@@ -1,0 +1,89 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.26.0]
+= Cerbos v0.26.0
+
+== Highlights
+
+We introduce the new `bundle` storage driver that allows you to connect your Cerbos instances to link:https://cerbos.dev/next[Cerbos Cloud], a cloud-hosted control plane and CI/CD pipeline for easily validating, testing and distributing optimized policy bundles to on-premise Cerbos instances. With Cerbos Cloud, you're still in full control of your environment and data while delegating the toil of building and maintaining a Git-ops and observability pipeline to the cloud. Head over to https://cerbos.dev/next to learn more and register your interest in the public beta.
+
+A new audit log sink for Kafka has been contributed by the Cerbos community member link:https://github.com/rcrowe[@rcrowe]. With this new driver, Cerbos audit logs can be written to a Kafka topic and feed into your data processing pipeline for further processing and storage. See xref:0.26.0@configuration:audit.adoc#kafka[Kafka configuration] for details. As part of this change, a new metric for monitoring audit publishing errors has been introduced as well.
+
+It is now possible to point the `disk` storage driver to a gzip, zip or tar archive containing Cerbos policies and schemas. This is particularly useful for deploying Cerbos to Kubernetes with your policy archive stored under a key in a `ConfigMap` or a `Secret`. See xref:0.26.0@configuration:storage.adoc#disk-driver-archives[disk driver configuration] for details.
+
+This release includes a breaking change to the way policy test results are reported. Previously the results were grouped by principals but this led to some subtle issues and confusion for users who wanted to separate principals into separate test cases. In this release of Cerbos, the test results are grouped by the name of the test case first.
+
+The Cerbos policy testing framework now supports outputting test results in the JUnit XML format. This enables integrating the Cerbos policy testing process into most of the popular CI and testing tools available in the market. Add `--test-output=junit` to the xref:0.26.0@cli:cerbos.adoc#compile[`cerbos compile`] command to produce test results in JUnit format.
+
+The `--config` flag is now optional for starting a Cerbos server. If no configuration file is provided using either the `--config` flag or `CERBOS_CONFIG` environment variable, the default behaviour is to start the server with the policy directory configured to `policies` in the current working directory. This could be a breaking change for users who mount a custom configuration file into the Cerbos container at `/conf.default.yaml` because the `CERBOS_CONFIG` environment variable no longer points to that path. To work around this, manually set `CERBOS_CONFIG=/conf.default.yaml` in the environment of the container.
+
+`cerbosctl` can now be used to enable disabled policies and delete schemas.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Fix passing tests not being visible in JUnit test output (link:https://github.com/cerbos/cerbos/pull/1534[#1534])
+* Kafka async produce context cancellation (link:https://github.com/cerbos/cerbos/pull/1516[#1516])
+* Kafka async publish fails when the API request returns (link:https://github.com/cerbos/cerbos/pull/1510[#1510])
+* Prevent default config from being turned into a path (link:https://github.com/cerbos/cerbos/pull/1533[#1533])
+
+=== Features
+
+* Add JUnit output format for test results (link:https://github.com/cerbos/cerbos/pull/1508[#1508])
+* Cerbos Cloud bundle store driver (link:https://github.com/cerbos/cerbos/pull/1530[#1530])
+* Kafka audit log (link:https://github.com/cerbos/cerbos/pull/1499[#1499])
+
+=== Enhancements
+
+* Add includeDisabled to Admin API and schema deletion to cerbosctl (link:https://github.com/cerbos/cerbos/pull/1463[#1463])
+* Add principal, resource and action as properties of JUnit output (link:https://github.com/cerbos/cerbos/pull/1520[#1520])
+* Add support for reading archive files for the disk driver (link:https://github.com/cerbos/cerbos/pull/1473[#1473])
+* Audit error metric (link:https://github.com/cerbos/cerbos/pull/1513[#1513])
+* Enable auth on API explorer page (link:https://github.com/cerbos/cerbos/pull/1464[#1464])
+* Enable disabled policies (link:https://github.com/cerbos/cerbos/pull/1472[#1472])
+* #**BREAKING**# Group test results by test name (link:https://github.com/cerbos/cerbos/pull/1498[#1498])
+* #**BREAKING**# Make config flag optional (link:https://github.com/cerbos/cerbos/pull/1462[#1462])
+* Report audit close error (link:https://github.com/cerbos/cerbos/pull/1501[#1501])
+
+=== Documentation
+
+* Add Kafka audit backend docs (link:https://github.com/cerbos/cerbos/pull/1506[#1506])
+* Add resource ID to test examples (link:https://github.com/cerbos/cerbos/pull/1488[#1488])
+* Document /api/server_info (link:https://github.com/cerbos/cerbos/pull/1469[#1469])
+* Document CEL string.format function (link:https://github.com/cerbos/cerbos/pull/1528[#1528])
+* Fix README snapshot.yml badge (link:https://github.com/cerbos/cerbos/pull/1497[#1497])
+* Fix name of test output format flag (link:https://github.com/cerbos/cerbos/pull/1481[#1481])
+* Fix typo in 04_testing-policies.adoc (link:https://github.com/cerbos/cerbos/pull/1477[#1477])
+
+=== Chores
+
+* Add timeouts to workflows (link:https://github.com/cerbos/cerbos/pull/1505[#1505])
+* Bump github.com/docker/docker from 20.10.23+incompatible to 20.10.24+incompatible (link:https://github.com/cerbos/cerbos/pull/1517[#1517])
+* Bump github.com/docker/docker from 23.0.2+incompatible to 23.0.3+incompatible in /tools (link:https://github.com/cerbos/cerbos/pull/1518[#1518])
+* Bump github.com/opencontainers/runc from 1.1.2 to 1.1.5 (link:https://github.com/cerbos/cerbos/pull/1507[#1507])
+* Bump golang.org/x/net from 0.5.0 to 0.7.0 (link:https://github.com/cerbos/cerbos/pull/1465[#1465])
+* Bump golang.org/x/net from 0.5.0 to 0.7.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1466[#1466])
+* Bump version to 0.26.0
+* Deprecate old policy disable endpoint (link:https://github.com/cerbos/cerbos/pull/1476[#1476])
+* Ignore stdout/stderr sync errors in audit log (link:https://github.com/cerbos/cerbos/pull/1515[#1515])
+* Increase snapshot build timeout (link:https://github.com/cerbos/cerbos/pull/1509[#1509])
+* Make Otel resource schemaless (link:https://github.com/cerbos/cerbos/pull/1487[#1487])
+* Publish unstable API to BSR (link:https://github.com/cerbos/cerbos/pull/1531[#1531])
+* Remove Playground from API explorer (link:https://github.com/cerbos/cerbos/pull/1467[#1467])
+* Remove api/x/plan/resources endpoint (link:https://github.com/cerbos/cerbos/pull/1471[#1471])
+* Update bufbuild/buf-setup-action action to v1.15.0 (link:https://github.com/cerbos/cerbos/pull/1484[#1484])
+* Update bufbuild/buf-setup-action action to v1.16.0 (link:https://github.com/cerbos/cerbos/pull/1512[#1512])
+* Update bufbuild/buf-setup-action action to v1.17.0 (link:https://github.com/cerbos/cerbos/pull/1522[#1522])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1475[#1475])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1494[#1494])
+* Update github actions deps to v4 (major) (link:https://github.com/cerbos/cerbos/pull/1495[#1495])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1474[#1474])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1483[#1483])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1493[#1493])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1502[#1502])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1511[#1511])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1521[#1521])
+* Update module github.com/dgraph-io/badger/v3 to v4 (link:https://github.com/cerbos/cerbos/pull/1503[#1503])
