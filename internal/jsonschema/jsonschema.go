@@ -72,8 +72,12 @@ func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
 }
 
 func newValidationError(err *jsonschema.ValidationError) validationError {
+	path := "/"
+	if err.InstanceLocation != "" {
+		path = err.InstanceLocation
+	}
 	return validationError{
-		Path:    err.InstanceLocation,
+		Path:    path,
 		Message: err.Message,
 	}
 }

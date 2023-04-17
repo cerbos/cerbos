@@ -3,7 +3,7 @@ wantErrList:
   loadFailures:
     - error: "[/derivedRoles: missing properties: 'definitions']"
       file: derived.yaml
-    - error: "[: missing properties: 'resourcePolicy', : missing properties: 'principalPolicy', : missing properties: 'derivedRoles']"
+    - error: "[/: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles']"
       file: resource.yaml
 files:
   "resource.yaml": |-

@@ -6,7 +6,7 @@
       "summary":  {
         "overallResult":  "RESULT_ERRORED"
       },
-      "error":  "[: expected object, but got string]"
+      "error":  "[/: expected object, but got string]"
     }
   ],
   "summary":  {
