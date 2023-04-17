@@ -105,13 +105,13 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		p := &policyv1.Policy{}
-		if err := util.LoadFromJSONOrYAML(fsys, filePath, p); err != nil {
+		if err := internaljsonschema.ValidatePolicy(fsys, filePath); err != nil {
 			ib.addLoadFailure(filePath, err)
 			return nil
 		}
 
-		if err := internaljsonschema.ValidatePolicy(fsys, filePath); err != nil {
+		p := &policyv1.Policy{}
+		if err := util.LoadFromJSONOrYAML(fsys, filePath, p); err != nil {
 			ib.addLoadFailure(filePath, err)
 			return nil
 		}

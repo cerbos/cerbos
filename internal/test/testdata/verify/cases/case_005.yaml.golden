@@ -6,7 +6,7 @@
       "summary":  {
         "overallResult":  "RESULT_ERRORED"
       },
-      "error":  "[/: missing properties: 'tests']"
+      "error":  "file is not valid: [/: missing properties: 'tests']"
     }
   ],
   "summary":  {

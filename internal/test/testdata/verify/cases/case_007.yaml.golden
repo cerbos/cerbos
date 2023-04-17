@@ -6,7 +6,7 @@
       "summary":  {
         "overallResult":  "RESULT_ERRORED"
       },
-      "error":  "[/options/now: 'blah' is not valid 'date-time']"
+      "error":  "file is not valid: [/options/now: 'blah' is not valid 'date-time']"
     }
   ],
   "summary":  {

@@ -48,6 +48,7 @@ func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open file %s: %w", path, err)
 	}
+	defer f.Close()
 
 	data, err := io.ReadAll(f)
 	if err != nil {
@@ -110,16 +111,8 @@ func (e validationError) Error() string {
 
 type validationErrorList []validationError
 
-func (e validationErrorList) ErrOrNil() error {
-	if len(e) == 0 {
-		return nil
-	}
-
-	return e
-}
-
 func (e validationErrorList) Error() string {
-	return fmt.Sprintf("[%s]", strings.Join(e.ErrorMessages(), ", "))
+	return fmt.Sprintf("file is not valid: [%s]", strings.Join(e.ErrorMessages(), ", "))
 }
 
 func (e validationErrorList) ErrorMessages() []string {
