@@ -1,5 +1,6 @@
 {"name": "github.com/acomagu/bufpipe", "licenceTextOverrideFile": "licences/github.com/acomagu/bufpipe/LICENSE"}
 {"name": "github.com/bmizerany/assert", "licenceType": "UNKNOWN"}
+{"name": "github.com/cerbos/cloud-api", "licenceType": "Apache-2.0"}
 {"name": "github.com/chzyer/logex", "licenceTextOverrideFile": "licences/github.com/chzyer/logex/LICENSE"}
 {"name": "github.com/dnaeon/go-vcr", "licenceType": "BSD-2-Clause"}
 {"name": "github.com/docker/go-metrics", "licenceType": "Apache-2.0"}
