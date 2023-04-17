@@ -6,7 +6,7 @@
       "summary":  {
         "overallResult":  "RESULT_ERRORED"
       },
-      "error":  "failed to load test suite: failed to unmarshal JSON: proto: (line 1:84): invalid google.protobuf.Timestamp value \"blah\""
+      "error":  "file is not valid: [/options/now: 'blah' is not valid 'date-time']"
     }
   ],
   "summary":  {

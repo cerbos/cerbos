@@ -26,7 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
-	"github.com/cerbos/cerbos/internal/schema"
+	internalschema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -97,11 +97,11 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 
-	enforcement := schema.EnforcementReject
+	enforcement := internalschema.EnforcementReject
 	if c.IgnoreSchemas {
-		enforcement = schema.EnforcementNone
+		enforcement = internalschema.EnforcementNone
 	}
-	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(enforcement))
+	schemaMgr := internalschema.NewFromConf(ctx, store, internalschema.NewConf(enforcement))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
@@ -141,6 +141,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		if err != nil {
 			return err
 		}
+
 		results, err := verify.Verify(ctx, testFsys, eng, verifyConf)
 		if err != nil {
 			return fmt.Errorf("failed to run tests: %w", err)

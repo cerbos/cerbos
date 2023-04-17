@@ -6,8 +6,9 @@ package audit
 import (
 	"fmt"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/cerbos/cerbos/internal/config"
-	"gopkg.in/yaml.v2"
 )
 
 const (

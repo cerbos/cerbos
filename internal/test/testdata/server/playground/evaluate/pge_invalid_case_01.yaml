@@ -36,11 +36,11 @@ playgroundEvaluate:
       "errors": [
         {
           "file": "resource.yaml",
-          "error": "Failed to read: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet"
+          "error": "Failed to read: failed to unmarshal file resource.yaml: yaml: invalid leading UTF-8 octet"
         },
         {
           "file": "common_roles.yaml",
-          "error": "Failed to read: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet"
+          "error": "Failed to read: failed to unmarshal file common_roles.yaml: yaml: invalid leading UTF-8 octet"
         }
       ]
     }

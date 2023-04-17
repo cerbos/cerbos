@@ -1,9 +1,9 @@
 ---
 wantErrList:
   loadFailures:
-    - error: "invalid Policy.DerivedRoles: embedded message failed validation | caused by: invalid DerivedRoles.Definitions: value must contain at least 1 item(s)"
+    - error: "file is not valid: [/derivedRoles: missing properties: 'definitions']"
       file: derived.yaml
-    - error: "invalid Policy.PolicyType: value is required"
+    - error: "file is not valid: [/: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles']"
       file: resource.yaml
 files:
   "resource.yaml": |-

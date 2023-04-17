@@ -15,6 +15,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -101,6 +102,11 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 		if !util.IsSupportedFileType(d.Name()) ||
 			util.IsSupportedTestFile(d.Name()) ||
 			util.IsHidden(d.Name()) {
+			return nil
+		}
+
+		if err := internaljsonschema.ValidatePolicy(fsys, filePath); err != nil {
+			ib.addLoadFailure(filePath, err)
 			return nil
 		}
 

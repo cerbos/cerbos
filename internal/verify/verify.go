@@ -15,6 +15,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
+	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -97,6 +98,17 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 	}
 
 	runTestSuite := func(file string) *policyv1.TestResults_Suite {
+		if err := internaljsonschema.ValidateTest(fsys, file); err != nil {
+			return &policyv1.TestResults_Suite{
+				File: file,
+				Name: "Unknown",
+				Summary: &policyv1.TestResults_Summary{
+					OverallResult: policyv1.TestResults_RESULT_ERRORED,
+				},
+				Error: err.Error(),
+			}
+		}
+
 		suite := &policyv1.TestSuite{}
 		err := util.LoadFromJSONOrYAML(fsys, file, suite)
 		if err == nil {

@@ -6,7 +6,7 @@
       "summary":  {
         "overallResult":  "RESULT_ERRORED"
       },
-      "error":  "failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)"
+      "error":  "file is not valid: [/: missing properties: 'tests']"
     }
   ],
   "summary":  {

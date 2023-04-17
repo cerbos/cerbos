@@ -6,7 +6,7 @@
       "summary":  {
         "overallResult":  "RESULT_ERRORED"
       },
-      "error":  "failed to load test suite: failed to unmarshal JSON: proto: syntax error (line 1:1): unexpected token \"x\""
+      "error":  "file is not valid: [/: expected object, but got string]"
     }
   ],
   "summary":  {
