@@ -1,9 +1,9 @@
 ---
 wantErrList:
   loadFailures:
-    - error: "jsonschema: '/derivedRoles' does not validate with https://api.cerbos.dev/cerbos/policy/v1/Policy.schema.json#/allOf/0/properties/derivedRoles/$ref/required: missing properties: 'definitions'"
+    - error: "[/derivedRoles: missing properties: 'definitions']"
       file: derived.yaml
-    - error: "jsonschema: '' does not validate with https://api.cerbos.dev/cerbos/policy/v1/Policy.schema.json#/allOf/1/oneOf/0/required: missing properties: 'resourcePolicy'"
+    - error: "[: missing properties: 'resourcePolicy', : missing properties: 'principalPolicy', : missing properties: 'derivedRoles']"
       file: resource.yaml
 files:
   "resource.yaml": |-

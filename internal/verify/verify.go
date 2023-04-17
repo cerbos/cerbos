@@ -105,7 +105,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 				Summary: &policyv1.TestResults_Summary{
 					OverallResult: policyv1.TestResults_RESULT_ERRORED,
 				},
-				Error: fmt.Sprintf("failed to validate with the schema: %v", err),
+				Error: err.Error(),
 			}
 		}
 

@@ -6,7 +6,7 @@ package storage
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/cerbos/cerbos/internal/config"
 )
