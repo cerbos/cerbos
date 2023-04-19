@@ -34,7 +34,8 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-const udsMaxSocketPathLength = 104 // NOTE(saml) AFAIK, this is the max allowable path length on macOS, which appears to be the shortest of common platforms
+// NOTE(saml) this is the max allowable path length on macOS, which appears to be the shortest of common platforms (at 104).
+const udsMaxSocketPathLength = 104
 
 type testParam struct {
 	store        storage.Store
@@ -177,7 +178,7 @@ func apiTests(tpg testParamGen) func(*testing.T) {
 }
 
 // createTempDirForUDS is used to generate a temporary directory with a pathname length below a defined limit.
-// This is to prevent the randonly generated directory path length exceeding platform limits (104-108 ish, platform specific).
+// This is to prevent the randonly generated directory path length exceeding platform limits (104-108, platform specific).
 func createTempDirForUDS(t *testing.T) string {
 	t.Helper()
 
