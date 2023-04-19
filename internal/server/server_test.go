@@ -177,7 +177,7 @@ func apiTests(tpg testParamGen) func(*testing.T) {
 }
 
 // createTempDirForUDS is used to generate a temporary directory with a pathname length below a defined limit.
-// This is to prevent the randonly generated directory path length exceeding platform limits (~100-108 ish, platform specific).
+// This is to prevent the randonly generated directory path length exceeding platform limits (104-108 ish, platform specific).
 func createTempDirForUDS(t *testing.T) string {
 	t.Helper()
 
