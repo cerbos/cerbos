@@ -6,8 +6,10 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
@@ -31,6 +33,8 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 )
+
+const udsMaxSocketPathLength = 104 // NOTE(saml) AFAIK, this is the max allowable path length on macOS, which appears to be the shortest of common platforms
 
 type testParam struct {
 	store        storage.Store
@@ -125,7 +129,7 @@ func apiTests(tpg testParamGen) func(*testing.T) {
 			})
 
 			t.Run("uds", func(t *testing.T) {
-				tempDir := t.TempDir()
+				tempDir := createTempDirForUDS(t)
 
 				conf := defaultConf()
 				conf.HTTPListenAddr = fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock"))
@@ -158,7 +162,7 @@ func apiTests(tpg testParamGen) func(*testing.T) {
 			})
 
 			t.Run("uds", func(t *testing.T) {
-				tempDir := t.TempDir()
+				tempDir := createTempDirForUDS(t)
 
 				conf := defaultConf()
 				conf.HTTPListenAddr = fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock"))
@@ -170,6 +174,52 @@ func apiTests(tpg testParamGen) func(*testing.T) {
 			})
 		})
 	}
+}
+
+// createTempDirForUDS is used to generate a temporary directory with a pathname length below a defined limit.
+// This is to prevent the randonly generated directory path length exceeding platform limits (~100-108 ish, platform specific).
+func createTempDirForUDS(t *testing.T) string {
+	t.Helper()
+
+	osTempDir := os.TempDir()
+	leafDirNameLen := 10
+	// We fail early if the generated path is guaranteed to exceed the hard path length limit.
+	// The `10` below accounts for the length of the string: `grpc.sock` (9), plus a single delimiter: `/`.
+	if len(osTempDir)+leafDirNameLen+10 >= udsMaxSocketPathLength {
+		t.Fatal("unable to create temp directory for UDS: socket path name length will exceed limit")
+	}
+
+	maxAttempts := 5
+	for i := 0; i < maxAttempts; i++ {
+		s, err := generateRandomString(leafDirNameLen)
+		require.NoError(t, err, "failed to generate random string for UDS directory path")
+
+		tmpPath := filepath.Join(osTempDir, s)
+		if _, err := os.Stat(tmpPath); os.IsNotExist(err) {
+			err = os.Mkdir(tmpPath, 0o700)
+			require.NoError(t, err, "failed to create temp dir for UDS")
+
+			t.Cleanup(func() {
+				os.RemoveAll(tmpPath)
+			})
+
+			return tmpPath
+		}
+	}
+	t.Fatal("unable to create temp directory for UDS")
+
+	return ""
+}
+
+func generateRandomString(length int) (string, error) {
+	bytes := make([]byte, (length+1)/2)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	hash := hex.EncodeToString(bytes)[:length]
+	return hash, nil
 }
 
 func TestAdminService(t *testing.T) {
