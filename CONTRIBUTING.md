@@ -53,7 +53,7 @@ Submitting pull requests
 Developing Cerbos
 -----------------
 
-Cerbos is developed using the [Go programming language](https://golang.org). We currently require Go 1.18.x for development.
+Cerbos is developed using the [Go programming language](https://golang.org). We currently require Go 1.19.x for development.
 
 The `Makefile` automatically installs required build tools using the versions defined in `tools/go.mod`. Run `make clean-tools` to clear the cache and force the installation of new versions.
 
