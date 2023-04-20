@@ -146,7 +146,6 @@ func TestUpdateStore(t *testing.T) {
 	}
 
 	numPolicySets := 10
-	rng := rand.New(rand.NewSource(time.Now().Unix())) //nolint:gosec
 
 	t.Run("no changes", func(t *testing.T) {
 		param := setupUpdateStoreTest(t, numPolicySets)
@@ -170,7 +169,7 @@ func TestUpdateStore(t *testing.T) {
 		}, nil)
 
 		checkEvents := storage.TestSubscription(param.store)
-		pset := genPolicySet(rng.Intn(numPolicySets))
+		pset := genPolicySet(rand.Intn(numPolicySets)) //nolint:gosec
 
 		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Modify policy", func(_ *git.Worktree) error {
 			for _, p := range pset {
@@ -205,7 +204,7 @@ func TestUpdateStore(t *testing.T) {
 		}, nil)
 
 		checkEvents := storage.TestSubscription(param.store)
-		pset := genPolicySet(rng.Intn(numPolicySets))
+		pset := genPolicySet(rand.Intn(numPolicySets)) //nolint:gosec
 
 		wantEvents := make([]storage.Event, len(pset))
 		psetEventIdx := make(map[string]int, len(pset))
@@ -314,7 +313,7 @@ func TestUpdateStore(t *testing.T) {
 		}, nil)
 
 		checkEvents := storage.TestSubscription(param.store)
-		pset := genPolicySet(rng.Intn(numPolicySets))
+		pset := genPolicySet(rand.Intn(numPolicySets)) //nolint:gosec
 
 		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
 			for file := range pset {
@@ -365,7 +364,7 @@ func TestUpdateStore(t *testing.T) {
 		}, nil)
 
 		checkEvents := storage.TestSubscription(param.store)
-		pset := genPolicySet(rng.Intn(numPolicySets))
+		pset := genPolicySet(rand.Intn(numPolicySets)) //nolint:gosec
 
 		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Rename policy", func(wt *git.Worktree) error {
 			for file := range pset {
@@ -411,7 +410,7 @@ func TestUpdateStore(t *testing.T) {
 		}, nil)
 
 		checkEvents := storage.TestSubscription(param.store)
-		pset := genPolicySet(rng.Intn(numPolicySets))
+		pset := genPolicySet(rand.Intn(numPolicySets)) //nolint:gosec
 
 		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Move policy out", func(wt *git.Worktree) error {
 			for file := range pset {
