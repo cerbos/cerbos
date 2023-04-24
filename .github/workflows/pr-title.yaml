@@ -7,23 +7,6 @@ on:
       - edited
       - synchronize
 jobs:
-  label:
-    name: Apply PR labels
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      pull-requests: write
-    continue-on-error: true
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Apply PR labels
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run:
-          hack/scripts/apply-pr-labels.sh "${{ github.event.number }}" "${{ github.event.pull_request.title }}"
-
   validate:
     name: Validate PR title
     runs-on: ubuntu-latest
