@@ -161,3 +161,7 @@ func (ls *LocalSource) Close() error {
 
 	return nil
 }
+
+func (ls *LocalSource) SourceKind() string {
+	return "local"
+}

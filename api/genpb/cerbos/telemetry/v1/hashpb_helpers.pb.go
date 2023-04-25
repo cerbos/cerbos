@@ -130,6 +130,21 @@ func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Blob_hashpb_sum(m *Server
 	}
 }
 
+func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Bundle_hashpb_sum(m *ServerLaunch_Features_Storage_Bundle, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle.pdp_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PdpId))
+
+	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle.bundle_source"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.BundleSource))
+
+	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle.client_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ClientId))
+
+	}
+}
+
 func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Disk_hashpb_sum(m *ServerLaunch_Features_Storage_Disk, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk.watch"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.Watch)))
@@ -175,6 +190,11 @@ func cerbos_telemetry_v1_ServerLaunch_Features_Storage_hashpb_sum(m *ServerLaunc
 			case *ServerLaunch_Features_Storage_Blob_:
 				if t.Blob != nil {
 					cerbos_telemetry_v1_ServerLaunch_Features_Storage_Blob_hashpb_sum(t.Blob, hasher, ignore)
+				}
+
+			case *ServerLaunch_Features_Storage_Bundle_:
+				if t.Bundle != nil {
+					cerbos_telemetry_v1_ServerLaunch_Features_Storage_Bundle_hashpb_sum(t.Bundle, hasher, ignore)
 				}
 
 			}

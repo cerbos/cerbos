@@ -1591,6 +1591,47 @@ func (m *ServerLaunch_Features_Storage) validate(all bool) error {
 			}
 		}
 
+	case *ServerLaunch_Features_Storage_Bundle_:
+		if v == nil {
+			err := ServerLaunch_Features_StorageValidationError{
+				field:  "Store",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetBundle()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
+						field:  "Bundle",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
+						field:  "Bundle",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetBundle()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ServerLaunch_Features_StorageValidationError{
+					field:  "Bundle",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	default:
 		_ = v // ensures v is used
 	}
@@ -2056,6 +2097,117 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerLaunch_Features_Storage_BlobValidationError{}
+
+// Validate checks the field values on ServerLaunch_Features_Storage_Bundle
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *ServerLaunch_Features_Storage_Bundle) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerLaunch_Features_Storage_Bundle
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerLaunch_Features_Storage_BundleMultiError, or nil if none found.
+func (m *ServerLaunch_Features_Storage_Bundle) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerLaunch_Features_Storage_Bundle) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PdpId
+
+	// no validation rules for BundleSource
+
+	// no validation rules for ClientId
+
+	if len(errors) > 0 {
+		return ServerLaunch_Features_Storage_BundleMultiError(errors)
+	}
+
+	return nil
+}
+
+// ServerLaunch_Features_Storage_BundleMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerLaunch_Features_Storage_Bundle.ValidateAll() if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_BundleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerLaunch_Features_Storage_BundleMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerLaunch_Features_Storage_BundleMultiError) AllErrors() []error { return m }
+
+// ServerLaunch_Features_Storage_BundleValidationError is the validation error
+// returned by ServerLaunch_Features_Storage_Bundle.Validate if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_BundleValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerLaunch_Features_Storage_BundleValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerLaunch_Features_Storage_BundleValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerLaunch_Features_Storage_BundleValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerLaunch_Features_Storage_BundleValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerLaunch_Features_Storage_BundleValidationError) ErrorName() string {
+	return "ServerLaunch_Features_Storage_BundleValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerLaunch_Features_Storage_BundleValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerLaunch_Features_Storage_Bundle.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerLaunch_Features_Storage_BundleValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerLaunch_Features_Storage_BundleValidationError{}
 
 // Validate checks the field values on ServerLaunch_Stats_Policy with the rules
 // defined in the proto definition for this message. If any rules are

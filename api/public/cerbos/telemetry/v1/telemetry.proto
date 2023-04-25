@@ -57,11 +57,18 @@ message ServerLaunch {
         google.protobuf.Duration poll_interval = 2;
       }
 
+      message Bundle {
+        string pdp_id = 1;
+        string bundle_source = 2;
+        string client_id = 3;
+      }
+
       string driver = 1;
       oneof store {
         Disk disk = 2;
         Git git = 3;
         Blob blob = 4;
+        Bundle bundle = 5;
       }
     }
 

@@ -71,6 +71,14 @@ func (is instrumentedSource) Close() error {
 	return nil
 }
 
+func (is instrumentedSource) SourceKind() string {
+	if s, ok := is.source.(Source); ok {
+		return s.SourceKind()
+	}
+
+	return "unknown"
+}
+
 func measureBinaryOp[T any](ctx context.Context, source, opName string, op func(context.Context) (T, error)) (T, error) {
 	startTime := time.Now()
 	result, err := withTrace(ctx, source, opName, op)

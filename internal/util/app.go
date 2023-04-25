@@ -4,9 +4,14 @@
 package util
 
 import (
+	"crypto/md5" //nolint:gosec
 	"fmt"
+	"os"
 	"runtime/debug"
 	"strings"
+
+	pdpv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/pdp/v1"
+	"github.com/google/uuid"
 )
 
 var (
@@ -52,4 +57,17 @@ func AppShortVersion() string {
 	}
 
 	return sb.String()
+}
+
+func PDPIdentifier(instanceID string) *pdpv1.Identifier {
+	if instanceID == "" {
+		//nolint:gosec
+		nodeID := md5.Sum(uuid.NodeID())
+		instanceID = fmt.Sprintf("%X-%d", nodeID, os.Getpid())
+	}
+
+	return &pdpv1.Identifier{
+		Instance: instanceID,
+		Version:  AppShortVersion(),
+	}
 }
