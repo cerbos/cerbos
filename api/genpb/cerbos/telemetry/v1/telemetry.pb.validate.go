@@ -2127,8 +2127,6 @@ func (m *ServerLaunch_Features_Storage_Bundle) validate(all bool) error {
 
 	// no validation rules for ClientId
 
-	// no validation rules for Label
-
 	if len(errors) > 0 {
 		return ServerLaunch_Features_Storage_BundleMultiError(errors)
 	}

@@ -10,9 +10,6 @@
     "clientId": {
       "type": "string"
     },
-    "label": {
-      "type": "string"
-    },
     "pdpId": {
       "type": "string"
     }

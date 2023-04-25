@@ -61,7 +61,6 @@ message ServerLaunch {
         string pdp_id = 1;
         string bundle_source = 2;
         string client_id = 3;
-        string label = 4;
       }
 
       string driver = 1;

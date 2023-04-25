@@ -143,10 +143,6 @@ func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Bundle_hashpb_sum(m *Serv
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ClientId))
 
 	}
-	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle.label"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Label))
-
-	}
 }
 
 func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Disk_hashpb_sum(m *ServerLaunch_Features_Storage_Disk, hasher hash.Hash, ignore map[string]struct{}) {
