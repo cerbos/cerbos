@@ -5,7 +5,6 @@ package bundle
 
 import (
 	"context"
-	"crypto/md5" //nolint:gosec
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -24,9 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
-	pdpv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/pdp/v1"
 	"github.com/go-logr/zapr"
-	"github.com/google/uuid"
 	"github.com/spf13/afero"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -80,7 +77,7 @@ func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
-	pdpID := getPDPIdentifier(s.conf.Credentials.InstanceID)
+	pdpID := util.PDPIdentifier(s.conf.Credentials.InstanceID)
 	s.log = s.log.With(zap.String("instance", pdpID.Instance))
 
 	tlsConf := &tls.Config{
@@ -155,19 +152,6 @@ func (s *RemoteSource) InitWithClient(ctx context.Context, client CloudAPIClient
 	}
 
 	return nil
-}
-
-func getPDPIdentifier(instanceID string) *pdpv1.Identifier {
-	if instanceID == "" {
-		//nolint:gosec
-		nodeID := md5.Sum(uuid.NodeID())
-		instanceID = fmt.Sprintf("%X-%d", nodeID, os.Getpid())
-	}
-
-	return &pdpv1.Identifier{
-		Instance: instanceID,
-		Version:  util.AppShortVersion(),
-	}
 }
 
 func shouldWorkOffline() bool {
@@ -471,4 +455,8 @@ func (s *RemoteSource) LoadSchema(ctx context.Context, id string) (io.ReadCloser
 
 func (s *RemoteSource) Reload(ctx context.Context) error {
 	return s.fetchBundle(ctx)
+}
+
+func (s *RemoteSource) SourceKind() string {
+	return "remote"
 }

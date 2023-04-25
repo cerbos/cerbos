@@ -80,6 +80,10 @@ func NewStore(ctx context.Context, conf *Conf) (storage.BinaryStore, error) {
 	}
 }
 
+type Source interface {
+	SourceKind() string
+}
+
 type HybridStore struct {
 	log             *zap.Logger
 	local           storage.BinaryStore
@@ -114,4 +118,8 @@ func (hs *HybridStore) LoadSchema(ctx context.Context, id string) (io.ReadCloser
 
 func (hs *HybridStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	return hs.withActiveSource().GetPolicySet(ctx, id)
+}
+
+func (hs *HybridStore) SourceKind() string {
+	return "hybrid"
 }

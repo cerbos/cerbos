@@ -15,6 +15,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/blob"
+	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/util"
@@ -25,7 +26,7 @@ func buildServerLaunch(store storage.Store) *telemetryv1.ServerLaunch {
 	evt := &telemetryv1.ServerLaunch{
 		Version:  "1.0.0",
 		Source:   extractSource(),
-		Features: extractFeatures(),
+		Features: extractFeatures(store),
 	}
 
 	if is, ok := store.(storage.Instrumented); ok {
@@ -56,7 +57,7 @@ func extractSource() *telemetryv1.ServerLaunch_Source {
 	return s
 }
 
-func extractFeatures() *telemetryv1.ServerLaunch_Features {
+func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 	feats := &telemetryv1.ServerLaunch_Features{}
 
 	if auditConf, err := audit.GetConf(); err == nil {
@@ -116,6 +117,24 @@ func extractFeatures() *telemetryv1.ServerLaunch_Features {
 				}
 
 				feats.Storage.Store = &telemetryv1.ServerLaunch_Features_Storage_Blob_{Blob: b}
+			}
+		case bundle.DriverName:
+			if bundleConf, err := bundle.GetConf(); err == nil {
+				pdpID := util.PDPIdentifier(bundleConf.Credentials.InstanceID)
+				b := &telemetryv1.ServerLaunch_Features_Storage_Bundle{
+					PdpId:    pdpID.GetInstance(),
+					ClientId: bundleConf.Credentials.ClientID,
+				}
+
+				if src, ok := store.(bundle.Source); ok {
+					b.BundleSource = src.SourceKind()
+				}
+
+				if bundleConf.Remote != nil {
+					b.Label = bundleConf.Remote.BundleLabel
+				}
+
+				feats.Storage.Store = &telemetryv1.ServerLaunch_Features_Storage_Bundle_{Bundle: b}
 			}
 		}
 	}

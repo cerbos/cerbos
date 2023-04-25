@@ -98,6 +98,14 @@ func (m *ServerLaunch_Features_Storage_Blob) HashPB(hasher hash.Hash, ignore map
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *ServerLaunch_Features_Storage_Bundle) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_telemetry_v1_ServerLaunch_Features_Storage_Bundle_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *ServerLaunch_Stats) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_telemetry_v1_ServerLaunch_Stats_hashpb_sum(m, hasher, ignore)

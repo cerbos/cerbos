@@ -39,6 +39,9 @@
         "blob": {
           "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob"
         },
+        "bundle": {
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle"
+        },
         "disk": {
           "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk"
         },
@@ -58,6 +61,24 @@
           "$ref": "#/definitions/google.protobuf.Duration"
         },
         "provider": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bundleSource": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "pdpId": {
           "type": "string"
         }
       }
