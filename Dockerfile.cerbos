@@ -4,7 +4,7 @@ RUN apk add -U --no-cache ca-certificates && update-ca-certificates
 FROM scratch
 EXPOSE 3592 3593
 ENV CERBOS_CONFIG="__default__"
-VOLUME ["/policies"]
+VOLUME ["/policies", "/tmp", "/.cache"]
 ENTRYPOINT ["/cerbos"]
 CMD ["server"]
 HEALTHCHECK --interval=1m --timeout=3s CMD ["/cerbos", "healthcheck"]
