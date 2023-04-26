@@ -147,3 +147,12 @@ Merge the configurations to obtain the final configuration file
 {{ mustMergeOverwrite $defaultConf .Values.cerbos.config $derivedConf | toYaml }}
 {{- end }}
 
+{{/*
+Detect if bundle driver is used with default config
+*/}}
+{{- define "cerbos.defaultBundleDriverEnabled" -}}
+{{- $isBundleDriver := (eq (dig "config" "storage" "driver" "<not_defined>" .Values.cerbos) "bundle") -}}
+{{- $isDefaultTmp := (eq (dig "config" "storage" "bundle" "remote" "tempDir" "<not_defined>" .Values.cerbos) "<not_defined>") -}}
+{{- $isDefaultCache := (eq (dig "config" "storage" "bundle" "remote" "cacheDir" "<not_defined>" .Values.cerbos) "<not_defined>") -}}
+{{- if (and $isBundleDriver $isDefaultTmp $isDefaultCache) -}}yes{{- else -}}no{{- end -}}
+{{- end }}

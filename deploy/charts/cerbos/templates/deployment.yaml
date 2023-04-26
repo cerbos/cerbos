@@ -1,4 +1,5 @@
 {{- $tlsDisabled := (eq (include "cerbos.tlsSecretName" .) "None") -}}
+{{- $defaultBundleDriverEnabled := (eq (include "cerbos.defaultBundleDriverEnabled" .) "yes") -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -81,8 +82,15 @@ spec:
             - name: config
               mountPath: /config
               readOnly: true
+          {{- if $defaultBundleDriverEnabled }}
+            - name: bundletmp
+              mountPath: /tmp
+            - name: bundlecache
+              mountPath: /.cache
+          {{- else }}
             - name: work
               mountPath: /work
+          {{- end }}
           {{- if not $tlsDisabled }}
             - name: certs
               mountPath: /certs
@@ -95,8 +103,15 @@ spec:
         - name: config
           configMap:
             name: {{ include "cerbos.fullname" . }}
+      {{- if $defaultBundleDriverEnabled }}
+        - name: bundletmp
+          emptyDir: {}
+        - name: bundlecache
+          emptyDir: {}
+      {{- else }}
         - name: work
           emptyDir: {}
+      {{- end }}
       {{- if not $tlsDisabled }}
         - name: certs
           secret:
