@@ -1,0 +1,23 @@
+wantErrList:
+  loadFailures:
+    - error: |-
+        _schemas directory must be under the root of the storage directory
+      file: policies/_schemas
+files:
+  "policies/_schemas/principal.json": |-
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "department": {
+          "type": "string",
+          "enum": [
+            "marketing",
+            "engineering"
+          ]
+        }
+      },
+      "required": [
+        "department"
+      ]
+    }
