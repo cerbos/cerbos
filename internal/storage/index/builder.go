@@ -23,6 +23,9 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+// errSchemasInWrongDir signals that schemas folder is in the wrong place.
+var errSchemasInWrongDir = fmt.Errorf("%s directory must be under the root of the storage directory", util.SchemasDirectory)
+
 const maxLoggableBuildErrors = 5
 
 // BuildError is an error type that contains details about the failures encountered during the index build.
@@ -93,6 +96,9 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			if filePath == path.Join(opts.rootDir, schema.Directory) ||
 				d.Name() == util.TestDataDirectory ||
 				util.IsHidden(d.Name()) {
+				return fs.SkipDir
+			} else if d.Name() == schema.Directory {
+				ib.addLoadFailure(filePath, errSchemasInWrongDir)
 				return fs.SkipDir
 			}
 
