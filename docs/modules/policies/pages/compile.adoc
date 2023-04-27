@@ -17,7 +17,7 @@ docker run -i -t -v /path/to/policy/dir:/policies {app-docker-img} compile /poli
 
 You can write optional tests for policies and run them as part of the compilation stage to make sure that the policies do exactly what you expect.
 
-Tests are defined using the familiar YAML format as well. Make sure that your tests are in a separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`. A test file must have `_test` suffix in the name and one of the following file extensions: 'yaml', 'yml', or 'json'. For example, `album_test.yml`, `album_test.yaml` or `album_test.json`.
+Tests are defined using the familiar YAML format as well. A test file must have `_test` suffix in the name and one of the following file extensions: `yaml`, `yml`, or `json`. For example, `album_test.yml`, `album_test.yaml` or `album_test.json`.
 
 .Test suite definition
 [source,yaml]

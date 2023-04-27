@@ -313,3 +313,45 @@ There might be circumstances where you want to create or update resources and ac
 If this is the case, then you can use the xref:api:admin_api.adoc[Admin API] configured alongside a mutable xref:configuration:storage.adoc#sqlite3[database storage engine] to provide this functionality. This would be handled within your application layer, with the desired policy contents provided to the PDP via the API.
 
 For a full example implementation, check out https://github.com/cerbos/demo-admin-api[this demo].
+
+
+== Policy repository layout
+
+Cerbos expects the policy repository to have a particular directory layout.
+
+- The directory must only contain Cerbos policy files, policy test files and schemas. Any other YAML or JSON files will cause Cerbos to consider the policy repository as invalid.
+- If you use xref:schemas.adoc[schemas], the `_schemas` directory must be a top-level directory at the root of the policy repo.
+- All policy tests must have a file name ending in `_test` and a `.yaml`, `.yml` or `.json` extension.
+- Directories named `testdata` can be used to store test data for policy tests. Cerbos will not attempt to locate any policy files inside those directories.
+- Hidden files and directories (names starting with `.`) are ignored.
+
+
+A typical policy repository might resemble the following:
+
+----
+.
+├── _schemas
+│   ├── principal.json
+│   └── resources
+│       ├── leave_request.json
+│       ├── purchase_order.json
+│       └── salary_record.json
+├── derived_roles
+│   ├── backoffice_roles.yaml
+│   └── common_roles.yaml
+├── principal_policies
+│   └── auditor_audrey.yaml
+└── resource_policies
+    ├── finance
+    │   ├── purchase_order.yaml
+    │   └── purchase_order_test.yaml
+    └── hr
+        ├── leave_request.yaml
+        ├── leave_request_test.yaml
+        ├── salary_record.yaml
+        ├── salary_record_test.yaml
+        └── testdata
+            ├── auxdata.yaml
+            ├── principals.yaml
+            └── resources.yaml
+----
