@@ -157,6 +157,11 @@ storage:
         cert: /path/to/certificate
         key: /path/to/private_key
         caCert: /path/to/CA_certificate
+  overlay:
+    # This section is required only if storage.driver is overlay.
+    baseDriver: <DEFAULT_VALUE_NOT_SET> # Required. BaseDriver is the secondary or fallback storage driver
+    failoverThreshold: <DEFAULT_VALUE_NOT_SET> # FailoverThreshold is the number of store connection errors seen in the last five minutes.
+    fallbackDriver: <DEFAULT_VALUE_NOT_SET> # Required. FallbackDriver is the primary storage driver
   postgres:
     # This section is required only if storage.driver is postgres.
     connPool: 

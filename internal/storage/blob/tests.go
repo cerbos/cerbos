@@ -85,7 +85,7 @@ func newMinioBucket(ctx context.Context, t *testing.T, prefix string) *blob.Buck
 	ctx, cancelFunc := context.WithDeadline(ctx, deadline)
 	defer cancelFunc()
 
-	endpoint := startMinio(ctx, t, bucketName)
+	endpoint := StartMinio(ctx, t, bucketName)
 
 	param := UploadParam{
 		BucketURL:    MinioBucketURL(bucketName, endpoint),
@@ -140,7 +140,7 @@ func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *b
 	return files, err
 }
 
-func startMinio(ctx context.Context, t *testing.T, bucketName string) string {
+func StartMinio(ctx context.Context, t *testing.T, bucketName string) string {
 	t.Helper()
 	is := require.New(t)
 	pool, err := dockertest.NewPool("")
