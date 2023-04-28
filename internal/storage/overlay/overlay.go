@@ -12,7 +12,8 @@ import (
 )
 
 // The interface is defined here because placing in storage causes a circular dependency,
-// probably because it blurs the lines by implementing both `SourceStore` and `PolicyLoader`.
+// probably because it blurs the lines by implementing `SourceStore` whilst having a dependency on
+// `schema` in order to build the compile manager in the GetOverlayPolicyLoader method.
 type Overlay interface {
 	storage.SourceStore
 	// GetOverlayPolicyLoader returns a PolicyLoader implementation that wraps two SourceStores
