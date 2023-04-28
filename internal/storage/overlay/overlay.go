@@ -34,8 +34,6 @@ var _ Store = (*WrappedSourceStore)(nil)
 // IMPORTANT: it's confusing because WrappedSourceStore implements both `SourceStore` and `PolicyLoader`.
 type Store interface {
 	storage.SourceStore
-
-
 	// GetOverlayPolicyLoader returns a PolicyLoader implementation that wraps two SourceStores
 	GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error)
 }
@@ -129,24 +127,17 @@ func (s *WrappedSourceStore) GetOverlayPolicyLoader(ctx context.Context, schemaM
 	return s.basePolicyLoader, nil
 }
 
-// func (s *WrappedSourceStore) getActiveStore() storage.SourceStore {
-//if s.circuitBreaker.State() == gobreaker.StateOpen {
-//return s.fallbackStore
-//}
-//return s.baseStore
-//}
-
 func (s *WrappedSourceStore) Driver() string {
 	return DriverName
 }
 
-func (s *WrappedSourceStore) withCircuitBreaker(action, fallback func() (interface{}, error)) (interface{}, error) {
+func (s *WrappedSourceStore) withCircuitBreaker(baseFn, fallbackFn func() (interface{}, error)) (interface{}, error) {
 	if s.circuitBreaker.State() == gobreaker.StateOpen {
-		return fallback()
+		return fallbackFn()
 	}
 
 	// TODO(saml) we only want to increment the circuitBreaker counter on relevant IO errors
-	result, err := s.circuitBreaker.Execute(action)
+	result, err := s.circuitBreaker.Execute(baseFn)
 	if err != nil {
 		return nil, err
 	}
@@ -292,22 +283,3 @@ func (s *WrappedSourceStore) LoadPolicy(ctx context.Context, file ...string) ([]
 	}
 	return policies, nil
 }
-
-// TODO(saml) consider other interface methods?
-// func (s *WrappedSourceStore) Reload(ctx context.Context) error {
-// if ms, ok := s.getActiveStore().(storage.Reloadable); ok {
-//return ms.Reload(ctx)
-//}
-
-//// noop
-// return nil
-//}
-
-// func (s *WrappedSourceStore) RepoStats(ctx context.Context) storage.RepoStats {
-//// TODO(saml) gather stats for both stores?
-// if ms, ok := s.getActiveStore().(storage.Instrumented); ok {
-//return ms.RepoStats(ctx)
-//}
-//// TODO(saml) pointless return of empty stats?
-//return storage.RepoStats{}
-//}
