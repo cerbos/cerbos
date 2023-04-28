@@ -11,7 +11,7 @@ import (
 	"time"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -28,17 +28,14 @@ const (
 
 var _ Store = (*WrappedSourceStore)(nil)
 
-var errMethodNotImplemented = errors.New("method not supported for store type")
-
 // The interface is defined here because placing in storage causes a circular dependency,
 // possibly because the store-wrapping-stores pattern somewhat breaks our boundaries.
 // TODO(saml) consider a dedicated package (separate from `store`) to cater for this?
 // IMPORTANT: it's confusing because WrappedSourceStore implements both `SourceStore` and `PolicyLoader`.
 type Store interface {
 	storage.SourceStore
-	storage.MutableStore
-	storage.Reloadable
-	storage.Instrumented
+
+
 	// GetOverlayPolicyLoader returns a PolicyLoader implementation that wraps two SourceStores
 	GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error)
 }
@@ -132,26 +129,39 @@ func (s *WrappedSourceStore) GetOverlayPolicyLoader(ctx context.Context, schemaM
 	return s.basePolicyLoader, nil
 }
 
-func (s *WrappedSourceStore) getActiveStore() storage.SourceStore {
-	if s.circuitBreaker.State() == gobreaker.StateOpen {
-		return s.fallbackStore
-	}
-	return s.baseStore
-}
+// func (s *WrappedSourceStore) getActiveStore() storage.SourceStore {
+//if s.circuitBreaker.State() == gobreaker.StateOpen {
+//return s.fallbackStore
+//}
+//return s.baseStore
+//}
 
 func (s *WrappedSourceStore) Driver() string {
 	return DriverName
 }
 
-func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+func (s *WrappedSourceStore) withCircuitBreaker(action, fallback func() (interface{}, error)) (interface{}, error) {
 	if s.circuitBreaker.State() == gobreaker.StateOpen {
-		return s.fallbackPolicyLoader.GetPolicySet(ctx, id)
+		return fallback()
 	}
 
 	// TODO(saml) we only want to increment the circuitBreaker counter on relevant IO errors
-	result, err := s.circuitBreaker.Execute(func() (interface{}, error) {
-		return s.basePolicyLoader.GetPolicySet(ctx, id)
-	})
+	result, err := s.circuitBreaker.Execute(action)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	result, err := s.withCircuitBreaker(
+		func() (interface{}, error) {
+			return s.basePolicyLoader.GetPolicySet(ctx, id)
+		},
+		func() (interface{}, error) {
+			return s.fallbackPolicyLoader.GetPolicySet(ctx, id)
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -164,83 +174,140 @@ func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID
 }
 
 func (s *WrappedSourceStore) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
-	return s.getActiveStore().ListPolicyIDs(ctx, includeDisabled)
+	result, err := s.withCircuitBreaker(
+		func() (interface{}, error) {
+			return s.baseStore.ListPolicyIDs(ctx, includeDisabled)
+		},
+		func() (interface{}, error) {
+			return s.fallbackStore.ListPolicyIDs(ctx, includeDisabled)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, ok := result.([]string)
+	if !ok {
+		return nil, errors.New("error retrieving list policy IDs")
+	}
+	return ids, nil
 }
 
 func (s *WrappedSourceStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
-	return s.getActiveStore().ListSchemaIDs(ctx)
+	result, err := s.withCircuitBreaker(
+		func() (interface{}, error) {
+			return s.baseStore.ListSchemaIDs(ctx)
+		},
+		func() (interface{}, error) {
+			return s.fallbackStore.ListSchemaIDs(ctx)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, ok := result.([]string)
+	if !ok {
+		return nil, errors.New("error retrieving list schema IDs")
+	}
+	return ids, nil
 }
 
 func (s *WrappedSourceStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
-	return s.getActiveStore().LoadSchema(ctx, url)
+	result, err := s.withCircuitBreaker(
+		func() (interface{}, error) {
+			return s.baseStore.LoadSchema(ctx, url)
+		},
+		func() (interface{}, error) {
+			return s.fallbackStore.LoadSchema(ctx, url)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	schema, ok := result.(io.ReadCloser)
+	if !ok {
+		return nil, errors.New("error retrieving schema")
+	}
+	return schema, nil
 }
 
 func (s *WrappedSourceStore) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	return s.getActiveStore().GetCompilationUnits(ctx, ids...)
+	result, err := s.withCircuitBreaker(
+		func() (interface{}, error) {
+			return s.baseStore.GetCompilationUnits(ctx, ids...)
+		},
+		func() (interface{}, error) {
+			return s.fallbackStore.GetCompilationUnits(ctx, ids...)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	cu, ok := result.(map[namer.ModuleID]*policy.CompilationUnit)
+	if !ok {
+		return nil, errors.New("error retrieving compilation units")
+	}
+	return cu, nil
 }
 
 func (s *WrappedSourceStore) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
-	return s.getActiveStore().GetDependents(ctx, ids...)
+	result, err := s.withCircuitBreaker(
+		func() (interface{}, error) {
+			return s.baseStore.GetDependents(ctx, ids...)
+		},
+		func() (interface{}, error) {
+			return s.fallbackStore.GetDependents(ctx, ids...)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	deps, ok := result.(map[namer.ModuleID][]namer.ModuleID)
+	if !ok {
+		return nil, errors.New("error retrieving dependents")
+	}
+	return deps, nil
 }
 
 func (s *WrappedSourceStore) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
-	return s.getActiveStore().LoadPolicy(ctx, file...)
+	result, err := s.withCircuitBreaker(
+		func() (interface{}, error) {
+			return s.baseStore.LoadPolicy(ctx, file...)
+		},
+		func() (interface{}, error) {
+			return s.fallbackStore.LoadPolicy(ctx, file...)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	policies, ok := result.([]*policy.Wrapper)
+	if !ok {
+		return nil, errors.New("error retrieving policies")
+	}
+	return policies, nil
 }
 
-func (s *WrappedSourceStore) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
-	if ms, ok := s.getActiveStore().(storage.MutableStore); ok {
-		return ms.AddOrUpdate(ctx, policies...)
-	}
-	return errMethodNotImplemented
-}
+// TODO(saml) consider other interface methods?
+// func (s *WrappedSourceStore) Reload(ctx context.Context) error {
+// if ms, ok := s.getActiveStore().(storage.Reloadable); ok {
+//return ms.Reload(ctx)
+//}
 
-func (s *WrappedSourceStore) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
-	if ms, ok := s.getActiveStore().(storage.MutableStore); ok {
-		return ms.AddOrUpdateSchema(ctx, schemas...)
-	}
-	return errMethodNotImplemented
-}
+//// noop
+// return nil
+//}
 
-func (s *WrappedSourceStore) Disable(ctx context.Context, policyKey ...string) (uint32, error) {
-	if ms, ok := s.getActiveStore().(storage.MutableStore); ok {
-		return ms.Disable(ctx, policyKey...)
-	}
-	return 0, errMethodNotImplemented
-}
-
-func (s *WrappedSourceStore) Enable(ctx context.Context, policyKey ...string) (uint32, error) {
-	if ms, ok := s.getActiveStore().(storage.MutableStore); ok {
-		return ms.Enable(ctx, policyKey...)
-	}
-	return 0, errMethodNotImplemented
-}
-
-func (s *WrappedSourceStore) DeleteSchema(ctx context.Context, ids ...string) (uint32, error) {
-	if ms, ok := s.getActiveStore().(storage.MutableStore); ok {
-		return ms.DeleteSchema(ctx, ids...)
-	}
-	return 0, errMethodNotImplemented
-}
-
-func (s *WrappedSourceStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
-	if ms, ok := s.getActiveStore().(storage.MutableStore); ok {
-		return ms.Delete(ctx, ids...)
-	}
-	return errMethodNotImplemented
-}
-
-func (s *WrappedSourceStore) Reload(ctx context.Context) error {
-	if ms, ok := s.getActiveStore().(storage.Reloadable); ok {
-		return ms.Reload(ctx)
-	}
-	return errMethodNotImplemented
-}
-
-func (s *WrappedSourceStore) RepoStats(ctx context.Context) storage.RepoStats {
-	// TODO(saml) gather stats for both stores?
-	if ms, ok := s.getActiveStore().(storage.Instrumented); ok {
-		return ms.RepoStats(ctx)
-	}
-	// TODO(saml) pointless return of empty stats?
-	return storage.RepoStats{}
-}
+// func (s *WrappedSourceStore) RepoStats(ctx context.Context) storage.RepoStats {
+//// TODO(saml) gather stats for both stores?
+// if ms, ok := s.getActiveStore().(storage.Instrumented); ok {
+//return ms.RepoStats(ctx)
+//}
+//// TODO(saml) pointless return of empty stats?
+//return storage.RepoStats{}
+//}
