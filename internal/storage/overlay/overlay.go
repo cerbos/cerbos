@@ -31,7 +31,6 @@ var _ Store = (*WrappedSourceStore)(nil)
 // TODO(saml) consider a dedicated package (separate from `store`) to cater for this?
 type Store interface {
 	storage.SourceStore
-	// TODO(saml) implement methods for all of these, with appropriate type assertions
 	storage.MutableStore
 	storage.Reloadable
 	storage.Instrumented
@@ -40,7 +39,6 @@ type Store interface {
 }
 
 func init() {
-	// TODO(saml), need to somehow register both `baseDriver` and `overlayDriver` keys in the `drivers` cache
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
