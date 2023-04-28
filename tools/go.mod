@@ -3,16 +3,16 @@ module github.com/cerbos/cerbos/tools
 go 1.19
 
 require (
-	github.com/bojand/ghz v0.114.0
+	github.com/bojand/ghz v0.115.0
 	github.com/bufbuild/buf v1.17.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.2.0
 	github.com/envoyproxy/protoc-gen-validate v0.10.1
 	github.com/fullstorydev/grpcurl v1.8.7
 	github.com/google/go-licenses v1.6.0
-	github.com/goreleaser/goreleaser v1.17.0
+	github.com/goreleaser/goreleaser v1.17.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/planetscale/vtprotobuf v0.4.0
-	github.com/vektra/mockery/v2 v2.24.0
+	github.com/vektra/mockery/v2 v2.26.1
 	go.elastic.co/go-licence-detector v0.6.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.30.0
@@ -99,7 +99,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/charmbracelet/lipgloss v0.7.1 // indirect
-	github.com/chigopher/pathlib v0.12.0 // indirect
+	github.com/chigopher/pathlib v0.13.0 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20220327082430-c57b701bfc08 // indirect
 	github.com/cncf/udpa/go v0.0.0-20220112060539-c52dc94e7fbe // indirect
 	github.com/cncf/xds/go v0.0.0-20230105202645-06c439db220b // indirect
