@@ -145,7 +145,7 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	switch st := store.(type) {
 	case storage.BinaryStore:
 		policyLoader = st
-	case overlay.Store: // overlay.Store embeds storage.SourceStore
+	case overlay.Overlay: // overlay.Overlay embeds storage.SourceStore
 		// create wrapped policy loader
 		pl, err := st.GetOverlayPolicyLoader(ctx, schemaMgr)
 		if err != nil {

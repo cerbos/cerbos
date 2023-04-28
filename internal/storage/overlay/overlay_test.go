@@ -59,13 +59,13 @@ func TestDriverInstantiation(t *testing.T) {
 		schemaMgr, err := schema.New(ctx, store)
 		require.NoError(t, err, "error creating schema manager")
 
-		overlayStore, ok := store.(Store)
-		require.True(t, ok, "store does not implement Store interface")
+		overlayStore, ok := store.(Overlay)
+		require.True(t, ok, "store does not implement Overlay interface")
 
 		_, err = overlayStore.GetOverlayPolicyLoader(ctx, schemaMgr)
 		require.NoError(t, err, "error creating overlay policy loader")
 
-		wrappedSourceStore, ok := store.(*WrappedSourceStore)
+		wrappedSourceStore, ok := store.(*Store)
 		require.True(t, ok)
 
 		_, ok = wrappedSourceStore.baseStore.(*blob.Store)
@@ -104,7 +104,7 @@ func TestFailover(t *testing.T) {
 
 		fallbackPolicyLoader := new(MockPolicyLoader)
 
-		wrappedSourceStore := &WrappedSourceStore{
+		wrappedSourceStore := &Store{
 			basePolicyLoader:     basePolicyLoader,
 			fallbackPolicyLoader: fallbackPolicyLoader,
 			circuitBreaker:       createCircuitBreaker(conf),
@@ -134,7 +134,7 @@ func TestFailover(t *testing.T) {
 		fallbackPolicyLoader := new(MockPolicyLoader)
 		fallbackPolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
 
-		wrappedSourceStore := &WrappedSourceStore{
+		wrappedSourceStore := &Store{
 			basePolicyLoader:     basePolicyLoader,
 			fallbackPolicyLoader: fallbackPolicyLoader,
 			circuitBreaker:       createCircuitBreaker(conf),

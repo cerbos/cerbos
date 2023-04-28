@@ -26,13 +26,13 @@ const (
 	DriverName = "overlay"
 )
 
-var _ Store = (*WrappedSourceStore)(nil)
+var _ Overlay = (*Store)(nil)
 
 // The interface is defined here because placing in storage causes a circular dependency,
 // possibly because the store-wrapping-stores pattern somewhat breaks our boundaries.
 // TODO(saml) consider a dedicated package (separate from `store`) to cater for this?
-// IMPORTANT: it's confusing because WrappedSourceStore implements both `SourceStore` and `PolicyLoader`.
-type Store interface {
+// IMPORTANT: it's confusing because Store implements both `SourceStore` and `PolicyLoader`.
+type Overlay interface {
 	storage.SourceStore
 	// GetOverlayPolicyLoader returns a PolicyLoader implementation that wraps two SourceStores
 	GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error)
@@ -49,7 +49,7 @@ func init() {
 	})
 }
 
-func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*WrappedSourceStore, error) {
+func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, error) {
 	getStore := func(key string) (storage.SourceStore, error) {
 		cons, err := storage.GetDriverConstructor(key)
 		if err != nil {
@@ -79,7 +79,7 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*WrappedS
 		return nil, fmt.Errorf("failed to create fallback policy loader: %w", err)
 	}
 
-	return &WrappedSourceStore{
+	return &Store{
 		conf:                conf,
 		baseStore:           baseStore,
 		fallbackStore:       fallbackStore,
@@ -90,7 +90,7 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*WrappedS
 
 func createCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 	breakerSettings := gobreaker.Settings{
-		Name: "WrappedSourceStore",
+		Name: "Store",
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
 			return counts.ConsecutiveFailures > uint32(conf.FailoverThreshold)
 		},
@@ -100,7 +100,7 @@ func createCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 	return gobreaker.NewCircuitBreaker(breakerSettings)
 }
 
-type WrappedSourceStore struct {
+type Store struct {
 	conf                 *Conf
 	baseStore            storage.SourceStore
 	fallbackStore        storage.SourceStore
@@ -111,7 +111,7 @@ type WrappedSourceStore struct {
 }
 
 // GetOverlayPolicyLoader instantiates both the base and fallback policy loaders, and returns the base.
-func (s *WrappedSourceStore) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error) {
+func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error) {
 	baseCompileMgr, err := compile.NewManager(ctx, s.baseStore, schemaMgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create base compile manager: %w", err)
@@ -127,11 +127,11 @@ func (s *WrappedSourceStore) GetOverlayPolicyLoader(ctx context.Context, schemaM
 	return s.basePolicyLoader, nil
 }
 
-func (s *WrappedSourceStore) Driver() string {
+func (s *Store) Driver() string {
 	return DriverName
 }
 
-func (s *WrappedSourceStore) withCircuitBreaker(baseFn, fallbackFn func() (interface{}, error)) (interface{}, error) {
+func (s *Store) withCircuitBreaker(baseFn, fallbackFn func() (interface{}, error)) (interface{}, error) {
 	if s.circuitBreaker.State() == gobreaker.StateOpen {
 		return fallbackFn()
 	}
@@ -144,7 +144,7 @@ func (s *WrappedSourceStore) withCircuitBreaker(baseFn, fallbackFn func() (inter
 	return result, nil
 }
 
-func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+func (s *Store) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	result, err := s.withCircuitBreaker(
 		func() (interface{}, error) {
 			return s.basePolicyLoader.GetPolicySet(ctx, id)
@@ -164,7 +164,7 @@ func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID
 	return rps, nil
 }
 
-func (s *WrappedSourceStore) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
+func (s *Store) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
 	result, err := s.withCircuitBreaker(
 		func() (interface{}, error) {
 			return s.baseStore.ListPolicyIDs(ctx, includeDisabled)
@@ -184,7 +184,7 @@ func (s *WrappedSourceStore) ListPolicyIDs(ctx context.Context, includeDisabled 
 	return ids, nil
 }
 
-func (s *WrappedSourceStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
+func (s *Store) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	result, err := s.withCircuitBreaker(
 		func() (interface{}, error) {
 			return s.baseStore.ListSchemaIDs(ctx)
@@ -204,7 +204,7 @@ func (s *WrappedSourceStore) ListSchemaIDs(ctx context.Context) ([]string, error
 	return ids, nil
 }
 
-func (s *WrappedSourceStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
+func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	result, err := s.withCircuitBreaker(
 		func() (interface{}, error) {
 			return s.baseStore.LoadSchema(ctx, url)
@@ -224,7 +224,7 @@ func (s *WrappedSourceStore) LoadSchema(ctx context.Context, url string) (io.Rea
 	return schema, nil
 }
 
-func (s *WrappedSourceStore) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
+func (s *Store) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	result, err := s.withCircuitBreaker(
 		func() (interface{}, error) {
 			return s.baseStore.GetCompilationUnits(ctx, ids...)
@@ -244,7 +244,7 @@ func (s *WrappedSourceStore) GetCompilationUnits(ctx context.Context, ids ...nam
 	return cu, nil
 }
 
-func (s *WrappedSourceStore) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
+func (s *Store) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
 	result, err := s.withCircuitBreaker(
 		func() (interface{}, error) {
 			return s.baseStore.GetDependents(ctx, ids...)
@@ -264,7 +264,7 @@ func (s *WrappedSourceStore) GetDependents(ctx context.Context, ids ...namer.Mod
 	return deps, nil
 }
 
-func (s *WrappedSourceStore) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
+func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
 	result, err := s.withCircuitBreaker(
 		func() (interface{}, error) {
 			return s.baseStore.LoadPolicy(ctx, file...)
