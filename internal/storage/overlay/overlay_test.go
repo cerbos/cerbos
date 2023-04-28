@@ -7,9 +7,7 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
-	"github.com/sony/gobreaker"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -80,13 +78,28 @@ func TestDriverInstantiation(t *testing.T) {
 
 func TestFailover(t *testing.T) {
 	failoverThreshold := 3
+	confMap := map[string]any{
+		"storage": map[string]any{
+			"driver": "overlay",
+			"overlay": map[string]any{
+				"failoverThreshold": failoverThreshold,
+			},
+		},
+	}
+	require.NoError(t, config.LoadMap(confMap))
+
+	conf := new(Conf)
+	err := config.Get(confKey, conf)
+	require.NoError(t, err)
 
 	t.Run("failover not triggered when consecutive failures below threshold", func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
 
+		nFailures := failoverThreshold - 1
+		nRequests := nFailures + 1
 		basePolicyLoader := new(MockPolicyLoader)
-		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(2)
+		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
 		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
 
 		fallbackPolicyLoader := new(MockPolicyLoader)
@@ -94,19 +107,12 @@ func TestFailover(t *testing.T) {
 		wrappedSourceStore := &WrappedSourceStore{
 			basePolicyLoader:     basePolicyLoader,
 			fallbackPolicyLoader: fallbackPolicyLoader,
-			circuitBreaker: gobreaker.NewCircuitBreaker(gobreaker.Settings{
-				Name: "WrappedSourceStore",
-				ReadyToTrip: func(counts gobreaker.Counts) bool {
-					return counts.ConsecutiveFailures > uint32(failoverThreshold)
-				},
-				Interval: 5 * time.Minute,
-				Timeout:  0,
-			}),
+			circuitBreaker:       createCircuitBreaker(conf),
 		}
 
-		for i := 0; i < failoverThreshold; i++ {
+		for i := 0; i < nRequests; i++ {
 			_, err := wrappedSourceStore.GetPolicySet(ctx, namer.GenModuleIDFromFQN("example"))
-			if i < 2 {
+			if i < nFailures {
 				require.Error(t, err, "expected base store to return an error")
 			} else {
 				require.NoError(t, err, "expected base store to succeed")
@@ -114,6 +120,37 @@ func TestFailover(t *testing.T) {
 		}
 
 		basePolicyLoader.AssertExpectations(t)
+	})
+
+	t.Run("failover triggered when consecutive failures exceed threshold", func(t *testing.T) {
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		defer cancelFunc()
+
+		nFailures := failoverThreshold + 1
+		nRequests := nFailures + 1
+		basePolicyLoader := new(MockPolicyLoader)
+		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
+
+		fallbackPolicyLoader := new(MockPolicyLoader)
+		fallbackPolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
+
+		wrappedSourceStore := &WrappedSourceStore{
+			basePolicyLoader:     basePolicyLoader,
+			fallbackPolicyLoader: fallbackPolicyLoader,
+			circuitBreaker:       createCircuitBreaker(conf),
+		}
+
+		for i := 0; i < nRequests; i++ {
+			_, err := wrappedSourceStore.GetPolicySet(ctx, namer.GenModuleIDFromFQN("example"))
+			if i < nFailures {
+				require.Error(t, err, "expected base store to return an error")
+			} else {
+				require.NoError(t, err, "expected fallback store to succeed")
+			}
+		}
+
+		basePolicyLoader.AssertExpectations(t)
+		fallbackPolicyLoader.AssertExpectations(t)
 	})
 }
 

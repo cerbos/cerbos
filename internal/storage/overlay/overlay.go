@@ -24,7 +24,6 @@ import (
 
 const (
 	DriverName = "overlay"
-	// circuitBreakerInterval = 5* time.Minute.
 )
 
 var _ Store = (*WrappedSourceStore)(nil)
@@ -85,6 +84,16 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*WrappedS
 		return nil, fmt.Errorf("failed to create fallback policy loader: %w", err)
 	}
 
+	return &WrappedSourceStore{
+		conf:                conf,
+		baseStore:           baseStore,
+		fallbackStore:       fallbackStore,
+		circuitBreaker:      createCircuitBreaker(conf),
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+	}, nil
+}
+
+func createCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 	breakerSettings := gobreaker.Settings{
 		Name: "WrappedSourceStore",
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
@@ -93,14 +102,7 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*WrappedS
 		Interval: time.Duration(conf.FailoverIntervalMinutes) * time.Minute,
 		Timeout:  0,
 	}
-
-	return &WrappedSourceStore{
-		conf:                conf,
-		baseStore:           baseStore,
-		fallbackStore:       fallbackStore,
-		circuitBreaker:      gobreaker.NewCircuitBreaker(breakerSettings),
-		SubscriptionManager: storage.NewSubscriptionManager(ctx),
-	}, nil
+	return gobreaker.NewCircuitBreaker(breakerSettings)
 }
 
 type WrappedSourceStore struct {
@@ -113,9 +115,8 @@ type WrappedSourceStore struct {
 	*storage.SubscriptionManager
 }
 
-// GetOverlayPolicyLoader ... TODO(saml).
+// GetOverlayPolicyLoader instantiates both the base and fallback policy loaders, and returns the base.
 func (s *WrappedSourceStore) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error) {
-	// TODO(saml) lazy or greedy store/compile mgr creation??
 	baseCompileMgr, err := compile.NewManager(ctx, s.baseStore, schemaMgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create base compile manager: %w", err)
@@ -128,14 +129,7 @@ func (s *WrappedSourceStore) GetOverlayPolicyLoader(ctx context.Context, schemaM
 	}
 	s.fallbackPolicyLoader = fallbackCompileMgr
 
-	return s.getActivePolicyLoader(), nil
-}
-
-func (s *WrappedSourceStore) getActivePolicyLoader() engine.PolicyLoader {
-	if s.circuitBreaker.State() == gobreaker.StateOpen {
-		return s.fallbackPolicyLoader
-	}
-	return s.basePolicyLoader
+	return s.basePolicyLoader, nil
 }
 
 func (s *WrappedSourceStore) getActiveStore() storage.SourceStore {
@@ -150,8 +144,13 @@ func (s *WrappedSourceStore) Driver() string {
 }
 
 func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	if s.circuitBreaker.State() == gobreaker.StateOpen {
+		return s.fallbackPolicyLoader.GetPolicySet(ctx, id)
+	}
+
+	// TODO(saml) we only want to increment the circuitBreaker counter on relevant IO errors
 	result, err := s.circuitBreaker.Execute(func() (interface{}, error) {
-		return s.getActivePolicyLoader().GetPolicySet(ctx, id)
+		return s.basePolicyLoader.GetPolicySet(ctx, id)
 	})
 	if err != nil {
 		return nil, err
