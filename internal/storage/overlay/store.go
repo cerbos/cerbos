@@ -28,16 +28,6 @@ const (
 
 var _ Overlay = (*Store)(nil)
 
-// The interface is defined here because placing in storage causes a circular dependency,
-// possibly because the store-wrapping-stores pattern somewhat breaks our boundaries.
-// TODO(saml) consider a dedicated package (separate from `store`) to cater for this?
-// IMPORTANT: it's confusing because Store implements both `SourceStore` and `PolicyLoader`.
-type Overlay interface {
-	storage.SourceStore
-	// GetOverlayPolicyLoader returns a PolicyLoader implementation that wraps two SourceStores
-	GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error)
-}
-
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
 		conf := new(Conf)
