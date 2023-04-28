@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -18,17 +19,22 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/sony/gobreaker"
 )
 
-const DriverName = "overlay"
-
-var errMethodNotImplemented = errors.New("method not supported for store type")
+const (
+	DriverName = "overlay"
+	// circuitBreakerInterval = 5* time.Minute.
+)
 
 var _ Store = (*WrappedSourceStore)(nil)
+
+var errMethodNotImplemented = errors.New("method not supported for store type")
 
 // The interface is defined here because placing in storage causes a circular dependency,
 // possibly because the store-wrapping-stores pattern somewhat breaks our boundaries.
 // TODO(saml) consider a dedicated package (separate from `store`) to cater for this?
+// IMPORTANT: it's confusing because WrappedSourceStore implements both `SourceStore` and `PolicyLoader`.
 type Store interface {
 	storage.SourceStore
 	storage.MutableStore
@@ -79,10 +85,20 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*WrappedS
 		return nil, fmt.Errorf("failed to create fallback policy loader: %w", err)
 	}
 
+	breakerSettings := gobreaker.Settings{
+		Name: "WrappedSourceStore",
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			return counts.ConsecutiveFailures > uint32(conf.FailoverThreshold)
+		},
+		Interval: time.Duration(conf.FailoverIntervalMinutes) * time.Minute,
+		Timeout:  0,
+	}
+
 	return &WrappedSourceStore{
 		conf:                conf,
 		baseStore:           baseStore,
 		fallbackStore:       fallbackStore,
+		circuitBreaker:      gobreaker.NewCircuitBreaker(breakerSettings),
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
@@ -93,8 +109,8 @@ type WrappedSourceStore struct {
 	fallbackStore        storage.SourceStore
 	basePolicyLoader     engine.PolicyLoader
 	fallbackPolicyLoader engine.PolicyLoader
+	circuitBreaker       *gobreaker.CircuitBreaker
 	*storage.SubscriptionManager
-	nFailures int
 }
 
 // GetOverlayPolicyLoader ... TODO(saml).
@@ -116,26 +132,36 @@ func (s *WrappedSourceStore) GetOverlayPolicyLoader(ctx context.Context, schemaM
 }
 
 func (s *WrappedSourceStore) getActivePolicyLoader() engine.PolicyLoader {
-	if s.nFailures > s.conf.FailoverThreshold {
+	if s.circuitBreaker.State() == gobreaker.StateOpen {
 		return s.fallbackPolicyLoader
 	}
 	return s.basePolicyLoader
 }
 
 func (s *WrappedSourceStore) getActiveStore() storage.SourceStore {
-	if s.nFailures > s.conf.FailoverThreshold {
+	if s.circuitBreaker.State() == gobreaker.StateOpen {
 		return s.fallbackStore
 	}
 	return s.baseStore
 }
 
-func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	// TODO(saml) failover
-	return s.getActivePolicyLoader().GetPolicySet(ctx, id)
-}
-
 func (s *WrappedSourceStore) Driver() string {
 	return DriverName
+}
+
+func (s *WrappedSourceStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	result, err := s.circuitBreaker.Execute(func() (interface{}, error) {
+		return s.getActivePolicyLoader().GetPolicySet(ctx, id)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rps, ok := result.(*runtimev1.RunnablePolicySet)
+	if !ok {
+		return nil, errors.New("error retrieving wrapped policy set")
+	}
+	return rps, nil
 }
 
 func (s *WrappedSourceStore) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
