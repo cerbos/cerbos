@@ -100,7 +100,7 @@ type Store struct {
 	*storage.SubscriptionManager
 }
 
-// GetOverlayPolicyLoader instantiates both the base and fallback policy loaders, and returns the base.
+// GetOverlayPolicyLoader instantiates both the base and fallback policy loaders and then returns itself.
 func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error) {
 	baseCompileMgr, err := compile.NewManager(ctx, s.baseStore, schemaMgr)
 	if err != nil {
@@ -114,7 +114,7 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Man
 	}
 	s.fallbackPolicyLoader = fallbackCompileMgr
 
-	return s.basePolicyLoader, nil
+	return s, nil
 }
 
 func (s *Store) Driver() string {
