@@ -159,10 +159,10 @@ storage:
         caCert: /path/to/CA_certificate
   overlay:
     # This section is required only if storage.driver is overlay.
-    baseDriver: <DEFAULT_VALUE_NOT_SET> # Required. BaseDriver is the secondary or fallback storage driver
-    failoverInterval: <DEFAULT_VALUE_NOT_SET> # FailoverIntervalMinutes is the cyclic period within which we count failures
+    baseDriver: <DEFAULT_VALUE_NOT_SET> # Required. BaseDriver is the default storage driver
+    failoverInterval: 5m # FailoverInterval is the cyclic period within which we aggregate failures
     failoverThreshold: <DEFAULT_VALUE_NOT_SET> # FailoverThreshold is the max number of errors we allow within the failoverInterval period
-    fallbackDriver: <DEFAULT_VALUE_NOT_SET> # Required. FallbackDriver is the primary storage driver
+    fallbackDriver: <DEFAULT_VALUE_NOT_SET> # Required. FallbackDriver is the secondary or fallback storage driver
   postgres:
     # This section is required only if storage.driver is postgres.
     connPool: 

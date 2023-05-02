@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 
@@ -83,7 +82,7 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
 			return counts.ConsecutiveFailures > uint32(conf.FailoverThreshold)
 		},
-		Interval: time.Duration(conf.FailoverIntervalMinutes) * time.Minute,
+		Interval: conf.FailoverInterval,
 		Timeout:  0,
 	}
 	return gobreaker.NewCircuitBreaker(breakerSettings)

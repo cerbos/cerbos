@@ -4,14 +4,16 @@
 package overlay
 
 import (
+	"time"
+
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
 const (
-	confKey                        = storage.ConfKey + ".overlay"
-	defaultFailoverThreshold       = 5
-	defaultFailoverIntervalMinutes = 5
+	confKey                  = storage.ConfKey + ".overlay"
+	defaultFailoverThreshold = 5
+	defaultFailoverInterval  = 5 * time.Minute
 )
 
 // Conf is required (if driver is set to 'overlay') configuration for overlay storage driver.
@@ -22,9 +24,9 @@ type Conf struct {
 	// FallbackDriver is the secondary or fallback storage driver
 	FallbackDriver string `yaml:"fallbackDriver" conf:"required"`
 	// FailoverThreshold is the max number of errors we allow within the failoverInterval period
-	FailoverThreshold int `yaml:"failoverThreshold"`
-	// FailoverIntervalMinutes is the cyclic period within which we aggregate failures
-	FailoverIntervalMinutes int `yaml:"failoverIntervalMinutes"`
+	FailoverThreshold int `yaml:"failoverThreshold,omitempty"`
+	// FailoverInterval is the cyclic period within which we aggregate failures
+	FailoverInterval time.Duration `yaml:"failoverInterval,omitempty" conf:",example=5m"`
 }
 
 func (conf *Conf) Key() string {
@@ -35,8 +37,8 @@ func (conf *Conf) SetDefaults() {
 	if conf.FailoverThreshold == 0 {
 		conf.FailoverThreshold = defaultFailoverThreshold
 	}
-	if conf.FailoverIntervalMinutes == 0 {
-		conf.FailoverIntervalMinutes = defaultFailoverIntervalMinutes
+	if conf.FailoverInterval == 0 {
+		conf.FailoverInterval = defaultFailoverInterval
 	}
 }
 
