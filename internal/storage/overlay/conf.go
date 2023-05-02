@@ -17,7 +17,7 @@ const (
 // Conf is required (if driver is set to 'overlay') configuration for overlay storage driver.
 // +desc=This section is required only if storage.driver is overlay.
 type Conf struct {
-	// BaseDriver is the primary/default storage driver
+	// BaseDriver is the default storage driver
 	BaseDriver string `yaml:"baseDriver" conf:"required"`
 	// FallbackDriver is the secondary or fallback storage driver
 	FallbackDriver string `yaml:"fallbackDriver" conf:"required"`
