@@ -9,6 +9,7 @@ import (
 	"io"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
@@ -57,17 +58,22 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 		return sourceStore, nil
 	}
 
+	logger := zap.S().Named(confKey+".store").With("baseDriver", conf.BaseDriver, "fallbackDriver", conf.FallbackDriver)
+
 	baseStore, err := getStore(conf.BaseDriver)
 	if err != nil {
+		logger.Errorw("Failed to initialize overlay base store", "error", err)
 		return nil, fmt.Errorf("failed to create base policy loader: %w", err)
 	}
 
 	fallbackStore, err := getStore(conf.FallbackDriver)
 	if err != nil {
+		logger.Errorw("Failed to initialize overlay fallback store", "error", err)
 		return nil, fmt.Errorf("failed to create fallback policy loader: %w", err)
 	}
 
 	return &Store{
+		log:                 logger,
 		conf:                conf,
 		baseStore:           baseStore,
 		fallbackStore:       fallbackStore,
@@ -77,6 +83,7 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 }
 
 type Store struct {
+	log                  *zap.SugaredLogger
 	conf                 *Conf
 	baseStore            storage.SourceStore
 	fallbackStore        storage.SourceStore
@@ -103,11 +110,13 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Man
 	var err error
 	s.basePolicyLoader, err = compile.NewManager(ctx, s.baseStore, schemaMgr)
 	if err != nil {
+		s.log.Errorw("Failed to create base compile manager", "error", err)
 		return nil, fmt.Errorf("failed to create base compile manager: %w", err)
 	}
 
 	s.fallbackPolicyLoader, err = compile.NewManager(ctx, s.fallbackStore, schemaMgr)
 	if err != nil {
+		s.log.Errorw("Failed to create fallback compile manager", "error", err)
 		return nil, fmt.Errorf("failed to create fallback compile manager: %w", err)
 	}
 
@@ -118,9 +127,25 @@ func (s *Store) Driver() string {
 	return DriverName
 }
 
+func withCircuitBreaker[T any](s *Store, baseFn, fallbackFn func() (T, error)) (T, error) {
+	if s.circuitBreaker.State() == gobreaker.StateOpen {
+		s.log.Debug("Calling overlay fallback method")
+		return fallbackFn()
+	}
+
+	s.log.Debug("Calling overlay base method")
+	result, err := s.circuitBreaker.Execute(func() (interface{}, error) {
+		// TODO(saml) only increment on network specific errors?
+		return baseFn()
+	})
+
+	//nolint:forcetypeassert
+	return result.(T), err
+}
+
 func (s *Store) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	return withCircuitBreaker(
-		s.circuitBreaker,
+		s,
 		func() (*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetPolicySet(ctx, id) },
 		func() (*runtimev1.RunnablePolicySet, error) { return s.fallbackPolicyLoader.GetPolicySet(ctx, id) },
 	)
@@ -128,7 +153,7 @@ func (s *Store) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1
 
 func (s *Store) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
 	return withCircuitBreaker(
-		s.circuitBreaker,
+		s,
 		func() ([]string, error) { return s.baseStore.ListPolicyIDs(ctx, includeDisabled) },
 		func() ([]string, error) { return s.fallbackStore.ListPolicyIDs(ctx, includeDisabled) },
 	)
@@ -136,7 +161,7 @@ func (s *Store) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]stri
 
 func (s *Store) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	return withCircuitBreaker(
-		s.circuitBreaker,
+		s,
 		func() ([]string, error) { return s.baseStore.ListSchemaIDs(ctx) },
 		func() ([]string, error) { return s.fallbackStore.ListSchemaIDs(ctx) },
 	)
@@ -144,7 +169,7 @@ func (s *Store) ListSchemaIDs(ctx context.Context) ([]string, error) {
 
 func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	return withCircuitBreaker(
-		s.circuitBreaker,
+		s,
 		func() (io.ReadCloser, error) { return s.baseStore.LoadSchema(ctx, url) },
 		func() (io.ReadCloser, error) { return s.fallbackStore.LoadSchema(ctx, url) },
 	)
@@ -152,7 +177,7 @@ func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, erro
 
 func (s *Store) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	return withCircuitBreaker(
-		s.circuitBreaker,
+		s,
 		func() (map[namer.ModuleID]*policy.CompilationUnit, error) {
 			return s.baseStore.GetCompilationUnits(ctx, ids...)
 		},
@@ -164,7 +189,7 @@ func (s *Store) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) 
 
 func (s *Store) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
 	return withCircuitBreaker(
-		s.circuitBreaker,
+		s,
 		func() (map[namer.ModuleID][]namer.ModuleID, error) { return s.baseStore.GetDependents(ctx, ids...) },
 		func() (map[namer.ModuleID][]namer.ModuleID, error) { return s.fallbackStore.GetDependents(ctx, ids...) },
 	)
@@ -172,22 +197,8 @@ func (s *Store) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[n
 
 func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
 	return withCircuitBreaker(
-		s.circuitBreaker,
+		s,
 		func() ([]*policy.Wrapper, error) { return s.baseStore.LoadPolicy(ctx, file...) },
 		func() ([]*policy.Wrapper, error) { return s.fallbackStore.LoadPolicy(ctx, file...) },
 	)
-}
-
-func withCircuitBreaker[T any](cb *gobreaker.CircuitBreaker, baseFn, fallbackFn func() (T, error)) (T, error) {
-	if cb.State() == gobreaker.StateOpen {
-		return fallbackFn()
-	}
-
-	result, err := cb.Execute(func() (interface{}, error) {
-		// TODO(saml) only increment on network specific errors?
-		return baseFn()
-	})
-
-	//nolint:forcetypeassert
-	return result.(T), err
 }

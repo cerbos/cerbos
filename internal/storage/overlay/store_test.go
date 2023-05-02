@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -105,6 +106,7 @@ func TestFailover(t *testing.T) {
 		fallbackPolicyLoader := new(MockPolicyLoader)
 
 		wrappedSourceStore := &Store{
+			log:                  zap.S(),
 			basePolicyLoader:     basePolicyLoader,
 			fallbackPolicyLoader: fallbackPolicyLoader,
 			circuitBreaker:       newCircuitBreaker(conf),
@@ -135,6 +137,7 @@ func TestFailover(t *testing.T) {
 		fallbackPolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
 
 		wrappedSourceStore := &Store{
+			log:                  zap.S(),
 			basePolicyLoader:     basePolicyLoader,
 			fallbackPolicyLoader: fallbackPolicyLoader,
 			circuitBreaker:       newCircuitBreaker(conf),
