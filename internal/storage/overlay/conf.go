@@ -26,7 +26,7 @@ type Conf struct {
 	// FailoverThreshold is the max number of errors we allow within the failoverInterval period
 	FailoverThreshold int `yaml:"failoverThreshold,omitempty"`
 	// FailoverInterval is the cyclic period within which we aggregate failures
-	FailoverInterval time.Duration `yaml:"failoverInterval,omitempty" conf:",example=5m"`
+	FailoverInterval time.Duration `yaml:"failoverInterval" conf:",example=5m"`
 }
 
 func (conf *Conf) Key() string {
