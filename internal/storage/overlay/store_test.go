@@ -66,13 +66,13 @@ func TestDriverInstantiation(t *testing.T) {
 		_, err = overlayStore.GetOverlayPolicyLoader(ctx, schemaMgr)
 		require.NoError(t, err, "error creating overlay policy loader")
 
-		wrappedSourceStore, ok := store.(*Store)
+		wrappedStore, ok := store.(*Store)
 		require.True(t, ok)
 
-		_, ok = wrappedSourceStore.baseStore.(*blob.Store)
+		_, ok = wrappedStore.baseStore.(*blob.Store)
 		require.True(t, ok, "baseStore should be of type *blob.Store")
 
-		_, ok = wrappedSourceStore.fallbackStore.(*disk.Store)
+		_, ok = wrappedStore.fallbackStore.(*disk.Store)
 		require.True(t, ok, "baseStore should be of type *disk.Store")
 	})
 }
