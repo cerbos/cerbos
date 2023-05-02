@@ -20,11 +20,11 @@ const (
 // +desc=This section is required only if storage.driver is overlay.
 type Conf struct {
 	// BaseDriver is the default storage driver
-	BaseDriver string `yaml:"baseDriver" conf:"required"`
+	BaseDriver string `yaml:"baseDriver" conf:"required,example=disk"`
 	// FallbackDriver is the secondary or fallback storage driver
-	FallbackDriver string `yaml:"fallbackDriver" conf:"required"`
+	FallbackDriver string `yaml:"fallbackDriver" conf:"required,example=git"`
 	// FailoverThreshold is the max number of errors we allow within the failoverInterval period
-	FailoverThreshold int `yaml:"failoverThreshold,omitempty"`
+	FailoverThreshold int `yaml:"failoverThreshold,omitempty" conf:",example=5"`
 	// FailoverInterval is the cyclic period within which we aggregate failures
 	FailoverInterval time.Duration `yaml:"failoverInterval" conf:",example=5m"`
 }

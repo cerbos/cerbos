@@ -76,6 +76,16 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 	}, nil
 }
 
+type Store struct {
+	conf                 *Conf
+	baseStore            storage.SourceStore
+	fallbackStore        storage.SourceStore
+	basePolicyLoader     engine.PolicyLoader
+	fallbackPolicyLoader engine.PolicyLoader
+	circuitBreaker       *gobreaker.CircuitBreaker
+	*storage.SubscriptionManager
+}
+
 func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 	breakerSettings := gobreaker.Settings{
 		Name: "Store",
@@ -86,16 +96,6 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 		Timeout:  0,
 	}
 	return gobreaker.NewCircuitBreaker(breakerSettings)
-}
-
-type Store struct {
-	conf                 *Conf
-	baseStore            storage.SourceStore
-	fallbackStore        storage.SourceStore
-	basePolicyLoader     engine.PolicyLoader
-	fallbackPolicyLoader engine.PolicyLoader
-	circuitBreaker       *gobreaker.CircuitBreaker
-	*storage.SubscriptionManager
 }
 
 // GetOverlayPolicyLoader instantiates both the base and fallback policy loaders and then returns itself.
