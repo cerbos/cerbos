@@ -1,5 +1,5 @@
 {
-  "apiVersion": "cloudapi.cerbos.dev/v1",
+  "apiVersion": "api.cerbos.cloud/v1",
   "policyIndex": {
     "cerbos.principal.donald_duck.v20210210": "policies/1CC91E277263674D",
     "cerbos.principal.donald_duck.vdefault": "policies/2F26F3660A97BECD",
