@@ -17,14 +17,14 @@ const (
 // Conf is required (if driver is set to 'overlay') configuration for overlay storage driver.
 // +desc=This section is required only if storage.driver is overlay.
 type Conf struct {
-	// BaseDriver is the secondary or fallback storage driver
+	// BaseDriver is the primary/default storage driver
 	BaseDriver string `yaml:"baseDriver" conf:"required"`
-	// FallbackDriver is the primary storage driver
+	// FallbackDriver is the secondary or fallback storage driver
 	FallbackDriver string `yaml:"fallbackDriver" conf:"required"`
 	// FailoverThreshold is the max number of errors we allow within the failoverInterval period
 	FailoverThreshold int `yaml:"failoverThreshold"`
-	// FailoverIntervalMinutes is the cyclic period within which we count failures
-	FailoverIntervalMinutes int `yaml:"failoverInterval"`
+	// FailoverIntervalMinutes is the cyclic period within which we aggregate failures
+	FailoverIntervalMinutes int `yaml:"failoverIntervalMinutes"`
 }
 
 func (conf *Conf) Key() string {
