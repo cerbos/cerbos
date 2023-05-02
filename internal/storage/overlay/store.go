@@ -46,7 +46,7 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 
 		store, err := cons(ctx, confW)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create store: %w", err)
+			return nil, fmt.Errorf("failed to create overlay store: %w", err)
 		}
 
 		sourceStore, ok := store.(storage.SourceStore)
@@ -90,7 +90,7 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 	breakerSettings := gobreaker.Settings{
 		Name: "Store",
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			return counts.ConsecutiveFailures > uint32(conf.FailoverThreshold)
+			return counts.ConsecutiveFailures >= uint32(conf.FailoverThreshold)
 		},
 		Interval: conf.FailoverInterval,
 		Timeout:  0,

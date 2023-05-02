@@ -143,15 +143,15 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 
 	var policyLoader engine.PolicyLoader
 	switch st := store.(type) {
-	case storage.BinaryStore:
-		policyLoader = st
-	case overlay.Overlay: // overlay.Overlay embeds storage.SourceStore
+	case overlay.Overlay: // overlay.Overlay embeds storage.SourceStore and implicitly encompasses storage.BinaryStore
 		// create wrapped policy loader
 		pl, err := st.GetOverlayPolicyLoader(ctx, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create overlay policy loader: %w", err)
 		}
 		policyLoader = pl
+	case storage.BinaryStore:
+		policyLoader = st
 	case storage.SourceStore:
 		// create compile manager
 		compileMgr, err := compile.NewManager(ctx, st, schemaMgr)

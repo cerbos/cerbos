@@ -92,7 +92,7 @@ func TestFailover(t *testing.T) {
 	err := config.Get(confKey, conf)
 	require.NoError(t, err)
 
-	t.Run("failover not triggered when consecutive failures below threshold", func(t *testing.T) {
+	t.Run("failover not triggered when consecutive failures within threshold", func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
 
@@ -126,7 +126,7 @@ func TestFailover(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
 
-		nFailures := failoverThreshold + 1
+		nFailures := failoverThreshold
 		nRequests := nFailures + 1
 		basePolicyLoader := new(MockPolicyLoader)
 		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
