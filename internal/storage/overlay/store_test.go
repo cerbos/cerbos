@@ -107,7 +107,7 @@ func TestFailover(t *testing.T) {
 		wrappedSourceStore := &Store{
 			basePolicyLoader:     basePolicyLoader,
 			fallbackPolicyLoader: fallbackPolicyLoader,
-			circuitBreaker:       createCircuitBreaker(conf),
+			circuitBreaker:       newCircuitBreaker(conf),
 		}
 
 		for i := 0; i < nRequests; i++ {
@@ -137,7 +137,7 @@ func TestFailover(t *testing.T) {
 		wrappedSourceStore := &Store{
 			basePolicyLoader:     basePolicyLoader,
 			fallbackPolicyLoader: fallbackPolicyLoader,
-			circuitBreaker:       createCircuitBreaker(conf),
+			circuitBreaker:       newCircuitBreaker(conf),
 		}
 
 		for i := 0; i < nRequests; i++ {
