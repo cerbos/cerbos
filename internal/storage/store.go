@@ -70,8 +70,8 @@ func RegisterDriver(name string, cons Constructor) {
 
 // GetDriverConstructor registers a storage driver.
 func GetDriverConstructor(name string) (Constructor, error) {
-	driversMu.Lock()
-	defer driversMu.Unlock()
+	driversMu.RLock()
+	defer driversMu.RUnlock()
 
 	cons, ok := drivers[name]
 	if !ok {
