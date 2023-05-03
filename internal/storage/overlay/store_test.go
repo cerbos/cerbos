@@ -32,9 +32,9 @@ func TestDriverInstantiation(t *testing.T) {
 		"storage": map[string]any{
 			"driver": "overlay",
 			"overlay": map[string]any{
-				"baseDriver":        "blob",
-				"fallbackDriver":    "disk",
-				"failoverThreshold": 3,
+				"baseDriver":             "blob",
+				"fallbackDriver":         "disk",
+				"fallbackErrorThreshold": 3,
 			},
 			"blob": map[string]any{
 				"bucket":             blob.MinioBucketURL(bucketName, blob.StartMinio(ctx, t, bucketName)),
@@ -78,12 +78,12 @@ func TestDriverInstantiation(t *testing.T) {
 }
 
 func TestFailover(t *testing.T) {
-	failoverThreshold := 3
+	fallbackErrorThreshold := 3
 	confMap := map[string]any{
 		"storage": map[string]any{
 			"driver": "overlay",
 			"overlay": map[string]any{
-				"failoverThreshold": failoverThreshold,
+				"fallbackErrorThreshold": fallbackErrorThreshold,
 			},
 		},
 	}
@@ -97,7 +97,7 @@ func TestFailover(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
 
-		nFailures := failoverThreshold - 1
+		nFailures := fallbackErrorThreshold - 1
 		nRequests := nFailures + 1
 		basePolicyLoader := new(MockPolicyLoader)
 		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
@@ -128,7 +128,7 @@ func TestFailover(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
 
-		nFailures := failoverThreshold
+		nFailures := fallbackErrorThreshold
 		nRequests := nFailures + 1
 		basePolicyLoader := new(MockPolicyLoader)
 		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)

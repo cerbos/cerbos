@@ -97,9 +97,9 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 	breakerSettings := gobreaker.Settings{
 		Name: "Store",
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			return counts.ConsecutiveFailures >= uint32(conf.FailoverThreshold)
+			return counts.ConsecutiveFailures >= uint32(conf.FallbackErrorThreshold)
 		},
-		Interval: conf.FailoverInterval,
+		Interval: conf.FallbackErrorWindow,
 		Timeout:  0,
 	}
 	return gobreaker.NewCircuitBreaker(breakerSettings)
