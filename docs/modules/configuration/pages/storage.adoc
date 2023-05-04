@@ -398,7 +398,7 @@ storage:
   overlay: 
     baseDriver: postgres
     fallbackDriver: disk
-    fallbackErrorThreshold: 1 # number of errors allowed within the fallbackErrorWindow before failover occurs
+    fallbackErrorThreshold: 1 # number of errors that occur within the fallbackErrorWindow to trigger failover
     fallbackErrorWindow: 1s # the rolling window in which errors are aggregated
   disk:
     directory: policies
