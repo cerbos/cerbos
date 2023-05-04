@@ -1,15 +1,18 @@
 include::ROOT:partial$attributes.adoc[]
 
-:schema-file: /policy/v1/Policy.schema.json
-:current-schema-url: {app-schema-url-current}{schema-file}
-:latest-schema-url: {app-schema-url-latest}{schema-file}
+:policy-schema-file: /policy/v1/Policy.schema.json
+:test-schema-file: /policy/v1/TestSuite.schema.json
+:current-policy-schema-url: {app-schema-url-current}{policy-schema-file}
+:latest-policy-schema-url: {app-schema-url-latest}{policy-schema-file}
+:current-test-schema-url: {app-schema-url-current}{test-schema-file}
+:latest-test-schema-url: {app-schema-url-latest}{test-schema-file}
 
 = Policy authoring 
 
 == Tips for working with policies
 
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
-* The JSON schema for Cerbos policies is available at `{current-schema-url}`. If you prefer to always use the latest version, it can be accessed at `{latest-schema-url}` as well. 
+* The JSON schema for Cerbos policies is available at `{current-policy-schema-url}` and xref:compile.adoc[tests] at `{current-test-schema-url}`. If you prefer to always use the latest version, it can be accessed at `{latest-policy-schema-url}` and `{latst-test-schema-url}`. 
 
 == Policy structure
 
@@ -37,7 +40,14 @@ Editors with support for the link:https://microsoft.github.io/language-server-pr
 
 [source,yaml,subs="+attributes"]
 ----
-# yaml-language-server: $schema={latest-schema-url}
+# yaml-language-server: $schema={latest-policy-schema-url}
+----
+
+The same method can be used for xref:compile.adoc[tests]:
+
+[source,yaml,subs="+attributes"]
+----
+# yaml-language-server: $schema={latest-test-schema-url}
 ----
 
 YAML language server also supports per-directory settings. If all your Cerbos policies are contained in a specific directory, you can configure the editor to always use the correct schema for the YAML files in that directory. Refer to the link:https://github.com/redhat-developer/yaml-language-server#language-server-settings=[YAML language server documentation] for more information.
@@ -46,7 +56,8 @@ YAML language server also supports per-directory settings. If all your Cerbos po
 [source,yaml,subs="+attributes"]
 ----
 yaml.schemas: {
-    "{latest-schema-url}": "/cerbos/*"
+    "{latest-policy-schema-url}": "/cerbos/*",
+    "{latest-test-schema-url}": "/cerbos/tests/*",
 }
 ----
 
@@ -75,7 +86,8 @@ use({
             settings = {
                 yaml = {
                     schemas = {
-                        "{latest-schema-url}": "/cerbos/*"
+                        "{latest-policy-schema-url}": "/cerbos/*",
+                        "{latest-test-schema-url}": "/cerbos/tests/*"
                     },
                 },
             },
@@ -93,7 +105,7 @@ Add an entry with the following configuration:
 [subs="attributes"]
 ----
 Name: Cerbos
-Schema file or URL: {latest-schema-url}
+Schema file or URL: {latest-policy-schema-url}
 Schema version: JSON Schema Version 7
 File path pattern: cerbos/*
 ----
@@ -114,7 +126,8 @@ After the extension is installed, hit kbd:[Ctrl+,] or menu:File[Preferences > Se
 ----
 {
   "yaml.schemas": {
-    "{latest-schema-url}": "cerbos/*"
+    "{latest-policy-schema-url}": "cerbos/*",
+    "{latest-test-schema-url}": "/cerbos/tests/*",
   }
 }
 ----
