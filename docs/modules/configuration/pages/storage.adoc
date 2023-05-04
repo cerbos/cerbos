@@ -383,3 +383,28 @@ You can customise the script below to suit your environment. Make sure to specif
 include::example$sqlserver_schema.sql[]
 ----
 
+
+[#redundancy]
+== Redundancy
+
+You can provide redundancy by configuring an `overlay` driver, which wraps a `base` and a `fallback` driver. Under normal operation, the base driver will be targeted as usual. However, if the driver consistently errors, the PDP will start targeting the fallback driver instead. The fallback is determined by a configurable https://learn.microsoft.com/en-us/previous-versions/msp-n-p/dn589784(v=pandp.10)?redirectedfrom=MSDN[circuit breaker pattern].
+
+You can configure the fallback error threshold and the fallback error window to determine how many errors can occur within a rolling window before the circuit breaker is tripped.
+
+[source,yaml,linenums]
+----
+storage:
+  driver: "overlay"
+  overlay: 
+    baseDriver: postgres
+    fallbackDriver: disk
+    fallbackErrorThreshold: 1 # number of errors allowed within the fallbackErrorWindow before failover occurs
+    fallbackErrorWindow: 1s # the rolling window in which errors are aggregated
+  disk:
+    directory: policies
+    watchForChanges: true
+  postgres:
+    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
+----
+
+NOTE: The overlay driver assumes the same interface as the base driver. Any operations that are available on the base driver but not the fallback driver will error if the circuit breaker is open and the fallback driver is being targeted. Likewise, even if the fallback driver supports additional operations compared to the base driver, these will still not be available should failover occur.
