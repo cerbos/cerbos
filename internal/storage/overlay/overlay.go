@@ -15,6 +15,8 @@ import (
 // probably because it blurs the lines by implementing `SourceStore` whilst having a dependency on
 // `schema` in order to build the compile managers in the GetOverlayPolicyLoader method.
 type Overlay interface {
+	storage.BinaryStore
+	storage.Reloadable
 	storage.SourceStore
 	// GetOverlayPolicyLoader returns a PolicyLoader implementation that wraps two SourceStores
 	GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error)
