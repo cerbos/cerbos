@@ -47,8 +47,8 @@
     }
   ],
   "labels": [
-    "chore",
-    "ci",
+    "kind/chore",
+    "area/dependencies",
     "bots"
   ]
 }
