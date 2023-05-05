@@ -264,12 +264,13 @@ func TestResidualExpr(t *testing.T) {
 			_, det, err := conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 
+			FillGapsInState(det.State())
 			residualAst, err := env.ResidualAst(ast, det)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
 			_, det, err = conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			residualExpr := ResidualExpr(ast, det)
+			residualExpr := ResidualExpr(ast, det.State())
 			is.NoError(err)
 			p := partialEvaluator{env, pvars}
 			err = p.evalComprehensionBody(residualExpr)
@@ -352,7 +353,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			_, det, err := conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 
-			residualExpr := ResidualExpr(ast, det)
+			residualExpr := ResidualExpr(ast, det.State())
 			p := partialEvaluator{env, pvars}
 			err = p.evalComprehensionBody(residualExpr)
 			internal.UpdateIds(residualExpr)

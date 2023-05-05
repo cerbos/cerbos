@@ -5,7 +5,7 @@ package internal
 
 import exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-func UpdateIds(e *exprpb.Expr) {
+func UpdateIds(e *exprpb.Expr) int64 {
 	var n int64
 	ids := make(map[*exprpb.Expr]int64)
 
@@ -21,7 +21,6 @@ func UpdateIds(e *exprpb.Expr) {
 			ids[e] = n
 			e.Id = n
 		}
-
 		switch e := e.ExprKind.(type) {
 		case *exprpb.Expr_SelectExpr:
 			impl(e.SelectExpr.Operand)
@@ -49,6 +48,8 @@ func UpdateIds(e *exprpb.Expr) {
 		}
 	}
 	impl(e)
+
+	return n
 }
 
 func MkCallExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {

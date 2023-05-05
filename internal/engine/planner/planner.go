@@ -536,7 +536,7 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 		return nil, nil, err
 	}
 
-	residual := ResidualExpr(ast, details)
+	residual := ResidualExpr(ast, details.State())
 
 	return val, residual, nil
 }
@@ -629,7 +629,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		if err != nil {
 			return err
 		}
-		le = ResidualExpr(ast, det)
+		le = ResidualExpr(ast, det.State())
 		loopStep.CallExpr.Args[i] = le
 		err = evalComprehensionBodyImpl(env1, pvars1, le)
 		if err != nil {
@@ -645,12 +645,38 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 	return err
 }
 
+func FillGapsInStateWithMax(s interpreter.EvalState, max int64) {
+	ids := s.IDs()
+	if len(ids) > 0 {
+		min := ids[0]
+		for _, id := range ids[1:] {
+			if id > max {
+				max = id
+			} else if id < min {
+				min = id
+			}
+		}
+		for i := min + 1; i <= max; i++ {
+			if _, b := s.Value(i); !b {
+				s.SetValue(i, types.Unknown{-1})
+			}
+		}
+	}
+}
+
+func FillGapsInState(s interpreter.EvalState) {
+	FillGapsInStateWithMax(s, -1)
+}
+
 // ResidualExpr evaluates `residual expression` of the partial evaluation.
 // There are two approaches for this:
 // 1. ast := env.ResidualAst(); ast.Expr()
 // 2. ResidualExpr()
 // The former is the built-in approach, but unlike the latter doesn't support CEL comprehensions.
-func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) *exprpb.Expr {
-	pruned := interpreter.PruneAst(a.Expr(), a.SourceInfo().GetMacroCalls(), details.State())
+func ResidualExpr(a *cel.Ast, evalState interpreter.EvalState) *exprpb.Expr {
+	expr := a.Expr()
+	n := plannerutils.UpdateIds(expr)
+	FillGapsInStateWithMax(evalState, n)
+	pruned := interpreter.PruneAst(expr, a.SourceInfo().GetMacroCalls(), evalState)
 	return pruned.Expr
 }

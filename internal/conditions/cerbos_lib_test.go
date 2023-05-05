@@ -4,6 +4,7 @@
 package conditions_test
 
 import (
+	"github.com/cerbos/cerbos/internal/engine/planner"
 	"log"
 	"reflect"
 	"testing"
@@ -179,6 +180,7 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 	out, det, err := conditions.Eval(env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 	is.NoError(err)
 	is.True(types.IsUnknown(out))
+	planner.FillGapsInState(det.State())
 	residual, err := env.ResidualAst(ast, det)
 	is.NoError(err)
 	astToString, err := cel.AstToString(residual)
@@ -261,6 +263,7 @@ func TestPartialEvaluation(t *testing.T) {
 			is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
 			t.Log(out.Type())
 			is.NoError(err)
+			planner.FillGapsInState(det.State())
 			residual, err := env.ResidualAst(ast, det)
 			is.NoError(err)
 			bytes, err := yaml.Marshal(residual.Expr())
