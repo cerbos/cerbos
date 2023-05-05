@@ -57,7 +57,7 @@ YAML language server also supports per-directory settings. If all your Cerbos po
 ----
 yaml.schemas: {
     "{latest-policy-schema-url}": "/cerbos/*",
-    "{latest-test-schema-url}": "/cerbos/tests/*",
+    "{latest-test-schema-url}": "/cerbos/**/*_test.yaml",
 }
 ----
 
