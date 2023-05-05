@@ -4,10 +4,12 @@
 package overlay
 
 import (
+	"errors"
 	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/storage"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -31,6 +33,28 @@ type Conf struct {
 
 func (conf *Conf) Key() string {
 	return confKey
+}
+
+func (conf *Conf) Validate() error {
+	var errs []error
+
+	if conf.BaseDriver == "" {
+		errs = append(errs, errors.New("baseDriver is required"))
+	}
+
+	if conf.FallbackDriver == "" {
+		errs = append(errs, errors.New("fallbackDriver is required"))
+	}
+
+	if conf.BaseDriver != "" && conf.BaseDriver == conf.FallbackDriver {
+		errs = append(errs, errors.New("baseDriver and fallbackDriver cannot be the same"))
+	}
+
+	if len(errs) > 0 {
+		return multierr.Combine(errs...)
+	}
+
+	return nil
 }
 
 func (conf *Conf) SetDefaults() {

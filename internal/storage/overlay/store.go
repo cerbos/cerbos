@@ -16,24 +16,18 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/sony/gobreaker"
 )
 
-const (
-	DriverName = "overlay"
-)
+const DriverName = "overlay"
 
 var (
 	_ Overlay             = (*Store)(nil)
 	_ storage.BinaryStore = (*Store)(nil)
 	_ storage.Reloadable  = (*Store)(nil)
-	_ storage.SourceStore = (*Store)(nil)
 )
-
-var errFallbackMethodNotImplemented = errors.New("fallback store does not implement method")
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
@@ -65,13 +59,11 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 
 	baseStore, err := getStore(conf.BaseDriver)
 	if err != nil {
-		logger.Errorw("Failed to initialize overlay base store", "error", err)
 		return nil, fmt.Errorf("failed to create base policy loader: %w", err)
 	}
 
 	fallbackStore, err := getStore(conf.FallbackDriver)
 	if err != nil {
-		logger.Errorw("Failed to initialize overlay fallback store", "error", err)
 		return nil, fmt.Errorf("failed to create fallback policy loader: %w", err)
 	}
 
@@ -115,7 +107,6 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Man
 		case storage.SourceStore:
 			pl, err := compile.NewManager(ctx, st, schemaMgr)
 			if err != nil {
-				s.log.Errorw(fmt.Sprintf("Failed to create %s compile manager", key), "error", err)
 				return nil, fmt.Errorf("failed to create %s compile manager: %w", key, err)
 			}
 			return pl, nil
@@ -135,18 +126,6 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Man
 	}
 
 	return s, nil
-}
-
-func getTypedStores[T any](baseStore, fallbackStore storage.Store) (baseResult, fallbackResult T, err error) {
-	bs, ok := baseStore.(T)
-	if !ok {
-		return baseResult, fallbackResult, errors.New("store interface does not implement method")
-	}
-	fs, ok := fallbackStore.(T)
-	if !ok {
-		return bs, fallbackResult, errFallbackMethodNotImplemented
-	}
-	return bs, fs, nil
 }
 
 func withCircuitBreaker[T any](s *Store, baseFn, fallbackFn func() (T, error)) (T, error) {
@@ -210,80 +189,22 @@ func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, erro
 	)
 }
 
-//
-// SourceStore interface methods
-//
-
-func (s *Store) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	bs, fs, err := getTypedStores[storage.SourceStore](s.baseStore, s.fallbackStore)
-	if err != nil {
-		if errors.Is(err, errFallbackMethodNotImplemented) {
-			return bs.GetCompilationUnits(ctx, ids...)
-		}
-		return nil, err
-	}
-
-	return withCircuitBreaker(
-		s,
-		func() (map[namer.ModuleID]*policy.CompilationUnit, error) {
-			return bs.GetCompilationUnits(ctx, ids...)
-		},
-		func() (map[namer.ModuleID]*policy.CompilationUnit, error) {
-			return fs.GetCompilationUnits(ctx, ids...)
-		},
-	)
-}
-
-func (s *Store) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
-	bs, fs, err := getTypedStores[storage.SourceStore](s.baseStore, s.fallbackStore)
-	if err != nil {
-		if errors.Is(err, errFallbackMethodNotImplemented) {
-			return bs.GetDependents(ctx, ids...)
-		}
-		return nil, err
-	}
-
-	return withCircuitBreaker(
-		s,
-		func() (map[namer.ModuleID][]namer.ModuleID, error) { return bs.GetDependents(ctx, ids...) },
-		func() (map[namer.ModuleID][]namer.ModuleID, error) { return fs.GetDependents(ctx, ids...) },
-	)
-}
-
-func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
-	bs, fs, err := getTypedStores[storage.SourceStore](s.baseStore, s.fallbackStore)
-	if err != nil {
-		if errors.Is(err, errFallbackMethodNotImplemented) {
-			return bs.LoadPolicy(ctx, file...)
-		}
-		return nil, err
-	}
-
-	return withCircuitBreaker(
-		s,
-		func() ([]*policy.Wrapper, error) { return bs.LoadPolicy(ctx, file...) },
-		func() ([]*policy.Wrapper, error) { return fs.LoadPolicy(ctx, file...) },
-	)
-}
-
-//
-// Reloadable interface methods
-//
-
 func (s *Store) Reload(ctx context.Context) error {
-	bs, fs, err := getTypedStores[storage.Reloadable](s.baseStore, s.fallbackStore)
-	if err != nil {
-		if errors.Is(err, errFallbackMethodNotImplemented) {
-			return bs.Reload(ctx)
-		}
-		return err
+	bs, ok := s.baseStore.(storage.Reloadable)
+	if !ok {
+		return errors.New("store does not implement Reloadable interface")
+	}
+
+	fs, ok := s.fallbackStore.(storage.Reloadable)
+	if !ok {
+		return bs.Reload(ctx)
 	}
 
 	placeholderFn := func(ctx context.Context, fn func(context.Context) error) (struct{}, error) {
 		err := fn(ctx)
 		return struct{}{}, err
 	}
-	_, err = withCircuitBreaker(
+	_, err := withCircuitBreaker(
 		s,
 		func() (struct{}, error) { return placeholderFn(ctx, bs.Reload) },
 		func() (struct{}, error) { return placeholderFn(ctx, fs.Reload) },
