@@ -12,7 +12,7 @@ include::ROOT:partial$attributes.adoc[]
 == Tips for working with policies
 
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
-* The JSON schema for Cerbos policies is available at `{current-policy-schema-url}` and xref:compile.adoc[tests] at `{current-test-schema-url}`. If you prefer to always use the latest version, it can be accessed at `{latest-policy-schema-url}` and `{latst-test-schema-url}`. 
+* The JSON schema for Cerbos policies is available at `{current-policy-schema-url}` and the xref:compile.adoc[test suite] schema is available at `{current-test-schema-url}`. If you prefer to always use the latest version, they can be accessed at `{latest-policy-schema-url}` and `{latst-test-schema-url}` respectively. 
 
 == Policy structure
 
