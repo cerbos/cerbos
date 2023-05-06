@@ -12,27 +12,27 @@ func WalkExpr(e *exprpb.Expr, pre func(e *exprpb.Expr)) {
 	pre(e)
 	switch e := e.ExprKind.(type) {
 	case *exprpb.Expr_SelectExpr:
-		WalkExpr(e.SelectExpr.Operand, pre, post)
+		WalkExpr(e.SelectExpr.Operand, pre)
 	case *exprpb.Expr_CallExpr:
-		WalkExpr(e.CallExpr.Target, pre, post)
+		WalkExpr(e.CallExpr.Target, pre)
 		for _, arg := range e.CallExpr.Args {
-			WalkExpr(arg, pre, post)
+			WalkExpr(arg, pre)
 		}
 	case *exprpb.Expr_StructExpr:
 		for _, entry := range e.StructExpr.Entries {
-			WalkExpr(entry.GetMapKey(), pre, post)
-			WalkExpr(entry.GetValue(), pre, post)
+			WalkExpr(entry.GetMapKey(), pre)
+			WalkExpr(entry.GetValue(), pre)
 		}
 	case *exprpb.Expr_ComprehensionExpr:
 		ce := e.ComprehensionExpr
-		WalkExpr(ce.IterRange, pre, post)
-		WalkExpr(ce.AccuInit, pre, post)
-		WalkExpr(ce.LoopStep, pre, post)
-		WalkExpr(ce.LoopCondition, pre, post)
-		WalkExpr(ce.Result, pre, post)
+		WalkExpr(ce.IterRange, pre)
+		WalkExpr(ce.AccuInit, pre)
+		WalkExpr(ce.LoopStep, pre)
+		WalkExpr(ce.LoopCondition, pre)
+		WalkExpr(ce.Result, pre)
 	case *exprpb.Expr_ListExpr:
 		for _, element := range e.ListExpr.Elements {
-			WalkExpr(element, pre, post)
+			WalkExpr(element, pre)
 		}
 	}
 }
