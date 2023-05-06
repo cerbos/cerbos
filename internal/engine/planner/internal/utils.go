@@ -5,15 +5,43 @@ package internal
 
 import exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-func UpdateIds(e *exprpb.Expr) int64 {
+func WalkExpr(e *exprpb.Expr, pre func(e *exprpb.Expr)) {
+	if e == nil {
+		return
+	}
+	pre(e)
+	switch e := e.ExprKind.(type) {
+	case *exprpb.Expr_SelectExpr:
+		WalkExpr(e.SelectExpr.Operand, pre, post)
+	case *exprpb.Expr_CallExpr:
+		WalkExpr(e.CallExpr.Target, pre, post)
+		for _, arg := range e.CallExpr.Args {
+			WalkExpr(arg, pre, post)
+		}
+	case *exprpb.Expr_StructExpr:
+		for _, entry := range e.StructExpr.Entries {
+			WalkExpr(entry.GetMapKey(), pre, post)
+			WalkExpr(entry.GetValue(), pre, post)
+		}
+	case *exprpb.Expr_ComprehensionExpr:
+		ce := e.ComprehensionExpr
+		WalkExpr(ce.IterRange, pre, post)
+		WalkExpr(ce.AccuInit, pre, post)
+		WalkExpr(ce.LoopStep, pre, post)
+		WalkExpr(ce.LoopCondition, pre, post)
+		WalkExpr(ce.Result, pre, post)
+	case *exprpb.Expr_ListExpr:
+		for _, element := range e.ListExpr.Elements {
+			WalkExpr(element, pre, post)
+		}
+	}
+}
+
+func UpdateIDs(e *exprpb.Expr) int64 {
 	var n int64
 	ids := make(map[*exprpb.Expr]int64)
 
-	var impl func(e *exprpb.Expr)
-	impl = func(e *exprpb.Expr) {
-		if e == nil {
-			return
-		}
+	WalkExpr(e, func(e *exprpb.Expr) {
 		if id, ok := ids[e]; ok {
 			e.Id = id
 		} else {
@@ -21,33 +49,21 @@ func UpdateIds(e *exprpb.Expr) int64 {
 			ids[e] = n
 			e.Id = n
 		}
-		switch e := e.ExprKind.(type) {
-		case *exprpb.Expr_SelectExpr:
-			impl(e.SelectExpr.Operand)
-		case *exprpb.Expr_CallExpr:
-			impl(e.CallExpr.Target)
-			for _, arg := range e.CallExpr.Args {
-				impl(arg)
-			}
-		case *exprpb.Expr_StructExpr:
-			for _, entry := range e.StructExpr.Entries {
-				impl(entry.GetMapKey())
-				impl(entry.GetValue())
-			}
-		case *exprpb.Expr_ComprehensionExpr:
-			ce := e.ComprehensionExpr
-			impl(ce.IterRange)
-			impl(ce.AccuInit)
-			impl(ce.LoopStep)
-			impl(ce.LoopCondition)
-			impl(ce.Result)
-		case *exprpb.Expr_ListExpr:
-			for _, element := range e.ListExpr.Elements {
-				impl(element)
-			}
-		}
+	})
+
+	return n
+}
+
+func GetMaxID(e *exprpb.Expr) int64 {
+	if e == nil {
+		return 0
 	}
-	impl(e)
+	n := e.Id
+	WalkExpr(e, func(e *exprpb.Expr) {
+		if e.Id > n {
+			n = e.Id
+		}
+	})
 
 	return n
 }

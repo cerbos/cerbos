@@ -356,11 +356,11 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			residualExpr := ResidualExpr(ast, det.State())
 			p := partialEvaluator{env, pvars}
 			err = p.evalComprehensionBody(residualExpr)
-			internal.UpdateIds(residualExpr)
+			internal.UpdateIDs(residualExpr)
 			is.NoError(err)
 			wantAst, iss := env.Parse(tt.want)
 			wantExpr := wantAst.Expr()
-			internal.UpdateIds(wantExpr)
+			internal.UpdateIDs(wantExpr)
 			is.Nil(iss, iss.Err())
 			is.Empty(cmp.Diff(residualExpr, wantExpr, protocmp.Transform(), ignoreID),
 				"{\"got\": %s,\n\"want\": %s}", protojson.Format(residualExpr), protojson.Format(wantExpr))

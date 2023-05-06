@@ -615,7 +615,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		if err != nil {
 			return err
 		}
-		plannerutils.UpdateIds(le)
+		plannerutils.UpdateIDs(le)
 		ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: le})
 
 		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar))
@@ -675,7 +675,7 @@ func FillGapsInState(s interpreter.EvalState) {
 // The former is the built-in approach, but unlike the latter doesn't support CEL comprehensions.
 func ResidualExpr(a *cel.Ast, evalState interpreter.EvalState) *exprpb.Expr {
 	expr := a.Expr()
-	n := plannerutils.UpdateIds(expr)
+	n := plannerutils.GetMaxID(expr)
 	FillGapsInStateWithMax(evalState, n)
 	pruned := interpreter.PruneAst(expr, a.SourceInfo().GetMacroCalls(), evalState)
 	return pruned.Expr
