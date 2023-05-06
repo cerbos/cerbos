@@ -4,7 +4,6 @@
 package conditions_test
 
 import (
-	"github.com/cerbos/cerbos/internal/engine/planner"
 	"log"
 	"reflect"
 	"testing"
@@ -22,6 +21,7 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine/planner"
 )
 
 func TestCerbosLib(t *testing.T) {
