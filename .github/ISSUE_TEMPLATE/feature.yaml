@@ -1,7 +1,7 @@
 name: ⭐️ Feature Request
 description: Request a feature
 title: "<title>"
-labels: [feature, triage]
+labels: ["kind/feature", "status/triage"]
 body:
 - type: checkboxes
   attributes:
