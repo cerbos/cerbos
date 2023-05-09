@@ -63,6 +63,8 @@ require (
 	github.com/rs/cors v1.9.0
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
+	github.com/sony/gobreaker v0.5.0
+	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/afero v1.9.5
 	github.com/stretchr/testify v1.8.2
 	github.com/tidwall/gjson v1.14.4
@@ -234,7 +236,6 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
-	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect

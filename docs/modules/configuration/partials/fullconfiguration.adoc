@@ -157,6 +157,12 @@ storage:
         cert: /path/to/certificate
         key: /path/to/private_key
         caCert: /path/to/CA_certificate
+  overlay:
+    # This section is required only if storage.driver is overlay.
+    baseDriver: blob # Required. BaseDriver is the default storage driver
+    fallbackDriver: disk # Required. FallbackDriver is the secondary or fallback storage driver
+    fallbackErrorThreshold: 5 # FallbackErrorThreshold is the max number of errors we allow within the fallbackErrorWindow period
+    fallbackErrorWindow: 5m # FallbackErrorWindow is the cyclic period within which we aggregate failures
   postgres:
     # This section is required only if storage.driver is postgres.
     connPool: 

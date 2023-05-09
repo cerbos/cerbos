@@ -61,7 +61,7 @@ func TestNewStore(t *testing.T) {
 		must := require.New(t)
 
 		bucketName := "test"
-		endpoint := startMinio(ctx, t, bucketName)
+		endpoint := StartMinio(ctx, t, bucketName)
 		t.Setenv("AWS_ACCESS_KEY_ID", minioUsername)
 		t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
 		conf.Bucket = MinioBucketURL(bucketName, endpoint)
@@ -132,7 +132,7 @@ func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 	t.Helper()
 
-	endpoint := startMinio(context.Background(), t, bucketName)
+	endpoint := StartMinio(context.Background(), t, bucketName)
 	conf := mkConf(t, dir, bucketName, endpoint)
 	bucket, err := newBucket(context.Background(), conf)
 	require.NoError(t, err)

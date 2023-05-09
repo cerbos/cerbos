@@ -68,6 +68,19 @@ func RegisterDriver(name string, cons Constructor) {
 	drivers[name] = cons
 }
 
+// GetDriverConstructor registers a storage driver.
+func GetDriverConstructor(name string) (Constructor, error) {
+	driversMu.RLock()
+	defer driversMu.RUnlock()
+
+	cons, ok := drivers[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown storage driver [%s]", name)
+	}
+
+	return cons, nil
+}
+
 // New returns a storage driver implementation based on the configured driver.
 func New(ctx context.Context) (Store, error) {
 	return NewFromConf(ctx, config.Global())

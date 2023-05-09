@@ -67,6 +67,8 @@ import (
 
 	// Import blob to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/blob"
+	"github.com/cerbos/cerbos/internal/storage/overlay"
+
 	// Import bundle to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/bundle"
 	// Import mysql to register the storage driver.
@@ -140,16 +142,24 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	var policyLoader engine.PolicyLoader
-	if bs, ok := store.(storage.BinaryStore); ok {
-		policyLoader = bs
-	} else if ss, ok := store.(storage.SourceStore); ok {
+	switch st := store.(type) {
+	case storage.BinaryStore:
+		policyLoader = st
+	case storage.SourceStore:
 		// create compile manager
-		compileMgr, err := compile.NewManager(ctx, ss, schemaMgr)
+		compileMgr, err := compile.NewManager(ctx, st, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create compile manager: %w", err)
 		}
 		policyLoader = compileMgr
-	} else {
+	case overlay.Overlay:
+		// create wrapped policy loader
+		pl, err := st.GetOverlayPolicyLoader(ctx, schemaMgr)
+		if err != nil {
+			return fmt.Errorf("failed to create overlay policy loader: %w", err)
+		}
+		policyLoader = pl
+	default:
 		return ErrInvalidStore
 	}
 
