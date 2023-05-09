@@ -166,13 +166,12 @@ func TestFailover(t *testing.T) {
 		fallbackPolicyLoader.AssertExpectations(t)
 	})
 
-	t.Run("failover not triggered when consecutive failures exceed threshold on unimplemented fallback interface method", func(t *testing.T) {
+	t.Run("reload only called on baseStore if not implemented on fallbackStore", func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
 
-		nRequests := fallbackErrorThreshold + 1
 		baseStore := new(MockReloadable)
-		baseStore.On("Reload", ctx).Return(errors.New("base store error")).Times(nRequests)
+		baseStore.On("Reload", mock.AnythingOfType("*context.cancelCtx")).Return(nil).Once()
 
 		// Fallback store does not implement required method
 		fallbackStore := new(MockBinaryStore)
@@ -184,23 +183,21 @@ func TestFailover(t *testing.T) {
 			circuitBreaker: newCircuitBreaker(conf),
 		}
 
-		for i := 0; i < nRequests; i++ {
-			err := wrappedSourceStore.Reload(ctx)
-			require.Error(t, err, "expected overlay to return an error")
-		}
+		err := wrappedSourceStore.Reload(ctx)
+		require.NoError(t, err, "error calling overlay reload method")
 
 		baseStore.AssertExpectations(t)
 		fallbackStore.AssertNotCalled(t, "Reload")
 	})
 
-	t.Run("neither store method called when request made on unimplemented base interface method", func(t *testing.T) {
+	t.Run("reload only called on fallbackStore if not implemented on baseStore", func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
 
-		nRequests := 2
-		// Base store does not implement required method
 		baseStore := new(MockBinaryStore)
+
 		fallbackStore := new(MockReloadable)
+		fallbackStore.On("Reload", mock.AnythingOfType("*context.cancelCtx")).Return(nil).Once()
 
 		wrappedSourceStore := &Store{
 			log:            zap.S(),
@@ -209,10 +206,29 @@ func TestFailover(t *testing.T) {
 			circuitBreaker: newCircuitBreaker(conf),
 		}
 
-		for i := 0; i < nRequests; i++ {
-			err := wrappedSourceStore.Reload(ctx)
-			require.Error(t, err, "expected base store to return an error")
+		err := wrappedSourceStore.Reload(ctx)
+		require.NoError(t, err, "error calling overlay reload method")
+
+		baseStore.AssertNotCalled(t, "Reload")
+		fallbackStore.AssertExpectations(t)
+	})
+
+	t.Run("reload not called if not implemented on either store", func(t *testing.T) {
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		defer cancelFunc()
+
+		baseStore := new(MockBinaryStore)
+		fallbackStore := new(MockBinaryStore)
+
+		wrappedSourceStore := &Store{
+			log:            zap.S(),
+			baseStore:      baseStore,
+			fallbackStore:  fallbackStore,
+			circuitBreaker: newCircuitBreaker(conf),
 		}
+
+		err := wrappedSourceStore.Reload(ctx)
+		require.NoError(t, err, "error calling overlay reload method")
 
 		baseStore.AssertNotCalled(t, "Reload")
 		fallbackStore.AssertNotCalled(t, "Reload")

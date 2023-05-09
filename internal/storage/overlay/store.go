@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/sony/gobreaker"
+	"github.com/sourcegraph/conc/pool"
 )
 
 const DriverName = "overlay"
@@ -68,12 +69,11 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 	}
 
 	return &Store{
-		log:                 logger,
-		conf:                conf,
-		baseStore:           baseStore,
-		fallbackStore:       fallbackStore,
-		circuitBreaker:      newCircuitBreaker(conf),
-		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		log:            logger,
+		conf:           conf,
+		baseStore:      baseStore,
+		fallbackStore:  fallbackStore,
+		circuitBreaker: newCircuitBreaker(conf),
 	}, nil
 }
 
@@ -85,7 +85,6 @@ type Store struct {
 	basePolicyLoader     engine.PolicyLoader
 	fallbackPolicyLoader engine.PolicyLoader
 	circuitBreaker       *gobreaker.CircuitBreaker
-	*storage.SubscriptionManager
 }
 
 func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
@@ -190,24 +189,17 @@ func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, erro
 }
 
 func (s *Store) Reload(ctx context.Context) error {
-	bs, ok := s.baseStore.(storage.Reloadable)
-	if !ok {
-		return errors.New("store does not implement Reloadable interface")
+	// We attempt to reload all stores in parallel, regardless of base/fallback configuration.
+	// Attempts on non-Reloadable stores will result in a noop.
+	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
+
+	if bs, ok := s.baseStore.(storage.Reloadable); ok {
+		p.Go(func(ctx context.Context) error { return bs.Reload(ctx) })
 	}
 
-	fs, ok := s.fallbackStore.(storage.Reloadable)
-	if !ok {
-		return bs.Reload(ctx)
+	if fs, ok := s.fallbackStore.(storage.Reloadable); ok {
+		p.Go(func(ctx context.Context) error { return fs.Reload(ctx) })
 	}
 
-	placeholderFn := func(ctx context.Context, fn func(context.Context) error) (struct{}, error) {
-		err := fn(ctx)
-		return struct{}{}, err
-	}
-	_, err := withCircuitBreaker(
-		s,
-		func() (struct{}, error) { return placeholderFn(ctx, bs.Reload) },
-		func() (struct{}, error) { return placeholderFn(ctx, fs.Reload) },
-	)
-	return err
+	return p.Wait()
 }
