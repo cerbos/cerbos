@@ -139,6 +139,7 @@ func newCELQueryPlanEnvOptions() []cel.EnvOption {
 		),
 		ext.Strings(),
 		ext.Encoders(),
+		ext.Math(),
 		CerbosCELLib(),
 	}
 }
@@ -150,6 +151,7 @@ func newCELEnvOptions() []cel.EnvOption {
 		cel.Declarations(StdEnvDecls...),
 		ext.Strings(),
 		ext.Encoders(),
+		ext.Math(),
 		CerbosCELLib(),
 	}
 }

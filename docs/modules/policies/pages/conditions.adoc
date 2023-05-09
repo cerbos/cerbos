@@ -337,6 +337,15 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 |===
 
+== Math
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example
+| math.greatest | Get the greatest valued number present in the arguments | math.greatest([1, 3, 5]) == 5
+| math.least | Get the least valued number present in the arguments | math.least([1, 3, 5]) == 1
+|===
 
 == Strings 
 
