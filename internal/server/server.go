@@ -143,6 +143,15 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 
 	var policyLoader engine.PolicyLoader
 	switch st := store.(type) {
+	// Overlay needs to take precedence over BinaryStore in this type switch,
+	// as our overlay store implements BinaryStore also
+	case overlay.Overlay:
+		// create wrapped policy loader
+		pl, err := st.GetOverlayPolicyLoader(ctx, schemaMgr)
+		if err != nil {
+			return fmt.Errorf("failed to create overlay policy loader: %w", err)
+		}
+		policyLoader = pl
 	case storage.BinaryStore:
 		policyLoader = st
 	case storage.SourceStore:
@@ -152,13 +161,6 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 			return fmt.Errorf("failed to create compile manager: %w", err)
 		}
 		policyLoader = compileMgr
-	case overlay.Overlay:
-		// create wrapped policy loader
-		pl, err := st.GetOverlayPolicyLoader(ctx, schemaMgr)
-		if err != nil {
-			return fmt.Errorf("failed to create overlay policy loader: %w", err)
-		}
-		policyLoader = pl
 	default:
 		return ErrInvalidStore
 	}
