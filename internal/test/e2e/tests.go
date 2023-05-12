@@ -27,10 +27,12 @@ const (
 type Opt func(*suiteOpt)
 
 type suiteOpt struct {
-	contextID   string
-	suites      []string
-	postSetup   func(Ctx)
-	tlsDisabled bool
+	contextID         string
+	suites            []string
+	computedEnv       func(Ctx) map[string]string
+	postSetup         func(Ctx)
+	tlsDisabled       bool
+	overlayMaxRetries uint64
 }
 
 func WithContextID(contextID string) Opt {
@@ -42,6 +44,12 @@ func WithContextID(contextID string) Opt {
 func WithSuites(suites ...string) Opt {
 	return func(so *suiteOpt) {
 		so.suites = append(so.suites, suites...)
+	}
+}
+
+func WithComputedEnv(fn func(Ctx) map[string]string) Opt {
+	return func(so *suiteOpt) {
+		so.computedEnv = fn
 	}
 }
 
@@ -69,6 +77,12 @@ func WithTLSDisabled() Opt {
 	}
 }
 
+func WithOverlayMaxRetries(nRetries uint64) Opt {
+	return func(so *suiteOpt) {
+		so.overlayMaxRetries = nRetries
+	}
+}
+
 func RunSuites(t *testing.T, opts ...Opt) {
 	sopt := suiteOpt{}
 	for _, o := range opts {
@@ -79,6 +93,13 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	require.NotEmpty(t, sopt.suites, "At least one suite must be defined")
 
 	ctx := NewCtx(t, sopt.contextID, sopt.tlsDisabled)
+
+	if sopt.computedEnv != nil {
+		ctx.Logf("Running ComputedEnv function")
+		ctx.ComputedEnv = sopt.computedEnv(ctx)
+		ctx.Logf("Finished ComputedEnv function")
+	}
+
 	require.NoError(t, Setup(ctx))
 
 	if sopt.postSetup != nil {
@@ -89,6 +110,10 @@ func RunSuites(t *testing.T, opts ...Opt) {
 
 	tr := server.LoadTestCases(t, sopt.suites...)
 	tr.Timeout = 30 * time.Second // Things are slower inside Kind
+
+	if sopt.overlayMaxRetries != 0 {
+		tr.WithCerbosClientRetries(sopt.overlayMaxRetries)
+	}
 
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
 	grpcDialOpts := []grpc.DialOption{grpc.WithPerRPCCredentials(creds)}

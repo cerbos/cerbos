@@ -76,8 +76,9 @@ func NewCtx(t *testing.T, contextID string, noTLS bool) Ctx {
 }
 
 type Ctx struct {
-	ContextID string
-	NoTLS     bool
+	ContextID   string
+	NoTLS       bool
+	ComputedEnv map[string]string
 	*testing.T
 	Config
 }
@@ -91,6 +92,12 @@ func (c Ctx) Environ() []string {
 		"E2E_NS":              c.Namespace(),
 		"E2E_RUN_ID":          c.RunID,
 		"E2E_SRC_ROOT":        c.SourceRoot,
+	}
+
+	if c.ComputedEnv != nil {
+		for k, v := range c.ComputedEnv {
+			defaults[k] = v
+		}
 	}
 
 	var e2eVars []string //nolint:prealloc

@@ -58,14 +58,29 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 
 	logger := zap.S().Named(confKey+".store").With("baseDriver", conf.BaseDriver, "fallbackDriver", conf.FallbackDriver)
 
-	baseStore, err := getStore(conf.BaseDriver)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create base policy loader: %w", err)
-	}
+	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 
-	fallbackStore, err := getStore(conf.FallbackDriver)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create fallback policy loader: %w", err)
+	var baseStore, fallbackStore storage.Store
+	p.Go(func(ctx context.Context) error {
+		var err error
+		baseStore, err = getStore(conf.BaseDriver)
+		if err != nil {
+			return fmt.Errorf("failed to create base policy loader: %w", err)
+		}
+		return nil
+	})
+
+	p.Go(func(ctx context.Context) error {
+		var err error
+		fallbackStore, err = getStore(conf.FallbackDriver)
+		if err != nil {
+			return fmt.Errorf("failed to create fallback policy loader: %w", err)
+		}
+		return nil
+	})
+
+	if err := p.Wait(); err != nil {
+		return nil, err
 	}
 
 	return &Store{
