@@ -16,6 +16,8 @@ type Conf struct {
 	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
 	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 	URL string `yaml:"url" conf:"required,example=\"postgres://user:password@localhost:port/db\""`
+	// Verify enables the pre-check for the required database tables.
+	Verify bool `yaml:"verify" conf:",example=false"`
 }
 
 func (c *Conf) Key() string {

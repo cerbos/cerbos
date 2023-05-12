@@ -77,6 +77,10 @@ func TestMySQL(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	t.Run("MySQL verifiable", func(t *testing.T) {
+		internal.TestVerifiable(ctx, t, store)
+	})
+
 	t.Run("suite", internal.TestSuite(store))
 }
 

@@ -12,6 +12,8 @@ const confKey = storage.ConfKey + ".sqlite3"
 type Conf struct {
 	// Data source name
 	DSN string `yaml:"dsn" conf:"required,example=\":memory:?_fk=true\""`
+	// Verify enables the pre-check for the required database tables.
+	Verify bool `yaml:"verify" conf:",example=false"`
 }
 
 func (c *Conf) Key() string {

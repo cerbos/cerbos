@@ -33,10 +33,14 @@ const (
 	PolicyAncestorTblPolicyIDCol   = "policy_id"
 	PolicyAncestorTblAncestorIDCol = "ancestor_id"
 
+	PolicyRevisionTbl = "policy_revision"
+
 	SchemaTbl              = "attr_schema_defs"
 	SchemaTblIDCol         = "id"
 	SchemaTblDefinitionCol = "definition"
 )
+
+var tables = []string{PolicyTbl, PolicyDepTbl, PolicyAncestorTbl, PolicyRevisionTbl, SchemaTbl}
 
 type Schema struct {
 	Definition *pgtype.JSON

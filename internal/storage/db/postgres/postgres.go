@@ -22,7 +22,10 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
 
-const DriverName = "postgres"
+const (
+	DriverName      = "postgres"
+	urlToSchemaDocs = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#_database_object_definitions"
+)
 
 var (
 	_ storage.SourceStore  = (*Store)(nil)
@@ -62,12 +65,18 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	storage, err := internal.NewDBStorage(ctx, goqu.New("postgres", db))
+	s, err := internal.NewDBStorage(ctx, goqu.New("postgres", db))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Store{DBStorage: storage}, nil
+	if conf.Verify {
+		if err := s.Verify(ctx); err != nil {
+			return nil, fmt.Errorf("failed to verify postgres database schema (%s): %w", urlToSchemaDocs, err)
+		}
+	}
+
+	return &Store{DBStorage: s}, nil
 }
 
 type Store struct {

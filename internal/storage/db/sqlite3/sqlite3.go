@@ -28,7 +28,10 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
 
-const DriverName = "sqlite3"
+const (
+	DriverName      = "sqlite3"
+	urlToSchemaDocs = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlite3"
+)
 
 //go:embed schema.sql
 var schema string
@@ -69,12 +72,18 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	storage, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db))
+	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Store{DBStorage: storage}, nil
+	if conf.Verify {
+		if err := s.Verify(ctx); err != nil {
+			return nil, fmt.Errorf("failed to verify sqlite database schema (%s): %w", urlToSchemaDocs, err)
+		}
+	}
+
+	return &Store{DBStorage: s}, nil
 }
 
 func runMigrations(db *sql.DB) error {

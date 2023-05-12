@@ -30,7 +30,10 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
 
-const DriverName = "sqlserver"
+const (
+	DriverName      = "sqlserver"
+	urlToSchemaDocs = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#_database_object_definitions_3"
+)
 
 var (
 	_ storage.SourceStore  = (*Store)(nil)
@@ -59,12 +62,18 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	dbStorage, err := internal.NewDBStorage(ctx, goqu.New("sqlserver", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithUpsertSchema(upsertSchema))
+	s, err := internal.NewDBStorage(ctx, goqu.New("sqlserver", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithUpsertSchema(upsertSchema))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Store{DBStorage: dbStorage}, nil
+	if conf.Verify {
+		if err := s.Verify(ctx); err != nil {
+			return nil, fmt.Errorf("failed to verify sqlserver database schema (%s): %w", urlToSchemaDocs, err)
+		}
+	}
+
+	return &Store{DBStorage: s}, nil
 }
 
 type Store struct {

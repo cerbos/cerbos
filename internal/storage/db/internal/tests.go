@@ -295,3 +295,10 @@ func withScope(p *policyv1.Policy, scope string) policy.Wrapper {
 	}
 	return policy.Wrap(p)
 }
+
+func TestVerifiable(ctx context.Context, t *testing.T, s storage.Verifiable) {
+	t.Helper()
+
+	err := s.Verify(ctx)
+	require.NoError(t, err, "failed to verify schema for the database storage")
+}

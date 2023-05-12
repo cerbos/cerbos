@@ -20,5 +20,9 @@ func TestSQLite(t *testing.T) {
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: "file::memory:?_fk=true"})
 	require.NoError(t, err)
 
+	t.Run("SQLite verifiable", func(t *testing.T) {
+		internal.TestVerifiable(ctx, t, store)
+	})
+
 	t.Run("suite", internal.TestSuite(store))
 }

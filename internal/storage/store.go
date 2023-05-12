@@ -146,6 +146,11 @@ type MutableStore interface {
 	Delete(context.Context, ...namer.ModuleID) error
 }
 
+// Verifiable stores allow querying whether the requirements for the store are met.
+type Verifiable interface {
+	Verify(ctx context.Context) error
+}
+
 // Reloadable stores allow reloading their contents.
 type Reloadable interface {
 	Reload(context.Context) error

@@ -33,6 +33,7 @@ type DBStorage interface {
 	storage.Subscribable
 	storage.Instrumented
 	storage.Reloadable
+	storage.Verifiable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
@@ -718,5 +719,30 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 
 func (s *dbStorage) Reload(context.Context) error {
 	s.NotifySubscribers(storage.NewReloadEvent())
+	return nil
+}
+
+// Verify verifies the tables required by cerbos are available.
+func (s *dbStorage) Verify(ctx context.Context) error {
+	var failed []string
+	for _, table := range tables {
+		_, err := s.db.
+			Select(
+				goqu.L("1"),
+			).
+			From(
+				goqu.T(table),
+			).
+			Executor().
+			ExecContext(ctx)
+		if err != nil {
+			failed = append(failed, table)
+		}
+	}
+
+	if len(failed) > 0 {
+		return fmt.Errorf("failed to the required database tables: %s", strings.Join(failed, ", "))
+	}
+
 	return nil
 }
