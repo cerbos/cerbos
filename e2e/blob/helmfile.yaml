@@ -86,9 +86,9 @@ releases:
             mountPath: /data
       - env:
           - name: AWS_ACCESS_KEY_ID
-            value: admin
+            value: '{{ requiredEnv "E2E_BUCKET_USERNAME" }}'
           - name: AWS_SECRET_ACCESS_KEY
-            value: passw0rd
+            value: '{{ requiredEnv "E2E_BUCKET_PASSWORD" }}'
       - cerbos:
           tlsSecretName: 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
           logLevel: DEBUG
@@ -118,8 +118,8 @@ releases:
             storage:
               driver: "blob"
               blob:
-                bucket: 's3://cerbos?endpoint=minio-{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:9000&disableSSL=true&s3ForcePathStyle=true&region=local'
-                prefix: repo/
+                bucket: '{{ requiredEnv "E2E_BUCKET_URL" }}'
+                prefix: '{{ requiredEnv "E2E_BUCKET_PREFIX" }}'
                 workDir: /data
                 updatePollInterval: 0.1s
             telemetry:

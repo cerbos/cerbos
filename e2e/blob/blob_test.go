@@ -16,14 +16,23 @@ import (
 )
 
 func TestBlob(t *testing.T) {
-	postSetup := func(ctx e2e.Ctx) {
-		//TODO(cell) Find way to share these values with Helmfile without repeating them in both places.
+	env := make(map[string]string)
+
+	computedEnvFn := func(ctx e2e.Ctx) map[string]string {
 		minioEndpoint := fmt.Sprintf("minio-%s.%s:9000", ctx.ContextID, ctx.Namespace())
+		env["E2E_BUCKET_URL"] = blob.MinioBucketURL("cerbos", minioEndpoint)
+		env["E2E_BUCKET_PREFIX"] = "repo/"
+		env["E2E_BUCKET_USERNAME"] = "admin"
+		env["E2E_BUCKET_PASSWORD"] = "passw0rd"
+		return env
+	}
+
+	postSetup := func(ctx e2e.Ctx) {
 		p := blob.UploadParam{
-			BucketURL:    blob.MinioBucketURL("cerbos", minioEndpoint),
-			BucketPrefix: "repo/",
-			Username:     "admin",
-			Password:     "passw0rd",
+			BucketURL:    env["E2E_BUCKET_URL"],
+			BucketPrefix: env["E2E_BUCKET_PREFIX"],
+			Username:     env["E2E_BUCKET_USERNAME"],
+			Password:     env["E2E_BUCKET_PASSWORD"],
 			Directory:    filepath.Join(ctx.SourceRoot, "internal", "test", "testdata", "store"),
 		}
 
@@ -36,5 +45,5 @@ func TestBlob(t *testing.T) {
 		time.Sleep(150 * time.Millisecond)
 	}
 
-	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithPostSetup(postSetup))
+	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithPostSetup(postSetup), e2e.WithComputedEnv(computedEnvFn))
 }
