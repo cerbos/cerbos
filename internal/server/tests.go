@@ -37,6 +37,7 @@ import (
 const (
 	requestTimeout     = 5 * time.Second
 	healthPollInterval = 50 * time.Millisecond
+	retryBackoffDelay  = 5
 )
 
 type AuthCreds struct {
@@ -91,7 +92,7 @@ type TestRunner struct {
 	CerbosClientMaxRetries uint64
 }
 
-// WithCerbosClientRetries is relevant to Overlay storage driver calls (specifically the e2e overlay test)
+// WithCerbosClientRetries is relevant to Overlay storage driver calls (specifically the e2e overlay test).
 func (tr *TestRunner) WithCerbosClientRetries(nRetries uint64) *TestRunner {
 	tr.CerbosClientMaxRetries = nRetries
 	return tr
@@ -138,21 +139,21 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 			err = backoff.Retry(func() error {
 				have, err = cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
 				return err
-			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*5), tr.CerbosClientMaxRetries))
+			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay), tr.CerbosClientMaxRetries))
 		case *privatev1.ServerTestCase_CheckResourceBatch:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceBatch.WantResponse
 			err = backoff.Retry(func() error {
 				have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
 				return err
-			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*5), tr.CerbosClientMaxRetries))
+			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay), tr.CerbosClientMaxRetries))
 		case *privatev1.ServerTestCase_CheckResources:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResources.WantResponse
 			err = backoff.Retry(func() error {
 				have, err = cerbosClient.CheckResources(ctx, call.CheckResources.Input)
 				return err
-			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*5), tr.CerbosClientMaxRetries))
+			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay), tr.CerbosClientMaxRetries))
 		case *privatev1.ServerTestCase_PlaygroundValidate:
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundValidate.WantResponse
