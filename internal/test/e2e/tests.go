@@ -29,6 +29,7 @@ type Opt func(*suiteOpt)
 type suiteOpt struct {
 	contextID         string
 	suites            []string
+	computedEnv       func(Ctx) map[string]string
 	postSetup         func(Ctx)
 	tlsDisabled       bool
 	overlayMaxRetries uint64
@@ -43,6 +44,12 @@ func WithContextID(contextID string) Opt {
 func WithSuites(suites ...string) Opt {
 	return func(so *suiteOpt) {
 		so.suites = append(so.suites, suites...)
+	}
+}
+
+func WithComputedEnv(fn func(Ctx) map[string]string) Opt {
+	return func(so *suiteOpt) {
+		so.computedEnv = fn
 	}
 }
 
@@ -86,6 +93,13 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	require.NotEmpty(t, sopt.suites, "At least one suite must be defined")
 
 	ctx := NewCtx(t, sopt.contextID, sopt.tlsDisabled)
+
+	if sopt.computedEnv != nil {
+		ctx.Logf("Running ComputedEnv function")
+		ctx.ComputedEnv = sopt.computedEnv(ctx)
+		ctx.Logf("Finished ComputedEnv function")
+	}
+
 	require.NoError(t, Setup(ctx))
 
 	if sopt.postSetup != nil {

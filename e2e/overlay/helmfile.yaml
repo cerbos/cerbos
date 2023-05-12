@@ -134,9 +134,9 @@ releases:
               overlay:
                 baseDriver: "postgres"
                 fallbackDriver: "git"
-                fallbackErrorThreshold: 1
+                fallbackErrorThreshold: {{ requiredEnv "E2E_FALLBACK_ERR_THRESHOLD" }}
               postgres:
-                url: 'postgres://cerbos_user:changeme@{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
+                url: {{ requiredEnv "E2E_DATABASE_URL" }}
               git:
                 protocol: https
                 url: https://github.com/cerbos/cerbos.git
