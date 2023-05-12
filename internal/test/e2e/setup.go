@@ -17,7 +17,8 @@ import (
 func Setup(ctx Ctx) error {
 	ctx.Logf("Setup for context %q (%+v)", ctx.ContextID, ctx.Config)
 
-	if err := Cmd(ctx, "helmfile", "sync"); err != nil {
+	// `helmfile apply` requires `helm diff`. `helmfile init` checks for required plugins
+	if err := Cmd(ctx, "helmfile", "apply"); err != nil {
 		ctx.Logf("Deployment failed: %v", err)
 		return err
 	}
@@ -56,8 +57,6 @@ func Cmd(ctx Ctx, name string, args ...string) error {
 		_ = c.Stop()
 		return timeout.Err()
 	}
-
-	return nil
 }
 
 func dumpOutput(ctx Ctx, s cmd.Status) {

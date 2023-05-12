@@ -27,10 +27,11 @@ const (
 type Opt func(*suiteOpt)
 
 type suiteOpt struct {
-	contextID   string
-	suites      []string
-	postSetup   func(Ctx)
-	tlsDisabled bool
+	contextID         string
+	suites            []string
+	postSetup         func(Ctx)
+	tlsDisabled       bool
+	overlayMaxRetries uint64
 }
 
 func WithContextID(contextID string) Opt {
@@ -69,6 +70,12 @@ func WithTLSDisabled() Opt {
 	}
 }
 
+func WithOverlayMaxRetries(nRetries uint64) Opt {
+	return func(so *suiteOpt) {
+		so.overlayMaxRetries = nRetries
+	}
+}
+
 func RunSuites(t *testing.T, opts ...Opt) {
 	sopt := suiteOpt{}
 	for _, o := range opts {
@@ -89,6 +96,10 @@ func RunSuites(t *testing.T, opts ...Opt) {
 
 	tr := server.LoadTestCases(t, sopt.suites...)
 	tr.Timeout = 30 * time.Second // Things are slower inside Kind
+
+	if sopt.overlayMaxRetries != 0 {
+		tr.WithCerbosClientRetries(sopt.overlayMaxRetries)
+	}
 
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
 	grpcDialOpts := []grpc.DialOption{grpc.WithPerRPCCredentials(creds)}

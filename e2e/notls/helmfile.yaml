@@ -1,7 +1,3 @@
-repositories:
-  - name: bitnami
-    url: https://charts.bitnami.com/bitnami
-
 helmDefaults:
   cleanupOnFail: true
   wait: true
