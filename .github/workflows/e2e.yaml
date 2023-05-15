@@ -37,6 +37,10 @@ jobs:
             trafficManagerAPI: 30s
           EOF
 
+      - name: Initialize Helmfile
+        run: |
+          helmfile init --force
+
       - name: Install KinD
         uses: helm/kind-action@v1.5.0
         with:
