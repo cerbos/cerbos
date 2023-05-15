@@ -19,12 +19,15 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install Helm
-        uses: azure/setup-helm@v3.5
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.11.1'
+        id: install
 
       - name: Install Helmfile and Telepresence
         run: |
           mkdir bin
-          curl -fL https://github.com/helmfile/helmfile/releases/download/v0.145.2/helmfile_0.145.2_linux_amd64.tar.gz -o bin/helmfile.tar.gz
+          curl -fL https://github.com/helmfile/helmfile/releases/download/v0.153.1/helmfile_0.153.1_linux_amd64.tar.gz -o bin/helmfile.tar.gz
           tar -xf bin/helmfile.tar.gz -C bin
           chmod +x bin/helmfile
           curl -fL https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence -o bin/telepresence
@@ -38,8 +41,7 @@ jobs:
           EOF
 
       - name: Initialize Helmfile
-        run: |
-          helmfile init --force
+        run: helmfile init --force
 
       - name: Install KinD
         uses: helm/kind-action@v1.5.0
