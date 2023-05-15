@@ -9,7 +9,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.7.0
 	github.com/alecthomas/kong v0.7.1
 	github.com/alecthomas/participle/v2 v2.0.0
-	github.com/aws/aws-sdk-go v1.44.258
+	github.com/aws/aws-sdk-go v1.44.262
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cloud-api v0.1.1
@@ -18,7 +18,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/dgraph-io/badger/v4 v4.1.0
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/envoyproxy/protoc-gen-validate v1.0.0
+	github.com/envoyproxy/protoc-gen-validate v1.0.1
 	github.com/fatih/color v1.15.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.21.0
@@ -26,11 +26,11 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.1
 	github.com/go-git/go-git/v5 v5.6.1
-	github.com/go-logr/zapr v1.2.3
+	github.com/go-logr/zapr v1.2.4
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.15.2
-	github.com/google/cel-go v0.14.0
+	github.com/google/cel-go v0.15.1
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gops v0.3.27
 	github.com/google/uuid v1.3.0
@@ -56,8 +56,8 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.4.0
 	github.com/prometheus/client_golang v1.15.1
-	github.com/pterm/pterm v0.12.59
-	github.com/rivo/tview v0.0.0-20230504092913-51ba3688bcdd
+	github.com/pterm/pterm v0.12.61
+	github.com/rivo/tview v0.0.0-20230511053024-822bd067b165
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.10.0
 	github.com/rs/cors v1.9.0
@@ -89,21 +89,22 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.24.0
 	gocloud.dev v0.29.0
-	golang.org/x/crypto v0.8.0
-	golang.org/x/net v0.9.0
+	golang.org/x/crypto v0.9.0
+	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.2.0
-	golang.org/x/tools v0.8.0
+	golang.org/x/tools v0.9.1
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.11.3
+	helm.sh/helm/v3 v3.12.0
 	modernc.org/sqlite v1.22.1
 )
 
 require (
 	atomicgo.dev/cursor v0.1.1 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
+	atomicgo.dev/schedule v0.0.2 // indirect
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.19.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -201,7 +202,7 @@ require (
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lib/pq v1.10.7 // indirect
-	github.com/lithammer/fuzzysearch v1.1.5 // indirect
+	github.com/lithammer/fuzzysearch v1.1.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magefile/mage v1.9.0 // indirect
 	github.com/matryer/is v1.4.0 // indirect
@@ -261,8 +262,8 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
-	golang.org/x/term v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.114.0 // indirect
