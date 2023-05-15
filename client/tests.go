@@ -35,7 +35,10 @@ func TestGRPCClient(c Client) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		token := GenerateToken(t, time.Now().Add(5*time.Minute)) //nolint:gomnd
-		c := c.With(AuxDataJWT(token, ""))
+		c := c.With(
+			AuxDataJWT(token, ""),
+			IncludeMeta(true),
+		)
 		t.Run("CheckResourceSet", func(t *testing.T) {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 			defer cancelFunc()
@@ -65,6 +68,7 @@ func TestGRPCClient(c Client) func(*testing.T) {
 			require.True(t, have.IsAllowed("XX125", "view:public"))
 			require.False(t, have.IsAllowed("XX125", "approve"))
 			require.True(t, have.IsAllowed("XX125", "defer"))
+			require.NotNil(t, have.Meta, "no metadata found")
 		})
 
 		t.Run("CheckResourceBatch", func(t *testing.T) {
@@ -184,6 +188,8 @@ func TestGRPCClient(c Client) func(*testing.T) {
 
 				have, err := c.CheckResources(ctx, principal, resources)
 				check(t, have, err)
+
+				require.NotNil(t, have.Results[0].Meta, "no metadata found in the result")
 			})
 
 			t.Run("WithPrincipal", func(t *testing.T) {
@@ -192,6 +198,8 @@ func TestGRPCClient(c Client) func(*testing.T) {
 
 				have, err := c.WithPrincipal(principal).CheckResources(ctx, resources)
 				check(t, have, err)
+
+				require.NotNil(t, have.Results[0].Meta, "no metadata found in the result")
 			})
 		})
 
