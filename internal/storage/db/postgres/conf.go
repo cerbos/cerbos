@@ -16,7 +16,7 @@ type Conf struct {
 	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
 	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 	URL string `yaml:"url" conf:"required,example=\"postgres://user:password@localhost:port/db\""`
-	// SkipSchemaCheck skips the pre-check for the required database tables.
+	// SkipSchemaCheck skips checking for required database tables on startup.
 	SkipSchemaCheck bool `yaml:"skipSchemaCheck" conf:",example=false"`
 }
 
