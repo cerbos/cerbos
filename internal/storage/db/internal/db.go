@@ -68,15 +68,13 @@ func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBSt
 	return &dbStorage{
 		opts:                opts,
 		db:                  db,
-		logger:              zap.L().Named("db"),
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
 
 type dbStorage struct {
-	opts   *dbOpt
-	db     *goqu.Database
-	logger *zap.Logger
+	opts *dbOpt
+	db   *goqu.Database
 	*storage.SubscriptionManager
 }
 
@@ -728,10 +726,11 @@ func (s *dbStorage) Reload(context.Context) error {
 
 // CheckSchema verifies the tables required by cerbos are available.
 func (s *dbStorage) CheckSchema(ctx context.Context) error {
-	s.logger.Info("Checking database schema. Set skipSchemaCheck to true to disable.")
+	logger := zap.L().Named("db")
+	logger.Info("Checking database schema. Set skipSchemaCheck to true to disable.")
 	var failed []string
 	for _, table := range requiredTables {
-		s.logger.Debug("Checking the table", zap.String(tableLogKey, table))
+		logger.Debug("Checking the table", zap.String(tableLogKey, table))
 		_, err := s.db.
 			Select(
 				goqu.L("1"),
@@ -743,7 +742,7 @@ func (s *dbStorage) CheckSchema(ctx context.Context) error {
 			ExecContext(ctx)
 		if err != nil {
 			failed = append(failed, table)
-			s.logger.Error("Check failed for the table", zap.String(tableLogKey, table))
+			logger.Error("Check failed for the table", zap.String(tableLogKey, table), zap.Error(err))
 		}
 	}
 
@@ -751,7 +750,6 @@ func (s *dbStorage) CheckSchema(ctx context.Context) error {
 		return fmt.Errorf("schema check failed: %s", strings.Join(failed, ", "))
 	}
 
-	s.logger.Info("Database schema check completed")
-
+	logger.Info("Database schema check completed")
 	return nil
 }
