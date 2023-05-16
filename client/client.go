@@ -343,6 +343,7 @@ func (gc *grpcClient) CheckResourceSet(ctx context.Context, principal *Principal
 
 	if gc.opts != nil {
 		req.AuxData = gc.opts.auxData
+		req.IncludeMeta = gc.opts.includeMeta
 	}
 
 	result, err := gc.stub.CheckResourceSet(ctx, req)
@@ -407,6 +408,7 @@ func (gc *grpcClient) CheckResources(ctx context.Context, principal *Principal, 
 
 	if gc.opts != nil {
 		req.AuxData = gc.opts.auxData
+		req.IncludeMeta = gc.opts.includeMeta
 	}
 
 	result, err := gc.stub.CheckResources(ctx, req)
@@ -441,6 +443,7 @@ func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resou
 
 	if gc.opts != nil {
 		req.AuxData = gc.opts.auxData
+		req.IncludeMeta = gc.opts.includeMeta
 	}
 
 	result, err := gc.stub.CheckResources(ctx, req)

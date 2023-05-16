@@ -79,7 +79,7 @@ func TestClient(t *testing.T) {
 					c, err := client.New(port.addr, tc.opts...)
 					require.NoError(t, err)
 
-					t.Run(port.name, client.TestGRPCClient(c.With(client.AuxDataJWT(jwt, ""))))
+					t.Run(port.name, client.TestGRPCClient(c))
 				}
 			})
 
