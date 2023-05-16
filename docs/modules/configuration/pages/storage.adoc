@@ -239,6 +239,7 @@ storage:
 
 
 
+[#postgres-schema]
 === Database object definitions
 
 You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.
@@ -324,6 +325,7 @@ storage:
       maxIdle: 5
 ----
 
+[#mysql-schema]
 === Database object definitions
 
 You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.
@@ -372,8 +374,7 @@ storage:
       maxIdle: 5
 ----
 
-
-
+[#sqlserver-schema]
 === Database object definitions
 
 You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.

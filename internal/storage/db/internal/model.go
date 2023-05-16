@@ -40,7 +40,7 @@ const (
 	SchemaTblDefinitionCol = "definition"
 )
 
-var tables = []string{PolicyTbl, PolicyDepTbl, PolicyAncestorTbl, PolicyRevisionTbl, SchemaTbl}
+var requiredTables = []string{PolicyTbl, PolicyDepTbl, PolicyAncestorTbl, PolicyRevisionTbl, SchemaTbl}
 
 type Schema struct {
 	Definition *pgtype.JSON

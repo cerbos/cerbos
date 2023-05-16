@@ -16,8 +16,8 @@ type Conf struct {
 	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
 	// URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
 	URL string `yaml:"url" conf:"required,example=\"sqlserver://username:password@host/instance?param1=value&param2=value\""`
-	// Verify enables the pre-check for the required database tables.
-	Verify bool `yaml:"verify" conf:",example=false"`
+	// SkipSchemaCheck skips the pre-check for the required database tables.
+	SkipSchemaCheck bool `yaml:"skipSchemaCheck" conf:",example=false"`
 }
 
 func (c *Conf) Key() string {

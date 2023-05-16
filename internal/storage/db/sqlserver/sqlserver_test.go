@@ -86,8 +86,8 @@ func TestSqlServer(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	t.Run("SQLServer verifiable", func(t *testing.T) {
-		internal.TestVerifiable(ctx, t, store)
+	t.Run("check schema", func(t *testing.T) {
+		internal.TestCheckSchema(ctx, t, store)
 	})
 
 	t.Run("suite", internal.TestSuite(store))

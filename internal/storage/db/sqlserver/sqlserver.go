@@ -32,7 +32,7 @@ import (
 
 const (
 	DriverName      = "sqlserver"
-	urlToSchemaDocs = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#_database_object_definitions_3"
+	urlToSchemaDocs = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlserver-schema"
 )
 
 var (
@@ -67,9 +67,9 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	if conf.Verify {
-		if err := s.Verify(ctx); err != nil {
-			return nil, fmt.Errorf("failed to verify sqlserver database schema (%s): %w", urlToSchemaDocs, err)
+	if !conf.SkipSchemaCheck {
+		if err := s.CheckSchema(ctx); err != nil {
+			return nil, fmt.Errorf("schema check failed. Ensure that the schema is correctly defined as documented at %s: %w", urlToSchemaDocs, err)
 		}
 	}
 

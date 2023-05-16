@@ -722,10 +722,10 @@ func (s *dbStorage) Reload(context.Context) error {
 	return nil
 }
 
-// Verify verifies the tables required by cerbos are available.
-func (s *dbStorage) Verify(ctx context.Context) error {
+// CheckSchema verifies the tables required by cerbos are available.
+func (s *dbStorage) CheckSchema(ctx context.Context) error {
 	var failed []string
-	for _, table := range tables {
+	for _, table := range requiredTables {
 		_, err := s.db.
 			Select(
 				goqu.L("1"),
@@ -741,7 +741,7 @@ func (s *dbStorage) Verify(ctx context.Context) error {
 	}
 
 	if len(failed) > 0 {
-		return fmt.Errorf("failed to the required database tables: %s", strings.Join(failed, ", "))
+		return fmt.Errorf("schema check failed: %s", strings.Join(failed, ", "))
 	}
 
 	return nil

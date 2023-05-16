@@ -152,12 +152,12 @@ storage:
     dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. DSN is the data source connection string.
     serverPubKey: 
       mykey: testdata/server_public_key.pem 
+    skipSchemaCheck: false # SkipSchemaCheck skips the pre-check for the required database tables.
     tls: 
       mytls:
         cert: /path/to/certificate
         key: /path/to/private_key
-        caCert: /path/to/CA_certificate 
-    verify: false # Verify enables the pre-check for the required database tables.
+        caCert: /path/to/CA_certificate
   overlay:
     # This section is required only if storage.driver is overlay.
     baseDriver: blob # Required. BaseDriver is the default storage driver
@@ -171,12 +171,11 @@ storage:
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1 
+    skipSchemaCheck: false # SkipSchemaCheck skips the pre-check for the required database tables.
     url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
-    verify: false # Verify enables the pre-check for the required database tables.
   sqlite3:
     # This section is required only if storage.driver is sqlite3.
     dsn: ":memory:?_fk=true" # Required. Data source name
-    verify: false # Verify enables the pre-check for the required database tables.
   sqlserver:
     # This section is required only if storage.driver is sqlserver.
     connPool: 
@@ -184,8 +183,8 @@ storage:
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1 
+    skipSchemaCheck: false # SkipSchemaCheck skips the pre-check for the required database tables.
     url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
-    verify: false # Verify enables the pre-check for the required database tables.
 telemetry:
   disabled: false # Disabled sets whether telemetry collection is disabled or not.
   reportInterval: 1h # ReportInterval is the interval between telemetry pings.

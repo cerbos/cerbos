@@ -148,7 +148,7 @@ type MutableStore interface {
 
 // Verifiable stores allow querying whether the requirements for the store are met.
 type Verifiable interface {
-	Verify(ctx context.Context) error
+	CheckSchema(ctx context.Context) error
 }
 
 // Reloadable stores allow reloading their contents.
