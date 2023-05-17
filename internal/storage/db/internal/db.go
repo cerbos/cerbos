@@ -29,10 +29,13 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db"
 )
 
+const tableLogKey = "table"
+
 type DBStorage interface {
 	storage.Subscribable
 	storage.Instrumented
 	storage.Reloadable
+	storage.Verifiable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
@@ -718,5 +721,35 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 
 func (s *dbStorage) Reload(context.Context) error {
 	s.NotifySubscribers(storage.NewReloadEvent())
+	return nil
+}
+
+// CheckSchema verifies the tables required by cerbos are available.
+func (s *dbStorage) CheckSchema(ctx context.Context) error {
+	logger := zap.L().Named("db")
+	logger.Info("Checking database schema. Set skipSchemaCheck to true to disable.")
+	var failed []string
+	for _, table := range requiredTables {
+		logger.Debug("Checking the table", zap.String(tableLogKey, table))
+		_, err := s.db.
+			Select(
+				goqu.L("1"),
+			).
+			From(
+				goqu.T(table),
+			).
+			Executor().
+			ExecContext(ctx)
+		if err != nil {
+			failed = append(failed, table)
+			logger.Error("Check failed for the table", zap.String(tableLogKey, table), zap.Error(err))
+		}
+	}
+
+	if len(failed) > 0 {
+		return fmt.Errorf("schema check failed: %s", strings.Join(failed, ", "))
+	}
+
+	logger.Info("Database schema check completed")
 	return nil
 }

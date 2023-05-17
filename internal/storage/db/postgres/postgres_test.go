@@ -53,6 +53,10 @@ func TestPostgres(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	t.Run("check schema", func(t *testing.T) {
+		internal.TestCheckSchema(ctx, t, store)
+	})
+
 	t.Run("suite", internal.TestSuite(store))
 }
 

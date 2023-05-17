@@ -69,12 +69,12 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	storage, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db))
+	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Store{DBStorage: storage}, nil
+	return &Store{DBStorage: s}, nil
 }
 
 func runMigrations(db *sql.DB) error {

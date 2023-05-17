@@ -18,6 +18,8 @@ type Conf struct {
 	ServerPubKey map[string]string      `yaml:"serverPubKey" conf:",example=\n  mykey: testdata/server_public_key.pem"`
 	// DSN is the data source connection string.
 	DSN string `yaml:"dsn" conf:"required,example=\"user:password@tcp(localhost:3306)/db?interpolateParams=true\""`
+	// SkipSchemaCheck skips checking for required database tables on startup.
+	SkipSchemaCheck bool `yaml:"skipSchemaCheck" conf:",example=false"`
 }
 
 type TLSConf struct {
