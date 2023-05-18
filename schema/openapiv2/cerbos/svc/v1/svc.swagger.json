@@ -976,6 +976,24 @@
             ]
           },
           "description": "Metadata about policy evaluation"
+        },
+        "outputs": {
+          "type": "array",
+          "example": [
+            {
+              "src": "resource.expense.v1/acme#rule-001",
+              "val": "view_allowed:alice"
+            },
+            {
+              "src": "resource.expense.v1/acme#rule-002",
+              "val": "foo"
+            }
+          ],
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1OutputEntry"
+          },
+          "description": "Output for each rule with outputs configured"
         }
       }
     },
@@ -1412,6 +1430,9 @@
         },
         "variable": {
           "$ref": "#/definitions/ComponentVariable"
+        },
+        "output": {
+          "type": "string"
         }
       }
     },
@@ -1431,7 +1452,8 @@
         "KIND_RULE",
         "KIND_SCOPE",
         "KIND_VARIABLE",
-        "KIND_VARIABLES"
+        "KIND_VARIABLES",
+        "KIND_OUTPUT"
       ],
       "default": "KIND_UNSPECIFIED"
     },
@@ -1797,6 +1819,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1ValidationError"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1OutputEntry"
           }
         }
       }
@@ -2427,6 +2456,29 @@
         }
       }
     },
+    "v1Output": {
+      "type": "object",
+      "properties": {
+        "expr": {
+          "type": "string"
+        }
+      }
+    },
+    "v1OutputEntry": {
+      "type": "object",
+      "properties": {
+        "src": {
+          "type": "string",
+          "example": "resource.expense.v1/acme#rule-001",
+          "description": "Rule that matched to produce this output."
+        },
+        "val": {
+          "type": "string",
+          "example": "some_string",
+          "description": "Dynamic output, determined by user defined rule output."
+        }
+      }
+    },
     "v1Peer": {
       "type": "object",
       "properties": {
@@ -2818,6 +2870,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "output": {
+          "$ref": "#/definitions/v1Output"
         }
       }
     },
@@ -2884,6 +2939,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "output": {
+          "$ref": "#/definitions/v1Output"
         }
       }
     },

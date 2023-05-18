@@ -456,6 +456,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 
 	output.EffectiveDerivedRoles = result.effectiveDerivedRoles
 	output.ValidationErrors = result.validationErrors
+	output.Outputs = result.outputs
 
 	return output, nil
 }
@@ -601,6 +602,7 @@ type evaluationResult struct {
 	effects               map[string]EffectInfo
 	effectiveDerivedRoles []string
 	validationErrors      []*schemav1.ValidationError
+	outputs               []*enginev1.OutputEntry
 }
 
 // merge the results by only updating the actions that have a no_match effect.
@@ -619,6 +621,10 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 
 	if len(res.ValidationErrors) > 0 {
 		er.validationErrors = append(er.validationErrors, res.ValidationErrors...)
+	}
+
+	if len(res.Outputs) > 0 {
+		er.outputs = append(er.outputs, res.Outputs...)
 	}
 
 	for action, effect := range res.Effects {

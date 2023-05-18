@@ -132,6 +132,27 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *CheckOutput, hasher hash.Hash, i
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_OutputEntry_hashpb_sum(m *OutputEntry, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.src"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Src))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.val"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Val))
+
+	}
 }
 
 func cerbos_engine_v1_PlanResourcesAst_LogicalOperation_hashpb_sum(m *PlanResourcesAst_LogicalOperation, hasher hash.Hash, ignore map[string]struct{}) {
@@ -468,6 +489,9 @@ func cerbos_engine_v1_Trace_Component_hashpb_sum(m *Trace_Component, hasher hash
 				if t.Variable != nil {
 					cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(t.Variable, hasher, ignore)
 				}
+
+			case *Trace_Component_Output:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Output))
 
 			}
 		}

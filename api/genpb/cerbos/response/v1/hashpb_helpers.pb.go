@@ -334,6 +334,27 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v11.CheckOutput, hasher hash.Has
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_OutputEntry_hashpb_sum(m *v11.OutputEntry, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.src"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Src))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.val"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Val))
+
+	}
 }
 
 func cerbos_engine_v1_PlanResourcesFilter_Expression_Operand_hashpb_sum(m *v11.PlanResourcesFilter_Expression_Operand, hasher hash.Hash, ignore map[string]struct{}) {
@@ -626,6 +647,9 @@ func cerbos_engine_v1_Trace_Component_hashpb_sum(m *v11.Trace_Component, hasher 
 					cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(t.Variable, hasher, ignore)
 				}
 
+			case *v11.Trace_Component_Output:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Output))
+
 			}
 		}
 	}
@@ -787,6 +811,13 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *v12.Metadata, hasher hash.Hash, ign
 	}
 }
 
+func cerbos_policy_v1_Output_hashpb_sum(m *v12.Output, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Output.expr"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Expr))
+
+	}
+}
+
 func cerbos_policy_v1_Policy_hashpb_sum(m *v12.Policy, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.Policy.api_version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ApiVersion))
@@ -890,6 +921,12 @@ func cerbos_policy_v1_PrincipalRule_Action_hashpb_sum(m *v12.PrincipalRule_Actio
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.PrincipalRule.Action.output"]; !ok {
+		if m.Output != nil {
+			cerbos_policy_v1_Output_hashpb_sum(m.Output, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_policy_v1_PrincipalRule_hashpb_sum(m *v12.PrincipalRule, hasher hash.Hash, ignore map[string]struct{}) {
@@ -985,6 +1022,12 @@ func cerbos_policy_v1_ResourceRule_hashpb_sum(m *v12.ResourceRule, hasher hash.H
 	}
 	if _, ok := ignore["cerbos.policy.v1.ResourceRule.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.ResourceRule.output"]; !ok {
+		if m.Output != nil {
+			cerbos_policy_v1_Output_hashpb_sum(m.Output, hasher, ignore)
+		}
 
 	}
 }
@@ -1538,6 +1581,16 @@ func cerbos_response_v1_CheckResourcesResponse_ResultEntry_hashpb_sum(m *CheckRe
 			cerbos_response_v1_CheckResourcesResponse_ResultEntry_Meta_hashpb_sum(m.Meta, hasher, ignore)
 		}
 
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

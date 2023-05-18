@@ -205,6 +205,12 @@
             "type": "string"
           }
         },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
+          }
+        },
         "requestId": {
           "type": "string"
         },
@@ -230,6 +236,18 @@
           "type": "string"
         },
         "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
           "type": "string"
         }
       }

@@ -26,6 +26,18 @@
         }
       }
     },
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.schema.v1.ValidationError": {
       "type": "object",
       "additionalProperties": false,
@@ -63,6 +75,12 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
       }
     },
     "requestId": {

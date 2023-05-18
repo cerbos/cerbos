@@ -46,6 +46,9 @@
         "kind": {
           "$ref": "#/definitions/cerbos.engine.v1.Trace.Component.Kind"
         },
+        "output": {
+          "type": "string"
+        },
         "policy": {
           "type": "string"
         },
@@ -79,7 +82,8 @@
         "KIND_RULE",
         "KIND_SCOPE",
         "KIND_VARIABLE",
-        "KIND_VARIABLES"
+        "KIND_VARIABLES",
+        "KIND_OUTPUT"
       ]
     },
     "cerbos.engine.v1.Trace.Component.Variable": {

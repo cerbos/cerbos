@@ -150,8 +150,26 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		}
 
 		// evaluate each rule until all actions have a result
-		for _, rule := range p.Rules {
+		for i, rule := range p.Rules {
 			rctx := sctx.StartRule(rule.Name)
+
+			if rule.Output != nil {
+				octx := rctx.StartOutput(rule.Name)
+				output, err := rpe.evalParams.evaluateStrCELExpr(rule.Output.Checked, variables, input)
+				if err != nil {
+					octx.Skipped(err, "Error evaluating output")
+				}
+
+				ruleName := rule.Name
+				if ruleName == "" {
+					ruleName = fmt.Sprintf("rule-%03d", i)
+				}
+				result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
+					Src: fmt.Sprintf("%s#%s", rpe.policy.Meta.Fqn, ruleName),
+					Val: output,
+				})
+			}
+
 			if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
 				rctx.Skipped(nil, "No matching roles or derived roles")
 				continue
@@ -220,7 +238,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				continue
 			}
 
-			for _, rule := range resourceRules.ActionRules {
+			for i, rule := range resourceRules.ActionRules {
 				matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
@@ -234,8 +252,26 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						actx.Skipped(nil, "Condition not satisfied")
 						continue
 					}
+
 					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.AppliedEffect(rule.Effect, "")
+				}
+
+				if rule.Output != nil {
+					octx := rctx.StartOutput(rule.Name)
+					output, err := ppe.evalParams.evaluateStrCELExpr(rule.Output.Checked, variables, input)
+					if err != nil {
+						octx.Skipped(err, "Error evaluating output")
+					}
+
+					ruleName := rule.Name
+					if ruleName == "" {
+						ruleName = fmt.Sprintf("rule-%03d", i)
+					}
+					result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
+						Src: fmt.Sprintf("%s#%s", ppe.policy.Meta.Fqn, ruleName),
+						Val: output,
+					})
 				}
 			}
 		}
@@ -361,6 +397,24 @@ func (ep evalParams) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map
 	return boolVal, nil
 }
 
+func (ep evalParams) evaluateStrCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (string, error) {
+	val, err := ep.evaluateCELExpr(expr, variables, input)
+	if err != nil {
+		return "", err
+	}
+
+	if val == nil {
+		return "", nil
+	}
+
+	strVal, ok := val.(string)
+	if !ok {
+		return "", nil
+	}
+
+	return strVal, nil
+}
+
 func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (any, error) {
 	if expr == nil {
 		return nil, nil
@@ -397,6 +451,7 @@ type PolicyEvalResult struct {
 	EffectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
 	ValidationErrors      []*schemav1.ValidationError
+	Outputs               []*enginev1.OutputEntry
 }
 
 func newEvalResult(actions []string) *PolicyEvalResult {
@@ -404,6 +459,7 @@ func newEvalResult(actions []string) *PolicyEvalResult {
 		Effects:               make(map[string]EffectInfo, len(actions)),
 		EffectiveDerivedRoles: make(map[string]struct{}),
 		toResolve:             make(map[string]struct{}, len(actions)),
+		Outputs:               []*enginev1.OutputEntry{},
 	}
 
 	for _, a := range actions {

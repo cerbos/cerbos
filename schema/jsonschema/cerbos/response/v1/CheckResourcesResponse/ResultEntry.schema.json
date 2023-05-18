@@ -11,6 +11,18 @@
         "EFFECT_NO_MATCH"
       ]
     },
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta": {
       "type": "object",
       "additionalProperties": false,
@@ -94,6 +106,12 @@
     },
     "meta": {
       "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
+      }
     },
     "resource": {
       "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource"

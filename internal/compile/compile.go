@@ -292,9 +292,10 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 		modCtx.addErrWithDesc(errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
 
+	parent := fmt.Sprintf("resource rule '%s'", rule.Name)
 	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{
 		Name:      rule.Name,
-		Condition: compileCondition(modCtx, fmt.Sprintf("resource rule '%s'", rule.Name), rule.Condition),
+		Condition: compileCondition(modCtx, parent, rule.Condition),
 		Effect:    rule.Effect,
 	}
 
@@ -320,6 +321,13 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 		cr.Actions = make(map[string]*emptypb.Empty, len(rule.Actions))
 		for _, a := range rule.Actions {
 			cr.Actions[a] = emptyVal
+		}
+	}
+
+	if rule.Output != nil {
+		cr.Output = &runtimev1.Expr{
+			Original: rule.Output.Expr,
+			Checked:  compileCELExpr(modCtx, parent, rule.Output.Expr),
 		}
 	}
 
@@ -386,12 +394,21 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 			action.Name = namer.PrincipalResourceActionRuleName(action, rule.Resource, i+1)
 
 			ruleName := fmt.Sprintf("rule '%s' (#%d) of resource '%s'", action.Name, i+1, rule.Resource)
-			rr.ActionRules[i] = &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
+			actionRule := &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
 				Action:    action.Action,
 				Name:      action.Name,
 				Effect:    action.Effect,
 				Condition: compileCondition(modCtx, ruleName, action.Condition),
 			}
+
+			if action.Output != nil {
+				actionRule.Output = &runtimev1.Expr{
+					Original: action.Output.Expr,
+					Checked:  compileCELExpr(modCtx, ruleName, action.Output.Expr),
+				}
+			}
+
+			rr.ActionRules[i] = actionRule
 		}
 
 		rpp.ResourceRules[rule.Resource] = rr

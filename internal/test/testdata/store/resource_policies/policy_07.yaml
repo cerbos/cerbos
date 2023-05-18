@@ -1,0 +1,29 @@
+---
+apiVersion: api.cerbos.dev/v1
+variables:
+  pending_approval: ("PENDING_APPROVAL")
+resourcePolicy:
+  version: "default"
+  importDerivedRoles:
+    - beta
+  resource: equipment_request
+  rules:
+    - actions: ["view:public"]
+      derivedRoles:
+        - any_employee
+      effect: EFFECT_ALLOW
+      name: public-view
+      output:
+        expr: |-
+          "view:public_allowed:%s".format([request.principal.id])
+
+    - actions: ["approve"]
+      condition:
+        match:
+          expr: request.resource.attr.status == V.pending_approval
+      derivedRoles:
+        - direct_manager
+      effect: EFFECT_ALLOW
+      output:
+        expr: |-
+          "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])

@@ -44,7 +44,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 	t.Run("check_contents", func(t *testing.T) {
 		data := idxImpl.Inspect()
-		require.Len(t, data, 18)
+		require.Len(t, data, 20)
 
 		rp1 := filepath.Join("resource_policies", "policy_01.yaml")
 		rp2 := filepath.Join("resource_policies", "policy_02.yaml")
@@ -107,7 +107,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 		require.Contains(t, data, dr2)
 		require.Empty(t, data[dr2].Dependencies)
-		require.Len(t, data[dr2].References, 5)
+		require.Len(t, data[dr2].References, 7)
 
 		require.Contains(t, data, dr3)
 		require.Empty(t, data[dr3].Dependencies)

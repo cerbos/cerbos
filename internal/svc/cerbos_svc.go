@@ -277,6 +277,10 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 			}
 		}
 
+		if l := len(out.Outputs); l > 0 {
+			entry.Outputs = out.Outputs
+		}
+
 		for action, actionEffect := range out.Actions {
 			entry.Actions[action] = actionEffect.Effect
 			if req.IncludeMeta {

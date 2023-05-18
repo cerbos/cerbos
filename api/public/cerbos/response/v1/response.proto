@@ -219,6 +219,10 @@ message CheckResourcesResponse {
       description: "Metadata about policy evaluation"
       example: "{\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}"
     }];
+    repeated cerbos.engine.v1.OutputEntry outputs = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Output for each rule with outputs configured"
+      example: "[{\"src\": \"resource.expense.v1/acme#rule-001\", \"val\": \"view_allowed:alice\"}, {\"src\": \"resource.expense.v1/acme#rule-002\", \"val\": \"foo\"}]"
+    }];
   }
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {

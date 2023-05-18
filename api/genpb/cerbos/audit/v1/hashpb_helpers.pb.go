@@ -330,6 +330,27 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v1.CheckOutput, hasher hash.Hash
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_OutputEntry_hashpb_sum(m *v1.OutputEntry, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.src"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Src))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.val"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Val))
+
+	}
 }
 
 func cerbos_engine_v1_PlanResourcesFilter_Expression_Operand_hashpb_sum(m *v1.PlanResourcesFilter_Expression_Operand, hasher hash.Hash, ignore map[string]struct{}) {

@@ -386,6 +386,12 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Effect)))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output"]; !ok {
+		if m.Output != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.Output, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ResourceRules_hashpb_sum(m *RunnablePrincipalPolicySet_Policy_ResourceRules, hasher hash.Hash, ignore map[string]struct{}) {
@@ -550,6 +556,12 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Rule_hashpb_sum(m *Runna
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.effect"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Effect)))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output"]; !ok {
+		if m.Output != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.Output, hasher, ignore)
+		}
 
 	}
 }

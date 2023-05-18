@@ -95,6 +95,8 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"principal.donald_duck.vdefault/acme.hr",
 					"resource.account.vdefault",
 					"resource.album_object.vdefault",
+					"resource.equipment_request.vdefault",
+					"resource.equipment_request.vdefault/acme",
 					"resource.leave_request.v20210210",
 					"resource.leave_request.vdefault",
 					"resource.leave_request.vdefault/acme",
