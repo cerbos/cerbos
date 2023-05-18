@@ -5,6 +5,7 @@ package compile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -301,4 +302,8 @@ func (pce PolicyCompilationErr) Error() string {
 
 func (pce PolicyCompilationErr) Unwrap() error {
 	return pce.underlying
+}
+
+func (pce PolicyCompilationErr) Is(target error) bool {
+	return errors.As(target, &PolicyCompilationErr{})
 }

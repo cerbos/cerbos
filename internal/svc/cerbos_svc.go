@@ -135,7 +135,7 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 	outputs, err := cs.eng.Check(logging.ToContext(ctx, log), inputs)
 	if err != nil {
 		log.Error("Policy check failed", zap.Error(err))
-		if errors.As(err, &compile.PolicyCompilationErr{}) {
+		if errors.Is(err, compile.PolicyCompilationErr{}) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
 		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
@@ -183,6 +183,9 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 	outputs, err := cs.eng.Check(logging.ToContext(ctx, log), inputs)
 	if err != nil {
 		log.Error("Policy check failed", zap.Error(err))
+		if errors.Is(err, compile.PolicyCompilationErr{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
@@ -240,6 +243,9 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 	outputs, err := cs.eng.Check(logging.ToContext(ctx, log), inputs)
 	if err != nil {
 		log.Error("Policy check failed", zap.Error(err))
+		if errors.Is(err, compile.PolicyCompilationErr{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
