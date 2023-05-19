@@ -6,6 +6,7 @@
     "cerbos.principal.donald_duck.vdefault": "policies/2F26F3660A97BECD",
     "cerbos.principal.donald_duck.vdefault/acme": "policies/4C6062CFBE8627DB",
     "cerbos.principal.donald_duck.vdefault/acme.hr": "policies/60C13DA6FD1DF10C",
+    "cerbos.principal.terry_tibbs.vdefault": "policies/BCD8E5E5F425900C",
     "cerbos.resource.account.vdefault": "policies/EE58DE7B0F7DA6B9",
     "cerbos.resource.album_object.vdefault": "policies/684ED25FF04663F2",
     "cerbos.resource.equipment_request.vdefault": "policies/51F53279EC2F9999",
@@ -25,7 +26,7 @@
     "resources/salary_record.json"
   ],
   "meta": {
-    "identifier": "h1:4ZpgRfg1N0nEiILxICMUG3LRoX2vYt7P5pj+6VvDPJA=",
+    "identifier": "h1:J8ZoWJB5W+iLzqs5i7QRSKJ0S4+6MUwPz/KsWUv6/Zs=",
     "source": "/Users/samuellock/cerbos/cerbos/internal/test/testdata/store"
   }
 }

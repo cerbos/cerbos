@@ -1,0 +1,71 @@
+---
+description: "With principal output"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResources:
+  input: {
+    "requestId": "test",
+    "principal": {
+      "id": "terry_tibbs",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resources": [
+      {
+        "actions": [
+          "view:public",
+          "approve",
+          "create"
+        ],
+        "resource": {
+          "kind": "equipment_request",
+          "id": "YY125",
+          "attr": {
+            "department": "engineering",
+            "geography": "GB",
+            "id": "YY125",
+            "owner": "jenny",
+            "team": "backend",
+            "status": "DRAFT"
+          }
+        }
+      }
+    ]
+  }
+  wantResponse: {
+    "requestId": "test",
+    "results": [
+      {
+        "resource": {
+          "id": "YY125",
+          "kind": "equipment_request",
+        },
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY",
+          "create": "EFFECT_ALLOW"
+        },
+        "outputs": [
+          {
+            "src": "cerbos.principal.terry_tibbs.vdefault#equipment_request_rule-001",
+            "val": "create_override_for_terry_tibbs_talk_to_me"
+          },
+          {
+            "src": "cerbos.resource.equipment_request.vdefault#public-view",
+            "val": "view:public_allowed:terry_tibbs"
+          },
+          {
+            "src": "cerbos.resource.equipment_request.vdefault#rule-002",
+            "val": "approval_status:terry_tibbs:DRAFT"
+          },
+        ]
+      }
+    ]
+  }
