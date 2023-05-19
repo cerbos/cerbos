@@ -1,0 +1,13 @@
+---
+description: "Add additional batch, required for `checks` tests"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+adminAddOrUpdatePolicy:
+  input: {
+    "policies": [
+      {{- readPolicy "store/resource_policies/policy_07.yaml" | toPolicyJSON }},
+      {{- readPolicy "store/resource_policies/policy_08.yaml" | toPolicyJSON }},
+    ]
+  }
+  wantResponse: {"success":{}}

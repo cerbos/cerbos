@@ -227,7 +227,6 @@ func generateRandomString(length int) (string, error) {
 func TestAdminService(t *testing.T) {
 	tpg := func(t *testing.T) testParam {
 		t.Helper()
-		t.Skip("TODO(saml) update DB state and re-enable") // TODO(saml) update DB state and re-enable!!
 
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		t.Cleanup(cancelFunc)

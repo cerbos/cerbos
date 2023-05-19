@@ -252,7 +252,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						actx.Skipped(nil, "Condition not satisfied")
 						continue
 					}
-
 					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.AppliedEffect(rule.Effect, "")
 				}
