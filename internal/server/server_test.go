@@ -71,7 +71,6 @@ func TestServer(t *testing.T) {
 	})
 
 	t.Run("store=bundle_local", func(t *testing.T) {
-		t.Skip("TODO(saml) create bundle and re-enable") // TODO(saml) create bundle and re-enable!!
 		tpg := func(t *testing.T) testParam {
 			t.Helper()
 			ctx, cancelFunc := context.WithCancel(context.Background())
