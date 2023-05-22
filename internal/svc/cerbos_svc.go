@@ -277,7 +277,7 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 			}
 		}
 
-		if l := len(out.Outputs); l > 0 {
+		if len(out.Outputs) > 0 {
 			entry.Outputs = out.Outputs
 		}
 
