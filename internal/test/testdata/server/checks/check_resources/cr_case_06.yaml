@@ -80,11 +80,11 @@ checkResources:
             "val": "create_allowed:john"
           },
           {
-            "src": "cerbos.resource.equipment_request.vdefault/acme#public-view",
+            "src": "cerbos.resource.equipment_request.vdefault#public-view",
             "val": "view:public_allowed:john"
           },
           {
-            "src": "cerbos.resource.equipment_request.vdefault/acme#rule-002",
+            "src": "cerbos.resource.equipment_request.vdefault#rule-002",
             "val": "approval_status:john:DRAFT"
           }
         ]

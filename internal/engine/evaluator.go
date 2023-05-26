@@ -150,7 +150,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		}
 
 		// evaluate each rule until all actions have a result
-		for i, rule := range p.Rules {
+		for _, rule := range p.Rules {
 			rctx := sctx.StartRule(rule.Name)
 
 			if rule.Output != nil {
@@ -160,12 +160,8 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 					octx.Skipped(err, "Error evaluating output")
 				}
 
-				ruleName := rule.Name
-				if ruleName == "" {
-					ruleName = fmt.Sprintf("rule-%03d", i)
-				}
 				result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
-					Src: fmt.Sprintf("%s#%s", rpe.policy.Meta.Fqn, ruleName),
+					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
 					Val: output,
 				})
 			}
@@ -238,7 +234,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				continue
 			}
 
-			for i, rule := range resourceRules.ActionRules {
+			for _, rule := range resourceRules.ActionRules {
 				matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
@@ -263,12 +259,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						octx.Skipped(err, "Error evaluating output")
 					}
 
-					ruleName := rule.Name
-					if ruleName == "" {
-						ruleName = fmt.Sprintf("rule-%03d", i)
-					}
 					result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
-						Src: fmt.Sprintf("%s#%s", ppe.policy.Meta.Fqn, ruleName),
+						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
 						Val: output,
 					})
 				}

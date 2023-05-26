@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -215,6 +216,22 @@ func PrincipalResourceActionRuleName(rule *policyv1.PrincipalRule_Action, resour
 	}
 
 	return fmt.Sprintf("%s_rule-%03d", resource, idx)
+}
+
+// RuleFQN returns the FQN for the resource rule or principal resource action rule with scope granularity.
+func RuleFQN(rpsMeta any, scope, ruleName string) string {
+	var policyFqn string
+
+	switch m := rpsMeta.(type) {
+	case *runtimev1.RunnableResourcePolicySet_Metadata:
+		policyFqn = ResourcePolicyFQN(m.Resource, m.Version, scope)
+	case *runtimev1.RunnablePrincipalPolicySet_Metadata:
+		policyFqn = PrincipalPolicyFQN(m.Principal, m.Version, scope)
+	default:
+		panic(fmt.Errorf("unknown runnable policy set meta type %T", m))
+	}
+
+	return fmt.Sprintf("%s#%s", policyFqn, ruleName)
 }
 
 type PolicyCoords struct {
