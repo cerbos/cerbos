@@ -172,7 +172,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.8.0 // indirect
 	github.com/goreleaser/chglog v0.4.2 // indirect
 	github.com/goreleaser/fileglob v1.3.0 // indirect
-	github.com/goreleaser/nfpm/v2 v2.28.0 // indirect
+	github.com/goreleaser/nfpm/v2 v2.29.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
