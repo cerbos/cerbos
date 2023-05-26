@@ -9,7 +9,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.7.0
 	github.com/alecthomas/kong v0.7.1
 	github.com/alecthomas/participle/v2 v2.0.0
-	github.com/aws/aws-sdk-go v1.44.262
+	github.com/aws/aws-sdk-go v1.44.270
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cloud-api v0.1.1
@@ -21,16 +21,16 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.0.1
 	github.com/fatih/color v1.15.0
 	github.com/fatih/structtag v1.2.0
-	github.com/fergusstrange/embedded-postgres v1.21.0
+	github.com/fergusstrange/embedded-postgres v1.22.0
 	github.com/gdamore/tcell/v2 v2.6.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.1
-	github.com/go-git/go-git/v5 v5.6.1
+	github.com/go-git/go-git/v5 v5.7.0
 	github.com/go-logr/zapr v1.2.4
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.15.2
-	github.com/google/cel-go v0.14.0
+	github.com/google/cel-go v0.15.3
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gops v0.3.27
 	github.com/google/uuid v1.3.0
@@ -47,8 +47,8 @@ require (
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lestrrat-go/httprc v1.0.4
 	github.com/lestrrat-go/jwx/v2 v2.0.9
-	github.com/mattn/go-isatty v0.0.18
-	github.com/minio/minio-go/v7 v7.0.52
+	github.com/mattn/go-isatty v0.0.19
+	github.com/minio/minio-go/v7 v7.0.55
 	github.com/nlepage/go-tarfs v1.1.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -56,8 +56,8 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.4.0
 	github.com/prometheus/client_golang v1.15.1
-	github.com/pterm/pterm v0.12.61
-	github.com/rivo/tview v0.0.0-20230511053024-822bd067b165
+	github.com/pterm/pterm v0.12.62
+	github.com/rivo/tview 4a1f85bb2219
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.10.0
 	github.com/rs/cors v1.9.0
@@ -66,24 +66,24 @@ require (
 	github.com/sony/gobreaker v0.5.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/afero v1.9.5
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/tidwall/gjson v1.14.4
 	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/sjson v1.2.5
-	github.com/twmb/franz-go v1.13.3
+	github.com/twmb/franz-go v1.13.4
 	github.com/twmb/franz-go/pkg/kadm v1.8.1
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.24.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.41.1
-	go.opentelemetry.io/contrib/propagators/autoprop v0.41.1
-	go.opentelemetry.io/contrib/propagators/b3 v1.16.1
-	go.opentelemetry.io/otel v1.15.1
-	go.opentelemetry.io/otel/bridge/opencensus v0.38.1
-	go.opentelemetry.io/otel/exporters/jaeger v1.15.1
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.15.1
-	go.opentelemetry.io/otel/sdk v1.15.1
-	go.opentelemetry.io/otel/trace v1.15.1
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
+	go.opentelemetry.io/contrib/propagators/autoprop v0.42.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.17.0
+	go.opentelemetry.io/otel v1.16.0
+	go.opentelemetry.io/otel/bridge/opencensus v0.39.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.16.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
+	go.opentelemetry.io/otel/sdk v1.16.0
+	go.opentelemetry.io/otel/trace v1.16.0
 	go.uber.org/automaxprocs v1.5.2
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.11.0
@@ -93,7 +93,7 @@ require (
 	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.2.0
 	golang.org/x/tools v0.9.1
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
+	google.golang.org/genproto 6ee61e4f9d5f
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
