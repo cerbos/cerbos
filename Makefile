@@ -12,6 +12,8 @@ LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.Version=$(VERSION)"
 LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.Commit=$(COMMIT_SHA)"
 LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.BuildDate=$(BUILD_DATE)"
 
+MOCK_QUIET ?= --quiet
+
 .PHONY: all
 all: clean build
 
@@ -54,10 +56,10 @@ generate-json-schemas: proto-gen-deps
 .PHONY: generate-mocks
 generate-mocks: $(MOCKERY)
 	@-rm -rf $(MOCK_DIR)
-	@ $(MOCKERY) --quiet --srcpkg=./internal/storage/index --name=Index --output=$(MOCK_DIR)
-	@ $(MOCKERY) --quiet --srcpkg=./internal/storage --name=Store --output=$(MOCK_DIR)
-	@ $(MOCKERY) --quiet --srcpkg=./internal/storage/bundle --name=CloudAPIClient --output=$(MOCK_DIR)
-	@ $(MOCKERY) --quiet --srcpkg=github.com/cerbos/cloud-api/bundle --name=WatchHandle --output=$(MOCK_DIR)
+	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/index --name=Index --output=$(MOCK_DIR)
+	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage --name=Store --output=$(MOCK_DIR)
+	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/bundle --name=CloudAPIClient --output=$(MOCK_DIR)
+	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=github.com/cerbos/cloud-api/bundle --name=WatchHandle --output=$(MOCK_DIR)
 
 .PHONY: generate-notice
 generate-notice: $(GO_LICENCE_DETECTOR)
