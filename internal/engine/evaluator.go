@@ -23,6 +23,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
@@ -162,7 +163,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 				result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
 					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-					Val: output,
+					Val: structpb.NewStringValue(output),
 				})
 			}
 
@@ -261,7 +262,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 					result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
 						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-						Val: output,
+						Val: structpb.NewStringValue(output),
 					})
 				}
 			}

@@ -1,6 +1,12 @@
 {
   "$id": "https://api.cerbos.dev/cerbos/engine/v1/OutputEntry.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -8,7 +14,7 @@
       "type": "string"
     },
     "val": {
-      "type": "string"
+      "$ref": "#/definitions/google.protobuf.Value"
     }
   }
 }

@@ -150,7 +150,9 @@ func cerbos_engine_v1_OutputEntry_hashpb_sum(m *OutputEntry, hasher hash.Hash, i
 
 	}
 	if _, ok := ignore["cerbos.engine.v1.OutputEntry.val"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Val))
+		if m.Val != nil {
+			google_protobuf_Value_hashpb_sum(m.Val, hasher, ignore)
+		}
 
 	}
 }

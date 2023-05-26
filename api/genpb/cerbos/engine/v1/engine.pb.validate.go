@@ -1155,7 +1155,34 @@ func (m *OutputEntry) validate(all bool) error {
 
 	// no validation rules for Src
 
-	// no validation rules for Val
+	if all {
+		switch v := interface{}(m.GetVal()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, OutputEntryValidationError{
+					field:  "Val",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, OutputEntryValidationError{
+					field:  "Val",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetVal()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return OutputEntryValidationError{
+				field:  "Val",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return OutputEntryMultiError(errors)

@@ -112,7 +112,7 @@
           "type": "string"
         },
         "val": {
-          "type": "string"
+          "$ref": "#/definitions/google.protobuf.Value"
         }
       }
     },

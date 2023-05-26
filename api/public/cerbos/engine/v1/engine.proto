@@ -171,7 +171,7 @@ message OutputEntry {
     description: "Rule that matched to produce this output."
     example: "\"resource.expense.v1/acme#rule-001\""
   }];
-  string val = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+  google.protobuf.Value val = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Dynamic output, determined by user defined rule output."
     example: "\"some_string\""
   }];

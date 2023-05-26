@@ -19,7 +19,7 @@
           "type": "string"
         },
         "val": {
-          "type": "string"
+          "$ref": "#/definitions/google.protobuf.Value"
         }
       }
     },
@@ -93,6 +93,10 @@
         "SOURCE_PRINCIPAL",
         "SOURCE_RESOURCE"
       ]
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "type": "object",

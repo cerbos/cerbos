@@ -2473,7 +2473,6 @@
           "description": "Rule that matched to produce this output."
         },
         "val": {
-          "type": "string",
           "example": "some_string",
           "description": "Dynamic output, determined by user defined rule output."
         }
