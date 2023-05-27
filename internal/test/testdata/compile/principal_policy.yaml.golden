@@ -1,107 +1,107 @@
 {
-  "fqn":  "cerbos.principal.donald_duck.v20210210",
-  "principalPolicy":  {
-    "meta":  {
-      "fqn":  "cerbos.principal.donald_duck.v20210210",
-      "principal":  "donald_duck",
-      "version":  "20210210"
+  "fqn": "cerbos.principal.donald_duck.v20210210",
+  "principalPolicy": {
+    "meta": {
+      "fqn": "cerbos.principal.donald_duck.v20210210",
+      "principal": "donald_duck",
+      "version": "20210210"
     },
-    "policies":  [
+    "policies": [
       {
-        "resourceRules":  {
-          "leave_request":  {
-            "actionRules":  [
+        "resourceRules": {
+          "leave_request": {
+            "actionRules": [
               {
-                "action":  "*",
-                "name":  "leave_request_rule-001",
-                "condition":  {
-                  "expr":  {
-                    "original":  "request.resource.attr.dev_record == true",
-                    "checked":  {
-                      "referenceMap":  {
-                        "1":  {
-                          "name":  "request"
+                "action": "*",
+                "name": "leave_request_rule-001",
+                "condition": {
+                  "expr": {
+                    "original": "request.resource.attr.dev_record == true",
+                    "checked": {
+                      "referenceMap": {
+                        "1": {
+                          "name": "request"
                         },
-                        "5":  {
-                          "overloadId":  [
+                        "5": {
+                          "overloadId": [
                             "equals"
                           ]
                         }
                       },
-                      "typeMap":  {
-                        "1":  {
-                          "messageType":  "cerbos.engine.v1.CheckInput"
+                      "typeMap": {
+                        "1": {
+                          "messageType": "cerbos.engine.v1.CheckInput"
                         },
-                        "2":  {
-                          "messageType":  "cerbos.engine.v1.Resource"
+                        "2": {
+                          "messageType": "cerbos.engine.v1.Resource"
                         },
-                        "3":  {
-                          "mapType":  {
-                            "keyType":  {
-                              "primitive":  "STRING"
+                        "3": {
+                          "mapType": {
+                            "keyType": {
+                              "primitive": "STRING"
                             },
-                            "valueType":  {
-                              "dyn":  {}
+                            "valueType": {
+                              "dyn": {}
                             }
                           }
                         },
-                        "4":  {
-                          "dyn":  {}
+                        "4": {
+                          "dyn": {}
                         },
-                        "5":  {
-                          "primitive":  "BOOL"
+                        "5": {
+                          "primitive": "BOOL"
                         },
-                        "6":  {
-                          "primitive":  "BOOL"
+                        "6": {
+                          "primitive": "BOOL"
                         }
                       },
-                      "sourceInfo":  {
-                        "location":  "<input>",
-                        "lineOffsets":  [
+                      "sourceInfo": {
+                        "location": "<input>",
+                        "lineOffsets": [
                           41
                         ],
-                        "positions":  {
-                          "1":  0,
-                          "2":  7,
-                          "3":  16,
-                          "4":  21,
-                          "5":  33,
-                          "6":  36
+                        "positions": {
+                          "1": 0,
+                          "2": 7,
+                          "3": 16,
+                          "4": 21,
+                          "5": 33,
+                          "6": 36
                         }
                       },
-                      "expr":  {
-                        "id":  "5",
-                        "callExpr":  {
-                          "function":  "_==_",
-                          "args":  [
+                      "expr": {
+                        "id": "5",
+                        "callExpr": {
+                          "function": "_==_",
+                          "args": [
                             {
-                              "id":  "4",
-                              "selectExpr":  {
-                                "operand":  {
-                                  "id":  "3",
-                                  "selectExpr":  {
-                                    "operand":  {
-                                      "id":  "2",
-                                      "selectExpr":  {
-                                        "operand":  {
-                                          "id":  "1",
-                                          "identExpr":  {
-                                            "name":  "request"
+                              "id": "4",
+                              "selectExpr": {
+                                "operand": {
+                                  "id": "3",
+                                  "selectExpr": {
+                                    "operand": {
+                                      "id": "2",
+                                      "selectExpr": {
+                                        "operand": {
+                                          "id": "1",
+                                          "identExpr": {
+                                            "name": "request"
                                           }
                                         },
-                                        "field":  "resource"
+                                        "field": "resource"
                                       }
                                     },
-                                    "field":  "attr"
+                                    "field": "attr"
                                   }
                                 },
-                                "field":  "dev_record"
+                                "field": "dev_record"
                               }
                             },
                             {
-                              "id":  "6",
-                              "constExpr":  {
-                                "boolValue":  true
+                              "id": "6",
+                              "constExpr": {
+                                "boolValue": true
                               }
                             }
                           ]
@@ -110,16 +110,152 @@
                     }
                   }
                 },
-                "effect":  "EFFECT_ALLOW"
+                "effect": "EFFECT_ALLOW",
+                "output": {
+                  "original": "\"donald_duck_dev_record_override:%s\".format([request.resource.attr.dev_record == true])",
+                  "checked": {
+                    "referenceMap": {
+                      "2": {
+                        "overloadId": [
+                          "string_format"
+                        ]
+                      },
+                      "4": {
+                        "name": "request"
+                      },
+                      "8": {
+                        "overloadId": [
+                          "equals"
+                        ]
+                      }
+                    },
+                    "typeMap": {
+                      "1": {
+                        "primitive": "STRING"
+                      },
+                      "2": {
+                        "primitive": "STRING"
+                      },
+                      "3": {
+                        "listType": {
+                          "elemType": {
+                            "primitive": "BOOL"
+                          }
+                        }
+                      },
+                      "4": {
+                        "messageType": "cerbos.engine.v1.CheckInput"
+                      },
+                      "5": {
+                        "messageType": "cerbos.engine.v1.Resource"
+                      },
+                      "6": {
+                        "mapType": {
+                          "keyType": {
+                            "primitive": "STRING"
+                          },
+                          "valueType": {
+                            "dyn": {}
+                          }
+                        }
+                      },
+                      "7": {
+                        "dyn": {}
+                      },
+                      "8": {
+                        "primitive": "BOOL"
+                      },
+                      "9": {
+                        "primitive": "BOOL"
+                      }
+                    },
+                    "sourceInfo": {
+                      "location": "<input>",
+                      "lineOffsets": [
+                        88
+                      ],
+                      "positions": {
+                        "1": 0,
+                        "2": 43,
+                        "3": 44,
+                        "4": 45,
+                        "5": 52,
+                        "6": 61,
+                        "7": 66,
+                        "8": 78,
+                        "9": 81
+                      }
+                    },
+                    "expr": {
+                      "id": "2",
+                      "callExpr": {
+                        "target": {
+                          "id": "1",
+                          "constExpr": {
+                            "stringValue": "donald_duck_dev_record_override:%s"
+                          }
+                        },
+                        "function": "format",
+                        "args": [
+                          {
+                            "id": "3",
+                            "listExpr": {
+                              "elements": [
+                                {
+                                  "id": "8",
+                                  "callExpr": {
+                                    "function": "_==_",
+                                    "args": [
+                                      {
+                                        "id": "7",
+                                        "selectExpr": {
+                                          "operand": {
+                                            "id": "6",
+                                            "selectExpr": {
+                                              "operand": {
+                                                "id": "5",
+                                                "selectExpr": {
+                                                  "operand": {
+                                                    "id": "4",
+                                                    "identExpr": {
+                                                      "name": "request"
+                                                    }
+                                                  },
+                                                  "field": "resource"
+                                                }
+                                              },
+                                              "field": "attr"
+                                            }
+                                          },
+                                          "field": "dev_record"
+                                        }
+                                      },
+                                      {
+                                        "id": "9",
+                                        "constExpr": {
+                                          "boolValue": true
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             ]
           },
-          "salary_record":  {
-            "actionRules":  [
+          "salary_record": {
+            "actionRules": [
               {
-                "action":  "*",
-                "name":  "salary_record_rule-001",
-                "effect":  "EFFECT_DENY"
+                "action": "*",
+                "name": "salary_record_rule-001",
+                "effect": "EFFECT_DENY"
               }
             ]
           }
