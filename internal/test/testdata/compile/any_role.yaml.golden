@@ -1,59 +1,59 @@
 {
-  "fqn":  "cerbos.resource.leave_request.v20210210",
-  "resourcePolicy":  {
-    "meta":  {
-      "fqn":  "cerbos.resource.leave_request.v20210210",
-      "resource":  "leave_request",
-      "version":  "20210210"
+  "fqn": "cerbos.resource.leave_request.v20210210",
+  "resourcePolicy": {
+    "meta": {
+      "fqn": "cerbos.resource.leave_request.v20210210",
+      "resource": "leave_request",
+      "version": "20210210"
     },
-    "policies":  [
+    "policies": [
       {
-        "derivedRoles":  {
-          "tester":  {
-            "name":  "tester",
-            "parentRoles":  {
-              "*":  {}
+        "derivedRoles": {
+          "tester": {
+            "name": "tester",
+            "parentRoles": {
+              "*": {}
             }
           }
         },
-        "rules":  [
+        "rules": [
           {
-            "name":  "wildcard",
-            "actions":  {
-              "*":  {}
+            "name": "wildcard",
+            "actions": {
+              "*": {}
             },
-            "roles":  {
-              "*":  {}
+            "roles": {
+              "*": {}
             },
-            "effect":  "EFFECT_ALLOW"
+            "effect": "EFFECT_ALLOW"
           },
           {
-            "name":  "rule-002",
-            "actions":  {
-              "create":  {}
+            "name": "rule-002",
+            "actions": {
+              "create": {}
             },
-            "derivedRoles":  {
-              "tester":  {}
+            "derivedRoles": {
+              "tester": {}
             },
-            "effect":  "EFFECT_ALLOW"
+            "effect": "EFFECT_ALLOW"
           }
         ],
-        "schemas":  {
-          "principalSchema":  {
-            "ref":  "cerbos:///complex_object.json"
+        "schemas": {
+          "principalSchema": {
+            "ref": "cerbos:///complex_object.json"
           },
-          "resourceSchema":  {
-            "ref":  "cerbos:///complex_object.json"
+          "resourceSchema": {
+            "ref": "cerbos:///complex_object.json"
           }
         }
       }
     ],
-    "schemas":  {
-      "principalSchema":  {
-        "ref":  "cerbos:///complex_object.json"
+    "schemas": {
+      "principalSchema": {
+        "ref": "cerbos:///complex_object.json"
       },
-      "resourceSchema":  {
-        "ref":  "cerbos:///complex_object.json"
+      "resourceSchema": {
+        "ref": "cerbos:///complex_object.json"
       }
     }
   }
