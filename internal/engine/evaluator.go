@@ -156,14 +156,15 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 			if rule.Output != nil {
 				octx := rctx.StartOutput(rule.Name)
-				output, err := rpe.evalParams.evaluateStrCELExpr(rule.Output.Checked, variables, input)
+				output, err := rpe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input)
 				if err != nil {
 					octx.Skipped(err, "Error evaluating output")
+					continue
 				}
 
 				result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
 					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-					Val: structpb.NewStringValue(output),
+					Val: output,
 				})
 			}
 
@@ -255,14 +256,15 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 				if rule.Output != nil {
 					octx := rctx.StartOutput(rule.Name)
-					output, err := ppe.evalParams.evaluateStrCELExpr(rule.Output.Checked, variables, input)
+					output, err := ppe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input)
 					if err != nil {
 						octx.Skipped(err, "Error evaluating output")
+						continue
 					}
 
 					result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
 						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-						Val: structpb.NewStringValue(output),
+						Val: output,
 					})
 				}
 			}
@@ -389,22 +391,22 @@ func (ep evalParams) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map
 	return boolVal, nil
 }
 
-func (ep evalParams) evaluateStrCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (string, error) {
+func (ep evalParams) evaluateProtobufValueCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (*structpb.Value, error) {
 	val, err := ep.evaluateCELExpr(expr, variables, input)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if val == nil {
-		return "", nil
+		return nil, nil
 	}
 
-	strVal, ok := val.(string)
-	if !ok {
-		return "", nil
+	pbVal, err := structpb.NewValue(val)
+	if err != nil {
+		return nil, err
 	}
 
-	return strVal, nil
+	return pbVal, nil
 }
 
 func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (any, error) {
