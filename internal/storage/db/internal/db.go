@@ -213,6 +213,31 @@ func (s *dbStorage) LoadSchema(ctx context.Context, urlVar string) (io.ReadClose
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
+	mIDs := make([]namer.ModuleID, 0, len(policies))
+	for _, p := range policies {
+		if p.Disabled {
+			mIDs = append(mIDs, p.ID)
+		}
+	}
+
+	if len(mIDs) > 0 {
+		hasDescendants, err := s.HasDescendants(ctx, mIDs...)
+		if err != nil {
+			return fmt.Errorf("failed to get descendants for policies: %w", err)
+		}
+
+		var brokenChainPolicies []string
+		for _, p := range policies {
+			if has, ok := hasDescendants[p.ID]; ok && has {
+				brokenChainPolicies = append(brokenChainPolicies, namer.PolicyKey(p.Policy))
+			}
+		}
+
+		if len(brokenChainPolicies) > 0 {
+			return db.ErrBreaksScopeChain{PolicyKeys: brokenChainPolicies}
+		}
+	}
+
 	events := make([]storage.Event, len(policies))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for i, p := range policies {
