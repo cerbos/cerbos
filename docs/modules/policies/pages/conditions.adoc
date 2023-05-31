@@ -369,7 +369,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | Function | Description | Example 
 | base64.encode | Encode as base64 | base64.encode(bytes("hello")) == "aGVsbG8="
 | base64.decode | Decode base64    | base64.decode("aGVsbG8=") == bytes("hello")
-| charAt   | Get the character at given index | R.attr.department.chartAt(1) == 'a'
+| charAt   | Get the character at given index | R.attr.department.charAt(1) == 'a'
 | contains | Check whether a string contains the given substring | R.attr.department.contains("arket")
 | endsWith | Check whether a string has the given suffix | R.attr.department.endsWith("ing")
 | format   | Format a string with the given arguments | "department_%s_%d".format(["marketing", 1])
