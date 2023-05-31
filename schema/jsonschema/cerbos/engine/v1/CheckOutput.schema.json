@@ -26,6 +26,18 @@
         }
       }
     },
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
     "cerbos.schema.v1.ValidationError": {
       "type": "object",
       "additionalProperties": false,
@@ -48,6 +60,10 @@
         "SOURCE_PRINCIPAL",
         "SOURCE_RESOURCE"
       ]
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "type": "object",
@@ -63,6 +79,12 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
       }
     },
     "requestId": {

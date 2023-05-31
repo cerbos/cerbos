@@ -1,0 +1,13 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: terry_tibbs
+  version: "default"
+  rules:
+    - resource: equipment_request
+      actions:
+        - action: "create"
+          effect: EFFECT_ALLOW
+          output:
+            expr: |-
+              ["foo", ["bar", true]]

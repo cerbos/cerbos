@@ -36,6 +36,7 @@ func TestCloneResult(t *testing.T) {
 		"principal_policies/policy_02_acme.hr.yaml",
 		"principal_policies/policy_02_acme.yaml",
 		"principal_policies/policy_03.yaml",
+		"principal_policies/policy_04.yaml",
 		"resource_policies/disabled_policy_01.yaml",
 		"resource_policies/policy_01.yaml",
 		"resource_policies/policy_02.yaml",
@@ -46,5 +47,7 @@ func TestCloneResult(t *testing.T) {
 		"resource_policies/policy_05_acme.hr.yaml",
 		"resource_policies/policy_05_acme.yaml",
 		"resource_policies/policy_06.yaml",
+		"resource_policies/policy_07.yaml",
+		"resource_policies/policy_08.yaml",
 	}, result.updateOrAdd)
 }

@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -21,8 +22,10 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
@@ -152,6 +155,19 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
 			rctx := sctx.StartRule(rule.Name)
+
+			if rule.Output != nil {
+				octx := rctx.StartOutput(rule.Name)
+
+				output := &enginev1.OutputEntry{
+					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
+					Val: rpe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
+				}
+				result.Outputs = append(result.Outputs, output)
+
+				octx.ComputedOutput(output)
+			}
+
 			if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
 				rctx.Skipped(nil, "No matching roles or derived roles")
 				continue
@@ -237,6 +253,18 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.AppliedEffect(rule.Effect, "")
 				}
+
+				if rule.Output != nil {
+					octx := rctx.StartOutput(rule.Name)
+
+					output := &enginev1.OutputEntry{
+						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
+						Val: ppe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
+					}
+					result.Outputs = append(result.Outputs, output)
+
+					octx.ComputedOutput(output)
+				}
 			}
 		}
 	}
@@ -250,7 +278,7 @@ func (ep evalParams) evaluateVariables(tctx tracer.Context, variables map[string
 	evalVars := make(map[string]any, len(variables))
 	for varName, varExpr := range variables {
 		vctx := tctx.StartVariable(varName, varExpr.Original)
-		val, err := ep.evaluateCELExpr(varExpr.Checked, evalVars, input)
+		val, err := ep.evaluateCELExprToRaw(varExpr.Checked, evalVars, input)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", varName, varExpr.Original, err))
@@ -344,7 +372,7 @@ func (ep evalParams) satisfiesCondition(tctx tracer.Context, cond *runtimev1.Con
 }
 
 func (ep evalParams) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (bool, error) {
-	val, err := ep.evaluateCELExpr(expr, variables, input)
+	val, err := ep.evaluateCELExprToRaw(expr, variables, input)
 	if err != nil {
 		return false, err
 	}
@@ -361,7 +389,31 @@ func (ep evalParams) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map
 	return boolVal, nil
 }
 
-func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (any, error) {
+func (ep evalParams) evaluateProtobufValueCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) *structpb.Value {
+	result, err := ep.evaluateCELExpr(expr, variables, input)
+	if err != nil {
+		return structpb.NewStringValue("<failed to evaluate expression>")
+	}
+
+	if result == nil {
+		return nil
+	}
+
+	val, err := result.ConvertToNative(reflect.TypeOf(&structpb.Value{}))
+	if err != nil {
+		return structpb.NewStringValue("<failed to convert evaluation to protobuf value>")
+	}
+
+	pbVal, ok := val.(*structpb.Value)
+	if !ok {
+		// Something is broken in `ConvertToNative`
+		return structpb.NewStringValue("<failed to convert evaluation to protobuf value>")
+	}
+
+	return pbVal
+}
+
+func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (ref.Val, error) {
 	if expr == nil {
 		return nil, nil
 	}
@@ -383,6 +435,19 @@ func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[str
 		return nil, err
 	}
 
+	return result, nil
+}
+
+func (ep evalParams) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (any, error) {
+	result, err := ep.evaluateCELExpr(expr, variables, input)
+	if err != nil {
+		return nil, err
+	}
+
+	if result == nil {
+		return nil, nil
+	}
+
 	return result.Value(), nil
 }
 
@@ -397,6 +462,7 @@ type PolicyEvalResult struct {
 	EffectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
 	ValidationErrors      []*schemav1.ValidationError
+	Outputs               []*enginev1.OutputEntry
 }
 
 func newEvalResult(actions []string) *PolicyEvalResult {
@@ -404,6 +470,7 @@ func newEvalResult(actions []string) *PolicyEvalResult {
 		Effects:               make(map[string]EffectInfo, len(actions)),
 		EffectiveDerivedRoles: make(map[string]struct{}),
 		toResolve:             make(map[string]struct{}, len(actions)),
+		Outputs:               []*enginev1.OutputEntry{},
 	}
 
 	for _, a := range actions {

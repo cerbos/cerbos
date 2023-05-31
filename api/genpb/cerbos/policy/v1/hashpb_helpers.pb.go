@@ -197,6 +197,9 @@ func cerbos_engine_v1_Trace_Component_hashpb_sum(m *v1.Trace_Component, hasher h
 					cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(t.Variable, hasher, ignore)
 				}
 
+			case *v1.Trace_Component_Output:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Output))
+
 			}
 		}
 	}
@@ -358,6 +361,13 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *Metadata, hasher hash.Hash, ignore 
 	}
 }
 
+func cerbos_policy_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Output.expr"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Expr))
+
+	}
+}
+
 func cerbos_policy_v1_Policy_hashpb_sum(m *Policy, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.Policy.api_version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ApiVersion))
@@ -461,6 +471,12 @@ func cerbos_policy_v1_PrincipalRule_Action_hashpb_sum(m *PrincipalRule_Action, h
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.PrincipalRule.Action.output"]; !ok {
+		if m.Output != nil {
+			cerbos_policy_v1_Output_hashpb_sum(m.Output, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_policy_v1_PrincipalRule_hashpb_sum(m *PrincipalRule, hasher hash.Hash, ignore map[string]struct{}) {
@@ -556,6 +572,12 @@ func cerbos_policy_v1_ResourceRule_hashpb_sum(m *ResourceRule, hasher hash.Hash,
 	}
 	if _, ok := ignore["cerbos.policy.v1.ResourceRule.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.ResourceRule.output"]; !ok {
+		if m.Output != nil {
+			cerbos_policy_v1_Output_hashpb_sum(m.Output, hasher, ignore)
+		}
 
 	}
 }

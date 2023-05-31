@@ -884,6 +884,35 @@ func (m *ResourceRule) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if all {
+		switch v := interface{}(m.GetOutput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ResourceRuleValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ResourceRuleValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOutput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourceRuleValidationError{
+				field:  "Output",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return ResourceRuleMultiError(errors)
 	}
@@ -2086,6 +2115,106 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MatchValidationError{}
+
+// Validate checks the field values on Output with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Output) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Output with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in OutputMultiError, or nil if none found.
+func (m *Output) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Output) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Expr
+
+	if len(errors) > 0 {
+		return OutputMultiError(errors)
+	}
+
+	return nil
+}
+
+// OutputMultiError is an error wrapping multiple validation errors returned by
+// Output.ValidateAll() if the designated constraints aren't met.
+type OutputMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m OutputMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m OutputMultiError) AllErrors() []error { return m }
+
+// OutputValidationError is the validation error returned by Output.Validate if
+// the designated constraints aren't met.
+type OutputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e OutputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e OutputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e OutputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e OutputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e OutputValidationError) ErrorName() string { return "OutputValidationError" }
+
+// Error satisfies the builtin error interface
+func (e OutputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sOutput.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = OutputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = OutputValidationError{}
 
 // Validate checks the field values on Schemas with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -3523,6 +3652,35 @@ func (m *PrincipalRule_Action) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetOutput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PrincipalRule_ActionValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PrincipalRule_ActionValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOutput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PrincipalRule_ActionValidationError{
+				field:  "Output",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if len(errors) > 0 {

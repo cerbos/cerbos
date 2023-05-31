@@ -1,0 +1,24 @@
+---
+apiVersion: api.cerbos.dev/v1
+variables:
+  pending_approval: ("PENDING_APPROVAL")
+resourcePolicy:
+  scope: "acme"
+  version: "default"
+  importDerivedRoles:
+    - beta
+  resource: equipment_request
+  rules:
+    - actions: ["create"]
+      derivedRoles:
+        - any_employee
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.department == P.attr.department
+              - expr: P.attr.team == "design"
+      output:
+        expr: |-
+          "create_allowed:%s".format([request.principal.id])

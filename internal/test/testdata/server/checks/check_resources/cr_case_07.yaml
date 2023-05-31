@@ -1,0 +1,83 @@
+---
+description: "With principal output"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResources:
+  input: {
+    "requestId": "test",
+    "principal": {
+      "id": "terry_tibbs",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resources": [
+      {
+        "actions": [
+          "view:public",
+          "approve",
+          "create"
+        ],
+        "resource": {
+          "kind": "equipment_request",
+          "id": "YY125",
+          "attr": {
+            "department": "engineering",
+            "geography": "GB",
+            "id": "YY125",
+            "owner": "jenny",
+            "team": "backend",
+            "status": "DRAFT"
+          }
+        }
+      }
+    ]
+  }
+  wantResponse: {
+    "requestId": "test",
+    "results": [
+      {
+        "resource": {
+          "id": "YY125",
+          "kind": "equipment_request",
+        },
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY",
+          "create": "EFFECT_ALLOW"
+        },
+        "outputs": [
+          {
+            "src": "cerbos.principal.terry_tibbs.vdefault#equipment_request_rule-001",
+            "val": ["foo", ["bar", true]]
+          },
+          {
+            "src": "cerbos.resource.equipment_request.vdefault#public-view",
+            "val": {
+              "id": "terry_tibbs",
+              "keys": "YY125",
+              "formatted_string": "id:terry_tibbs",
+              "some_bool": true,
+              "some_list": ["foo", "bar"],
+              "something_nested": {
+                "nested_str": "foo",
+                "nested_bool": false,
+                "nested_list": ["nest_foo", 1.01],
+                "nested_formatted_string": "id:terry_tibbs"
+              },
+            }
+          },
+          {
+            "src": "cerbos.resource.equipment_request.vdefault#rule-002",
+            "val": "approval_status:terry_tibbs:DRAFT"
+          },
+        ]
+      }
+    ]
+  }

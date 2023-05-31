@@ -48,6 +48,7 @@ message RunnableResourcePolicySet {
       map<string, google.protobuf.Empty> roles = 4;
       Condition condition = 5;
       cerbos.effect.v1.Effect effect = 6;
+      Expr output = 7;
     }
 
     string scope = 1;
@@ -93,6 +94,7 @@ message RunnablePrincipalPolicySet {
       string name = 2;
       Condition condition = 3;
       cerbos.effect.v1.Effect effect = 4;
+      Expr output = 5;
     }
 
     message ResourceRules {

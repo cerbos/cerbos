@@ -1,12 +1,16 @@
 {
   "apiVersion": "api.cerbos.cloud/v1",
   "policyIndex": {
+    "cerbos.principal.daisy_duck.vdefault": "policies/1E0CD2615BE3760B",
     "cerbos.principal.donald_duck.v20210210": "policies/1CC91E277263674D",
     "cerbos.principal.donald_duck.vdefault": "policies/2F26F3660A97BECD",
     "cerbos.principal.donald_duck.vdefault/acme": "policies/4C6062CFBE8627DB",
     "cerbos.principal.donald_duck.vdefault/acme.hr": "policies/60C13DA6FD1DF10C",
+    "cerbos.principal.terry_tibbs.vdefault": "policies/BCD8E5E5F425900C",
     "cerbos.resource.account.vdefault": "policies/EE58DE7B0F7DA6B9",
     "cerbos.resource.album_object.vdefault": "policies/684ED25FF04663F2",
+    "cerbos.resource.equipment_request.vdefault": "policies/51F53279EC2F9999",
+    "cerbos.resource.equipment_request.vdefault/acme": "policies/4E007D10C67C7E53",
     "cerbos.resource.leave_request.v20210210": "policies/EAE733C912F22DA",
     "cerbos.resource.leave_request.vdefault": "policies/EF8C9BEB57967AA0",
     "cerbos.resource.leave_request.vdefault/acme": "policies/827F815FFA0C2AC5",
@@ -22,7 +26,7 @@
     "resources/salary_record.json"
   ],
   "meta": {
-    "identifier": "h1:E/zAwBnyaRGZJ7pF5C2hmu5jz2pM4ptsET/9EzG7lwM=",
-    "source": "/home/cell/work/cerbos/internal/test/testdata/store"
+    "identifier": "h1:EVPzJ8jAvo0+qEaXJPe8roBCAdfGAdowddMAPMkxZY8=",
+    "source": "/Users/samuellock/cerbos/cerbos/internal/test/testdata/store"
   }
 }

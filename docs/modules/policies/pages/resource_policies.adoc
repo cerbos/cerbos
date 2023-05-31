@@ -32,8 +32,11 @@ resourcePolicy:
       condition:
         match:
           expr: request.resource.attr.public == true
+      output: <9>
+        expr: |-
+          "view_allowed:%s".format([request.principal.id])
 
-    - name: moderator_rule <9>
+    - name: moderator_rule <10>
       actions: ['view', 'delete']
       effect: EFFECT_ALLOW
       condition:
@@ -41,14 +44,14 @@ resourcePolicy:
           expr: V.is_corporate_network
       derivedRoles:
         - abuse_moderator
-  schemas: <10>
+  schemas: <11>
     principalSchema:
-      ref: cerbos:///principal.json <11>
+      ref: cerbos:///principal.json <12>
     resourceSchema:
-      ref: cerbos:///album/object.json <12>
+      ref: cerbos:///album/object.json <13>
 ----
 <1> Optional variables section. Each variable is evaluated before any rule condition.
-A variable expression can contain anything that condition expression can have.
+A variable expression can contain anything that condition expressions can have.
 <2> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
 <3> Optional scope for this policy. See xref:scoped_policies.adoc[].
 <4> Import a set of derived roles.
@@ -56,7 +59,9 @@ A variable expression can contain anything that condition expression can have.
 <6> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <7> This rule applies to a derived role.
 <8> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
-<9> Optional name for the rule.
-<10> Optional section for defining schemas that apply to this resource kind.
-<11> Optional schema for validating the principal attributes.
-<12> Optional schema for validating the resource attributes.
+<9> Optional output for the rule. You can define a single expression per rule which will be evaluated and output in the response.
+An output expression can contain anything that condition expressions can have.
+<10> Optional name for the rule.
+<11> Optional section for defining schemas that apply to this resource kind.
+<12> Optional schema for validating the principal attributes.
+<13> Optional schema for validating the resource attributes.

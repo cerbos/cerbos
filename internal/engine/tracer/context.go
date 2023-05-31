@@ -27,9 +27,11 @@ type Context interface {
 	StartScope(scope string) Context
 	StartVariable(name, expr string) Context
 	StartVariables() Context
+	StartOutput(ruleName string) Context
 	Activated()
 	AppliedEffect(effect effectv1.Effect, message string)
 	ComputedBoolResult(result bool, err error, message string)
+	ComputedOutput(output *enginev1.OutputEntry)
 	ComputedResult(result any)
 	Failed(err error, message string)
 	Skipped(err error, message string)
@@ -133,6 +135,13 @@ func (c *context) StartVariables() Context {
 	return c.start(&enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_VARIABLES})
 }
 
+func (c *context) StartOutput(ruleName string) Context {
+	return c.start(&enginev1.Trace_Component{
+		Kind:    enginev1.Trace_Component_KIND_OUTPUT,
+		Details: &enginev1.Trace_Component_Output{Output: ruleName},
+	})
+}
+
 func (c *context) start(component *enginev1.Trace_Component) Context {
 	return &context{
 		sink:       c.sink,
@@ -160,6 +169,13 @@ func (c *context) ComputedBoolResult(result bool, err error, message string) {
 		Error:   errorString(err),
 		Message: message,
 		Result:  structpb.NewBoolValue(result),
+	})
+}
+
+func (c *context) ComputedOutput(output *enginev1.OutputEntry) {
+	c.addTrace(&enginev1.Trace_Event{
+		Status: enginev1.Trace_Event_STATUS_ACTIVATED,
+		Result: protobufValue(output),
 	})
 }
 
@@ -245,11 +261,15 @@ func (c noopContext) StartVariable(string, string) Context { return c }
 
 func (c noopContext) StartVariables() Context { return c }
 
+func (c noopContext) StartOutput(string) Context { return c }
+
 func (noopContext) Activated() {}
 
 func (noopContext) AppliedEffect(effectv1.Effect, string) {}
 
 func (noopContext) ComputedBoolResult(bool, error, string) {}
+
+func (noopContext) ComputedOutput(*enginev1.OutputEntry) {}
 
 func (noopContext) ComputedResult(any) {}
 

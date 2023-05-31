@@ -2517,6 +2517,35 @@ func (m *RunnableResourcePolicySet_Policy_Rule) validate(all bool) error {
 
 	// no validation rules for Effect
 
+	if all {
+		switch v := interface{}(m.GetOutput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOutput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunnableResourcePolicySet_Policy_RuleValidationError{
+				field:  "Output",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return RunnableResourcePolicySet_Policy_RuleMultiError(errors)
 	}
@@ -3074,6 +3103,35 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) validate(all bool) error 
 	}
 
 	// no validation rules for Effect
+
+	if all {
+		switch v := interface{}(m.GetOutput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnablePrincipalPolicySet_Policy_ActionRuleValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnablePrincipalPolicySet_Policy_ActionRuleValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOutput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunnablePrincipalPolicySet_Policy_ActionRuleValidationError{
+				field:  "Output",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return RunnablePrincipalPolicySet_Policy_ActionRuleMultiError(errors)

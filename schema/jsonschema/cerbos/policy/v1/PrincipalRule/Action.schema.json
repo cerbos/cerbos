@@ -99,6 +99,15 @@
           "minItems": 1
         }
       }
+    },
+    "cerbos.policy.v1.Output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expr": {
+          "type": "string"
+        }
+      }
     }
   },
   "type": "object",
@@ -125,6 +134,9 @@
     "name": {
       "type": "string",
       "pattern": "^([A-Za-z][\\--\\.0-9@-Z_a-z]*)*$"
+    },
+    "output": {
+      "$ref": "#/definitions/cerbos.policy.v1.Output"
     }
   }
 }

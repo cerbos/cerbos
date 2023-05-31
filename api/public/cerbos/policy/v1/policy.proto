@@ -82,6 +82,7 @@ message ResourceRule {
     ]
   }];
   string name = 6 [(validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\@\\.\\-]*)*$"];
+  Output output = 7;
 }
 
 message PrincipalPolicy {
@@ -105,6 +106,7 @@ message PrincipalRule {
       ]
     }];
     string name = 4 [(validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\@\\.\\-]*)*$"];
+    Output output = 5;
   }
 
   string resource = 1 [(validate.rules).string = {min_len: 1}];
@@ -151,6 +153,10 @@ message Match {
     ExprList none = 3;
     string expr = 4;
   }
+}
+
+message Output {
+  string expr = 1;
 }
 
 message Schemas {

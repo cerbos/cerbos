@@ -163,6 +163,18 @@ message CheckOutput {
   map<string, ActionEffect> actions = 3;
   repeated string effective_derived_roles = 4;
   repeated cerbos.schema.v1.ValidationError validation_errors = 5;
+  repeated OutputEntry outputs = 6;
+}
+
+message OutputEntry {
+  string src = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Rule that matched to produce this output."
+    example: "\"resource.expense.v1/acme#rule-001\""
+  }];
+  google.protobuf.Value val = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Dynamic output, determined by user defined rule output."
+    example: "\"some_string\""
+  }];
 }
 
 message Resource {
@@ -294,6 +306,7 @@ message Trace {
       KIND_SCOPE = 11;
       KIND_VARIABLE = 12;
       KIND_VARIABLES = 13;
+      KIND_OUTPUT = 14;
     }
 
     message Variable {
@@ -312,6 +325,7 @@ message Trace {
       string rule = 8;
       string scope = 9;
       Variable variable = 10;
+      string output = 11;
     }
   }
 
