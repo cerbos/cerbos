@@ -10,4 +10,4 @@ principalPolicy:
           effect: EFFECT_ALLOW
           output:
             expr: |-
-              'create_override_for_terry_tibbs_talk_to_me'
+              ["foo", ["bar", true]]

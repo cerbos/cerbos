@@ -15,7 +15,19 @@ resourcePolicy:
       name: public-view
       output:
         expr: |-
-          "view:public_allowed:%s".format([request.principal.id])
+          {
+            "id": P.id,
+            "keys": R.attr.id,
+            "formatted_%s".format(["string"]): "id:%s".format([P.id]),
+            "some_bool": true,
+            "some_list": ["foo", "bar"],
+            "something_nested": {
+              "nested_str": "foo",
+              "nested_bool": false,
+              "nested_list": ["nest_foo", 1.01],
+              "nested_formatted_%s".format(["string"]): "id:%s".format([P.id]),
+            },
+          }
 
     - actions: ["approve"]
       condition:

@@ -31,6 +31,7 @@ type Context interface {
 	Activated()
 	AppliedEffect(effect effectv1.Effect, message string)
 	ComputedBoolResult(result bool, err error, message string)
+	ComputedOutput(output *enginev1.OutputEntry)
 	ComputedResult(result any)
 	Failed(err error, message string)
 	Skipped(err error, message string)
@@ -171,6 +172,13 @@ func (c *context) ComputedBoolResult(result bool, err error, message string) {
 	})
 }
 
+func (c *context) ComputedOutput(output *enginev1.OutputEntry) {
+	c.addTrace(&enginev1.Trace_Event{
+		Status: enginev1.Trace_Event_STATUS_ACTIVATED,
+		Result: protobufValue(output),
+	})
+}
+
 func (c *context) ComputedResult(result any) {
 	c.addTrace(&enginev1.Trace_Event{
 		Status: enginev1.Trace_Event_STATUS_ACTIVATED,
@@ -260,6 +268,8 @@ func (noopContext) Activated() {}
 func (noopContext) AppliedEffect(effectv1.Effect, string) {}
 
 func (noopContext) ComputedBoolResult(bool, error, string) {}
+
+func (noopContext) ComputedOutput(*enginev1.OutputEntry) {}
 
 func (noopContext) ComputedResult(any) {}
 

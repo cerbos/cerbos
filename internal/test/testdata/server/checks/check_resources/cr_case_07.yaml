@@ -55,11 +55,23 @@ checkResources:
         "outputs": [
           {
             "src": "cerbos.principal.terry_tibbs.vdefault#equipment_request_rule-001",
-            "val": "create_override_for_terry_tibbs_talk_to_me"
+            "val": ["foo", ["bar", true]]
           },
           {
             "src": "cerbos.resource.equipment_request.vdefault#public-view",
-            "val": "view:public_allowed:terry_tibbs"
+            "val": {
+              "id": "terry_tibbs",
+              "keys": "YY125",
+              "formatted_string": "id:terry_tibbs",
+              "some_bool": true,
+              "some_list": ["foo", "bar"],
+              "something_nested": {
+                "nested_str": "foo",
+                "nested_bool": false,
+                "nested_list": ["nest_foo", 1.01],
+                "nested_formatted_string": "id:terry_tibbs"
+              },
+            }
           },
           {
             "src": "cerbos.resource.equipment_request.vdefault#rule-002",

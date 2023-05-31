@@ -81,7 +81,19 @@ checkResources:
           },
           {
             "src": "cerbos.resource.equipment_request.vdefault#public-view",
-            "val": "view:public_allowed:john"
+            "val": {
+              "id": "john",
+              "keys": "XX125",
+              "formatted_string": "id:john",
+              "some_bool": true,
+              "some_list": ["foo", "bar"],
+              "something_nested": {
+                "nested_str": "foo",
+                "nested_bool": false,
+                "nested_list": ["nest_foo", 1.01],
+                "nested_formatted_string": "id:john"
+              },
+            }
           },
           {
             "src": "cerbos.resource.equipment_request.vdefault#rule-002",
@@ -102,7 +114,19 @@ checkResources:
         "outputs": [
           {
             "src": "cerbos.resource.equipment_request.vdefault#public-view",
-            "val": "view:public_allowed:john"
+            "val": {
+              "id": "john",
+              "keys": "YY125",
+              "formatted_string": "id:john",
+              "some_bool": true,
+              "some_list": ["foo", "bar"],
+              "something_nested": {
+                "nested_str": "foo",
+                "nested_bool": false,
+                "nested_list": ["nest_foo", 1.01],
+                "nested_formatted_string": "id:john"
+              },
+            }
           },
           {
             "src": "cerbos.resource.equipment_request.vdefault#rule-002",

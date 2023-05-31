@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const bundleID = "h1:J8ZoWJB5W+iLzqs5i7QRSKJ0S4+6MUwPz/KsWUv6/Zs="
+const bundleID = "h1:EVPzJ8jAvo0+qEaXJPe8roBCAdfGAdowddMAPMkxZY8="
 
 func TestRemoteSource(t *testing.T) {
 	bundlePath := filepath.Join(test.PathToDir(t, "bundle"), "bundle.crbp")
