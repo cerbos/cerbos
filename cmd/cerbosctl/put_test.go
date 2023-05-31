@@ -135,6 +135,24 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				}, listSchemas(t, clientCtx))
 			})
 
+			t.Run("put chain breaking policies", func(t *testing.T) {
+				p := mustNew(t, &root.Cli{})
+
+				ctx, err := p.Parse([]string{
+					"put",
+					policyKind,
+					filepath.Join("testdata", "disabled_policy_05_acme.yaml"),
+					filepath.Join("testdata", "disabled_policy_05_acme.hr.yaml"),
+				})
+				require.NoError(t, err)
+
+				err = ctx.Run(clientCtx, globals)
+				require.Error(t, err)
+
+				require.ErrorContains(t, err, "resource.leave_request.vdefault/acme")
+				require.ErrorContains(t, err, "resource.leave_request.vdefault/acme.hr")
+			})
+
 			t.Run("put schema", func(t *testing.T) {
 				put(t, clientCtx, globals, schemaKind, pathToSchema)
 				outSchema := getSchema(t, clientCtx, globals, schemaFileName)
