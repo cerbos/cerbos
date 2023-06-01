@@ -231,7 +231,7 @@ func RuleFQN(rpsMeta any, scope, ruleName string) string {
 		panic(fmt.Errorf("unknown runnable policy set meta type %T", m))
 	}
 
-	return fmt.Sprintf("%s#%s", policyFqn, ruleName)
+	return fmt.Sprintf("%s#%s", PolicyKeyFromFQN(policyFqn), ruleName)
 }
 
 type PolicyCoords struct {
