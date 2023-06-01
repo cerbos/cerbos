@@ -297,12 +297,12 @@ cerbosctl get rp --sort-by version
 
 .Get JSON
 ----
-cerbosctl get derived_roles my_derived_roles --format=json
+cerbosctl get derived_roles my_derived_roles --output=json
 ----
 
 .Get YAML
 ----
-cerbosctl get derived_roles my_derived_roles --format=yaml
+cerbosctl get derived_roles my_derived_roles --output=yaml
 ----
 
 [#put]
