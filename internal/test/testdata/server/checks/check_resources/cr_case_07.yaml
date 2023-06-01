@@ -54,11 +54,11 @@ checkResources:
         },
         "outputs": [
           {
-            "src": "cerbos.principal.terry_tibbs.vdefault#equipment_request_rule-001",
+            "src": "principal.terry_tibbs.vdefault#equipment_request_rule-001",
             "val": ["foo", ["bar", true]]
           },
           {
-            "src": "cerbos.resource.equipment_request.vdefault#public-view",
+            "src": "resource.equipment_request.vdefault#public-view",
             "val": {
               "id": "terry_tibbs",
               "keys": "YY125",
@@ -74,7 +74,7 @@ checkResources:
             }
           },
           {
-            "src": "cerbos.resource.equipment_request.vdefault#rule-002",
+            "src": "resource.equipment_request.vdefault#rule-002",
             "val": "approval_status:terry_tibbs:DRAFT"
           },
         ]

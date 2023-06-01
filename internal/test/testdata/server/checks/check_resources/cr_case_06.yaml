@@ -76,11 +76,11 @@ checkResources:
         },
         "outputs": [
           {
-            "src": "cerbos.resource.equipment_request.vdefault/acme#rule-001",
+            "src": "resource.equipment_request.vdefault/acme#rule-001",
             "val": "create_allowed:john"
           },
           {
-            "src": "cerbos.resource.equipment_request.vdefault#public-view",
+            "src": "resource.equipment_request.vdefault#public-view",
             "val": {
               "id": "john",
               "keys": "XX125",
@@ -96,7 +96,7 @@ checkResources:
             }
           },
           {
-            "src": "cerbos.resource.equipment_request.vdefault#rule-002",
+            "src": "resource.equipment_request.vdefault#rule-002",
             "val": "approval_status:john:DRAFT"
           }
         ]
@@ -113,7 +113,7 @@ checkResources:
         },
         "outputs": [
           {
-            "src": "cerbos.resource.equipment_request.vdefault#public-view",
+            "src": "resource.equipment_request.vdefault#public-view",
             "val": {
               "id": "john",
               "keys": "YY125",
@@ -129,7 +129,7 @@ checkResources:
             }
           },
           {
-            "src": "cerbos.resource.equipment_request.vdefault#rule-002",
+            "src": "resource.equipment_request.vdefault#rule-002",
             "val": "approval_status:john:DRAFT"
           }
         ]
