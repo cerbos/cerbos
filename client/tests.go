@@ -12,12 +12,16 @@ import (
 	"testing"
 	"time"
 
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/test"
+	"github.com/google/go-cmp/cmp"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 const timeout = 30 * time.Second
@@ -253,6 +257,78 @@ func TestGRPCClient(c Client) func(*testing.T) {
 				require.False(t, haveXX225.IsAllowed("delete"))
 				require.True(t, haveXX225.IsAllowed("create"))
 				require.Equal(t, "acme.hr", haveXX225.Resource.Scope)
+			}
+
+			t.Run("Direct", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.CheckResources(ctx, principal, resources)
+				check(t, have, err)
+			})
+
+			t.Run("WithPrincipal", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.WithPrincipal(principal).CheckResources(ctx, resources)
+				check(t, have, err)
+			})
+		})
+
+		t.Run("CheckResourcesOutput", func(t *testing.T) {
+			principal := NewPrincipal("john").
+				WithRoles("employee").
+				WithAttributes(map[string]any{
+					"department": "marketing",
+					"geography":  "GB",
+					"team":       "design",
+				})
+
+			resources := NewResourceBatch().Add(
+				NewResource("equipment_request", "XX125").
+					WithScope("acme").
+					WithAttributes(map[string]any{
+						"department": "marketing",
+						"geography":  "GB",
+						"id":         "XX125",
+						"owner":      "john",
+						"team":       "design",
+					}), "view:public", "approve", "create",
+			)
+
+			check := func(t *testing.T, have *CheckResourcesResponse, err error) {
+				t.Helper()
+				require.NoError(t, err)
+
+				haveXX125 := have.GetResource("XX125")
+				require.NoError(t, haveXX125.Err())
+				require.True(t, haveXX125.IsAllowed("view:public"))
+				require.False(t, haveXX125.IsAllowed("approve"))
+				require.True(t, haveXX125.IsAllowed("create"))
+				require.Equal(t, "acme", haveXX125.Resource.Scope)
+
+				wantStruct, err := structpb.NewStruct(map[string]any{
+					"id":               "john",
+					"keys":             "XX125",
+					"formatted_string": "id:john",
+					"some_bool":        true,
+					"some_list":        []any{"foo", "bar"},
+					"something_nested": map[string]any{
+						"nested_str":              "foo",
+						"nested_bool":             false,
+						"nested_list":             []any{"nest_foo", 1.01},
+						"nested_formatted_string": "id:john",
+					},
+				})
+				require.NoError(t, err, "Failed to create wanted output")
+				wantOutput1 := structpb.NewStructValue(wantStruct)
+				haveOutput1 := haveXX125.Output("resource.equipment_request.vdefault#public-view")
+				require.Empty(t, cmp.Diff(wantOutput1, haveOutput1, protocmp.Transform()))
+
+				wantOutput2 := structpb.NewStringValue("create_allowed:john")
+				haveOutput2 := haveXX125.Output("resource.equipment_request.vdefault/acme#rule-001")
+				require.Empty(t, cmp.Diff(wantOutput2, haveOutput2, protocmp.Transform()))
 			}
 
 			t.Run("Direct", func(t *testing.T) {

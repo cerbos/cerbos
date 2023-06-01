@@ -415,7 +415,9 @@ func (crbr *CheckResourceBatchResponse) MarshalJSON() ([]byte, error) {
 
 type ResourceResult struct {
 	*responsev1.CheckResourcesResponse_ResultEntry
-	err error
+	err        error
+	outputMap  map[string]*structpb.Value
+	outputOnce sync.Once
 }
 
 func (rr *ResourceResult) Err() error {
@@ -430,6 +432,28 @@ func (rr *ResourceResult) IsAllowed(action string) bool {
 	}
 
 	return false
+}
+
+func (rr *ResourceResult) buildOutputMap() {
+	rr.outputOnce.Do(func() {
+		if len(rr.GetOutputs()) == 0 {
+			return
+		}
+
+		rr.outputMap = make(map[string]*structpb.Value, len(rr.Outputs))
+		for _, o := range rr.Outputs {
+			rr.outputMap[o.GetSrc()] = o.GetVal()
+		}
+	})
+}
+
+func (rr *ResourceResult) Output(key string) *structpb.Value {
+	if rr == nil {
+		return nil
+	}
+
+	rr.buildOutputMap()
+	return rr.outputMap[key]
 }
 
 // MatchResource is a function that returns true if the given resource is of interest.
