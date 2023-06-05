@@ -135,7 +135,20 @@ This is the main API entrypoint for checking permissions for a set of resources.
         "view:public": "EFFECT_ALLOW",
         "approve": "EFFECT_DENY"
       },
-      "validationErrors": [ <5>
+      "outputs": [ <5>
+        {
+          "src": "resource.leave_request.v20210210/acme#rule-001", <6>
+          "val": "create_allowed:john" <7>
+        },
+        {
+          "src": "resource.leave_request.v20210210#public-view",
+          "val": {
+            "id": "john",
+            "keys": ["foo", "bar", "baz"]
+          }
+        }
+      ],
+      "validationErrors": [ <8>
         {
           "path": "/department",
           "message": "value must be one of \"marketing\", \"engineering\"",
@@ -147,17 +160,17 @@ This is the main API entrypoint for checking permissions for a set of resources.
           "source": "SOURCE_RESOURCE"
         }
       ],
-      "meta": { <6>
+      "meta": { <9>
         "actions": {
           "view:public": {
-            "matchedPolicy": "resource.leave_request.v20210210/acme.corp", <7>
-            "matchedScope": "acme" <8>
+            "matchedPolicy": "resource.leave_request.v20210210/acme.corp", <10>
+            "matchedScope": "acme" <11>
           },
           "approve": {
             "matchedPolicy": "resource.leave_request.v20210210/acme.corp"
           }
         },
-        "effectiveDerivedRoles": [ <9>
+        "effectiveDerivedRoles": [ <12>
           "employee_that_owns_the_record",
           "any_employee"
         ]
@@ -170,11 +183,14 @@ This is the main API entrypoint for checking permissions for a set of resources.
 <2> List of results. Items are in the same order as they were sent in the request.
 <3> Resource identifiers.
 <4> Access decisions for each of the actions.
-<5> Validation errors, if xref:policies:schemas.adoc[schema enforcement] is enabled and the request didn't conform to the schema.
-<6> Metadata (if `includeMeta` was true in the request)
-<7> Name of the policy that produced the decision for this action.
-<8> Name of the scope that was active when the decision was made for the action.
-<9> List of derived roles that were activated.
+<5> List of outputs from policy evaluation, if there are any. See xref:policies:outputs.adoc[].
+<6> Name of the rule that produced the output.
+<7> Output value produced by the rule.
+<8> Validation errors, if xref:policies:schemas.adoc[schema enforcement] is enabled and the request didn't conform to the schema.
+<9> Metadata (if `includeMeta` was true in the request)
+<10> Name of the policy that produced the decision for this action.
+<11> Name of the scope that was active when the decision was made for the action.
+<12> List of derived roles that were activated.
 
 
 === `CheckResourceSet` (`/api/check`)
