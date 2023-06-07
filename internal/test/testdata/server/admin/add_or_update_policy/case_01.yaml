@@ -7,7 +7,7 @@ adminAddOrUpdatePolicy:
   input: {
     "policies": [
       {{- readPolicy "store/resource_policies/policy_07.yaml" | toPolicyJSON }},
-      {{- readPolicy "store/resource_policies/policy_08.yaml" | toPolicyJSON }},
+      {{- readPolicy "store/resource_policies/policy_07_acme.yaml" | toPolicyJSON }},
       {{- readPolicy "store/principal_policies/policy_04.yaml" | toPolicyJSON }},
     ]
   }

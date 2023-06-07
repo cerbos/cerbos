@@ -1249,6 +1249,26 @@
             "type": "object",
             "$ref": "#/definitions/PlaygroundEvaluateResponseEvalResult"
           }
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ValidationError"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1OutputEntry"
+          }
         }
       }
     },

@@ -1764,6 +1764,34 @@ func cerbos_response_v1_PlaygroundEvaluateResponse_EvalResultList_hashpb_sum(m *
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.effective_derived_roles"]; !ok {
+		if len(m.EffectiveDerivedRoles) > 0 {
+			for _, v := range m.EffectiveDerivedRoles {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.validation_errors"]; !ok {
+		if len(m.ValidationErrors) > 0 {
+			for _, v := range m.ValidationErrors {
+				if v != nil {
+					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_response_v1_PlaygroundEvaluateResponse_EvalResult_hashpb_sum(m *PlaygroundEvaluateResponse_EvalResult, hasher hash.Hash, ignore map[string]struct{}) {

@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -397,8 +398,9 @@ func compareProto(t *testing.T, want, have proto.Message) {
 		protocmp.Transform(),
 		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&responsev1.CheckResourcesResponse_ResultEntry_Meta{}, "effective_derived_roles"),
-		protocmp.SortRepeatedFields(&responsev1.PlaygroundEvaluateResponse_EvalResult{}, "effective_derived_roles"),
+		protocmp.SortRepeatedFields(&responsev1.PlaygroundEvaluateResponse_EvalResultList{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&policyv1.TestResults_Details{}, "engine_trace"),
+		protocmp.SortRepeated(cmpOutputs),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
 		protocmp.SortRepeated(cmpValidationError),
@@ -422,6 +424,10 @@ func cmpValidationError(a, b *schemav1.ValidationError) bool {
 		return a.Path < b.Path
 	}
 	return a.Source < b.Source
+}
+
+func cmpOutputs(a, b *enginev1.OutputEntry) bool {
+	return a.Src < b.Src
 }
 
 func grpcHealthCheckPasses(grpcConn *grpc.ClientConn, reqTimeout time.Duration) func() bool {

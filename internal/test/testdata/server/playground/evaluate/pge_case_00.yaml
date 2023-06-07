@@ -37,19 +37,16 @@ playgroundEvaluate:
         {
           "action": "view",
           "effect": "EFFECT_ALLOW",
-          "policy": "resource.album_object.vdefault",
-          "effectiveDerivedRoles": [
-            "owner"
-          ]
+          "policy": "resource.album_object.vdefault"
         },
         {
           "action": "delete",
           "effect": "EFFECT_ALLOW",
-          "policy": "resource.album_object.vdefault",
-          "effectiveDerivedRoles": [
-            "owner"
-          ]
+          "policy": "resource.album_object.vdefault"
         }
+      ],
+      "effectiveDerivedRoles": [
+        "owner"
       ]
     }
   }
