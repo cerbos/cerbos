@@ -240,9 +240,9 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				continue
 			}
 
-			var evalOutput sync.Once
 			for _, rule := range resourceRules.ActionRules {
 				matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
+				var evalOutput sync.Once
 				//nolint:dupl
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
