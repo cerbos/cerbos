@@ -11,3 +11,9 @@ principalPolicy:
           output:
             expr: |-
               ["foo", ["bar", true]]
+
+        - action: "reject"
+          effect: EFFECT_ALLOW
+          output:
+            expr: |-
+              ["foo"]

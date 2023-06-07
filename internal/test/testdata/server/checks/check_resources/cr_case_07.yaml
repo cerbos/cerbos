@@ -72,11 +72,7 @@ checkResources:
                 "nested_formatted_string": "id:terry_tibbs"
               },
             }
-          },
-          {
-            "src": "resource.equipment_request.vdefault#rule-002",
-            "val": "approval_status:terry_tibbs:DRAFT"
-          },
+          }
         ]
       }
     ]

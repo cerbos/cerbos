@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -156,25 +157,15 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		for _, rule := range p.Rules {
 			rctx := sctx.StartRule(rule.Name)
 
-			if rule.Output != nil {
-				octx := rctx.StartOutput(rule.Name)
-
-				output := &enginev1.OutputEntry{
-					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-					Val: rpe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
-				}
-				result.Outputs = append(result.Outputs, output)
-
-				octx.ComputedOutput(output)
-			}
-
 			if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
 				rctx.Skipped(nil, "No matching roles or derived roles")
 				continue
 			}
 
+			var evalOutput sync.Once
 			for actionGlob := range rule.Actions {
 				matchedActions := util.FilterGlob(actionGlob, actionsToResolve)
+				//nolint:dupl
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
 					ok, err := rpe.evalParams.satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
@@ -190,6 +181,19 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.AppliedEffect(rule.Effect, "")
+					if rule.Output != nil {
+						evalOutput.Do(func() {
+							octx := rctx.StartOutput(rule.Name)
+
+							output := &enginev1.OutputEntry{
+								Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
+								Val: rpe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
+							}
+							result.Outputs = append(result.Outputs, output)
+
+							octx.ComputedOutput(output)
+						})
+					}
 				}
 			}
 		}
@@ -236,8 +240,10 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				continue
 			}
 
+			var evalOutput sync.Once
 			for _, rule := range resourceRules.ActionRules {
 				matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
+				//nolint:dupl
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
 					ok, err := ppe.evalParams.satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
@@ -250,20 +256,22 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						actx.Skipped(nil, "Condition not satisfied")
 						continue
 					}
+
 					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.AppliedEffect(rule.Effect, "")
-				}
+					if rule.Output != nil {
+						evalOutput.Do(func() {
+							octx := rctx.StartOutput(rule.Name)
 
-				if rule.Output != nil {
-					octx := rctx.StartOutput(rule.Name)
+							output := &enginev1.OutputEntry{
+								Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
+								Val: ppe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
+							}
+							result.Outputs = append(result.Outputs, output)
 
-					output := &enginev1.OutputEntry{
-						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-						Val: ppe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
+							octx.ComputedOutput(output)
+						})
 					}
-					result.Outputs = append(result.Outputs, output)
-
-					octx.ComputedOutput(output)
 				}
 			}
 		}
