@@ -18,9 +18,10 @@ import (
 )
 
 const (
-	HTTPPort       = 3592
-	GRPCPort       = 3593
-	HealthEndpoint = "/_cerbos/health"
+	cerbosHostNameEnvVar = "E2E_CERBOS_HOST"
+	HTTPPort             = 3592
+	GRPCPort             = 3593
+	HealthEndpoint       = "/_cerbos/health"
 )
 
 var conf = Config{}
@@ -118,6 +119,9 @@ func (c Ctx) Environ() []string {
 }
 
 func (c Ctx) CerbosHost() string {
+	if hostname, ok := c.ComputedEnv[cerbosHostNameEnvVar]; ok {
+		return hostname
+	}
 	return fmt.Sprintf("cerbos-%s.%s", c.ContextID, c.Namespace())
 }
 
