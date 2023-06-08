@@ -390,7 +390,7 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 	}
 }
 
-func compareProto(t *testing.T, want, have interface{}) {
+func compareProto(t *testing.T, want, have proto.Message) {
 	t.Helper()
 
 	require.Empty(t, cmp.Diff(want, have,

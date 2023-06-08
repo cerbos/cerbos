@@ -94,10 +94,6 @@ checkResources:
                 "nested_formatted_string": "id:john"
               },
             }
-          },
-          {
-            "src": "resource.equipment_request.vdefault#rule-002",
-            "val": "approval_status:john:DRAFT"
           }
         ]
       },
@@ -127,10 +123,6 @@ checkResources:
                 "nested_formatted_string": "id:john"
               },
             }
-          },
-          {
-            "src": "resource.equipment_request.vdefault#rule-002",
-            "val": "approval_status:john:DRAFT"
           }
         ]
       }

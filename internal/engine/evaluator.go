@@ -156,23 +156,12 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		for _, rule := range p.Rules {
 			rctx := sctx.StartRule(rule.Name)
 
-			if rule.Output != nil {
-				octx := rctx.StartOutput(rule.Name)
-
-				output := &enginev1.OutputEntry{
-					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-					Val: rpe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
-				}
-				result.Outputs = append(result.Outputs, output)
-
-				octx.ComputedOutput(output)
-			}
-
 			if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
 				rctx.Skipped(nil, "No matching roles or derived roles")
 				continue
 			}
 
+			ruleActivated := false
 			for actionGlob := range rule.Actions {
 				matchedActions := util.FilterGlob(actionGlob, actionsToResolve)
 				for _, action := range matchedActions {
@@ -190,7 +179,21 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.AppliedEffect(rule.Effect, "")
+					ruleActivated = true
 				}
+			}
+
+			// evaluate output expression if the rule was activated
+			if ruleActivated && rule.Output != nil {
+				octx := rctx.StartOutput(rule.Name)
+
+				output := &enginev1.OutputEntry{
+					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
+					Val: rpe.evalParams.evaluateProtobufValueCELExpr(rule.Output.Checked, variables, input),
+				}
+				result.Outputs = append(result.Outputs, output)
+
+				octx.ComputedOutput(output)
 			}
 		}
 	}
@@ -238,6 +241,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 			for _, rule := range resourceRules.ActionRules {
 				matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
+				ruleActivated := false
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
 					ok, err := ppe.evalParams.satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
@@ -250,11 +254,14 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						actx.Skipped(nil, "Condition not satisfied")
 						continue
 					}
+
 					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.AppliedEffect(rule.Effect, "")
+					ruleActivated = true
 				}
 
-				if rule.Output != nil {
+				// evaluate output expression if the rule was activated
+				if ruleActivated && rule.Output != nil {
 					octx := rctx.StartOutput(rule.Name)
 
 					output := &enginev1.OutputEntry{

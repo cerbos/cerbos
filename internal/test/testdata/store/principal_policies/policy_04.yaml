@@ -6,8 +6,17 @@ principalPolicy:
   rules:
     - resource: equipment_request
       actions:
-        - action: "create"
+        - name: reject-rule
+          action: "reject"
+          effect: EFFECT_ALLOW
+          output:
+            expr: |-
+              ["foo"]
+
+        - name: create-rule
+          action: "create"
           effect: EFFECT_ALLOW
           output:
             expr: |-
               ["foo", ["bar", true]]
+
