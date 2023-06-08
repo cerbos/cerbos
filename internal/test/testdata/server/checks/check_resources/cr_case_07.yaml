@@ -22,7 +22,8 @@ checkResources:
         "actions": [
           "view:public",
           "approve",
-          "create"
+          "create",
+          "delete"
         ],
         "resource": {
           "kind": "equipment_request",
@@ -50,11 +51,12 @@ checkResources:
         "actions": {
           "view:public": "EFFECT_ALLOW",
           "approve": "EFFECT_DENY",
-          "create": "EFFECT_ALLOW"
+          "create": "EFFECT_ALLOW",
+          "delete": "EFFECT_DENY",
         },
         "outputs": [
           {
-            "src": "principal.terry_tibbs.vdefault#equipment_request_rule-001",
+            "src": "principal.terry_tibbs.vdefault#create-rule",
             "val": ["foo", ["bar", true]]
           },
           {
