@@ -15,18 +15,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOverlay(t *testing.T) {
-	env := make(map[string]string)
+const fallbackErrThreshold = 1
 
-	computedEnvFn := func(ctx e2e.Ctx) map[string]string {
-		env["E2E_DATABASE_URL"] = fmt.Sprintf("postgres://postgres:passw0rd@%s.%s.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos", ctx.ContextID, ctx.Namespace())
-		env["E2E_FALLBACK_ERR_THRESHOLD"] = "1"
-		return env
+func TestOverlay(t *testing.T) {
+	t.Log(">>> Loading policies into Postgres using the cerbos-admin instance")
+	computedEnv := func(ctx e2e.Ctx) map[string]string {
+		return map[string]string{
+			"E2E_DATABASE_URL":           dbURL(ctx),
+			"E2E_CERBOS_HOST":            fmt.Sprintf("cerbos-admin-%s.%s", ctx.ContextID, ctx.Namespace()),
+			"E2E_FALLBACK_ERR_THRESHOLD": strconv.FormatInt(fallbackErrThreshold, 10),
+		}
+	}
+	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithSuites(e2e.AdminSuite), e2e.WithComputedEnv(computedEnv))
+
+	computedEnv = func(ctx e2e.Ctx) map[string]string {
+		return map[string]string{
+			"E2E_DATABASE_URL":           dbURL(ctx),
+			"E2E_FALLBACK_ERR_THRESHOLD": strconv.FormatInt(fallbackErrThreshold, 10),
+		}
 	}
 
-	// a rather hacky way simulate a DB error, by dropping tables
-	breakDB := func(ctx e2e.Ctx) {
-		db, err := sqlx.Connect("pgx", env["E2E_DATABASE_URL"])
+	t.Log(">>> Testing the overlay base driver")
+	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv))
+	t.Log(">>> Testing the overlay fallback driver")
+	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv), e2e.WithPostSetup(breakDB(t)), e2e.WithOverlayMaxRetries(fallbackErrThreshold))
+}
+
+func dbURL(ctx e2e.Ctx) string {
+	return fmt.Sprintf("postgres://postgres:passw0rd@postgres-%s.%s.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos", ctx.ContextID, ctx.Namespace())
+}
+
+func breakDB(t *testing.T) func(e2e.Ctx) {
+	t.Helper()
+	return func(ctx e2e.Ctx) {
+		// a rather hacky way simulate a DB error, by dropping tables
+		db, err := sqlx.Connect("pgx", dbURL(ctx))
 		require.NoError(t, err, "failed to connect to postgres")
 
 		txn := db.MustBegin()
@@ -34,17 +57,4 @@ func TestOverlay(t *testing.T) {
 		err = txn.Commit()
 		require.NoError(t, err, "failed to drop tables from test postgres db")
 	}
-
-	t.Run("base driver success", func(t *testing.T) {
-		// TODO dedicated contextID?
-		e2e.RunSuites(t, e2e.WithContextID("postgres"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnvFn))
-	})
-
-	fallbackErrorThreshold, err := strconv.ParseUint(env["E2E_FALLBACK_ERR_THRESHOLD"], 10, 64)
-	require.NoError(t, err, "failed to convert fallbackErrorThreshold string to uint64")
-
-	t.Run("base driver error and fallback driver success", func(t *testing.T) {
-		// TODO dedicated contextID?
-		e2e.RunSuites(t, e2e.WithContextID("postgres"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnvFn), e2e.WithPostSetup(breakDB), e2e.WithOverlayMaxRetries(fallbackErrorThreshold))
-	})
 }

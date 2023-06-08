@@ -34,7 +34,6 @@ releases:
           - postgres-init
           - '--namespace={{ requiredEnv "E2E_NS" }}'
           - '--from-file=00_init_schema.sql={{ requiredEnv "E2E_SRC_ROOT" }}/internal/storage/db/postgres/schema.sql'
-          - '--from-file=01_init_data.sql={{ requiredEnv "E2E_SRC_ROOT" }}/e2e/overlay/data.sql'
       - events: ["postuninstall"]
         showlogs: true
         command: kubectl
@@ -144,5 +143,62 @@ releases:
                 subDir: internal/test/testdata/store
                 checkoutDir: /data
                 updatePollInterval: 60s
+            telemetry:
+              disabled: true
+
+  - name: cerbos-admin
+    namespace: '{{ requiredEnv "E2E_NS" }}'
+    needs: ["postgres"]
+    createNamespace: true
+    labels:
+      e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
+      e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+    chart: '{{ requiredEnv "E2E_SRC_ROOT" }}/deploy/charts/cerbos'
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - secret
+          - tls
+          - 'cerbos-admin-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          - '--cert={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.crt'
+          - '--key={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.key'
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - secret
+          - 'cerbos-admin-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+    values:
+      - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+      - image:
+          repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
+          tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
+      - cerbos:
+          tlsSecretName: 'cerbos-admin-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          logLevel: DEBUG
+          config:
+            server:
+              adminAPI:
+                enabled: true
+                adminCredentials:
+                  username: cerbos
+                  passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
+            auxData:
+              jwt:
+                disableVerification: true
+            schema:
+              enforcement: reject
+            audit:
+              enabled: false
+            storage:
+              driver: "postgres"
+              postgres:
+                url: {{ requiredEnv "E2E_DATABASE_URL" }}
             telemetry:
               disabled: true
