@@ -1,0 +1,84 @@
+---
+description: "Valid request with outputs"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+playgroundEvaluate:
+  input: {
+    "playgroundId": "test",
+    "files": [
+      {
+        "fileName": "roles.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "resource_01.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_07.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "resource_01_acme.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_07_acme.yaml` | b64enc }}",
+      }
+    ],
+    "actions": ["view:public", "create"],
+    "principal": {
+      "id": "alicia",
+      "roles": ["employee"],
+      "attr": {
+        "department": "marketing",
+        "team": "design"
+      }
+    },
+    "resource": {
+      "kind": "equipment_request",
+      "id": "XX125",
+      "scope": "acme",
+      "attr": {
+        "id": "XX125",
+        "department": "marketing",
+        "status": "DRAFT"
+      }
+    }
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "success": {
+      "results": [
+        {
+          "action": "view:public",
+          "effect": "EFFECT_ALLOW",
+          "policy": "resource.equipment_request.vdefault/acme",
+        },
+        {
+          "action": "create",
+          "effect": "EFFECT_ALLOW",
+          "policy": "resource.equipment_request.vdefault/acme",
+        }
+      ],
+      "effectiveDerivedRoles": [
+        "any_employee"
+      ],
+      "outputs": [
+        {
+          "src": "resource.equipment_request.vdefault/acme#rule-001",
+          "val": "create_allowed:alicia"
+        },
+        {
+          "src": "resource.equipment_request.vdefault#public-view",
+          "val": {
+            "id": "alicia",
+            "keys": "XX125",
+            "formatted_string": "id:alicia",
+            "some_bool": true,
+            "some_list": ["foo", "bar"],
+            "something_nested": {
+              "nested_str": "foo",
+              "nested_bool": false,
+              "nested_list": ["nest_foo", 1.01],
+              "nested_formatted_string": "id:alicia"
+            },
+          }
+        }
+      ]
+    }
+  }

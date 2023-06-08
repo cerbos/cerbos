@@ -5003,6 +5003,74 @@ func (m *PlaygroundEvaluateResponse_EvalResultList) validate(all bool) error {
 
 	}
 
+	for idx, item := range m.GetValidationErrors() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PlaygroundEvaluateResponse_EvalResultListValidationError{
+						field:  fmt.Sprintf("ValidationErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PlaygroundEvaluateResponse_EvalResultListValidationError{
+						field:  fmt.Sprintf("ValidationErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundEvaluateResponse_EvalResultListValidationError{
+					field:  fmt.Sprintf("ValidationErrors[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetOutputs() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PlaygroundEvaluateResponse_EvalResultListValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PlaygroundEvaluateResponse_EvalResultListValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundEvaluateResponse_EvalResultListValidationError{
+					field:  fmt.Sprintf("Outputs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return PlaygroundEvaluateResponse_EvalResultListMultiError(errors)
 	}

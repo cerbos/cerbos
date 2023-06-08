@@ -28,7 +28,7 @@ playgroundEvaluate:
         "contents": "{{ fileString `store/_schemas/resources/leave_request.json` | b64enc }}",
       }
     ],
-  "actions": ["approve", "view:public"],
+    "actions": ["approve", "view:public"],
     "principal": {
       "id": "john",
       "policyVersion": "20210210",
@@ -61,23 +61,18 @@ playgroundEvaluate:
         {
           "action": "approve",
           "effect": "EFFECT_DENY",
-          "policy": "resource.leave_request.v20210210",
-          "effective_derived_roles": ["employee_that_owns_the_record", "any_employee"],
-          "validationErrors": [
-            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_PRINCIPAL"},
-            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_RESOURCE"}
-          ]
+          "policy": "resource.leave_request.v20210210"
         },
         {
           "action": "view:public",
           "effect": "EFFECT_ALLOW",
-          "policy": "resource.leave_request.v20210210",
-          "effective_derived_roles": ["employee_that_owns_the_record", "any_employee"],
-          "validationErrors": [
-            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_PRINCIPAL"},
-            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_RESOURCE"}
-          ]
+          "policy": "resource.leave_request.v20210210"
         }
+      ],
+      "effectiveDerivedRoles": ["any_employee", "employee_that_owns_the_record"],
+      "validationErrors": [
+        {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_PRINCIPAL"},
+        {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_RESOURCE"}
       ]
     }
   }

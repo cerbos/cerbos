@@ -48,6 +48,6 @@ func TestCloneResult(t *testing.T) {
 		"resource_policies/policy_05_acme.yaml",
 		"resource_policies/policy_06.yaml",
 		"resource_policies/policy_07.yaml",
-		"resource_policies/policy_08.yaml",
+		"resource_policies/policy_07_acme.yaml",
 	}, result.updateOrAdd)
 }

@@ -286,12 +286,15 @@ message PlaygroundEvaluateResponse {
     string action = 1;
     cerbos.effect.v1.Effect effect = 2;
     string policy = 3;
-    repeated string effective_derived_roles = 4;
-    repeated cerbos.schema.v1.ValidationError validation_errors = 5;
+    repeated string effective_derived_roles = 4 [deprecated = true];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 5 [deprecated = true];
   }
 
   message EvalResultList {
     repeated EvalResult results = 1;
+    repeated string effective_derived_roles = 2;
+    repeated cerbos.schema.v1.ValidationError validation_errors = 3;
+    repeated cerbos.engine.v1.OutputEntry outputs = 4;
   }
 
   string playground_id = 1;

@@ -377,18 +377,21 @@ func processEngineOutput(_ context.Context, playgroundID string, outputs []*engi
 
 	for action, effect := range outputs[0].Actions {
 		results = append(results, &responsev1.PlaygroundEvaluateResponse_EvalResult{
-			Action:                action,
-			Effect:                effect.Effect,
-			Policy:                effect.Policy,
-			EffectiveDerivedRoles: outputs[0].EffectiveDerivedRoles,
-			ValidationErrors:      outputs[0].ValidationErrors,
+			Action: action,
+			Effect: effect.Effect,
+			Policy: effect.Policy,
 		})
 	}
 
 	return &responsev1.PlaygroundEvaluateResponse{
 		PlaygroundId: playgroundID,
 		Outcome: &responsev1.PlaygroundEvaluateResponse_Success{
-			Success: &responsev1.PlaygroundEvaluateResponse_EvalResultList{Results: results},
+			Success: &responsev1.PlaygroundEvaluateResponse_EvalResultList{
+				Results:               results,
+				EffectiveDerivedRoles: outputs[0].EffectiveDerivedRoles,
+				ValidationErrors:      outputs[0].ValidationErrors,
+				Outputs:               outputs[0].Outputs,
+			},
 		},
 	}, nil
 }
