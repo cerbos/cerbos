@@ -10,6 +10,46 @@
         "EFFECT_DENY",
         "EFFECT_NO_MATCH"
       ]
+    },
+    "cerbos.policy.v1.TestResults.OutputFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mismatched": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue"
+        },
+        "missing": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.OutputFailure.MissingValue"
+        },
+        "src": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        },
+        "expected": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.OutputFailure.MissingValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expected": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "type": "object",
@@ -20,6 +60,12 @@
     },
     "expected": {
       "$ref": "#/definitions/cerbos.effect.v1.Effect"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.policy.v1.TestResults.OutputFailure"
+      }
     }
   }
 }

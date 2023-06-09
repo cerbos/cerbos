@@ -10,6 +10,8 @@ import (
 
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
@@ -21,12 +23,15 @@ import (
 )
 
 const (
-	suiteLevel     = 0
-	testCaseLevel  = 1
-	principalLevel = 2
-	resourceLevel  = 3
-	actionLevel    = 4
-	resultLevel    = 5
+	suiteLevel         = 0
+	testCaseLevel      = 1
+	principalLevel     = 2
+	resourceLevel      = 3
+	actionLevel        = 4
+	resultLevel        = 5
+	outputSrcLevel     = 6
+	outputErrKindLevel = 7
+	outputErrValLevel  = 8
 
 	listIndent = 2
 )
@@ -233,7 +238,24 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 	case policyv1.TestResults_RESULT_FAILED:
 		failure := action.Details.GetFailure()
 		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
-		o.appendNode(resultLevel, fmt.Sprintf("%s expected: %s, actual: %s", colored.ErrorMsg("OUTCOME:"), failure.Expected, colored.FailedTest(failure.Actual)))
+		if len(failure.Outputs) > 0 {
+			o.appendNode(resultLevel, fmt.Sprintf("%s output expectation unsatisfied", colored.ErrorMsg("OUTCOME:")))
+			for _, output := range failure.Outputs {
+				o.appendNode(outputSrcLevel, colored.TestOutputSrc(output.Src))
+				switch t := output.Outcome.(type) {
+				case *policyv1.TestResults_OutputFailure_Mismatched:
+					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.TestOutputVal("EXPECTED:"), singleLineJSON(t.Mismatched.Expected)))
+					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.TestOutputVal("ACTUAL:"), singleLineJSON(t.Mismatched.Actual)))
+				case *policyv1.TestResults_OutputFailure_Missing:
+					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.TestOutputVal("EXPECTED:"), singleLineJSON(t.Missing.Expected)))
+					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.TestOutputVal("ACTUAL:"), colored.ErrorMsg("MISSING")))
+				default:
+					o.appendNode(outputErrKindLevel, colored.ErrorMsg("<UNKNOWN>"))
+				}
+			}
+		} else {
+			o.appendNode(resultLevel, fmt.Sprintf("%s expected: %s, actual: %s", colored.ErrorMsg("OUTCOME:"), failure.Expected, colored.FailedTest(failure.Actual)))
+		}
 
 	case policyv1.TestResults_RESULT_ERRORED:
 		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
@@ -257,4 +279,13 @@ func resultLabel(result policyv1.TestResults_Result) string {
 
 func tallyLabel(tally *policyv1.TestResults_Tally) string {
 	return labelColors[tally.Result](fmt.Sprintf("[%d %s]", tally.Count, labels[tally.Result]))
+}
+
+func singleLineJSON(m proto.Message) string {
+	v, err := protojson.Marshal(m)
+	if err != nil {
+		return "<unable to render value>"
+	}
+
+	return string(v)
 }

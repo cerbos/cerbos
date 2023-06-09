@@ -1,0 +1,258 @@
+{
+  "suites":  [
+    {
+      "file":  "suite_test.yaml",
+      "name":  "TestSuite",
+      "summary":  {
+        "overallResult":  "RESULT_FAILED",
+        "testsCount":  18,
+        "resultCounts":  [
+          {
+            "result":  "RESULT_PASSED",
+            "count":  16
+          },
+          {
+            "result":  "RESULT_FAILED",
+            "count":  2
+          }
+        ]
+      },
+      "testCases":  [
+        {
+          "name":  "John's request",
+          "principals":  [
+            {
+              "name":  "john",
+              "resources":  [
+                {
+                  "name":  "john_equipment_request",
+                  "actions":  [
+                    {
+                      "name":  "view:public",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "approve",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "create",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name":  "john_pending_equipment_request",
+                  "actions":  [
+                    {
+                      "name":  "view:public",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "approve",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "create",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name":  "bev",
+              "resources":  [
+                {
+                  "name":  "john_equipment_request",
+                  "actions":  [
+                    {
+                      "name":  "view:public",
+                      "details":  {
+                        "result":  "RESULT_FAILED",
+                        "failure":  {
+                          "expected":  "EFFECT_ALLOW",
+                          "actual":  "EFFECT_ALLOW",
+                          "outputs":  [
+                            {
+                              "src":  "resource.equipment_request.vdefault#public-view",
+                              "mismatched":  {
+                                "expected":  {
+                                  "formatted_string":  "id:john",
+                                  "id":  "john",
+                                  "keys":  "XX125",
+                                  "some_bool":  true,
+                                  "some_list":  [
+                                    "foo",
+                                    "bar"
+                                  ],
+                                  "something_nested":  {
+                                    "nested_bool":  false,
+                                    "nested_formatted_string":  "id:john",
+                                    "nested_list":  [
+                                      "nest_foo",
+                                      1.01
+                                    ],
+                                    "nested_str":  "foo"
+                                  }
+                                },
+                                "actual":  {
+                                  "formatted_string":  "id:bev",
+                                  "id":  "bev",
+                                  "keys":  "XX125",
+                                  "some_bool":  true,
+                                  "some_list":  [
+                                    "foo",
+                                    "bar"
+                                  ],
+                                  "something_nested":  {
+                                    "nested_bool":  false,
+                                    "nested_formatted_string":  "id:bev",
+                                    "nested_list":  [
+                                      "nest_foo",
+                                      1.01
+                                    ],
+                                    "nested_str":  "foo"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name":  "approve",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "create",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name":  "john_pending_equipment_request",
+                  "actions":  [
+                    {
+                      "name":  "view:public",
+                      "details":  {
+                        "result":  "RESULT_FAILED",
+                        "failure":  {
+                          "expected":  "EFFECT_ALLOW",
+                          "actual":  "EFFECT_ALLOW",
+                          "outputs":  [
+                            {
+                              "src":  "resource.equipment_request.vdefault#foo",
+                              "missing":  {
+                                "expected":  "bar"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name":  "approve",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "create",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name":  "terry_tibbs",
+              "resources":  [
+                {
+                  "name":  "john_equipment_request",
+                  "actions":  [
+                    {
+                      "name":  "view:public",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "approve",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "create",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name":  "john_pending_equipment_request",
+                  "actions":  [
+                    {
+                      "name":  "view:public",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "approve",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name":  "create",
+                      "details":  {
+                        "result":  "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description":  "Tests for equipment requests"
+    }
+  ],
+  "summary":  {
+    "overallResult":  "RESULT_FAILED",
+    "testsCount":  18,
+    "resultCounts":  [
+      {
+        "result":  "RESULT_PASSED",
+        "count":  16
+      },
+      {
+        "result":  "RESULT_FAILED",
+        "count":  2
+      }
+    ]
+  }
+}

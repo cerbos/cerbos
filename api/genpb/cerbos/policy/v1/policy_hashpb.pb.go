@@ -170,6 +170,14 @@ func (m *TestTable_Input) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *TestTable_OutputExpectations) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_policy_v1_TestTable_OutputExpectations_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *TestTable_Expectation) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m, hasher, ignore)
@@ -189,6 +197,14 @@ func (m *Test) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 func (m *Test_TestName) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_policy_v1_Test_TestName_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *Test_OutputEntries) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_policy_v1_Test_OutputEntries_hashpb_sum(m, hasher, ignore)
 	}
 }
 
@@ -261,6 +277,30 @@ func (m *TestResults_Action) HashPB(hasher hash.Hash, ignore map[string]struct{}
 func (m *TestResults_Details) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_policy_v1_TestResults_Details_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *TestResults_OutputFailure) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_policy_v1_TestResults_OutputFailure_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *TestResults_OutputFailure_MismatchedValue) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_policy_v1_TestResults_OutputFailure_MismatchedValue_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *TestResults_OutputFailure_MissingValue) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_policy_v1_TestResults_OutputFailure_MissingValue_hashpb_sum(m, hasher, ignore)
 	}
 }
 

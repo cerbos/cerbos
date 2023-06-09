@@ -123,6 +123,18 @@
         }
       }
     },
+    "cerbos.policy.v1.Test.OutputEntries": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "cerbos.policy.v1.Test.TestName": {
       "type": "object",
       "required": [
@@ -186,6 +198,12 @@
       "propertyNames": {
         "type": "string",
         "minLength": 1
+      }
+    },
+    "expectedOutputs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.policy.v1.Test.OutputEntries"
       }
     },
     "input": {

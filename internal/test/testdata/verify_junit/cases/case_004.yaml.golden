@@ -10,7 +10,7 @@
       </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="admin.company.create" name="Company Test 2">
-      <failure type="RESULT_FAILED">
+      <failure type="RESULT_FAILED" message="Effect expectation unsatisfied">
         <actual>EFFECT_ALLOW</actual>
         <expected>EFFECT_DENY</expected>
       </failure>
