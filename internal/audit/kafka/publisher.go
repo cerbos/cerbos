@@ -32,6 +32,12 @@ const (
 
 	HeaderKeyEncoding = "cerbos.audit.encoding"
 	HeaderKeyKind     = "cerbos.audit.kind"
+
+	CompressionNone   = "none"
+	CompressionGzip   = "gzip"
+	CompressionSnappy = "snappy"
+	CompressionLZ4    = "lz4"
+	CompressionZstd   = "zstd"
 )
 
 type Encoding string
@@ -97,6 +103,13 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 	if conf.Ack != AckAll {
 		clientOpts = append(clientOpts, kgo.DisableIdempotentWrite())
 	}
+
+	compression, err := formatCompression(conf.Compression)
+	if err != nil {
+		return nil, err
+	}
+
+	clientOpts = append(clientOpts, kgo.ProducerBatchCompression(compression...))
 
 	client, err := kgo.NewClient(clientOpts...)
 	if err != nil {

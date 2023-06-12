@@ -74,6 +74,47 @@ func TestSyncProduce(t *testing.T) {
 	require.Len(t, records, 2, "unexpected number of published audit log entries")
 }
 
+func TestCompression(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	// setup kafka
+	uri := newKafkaBroker(t, defaultIntegrationTopic)
+
+	for _, compression := range []string{"none", "gzip", "snappy", "lz4", "zstd"} {
+		log, err := newLog(map[string]any{
+			"audit": map[string]any{
+				"enabled": true,
+				"backend": "kafka",
+				"kafka": map[string]any{
+					"brokers":     []string{uri},
+					"topic":       defaultIntegrationTopic,
+					"produceSync": true,
+					"compression": []string{compression},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		// write audit log entries
+		callId, err := audit.NewID()
+		require.NoError(t, err)
+
+		err = log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+			return &auditv1.AccessLogEntry{
+				CallId: string(callId),
+			}, nil
+		})
+		require.NoError(t, err)
+	}
+
+	// validate we see these entries in kafka
+	records, err := fetchKafkaTopic(uri, defaultIntegrationTopic)
+	require.NoError(t, err)
+	require.Len(t, records, 5, "unexpected number of published audit log entries")
+}
+
 func TestAsyncProduce(t *testing.T) {
 	t.Parallel()
 

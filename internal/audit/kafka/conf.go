@@ -35,6 +35,8 @@ type Conf struct {
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Brokers list to seed the Kafka client.
 	Brokers []string `yaml:"brokers" conf:"required,example=['localhost:9092']"`
+	// Compression sets the compression algorithm to use in order of priority. Valid values are "none", "gzip", "snappy","lz4", "zstd". Default is ["snappy", "none"].
+	Compression []string `yaml:"compression" conf:",example=['snappy']"`
 	// CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
 	CloseTimeout time.Duration `yaml:"closeTimeout" conf:",example=30s"`
 	// MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
@@ -53,6 +55,7 @@ func (c *Conf) SetDefaults() {
 	c.CloseTimeout = defaultCloseTimeout
 	c.ClientID = defaultClientID
 	c.MaxBufferedRecords = defaultMaxBufferedRecords
+	c.Compression = []string{CompressionSnappy, CompressionNone}
 }
 
 func (c *Conf) Validate() error {
@@ -82,6 +85,11 @@ func (c *Conf) Validate() error {
 		return errors.New("empty brokers")
 	}
 
+	_, err := formatCompression(c.Compression)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -96,4 +104,27 @@ func formatAck(ack string) (kgo.Acks, error) {
 	default:
 		return kgo.NoAck(), fmt.Errorf("invalid ack value: %s", ack)
 	}
+}
+
+func formatCompression(compression []string) ([]kgo.CompressionCodec, error) {
+	codecs := make([]kgo.CompressionCodec, 0, len(compression))
+
+	for _, c := range compression {
+		switch c {
+		case CompressionNone:
+			codecs = append(codecs, kgo.NoCompression())
+		case CompressionGzip:
+			codecs = append(codecs, kgo.GzipCompression())
+		case CompressionSnappy:
+			codecs = append(codecs, kgo.SnappyCompression())
+		case CompressionLZ4:
+			codecs = append(codecs, kgo.Lz4Compression())
+		case CompressionZstd:
+			codecs = append(codecs, kgo.ZstdCompression())
+		default:
+			return nil, fmt.Errorf("invalid compression algorithm: %s", compression)
+		}
+	}
+
+	return codecs, nil
 }
