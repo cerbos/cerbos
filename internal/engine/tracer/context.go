@@ -143,9 +143,13 @@ func (c *context) StartOutput(ruleName string) Context {
 }
 
 func (c *context) start(component *enginev1.Trace_Component) Context {
+	components := make([]*enginev1.Trace_Component, len(c.components)+1)
+	copy(components, c.components)
+	components[len(c.components)] = component
+
 	return &context{
 		sink:       c.sink,
-		components: append(c.components, component),
+		components: components,
 	}
 }
 
