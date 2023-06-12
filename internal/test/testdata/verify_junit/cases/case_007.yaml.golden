@@ -36,14 +36,8 @@
       <failure type="RESULT_FAILED" message="Output expectation unsatisfied">
         <outputs>
           <output src="resource.company.vdefault#rule-001">
-            <expected><![CDATA[{
-  "principal":  "blah",
-  "resource":  "yy1"
-}]]></expected>
-            <actual><![CDATA[{
-  "principal":  "user",
-  "resource":  "xx1"
-}]]></actual>
+            <expected><![CDATA[{"principal":"blah","resource":"yy1"}]]></expected>
+            <actual><![CDATA[{"principal":"user","resource":"xx1"}]]></actual>
           </output>
         </outputs>
         <actual>EFFECT_ALLOW</actual>

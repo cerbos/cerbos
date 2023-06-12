@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
@@ -133,13 +134,13 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 								case *policyv1.TestResults_OutputFailure_Mismatched:
 									outputSet[i] = output{
 										Src:      o.Src,
-										Actual:   outputValue{Value: protojson.Format(t.Mismatched.Actual)},
-										Expected: outputValue{Value: protojson.Format(t.Mismatched.Expected)},
+										Actual:   outputValue{Value: renderValue(t.Mismatched.Actual)},
+										Expected: outputValue{Value: renderValue(t.Mismatched.Expected)},
 									}
 								case *policyv1.TestResults_OutputFailure_Missing:
 									outputSet[i] = output{
 										Src:      o.Src,
-										Expected: outputValue{Value: protojson.Format(t.Missing.Expected)},
+										Expected: outputValue{Value: renderValue(t.Missing.Expected)},
 									}
 								default:
 									outputSet[i] = output{
@@ -170,6 +171,15 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 	}
 
 	return testCases, summary, nil
+}
+
+func renderValue(v proto.Message) string {
+	vv, err := protojson.Marshal(v)
+	if err != nil {
+		return "FAILED TO RENDER"
+	}
+
+	return string(vv)
 }
 
 type TestSuites struct {
