@@ -915,6 +915,63 @@ func cerbos_policy_v1_TestResults_Failure_hashpb_sum(m *v11.TestResults_Failure,
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Actual)))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Failure.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_policy_v1_TestResults_OutputFailure_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_OutputFailure_MismatchedValue_hashpb_sum(m *v11.TestResults_OutputFailure_MismatchedValue, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected"]; !ok {
+		if m.Expected != nil {
+			google_protobuf_Value_hashpb_sum(m.Expected, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual"]; !ok {
+		if m.Actual != nil {
+			google_protobuf_Value_hashpb_sum(m.Actual, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_OutputFailure_MissingValue_hashpb_sum(m *v11.TestResults_OutputFailure_MissingValue, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected"]; !ok {
+		if m.Expected != nil {
+			google_protobuf_Value_hashpb_sum(m.Expected, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_OutputFailure_hashpb_sum(m *v11.TestResults_OutputFailure, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.src"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Src))
+
+	}
+	if m.Outcome != nil {
+		if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.outcome"]; !ok {
+			switch t := m.Outcome.(type) {
+			case *v11.TestResults_OutputFailure_Mismatched:
+				if t.Mismatched != nil {
+					cerbos_policy_v1_TestResults_OutputFailure_MismatchedValue_hashpb_sum(t.Mismatched, hasher, ignore)
+				}
+
+			case *v11.TestResults_OutputFailure_Missing:
+				if t.Missing != nil {
+					cerbos_policy_v1_TestResults_OutputFailure_MissingValue_hashpb_sum(t.Missing, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestResults_Principal_hashpb_sum(m *v11.TestResults_Principal, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1090,6 +1147,16 @@ func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *v11.TestTable_Expectat
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_policy_v1_TestTable_OutputExpectations_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *v11.TestTable_Input, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1120,6 +1187,23 @@ func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *v11.TestTable_Input, hasher 
 	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.aux_data"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.AuxData))
 
+	}
+}
+
+func cerbos_policy_v1_TestTable_OutputExpectations_hashpb_sum(m *v11.TestTable_OutputExpectations, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestTable.OutputExpectations.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Action))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.OutputExpectations.expected"]; !ok {
+		if len(m.Expected) > 0 {
+			for _, v := range m.Expected {
+				if v != nil {
+					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
@@ -1161,6 +1245,28 @@ func cerbos_policy_v1_TestTable_hashpb_sum(m *v11.TestTable, hasher hash.Hash, i
 			cerbos_policy_v1_TestOptions_hashpb_sum(m.Options, hasher, ignore)
 		}
 
+	}
+}
+
+func cerbos_policy_v1_Test_OutputEntries_hashpb_sum(m *v11.Test_OutputEntries, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Test.OutputEntries.entries"]; !ok {
+		if len(m.Entries) > 0 {
+			keys := make([]string, len(m.Entries))
+			i := 0
+			for k := range m.Entries {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Entries[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Entries[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
@@ -1226,6 +1332,25 @@ func cerbos_policy_v1_Test_hashpb_sum(m *v11.Test, hasher hash.Hash, ignore map[
 			cerbos_policy_v1_TestOptions_hashpb_sum(m.Options, hasher, ignore)
 		}
 
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.expected_outputs"]; !ok {
+		if len(m.ExpectedOutputs) > 0 {
+			keys := make([]string, len(m.ExpectedOutputs))
+			i := 0
+			for k := range m.ExpectedOutputs {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.ExpectedOutputs[k] != nil {
+					cerbos_policy_v1_Test_OutputEntries_hashpb_sum(m.ExpectedOutputs[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

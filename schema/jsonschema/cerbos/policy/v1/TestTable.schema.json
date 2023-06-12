@@ -11,6 +11,18 @@
         "EFFECT_NO_MATCH"
       ]
     },
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
     "cerbos.policy.v1.TestOptions": {
       "type": "object",
       "additionalProperties": false,
@@ -38,6 +50,12 @@
           "propertyNames": {
             "type": "string",
             "minLength": 1
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestTable.OutputExpectations"
           }
         },
         "principal": {
@@ -91,11 +109,36 @@
         }
       }
     },
+    "cerbos.policy.v1.TestTable.OutputExpectations": {
+      "type": "object",
+      "required": [
+        "action",
+        "expected"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
+          },
+          "minItems": 1
+        }
+      }
+    },
     "google.protobuf.Timestamp": {
       "title": "Timestamp",
       "description": "A point in time, independent of any time zone or calendar.",
       "type": "string",
       "format": "date-time"
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "type": "object",

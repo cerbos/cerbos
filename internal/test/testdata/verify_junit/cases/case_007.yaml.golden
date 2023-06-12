@@ -1,10 +1,16 @@
-<testsuites errors="0" failures="4" skipped="0" tests="4">
-  <testsuite description="Tests for verifying the company resource policy" name="CompanyTestSuite" file="suite_test.yaml" errors="0" failures="4" skipped="0" tests="4">
+<testsuites errors="0" failures="2" skipped="0" tests="4">
+  <testsuite description="Tests for verifying the company resource policy" name="CompanyTestSuite" file="suite_test.yaml" errors="0" failures="2" skipped="0" tests="4">
     <properties></properties>
     <testcase file="suite_test.yaml" classname="admin.company.create" name="Company Test 1">
-      <failure type="RESULT_FAILED" message="Effect expectation unsatisfied">
+      <failure type="RESULT_FAILED" message="Output expectation unsatisfied">
+        <outputs>
+          <output src="resource.company.vdefault#rule-001">
+            <expected><![CDATA["foo"]]></expected>
+            <actual></actual>
+          </output>
+        </outputs>
         <actual>EFFECT_ALLOW</actual>
-        <expected>EFFECT_DENY</expected>
+        <expected>EFFECT_ALLOW</expected>
       </failure>
       <properties>
         <property name="principal">admin</property>
@@ -13,10 +19,6 @@
       </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="admin.company.read" name="Company Test 1">
-      <failure type="RESULT_FAILED" message="Effect expectation unsatisfied">
-        <actual>EFFECT_ALLOW</actual>
-        <expected>EFFECT_DENY</expected>
-      </failure>
       <properties>
         <property name="principal">admin</property>
         <property name="resource">company</property>
@@ -24,10 +26,6 @@
       </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="user.company.create" name="Company Test 2">
-      <failure type="RESULT_FAILED" message="Effect expectation unsatisfied">
-        <actual>EFFECT_ALLOW</actual>
-        <expected>EFFECT_DENY</expected>
-      </failure>
       <properties>
         <property name="principal">user</property>
         <property name="resource">company</property>
@@ -35,9 +33,21 @@
       </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="user.company.read" name="Company Test 2">
-      <failure type="RESULT_FAILED" message="Effect expectation unsatisfied">
+      <failure type="RESULT_FAILED" message="Output expectation unsatisfied">
+        <outputs>
+          <output src="resource.company.vdefault#rule-001">
+            <expected><![CDATA[{
+  "principal":  "blah",
+  "resource":  "yy1"
+}]]></expected>
+            <actual><![CDATA[{
+  "principal":  "user",
+  "resource":  "xx1"
+}]]></actual>
+          </output>
+        </outputs>
         <actual>EFFECT_ALLOW</actual>
-        <expected>EFFECT_DENY</expected>
+        <expected>EFFECT_ALLOW</expected>
       </failure>
       <properties>
         <property name="principal">user</property>

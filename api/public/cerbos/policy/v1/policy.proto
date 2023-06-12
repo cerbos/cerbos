@@ -7,6 +7,7 @@ package cerbos.policy.v1;
 
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/engine/v1/engine.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
@@ -233,6 +234,11 @@ message TestTable {
     string aux_data = 4;
   }
 
+  message OutputExpectations {
+    string action = 1 [(validate.rules).string.min_len = 1];
+    repeated cerbos.engine.v1.OutputEntry expected = 2 [(validate.rules).repeated.min_items = 1];
+  }
+
   message Expectation {
     string principal = 1 [(validate.rules).string.min_len = 1];
     string resource = 2 [(validate.rules).string.min_len = 1];
@@ -242,6 +248,7 @@ message TestTable {
         string: {min_len: 1}
       }
     }];
+    repeated OutputExpectations outputs = 4;
   }
 
   string name = 1 [(validate.rules).string.min_len = 1];
@@ -260,6 +267,10 @@ message Test {
     string resource_key = 3 [(validate.rules).string.min_len = 1];
   }
 
+  message OutputEntries {
+    map<string, google.protobuf.Value> entries = 1;
+  }
+
   TestName name = 1 [(validate.rules).message.required = true];
   string description = 2;
   bool skip = 3;
@@ -272,6 +283,7 @@ message Test {
     }
   }];
   TestOptions options = 7;
+  map<string, OutputEntries> expected_outputs = 8;
 }
 
 message TestResults {
@@ -333,9 +345,27 @@ message TestResults {
     repeated cerbos.engine.v1.Trace engine_trace = 4;
   }
 
+  message OutputFailure {
+    message MismatchedValue {
+      google.protobuf.Value expected = 1;
+      google.protobuf.Value actual = 2;
+    }
+
+    message MissingValue {
+      google.protobuf.Value expected = 1;
+    }
+
+    string src = 1;
+    oneof outcome {
+      MismatchedValue mismatched = 2;
+      MissingValue missing = 3;
+    }
+  }
+
   message Failure {
     cerbos.effect.v1.Effect expected = 1;
     cerbos.effect.v1.Effect actual = 2;
+    repeated OutputFailure outputs = 3;
   }
 
   repeated Suite suites = 1;

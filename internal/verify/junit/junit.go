@@ -7,6 +7,8 @@ import (
 	"encoding/xml"
 	"fmt"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
@@ -116,12 +118,40 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 					case policyv1.TestResults_RESULT_FAILED:
 						f, _ := a.Details.Outcome.(*policyv1.TestResults_Details_Failure)
 						testCase.Failure = &failure{
-							Type: a.Details.Result.String(),
+							Type:    a.Details.Result.String(),
+							Message: "Effect expectation unsatisfied",
 							resultFailed: resultFailed{
 								Actual:   f.Failure.Actual.String(),
 								Expected: f.Failure.Expected.String(),
 							},
 						}
+
+						if len(f.Failure.Outputs) > 0 {
+							outputSet := make([]output, len(f.Failure.Outputs))
+							for i, o := range f.Failure.Outputs {
+								switch t := o.Outcome.(type) {
+								case *policyv1.TestResults_OutputFailure_Mismatched:
+									outputSet[i] = output{
+										Src:      o.Src,
+										Actual:   outputValue{Value: protojson.Format(t.Mismatched.Actual)},
+										Expected: outputValue{Value: protojson.Format(t.Mismatched.Expected)},
+									}
+								case *policyv1.TestResults_OutputFailure_Missing:
+									outputSet[i] = output{
+										Src:      o.Src,
+										Expected: outputValue{Value: protojson.Format(t.Missing.Expected)},
+									}
+								default:
+									outputSet[i] = output{
+										Src: o.Src,
+									}
+								}
+							}
+
+							testCase.Failure.Message = "Output expectation unsatisfied"
+							testCase.Failure.Outputs = &outputSet
+						}
+
 						summary.Failures++
 					case policyv1.TestResults_RESULT_PASSED:
 					case policyv1.TestResults_RESULT_SKIPPED:
@@ -181,14 +211,27 @@ type testError struct {
 }
 
 type failure struct {
+	resultFailed
 	XMLName xml.Name `xml:"failure"`
 	Type    string   `xml:"type,attr,omitempty"`
-	resultFailed
+	Message string   `xml:"message,attr"`
 }
 
 type resultFailed struct {
-	Actual   string `xml:"actual,omitempty"`
-	Expected string `xml:"expected,omitempty"`
+	Outputs  *[]output `xml:"outputs>output,omitempty"`
+	Actual   string    `xml:"actual,omitempty"`
+	Expected string    `xml:"expected,omitempty"`
+}
+
+type output struct {
+	XMLName  xml.Name    `xml:"output"`
+	Src      string      `xml:"src,attr"`
+	Expected outputValue `xml:"expected"`
+	Actual   outputValue `xml:"actual"`
+}
+
+type outputValue struct {
+	Value string `xml:",cdata"` //nolint:tagliatelle
 }
 
 type skipped struct {

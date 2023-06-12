@@ -80,6 +80,15 @@ tests: <7>
         actions: <18>
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
+        outputs: <19>
+          - action: view <20>
+            expected: <21>
+              - src: resource.album.vdefault#view-rule
+                val:
+                  key1: value1
+                  key2: ["value2", "value3"]
+              - src: resource.album.vdefault#token-lifetime
+                val: 1h
       - principal: bradley
         resource: bradley_album
         actions:
@@ -104,6 +113,9 @@ tests: <7>
 <16> Key of the principal fixture under test
 <17> Key of the resource fixture under test
 <18> Expected outcomes for each action for the principal+resource pair
+<19> Optional list of xref:outputs.adoc[output values] to match
+<20> Name of the action that would produce the output
+<21> List of expected output values
 
 === Sharing test fixtures
 

@@ -23,6 +23,18 @@
         }
       }
     },
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
     "cerbos.engine.v1.Principal": {
       "type": "object",
       "required": [
@@ -159,6 +171,12 @@
             "minLength": 1
           }
         },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestTable.OutputExpectations"
+          }
+        },
         "principal": {
           "type": "string",
           "minLength": 1
@@ -207,6 +225,27 @@
           },
           "minItems": 1,
           "uniqueItems": true
+        }
+      }
+    },
+    "cerbos.policy.v1.TestTable.OutputExpectations": {
+      "type": "object",
+      "required": [
+        "action",
+        "expected"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
+          },
+          "minItems": 1
         }
       }
     },

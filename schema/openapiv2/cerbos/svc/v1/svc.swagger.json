@@ -1196,6 +1196,19 @@
       },
       "description": "Unique resource instance ID supplied in the request."
     },
+    "OutputFailureMismatchedValue": {
+      "type": "object",
+      "properties": {
+        "expected": {},
+        "actual": {}
+      }
+    },
+    "OutputFailureMissingValue": {
+      "type": "object",
+      "properties": {
+        "expected": {}
+      }
+    },
     "PlanResourcesFilterExpression": {
       "type": "object",
       "properties": {
@@ -1323,6 +1336,27 @@
         },
         "actual": {
           "$ref": "#/definitions/v1Effect"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TestResultsOutputFailure"
+          }
+        }
+      }
+    },
+    "TestResultsOutputFailure": {
+      "type": "object",
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "mismatched": {
+          "$ref": "#/definitions/OutputFailureMismatchedValue"
+        },
+        "missing": {
+          "$ref": "#/definitions/OutputFailureMissingValue"
         }
       }
     },

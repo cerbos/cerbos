@@ -1,0 +1,41 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestTable/OutputExpectations.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "required": [
+    "action",
+    "expected"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
+      },
+      "minItems": 1
+    }
+  }
+}

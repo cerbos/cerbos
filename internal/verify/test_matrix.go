@@ -6,6 +6,8 @@ package verify
 import (
 	"fmt"
 
+	"google.golang.org/protobuf/types/known/structpb"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
@@ -15,10 +17,13 @@ type testMatrixKey struct {
 	Resource  string
 }
 
-type testMatrixExpectation = map[string]effectv1.Effect
+type testMatrixExpectations struct {
+	actions map[string]effectv1.Effect
+	outputs map[string]*policyv1.Test_OutputEntries
+}
 
 type testMatrixElement struct {
-	Expected testMatrixExpectation
+	Expected testMatrixExpectations
 	testMatrixKey
 }
 
@@ -51,8 +56,8 @@ func buildTestMatrix(table *policyv1.TestTable) ([]testMatrixElement, error) {
 	return matrix, nil
 }
 
-func buildExpectationLookup(table *policyv1.TestTable) (map[testMatrixKey]testMatrixExpectation, error) {
-	lookup := make(map[testMatrixKey]testMatrixExpectation, len(table.Expected))
+func buildExpectationLookup(table *policyv1.TestTable) (map[testMatrixKey]testMatrixExpectations, error) {
+	lookup := make(map[testMatrixKey]testMatrixExpectations, len(table.Expected))
 
 	for _, expectation := range table.Expected {
 		key := testMatrixKey{Principal: expectation.Principal, Resource: expectation.Resource}
@@ -61,16 +66,29 @@ func buildExpectationLookup(table *policyv1.TestTable) (map[testMatrixKey]testMa
 			return nil, fmt.Errorf("found multiple expectations for principal %q and resource %q", key.Principal, key.Resource)
 		}
 
-		lookup[key] = expectation.Actions
+		tmExpectation := testMatrixExpectations{actions: expectation.Actions}
+		if n := len(expectation.Outputs); n > 0 {
+			tmExpectation.outputs = make(map[string]*policyv1.Test_OutputEntries, n)
+			for _, oe := range expectation.Outputs {
+				entries := make(map[string]*structpb.Value, len(oe.Expected))
+				for _, entry := range oe.Expected {
+					entries[entry.Src] = entry.Val
+				}
+				tmExpectation.outputs[oe.Action] = &policyv1.Test_OutputEntries{Entries: entries}
+			}
+		}
+
+		lookup[key] = tmExpectation
 	}
 
 	return lookup, nil
 }
 
-func buildDefaultExpectation(table *policyv1.TestTable) testMatrixExpectation {
-	expectation := make(testMatrixExpectation, len(table.Input.Actions))
-	for _, action := range table.Input.Actions {
-		expectation[action] = effectv1.Effect_EFFECT_DENY
+func buildDefaultExpectation(table *policyv1.TestTable) testMatrixExpectations {
+	actions := make(map[string]effectv1.Effect, len(table.Input.Actions))
+	for _, a := range table.Input.Actions {
+		actions[a] = effectv1.Effect_EFFECT_DENY
 	}
-	return expectation
+
+	return testMatrixExpectations{actions: actions}
 }

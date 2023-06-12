@@ -1147,6 +1147,63 @@ func cerbos_policy_v1_TestResults_Failure_hashpb_sum(m *v12.TestResults_Failure,
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Actual)))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Failure.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_policy_v1_TestResults_OutputFailure_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_OutputFailure_MismatchedValue_hashpb_sum(m *v12.TestResults_OutputFailure_MismatchedValue, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected"]; !ok {
+		if m.Expected != nil {
+			google_protobuf_Value_hashpb_sum(m.Expected, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual"]; !ok {
+		if m.Actual != nil {
+			google_protobuf_Value_hashpb_sum(m.Actual, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_OutputFailure_MissingValue_hashpb_sum(m *v12.TestResults_OutputFailure_MissingValue, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected"]; !ok {
+		if m.Expected != nil {
+			google_protobuf_Value_hashpb_sum(m.Expected, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_OutputFailure_hashpb_sum(m *v12.TestResults_OutputFailure, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.src"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Src))
+
+	}
+	if m.Outcome != nil {
+		if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.outcome"]; !ok {
+			switch t := m.Outcome.(type) {
+			case *v12.TestResults_OutputFailure_Mismatched:
+				if t.Mismatched != nil {
+					cerbos_policy_v1_TestResults_OutputFailure_MismatchedValue_hashpb_sum(t.Mismatched, hasher, ignore)
+				}
+
+			case *v12.TestResults_OutputFailure_Missing:
+				if t.Missing != nil {
+					cerbos_policy_v1_TestResults_OutputFailure_MissingValue_hashpb_sum(t.Missing, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestResults_Principal_hashpb_sum(m *v12.TestResults_Principal, hasher hash.Hash, ignore map[string]struct{}) {

@@ -1,0 +1,176 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    id: john
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+  bev:
+    id: bev
+    roles:
+      - employee
+      - manager
+    attr:
+      department: marketing
+      geography: GB
+      managed_geographies: GB
+      team: design
+  terry_tibbs:
+    id: terry_tibbs
+    roles:
+      - employee
+    attr:
+      department: accounting
+      geography: GB
+      team: payroll
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_equipment_request:
+    kind: equipment_request
+    id: XX125
+    scope: acme
+    attr: &attr
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+  john_pending_equipment_request:
+    kind: equipment_request
+    id: XX225
+    scope: acme
+    attr:
+      << : *attr
+      status: PENDING_APPROVAL
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for equipment requests
+tests:
+  - name: John's request
+    input:
+      principals:
+        - john
+        - bev
+        - terry_tibbs
+      resources:
+        - john_equipment_request
+        - john_pending_equipment_request
+      actions:
+        - view:public
+        - approve
+        - create
+    expected:
+      - principal: john
+        resource: john_equipment_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          create: EFFECT_ALLOW
+        outputs:
+          - action: view:public
+            expected:
+              - src: "resource.equipment_request.vdefault#public-view"
+                val:
+                  id: john
+                  keys: XX125
+                  formatted_string: "id:john"
+                  some_bool: true
+                  some_list: ["foo", "bar"]
+                  something_nested:
+                    nested_str: foo
+                    nested_bool: false
+                    nested_list: ["nest_foo", 1.01]
+                    nested_formatted_string: "id:john"
+
+          - action: create
+            expected:
+              - src: "resource.equipment_request.vdefault/acme#rule-001"
+                val: "create_allowed:john"
+
+      - principal: bev
+        resource: john_equipment_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          create: EFFECT_ALLOW
+        outputs:
+          - action: view:public
+            expected:
+              - src: "resource.equipment_request.vdefault#public-view"
+                val:
+                  id: john
+                  keys: XX125
+                  formatted_string: "id:john"
+                  some_bool: true
+                  some_list: ["foo", "bar"]
+                  something_nested:
+                    nested_str: foo
+                    nested_bool: false
+                    nested_list: ["nest_foo", 1.01]
+                    nested_formatted_string: "id:john"
+
+          - action: create
+            expected:
+              - src: "resource.equipment_request.vdefault/acme#rule-001"
+                val: "create_allowed:bev"
+
+      - principal: terry_tibbs
+        resource: john_equipment_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          create: EFFECT_ALLOW
+        outputs:
+          - action: create
+            expected:
+              - src: "principal.terry_tibbs.vdefault#create-rule"
+                val: ["foo", ["bar", true]]
+
+      - principal: john
+        resource: john_pending_equipment_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          create: EFFECT_ALLOW
+
+      - principal: bev
+        resource: john_pending_equipment_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_ALLOW
+          create: EFFECT_ALLOW
+        outputs:
+          - action: view:public
+            expected:
+              - src: "resource.equipment_request.vdefault#foo"
+                val: "bar"
+
+          - action: approve
+            expected:
+              - src: "resource.equipment_request.vdefault#rule-002"
+                val: "approval_status:bev:PENDING_APPROVAL"
+
+          - action: create
+            expected:
+              - src: "resource.equipment_request.vdefault/acme#rule-001"
+                val: "create_allowed:bev"
+
+      - principal: terry_tibbs
+        resource: john_pending_equipment_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          create: EFFECT_ALLOW
+        outputs:
+          - action: create
+            expected:
+              - src: "principal.terry_tibbs.vdefault#create-rule"
+                val: ["foo", ["bar", true]]

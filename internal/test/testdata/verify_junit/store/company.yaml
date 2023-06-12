@@ -11,6 +11,9 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       roles:
         - user
+      output:
+        expr: |-
+          {"principal": P.id, "resource": R.id}
 
     - actions:
         - "*"

@@ -13,6 +13,10 @@ import (
 
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/google/go-cmp/cmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -218,6 +222,53 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 		return details
 	}
 
+	if expectedOutputs, ok := test.ExpectedOutputs[action]; ok {
+		actualOutputs := make(map[string]*structpb.Value, len(actual[0].Outputs))
+		for _, output := range actual[0].Outputs {
+			actualOutputs[output.Src] = output.Val
+		}
+
+		var failures []*policyv1.TestResults_OutputFailure
+		for wantKey, wantValue := range expectedOutputs.Entries {
+			haveValue, ok := actualOutputs[wantKey]
+			if !ok {
+				failures = append(failures, &policyv1.TestResults_OutputFailure{
+					Src: wantKey,
+					Outcome: &policyv1.TestResults_OutputFailure_Missing{
+						Missing: &policyv1.TestResults_OutputFailure_MissingValue{
+							Expected: wantValue,
+						},
+					},
+				})
+				continue
+			}
+
+			if !cmp.Equal(wantValue, haveValue, protocmp.Transform()) {
+				failures = append(failures, &policyv1.TestResults_OutputFailure{
+					Src: wantKey,
+					Outcome: &policyv1.TestResults_OutputFailure_Mismatched{
+						Mismatched: &policyv1.TestResults_OutputFailure_MismatchedValue{
+							Actual:   haveValue,
+							Expected: wantValue,
+						},
+					},
+				})
+			}
+		}
+
+		if len(failures) > 0 {
+			details.Result = policyv1.TestResults_RESULT_FAILED
+			details.Outcome = &policyv1.TestResults_Details_Failure{
+				Failure: &policyv1.TestResults_Failure{
+					Expected: test.Expected[action],
+					Actual:   actual[0].Actions[action].Effect,
+					Outputs:  failures,
+				},
+			}
+			return details
+		}
+	}
+
 	details.Result = policyv1.TestResults_RESULT_PASSED
 	return details
 }
@@ -362,8 +413,9 @@ func (tf *testFixture) buildTest(suite *policyv1.TestSuite, table *policyv1.Test
 			Actions:   table.Input.Actions,
 			AuxData:   auxData,
 		},
-		Expected: matrixElement.Expected,
-		Options:  options,
+		Expected:        matrixElement.Expected.actions,
+		ExpectedOutputs: matrixElement.Expected.outputs,
+		Options:         options,
 	}, nil
 }
 
