@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/tidwall/pretty"
 )
 
 const (
@@ -179,7 +180,7 @@ func renderValue(v proto.Message) string {
 		return "FAILED TO RENDER"
 	}
 
-	return string(vv)
+	return string(pretty.UglyInPlace(vv))
 }
 
 type TestSuites struct {
