@@ -636,20 +636,7 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]
 		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
 	}
 
-	err := s.db.From(PolicyTbl).
-		Select(
-			goqu.C(PolicyTblKindCol),
-			goqu.C(PolicyTblNameCol),
-			goqu.C(PolicyTblVerCol),
-			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
-		).
-		Where(whereExprs...).
-		Order(
-			goqu.C(PolicyTblKindCol).Asc(),
-			goqu.C(PolicyTblNameCol).Asc(),
-			goqu.C(PolicyTblVerCol).Asc(),
-			goqu.C(PolicyTblScopeCol).Asc(),
-		).
+	err := s.filterPolicyIDs(whereExprs).
 		Executor().
 		ScanStructsContext(ctx, &policyCoords)
 	if err != nil {
@@ -694,21 +681,7 @@ func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.Filt
 		whereExprs = append(whereExprs, goqu.C(PolicyTblScopeCol).Eq(listParams.Scope))
 	}
 
-	// TODO(saml) dedup with ListPolicyIDs query gen above
-	err := s.db.From(PolicyTbl).
-		Select(
-			goqu.C(PolicyTblKindCol),
-			goqu.C(PolicyTblNameCol),
-			goqu.C(PolicyTblVerCol),
-			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
-		).
-		Where(whereExprs...).
-		Order(
-			goqu.C(PolicyTblKindCol).Asc(),
-			goqu.C(PolicyTblNameCol).Asc(),
-			goqu.C(PolicyTblVerCol).Asc(),
-			goqu.C(PolicyTblScopeCol).Asc(),
-		).
+	err := s.filterPolicyIDs(whereExprs).
 		Executor().
 		ScanStructsContext(ctx, &policyCoords)
 	if err != nil {
@@ -723,6 +696,23 @@ func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.Filt
 	}
 
 	return policyIDs, nil
+}
+
+func (s *dbStorage) filterPolicyIDs(whereExprs []exp.Expression) *goqu.SelectDataset {
+	return s.db.From(PolicyTbl).
+		Select(
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+		).
+		Where(whereExprs...).
+		Order(
+			goqu.C(PolicyTblKindCol).Asc(),
+			goqu.C(PolicyTblNameCol).Asc(),
+			goqu.C(PolicyTblVerCol).Asc(),
+			goqu.C(PolicyTblScopeCol).Asc(),
+		)
 }
 
 func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {
