@@ -25,6 +25,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -1259,3 +1260,6 @@ func WithIncludeDisabled() ListPoliciesOption {
 		request.IncludeDisabled = true
 	}
 }
+
+// FilterPoliciesOptions is used to filter policies.
+type FilterPoliciesOptions storage.FilterPolicyIDsParams

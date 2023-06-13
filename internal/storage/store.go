@@ -135,8 +135,6 @@ type BinaryStore interface {
 	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
-// TODO(saml) place somewhere sensical
-// TODO(saml) attribute naming.
 type FilterPolicyIDsParams struct {
 	NameRegexp      string
 	ScopeRegexp     string

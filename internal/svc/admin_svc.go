@@ -147,7 +147,6 @@ func (cas *CerbosAdminService) FilterPolicies(ctx context.Context, req *requestv
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	// TODO(saml) attribute naming
 	filterParams := storage.FilterPolicyIDsParams{
 		NameRegexp:      req.NameRegexp,
 		ScopeRegexp:     req.ScopeRegexp,

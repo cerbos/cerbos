@@ -18,7 +18,6 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/internal/storage"
 )
 
 const (
@@ -30,7 +29,7 @@ type AdminClient interface {
 	AddOrUpdatePolicy(ctx context.Context, policies *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 	ListPolicies(ctx context.Context, opts ...ListPoliciesOption) ([]string, error)
-	FilterPolicies(ctx context.Context, opts storage.FilterPolicyIDsParams) ([]string, error)
+	FilterPolicies(ctx context.Context, opts FilterPoliciesOptions) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 	DisablePolicy(ctx context.Context, ids ...string) (uint32, error)
 	EnablePolicy(ctx context.Context, ids ...string) (uint32, error)
@@ -197,7 +196,7 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListPolicies
 	return p.PolicyIds, nil
 }
 
-func (c *GrpcAdminClient) FilterPolicies(ctx context.Context, params storage.FilterPolicyIDsParams) ([]string, error) {
+func (c *GrpcAdminClient) FilterPolicies(ctx context.Context, params FilterPoliciesOptions) ([]string, error) {
 	req := &requestv1.FilterPoliciesRequest{
 		IncludeDisabled: params.IncludeDisabled,
 		NameRegexp:      params.NameRegexp,

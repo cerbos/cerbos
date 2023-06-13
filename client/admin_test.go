@@ -22,7 +22,6 @@ import (
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -160,7 +159,7 @@ func TestListPolicies(t *testing.T) {
 func TestFilterPolicies(t *testing.T) {
 	ac, ps := setUpAdminClientAndPolicySet(t)
 
-	testFilter := func(filterParams storage.FilterPolicyIDsParams) {
+	testFilter := func(filterParams FilterPoliciesOptions) {
 		t.Helper()
 
 		have, err := ac.FilterPolicies(context.Background(), filterParams)
@@ -176,7 +175,7 @@ func TestFilterPolicies(t *testing.T) {
 	}
 
 	t.Run("should get the list of filtered policies by name", func(t *testing.T) {
-		filterParams := storage.FilterPolicyIDsParams{
+		filterParams := FilterPoliciesOptions{
 			NameRegexp:      ".*request$",
 			IncludeDisabled: true,
 		}
@@ -184,7 +183,7 @@ func TestFilterPolicies(t *testing.T) {
 	})
 
 	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
-		filterParams := storage.FilterPolicyIDsParams{
+		filterParams := FilterPoliciesOptions{
 			Version:         "20210210",
 			IncludeDisabled: true,
 		}
@@ -192,7 +191,7 @@ func TestFilterPolicies(t *testing.T) {
 	})
 
 	t.Run("should get the list of filtered policies by scope", func(t *testing.T) {
-		filterParams := storage.FilterPolicyIDsParams{
+		filterParams := FilterPoliciesOptions{
 			ScopeRegexp:     "acme",
 			IncludeDisabled: true,
 		}
@@ -200,7 +199,7 @@ func TestFilterPolicies(t *testing.T) {
 	})
 
 	t.Run("should get the list of filtered policies by all", func(t *testing.T) {
-		filterParams := storage.FilterPolicyIDsParams{
+		filterParams := FilterPoliciesOptions{
 			NameRegexp:      ".*(leave|equipment)_[rw]equest$",
 			ScopeRegexp:     "^acme",
 			Version:         "default",
@@ -210,7 +209,7 @@ func TestFilterPolicies(t *testing.T) {
 	})
 }
 
-func filterPolicies(t *testing.T, policies []*policyv1.Policy, params storage.FilterPolicyIDsParams) []*policyv1.Policy {
+func filterPolicies(t *testing.T, policies []*policyv1.Policy, params FilterPoliciesOptions) []*policyv1.Policy {
 	t.Helper()
 
 	filtered := []*policyv1.Policy{}
