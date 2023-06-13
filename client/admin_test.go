@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"regexp"
 	"testing"
 	"time"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestCollectLogs(t *testing.T) {
@@ -183,6 +183,14 @@ func TestFilterPolicies(t *testing.T) {
 		testFilter(filterParams)
 	})
 
+	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
+		filterParams := storage.FilterPolicyIDsParams{
+			Version:         "20210210",
+			IncludeDisabled: true,
+		}
+		testFilter(filterParams)
+	})
+
 	t.Run("should get the list of filtered policies by scope", func(t *testing.T) {
 		filterParams := storage.FilterPolicyIDsParams{
 			Scope:           "acme",
@@ -191,9 +199,11 @@ func TestFilterPolicies(t *testing.T) {
 		testFilter(filterParams)
 	})
 
-	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
+	t.Run("should get the list of filtered policies by all", func(t *testing.T) {
 		filterParams := storage.FilterPolicyIDsParams{
-			Version:         "20210210",
+			NamePattern:     ".*(leave|equipment)_[rw]equest$",
+			Scope:           "^acme",
+			Version:         "default",
 			IncludeDisabled: true,
 		}
 		testFilter(filterParams)
@@ -205,23 +215,24 @@ func filterPolicies(t *testing.T, policies []*policyv1.Policy, params storage.Fi
 
 	filtered := []*policyv1.Policy{}
 
-	var r *regexp.Regexp
+	c := util.NewRegexpCache()
 	for _, p := range policies {
 		wrapped := policy.Wrap(p)
 
 		if params.NamePattern != "" {
-			if r == nil {
-				var err error
-				r, err = regexp.Compile(params.NamePattern)
-				require.NoError(t, err)
-			}
+			r, err := c.GetCompiledExpr(params.NamePattern)
+			require.NoError(t, err)
 			if !r.MatchString(wrapped.Name) {
 				continue
 			}
 		}
 
-		if params.Scope != "" && params.Scope != wrapped.Scope {
-			continue
+		if params.Scope != "" {
+			r, err := c.GetCompiledExpr(params.Scope)
+			require.NoError(t, err)
+			if !r.MatchString(wrapped.Scope) {
+				continue
+			}
 		}
 
 		if params.Version != "" && params.Version != wrapped.Version {

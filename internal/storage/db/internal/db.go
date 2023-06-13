@@ -673,12 +673,16 @@ func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.Filt
 		whereExprs = append(whereExprs, goqu.C(PolicyTblNameCol).Like(r))
 	}
 
-	if listParams.Version != "" {
-		whereExprs = append(whereExprs, goqu.C(PolicyTblVerCol).Eq(listParams.Version))
+	if listParams.Scope != "" {
+		r, err := s.opts.regexpCache.GetCompiledExpr(listParams.Scope)
+		if err != nil {
+			return nil, err
+		}
+		whereExprs = append(whereExprs, goqu.C(PolicyTblScopeCol).Like(r))
 	}
 
-	if listParams.Scope != "" {
-		whereExprs = append(whereExprs, goqu.C(PolicyTblScopeCol).Eq(listParams.Scope))
+	if listParams.Version != "" {
+		whereExprs = append(whereExprs, goqu.C(PolicyTblVerCol).Eq(listParams.Version))
 	}
 
 	err := s.filterPolicyIDs(whereExprs).

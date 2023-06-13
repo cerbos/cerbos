@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const DriverName = "sqlite3"
@@ -44,10 +45,10 @@ var (
 
 const nRegexpFnArgs = 2
 
-var nameRegexpCache internal.RegexpCache
+var nameRegexpCache util.RegexpCache
 
 func init() {
-	nameRegexpCache = *internal.NewRegexpCache()
+	nameRegexpCache = *util.NewRegexpCache()
 
 	gosqlite3.MustRegisterDeterministicScalarFunction("regexp", nRegexpFnArgs, func(ctx *gosqlite3.FunctionContext, args []driver.Value) (driver.Value, error) {
 		if args[0] == nil || args[1] == nil {
