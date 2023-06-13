@@ -133,6 +133,40 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 	}, nil
 }
 
+func (cas *CerbosAdminService) FilterPolicies(ctx context.Context, req *requestv1.FilterPoliciesRequest) (*responsev1.FilterPoliciesResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	// TODO(saml) attribute naming
+	filterParams := storage.FilterPolicyIDsParams{
+		NamePattern:     req.PolicyNameRegex,
+		Version:         req.PolicyVersion,
+		Scope:           req.PolicyScope,
+		IncludeDisabled: req.IncludeDisabled,
+	}
+
+	policyIds, err := ms.FilterPolicyIDs(context.Background(), filterParams)
+	if err != nil {
+		ctxzap.Extract(ctx).Error("Could not get policy ids", zap.Error(err))
+		return nil, status.Error(codes.Internal, "could not get policy ids")
+	}
+
+	sort.Strings(policyIds)
+	return &responsev1.FilterPoliciesResponse{
+		PolicyIds: policyIds,
+	}, nil
+}
+
 func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.GetPolicyRequest) (*responsev1.GetPolicyResponse, error) {
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err

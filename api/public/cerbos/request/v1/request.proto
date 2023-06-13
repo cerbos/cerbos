@@ -523,6 +523,28 @@ message ListPoliciesRequest {
   ];
 }
 
+message FilterPoliciesRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Filter policies request"}
+  };
+  bool include_disabled = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
+  ];
+  string policy_name_regex = 2 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by name with regex"}
+  ];
+  string policy_version = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by version"}
+  ];
+  string policy_scope = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by scope"}
+  ];
+}
+
 message GetPolicyRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Get policy request"}

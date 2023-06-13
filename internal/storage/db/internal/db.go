@@ -42,6 +42,7 @@ type DBStorage interface {
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error)
+	FilterPolicyIDs(context.Context, storage.FilterPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
@@ -52,7 +53,7 @@ type DBStorage interface {
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
-	opts := &dbOpt{}
+	opts := newDbOpt()
 	for _, opt := range dbOpts {
 		opt(opts)
 	}
@@ -653,6 +654,67 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]
 		ScanStructsContext(ctx, &policyCoords)
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
+	}
+
+	policyIDs := make([]string, len(policyCoords))
+	for i := 0; i < len(policyCoords); i++ {
+		policyIDs[i] = policyCoords[i].PolicyKey()
+	}
+
+	return policyIDs, nil
+}
+
+func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.FilterPolicyIDsParams) ([]string, error) {
+	var policyCoords []namer.PolicyCoords
+	var whereExprs []exp.Expression
+
+	if !listParams.IncludeDisabled {
+		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
+	}
+
+	if listParams.NamePattern != "" {
+		// We need to pass a *regexp.Regexp expression to `Like` (or `RegexpLike`, which is equivalent) in order for goqu
+		// to correctly parse the query. We need to pass the compiled expression in order for goqu to access (only) the
+		// raw string (https://github.com/doug-martin/goqu/blob/master/exp/bool.go#L148).
+		// We use a cache to prevent the need to recompile arbitrary strings on each request.
+		// In the case of the SQLite driver, to support regexp, we generate an application-defined function in which we
+		// use the cached compiled expressions.
+		r, err := s.opts.regexpCache.GetCompiledExpr(listParams.NamePattern)
+		if err != nil {
+			return nil, err
+		}
+		whereExprs = append(whereExprs, goqu.C(PolicyTblNameCol).Like(r))
+	}
+
+	if listParams.Version != "" {
+		whereExprs = append(whereExprs, goqu.C(PolicyTblVerCol).Eq(listParams.Version))
+	}
+
+	if listParams.Scope != "" {
+		whereExprs = append(whereExprs, goqu.C(PolicyTblScopeCol).Eq(listParams.Scope))
+	}
+
+	// TODO(saml) dedup with ListPolicyIDs query gen above
+	err := s.db.From(PolicyTbl).
+		Select(
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+		).
+		Where(whereExprs...).
+		Order(
+			goqu.C(PolicyTblKindCol).Asc(),
+			goqu.C(PolicyTblNameCol).Asc(),
+			goqu.C(PolicyTblVerCol).Asc(),
+			goqu.C(PolicyTblScopeCol).Asc(),
+		).
+		Executor().
+		ScanStructsContext(ctx, &policyCoords)
+	if err != nil {
+		// TODO(saml) do all dialects support regexp matching? If not, pre-filter and apply filter afterwards in code?
+		// SQLite is supported via application defined function. SQL Server doesn't support regexp out the box.
+		return nil, fmt.Errorf("could not execute %q query: %w", "FilterPolicyIDs", err)
 	}
 
 	policyIDs := make([]string, len(policyCoords))

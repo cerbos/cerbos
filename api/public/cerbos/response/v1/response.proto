@@ -356,6 +356,14 @@ message ListPoliciesResponse {
   repeated string policy_ids = 1;
 }
 
+message FilterPoliciesResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Filtered list of policies stored in the Cerbos server"}
+  };
+
+  repeated string policy_ids = 1;
+}
+
 message GetPolicyResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Get policy response"}

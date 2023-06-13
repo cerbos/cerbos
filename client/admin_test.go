@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"testing"
 	"time"
 
@@ -16,10 +17,13 @@ import (
 	"google.golang.org/grpc"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -86,7 +90,9 @@ func TestAuditLogs(t *testing.T) {
 	})
 }
 
-func TestListPolicies(t *testing.T) {
+func setUpAdminClientAndPolicySet(t *testing.T) (AdminClient, *PolicySet) {
+	t.Helper()
+
 	const (
 		adminUsername = "cerbos"
 		adminPassword = "cerbosAdmin"
@@ -117,6 +123,12 @@ func TestListPolicies(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 
+	return ac, ps
+}
+
+func TestListPolicies(t *testing.T) {
+	ac, ps := setUpAdminClientAndPolicySet(t)
+
 	t.Run("should get the list of policies", func(t *testing.T) {
 		have, err := ac.ListPolicies(context.Background(), WithIncludeDisabled())
 		require.NoError(t, err)
@@ -143,4 +155,81 @@ func TestListPolicies(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestFilterPolicies(t *testing.T) {
+	ac, ps := setUpAdminClientAndPolicySet(t)
+
+	testFilter := func(filterParams storage.FilterPolicyIDsParams) {
+		t.Helper()
+
+		have, err := ac.FilterPolicies(context.Background(), filterParams)
+		require.NoError(t, err)
+		require.NotEmpty(t, have)
+
+		policyList := filterPolicies(t, ps.GetPolicies(), filterParams)
+		want := make([]string, len(policyList))
+		for i, p := range policyList {
+			want[i] = namer.PolicyKey(p)
+		}
+		require.ElementsMatch(t, want, have)
+	}
+
+	t.Run("should get the list of filtered policies by name", func(t *testing.T) {
+		filterParams := storage.FilterPolicyIDsParams{
+			NamePattern:     ".*request$",
+			IncludeDisabled: true,
+		}
+		testFilter(filterParams)
+	})
+
+	t.Run("should get the list of filtered policies by scope", func(t *testing.T) {
+		filterParams := storage.FilterPolicyIDsParams{
+			Scope:           "acme",
+			IncludeDisabled: true,
+		}
+		testFilter(filterParams)
+	})
+
+	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
+		filterParams := storage.FilterPolicyIDsParams{
+			Version:         "20210210",
+			IncludeDisabled: true,
+		}
+		testFilter(filterParams)
+	})
+}
+
+func filterPolicies(t *testing.T, policies []*policyv1.Policy, params storage.FilterPolicyIDsParams) []*policyv1.Policy {
+	t.Helper()
+
+	filtered := []*policyv1.Policy{}
+
+	var r *regexp.Regexp
+	for _, p := range policies {
+		wrapped := policy.Wrap(p)
+
+		if params.NamePattern != "" {
+			if r == nil {
+				var err error
+				r, err = regexp.Compile(params.NamePattern)
+				require.NoError(t, err)
+			}
+			if !r.MatchString(wrapped.Name) {
+				continue
+			}
+		}
+
+		if params.Scope != "" && params.Scope != wrapped.Scope {
+			continue
+		}
+
+		if params.Version != "" && params.Version != wrapped.Version {
+			continue
+		}
+
+		filtered = append(filtered, p)
+	}
+
+	return filtered
 }

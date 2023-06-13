@@ -769,6 +769,25 @@ func cerbos_request_v1_File_hashpb_sum(m *File, hasher hash.Hash, ignore map[str
 	}
 }
 
+func cerbos_request_v1_FilterPoliciesRequest_hashpb_sum(m *FilterPoliciesRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.include_disabled"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeDisabled)))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.policy_name_regex"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyNameRegex))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyVersion))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.policy_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyScope))
+
+	}
+}
+
 func cerbos_request_v1_GetPolicyRequest_hashpb_sum(m *GetPolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.GetPolicyRequest.id"]; !ok {
 		if len(m.Id) > 0 {

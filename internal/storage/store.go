@@ -135,9 +135,19 @@ type BinaryStore interface {
 	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
+// TODO(saml) place somewhere sensical
+// TODO(saml) attribute naming.
+type FilterPolicyIDsParams struct {
+	NamePattern     string
+	Version         string
+	Scope           string
+	IncludeDisabled bool
+}
+
 // MutableStore is a store that allows mutations.
 type MutableStore interface {
 	Store
+	FilterPolicyIDs(context.Context, FilterPolicyIDsParams) ([]string, error)
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
 	AddOrUpdateSchema(context.Context, ...*schemav1.Schema) error
 	Disable(context.Context, ...string) (uint32, error)
