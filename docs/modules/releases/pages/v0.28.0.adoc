@@ -1,0 +1,32 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.28.0]
+= Cerbos v0.28.0
+
+== Highlights
+
+This is a quick release close on the heels of xref:v0.27.0.adoc[Cerbos v0.27.0] to introduce two useful features and a couple of bug fixes.
+
+You can now write policy tests to verify that your policies produce the correct xref:policies:outputs.adoc[output values]. Checking for output values in tests is optional but, if you do define any output expectations, the tests will fail if the produced output does not match the expectations. See xref:policies:compile.adoc[] for information on testing.
+
+Audit log entries written to xref:0.28.0@configuration:audit.adoc#kafka[Kafka] can now be compressed using one of the supported compression algorithms. The default algorithm used is `Snappy`. Thanks to `@shangardezi` for contributing this feature.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Only produce outputs for activated rules (link:https://github.com/cerbos/cerbos/pull/1631[#1631])
+* Render the condition correctly in an Engine trace (link:https://github.com/cerbos/cerbos/pull/1637[#1637])
+
+=== Features
+
+* Ability to verify outputs in policy tests (link:https://github.com/cerbos/cerbos/pull/1634[#1634])
+* Support different compression algorithms for kafka audit (link:https://github.com/cerbos/cerbos/pull/1636[#1636])
+
+=== Chores
+
+* Add output support to Playground API (link:https://github.com/cerbos/cerbos/pull/1632[#1632])
+* Bump version to 0.28.0
+* Remove manual setup from overlay E2E test (link:https://github.com/cerbos/cerbos/pull/1633[#1633])

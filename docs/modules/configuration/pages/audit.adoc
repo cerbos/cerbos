@@ -143,4 +143,5 @@ audit:
     maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
     produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
     topic: cerbos.audit.log # Required. Topic to write audit entries to.
+    compression: ['snappy'] # Compression sets the compression algorithm to use in order of priority. Valid values are "none", "gzip", "snappy","lz4", "zstd". Default is ["snappy", "none"].
 ----
