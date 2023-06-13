@@ -183,22 +183,22 @@
             "type": "boolean"
           },
           {
-            "name": "policyNameRegex",
-            "description": "Filter policies by name with regex",
+            "name": "nameRegexp",
+            "description": "Filter policies by name with regexp",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "policyVersion",
+            "name": "scopeRegexp",
+            "description": "Filter policies by scope with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
             "description": "Filter policies by version",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "policyScope",
-            "description": "Filter policies by scope",
             "in": "query",
             "required": false,
             "type": "string"

@@ -149,9 +149,9 @@ func (cas *CerbosAdminService) FilterPolicies(ctx context.Context, req *requestv
 
 	// TODO(saml) attribute naming
 	filterParams := storage.FilterPolicyIDsParams{
-		NamePattern:     req.PolicyNameRegex,
-		Version:         req.PolicyVersion,
-		Scope:           req.PolicyScope,
+		NameRegexp:      req.NameRegexp,
+		ScopeRegexp:     req.ScopeRegexp,
+		Version:         req.Version,
 		IncludeDisabled: req.IncludeDisabled,
 	}
 

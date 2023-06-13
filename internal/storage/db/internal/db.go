@@ -659,22 +659,22 @@ func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.Filt
 		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
 	}
 
-	if listParams.NamePattern != "" {
+	if listParams.NameRegexp != "" {
 		// We need to pass a *regexp.Regexp expression to `Like` (or `RegexpLike`, which is equivalent) in order for goqu
 		// to correctly parse the query. We need to pass the compiled expression in order for goqu to access (only) the
 		// raw string (https://github.com/doug-martin/goqu/blob/master/exp/bool.go#L148).
 		// We use a cache to prevent the need to recompile arbitrary strings on each request.
 		// In the case of the SQLite driver, to support regexp, we generate an application-defined function in which we
 		// use the cached compiled expressions.
-		r, err := s.opts.regexpCache.GetCompiledExpr(listParams.NamePattern)
+		r, err := s.opts.regexpCache.GetCompiledExpr(listParams.NameRegexp)
 		if err != nil {
 			return nil, err
 		}
 		whereExprs = append(whereExprs, goqu.C(PolicyTblNameCol).Like(r))
 	}
 
-	if listParams.Scope != "" {
-		r, err := s.opts.regexpCache.GetCompiledExpr(listParams.Scope)
+	if listParams.ScopeRegexp != "" {
+		r, err := s.opts.regexpCache.GetCompiledExpr(listParams.ScopeRegexp)
 		if err != nil {
 			return nil, err
 		}

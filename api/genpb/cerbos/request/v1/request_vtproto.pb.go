@@ -1542,24 +1542,24 @@ func (m *FilterPoliciesRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.PolicyScope) > 0 {
-		i -= len(m.PolicyScope)
-		copy(dAtA[i:], m.PolicyScope)
-		i = encodeVarint(dAtA, i, uint64(len(m.PolicyScope)))
+	if len(m.Version) > 0 {
+		i -= len(m.Version)
+		copy(dAtA[i:], m.Version)
+		i = encodeVarint(dAtA, i, uint64(len(m.Version)))
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.PolicyVersion) > 0 {
-		i -= len(m.PolicyVersion)
-		copy(dAtA[i:], m.PolicyVersion)
-		i = encodeVarint(dAtA, i, uint64(len(m.PolicyVersion)))
+	if len(m.ScopeRegexp) > 0 {
+		i -= len(m.ScopeRegexp)
+		copy(dAtA[i:], m.ScopeRegexp)
+		i = encodeVarint(dAtA, i, uint64(len(m.ScopeRegexp)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.PolicyNameRegex) > 0 {
-		i -= len(m.PolicyNameRegex)
-		copy(dAtA[i:], m.PolicyNameRegex)
-		i = encodeVarint(dAtA, i, uint64(len(m.PolicyNameRegex)))
+	if len(m.NameRegexp) > 0 {
+		i -= len(m.NameRegexp)
+		copy(dAtA[i:], m.NameRegexp)
+		i = encodeVarint(dAtA, i, uint64(len(m.NameRegexp)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -2563,15 +2563,15 @@ func (m *FilterPoliciesRequest) SizeVT() (n int) {
 	if m.IncludeDisabled {
 		n += 2
 	}
-	l = len(m.PolicyNameRegex)
+	l = len(m.NameRegexp)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.PolicyVersion)
+	l = len(m.ScopeRegexp)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.PolicyScope)
+	l = len(m.Version)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -6084,7 +6084,7 @@ func (m *FilterPoliciesRequest) UnmarshalVT(dAtA []byte) error {
 			m.IncludeDisabled = bool(v != 0)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyNameRegex", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field NameRegexp", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6112,11 +6112,11 @@ func (m *FilterPoliciesRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PolicyNameRegex = string(dAtA[iNdEx:postIndex])
+			m.NameRegexp = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyVersion", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopeRegexp", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6144,11 +6144,11 @@ func (m *FilterPoliciesRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PolicyVersion = string(dAtA[iNdEx:postIndex])
+			m.ScopeRegexp = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyScope", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6176,7 +6176,7 @@ func (m *FilterPoliciesRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PolicyScope = string(dAtA[iNdEx:postIndex])
+			m.Version = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

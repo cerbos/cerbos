@@ -7,13 +7,13 @@
     "includeDisabled": {
       "type": "boolean"
     },
-    "policyNameRegex": {
+    "nameRegexp": {
       "type": "string"
     },
-    "policyScope": {
+    "scopeRegexp": {
       "type": "string"
     },
-    "policyVersion": {
+    "version": {
       "type": "string"
     }
   }

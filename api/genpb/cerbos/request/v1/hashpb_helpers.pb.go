@@ -774,16 +774,16 @@ func cerbos_request_v1_FilterPoliciesRequest_hashpb_sum(m *FilterPoliciesRequest
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeDisabled)))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.policy_name_regex"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyNameRegex))
+	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.name_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.NameRegexp))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.policy_version"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyVersion))
+	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.scope_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ScopeRegexp))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.policy_scope"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyScope))
+	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Version))
 
 	}
 }

@@ -177,7 +177,7 @@ func TestFilterPolicies(t *testing.T) {
 
 	t.Run("should get the list of filtered policies by name", func(t *testing.T) {
 		filterParams := storage.FilterPolicyIDsParams{
-			NamePattern:     ".*request$",
+			NameRegexp:      ".*request$",
 			IncludeDisabled: true,
 		}
 		testFilter(filterParams)
@@ -193,7 +193,7 @@ func TestFilterPolicies(t *testing.T) {
 
 	t.Run("should get the list of filtered policies by scope", func(t *testing.T) {
 		filterParams := storage.FilterPolicyIDsParams{
-			Scope:           "acme",
+			ScopeRegexp:     "acme",
 			IncludeDisabled: true,
 		}
 		testFilter(filterParams)
@@ -201,8 +201,8 @@ func TestFilterPolicies(t *testing.T) {
 
 	t.Run("should get the list of filtered policies by all", func(t *testing.T) {
 		filterParams := storage.FilterPolicyIDsParams{
-			NamePattern:     ".*(leave|equipment)_[rw]equest$",
-			Scope:           "^acme",
+			NameRegexp:      ".*(leave|equipment)_[rw]equest$",
+			ScopeRegexp:     "^acme",
 			Version:         "default",
 			IncludeDisabled: true,
 		}
@@ -219,16 +219,16 @@ func filterPolicies(t *testing.T, policies []*policyv1.Policy, params storage.Fi
 	for _, p := range policies {
 		wrapped := policy.Wrap(p)
 
-		if params.NamePattern != "" {
-			r, err := c.GetCompiledExpr(params.NamePattern)
+		if params.NameRegexp != "" {
+			r, err := c.GetCompiledExpr(params.NameRegexp)
 			require.NoError(t, err)
 			if !r.MatchString(wrapped.Name) {
 				continue
 			}
 		}
 
-		if params.Scope != "" {
-			r, err := c.GetCompiledExpr(params.Scope)
+		if params.ScopeRegexp != "" {
+			r, err := c.GetCompiledExpr(params.ScopeRegexp)
 			require.NoError(t, err)
 			if !r.MatchString(wrapped.Scope) {
 				continue

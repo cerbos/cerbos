@@ -3153,11 +3153,11 @@ func (m *FilterPoliciesRequest) validate(all bool) error {
 
 	// no validation rules for IncludeDisabled
 
-	// no validation rules for PolicyNameRegex
+	// no validation rules for NameRegexp
 
-	// no validation rules for PolicyVersion
+	// no validation rules for ScopeRegexp
 
-	// no validation rules for PolicyScope
+	// no validation rules for Version
 
 	if len(errors) > 0 {
 		return FilterPoliciesRequestMultiError(errors)

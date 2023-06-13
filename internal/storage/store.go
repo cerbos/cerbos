@@ -138,9 +138,9 @@ type BinaryStore interface {
 // TODO(saml) place somewhere sensical
 // TODO(saml) attribute naming.
 type FilterPolicyIDsParams struct {
-	NamePattern     string
+	NameRegexp      string
+	ScopeRegexp     string
 	Version         string
-	Scope           string
 	IncludeDisabled bool
 }
 

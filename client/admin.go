@@ -200,9 +200,9 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListPolicies
 func (c *GrpcAdminClient) FilterPolicies(ctx context.Context, params storage.FilterPolicyIDsParams) ([]string, error) {
 	req := &requestv1.FilterPoliciesRequest{
 		IncludeDisabled: params.IncludeDisabled,
-		PolicyNameRegex: params.NamePattern,
-		PolicyVersion:   params.Version,
-		PolicyScope:     params.Scope,
+		NameRegexp:      params.NameRegexp,
+		ScopeRegexp:     params.ScopeRegexp,
+		Version:         params.Version,
 	}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("could not validate filter policies request: %w", err)
