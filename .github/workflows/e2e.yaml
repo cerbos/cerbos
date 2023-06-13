@@ -21,10 +21,10 @@ jobs:
       - name: Install Helmfile and Telepresence
         run: |
           mkdir bin
-          curl -fL https://github.com/helmfile/helmfile/releases/download/v0.153.1/helmfile_0.153.1_linux_amd64.tar.gz -o bin/helmfile.tar.gz
+          curl -fL https://github.com/helmfile/helmfile/releases/download/v0.154.0/helmfile_0.154.0_linux_amd64.tar.gz -o bin/helmfile.tar.gz
           tar -xf bin/helmfile.tar.gz -C bin
           chmod +x bin/helmfile
-          curl -fL https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence -o bin/telepresence
+          curl -fL https://ambassador-labs.gateway.scarf.sh/telepresenceio/telepresence/releases/download/v2.13.2/telepresence-linux-amd64 -o bin/telepresence
           chmod +x bin/telepresence
           echo "$(pwd)/bin" >> $GITHUB_PATH
           mkdir -p ~/.config/telepresence
@@ -33,6 +33,7 @@ jobs:
             helm: 60s
             trafficManagerAPI: 30s
           EOF
+          go install github.com/stern/stern@latest
 
       - name: Initialize Helmfile
         run: helmfile init --force

@@ -42,5 +42,5 @@ if [[ "$#" -gt "0" ]]; then
     # E.g. e2e/run.sh ./mysql/... -args -run-id=xxxxx -no-cleanup
     run_tests "$@"
 else
-    run_tests ./... -args -no-cleanup="$E2E_NO_CLEANUP" -command-timeout=4m
+    run_tests ./... -args -no-cleanup="$E2E_NO_CLEANUP" -command-timeout=5m
 fi

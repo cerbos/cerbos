@@ -133,6 +133,12 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 		ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
 		defer cancelFunc()
 
+		backoffConf := backoff.WithContext(
+			backoff.WithMaxRetries(
+				backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay),
+				tr.CerbosClientMaxRetries),
+			ctx)
+
 		switch call := tc.CallKind.(type) {
 		case *privatev1.ServerTestCase_CheckResourceSet:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
@@ -140,21 +146,21 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 			err = backoff.Retry(func() error {
 				have, err = cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
 				return err
-			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay), tr.CerbosClientMaxRetries))
+			}, backoffConf)
 		case *privatev1.ServerTestCase_CheckResourceBatch:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceBatch.WantResponse
 			err = backoff.Retry(func() error {
 				have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
 				return err
-			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay), tr.CerbosClientMaxRetries))
+			}, backoffConf)
 		case *privatev1.ServerTestCase_CheckResources:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResources.WantResponse
 			err = backoff.Retry(func() error {
 				have, err = cerbosClient.CheckResources(ctx, call.CheckResources.Input)
 				return err
-			}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay), tr.CerbosClientMaxRetries))
+			}, backoffConf)
 		case *privatev1.ServerTestCase_PlaygroundValidate:
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundValidate.WantResponse
