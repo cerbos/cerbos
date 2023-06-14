@@ -16,14 +16,12 @@ import (
 	"google.golang.org/grpc"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestCollectLogs(t *testing.T) {
@@ -166,7 +164,7 @@ func TestFilterPolicies(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, have)
 
-		policyList := filterPolicies(t, ps.GetPolicies(), filterParams)
+		policyList := test.FilterPolicies(t, ps.GetPolicies(), storage.FilterPolicyIDsParams(filterParams))
 		want := make([]string, len(policyList))
 		for i, p := range policyList {
 			want[i] = namer.PolicyKey(p)
@@ -207,39 +205,4 @@ func TestFilterPolicies(t *testing.T) {
 		}
 		testFilter(filterParams)
 	})
-}
-
-func filterPolicies(t *testing.T, policies []*policyv1.Policy, params FilterPoliciesOptions) []*policyv1.Policy {
-	t.Helper()
-
-	filtered := []*policyv1.Policy{}
-
-	c := util.NewRegexpCache()
-	for _, p := range policies {
-		wrapped := policy.Wrap(p)
-
-		if params.NameRegexp != "" {
-			r, err := c.GetCompiledExpr(params.NameRegexp)
-			require.NoError(t, err)
-			if !r.MatchString(wrapped.Name) {
-				continue
-			}
-		}
-
-		if params.ScopeRegexp != "" {
-			r, err := c.GetCompiledExpr(params.ScopeRegexp)
-			require.NoError(t, err)
-			if !r.MatchString(wrapped.Scope) {
-				continue
-			}
-		}
-
-		if params.Version != "" && params.Version != wrapped.Version {
-			continue
-		}
-
-		filtered = append(filtered, p)
-	}
-
-	return filtered
 }

@@ -46,7 +46,7 @@ func WithUpsertPolicy(f upsertPolicyFunc) DBOpt {
 	}
 }
 
-// WithRegexpCacheOverride overrides the default regexp cache forto DB queries requiring compiled expressions.
+// WithRegexpCacheOverride overrides the default regexp cache for DB queries requiring compiled expressions.
 // This is only required for DB drivers that require access to the cache (e.g. The SQLite driver retrieves the compiled
 // expressions for the application-defined function).
 func WithRegexpCacheOverride(c *util.RegexpCache) DBOpt {

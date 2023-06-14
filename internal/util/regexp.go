@@ -4,6 +4,7 @@
 package util
 
 import (
+	"fmt"
 	"regexp"
 	"sync"
 )
@@ -33,7 +34,7 @@ func (c *RegexpCache) GetCompiledExpr(re string) (*regexp.Regexp, error) {
 	if !ok {
 		var err error
 		if r, err = regexp.Compile(re); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compile regexp: %s", re)
 		}
 		c.cache[re] = r
 	}
