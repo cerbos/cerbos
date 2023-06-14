@@ -712,11 +712,11 @@ func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.Filt
 }
 
 type postRegexpFilter struct {
-	col string
 	re  *regexp.Regexp
+	col string
 }
 
-// updateRegexpFilters updates either `whereExprs` or `postFilters` in place, dependent on whether regexp support is enabled or not
+// updateRegexpFilters updates either `whereExprs` or `postFilters` in place, dependent on whether regexp support is enabled or not.
 func (s *dbStorage) updateRegexpFilters(namePattern, col string, whereExprs *[]exp.Expression, postFilters *[]postRegexpFilter) error {
 	r, err := s.opts.regexpCache.GetCompiledExpr(namePattern)
 	if err != nil {
@@ -731,7 +731,7 @@ func (s *dbStorage) updateRegexpFilters(namePattern, col string, whereExprs *[]e
 		// use the cached compiled expressions.
 		*whereExprs = append(*whereExprs, goqu.C(col).Like(r))
 	} else {
-		*postFilters = append(*postFilters, postRegexpFilter{col, r})
+		*postFilters = append(*postFilters, postRegexpFilter{re: r, col: col})
 	}
 
 	return nil
