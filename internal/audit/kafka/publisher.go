@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/audit/kafka"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -110,6 +111,15 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 	}
 
 	clientOpts = append(clientOpts, kgo.ProducerBatchCompression(compression...))
+
+	if conf.Authentication.TLS != nil {
+		tlsConfig, err := kafka.NewTLSConfig(conf.Authentication.TLS.CAPath, conf.Authentication.TLS.CertPath, conf.Authentication.TLS.KeyPath)
+		if err != nil {
+			return nil, err
+		}
+
+		clientOpts = append(clientOpts, kgo.DialTLSConfig(tlsConfig))
+	}
 
 	client, err := kgo.NewClient(clientOpts...)
 	if err != nil {

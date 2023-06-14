@@ -23,10 +23,22 @@ const (
 	defaultMaxBufferedRecords = 250
 )
 
+type Authentication struct {
+	TLS *TLS `yaml:"tls"`
+}
+
+type TLS struct {
+	CAPath   string `yaml:"caPath"`
+	CertPath string `yaml:"certPath"`
+	KeyPath  string `yaml:"keyPath"`
+}
+
 // Conf is optional configuration for kafka Audit.
 type Conf struct {
 	// Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
 	Ack string `yaml:"ack" conf:",example=all"`
+	// Authentication
+	Authentication Authentication `yaml:"authentication"`
 	// Topic to write audit entries to.
 	Topic string `yaml:"topic" conf:"required,example=cerbos.audit.log"`
 	// Encoding format. Valid values are "json" (default) or "protobuf".
