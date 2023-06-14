@@ -156,8 +156,8 @@ func (cas *CerbosAdminService) FilterPolicies(ctx context.Context, req *requestv
 
 	policyIds, err := ms.FilterPolicyIDs(context.Background(), filterParams)
 	if err != nil {
-		ctxzap.Extract(ctx).Error("Could not get policy ids", zap.Error(err))
-		return nil, status.Error(codes.Internal, "could not get policy ids")
+		ctxzap.Extract(ctx).Error("Could not filter policy ids", zap.Error(err))
+		return nil, status.Error(codes.Internal, "could not filter policy ids")
 	}
 
 	sort.Strings(policyIds)
