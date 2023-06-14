@@ -7,21 +7,24 @@ package e2e
 
 import (
 	"crypto/tls"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/internal/server"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/internal/server"
 )
 
 const (
 	AdminSuite         = "admin"
 	ChecksSuite        = "checks"
 	PlanResourcesSuite = "plan_resources"
+	testTimeout        = 90 * time.Second // Things are slower inside Kind
 )
 
 type Opt func(*suiteOpt)
@@ -101,6 +104,13 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	}
 
 	require.NoError(t, Setup(ctx))
+	t.Cleanup(func() {
+		if t.Failed() {
+			if err := CmdWithOutput(ctx, "stern", ".*", fmt.Sprintf("--namespace=%s", ctx.Namespace()), "--no-follow"); err != nil {
+				t.Logf("Failed to grab logs: %v", err)
+			}
+		}
+	})
 
 	if sopt.postSetup != nil {
 		ctx.Logf("Running PostSetup function")
@@ -109,7 +119,7 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	}
 
 	tr := server.LoadTestCases(t, sopt.suites...)
-	tr.Timeout = 30 * time.Second // Things are slower inside Kind
+	tr.Timeout = testTimeout
 
 	if sopt.overlayMaxRetries != 0 {
 		tr.WithCerbosClientRetries(sopt.overlayMaxRetries)
