@@ -133,7 +133,9 @@ NOTE: This endpoint is still under development and should be considered unstable
 
 Issue a GET request to the endpoint to list the policies available in the store. You can optionally pass filter parameters to reduce the result set.
 
-Use `includeDisabled=true` query parameter in order to include disabled policies in the response. `nameRegexp` and `scopeRegexp` both support regular expression. `version` requires a full string match.
+Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
+
+Use `nameRegexp` and `scopeRegexp` to filter using the policy name and scope with regular expression. Use `version` to filter using the full policy version string.
 
 [source,shell]
 ----
