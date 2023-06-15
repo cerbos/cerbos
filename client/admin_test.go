@@ -167,7 +167,7 @@ func TestFilterPolicies(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, have)
 
-		// Bit of gymnastics to convert the client friend filterOpts to backend-recognised params
+		// Bit of gymnastics to convert the client friendly filterOpts to backend-recognised params
 		r := &requestv1.ListPoliciesRequest{}
 		for _, opt := range filterOpts {
 			opt(r)
