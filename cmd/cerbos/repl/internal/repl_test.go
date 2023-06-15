@@ -274,6 +274,29 @@ func TestREPL(t *testing.T) {
 			},
 		},
 		{
+			name: "set_globals_variable",
+			directives: []DirectiveTest{
+				{
+					Directive: `:let G = {"foo":"bar"}`,
+					Check: func(t *testing.T, m *mockOutput) {
+						t.Helper()
+						require.Equal(t, "G", m.resultName)
+
+						want := map[string]any{"foo": "bar"}
+						require.Equal(t, want, m.resultVal.Value())
+					},
+				},
+				{
+					Directive: `globals.foo`,
+					Check: func(t *testing.T, m *mockOutput) {
+						t.Helper()
+						require.Equal(t, lastResultVar, m.resultName)
+						require.Equal(t, "bar", m.resultVal.Value())
+					},
+				},
+			},
+		},
+		{
 			name: "load_derived_roles",
 			directives: []DirectiveTest{
 				{

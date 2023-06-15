@@ -49,5 +49,6 @@ func TestCloneResult(t *testing.T) {
 		"resource_policies/policy_06.yaml",
 		"resource_policies/policy_07.yaml",
 		"resource_policies/policy_07_acme.yaml",
+		"resource_policies/policy_08.yaml",
 	}, result.updateOrAdd)
 }

@@ -31,11 +31,15 @@ import (
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type evalParams struct {
+	globals map[string]any
 	nowFunc func() time.Time
 }
 
-func defaultEvalParams() evalParams {
-	return evalParams{nowFunc: time.Now}
+func defaultEvalParams(globals map[string]any) evalParams {
+	return evalParams{
+		globals: globals,
+		nowFunc: time.Now,
+	}
 }
 
 type Evaluator interface {
@@ -431,6 +435,8 @@ func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[str
 		conditions.CELPrincipalAbbrev: input.Principal,
 		conditions.CELVariablesIdent:  variables,
 		conditions.CELVariablesAbbrev: variables,
+		conditions.CELGlobalsIdent:    ep.globals,
+		conditions.CELGlobalsAbbrev:   ep.globals,
 	}, ep.nowFunc)
 	if err != nil {
 		// ignore expressions that access non-existent keys

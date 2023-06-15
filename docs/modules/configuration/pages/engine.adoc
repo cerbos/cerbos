@@ -13,3 +13,38 @@ engine:
   defaultPolicyVersion: "default"
 ----
 
+[#globals]
+== Globals
+
+Global variables are a way to pass environment-specific information to xref:policies:conditions.adoc[policy conditions]. For example, you might want to grant additional permissions to a role in your staging environment, without creating separate policy versions for different environments.
+
+[source,yaml,linenums]
+----
+engine:
+  globals:
+    environment: "staging"
+----
+
+Values set in `globals` can then be referenced in policy conditions:
+
+[source,yaml,linenums]
+----
+rules:
+  - actions:
+      - view
+    effect: EFFECT_ALLOW
+    roles:
+      - developer
+    condition:
+      match:
+        expr: globals.environment != "production"
+----
+
+As with other configuration settings, environment variables can be used to set global values.
+
+[source,yaml,linenums]
+----
+engine:
+  globals:
+    environment: ${CERBOS_ENVIRONMENT:development}
+----

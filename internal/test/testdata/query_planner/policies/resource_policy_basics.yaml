@@ -22,3 +22,12 @@ resourcePolicy:
         match:
           expr: |-
             P.attr.userQid == request.resource.id
+    - actions:
+        - reference_globals
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: |-
+            R.attr.environment == G.environment
