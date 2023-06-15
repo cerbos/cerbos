@@ -3049,6 +3049,12 @@ func (m *ListPoliciesRequest) validate(all bool) error {
 
 	// no validation rules for IncludeDisabled
 
+	// no validation rules for NameRegexp
+
+	// no validation rules for ScopeRegexp
+
+	// no validation rules for VersionRegexp
+
 	if len(errors) > 0 {
 		return ListPoliciesRequestMultiError(errors)
 	}

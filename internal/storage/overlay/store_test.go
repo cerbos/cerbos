@@ -253,7 +253,7 @@ func (ms *MockStore) Driver() string {
 	return args.String(0)
 }
 
-func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ bool) ([]string, error) {
+func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
 	args := ms.Called(ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)

@@ -251,3 +251,48 @@ func FindPolicyFiles(t *testing.T, dir string, callback func(string) error) erro
 		return callback(filepath.Join(base, path))
 	})
 }
+
+func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies []P, params storage.ListPolicyIDsParams) []P {
+	t.Helper()
+
+	filtered := []P{}
+
+	c := util.NewRegexpCache()
+	for _, p := range policies {
+		var wrapped policy.Wrapper
+		switch a := any(p).(type) {
+		case *policyv1.Policy:
+			wrapped = policy.Wrap(a)
+		case policy.Wrapper:
+			wrapped = a
+		}
+
+		if params.NameRegexp != "" {
+			r, err := c.GetCompiledExpr(params.NameRegexp)
+			require.NoError(t, err)
+			if !r.MatchString(wrapped.Name) {
+				continue
+			}
+		}
+
+		if params.ScopeRegexp != "" {
+			r, err := c.GetCompiledExpr(params.ScopeRegexp)
+			require.NoError(t, err)
+			if !r.MatchString(wrapped.Scope) {
+				continue
+			}
+		}
+
+		if params.VersionRegexp != "" {
+			r, err := c.GetCompiledExpr(params.VersionRegexp)
+			require.NoError(t, err)
+			if !r.MatchString(wrapped.Version) {
+				continue
+			}
+		}
+
+		filtered = append(filtered, p)
+	}
+
+	return filtered
+}

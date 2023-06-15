@@ -177,9 +177,7 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 }
 
 func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListPoliciesOption) ([]string, error) {
-	req := &requestv1.ListPoliciesRequest{
-		IncludeDisabled: false,
-	}
+	req := &requestv1.ListPoliciesRequest{}
 	for _, opt := range opts {
 		opt(req)
 	}

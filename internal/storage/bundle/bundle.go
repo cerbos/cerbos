@@ -15,6 +15,7 @@ import (
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	"github.com/spf13/afero"
@@ -201,7 +202,7 @@ func (b *Bundle) GetPolicySet(_ context.Context, id namer.ModuleID) (*runtimev1.
 	return rps, nil
 }
 
-func (b *Bundle) ListPolicyIDs(_ context.Context, _ bool) ([]string, error) {
+func (b *Bundle) ListPolicyIDs(_ context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
 	output := make([]string, len(b.manifest.PolicyIndex))
 
 	i := 0

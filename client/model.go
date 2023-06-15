@@ -1259,3 +1259,21 @@ func WithIncludeDisabled() ListPoliciesOption {
 		request.IncludeDisabled = true
 	}
 }
+
+func WithNameRegexp(re string) ListPoliciesOption {
+	return func(request *requestv1.ListPoliciesRequest) {
+		request.NameRegexp = re
+	}
+}
+
+func WithScopeRegexp(re string) ListPoliciesOption {
+	return func(request *requestv1.ListPoliciesRequest) {
+		request.ScopeRegexp = re
+	}
+}
+
+func WithVersionRegexp(v string) ListPoliciesOption {
+	return func(request *requestv1.ListPoliciesRequest) {
+		request.VersionRegexp = v
+	}
+}

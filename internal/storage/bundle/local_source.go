@@ -119,9 +119,9 @@ func (ls *LocalSource) Driver() string {
 	return DriverName
 }
 
-func (ls *LocalSource) ListPolicyIDs(ctx context.Context, includeDisabled bool) (ids []string, err error) {
+func (ls *LocalSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) (ids []string, err error) {
 	ls.mu.RLock()
-	ids, err = ls.bundle.ListPolicyIDs(ctx, includeDisabled)
+	ids, err = ls.bundle.ListPolicyIDs(ctx, params)
 	ls.mu.RUnlock()
 	return ids, err
 }

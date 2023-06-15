@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
@@ -41,7 +42,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error)
+	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
@@ -52,7 +53,7 @@ type DBStorage interface {
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
-	opts := &dbOpt{}
+	opts := newDbOpt()
 	for _, opt := range dbOpts {
 		opt(opts)
 	}
@@ -628,11 +629,31 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
+func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPolicyIDsParams) ([]string, error) {
 	var policyCoords []namer.PolicyCoords
 	var whereExprs []exp.Expression
-	if !includeDisabled {
+	var postFilters []postRegexpFilter
+
+	if !listParams.IncludeDisabled {
 		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
+	}
+
+	if listParams.NameRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.NameRegexp, PolicyTblNameCol, &whereExprs, &postFilters); err != nil {
+			return nil, err
+		}
+	}
+
+	if listParams.ScopeRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.ScopeRegexp, PolicyTblScopeCol, &whereExprs, &postFilters); err != nil {
+			return nil, err
+		}
+	}
+
+	if listParams.VersionRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.VersionRegexp, PolicyTblVerCol, &whereExprs, &postFilters); err != nil {
+			return nil, err
+		}
 	}
 
 	err := s.db.From(PolicyTbl).
@@ -655,12 +676,65 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]
 		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
 
-	policyIDs := make([]string, len(policyCoords))
-	for i := 0; i < len(policyCoords); i++ {
-		policyIDs[i] = policyCoords[i].PolicyKey()
+	policyIDs := make([]string, 0, len(policyCoords))
+	for _, pc := range policyCoords {
+		if checkPostFilters(pc, postFilters) {
+			policyIDs = append(policyIDs, pc.PolicyKey())
+		}
 	}
 
 	return policyIDs, nil
+}
+
+type postRegexpFilter struct {
+	re  *regexp.Regexp
+	col string
+}
+
+// updateRegexpFilters updates either `whereExprs` or `postFilters` in place, dependent on whether regexp support is enabled or not.
+func (s *dbStorage) updateRegexpFilters(namePattern, col string, whereExprs *[]exp.Expression, postFilters *[]postRegexpFilter) error {
+	r, err := s.opts.regexpCache.GetCompiledExpr(namePattern)
+	if err != nil {
+		return err
+	}
+	if s.regexpEnabled() {
+		// We need to pass a *regexp.Regexp expression to `Like` (or `RegexpLike`, which is equivalent) in order for goqu
+		// to correctly parse the query. We need to pass the compiled expression in order for goqu to access (only) the
+		// raw string (https://github.com/doug-martin/goqu/blob/master/exp/bool.go#L148).
+		// We use a cache to prevent the need to recompile arbitrary strings on each request.
+		// In the case of the SQLite driver, to support regexp, we generate an application-defined function in which we
+		// use the cached compiled expressions.
+		*whereExprs = append(*whereExprs, goqu.C(col).ILike(r))
+	} else {
+		*postFilters = append(*postFilters, postRegexpFilter{re: r, col: col})
+	}
+
+	return nil
+}
+
+func (s *dbStorage) regexpEnabled() bool {
+	// TODO(saml) link this to the `dialect` arg passed to `goqu` in the sqlserver package, or rethink how to indicate regexp support
+	return s.db.Dialect() != "sqlserver"
+}
+
+func checkPostFilters(pc namer.PolicyCoords, postFilters []postRegexpFilter) bool {
+	for _, f := range postFilters {
+		switch f.col {
+		case PolicyTblNameCol:
+			if !f.re.MatchString(pc.Name) {
+				return false
+			}
+		case PolicyTblScopeCol:
+			if !f.re.MatchString(pc.Scope) {
+				return false
+			}
+		case PolicyTblVerCol:
+			if !f.re.MatchString(pc.Version) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {

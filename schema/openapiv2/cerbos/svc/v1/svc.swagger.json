@@ -144,6 +144,27 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          },
+          {
+            "name": "nameRegexp",
+            "description": "Filter policies by name with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "scopeRegexp",
+            "description": "Filter policies by scope with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "versionRegexp",
+            "description": "Filter policies by version with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

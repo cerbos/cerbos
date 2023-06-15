@@ -840,6 +840,18 @@ func cerbos_request_v1_ListPoliciesRequest_hashpb_sum(m *ListPoliciesRequest, ha
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeDisabled)))
 
 	}
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.name_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.NameRegexp))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.scope_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ScopeRegexp))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.version_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.VersionRegexp))
+
+	}
 }
 
 func cerbos_request_v1_ListSchemasRequest_hashpb_sum(m *ListSchemasRequest, hasher hash.Hash, ignore map[string]struct{}) {

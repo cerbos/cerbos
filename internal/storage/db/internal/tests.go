@@ -221,7 +221,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("list_policies", func(t *testing.T) {
 			t.Run("should be able to list policies", func(t *testing.T) {
-				have, err := store.ListPolicyIDs(ctx, false)
+				have, err := store.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
 				require.NoError(t, err)
 				require.Len(t, have, len(policyList))
 
@@ -232,6 +232,62 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 				require.ElementsMatch(t, want, have)
 			})
+		})
+
+		t.Run("filter_policies", func(t *testing.T) {
+			testCases := []struct {
+				name   string
+				params storage.ListPolicyIDsParams
+			}{
+				{
+					name: "name regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						NameRegexp:      ".*(leave|equipment)_[rw]equest$",
+					},
+				},
+				{
+					name: "scope regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						ScopeRegexp:     "^acme",
+					},
+				},
+				{
+					name: "version regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						VersionRegexp:   "default$",
+					},
+				},
+				{
+					name: "all regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						NameRegexp:      ".*(leave|equipment)_[rw]equest$",
+						ScopeRegexp:     "^acme",
+						VersionRegexp:   "default$",
+					},
+				},
+			}
+
+			for _, tc := range testCases {
+				tc := tc
+				t.Run("should be able to filter policies "+tc.name, func(t *testing.T) {
+					have, err := store.ListPolicyIDs(ctx, tc.params)
+					require.NoError(t, err)
+					filteredPolicyList := test.FilterPolicies(t, policyList, tc.params)
+					require.Greater(t, len(filteredPolicyList), 0)
+					require.Len(t, have, len(filteredPolicyList))
+
+					want := make([]string, len(filteredPolicyList))
+					for i, p := range filteredPolicyList {
+						want[i] = namer.PolicyKeyFromFQN(p.FQN)
+					}
+
+					require.ElementsMatch(t, want, have)
+				})
+			}
 		})
 
 		t.Run("delete", func(t *testing.T) {
