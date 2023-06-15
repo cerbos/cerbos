@@ -33,8 +33,8 @@ func (c *RegexpCache) GetCompiledExpr(re string) (*regexp.Regexp, error) {
 		}
 
 		c.mu.Lock()
-		defer c.mu.Unlock()
 		c.cache[re] = r
+		c.mu.Unlock()
 	}
 
 	return r, nil

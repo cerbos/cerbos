@@ -728,6 +728,10 @@ func checkPostFilters(pc namer.PolicyCoords, postFilters []postRegexpFilter) boo
 			if !f.re.MatchString(pc.Scope) {
 				return false
 			}
+		case PolicyTblVerCol:
+			if !f.re.MatchString(pc.Version) {
+				return false
+			}
 		}
 	}
 	return true

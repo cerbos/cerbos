@@ -135,7 +135,7 @@ Issue a GET request to the endpoint to list the policies available in the store.
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
 
-Use `nameRegexp` and `scopeRegexp` to filter using the policy name and scope with case insensitive regular expression. Use `version` to filter using the full policy version string.
+Use `nameRegexp`, `scopeRegexp` and `versionRegexp` to filter using the policy name, scope or version with case insensitive regular expressions.
 
 [source,shell]
 ----
@@ -146,7 +146,7 @@ curl -k -u cerbos:cerbosAdmin \
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policies?pretty&includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&version=default'
+    'https://localhost:3592/admin/policies?pretty&includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&versionRegexp=default'
 ----
 
 === Get Policies

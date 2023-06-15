@@ -235,26 +235,59 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("filter_policies", func(t *testing.T) {
-			t.Run("should be able to filter policies", func(t *testing.T) {
-				filterParams := storage.ListPolicyIDsParams{
-					// Use REGEXP to test support on all drivers
-					NameRegexp:      ".*(leave|equipment)_[rw]equest$",
-					ScopeRegexp:     "^acme",
-					VersionRegexp:   "default",
-					IncludeDisabled: true,
-				}
-				have, err := store.ListPolicyIDs(ctx, filterParams)
-				require.NoError(t, err)
-				filteredPolicyList := test.FilterPolicies(t, policyList, filterParams)
-				require.Len(t, have, len(filteredPolicyList))
+			testCases := []struct {
+				name   string
+				params storage.ListPolicyIDsParams
+			}{
+				{
+					name: "name regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						NameRegexp:      ".*(leave|equipment)_[rw]equest$",
+					},
+				},
+				{
+					name: "scope regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						ScopeRegexp:     "^acme",
+					},
+				},
+				{
+					name: "version regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						VersionRegexp:   "default$",
+					},
+				},
+				{
+					name: "all regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						NameRegexp:      ".*(leave|equipment)_[rw]equest$",
+						ScopeRegexp:     "^acme",
+						VersionRegexp:   "default$",
+					},
+				},
+			}
 
-				want := make([]string, len(filteredPolicyList))
-				for i, p := range filteredPolicyList {
-					want[i] = namer.PolicyKeyFromFQN(p.FQN)
-				}
+			for _, tc := range testCases {
+				tc := tc
+				t.Run("should be able to filter policies "+tc.name, func(t *testing.T) {
+					have, err := store.ListPolicyIDs(ctx, tc.params)
+					require.NoError(t, err)
+					filteredPolicyList := test.FilterPolicies(t, policyList, tc.params)
+					require.Greater(t, len(filteredPolicyList), 0)
+					require.Len(t, have, len(filteredPolicyList))
 
-				require.ElementsMatch(t, want, have)
-			})
+					want := make([]string, len(filteredPolicyList))
+					for i, p := range filteredPolicyList {
+						want[i] = namer.PolicyKeyFromFQN(p.FQN)
+					}
+
+					require.ElementsMatch(t, want, have)
+				})
+			}
 		})
 
 		t.Run("delete", func(t *testing.T) {
