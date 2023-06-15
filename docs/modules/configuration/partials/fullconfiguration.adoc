@@ -50,6 +50,7 @@ compile:
   cacheSize: 1024 # CacheSize is the number of compiled policies to cache in memory.
 engine:
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
+  globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.
 schema:
   cacheSize: 1024 # CacheSize defines the number of schemas to cache in memory.
   enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.

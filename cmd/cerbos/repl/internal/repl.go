@@ -323,6 +323,18 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		r.evalPolicyVariables()
 		r.output.PrintResult(name, r.vars[conditions.CELVariablesIdent])
 
+	case conditions.CELGlobalsIdent, conditions.CELGlobalsAbbrev:
+		var globals map[string]any
+		if err := json.Unmarshal([]byte(value), &globals); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON as %q: %w", name, err)
+		}
+
+		globalsVal := r.toRefVal(globals)
+		r.vars[conditions.CELGlobalsIdent] = globalsVal
+		r.vars[conditions.CELGlobalsAbbrev] = globalsVal
+		r.evalPolicyVariables()
+		r.output.PrintResult(name, r.vars[conditions.CELGlobalsIdent])
+
 	default:
 		return fmt.Errorf("setting %q is unsupported", name)
 	}

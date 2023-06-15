@@ -196,13 +196,16 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
-	eng, err := New(ctx, Components{
+	engineConf := &Conf{}
+	engineConf.SetDefaults()
+	engineConf.Globals = map[string]any{"environment": "test"}
+
+	eng := NewFromConf(ctx, engineConf, Components{
 		PolicyLoader:      compiler,
 		SchemaMgr:         schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),
 	})
-	require.NoError(tb, err)
 
 	return eng, cancelFunc
 }

@@ -25,6 +25,8 @@ const (
 	CELPrincipalField  = "principal"
 	CELVariablesIdent  = "variables"
 	CELVariablesAbbrev = "V"
+	CELGlobalsIdent    = "globals"
+	CELGlobalsAbbrev   = "G"
 	CELAuxDataField    = "aux_data"
 	CELAttrField       = "attr"
 )
@@ -42,6 +44,8 @@ var StdEnvDecls = []*exprpb.Decl{
 	decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 	decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
 	decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+	decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
+	decls.NewVar(CELGlobalsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 }
 
 func init() {
@@ -114,6 +118,8 @@ func ExpandAbbrev(s string) string {
 		expanded = Fqn(CELResourceField)
 	case CELVariablesAbbrev:
 		expanded = CELVariablesIdent
+	case CELGlobalsAbbrev:
+		expanded = CELGlobalsIdent
 	}
 
 	if ok {
@@ -136,6 +142,8 @@ func newCELQueryPlanEnvOptions() []cel.EnvOption {
 			decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 			decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar(CELGlobalsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 		),
 		ext.Strings(),
 		ext.Encoders(),

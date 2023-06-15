@@ -18,6 +18,8 @@ var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an em
 
 // Conf is optional configuration for engine.
 type Conf struct {
+	// Globals are environment-specific variables to be made available to policy conditions.
+	Globals map[string]any `yaml:"globals" conf:",example={\"environment\": \"staging\"}"`
 	// DefaultPolicyVersion defines what version to assume if the request does not specify one.
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",example=\"default\""`
 	NumWorkers           uint   `yaml:"numWorkers" conf:",ignore"`

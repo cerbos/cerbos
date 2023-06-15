@@ -50,13 +50,13 @@ type checkOptions struct {
 	evalParams evalParams
 }
 
-func newCheckOptions(ctx context.Context, opts ...CheckOpt) *checkOptions {
+func newCheckOptions(ctx context.Context, globals map[string]any, opts ...CheckOpt) *checkOptions {
 	var tracerSink tracer.Sink
 	if debugEnabled, ok := os.LookupEnv("CERBOS_DEBUG_ENGINE"); ok && debugEnabled != "false" {
 		tracerSink = tracer.NewZapSink(logging.FromContext(ctx).Named("tracer"))
 	}
 
-	co := &checkOptions{tracerSink: tracerSink, evalParams: defaultEvalParams()}
+	co := &checkOptions{tracerSink: tracerSink, evalParams: defaultEvalParams(globals)}
 	for _, opt := range opts {
 		opt(co)
 	}
@@ -214,7 +214,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	result := new(planner.PolicyPlanResult)
 
 	if policy := policySet.GetPrincipalPolicy(); policy != nil {
-		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy}
+		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: engine.conf.Globals}
 		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, err
@@ -229,7 +229,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	if policy := policySet.GetResourcePolicy(); policy != nil {
-		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, SchemaMgr: engine.schemaMgr}
+		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: engine.conf.Globals, SchemaMgr: engine.schemaMgr}
 		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, err
@@ -296,7 +296,7 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, 
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
-		checkOpts := newCheckOptions(ctx, opts...)
+		checkOpts := newCheckOptions(ctx, engine.conf.Globals, opts...)
 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
