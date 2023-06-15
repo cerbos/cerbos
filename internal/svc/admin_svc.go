@@ -121,7 +121,20 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	policyIds, err := cas.store.ListPolicyIDs(context.Background(), req.IncludeDisabled)
+	// We've historically supported ListPolicies on non-mutable stores, but later introduced filters are not scalable.
+	// Therefore, if any of the filters in question are passed and the store is not mutable, we reject the request.
+	if _, ok := cas.store.(storage.MutableStore); !ok && (req.NameRegexp != "" || req.ScopeRegexp != "" || req.Version != "") {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	filterParams := storage.ListPolicyIDsParams{
+		NameRegexp:      req.NameRegexp,
+		ScopeRegexp:     req.ScopeRegexp,
+		Version:         req.Version,
+		IncludeDisabled: req.IncludeDisabled,
+	}
+
+	policyIds, err := cas.store.ListPolicyIDs(context.Background(), filterParams)
 	if err != nil {
 		ctxzap.Extract(ctx).Error("Could not get policy ids", zap.Error(err))
 		return nil, status.Error(codes.Internal, "could not get policy ids")
@@ -129,39 +142,6 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 
 	sort.Strings(policyIds)
 	return &responsev1.ListPoliciesResponse{
-		PolicyIds: policyIds,
-	}, nil
-}
-
-func (cas *CerbosAdminService) FilterPolicies(ctx context.Context, req *requestv1.FilterPoliciesRequest) (*responsev1.FilterPoliciesResponse, error) {
-	if err := cas.checkCredentials(ctx); err != nil {
-		return nil, err
-	}
-
-	if cas.store == nil {
-		return nil, status.Error(codes.NotFound, "store is not configured")
-	}
-
-	ms, ok := cas.store.(storage.MutableStore)
-	if !ok {
-		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
-	}
-
-	filterParams := storage.FilterPolicyIDsParams{
-		NameRegexp:      req.NameRegexp,
-		ScopeRegexp:     req.ScopeRegexp,
-		Version:         req.Version,
-		IncludeDisabled: req.IncludeDisabled,
-	}
-
-	policyIds, err := ms.FilterPolicyIDs(context.Background(), filterParams)
-	if err != nil {
-		ctxzap.Extract(ctx).Error("Could not filter policy ids", zap.Error(err))
-		return nil, status.Error(codes.Internal, "could not filter policy ids")
-	}
-
-	sort.Strings(policyIds)
-	return &responsev1.FilterPoliciesResponse{
 		PolicyIds: policyIds,
 	}, nil
 }

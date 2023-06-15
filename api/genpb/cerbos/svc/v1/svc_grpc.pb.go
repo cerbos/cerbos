@@ -264,7 +264,6 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 const (
 	CerbosAdminService_AddOrUpdatePolicy_FullMethodName   = "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy"
 	CerbosAdminService_ListPolicies_FullMethodName        = "/cerbos.svc.v1.CerbosAdminService/ListPolicies"
-	CerbosAdminService_FilterPolicies_FullMethodName      = "/cerbos.svc.v1.CerbosAdminService/FilterPolicies"
 	CerbosAdminService_GetPolicy_FullMethodName           = "/cerbos.svc.v1.CerbosAdminService/GetPolicy"
 	CerbosAdminService_DisablePolicy_FullMethodName       = "/cerbos.svc.v1.CerbosAdminService/DisablePolicy"
 	CerbosAdminService_EnablePolicy_FullMethodName        = "/cerbos.svc.v1.CerbosAdminService/EnablePolicy"
@@ -282,7 +281,6 @@ const (
 type CerbosAdminServiceClient interface {
 	AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error)
 	ListPolicies(ctx context.Context, in *v1.ListPoliciesRequest, opts ...grpc.CallOption) (*v11.ListPoliciesResponse, error)
-	FilterPolicies(ctx context.Context, in *v1.FilterPoliciesRequest, opts ...grpc.CallOption) (*v11.FilterPoliciesResponse, error)
 	GetPolicy(ctx context.Context, in *v1.GetPolicyRequest, opts ...grpc.CallOption) (*v11.GetPolicyResponse, error)
 	DisablePolicy(ctx context.Context, in *v1.DisablePolicyRequest, opts ...grpc.CallOption) (*v11.DisablePolicyResponse, error)
 	EnablePolicy(ctx context.Context, in *v1.EnablePolicyRequest, opts ...grpc.CallOption) (*v11.EnablePolicyResponse, error)
@@ -314,15 +312,6 @@ func (c *cerbosAdminServiceClient) AddOrUpdatePolicy(ctx context.Context, in *v1
 func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, in *v1.ListPoliciesRequest, opts ...grpc.CallOption) (*v11.ListPoliciesResponse, error) {
 	out := new(v11.ListPoliciesResponse)
 	err := c.cc.Invoke(ctx, CerbosAdminService_ListPolicies_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cerbosAdminServiceClient) FilterPolicies(ctx context.Context, in *v1.FilterPoliciesRequest, opts ...grpc.CallOption) (*v11.FilterPoliciesResponse, error) {
-	out := new(v11.FilterPoliciesResponse)
-	err := c.cc.Invoke(ctx, CerbosAdminService_FilterPolicies_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +428,6 @@ func (c *cerbosAdminServiceClient) ReloadStore(ctx context.Context, in *v1.Reloa
 type CerbosAdminServiceServer interface {
 	AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error)
 	ListPolicies(context.Context, *v1.ListPoliciesRequest) (*v11.ListPoliciesResponse, error)
-	FilterPolicies(context.Context, *v1.FilterPoliciesRequest) (*v11.FilterPoliciesResponse, error)
 	GetPolicy(context.Context, *v1.GetPolicyRequest) (*v11.GetPolicyResponse, error)
 	DisablePolicy(context.Context, *v1.DisablePolicyRequest) (*v11.DisablePolicyResponse, error)
 	EnablePolicy(context.Context, *v1.EnablePolicyRequest) (*v11.EnablePolicyResponse, error)
@@ -461,9 +449,6 @@ func (UnimplementedCerbosAdminServiceServer) AddOrUpdatePolicy(context.Context, 
 }
 func (UnimplementedCerbosAdminServiceServer) ListPolicies(context.Context, *v1.ListPoliciesRequest) (*v11.ListPoliciesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPolicies not implemented")
-}
-func (UnimplementedCerbosAdminServiceServer) FilterPolicies(context.Context, *v1.FilterPoliciesRequest) (*v11.FilterPoliciesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FilterPolicies not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) GetPolicy(context.Context, *v1.GetPolicyRequest) (*v11.GetPolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPolicy not implemented")
@@ -537,24 +522,6 @@ func _CerbosAdminService_ListPolicies_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CerbosAdminServiceServer).ListPolicies(ctx, req.(*v1.ListPoliciesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CerbosAdminService_FilterPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.FilterPoliciesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CerbosAdminServiceServer).FilterPolicies(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: CerbosAdminService_FilterPolicies_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CerbosAdminServiceServer).FilterPolicies(ctx, req.(*v1.FilterPoliciesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -738,10 +705,6 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPolicies",
 			Handler:    _CerbosAdminService_ListPolicies_Handler,
-		},
-		{
-			MethodName: "FilterPolicies",
-			Handler:    _CerbosAdminService_FilterPolicies_Handler,
 		},
 		{
 			MethodName: "GetPolicy",

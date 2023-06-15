@@ -252,7 +252,7 @@ func FindPolicyFiles(t *testing.T, dir string, callback func(string) error) erro
 	})
 }
 
-func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies []P, params storage.FilterPolicyIDsParams) []P {
+func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies []P, params storage.ListPolicyIDsParams) []P {
 	t.Helper()
 
 	filtered := []P{}

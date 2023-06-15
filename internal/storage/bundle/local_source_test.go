@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/test"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
@@ -44,7 +45,7 @@ func TestLocalSource(t *testing.T) {
 func runTests(have *bundle.LocalSource, manifest *bundlev1.Manifest) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Run("listPolicyIDs", func(t *testing.T) {
-			havePolicies, err := have.ListPolicyIDs(context.Background(), true)
+			havePolicies, err := have.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err)
 			require.Len(t, havePolicies, len(manifest.PolicyIndex))
 

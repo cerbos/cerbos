@@ -144,43 +144,6 @@
             "in": "query",
             "required": false,
             "type": "boolean"
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      }
-    },
-    "/admin/policies/filter": {
-      "get": {
-        "summary": "Filter policies",
-        "operationId": "CerbosAdminService_FilterPolicies",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1FilterPoliciesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "includeDisabled",
-            "description": "Include disabled policies",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
           },
           {
             "name": "nameRegexp",
@@ -2444,18 +2407,6 @@
         "fileName",
         "contents"
       ]
-    },
-    "v1FilterPoliciesResponse": {
-      "type": "object",
-      "properties": {
-        "policyIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "description": "Filtered list of policies stored in the Cerbos server"
     },
     "v1GetPolicyResponse": {
       "type": "object",

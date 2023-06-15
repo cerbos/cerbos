@@ -6,6 +6,15 @@
   "properties": {
     "includeDisabled": {
       "type": "boolean"
+    },
+    "nameRegexp": {
+      "type": "string"
+    },
+    "scopeRegexp": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
     }
   }
 }

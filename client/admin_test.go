@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client/testutil"
@@ -157,14 +158,28 @@ func TestListPolicies(t *testing.T) {
 func TestFilterPolicies(t *testing.T) {
 	ac, ps := setUpAdminClientAndPolicySet(t)
 
-	testFilter := func(filterParams FilterPoliciesOptions) {
+	testFilter := func(filterOpts ...ListPoliciesOption) {
 		t.Helper()
 
-		have, err := ac.FilterPolicies(context.Background(), filterParams)
+		filterOpts = append(filterOpts, WithIncludeDisabled())
+
+		have, err := ac.ListPolicies(context.Background(), filterOpts...)
 		require.NoError(t, err)
 		require.NotEmpty(t, have)
 
-		policyList := test.FilterPolicies(t, ps.GetPolicies(), storage.FilterPolicyIDsParams(filterParams))
+		// Bit of gymnastics to convert the client friend filterOpts to backend-recognised params
+		r := &requestv1.ListPoliciesRequest{}
+		for _, opt := range filterOpts {
+			opt(r)
+		}
+		params := storage.ListPolicyIDsParams{
+			IncludeDisabled: r.IncludeDisabled,
+			NameRegexp:      r.NameRegexp,
+			ScopeRegexp:     r.ScopeRegexp,
+			Version:         r.Version,
+		}
+
+		policyList := test.FilterPolicies(t, ps.GetPolicies(), params)
 		want := make([]string, len(policyList))
 		for i, p := range policyList {
 			want[i] = namer.PolicyKey(p)
@@ -173,36 +188,22 @@ func TestFilterPolicies(t *testing.T) {
 	}
 
 	t.Run("should get the list of filtered policies by name", func(t *testing.T) {
-		filterParams := FilterPoliciesOptions{
-			NameRegexp:      ".*request$",
-			IncludeDisabled: true,
-		}
-		testFilter(filterParams)
-	})
-
-	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
-		filterParams := FilterPoliciesOptions{
-			Version:         "20210210",
-			IncludeDisabled: true,
-		}
-		testFilter(filterParams)
+		testFilter(WithNameRegexp(".*request$"))
 	})
 
 	t.Run("should get the list of filtered policies by scope", func(t *testing.T) {
-		filterParams := FilterPoliciesOptions{
-			ScopeRegexp:     "acme",
-			IncludeDisabled: true,
-		}
-		testFilter(filterParams)
+		testFilter(WithScopeRegexp("acme"))
+	})
+
+	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
+		testFilter(WithVersion("20210210"))
 	})
 
 	t.Run("should get the list of filtered policies by all", func(t *testing.T) {
-		filterParams := FilterPoliciesOptions{
-			NameRegexp:      ".*(leave|equipment)_[rw]equest$",
-			ScopeRegexp:     "^acme",
-			Version:         "default",
-			IncludeDisabled: true,
-		}
-		testFilter(filterParams)
+		testFilter(
+			WithNameRegexp(".*(leave|equipment)_[rw]equest$"),
+			WithScopeRegexp("^acme"),
+			WithVersion("default"),
+		)
 	})
 }

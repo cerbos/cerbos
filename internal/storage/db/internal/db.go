@@ -42,8 +42,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error)
-	FilterPolicyIDs(context.Context, storage.FilterPolicyIDsParams) ([]string, error)
+	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
@@ -630,46 +629,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
-	var policyCoords []namer.PolicyCoords
-	var whereExprs []exp.Expression
-	if !includeDisabled {
-		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
-	}
-
-	err := s.filterPolicyIDs(whereExprs).
-		Executor().
-		ScanStructsContext(ctx, &policyCoords)
-	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
-	}
-
-	policyIDs := make([]string, len(policyCoords))
-	for i := 0; i < len(policyCoords); i++ {
-		policyIDs[i] = policyCoords[i].PolicyKey()
-	}
-
-	return policyIDs, nil
-}
-
-func (s *dbStorage) filterPolicyIDs(whereExprs []exp.Expression) *goqu.SelectDataset {
-	return s.db.From(PolicyTbl).
-		Select(
-			goqu.C(PolicyTblKindCol),
-			goqu.C(PolicyTblNameCol),
-			goqu.C(PolicyTblVerCol),
-			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
-		).
-		Where(whereExprs...).
-		Order(
-			goqu.C(PolicyTblKindCol).Asc(),
-			goqu.C(PolicyTblNameCol).Asc(),
-			goqu.C(PolicyTblVerCol).Asc(),
-			goqu.C(PolicyTblScopeCol).Asc(),
-		)
-}
-
-func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.FilterPolicyIDsParams) ([]string, error) {
+func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPolicyIDsParams) ([]string, error) {
 	var policyCoords []namer.PolicyCoords
 	var whereExprs []exp.Expression
 	var postFilters []postRegexpFilter
@@ -694,11 +654,24 @@ func (s *dbStorage) FilterPolicyIDs(ctx context.Context, listParams storage.Filt
 		whereExprs = append(whereExprs, goqu.C(PolicyTblVerCol).Eq(listParams.Version))
 	}
 
-	err := s.filterPolicyIDs(whereExprs).
+	err := s.db.From(PolicyTbl).
+		Select(
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+		).
+		Where(whereExprs...).
+		Order(
+			goqu.C(PolicyTblKindCol).Asc(),
+			goqu.C(PolicyTblNameCol).Asc(),
+			goqu.C(PolicyTblVerCol).Asc(),
+			goqu.C(PolicyTblScopeCol).Asc(),
+		).
 		Executor().
 		ScanStructsContext(ctx, &policyCoords)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "FilterPolicyIDs", err)
+		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
 
 	policyIDs := []string{}

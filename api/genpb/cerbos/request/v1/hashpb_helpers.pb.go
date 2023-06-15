@@ -769,25 +769,6 @@ func cerbos_request_v1_File_hashpb_sum(m *File, hasher hash.Hash, ignore map[str
 	}
 }
 
-func cerbos_request_v1_FilterPoliciesRequest_hashpb_sum(m *FilterPoliciesRequest, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.include_disabled"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeDisabled)))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.name_regexp"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.NameRegexp))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.scope_regexp"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.ScopeRegexp))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.FilterPoliciesRequest.version"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Version))
-
-	}
-}
-
 func cerbos_request_v1_GetPolicyRequest_hashpb_sum(m *GetPolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.GetPolicyRequest.id"]; !ok {
 		if len(m.Id) > 0 {
@@ -857,6 +838,18 @@ func cerbos_request_v1_ListAuditLogEntriesRequest_hashpb_sum(m *ListAuditLogEntr
 func cerbos_request_v1_ListPoliciesRequest_hashpb_sum(m *ListPoliciesRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.include_disabled"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeDisabled)))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.name_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.NameRegexp))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.scope_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ScopeRegexp))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Version))
 
 	}
 }

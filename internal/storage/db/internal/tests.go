@@ -221,7 +221,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("list_policies", func(t *testing.T) {
 			t.Run("should be able to list policies", func(t *testing.T) {
-				have, err := store.ListPolicyIDs(ctx, false)
+				have, err := store.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
 				require.NoError(t, err)
 				require.Len(t, have, len(policyList))
 
@@ -236,14 +236,14 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("filter_policies", func(t *testing.T) {
 			t.Run("should be able to filter policies", func(t *testing.T) {
-				filterParams := storage.FilterPolicyIDsParams{
+				filterParams := storage.ListPolicyIDsParams{
 					// Use REGEXP to test support on all drivers
 					NameRegexp:      ".*(leave|equipment)_[rw]equest$",
 					ScopeRegexp:     "^acme",
 					Version:         "default",
 					IncludeDisabled: true,
 				}
-				have, err := store.FilterPolicyIDs(ctx, filterParams)
+				have, err := store.ListPolicyIDs(ctx, filterParams)
 				require.NoError(t, err)
 				filteredPolicyList := test.FilterPolicies(t, policyList, filterParams)
 				require.Len(t, have, len(filteredPolicyList))

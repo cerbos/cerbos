@@ -29,7 +29,6 @@ type AdminClient interface {
 	AddOrUpdatePolicy(ctx context.Context, policies *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 	ListPolicies(ctx context.Context, opts ...ListPoliciesOption) ([]string, error)
-	FilterPolicies(ctx context.Context, opts FilterPoliciesOptions) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 	DisablePolicy(ctx context.Context, ids ...string) (uint32, error)
 	EnablePolicy(ctx context.Context, ids ...string) (uint32, error)
@@ -178,9 +177,7 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 }
 
 func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListPoliciesOption) ([]string, error) {
-	req := &requestv1.ListPoliciesRequest{
-		IncludeDisabled: false,
-	}
+	req := &requestv1.ListPoliciesRequest{}
 	for _, opt := range opts {
 		opt(req)
 	}
@@ -191,25 +188,6 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListPolicies
 	p, err := c.client.ListPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
 	if err != nil {
 		return nil, fmt.Errorf("could not list policies: %w", err)
-	}
-
-	return p.PolicyIds, nil
-}
-
-func (c *GrpcAdminClient) FilterPolicies(ctx context.Context, params FilterPoliciesOptions) ([]string, error) {
-	req := &requestv1.FilterPoliciesRequest{
-		IncludeDisabled: params.IncludeDisabled,
-		NameRegexp:      params.NameRegexp,
-		ScopeRegexp:     params.ScopeRegexp,
-		Version:         params.Version,
-	}
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("could not validate filter policies request: %w", err)
-	}
-
-	p, err := c.client.FilterPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
-	if err != nil {
-		return nil, fmt.Errorf("could not filter policies: %w", err)
 	}
 
 	return p.PolicyIds, nil

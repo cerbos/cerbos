@@ -104,12 +104,19 @@ func NewFromConf(ctx context.Context, confWrapper *config.Wrapper) (Store, error
 	return cons(ctx, confWrapper)
 }
 
+type ListPolicyIDsParams struct {
+	NameRegexp      string
+	ScopeRegexp     string
+	Version         string
+	IncludeDisabled bool
+}
+
 // Store is the common interface implemented by storage backends.
 type Store interface {
 	// Driver is the name of the storage backend implementation.
 	Driver() string
 	// ListPolicyIDs returns the policy IDs in the store
-	ListPolicyIDs(context.Context, bool) ([]string, error)
+	ListPolicyIDs(context.Context, ListPolicyIDsParams) ([]string, error)
 	// ListSchemaIDs returns the schema ids in the store
 	ListSchemaIDs(context.Context) ([]string, error)
 	// LoadSchema loads the given schema from the store.
@@ -135,17 +142,9 @@ type BinaryStore interface {
 	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
-type FilterPolicyIDsParams struct {
-	NameRegexp      string
-	ScopeRegexp     string
-	Version         string
-	IncludeDisabled bool
-}
-
 // MutableStore is a store that allows mutations.
 type MutableStore interface {
 	Store
-	FilterPolicyIDs(context.Context, FilterPolicyIDsParams) ([]string, error)
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
 	AddOrUpdateSchema(context.Context, ...*schemav1.Schema) error
 	Disable(context.Context, ...string) (uint32, error)

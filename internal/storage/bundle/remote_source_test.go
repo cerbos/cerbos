@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/test/mocks"
@@ -33,7 +34,7 @@ func TestRemoteSource(t *testing.T) {
 			require.NoError(t, err, "Failed to create remote source")
 			require.NoError(t, rs.InitWithClient(context.Background(), mockClient), "Failed to init")
 
-			ids, err := rs.ListPolicyIDs(context.Background(), true)
+			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err, "Failed to call ListPolicyIDs")
 			require.True(t, len(ids) > 0, "Policy IDs are empty")
 		})
@@ -47,7 +48,7 @@ func TestRemoteSource(t *testing.T) {
 			require.NoError(t, err, "Failed to create remote source")
 			require.NoError(t, rs.InitWithClient(context.Background(), mockClient), "Failed to init")
 
-			ids, err := rs.ListPolicyIDs(context.Background(), true)
+			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err, "Failed to call ListPolicyIDs")
 			require.True(t, len(ids) > 0, "Policy IDs are empty")
 		})
@@ -63,7 +64,7 @@ func TestRemoteSource(t *testing.T) {
 
 			require.False(t, rs.IsHealthy(), "Source should be unhealthy")
 
-			_, err = rs.ListPolicyIDs(context.Background(), true)
+			_, err = rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.Error(t, err, "Expected error from ListPolicyIDs")
 			require.ErrorIs(t, err, bundle.ErrBundleNotLoaded, "Exepcted bundle not loaded error")
 		})
@@ -78,7 +79,7 @@ func TestRemoteSource(t *testing.T) {
 
 			require.NoError(t, rs.Reload(context.Background()), "Failed to reload")
 
-			ids, err := rs.ListPolicyIDs(context.Background(), true)
+			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err, "Failed to call ListPolicyIDs")
 			require.True(t, len(ids) > 0, "Policy IDs are empty")
 		})
@@ -94,7 +95,7 @@ func TestRemoteSource(t *testing.T) {
 		require.NoError(t, err, "Failed to create remote source")
 		require.NoError(t, rs.InitWithClient(context.Background(), mockClient), "Failed to init")
 
-		ids, err := rs.ListPolicyIDs(context.Background(), true)
+		ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 		require.NoError(t, err, "Failed to call ListPolicyIDs")
 		require.True(t, len(ids) > 0, "Policy IDs are empty")
 	})
@@ -125,7 +126,7 @@ func TestRemoteSource(t *testing.T) {
 				return rs.IsHealthy() == false
 			}, 60*time.Millisecond, 10*time.Millisecond, "Source should be unhealthy")
 
-			_, err = rs.ListPolicyIDs(context.Background(), true)
+			_, err = rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.Error(t, err, "Expected error from ListPolicyIDs")
 			require.ErrorIs(t, err, bundle.ErrBundleNotLoaded, "Exepcted bundle not loaded error")
 		})
@@ -166,7 +167,7 @@ func TestRemoteSource(t *testing.T) {
 			}
 			waitForCallsDone(t, callsDone)
 
-			ids, err := rs.ListPolicyIDs(context.Background(), true)
+			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.ErrorIs(t, err, bundle.ErrBundleNotLoaded, "Failed to remove the bundle")
 			require.Len(t, ids, 0, "Policy IDs must be empty")
 		})
@@ -206,7 +207,7 @@ func TestRemoteSource(t *testing.T) {
 			}
 			waitForCallsDone(t, callsDone)
 
-			ids, err := rs.ListPolicyIDs(context.Background(), true)
+			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err, "Failed to call ListPolicyIDs")
 			require.True(t, len(ids) > 0, "Policy IDs are empty")
 		})
@@ -251,7 +252,7 @@ func TestRemoteSource(t *testing.T) {
 			}
 			waitForCallsDone(t, callsDone)
 
-			ids, err := rs.ListPolicyIDs(context.Background(), true)
+			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err, "Failed to call ListPolicyIDs")
 			require.True(t, len(ids) > 0, "Policy IDs are empty")
 		})
@@ -286,7 +287,7 @@ func TestRemoteSource(t *testing.T) {
 
 			require.False(t, rs.IsHealthy(), "Source should be unhealthy")
 
-			ids, err := rs.ListPolicyIDs(context.Background(), true)
+			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err, "Failed to call ListPolicyIDs")
 			require.True(t, len(ids) > 0, "Policy IDs are empty")
 		})

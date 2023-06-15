@@ -33,9 +33,9 @@ func (instrumentedSource) Driver() string {
 	return DriverName
 }
 
-func (is instrumentedSource) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
+func (is instrumentedSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
 	return measureBinaryOp(ctx, is.name, "ListPolicyIDs", func(ctx context.Context) ([]string, error) {
-		return is.source.ListPolicyIDs(ctx, includeDisabled)
+		return is.source.ListPolicyIDs(ctx, params)
 	})
 }
 
