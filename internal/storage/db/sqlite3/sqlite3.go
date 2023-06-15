@@ -19,8 +19,6 @@ import (
 	migratesqlite3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"go.uber.org/zap"
-
-	// import sqlite3 driver.
 	gosqlite3 "modernc.org/sqlite"
 
 	"github.com/cerbos/cerbos/internal/config"

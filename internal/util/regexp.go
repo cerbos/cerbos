@@ -11,31 +11,29 @@ import (
 
 type RegexpCache struct {
 	cache map[string]*regexp.Regexp
-	mu    *sync.Mutex
+	mu    sync.RWMutex
 }
 
 func NewRegexpCache() *RegexpCache {
 	return &RegexpCache{
 		cache: make(map[string]*regexp.Regexp),
-		
 	}
 }
 
 // GetCompiledExpr lazily compiles (and stores) regexp.
 func (c *RegexpCache) GetCompiledExpr(re string) (*regexp.Regexp, error) {
-	if c.cache == nil {
-		c.cache = make(map[string]*regexp.Regexp)
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
+	c.mu.RLock()
 	r, ok := c.cache[re]
+	c.mu.RUnlock()
+
 	if !ok {
 		var err error
 		if r, err = regexp.Compile(re); err != nil {
 			return nil, fmt.Errorf("failed to compile regexp: %s", re)
 		}
+
+		c.mu.Lock()
+		defer c.mu.Unlock()
 		c.cache[re] = r
 	}
 
