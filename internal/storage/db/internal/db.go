@@ -702,7 +702,7 @@ func (s *dbStorage) updateRegexpFilters(namePattern, col string, whereExprs *[]e
 		// We use a cache to prevent the need to recompile arbitrary strings on each request.
 		// In the case of the SQLite driver, to support regexp, we generate an application-defined function in which we
 		// use the cached compiled expressions.
-		*whereExprs = append(*whereExprs, goqu.C(col).Like(r))
+		*whereExprs = append(*whereExprs, goqu.C(col).ILike(r))
 	} else {
 		*postFilters = append(*postFilters, postRegexpFilter{re: r, col: col})
 	}
