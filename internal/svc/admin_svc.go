@@ -124,7 +124,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 	// We've historically supported ListPolicies on non-mutable stores, but later introduced filters are not scalable.
 	// Therefore, if any of the filters in question are passed and the store is not mutable, we reject the request.
 	if _, ok := cas.store.(storage.MutableStore); !ok && (req.NameRegexp != "" || req.ScopeRegexp != "" || req.Version != "") {
-		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+		return nil, status.Error(codes.Unimplemented, "Store does not support filters")
 	}
 
 	filterParams := storage.ListPolicyIDsParams{

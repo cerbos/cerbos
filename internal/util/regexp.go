@@ -17,7 +17,7 @@ type RegexpCache struct {
 func NewRegexpCache() *RegexpCache {
 	return &RegexpCache{
 		cache: make(map[string]*regexp.Regexp),
-		mu:    &sync.Mutex{},
+		
 	}
 }
 

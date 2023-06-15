@@ -674,7 +674,7 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPo
 		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
 
-	policyIDs := []string{}
+	policyIDs := make([]string, 0, len(policyCoords))
 	for _, pc := range policyCoords {
 		if checkPostFilters(pc, postFilters) {
 			policyIDs = append(policyIDs, pc.PolicyKey())

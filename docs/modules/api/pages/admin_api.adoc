@@ -131,7 +131,7 @@ GET /admin/policies
 
 NOTE: This endpoint is still under development and should be considered unstable.
 
-Issue a GET request to the endpoint to list the policies available in the store. You can optionally pass filter parameters to reduce the result set.
+Issue a GET request to the endpoint to list the policies available in the store. If the policy store supports filtering, you can optionally pass filter parameters to reduce the result set.
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
 
