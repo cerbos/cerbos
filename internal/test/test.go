@@ -283,8 +283,12 @@ func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies 
 			}
 		}
 
-		if params.Version != "" && params.Version != wrapped.Version {
-			continue
+		if params.VersionRegexp != "" {
+			r, err := c.GetCompiledExpr(params.VersionRegexp)
+			require.NoError(t, err)
+			if !r.MatchString(wrapped.Version) {
+				continue
+			}
 		}
 
 		filtered = append(filtered, p)

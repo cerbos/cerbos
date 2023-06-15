@@ -160,8 +160,8 @@
             "type": "string"
           },
           {
-            "name": "version",
-            "description": "Filter policies by version",
+            "name": "versionRegexp",
+            "description": "Filter policies by version with regexp",
             "in": "query",
             "required": false,
             "type": "string"

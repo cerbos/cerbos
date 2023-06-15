@@ -650,8 +650,10 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPo
 		}
 	}
 
-	if listParams.Version != "" {
-		whereExprs = append(whereExprs, goqu.C(PolicyTblVerCol).Eq(listParams.Version))
+	if listParams.VersionRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.VersionRegexp, PolicyTblVerCol, &whereExprs, &postFilters); err != nil {
+			return nil, err
+		}
 	}
 
 	err := s.db.From(PolicyTbl).

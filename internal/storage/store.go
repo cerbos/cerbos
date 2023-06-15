@@ -107,7 +107,7 @@ func NewFromConf(ctx context.Context, confWrapper *config.Wrapper) (Store, error
 type ListPolicyIDsParams struct {
 	NameRegexp      string
 	ScopeRegexp     string
-	Version         string
+	VersionRegexp   string
 	IncludeDisabled bool
 }
 

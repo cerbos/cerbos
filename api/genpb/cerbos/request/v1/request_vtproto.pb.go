@@ -1499,10 +1499,10 @@ func (m *ListPoliciesRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Version) > 0 {
-		i -= len(m.Version)
-		copy(dAtA[i:], m.Version)
-		i = encodeVarint(dAtA, i, uint64(len(m.Version)))
+	if len(m.VersionRegexp) > 0 {
+		i -= len(m.VersionRegexp)
+		copy(dAtA[i:], m.VersionRegexp)
+		i = encodeVarint(dAtA, i, uint64(len(m.VersionRegexp)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -2515,7 +2515,7 @@ func (m *ListPoliciesRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.Version)
+	l = len(m.VersionRegexp)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -6021,7 +6021,7 @@ func (m *ListPoliciesRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field VersionRegexp", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6049,7 +6049,7 @@ func (m *ListPoliciesRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Version = string(dAtA[iNdEx:postIndex])
+			m.VersionRegexp = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -848,8 +848,8 @@ func cerbos_request_v1_ListPoliciesRequest_hashpb_sum(m *ListPoliciesRequest, ha
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ScopeRegexp))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.version"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Version))
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.version_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.VersionRegexp))
 
 	}
 }

@@ -240,7 +240,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 					// Use REGEXP to test support on all drivers
 					NameRegexp:      ".*(leave|equipment)_[rw]equest$",
 					ScopeRegexp:     "^acme",
-					Version:         "default",
+					VersionRegexp:   "default",
 					IncludeDisabled: true,
 				}
 				have, err := store.ListPolicyIDs(ctx, filterParams)

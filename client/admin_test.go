@@ -176,7 +176,7 @@ func TestFilterPolicies(t *testing.T) {
 			IncludeDisabled: r.IncludeDisabled,
 			NameRegexp:      r.NameRegexp,
 			ScopeRegexp:     r.ScopeRegexp,
-			Version:         r.Version,
+			VersionRegexp:   r.VersionRegexp,
 		}
 
 		policyList := test.FilterPolicies(t, ps.GetPolicies(), params)
@@ -196,14 +196,14 @@ func TestFilterPolicies(t *testing.T) {
 	})
 
 	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
-		testFilter(WithVersion("20210210"))
+		testFilter(WithVersionRegexp("20210210"))
 	})
 
 	t.Run("should get the list of filtered policies by all", func(t *testing.T) {
 		testFilter(
 			WithNameRegexp(".*(leave|equipment)_[rw]equest$"),
 			WithScopeRegexp("^acme"),
-			WithVersion("default"),
+			WithVersionRegexp("default$"),
 		)
 	})
 }

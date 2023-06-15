@@ -13,7 +13,7 @@
     "scopeRegexp": {
       "type": "string"
     },
-    "version": {
+    "versionRegexp": {
       "type": "string"
     }
   }

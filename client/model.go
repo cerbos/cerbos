@@ -1272,8 +1272,8 @@ func WithScopeRegexp(re string) ListPoliciesOption {
 	}
 }
 
-func WithVersion(v string) ListPoliciesOption {
+func WithVersionRegexp(v string) ListPoliciesOption {
 	return func(request *requestv1.ListPoliciesRequest) {
-		request.Version = v
+		request.VersionRegexp = v
 	}
 }
