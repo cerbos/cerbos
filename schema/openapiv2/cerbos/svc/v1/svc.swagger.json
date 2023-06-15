@@ -2325,6 +2325,9 @@
             "type": "object",
             "$ref": "#/definitions/v1RoleDef"
           }
+        },
+        "variables": {
+          "$ref": "#/definitions/v1Variables"
         }
       }
     },
@@ -2391,6 +2394,20 @@
         }
       },
       "description": "Enable policy response"
+    },
+    "v1ExportVariables": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "definitions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
     },
     "v1File": {
       "type": "object",
@@ -2886,6 +2903,9 @@
         "derivedRoles": {
           "$ref": "#/definitions/v1DerivedRoles"
         },
+        "exportVariables": {
+          "$ref": "#/definitions/v1ExportVariables"
+        },
         "variables": {
           "type": "object",
           "additionalProperties": {
@@ -2915,6 +2935,9 @@
         },
         "scope": {
           "type": "string"
+        },
+        "variables": {
+          "$ref": "#/definitions/v1Variables"
         }
       }
     },
@@ -2984,6 +3007,9 @@
         },
         "schemas": {
           "$ref": "#/definitions/v1Schemas"
+        },
+        "variables": {
+          "$ref": "#/definitions/v1Variables"
         }
       }
     },
@@ -3194,6 +3220,23 @@
         },
         "source": {
           "$ref": "#/definitions/ValidationErrorSource"
+        }
+      }
+    },
+    "v1Variables": {
+      "type": "object",
+      "properties": {
+        "import": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     }
