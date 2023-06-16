@@ -76,6 +76,16 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					{strings.Split("get derived_roles --include-disabled", " "), false},
 					{strings.Split("get derived_roles --sort-by policyId", " "), false},
 					{strings.Split("get derived_roles --sort-by version", " "), true},
+					// regexp filtering
+					{strings.Split("get derived_roles --name-regexp=a --scope-regexp=a", " "), false},
+					{strings.Split("get derived_roles --name-regexp=a --scope-regexp=a --version-regexp=a", " "), true},
+					{strings.Split("get derived_roles --name=a --name-regexp=a", " "), true},
+					{strings.Split("get resource_policies --name-regexp=a --scope-regexp=a --version-regexp=a", " "), false},
+					{strings.Split("get resource_policies --name=a --name-regexp=a", " "), true},
+					{strings.Split("get resource_policies --version=a --version-regexp=a", " "), true},
+					{strings.Split("get principal_policies --name-regexp=a --scope-regexp=a --version-regexp=a", " "), false},
+					{strings.Split("get principal_policies --name=a --name-regexp=a", " "), true},
+					{strings.Split("get principal_policies --version=a --version-regexp=a", " "), true},
 				}
 				for _, tc := range testCases {
 					p := mustNew(t, &root.Cli{})
@@ -129,33 +139,41 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 			t.Run("compare policy count", func(t *testing.T) {
 				testCases := []struct {
-					args                  []string
-					wantCount             int
-					wantCountWithDisabled int
+					args                      []string
+					regexpArg                 string
+					wantCount                 int
+					wantCountWithDisabled     int
+					wantCountWithRegexpFilter int
 				}{
 					{
-						args:                  []string{"principal_policy", "principal_policies", "pp"},
-						wantCount:             policiesPerType * 3,
-						wantCountWithDisabled: policiesPerType * 4,
+						args:                      []string{"principal_policy", "principal_policies", "pp"},
+						wantCount:                 policiesPerType * 3,
+						wantCountWithDisabled:     policiesPerType * 4,
+						regexpArg:                 "--scope-regexp=acme",
+						wantCountWithRegexpFilter: policiesPerType * 2,
 					},
 					{
-						args:                  []string{"derived_role", "derived_roles", "dr"},
-						wantCount:             policiesPerType,
-						wantCountWithDisabled: policiesPerType * 2,
+						args:                      []string{"derived_role", "derived_roles", "dr"},
+						wantCount:                 policiesPerType,
+						wantCountWithDisabled:     policiesPerType * 2,
+						regexpArg:                 "--name-regexp=my_derived_",
+						wantCountWithRegexpFilter: policiesPerType * 2,
 					},
 					{
-						args:                  []string{"resource_policy", "resource_policies", "rp"},
-						wantCount:             policiesPerType * 4,
-						wantCountWithDisabled: policiesPerType * 5,
+						args:                      []string{"resource_policy", "resource_policies", "rp"},
+						wantCount:                 policiesPerType * 4,
+						wantCountWithDisabled:     policiesPerType * 5,
+						regexpArg:                 "--scope-regexp=acme",
+						wantCountWithRegexpFilter: policiesPerType * 3,
 					},
 				}
 
 				for _, tc := range testCases {
 					for _, arg := range tc.args {
 						p := mustNew(t, &root.Cli{})
+
 						out := bytes.NewBufferString("")
 						p.Stdout = out
-
 						ctx, err := p.Parse([]string{"get", arg, "--no-headers"})
 						require.NoError(t, err)
 						err = ctx.Run(clientCtx, globals)
@@ -169,6 +187,14 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 						err = ctx.Run(clientCtx, globals)
 						require.NoError(t, err)
 						require.Equal(t, tc.wantCountWithDisabled, noOfPoliciesInCmdOutput(t, out.String()))
+
+						out = bytes.NewBufferString("")
+						p.Stdout = out
+						ctx, err = p.Parse([]string{"get", arg, "--include-disabled", tc.regexpArg, "--no-headers"})
+						require.NoError(t, err)
+						err = ctx.Run(clientCtx, globals)
+						require.NoError(t, err)
+						require.Equal(t, tc.wantCountWithRegexpFilter, noOfPoliciesInCmdOutput(t, out.String()))
 					}
 				}
 			})

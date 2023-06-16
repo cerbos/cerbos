@@ -44,7 +44,6 @@ cerbosctl get derived_roles derived_roles.my_derived_roles -ojson
 # Get derived role policy definition as pretty json
 cerbosctl get derived_roles derived_roles.my_derived_roles -oprettyjson`
 
-//nolint:govet
 type Cmd struct {
 	flagset.Filters
 	flagset.Format
