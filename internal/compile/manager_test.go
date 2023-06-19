@@ -255,6 +255,21 @@ func (ms *MockStore) Unsubscribe(s storage.Subscriber) {
 	ms.subscriber = nil
 }
 
+func (ms *MockStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
+	args := ms.MethodCalled("GetFirstMatch", ctx, candidates)
+	res := args.Get(0)
+	switch t := res.(type) {
+	case nil:
+		return nil, args.Error(1)
+	case *policy.CompilationUnit:
+		return t, args.Error(1)
+	case func() (*policy.CompilationUnit, error):
+		return t()
+	default:
+		panic(fmt.Errorf("unknown return value type: %T", res))
+	}
+}
+
 func (ms *MockStore) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	args := ms.MethodCalled("GetCompilationUnits", ctx, ids)
 	res := args.Get(0)

@@ -127,6 +127,8 @@ type Store interface {
 type SourceStore interface {
 	Store
 	Subscribable
+	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
+	GetFirstMatch(context.Context, []namer.ModuleID) (*policy.CompilationUnit, error)
 	// GetCompilationUnits gets the compilation units for the given module IDs.
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
@@ -138,8 +140,8 @@ type SourceStore interface {
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.
 type BinaryStore interface {
 	Store
-	// GetPolicySet gets the compiled policy set identified by the given module ID.
-	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
+	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
 // MutableStore is a store that allows mutations.

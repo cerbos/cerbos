@@ -42,7 +42,7 @@ const (
 )
 
 type PolicyLoader interface {
-	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
 type checkOptions struct {
@@ -501,8 +501,8 @@ func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, poli
 	defer span.End()
 	span.SetAttributes(tracing.PolicyName(principal), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
 
-	principalModID := namer.PrincipalPolicyModuleID(principal, policyVer, scope)
-	rps, err := engine.policyLoader.GetPolicySet(ctx, principalModID)
+	principalModIDs := namer.ScopedPrincipalPolicyModuleIDs(principal, policyVer, scope, engine.conf.LenientScopeSearch)
+	rps, err := engine.policyLoader.GetFirstMatch(ctx, principalModIDs)
 	if err != nil {
 		tracing.MarkFailed(span, http.StatusInternalServerError, err)
 		return nil, err
@@ -529,8 +529,8 @@ func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policy
 	defer span.End()
 	span.SetAttributes(tracing.PolicyName(resource), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
 
-	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
-	rps, err := engine.policyLoader.GetPolicySet(ctx, resourceModID)
+	resourceModIDs := namer.ScopedResourcePolicyModuleIDs(resource, policyVer, scope, engine.conf.LenientScopeSearch)
+	rps, err := engine.policyLoader.GetFirstMatch(ctx, resourceModIDs)
 	if err != nil {
 		tracing.MarkFailed(span, http.StatusInternalServerError, err)
 		return nil, err

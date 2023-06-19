@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bluele/gcache"
@@ -201,6 +202,54 @@ func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePoli
 
 func (c *Manager) evict(modID namer.ModuleID) {
 	c.cache.Remove(modID)
+}
+
+func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	keyBuilder := new(strings.Builder)
+	for _, modID := range candidates {
+		rps, err := c.cache.GetIFPresent(modID)
+		if err == nil {
+			cacheHit()
+			if rps != nil {
+				return rps.(*runtimev1.RunnablePolicySet), nil //nolint:forcetypeassert
+			}
+		}
+		keyBuilder.WriteString(modID.String())
+		keyBuilder.WriteRune('|')
+	}
+
+	cacheMiss()
+
+	key := keyBuilder.String()
+	defer c.sf.Forget(key)
+
+	rpsVal, err, _ := c.sf.Do(key, func() (any, error) {
+		cu, err := c.store.GetFirstMatch(ctx, candidates)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compilation units: %w", err)
+		}
+
+		if cu == nil {
+			return nil, nil
+		}
+
+		rps, err := c.compile(cu)
+		if err != nil {
+			return nil, PolicyCompilationErr{underlying: err}
+		}
+
+		return rps, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if rpsVal == nil {
+		return nil, nil
+	}
+
+	//nolint:forcetypeassert
+	return rpsVal.(*runtimev1.RunnablePolicySet), nil
 }
 
 func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {

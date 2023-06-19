@@ -64,11 +64,13 @@ func runTests(have *bundle.LocalSource, manifest *bundlev1.Manifest) func(*testi
 			}
 		})
 
-		t.Run("getPolicySet", func(t *testing.T) {
+		t.Run("getFirstMatch", func(t *testing.T) {
+			blahMod := namer.GenModuleIDFromFQN("blah")
+
 			t.Run("existing", func(t *testing.T) {
 				for fqn := range manifest.PolicyIndex {
 					modID := namer.GenModuleIDFromFQN(fqn)
-					havePolicy, err := have.GetPolicySet(context.Background(), modID)
+					havePolicy, err := have.GetFirstMatch(context.Background(), []namer.ModuleID{blahMod, modID})
 					require.NoError(t, err, "Failed to get policy set for %q", fqn)
 					require.NotNil(t, havePolicy, "Policy set %q is nil", fqn)
 					require.Equal(t, havePolicy.Fqn, fqn, "FQN mismatch for policy set %q", fqn)
@@ -76,8 +78,7 @@ func runTests(have *bundle.LocalSource, manifest *bundlev1.Manifest) func(*testi
 			})
 
 			t.Run("nonExisting", func(t *testing.T) {
-				modID := namer.GenModuleIDFromFQN("blah")
-				havePolicy, err := have.GetPolicySet(context.Background(), modID)
+				havePolicy, err := have.GetFirstMatch(context.Background(), []namer.ModuleID{blahMod})
 				require.NoError(t, err)
 				require.Nil(t, havePolicy)
 			})

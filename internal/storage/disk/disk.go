@@ -91,6 +91,10 @@ func (s *Store) Driver() string {
 	return DriverName
 }
 
+func (s *Store) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
+	return s.idx.GetFirstMatch(candidates)
+}
+
 func (s *Store) GetCompilationUnits(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	return s.idx.GetCompilationUnits(ids...)
 }

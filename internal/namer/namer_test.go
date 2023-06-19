@@ -186,3 +186,83 @@ func TestPolicyCoords(t *testing.T) {
 		})
 	}
 }
+
+func TestScopedModuleIDs(t *testing.T) {
+	testCases := []struct {
+		scope            string
+		wantCountForTree int
+	}{
+		{
+			scope:            "",
+			wantCountForTree: 1,
+		},
+		{
+			scope:            "a.b.c.d.e",
+			wantCountForTree: 6,
+		},
+	}
+
+	fns := []struct {
+		kind    string
+		fn      func(string, string, string, bool) []namer.ModuleID
+		modIDFn func(string, string, string) namer.ModuleID
+	}{
+		{
+			kind: "resource_policy",
+			fn:   namer.ScopedResourcePolicyModuleIDs,
+			modIDFn: func(resource, version, scope string) namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.ResourcePolicyFQN(resource, version, scope))
+			},
+		},
+		{
+			kind: "principal_policy",
+			fn:   namer.ScopedPrincipalPolicyModuleIDs,
+			modIDFn: func(principal, version, scope string) namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.PrincipalPolicyFQN(principal, version, scope))
+			},
+		},
+	}
+
+	t.Parallel()
+
+	const (
+		inputName    = "foo"
+		inputVersion = "bar"
+	)
+
+	for _, fn := range fns {
+		fn := fn
+		t.Run(fn.kind, func(t *testing.T) {
+			t.Parallel()
+
+			for _, tc := range testCases {
+				tc := tc
+				t.Run(fmt.Sprintf("scope=%s/genTree=false", tc.scope), func(t *testing.T) {
+					t.Parallel()
+
+					have := fn.fn(inputName, inputVersion, tc.scope, false)
+					require.Len(t, have, 1)
+					require.Equal(t, fn.modIDFn(inputName, inputVersion, tc.scope), have[0])
+				})
+
+				t.Run(fmt.Sprintf("scope=%s/genTree=true", tc.scope), func(t *testing.T) {
+					t.Parallel()
+
+					have := fn.fn(inputName, inputVersion, tc.scope, true)
+					require.Len(t, have, tc.wantCountForTree)
+					require.Equal(t, fn.modIDFn(inputName, inputVersion, tc.scope), have[0])
+					require.Equal(t, fn.modIDFn(inputName, inputVersion, ""), have[len(have)-1])
+
+					idx := 1
+					for i := len(tc.scope) - 1; i >= 0; i-- {
+						if tc.scope[i] == '.' {
+							wantModID := fn.modIDFn(inputName, inputVersion, tc.scope[:i])
+							require.Equal(t, wantModID, have[idx], "Unexpected modID for scope %s", tc.scope[:i])
+							idx++
+						}
+					}
+				})
+			}
+		})
+	}
+}

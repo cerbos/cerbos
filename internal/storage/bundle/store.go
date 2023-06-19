@@ -116,8 +116,8 @@ func (hs *HybridStore) LoadSchema(ctx context.Context, id string) (io.ReadCloser
 	return hs.withActiveSource().LoadSchema(ctx, id)
 }
 
-func (hs *HybridStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	return hs.withActiveSource().GetPolicySet(ctx, id)
+func (hs *HybridStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	return hs.withActiveSource().GetFirstMatch(ctx, candidates)
 }
 
 func (hs *HybridStore) SourceKind() string {

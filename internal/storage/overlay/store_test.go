@@ -110,8 +110,8 @@ func TestFailover(t *testing.T) {
 		nFailures := fallbackErrorThreshold - 1
 		nRequests := nFailures + 1
 		basePolicyLoader := new(MockPolicyLoader)
-		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
-		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
+		basePolicyLoader.On("GetFirstMatch", ctx, mock.AnythingOfType("[]namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
+		basePolicyLoader.On("GetFirstMatch", ctx, mock.AnythingOfType("[]namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
 
 		fallbackPolicyLoader := new(MockPolicyLoader)
 
@@ -123,7 +123,7 @@ func TestFailover(t *testing.T) {
 		}
 
 		for i := 0; i < nRequests; i++ {
-			_, err := wrappedSourceStore.GetPolicySet(ctx, namer.GenModuleIDFromFQN("example"))
+			_, err := wrappedSourceStore.GetFirstMatch(ctx, []namer.ModuleID{namer.GenModuleIDFromFQN("example")})
 			if i < nFailures {
 				require.Error(t, err, "expected base store to return an error")
 			} else {
@@ -141,10 +141,10 @@ func TestFailover(t *testing.T) {
 		nFailures := fallbackErrorThreshold
 		nRequests := nFailures + 1
 		basePolicyLoader := new(MockPolicyLoader)
-		basePolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
+		basePolicyLoader.On("GetFirstMatch", ctx, mock.AnythingOfType("[]namer.ModuleID")).Return((*runtimev1.RunnablePolicySet)(nil), errors.New("base store error")).Times(nFailures)
 
 		fallbackPolicyLoader := new(MockPolicyLoader)
-		fallbackPolicyLoader.On("GetPolicySet", ctx, mock.AnythingOfType("namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
+		fallbackPolicyLoader.On("GetFirstMatch", ctx, mock.AnythingOfType("[]namer.ModuleID")).Return(&runtimev1.RunnablePolicySet{}, nil).Once()
 
 		wrappedSourceStore := &Store{
 			log:                  zap.S(),
@@ -154,7 +154,7 @@ func TestFailover(t *testing.T) {
 		}
 
 		for i := 0; i < nRequests; i++ {
-			_, err := wrappedSourceStore.GetPolicySet(ctx, namer.GenModuleIDFromFQN("example"))
+			_, err := wrappedSourceStore.GetFirstMatch(ctx, []namer.ModuleID{namer.GenModuleIDFromFQN("example")})
 			if i < nFailures {
 				require.Error(t, err, "expected base store to return an error")
 			} else {
@@ -239,8 +239,8 @@ type MockPolicyLoader struct {
 	mock.Mock
 }
 
-func (m *MockPolicyLoader) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	args := m.Called(ctx, id)
+func (m *MockPolicyLoader) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx, candidates)
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
@@ -282,8 +282,8 @@ type MockBinaryStore struct {
 	MockStore
 }
 
-func (m *MockBinaryStore) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	args := m.Called(ctx, id)
+func (m *MockBinaryStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx, candidates)
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
 }
 

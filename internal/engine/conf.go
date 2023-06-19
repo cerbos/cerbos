@@ -22,7 +22,9 @@ type Conf struct {
 	Globals map[string]any `yaml:"globals" conf:",example={\"environment\": \"staging\"}"`
 	// DefaultPolicyVersion defines what version to assume if the request does not specify one.
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",example=\"default\""`
-	NumWorkers           uint   `yaml:"numWorkers" conf:",ignore"`
+	// LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
+	LenientScopeSearch bool `yaml:"lenientScopeSearch" conf:",example=false"`
+	NumWorkers         uint `yaml:"numWorkers" conf:",ignore"`
 }
 
 func (c *Conf) Key() string {
