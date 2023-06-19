@@ -37,6 +37,15 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 	if filters.IncludeDisabled {
 		opts = append(opts, client.WithIncludeDisabled())
 	}
+	if filters.NameRegexp != "" {
+		opts = append(opts, client.WithNameRegexp(filters.NameRegexp))
+	}
+	if filters.ScopeRegexp != "" {
+		opts = append(opts, client.WithScopeRegexp(filters.ScopeRegexp))
+	}
+	if filters.VersionRegexp != "" {
+		opts = append(opts, client.WithVersionRegexp(filters.VersionRegexp))
+	}
 
 	policyIds, err := c.ListPolicies(context.Background(), opts...)
 	if err != nil {
