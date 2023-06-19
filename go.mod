@@ -40,6 +40,7 @@ require (
 	github.com/iancoleman/strcase v0.2.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.1
+	github.com/jackc/pgx/v5 v5.4.1
 	github.com/jdxcode/netrc v0.0.0-20221124155335-4616370d1a84
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/jwalton/gchalk v1.3.0
