@@ -1,5 +1,5 @@
 ---
-description: "Scoped policy: missing policy"
+description: "Scoped policy: lenient search"
 inputs: [
   {
     "requestId": "test",
@@ -21,8 +21,8 @@ inputs: [
       }
     },
     "resource": {
-      "kind": "leave_request_x",
-      "scope": "acme.hr.fr",
+      "kind": "leave_request",
+      "scope": "acme.hr.uk.wales.cardiff",
       "id": "XX125",
       "attr": {
         "department": "marketing",
@@ -40,17 +40,24 @@ wantOutputs: [
     "resourceId": "XX125",
     "actions": {
       "view:public": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+        "scope": "acme.hr"
       },
       "delete": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+        "scope": "acme.hr.uk"
       },
       "create": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+        "scope": "acme"
       }
-    }
+    },
+    "effectiveDerivedRoles": [
+      "any_employee",
+      "employee_that_owns_the_record"
+    ]
   }
 ]

@@ -41,6 +41,7 @@ type Entry struct {
 
 type Index interface {
 	storage.Instrumented
+	GetFirstMatch([]namer.ModuleID) (*policy.CompilationUnit, error)
 	GetCompilationUnits(...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	AddOrUpdate(Entry) (storage.Event, error)
@@ -82,6 +83,50 @@ func (idx *index) GetFiles() []string {
 	}
 
 	return files
+}
+
+func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+
+	for _, id := range candidates {
+		if _, ok := idx.modIDToFile[id]; !ok {
+			continue
+		}
+
+		p, err := idx.loadPolicy(id)
+		if err != nil {
+			return nil, err
+		}
+
+		policyKey := namer.PolicyKey(p)
+
+		cu := &policy.CompilationUnit{
+			ModID:       id,
+			Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
+		}
+
+		// add dependencies
+		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {
+			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
+		}
+
+		// load ancestors of the policy
+		for _, ancestor := range cu.Ancestors() {
+			p, err := idx.loadPolicy(ancestor)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
+			}
+			cu.AddDefinition(ancestor, p)
+			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
+				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
+			}
+		}
+
+		return cu, nil
+	}
+
+	return nil, nil
 }
 
 func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {

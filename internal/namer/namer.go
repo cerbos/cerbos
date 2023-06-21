@@ -117,20 +117,24 @@ func FQNTree(p *policyv1.Policy) []string {
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
 
+	return buildFQNTree(fqn, scope, func(s string) string { return s })
+}
+
+func buildFQNTree[T any](fqn, scope string, elementFn func(string) T) []T {
 	if scope == "" {
-		return []string{fqn}
+		return []T{elementFn(fqn)}
 	}
 
-	fqnTree := []string{withScope(fqn, scope)}
+	fqnTree := []T{elementFn(withScope(fqn, scope))}
 
 	for i := len(scope) - 1; i >= 0; i-- {
 		if scope[i] == '.' {
-			fqnTree = append(fqnTree, withScope(fqn, scope[:i]))
+			fqnTree = append(fqnTree, elementFn(withScope(fqn, scope[:i])))
 		}
 	}
 
 	// add the no scope FQN as the root
-	fqnTree = append(fqnTree, fqn)
+	fqnTree = append(fqnTree, elementFn(fqn))
 
 	return fqnTree
 }
@@ -161,6 +165,16 @@ func ResourcePolicyModuleID(resource, version, scope string) ModuleID {
 	return GenModuleIDFromFQN(ResourcePolicyFQN(resource, version, scope))
 }
 
+// ScopedResourcePolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
+// For example, if the scope is `a.b.c`, the list will contain the module IDs for scopes `a.b.c`, `a.b`, `a` and `""` in that order.
+func ScopedResourcePolicyModuleIDs(resource, version, scope string, genTree bool) []ModuleID {
+	if !genTree || scope == "" {
+		return []ModuleID{ResourcePolicyModuleID(resource, version, scope)}
+	}
+
+	return buildFQNTree(ResourcePolicyFQN(resource, version, ""), scope, GenModuleIDFromFQN)
+}
+
 // PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal, version and scope.
 func PrincipalPolicyFQN(principal, version, scope string) string {
 	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, Sanitize(principal), Sanitize(version))
@@ -170,6 +184,16 @@ func PrincipalPolicyFQN(principal, version, scope string) string {
 // PrincipalPolicyModuleID returns the module ID for the principal policy with given principal and version.
 func PrincipalPolicyModuleID(principal, version, scope string) ModuleID {
 	return GenModuleIDFromFQN(PrincipalPolicyFQN(principal, version, scope))
+}
+
+// ScopedPrincipalPolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
+// For example, if the scope is `a.b.c`, the list will contain the module IDs for scopes `a.b.c`, `a.b`, `a` and `""` in that order.
+func ScopedPrincipalPolicyModuleIDs(principal, version, scope string, genTree bool) []ModuleID {
+	if !genTree || scope == "" {
+		return []ModuleID{PrincipalPolicyModuleID(principal, version, scope)}
+	}
+
+	return buildFQNTree(PrincipalPolicyFQN(principal, version, ""), scope, GenModuleIDFromFQN)
 }
 
 // DerivedRolesFQN returns the fully-qualified module name for the given derived roles set.

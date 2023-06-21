@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
@@ -114,4 +115,95 @@ func TestIndexListSchemaIDs(t *testing.T) {
 		"resources/purchase_order.json",
 		"resources/salary_record.json",
 	}, ids)
+}
+
+func TestIndexGetFirstMatch(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	fsys := os.DirFS(test.PathToDir(t, "."))
+
+	idx, err := index.Build(ctx, fsys, index.WithRootDir("store"))
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name   string
+		modIDs []namer.ModuleID
+		want   func() namer.ModuleID
+	}{
+		{
+			name:   "resource_policy/strict/non_existent",
+			modIDs: namer.ScopedResourcePolicyModuleIDs("leave_request", "default", "acme.hr.france.marseille", false),
+		},
+		{
+			name:   "resource_policy/strict/existent",
+			modIDs: namer.ScopedResourcePolicyModuleIDs("leave_request", "default", "acme.hr", false),
+			want: func() namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.ResourcePolicyFQN("leave_request", "default", "acme.hr"))
+			},
+		},
+		{
+			name:   "resource_policy/lenient/some_leaf_scopes_missing",
+			modIDs: namer.ScopedResourcePolicyModuleIDs("leave_request", "default", "acme.hr.france.marseille", true),
+			want: func() namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.ResourcePolicyFQN("leave_request", "default", "acme.hr"))
+			},
+		},
+		{
+			name:   "resource_policy/lenient/all_scopes_missing",
+			modIDs: namer.ScopedResourcePolicyModuleIDs("leave_request", "default", "foo.bar.baz", true),
+			want: func() namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.ResourcePolicyFQN("leave_request", "default", ""))
+			},
+		},
+		{
+			name:   "resource_policy/lenient/non_existent",
+			modIDs: namer.ScopedResourcePolicyModuleIDs("leave_request", "blah", "blah", true),
+		},
+		{
+			name:   "principal_policy/strict/non_existent",
+			modIDs: namer.ScopedPrincipalPolicyModuleIDs("donald_duck", "default", "acme.hr.france.marseille", false),
+		},
+		{
+			name:   "principal_policy/strict/existent",
+			modIDs: namer.ScopedPrincipalPolicyModuleIDs("donald_duck", "default", "acme.hr", false),
+			want: func() namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.PrincipalPolicyFQN("donald_duck", "default", "acme.hr"))
+			},
+		},
+		{
+			name:   "principal_policy/lenient/some_leaf_scopes_missing",
+			modIDs: namer.ScopedPrincipalPolicyModuleIDs("donald_duck", "default", "acme.hr.france.marseille", true),
+			want: func() namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.PrincipalPolicyFQN("donald_duck", "default", "acme.hr"))
+			},
+		},
+		{
+			name:   "principal_policy/lenient/all_scopes_missing",
+			modIDs: namer.ScopedPrincipalPolicyModuleIDs("donald_duck", "default", "foo.bar.baz", true),
+			want: func() namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.PrincipalPolicyFQN("donald_duck", "default", ""))
+			},
+		},
+		{
+			name:   "principal_policy/lenient/non_existent",
+			modIDs: namer.ScopedPrincipalPolicyModuleIDs("donald_duck", "blah", "blah", true),
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			have, err := idx.GetFirstMatch(tc.modIDs)
+			require.NoError(t, err)
+			if tc.want == nil {
+				require.Nil(t, have)
+			} else {
+				want := tc.want()
+				require.Equal(t, want, have.ModID)
+			}
+		})
+	}
 }

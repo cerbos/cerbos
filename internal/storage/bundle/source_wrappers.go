@@ -51,9 +51,9 @@ func (is instrumentedSource) LoadSchema(ctx context.Context, id string) (io.Read
 	})
 }
 
-func (is instrumentedSource) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	return measureBinaryOp(ctx, is.name, "GetPolicySet", func(ctx context.Context) (*runtimev1.RunnablePolicySet, error) {
-		return is.source.GetPolicySet(ctx, id)
+func (is instrumentedSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	return measureBinaryOp(ctx, is.name, "GetFirstMatch", func(ctx context.Context) (*runtimev1.RunnablePolicySet, error) {
+		return is.source.GetFirstMatch(ctx, candidates)
 	})
 }
 

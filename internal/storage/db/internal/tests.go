@@ -187,6 +187,43 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Empty(t, have)
 		})
 
+		t.Run("get_first_match_resource_policy", func(t *testing.T) {
+			modIDs := namer.ScopedResourcePolicyModuleIDs(rpAcmeHR.Name, rpAcmeHR.Version, "acme.hr.france.marseille", true)
+			have, err := store.GetFirstMatch(ctx, modIDs)
+			require.NoError(t, err)
+			require.NotNil(t, have)
+			require.Equal(t, rpAcmeHR.ID, have.ModID)
+			require.Contains(t, have.Definitions, rpAcmeHR.ID)
+			require.Empty(t, cmp.Diff(rpAcmeHR, have.Definitions[rpAcmeHR.ID], protocmp.Transform()))
+			require.Contains(t, have.Definitions, rpAcme.ID)
+			require.Empty(t, cmp.Diff(rpAcme, have.Definitions[rpAcme.ID], protocmp.Transform()))
+			require.Contains(t, have.Definitions, rp.ID)
+			require.Empty(t, cmp.Diff(rp, have.Definitions[rp.ID], protocmp.Transform()))
+			require.Contains(t, have.Definitions, dr.ID)
+			require.Empty(t, cmp.Diff(dr, have.Definitions[dr.ID], protocmp.Transform()))
+		})
+
+		t.Run("get_first_match_principal_policy", func(t *testing.T) {
+			modIDs := namer.ScopedPrincipalPolicyModuleIDs(ppAcmeHR.Name, ppAcmeHR.Version, "acme.hr.france.marseille", true)
+			have, err := store.GetFirstMatch(ctx, modIDs)
+			require.NoError(t, err)
+			require.NotNil(t, have)
+			require.Equal(t, ppAcmeHR.ID, have.ModID)
+			require.Contains(t, have.Definitions, ppAcmeHR.ID)
+			require.Empty(t, cmp.Diff(ppAcmeHR, have.Definitions[ppAcmeHR.ID], protocmp.Transform()))
+			require.Contains(t, have.Definitions, ppAcme.ID)
+			require.Empty(t, cmp.Diff(ppAcme, have.Definitions[ppAcme.ID], protocmp.Transform()))
+			require.Contains(t, have.Definitions, pp.ID)
+			require.Empty(t, cmp.Diff(pp, have.Definitions[pp.ID], protocmp.Transform()))
+		})
+
+		t.Run("get_first_match_non_existent", func(t *testing.T) {
+			modIDs := namer.ScopedResourcePolicyModuleIDs("foo", "bar", "acme.hr.france.marseille", true)
+			have, err := store.GetFirstMatch(ctx, modIDs)
+			require.NoError(t, err)
+			require.Nil(t, have)
+		})
+
 		t.Run("get_dependents", func(t *testing.T) {
 			have, err := store.GetDependents(ctx, dr.ID)
 			require.NoError(t, err)

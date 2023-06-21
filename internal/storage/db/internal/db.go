@@ -38,6 +38,7 @@ type DBStorage interface {
 	storage.Reloadable
 	storage.Verifiable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
+	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
@@ -306,6 +307,21 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 
 	s.NotifySubscribers(events...)
 	return nil
+}
+
+func (s *dbStorage) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
+	results, err := s.GetCompilationUnits(ctx, candidates...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, id := range candidates {
+		if cu, ok := results[id]; ok {
+			return cu, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
