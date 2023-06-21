@@ -1,7 +1,11 @@
 {{- $tlsDisabled := (eq (include "cerbos.tlsSecretName" .) "None") -}}
 {{- $defaultBundleDriverEnabled := (eq (include "cerbos.defaultBundleDriverEnabled" .) "yes") -}}
 apiVersion: apps/v1
+{{- if eq .Values.type "deployment" }}
 kind: Deployment
+{{- else if eq .Values.type "deamonset" }}
+kind: DaemonSet
+{{- end}}
 metadata:
   name: {{ include "cerbos.fullname" . }}
   labels:
@@ -12,7 +16,9 @@ metadata:
   {{- end }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
+  {{-   if eq .Values.type "deployment" }}
   replicas: {{ .Values.replicaCount }}
+  {{-   end }}
   {{- end }}
   selector:
     matchLabels:
@@ -38,6 +44,9 @@ spec:
       {{- with .Values.initContainers }}
       initContainers:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{- .Values.priorityClassName }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}

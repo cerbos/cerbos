@@ -96,6 +96,12 @@ envFrom: []
 certManager:
   certSpec: {}
 
+# Kubernetes to to use
+type: deployment
+
+# PriorityClassName to set on deployed pods
+priorityClassName: ""
+
 # Cerbos service settings.
 service:
   type: ClusterIP
@@ -105,6 +111,9 @@ service:
   grpcNodePort: 13593
   annotations: {}
   loadBalancerIP: null
+  # Set the internalTrafficPolicy. If this is unset, and .Values.type
+  # is set to daemonset, this will default to "Local"
+  internalTrafficPolicy: ""
 
 # Cerbos deployment settings.
 cerbos:

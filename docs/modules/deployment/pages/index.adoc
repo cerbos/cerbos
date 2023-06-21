@@ -20,3 +20,11 @@ image:sidecar_deployment.png[Sidecar model,role="center-img"]
 * Each application instance gets its own Cerbos instance — ensuring high performance and availability.
 * Upgrades to Cerbos would require a rolling update to all the application instances.
 * Policy updates could take slightly longer to propagate to all the individual application instances — resulting in a period where both the old and new policies are in effect at the same time.
+
+== DaemonSet model
+
+image:daemonset_deployment.png[DaemonSet model,role="center-img"]
+
+* Each clusster node gets its own Cerbos instance — ensuring high performance and efficient resource usage.
+* Policy updates must roll out to nodes individually — resulting in a period where both the old and new policies are in effect at the same time.
+* Upgrades to Cerbos could result in application seeing a short outage to the cerbos instance on their own node, client retries may be neccessary.
