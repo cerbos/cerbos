@@ -1,12 +1,16 @@
 # yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
-apiVersion: "api.cerbos.dev/v1"
+apiVersion: api.cerbos.dev/v1
 principalPolicy:
-  principal: daisy_duck
+  principal: scrooge_mcduck
   version: default
+  variables:
+    import:
+      - foobar
   rules:
-    - resource: "expenses"
+    - resource: money
       actions:
-        - action: "view"
+        - action: swim
           effect: EFFECT_ALLOW
-          name: expenses_admin
+          output:
+            expr: V.foo

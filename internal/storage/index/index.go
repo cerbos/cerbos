@@ -182,12 +182,20 @@ func (idx *index) addDepsToCompilationUnit(cu *policy.CompilationUnit, id namer.
 	}
 
 	for dep := range deps {
-		p, err := idx.loadPolicy(dep)
+		_, ok := cu.Definitions[dep]
+		if !ok {
+			p, err := idx.loadPolicy(dep)
+			if err != nil {
+				return err
+			}
+
+			cu.AddDefinition(dep, p)
+		}
+
+		err := idx.addDepsToCompilationUnit(cu, dep)
 		if err != nil {
 			return err
 		}
-
-		cu.AddDefinition(dep, p)
 	}
 
 	return nil
@@ -221,25 +229,30 @@ func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]nam
 	results := make(map[namer.ModuleID][]namer.ModuleID, len(ids))
 
 	for _, id := range ids {
-		results[id] = nil
+		set := make(map[namer.ModuleID]struct{})
+		idx.addTransitiveDependents(set, id)
 
-		dependents, ok := idx.dependents[id]
-		if !ok {
-			continue
-		}
-
-		depList := make([]namer.ModuleID, len(dependents))
+		list := make([]namer.ModuleID, len(set))
 		i := 0
-
-		for d := range dependents {
-			depList[i] = d
+		for dependent := range set {
+			list[i] = dependent
 			i++
 		}
 
-		results[id] = depList
+		results[id] = list
 	}
 
 	return results, nil
+}
+
+func (idx *index) addTransitiveDependents(dependents map[namer.ModuleID]struct{}, id namer.ModuleID) {
+	for dependent := range idx.dependents[id] {
+		_, ok := dependents[dependent]
+		if !ok {
+			dependents[dependent] = struct{}{}
+			idx.addTransitiveDependents(dependents, dependent)
+		}
+	}
 }
 
 func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
@@ -301,13 +314,13 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 }
 
 func (idx *index) addDep(child, parent namer.ModuleID) {
-	// When we compile a resource policy, we need to load the derived roles (dependsOn).
+	// When we compile a policy, we need to load the dependencies (imported variables and derived roles).
 	if _, ok := idx.dependencies[child]; !ok {
 		idx.dependencies[child] = make(map[namer.ModuleID]struct{})
 	}
 	idx.dependencies[child][parent] = struct{}{}
 
-	// if a derived role changes, we need to recompile all the resource policies that import it (referencedBy).
+	// if a derived role or variable export changes, we need to recompile all the policies that import it (dependents).
 	if _, ok := idx.dependents[parent]; !ok {
 		idx.dependents[parent] = make(map[namer.ModuleID]struct{})
 	}
@@ -402,7 +415,7 @@ func (idx *index) Clear() error {
 
 type meta struct {
 	Dependencies []string
-	References   []string
+	Dependents   []string
 }
 
 func (idx *index) Inspect() map[string]meta {
@@ -417,7 +430,7 @@ func (idx *index) Inspect() map[string]meta {
 		}
 
 		for ref := range idx.dependents[modID] {
-			m.References = append(m.References, idx.modIDToFile[ref])
+			m.Dependents = append(m.Dependents, idx.modIDToFile[ref])
 		}
 
 		entries[file] = m

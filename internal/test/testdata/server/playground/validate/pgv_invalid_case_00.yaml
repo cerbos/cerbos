@@ -19,7 +19,7 @@ playgroundValidate:
       "errors": [
         {
           "file": "resource.yaml",
-          "error": "Import 'apatr_common_roles' not found"
+          "error": "Derived roles import 'apatr_common_roles' not found"
         }
       ]
     }

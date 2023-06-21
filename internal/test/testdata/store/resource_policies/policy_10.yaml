@@ -2,13 +2,13 @@
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
-  version: "default"
-  resource: account
+  version: default
+  resource: import_derived_roles_that_import_variables
+  importDerivedRoles:
+    - import_variables
   rules:
-    - actions: ["*"]
+    - actions:
+        - use
       effect: EFFECT_ALLOW
-      roles: ["*"]
-
-    - actions: ["create"]
-      roles: ["user"]
-      effect: EFFECT_DENY
+      derivedRoles:
+        - bar

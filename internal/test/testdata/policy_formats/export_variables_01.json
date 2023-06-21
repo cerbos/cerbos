@@ -1,0 +1,9 @@
+{
+  "apiVersion": "api.cerbos.dev/v1",
+  "exportVariables": {
+    "name": "my_variables",
+    "definitions": {
+      "geography": "request.resource.attr.geography"
+    }
+  }
+}

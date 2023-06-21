@@ -776,6 +776,7 @@ func genPolicySet(i int) policySet {
 		test.GenResourcePolicy(test.PrefixAndSuffix(namePrefix, suffix)),
 		test.GenPrincipalPolicy(test.PrefixAndSuffix(namePrefix, suffix)),
 		test.GenDerivedRoles(test.PrefixAndSuffix(namePrefix, suffix)),
+		test.GenExportVariables(test.PrefixAndSuffix(namePrefix, suffix)),
 	}
 
 	m := make(policySet, len(policies))
@@ -815,8 +816,10 @@ func mkFileName(p *policyv1.Policy) string {
 		return fmt.Sprintf("%s.%s.yaml", pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
 	case *policyv1.Policy_DerivedRoles:
 		return fmt.Sprintf("%s.yaml", pt.DerivedRoles.Name)
+	case *policyv1.Policy_ExportVariables:
+		return fmt.Sprintf("%s.yaml", pt.ExportVariables.Name)
 	default:
-		panic(fmt.Errorf("unknown policy type %T", pt))
+		panic(fmt.Errorf("unknown policy type %T", p.PolicyType))
 	}
 }
 
@@ -901,7 +904,6 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 			Effect:  effectv1.Effect_EFFECT_ALLOW,
 		})
 
-		return p
 	case *policyv1.Policy_PrincipalPolicy:
 		pt.PrincipalPolicy.Rules = append(pt.PrincipalPolicy.Rules, &policyv1.PrincipalRule{
 			Resource: "some_resource",
@@ -913,31 +915,30 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 			},
 		})
 
-		return p
 	case *policyv1.Policy_DerivedRoles:
 		pt.DerivedRoles.Definitions = append(pt.DerivedRoles.Definitions, &policyv1.RoleDef{
 			Name:        "some_role",
 			ParentRoles: []string{"some_role", "another_role"},
 		})
 
-		return p
-	default:
-		return p
+	case *policyv1.Policy_ExportVariables:
+		pt.ExportVariables.Definitions["some_variable"] = "some_expression"
 	}
+
+	return p
 }
 
 func modifyPolicyVersion(p *policyv1.Policy) *policyv1.Policy {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		pt.ResourcePolicy.Version = "changed"
-		return p
 	case *policyv1.Policy_PrincipalPolicy:
 		pt.PrincipalPolicy.Version = "changed"
-		return p
 	case *policyv1.Policy_DerivedRoles:
 		pt.DerivedRoles.Name = "changed"
-		return p
-	default:
-		return p
+	case *policyv1.Policy_ExportVariables:
+		pt.ExportVariables.Name = "changed"
 	}
+
+	return p
 }

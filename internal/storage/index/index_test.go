@@ -207,3 +207,20 @@ func TestIndexGetFirstMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestIndexGetDependents(t *testing.T) {
+	idx, err := index.Build(context.Background(), os.DirFS(test.PathToDir(t, "store")))
+	require.NoError(t, err)
+
+	modID := namer.ExportVariablesModuleID("foobar")
+	dependents, err := idx.GetDependents(modID)
+	require.NoError(t, err)
+	require.Len(t, dependents, 1)
+	require.Contains(t, dependents, modID)
+	require.ElementsMatch(t, []namer.ModuleID{
+		namer.DerivedRolesModuleID("import_variables"),
+		namer.PrincipalPolicyModuleID("scrooge_mcduck", "default", ""),
+		namer.ResourcePolicyModuleID("import_variables", "default", ""),
+		namer.ResourcePolicyModuleID("import_derived_roles_that_import_variables", "default", ""),
+	}, dependents[modID])
+}

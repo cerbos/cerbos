@@ -3,13 +3,16 @@
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: default
-  resource: global
+  resource: import_variables
+  variables:
+    import:
+      - foobar
   rules:
     - actions:
-        - test
+        - use
       effect: EFFECT_ALLOW
       roles:
-        - employee
+        - user
       condition:
         match:
-          expr: globals.environment == "test"
+          expr: V.bar

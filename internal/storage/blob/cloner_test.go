@@ -31,12 +31,15 @@ func TestCloneResult(t *testing.T) {
 		"derived_roles/derived_roles_01.yaml",
 		"derived_roles/derived_roles_02.yaml",
 		"derived_roles/derived_roles_03.yaml",
+		"derived_roles/derived_roles_04.yaml",
+		"export_variables/export_variables_01.yaml",
 		"principal_policies/policy_01.yaml",
 		"principal_policies/policy_02.yaml",
 		"principal_policies/policy_02_acme.hr.yaml",
 		"principal_policies/policy_02_acme.yaml",
 		"principal_policies/policy_03.yaml",
 		"principal_policies/policy_04.yaml",
+		"principal_policies/policy_05.yaml",
 		"resource_policies/disabled_policy_01.yaml",
 		"resource_policies/policy_01.yaml",
 		"resource_policies/policy_02.yaml",
@@ -50,5 +53,7 @@ func TestCloneResult(t *testing.T) {
 		"resource_policies/policy_07.yaml",
 		"resource_policies/policy_07_acme.yaml",
 		"resource_policies/policy_08.yaml",
+		"resource_policies/policy_09.yaml",
+		"resource_policies/policy_10.yaml",
 	}, result.updateOrAdd)
 }

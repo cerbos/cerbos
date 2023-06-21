@@ -196,8 +196,12 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 
 	idx.stats.add(p)
 
-	if p.Kind != policy.DerivedRolesKind {
+	switch p.Kind {
+	case policy.ResourceKind, policy.PrincipalKind:
 		idx.executables[p.ID] = struct{}{}
+
+	case policy.DerivedRolesKind, policy.ExportVariablesKind:
+		// not executable
 	}
 
 	for _, dep := range policy.Dependencies(p.Policy) {
@@ -207,9 +211,20 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 
 		// the dependent may not have been loaded by the indexer yet because it's still walking the directory.
 		if _, exists := idx.modIDToFile[depID]; !exists {
+			kind := policy.KindFromFQN(dep)
+			var desc string
+			switch kind {
+			case policy.DerivedRolesKind:
+				desc = "Derived roles"
+			case policy.ExportVariablesKind:
+				desc = "Variables"
+			default:
+				panic(fmt.Errorf("unexpected import kind %s", kind))
+			}
+
 			idx.missing[depID] = append(idx.missing[depID], &runtimev1.IndexBuildErrors_MissingImport{
 				ImportingFile: file,
-				Desc:          fmt.Sprintf("Import '%s' not found", namer.DerivedRolesSimpleName(dep)),
+				Desc:          fmt.Sprintf("%s import '%s' not found", desc, namer.SimpleName(dep)),
 			})
 		}
 	}
@@ -223,13 +238,13 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 }
 
 func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
-	// When we compile a resource policy, we need to load the derived roles (dependsOn).
+	// When we compile a policy, we need to load the dependencies (imported variables and derived roles).
 	if _, ok := idx.dependencies[child]; !ok {
 		idx.dependencies[child] = make(map[namer.ModuleID]struct{})
 	}
 	idx.dependencies[child][parent] = struct{}{}
 
-	// if a derived role changes, we need to recompile all the resource policies that import it (referencedBy).
+	// if a derived role or variable export changes, we need to recompile all the policies that import it (dependents).
 	if _, ok := idx.dependents[parent]; !ok {
 		idx.dependents[parent] = make(map[namer.ModuleID]struct{})
 	}

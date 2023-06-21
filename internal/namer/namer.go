@@ -18,13 +18,9 @@ import (
 
 var invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
 
-// validKinds holds valid policy kinds and the minimum number of components that must be contained in the policy key.
-//
-//nolint:gomnd
-var validKinds = map[string]int{"derived_roles": 2, "principal": 3, "resource": 3}
-
 const (
 	DerivedRolesPrefix      = fqnPrefix + "derived_roles"
+	ExportVariablesPrefix   = fqnPrefix + "export_variables"
 	PrincipalPoliciesPrefix = fqnPrefix + "principal"
 	ResourcePoliciesPrefix  = fqnPrefix + "resource"
 
@@ -89,6 +85,8 @@ func FQN(p *policyv1.Policy) string {
 		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesFQN(pt.DerivedRoles.Name)
+	case *policyv1.Policy_ExportVariables:
+		return ExportVariablesFQN(pt.ExportVariables.Name)
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
@@ -113,6 +111,8 @@ func FQNTree(p *policyv1.Policy) []string {
 		scope = pt.PrincipalPolicy.Scope
 	case *policyv1.Policy_DerivedRoles:
 		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
+	case *policyv1.Policy_ExportVariables:
+		fqn = ExportVariablesFQN(pt.ExportVariables.Name)
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
@@ -201,22 +201,32 @@ func DerivedRolesFQN(roleSetName string) string {
 	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, Sanitize(roleSetName))
 }
 
+// DerivedRolesModuleID returns the module ID for the given derived roles set.
+func DerivedRolesModuleID(roleSetName string) ModuleID {
+	return GenModuleIDFromFQN(DerivedRolesFQN(roleSetName))
+}
+
+// ExportVariablesFQN returns the fully-qualified module name for the given exported variable definitions.
+func ExportVariablesFQN(variablesName string) string {
+	return fmt.Sprintf("%s.%s", ExportVariablesPrefix, Sanitize(variablesName))
+}
+
+// ExportVariablesModuleID returns the module ID for the given exported variable definitions.
+func ExportVariablesModuleID(variablesName string) ModuleID {
+	return GenModuleIDFromFQN(ExportVariablesFQN(variablesName))
+}
+
+// SimpleName extracts the simple name from a derived roles or exported variables FQN.
+func SimpleName(fqn string) string {
+	return strings.TrimPrefix(strings.TrimPrefix(fqn, ExportVariablesPrefix+"."), DerivedRolesPrefix+".")
+}
+
 func withScope(fqn, scope string) string {
 	if scope == "" {
 		return fqn
 	}
 
 	return fqn + "/" + scope
-}
-
-// DerivedRolesModuleID returns the module ID for the given derived roles set.
-func DerivedRolesModuleID(roleSetName string) ModuleID {
-	return GenModuleIDFromFQN(DerivedRolesFQN(roleSetName))
-}
-
-// DerivedRolesSimpleName extracts the simple name from a derived roles FQN.
-func DerivedRolesSimpleName(fqn string) string {
-	return strings.TrimPrefix(fqn, DerivedRolesPrefix+".")
 }
 
 // Sanitize replaces special characters in the string with underscores.
@@ -265,63 +275,13 @@ type PolicyCoords struct {
 	Scope   string
 }
 
-//nolint:gomnd
-func PolicyCoordsFromPolicyKey(key string) (PolicyCoords, error) {
-	var pc PolicyCoords
-	var parts [4]string
-	idx := 0
-	ptr := 0
-
-loop:
-	for i, c := range key {
-		switch c {
-		case '.':
-			parts[idx] = key[ptr:i]
-			ptr = i + 1
-			idx++
-
-			if idx == 1 {
-				if _, ok := validKinds[parts[0]]; !ok {
-					return pc, fmt.Errorf("invalid kind in policy key %q", key)
-				}
-			}
-		case '/':
-			if idx != 2 {
-				return pc, fmt.Errorf("missing components in policy key %q", key)
-			}
-			parts[idx] = key[ptr:i]
-			ptr = i + 1
-			idx++
-			break loop
-		}
-
-		if idx >= 4 {
-			return pc, fmt.Errorf("invalid policy key %q", key)
-		}
-	}
-
-	if ptr < len(key) {
-		parts[idx] = key[ptr:]
-		idx++
-	}
-
-	if minParts, ok := validKinds[parts[0]]; !ok || idx < minParts {
-		return pc, fmt.Errorf("invalid policy key %q", key)
-	}
-
-	pc.Kind = strings.ToUpper(parts[0])
-	pc.Name = parts[1]
-	pc.Version = strings.TrimPrefix(parts[2], "v")
-	pc.Scope = parts[3]
-
-	return pc, nil
-}
-
 func (pc PolicyCoords) FQN() string {
 	prefix := fqnPrefix + strings.ToLower(pc.Kind)
 	switch prefix {
 	case DerivedRolesPrefix:
 		return DerivedRolesFQN(pc.Name)
+	case ExportVariablesPrefix:
+		return ExportVariablesFQN(pc.Name)
 	case PrincipalPoliciesPrefix:
 		return PrincipalPolicyFQN(pc.Name, pc.Version, pc.Scope)
 	case ResourcePoliciesPrefix:
@@ -333,8 +293,4 @@ func (pc PolicyCoords) FQN() string {
 
 func (pc PolicyCoords) PolicyKey() string {
 	return PolicyKeyFromFQN(pc.FQN())
-}
-
-func (pc PolicyCoords) ModuleID() ModuleID {
-	return GenModuleIDFromFQN(pc.FQN())
 }

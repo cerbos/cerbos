@@ -26,6 +26,11 @@ func TestFQN(t *testing.T) {
 			want:   "cerbos.derived_roles.my_derived_roles",
 		},
 		{
+			name:   "export variables",
+			policy: func() *policyv1.Policy { return test.GenExportVariables(test.NoMod()) },
+			want:   "cerbos.export_variables.my_variables",
+		},
+		{
 			name:   "resource policy without scope",
 			policy: func() *policyv1.Policy { return test.GenResourcePolicy(test.NoMod()) },
 			want:   "cerbos.resource.leave_request.vdefault",
@@ -75,6 +80,11 @@ func TestFQNTree(t *testing.T) {
 			want:   []string{"cerbos.derived_roles.my_derived_roles"},
 		},
 		{
+			name:   "export variables",
+			policy: func() *policyv1.Policy { return test.GenExportVariables(test.NoMod()) },
+			want:   []string{"cerbos.export_variables.my_variables"},
+		},
+		{
 			name:   "resource policy without scope",
 			policy: func() *policyv1.Policy { return test.GenResourcePolicy(test.NoMod()) },
 			want:   []string{"cerbos.resource.leave_request.vdefault"},
@@ -119,70 +129,6 @@ func TestFQNTree(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			have := namer.FQNTree(tc.policy())
 			require.Equal(t, tc.want, have)
-		})
-	}
-}
-
-func TestPolicyCoords(t *testing.T) {
-	testCases := []struct {
-		key     string
-		want    namer.PolicyCoords
-		wantErr bool
-	}{
-		{
-			key:  "derived_roles.my_derived_roles",
-			want: namer.PolicyCoords{Kind: "DERIVED_ROLES", Name: "my_derived_roles"},
-		},
-		{
-			key:  "principal.donald_duck.vdefault",
-			want: namer.PolicyCoords{Kind: "PRINCIPAL", Name: "donald_duck", Version: "default"},
-		},
-		{
-			key:  "principal.donald_duck.vdefault/acme.base.cloud",
-			want: namer.PolicyCoords{Kind: "PRINCIPAL", Name: "donald_duck", Version: "default", Scope: "acme.base.cloud"},
-		},
-		{
-			key:  "resource.salary_record.vdefault",
-			want: namer.PolicyCoords{Kind: "RESOURCE", Name: "salary_record", Version: "default"},
-		},
-		{
-			key:  "resource.salary_record.vdefault/acme.base",
-			want: namer.PolicyCoords{Kind: "RESOURCE", Name: "salary_record", Version: "default", Scope: "acme.base"},
-		},
-		{
-			key:     "resource.xxx.yyy.zzz.vdefault/acme.base",
-			wantErr: true,
-		},
-		{
-			key:     "resource.salary_record/acme.base",
-			wantErr: true,
-		},
-		{
-			key:     "blah.salary_record.vdefault/acme.base",
-			wantErr: true,
-		},
-		{
-			key:     "blah",
-			wantErr: true,
-		},
-		{
-			key:     "",
-			wantErr: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(fmt.Sprintf("key=%q", tc.key), func(t *testing.T) {
-			have, err := namer.PolicyCoordsFromPolicyKey(tc.key)
-			if tc.wantErr {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			require.Equal(t, tc.want, have)
-			require.Equal(t, tc.key, have.PolicyKey())
 		})
 	}
 }
