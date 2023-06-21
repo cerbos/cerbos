@@ -54,6 +54,8 @@ engine:
 
 When working with xref:policies:scoped_policies.adoc[scopes], the default behaviour of the Cerbos engine is to expect that a policy file exists for the requested scope. For example, if the API request defines `a.b.c` as the `scope`, a policy file _must exist_ in the policy repository with the `a.b.c` scope. This behaviour can be overridden by setting `lenientScopeSearch` configuration to `true`. When lenient scope search is enabled, if a policy with scope `a.b.c` does not exist in the store, Cerbos will attempt to find scopes `a.b`, `a` and `` in that order.
 
+NOTE: This setting only affects how Cerbos treats missing leaf scopes when searching for policies. The policies stored in your policy store _must_ have unbroken scope chains (for example, if you have a scoped policy `a.b.c` in the store, the policy files for scopes `a.b`, `a` and `` must also exist).
+
 
 [source,yaml,linenums]
 ----
