@@ -72,10 +72,15 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 			row := make([]string, 2, 4) //nolint:gomnd
 			row[0] = p.Metadata.StoreIdentifier
 			row[1] = p.Name
-			if kind != policy.DerivedRolesKind {
-				row = append(row, p.Version)
-				row = append(row, p.Scope)
+
+			switch kind {
+			case policy.PrincipalKind, policy.ResourceKind:
+				row = append(row, p.Version, p.Scope)
+
+			case policy.DerivedRolesKind, policy.ExportVariablesKind:
+				// no version or scope
 			}
+
 			tw.Append(row)
 		}
 

@@ -69,8 +69,13 @@ func printPolicyYAML(w io.Writer, policies []policy.Wrapper) error {
 }
 
 func getHeaders(kind policy.Kind) []string {
-	if kind == policy.DerivedRolesKind {
+	switch kind {
+	case policy.DerivedRolesKind, policy.ExportVariablesKind:
 		return []string{"POLICY ID", "NAME"}
+
+	case policy.PrincipalKind, policy.ResourceKind:
+		return []string{"POLICY ID", "NAME", "VERSION", "SCOPE"}
 	}
-	return []string{"POLICY ID", "NAME", "VERSION", "SCOPE"}
+
+	panic(fmt.Errorf("unknown policy kind %d", kind))
 }

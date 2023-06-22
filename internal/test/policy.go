@@ -380,6 +380,12 @@ func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 	}
 }
 
+func GenDisabledExportVariables(mod NameMod) *policyv1.Policy {
+	p := GenExportVariables(mod)
+	p.Disabled = true
+	return p
+}
+
 func GenExportVariables(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
 		ApiVersion: "api.cerbos.dev/v1",

@@ -39,7 +39,7 @@ const (
 	readyPollInterval = 50 * time.Millisecond
 )
 
-var policyKeyRegex = regexp.MustCompile(`(derived_roles|principal|resource)\.(.+)(\.(.+))?`)
+var policyKeyRegex = regexp.MustCompile(`(derived_roles|export_variables|principal|resource)\.(.+)(\.(.+))?`)
 
 func TestGetCmd(t *testing.T) {
 	s := mkServer(t)
@@ -67,6 +67,7 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				}{
 					{strings.Split("get schema --no-headers", " "), false},
 					{strings.Split("get derived_roles --name=a", " "), false},
+					{strings.Split("get export_variables --name=a", " "), false},
 					{strings.Split("get principal_policies --name=a --version=default", " "), false},
 					{strings.Split("get resource_policies --name=a --version=default", " "), false},
 					{strings.Split("get derived_roles --version=abc", " "), true},
@@ -77,9 +78,12 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					{strings.Split("get derived_roles --sort-by policyId", " "), false},
 					{strings.Split("get derived_roles --sort-by version", " "), true},
 					// regexp filtering
-					{strings.Split("get derived_roles --name-regexp=a --scope-regexp=a", " "), false},
+					{strings.Split("get derived_roles --name-regexp=a --scope-regexp=a", " "), true},
 					{strings.Split("get derived_roles --name-regexp=a --scope-regexp=a --version-regexp=a", " "), true},
 					{strings.Split("get derived_roles --name=a --name-regexp=a", " "), true},
+					{strings.Split("get export_variables --name-regexp=a --scope-regexp=a", " "), true},
+					{strings.Split("get export_variables --name-regexp=a --scope-regexp=a --version-regexp=a", " "), true},
+					{strings.Split("get export_variables --name=a --name-regexp=a", " "), true},
 					{strings.Split("get resource_policies --name-regexp=a --scope-regexp=a --version-regexp=a", " "), false},
 					{strings.Split("get resource_policies --name=a --name-regexp=a", " "), true},
 					{strings.Split("get resource_policies --version=a --version-regexp=a", " "), true},
@@ -104,6 +108,10 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				}{
 					{
 						[]string{"derived_role", "derived_roles", "dr"},
+						false,
+					},
+					{
+						[]string{"export_variables", "ev"},
 						false,
 					},
 					{
@@ -160,6 +168,13 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 						wantCountWithRegexpFilter: policiesPerType * 2,
 					},
 					{
+						args:                      []string{"export_variables", "ev"},
+						wantCount:                 policiesPerType,
+						wantCountWithDisabled:     policiesPerType * 2,
+						regexpArg:                 "--name-regexp=my_variables_",
+						wantCountWithRegexpFilter: policiesPerType * 2,
+					},
+					{
 						args:                      []string{"resource_policy", "resource_policies", "rp"},
 						wantCount:                 policiesPerType * 4,
 						wantCountWithDisabled:     policiesPerType * 5,
@@ -206,27 +221,32 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					name   string
 				}{
 					{
-						policy: withMeta(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1)))),
+						policy: withMeta(test.GenDerivedRoles(test.Suffix("1"))),
 						kind:   policy.DerivedRolesKind,
 						name:   "derived_roles.my_derived_roles_1",
 					},
 					{
-						policy: withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1)))),
+						policy: withMeta(test.GenExportVariables(test.Suffix("1"))),
+						kind:   policy.ExportVariablesKind,
+						name:   "export_variables.my_variables_1",
+					},
+					{
+						policy: withMeta(test.GenPrincipalPolicy(test.Suffix("1"))),
 						kind:   policy.PrincipalKind,
 						name:   "principal.donald_duck_1.vdefault",
 					},
 					{
-						policy: withMeta(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))), "acme.hr")),
+						policy: withMeta(withScope(test.GenPrincipalPolicy(test.Suffix("1")), "acme.hr")),
 						kind:   policy.PrincipalKind,
 						name:   "principal.donald_duck_1.vdefault/acme.hr",
 					},
 					{
-						policy: withMeta(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1)))),
+						policy: withMeta(test.GenResourcePolicy(test.Suffix("1"))),
 						kind:   policy.ResourceKind,
 						name:   "resource.leave_request_1.vdefault",
 					},
 					{
-						policy: withMeta(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))), "acme.hr.uk")),
+						policy: withMeta(withScope(test.GenResourcePolicy(test.Suffix("1")), "acme.hr.uk")),
 						kind:   policy.ResourceKind,
 						name:   "resource.leave_request_1.vdefault/acme.hr.uk",
 					},
@@ -241,6 +261,9 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					switch tc.kind {
 					case policy.DerivedRolesKind:
 						ctx, err = p.Parse([]string{"get", "dr", tc.name, "-ojson"})
+						require.NoError(t, err)
+					case policy.ExportVariablesKind:
+						ctx, err = p.Parse([]string{"get", "ev", tc.name, "-ojson"})
 						require.NoError(t, err)
 					case policy.PrincipalKind:
 						ctx, err = p.Parse([]string{"get", "pp", tc.name, "-ojson"})
@@ -262,11 +285,17 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				testCases := []struct {
 					args []string
 				}{
+					{strings.Split("get derived_roles export_variables.my_variables_1", " ")},
 					{strings.Split("get derived_roles principal.donald_duck_1.default", " ")},
 					{strings.Split("get derived_roles resource.leave_request_1.default", " ")},
+					{strings.Split("get export_variables derived_roles.my_derived_roles_1", " ")},
+					{strings.Split("get export_variables principal.donald_duck_1.default", " ")},
+					{strings.Split("get export_variables resource.leave_request_1.default", " ")},
 					{strings.Split("get principal_policies derived_roles.my_derived_roles_1", " ")},
+					{strings.Split("get principal_policies export_variables.my_variables_1", " ")},
 					{strings.Split("get principal_policies resource.leave_request_1.default", " ")},
 					{strings.Split("get resource_policies derived_roles.my_derived_roles_1", " ")},
+					{strings.Split("get resource_policies export_variables.my_variables_1", " ")},
 					{strings.Split("get resource_policies principal.donald_duck_1.default", " ")},
 				}
 
@@ -306,10 +335,12 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 		ps.AddPolicies(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i))))
+		ps.AddPolicies(test.GenExportVariables(test.Suffix(strconv.Itoa(i))))
 
 		ps.AddPolicies(test.GenDisabledPrincipalPolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
 		ps.AddPolicies(test.GenDisabledResourcePolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
 		ps.AddPolicies(test.GenDisabledDerivedRoles(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
+		ps.AddPolicies(test.GenDisabledExportVariables(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
 
 		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme"))
 		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
