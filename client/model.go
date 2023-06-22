@@ -99,6 +99,21 @@ func (p *Principal) WithAttr(key string, value any) *Principal {
 	return p
 }
 
+// ID returns the principal ID.
+func (p *Principal) ID() string {
+	return p.p.GetId()
+}
+
+// Roles returns the principal roles.
+func (p *Principal) Roles() []string {
+	return p.p.GetRoles()
+}
+
+// Proto returns the underlying protobuf object representing the principal.
+func (p *Principal) Proto() *enginev1.Principal {
+	return p.p
+}
+
 // Err returns any errors accumulated during the construction of the principal.
 func (p *Principal) Err() error {
 	return p.err
@@ -171,6 +186,21 @@ func (r *Resource) WithAttr(key string, value any) *Resource {
 func (r *Resource) WithScope(scope string) *Resource {
 	r.r.Scope = scope
 	return r
+}
+
+// ID returns the resource ID.
+func (r *Resource) ID() string {
+	return r.r.GetId()
+}
+
+// Kind returns the resource kind.
+func (r *Resource) Kind() string {
+	return r.r.GetKind()
+}
+
+// Proto returns the underlying protobuf object representing the resource.
+func (r *Resource) Proto() *enginev1.Resource {
+	return r.r
 }
 
 // Err returns any errors accumulated during the construction of the resource.
