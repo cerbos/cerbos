@@ -484,8 +484,8 @@ func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 			return nil, err
 		}
 
-		idx.mu.RLock()
-		defer idx.mu.RUnlock()
+		idx.mu.Lock()
+		defer idx.mu.Unlock()
 		idx.fileToModID = newIdx.fileToModID
 		idx.executables = newIdx.executables
 		idx.dependents = newIdx.dependents
