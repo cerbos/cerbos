@@ -1,6 +1,5 @@
 ---
 run:
-  go: "1.19"
   timeout: 300s
   skip-dirs:
     - "^api/"
