@@ -158,7 +158,7 @@ func TestListPolicies(t *testing.T) {
 func TestFilterPolicies(t *testing.T) {
 	ac, ps := setUpAdminClientAndPolicySet(t)
 
-	testFilter := func(filterOpts ...ListPoliciesOption) {
+	testFilter := func(t *testing.T, filterOpts ...ListPoliciesOption) {
 		t.Helper()
 
 		filterOpts = append(filterOpts, WithIncludeDisabled())
@@ -188,19 +188,19 @@ func TestFilterPolicies(t *testing.T) {
 	}
 
 	t.Run("should get the list of filtered policies by name", func(t *testing.T) {
-		testFilter(WithNameRegexp(".*request$"))
+		testFilter(t, WithNameRegexp(".*request$"))
 	})
 
 	t.Run("should get the list of filtered policies by scope", func(t *testing.T) {
-		testFilter(WithScopeRegexp("acme"))
+		testFilter(t, WithScopeRegexp("acme"))
 	})
 
 	t.Run("should get the list of filtered policies by version", func(t *testing.T) {
-		testFilter(WithVersionRegexp("20210210"))
+		testFilter(t, WithVersionRegexp("20210210"))
 	})
 
 	t.Run("should get the list of filtered policies by all", func(t *testing.T) {
-		testFilter(
+		testFilter(t,
 			WithNameRegexp(".*(leave|equipment)_[rw]equest$"),
 			WithScopeRegexp("^acme"),
 			WithVersionRegexp("default$"),
