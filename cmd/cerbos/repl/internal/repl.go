@@ -47,8 +47,8 @@ var (
 	//go:embed help.txt
 	helpText string
 
-	errExit        = errors.New("exit")
-	errInvalidExpr = errors.New("invalid expr")
+	errExit   = errors.New("exit")
+	errSilent = errors.New("") // returned when an error has occurred but feedback has already been provided to the user
 
 	listType = reflect.TypeOf([]any{})
 	mapType  = reflect.TypeOf(map[string]any{})
@@ -76,14 +76,15 @@ type policyHolder struct {
 }
 
 type REPL struct {
-	output   Output
-	vars     variables
-	decls    map[string]*exprpb.Decl
-	reader   *liner.State
-	parser   *participle.Parser[REPLDirective]
-	toRefVal func(any) ref.Val
-	policy   *policyHolder
-	varV     map[string]any
+	output     Output
+	vars       variables
+	decls      map[string]*exprpb.Decl
+	reader     *liner.State
+	parser     *participle.Parser[REPLDirective]
+	toRefVal   func(any) ref.Val
+	policy     *policyHolder
+	varV       map[string]any
+	varExports map[string]map[string]string
 }
 
 func NewREPL(reader *liner.State, output Output) (*REPL, error) {
@@ -128,7 +129,7 @@ func (r *REPL) Loop() error {
 				return nil
 			}
 
-			if !errors.Is(err, errInvalidExpr) {
+			if !errors.Is(err, errSilent) {
 				r.output.PrintErr("Failed to process input", err)
 			}
 		}
@@ -211,7 +212,7 @@ func (r *REPL) processDirective(line string) error {
 		}
 		return r.processExpr(directive.Let.Name, directive.Let.Expr)
 	case directive.Load != nil:
-		return r.loadRulesFromPolicy(directive.Load.Path)
+		return r.loadPolicy(directive.Load.Path)
 	case directive.Exec != nil:
 		return r.execRule(directive.Exec.RuleID)
 	default:
@@ -223,6 +224,7 @@ func (r *REPL) reset() error {
 	r.vars, r.decls = resetVarsAndDecls()
 	r.policy = nil
 	r.varV = nil
+	r.varExports = make(map[string]map[string]string)
 	r.output.Println()
 
 	return nil
@@ -400,7 +402,7 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 		}
 		r.output.Println()
 
-		return nil, nil, errInvalidExpr
+		return nil, nil, errSilent
 	}
 
 	val, _, err := conditions.Eval(env, ast, r.vars, time.Now)
@@ -416,7 +418,7 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 	return val, tpe, nil
 }
 
-func (r *REPL) loadRulesFromPolicy(path string) error {
+func (r *REPL) loadPolicy(path string) error {
 	f, err := os.Open(strings.TrimSpace(path))
 	if err != nil {
 		return fmt.Errorf("failed to open policy file at %s: %w", path, err)
@@ -428,21 +430,38 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 		return fmt.Errorf("failed to read policy file: %w", err)
 	}
 
-	ph := &policyHolder{key: namer.PolicyKey(p), variables: p.Variables}
+	ph := &policyHolder{key: namer.PolicyKey(p)}
 	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ExportVariables:
+		r.varExports[pt.ExportVariables.Name] = pt.ExportVariables.Definitions
 	case *policyv1.Policy_ResourcePolicy:
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.ResourcePolicy.Variables, p.Variables) //nolint:staticcheck
+		if err != nil {
+			return err
+		}
+
 		for _, rule := range pt.ResourcePolicy.Rules {
 			if rule.Condition != nil && rule.Condition.Condition != nil {
 				ph.rules = append(ph.rules, rule)
 			}
 		}
 	case *policyv1.Policy_DerivedRoles:
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.DerivedRoles.Variables, p.Variables) //nolint:staticcheck
+		if err != nil {
+			return err
+		}
+
 		for _, def := range pt.DerivedRoles.Definitions {
 			if def.Condition != nil {
 				ph.rules = append(ph.rules, def)
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.PrincipalPolicy.Variables, p.Variables) //nolint:staticcheck
+		if err != nil {
+			return err
+		}
+
 		for _, rule := range pt.PrincipalPolicy.Rules {
 			for _, action := range rule.Actions {
 				if action.Condition != nil {
@@ -469,7 +488,77 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 		r.output.PrintJSON(ph.variables)
 	}
 
-	return r.showRules()
+	if len(ph.rules) > 0 {
+		return r.showRules()
+	}
+
+	return nil
+}
+
+func (r *REPL) mergeVariableDefinitions(policyKey string, policyVariables *policyv1.Variables, deprecatedTopLevel map[string]string) (map[string]string, error) {
+	merged := make(map[string]string)
+	sources := make(map[string][]string)
+	missingImports := make([]string, 0, len(policyVariables.GetImport()))
+
+	for _, name := range policyVariables.GetImport() {
+		imported, ok := r.varExports[name]
+		if !ok {
+			missingImports = append(missingImports, name)
+			continue
+		}
+
+		mergeVariableDefinitions(merged, sources, imported, fmt.Sprintf("import %q", name))
+	}
+
+	if len(missingImports) > 0 {
+		var plural string
+		if len(missingImports) > 1 {
+			plural = "s"
+		}
+
+		r.output.PrintErr(fmt.Sprintf("Missing variables import%s", plural), nil)
+		r.output.Print("%s imports the following variable definitions:", policyKey)
+
+		for _, name := range missingImports {
+			r.output.Print("  - %s", colored.REPLPolicyName(name))
+		}
+
+		r.output.Println()
+		r.output.Print("Load the file%s containing the variable definitions, then try again", plural)
+		r.output.Println()
+
+		return nil, errSilent
+	}
+
+	mergeVariableDefinitions(merged, sources, policyVariables.GetLocal(), "policy local variables")
+	mergeVariableDefinitions(merged, sources, deprecatedTopLevel, "top-level policy variables (deprecated)")
+
+	for name, definedIn := range sources {
+		if len(definedIn) == 1 {
+			delete(sources, name)
+		}
+	}
+
+	if len(sources) > 0 {
+		var plural string
+		if len(sources) > 1 {
+			plural = "s"
+		}
+
+		r.output.PrintErr(fmt.Sprintf("Duplicate variable definition%s", plural), nil)
+		for name, definedIn := range sources {
+			r.output.Print("- %s is defined in %s", colored.REPLVar(name), strings.Join(definedIn, " and "))
+		}
+	}
+
+	return merged, nil
+}
+
+func mergeVariableDefinitions(merged map[string]string, sources map[string][]string, values map[string]string, source string) {
+	for name, expr := range values {
+		merged[name] = expr
+		sources[name] = append(sources[name], source)
+	}
 }
 
 func (r *REPL) evalPolicyVariables() {
