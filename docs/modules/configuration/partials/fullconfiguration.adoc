@@ -15,11 +15,12 @@ audit:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   kafka:
     ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
-    authentication:
-      tls:
-        caPath: #/path/to/ca.crt # Path to the CA certificate to use for verifying the broker's certificate.
-        certPath: # /path/to/client.crt # Path to the client certificate to use for authenticating with the broker.
-        keyPath: #/path/to/client.key # Path to the client key to use for authenticating with the broker.
+    authentication: # Authentication
+      tls: 
+        caPath: <DEFAULT_VALUE_NOT_SET> 
+        certPath: <DEFAULT_VALUE_NOT_SET> 
+        keyPath: <DEFAULT_VALUE_NOT_SET> 
+        reloadInterval: 5m 
     brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
     clientID: cerbos # ClientID reported in Kafka connections.
     closeTimeout: 30s # CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
@@ -29,11 +30,11 @@ audit:
     produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
     topic: cerbos.audit.log # Required. Topic to write audit entries to.
   local:
-    advanced:
-      bufferSize: 256
-      flushInterval: 1s
-      gcInterval: 60s
-      maxBatchSize: 32
+    advanced: 
+      bufferSize: 256 
+      flushInterval: 1s 
+      gcInterval: 60s 
+      maxBatchSize: 32 
     retentionPeriod: 168h # How long to keep records for
     storagePath: /path/to/dir # Path to store the data
 auxData:
@@ -41,7 +42,7 @@ auxData:
     cacheSize: 256 # CacheSize sets the number of verified tokens cached in memory. Set to negative value to disable caching.
     disableVerification: false # DisableVerification disables JWT verification.
     keySets: # KeySets is the list of keysets to be used to verify tokens.
-      -
+      - 
         id: ks1 # Required. ID is the unique reference to this keyset.
         local: # Local defines a local keyset. Mutually exclusive with Remote.
           data: base64encodedJWK # Data is the encoded JWK data for this keyset. Mutually exclusive with File.
@@ -152,16 +153,16 @@ storage:
     updatePollInterval: 60s # UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
   mysql:
     # This section is required only if storage.driver is mysql.
-    connPool:
+    connPool: 
       maxLifeTime: 60m
       maxIdleTime: 45s
       maxOpen: 4
-      maxIdle: 1
+      maxIdle: 1 
     dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. DSN is the data source connection string.
-    serverPubKey:
-      mykey: testdata/server_public_key.pem
+    serverPubKey: 
+      mykey: testdata/server_public_key.pem 
     skipSchemaCheck: false # SkipSchemaCheck skips checking for required database tables on startup.
-    tls:
+    tls: 
       mytls:
         cert: /path/to/certificate
         key: /path/to/private_key
@@ -174,11 +175,11 @@ storage:
     fallbackErrorWindow: 5m # FallbackErrorWindow is the cyclic period within which we aggregate failures
   postgres:
     # This section is required only if storage.driver is postgres.
-    connPool:
+    connPool: 
       maxLifeTime: 60m
       maxIdleTime: 45s
       maxOpen: 4
-      maxIdle: 1
+      maxIdle: 1 
     skipSchemaCheck: false # SkipSchemaCheck skips checking for required database tables on startup.
     url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
   sqlite3:
@@ -186,11 +187,11 @@ storage:
     dsn: ":memory:?_fk=true" # Required. Data source name
   sqlserver:
     # This section is required only if storage.driver is sqlserver.
-    connPool:
+    connPool: 
       maxLifeTime: 60m
       maxIdleTime: 45s
       maxOpen: 4
-      maxIdle: 1
+      maxIdle: 1 
     skipSchemaCheck: false # SkipSchemaCheck skips checking for required database tables on startup.
     url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
 telemetry:
