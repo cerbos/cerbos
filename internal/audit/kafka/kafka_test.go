@@ -251,7 +251,8 @@ func newKafkaBrokerWithTLS(t *testing.T, topic, caPath, certPath, keyPath string
 
 	brokerDSN := fmt.Sprintf("localhost:%d", hostPort)
 	duration := 10 * time.Second
-	tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, caPath, certPath, keyPath)
+	skipVerify := false
+	tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, skipVerify, caPath, certPath, keyPath)
 	require.NoError(t, err)
 	client, err := kgo.NewClient(kgo.SeedBrokers(brokerDSN), kgo.DialTLSConfig(tlsConfig))
 	require.NoError(t, err)
@@ -321,7 +322,8 @@ func fetchKafkaTopic(uri string, topic string, tlsEnabled bool) ([]*kgo.Record, 
 	kgoOptions := []kgo.Opt{kgo.SeedBrokers(uri)}
 	if tlsEnabled {
 		duration := 10 * time.Second
-		tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, "testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
+		skipVerify := false
+		tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, skipVerify, "testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
 		if err != nil {
 			return nil, err
 		}

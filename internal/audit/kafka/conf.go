@@ -28,10 +28,16 @@ type Authentication struct {
 }
 
 type TLS struct {
-	CAPath         string        `yaml:"caPath"`
-	CertPath       string        `yaml:"certPath"`
-	KeyPath        string        `yaml:"keyPath"`
-	ReloadInterval time.Duration `yaml:"reloadInterval" conf:",example=5m"`
+	// CAPath is the path to the CA certificate.
+	CAPath string `yaml:"caPath" conf:"required,example=/path/to/ca.crt"`
+	// CertPath is the path to the client certificate.
+	CertPath string `yaml:"certPath" conf:"required,example=/path/to/tls.cert"`
+	// KeyPath is the path to the client key.
+	KeyPath string `yaml:"keyPath" conf:"required,example=/path/to/tls.key"`
+	// ReloadInterval is the interval at which the TLS certificates are reloaded.
+	ReloadInterval time.Duration `yaml:"reloadInterval" conf:"required,example=5m"`
+	// InsecureSkipVerify controls whether the server's certificate chain and host name are verified. Default is false.
+	InsecureSkipVerify bool `yaml:"insecureSkipVerify" conf:",example=true"`
 }
 
 // Conf is optional configuration for kafka Audit.

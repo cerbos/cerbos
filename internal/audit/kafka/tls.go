@@ -67,7 +67,7 @@ func (r *TLSReloader) reload(ctx context.Context) error {
 	}
 }
 
-func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, caPath, certPath, keyPath string) (*tls.Config, error) {
+func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSkipVerify bool, caPath, certPath, keyPath string) (*tls.Config, error) {
 	if caPath == "" || certPath == "" || keyPath == "" || reloadInterval == 0 {
 		return nil, errors.New("invalid TLS configuration")
 	}
@@ -91,6 +91,7 @@ func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, caPath, cer
 		RootCAs:              caCertPool,
 		ClientCAs:            caCertPool,
 		MinVersion:           DefaultTLSVersion,
+		InsecureSkipVerify:   insecureSkipVerify,
 		GetClientCertificate: reloader.GetCertificateFunc(),
 	}, nil
 }

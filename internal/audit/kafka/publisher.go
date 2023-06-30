@@ -112,7 +112,12 @@ func NewPublisher(ctx context.Context, conf *Conf, decisionFilter audit.Decision
 	clientOpts = append(clientOpts, kgo.ProducerBatchCompression(compression...))
 
 	if conf.Authentication.TLS != nil {
-		tlsConfig, err := NewTLSConfig(ctx, conf.Authentication.TLS.ReloadInterval, conf.Authentication.TLS.CAPath, conf.Authentication.TLS.CertPath, conf.Authentication.TLS.KeyPath)
+		tlsConfig, err := NewTLSConfig(ctx,
+			conf.Authentication.TLS.ReloadInterval,
+			conf.Authentication.TLS.InsecureSkipVerify,
+			conf.Authentication.TLS.CAPath,
+			conf.Authentication.TLS.CertPath,
+			conf.Authentication.TLS.KeyPath)
 		if err != nil {
 			return nil, err
 		}
