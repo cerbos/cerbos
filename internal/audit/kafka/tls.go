@@ -1,30 +1,34 @@
 package kafka
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"log"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
+	"time"
+
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"go.uber.org/zap"
 )
 
 const DefaultTLSVersion = tls.VersionTLS12
 
 type TLSReloader struct {
-	mu       sync.RWMutex
-	certPath string
-	keyPath  string
-	cert     *tls.Certificate
+	mu             sync.RWMutex
+	certPath       string
+	keyPath        string
+	cert           *tls.Certificate
+	reloadInterval time.Duration
 }
 
-func NewTLSReloader(certPath, keyPath string) (*TLSReloader, error) {
+func newTLSReloader(ctx context.Context, reloadInterval time.Duration, certPath, keyPath string) (*TLSReloader, error) {
 	reloader := &TLSReloader{
-		certPath: certPath,
-		keyPath:  keyPath,
+		certPath:       certPath,
+		keyPath:        keyPath,
+		reloadInterval: reloadInterval,
 	}
 
 	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
@@ -34,36 +38,41 @@ func NewTLSReloader(certPath, keyPath string) (*TLSReloader, error) {
 	reloader.cert = &cert
 
 	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGHUP)
-		for range c {
-			if err := reloader.reload(); err != nil {
-				log.Printf("unable to renew certificate, using previous: %v", err)
-			}
+		if err := reloader.reload(ctx); err != nil {
+			logging.FromContext(ctx).Named("kafka").Error("Failed to reload TLS certificate", zap.Error(err))
 		}
 	}()
 
 	return reloader, nil
 }
 
-func (r *TLSReloader) reload() error {
-	cert, err := tls.LoadX509KeyPair(r.certPath, r.keyPath)
-	if err != nil {
-		return fmt.Errorf("failed to load TLS key pair: %w", err)
-	}
+func (r *TLSReloader) reload(ctx context.Context) error {
+	ticker := time.NewTicker(r.reloadInterval)
+	defer ticker.Stop()
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.cert = &cert
-	return nil
+	for {
+		select {
+		case <-ctx.Done():
+
+		case <-ticker.C:
+			cert, err := tls.LoadX509KeyPair(r.certPath, r.keyPath)
+			if err != nil {
+				return fmt.Errorf("failed to load TLS key pair: %w", err)
+			}
+
+			r.mu.Lock()
+			defer r.mu.Unlock()
+			r.cert = &cert
+		}
+	}
 }
 
-func NewTLSConfig(caPath, certPath, keyPath string) (*tls.Config, error) {
-	if caPath == "" || certPath == "" || keyPath == "" {
+func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, caPath, certPath, keyPath string) (*tls.Config, error) {
+	if caPath == "" || certPath == "" || keyPath == "" || reloadInterval == 0 {
 		return nil, errors.New("invalid TLS configuration")
 	}
 
-	reloader, err := NewTLSReloader(certPath, keyPath)
+	reloader, err := newTLSReloader(ctx, reloadInterval, certPath, keyPath)
 	if err != nil {
 		return nil, err
 	}

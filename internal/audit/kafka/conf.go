@@ -28,9 +28,10 @@ type Authentication struct {
 }
 
 type TLS struct {
-	CAPath   string `yaml:"caPath"`
-	CertPath string `yaml:"certPath"`
-	KeyPath  string `yaml:"keyPath"`
+	CAPath         string        `yaml:"caPath"`
+	CertPath       string        `yaml:"certPath"`
+	KeyPath        string        `yaml:"keyPath"`
+	ReloadInterval time.Duration `yaml:"reloadInterval" conf:",example=5m"`
 }
 
 // Conf is optional configuration for kafka Audit.

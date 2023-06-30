@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/audit/kafka"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -63,7 +62,7 @@ func init() {
 			return nil, fmt.Errorf("failed to read kafka audit log configuration: %w", err)
 		}
 
-		return NewPublisher(conf, decisionFilter)
+		return NewPublisher(ctx, conf, decisionFilter)
 	})
 }
 
@@ -82,7 +81,7 @@ type Publisher struct {
 	closeTimeout   time.Duration
 }
 
-func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
+func NewPublisher(ctx context.Context, conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
 	clientOpts := []kgo.Opt{
 		kgo.ClientID(conf.ClientID),
 		kgo.SeedBrokers(conf.Brokers...),
@@ -113,7 +112,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 	clientOpts = append(clientOpts, kgo.ProducerBatchCompression(compression...))
 
 	if conf.Authentication.TLS != nil {
-		tlsConfig, err := kafka.NewTLSConfig(conf.Authentication.TLS.CAPath, conf.Authentication.TLS.CertPath, conf.Authentication.TLS.KeyPath)
+		tlsConfig, err := NewTLSConfig(ctx, conf.Authentication.TLS.ReloadInterval, conf.Authentication.TLS.CAPath, conf.Authentication.TLS.CertPath, conf.Authentication.TLS.KeyPath)
 		if err != nil {
 			return nil, err
 		}

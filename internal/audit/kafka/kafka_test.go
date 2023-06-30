@@ -22,7 +22,7 @@ import (
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	_ "github.com/cerbos/cerbos/internal/audit/kafka"
+	"github.com/cerbos/cerbos/internal/audit/kafka"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -48,9 +48,10 @@ func TestProduceWithTLS(t *testing.T) {
 			"kafka": map[string]any{
 				"authentication": map[string]any{
 					"tls": map[string]any{
-						"caPath":   "testdata/valid/ca.crt",
-						"certPath": "testdata/valid/client/tls.crt",
-						"keyPath":  "testdata/valid/client/tls.key",
+						"caPath":         "testdata/valid/ca.crt",
+						"certPath":       "testdata/valid/client/tls.crt",
+						"keyPath":        "testdata/valid/client/tls.key",
+						"reloadInterval": "10s",
 					},
 				},
 				"brokers":     []string{uri},
@@ -249,7 +250,8 @@ func newKafkaBrokerWithTLS(t *testing.T, topic, caPath, certPath, keyPath string
 	})
 
 	brokerDSN := fmt.Sprintf("localhost:%d", hostPort)
-	tlsConfig, err := kafka.NewTLSConfig(caPath, certPath, keyPath)
+	duration := 10 * time.Second
+	tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, caPath, certPath, keyPath)
 	require.NoError(t, err)
 	client, err := kgo.NewClient(kgo.SeedBrokers(brokerDSN), kgo.DialTLSConfig(tlsConfig))
 	require.NoError(t, err)
@@ -318,7 +320,8 @@ func newKafkaBroker(t *testing.T, topic string) string {
 func fetchKafkaTopic(uri string, topic string, tlsEnabled bool) ([]*kgo.Record, error) {
 	kgoOptions := []kgo.Opt{kgo.SeedBrokers(uri)}
 	if tlsEnabled {
-		tlsConfig, err := kafka.NewTLSConfig("testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
+		duration := 10 * time.Second
+		tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, "testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
 		if err != nil {
 			return nil, err
 		}
