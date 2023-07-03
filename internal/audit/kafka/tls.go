@@ -1,3 +1,6 @@
+// Copyright 2021-2023 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package kafka
 
 import (
@@ -17,10 +20,10 @@ import (
 const DefaultTLSVersion = tls.VersionTLS12
 
 type TLSReloader struct {
-	mu             sync.RWMutex
+	cert           *tls.Certificate
 	certPath       string
 	keyPath        string
-	cert           *tls.Certificate
+	mu             sync.RWMutex
 	reloadInterval time.Duration
 }
 
@@ -87,6 +90,7 @@ func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSki
 		return nil, fmt.Errorf("failed to append CA certificate")
 	}
 
+	// #nosec G402
 	return &tls.Config{
 		RootCAs:              caCertPool,
 		ClientCAs:            caCertPool,
