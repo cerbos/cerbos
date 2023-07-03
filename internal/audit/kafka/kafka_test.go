@@ -160,7 +160,7 @@ func TestCompression(t *testing.T) {
 	}
 
 	// validate we see these entries in kafka
-	records, err := fetchKafkaTopic(uri, defaultIntegrationTopic)
+	records, err := fetchKafkaTopic(uri, defaultIntegrationTopic, false)
 	require.NoError(t, err)
 	require.Len(t, records, 5, "unexpected number of published audit log entries")
 }
