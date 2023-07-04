@@ -108,7 +108,16 @@ func (r *REPL) Loop() error {
 	r.output.Println()
 
 	for {
-		input := r.readInput()
+		input, err := r.readInput()
+		if err != nil {
+			if errors.Is(err, errExit) {
+				return nil
+			}
+
+			r.output.PrintErr("Failed to read input", err)
+			continue
+		}
+
 		if input == "" {
 			continue
 		}
@@ -126,7 +135,7 @@ func (r *REPL) Loop() error {
 	}
 }
 
-func (r *REPL) readInput() string {
+func (r *REPL) readInput() (string, error) {
 	var input strings.Builder
 	currPrompt := prompt
 
@@ -134,17 +143,25 @@ func (r *REPL) readInput() string {
 	for {
 		line, err := r.reader.Prompt(currPrompt)
 		if err != nil {
-			if errors.Is(err, io.EOF) || errors.Is(err, liner.ErrPromptAborted) {
-				return ""
+			if errors.Is(err, io.EOF) {
+				if stack.IsEmpty() {
+					return "", errExit
+				}
+
+				r.output.Println()
+				return "", nil
 			}
 
-			r.output.PrintErr("Failed to read input", err)
-			return ""
+			if errors.Is(err, liner.ErrPromptAborted) {
+				return "", nil
+			}
+
+			return "", err
 		}
 
 		line = strings.TrimSpace(line)
 		if line == "" {
-			return input.String()
+			return input.String(), nil
 		}
 
 		l, terminated := isTerminated(line, stack)
@@ -154,7 +171,7 @@ func (r *REPL) readInput() string {
 			currPrompt = secondaryPrompt
 		} else {
 			input.WriteString(l)
-			return input.String()
+			return input.String(), nil
 		}
 	}
 }
