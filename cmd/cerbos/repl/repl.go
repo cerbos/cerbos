@@ -31,6 +31,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	histFile := getHistoryFile(c.History)
 
 	reader := liner.NewLiner()
+	reader.SetCtrlCAborts(true)
 	reader.SetMultiLineMode(true)
 
 	defer func() {
