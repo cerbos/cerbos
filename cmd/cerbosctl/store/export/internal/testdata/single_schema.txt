@@ -1,0 +1,9 @@
+-- _schemas/leave_request.json --
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "ownerId": { "type": "string" }
+  },
+  "required": ["ownerId"]
+}

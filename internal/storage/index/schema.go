@@ -5,6 +5,7 @@ package index
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -33,6 +34,9 @@ func (sl *SchemaLoader) ListIDs(_ context.Context) ([]string, error) {
 	var schemaIds []string
 	err := fs.WalkDir(sl.fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return fs.SkipDir
+			}
 			return err
 		}
 

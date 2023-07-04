@@ -1,0 +1,19 @@
+-- leave_request.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: leave_request
+  rules:
+  - actions: ["*"]
+    effect: EFFECT_ALLOW
+    roles:
+    - admin
+
+  - actions: ["delete"]
+    effect: EFFECT_ALLOW
+    roles:
+      - user
+    condition:
+      match:
+        expr: request.resource.attr.owner == request.principal.id
