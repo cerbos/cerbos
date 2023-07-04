@@ -30,6 +30,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -37,8 +38,12 @@ func TestManager(t *testing.T) {
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
 				rp.ID: {
-					ModID:       rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+					ModID: rp.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						rp.ID: rp.Policy,
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 			}, nil).
 			Once()
@@ -107,6 +112,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -114,8 +120,12 @@ func TestManager(t *testing.T) {
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
 				rp.ID: {
-					ModID:       rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+					ModID: rp.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						rp.ID: rp.Policy,
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 			}, nil).
 			Once()
@@ -124,12 +134,19 @@ func TestManager(t *testing.T) {
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID, rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
 				rp.ID: {
-					ModID:       rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+					ModID: rp.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						rp.ID: rp.Policy,
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 				dr.ID: {
-					ModID:       dr.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{dr.ID: dr.Policy},
+					ModID: dr.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 			}, nil).
 			Once()
@@ -161,6 +178,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -171,15 +189,22 @@ func TestManager(t *testing.T) {
 			case 1:
 				return map[namer.ModuleID]*policy.CompilationUnit{
 					rp.ID: {
-						ModID:       rp.ID,
-						Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+						ModID: rp.ID,
+						Definitions: map[namer.ModuleID]*policyv1.Policy{
+							rp.ID: rp.Policy,
+							dr.ID: dr.Policy,
+							ev.ID: ev.Policy,
+						},
 					},
 				}, nil
 			case 2, 3: // derived roles is now deleted
 				return map[namer.ModuleID]*policy.CompilationUnit{
 					rp.ID: {
-						ModID:       rp.ID,
-						Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy},
+						ModID: rp.ID,
+						Definitions: map[namer.ModuleID]*policyv1.Policy{
+							rp.ID: rp.Policy,
+							ev.ID: ev.Policy,
+						},
 					},
 				}, nil
 			default:
