@@ -824,6 +824,14 @@ func google_api_expr_v1alpha1_Expr_CreateList_hashpb_sum(m *v1alpha1.Expr_Create
 			}
 		}
 	}
+	if _, ok := ignore["google.api.expr.v1alpha1.Expr.CreateList.optional_indices"]; !ok {
+		if len(m.OptionalIndices) > 0 {
+			for _, v := range m.OptionalIndices {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(v)))
+
+			}
+		}
+	}
 }
 
 func google_api_expr_v1alpha1_Expr_CreateStruct_Entry_hashpb_sum(m *v1alpha1.Expr_CreateStruct_Entry, hasher hash.Hash, ignore map[string]struct{}) {
@@ -849,6 +857,10 @@ func google_api_expr_v1alpha1_Expr_CreateStruct_Entry_hashpb_sum(m *v1alpha1.Exp
 		if m.Value != nil {
 			google_api_expr_v1alpha1_Expr_hashpb_sum(m.Value, hasher, ignore)
 		}
+
+	}
+	if _, ok := ignore["google.api.expr.v1alpha1.Expr.CreateStruct.Entry.optional_entry"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.OptionalEntry)))
 
 	}
 }
