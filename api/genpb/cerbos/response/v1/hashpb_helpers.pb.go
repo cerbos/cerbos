@@ -877,6 +877,10 @@ func cerbos_policy_v1_Policy_hashpb_sum(m *v12.Policy, hasher hash.Hash, ignore 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.Policy.json_schema"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.JsonSchema))
+
+	}
 }
 
 func cerbos_policy_v1_PrincipalPolicy_hashpb_sum(m *v12.PrincipalPolicy, hasher hash.Hash, ignore map[string]struct{}) {

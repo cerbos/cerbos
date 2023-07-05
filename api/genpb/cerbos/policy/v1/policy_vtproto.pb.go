@@ -63,6 +63,13 @@ func (m *Policy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		}
 		i -= size
 	}
+	if len(m.JsonSchema) > 0 {
+		i -= len(m.JsonSchema)
+		copy(dAtA[i:], m.JsonSchema)
+		i = encodeVarint(dAtA, i, uint64(len(m.JsonSchema)))
+		i--
+		dAtA[i] = 0x4a
+	}
 	if len(m.Variables) > 0 {
 		for k := range m.Variables {
 			v := m.Variables[k]
@@ -1197,6 +1204,13 @@ func (m *TestFixture_Principals) MarshalToSizedBufferVT(dAtA []byte) (int, error
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.JsonSchema) > 0 {
+		i -= len(m.JsonSchema)
+		copy(dAtA[i:], m.JsonSchema)
+		i = encodeVarint(dAtA, i, uint64(len(m.JsonSchema)))
+		i--
+		dAtA[i] = 0x12
+	}
 	if len(m.Principals) > 0 {
 		for k := range m.Principals {
 			v := m.Principals[k]
@@ -1264,6 +1278,13 @@ func (m *TestFixture_Resources) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.JsonSchema) > 0 {
+		i -= len(m.JsonSchema)
+		copy(dAtA[i:], m.JsonSchema)
+		i = encodeVarint(dAtA, i, uint64(len(m.JsonSchema)))
+		i--
+		dAtA[i] = 0x12
+	}
 	if len(m.Resources) > 0 {
 		for k := range m.Resources {
 			v := m.Resources[k]
@@ -1330,6 +1351,13 @@ func (m *TestFixture_AuxData) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.JsonSchema) > 0 {
+		i -= len(m.JsonSchema)
+		copy(dAtA[i:], m.JsonSchema)
+		i = encodeVarint(dAtA, i, uint64(len(m.JsonSchema)))
+		i--
+		dAtA[i] = 0x12
 	}
 	if len(m.AuxData) > 0 {
 		for k := range m.AuxData {
@@ -1485,6 +1513,13 @@ func (m *TestSuite) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.JsonSchema) > 0 {
+		i -= len(m.JsonSchema)
+		copy(dAtA[i:], m.JsonSchema)
+		i = encodeVarint(dAtA, i, uint64(len(m.JsonSchema)))
+		i--
+		dAtA[i] = 0x52
 	}
 	if m.Options != nil {
 		size, err := m.Options.MarshalToSizedBufferVT(dAtA[:i])
@@ -3081,6 +3116,10 @@ func (m *Policy) SizeVT() (n int) {
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
 	}
+	l = len(m.JsonSchema)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -3564,6 +3603,10 @@ func (m *TestFixture_Principals) SizeVT() (n int) {
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
 	}
+	l = len(m.JsonSchema)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -3593,6 +3636,10 @@ func (m *TestFixture_Resources) SizeVT() (n int) {
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
 	}
+	l = len(m.JsonSchema)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -3621,6 +3668,10 @@ func (m *TestFixture_AuxData) SizeVT() (n int) {
 			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + l
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
+	}
+	l = len(m.JsonSchema)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3742,6 +3793,10 @@ func (m *TestSuite) SizeVT() (n int) {
 	}
 	if m.Options != nil {
 		l = m.Options.SizeVT()
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.JsonSchema)
+	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -4733,6 +4788,38 @@ func (m *Policy) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.Variables[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JsonSchema", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.JsonSchema = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -7354,6 +7441,38 @@ func (m *TestFixture_Principals) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Principals[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JsonSchema", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.JsonSchema = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -7542,6 +7661,38 @@ func (m *TestFixture_Resources) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Resources[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JsonSchema", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.JsonSchema = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -7729,6 +7880,38 @@ func (m *TestFixture_AuxData) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.AuxData[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JsonSchema", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.JsonSchema = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -8523,6 +8706,38 @@ func (m *TestSuite) UnmarshalVT(dAtA []byte) error {
 			if err := m.Options.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JsonSchema", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.JsonSchema = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

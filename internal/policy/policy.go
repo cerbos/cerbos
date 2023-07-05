@@ -30,9 +30,10 @@ const (
 )
 
 var IgnoreHashFields = map[string]struct{}{
-	"cerbos.policy.v1.Policy.metadata":    {},
-	"cerbos.policy.v1.Policy.disabled":    {},
 	"cerbos.policy.v1.Policy.description": {},
+	"cerbos.policy.v1.Policy.disabled":    {},
+	"cerbos.policy.v1.Policy.json_schema": {},
+	"cerbos.policy.v1.Policy.metadata":    {},
 }
 
 func (k Kind) String() string {

@@ -7,12 +7,12 @@ include::ROOT:partial$attributes.adoc[]
 :current-test-schema-url: {app-schema-url-current}{test-schema-file}
 :latest-test-schema-url: {app-schema-url-latest}{test-schema-file}
 
-= Policy authoring 
+= Policy authoring
 
 == Tips for working with policies
 
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
-* The JSON schema for Cerbos policies is available at `{current-policy-schema-url}` and the xref:compile.adoc[test suite] schema is available at `{current-test-schema-url}`. If you prefer to always use the latest version, they can be accessed at `{latest-policy-schema-url}` and `{latest-test-schema-url}` respectively. 
+* The JSON schema for Cerbos policies is available at `{current-policy-schema-url}` and the xref:compile.adoc[test suite] schema is available at `{current-test-schema-url}`. If you prefer to always use the latest version, they can be accessed at `{latest-policy-schema-url}` and `{latest-test-schema-url}` respectively.
 
 == Policy structure
 
@@ -61,7 +61,14 @@ yaml.schemas: {
 }
 ----
 
-==== Neovim 
+JSON files can specify the schema using the `$schema` top-level property.
+
+[source,json,subs="+attributes"]
+----
+"$schema": "{latest-policy-schema-url}",
+----
+
+==== Neovim
 
 Easiest way to get started is to install the link:https://github.com/lspcontainers/lspcontainers.nvim[lspcontainer.nvim] plugin. With link:https://github.com/wbthomason/packer.nvim[Packer], you can use a configuration similar to the following:
 
@@ -69,7 +76,7 @@ Easiest way to get started is to install the link:https://github.com/lspcontaine
 ----
 use({ 'lspcontainers/lspcontainers.nvim' })
 
-use({ 
+use({
     'neovim/nvim-lspconfig',
     config = function()
         lspconfig = require "lspconfig"

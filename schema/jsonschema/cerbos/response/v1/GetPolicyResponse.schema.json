@@ -173,6 +173,9 @@
           ],
           "additionalProperties": false,
           "properties": {
+            "$schema": {
+              "type": "string"
+            },
             "apiVersion": {
               "type": "string",
               "const": "api.cerbos.dev/v1"

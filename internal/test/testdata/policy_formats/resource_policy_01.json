@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json",
   "apiVersion": "api.cerbos.dev/v1",
   "resourcePolicy": {
     "resource": "leave_request",

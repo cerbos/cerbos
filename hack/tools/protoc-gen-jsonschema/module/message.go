@@ -40,7 +40,7 @@ func (m *Module) defineMessage(message pgs.Message) jsonschema.NonTrivialSchema 
 }
 
 func (m *Module) propertyName(field pgs.Field) string {
-	return field.Name().LowerCamelCase().String()
+	return field.Descriptor().GetJsonName()
 }
 
 func (m *Module) schemaForField(field pgs.Field) (jsonschema.Schema, bool) {
