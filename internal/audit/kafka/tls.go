@@ -97,15 +97,13 @@ func newTLSReloader(ctx context.Context, reloadInterval time.Duration, certPath,
 	reloader.cert = cert
 
 	go func() {
-		if err := reloader.reload(ctx); err != nil {
-			logging.FromContext(ctx).Named("kafka").Error("Failed to reload TLS certificate", zap.Error(err))
-		}
+		reloader.reload(ctx)
 	}()
 
 	return reloader, nil
 }
 
-func (r *tlsReloader) reload(ctx context.Context) error {
+func (r *tlsReloader) reload(ctx context.Context) {
 	ticker := time.NewTicker(r.reloadInterval)
 	defer ticker.Stop()
 
@@ -116,11 +114,12 @@ func (r *tlsReloader) reload(ctx context.Context) error {
 			cert, err := loadTLSCert(r.certPath, r.keyPath)
 			if err != nil {
 				logging.FromContext(ctx).Named("kafka").Error("Failed to load TLS key pair", zap.Error(err))
+				continue
 			}
 
 			r.mu.Lock()
-			defer r.mu.Unlock()
 			r.cert = cert
+			r.mu.Unlock()
 		}
 	}
 }
