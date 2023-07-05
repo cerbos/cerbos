@@ -17,9 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const DefaultTLSVersion = tls.VersionTLS12
-
-type TLSReloader struct {
+type tlsReloader struct {
 	cert           *tls.Certificate
 	certPath       string
 	keyPath        string
@@ -27,8 +25,8 @@ type TLSReloader struct {
 	reloadInterval time.Duration
 }
 
-func newTLSReloader(ctx context.Context, reloadInterval time.Duration, certPath, keyPath string) (*TLSReloader, error) {
-	reloader := &TLSReloader{
+func newTLSReloader(ctx context.Context, reloadInterval time.Duration, certPath, keyPath string) (*tlsReloader, error) {
+	reloader := &tlsReloader{
 		certPath:       certPath,
 		keyPath:        keyPath,
 		reloadInterval: reloadInterval,
@@ -49,7 +47,7 @@ func newTLSReloader(ctx context.Context, reloadInterval time.Duration, certPath,
 	return reloader, nil
 }
 
-func (r *TLSReloader) reload(ctx context.Context) error {
+func (r *tlsReloader) reload(ctx context.Context) error {
 	ticker := time.NewTicker(r.reloadInterval)
 	defer ticker.Stop()
 
@@ -94,13 +92,13 @@ func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSki
 	return &tls.Config{
 		RootCAs:              caCertPool,
 		ClientCAs:            caCertPool,
-		MinVersion:           DefaultTLSVersion,
+		MinVersion:           tls.VersionTLS12,
 		InsecureSkipVerify:   insecureSkipVerify,
 		GetClientCertificate: reloader.GetCertificateFunc(),
 	}, nil
 }
 
-func (r *TLSReloader) GetCertificateFunc() func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+func (r *tlsReloader) GetCertificateFunc() func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 	return func(chi *tls.CertificateRequestInfo) (*tls.Certificate, error) {
 		r.mu.RLock()
 		defer r.mu.RUnlock()
