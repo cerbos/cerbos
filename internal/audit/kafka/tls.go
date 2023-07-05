@@ -115,7 +115,7 @@ func (r *tlsReloader) reload(ctx context.Context) error {
 		case <-ticker.C:
 			cert, err := loadTLSCert(r.certPath, r.keyPath)
 			if err != nil {
-				return fmt.Errorf("failed to load TLS key pair: %w", err)
+				logging.FromContext(ctx).Named("kafka").Error("Failed to load TLS key pair", zap.Error(err))
 			}
 
 			r.mu.Lock()
