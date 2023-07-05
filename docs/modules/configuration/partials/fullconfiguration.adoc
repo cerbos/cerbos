@@ -18,10 +18,10 @@ audit:
     authentication: # Authentication
       tls: 
         caPath: /path/to/ca.crt # Required. CAPath is the path to the CA certificate.
-        certPath: /path/to/tls.cert # Required. CertPath is the path to the client certificate.
+        certPath: /path/to/tls.cert # CertPath is the path to the client certificate.
         insecureSkipVerify: true # InsecureSkipVerify controls whether the server's certificate chain and host name are verified. Default is false.
-        keyPath: /path/to/tls.key # Required. KeyPath is the path to the client key.
-        reloadInterval: <DEFAULT_VALUE_NOT_SET> # ReloadInterval is the interval at which the TLS certificates are reloaded. The default is 0 (no reload).
+        keyPath: /path/to/tls.key # KeyPath is the path to the client key.
+        reloadInterval: 5m # ReloadInterval is the interval at which the TLS certificates are reloaded. The default is 0 (no reload).
     brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
     clientID: cerbos # ClientID reported in Kafka connections.
     closeTimeout: 30s # CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
