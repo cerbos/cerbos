@@ -17,6 +17,13 @@ releases:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
       e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
     chart: bitnami/postgresql
+    # There were a few issues around version 12.6.1 of the postgresql image. It manifested here as problems related to
+    # duplicate kube namespaces (possibly due to being unable to clear up previous namespace between runs).
+    # Locking the version to a known working image.
+    # https://artifacthub.io/packages/helm/bitnami/postgresql
+    # https://github.com/bitnami/charts/commit/262f4f1d2906226cee8cabb49c8fedf97ecc30e4
+    # https://github.com/bitnami/charts/commit/d6234d8b8921470066e567832660164d84192975
+    version: 12.6.2
     hooks:
       - events: ["presync"]
         showlogs: true
