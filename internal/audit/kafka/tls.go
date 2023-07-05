@@ -39,7 +39,6 @@ func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSki
 	// #nosec G402
 	tlsConfig := &tls.Config{
 		RootCAs:            caCertPool,
-		ClientCAs:          caCertPool,
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: insecureSkipVerify,
 	}
