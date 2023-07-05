@@ -17,6 +17,64 @@ import (
 	"go.uber.org/zap"
 )
 
+func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSkipVerify bool, caPath, certPath, keyPath string) (*tls.Config, error) {
+	if caPath == "" {
+		return nil, errors.New("CA path cannot be empty")
+	}
+
+	if certPath != "" && keyPath == "" || certPath == "" && keyPath != "" {
+		return nil, errors.New("certPath and keyPath must both be empty or both be non-empty")
+	}
+
+	caCert, err := os.ReadFile(caPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CA certificate: %w", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("failed to append CA certificate")
+	}
+
+	// #nosec G402
+	tlsConfig := &tls.Config{
+		RootCAs:            caCertPool,
+		ClientCAs:          caCertPool,
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: insecureSkipVerify,
+	}
+
+	if certPath == "" && keyPath == "" {
+		return tlsConfig, nil
+	}
+
+	if reloadInterval == 0 {
+		cert, err := loadTLSCert(certPath, keyPath)
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) { return cert, nil }
+		return tlsConfig, nil
+	}
+
+	reloader, err := newTLSReloader(ctx, reloadInterval, certPath, keyPath)
+	if err != nil {
+		return nil, err
+	}
+	tlsConfig.GetClientCertificate = reloader.GetCertificateFunc()
+
+	return tlsConfig, nil
+}
+
+func loadTLSCert(certPath, keyPath string) (*tls.Certificate, error) {
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load TLS key pair: %w", err)
+	}
+	return &cert, nil
+}
+
 type tlsReloader struct {
 	cert           *tls.Certificate
 	certPath       string
@@ -32,11 +90,11 @@ func newTLSReloader(ctx context.Context, reloadInterval time.Duration, certPath,
 		reloadInterval: reloadInterval,
 	}
 
-	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+	cert, err := loadTLSCert(certPath, keyPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load TLS key pair: %w", err)
+		return nil, err
 	}
-	reloader.cert = &cert
+	reloader.cert = cert
 
 	go func() {
 		if err := reloader.reload(ctx); err != nil {
@@ -54,48 +112,17 @@ func (r *tlsReloader) reload(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-
 		case <-ticker.C:
-			cert, err := tls.LoadX509KeyPair(r.certPath, r.keyPath)
+			cert, err := loadTLSCert(r.certPath, r.keyPath)
 			if err != nil {
 				return fmt.Errorf("failed to load TLS key pair: %w", err)
 			}
 
 			r.mu.Lock()
 			defer r.mu.Unlock()
-			r.cert = &cert
+			r.cert = cert
 		}
 	}
-}
-
-func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSkipVerify bool, caPath, certPath, keyPath string) (*tls.Config, error) {
-	if caPath == "" || certPath == "" || keyPath == "" || reloadInterval == 0 {
-		return nil, errors.New("invalid TLS configuration")
-	}
-
-	reloader, err := newTLSReloader(ctx, reloadInterval, certPath, keyPath)
-	if err != nil {
-		return nil, err
-	}
-
-	caCert, err := os.ReadFile(caPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read CA certificate: %w", err)
-	}
-
-	caCertPool := x509.NewCertPool()
-	if !caCertPool.AppendCertsFromPEM(caCert) {
-		return nil, fmt.Errorf("failed to append CA certificate")
-	}
-
-	// #nosec G402
-	return &tls.Config{
-		RootCAs:              caCertPool,
-		ClientCAs:            caCertPool,
-		MinVersion:           tls.VersionTLS12,
-		InsecureSkipVerify:   insecureSkipVerify,
-		GetClientCertificate: reloader.GetCertificateFunc(),
-	}, nil
 }
 
 func (r *tlsReloader) GetCertificateFunc() func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {

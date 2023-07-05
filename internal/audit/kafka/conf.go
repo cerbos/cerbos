@@ -34,8 +34,8 @@ type TLS struct {
 	CertPath string `yaml:"certPath" conf:"required,example=/path/to/tls.cert"`
 	// KeyPath is the path to the client key.
 	KeyPath string `yaml:"keyPath" conf:"required,example=/path/to/tls.key"`
-	// ReloadInterval is the interval at which the TLS certificates are reloaded.
-	ReloadInterval time.Duration `yaml:"reloadInterval" conf:"required,example=5m"`
+	// ReloadInterval is the interval at which the TLS certificates are reloaded. The default is 0 (no reload).
+	ReloadInterval time.Duration `yaml:"reloadInterval" conf:"example=5m"`
 	// InsecureSkipVerify controls whether the server's certificate chain and host name are verified. Default is false.
 	InsecureSkipVerify bool `yaml:"insecureSkipVerify" conf:",example=true"`
 }
