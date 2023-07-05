@@ -110,6 +110,7 @@ func (r *tlsReloader) reload(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			return
 		case <-ticker.C:
 			cert, err := loadTLSCert(r.certPath, r.keyPath)
 			if err != nil {
