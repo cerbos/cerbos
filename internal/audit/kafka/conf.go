@@ -75,10 +75,6 @@ func (c *Conf) SetDefaults() {
 	c.ClientID = defaultClientID
 	c.MaxBufferedRecords = defaultMaxBufferedRecords
 	c.Compression = []string{CompressionSnappy, CompressionNone}
-
-	if c.Authentication.TLS != nil {
-		c.Authentication.TLS.InsecureSkipVerify = false
-	}
 }
 
 func (c *Conf) Validate() error {
