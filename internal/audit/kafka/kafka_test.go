@@ -78,7 +78,7 @@ func TestProduceWithTLS(t *testing.T) {
 	require.NoError(t, err)
 
 	// validate we see this entries in kafka
-	records, err := fetchKafkaTopic(uri, defaultIntegrationTopic, true)
+	records, err := fetchKafkaTopic(t, uri, defaultIntegrationTopic, true)
 	require.NoError(t, err)
 	require.Len(t, records, 2, "unexpected number of published audit log entries")
 }
@@ -119,7 +119,7 @@ func TestSyncProduce(t *testing.T) {
 	require.NoError(t, err)
 
 	// validate we see this entries in kafka
-	records, err := fetchKafkaTopic(uri, defaultIntegrationTopic, false)
+	records, err := fetchKafkaTopic(t, uri, defaultIntegrationTopic, false)
 	require.NoError(t, err)
 	require.Len(t, records, 2, "unexpected number of published audit log entries")
 }
@@ -160,7 +160,7 @@ func TestCompression(t *testing.T) {
 	}
 
 	// validate we see these entries in kafka
-	records, err := fetchKafkaTopic(uri, defaultIntegrationTopic, false)
+	records, err := fetchKafkaTopic(t, uri, defaultIntegrationTopic, false)
 	require.NoError(t, err)
 	require.Len(t, records, 5, "unexpected number of published audit log entries")
 }
@@ -202,7 +202,7 @@ func TestAsyncProduce(t *testing.T) {
 
 	// validate we see this entries in kafka, eventually
 	require.Eventually(t, func() bool {
-		records, err := fetchKafkaTopic(uri, defaultIntegrationTopic, false)
+		records, err := fetchKafkaTopic(t, uri, defaultIntegrationTopic, false)
 		require.NoError(t, err)
 		return len(records) == 2
 	}, 10*time.Second, 100*time.Millisecond, "expected to see audit log entries in kafka")
@@ -252,8 +252,13 @@ func newKafkaBrokerWithTLS(t *testing.T, topic, caPath, certPath, keyPath string
 	brokerDSN := fmt.Sprintf("localhost:%d", hostPort)
 	duration := 10 * time.Second
 	skipVerify := false
-	tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, skipVerify, caPath, certPath, keyPath)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	tlsConfig, err := kafka.NewTLSConfig(ctx, duration, skipVerify, caPath, certPath, keyPath)
 	require.NoError(t, err)
+
 	client, err := kgo.NewClient(kgo.SeedBrokers(brokerDSN), kgo.DialTLSConfig(tlsConfig))
 	require.NoError(t, err)
 
@@ -318,12 +323,15 @@ func newKafkaBroker(t *testing.T, topic string) string {
 	return brokerDSN
 }
 
-func fetchKafkaTopic(uri string, topic string, tlsEnabled bool) ([]*kgo.Record, error) {
+func fetchKafkaTopic(t *testing.T, uri string, topic string, tlsEnabled bool) ([]*kgo.Record, error) {
 	kgoOptions := []kgo.Opt{kgo.SeedBrokers(uri)}
 	if tlsEnabled {
 		duration := 10 * time.Second
 		skipVerify := false
-		tlsConfig, err := kafka.NewTLSConfig(context.Background(), duration, skipVerify, "testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		tlsConfig, err := kafka.NewTLSConfig(ctx, duration, skipVerify, "testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
 		if err != nil {
 			return nil, err
 		}
