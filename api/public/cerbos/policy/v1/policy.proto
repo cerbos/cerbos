@@ -28,6 +28,7 @@ message Policy {
     DerivedRoles derived_roles = 7;
   }
   map<string, string> variables = 8;
+  string json_schema = 9 [json_name = "$schema"];
 }
 
 message Metadata {
@@ -183,12 +184,17 @@ message Schemas {
 message TestFixture {
   message Principals {
     map<string, cerbos.engine.v1.Principal> principals = 1;
+    string json_schema = 2 [json_name = "$schema"];
   }
+
   message Resources {
     map<string, cerbos.engine.v1.Resource> resources = 1;
+    string json_schema = 2 [json_name = "$schema"];
   }
+
   message AuxData {
     map<string, cerbos.engine.v1.AuxData> aux_data = 1;
+    string json_schema = 2 [json_name = "$schema"];
   }
 }
 
@@ -206,6 +212,7 @@ message TestSuite {
   map<string, cerbos.engine.v1.Resource> resources = 7;
   map<string, cerbos.engine.v1.AuxData> aux_data = 8;
   TestOptions options = 9;
+  string json_schema = 10 [json_name = "$schema"];
 }
 
 message TestTable {

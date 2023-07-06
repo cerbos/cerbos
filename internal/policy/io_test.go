@@ -49,7 +49,7 @@ func TestReadPolicy(t *testing.T) {
 
 					have, err := policy.ReadPolicy(f)
 					require.NoError(t, err)
-					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
 				})
 			}
 		})
@@ -69,7 +69,7 @@ func TestHash(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, policy.GetHash(yamlP), policy.GetHash(jsonP))
-			require.Empty(t, cmp.Diff(yamlP, jsonP, protocmp.Transform()))
+			require.Empty(t, cmp.Diff(yamlP, jsonP, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
 		})
 	}
 }

@@ -22,6 +22,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "auxData": {
       "type": "object",
       "additionalProperties": {

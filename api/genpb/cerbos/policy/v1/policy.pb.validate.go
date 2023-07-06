@@ -106,6 +106,8 @@ func (m *Policy) validate(all bool) error {
 
 	// no validation rules for Variables
 
+	// no validation rules for JsonSchema
+
 	oneofPolicyTypePresent := false
 	switch v := m.PolicyType.(type) {
 	case *Policy_ResourcePolicy:
@@ -2850,6 +2852,8 @@ func (m *TestSuite) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for JsonSchema
+
 	if len(errors) > 0 {
 		return TestSuiteMultiError(errors)
 	}
@@ -4313,6 +4317,8 @@ func (m *TestFixture_Principals) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for JsonSchema
+
 	if len(errors) > 0 {
 		return TestFixture_PrincipalsMultiError(errors)
 	}
@@ -4461,6 +4467,8 @@ func (m *TestFixture_Resources) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for JsonSchema
+
 	if len(errors) > 0 {
 		return TestFixture_ResourcesMultiError(errors)
 	}
@@ -4608,6 +4616,8 @@ func (m *TestFixture_AuxData) validate(all bool) error {
 
 		}
 	}
+
+	// no validation rules for JsonSchema
 
 	if len(errors) > 0 {
 		return TestFixture_AuxDataMultiError(errors)
