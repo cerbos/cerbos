@@ -158,7 +158,10 @@ func newPublisher(t *testing.T, cfg kafka.Conf) (*kafka.Publisher, *mockClient) 
 	config.Encoding = cfg.Encoding
 	config.ProduceSync = cfg.ProduceSync
 
-	publisher, err := kafka.NewPublisher(config, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	publisher, err := kafka.NewPublisher(ctx, config, nil)
 	require.NoError(t, err)
 
 	kafkaClient := &mockClient{}

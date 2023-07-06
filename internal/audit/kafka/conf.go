@@ -23,10 +23,29 @@ const (
 	defaultMaxBufferedRecords = 250
 )
 
+type Authentication struct {
+	TLS *TLS `yaml:"tls"`
+}
+
+type TLS struct {
+	// CAPath is the path to the CA certificate.
+	CAPath string `yaml:"caPath" conf:"required,example=/path/to/ca.crt"`
+	// CertPath is the path to the client certificate.
+	CertPath string `yaml:"certPath" conf:",example=/path/to/tls.cert"`
+	// KeyPath is the path to the client key.
+	KeyPath string `yaml:"keyPath" conf:",example=/path/to/tls.key"`
+	// ReloadInterval is the interval at which the TLS certificates are reloaded. The default is 0 (no reload).
+	ReloadInterval time.Duration `yaml:"reloadInterval" conf:",example=5m"`
+	// InsecureSkipVerify controls whether the server's certificate chain and host name are verified. Default is false.
+	InsecureSkipVerify bool `yaml:"insecureSkipVerify" conf:",example=true"`
+}
+
 // Conf is optional configuration for kafka Audit.
 type Conf struct {
 	// Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
 	Ack string `yaml:"ack" conf:",example=all"`
+	// Authentication
+	Authentication Authentication `yaml:"authentication"`
 	// Topic to write audit entries to.
 	Topic string `yaml:"topic" conf:"required,example=cerbos.audit.log"`
 	// Encoding format. Valid values are "json" (default) or "protobuf".
