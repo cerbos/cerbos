@@ -31,6 +31,7 @@ runs:
       uses: actions/setup-go@v4
       with:
         go-version: 1.20.x
+        cache: false
         check-latest: true
 
     - name: Cache dependencies
