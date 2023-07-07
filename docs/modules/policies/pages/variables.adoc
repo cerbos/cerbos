@@ -1,0 +1,71 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Variables
+
+You can use variables to reduce duplication in xref:conditions.adoc[policy condition expressions]. Variables may either be defined locally within a policy, or in a standalone `exportVariables` policy file that can be imported by other policies.
+
+== Defining local variables
+
+Local variables are only accessible from the policy they are defined. In particular, local variables defined for derived roles can't be used in resource policies that import the derived roles.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  variables:
+    local: <1>
+      flagged_resource: request.resource.attr.flagged
+  # ...
+----
+<1> Map of variable name to expression.
+
+[#export]
+== Defining and importing exported variables
+
+To reuse variables between policies, they can be exported from a separate file.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+description: Common variables used within the Apatr app
+exportVariables:
+  name: apatr_common_variables <1>
+  definitions: <2>
+    flagged_resource: request.resource.attr.flagged
+----
+<1> Name to use when importing this set of variables.
+<2> Map of variable name to expression.
+
+Other policies can then import the variables by name.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  variables:
+    import: <1>
+      - apatr_common_variables
+  # ...
+----
+<1> List of names of variable sets to import.
+
+== Using variables in policy conditions
+
+Variables can be referenced via the `variables` (aliased to `V`) special variable in policy condition expressions.
+
+[source,yaml,linenums]
+----
+---
+condition:
+  match:
+    expr: variables.flagged_resource
+----
+
+Local and imported variable definitions are merged, and each variable is evaluated before any rule condition. If a variable is defined in more than one location, the policy will fail to compile.
+
+== Top-level variables field
+
+In earlier versions of Cerbos, local variables were defined in a top-level `variables` field in the policy file. This field is deprecated in favour of the `variables.local` section within the policy body. For backwards compatibility, the deprecated top-level field is merged with the `variables.local` section in derived roles, resource, and principal policies.
