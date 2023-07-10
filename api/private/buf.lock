@@ -4,8 +4,8 @@ deps:
   - remote: buf.build
     owner: cerbos
     repository: cerbos-api
-    commit: 9930b65ea1d14cd7abdffdc4d7591344
-    digest: shake256:92c9aa8d21618f28a085b024f589811a30d9bca2d9094388e80e4294737ad39abcae5a205dd7e00610348d20998a7c033aa02d97a85b3beba3f01260034005aa
+    commit: ebd8a41673d04a9aaf4c2f3ac0f75b2c
+    digest: shake256:240308dcea6a6b177e501d75e25f959791282c4e850db75a623c79f1be5cd750c1918079de5b8f71bb2a3c6f731ccbeedafb29b8abd1607f2cd4df72657ecada
   - remote: buf.build
     owner: envoyproxy
     repository: protoc-gen-validate
@@ -19,5 +19,5 @@ deps:
   - remote: buf.build
     owner: grpc-ecosystem
     repository: grpc-gateway
-    commit: a1ecdc58eccd49aa8bea2a7a9022dc27
-    digest: shake256:efdd86fbdc42e8b7259fe461a49656827a03fb7cba0b3b9eb622ca10654ec6beccb9a051229c1553ccd89ed3e95d69ad4d7c799f1da3f3f1bd447b7947a4893e
+    commit: 11c9972ea0fd4c95a2c38d29bb1dc817
+    digest: shake256:9c7ce822dff52ad28714465396fbe98e879409677a61687b7dd9bb3d1484aa5d1704c013698b24f34c5d51023dbff47287ecd9676271953c25e646b42ebb76c5
