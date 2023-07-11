@@ -5,6 +5,7 @@ package policy
 
 import (
 	"fmt"
+	"strings"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -21,12 +22,14 @@ const (
 	ResourceKind Kind = iota
 	PrincipalKind
 	DerivedRolesKind
+	ExportVariablesKind
 )
 
 const (
-	ResourceKindStr     = "RESOURCE"
-	PrincipalKindStr    = "PRINCIPAL"
-	DerivedRolesKindStr = "DERIVED_ROLES"
+	ResourceKindStr        = "RESOURCE"
+	PrincipalKindStr       = "PRINCIPAL"
+	DerivedRolesKindStr    = "DERIVED_ROLES"
+	ExportVariablesKindStr = "EXPORT_VARIABLES"
 )
 
 var IgnoreHashFields = map[string]struct{}{
@@ -44,6 +47,8 @@ func (k Kind) String() string {
 		return PrincipalKindStr
 	case DerivedRolesKind:
 		return DerivedRolesKindStr
+	case ExportVariablesKind:
+		return ExportVariablesKindStr
 	default:
 		panic(fmt.Errorf("unknown policy kind %d", k))
 	}
@@ -58,29 +63,62 @@ func GetKind(p *policyv1.Policy) Kind {
 		return PrincipalKind
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesKind
+	case *policyv1.Policy_ExportVariables:
+		return ExportVariablesKind
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
 }
 
+// KindFromFQN returns the kind of policy referred to by the given fully-qualified name.
+func KindFromFQN(fqn string) Kind {
+	switch {
+	case strings.HasPrefix(fqn, namer.ResourcePoliciesPrefix):
+		return ResourceKind
+	case strings.HasPrefix(fqn, namer.PrincipalPoliciesPrefix):
+		return PrincipalKind
+	case strings.HasPrefix(fqn, namer.DerivedRolesPrefix):
+		return DerivedRolesKind
+	case strings.HasPrefix(fqn, namer.ExportVariablesPrefix):
+		return ExportVariablesKind
+	default:
+		panic(fmt.Errorf("unknown policy FQN format %q", fqn))
+	}
+}
+
 // Dependencies returns the module names of dependencies of the policy.
 func Dependencies(p *policyv1.Policy) []string {
+	var importDerivedRoles []string
+	var importVariables []string
+
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		imports := pt.ResourcePolicy.ImportDerivedRoles
-		if len(imports) == 0 {
-			return nil
-		}
+		importDerivedRoles = pt.ResourcePolicy.ImportDerivedRoles
+		importVariables = pt.ResourcePolicy.Variables.GetImport()
 
-		dr := make([]string, len(imports))
-		for i, imp := range imports {
-			dr[i] = namer.DerivedRolesFQN(imp)
-		}
+	case *policyv1.Policy_PrincipalPolicy:
+		importVariables = pt.PrincipalPolicy.Variables.GetImport()
 
-		return dr
+	case *policyv1.Policy_DerivedRoles:
+		importVariables = pt.DerivedRoles.Variables.GetImport()
+
+	case *policyv1.Policy_ExportVariables:
+
 	default:
-		return nil
+		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
+
+	dependencies := make([]string, 0, len(importDerivedRoles)+len(importVariables))
+
+	for _, dr := range importDerivedRoles {
+		dependencies = append(dependencies, namer.DerivedRolesFQN(dr))
+	}
+
+	for _, v := range importVariables {
+		dependencies = append(dependencies, namer.ExportVariablesFQN(v))
+	}
+
+	return dependencies
 }
 
 // Ancestors returns the module IDs of the ancestors of this policy from most recent to oldest.
@@ -247,6 +285,12 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.DerivedRoles.Name
 
+	case *policyv1.Policy_ExportVariables:
+		w.Kind = ExportVariablesKind
+		w.FQN = namer.ExportVariablesFQN(pt.ExportVariables.Name)
+		w.ID = namer.GenModuleIDFromFQN(w.FQN)
+		w.Name = pt.ExportVariables.Name
+
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
@@ -255,17 +299,12 @@ func Wrap(p *policyv1.Policy) Wrapper {
 }
 
 func (pw Wrapper) Dependencies() []namer.ModuleID {
-	if pw.Kind == ResourceKind {
-		imports := pw.GetResourcePolicy().ImportDerivedRoles
-		if len(imports) > 0 {
-			dependencies := make([]namer.ModuleID, len(imports))
-			for i, imp := range imports {
-				dependencies[i] = namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
-			}
-			return dependencies
-		}
+	fqns := Dependencies(pw.Policy)
+	modIDs := make([]namer.ModuleID, len(fqns))
+	for i, fqn := range fqns {
+		modIDs[i] = namer.GenModuleIDFromFQN(fqn)
 	}
-	return nil
+	return modIDs
 }
 
 // CompilationUnit is the set of policies that need to be compiled together.

@@ -10,7 +10,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const numPolicyKinds = 3
+const numPolicyKinds = 4
 
 type statsCollector struct {
 	policyCount    map[policy.Kind]int
@@ -59,6 +59,8 @@ func (s *statsCollector) add(p policy.Wrapper) {
 	switch p.Kind {
 	case policy.DerivedRolesKind:
 		ps = s.procDerivedRoles(p.GetDerivedRoles())
+	case policy.ExportVariablesKind:
+		ps = s.procExportVariables(p.GetExportVariables())
 	case policy.PrincipalKind:
 		ps = s.procPrincipalPolicy(p.GetPrincipalPolicy())
 	case policy.ResourceKind:
@@ -81,6 +83,16 @@ func (s *statsCollector) procDerivedRoles(dr *policyv1.DerivedRoles) (ps policyS
 			ps.conditionCount++
 		}
 	}
+
+	return ps
+}
+
+func (s *statsCollector) procExportVariables(ev *policyv1.ExportVariables) (ps policyStats) {
+	if ev == nil {
+		return ps
+	}
+
+	ps.ruleCount = len(ev.Definitions)
 
 	return ps
 }

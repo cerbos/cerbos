@@ -135,6 +135,9 @@ func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 				Resource:           mod("leave_request"),
 				Version:            "default",
 				ImportDerivedRoles: []string{mod("my_derived_roles")},
+				Variables: &policyv1.Variables{
+					Import: []string{mod("my_variables")},
+				},
 				Rules: []*policyv1.ResourceRule{
 					{
 						Actions: []string{"*"},
@@ -264,6 +267,9 @@ func GenPrincipalPolicy(mod NameMod) *policyv1.Policy {
 			PrincipalPolicy: &policyv1.PrincipalPolicy{
 				Principal: mod("donald_duck"),
 				Version:   "default",
+				Variables: &policyv1.Variables{
+					Import: []string{mod("my_variables")},
+				},
 				Rules: []*policyv1.PrincipalRule{
 					{
 						Resource: mod("leave_request"),
@@ -368,6 +374,26 @@ func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 							"request.resource.attr.geography == request.principal.attr.managed_geographies",
 						),
 					},
+				},
+			},
+		},
+	}
+}
+
+func GenDisabledExportVariables(mod NameMod) *policyv1.Policy {
+	p := GenExportVariables(mod)
+	p.Disabled = true
+	return p
+}
+
+func GenExportVariables(mod NameMod) *policyv1.Policy {
+	return &policyv1.Policy{
+		ApiVersion: "api.cerbos.dev/v1",
+		PolicyType: &policyv1.Policy_ExportVariables{
+			ExportVariables: &policyv1.ExportVariables{
+				Name: mod("my_variables"),
+				Definitions: map[string]string{
+					"geography": "request.resource.attr.geography",
 				},
 			},
 		},

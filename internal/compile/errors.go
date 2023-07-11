@@ -24,6 +24,7 @@ var (
 	errScriptsUnsupported     = errors.New("scripts in conditions are no longer supported")
 	errUnexpectedErr          = errors.New("unexpected error")
 	errUnknownDerivedRole     = errors.New("unknown derived role")
+	errVariableRedefined      = errors.New("variable redefined")
 )
 
 type ErrorList struct {

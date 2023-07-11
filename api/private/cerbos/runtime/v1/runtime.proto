@@ -18,6 +18,7 @@ message RunnablePolicySet {
     RunnableResourcePolicySet resource_policy = 2;
     RunnablePrincipalPolicySet principal_policy = 3;
     RunnableDerivedRolesSet derived_roles = 4;
+    RunnableVariablesSet variables = 5;
   }
 }
 
@@ -77,6 +78,15 @@ message RunnableDerivedRolesSet {
 
   Metadata meta = 1;
   map<string, RunnableDerivedRole> derived_roles = 2;
+}
+
+message RunnableVariablesSet {
+  message Metadata {
+    string fqn = 1;
+  }
+
+  Metadata meta = 1;
+  map<string, Expr> variables = 2;
 }
 
 // RunnablePrincipalPolicySet is a container for all "compiled" principal policies belonging to a particular scope hierarchy.

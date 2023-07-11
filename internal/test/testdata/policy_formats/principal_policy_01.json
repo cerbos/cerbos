@@ -4,6 +4,9 @@
   "principalPolicy": {
     "principal": "donald_duck",
     "version": "default",
+    "variables": {
+      "import": ["my_variables"]
+    },
     "rules": [
       {
         "resource": "leave_request",

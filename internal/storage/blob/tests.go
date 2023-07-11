@@ -150,7 +150,7 @@ func StartMinio(ctx context.Context, t *testing.T, bucketName string) string {
 		Repository: "minio/minio",
 		Tag:        "latest",
 		Cmd:        []string{"server", "/data"},
-		Env:        []string{"MINIO_ACCESS_KEY=" + minioUsername, "MINIO_SECRET_KEY=" + minioPassword},
+		Env:        []string{"MINIO_ROOT_USER=" + minioUsername, "MINIO_ROOT_PASSWORD=" + minioPassword},
 	}
 
 	resource, err := pool.RunWithOptions(options)

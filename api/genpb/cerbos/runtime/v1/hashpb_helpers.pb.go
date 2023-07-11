@@ -347,6 +347,11 @@ func cerbos_runtime_v1_RunnablePolicySet_hashpb_sum(m *RunnablePolicySet, hasher
 					cerbos_runtime_v1_RunnableDerivedRolesSet_hashpb_sum(t.DerivedRoles, hasher, ignore)
 				}
 
+			case *RunnablePolicySet_Variables:
+				if t.Variables != nil {
+					cerbos_runtime_v1_RunnableVariablesSet_hashpb_sum(t.Variables, hasher, ignore)
+				}
+
 			}
 		}
 	}
@@ -649,6 +654,41 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourceP
 			cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas, hasher, ignore)
 		}
 
+	}
+}
+
+func cerbos_runtime_v1_RunnableVariablesSet_Metadata_hashpb_sum(m *RunnableVariablesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.Metadata.fqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Fqn))
+
+	}
+}
+
+func cerbos_runtime_v1_RunnableVariablesSet_hashpb_sum(m *RunnableVariablesSet, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.meta"]; !ok {
+		if m.Meta != nil {
+			cerbos_runtime_v1_RunnableVariablesSet_Metadata_hashpb_sum(m.Meta, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.variables"]; !ok {
+		if len(m.Variables) > 0 {
+			keys := make([]string, len(m.Variables))
+			i := 0
+			for k := range m.Variables {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Variables[k] != nil {
+					cerbos_runtime_v1_Expr_hashpb_sum(m.Variables[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

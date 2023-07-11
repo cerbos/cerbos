@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: import_variables
+  variables:
+    import:
+      - foobar
+  rules:
+    - actions:
+        - use
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: V.bar

@@ -44,7 +44,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 	t.Run("check_contents", func(t *testing.T) {
 		data := idxImpl.Inspect()
-		require.Len(t, data, 22)
+		require.Len(t, data, 27)
 
 		rp1 := filepath.Join("resource_policies", "policy_01.yaml")
 		rp2 := filepath.Join("resource_policies", "policy_02.yaml")
@@ -54,28 +54,30 @@ func TestBuildIndexWithDisk(t *testing.T) {
 		rp6 := filepath.Join("resource_policies", "policy_05_acme.yaml")
 		rp7 := filepath.Join("resource_policies", "policy_05_acme.hr.yaml")
 		rp8 := filepath.Join("resource_policies", "policy_05_acme.hr.uk.yaml")
+		rp9 := filepath.Join("resource_policies", "policy_09.yaml")
+		rp10 := filepath.Join("resource_policies", "policy_10.yaml")
 		pp1 := filepath.Join("principal_policies", "policy_01.yaml")
 		pp2 := filepath.Join("principal_policies", "policy_02.yaml")
 		pp3 := filepath.Join("principal_policies", "policy_02_acme.yaml")
 		pp4 := filepath.Join("principal_policies", "policy_02_acme.hr.yaml")
 		pp5 := filepath.Join("principal_policies", "policy_03.yaml")
+		pp6 := filepath.Join("principal_policies", "policy_05.yaml")
 		drCommon := filepath.Join("derived_roles", "common_roles.yaml")
 		dr1 := filepath.Join("derived_roles", "derived_roles_01.yaml")
 		dr2 := filepath.Join("derived_roles", "derived_roles_02.yaml")
 		dr3 := filepath.Join("derived_roles", "derived_roles_03.yaml")
+		dr4 := filepath.Join("derived_roles", "derived_roles_04.yaml")
+		ev1 := filepath.Join("export_variables", "export_variables_01.yaml")
 
 		for _, rp := range []string{rp1, rp5, rp6, rp7, rp8} {
 			require.Contains(t, data, rp)
 			require.Len(t, data[rp].Dependencies, 2)
 			require.Contains(t, data[rp].Dependencies, dr1)
 			require.Contains(t, data[rp].Dependencies, dr2)
-			require.Empty(t, data[rp].References)
+			require.Empty(t, data[rp].Dependents)
 
-			require.Contains(t, data[dr1].References, rp)
-			require.Contains(t, data[dr1].References, rp)
-
-			require.Contains(t, data[dr2].References, rp)
-			require.Contains(t, data[dr2].References, rp)
+			require.Contains(t, data[dr1].Dependents, rp)
+			require.Contains(t, data[dr2].Dependents, rp)
 		}
 
 		require.Contains(t, data, rp2)
@@ -84,35 +86,48 @@ func TestBuildIndexWithDisk(t *testing.T) {
 		require.Contains(t, data, rp3)
 		require.Len(t, data[rp3].Dependencies, 1)
 		require.Contains(t, data[rp3].Dependencies, dr3)
-		require.Empty(t, data[rp3].References)
+		require.Empty(t, data[rp3].Dependents)
 
 		require.Contains(t, data, rp4)
 		require.Len(t, data[rp4].Dependencies, 1)
 		require.Contains(t, data[rp3].Dependencies, dr3)
-		require.Empty(t, data[rp3].References)
+		require.Empty(t, data[rp3].Dependents)
 
 		for _, pp := range []string{pp1, pp2, pp3, pp4, pp5} {
 			require.Contains(t, data, pp)
 			require.Empty(t, data[pp].Dependencies)
-			require.Empty(t, data[pp].References)
+			require.Empty(t, data[pp].Dependents)
 		}
 
 		require.Contains(t, data, drCommon)
 		require.Empty(t, data[drCommon].Dependencies)
-		require.Len(t, data[drCommon].References, 1)
+		require.Len(t, data[drCommon].Dependents, 1)
 
 		require.Contains(t, data, dr1)
 		require.Empty(t, data[dr1].Dependencies)
-		require.Len(t, data[dr1].References, 5)
+		require.Len(t, data[dr1].Dependents, 5)
 
 		require.Contains(t, data, dr2)
 		require.Empty(t, data[dr2].Dependencies)
-		require.Len(t, data[dr2].References, 7)
+		require.Len(t, data[dr2].Dependents, 7)
 
 		require.Contains(t, data, dr3)
 		require.Empty(t, data[dr3].Dependencies)
-		require.Len(t, data[dr3].References, 1)
-		require.Contains(t, data[dr3].References, rp3)
+		require.Len(t, data[dr3].Dependents, 1)
+		require.Contains(t, data[dr3].Dependents, rp3)
+
+		require.Contains(t, data, ev1)
+		require.Empty(t, data[ev1].Dependencies)
+		require.ElementsMatch(t, []string{rp9, pp6, dr4}, data[ev1].Dependents)
+
+		for _, p := range data[ev1].Dependents {
+			require.Contains(t, data, p)
+			require.ElementsMatch(t, []string{ev1}, data[p].Dependencies)
+		}
+
+		require.Contains(t, data, rp10)
+		require.Equal(t, []string{dr4}, data[rp10].Dependencies)
+		require.Empty(t, data[rp10].Dependents)
 	})
 
 	t.Run("check_stats", func(t *testing.T) {
@@ -126,6 +141,12 @@ func TestBuildIndexWithDisk(t *testing.T) {
 				require.Greater(t, stats.AvgRuleCount[k], float64(1.0))
 			})
 		}
+
+		t.Run(policy.ExportVariablesKindStr, func(t *testing.T) {
+			require.GreaterOrEqual(t, stats.PolicyCount[policy.ExportVariablesKind], 1)
+			require.GreaterOrEqual(t, stats.AvgRuleCount[policy.ExportVariablesKind], float64(1.0))
+			require.Zero(t, stats.AvgConditionCount[policy.ExportVariablesKind])
+		})
 	})
 
 	t.Run("add_empty", func(t *testing.T) {

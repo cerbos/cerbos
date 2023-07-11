@@ -16,18 +16,21 @@ import (
 )
 
 const (
-	actionApprove = "approve"
-	actionCreate  = "create"
-	id            = "XX125"
-	kind          = "leave_request"
-	name          = "my_derived_roles"
-	ref           = "cerbos:///principal.json"
-	roleName      = "employee_that_owns_the_record"
-	ruleName      = "rule-001"
-	principal     = "bugs_bunny"
-	resource      = "leave_request"
-	scope         = "acme"
-	version       = "v1"
+	actionApprove       = "approve"
+	actionCreate        = "create"
+	id                  = "XX125"
+	kind                = "leave_request"
+	derivedRolesName    = "my_derived_roles"
+	exportVariablesName = "my_variables"
+	ref                 = "cerbos:///principal.json"
+	roleName            = "employee_that_owns_the_record"
+	ruleName            = "rule-001"
+	principal           = "bugs_bunny"
+	resource            = "leave_request"
+	scope               = "acme"
+	version             = "v1"
+	variableName        = "foo"
+	variableExpr        = "42"
 
 	attrKey    = "department"
 	attrValue  = "marketing"
@@ -60,6 +63,11 @@ func TestBuilders(t *testing.T) {
 		dr := newDerivedRoles(t)
 		require.NoError(t, dr.Validate())
 		cmpDerivedRoles(t, dr)
+	})
+	t.Run("ExportVariables", func(t *testing.T) {
+		ev := newExportVariables(t)
+		require.NoError(t, ev.Validate())
+		cmpExportVariables(t, ev)
 	})
 	t.Run("Principal", func(t *testing.T) {
 		p := newPrincipal(t)
@@ -114,11 +122,20 @@ func TestBuilders(t *testing.T) {
 func cmpDerivedRoles(t *testing.T, dr *DerivedRoles) {
 	t.Helper()
 
-	require.Equal(t, name, dr.dr.Name)
+	require.Equal(t, derivedRolesName, dr.dr.Name)
 	require.Equal(t, roleName, dr.dr.Definitions[0].Name)
 	for i, role := range roles {
 		require.Equal(t, role, dr.dr.Definitions[0].ParentRoles[i])
 	}
+	require.Equal(t, []string{exportVariablesName}, dr.dr.Variables.Import)
+	require.Equal(t, map[string]string{variableName: variableExpr}, dr.dr.Variables.Local)
+}
+
+func cmpExportVariables(t *testing.T, ev *ExportVariables) {
+	t.Helper()
+
+	require.Equal(t, exportVariablesName, ev.ev.Name)
+	require.Equal(t, map[string]string{variableName: variableExpr}, ev.ev.Definitions)
 }
 
 func cmpPrincipal(t *testing.T, p *Principal) {
@@ -171,6 +188,8 @@ func cmpPrincipalPolicy(t *testing.T, pp *PrincipalPolicy) {
 	require.Equal(t, principal, pp.pp.Principal)
 	require.Equal(t, scope, pp.pp.Scope)
 	require.Equal(t, version, pp.pp.Version)
+	require.Equal(t, []string{exportVariablesName}, pp.pp.Variables.Import)
+	require.Equal(t, map[string]string{variableName: variableExpr}, pp.pp.Variables.Local)
 }
 
 func cmpResourcePolicy(t *testing.T, rp *ResourcePolicy) {
@@ -179,6 +198,8 @@ func cmpResourcePolicy(t *testing.T, rp *ResourcePolicy) {
 	require.Equal(t, resource, rp.p.Resource)
 	require.Equal(t, scope, rp.p.Scope)
 	require.Equal(t, version, rp.p.Version)
+	require.Equal(t, []string{exportVariablesName}, rp.p.Variables.Import)
+	require.Equal(t, map[string]string{variableName: variableExpr}, rp.p.Variables.Local)
 }
 
 func cmpPrincipalRule(t *testing.T, pr *PrincipalRule) {
@@ -223,10 +244,11 @@ func cmpResourceSet(t *testing.T, rs *ResourceSet) {
 func cmpPolicySet(t *testing.T, ps *PolicySet) {
 	t.Helper()
 
-	require.Len(t, ps.policies, 3)
+	require.Len(t, ps.policies, 4)
 	require.IsType(t, &policyv1.Policy_DerivedRoles{}, ps.policies[0].PolicyType)
-	require.IsType(t, &policyv1.Policy_PrincipalPolicy{}, ps.policies[1].PolicyType)
-	require.IsType(t, &policyv1.Policy_ResourcePolicy{}, ps.policies[2].PolicyType)
+	require.IsType(t, &policyv1.Policy_ExportVariables{}, ps.policies[1].PolicyType)
+	require.IsType(t, &policyv1.Policy_PrincipalPolicy{}, ps.policies[2].PolicyType)
+	require.IsType(t, &policyv1.Policy_ResourcePolicy{}, ps.policies[3].PolicyType)
 }
 
 func cmpSchema(t *testing.T, s *Schema) {
@@ -239,8 +261,17 @@ func cmpSchema(t *testing.T, s *Schema) {
 func newDerivedRoles(t *testing.T) *DerivedRoles {
 	t.Helper()
 
-	return NewDerivedRoles(name).
+	return NewDerivedRoles(derivedRolesName).
+		WithVariablesImports(exportVariablesName).
+		WithVariable(variableName, variableExpr).
 		AddRole(roleName, roles)
+}
+
+func newExportVariables(t *testing.T) *ExportVariables {
+	t.Helper()
+
+	return NewExportVariables(exportVariablesName).
+		AddVariable(variableName, variableExpr)
 }
 
 func newPrincipal(t *testing.T) *Principal {
@@ -269,6 +300,8 @@ func newPrincipalPolicy(t *testing.T) *PrincipalPolicy {
 
 	return NewPrincipalPolicy(principal, version).
 		WithScope(scope).
+		WithVariablesImports(exportVariablesName).
+		WithVariable(variableName, variableExpr).
 		AddPrincipalRules(
 			newPrincipalRule(t),
 		)
@@ -278,7 +311,9 @@ func newResourcePolicy(t *testing.T) *ResourcePolicy {
 	t.Helper()
 
 	return NewResourcePolicy(resource, version).
-		WithScope(scope)
+		WithScope(scope).
+		WithVariablesImports(exportVariablesName).
+		WithVariable(variableName, variableExpr)
 }
 
 func newPrincipalRule(t *testing.T) *PrincipalRule {
@@ -303,6 +338,7 @@ func newPolicySet(t *testing.T) *PolicySet {
 
 	return NewPolicySet().
 		AddDerivedRoles(newDerivedRoles(t)).
+		AddExportVariables(newExportVariables(t)).
 		AddPrincipalPolicies(newPrincipalPolicy(t)).
 		AddResourcePolicies(newResourcePolicy(t))
 }

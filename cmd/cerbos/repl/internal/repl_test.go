@@ -35,6 +35,8 @@ func TestREPL(t *testing.T) {
 	drPath := filepath.Join(test.PathToDir(t, "store"), "derived_roles", "derived_roles_01.yaml")
 	rpPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_01.yaml")
 	ppPath := filepath.Join(test.PathToDir(t, "store"), "principal_policies", "policy_01.yaml")
+	rpImportVariablesPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_09.yaml")
+	evPath := filepath.Join(test.PathToDir(t, "store"), "export_variables", "export_variables_01.yaml")
 	drConds := loadConditionsFromPolicy(t, drPath)
 	rpConds := loadConditionsFromPolicy(t, rpPath)
 	ppConds := loadConditionsFromPolicy(t, ppPath)
@@ -85,7 +87,6 @@ func TestREPL(t *testing.T) {
 				},
 				{
 					Directive: `:reset`,
-					Check:     func(t *testing.T, m *mockOutput) { t.Helper() },
 				},
 				{
 					Directive: `x * 2`,
@@ -379,6 +380,29 @@ func TestREPL(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "load_policy_with_imported_variables",
+			directives: []DirectiveTest{
+				{
+					Directive: fmt.Sprintf(":load %s", rpImportVariablesPath),
+					WantErr:   true,
+				},
+				{
+					Directive: fmt.Sprintf(":load %s", evPath),
+				},
+				{
+					Directive: fmt.Sprintf(":load %s", rpImportVariablesPath),
+				},
+				{
+					Directive: "V.foo",
+					Check: func(t *testing.T, output *mockOutput) {
+						t.Helper()
+						require.Equal(t, lastResultVar, output.resultName)
+						require.Equal(t, toRefVal(42), output.resultVal)
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -397,7 +421,9 @@ func TestREPL(t *testing.T) {
 					}
 
 					require.NoError(t, err)
-					d.Check(t, mockOut)
+					if d.Check != nil {
+						d.Check(t, mockOut)
+					}
 				})
 			}
 		})

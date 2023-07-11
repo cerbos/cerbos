@@ -1,0 +1,22 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/ExportVariables.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "definitions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+    }
+  }
+}

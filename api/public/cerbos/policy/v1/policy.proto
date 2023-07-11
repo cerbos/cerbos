@@ -26,8 +26,9 @@ message Policy {
     ResourcePolicy resource_policy = 5;
     PrincipalPolicy principal_policy = 6;
     DerivedRoles derived_roles = 7;
+    ExportVariables export_variables = 10;
   }
-  map<string, string> variables = 8;
+  map<string, string> variables = 8 [deprecated = true];
   string json_schema = 9 [json_name = "$schema"];
 }
 
@@ -54,6 +55,7 @@ message ResourcePolicy {
   repeated ResourceRule rules = 4;
   string scope = 5 [(validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   Schemas schemas = 6;
+  Variables variables = 7;
 }
 
 message ResourceRule {
@@ -95,6 +97,7 @@ message PrincipalPolicy {
   string version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
   repeated PrincipalRule rules = 3;
   string scope = 4 [(validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
+  Variables variables = 5;
 }
 
 message PrincipalRule {
@@ -121,6 +124,7 @@ message DerivedRoles {
     min_len: 1
   }];
   repeated RoleDef definitions = 2 [(validate.rules).repeated.min_items = 1];
+  Variables variables = 3;
 }
 
 message RoleDef {
@@ -133,6 +137,24 @@ message RoleDef {
     }
   }];
   Condition condition = 3;
+}
+
+message ExportVariables {
+  string name = 1 [(validate.rules).string = {
+    pattern: "^[[:word:]\\-\\.]+$",
+    min_len: 1
+  }];
+  map<string, string> definitions = 2;
+}
+
+message Variables {
+  repeated string import = 1 [(validate.rules).repeated = {
+    unique: true,
+    items {
+      string {pattern: "^[[:word:]\\-\\.]+$"}
+    }
+  }];
+  map<string, string> local = 2;
 }
 
 message Condition {

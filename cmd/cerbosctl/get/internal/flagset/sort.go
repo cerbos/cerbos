@@ -18,8 +18,14 @@ func (s Sort) Validate(kind policy.Kind, listing bool) error {
 		return fmt.Errorf("--sort-by flag is only available when listing")
 	}
 
-	if listing && kind == policy.DerivedRolesKind && s.SortBy == SortByVersion {
-		return fmt.Errorf("value of --sort-by flag cannot be %q when listing derived_roles", SortByVersion)
+	if listing && s.SortBy == SortByVersion {
+		switch kind { //nolint:exhaustive
+		case policy.DerivedRolesKind:
+			return fmt.Errorf("value of --sort-by flag cannot be %q when listing derived roles", SortByVersion)
+
+		case policy.ExportVariablesKind:
+			return fmt.Errorf("value of --sort-by flag cannot be %q when listing exported variables", SortByVersion)
+		}
 	}
 
 	return nil

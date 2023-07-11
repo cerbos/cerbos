@@ -2,7 +2,7 @@
 wantErrList:
   missingImports:
     - importingFile: resource.yaml
-      desc: "Import 'my_derived_roles' not found"
+      desc: "Variables import 'my_variables' not found"
 files:
   "test.txt": |-
     this is some text
@@ -10,9 +10,10 @@ files:
     ---
     apiVersion: api.cerbos.dev/v1
     resourcePolicy:
-      importDerivedRoles:
-      - my_derived_roles
       resource: leave_request
+      variables:
+        import:
+          - my_variables
       rules:
       - actions: ['*']
         effect: EFFECT_ALLOW

@@ -3,7 +3,7 @@ wantErrors:
   - file: resource_policies/leave_request_20210210.yaml
     error: import not found
     desc: |-
-      Import 'some_derived_roles' cannot be found
+      Derived roles import 'some_derived_roles' cannot be found
   - file: resource_policies/leave_request_20210210.yaml
     error: unknown derived role
     desc: |-

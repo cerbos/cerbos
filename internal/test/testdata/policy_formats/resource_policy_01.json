@@ -4,6 +4,9 @@
   "resourcePolicy": {
     "resource": "leave_request",
     "version": "default",
+    "variables": {
+      "import": ["my_variables"]
+    },
     "importDerivedRoles": [
       "my_derived_roles"
     ],
