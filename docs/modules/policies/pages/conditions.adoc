@@ -219,7 +219,7 @@ Duration values must be specified in one of the following units. Larger units li
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Function | Description | Example 
-| duration | Convert a string to a duration. The string must contain a valid duration suffixed by one of `ns`, `us`, `ms`, `s`, `m` or `h`. E.g. `3750s` | duration(R.attr.cooldownPeriod).getSeconds == 3750
+| duration | Convert a string to a duration. The string must contain a valid duration suffixed by one of `ns`, `us`, `ms`, `s`, `m` or `h`. E.g. `3750s` | duration(R.attr.cooldownPeriod).getSeconds() == 3750
 | getHours | Get hours from a duration | duration(R.attr.cooldownPeriod).getHours() == 1
 | getMilliseconds | Get milliseconds from a duration | duration(R.attr.cooldownPeriod).getMilliseconds() == 3750000
 | getMinutes | Get minutes from a duration | duration(R.attr.cooldownPeriod).getMinutes() == 62
