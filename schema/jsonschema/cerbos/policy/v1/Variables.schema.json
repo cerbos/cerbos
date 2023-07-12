@@ -1,0 +1,22 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/Variables.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "import": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+      },
+      "uniqueItems": true
+    },
+    "local": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

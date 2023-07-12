@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: import_derived_roles_that_import_variables
+  importDerivedRoles:
+    - import_variables
+  rules:
+    - actions:
+        - use
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - bar

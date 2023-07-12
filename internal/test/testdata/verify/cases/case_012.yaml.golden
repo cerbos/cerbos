@@ -1,0 +1,106 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.json",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 5,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 5
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "John and his leave request",
+          "principals": [
+            {
+              "name": "john",
+              "resources": [
+                {
+                  "name": "john_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name": "defer",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "With global now",
+          "principals": [
+            {
+              "name": "bev",
+              "resources": [
+                {
+                  "name": "stale_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "With local now",
+          "principals": [
+            {
+              "name": "bev",
+              "resources": [
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 5,
+    "resultCounts": [
+      {
+        "result": "RESULT_PASSED",
+        "count": 5
+      }
+    ]
+  }
+}

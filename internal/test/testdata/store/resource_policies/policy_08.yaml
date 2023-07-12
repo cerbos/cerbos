@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: global
+  rules:
+    - actions:
+        - test
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
+      condition:
+        match:
+          expr: globals.environment == "test"

@@ -15,6 +15,13 @@ audit:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   kafka:
     ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
+    authentication: # Authentication
+      tls: 
+        caPath: /path/to/ca.crt # Required. CAPath is the path to the CA certificate.
+        certPath: /path/to/tls.cert # CertPath is the path to the client certificate.
+        insecureSkipVerify: true # InsecureSkipVerify controls whether the server's certificate chain and host name are verified. Default is false.
+        keyPath: /path/to/tls.key # KeyPath is the path to the client key.
+        reloadInterval: 5m # ReloadInterval is the interval at which the TLS certificates are reloaded. The default is 0 (no reload).
     brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
     clientID: cerbos # ClientID reported in Kafka connections.
     closeTimeout: 30s # CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
@@ -50,6 +57,8 @@ compile:
   cacheSize: 1024 # CacheSize is the number of compiled policies to cache in memory.
 engine:
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
+  globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.
+  lenientScopeSearch: false # LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
 schema:
   cacheSize: 1024 # CacheSize defines the number of schemas to cache in memory.
   enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.

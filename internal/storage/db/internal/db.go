@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
@@ -37,11 +38,12 @@ type DBStorage interface {
 	storage.Reloadable
 	storage.Verifiable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
+	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error)
+	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
@@ -52,7 +54,7 @@ type DBStorage interface {
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
-	opts := &dbOpt{}
+	opts := newDbOpt()
 	for _, opt := range dbOpts {
 		opt(opts)
 	}
@@ -307,112 +309,40 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 	return nil
 }
 
+func (s *dbStorage) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
+	results, err := s.GetCompilationUnits(ctx, candidates...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, id := range candidates {
+		if cu, ok := results[id]; ok {
+			return cu, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	// SELECT p.id as parent, p.id, p.definition
-	// FROM policy p
-	// WHERE p.id IN (?) AND p.disabled = false
-	policiesQuery := s.db.Select(
-		goqu.C(PolicyTblIDCol).As("parent"),
-		goqu.C(PolicyTblIDCol),
-		goqu.C(PolicyTblDefinitionCol)).
-		From(PolicyTbl).
-		Where(
-			goqu.And(
-				goqu.I(PolicyTblIDCol).In(ids),
-				goqu.I(PolicyTblDisabledCol).Eq(goqu.V(false)),
-			),
-		)
+	// Rather than writing a proper recursive query (which is pretty much impossible to do in a database-agnostic way), we're
+	// exploiting the fact that we have a maximum of two levels of dependency (resourcePolicy -> derivedRoles -> exportVariables).
 
-	// SELECT pd.policy_id as parent, p.id, p.definition
-	// FROM policy_dependency pd
-	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
-	// WHERE pd.policy_id IN (?)
-	depsQuery := s.db.Select(
-		goqu.C(PolicyDepTblPolicyIDCol).Table("pd").As("parent"),
-		goqu.C(PolicyTblIDCol).Table("p"),
-		goqu.C(PolicyTblDefinitionCol).Table("p")).
-		From(goqu.T(PolicyDepTbl).As("pd")).
-		Join(
-			goqu.T(PolicyTbl).As("p"),
-			goqu.On(goqu.And(
-				goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
-				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
-			),
-		).
-		Where(goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids))
+	policiesQuery := s.newGetCompilationUnitsQueryBuilder(ids)
+	directDepsQuery := policiesQuery.JoinDependencies()
+	transitiveDepsQuery := directDepsQuery.JoinDependencies()
+	ancestorsQuery := policiesQuery.JoinAncestors()
+	ancestorsDirectDepsQuery := ancestorsQuery.JoinDependencies()
+	ancestorsTransitiveDepsQuery := ancestorsDirectDepsQuery.JoinDependencies()
 
-	// SELECT pa.policy_id as parent, p.id, p.definition
-	// FROM policy_ancestor pa
-	// JOIN policy p ON (pa.ancestor_id = p.id AND p.disabled = false )
-	// WHERE pa.policy_id IN (?)
-	ancestorsQuery := s.db.Select(
-		goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").As("parent"),
-		goqu.C(PolicyTblIDCol).Table("p"),
-		goqu.C(PolicyTblDefinitionCol).Table("p")).
-		From(goqu.T(PolicyAncestorTbl).As("pa")).
-		Join(
-			goqu.T(PolicyTbl).As("p"),
-			goqu.On(goqu.And(
-				goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
-				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
-			),
-		).
-		Where(goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").In(ids))
+	query := policiesQuery.Select().
+		Union(directDepsQuery.Select()).
+		Union(transitiveDepsQuery.Select()).
+		Union(ancestorsQuery.Select()).
+		Union(ancestorsDirectDepsQuery.Select()).
+		Union(ancestorsTransitiveDepsQuery.Select())
 
-	// SELECT pa.policy_id as parent, p.id, p.definition
-	// FROM policy_ancestor pa
-	// JOIN policy_dependency pd ON (pa.ancestor_id = pd.policy_id)
-	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
-	// WHERE pa.policy_id IN (?)
-	ancestorDepsQuery := s.db.Select(
-		goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").As("parent"),
-		goqu.C(PolicyTblIDCol).Table("p"),
-		goqu.C(PolicyTblDefinitionCol).Table("p")).
-		From(goqu.T(PolicyAncestorTbl).As("pa")).
-		Join(
-			goqu.T(PolicyDepTbl).As("pd"),
-			goqu.On(goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa").Eq(goqu.C(PolicyDepTblPolicyIDCol).Table("pd"))),
-		).
-		Join(
-			goqu.T(PolicyTbl).As("p"),
-			goqu.On(goqu.And(
-				goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
-				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
-			),
-		).
-		Where(goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").In(ids))
-
-	// -- Select the policies requested
-	// SELECT p.id as parent,p.id, p.definition
-	// FROM policy p
-	// WHERE p.id IN (?) AND p.disabled = false
-	// UNION ALL
-	// -- Select the dependencies of those policies
-	// SELECT pd.policy_id as parent, p.id, p.definition
-	// FROM policy_dependency pd
-	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
-	// WHERE pd.policy_id IN (?)
-	// UNION ALL
-	// -- Select the ancestors of the policies requested
-	// SELECT pa.policy_id as parent, p.id, p.definition
-	// FROM policy_ancestor pa
-	// JOIN policy p ON (pa.ancestor_id = p.id AND p.disabled = false )
-	// WHERE pa.policy_id IN (?)
-	// UNION ALL
-	// -- Select the dependencies of the ancestors
-	// SELECT pa.policy_id as parent, p.id, p.definition
-	// FROM policy_ancestor pa
-	// JOIN policy_dependency pd ON (pa.ancestor_id = pd.policy_id)
-	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
-	// WHERE pa.policy_id IN (?)
-	// ORDER BY parent
-	fullQuery := policiesQuery.
-		UnionAll(depsQuery).
-		UnionAll(ancestorsQuery).
-		UnionAll(ancestorDepsQuery).
-		Order(goqu.C("parent").Asc())
-
-	results, err := fullQuery.Executor().ScannerContext(ctx)
+	results, err := query.Executor().ScannerContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -421,20 +351,19 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	units := make(map[namer.ModuleID]*policy.CompilationUnit)
 	for results.Next() {
 		var row struct {
-			Definition PolicyDefWrapper
-			Parent     namer.ModuleID
-			ID         namer.ModuleID
-			Disabled   bool
+			Definition PolicyDefWrapper `db:"definition"`
+			UnitID     namer.ModuleID   `db:"unit_id"`
+			ID         namer.ModuleID   `db:"id"`
 		}
+
 		if err := results.ScanStruct(&row); err != nil {
 			return nil, err
 		}
 
-		row.Definition.Disabled = row.Disabled
-		unit, ok := units[row.Parent]
+		unit, ok := units[row.UnitID]
 		if !ok {
-			unit = &policy.CompilationUnit{ModID: row.Parent}
-			units[row.Parent] = unit
+			unit = &policy.CompilationUnit{ModID: row.UnitID}
+			units[row.UnitID] = unit
 		}
 
 		unit.AddDefinition(row.ID, row.Definition.Policy)
@@ -443,18 +372,129 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	return units, nil
 }
 
+type getCompilationUnitsQueryBuilder struct {
+	query *goqu.SelectDataset
+	depth int
+}
+
+// newGetCompilationUnitsQueryBuilder starts a query for retrieving policies and their ancestors and dependencies.
+//
+// The query starts out as
+//
+//	FROM policy AS p0
+//	WHERE p0.id IN (?) AND p0.disabled = false
+//
+// JOIN clauses are added for ancestors using JoinAncestors and JoinDependencies, then finally a SELECT clause is
+// added using Select.
+func (s *dbStorage) newGetCompilationUnitsQueryBuilder(ids []namer.ModuleID) getCompilationUnitsQueryBuilder {
+	q := getCompilationUnitsQueryBuilder{}
+
+	q.query = s.db.
+		From(goqu.T(PolicyTbl).As(q.p(0))).
+		Where(
+			goqu.And(
+				q.p(0).Col(PolicyTblIDCol).In(ids),
+				q.p(0).Col(PolicyTblDisabledCol).Eq(goqu.V(false)),
+			),
+		)
+
+	return q
+}
+
+// JoinAncestors appends JOIN clauses to find ancestors of the policies.
+func (q getCompilationUnitsQueryBuilder) JoinAncestors() getCompilationUnitsQueryBuilder {
+	return q.join(PolicyAncestorTbl, PolicyAncestorTblPolicyIDCol, PolicyAncestorTblAncestorIDCol)
+}
+
+// JoinDependencies appends JOIN clauses to find dependencies of the policies.
+// It can be chained after JoinAncestors to get dependencies of ancestors, and
+// after JoinDependencies to get transitive dependencies.
+func (q getCompilationUnitsQueryBuilder) JoinDependencies() getCompilationUnitsQueryBuilder {
+	return q.join(PolicyDepTbl, PolicyDepTblPolicyIDCol, PolicyDepTblDepIDCol)
+}
+
+// join appends JOIN clauses for the given join table at the current depth N, producing a new query
+// with depth N+1.
+//
+//	JOIN policy_dependency AS jN_N+1 ON pN.id = jN_N+1.policy_id
+//	JOIN policy AS pN+1 ON (pN+1.id = jN_N+1.dependency_id AND pN+1.disabled = false)
+func (q getCompilationUnitsQueryBuilder) join(joinTbl, joinTblParentIDCol, joinTblChildIDCol string) getCompilationUnitsQueryBuilder {
+	p0 := q.p(q.depth)
+	j := q.j(q.depth)
+	p1 := q.p(q.depth + 1)
+
+	return getCompilationUnitsQueryBuilder{
+		depth: q.depth + 1,
+		query: q.query.
+			Join(
+				goqu.T(joinTbl).As(j),
+				goqu.On(p0.Col(PolicyTblIDCol).Eq(j.Col(joinTblParentIDCol))),
+			).
+			Join(
+				goqu.T(PolicyTbl).As(p1),
+				goqu.On(
+					goqu.And(
+						p1.Col(PolicyTblIDCol).Eq(j.Col(joinTblChildIDCol)),
+						p1.Col(PolicyTblDisabledCol).Eq(goqu.V(false)),
+					),
+				),
+			),
+	}
+}
+
+// Select produces the finished query for the current depth, N, by appending a SELECT clause.
+//
+//	SELECT p0.id AS unit_id, pN.id, pN.definition
+func (q getCompilationUnitsQueryBuilder) Select() *goqu.SelectDataset {
+	return q.query.Select(
+		q.p(0).Col(PolicyTblIDCol).As("unit_id"),
+		q.p(q.depth).Col(PolicyTblIDCol),
+		q.p(q.depth).Col(PolicyTblDefinitionCol),
+	)
+}
+
+// p is the policy table alias at depth N: pN.
+func (q getCompilationUnitsQueryBuilder) p(depth int) exp.IdentifierExpression {
+	return goqu.T(fmt.Sprintf("p%d", depth))
+}
+
+// j is the join table (policy ancestor or dependency) alias between depth N and N+1: jN_N+1.
+func (q getCompilationUnitsQueryBuilder) j(depth int) exp.IdentifierExpression {
+	return goqu.T(fmt.Sprintf("j%d_%d", depth, depth+1))
+}
+
 func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
-	// SELECT dependency_id, policy_id
+	// Rather than writing a proper recursive query (which is pretty much impossible to do in a database-agnostic way), we're
+	// exploiting the fact that we have a maximum of two levels of dependency (resourcePolicy -> derivedRoles -> exportVariables).
+
+	// SELECT dependency_id AS policy_id, policy_id AS dependent_id
 	// FROM policy_dependency
-	// WHERE dependency_id IN (?)
-	// ORDER BY dependency_id
-	query := s.db.Select(
-		goqu.C(PolicyDepTblDepIDCol),
-		goqu.C(PolicyDepTblPolicyIDCol),
-	).
+	// WHERE policy_dependency.dependency_id IN (?)
+	directDependentsQuery := s.db.
+		Select(
+			goqu.C(PolicyDepTblDepIDCol).As("policy_id"),
+			goqu.C(PolicyDepTblPolicyIDCol).As("dependent_id"),
+		).
 		From(PolicyDepTbl).
-		Where(goqu.C(PolicyDepTblDepIDCol).In(ids)).
-		Order(goqu.C(PolicyDepTblDepIDCol).Asc())
+		Where(goqu.T(PolicyDepTbl).Col(PolicyDepTblDepIDCol).In(ids))
+
+	// SELECT child.dependency_id AS policy_id, parent.policy_id AS dependent_id
+	// FROM policy_dependency AS parent
+	// JOIN policy_dependency AS child ON child.policy_id = parent.dependency_id
+	// WHERE child.dependency_id IN (?)
+	transitiveDependentsQuery := s.db.
+		Select(
+			goqu.T("child").Col(PolicyDepTblDepIDCol).As("policy_id"),
+			goqu.T("parent").Col(PolicyDepTblPolicyIDCol).As("dependent_id"),
+		).
+		From(goqu.T(PolicyDepTbl).As("parent")).
+		Join(
+			goqu.T(PolicyDepTbl).As("child"),
+			goqu.On(goqu.T("child").Col(PolicyDepTblPolicyIDCol).Eq(goqu.T("parent").Col(PolicyDepTblDepIDCol))),
+		).
+		Where(goqu.T("child").Col(PolicyDepTblDepIDCol).In(ids))
+
+	query := directDependentsQuery.Union(transitiveDependentsQuery)
 
 	results, err := query.Executor().ScannerContext(ctx)
 	if err != nil {
@@ -463,17 +503,19 @@ func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (m
 
 	defer results.Close()
 
-	out := make(map[namer.ModuleID][]namer.ModuleID)
+	out := make(map[namer.ModuleID][]namer.ModuleID, len(ids))
 
 	for results.Next() {
-		var rec PolicyDependency
-		if err := results.ScanStruct(&rec); err != nil {
+		var row struct {
+			PolicyID    namer.ModuleID `db:"policy_id"`
+			DependentID namer.ModuleID `db:"dependent_id"`
+		}
+
+		if err := results.ScanStruct(&row); err != nil {
 			return nil, err
 		}
 
-		deps := out[rec.DependencyID]
-		deps = append(deps, rec.PolicyID)
-		out[rec.DependencyID] = deps
+		out[row.PolicyID] = append(out[row.PolicyID], row.DependentID)
 	}
 
 	return out, nil
@@ -628,11 +670,31 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
+func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPolicyIDsParams) ([]string, error) {
 	var policyCoords []namer.PolicyCoords
 	var whereExprs []exp.Expression
-	if !includeDisabled {
+	var postFilters []postRegexpFilter
+
+	if !listParams.IncludeDisabled {
 		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
+	}
+
+	if listParams.NameRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.NameRegexp, PolicyTblNameCol, &whereExprs, &postFilters); err != nil {
+			return nil, err
+		}
+	}
+
+	if listParams.ScopeRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.ScopeRegexp, PolicyTblScopeCol, &whereExprs, &postFilters); err != nil {
+			return nil, err
+		}
+	}
+
+	if listParams.VersionRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.VersionRegexp, PolicyTblVerCol, &whereExprs, &postFilters); err != nil {
+			return nil, err
+		}
 	}
 
 	err := s.db.From(PolicyTbl).
@@ -655,12 +717,65 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]
 		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
 
-	policyIDs := make([]string, len(policyCoords))
-	for i := 0; i < len(policyCoords); i++ {
-		policyIDs[i] = policyCoords[i].PolicyKey()
+	policyIDs := make([]string, 0, len(policyCoords))
+	for _, pc := range policyCoords {
+		if checkPostFilters(pc, postFilters) {
+			policyIDs = append(policyIDs, pc.PolicyKey())
+		}
 	}
 
 	return policyIDs, nil
+}
+
+type postRegexpFilter struct {
+	re  *regexp.Regexp
+	col string
+}
+
+// updateRegexpFilters updates either `whereExprs` or `postFilters` in place, dependent on whether regexp support is enabled or not.
+func (s *dbStorage) updateRegexpFilters(namePattern, col string, whereExprs *[]exp.Expression, postFilters *[]postRegexpFilter) error {
+	r, err := s.opts.regexpCache.GetCompiledExpr(namePattern)
+	if err != nil {
+		return err
+	}
+	if s.regexpEnabled() {
+		// We need to pass a *regexp.Regexp expression to `Like` (or `RegexpLike`, which is equivalent) in order for goqu
+		// to correctly parse the query. We need to pass the compiled expression in order for goqu to access (only) the
+		// raw string (https://github.com/doug-martin/goqu/blob/master/exp/bool.go#L148).
+		// We use a cache to prevent the need to recompile arbitrary strings on each request.
+		// In the case of the SQLite driver, to support regexp, we generate an application-defined function in which we
+		// use the cached compiled expressions.
+		*whereExprs = append(*whereExprs, goqu.C(col).ILike(r))
+	} else {
+		*postFilters = append(*postFilters, postRegexpFilter{re: r, col: col})
+	}
+
+	return nil
+}
+
+func (s *dbStorage) regexpEnabled() bool {
+	// TODO(saml) link this to the `dialect` arg passed to `goqu` in the sqlserver package, or rethink how to indicate regexp support
+	return s.db.Dialect() != "sqlserver"
+}
+
+func checkPostFilters(pc namer.PolicyCoords, postFilters []postRegexpFilter) bool {
+	for _, f := range postFilters {
+		switch f.col {
+		case PolicyTblNameCol:
+			if !f.re.MatchString(pc.Name) {
+				return false
+			}
+		case PolicyTblScopeCol:
+			if !f.re.MatchString(pc.Scope) {
+				return false
+			}
+		case PolicyTblVerCol:
+			if !f.re.MatchString(pc.Version) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {
@@ -704,6 +819,8 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 		switch r.Kind {
 		case policy.DerivedRolesKindStr:
 			stats.PolicyCount[policy.DerivedRolesKind] = r.Count
+		case policy.ExportVariablesKindStr:
+			stats.PolicyCount[policy.ExportVariablesKind] = r.Count
 		case policy.PrincipalKindStr:
 			stats.PolicyCount[policy.PrincipalKind] = r.Count
 		case policy.ResourceKindStr:

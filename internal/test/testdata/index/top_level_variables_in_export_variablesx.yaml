@@ -1,0 +1,14 @@
+---
+wantErrList:
+  loadFailures:
+    - error: export variables policies do not support the deprecated top-level variables field
+      file: export_variables.yaml
+files:
+  export_variables.yaml: |-
+    apiVersion: api.cerbos.dev/v1
+    variables:
+      foo: "42"
+    exportVariables:
+      name: example
+      definitions:
+        bar: V.foo

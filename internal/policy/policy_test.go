@@ -38,12 +38,18 @@ func TestWith(t *testing.T) {
 	})
 
 	t.Run("WithHash", func(t *testing.T) {
-		p := test.GenDerivedRoles(test.Suffix(strconv.Itoa(1)))
-		require.Empty(t, p.Metadata)
+		p1 := test.GenDerivedRoles(test.Suffix(strconv.Itoa(1)))
+		require.Empty(t, p1.Metadata)
 
-		p = policy.WithHash(p)
-		require.NotEmpty(t, p.Metadata.Hash)
-		require.Equal(t, wrapperspb.UInt64(util.HashPB(p, policy.IgnoreHashFields)), p.Metadata.Hash)
+		p2 := policy.WithHash(p1)
+		require.NotEmpty(t, p2.Metadata.Hash)
+		require.Equal(t, wrapperspb.UInt64(util.HashPB(p2, policy.IgnoreHashFields)), p2.Metadata.Hash)
+
+		p3 := test.GenDerivedRoles(test.Suffix(strconv.Itoa(1)))
+		p3.Description = "With additional fields set that don't affect the hash"
+		p3.Disabled = true
+		p3.JsonSchema = "https://api.cerbos.dev/latest/cerbos/policy/v1/Policy.schema.json"
+		require.Equal(t, p2.Metadata.Hash, policy.WithHash(p3).Metadata.Hash)
 	})
 
 	t.Run("WithMetadata", func(t *testing.T) {

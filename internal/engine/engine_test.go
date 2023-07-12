@@ -64,6 +64,38 @@ func TestCheck(t *testing.T) {
 	}
 }
 
+func TestCheckWithLenientScopeSearch(t *testing.T) {
+	eng, cancelFunc := mkEngine(t, param{schemaEnforcement: schema.EnforcementNone, lenientScopeSearch: true})
+	defer cancelFunc()
+
+	testCases := test.LoadTestCases(t, "engine")
+	testCases = append(testCases, test.LoadTestCases(t, "engine_lenient_scope_search")...)
+
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readTestCase(t, tcase.Input)
+
+			traceCollector := tracer.NewCollector()
+			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
+
+			if tc.WantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			for i, have := range haveOutputs {
+				require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+					have,
+					protocmp.Transform(),
+					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+				))
+			}
+		})
+	}
+}
+
 func TestSchemaValidation(t *testing.T) {
 	for _, enforcement := range []string{"warn", "reject"} {
 		enforcement := enforcement
@@ -159,9 +191,10 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 }
 
 type param struct {
-	enableAuditLog    bool
-	schemaEnforcement schema.Enforcement
-	subDir            string
+	enableAuditLog     bool
+	schemaEnforcement  schema.Enforcement
+	subDir             string
+	lenientScopeSearch bool
 }
 
 func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
@@ -196,13 +229,17 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
-	eng, err := New(ctx, Components{
+	engineConf := &Conf{}
+	engineConf.SetDefaults()
+	engineConf.Globals = map[string]any{"environment": "test"}
+	engineConf.LenientScopeSearch = p.lenientScopeSearch
+
+	eng := NewFromConf(ctx, engineConf, Components{
 		PolicyLoader:      compiler,
 		SchemaMgr:         schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),
 	})
-	require.NoError(tb, err)
 
 	return eng, cancelFunc
 }

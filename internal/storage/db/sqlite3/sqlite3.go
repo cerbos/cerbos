@@ -6,6 +6,7 @@ package sqlite3
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"embed"
 	"errors"
 	"fmt"
@@ -18,14 +19,13 @@ import (
 	migratesqlite3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"go.uber.org/zap"
-
-	// import sqlite3 driver.
-	_ "modernc.org/sqlite"
+	gosqlite3 "modernc.org/sqlite"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const DriverName = "sqlite3"
@@ -41,7 +41,37 @@ var (
 	_ storage.MutableStore = (*Store)(nil)
 )
 
+const nRegexpFnArgs = 2
+
+var nameRegexpCache util.RegexpCache
+
 func init() {
+	nameRegexpCache = *util.NewRegexpCache()
+
+	gosqlite3.MustRegisterDeterministicScalarFunction("regexp", nRegexpFnArgs, func(ctx *gosqlite3.FunctionContext, args []driver.Value) (driver.Value, error) {
+		if args[0] == nil || args[1] == nil {
+			return nil, nil
+		}
+
+		re, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("arg[0] should be of type: string")
+		}
+
+		s, ok := args[1].(string)
+		if !ok {
+			return nil, fmt.Errorf("arg[1] should be of type: string")
+		}
+
+		r, err := nameRegexpCache.GetCompiledExpr(re)
+		if err != nil {
+			return nil, err
+		}
+
+		b := r.MatchString(s)
+		return b, nil
+	})
+
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
@@ -69,7 +99,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db))
+	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db), internal.WithRegexpCacheOverride(&nameRegexpCache))
 	if err != nil {
 		return nil, err
 	}

@@ -119,9 +119,9 @@ func (ls *LocalSource) Driver() string {
 	return DriverName
 }
 
-func (ls *LocalSource) ListPolicyIDs(ctx context.Context, includeDisabled bool) (ids []string, err error) {
+func (ls *LocalSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) (ids []string, err error) {
 	ls.mu.RLock()
-	ids, err = ls.bundle.ListPolicyIDs(ctx, includeDisabled)
+	ids, err = ls.bundle.ListPolicyIDs(ctx, params)
 	ls.mu.RUnlock()
 	return ids, err
 }
@@ -140,9 +140,9 @@ func (ls *LocalSource) LoadSchema(ctx context.Context, id string) (schema io.Rea
 	return schema, err
 }
 
-func (ls *LocalSource) GetPolicySet(ctx context.Context, id namer.ModuleID) (ps *runtimev1.RunnablePolicySet, err error) {
+func (ls *LocalSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (ps *runtimev1.RunnablePolicySet, err error) {
 	ls.mu.RLock()
-	ps, err = ls.bundle.GetPolicySet(ctx, id)
+	ps, err = ls.bundle.GetFirstMatch(ctx, candidates)
 	ls.mu.RUnlock()
 	return ps, err
 }

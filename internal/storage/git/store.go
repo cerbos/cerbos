@@ -134,6 +134,10 @@ func (s *Store) Driver() string {
 	return DriverName
 }
 
+func (s *Store) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
+	return s.idx.GetFirstMatch(candidates)
+}
+
 func (s *Store) GetCompilationUnits(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	return s.idx.GetCompilationUnits(ids...)
 }
@@ -142,7 +146,7 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 	return s.idx.GetDependents(ids...)
 }
 
-func (s *Store) ListPolicyIDs(ctx context.Context, _ bool) ([]string, error) {
+func (s *Store) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
 	return s.idx.ListPolicyIDs(ctx)
 }
 

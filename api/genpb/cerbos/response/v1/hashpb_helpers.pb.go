@@ -733,6 +733,36 @@ func cerbos_policy_v1_DerivedRoles_hashpb_sum(m *v12.DerivedRoles, hasher hash.H
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.DerivedRoles.variables"]; !ok {
+		if m.Variables != nil {
+			cerbos_policy_v1_Variables_hashpb_sum(m.Variables, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_ExportVariables_hashpb_sum(m *v12.ExportVariables, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.ExportVariables.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.ExportVariables.definitions"]; !ok {
+		if len(m.Definitions) > 0 {
+			keys := make([]string, len(m.Definitions))
+			i := 0
+			for k := range m.Definitions {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				_, _ = hasher.Write(protowire.AppendString(nil, m.Definitions[k]))
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_Match_ExprList_hashpb_sum(m *v12.Match_ExprList, hasher hash.Hash, ignore map[string]struct{}) {
@@ -857,6 +887,11 @@ func cerbos_policy_v1_Policy_hashpb_sum(m *v12.Policy, hasher hash.Hash, ignore 
 					cerbos_policy_v1_DerivedRoles_hashpb_sum(t.DerivedRoles, hasher, ignore)
 				}
 
+			case *v12.Policy_ExportVariables:
+				if t.ExportVariables != nil {
+					cerbos_policy_v1_ExportVariables_hashpb_sum(t.ExportVariables, hasher, ignore)
+				}
+
 			}
 		}
 	}
@@ -876,6 +911,10 @@ func cerbos_policy_v1_Policy_hashpb_sum(m *v12.Policy, hasher hash.Hash, ignore 
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.Policy.json_schema"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.JsonSchema))
+
 	}
 }
 
@@ -900,6 +939,12 @@ func cerbos_policy_v1_PrincipalPolicy_hashpb_sum(m *v12.PrincipalPolicy, hasher 
 	}
 	if _, ok := ignore["cerbos.policy.v1.PrincipalPolicy.scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.PrincipalPolicy.variables"]; !ok {
+		if m.Variables != nil {
+			cerbos_policy_v1_Variables_hashpb_sum(m.Variables, hasher, ignore)
+		}
 
 	}
 }
@@ -982,6 +1027,12 @@ func cerbos_policy_v1_ResourcePolicy_hashpb_sum(m *v12.ResourcePolicy, hasher ha
 	if _, ok := ignore["cerbos.policy.v1.ResourcePolicy.schemas"]; !ok {
 		if m.Schemas != nil {
 			cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.ResourcePolicy.variables"]; !ok {
+		if m.Variables != nil {
+			cerbos_policy_v1_Variables_hashpb_sum(m.Variables, hasher, ignore)
 		}
 
 	}
@@ -1350,6 +1401,34 @@ func cerbos_policy_v1_TestResults_hashpb_sum(m *v12.TestResults, hasher hash.Has
 			cerbos_policy_v1_TestResults_Summary_hashpb_sum(m.Summary, hasher, ignore)
 		}
 
+	}
+}
+
+func cerbos_policy_v1_Variables_hashpb_sum(m *v12.Variables, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Variables.import"]; !ok {
+		if len(m.Import) > 0 {
+			for _, v := range m.Import {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.Variables.local"]; !ok {
+		if len(m.Local) > 0 {
+			keys := make([]string, len(m.Local))
+			i := 0
+			for k := range m.Local {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				_, _ = hasher.Write(protowire.AppendString(nil, m.Local[k]))
+
+			}
+		}
 	}
 }
 

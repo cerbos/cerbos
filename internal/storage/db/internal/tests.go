@@ -36,6 +36,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		pp := policy.Wrap(test.GenPrincipalPolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
+		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
 
@@ -45,7 +46,13 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		ppAcme := withScope(test.GenPrincipalPolicy(test.NoMod()), "acme")
 		ppAcmeHR := withScope(test.GenPrincipalPolicy(test.NoMod()), "acme.hr")
 
-		policyList := []policy.Wrapper{rp, pp, dr, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR}
+		drImportVariables := policy.Wrap(test.GenDerivedRoles(test.Suffix("_import_variables")))
+		drImportVariables.GetDerivedRoles().Variables = &policyv1.Variables{Import: []string{ev.Name}}
+		rpImportDerivedRolesThatImportVariables := policy.Wrap(test.GenResourcePolicy(test.Suffix("_import_derived_roles_that_import_variables")))
+		rpImportDerivedRolesThatImportVariables.GetResourcePolicy().ImportDerivedRoles = []string{drImportVariables.Name}
+		rpImportDerivedRolesThatImportVariables.GetResourcePolicy().Variables = nil
+
+		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables}
 
 		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
 		const schID = "leave_request"
@@ -58,6 +65,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: pp.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ev.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcme.ID},
@@ -65,119 +73,66 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHRUK.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcme.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcmeHR.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drImportVariables.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpImportDerivedRolesThatImportVariables.ID},
 			}
 			checkEvents(t, timeout, wantEvents...)
 
 			stats := store.RepoStats(ctx)
-			require.Equal(t, 5, stats.PolicyCount[policy.ResourceKind])
+			require.Equal(t, 6, stats.PolicyCount[policy.ResourceKind])
 			require.Equal(t, 3, stats.PolicyCount[policy.PrincipalKind])
-			require.Equal(t, 2, stats.PolicyCount[policy.DerivedRolesKind])
+			require.Equal(t, 3, stats.PolicyCount[policy.DerivedRolesKind])
+			require.Equal(t, 1, stats.PolicyCount[policy.ExportVariablesKind])
 		})
 
-		t.Run("get_compilation_unit_with_deps", func(t *testing.T) {
+		t.Run("get_compilation_unit_for_resource_policy", func(t *testing.T) {
 			have, err := store.GetCompilationUnits(ctx, rp.ID)
 			require.NoError(t, err)
-			require.Len(t, have, 1)
-			require.Contains(t, have, rp.ID)
-
-			haveRec := have[rp.ID]
-			require.Equal(t, rp.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 2)
-
-			require.Contains(t, haveRec.Definitions, rp.ID)
-			require.Empty(t, cmp.Diff(rp, haveRec.Definitions[rp.ID], protocmp.Transform()))
-
-			require.Contains(t, haveRec.Definitions, dr.ID)
-			require.Empty(t, cmp.Diff(dr, haveRec.Definitions[dr.ID], protocmp.Transform()))
+			requireCompilationUnits(t, map[policy.Wrapper][]policy.Wrapper{
+				rp: {rp, dr, ev},
+			}, have)
 		})
 
-		t.Run("get_compilation_unit_without_deps", func(t *testing.T) {
+		t.Run("get_compilation_unit_for_resource_policy_that_imports_derived_roles_that_import_variables", func(t *testing.T) {
+			have, err := store.GetCompilationUnits(ctx, rpImportDerivedRolesThatImportVariables.ID)
+			require.NoError(t, err)
+			requireCompilationUnits(t, map[policy.Wrapper][]policy.Wrapper{
+				rpImportDerivedRolesThatImportVariables: {rpImportDerivedRolesThatImportVariables, drImportVariables, ev},
+			}, have)
+		})
+
+		t.Run("get_compilation_unit_for_principal_policy", func(t *testing.T) {
 			have, err := store.GetCompilationUnits(ctx, pp.ID)
 			require.NoError(t, err)
-			require.Len(t, have, 1)
-			require.Contains(t, have, pp.ID)
-
-			haveRec := have[pp.ID]
-			require.Equal(t, pp.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 1)
-
-			require.Contains(t, haveRec.Definitions, pp.ID)
-			require.Empty(t, cmp.Diff(pp, haveRec.Definitions[pp.ID], protocmp.Transform()))
+			requireCompilationUnits(t, map[policy.Wrapper][]policy.Wrapper{
+				pp: {pp, ev},
+			}, have)
 		})
 
 		t.Run("get_compilation_unit_for_scoped_resource_policy", func(t *testing.T) {
 			have, err := store.GetCompilationUnits(ctx, rpAcmeHRUK.ID)
 			require.NoError(t, err)
-			require.Len(t, have, 1)
-			require.Contains(t, have, rpAcmeHRUK.ID)
-
-			haveRec := have[rpAcmeHRUK.ID]
-			require.Equal(t, rpAcmeHRUK.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 5)
-			require.Contains(t, haveRec.Definitions, rpAcmeHRUK.ID)
-			require.Empty(t, cmp.Diff(rpAcmeHRUK, haveRec.Definitions[rpAcmeHRUK.ID], protocmp.Transform()))
-			require.Contains(t, haveRec.Definitions, rpAcmeHR.ID)
-			require.Empty(t, cmp.Diff(rpAcmeHR, haveRec.Definitions[rpAcmeHR.ID], protocmp.Transform()))
-			require.Contains(t, haveRec.Definitions, rpAcme.ID)
-			require.Empty(t, cmp.Diff(rpAcme, haveRec.Definitions[rpAcme.ID], protocmp.Transform()))
-			require.Contains(t, haveRec.Definitions, rp.ID)
-			require.Empty(t, cmp.Diff(rp, haveRec.Definitions[rp.ID], protocmp.Transform()))
-			require.Contains(t, haveRec.Definitions, dr.ID)
-			require.Empty(t, cmp.Diff(dr, haveRec.Definitions[dr.ID], protocmp.Transform()))
+			requireCompilationUnits(t, map[policy.Wrapper][]policy.Wrapper{
+				rpAcmeHRUK: {rpAcmeHRUK, rpAcmeHR, rpAcme, rp, dr, ev},
+			}, have)
 		})
 
 		t.Run("get_compilation_unit_for_scoped_principal_policy", func(t *testing.T) {
 			have, err := store.GetCompilationUnits(ctx, ppAcmeHR.ID)
 			require.NoError(t, err)
-			require.Len(t, have, 1)
-			require.Contains(t, have, ppAcmeHR.ID)
-
-			haveRec := have[ppAcmeHR.ID]
-			require.Equal(t, ppAcmeHR.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 3)
-			require.Contains(t, haveRec.Definitions, ppAcmeHR.ID)
-			require.Empty(t, cmp.Diff(ppAcmeHR, haveRec.Definitions[ppAcmeHR.ID], protocmp.Transform()))
-			require.Contains(t, haveRec.Definitions, ppAcme.ID)
-			require.Empty(t, cmp.Diff(ppAcme, haveRec.Definitions[ppAcme.ID], protocmp.Transform()))
-			require.Contains(t, haveRec.Definitions, pp.ID)
-			require.Empty(t, cmp.Diff(pp, haveRec.Definitions[pp.ID], protocmp.Transform()))
+			requireCompilationUnits(t, map[policy.Wrapper][]policy.Wrapper{
+				ppAcmeHR: {ppAcmeHR, ppAcme, pp, ev},
+			}, have)
 		})
 
 		t.Run("get_multiple_compilation_units", func(t *testing.T) {
 			have, err := store.GetCompilationUnits(ctx, rp.ID, pp.ID, rpAcmeHRUK.ID)
 			require.NoError(t, err)
-			require.Len(t, have, 3)
-			require.Contains(t, have, rp.ID)
-			require.Contains(t, have, pp.ID)
-			require.Contains(t, have, rpAcmeHRUK.ID)
-
-			haveRP := have[rp.ID]
-			require.Equal(t, rp.ID, haveRP.ModID)
-			require.Len(t, haveRP.Definitions, 2)
-			require.Contains(t, haveRP.Definitions, rp.ID)
-			require.Empty(t, cmp.Diff(rp, haveRP.Definitions[rp.ID], protocmp.Transform()))
-			require.Contains(t, haveRP.Definitions, dr.ID)
-			require.Empty(t, cmp.Diff(dr, haveRP.Definitions[dr.ID], protocmp.Transform()))
-
-			havePP := have[pp.ID]
-			require.Equal(t, pp.ID, havePP.ModID)
-			require.Len(t, havePP.Definitions, 1)
-			require.Contains(t, havePP.Definitions, pp.ID)
-			require.Empty(t, cmp.Diff(pp, havePP.Definitions[pp.ID], protocmp.Transform()))
-
-			haveRPAcmeHRUK := have[rpAcmeHRUK.ID]
-			require.Equal(t, rpAcmeHRUK.ID, haveRPAcmeHRUK.ModID)
-			require.Len(t, haveRPAcmeHRUK.Definitions, 5)
-			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcmeHRUK.ID)
-			require.Empty(t, cmp.Diff(rpAcmeHRUK, haveRPAcmeHRUK.Definitions[rpAcmeHRUK.ID], protocmp.Transform()))
-			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcmeHR.ID)
-			require.Empty(t, cmp.Diff(rpAcmeHR, haveRPAcmeHRUK.Definitions[rpAcmeHR.ID], protocmp.Transform()))
-			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcme.ID)
-			require.Empty(t, cmp.Diff(rpAcme, haveRPAcmeHRUK.Definitions[rpAcme.ID], protocmp.Transform()))
-			require.Contains(t, haveRPAcmeHRUK.Definitions, rp.ID)
-			require.Empty(t, cmp.Diff(rp, haveRPAcmeHRUK.Definitions[rp.ID], protocmp.Transform()))
-			require.Contains(t, haveRPAcmeHRUK.Definitions, dr.ID)
-			require.Empty(t, cmp.Diff(dr, haveRPAcmeHRUK.Definitions[dr.ID], protocmp.Transform()))
+			requireCompilationUnits(t, map[policy.Wrapper][]policy.Wrapper{
+				rp:         {rp, dr, ev},
+				pp:         {pp, ev},
+				rpAcmeHRUK: {rpAcmeHRUK, rpAcmeHR, rpAcme, rp, dr, ev},
+			}, have)
 		})
 
 		t.Run("get_non_existent_compilation_unit", func(t *testing.T) {
@@ -187,19 +142,36 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Empty(t, have)
 		})
 
+		t.Run("get_first_match_resource_policy", func(t *testing.T) {
+			modIDs := namer.ScopedResourcePolicyModuleIDs(rpAcmeHR.Name, rpAcmeHR.Version, "acme.hr.france.marseille", true)
+			have, err := store.GetFirstMatch(ctx, modIDs)
+			require.NoError(t, err)
+			requireCompilationUnit(t, rpAcmeHR.ID, []policy.Wrapper{rpAcmeHR, rpAcme, rp, dr, ev}, have)
+		})
+
+		t.Run("get_first_match_principal_policy", func(t *testing.T) {
+			modIDs := namer.ScopedPrincipalPolicyModuleIDs(ppAcmeHR.Name, ppAcmeHR.Version, "acme.hr.france.marseille", true)
+			have, err := store.GetFirstMatch(ctx, modIDs)
+			require.NoError(t, err)
+			requireCompilationUnit(t, ppAcmeHR.ID, []policy.Wrapper{ppAcmeHR, ppAcme, pp, ev}, have)
+		})
+
+		t.Run("get_first_match_non_existent", func(t *testing.T) {
+			modIDs := namer.ScopedResourcePolicyModuleIDs("foo", "bar", "acme.hr.france.marseille", true)
+			have, err := store.GetFirstMatch(ctx, modIDs)
+			require.NoError(t, err)
+			require.Nil(t, have)
+		})
+
 		t.Run("get_dependents", func(t *testing.T) {
-			have, err := store.GetDependents(ctx, dr.ID)
+			have, err := store.GetDependents(ctx, dr.ID, ev.ID)
 			require.NoError(t, err)
 
-			require.Len(t, have, 1)
+			require.Len(t, have, 2)
 			require.Contains(t, have, dr.ID)
-
-			haveDeps := have[dr.ID]
-			require.Len(t, haveDeps, 4)
-			require.Contains(t, haveDeps, rp.ID)
-			require.Contains(t, haveDeps, rpAcme.ID)
-			require.Contains(t, haveDeps, rpAcmeHR.ID)
-			require.Contains(t, haveDeps, rpAcmeHRUK.ID)
+			require.ElementsMatch(t, []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}, have[dr.ID])
+			require.Contains(t, have, ev.ID)
+			require.ElementsMatch(t, []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID, pp.ID, ppAcme.ID, ppAcmeHR.ID, drImportVariables.ID, rpImportDerivedRolesThatImportVariables.ID}, have[ev.ID])
 		})
 
 		t.Run("get_policy", func(t *testing.T) {
@@ -221,7 +193,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("list_policies", func(t *testing.T) {
 			t.Run("should be able to list policies", func(t *testing.T) {
-				have, err := store.ListPolicyIDs(ctx, false)
+				have, err := store.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
 				require.NoError(t, err)
 				require.Len(t, have, len(policyList))
 
@@ -232,6 +204,62 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 				require.ElementsMatch(t, want, have)
 			})
+		})
+
+		t.Run("filter_policies", func(t *testing.T) {
+			testCases := []struct {
+				name   string
+				params storage.ListPolicyIDsParams
+			}{
+				{
+					name: "name regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						NameRegexp:      ".*(leave|equipment)_[rw]equest$",
+					},
+				},
+				{
+					name: "scope regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						ScopeRegexp:     "^acme",
+					},
+				},
+				{
+					name: "version regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						VersionRegexp:   "default$",
+					},
+				},
+				{
+					name: "all regexp",
+					params: storage.ListPolicyIDsParams{
+						IncludeDisabled: true,
+						NameRegexp:      ".*(leave|equipment)_[rw]equest$",
+						ScopeRegexp:     "^acme",
+						VersionRegexp:   "default$",
+					},
+				},
+			}
+
+			for _, tc := range testCases {
+				tc := tc
+				t.Run("should be able to filter policies "+tc.name, func(t *testing.T) {
+					have, err := store.ListPolicyIDs(ctx, tc.params)
+					require.NoError(t, err)
+					filteredPolicyList := test.FilterPolicies(t, policyList, tc.params)
+					require.Greater(t, len(filteredPolicyList), 0)
+					require.Len(t, have, len(filteredPolicyList))
+
+					want := make([]string, len(filteredPolicyList))
+					for i, p := range filteredPolicyList {
+						want[i] = namer.PolicyKeyFromFQN(p.FQN)
+					}
+
+					require.ElementsMatch(t, want, have)
+				})
+			}
 		})
 
 		t.Run("delete", func(t *testing.T) {
@@ -301,4 +329,26 @@ func TestCheckSchema(ctx context.Context, t *testing.T, s storage.Verifiable) {
 
 	err := s.CheckSchema(ctx)
 	require.NoError(t, err, "failed to check schema for the database storage")
+}
+
+func requireCompilationUnits(t *testing.T, want map[policy.Wrapper][]policy.Wrapper, have map[namer.ModuleID]*policy.CompilationUnit) {
+	t.Helper()
+
+	require.Len(t, have, len(want))
+	for wantUnit, wantDefinitions := range want {
+		require.Contains(t, have, wantUnit.ID)
+		requireCompilationUnit(t, wantUnit.ID, wantDefinitions, have[wantUnit.ID])
+	}
+}
+
+func requireCompilationUnit(t *testing.T, wantModID namer.ModuleID, wantDefinitions []policy.Wrapper, have *policy.CompilationUnit) {
+	t.Helper()
+
+	require.NotNil(t, have)
+	require.Equal(t, wantModID, have.ModID)
+	require.Len(t, have.Definitions, len(wantDefinitions))
+	for _, wantDefinition := range wantDefinitions {
+		require.Contains(t, have.Definitions, wantDefinition.ID)
+		require.Empty(t, cmp.Diff(wantDefinition, have.Definitions[wantDefinition.ID], protocmp.Transform()))
+	}
 }

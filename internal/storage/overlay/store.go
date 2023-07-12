@@ -162,12 +162,13 @@ func withCircuitBreaker[T any](s *Store, baseFn, fallbackFn func() (T, error)) (
 // PolicyLoader interface
 //
 
-func (s *Store) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	// Both `SourceStore` (via `compile.Manager`) and `BinaryStore` implement GetPolicySet
+func (s *Store) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	return withCircuitBreaker(
 		s,
-		func() (*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetPolicySet(ctx, id) },
-		func() (*runtimev1.RunnablePolicySet, error) { return s.fallbackPolicyLoader.GetPolicySet(ctx, id) },
+		func() (*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetFirstMatch(ctx, candidates) },
+		func() (*runtimev1.RunnablePolicySet, error) {
+			return s.fallbackPolicyLoader.GetFirstMatch(ctx, candidates)
+		},
 	)
 }
 
@@ -179,11 +180,11 @@ func (s *Store) Driver() string {
 	return DriverName
 }
 
-func (s *Store) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
+func (s *Store) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
 	return withCircuitBreaker(
 		s,
-		func() ([]string, error) { return s.baseStore.ListPolicyIDs(ctx, includeDisabled) },
-		func() ([]string, error) { return s.fallbackStore.ListPolicyIDs(ctx, includeDisabled) },
+		func() ([]string, error) { return s.baseStore.ListPolicyIDs(ctx, params) },
+		func() ([]string, error) { return s.fallbackStore.ListPolicyIDs(ctx, params) },
 	)
 }
 

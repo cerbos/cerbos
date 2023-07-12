@@ -1,0 +1,118 @@
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+
+helmDefaults:
+  cleanupOnFail: true
+  wait: true
+  recreatePods: true
+  force: true
+  createNamespace: true
+
+releases:
+  - name: cerbos
+    namespace: '{{ requiredEnv "E2E_NS" }}'
+    createNamespace: true
+    labels:
+      e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
+      e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+    chart: '{{ requiredEnv "E2E_SRC_ROOT" }}/deploy/charts/cerbos'
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - namespace
+          - '{{ requiredEnv "E2E_NS" }}'
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - secret
+          - tls
+          - 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          - '--cert={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.crt'
+          - '--key={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.key'
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+      - events: ["presync"]
+        showlogs: true
+        command: ./create-policy-secret.sh
+        args:
+          - '{{ requiredEnv "E2E_SRC_ROOT" }}'
+          - '{{ requiredEnv "E2E_NS" }}'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - secret
+          - cerbos-policies
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - secret
+          - 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - namespace
+          - '{{ requiredEnv "E2E_NS" }}'
+    values:
+      - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+      - image:
+          repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
+          tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
+      - volumes:
+        - name: cerbos-auditlog
+          emptyDir: {}
+        - name: cerbos-policies
+          secret:
+            secretName: cerbos-policies
+      - volumeMounts:
+        - name: cerbos-auditlog
+          mountPath: /audit
+        - name: cerbos-policies
+          mountPath: /policies
+      - cerbos:
+          tlsSecretName: 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          logLevel: DEBUG
+          config:
+            server:
+              playgroundEnabled: true
+              requestLimits:
+                maxActionsPerResource: 5
+                maxResourcesPerRequest: 5
+            auxData:
+              jwt:
+                disableVerification: true
+            schema:
+              enforcement: reject
+            audit:
+              enabled: true
+              accessLogsEnabled: true
+              decisionLogsEnabled: true
+              decisionLogFilters:
+                checkResources:
+                  ignoreAllowAll: true
+                planResources:
+                  ignoreAll: true
+              excludeMetadataKeys: ["authorization"]
+              backend: local
+              local:
+                storagePath: /audit/cerbos
+            engine:
+              lenientScopeSearch: true
+            storage:
+              driver: "disk"
+              disk:
+                directory: /policies/policies.tgz
+            telemetry:
+              disabled: true

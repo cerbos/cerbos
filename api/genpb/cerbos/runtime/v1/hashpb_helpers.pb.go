@@ -347,6 +347,11 @@ func cerbos_runtime_v1_RunnablePolicySet_hashpb_sum(m *RunnablePolicySet, hasher
 					cerbos_runtime_v1_RunnableDerivedRolesSet_hashpb_sum(t.DerivedRoles, hasher, ignore)
 				}
 
+			case *RunnablePolicySet_Variables:
+				if t.Variables != nil {
+					cerbos_runtime_v1_RunnableVariablesSet_hashpb_sum(t.Variables, hasher, ignore)
+				}
+
 			}
 		}
 	}
@@ -652,6 +657,41 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourceP
 	}
 }
 
+func cerbos_runtime_v1_RunnableVariablesSet_Metadata_hashpb_sum(m *RunnableVariablesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.Metadata.fqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Fqn))
+
+	}
+}
+
+func cerbos_runtime_v1_RunnableVariablesSet_hashpb_sum(m *RunnableVariablesSet, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.meta"]; !ok {
+		if m.Meta != nil {
+			cerbos_runtime_v1_RunnableVariablesSet_Metadata_hashpb_sum(m.Meta, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.variables"]; !ok {
+		if len(m.Variables) > 0 {
+			keys := make([]string, len(m.Variables))
+			i := 0
+			for k := range m.Variables {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Variables[k] != nil {
+					cerbos_runtime_v1_Expr_hashpb_sum(m.Variables[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func google_api_expr_v1alpha1_CheckedExpr_hashpb_sum(m *v1alpha1.CheckedExpr, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["google.api.expr.v1alpha1.CheckedExpr.reference_map"]; !ok {
 		if len(m.ReferenceMap) > 0 {
@@ -824,6 +864,14 @@ func google_api_expr_v1alpha1_Expr_CreateList_hashpb_sum(m *v1alpha1.Expr_Create
 			}
 		}
 	}
+	if _, ok := ignore["google.api.expr.v1alpha1.Expr.CreateList.optional_indices"]; !ok {
+		if len(m.OptionalIndices) > 0 {
+			for _, v := range m.OptionalIndices {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(v)))
+
+			}
+		}
+	}
 }
 
 func google_api_expr_v1alpha1_Expr_CreateStruct_Entry_hashpb_sum(m *v1alpha1.Expr_CreateStruct_Entry, hasher hash.Hash, ignore map[string]struct{}) {
@@ -849,6 +897,10 @@ func google_api_expr_v1alpha1_Expr_CreateStruct_Entry_hashpb_sum(m *v1alpha1.Exp
 		if m.Value != nil {
 			google_api_expr_v1alpha1_Expr_hashpb_sum(m.Value, hasher, ignore)
 		}
+
+	}
+	if _, ok := ignore["google.api.expr.v1alpha1.Expr.CreateStruct.Entry.optional_entry"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.OptionalEntry)))
 
 	}
 }

@@ -30,6 +30,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -37,8 +38,12 @@ func TestManager(t *testing.T) {
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
 				rp.ID: {
-					ModID:       rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+					ModID: rp.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						rp.ID: rp.Policy,
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 			}, nil).
 			Once()
@@ -107,6 +112,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -114,8 +120,12 @@ func TestManager(t *testing.T) {
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
 				rp.ID: {
-					ModID:       rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+					ModID: rp.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						rp.ID: rp.Policy,
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 			}, nil).
 			Once()
@@ -124,12 +134,19 @@ func TestManager(t *testing.T) {
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID, rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
 				rp.ID: {
-					ModID:       rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+					ModID: rp.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						rp.ID: rp.Policy,
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 				dr.ID: {
-					ModID:       dr.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{dr.ID: dr.Policy},
+					ModID: dr.ID,
+					Definitions: map[namer.ModuleID]*policyv1.Policy{
+						dr.ID: dr.Policy,
+						ev.ID: ev.Policy,
+					},
 				},
 			}, nil).
 			Once()
@@ -161,6 +178,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -171,15 +189,22 @@ func TestManager(t *testing.T) {
 			case 1:
 				return map[namer.ModuleID]*policy.CompilationUnit{
 					rp.ID: {
-						ModID:       rp.ID,
-						Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
+						ModID: rp.ID,
+						Definitions: map[namer.ModuleID]*policyv1.Policy{
+							rp.ID: rp.Policy,
+							dr.ID: dr.Policy,
+							ev.ID: ev.Policy,
+						},
 					},
 				}, nil
 			case 2, 3: // derived roles is now deleted
 				return map[namer.ModuleID]*policy.CompilationUnit{
 					rp.ID: {
-						ModID:       rp.ID,
-						Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy},
+						ModID: rp.ID,
+						Definitions: map[namer.ModuleID]*policyv1.Policy{
+							rp.ID: rp.Policy,
+							ev.ID: ev.Policy,
+						},
 					},
 				}, nil
 			default:
@@ -255,6 +280,21 @@ func (ms *MockStore) Unsubscribe(s storage.Subscriber) {
 	ms.subscriber = nil
 }
 
+func (ms *MockStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
+	args := ms.MethodCalled("GetFirstMatch", ctx, candidates)
+	res := args.Get(0)
+	switch t := res.(type) {
+	case nil:
+		return nil, args.Error(1)
+	case *policy.CompilationUnit:
+		return t, args.Error(1)
+	case func() (*policy.CompilationUnit, error):
+		return t()
+	default:
+		panic(fmt.Errorf("unknown return value type: %T", res))
+	}
+}
+
 func (ms *MockStore) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	args := ms.MethodCalled("GetCompilationUnits", ctx, ids)
 	res := args.Get(0)
@@ -288,7 +328,7 @@ func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return args.Error(0)
 }
 
-func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ bool) ([]string, error) {
+func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
 	args := ms.MethodCalled("ListPolicyIDs", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)

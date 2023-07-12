@@ -104,12 +104,19 @@ func NewFromConf(ctx context.Context, confWrapper *config.Wrapper) (Store, error
 	return cons(ctx, confWrapper)
 }
 
+type ListPolicyIDsParams struct {
+	NameRegexp      string
+	ScopeRegexp     string
+	VersionRegexp   string
+	IncludeDisabled bool
+}
+
 // Store is the common interface implemented by storage backends.
 type Store interface {
 	// Driver is the name of the storage backend implementation.
 	Driver() string
 	// ListPolicyIDs returns the policy IDs in the store
-	ListPolicyIDs(context.Context, bool) ([]string, error)
+	ListPolicyIDs(context.Context, ListPolicyIDsParams) ([]string, error)
 	// ListSchemaIDs returns the schema ids in the store
 	ListSchemaIDs(context.Context) ([]string, error)
 	// LoadSchema loads the given schema from the store.
@@ -120,6 +127,8 @@ type Store interface {
 type SourceStore interface {
 	Store
 	Subscribable
+	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
+	GetFirstMatch(context.Context, []namer.ModuleID) (*policy.CompilationUnit, error)
 	// GetCompilationUnits gets the compilation units for the given module IDs.
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
@@ -131,8 +140,8 @@ type SourceStore interface {
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.
 type BinaryStore interface {
 	Store
-	// GetPolicySet gets the compiled policy set identified by the given module ID.
-	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
+	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
 // MutableStore is a store that allows mutations.

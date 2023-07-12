@@ -21,7 +21,7 @@ inputs: [
       }
     },
     "resource": {
-      "kind": "leave_request",
+      "kind": "leave_request_x",
       "scope": "acme.hr.fr",
       "id": "XX125",
       "attr": {

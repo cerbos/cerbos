@@ -99,6 +99,21 @@ func (p *Principal) WithAttr(key string, value any) *Principal {
 	return p
 }
 
+// ID returns the principal ID.
+func (p *Principal) ID() string {
+	return p.p.GetId()
+}
+
+// Roles returns the principal roles.
+func (p *Principal) Roles() []string {
+	return p.p.GetRoles()
+}
+
+// Proto returns the underlying protobuf object representing the principal.
+func (p *Principal) Proto() *enginev1.Principal {
+	return p.p
+}
+
 // Err returns any errors accumulated during the construction of the principal.
 func (p *Principal) Err() error {
 	return p.err
@@ -171,6 +186,21 @@ func (r *Resource) WithAttr(key string, value any) *Resource {
 func (r *Resource) WithScope(scope string) *Resource {
 	r.r.Scope = scope
 	return r
+}
+
+// ID returns the resource ID.
+func (r *Resource) ID() string {
+	return r.r.GetId()
+}
+
+// Kind returns the resource kind.
+func (r *Resource) Kind() string {
+	return r.r.GetKind()
+}
+
+// Proto returns the underlying protobuf object representing the resource.
+func (r *Resource) Proto() *enginev1.Resource {
+	return r.r
 }
 
 // Err returns any errors accumulated during the construction of the resource.
@@ -659,6 +689,21 @@ func (ps *PolicySet) AddDerivedRoles(policies ...*DerivedRoles) *PolicySet {
 	return ps
 }
 
+// AddExportVariables adds the given exported variables to the set.
+func (ps *PolicySet) AddExportVariables(policies ...*ExportVariables) *PolicySet {
+	for _, p := range policies {
+		if p == nil {
+			continue
+		}
+
+		if err := ps.add(p); err != nil {
+			ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add exported variables [%s]: %w", p.ev.Name, err))
+		}
+	}
+
+	return ps
+}
+
 // GetPolicies returns all of the policies in the set.
 func (ps *PolicySet) GetPolicies() []*policyv1.Policy {
 	return ps.policies
@@ -831,8 +876,9 @@ type ResourcePolicy struct {
 func NewResourcePolicy(resource, version string) *ResourcePolicy {
 	return &ResourcePolicy{
 		p: &policyv1.ResourcePolicy{
-			Resource: resource,
-			Version:  version,
+			Resource:  resource,
+			Version:   version,
+			Variables: &policyv1.Variables{Local: make(map[string]string)},
 		},
 	}
 }
@@ -873,6 +919,18 @@ func (rp *ResourcePolicy) AddResourceRules(rules ...*ResourceRule) *ResourcePoli
 		rp.p.Rules = append(rp.p.Rules, r.rule)
 	}
 
+	return rp
+}
+
+// WithVariablesImports adds import statements for exported variables.
+func (rp *ResourcePolicy) WithVariablesImports(name ...string) *ResourcePolicy {
+	rp.p.Variables.Import = append(rp.p.Variables.Import, name...)
+	return rp
+}
+
+// WithVariable adds a variable definition for use in conditions.
+func (rp *ResourcePolicy) WithVariable(name, expr string) *ResourcePolicy {
+	rp.p.Variables.Local[name] = expr
 	return rp
 }
 
@@ -978,6 +1036,7 @@ func NewPrincipalPolicy(principal, version string) *PrincipalPolicy {
 		pp: &policyv1.PrincipalPolicy{
 			Principal: principal,
 			Version:   version,
+			Variables: &policyv1.Variables{Local: make(map[string]string)},
 		},
 	}
 }
@@ -1009,6 +1068,18 @@ func (pp *PrincipalPolicy) WithScope(scope string) *PrincipalPolicy {
 // WithVersion sets the version of this policy.
 func (pp *PrincipalPolicy) WithVersion(version string) *PrincipalPolicy {
 	pp.pp.Version = version
+	return pp
+}
+
+// WithVariablesImports adds import statements for exported variables.
+func (pp *PrincipalPolicy) WithVariablesImports(name ...string) *PrincipalPolicy {
+	pp.pp.Variables.Import = append(pp.pp.Variables.Import, name...)
+	return pp
+}
+
+// WithVariable adds a variable definition for use in conditions.
+func (pp *PrincipalPolicy) WithVariable(name, expr string) *PrincipalPolicy {
+	pp.pp.Variables.Local[name] = expr
 	return pp
 }
 
@@ -1102,7 +1173,10 @@ type DerivedRoles struct {
 // NewDerivedRoles creates a new derived roles set with the given name.
 func NewDerivedRoles(name string) *DerivedRoles {
 	return &DerivedRoles{
-		dr: &policyv1.DerivedRoles{Name: name},
+		dr: &policyv1.DerivedRoles{
+			Name:      name,
+			Variables: &policyv1.Variables{Local: make(map[string]string)},
+		},
 	}
 }
 
@@ -1122,6 +1196,18 @@ func (dr *DerivedRoles) addRoleDef(name string, parentRoles []string, comp *poli
 	return dr
 }
 
+// WithVariablesImports adds import statements for exported variables.
+func (dr *DerivedRoles) WithVariablesImports(name ...string) *DerivedRoles {
+	dr.dr.Variables.Import = append(dr.dr.Variables.Import, name...)
+	return dr
+}
+
+// WithVariable adds a variable definition for use in conditions.
+func (dr *DerivedRoles) WithVariable(name, expr string) *DerivedRoles {
+	dr.dr.Variables.Local[name] = expr
+	return dr
+}
+
 // Err returns any errors accumulated during the construction of the derived roles.
 func (dr *DerivedRoles) Err() error {
 	return nil
@@ -1138,6 +1224,49 @@ func (dr *DerivedRoles) build() (*policyv1.Policy, error) {
 		ApiVersion: apiVersion,
 		PolicyType: &policyv1.Policy_DerivedRoles{
 			DerivedRoles: dr.dr,
+		},
+	}
+
+	return p, policy.Validate(p)
+}
+
+// ExportVariables is a builder for exported variables.
+type ExportVariables struct {
+	ev *policyv1.ExportVariables
+}
+
+// NewExportVariables creates a new exported variables set with the given name.
+func NewExportVariables(name string) *ExportVariables {
+	return &ExportVariables{
+		ev: &policyv1.ExportVariables{
+			Name:        name,
+			Definitions: make(map[string]string),
+		},
+	}
+}
+
+// AddVariable defines an exported variable with the given name to be computed by the given expression.
+func (ev *ExportVariables) AddVariable(name, expr string) *ExportVariables {
+	ev.ev.Definitions[name] = expr
+	return ev
+}
+
+// Err returns any errors accumulated during the construction of the exported variables.
+func (ev *ExportVariables) Err() error {
+	return nil
+}
+
+// Validate checks whether the exported variables are valid.
+func (ev *ExportVariables) Validate() error {
+	_, err := ev.build()
+	return err
+}
+
+func (ev *ExportVariables) build() (*policyv1.Policy, error) {
+	p := &policyv1.Policy{
+		ApiVersion: apiVersion,
+		PolicyType: &policyv1.Policy_ExportVariables{
+			ExportVariables: ev.ev,
 		},
 	}
 
@@ -1257,5 +1386,23 @@ type (
 func WithIncludeDisabled() ListPoliciesOption {
 	return func(request *requestv1.ListPoliciesRequest) {
 		request.IncludeDisabled = true
+	}
+}
+
+func WithNameRegexp(re string) ListPoliciesOption {
+	return func(request *requestv1.ListPoliciesRequest) {
+		request.NameRegexp = re
+	}
+}
+
+func WithScopeRegexp(re string) ListPoliciesOption {
+	return func(request *requestv1.ListPoliciesRequest) {
+		request.ScopeRegexp = re
+	}
+}
+
+func WithVersionRegexp(v string) ListPoliciesOption {
+	return func(request *requestv1.ListPoliciesRequest) {
+		request.VersionRegexp = v
 	}
 }

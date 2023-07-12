@@ -409,7 +409,7 @@ func (s *RemoteSource) IsHealthy() bool {
 	return s.healthy
 }
 
-func (s *RemoteSource) GetPolicySet(ctx context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -417,10 +417,10 @@ func (s *RemoteSource) GetPolicySet(ctx context.Context, id namer.ModuleID) (*ru
 		return nil, ErrBundleNotLoaded
 	}
 
-	return s.bundle.GetPolicySet(ctx, id)
+	return s.bundle.GetFirstMatch(ctx, candidates)
 }
 
-func (s *RemoteSource) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
+func (s *RemoteSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -428,7 +428,7 @@ func (s *RemoteSource) ListPolicyIDs(ctx context.Context, includeDisabled bool) 
 		return nil, ErrBundleNotLoaded
 	}
 
-	return s.bundle.ListPolicyIDs(ctx, includeDisabled)
+	return s.bundle.ListPolicyIDs(ctx, params)
 }
 
 func (s *RemoteSource) ListSchemaIDs(ctx context.Context) ([]string, error) {

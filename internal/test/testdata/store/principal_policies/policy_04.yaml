@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: "api.cerbos.dev/v1"
 principalPolicy:
@@ -19,4 +20,3 @@ principalPolicy:
           output:
             expr: |-
               ["foo", ["bar", true]]
-

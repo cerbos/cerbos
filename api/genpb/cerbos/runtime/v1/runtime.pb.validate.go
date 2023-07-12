@@ -187,6 +187,47 @@ func (m *RunnablePolicySet) validate(all bool) error {
 			}
 		}
 
+	case *RunnablePolicySet_Variables:
+		if v == nil {
+			err := RunnablePolicySetValidationError{
+				field:  "PolicySet",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+		if all {
+			switch v := interface{}(m.GetVariables()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "Variables",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "Variables",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetVariables()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RunnablePolicySetValidationError{
+					field:  "Variables",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	default:
 		_ = v // ensures v is used
 	}
@@ -866,6 +907,183 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RunnableDerivedRolesSetValidationError{}
+
+// Validate checks the field values on RunnableVariablesSet with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RunnableVariablesSet) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableVariablesSet with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunnableVariablesSetMultiError, or nil if none found.
+func (m *RunnableVariablesSet) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableVariablesSet) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetMeta()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnableVariablesSetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnableVariablesSetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunnableVariablesSetValidationError{
+				field:  "Meta",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetVariables()))
+		i := 0
+		for key := range m.GetVariables() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetVariables()[key]
+			_ = val
+
+			// no validation rules for Variables[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableVariablesSetValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableVariablesSetValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableVariablesSetValidationError{
+						field:  fmt.Sprintf("Variables[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		}
+	}
+
+	if len(errors) > 0 {
+		return RunnableVariablesSetMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunnableVariablesSetMultiError is an error wrapping multiple validation
+// errors returned by RunnableVariablesSet.ValidateAll() if the designated
+// constraints aren't met.
+type RunnableVariablesSetMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableVariablesSetMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableVariablesSetMultiError) AllErrors() []error { return m }
+
+// RunnableVariablesSetValidationError is the validation error returned by
+// RunnableVariablesSet.Validate if the designated constraints aren't met.
+type RunnableVariablesSetValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunnableVariablesSetValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunnableVariablesSetValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunnableVariablesSetValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunnableVariablesSetValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunnableVariablesSetValidationError) ErrorName() string {
+	return "RunnableVariablesSetValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RunnableVariablesSetValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunnableVariablesSet.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunnableVariablesSetValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunnableVariablesSetValidationError{}
 
 // Validate checks the field values on RunnablePrincipalPolicySet with the
 // rules defined in the proto definition for this message. If any rules are
@@ -2734,6 +2952,111 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RunnableDerivedRolesSet_MetadataValidationError{}
+
+// Validate checks the field values on RunnableVariablesSet_Metadata with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RunnableVariablesSet_Metadata) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableVariablesSet_Metadata with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// RunnableVariablesSet_MetadataMultiError, or nil if none found.
+func (m *RunnableVariablesSet_Metadata) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableVariablesSet_Metadata) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Fqn
+
+	if len(errors) > 0 {
+		return RunnableVariablesSet_MetadataMultiError(errors)
+	}
+
+	return nil
+}
+
+// RunnableVariablesSet_MetadataMultiError is an error wrapping multiple
+// validation errors returned by RunnableVariablesSet_Metadata.ValidateAll()
+// if the designated constraints aren't met.
+type RunnableVariablesSet_MetadataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableVariablesSet_MetadataMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableVariablesSet_MetadataMultiError) AllErrors() []error { return m }
+
+// RunnableVariablesSet_MetadataValidationError is the validation error
+// returned by RunnableVariablesSet_Metadata.Validate if the designated
+// constraints aren't met.
+type RunnableVariablesSet_MetadataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RunnableVariablesSet_MetadataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RunnableVariablesSet_MetadataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RunnableVariablesSet_MetadataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RunnableVariablesSet_MetadataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RunnableVariablesSet_MetadataValidationError) ErrorName() string {
+	return "RunnableVariablesSet_MetadataValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e RunnableVariablesSet_MetadataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRunnableVariablesSet_Metadata.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RunnableVariablesSet_MetadataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RunnableVariablesSet_MetadataValidationError{}
 
 // Validate checks the field values on RunnablePrincipalPolicySet_Metadata with
 // the rules defined in the proto definition for this message. If any rules

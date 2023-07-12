@@ -15,11 +15,11 @@ Cerbos resource and principal policies have an optional `scope` field that can b
 ----
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
-  version: "default" 
+  version: "default"
   scope: "acme.corp" <1>
-  resource: "album:object"  
+  resource: "album:object"
   rules:
-    - actions: ['*'] 
+    - actions: ['*']
       effect: EFFECT_ALLOW
       roles: ["admin"]
 ----
@@ -37,15 +37,15 @@ To illustrate, consider the following Check request:
 [source,json,linenums]
 ----
 {
-  "requestId":  "test01", 
-  "actions":  ["view", "comment"], 
+  "requestId":  "test01",
+  "actions":  ["view", "comment"],
   "resource":  {
-    "kind":  "album:object", 
+    "kind":  "album:object",
     "policyVersion": "default",
     "scope": "customer.abc", <1>
-    "instances": { 
-      "XX125": { 
-        "attr":  { 
+    "instances": {
+      "XX125": {
+        "attr":  {
           "owner":  "alicia",
           "public": false,
           "tags": ["x", "y"],
@@ -54,11 +54,11 @@ To illustrate, consider the following Check request:
     }
   },
   "principal":  {
-    "id":  "alicia", 
+    "id":  "alicia",
     "policyVersion": "default",
     "scope": "customer", <2>
-    "roles":  ["user"], 
-    "attr": { 
+    "roles":  ["user"],
+    "attr": {
       "geography": "GB"
     }
   }
@@ -78,5 +78,6 @@ image::decision_flow.png[]
 * There must be no gaps in the policy chain. For example, if you define a policy with scope `a.b.c`, then policies with scopes `a.b`, `a`, and no-scope should also exist in the policy repository.
 * xref:schemas.adoc[Schemas] must be the same among all the policies in the chain. The schemas used to validate the request are taken from the base policy (policy without a scope). Schemas defined in other policies of the chain will be ignored.
 * Variables and derived roles imports are not inherited between policies. Explicitly import any derived roles and re-define any variables in each policy that requires them.
-* First match wins. As illustrated in the flow chart above, scoped policies are evaluated from the most specific to the least specific. The first policy to produce a decision (ALLOW/DENY) for an action is the winner. The remaining policies cannot override the decision for that particular action (but they will still be evaluated if there are other actions that don't yet have a decision). 
+* First match wins. As illustrated in the flow chart above, scoped policies are evaluated from the most specific to the least specific. The first policy to produce a decision (ALLOW/DENY) for an action is the winner. The remaining policies cannot override the decision for that particular action (but they will still be evaluated if there are other actions that don't yet have a decision).
+* Unless xref:configuration:engine.adoc#lenient_scopes[lenient scope search] is enabled, a policy file matching the exact scope requested in the API request must exist in the store.
 

@@ -48,6 +48,8 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 		rps = compilePrincipalPolicySet(mc)
 	case *policyv1.Policy_DerivedRoles:
 		rps = compileDerivedRoles(mc)
+	case *policyv1.Policy_ExportVariables:
+		rps = compileExportVariables(mc)
 	default:
 		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
 	}
@@ -128,7 +130,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 		DerivedRoles: referencedRoles,
 		Scope:        rp.Scope,
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
-		Variables:    compileVariables(modCtx, modCtx.def.Variables),
+		Variables:    compileAllVariables(modCtx, rp.Variables),
 		Schemas:      rp.Schemas,
 	}
 
@@ -159,7 +161,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 		drModCtx := modCtx.moduleCtx(impID)
 		if drModCtx == nil {
-			modCtx.addErrWithDesc(errImportNotFound, "Import '%s' cannot be found", imp)
+			modCtx.addErrWithDesc(errImportNotFound, "Derived roles import '%s' cannot be found", imp)
 			continue
 		}
 
@@ -243,7 +245,7 @@ func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet
 		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
 	}
 
-	variables := compileVariables(modCtx, modCtx.def.Variables)
+	variables := compileAllVariables(modCtx, dr.Variables)
 
 	for i, def := range dr.Definitions {
 		rdr := &runtimev1.RunnableDerivedRole{
@@ -382,7 +384,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
 		Scope:         pp.Scope,
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
-		Variables:     compileVariables(modCtx, modCtx.def.Variables),
+		Variables:     compileAllVariables(modCtx, pp.Variables),
 	}
 
 	for _, rule := range pp.Rules {
@@ -415,6 +417,77 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 	}
 
 	return rpp
+}
+
+func compileExportVariables(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
+	ev := modCtx.def.GetExportVariables()
+	if ev == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not an export variables definition")
+		return nil
+	}
+
+	return &runtimev1.RunnablePolicySet{
+		Fqn: modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_Variables{
+			Variables: &runtimev1.RunnableVariablesSet{
+				Meta: &runtimev1.RunnableVariablesSet_Metadata{
+					Fqn: modCtx.fqn,
+				},
+				Variables: compileVariables(modCtx, ev.Definitions),
+			},
+		},
+	}
+}
+
+func compileAllVariables(modCtx *moduleCtx, variables *policyv1.Variables) map[string]*runtimev1.Expr {
+	results := make(map[string]*runtimev1.Expr)
+	sources := make(map[string][]string)
+
+	for _, imp := range variables.GetImport() {
+		evModID := namer.ExportVariablesModuleID(imp)
+
+		evModCtx := modCtx.moduleCtx(evModID)
+		if evModCtx == nil {
+			modCtx.addErrWithDesc(errImportNotFound, "Variables import '%s' cannot be found", imp)
+			continue
+		}
+
+		ev := evModCtx.def.GetExportVariables()
+		if ev == nil {
+			modCtx.addErrWithDesc(errUnexpectedErr, "Not an export variables definition")
+			continue
+		}
+
+		addVariables(evModCtx, results, sources, ev.Definitions, fmt.Sprintf("import '%s'", imp))
+	}
+
+	addVariables(modCtx, results, sources, variables.GetLocal(), "policy local variables")
+	addVariables(modCtx, results, sources, modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
+
+	for name, definedIn := range sources {
+		var definedInMsg string
+		switch len(definedIn) {
+		case 1:
+			continue
+
+		case 2: //nolint:gomnd
+			definedInMsg = strings.Join(definedIn, " and ")
+
+		default:
+			definedInMsg = fmt.Sprintf("%s, and %s", strings.Join(definedIn[:len(definedIn)-1], ", "), definedIn[len(definedIn)-1])
+		}
+
+		modCtx.addErrWithDesc(errVariableRedefined, "Variable '%s' has multiple definitions in %s", name, definedInMsg)
+	}
+
+	return results
+}
+
+func addVariables(modCtx *moduleCtx, results map[string]*runtimev1.Expr, sources map[string][]string, definitions map[string]string, source string) {
+	for name, expr := range compileVariables(modCtx, definitions) {
+		results[name] = expr
+		sources[name] = append(sources[name], source)
+	}
 }
 
 func reportMissingAncestors(modCtx *moduleCtx) {

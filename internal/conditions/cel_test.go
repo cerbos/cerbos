@@ -45,6 +45,10 @@ func TestExpandAbbrev(t *testing.T) {
 			want:  "variables.is_admin",
 		},
 		{
+			input: "G.environment",
+			want:  "globals.environment",
+		},
+		{
 			input: "request.principal.attr.department",
 			want:  "request.principal.attr.department",
 		},

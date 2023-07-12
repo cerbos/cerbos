@@ -40,7 +40,6 @@ cerbosctl get resource_policies resource.leave_request.default -ojson
 # Get resource policy definition as pretty json
 cerbosctl get resource_policies resource.leave_request.default -oprettyjson`
 
-//nolint:govet
 type Cmd struct {
 	flagset.Filters
 	flagset.Format

@@ -10,7 +10,7 @@ The Cerbos server is configured with a YAML file. Start the server by passing th
 ./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 --set=engine.defaultPolicyVersion=staging
 ----
 
-NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`.
+NOTE: Config values can reference environment variables by enclosing them between `${}`, for example `$$${HOME}$$`. Defaults can be set using `$$${VAR:default}$$`.
 
 
 == Minimal Configuration

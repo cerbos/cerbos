@@ -227,6 +227,8 @@ You can also retrieve individual policies or schemas by their identifiers and vi
 
 You can filter the output using the `name` and `version` flags. Each flag accepts multiple comma-separated values which are OR'ed together. For example, `--name=a.yaml,b.yaml` matches policies that are either named `a.yaml` or `b.yaml`.
 
+Separately, you can filter the output using the `name-regexp`, `version-regexp` and `scope-regexp` flags. Each flag accepts a regular expression string. These are separate from the `name` and `version` flags above, and cannot be used with their respective counterparts.
+
 You can include disabled policies in the results by adding `--include-disabled` flag.
 
 .List derived roles
@@ -256,10 +258,28 @@ cerbosctl get derived_roles --name my_policy,a_policy
 cerbosctl get dr --name my_policy,a_policy
 ----
 
+.List derived_roles where `name` is `my_policy` or `a_policy`, using regular expression
+----
+cerbosctl get derived_roles --name-regexp "^(my|a)_policy\$"
+cerbosctl get dr --name-regexp "^(my|a)_policy\$"
+----
+
 .List principal_policies where `version` is `default` or `v1`
 ----
 cerbosctl get principal_policies --version default,v1
 cerbosctl get pp --version default,v1
+----
+
+.List principal_policies where `version` is `default` or `v1`, using regular expression
+----
+cerbosctl get principal_policies --version-regexp "(default|v1)"
+cerbosctl get pp --version-regexp "(default|v1)"
+----
+
+.List resource_policies where `scope` includes the substring `foo`, using regular expression
+----
+cerbosctl get resource_policies --scope-regexp foo
+cerbosctl get rp --scope-regexp foo
 ----
 
 .List derived_roles and sort by column `policyId` or `name`

@@ -36,6 +36,14 @@ func Teardown(ctx Ctx) error {
 }
 
 func Cmd(ctx Ctx, name string, args ...string) error {
+	return execCmd(ctx, false, name, args...)
+}
+
+func CmdWithOutput(ctx Ctx, name string, args ...string) error {
+	return execCmd(ctx, true, name, args...)
+}
+
+func execCmd(ctx Ctx, showOutput bool, name string, args ...string) error {
 	c := cmd.NewCmd(name, args...)
 	c.Env = ctx.Environ()
 
@@ -47,6 +55,9 @@ func Cmd(ctx Ctx, name string, args ...string) error {
 	select {
 	case done := <-status:
 		if done.Complete && done.Error == nil && done.Exit == 0 {
+			if showOutput {
+				dumpOutput(ctx, done)
+			}
 			return nil
 		}
 
@@ -83,9 +94,11 @@ func checkCerbosIsUp(ctx Ctx) func() error {
 		ctx.Logf("Checking whether Cerbos is up")
 		resp, err := client.Get(healthURL)
 		if err != nil {
+			ctx.Logf("Error during healthcheck: %v", err)
 			return err
 		}
 		if resp.StatusCode != http.StatusOK {
+			ctx.Logf("Received health status: %q", resp.Status)
 			return fmt.Errorf("received status %q", resp.Status)
 		}
 

@@ -106,6 +106,8 @@ func (m *Policy) validate(all bool) error {
 
 	// no validation rules for Variables
 
+	// no validation rules for JsonSchema
+
 	oneofPolicyTypePresent := false
 	switch v := m.PolicyType.(type) {
 	case *Policy_ResourcePolicy:
@@ -228,6 +230,48 @@ func (m *Policy) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return PolicyValidationError{
 					field:  "DerivedRoles",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Policy_ExportVariables:
+		if v == nil {
+			err := PolicyValidationError{
+				field:  "PolicyType",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofPolicyTypePresent = true
+
+		if all {
+			switch v := interface{}(m.GetExportVariables()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PolicyValidationError{
+						field:  "ExportVariables",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PolicyValidationError{
+						field:  "ExportVariables",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetExportVariables()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PolicyValidationError{
+					field:  "ExportVariables",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -615,6 +659,35 @@ func (m *ResourcePolicy) validate(all bool) error {
 		if err := v.Validate(); err != nil {
 			return ResourcePolicyValidationError{
 				field:  "Schemas",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetVariables()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ResourcePolicyValidationError{
+					field:  "Variables",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ResourcePolicyValidationError{
+					field:  "Variables",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetVariables()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcePolicyValidationError{
+				field:  "Variables",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1101,6 +1174,35 @@ func (m *PrincipalPolicy) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if all {
+		switch v := interface{}(m.GetVariables()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, PrincipalPolicyValidationError{
+					field:  "Variables",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, PrincipalPolicyValidationError{
+					field:  "Variables",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetVariables()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PrincipalPolicyValidationError{
+				field:  "Variables",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return PrincipalPolicyMultiError(errors)
 	}
@@ -1430,6 +1532,35 @@ func (m *DerivedRoles) validate(all bool) error {
 
 	}
 
+	if all {
+		switch v := interface{}(m.GetVariables()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DerivedRolesValidationError{
+					field:  "Variables",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DerivedRolesValidationError{
+					field:  "Variables",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetVariables()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DerivedRolesValidationError{
+				field:  "Variables",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return DerivedRolesMultiError(errors)
 	}
@@ -1692,6 +1823,266 @@ var _ interface {
 var _RoleDef_Name_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
 var _RoleDef_ParentRoles_Pattern = regexp.MustCompile("^([[:word:]\\-\\.]+|\\*)$")
+
+// Validate checks the field values on ExportVariables with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *ExportVariables) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ExportVariables with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ExportVariablesMultiError, or nil if none found.
+func (m *ExportVariables) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ExportVariables) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		err := ExportVariablesValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if !_ExportVariables_Name_Pattern.MatchString(m.GetName()) {
+		err := ExportVariablesValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[[:word:]\\\\-\\\\.]+$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Definitions
+
+	if len(errors) > 0 {
+		return ExportVariablesMultiError(errors)
+	}
+
+	return nil
+}
+
+// ExportVariablesMultiError is an error wrapping multiple validation errors
+// returned by ExportVariables.ValidateAll() if the designated constraints
+// aren't met.
+type ExportVariablesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ExportVariablesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ExportVariablesMultiError) AllErrors() []error { return m }
+
+// ExportVariablesValidationError is the validation error returned by
+// ExportVariables.Validate if the designated constraints aren't met.
+type ExportVariablesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExportVariablesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExportVariablesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExportVariablesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExportVariablesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExportVariablesValidationError) ErrorName() string { return "ExportVariablesValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ExportVariablesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExportVariables.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExportVariablesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExportVariablesValidationError{}
+
+var _ExportVariables_Name_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
+
+// Validate checks the field values on Variables with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Variables) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Variables with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in VariablesMultiError, or nil
+// if none found.
+func (m *Variables) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Variables) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	_Variables_Import_Unique := make(map[string]struct{}, len(m.GetImport()))
+
+	for idx, item := range m.GetImport() {
+		_, _ = idx, item
+
+		if _, exists := _Variables_Import_Unique[item]; exists {
+			err := VariablesValidationError{
+				field:  fmt.Sprintf("Import[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		} else {
+			_Variables_Import_Unique[item] = struct{}{}
+		}
+
+		if !_Variables_Import_Pattern.MatchString(item) {
+			err := VariablesValidationError{
+				field:  fmt.Sprintf("Import[%v]", idx),
+				reason: "value does not match regex pattern \"^[[:word:]\\\\-\\\\.]+$\"",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	// no validation rules for Local
+
+	if len(errors) > 0 {
+		return VariablesMultiError(errors)
+	}
+
+	return nil
+}
+
+// VariablesMultiError is an error wrapping multiple validation errors returned
+// by Variables.ValidateAll() if the designated constraints aren't met.
+type VariablesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m VariablesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m VariablesMultiError) AllErrors() []error { return m }
+
+// VariablesValidationError is the validation error returned by
+// Variables.Validate if the designated constraints aren't met.
+type VariablesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e VariablesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e VariablesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e VariablesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e VariablesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e VariablesValidationError) ErrorName() string { return "VariablesValidationError" }
+
+// Error satisfies the builtin error interface
+func (e VariablesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sVariables.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = VariablesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = VariablesValidationError{}
+
+var _Variables_Import_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
 // Validate checks the field values on Condition with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -2849,6 +3240,8 @@ func (m *TestSuite) validate(all bool) error {
 			}
 		}
 	}
+
+	// no validation rules for JsonSchema
 
 	if len(errors) > 0 {
 		return TestSuiteMultiError(errors)
@@ -4313,6 +4706,8 @@ func (m *TestFixture_Principals) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for JsonSchema
+
 	if len(errors) > 0 {
 		return TestFixture_PrincipalsMultiError(errors)
 	}
@@ -4461,6 +4856,8 @@ func (m *TestFixture_Resources) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for JsonSchema
+
 	if len(errors) > 0 {
 		return TestFixture_ResourcesMultiError(errors)
 	}
@@ -4608,6 +5005,8 @@ func (m *TestFixture_AuxData) validate(all bool) error {
 
 		}
 	}
+
+	// no validation rules for JsonSchema
 
 	if len(errors) > 0 {
 		return TestFixture_AuxDataMultiError(errors)

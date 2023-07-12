@@ -1,11 +1,11 @@
 ---
-wantErrList: 
-  loadFailures: 
+wantErrList:
+  loadFailures:
     - error: |-
-        file is not valid: [/: missing properties: 'apiVersion', /: additionalProperties 'key' not allowed, /: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles']
+        file is not valid: [/: missing properties: 'apiVersion', /: additionalProperties 'key' not allowed, /: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles', /: missing properties: 'exportVariables']
       file: principal.json
     - error: |-
-        file is not valid: [/: missing properties: 'apiVersion', /: additionalProperties 'some' not allowed, /: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles']
+        file is not valid: [/: missing properties: 'apiVersion', /: additionalProperties 'some' not allowed, /: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles', /: missing properties: 'exportVariables']
       file: resource.yaml
 files:
   "resource.yaml": |-

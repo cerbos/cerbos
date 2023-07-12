@@ -5,6 +5,7 @@
 * xref:principal_policies.adoc[Principal Policies]
 * xref:scoped_policies.adoc[Scoped Policies]
 * xref:conditions.adoc[Conditions]
+* xref:variables.adoc[Variables]
 * xref:outputs.adoc[Outputs]
 * xref:schemas.adoc[Schemas]
 * xref:compile.adoc[Validating and testing]

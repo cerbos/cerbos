@@ -1,8 +1,12 @@
 {
+  "$schema": "../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json",
   "apiVersion": "api.cerbos.dev/v1",
   "principalPolicy": {
     "principal": "donald_duck",
     "version": "default",
+    "variables": {
+      "import": ["my_variables"]
+    },
     "rules": [
       {
         "resource": "leave_request",

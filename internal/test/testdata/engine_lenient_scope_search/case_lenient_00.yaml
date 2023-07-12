@@ -1,0 +1,63 @@
+---
+description: "Scoped policy: lenient search"
+inputs: [
+  {
+    "requestId": "test",
+    "actions": [
+      "create",
+      "delete",
+      "view:public"
+    ],
+    "principal": {
+      "id": "john",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "ip_address": "10.20.0.13"
+      }
+    },
+    "resource": {
+      "kind": "leave_request",
+      "scope": "acme.hr.uk.wales.cardiff",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design"
+      }
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "XX125",
+    "actions": {
+      "view:public": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+        "scope": "acme.hr"
+      },
+      "delete": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+        "scope": "acme.hr.uk"
+      },
+      "create": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+        "scope": "acme"
+      }
+    },
+    "effectiveDerivedRoles": [
+      "any_employee",
+      "employee_that_owns_the_record"
+    ]
+  }
+]

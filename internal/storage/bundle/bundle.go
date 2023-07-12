@@ -15,6 +15,7 @@ import (
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	"github.com/spf13/afero"
@@ -170,18 +171,26 @@ func loadManifest(bundleFS afero.Fs) (*bundlev1.Manifest, error) {
 	return manifest, nil
 }
 
-func (b *Bundle) GetPolicySet(_ context.Context, id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	idHex := id.HexStr()
-	fileName := policyDir + idHex
+func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	for _, id := range candidates {
+		idHex := id.HexStr()
+		fileName := policyDir + idHex
 
-	if _, err := b.bundleFS.Stat(fileName); err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, nil
+		if _, err := b.bundleFS.Stat(fileName); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
 		}
 
-		return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
+		return b.loadPolicySet(idHex, fileName)
 	}
 
+	return nil, nil
+}
+
+func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolicySet, error) {
 	f, err := b.bundleFS.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open policy %s: %w", idHex, err)
@@ -201,7 +210,7 @@ func (b *Bundle) GetPolicySet(_ context.Context, id namer.ModuleID) (*runtimev1.
 	return rps, nil
 }
 
-func (b *Bundle) ListPolicyIDs(_ context.Context, _ bool) ([]string, error) {
+func (b *Bundle) ListPolicyIDs(_ context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
 	output := make([]string, len(b.manifest.PolicyIndex))
 
 	i := 0

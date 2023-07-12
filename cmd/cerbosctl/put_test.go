@@ -53,14 +53,18 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 		pathToSchema := test.PathToDir(t, filepath.Join("store", "_schemas", schemaFileName))
 		sch := string(test.ReadSchemaFromFile(t, pathToSchema))
 
+		ev := withMeta(test.GenExportVariables(test.Suffix(strconv.Itoa(1))))
 		dr := withMeta(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))))
 		pp := withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))))
 		rp := withMeta(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))))
 
+		evPath := writeToTmpFile(t, ev)
 		drPath := writeToTmpFile(t, dr)
 		ppPath := writeToTmpFile(t, pp)
 		rpPath := writeToTmpFile(t, rp)
 
+		expectedEv, err := protojson.Marshal(ev)
+		require.NoError(t, err)
 		expectedDr, err := protojson.Marshal(dr)
 		require.NoError(t, err)
 		expectedPp, err := protojson.Marshal(pp)
@@ -77,6 +81,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 
 			t.Run("put policies recursive", func(t *testing.T) {
+				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/export_variables"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/derived_roles"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/principal_policies"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/resource_policies"))
@@ -87,17 +92,23 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"derived_roles.apatr_common_roles",
 					"derived_roles.beta",
 					"derived_roles.buyer_derived_roles",
+					"derived_roles.import_variables",
 					"derived_roles.package_roles",
+					"export_variables.foobar",
 					"principal.daisy_duck.vdefault",
 					"principal.donald_duck.v20210210",
 					"principal.donald_duck.vdefault",
 					"principal.donald_duck.vdefault/acme",
 					"principal.donald_duck.vdefault/acme.hr",
+					"principal.scrooge_mcduck.vdefault",
 					"principal.terry_tibbs.vdefault",
 					"resource.account.vdefault",
 					"resource.album_object.vdefault",
 					"resource.equipment_request.vdefault",
 					"resource.equipment_request.vdefault/acme",
+					"resource.global.vdefault",
+					"resource.import_derived_roles_that_import_variables.vdefault",
+					"resource.import_variables.vdefault",
 					"resource.leave_request.v20210210",
 					"resource.leave_request.vdefault",
 					"resource.leave_request.vdefault/acme",
@@ -110,14 +121,17 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 
 			t.Run("put policies", func(t *testing.T) {
+				put(t, clientCtx, globals, policyKind, evPath)
 				put(t, clientCtx, globals, policyKind, drPath)
 				put(t, clientCtx, globals, policyKind, ppPath)
 				put(t, clientCtx, globals, policyKind, rpPath)
 
+				outEv := getPolicy(t, clientCtx, globals, policy.ExportVariablesKind, namer.PolicyKey(ev))
 				outDr := getPolicy(t, clientCtx, globals, policy.DerivedRolesKind, namer.PolicyKey(dr))
 				outPp := getPolicy(t, clientCtx, globals, policy.PrincipalKind, namer.PolicyKey(pp))
 				outRp := getPolicy(t, clientCtx, globals, policy.ResourceKind, namer.PolicyKey(rp))
 
+				require.JSONEq(t, string(expectedEv), outEv)
 				require.JSONEq(t, string(expectedDr), outDr)
 				require.JSONEq(t, string(expectedPp), outPp)
 				require.JSONEq(t, string(expectedRp), outRp)
@@ -201,13 +215,14 @@ func policyKindToGet(kind policy.Kind) string {
 	switch kind {
 	case policy.DerivedRolesKind:
 		return "dr"
+	case policy.ExportVariablesKind:
+		return "ev"
 	case policy.PrincipalKind:
 		return "pp"
 	case policy.ResourceKind:
 		return "rp"
-	default:
-		panic(fmt.Errorf("unknown policy kind %d", kind))
 	}
+	panic(fmt.Errorf("unknown policy kind %d", kind))
 }
 
 func getSchema(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, schemaID string) string {

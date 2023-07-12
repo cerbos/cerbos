@@ -11,9 +11,10 @@ import (
 
 	// Import the postgres dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/log/zapadapter"
-	"github.com/jackc/pgx/v4/stdlib"
+	pgxzap "github.com/jackc/pgx-zap"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/tracelog"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -51,9 +52,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		log.Error("Failed to parse Postgres connection URL", zap.Error(err))
 		return nil, err
 	}
-
-	pgConf.Logger = zapadapter.NewLogger(log)
-	pgConf.LogLevel = pgx.LogLevelWarn
+	pgConf.Tracer = &tracelog.TraceLog{Logger: pgxzap.NewLogger(log), LogLevel: tracelog.LogLevelWarn}
 
 	log.Info("Initializing Postgres storage", zap.String("host", pgConf.Host), zap.String("database", pgConf.Database))
 

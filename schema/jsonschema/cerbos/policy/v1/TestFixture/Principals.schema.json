@@ -47,6 +47,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "principals": {
       "type": "object",
       "additionalProperties": {

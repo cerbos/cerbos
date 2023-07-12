@@ -2,6 +2,7 @@
 files:
   "test.txt": |-
     this is some text
+
   "resource.yaml": |-
     ---
     apiVersion: api.cerbos.dev/v1
@@ -156,21 +157,87 @@ files:
             - action: "*"
               effect: EFFECT_ALLOW
 
+  "variables.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    exportVariables:
+      name: my_variables
+      definitions:
+        geography: request.resource.attr.geography
+
+  "resource_import_variables.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: import_variables
+      version: "20210210"
+      variables:
+        import:
+          - my_variables
+      rules:
+      - actions:
+          - "*"
+        effect: EFFECT_ALLOW
+        roles:
+          - admin
+
+  "principal_import_variables.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    principalPolicy:
+      principal: import_variables
+      version: "20210210"
+      variables:
+        import:
+          - my_variables
+      rules:
+        - resource: import_variables
+          actions:
+            - action: "*"
+              effect: EFFECT_ALLOW
+
+  "derived_roles_import_variables.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    derivedRoles:
+      name: import_variables
+      variables:
+        import:
+          - my_variables
+      definitions:
+        - name: admin
+          parentRoles:
+            - admin
+
+  "resource_import_derived_roles_that_import_variables.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: import_derived_roles_that_import_variables
+      version: "20210210"
+      importDerivedRoles:
+        - import_variables
+      rules:
+      - actions:
+          - "*"
+        effect: EFFECT_ALLOW
+        roles:
+          - admin
 
 wantCompilationUnits:
   - mainFqn: cerbos.principal.donald_duck.v20210210
-    definitionFqns: 
+    definitionFqns:
       - cerbos.principal.donald_duck.v20210210
 
   - mainFqn: cerbos.principal.donald_duck.v20210210/acme
-    definitionFqns: 
+    definitionFqns:
       - cerbos.principal.donald_duck.v20210210/acme
       - cerbos.principal.donald_duck.v20210210
     ancestorFqns:
       - cerbos.principal.donald_duck.v20210210
 
   - mainFqn: cerbos.principal.donald_duck.v20210210/acme.corp
-    definitionFqns: 
+    definitionFqns:
       - cerbos.principal.donald_duck.v20210210/acme.corp
       - cerbos.principal.donald_duck.v20210210/acme
       - cerbos.principal.donald_duck.v20210210
@@ -212,3 +279,19 @@ wantCompilationUnits:
       - cerbos.resource.leave_request.v20210210/acme.hr
       - cerbos.resource.leave_request.v20210210/acme
       - cerbos.resource.leave_request.v20210210
+
+  - mainFqn: cerbos.resource.import_variables.v20210210
+    definitionFqns:
+      - cerbos.resource.import_variables.v20210210
+      - cerbos.export_variables.my_variables
+
+  - mainFqn: cerbos.principal.import_variables.v20210210
+    definitionFqns:
+      - cerbos.principal.import_variables.v20210210
+      - cerbos.export_variables.my_variables
+
+  - mainFqn: cerbos.resource.import_derived_roles_that_import_variables.v20210210
+    definitionFqns:
+      - cerbos.resource.import_derived_roles_that_import_variables.v20210210
+      - cerbos.derived_roles.import_variables
+      - cerbos.export_variables.my_variables

@@ -8,29 +8,32 @@ Principal policies define overrides for a specific user.
 ----
 ---
 apiVersion: "api.cerbos.dev/v1"
-variables: <1>
-  is_dev_record: request.resource.attr.dev_record == true
 principalPolicy:
-  principal: daffy_duck <2>
-  version: "dev" <3>
-  scope: "acme.corp" <4>
+  principal: daffy_duck <1>
+  version: "dev" <2>
+  scope: "acme.corp" <3>
+  variables:
+    import: <4>
+      - apatr_common_variables
+    local: <5>
+      is_dev_record: request.resource.attr.dev_record == true
   rules:
-    - resource: leave_request <5>
+    - resource: leave_request <6>
       actions:
-        - name: dev_record_wildcard <6>
-          action: "*" <7>
-          condition: <8>
+        - name: dev_record_wildcard <7>
+          action: "*" <8>
+          condition: <9>
             match:
               expr: variables.is_dev_record
           effect: EFFECT_ALLOW
-          output: <9>
+          output: <10>
             expr: |-
               "wildcard_override:%s".format([request.principal.id])
     - resource: employee_profile
       actions:
         - name: view_employee_profile
-          action: "*" 
-          condition: 
+          action: "*"
+          condition:
             match:
               all:
                 of:
@@ -42,14 +45,14 @@ principalPolicy:
         - action: "*"
           effect: EFFECT_DENY
 ----
-<1> Optional variables section. Each variable is evaluated before any rule condition.
-A variable expression can contain anything that condition expressions can have.
-<2> Principal to whom this policy applies.
-<3> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
-<4> Optional scope for this policy. See xref:scoped_policies.adoc[].
-<5> Resource to which this override applies. Wildcards are supported here.
-<6> Optional name for the rule.
-<7> Actions that can be performed on the resource. Wildcards are supported here.
-<8> Optional conditions required to match this rule.
-<9> Optional output for the action rule. You can define a single expression per rule which will be evaluated and output in the response.
+<1> Principal to whom this policy applies.
+<2> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
+<3> Optional xref:scoped_policies.adoc[scope] for this policy.
+<4> xref:variables.adoc[Variable definitions] to import (optional).
+<5> Local xref:variables.adoc[variable definitions] (optional).
+<6> Resource to which this override applies. Wildcards are supported here.
+<7> Optional name for the rule.
+<8> Actions that can be performed on the resource. Wildcards are supported here.
+<9> Optional conditions required to match this rule.
+<10> Optional output for the action rule. You can define a single expression per rule which will be evaluated and output in the response.
 An output expression can contain anything that condition expressions can have.

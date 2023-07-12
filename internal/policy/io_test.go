@@ -34,6 +34,10 @@ func TestReadPolicy(t *testing.T) {
 			input: "derived_roles_01",
 			want:  test.GenDerivedRoles(test.NoMod()),
 		},
+		{
+			input: "export_variables_01",
+			want:  test.GenExportVariables(test.NoMod()),
+		},
 	}
 
 	dir := test.PathToDir(t, "policy_formats")
@@ -49,7 +53,7 @@ func TestReadPolicy(t *testing.T) {
 
 					have, err := policy.ReadPolicy(f)
 					require.NoError(t, err)
-					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
 				})
 			}
 		})
@@ -57,7 +61,7 @@ func TestReadPolicy(t *testing.T) {
 }
 
 func TestHash(t *testing.T) {
-	inputs := []string{"resource_policy_01", "principal_policy_01", "derived_roles_01"}
+	inputs := []string{"resource_policy_01", "principal_policy_01", "derived_roles_01", "export_variables_01"}
 	fs := os.DirFS(test.PathToDir(t, "policy_formats"))
 
 	for _, input := range inputs {
@@ -69,7 +73,7 @@ func TestHash(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, policy.GetHash(yamlP), policy.GetHash(jsonP))
-			require.Empty(t, cmp.Diff(yamlP, jsonP, protocmp.Transform()))
+			require.Empty(t, cmp.Diff(yamlP, jsonP, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
 		})
 	}
 }

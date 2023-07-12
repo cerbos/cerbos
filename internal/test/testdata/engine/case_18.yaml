@@ -1,0 +1,30 @@
+---
+description: Globals
+inputs: [
+  {
+    "requestId": "test",
+    "actions": ["test"],
+    "principal": {
+      "id": "andy",
+      "roles": [
+        "employee"
+      ]
+    },
+    "resource": {
+      "kind": "global",
+      "id": "test"
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "test",
+    "actions": {
+      "test": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.global.vdefault"
+      }
+    }
+  }
+]

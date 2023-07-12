@@ -131,9 +131,11 @@ GET /admin/policies
 
 NOTE: This endpoint is still under development and should be considered unstable.
 
-Issue a GET request to the endpoint to list the policies available in the store.
+Issue a GET request to the endpoint to list the policies available in the store. If the policy store supports filtering, you can optionally pass filter parameters to reduce the result set.
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
+
+Use `nameRegexp`, `scopeRegexp` and `versionRegexp` to filter using the policy name, scope or version with case insensitive regular expressions.
 
 [source,shell]
 ----
@@ -144,7 +146,7 @@ curl -k -u cerbos:cerbosAdmin \
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policies?pretty&includeDisabled=true'
+    'https://localhost:3592/admin/policies?pretty&includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&versionRegexp=default'
 ----
 
 === Get Policies

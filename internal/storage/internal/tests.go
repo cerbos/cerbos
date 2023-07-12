@@ -34,21 +34,21 @@ func TestSuiteReloadable(store storage.Store, initFn, addFn, deleteFn MutateStor
 			require.NoError(t, err)
 		}
 
-		policies, err := store.ListPolicyIDs(context.Background(), false)
+		policies, err := store.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{})
 		require.NoError(t, err)
 		require.Len(t, policies, expectedLen)
 
 		err = addFn()
 		require.NoError(t, err)
 
-		policies, err = store.ListPolicyIDs(context.Background(), false)
+		policies, err = store.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{})
 		require.NoError(t, err)
 		require.Len(t, policies, expectedLen)
 
 		err = r.Reload(context.Background())
 		require.NoError(t, err)
 
-		policies, err = store.ListPolicyIDs(context.Background(), false)
+		policies, err = store.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{})
 		require.NoError(t, err)
 		require.Greater(t, len(policies), expectedLen)
 
@@ -58,7 +58,7 @@ func TestSuiteReloadable(store storage.Store, initFn, addFn, deleteFn MutateStor
 		err = r.Reload(context.Background())
 		require.NoError(t, err)
 
-		policies, err = store.ListPolicyIDs(context.Background(), false)
+		policies, err = store.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{})
 		require.NoError(t, err)
 		require.Len(t, policies, expectedLen)
 	}

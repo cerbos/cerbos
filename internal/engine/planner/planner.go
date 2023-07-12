@@ -49,11 +49,13 @@ type (
 
 type ResourcePolicyEvaluator struct {
 	Policy    *runtimev1.RunnableResourcePolicySet
+	Globals   map[string]any
 	SchemaMgr schema.Manager
 }
 
 type PrincipalPolicyEvaluator struct {
-	Policy *runtimev1.RunnablePrincipalPolicySet
+	Policy  *runtimev1.RunnablePrincipalPolicySet
+	Globals map[string]any
 }
 
 func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *PolicyPlanResult {
@@ -169,7 +171,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					variables[k] = v.Checked.Expr
 				}
 
-				filter, err := evaluateCondition(rule.Condition, input, variables)
+				filter, err := evaluateCondition(rule.Condition, input, ppe.Globals, variables)
 				if err != nil {
 					return nil, err
 				}
@@ -231,7 +233,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					for k, v := range dr.Variables {
 						drVariables[k] = v.Checked.Expr
 					}
-					node, err := evaluateCondition(dr.Condition, input, drVariables)
+					node, err := evaluateCondition(dr.Condition, input, rpe.Globals, drVariables)
 					if err != nil {
 						return nil, err
 					}
@@ -280,7 +282,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					variables[k] = v.Checked.Expr
 				}
 
-				node, err := evaluateCondition(rule.Condition, input, variables)
+				node, err := evaluateCondition(rule.Condition, input, rpe.Globals, variables)
 				if err != nil {
 					return nil, err
 				}
@@ -373,7 +375,7 @@ func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesAst_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesInput, globals map[string]any, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -383,7 +385,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_Any:
 		nodes := make([]*qpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
-			node, err := evaluateCondition(c, input, variables)
+			node, err := evaluateCondition(c, input, globals, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -407,7 +409,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
-			node, err := evaluateCondition(c, input, variables)
+			node, err := evaluateCondition(c, input, globals, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -430,7 +432,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
-			node, err := evaluateCondition(c, input, variables)
+			node, err := evaluateCondition(c, input, globals, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -457,7 +459,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evaluateConditionExpression(t.Expr.Checked, input, variables)
+		residual, err := evaluateConditionExpression(t.Expr.Checked, input, globals, variables)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -468,8 +470,8 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	return res, nil
 }
 
-func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
-	p, err := newEvaluator(input)
+func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, globals map[string]any, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
+	p, err := newEvaluator(input, globals)
 	if err != nil {
 		return nil, err
 	}
@@ -541,12 +543,14 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 	return val, residual, nil
 }
 
-func newEvaluator(input *enginev1.PlanResourcesInput) (p *partialEvaluator, err error) {
+func newEvaluator(input *enginev1.PlanResourcesInput, globals map[string]any) (p *partialEvaluator, err error) {
 	p = new(partialEvaluator)
 	knownVars := make(map[string]any)
 	knownVars[conditions.CELRequestIdent] = input
 	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
 	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
+	knownVars[conditions.CELGlobalsIdent] = globals
+	knownVars[conditions.CELGlobalsAbbrev] = globals
 
 	p.env = conditions.StdPartialEnv
 	if len(input.Resource.GetAttr()) > 0 {

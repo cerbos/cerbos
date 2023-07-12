@@ -4,7 +4,7 @@ include::ROOT:partial$attributes.adoc[]
 
 A powerful feature of Cerbos policies is the ability to define conditions that are evaluated against the data provided in the request. Conditions are written using the link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)].
 
-TIP: Cerbos ships with an interactive REPL that can be used to experiment with writing CEL conditions. It can be started by running `cerbos repl`. See xref:cli:cerbos.adoc#repl[the REPL documentation] for more information.  
+TIP: Cerbos ships with an interactive REPL that can be used to experiment with writing CEL conditions. It can be started by running `cerbos repl`. See xref:cli:cerbos.adoc#repl[the REPL documentation] for more information.
 
 .CEL condition
 [source,yaml,linenums]
@@ -21,9 +21,11 @@ Within a condition block you have access to several special variables:
 
 `request`:: The entire request object containing data provided about the resource and the principal. Use dots to access nested fields. For example, the expression to get the principal's department attribute is `request.principal.attr.department`.
 `variables`:: Access variables declared in the `variables` section of the policy.
+`globals`:: Access global variables declared in the xref:configuration:engine.adoc#globals[policy engine configuration].
 `P`:: An alias for `request.principal` for accessing the principal object.
 `R`:: An alias for `request.resource` for accessing the resource object.
 `V`:: An alias for `variables` for accessing the policy variables object.
+`G`:: An alias for `globals` for accessing the global variables object.
 
 Every condition expression must evaluate to a boolean true/false value. You can combine complex expressions together in a single condition block by using the `all`, `any`, or `none` operators.
 
@@ -82,7 +84,7 @@ condition:
       of:
         - expr: R.attr.status == "DRAFT"
         - any:
-            of: 
+            of:
               - expr: R.attr.dev == true
               - expr: R.attr.id.matches("^[98][0-9]+")
         - none:
@@ -98,53 +100,19 @@ The above nested block is equivalent to the following:
 condition:
   match:
     expr: |-
-      (R.attr.status == "DRAFT" && 
+      (R.attr.status == "DRAFT" &&
         (R.attr.dev == true || R.attr.id.matches("^[98][0-9]+")) &&
         !(R.attr.qa == true || R.attr.canary == true))
 ----
 
 == Policy variables
-If your policy repeats the same expression in multiple conditions, you can declare it in the variables section of a policy and refer in the conditions to avoid a repeat.
 
-[source,yaml,linenums]
-----
----
-apiVersion: "api.cerbos.dev/v1"
-variables:
-  is_dev_record: request.resource.attr.dev_record == true
-principalPolicy:
-  principal: daffy_duck
-  version: "dev"
-  rules:
-    - resource: leave_request
-      actions:
-        - name: dev_record_wildcard
-          action: "*"
-          condition:
-            match:
-              expr: variables.is_dev_record
-          effect: EFFECT_ALLOW
-    - resource: employee_profile
-      actions:
-        - name: view_employee_profile
-          action: "*"
-          condition:
-            match:
-              all:
-                of:
-                  - expr: V.is_dev_record
-                  - expr: request.resource.attr.public == true
-          effect: EFFECT_ALLOW
-    - resource: salary_record
-      actions:
-        - action: "*"
-          effect: EFFECT_DENY
-----
+To avoid duplication in condition expressions, you can define xref:variables.adoc[variables].
 
 [id="auxdata"]
 == Auxiliary Data
 
-If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], they can be accessed using `request.aux_data`. 
+If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], they can be accessed using `request.aux_data`.
 
 .Accessing JWT claims
 [source,yaml,linenums]
@@ -155,21 +123,21 @@ If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], 
 
 == Operators
 
-NOTE: CEL has many builtin functions and operators. The fully up-to-date list can be found at https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions. 
+NOTE: CEL has many builtin functions and operators. The fully up-to-date list can be found at https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions.
 
 [caption=]
 [%header,cols=".^1m,.^4",grid=rows]
 |===
-| Operator | Description 
-| !        | Logical negation (NOT) 
-| -        | Subtraction/numeric negation 
+| Operator | Description
+| !        | Logical negation (NOT)
+| -        | Subtraction/numeric negation
 | !=       | Unequals
 | %        | Modulo
 | &&       | Logical AND
 | \|\|     | Logical OR
-| *        | Multiplication 
-| +        | Addition/concatenation 
-| /        | Division 
+| *        | Multiplication
+| +        | Addition/concatenation
+| /        | Division
 | <=       | Less than or equal to
 | <        | Less than
 | ==       | Equals
@@ -189,7 +157,7 @@ Duration values must be specified in one of the following units. Larger units li
 [caption=]
 [%header,cols=".^1m,.^4",grid=rows]
 |===
-| Suffix | Unit 
+| Suffix | Unit
 | ns     | Nanoseconds
 | us     | Microseconds
 | ms     | Milliseconds
@@ -256,12 +224,12 @@ NOTE: The hierarchy functions are Cerbos-specific extensions to CEL.
 [caption=]
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
-| Function | Description | Example 
+| Function | Description | Example
 | hierarchy | Convert a dotted string or a string list to a hierarchy | hierarchy("a.b.c") == hierarchy(["a","b","c"])
 | hierarchy | Convert a delimited string representation to a hierarchy | hierarchy("a:b:c", ":").size() == 3
 | ancestorOf | Returns true if the first hierarchy shares a common prefix with the second hierarchy | hierarchy("a.b").ancestorOf(hierarchy("a.b.c.d")) == true
 | commonAncestors | Returns the common ancestor hierarchy | hierarchy(R.attr.scope).commonAncestors(hierarchy(P.attr.scope)) == hierarchy("foo.bar")
-| descendentOf | Mirror function of `ancestorOf` | hierarchy("a.b.c.d").descendentOf(hierarchy("a.b")) == true 
+| descendentOf | Mirror function of `ancestorOf` | hierarchy("a.b.c.d").descendentOf(hierarchy("a.b")) == true
 | immediateChildOf | Returns true if the first hierarchy is a first-level child of the second hierarchy | hierarchy("a.b.c").immediateChildOf(hierarchy("a.b")) == true && hierarchy("a.b.c.d").immediateChildOf(hierarchy("a.b")) == false
 | immediateParentOf | Mirror function of `immediateChildOf` | hierarchy("a.b").immediateParentOf(hierarchy("a.b.c")) == true && hierarchy("a.b").immediateParentOf(hierarchy("a.b.c.d")) == false
 | overlaps | Returns true if one of the hierarchies is a prefix of the other | hierarchy("a.b.c").overlaps(hierarchy("a.b.c.d.e")) == true && hierarchy("a.b.x").overlaps(hierarchy("a.b.c.d.e")) == false
@@ -292,7 +260,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 [caption=]
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
-| Function | Description | Example 
+| Function | Description | Example
 | inIPAddrRange | Check whether the IP address is in the range defined by the CIDR | P.attr.ipv4Address.inIPAddrRange("192.168.0.0/24") && P.attr.ipv6Address.inIPAddrRange("2001:db8::/48")
 |===
 
@@ -321,7 +289,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 [caption=]
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
-| Operator/Function | Description | Example 
+| Operator/Function | Description | Example
 | + | Concatenates lists | P.attr.teams + ["design", "engineering"]
 | []       | Index into a list or a map | P.attr.teams[0] == "design" && P.attr.clients["acme"]["active"] == true
 | all      | Check whether all elements in a list match the predicate | P.attr.teams.all(t, size(t) > 3)
@@ -347,7 +315,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | math.least | Get the least valued number present in the arguments | math.least([1, 3, 5]) == 1
 |===
 
-== Strings 
+== Strings
 
 .Test data
 [source,json,linenums]
@@ -366,7 +334,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 [caption=]
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
-| Function | Description | Example 
+| Function | Description | Example
 | base64.encode | Encode as base64 | base64.encode(bytes("hello")) == "aGVsbG8="
 | base64.decode | Decode base64    | base64.decode("aGVsbG8=") == bytes("hello")
 | charAt   | Get the character at given index | R.attr.department.charAt(1) == 'a'
@@ -379,7 +347,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | R.attr.department.matches("^[mM].*g$")
 | replace  | Replace all occurrences of a substring | R.attr.department.replace("market", "engineer") == "engineering"
 | replace  | Replace with limits. Limit 0 replaces nothing, -1 replaces all. | "engineering".replace("e", "a", 1) == "angineering" && "engineering".replace("e", "a", -1) == "anginaaring"
-| size     | Get the length of the string | size(R.attr.department) == 9  
+| size     | Get the length of the string | size(R.attr.department) == 9
 | split    | Split a string using a delimiter | "a,b,c,d".split(",")[1] == "b"
 | split    | Split a string with limits. Limit 0 returns an empty list, 1 returns a list containing the original string. | "a,b,c,d".split(",", 2)[1] == "b,c,d"
 | startsWith | Check whether a string has the given prefix | R.attr.department.startsWith("mark")
@@ -408,13 +376,13 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 [caption=]
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
-| Function | Description | Example 
+| Function | Description | Example
 | timestamp | Convert an RFC3339 formatted string to a timestamp | timestamp(R.attr.lastAccessed).getFullYear() == 2021
 | getDate  | Get day of month from a timestamp | timestamp(R.attr.lastAccessed).getDate() == 20
 | getDayOfMonth | Get day of month from a timestamp. Returns a zero-based value | timestamp(R.attr.lastAccessed).getDayOfMonth() == 19
 | getDayOfWeek | Get day of week from a timestamp. Returns a zero-based value where Sunday is 0 | timestamp(R.attr.lastAccessed).getDayOfWeek() == 2
 | getDayOfYear | Get day of year from a timestamp. Returns a zero-based value | timestamp(R.attr.lastAccessed).getDayOfYear() == 109
-| getFullYear | Get full year from a timestamp | timestamp(R.attr.lastAccessed).getFullYear() == 2021 
+| getFullYear | Get full year from a timestamp | timestamp(R.attr.lastAccessed).getFullYear() == 2021
 | getHours | Get hours from a timestamp | timestamp(R.attr.lastAccessed).getHours() == 10
 | getMilliseconds | Get milliseconds from a timestamp | timestamp(R.attr.lastAccessed).getMilliseconds() == 21
 | getMinutes | Get minutes from a timestamp | timestamp(R.attr.lastAccessed).getMinutes() == 5
@@ -424,7 +392,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
 
-.Example: Assert that more than 36 hours has elapsed between last access time and last update time 
+.Example: Assert that more than 36 hours has elapsed between last access time and last update time
 [source,yaml,linenums]
 ----
 timestamp(R.attr.lastUpdateTime) - timestamp(R.attr.lastAccessed) > duration("36h")

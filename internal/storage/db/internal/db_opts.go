@@ -9,6 +9,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 // DBOpt defines database driver options.
@@ -22,6 +23,13 @@ type (
 type dbOpt struct {
 	upsertPolicy upsertPolicyFunc
 	upsertSchema upsertSchemaFunc
+	regexpCache  *util.RegexpCache
+}
+
+func newDbOpt() *dbOpt {
+	return &dbOpt{
+		regexpCache: util.NewRegexpCache(),
+	}
 }
 
 // WithUpsertSchema sets custom upsert schema function.
@@ -35,5 +43,14 @@ func WithUpsertSchema(f upsertSchemaFunc) DBOpt {
 func WithUpsertPolicy(f upsertPolicyFunc) DBOpt {
 	return func(opt *dbOpt) {
 		opt.upsertPolicy = f
+	}
+}
+
+// WithRegexpCacheOverride overrides the default regexp cache for DB queries requiring compiled expressions.
+// This is only required for DB drivers that require access to the cache (e.g. The SQLite driver retrieves the compiled
+// expressions for the application-defined function).
+func WithRegexpCacheOverride(c *util.RegexpCache) DBOpt {
+	return func(opt *dbOpt) {
+		opt.regexpCache = c
 	}
 }
