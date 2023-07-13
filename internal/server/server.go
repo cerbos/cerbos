@@ -455,7 +455,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 			grpc_recovery.UnaryServerInterceptor(),
 			telemetryInt.UnaryServerInterceptor(),
 			grpc_validator.UnaryServerInterceptor(),
-			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
+			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
 			XForwardedHostUnaryServerInterceptor,
 			grpc_zap.UnaryServerInterceptor(log,
 				grpc_zap.WithDecider(loggingDecider),
