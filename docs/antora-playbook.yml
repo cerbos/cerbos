@@ -12,6 +12,7 @@ content:
       branches: [HEAD, 'v*']
       edit_url: 'https://github.com/cerbos/cerbos/tree/{refname}/{path}'
       start_path: docs
+    - url: https://github.com/cerbos/cloud-docs.git
 urls:
   redirect_facility: netlify
   latest_version_segment: latest
