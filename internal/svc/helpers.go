@@ -25,7 +25,17 @@ func ExtractRequestFields(fullMethod string, req any) map[string]any {
 	}
 
 	switch fullMethod {
-	case "/cerbos.vc.v1.CerbosService/CheckResourceSet":
+	case "/cerbos.svc.v1.CerbosService/CheckResources":
+		crsReq, ok := req.(*requestv1.CheckResourcesRequest)
+		if !ok || crsReq.RequestId == "" {
+			return nil
+		}
+
+		return map[string]any{
+			metaTagKey: map[string]string{requestIDTagKey: crsReq.RequestId},
+		}
+
+	case "/cerbos.svc.v1.CerbosService/CheckResourceSet":
 		crsReq, ok := req.(*requestv1.CheckResourceSetRequest)
 		if !ok || crsReq.RequestId == "" {
 			return nil
@@ -43,6 +53,16 @@ func ExtractRequestFields(fullMethod string, req any) map[string]any {
 
 		return map[string]any{
 			metaTagKey: map[string]string{requestIDTagKey: crbReq.RequestId},
+		}
+
+	case "/cerbos.svc.v1.CerbosService/PlanResources":
+		plReq, ok := req.(*requestv1.PlanResourcesRequest)
+		if !ok || plReq.RequestId == "" {
+			return nil
+		}
+
+		return map[string]any{
+			metaTagKey: map[string]string{requestIDTagKey: plReq.RequestId},
 		}
 
 	case "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate":
