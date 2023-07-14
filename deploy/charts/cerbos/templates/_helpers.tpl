@@ -86,15 +86,13 @@ prometheus.io/scheme: {{ include "cerbos.httpScheme" . }}
 Generate pod annotations based on config
 */}}
 {{- define "cerbos.podAnnotations" -}}
-{{- $annotations := .Values.podAnnotations -}}
+{{- $annotations := mustMergeOverwrite .Values.podAnnotations (dict "checksum/config" (include "cerbos.config" . | sha256sum)) -}}
 {{- if .Values.cerbos.prometheusPodAnnotationsEnabled -}}
 {{- $promAnnotations := (include "cerbos.promAnnotations" .)| fromYaml -}}
 {{- $annotations = mustMergeOverwrite $annotations $promAnnotations -}}
 {{- end -}}
-{{- with $annotations }}
 annotations:
   {{- $annotations | toYaml | nindent 2 }}
-{{- end }}
 {{- end }}
 
 {{/*
