@@ -1,0 +1,68 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.29.0]
+= Cerbos v0.29.0
+
+This release of Cerbos is packed with new features and enhancements to make policy authoring and operations easier.
+
+== Highlights
+
+Now it's possible to share variable definitions between multiple policies using the new `ExportVariables` policy type. You can define your variables in a dedicated file and import theminto any of the other policies to reuse common values and expressions across your policy repo. Read more about how to use them at xref:policies:variables.adoc[].
+
+A new `globals` object is available to policies at runtime to read environment-specific values defined in the configuration file of the Cerbos server. This is useful if you want your policies to consider certain values defined in the execution environment while evaluating the rules. See xref:configuration:engine.adoc#globals[globals documentation] for more information.
+
+When evaluating xref:policies:scoped_policies.adoc[scoped policies], the default behaviour of Cerbos is to fail if a policy file with the requested scope does not exist. You can now relax this requirement through a xref:configuration:engine.adoc#lenient_scopes[configuration setting]. When lenient scope search is enabled, if a policy file with the requested scope does not exist in the policy repo, Cerbos will walk up through the scope chain until it finds a defined policy. Note that only leaf scopes can be missing. It's still an error to have policies missing from the middle of the scope chain. See xref:policies:scoped_policies.adoc[] for details.
+
+The `ListPolicies` admin API endpoint now supports optional parameters to filter the result list by name, version and scope.
+
+The Kafka audit log sink can now be configured with TLS certificates for client and server authentication. This is a community contribution from `@shangardezi`.
+
+`@mark-piper` contributed a patch to fix an issue where the request ID was not being logged to the audit entry.
+
+When working with JSON policy files, you can use the `$schema` key to help the editor find the JSON schema for policies and provide auto completion and other contextual editing features. See xref:policies:authoring_tips.adoc[] for details.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Fix overlay e2e test caused by troublesome bitnami postgres image (link:https://github.com/cerbos/cerbos/pull/1677[#1677])
+* Log request_id in the grpc "Handled request" log message (link:https://github.com/cerbos/cerbos/pull/1691[#1691])
+* Obtain write lock while reloading index (link:https://github.com/cerbos/cerbos/pull/1659[#1659])
+
+=== Features
+
+* Add tls support kafka (link:https://github.com/cerbos/cerbos/pull/1667[#1667])
+* Allow reuse of variable definitions between policies (link:https://github.com/cerbos/cerbos/pull/1646[#1646])
+* Allow top-level `$schema` field in JSON files (link:https://github.com/cerbos/cerbos/pull/1676[#1676])
+* Introduce environment-specific global variables (link:https://github.com/cerbos/cerbos/pull/1645[#1645])
+* Lenient scope search (link:https://github.com/cerbos/cerbos/pull/1655[#1655])
+* Quit REPL when Ctrl-D is pressed on an empty prompt (link:https://github.com/cerbos/cerbos/pull/1674[#1674])
+
+=== Enhancements
+
+* Add `ListPolicies` filtering ability to `cerbosctl get` (link:https://github.com/cerbos/cerbos/pull/1649[#1649])
+* Add config checksum to pod annotations so that deployment restarts on config changes (link:https://github.com/cerbos/cerbos/pull/1693[#1693])
+* Add filtering in the ListPolicies RPC (link:https://github.com/cerbos/cerbos/pull/1642[#1642])
+* Add getters for principal and resource ID fields (link:https://github.com/cerbos/cerbos/pull/1660[#1660])
+
+=== Chores
+
+* Add E2E test for lenient scopes (link:https://github.com/cerbos/cerbos/pull/1657[#1657])
+* Add parentheses after the function name `getSeconds`  (link:https://github.com/cerbos/cerbos/pull/1684[#1684])
+* Bump github.com/lestrrat-go/jwx/v2 from 2.0.9 to 2.0.11 (link:https://github.com/cerbos/cerbos/pull/1643[#1643])
+* Bump version to 0.29.0
+* Disable cache of Go installation for GolangCI (link:https://github.com/cerbos/cerbos/pull/1662[#1662])
+* Don't use built-in caching in setup-go action (link:https://github.com/cerbos/cerbos/pull/1678[#1678])
+* Downgrade telepresence (link:https://github.com/cerbos/cerbos/pull/1641[#1641])
+* Run govulncheck without verbose flag (link:https://github.com/cerbos/cerbos/pull/1675[#1675])
+* Update bufbuild/buf-setup-action action to v1.22.0 (link:https://github.com/cerbos/cerbos/pull/1665[#1665])
+* Update bufbuild/buf-setup-action action to v1.23.1 (link:https://github.com/cerbos/cerbos/pull/1671[#1671])
+* Update cloud-api to 0.1.4 (link:https://github.com/cerbos/cerbos/pull/1698[#1698])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1652[#1652])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1651[#1651])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1666[#1666])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1672[#1672])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1680[#1680])
+* Update module github.com/jackc/pgx/v4 to v5 (link:https://github.com/cerbos/cerbos/pull/1653[#1653])
