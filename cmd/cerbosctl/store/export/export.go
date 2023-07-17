@@ -54,23 +54,30 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 	defer exporter.Close()
 
 	if err := client.BatchAdminClientCall2(context.Background(), clientCtx.AdminClient.GetPolicy, func(ctx context.Context, policies []*policyv1.Policy) error {
-		if policies == nil {
-			return fmt.Errorf("failed to retrieve policy: %w", err)
-		}
-
 		for _, p := range policies {
-			name := strings.ReplaceAll(p.Metadata.StoreIdentifier, "/", "_")
-			if !strings.HasSuffix(name, ".yaml") {
+			name := p.Metadata.StoreIdentifier
+
+			var ext string
+			var ok bool
+			if ext, ok = util.IsSupportedFileTypeExt(name); !ok {
+				name = strings.ReplaceAll(name, "/", "_")
+			}
+
+			jsonString := protojson.Format(p)
+			switch ext {
+			case ".json":
+				if err := exporter.WriteJSON(name, []byte(jsonString)); err != nil {
+					return fmt.Errorf("failed to write policy %s: %w", name, err)
+				}
+			case ".yml", ".yaml":
+				if err := exporter.WriteYAML(name, []byte(jsonString)); err != nil {
+					return fmt.Errorf("failed to write policy %s: %w", name, err)
+				}
+			default:
 				name = fmt.Sprintf("%s.yaml", name)
-			}
-
-			jsonBytes, err := protojson.Marshal(p)
-			if err != nil {
-				return fmt.Errorf("failed to marshal policy %s: %w", name, err)
-			}
-
-			if err := exporter.WriteYAML(name, jsonBytes); err != nil {
-				return fmt.Errorf("failed to write policy %s: %w", name, err)
+				if err := exporter.WriteYAML(name, []byte(jsonString)); err != nil {
+					return fmt.Errorf("failed to write policy %s: %w", name, err)
+				}
 			}
 		}
 
@@ -80,10 +87,6 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 	}
 
 	if err := client.BatchAdminClientCall2(context.Background(), clientCtx.AdminClient.GetSchema, func(ctx context.Context, schemas []*schemav1.Schema) error {
-		if schemas == nil {
-			return fmt.Errorf("failed to retrieve schema: %w", err)
-		}
-
 		for _, s := range schemas {
 			var pretty bytes.Buffer
 			if err := json.Indent(&pretty, s.Definition, "", "  "); err != nil {

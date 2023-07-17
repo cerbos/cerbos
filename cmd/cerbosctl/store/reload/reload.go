@@ -19,7 +19,7 @@ cerbosctl store reload
 cerbosctl store reload --wait`
 
 type Cmd struct {
-	Wait bool `help:"Wait until the reloading process finalizes"`
+	Wait bool `help:"Wait until the reloading process finishes"`
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {

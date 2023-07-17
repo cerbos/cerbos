@@ -690,7 +690,7 @@
         "parameters": [
           {
             "name": "wait",
-            "description": "Wait until the reloading process finalizes",
+            "description": "Wait until the reloading process finishes",
             "in": "query",
             "required": false,
             "type": "boolean"

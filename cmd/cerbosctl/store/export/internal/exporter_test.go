@@ -88,7 +88,7 @@ func TestExporter(t *testing.T) {
 	}
 }
 
-func exportFile(t *testing.T, e *internal.Exporter, path string, file []byte) {
+func exportFile(t *testing.T, e internal.Exporter, path string, file []byte) {
 	t.Helper()
 
 	if strings.HasPrefix(path, util.SchemasDirectory) {
