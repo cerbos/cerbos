@@ -9,7 +9,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.8.0
 	github.com/alecthomas/kong v0.8.0
 	github.com/alecthomas/participle/v2 v2.0.0
-	github.com/aws/aws-sdk-go v1.44.298
+	github.com/aws/aws-sdk-go v1.44.300
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cloud-api v0.1.3
@@ -37,10 +37,10 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
-	github.com/iancoleman/strcase v0.2.0
+	github.com/iancoleman/strcase v0.3.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx-zap v0.0.0-20221202020421-94b1cb2f889f
-	github.com/jackc/pgx/v5 v5.4.1
+	github.com/jackc/pgx/v5 v5.4.2
 	github.com/jdxcode/netrc v0.0.0-20221124155335-4616370d1a84
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/jwalton/gchalk v1.3.0
@@ -49,7 +49,7 @@ require (
 	github.com/lestrrat-go/httprc v1.0.4
 	github.com/lestrrat-go/jwx/v2 v2.0.11
 	github.com/mattn/go-isatty v0.0.19
-	github.com/minio/minio-go/v7 v7.0.59
+	github.com/minio/minio-go/v7 v7.0.60
 	github.com/nlepage/go-tarfs v1.1.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -71,8 +71,8 @@ require (
 	github.com/tidwall/gjson v1.14.4
 	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/sjson v1.2.5
-	github.com/twmb/franz-go v1.14.0
-	github.com/twmb/franz-go/pkg/kadm v1.8.1
+	github.com/twmb/franz-go v1.14.1
+	github.com/twmb/franz-go/pkg/kadm v1.9.0
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.24.0
@@ -94,20 +94,20 @@ require (
 	golang.org/x/net v0.12.0
 	golang.org/x/sync v0.3.0
 	golang.org/x/tools v0.11.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20230706204954-ccb25ca9f130
+	google.golang.org/genproto/googleapis/api v0.0.0-20230711160842-782d3b101e98
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.12.1
-	modernc.org/sqlite v1.23.1
+	helm.sh/helm/v3 v3.12.2
+	modernc.org/sqlite v1.24.0
 )
 
 require (
 	atomicgo.dev/cursor v0.1.1 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.0.2 // indirect
-	cloud.google.com/go v0.110.2 // indirect
-	cloud.google.com/go/compute v1.20.0 // indirect
+	cloud.google.com/go v0.110.4 // indirect
+	cloud.google.com/go/compute v1.20.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.0 // indirect
 	cloud.google.com/go/storage v1.30.1 // indirect
@@ -151,7 +151,7 @@ require (
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
-	github.com/docker/cli v20.10.21+incompatible // indirect
+	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/docker v23.0.4+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -268,8 +268,8 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.128.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230629202037-9506855d4529 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230629202037-9506855d4529 // indirect
+	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230706204954-ccb25ca9f130 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
