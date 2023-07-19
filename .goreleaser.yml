@@ -192,11 +192,16 @@ docker_manifests:
       - "ghcr.io/cerbos/cerbosctl:dev-arm64"
 
 brews:
-  - tap:
+  - repository:
       owner: cerbos
       name: homebrew-tap
-      branch: main
+      branch: "release_{{ .Version }}"
       token: "{{ .Env.HOMEBREW_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: true
+        base:
+          branch: main
+
     folder: Formula
     ids:
       - cerbos
