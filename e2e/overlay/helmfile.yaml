@@ -23,7 +23,7 @@ releases:
     # https://artifacthub.io/packages/helm/bitnami/postgresql
     # https://github.com/bitnami/charts/commit/262f4f1d2906226cee8cabb49c8fedf97ecc30e4
     # https://github.com/bitnami/charts/commit/d6234d8b8921470066e567832660164d84192975
-    version: 12.6.0
+    version: 12.6.7
     hooks:
       - events: ["presync"]
         showlogs: true
