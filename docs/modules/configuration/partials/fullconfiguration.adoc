@@ -87,7 +87,6 @@ server:
   httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
   logRequestPayloads: false # LogRequestPayloads defines whether the request payloads should be logged.
   metricsEnabled: true # MetricsEnabled defines whether the metrics endpoint is enabled.
-  playgroundEnabled: false # PlaygroundEnabled defines whether the playground API is enabled.
   requestLimits: # RequestLimits defines the limits for requests.
     maxActionsPerResource: 50 # MaxActionsPerResource sets the maximum number of actions that could be checked for a resource in a single request.
     maxResourcesPerRequest: 50 # MaxResourcesPerBatch sets the maximum number of resources that could be sent in a single request.

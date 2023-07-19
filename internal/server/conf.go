@@ -63,7 +63,7 @@ type Conf struct {
 	// LogRequestPayloads defines whether the request payloads should be logged.
 	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",example=false"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
-	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",example=false"`
+	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",ignore"`
 	// Advanced server settings.
 	Advanced AdvancedConf `yaml:"advanced"`
 }
