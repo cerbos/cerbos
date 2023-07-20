@@ -17,7 +17,6 @@ releases:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
       e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
     chart: bitnami/postgresql
-    version: 12.6.7
     hooks:
       - events: ["presync"]
         showlogs: true
