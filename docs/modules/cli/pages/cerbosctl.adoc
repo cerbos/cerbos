@@ -391,6 +391,27 @@ cerbosctl put schema ./dir/to/schemas.zip
 
 Trigger operations on the policy store of the PDP
 
+[#export]
+=== `export`
+
+Exports the policies and schemas from the store into a directory.
+
+.Export policies and schemas from the store into a directory
+----
+cerbosctl store export path/to/dir
+----
+
+.Export policies and schemas from the store into a zip archive
+----
+cerbosctl store export path/to/archive.zip
+----
+
+.Export policies and schemas from the store into a gzip archive
+----
+cerbosctl store export path/to/archive.gzip
+cerbosctl store export path/to/archive.tar.gz
+----
+
 [#reload]
 === `reload`
 

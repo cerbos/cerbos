@@ -687,6 +687,6 @@ message ReloadStoreRequest {
 
   bool wait = 1 [
     (google.api.field_behavior) = OPTIONAL,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Wait until the reloading process finalizes"}
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Wait until the reloading process finishes"}
   ];
 }

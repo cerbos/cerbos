@@ -181,6 +181,17 @@ func SchemaReferences(p *policyv1.Policy) []string {
 	}
 }
 
+func GetScope(p *policyv1.Policy) string {
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		return pt.ResourcePolicy.Scope
+	case *policyv1.Policy_PrincipalPolicy:
+		return pt.PrincipalPolicy.Scope
+	default:
+		return ""
+	}
+}
+
 // WithMetadata adds metadata to the policy.
 func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string, storeIdentifier string) *policyv1.Policy {
 	if p.Metadata == nil {

@@ -3,6 +3,12 @@
 
 package store
 
+import (
+	"github.com/cerbos/cerbos/cmd/cerbosctl/store/export"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/store/reload"
+)
+
 type Cmd struct {
-	Reload ReloadCmd `cmd:""`
+	Export export.Cmd `cmd:"" name:"export" aliases:"e"`
+	Reload reload.Cmd `cmd:"" name:"reload" aliases:"r"`
 }

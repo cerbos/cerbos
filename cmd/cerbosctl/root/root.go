@@ -39,6 +39,7 @@ cerbosctl --server=localhost:3593 --username=user --password=password --plaintex
 type Cli struct {
 	Version version.Cmd `cmd:"" help:"Show cerbosctl and PDP version"`
 	Get     get.Cmd     `cmd:"" help:"List or view policies and schemas"`
+	Store   store.Cmd   `cmd:"" help:"Store operations"`
 	flagset.Globals
 	Delete    del.Cmd       `cmd:"" help:"Delete schemas"`
 	Disable   disable.Cmd   `cmd:"" help:"Disable policies"`
@@ -46,7 +47,6 @@ type Cli struct {
 	Put       put.Cmd       `cmd:"" help:"Put policies or schemas"`
 	Decisions decisions.Cmd `cmd:"" help:"Interactive decision log viewer"`
 	Audit     audit.Cmd     `cmd:"" help:"View audit logs"`
-	Store     store.Cmd     `cmd:"" help:"Store operations"`
 }
 
 func (c *Cli) Help() string {
