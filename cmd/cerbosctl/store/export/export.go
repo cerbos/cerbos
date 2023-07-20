@@ -57,9 +57,8 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 		for _, p := range policies {
 			name := p.Metadata.StoreIdentifier
 
-			var ext string
-			var ok bool
-			if ext, ok = util.IsSupportedFileTypeExt(name); !ok {
+			ext, ok := util.IsSupportedFileTypeExt(name)
+			if !ok {
 				name = strings.ReplaceAll(name, "/", "_")
 			}
 
@@ -79,6 +78,8 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 					return fmt.Errorf("failed to write policy %s: %w", name, err)
 				}
 			}
+
+			_, _ = fmt.Fprintf(k.Stdout, "Successfully wrote policy %s\n", name)
 		}
 
 		return nil
@@ -97,6 +98,8 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 			if err := exporter.WriteJSON(name, pretty.Bytes()); err != nil {
 				return fmt.Errorf("failed to write schema %s: %w", name, err)
 			}
+
+			_, _ = fmt.Fprintf(k.Stdout, "Successfully wrote schema %s\n", name)
 		}
 
 		return nil
@@ -104,7 +107,12 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 		return fmt.Errorf("error while getting schemas: %w", err)
 	}
 
-	_, _ = fmt.Fprintf(k.Stdout, "Successfully wrote %d policies and %d schemas to %s\n", len(policies), len(schemas), c.Path)
+	if len(policies) > 0 || len(schemas) > 0 {
+		_, _ = fmt.Fprintf(k.Stdout, "\nSuccessfully wrote %d policies and %d schemas to %s\n", len(policies), len(schemas), c.Path)
+	} else {
+		_, _ = fmt.Fprintf(k.Stdout, "No policies and schemas found in the store\n")
+	}
+
 	return nil
 }
 
