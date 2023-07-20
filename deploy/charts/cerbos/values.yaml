@@ -104,6 +104,7 @@ service:
   httpNodePort: 13592
   grpcNodePort: 13593
   annotations: {}
+  clusterIP: null
   loadBalancerIP: null
 
 # Cerbos deployment settings.
