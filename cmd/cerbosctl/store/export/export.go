@@ -79,7 +79,7 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 				}
 			}
 
-			_, _ = fmt.Fprintf(k.Stdout, "Successfully wrote policy %s\n", name)
+			_, _ = fmt.Fprintf(k.Stdout, "🗸 %s (policy)\n", name)
 		}
 
 		return nil
@@ -99,7 +99,7 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 				return fmt.Errorf("failed to write schema %s: %w", name, err)
 			}
 
-			_, _ = fmt.Fprintf(k.Stdout, "Successfully wrote schema %s\n", name)
+			_, _ = fmt.Fprintf(k.Stdout, "🗸 %s (schema)\n", name)
 		}
 
 		return nil
@@ -107,12 +107,7 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 		return fmt.Errorf("error while getting schemas: %w", err)
 	}
 
-	if len(policies) > 0 || len(schemas) > 0 {
-		_, _ = fmt.Fprintf(k.Stdout, "\nSuccessfully wrote %d policies and %d schemas to %s\n", len(policies), len(schemas), c.Path)
-	} else {
-		_, _ = fmt.Fprintf(k.Stdout, "No policies and schemas found in the store\n")
-	}
-
+	_, _ = fmt.Fprintf(k.Stdout, "\nExported %d policies and %d schemas to %s\n", len(policies), len(schemas), c.Path)
 	return nil
 }
 
