@@ -272,7 +272,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.NoError(t, err)
 			require.Empty(t, have)
 
-			checkEvents(t, timeout, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
+			checkEvents(t, timeout, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: rpx.ID})
 		})
 
 		t.Run("add_schema", func(t *testing.T) {

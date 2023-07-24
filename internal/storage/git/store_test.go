@@ -336,7 +336,7 @@ func TestUpdateStore(t *testing.T) {
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
-			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
 		checkEvents(t, timeout, wantEvents...)
@@ -390,7 +390,7 @@ func TestUpdateStore(t *testing.T) {
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
-			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: namer.GenModuleID(p)})
 			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
@@ -435,7 +435,7 @@ func TestUpdateStore(t *testing.T) {
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
-			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
 		checkEvents(t, timeout, wantEvents...)
