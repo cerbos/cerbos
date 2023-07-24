@@ -93,7 +93,7 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 			case storage.EventReload:
 				c.log.Info("Purging compile cache")
 				c.cache.Purge()
-			case storage.EventAddOrUpdatePolicy, storage.EventDeletePolicy:
+			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 				if err := c.recompile(evt); err != nil {
 					c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
 				}
@@ -106,7 +106,7 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 
 func (c *Manager) recompile(evt storage.Event) error {
 	// if this is a delete event, remove the module from the cache
-	if evt.Kind == storage.EventDeletePolicy {
+	if evt.Kind == storage.EventDeleteOrDisablePolicy {
 		c.evict(evt.PolicyID)
 	}
 

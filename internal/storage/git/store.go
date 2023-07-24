@@ -410,7 +410,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 			switch fromType {
 			case util.FileTypePolicy:
 				s.log.Debugf("Removing policy %s", fromPath)
-				if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
+				if err := s.applyIndexUpdate(c.From, storage.EventDeleteOrDisablePolicy); err != nil {
 					return err
 				}
 

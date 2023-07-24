@@ -226,7 +226,7 @@ func TestManager(t *testing.T) {
 		require.NotNil(t, rps1)
 
 		// send event to trigger recompiliation
-		mockStore.subscriber.OnStorageEvent(storage.Event{Kind: storage.EventDeletePolicy, PolicyID: dr.ID})
+		mockStore.subscriber.OnStorageEvent(storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: dr.ID})
 
 		yield()
 

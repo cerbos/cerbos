@@ -336,7 +336,7 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 		// nothing to do because we don't have that file in the index.
 		return storage.Event{Kind: storage.EventNop}, nil
 	}
-	evt := storage.NewPolicyEvent(storage.EventDeletePolicy, modID)
+	evt := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, modID)
 
 	// go through the dependencies and remove self from the dependents list for each dependency.
 	if deps, ok := idx.dependencies[modID]; ok {

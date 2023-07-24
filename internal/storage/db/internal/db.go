@@ -594,7 +594,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 
 	events := make([]storage.Event, len(policyKey))
 	for i, pk := range policyKey {
-		events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))}
+		events[i] = storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk)))
 	}
 	res, err := s.db.Update(PolicyTbl).Prepared(true).
 		Set(goqu.Record{PolicyTblDisabledCol: true}).
@@ -618,7 +618,7 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 	events := make([]storage.Event, len(policyKey))
 	for idx, pk := range policyKey {
 		mIDs[idx] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
-		events[idx] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))}
+		events[idx] = storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk)))
 	}
 
 	res, err := s.db.Update(PolicyTbl).Prepared(true).
@@ -647,7 +647,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			return err
 		}
 
-		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventDeletePolicy, ids[0]))
+		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, ids[0]))
 
 		return nil
 	}
@@ -657,7 +657,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 
 	for i, id := range ids {
 		idList[i] = id
-		events[i] = storage.Event{Kind: storage.EventDeletePolicy, PolicyID: id}
+		events[i] = storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: id}
 	}
 	_, err := s.db.Delete(PolicyTbl).Prepared(true).
 		Where(goqu.C(PolicyTblIDCol).In(idList...)).

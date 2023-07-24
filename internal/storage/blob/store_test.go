@@ -195,7 +195,7 @@ func TestStore_updateIndex(t *testing.T) {
 		Kind: storage.EventAddOrUpdatePolicy,
 	}
 	deleteEvent := storage.Event{
-		Kind: storage.EventDeletePolicy,
+		Kind: storage.EventDeleteOrDisablePolicy,
 	}
 	store.idx = &mockIndex{
 		addOrUpdate: func(entry index.Entry) (storage.Event, error) {

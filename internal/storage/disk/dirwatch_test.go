@@ -92,7 +92,7 @@ func TestDirWatch(t *testing.T) {
 		haveEntries := make(chan index.Entry, 8)
 		mockIdx.On("Delete", mock.Anything).Return(func(entry index.Entry) storage.Event {
 			haveEntries <- entry
-			return storage.Event{Kind: storage.EventDeletePolicy, PolicyID: entry.Policy.ID}
+			return storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: entry.Policy.ID}
 		}, nil)
 
 		checkEvents := storage.TestSubscription(subMgr)
@@ -111,7 +111,7 @@ func TestDirWatch(t *testing.T) {
 		// Check expectations
 		mockIdx.AssertExpectations(t)
 
-		wantEvent := storage.Event{Kind: storage.EventDeletePolicy}
+		wantEvent := storage.Event{Kind: storage.EventDeleteOrDisablePolicy}
 		checkEvents(t, timeOut, wantEvent)
 	})
 
