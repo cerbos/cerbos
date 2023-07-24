@@ -97,7 +97,7 @@ func NewREPL(reader *liner.State, output Output) (*REPL, error) {
 		reader:   reader,
 		parser:   parser,
 		output:   output,
-		toRefVal: conditions.StdEnv.TypeAdapter().NativeToValue,
+		toRefVal: conditions.StdEnv.CELTypeAdapter().NativeToValue,
 	}
 
 	return repl, repl.reset()
@@ -410,12 +410,17 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 		return nil, nil, err
 	}
 
-	tpe := decls.Dyn
-	if t, ok := env.TypeProvider().FindType(val.Type().TypeName()); ok {
+	tpe := types.DynType
+	if t, ok := env.CELTypeProvider().FindStructType(val.Type().TypeName()); ok {
 		tpe = t
 	}
 
-	return val, tpe, nil
+	exprpbTpe, err := types.TypeToExprType(tpe)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return val, exprpbTpe, nil
 }
 
 func (r *REPL) loadPolicy(path string) error {
@@ -435,7 +440,7 @@ func (r *REPL) loadPolicy(path string) error {
 	case *policyv1.Policy_ExportVariables:
 		r.varExports[pt.ExportVariables.Name] = pt.ExportVariables.Definitions
 	case *policyv1.Policy_ResourcePolicy:
-		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.ResourcePolicy.Variables, p.Variables) //nolint:staticcheck
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.ResourcePolicy.Variables, p.Variables)
 		if err != nil {
 			return err
 		}
@@ -446,7 +451,7 @@ func (r *REPL) loadPolicy(path string) error {
 			}
 		}
 	case *policyv1.Policy_DerivedRoles:
-		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.DerivedRoles.Variables, p.Variables) //nolint:staticcheck
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.DerivedRoles.Variables, p.Variables)
 		if err != nil {
 			return err
 		}
@@ -457,7 +462,7 @@ func (r *REPL) loadPolicy(path string) error {
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
-		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.PrincipalPolicy.Variables, p.Variables) //nolint:staticcheck
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.PrincipalPolicy.Variables, p.Variables)
 		if err != nil {
 			return err
 		}

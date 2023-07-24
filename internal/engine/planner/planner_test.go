@@ -244,7 +244,7 @@ func TestResidualExpr(t *testing.T) {
 		`V.info.language + "_" + V.info.country == gbLoc`,
 		`has(R.attr.geo) && R.attr.geo in ["GB", "US"]`,
 		"has(V.info.language)",
-		`now() > timestamp("2021-04-20") && R.attr.geo in ["GB", "US"]`,
+		`now() > timestamp("2021-04-20T00:00:00Z") && R.attr.geo in ["GB", "US"]`,
 		`timestamp(R.attr.lastAccessed) > now()`,
 	}
 
@@ -320,7 +320,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			want: "R.attr.items.filter(x, x.price > 100)",
 		},
 		{
-			expr: `now() > timestamp("2021-04-20") && R.attr.geo in ["GB", "US"]`,
+			expr: `now() > timestamp("2021-04-20T00:00:00Z") && R.attr.geo in ["GB", "US"]`,
 			want: `R.attr.geo in ["GB", "US"]`,
 		},
 		{

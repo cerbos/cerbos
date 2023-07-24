@@ -14,6 +14,9 @@ import (
 	"github.com/google/cel-go/common/types"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
+	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/interpreter"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -25,8 +28,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/interpreter"
 )
 
 type (
