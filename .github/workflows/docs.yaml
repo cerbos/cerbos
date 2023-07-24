@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          #ref: main
+          ref: main
           fetch-depth: 0
           lfs: true
 
