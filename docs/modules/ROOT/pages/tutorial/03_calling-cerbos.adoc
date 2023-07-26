@@ -39,7 +39,7 @@ A call to Cerbos contains 3 key bits of information:
 
 . The Principal - who is making the request
 . The Resources - a map of entities of a resource kind that are they requesting access too
-. The Actions - what actions are they trying to person on the entities
+. The Actions - what actions are they trying to perform on the entities
 
 The request payload to the `/api/check` endpoint takes these 3 bits of information as JSON:
 
