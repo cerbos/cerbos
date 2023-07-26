@@ -18,7 +18,7 @@ Note that whilst authentication is out of scope of this article, Cerbos is compa
 
 You can find the Github repo for this tutorial  https://github.com/cerbos/express-prisma-cerbos/[here].
 
-=== Setting up Prisma
+== Setting up Prisma
 
 To get started, we need to install our various dependencies. Copy and run the following:
 
@@ -165,7 +165,7 @@ Now, to initialize our DB, generate the Prisma client and seed the database, run
 npx prisma migrate dev --name init
 ----
 
-=== Creating an access policy
+== Creating an access policy
 
 NOTE: We will be using a Docker container to run the Cerbos PDP instance, so ensure that you have https://docs.docker.com/get-docker/[Docker] set up first!
 
@@ -191,7 +191,7 @@ resourcePolicy:
   - actions: ["*"]
     effect: EFFECT_ALLOW
     roles:
-      - admin    
+      - admin
 
   # Users in the Sales department can read and create contacts
   - actions: ["read", "create"]
@@ -249,7 +249,7 @@ If everything is correct, we should see the following output:
 2022-12-07T16:43:40.632Z        INFO    cerbos.grpc     Starting gRPC server at :3593
 ----
 
-=== Setting up the server
+== Setting up the server
 
 Having now set up both our Cerbos policy and our Prisma database, it is time to implement our web server. For this example we will be using Express to set up a simple server running on port 3000. We will also import our Prisma and Cerbos clients which we will use later on.
 
@@ -303,7 +303,7 @@ app.get("/contacts/:id", async ({ params }, res) => {
 });
 ----
 
-=== Authorizing requests
+== Authorizing requests
 
 With our policy defined, we can call Cerbos from our request handler to authorize the principal to take the action on the resource.
 
@@ -369,7 +369,7 @@ In this case, we are only checking a single contact using the `checkResource` me
 
 Once we get the response back from Cerbos, calling the `.isAllowed` method for the required action (and optionally, the given resource ID in the `checkResources` case) will return a simple boolean of whether the user is authorized or not. Using this, we can either return the contact or throw an `HTTP 403 Unauthorized` response.
 
-=== The query planner
+== The query planner
 
 If we provide Cerbos with a `principal`, a description of the `resource` they're trying to access and the required `action`, we can ask it for a query plan.
 
@@ -449,7 +449,7 @@ We can then use the https://github.com/cerbos/query-plan-adapters/blob/main/pris
 
 In the case that the result `kind` is not `ALWAYS_DENIED`, we retrieve the filters from the adapter instance, and use them to construct a query using the Prisma ORM.
 
-=== Trying it out
+== Trying it out
 
 Run the Cerbos PDP, as described above, and separately, fire up the node server as follows:
 
@@ -466,7 +466,7 @@ curl -i http://localhost:3000/contacts/1
 curl -i http://localhost:3000/contacts
 ----
 
-=== Conclusion
+== Conclusion
 
 Through this simple example, we have used Primsa as our ORM to create a REST API which is authorized using Cerbos for a simple CRM system. This can be built upon to add more complex requirements, for example:
 

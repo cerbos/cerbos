@@ -60,6 +60,6 @@ derivedRoles:
       condition:
         match:
           expr: P.attr.isWearingBatCostume
----
+----
 
 ****
