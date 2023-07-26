@@ -9,7 +9,7 @@ site:
 content:
   sources:
     - url: ./../
-      branches: [HEAD, 'v*', '!v0.[0-25].*']
+      branches: [HEAD, 'v*', '!v0.{0..25}']
       edit_url: 'https://github.com/cerbos/cerbos/tree/main/{path}'
       start_path: docs
     - url: https://github.com/cerbos/cloud-docs.git
