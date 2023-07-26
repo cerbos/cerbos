@@ -10,11 +10,11 @@ Perhaps, in your case, a lot of the computational "heavy lifting" is done by the
 
 Regardless, there's _many_ ways to build an application (as the common idiom doesn't go). Application design is a vast and complex process, but one thing we can do to make that process more manageable is to use tools that take a lot of the implementation complexity away...
 
-=== Enter SQLAlchemy
+== Enter SQLAlchemy
 
 https://www.sqlalchemy.org/[SQLAlchemy] has established itself as one of the standards in database abstraction layers in the Python world. It offers two distinct ways of communicating with the DB; via it's lower-level `Core` SQL abstraction toolkit, or via it's `ORM` component, which extends `Core` to offer some convenient, higher-level abstractions.
 
-=== What we're building
+== What we're building
 
 In this run-through, we'll be building an application that manages a "Contact directory", enabling users to keep track of their contacts, along with useful information such as employment information (current company etc).
 
