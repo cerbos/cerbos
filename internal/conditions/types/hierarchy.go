@@ -182,7 +182,7 @@ type Hierarchy []string
 
 // ConvertToNative implements ref.Val.ConvertToNative.
 func (h Hierarchy) ConvertToNative(typeDesc reflect.Type) (any, error) {
-	
+	//nolint:exhaustive
 	switch typeDesc.Kind() {
 	case reflect.String:
 		return strings.Join(h, hierarchyDelim), nil
