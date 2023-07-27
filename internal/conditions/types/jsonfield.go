@@ -4,24 +4,24 @@
 package types
 
 import (
-	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/common/types"
 	"github.com/iancoleman/strcase"
 )
 
 // JSONFieldProvider is a custom type provider that allows protobuf fields to be accessed by their JSON name (camel case).
 type JSONFieldProvider struct {
-	ref.TypeProvider
+	types.Provider
 }
 
-func NewCamelCaseFieldProvider(tp ref.TypeProvider) *JSONFieldProvider {
-	return &JSONFieldProvider{TypeProvider: tp}
+func NewCamelCaseFieldProvider(tp types.Provider) *JSONFieldProvider {
+	return &JSONFieldProvider{Provider: tp}
 }
 
-func (ccfp *JSONFieldProvider) FindFieldType(msgType, fieldName string) (*ref.FieldType, bool) {
-	if ft, ok := ccfp.TypeProvider.FindFieldType(msgType, fieldName); ok {
+func (ccfp *JSONFieldProvider) FindStructFieldType(msgType, fieldName string) (*types.FieldType, bool) {
+	if ft, ok := ccfp.Provider.FindStructFieldType(msgType, fieldName); ok {
 		return ft, ok
 	}
 
 	sc := strcase.ToSnake(fieldName)
-	return ccfp.TypeProvider.FindFieldType(msgType, sc)
+	return ccfp.Provider.FindStructFieldType(msgType, sc)
 }

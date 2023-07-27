@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	HierarchyType = types.NewTypeValue(hierarchyTypeName,
+	HierarchyType = cel.ObjectType(hierarchyTypeName,
 		traits.IndexerType,
 		traits.SizerType,
 		traits.ReceiverType)

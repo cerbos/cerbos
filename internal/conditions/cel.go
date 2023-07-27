@@ -78,7 +78,7 @@ func initEnv(options []cel.EnvOption) (*cel.Env, error) {
 		return nil, err
 	}
 
-	cctp := types.NewCamelCaseFieldProvider(env.TypeProvider())
+	cctp := types.NewCamelCaseFieldProvider(env.CELTypeProvider())
 	return env.Extend(cel.CustomTypeProvider(cctp))
 }
 

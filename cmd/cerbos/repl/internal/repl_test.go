@@ -31,7 +31,7 @@ type DirectiveTest struct {
 }
 
 func TestREPL(t *testing.T) {
-	toRefVal := conditions.StdEnv.TypeAdapter().NativeToValue
+	toRefVal := conditions.StdEnv.CELTypeAdapter().NativeToValue
 	drPath := filepath.Join(test.PathToDir(t, "store"), "derived_roles", "derived_roles_01.yaml")
 	rpPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_01.yaml")
 	ppPath := filepath.Join(test.PathToDir(t, "store"), "principal_policies", "policy_01.yaml")
