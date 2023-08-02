@@ -194,3 +194,9 @@ resourcePolicy:
       condition:
         match:
           expr: P.attr.teams.all(t, t.startsWith(R.attr.teamId))
+    - actions: ["just-index"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: P.attr.account_id in (R.attr.accounts_people.map(ap, ap.account_id))

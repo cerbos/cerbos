@@ -11,6 +11,7 @@ principal:
     teams:
       team1: employee
       team2: user
+    account_id: abc123
 tests:
   - action: view
     resource:
@@ -131,3 +132,23 @@ tests:
                         - variable: t
                         - variable: request.resource.attr.teamId
                   - variable: t
+  - action: just-index
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: in
+          operands:
+            - value: abc123
+            - expression:
+                operator: map
+                operands:
+                  - variable: request.resource.attr.accounts_people
+                  - expression:
+                      operator: lambda
+                      operands:
+                        - variable: ap.account_id
+                        - variable: ap
