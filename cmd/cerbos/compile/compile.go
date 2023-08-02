@@ -52,9 +52,9 @@ cerbos compile --skip-tests /path/to/policy/repo
 )
 
 type Cmd struct { //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
-	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"existingdir"`
+	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
 	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
-	Tests         string                            `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
+	Tests         string                            `help:"Path to the directory containing tests. Defaults to policy directory." type:"path"`
 	RunRegex      string                            `help:"Run only tests that match this regex" name:"run"`
 	SkipTests     bool                              `help:"Skip tests"`
 	Output        flagset.OutputFormat              `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
