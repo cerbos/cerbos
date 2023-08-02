@@ -267,11 +267,27 @@ message AuxData {
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "JWT from the original request"
         example: "\"eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX\""
+        extensions: {
+          key: "x-fill-example";
+          value {bool_value: false}
+        }
+        extensions: {
+          key: "x-example-show-value";
+          value {bool_value: false}
+        }
       }
     ];
     string key_set_id = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
       example: "\"my-keyset\""
+      extensions: {
+        key: "x-fill-example";
+        value {bool_value: false}
+      }
+      extensions: {
+        key: "x-example-show-value";
+        value {bool_value: false}
+      }
     }];
   }
 
