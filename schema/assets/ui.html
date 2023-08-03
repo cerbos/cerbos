@@ -7,12 +7,20 @@
   <body>
     <rapi-doc
       spec-url="/schema/swagger.json"
-      render-style="view"
+      render-style="focused"
       schema-style="table"
+      default-schema-tab="schema"
+      schema-description-expanded="true"
       allow-authentication="true"
       allow-server-selection="false"
+      allow-spec-file-download="true"
       show-header="false"
-      schema-description-expanded="true"
-      theme="dark"></rapi-doc>
+      primary-color="#ffb901"
+      nav-bg-color="#ffc11e"
+      nav-text-color="#000000"
+      show-method-in-nav-bar="as-colored-block"
+      theme="light">
+          <img slot="nav-logo" src="https://docs.cerbos.dev/_/cerbie.svg" height="75" alt="Cerbos logo"/>
+    </rapi-doc>
   </body>
 </html>
