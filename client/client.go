@@ -69,6 +69,8 @@ type config struct {
 	tlsClientKey       string
 	userAgent          string
 	playgroundInstance string
+	streamInterceptors []grpc.StreamClientInterceptor
+	unaryInterceptors  []grpc.UnaryClientInterceptor
 	connectTimeout     time.Duration
 	retryTimeout       time.Duration
 	maxRetries         uint
@@ -151,6 +153,20 @@ func WithPlaygroundInstance(instance string) Opt {
 	}
 }
 
+// WithStreamInterceptors sets the interceptors to be used for streaming gRPC operations.
+func WithStreamInterceptors(interceptors ...grpc.StreamClientInterceptor) Opt {
+	return func(c *config) {
+		c.streamInterceptors = interceptors
+	}
+}
+
+// WithUnaryInterceptors sets the interceptors to be used for unary gRPC operations.
+func WithUnaryInterceptors(interceptors ...grpc.UnaryClientInterceptor) Opt {
+	return func(c *config) {
+		c.unaryInterceptors = interceptors
+	}
+}
+
 // New creates a new Cerbos client.
 func New(address string, opts ...Opt) (Client, error) {
 	grpcConn, _, err := mkConn(address, opts...)
@@ -194,21 +210,37 @@ func mkDialOpts(conf *config) ([]grpc.DialOption, error) {
 		dialOpts = append(dialOpts, grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: conf.connectTimeout}))
 	}
 
+	streamInterceptors := conf.streamInterceptors
+	unaryInterceptors := conf.unaryInterceptors
+
 	if conf.maxRetries > 0 && conf.retryTimeout > 0 {
-		dialOpts = append(dialOpts,
-			grpc.WithChainStreamInterceptor(
+		streamInterceptors = append(
+			[]grpc.StreamClientInterceptor{
 				grpc_retry.StreamClientInterceptor(
 					grpc_retry.WithMax(conf.maxRetries),
 					grpc_retry.WithPerRetryTimeout(conf.retryTimeout),
 				),
-			),
-			grpc.WithChainUnaryInterceptor(
+			},
+			streamInterceptors...,
+		)
+
+		unaryInterceptors = append(
+			[]grpc.UnaryClientInterceptor{
 				grpc_retry.UnaryClientInterceptor(
 					grpc_retry.WithMax(conf.maxRetries),
 					grpc_retry.WithPerRetryTimeout(conf.retryTimeout),
 				),
-			),
+			},
+			unaryInterceptors...,
 		)
+	}
+
+	if len(streamInterceptors) > 0 {
+		dialOpts = append(dialOpts, grpc.WithChainStreamInterceptor(streamInterceptors...))
+	}
+
+	if len(unaryInterceptors) > 0 {
+		dialOpts = append(dialOpts, grpc.WithChainUnaryInterceptor(unaryInterceptors...))
 	}
 
 	if conf.plaintext {
