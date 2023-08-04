@@ -13,7 +13,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/test"
@@ -108,6 +112,41 @@ func TestClient(t *testing.T) {
 			})
 		})
 	}
+
+	t.Run("interceptors", func(t *testing.T) {
+		errCanceled := status.Error(codes.Canceled, "canceled")
+
+		t.Run("stream", func(t *testing.T) {
+			var called string
+
+			c, err := client.NewAdminClientWithCredentials("unix:/dev/null", "username", "password", client.WithStreamInterceptors(func(_ context.Context, _ *grpc.StreamDesc, _ *grpc.ClientConn, method string, _ grpc.Streamer, _ ...grpc.CallOption) (grpc.ClientStream, error) {
+				called = method
+				return nil, errCanceled
+			}))
+			require.NoError(t, err, "Failed to create client")
+
+			_, err = c.AuditLogs(context.Background(), client.AuditLogOptions{
+				Type: client.DecisionLogs,
+				Tail: 1,
+			})
+			require.ErrorIs(t, err, errCanceled)
+			require.Equal(t, svcv1.CerbosAdminService_ListAuditLogEntries_FullMethodName, called)
+		})
+
+		t.Run("unary", func(t *testing.T) {
+			var called string
+
+			c, err := client.New("unix:/dev/null", client.WithUnaryInterceptors(func(_ context.Context, method string, _, _ any, _ *grpc.ClientConn, _ grpc.UnaryInvoker, _ ...grpc.CallOption) error {
+				called = method
+				return errCanceled
+			}))
+			require.NoError(t, err, "Failed to create client")
+
+			_, err = c.IsAllowed(context.Background(), client.NewPrincipal("id", "role"), client.NewResource("kind", "id"), "action")
+			require.ErrorIs(t, err, errCanceled)
+			require.Equal(t, svcv1.CerbosService_CheckResources_FullMethodName, called)
+		})
+	})
 }
 
 func mkServerOpts(t *testing.T, withTLS bool) []testutil.ServerOpt {
