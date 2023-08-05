@@ -52,7 +52,7 @@ The request payload to the `/api/check` endpoint takes these 3 bits of informati
     "attr": {}          // a map of attributes about the user - not used yet
   },
   "resource": {
-    "kind": "contact",  // the type of the resoureces
+    "kind": "contact",  // the type of the resources
     "instances": {      // a map of the resource instance(s) being checked
         "contact_1": {  // key is the ID of the resource instance
             "attr": {}  // a map of attributes about the resource - not used yet
