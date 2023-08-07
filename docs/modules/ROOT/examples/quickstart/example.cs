@@ -35,12 +35,11 @@ internal class Program
             );
 
         CheckResourcesResponse result = client.CheckResources(request);
-        foreach (var n in new[] { "BUGS001", "DAFFY002" })
+        foreach (var resourceId in new[] { "BUGS001", "DAFFY002" })
         {
-            var r = result.Find(n);
-
-            Console.Write($"\nResource: {n}\n");
-            foreach (var actionEffect in r.Actions)
+            var resultEntry = result.Find(resourceId);
+            Console.Write($"\nResource ID: {resourceId}\n");
+            foreach (var actionEffect in resultEntry.Actions)
             {
                 string action = actionEffect.Key;
                 Effect effect = actionEffect.Value;
