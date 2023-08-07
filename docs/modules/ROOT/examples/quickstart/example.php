@@ -2,34 +2,47 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
+use Cerbos\Effect\V1\Effect;
+use Cerbos\Sdk\Builder\AttributeValue;
 use Cerbos\Sdk\Builder\CerbosClientBuilder;
+use Cerbos\Sdk\Builder\CheckResourcesRequest;
 use Cerbos\Sdk\Builder\Principal;
-use Cerbos\Sdk\Builder\ResourceAction;
-use Symfony\Component\HttpClient\HttplugClient;
+use Cerbos\Sdk\Builder\ResourceEntry;
+use Cerbos\Sdk\Utility\RequestId;
 
-$clientBuilder = new CerbosClientBuilder("http://localhost:3592", new HttplugClient(), null, null, null);
-$client = $clientBuilder->build();
+$client = CerbosClientBuilder::newInstance("localhost:3593")
+            ->withPlaintext(true)
+            ->build();
 
-$principal = Principal::newInstance("bugs_bunny")
-              ->withRole("user")
-              ->withAttribute("beta_tester", true);
+$request = CheckResourcesRequest::newInstance()
+    ->withRequestId(RequestId::generate())
+    ->withPrincipal(
+        Principal::newInstance("bugs_bunny")
+            ->withRole("user")
+            ->withAttribute("beta_tester", AttributeValue::boolValue(true))
+    )
+    ->withResourceEntries(
+        [
+            ResourceEntry::newInstance("album:object", "BUGS001")
+                ->withAttribute("owner", AttributeValue::stringValue("bugs_bunny"))
+                ->withAttribute("public", AttributeValue::boolValue(false))
+                ->withAttribute("flagged", AttributeValue::boolValue(false))
+                ->withActions(["comment", "view:public"]),
 
-$resourceAction1 = ResourceAction::newInstance("album:object", "BUGS001")
-                    ->withAction("view:public")
-                    ->withAction("comment")
-                    ->withAttribute("owner", "bugs_bunny")
-                    ->withAttribute("public", false)
-                    ->withAttribute("flagged", false);
+            ResourceEntry::newInstance("album:object", "DAFFY002")
+                ->withAttribute("owner", AttributeValue::stringValue("daffy_duck"))
+                ->withAttribute("public", AttributeValue::boolValue(true))
+                ->withAttribute("flagged", AttributeValue::boolValue(false))
+                ->withActions(["comment", "view:public"])
+        ]
+    );
 
-$resourceAction2 = ResourceAction::newInstance("album:object", "DAFFY002")
-                    ->withAction("view:public")
-                    ->withAction("comment")
-                    ->withAttribute("owner", "daffy_duck")
-                    ->withAttribute("public", true)
-                    ->withAttribute("flagged", false);
-
-$checkResourcesResult = $client->checkResources($principal, array($resourceAction1, $resourceAction2), null, null);
-
-echo json_encode($checkResourcesResult, JSON_PRETTY_PRINT);
-
+$checkResourcesResponse = $client->checkResources($request);
+foreach (["BUGS001", "DAFFY002"] as $resourceId) {
+    $resultEntry = $checkResourcesResponse->find($resourceId);
+    $actions = $resultEntry->getActions();
+    foreach ($actions as $k => $v) {
+        printf("%s -> %s", $k, Effect::name($v));
+    }
+}
 ?>
