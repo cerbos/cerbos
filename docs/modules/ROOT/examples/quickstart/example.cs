@@ -1,40 +1,49 @@
-using Cerbos.Sdk.Builders;
-using Cerbos.Sdk;
+using Cerbos.Api.V1.Effect;
+using Cerbos.Sdk.Response;
+using Cerbos.Sdk.Builder;
+using Cerbos.Sdk.Utility;
 
 internal class Program
 {
     private static void Main(string[] args)
     {
-        var client = new CerbosClientBuilder("http://localhost:3593").WithPlaintext().BuildBlockingClient();
-        string[] actions = { "view:public", "comment" };
-
-        CheckResourcesResult result = client
-            .CheckResources(
-                Principal.NewInstance("bugs_bunny", "user")
-                    .WithAttribute("beta_tester", AttributeValue.BoolValue(true)),
-
-                ResourceAction.NewInstance("album:object", "BUGS001")
+        var client = CerbosClientBuilder.ForTarget("http://localhost:3593").WithPlaintext().Build();
+        var request = CheckResourcesRequest
+            .NewInstance()
+            .WithRequestId(RequestId.Generate())
+            .WithIncludeMeta(true)
+            .WithPrincipal(
+                Principal
+                    .NewInstance("bugs_bunny", "user")
+                    .WithAttribute("beta_tester", AttributeValue.BoolValue(true))
+            )
+            .WithResourceEntries(
+                ResourceEntry
+                    .NewInstance("album:object", "BUGS001")
                     .WithAttribute("owner", AttributeValue.StringValue("bugs_bunny"))
                     .WithAttribute("public", AttributeValue.BoolValue(false))
                     .WithAttribute("flagged", AttributeValue.BoolValue(false))
-                    .WithActions(actions),
+                    .WithActions("comment", "view:public"),
 
-                ResourceAction.NewInstance("album:object", "DAFFY002")
+                ResourceEntry
+                    .NewInstance("album:object", "DAFFY002")
+                    .WithPolicyVersion("20210210")
                     .WithAttribute("owner", AttributeValue.StringValue("daffy_duck"))
                     .WithAttribute("public", AttributeValue.BoolValue(true))
                     .WithAttribute("flagged", AttributeValue.BoolValue(false))
-                    .WithActions(actions)
+                    .WithActions("comment", "view:public")
             );
 
-        foreach (string n in new string[] { "BUGS001", "DAFFY002" })
+        CheckResourcesResponse result = client.CheckResources(request);
+        foreach (var resourceId in new[] { "BUGS001", "DAFFY002" })
         {
-            var r = result.Find(n);
-            Console.Write(String.Format("\nResource: {0}\n", n));
-            foreach (var i in r.GetAll())
+            var resultEntry = result.Find(resourceId);
+            Console.Write($"\nResource ID: {resourceId}\n");
+            foreach (var actionEffect in resultEntry.Actions)
             {
-                String action = i.Key;
-                Boolean isAllowed = i.Value;
-                Console.Write(String.Format("\t{0} -> {1}\n", action, isAllowed ? "EFFECT_ALLOW" : "EFFECT_DENY"));
+                string action = actionEffect.Key;
+                Effect effect = actionEffect.Value;
+                Console.Write($"\t{action} -> {(effect == Effect.Allow ? "EFFECT_ALLOW" : "EFFECT_DENY")}\n");
             }
         }
     }
