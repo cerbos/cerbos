@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.317
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/cerbos/cloud-api v0.1.4
+	github.com/cerbos/cloud-api v0.1.5
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/denisenkom/go-mssqldb v0.12.3
@@ -144,7 +144,7 @@ require (
 	github.com/aws/smithy-go v1.14.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/bufbuild/connect-go v1.9.0 // indirect
+	github.com/bufbuild/connect-go v1.10.0 // indirect
 	github.com/bufbuild/connect-opentelemetry-go v0.4.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/containerd/console v1.0.3 // indirect
