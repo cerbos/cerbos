@@ -12,6 +12,8 @@ replicaCount: 1
 image:
   repository: ghcr.io/cerbos/cerbos
   pullPolicy: IfNotPresent
+  # Image digest to use. Takes precedence over tag if specified.
+  digest: ""
   # Image tag to use. Defaults to the chart appVersion.
   tag: ""
 
