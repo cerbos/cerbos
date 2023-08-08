@@ -77,6 +77,8 @@ jobs:
         run: |
           docker push ghcr.io/cerbos/cerbos:dev-amd64
           docker push ghcr.io/cerbos/cerbos:dev-arm64
+          docker manifest create ghcr.io/cerbos/cerbos:${{ github.sha }} ghcr.io/cerbos/cerbos:dev-arm64 ghcr.io/cerbos/cerbos:dev-amd64
+          docker manifest push ghcr.io/cerbos/cerbos:${{ github.sha }}
           docker manifest create ghcr.io/cerbos/cerbos:dev ghcr.io/cerbos/cerbos:dev-arm64 ghcr.io/cerbos/cerbos:dev-amd64
           docker manifest push ghcr.io/cerbos/cerbos:dev
 
@@ -84,6 +86,8 @@ jobs:
         run: |
           docker push ghcr.io/cerbos/cerbosctl:dev-amd64
           docker push ghcr.io/cerbos/cerbosctl:dev-arm64
+          docker manifest create ghcr.io/cerbos/cerbosctl:${{ github.sha }} ghcr.io/cerbos/cerbosctl:dev-arm64 ghcr.io/cerbos/cerbosctl:dev-amd64
+          docker manifest push ghcr.io/cerbos/cerbosctl:${{ github.sha }}
           docker manifest create ghcr.io/cerbos/cerbosctl:dev ghcr.io/cerbos/cerbosctl:dev-arm64 ghcr.io/cerbos/cerbosctl:dev-amd64
           docker manifest push ghcr.io/cerbos/cerbosctl:dev
 
