@@ -154,3 +154,16 @@ Detect if bundle driver is used with default config
 {{- $isDefaultCache := (eq (dig "config" "storage" "bundle" "remote" "cacheDir" "<not_defined>" .Values.cerbos) "<not_defined>") -}}
 {{- if (and $isBundleDriver $isDefaultTmp $isDefaultCache) -}}yes{{- else -}}no{{- end -}}
 {{- end }}
+
+{{/*
+The image reference to use in pods
+*/}}
+{{- define "cerbos.image" -}}
+"{{ .Values.image.repository }}
+{{- with .Values.image.digest -}}
+@{{ . }}
+{{- else -}}
+:{{ .Values.image.tag | default .Chart.AppVersion }}
+{{- end -}}
+"
+{{- end }}

@@ -45,7 +45,7 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: {{ include "cerbos.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - "server"
