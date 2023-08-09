@@ -32,11 +32,11 @@ Every condition expression must evaluate to a boolean true/false value. You can 
 
 .Quotes in expressions
 ****
-Because single and double quotes have special meanings in YAML, if your expression contains quotation marks, use the YAML literal block syntax to avoid YAML parsing errors.
+Single and double quotes have special meanings in YAML. If your expression contains quotes, use the YAML block syntax to avoid parsing errors.
 
 [source,yaml]
 ----
-expr: |
+expr: >
   "GB" in R.attr.geographies
 ----  
 ****
