@@ -14,7 +14,8 @@ condition:
     all:
       of:
         - expr: request.resource.attr.status == "PENDING_APPROVAL"
-        - expr: "GB" in request.resource.attr.geographies
+        - expr: >
+            "GB" in request.resource.attr.geographies
 ----
 
 Within a condition block you have access to several special variables:
@@ -28,6 +29,17 @@ Within a condition block you have access to several special variables:
 `G`:: An alias for `globals` for accessing the global variables object.
 
 Every condition expression must evaluate to a boolean true/false value. You can combine complex expressions together in a single condition block by using the `all`, `any`, or `none` operators.
+
+.Quotes in expressions
+****
+Single and double quotes have special meanings in YAML. If your expression contains quotes, use the YAML block syntax to avoid parsing errors.
+
+[source,yaml]
+----
+expr: >
+  "GB" in R.attr.geographies
+----  
+****
 
 .Single boolean expression
 [source,yaml,linenums]
@@ -45,7 +57,8 @@ condition:
     all:
       of:
         - expr: R.attr.status == "PENDING_APPROVAL"
-        - expr: "GB" in R.attr.geographies
+        - expr: >
+            "GB" in R.attr.geographies
         - expr: P.attr.geography == "GB"
 ----
 
@@ -57,7 +70,8 @@ condition:
     any:
       of:
         - expr: R.attr.status == "PENDING_APPROVAL"
-        - expr: "GB" in R.attr.geographies
+        - expr: >
+            "GB" in R.attr.geographies
         - expr: P.attr.geography == "GB"
 ----
 
@@ -70,7 +84,8 @@ condition:
     none:
       of:
         - expr: R.attr.status == "PENDING_APPROVAL"
-        - expr: "GB" in R.attr.geographies
+        - expr: >
+            "GB" in R.attr.geographies
         - expr: P.attr.geography == "GB"
 ----
 
