@@ -30,7 +30,7 @@ Within a condition block you have access to several special variables:
 
 Every condition expression must evaluate to a boolean true/false value. You can combine complex expressions together in a single condition block by using the `all`, `any`, or `none` operators.
 
-TIP: If the condition starts with a quotation mark, then it needs to be moved to a new line via the `>` syntax in the example above.
+TIP: If the expression starts with a quotation mark, then it needs to be moved to a new line via the `>` syntax in the example above.
 
 .Single boolean expression
 [source,yaml,linenums]
