@@ -205,6 +205,9 @@ The Postgres storage backend is one of the dynamic stores that supports adding o
 
 include::partial$cerbosctl.adoc[]
 
+[#postgres-db-sync]
+include::partial$db_sync.adoc[]
+
 NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos Postgres driver. This is to minimize the privileges the Cerbos instance has on the Postgres installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
 
 The driver configuration expects the connection details to be provided as connection URL. See link:https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING[Postgres connstring documentation] for more information. Use the `search_path` parameter to point to the schema containing the Cerbos tables.
@@ -237,8 +240,6 @@ storage:
       maxIdle: 5
 ----
 
-
-
 [#postgres-schema]
 === Database object definitions
 
@@ -256,6 +257,9 @@ include::example$postgres_schema.sql[]
 The MySQL storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
 
 include::partial$cerbosctl.adoc[]
+
+[#mysql-db-sync]
+include::partial$db_sync.adoc[]
 
 NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos MySQL driver. This is to minimize the privileges the Cerbos instance has on the MySQL installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
 
@@ -325,6 +329,7 @@ storage:
       maxIdle: 5
 ----
 
+
 [#mysql-schema]
 === Database object definitions
 
@@ -341,6 +346,9 @@ include::example$mysql_schema.sql[]
 The SQL Server storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
 
 include::partial$cerbosctl.adoc[]
+
+[#sqlserver-db-sync]
+include::partial$db_sync.adoc[]
 
 NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos SQL Server driver. This is to minimize the privileges the Cerbos instance has on the SQL Server installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
 
@@ -374,6 +382,7 @@ storage:
       maxIdle: 5
 ----
 
+
 [#sqlserver-schema]
 === Database object definitions
 
@@ -396,7 +405,7 @@ You can configure the fallback error threshold and the fallback error window to 
 ----
 storage:
   driver: "overlay"
-  overlay: 
+  overlay:
     baseDriver: postgres
     fallbackDriver: disk
     fallbackErrorThreshold: 5 # number of errors that occur within the fallbackErrorWindow to trigger failover
