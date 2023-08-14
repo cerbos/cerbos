@@ -462,7 +462,7 @@ func compileAllVariables(modCtx *moduleCtx, variables *policyv1.Variables) map[s
 	}
 
 	addVariables(modCtx, results, sources, variables.GetLocal(), "policy local variables")
-	addVariables(modCtx, results, sources, modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
+	addVariables(modCtx, results, sources, modCtx.def.Variables, "top-level policy variables (deprecated)") 
 
 	for name, definedIn := range sources {
 		var definedInMsg string

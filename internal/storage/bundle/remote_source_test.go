@@ -32,6 +32,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, true))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 			require.NoError(t, rs.InitWithClient(context.Background(), mockClient), "Failed to init")
 
 			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
@@ -46,6 +47,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, true))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 			require.NoError(t, rs.InitWithClient(context.Background(), mockClient), "Failed to init")
 
 			ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
@@ -60,6 +62,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, true))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 			require.Error(t, rs.InitWithClient(context.Background(), mockClient), "Expected error")
 
 			require.False(t, rs.IsHealthy(), "Source should be unhealthy")
@@ -75,6 +78,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, true))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 			require.NoError(t, rs.InitWithClient(context.Background(), mockClient), "Failed to init")
 
 			require.NoError(t, rs.Reload(context.Background()), "Failed to reload")
@@ -93,6 +97,7 @@ func TestRemoteSource(t *testing.T) {
 
 		rs, err := bundle.NewRemoteSource(mkConf(t, false))
 		require.NoError(t, err, "Failed to create remote source")
+		t.Cleanup(func() { _ = rs.Close() })
 		require.NoError(t, rs.InitWithClient(context.Background(), mockClient), "Failed to init")
 
 		ids, err := rs.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
@@ -114,6 +119,7 @@ func TestRemoteSource(t *testing.T) {
 				Once()
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, false))
+			t.Cleanup(func() { _ = rs.Close() })
 			require.NoError(t, err, "Failed to create remote source")
 
 			ctx, cancelFn := context.WithCancel(context.Background())
@@ -152,6 +158,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, false))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 
 			ctx, cancelFn := context.WithCancel(context.Background())
 			t.Cleanup(cancelFn)
@@ -192,6 +199,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, false))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 
 			ctx, cancelFn := context.WithCancel(context.Background())
 			t.Cleanup(cancelFn)
@@ -237,6 +245,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, false))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 
 			ctx, cancelFn := context.WithCancel(context.Background())
 			t.Cleanup(cancelFn)
@@ -278,6 +287,7 @@ func TestRemoteSource(t *testing.T) {
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, false))
 			require.NoError(t, err, "Failed to create remote source")
+			t.Cleanup(func() { _ = rs.Close() })
 
 			ctx, cancelFn := context.WithCancel(context.Background())
 			t.Cleanup(cancelFn)

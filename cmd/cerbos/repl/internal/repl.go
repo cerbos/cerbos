@@ -440,7 +440,7 @@ func (r *REPL) loadPolicy(path string) error {
 	case *policyv1.Policy_ExportVariables:
 		r.varExports[pt.ExportVariables.Name] = pt.ExportVariables.Definitions
 	case *policyv1.Policy_ResourcePolicy:
-		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.ResourcePolicy.Variables, p.Variables) //nolint:staticcheck
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.ResourcePolicy.Variables, p.Variables) 
 		if err != nil {
 			return err
 		}
@@ -451,7 +451,7 @@ func (r *REPL) loadPolicy(path string) error {
 			}
 		}
 	case *policyv1.Policy_DerivedRoles:
-		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.DerivedRoles.Variables, p.Variables) //nolint:staticcheck
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.DerivedRoles.Variables, p.Variables) 
 		if err != nil {
 			return err
 		}
@@ -462,7 +462,7 @@ func (r *REPL) loadPolicy(path string) error {
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
-		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.PrincipalPolicy.Variables, p.Variables) //nolint:staticcheck
+		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.PrincipalPolicy.Variables, p.Variables) 
 		if err != nil {
 			return err
 		}

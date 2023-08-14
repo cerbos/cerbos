@@ -460,3 +460,16 @@ func (s *RemoteSource) Reload(ctx context.Context) error {
 func (s *RemoteSource) SourceKind() string {
 	return "remote"
 }
+
+func (s *RemoteSource) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.bundle != nil {
+		err := s.bundle.Close()
+		s.bundle = nil
+		return err
+	}
+
+	return nil
+}

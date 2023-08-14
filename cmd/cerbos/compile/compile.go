@@ -96,6 +96,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
+	defer store.Close()
 
 	enforcement := internalschema.EnforcementReject
 	if c.IgnoreSchemas {
