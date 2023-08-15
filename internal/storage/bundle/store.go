@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"io"
 
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
+
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
-	"go.uber.org/zap"
 )
 
 const DriverName = "bundle"
@@ -122,4 +124,16 @@ func (hs *HybridStore) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 
 func (hs *HybridStore) SourceKind() string {
 	return "hybrid"
+}
+
+func (hs *HybridStore) Close() (outErr error) {
+	if c, ok := hs.remote.(io.Closer); ok {
+		outErr = multierr.Append(outErr, c.Close())
+	}
+
+	if c, ok := hs.local.(io.Closer); ok {
+		outErr = multierr.Append(outErr, c.Close())
+	}
+
+	return outErr
 }

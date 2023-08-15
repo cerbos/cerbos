@@ -40,6 +40,7 @@ type Entry struct {
 }
 
 type Index interface {
+	io.Closer
 	storage.Instrumented
 	GetFirstMatch([]namer.ModuleID) (*policy.CompilationUnit, error)
 	GetCompilationUnits(...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
@@ -516,4 +517,11 @@ func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 	log.Info("Index reload successful")
 
 	return []storage.Event{storage.NewReloadEvent()}, nil
+}
+
+func (idx *index) Close() error {
+	if c, ok := idx.fsys.(io.Closer); ok {
+		return c.Close()
+	}
+	return nil
 }

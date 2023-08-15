@@ -132,3 +132,7 @@ func (s *Store) Reload(ctx context.Context) error {
 
 	return nil
 }
+
+func (s *Store) Close() error {
+	return s.idx.Close()
+}

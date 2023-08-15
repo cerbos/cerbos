@@ -50,6 +50,7 @@ func TestIndexLoadPolicy(t *testing.T) {
 		require.NoError(t, err)
 		idx, err := index.Build(context.Background(), fsys)
 		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
 
 		t.Run("should load the policies", func(t *testing.T) {
 			policies, err := idx.LoadPolicy(context.Background(), policyFiles...)

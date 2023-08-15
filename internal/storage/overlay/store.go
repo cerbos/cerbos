@@ -9,8 +9,13 @@ import (
 	"fmt"
 	"io"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
+
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+
+	"github.com/sony/gobreaker"
+	"github.com/sourcegraph/conc/pool"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
@@ -18,8 +23,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/sony/gobreaker"
-	"github.com/sourcegraph/conc/pool"
 )
 
 const DriverName = "overlay"
@@ -218,4 +221,16 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	return p.Wait()
+}
+
+func (s *Store) Close() (outErr error) {
+	if c, ok := s.baseStore.(io.Closer); ok {
+		outErr = multierr.Append(outErr, c.Close())
+	}
+
+	if c, ok := s.fallbackStore.(io.Closer); ok {
+		outErr = multierr.Append(outErr, c.Close())
+	}
+
+	return outErr
 }

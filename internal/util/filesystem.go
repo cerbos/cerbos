@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/nlepage/go-tarfs"
+	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -82,12 +83,30 @@ func IsArchiveFile(fileName string) bool {
 	return IsZip(fileName) || IsTar(fileName) || IsGzip(fileName)
 }
 
-func getFsFromTar(r io.Reader) (fs.FS, error) {
+func getFsFromTar(r io.Reader, closers ...io.Closer) (fs.FS, error) {
 	tfs, err := tarfs.New(r)
 	if err != nil {
+		for _, c := range closers {
+			_ = c.Close()
+		}
 		return nil, fmt.Errorf("failed to open tar file: %w", err)
 	}
-	return tfs, nil
+
+	return ClosableFS{FS: tfs, closers: closers}, nil
+}
+
+type ClosableFS struct {
+	fs.FS
+	io.Closer
+	closers []io.Closer
+}
+
+func (cfs ClosableFS) Close() (outErr error) {
+	for _, c := range cfs.closers {
+		outErr = multierr.Append(outErr, c.Close())
+	}
+
+	return outErr
 }
 
 // OpenDirectoryFS attempts to open a directory FS at the given location. It'll initially check if the target file is an archive,
@@ -101,29 +120,27 @@ func OpenDirectoryFS(path string) (fs.FS, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to open zip file: %w", err)
 		}
-		return zr, nil
+		return ClosableFS{FS: zr, closers: []io.Closer{zr}}, nil
 	case IsTar(path):
 		f, err := os.Open(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open tar file: %w", err)
 		}
-		defer f.Close()
 
-		return getFsFromTar(f)
+		return getFsFromTar(f, f)
 	case IsGzip(path):
 		f, err := os.Open(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open gzip file: %w", err)
 		}
-		defer f.Close()
 
 		gzr, err := gzip.NewReader(f)
 		if err != nil {
+			_ = f.Close()
 			return nil, fmt.Errorf("failed to open gzip file: %w", err)
 		}
-		defer gzr.Close()
 
-		return getFsFromTar(gzr)
+		return getFsFromTar(gzr, gzr, f)
 	}
 
 	return os.DirFS(path), nil

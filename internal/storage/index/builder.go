@@ -6,6 +6,7 @@ package index
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"path"
 
@@ -137,6 +138,9 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 		return nil
 	})
 	if err != nil {
+		if c, ok := fsys.(io.Closer); ok {
+			_ = c.Close()
+		}
 		return nil, err
 	}
 

@@ -244,5 +244,9 @@ func (b *Bundle) LoadSchema(_ context.Context, path string) (io.ReadCloser, erro
 }
 
 func (b *Bundle) Release() error {
+	return b.Close()
+}
+
+func (b *Bundle) Close() error {
 	return b.cleanup()
 }

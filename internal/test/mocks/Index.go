@@ -126,6 +126,47 @@ func (_c *Index_Clear_Call) RunAndReturn(run func() error) *Index_Clear_Call {
 	return _c
 }
 
+// Close provides a mock function with given fields:
+func (_m *Index) Close() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Index_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Close'
+type Index_Close_Call struct {
+	*mock.Call
+}
+
+// Close is a helper method to define mock.On call
+func (_e *Index_Expecter) Close() *Index_Close_Call {
+	return &Index_Close_Call{Call: _e.mock.On("Close")}
+}
+
+func (_c *Index_Close_Call) Run(run func()) *Index_Close_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Index_Close_Call) Return(_a0 error) *Index_Close_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Index_Close_Call) RunAndReturn(run func() error) *Index_Close_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: _a0
 func (_m *Index) Delete(_a0 index.Entry) (storage.Event, error) {
 	ret := _m.Called(_a0)

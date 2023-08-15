@@ -30,6 +30,7 @@ func mkStore(t *testing.T, dir string) *Store {
 
 	store, err := NewStore(context.Background(), &Conf{Directory: dir})
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = store.Close() })
 
 	return store
 }
