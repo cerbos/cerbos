@@ -242,32 +242,30 @@ resources:
 
 === Running tests
 
-To run the tests, provide the path to the tests directory using the `--tests` flag.
+The `compile` command automatically discovers test files in the policy repository.
 
 [source,sh,subs="attributes"]
 ----
 docker run -i -t \
     -v /path/to/policy/dir:/policies \
-    -v /path/to/test/dir:/tests \
-    {app-docker-img} compile --tests=/tests /policies
+    {app-docker-img} compile /policies
 ----
 
 
 The output format can be controlled using the `--output` flag, which accepts the values `tree` (default), `list` and `json`. The `--color` flag controls the coloring of the output. To produce machine readable output from the tests, pass `--output=json --color=never` to the command.
 
 
-By default, all discovered tests are run. To run just some of the tests, provide a regular expression that matches the test using the `--run` flag.
+By default, all discovered tests are run. Use the `--skip-tests` flag to skip all tests or use the `--run` flag to run a set of tests that match a regular expression.
 
 .Example: Running only tests that contain 'Delete' in the name
 [source,sh,subs="attributes"]
 ----
 docker run -i -t \
     -v /path/to/policy/dir:/policies \
-    -v /path/to/test/dir:/tests \
-    {app-docker-img} compile --tests=/tests --run=Delete /policies
+    {app-docker-img} compile --run=Delete /policies
 ----
 
-You can also skip entire suites or individual tests in a suite by adding `skip: true` to the test definition.
+You can mark entire suites or individual tests in a suite with `skip: true` to skip them during test runs.
 
 .Example: Skipping a test
 [source,yaml]
@@ -328,7 +326,6 @@ jobs:
         uses: cerbos/cerbos-compile-action@v1
         with:
           policyDir: policies
-          testDir: tests
 ----
 
 See https://github.com/cerbos/photo-share-tutorial for an example of Cerbos GitHub Actions being used in a workflow.
@@ -357,5 +354,5 @@ compile-job:
   stage: compile
   dependencies: ["download-cerbos"]
   script:
-    - ./cerbos compile ./policies --tests ./tests
+    - ./cerbos compile ./policies
 ----
