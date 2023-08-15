@@ -51,6 +51,12 @@ jobs:
           E2E_SKIP_CLUSTER: "true"
           E2E_NO_CLEANUP: "true"
 
+      - name: Upload coverage to Coveralls
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: e2e.cover
+          flag-name: e2e
+
       - name: Notify Slack
         if: failure()
         env:
