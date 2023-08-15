@@ -54,7 +54,7 @@ cerbos compile --skip-tests /path/to/policy/repo
 type Cmd struct { //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
 	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
 	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
-	Tests         string                            `help:"Path to the directory containing tests. Defaults to policy directory." type:"path"`
+	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
 	RunRegex      string                            `help:"Run only tests that match this regex" name:"run"`
 	SkipTests     bool                              `help:"Skip tests"`
 	Output        flagset.OutputFormat              `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
@@ -82,7 +82,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	fsys, err := util.OpenDirectoryFS(c.Dir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open policy repository at %q: %w", c.Dir, err)
 	}
 
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
@@ -92,7 +92,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return lint.Display(p, idxErr, c.Output, colorLevel)
 		}
 
-		return fmt.Errorf("failed to open directory %s: %w", c.Dir, err)
+		return fmt.Errorf("failed to load policy repository at %q: %w", c.Dir, err)
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
@@ -109,7 +109,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return internalcompile.Display(p, *compErr, c.Output, colorLevel)
 		}
 
-		return fmt.Errorf("failed to create engine: %w", err)
+		return fmt.Errorf("failed to compile policies: %w", err)
 	}
 
 	if c.TestOutput == nil {
@@ -134,17 +134,17 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 		eng, err := engine.NewEphemeral(compiler, schemaMgr)
 		if err != nil {
-			return fmt.Errorf("failed to create engine: %w", err)
+			return fmt.Errorf("failed to create engine to run tests: %w", err)
 		}
 
-		testFsys, err := c.testsDir()
+		testFsys, testDir, err := c.testsDir()
 		if err != nil {
 			return err
 		}
 
 		results, err := verify.Verify(ctx, testFsys, eng, verifyConf)
 		if err != nil {
-			return fmt.Errorf("failed to run tests: %w", err)
+			return fmt.Errorf("failed to run tests from %q: %w", testDir, err)
 		}
 
 		if err = verification.Display(p, results, *c.TestOutput, c.Verbose, colorLevel); err != nil {
@@ -161,12 +161,17 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	return nil
 }
 
-func (c *Cmd) testsDir() (fs.FS, error) {
-	if c.Tests == "" {
-		return util.OpenDirectoryFS(c.Dir)
+func (c *Cmd) testsDir() (fs.FS, string, error) {
+	dir := c.Dir
+	if c.Tests != "" {
+		dir = c.Tests
 	}
 
-	return util.OpenDirectoryFS(c.Tests)
+	fsys, err := util.OpenDirectoryFS(dir)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to open tests directory at %q: %w", dir, err)
+	}
+	return fsys, dir, nil
 }
 
 func (c *Cmd) Help() string {
