@@ -90,7 +90,7 @@ test: $(GOTESTSUM)
 
 .PHONY: test-race
 test-race: $(GOTESTSUM) $(TESTSPLIT)
-	@ $(TESTSPLIT) split --kind=unit --index=$(TESTSPLIT_INDEX) --total=$(TESTSPLIT_TOTAL) | xargs $(GOTESTSUM) --junitfile=junit.unit.$(TESTSPLIT_INDEX).xml -- -tags=tests -race -cover -coverprofile=unit.cover
+	@ $(TESTSPLIT) split --kind=unit --index=$(TESTSPLIT_INDEX) --total=$(TESTSPLIT_TOTAL) | xargs $(GOTESTSUM) --junitfile=junit.unit.$(TESTSPLIT_INDEX).xml -- -tags=tests -race -cover -covermode=atomic -coverprofile=unit.cover
 
 .PHONY: test-integration
 test-integration: $(GOTESTSUM) $(TESTSPLIT)

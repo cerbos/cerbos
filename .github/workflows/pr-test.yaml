@@ -115,11 +115,19 @@ jobs:
           name: junit-reports-${{ strategy.job-index }}
           path: junit.*.xml
 
-      - name: Upload to CodeCov
-        uses: codecov/codecov-action@v3
+      - name: Upload unit coverage to Coveralls
+        uses: shogo82148/actions-goveralls@v1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: "unit.cover,integration.cover"
+          path-to-profile: unit.cover
+          flag-name: unit-${{ strategy.job-index }}
+          parallel: true
+
+      - name: Upload integration coverage to Coveralls
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: integration.cover
+          flag-name: integration-${{ strategy.job-index }}
+          parallel: true
 
   upload-test-times:
     needs: test
@@ -146,6 +154,11 @@ jobs:
         with:
           name: test-times
           path: test-times.json
+
+      - name: Complete coveralls report
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          parallel-finished: true
 
   docs:
     needs: changes
