@@ -1,0 +1,11 @@
+---
+ignore:
+  - github.com/cerbos/cerbos/api/**
+  - github.com/cerbos/cerbos/e2e/**
+  - github.com/cerbos/cerbos/hack/**
+  - github.com/cerbos/cerbos/internal/observability/**
+  - github.com/cerbos/cerbos/internal/outputcolor/**
+  - github.com/cerbos/cerbos/internal/printer/**
+  - github.com/cerbos/cerbos/internal/telemetry/**
+  - github.com/cerbos/cerbos/internal/test/**
+  - github.com/cerbos/cerbos/schema/**
