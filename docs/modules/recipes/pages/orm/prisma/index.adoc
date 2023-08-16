@@ -16,7 +16,7 @@ The last point is an important one as the authorization decision requires contex
 
 Note that whilst authentication is out of scope of this article, Cerbos is compatible with any authentication system - be it basic auth, JWT or a service like https://auth0.com[Auth0].
 
-You can find the Github repo for this tutorial  https://github.com/cerbos/express-prisma-cerbos/[here].
+You can find the GitHub repo for this tutorial  https://github.com/cerbos/express-prisma-cerbos/[here].
 
 == Setting up Prisma
 
@@ -468,10 +468,10 @@ curl -i http://localhost:3000/contacts
 
 == Conclusion
 
-Through this simple example, we have used Primsa as our ORM to create a REST API which is authorized using Cerbos for a simple CRM system. This can be built upon to add more complex requirements, for example:
+Through this simple example, we have used Prisma as our ORM to create a REST API which is authorized using Cerbos for a simple CRM system. This can be built upon to add more complex requirements, for example:
 
 * Checking the IP address of the request to ensure it is within the corporate IP range
 * Check if the incoming change is within an acceptable boundary eg only allow 20% discounts on a product unless an admin
 * Ensure only certain actions are done during work-hours
 
-You can find a sample repo of integrating Primsa and Cerbos in an Express server on https://github.com/cerbos/express-prisma-cerbos/[Github], as well as many other example projects of implementing Cerbos.
+You can find a sample repo of integrating Prisma and Cerbos in an Express server on https://github.com/cerbos/express-prisma-cerbos/[GitHub], as well as many other example projects of implementing Cerbos.

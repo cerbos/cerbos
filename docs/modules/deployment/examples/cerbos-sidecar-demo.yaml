@@ -1,5 +1,5 @@
 ---
-# Config map used to configure Cerbos. 
+# Config map used to configure Cerbos.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: cerbos
     app.kubernetes.io/version: "0.0.1"
 data:
-  "config.yaml": |-
+  ".cerbos.yaml": |-
       server:
         # Configure Cerbos to listen on a Unix domain socket.
         httpListenAddr: "unix:/sock/cerbos.sock"
@@ -94,7 +94,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - "server"
-            - "--config=/config/config.yaml"
+            - "--config=/config/.cerbos.yaml"
             - "--log-level=INFO"
           volumeMounts:
             # Mount the shared volume containing the socket

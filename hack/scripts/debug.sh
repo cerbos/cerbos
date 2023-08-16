@@ -11,7 +11,7 @@ trap 'rm -rf "$TEMP_DIR"' EXIT
 STORE_DIR="${TEMP_DIR}/store"
 mkdir -p "${STORE_DIR}"
 
-cat >"${TEMP_DIR}/conf.yaml" <<EOF
+cat >"${TEMP_DIR}/.cerbos.yaml" <<EOF
 ---
 server:
   httpListenAddr: ":3592"
@@ -25,6 +25,5 @@ EOF
 echo "Store directory is $STORE_DIR"
 (
     cd "${SCRIPT_DIR}/../.."
-    dlv debug . -- server --config="${TEMP_DIR}/conf.yaml"
+    dlv debug . -- server --config="${TEMP_DIR}/.cerbos.yaml"
 )
-

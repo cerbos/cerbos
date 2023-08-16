@@ -4,10 +4,10 @@ include::partial$attributes.adoc[]
 
 [source,sh,subs="attributes"]
 ----
-docker run --rm --name cerbos -p 3592:3592 {app-docker-img} 
+docker run --rm --name cerbos -p 3592:3592 {app-docker-img}
 ----
 
-By default, the container is configured to listen on ports 3592 (HTTP) and 3593 (gRPC) and watch for policy files on the volume mounted at `/policies`. You can override these by creating a new xref:configuration:index.adoc[configuration file]. 
+By default, the container is configured to listen on ports 3592 (HTTP) and 3593 (gRPC) and watch for policy files on the volume mounted at `/policies`. You can override these by creating a new xref:configuration:index.adoc[configuration file].
 
 .Create a directory to hold the config file and policies.
 [source,sh,subs="attributes"]
@@ -18,7 +18,7 @@ mkdir -p cerbos-quickstart/policies
 .Create a config file.
 [source,sh,subs="attributes,+macros"]
 ----
-cat $$>$$ cerbos-quickstart/conf.yaml $$<<$$EOF
+cat $$>$$ cerbos-quickstart/.cerbos.yaml $$<<$$EOF
 server:
   httpListenAddr: ":3592"
 
@@ -33,6 +33,5 @@ EOF
 .Launch the container with the new config file.
 [source,sh,subs="attributes"]
 ----
-docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart:/quickstart -p 3592:3592 {app-docker-img} server --config=/quickstart/conf.yaml
+docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart:/quickstart -p 3592:3592 {app-docker-img} server --config=/quickstart/.cerbos.yaml
 ----
-

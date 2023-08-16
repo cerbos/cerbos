@@ -12,11 +12,11 @@ Cerbos developers rely on anonymous usage data to help prioritise new features a
 - Operating system type and architecture
 - Enabled Cerbos features (storage backend type and schema enforcement level are some examples of this information)
 - Aggregated statistics about the policies like the total number of policies and average number of rules in a policy
-- Aggregated statistics about Cerbos API calls and the gRPC user agents. 
+- Aggregated statistics about Cerbos API calls and the gRPC user agents.
 
 You can view the full schema of the telemetry data on link:https://github.com/cerbos/cerbos/tree/main/api/public/cerbos/telemetry/v1/telemetry.proto[GitHub] or on the link:https://buf.build/cerbos/cerbos-api/docs/main/cerbos.telemetry.v1[Buf schema registry].
 
-We use link:https://www.rudderstack.com[Rudderstack] to collect the data. Only a small number of Zenauth (the company leading the development of Cerbos) employees have access to the data. 
+We use link:https://www.rudderstack.com[Rudderstack] to collect the data. Only a small number of Zenauth (the company leading the development of Cerbos) employees have access to the data.
 
 == How to disable telemetry collection
 
@@ -39,7 +39,7 @@ Set `CERBOS_NO_TELEMETRY=1` or `CERBOS_NO_TELEMETRY=true` in your environment. W
 .With the binary
 [source,sh,subs="attributes"]
 ----
-CERBOS_NO_TELEMETRY=1 ./{app-name} server --config=/path/to/config.yaml 
+CERBOS_NO_TELEMETRY=1 ./{app-name} server --config=/path/to/.cerbos.yaml
 ----
 
 .With the container
@@ -47,7 +47,7 @@ CERBOS_NO_TELEMETRY=1 ./{app-name} server --config=/path/to/config.yaml
 ----
 docker run -i -t -p 3592:3592 \
     -e CERBOS_NO_TELEMETRY=true \
-    {app-docker-img} 
+    {app-docker-img}
 ----
 
 === Through the command line
@@ -57,7 +57,7 @@ Start Cerbos with `--set=telemetry.disabled=true` command line flag.
 .With the binary
 [source,sh,subs="attributes"]
 ----
-./{app-name} server --config=/path/to/config.yaml --set=telemetry.disabled=true 
+./{app-name} server --config=/path/to/.cerbos.yaml --set=telemetry.disabled=true
 ----
 
 .With the container
@@ -67,4 +67,3 @@ docker run -i -t -p 3592:3592 \
     {app-docker-img} \
     server --set=telemetry.disabled=true
 ----
-

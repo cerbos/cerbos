@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Attribute schema
 
-NOTE: The policies for this section can be found link:{tutorial-base}/09-attribute-schema/cerbos[on Github].
+NOTE: The policies for this section can be found link:{tutorial-base}/09-attribute-schema/cerbos[on GitHub].
 
 An additional check bit of business logic has been introduced for the `contact` resource which requires the `active` attribute of a contact to be set to `True` to be able to `update` or `delete` it. This is so that old contacts are kept for reporting purposes and can't be accidentally deleted or updated.
 
@@ -32,11 +32,12 @@ The same can be done with attributes of a principal - you can find out more in x
 
 == Enforcing schema
 
-Validating the request against the schema is done at request time by the server - to enable this a xref:configuration:schema.adoc[new schema configuration block] needs adding to the `config.yaml`.
+Validating the request against the schema is done at request time by the server - to enable this a xref:configuration:schema.adoc[new schema configuration block] needs adding to the `.cerbos.yaml`.
 
 [source,yaml]
 ----
-include::example$tutorial/09-attribute-schema/cerbos/config/conf.yaml[]
+schema:
+  enforcement: reject
 ----
 
 With this now in place, any request that is made to check authorization of a `contact` resource is rejected if the attributes are not provided or of the wrong type:

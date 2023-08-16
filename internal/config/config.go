@@ -20,7 +20,7 @@ import (
 
 const DefaultMarker = "__default__"
 
-//go:embed conf.yaml.gotmpl
+//go:embed .cerbos.yaml.gotmpl
 var defaultConfTmpl string
 
 var ErrConfigNotLoaded = errors.New("config not loaded")

@@ -33,7 +33,7 @@ const (
 	help = `
 Launches a command within the context of a Cerbos PDP. The policies are loaded by default from a directory named "policies" in the current working directory. The launched application can access Cerbos endpoints using the values from CERBOS_HTTP or CERBOS_GRPC environment variables.
 
-If a file named "cerbos.yaml" exists in the current working directory, it will be used as the configuration file for the PDP. You can override the config file and/or other configuration options using the flags described below. 
+If a file named ".cerbos.yaml" exists in the current working directory, it will be used as the configuration file for the PDP. You can override the config file and/or other configuration options using the flags described below.
 
 Examples:
 
@@ -67,7 +67,7 @@ storage:
 
 type Cmd struct {
 	LogLevel string         `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
-	Config   string         `help:"Path to config file" type:"existingfile" placeholder:"./cerbos.yaml"`
+	Config   string         `help:"Path to config file" type:"existingfile" placeholder:".cerbos.yaml"`
 	Set      []string       `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	Command  []string       `help:"Command to run" arg:"" passthrough:"" required:""`
 	Timeout  time.Duration  `help:"Cerbos startup timeout" default:"30s"`
@@ -157,9 +157,9 @@ func (c *Cmd) loadConfig() error {
 		if err := config.Load(c.Config, confOverrides); err != nil {
 			return fmt.Errorf("failed to load configuration from %s: %w", c.Config, err)
 		}
-	} else if fd, err := os.Stat("cerbos.yaml"); err == nil && !fd.IsDir() {
-		if err := config.Load("cerbos.yaml", confOverrides); err != nil {
-			return fmt.Errorf("failed to load configuration from cerbos.yaml: %w", err)
+	} else if fd, err := os.Stat(".cerbos.yaml"); err == nil && !fd.IsDir() {
+		if err := config.Load(".cerbos.yaml", confOverrides); err != nil {
+			return fmt.Errorf("failed to load configuration from .cerbos.yaml: %w", err)
 		}
 	} else {
 		wd, err := os.Getwd()
