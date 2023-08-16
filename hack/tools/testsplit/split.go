@@ -11,13 +11,16 @@ import (
 	"sort"
 
 	"github.com/alecthomas/kong"
+	"github.com/gobwas/glob"
 	"golang.org/x/tools/go/packages"
+	"gopkg.in/yaml.v3"
 )
 
 type splitCmd struct {
-	Kind  string
-	Index int
-	Total int
+	IgnoreFile string `type:"existingfile" optional:""`
+	Kind       string
+	Index      int
+	Total      int
 }
 
 func (cmd *splitCmd) Run(k *kong.Kong) error {
@@ -26,7 +29,7 @@ func (cmd *splitCmd) Run(k *kong.Kong) error {
 		return err
 	}
 
-	packages, err := listPackages()
+	packages, err := listPackages(cmd.IgnoreFile)
 	if err != nil {
 		return err
 	}
@@ -88,7 +91,16 @@ func (pkgs packageSet) Packages() []string {
 	return result
 }
 
-func listPackages() (packageSet, error) {
+func listPackages(ignoreFile string) (packageSet, error) {
+	var ignoredPkgs globList
+	if ignoreFile != "" {
+		ignore, err := loadIgnoreList(ignoreFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load ignore list from %q: %w", ignoreFile, err)
+		}
+		ignoredPkgs = ignore
+	}
+
 	packages, err := packages.Load(&packages.Config{Mode: packages.NeedName}, "./...")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list Go packages: %w", err)
@@ -97,8 +109,48 @@ func listPackages() (packageSet, error) {
 	result := make(packageSet, len(packages))
 
 	for _, pkg := range packages {
-		result[pkg.PkgPath] = struct{}{}
+		if !ignoredPkgs.Matches(pkg.PkgPath) {
+			result[pkg.PkgPath] = struct{}{}
+		}
 	}
 
 	return result, nil
+}
+
+type globList []glob.Glob
+
+func (gl globList) Matches(value string) bool {
+	for _, g := range gl {
+		if g.Match(value) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func loadIgnoreList(ignoreFile string) (globList, error) {
+	listBytes, err := os.ReadFile(ignoreFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %q: %w", ignoreFile, err)
+	}
+
+	var ignoreList struct {
+		Ignore []string `yaml:"ignore"`
+	}
+	if err := yaml.Unmarshal(listBytes, &ignoreList); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
+	}
+
+	ignoreGlobs := make(globList, len(ignoreList.Ignore))
+	for i, gp := range ignoreList.Ignore {
+		g, err := glob.Compile(gp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compile glob pattern %q: %w", gp, err)
+		}
+
+		ignoreGlobs[i] = g
+	}
+
+	return ignoreGlobs, nil
 }
