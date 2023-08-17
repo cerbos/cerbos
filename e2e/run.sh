@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2022 Zenauth Ltd.
+# Copyright 2021-2023 Zenauth Ltd.
 
 set -euo pipefail
 
@@ -30,7 +30,7 @@ run_tests() {
     (
         cd "$SCRIPT_DIR"
         telepresence helm upgrade
-        telepresence connect --no-report -- go test -v -failfast -p=1 -cover -coverprofile=e2e.cover --tags="tests e2e" "$@"
+        telepresence connect --no-report -- go test -v -failfast -p=1 -cover -coverprofile=../e2e.cover --tags="tests e2e" "$@"
     )
 }
 
