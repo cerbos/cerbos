@@ -37,13 +37,13 @@ storage:
 
 NOTE: You can find the full configuration schema in the xref:configuration:index.adoc[Cerbos docs].
 
-Save this file to a directory `config/conf.yaml`. You'll also need to create an empty policy folder `policies/`.
+Save this configuration to a file named `.cerbos.yaml`. You'll also need to create an empty policy folder `policies/`.
 
 Now, extract the binary and run:
 
 [source,sh]
 ----
-./cerbos server --config=config/conf.yaml
+./cerbos server --config=.cerbos.yaml
 ----
 
 Once started you can open `http://localhost:3592` to see the API documentation.

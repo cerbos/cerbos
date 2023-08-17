@@ -92,7 +92,7 @@ You can share the configuration between Cerbos PDP and the healthcheck by using 
 ----
 docker run -i -t -p 3592:3592 -p 3593:3593 \
     -v /path/to/conf/dir:/config \
-    -e CERBOS_CONFIG=/config/conf.yaml \
+    -e CERBOS_CONFIG=/config/.cerbos.yaml \
     {app-docker-img}
 ----
 
@@ -110,11 +110,11 @@ Examples:
 
 # Check gRPC endpoint
 
-cerbos healthcheck --config=/path/to/config.yaml
+cerbos healthcheck --config=/path/to/.cerbos.yaml
 
 # Check HTTP endpoint and ignore server certificate verification
 
-cerbos healthcheck --config=/path/to/config.yaml --kind=http --insecure
+cerbos healthcheck --config=/path/to/.cerbos.yaml --kind=http --insecure
 
 # Check the HTTP endpoint of a specific host with no TLS.
 
@@ -259,7 +259,7 @@ cerbos run -- python -m unittest
 
 By default, the policies are loaded from the `policies` directory in the current working directory and HTTP and gRPC endpoints will be exposed on `127.0.0.1:3592` and `127.0.0.1:3593` respectively. Your application can obtain the actual endpoint addresses by inspecting the `CERBOS_HTTP` or `CERBOS_GRPC` environment variables.
 
-If a file named `cerbos.yaml` exists in the current working directory, that file will be used as the Cerbos xref:configuration:index.adoc[configuration file]. You can use a different config file or override specific config values using the same flags as the `server` command above.
+If a file named `.cerbos.yaml` exists in the current working directory, that file will be used as the Cerbos xref:configuration:index.adoc[configuration file]. You can use a different config file or override specific config values using the same flags as the `server` command above.
 
 
 [source]
@@ -271,7 +271,7 @@ Run a command in the context of a Cerbos PDP
 Launches a command within the context of a Cerbos PDP. The policies are loaded by default from a directory named "policies" in the current working directory. The launched application can access Cerbos endpoints using the
 values from CERBOS_HTTP or CERBOS_GRPC environment variables.
 
-If a file named "cerbos.yaml" exists in the current working directory, it will be used as the configuration file for the PDP. You can override the config file and/or other configuration options using the flags described
+If a file named ".cerbos.yaml" exists in the current working directory, it will be used as the configuration file for the PDP. You can override the config file and/or other configuration options using the flags described
 below.
 
 Examples:
@@ -296,7 +296,7 @@ Flags:
       --version
 
       --log-level="info"                        Log level (debug,info,warn,error)
-      --config=./cerbos.yaml                    Path to config file
+      --config=.cerbos.yaml                     Path to config file
       --set=server.adminAPI.enabled=true,...    Config overrides
       --timeout=30s                             Cerbos startup timeout
 ----
@@ -309,7 +309,7 @@ Starts the Cerbos PDP.
 
 [source]
 ----
-Usage: cerbos server --config=./config.yaml
+Usage: cerbos server --config=.cerbos.yaml
 
 Start Cerbos server (PDP)
 
@@ -317,11 +317,11 @@ Examples:
 
 # Start the server
 
-cerbos server --config=/path/to/config.yaml
+cerbos server --config=/path/to/.cerbos.yaml
 
 # Start the server with the Admin API enabled and the 'sqlite' storage driver
 
-cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'
+cerbos server --config=/path/to/.cerbos.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'
 
 Flags:
   -h, --help                                    Show context-sensitive help.
@@ -329,6 +329,6 @@ Flags:
 
       --debug-listen-addr=:6666                 Address to start the gops listener
       --log-level="info"                        Log level (debug,info,warn,error)
-      --config=./config.yaml                    Path to config file
+      --config=.cerbos.yaml                     Path to config file
       --set=server.adminAPI.enabled=true,...    Config overrides
 ----

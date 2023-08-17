@@ -14,18 +14,18 @@ include::ROOT:partial$attributes.adoc[]
 docker pull {app-docker-img}
 ----
 
-* Create a file named `config.yaml` with the following contents:
+* Create a file named `.cerbos.yaml` with the following contents:
 
 [source,yaml]
 ----
-include::example$photo-share/config.yaml[]
+include::example$photo-share/cerbos.yaml[]
 ----
 
 * Create a directory named `policies` to hold the policies.
 
 ****
 
-NOTE: You can find all the policies and tests used in this tutorial at https://github.com/cerbos/photo-share-tutorial. 
+NOTE: You can find all the policies and tests used in this tutorial at https://github.com/cerbos/photo-share-tutorial.
 
 == The Apatr application
 
@@ -199,7 +199,7 @@ Let's start the server and try out a request.
 [source,shell,subs="attributes"]
 ----
 docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
-    server --config=/photo-share/config.yaml
+    server --config=/photo-share/.cerbos.yaml
 ----
 
 
@@ -296,7 +296,7 @@ Test results
 18 tests executed [18 OK]
 ----
 
-NOTE: See https://github.com/cerbos/photo-share-tutorial for an example of using Cerbos GitHub Actions in a CI workflow to compile and test policies. 
+NOTE: See https://github.com/cerbos/photo-share-tutorial for an example of using Cerbos GitHub Actions in a CI workflow to compile and test policies.
 
 
 == Using schemas to enforce type safety [Optional]
@@ -342,7 +342,7 @@ Now update `policies/resource_album_object.yaml` to add the reference to the sch
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
-  version: "default" 
+  version: "default"
   importDerivedRoles:
     - apatr_common_roles
   resource: "album:object"
@@ -366,13 +366,13 @@ resourcePolicy:
         - abuse_moderator
 
   schemas:
-    resourceSchema: 
+    resourceSchema:
       ref: cerbos:///album_object.json <1>
 ----
 <1> Defines the schema to use for validating resource attributes
 
 
-Update `config.yaml` to enable schema enforcement.
+Update `.cerbos.yaml` to enable schema enforcement.
 
 [source,yaml,linenums]
 ----
@@ -389,12 +389,12 @@ schema:
   enforcement: reject
 ----
 
-Now start the server again and send a request that does not conform to the schema. The server response should contain a list validation errors.
+Now start the server again and send a request that does not conform to the schema. The server response should contain a list of validation errors.
 
 [source,shell,subs="attributes"]
 ----
 docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
-    server --config=/photo-share/config.yaml
+    server --config=/photo-share/.cerbos.yaml
 ----
 
 .Invalid request

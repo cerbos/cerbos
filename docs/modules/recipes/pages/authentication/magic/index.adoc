@@ -21,7 +21,7 @@ Once a user has authenticated (and the profile enriched with profile information
 
 Implementing this requires passing the token provided from the Magic Client SDK to your backend code and then verifying it with the Magic Admin SDK.
 
-As an example, we have forked Magic’s Node/Express/Passport demo repo and added in calls to Cerbos to demonstrate how the two systems can work together - you can find a live https://demo-magiclink.cerbos.cloud/[demo here] and https://github.com/cerbos/express-magiclink-cerbos[view source code Github].
+As an example, we have forked Magic’s Node/Express/Passport demo repo and added in calls to Cerbos to demonstrate how the two systems can work together - you can find a live https://demo-magiclink.cerbos.cloud/[demo here] and https://github.com/cerbos/express-magiclink-cerbos[view source code on GitHub].
 
 The logical data flow for how this is implemented is as follows:
 

@@ -4,7 +4,7 @@ services:
     container_name: cerbos
     image: ghcr.io/cerbos/cerbos:${CERBOS_VERSION:-dev}
     restart: always
-    command: ["server", "--config=/conf/config.yml", "--log-level=warn", "--debug-listen-addr=:6666"]
+    command: ["server", "--config=/conf/.cerbos.yaml", "--log-level=warn", "--debug-listen-addr=:6666"]
     depends_on:
       - postgres
     environment:

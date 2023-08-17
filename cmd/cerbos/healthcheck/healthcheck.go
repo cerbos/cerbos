@@ -41,11 +41,11 @@ Examples:
 
 # Check gRPC endpoint
 
-cerbos healthcheck --config=/path/to/config.yaml
+cerbos healthcheck --config=/path/to/.cerbos.yaml
 
 # Check HTTP endpoint and ignore server certificate verification
 
-cerbos healthcheck --config=/path/to/config.yaml --kind=http --insecure
+cerbos healthcheck --config=/path/to/.cerbos.yaml --kind=http --insecure
 
 # Check the HTTP endpoint of a specific host with no TLS.
 

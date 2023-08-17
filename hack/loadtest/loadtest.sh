@@ -47,8 +47,8 @@ up() {
   mkdir -p "${WORK_DIR}"/{audit,cerbos}
   mkdir -p "${WORK_DIR}"/postgres/{init,data}
   cp ../../internal/storage/db/postgres/schema.sql "${WORK_DIR}/postgres/init/schema.sql"
-  
-  cp conf/cerbos/config.yml "${WORK_DIR}/cerbos/config.yml"
+
+  cp conf/cerbos/.cerbos.yaml "${WORK_DIR}/cerbos/.cerbos.yaml"
 
   printf "Starting all services\n"
   AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker-compose up -d
@@ -65,7 +65,7 @@ up() {
     put policies "${WORK_DIR}"/policies
   fi
 
-  docker-compose logs -f 
+  docker-compose logs -f
 }
 
 executeTest() {
@@ -96,9 +96,9 @@ usage() {
 }
 
 
-while getopts ":cdeghu" opt; do 
+while getopts ":cdeghu" opt; do
   case "$opt" in
-    c) 
+    c)
       down
       clean
       exit 0
@@ -111,7 +111,7 @@ while getopts ":cdeghu" opt; do
       executeTest
       exit 0
       ;;
-    g) 
+    g)
       generateResources
       ;;
     h)
@@ -127,7 +127,7 @@ while getopts ":cdeghu" opt; do
       usage
       exit 2
       ;;
-    :)  
+    :)
       echo "Flag $OPTARG requires an argument"
       usage
       exit 2
