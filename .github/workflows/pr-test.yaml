@@ -131,10 +131,14 @@ jobs:
 
   upload-test-times:
     needs: test
+    if: ${{ always() && needs.test.result != 'skipped' }}
     name: Upload test times
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Check test results
+        run: test "${{ needs.test.result }}" = "success"
+
       - name: Checkout code
         uses: actions/checkout@v3
 
