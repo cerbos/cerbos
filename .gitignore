@@ -18,6 +18,7 @@ internal/confdocs/
 .DS_Store
 
 coverage.out
+e2e.cover
 unit.cover
 integration.cover
 junit.*.xml
