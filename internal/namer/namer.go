@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -15,8 +14,6 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
-
-var invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
 
 const (
 	DerivedRolesPrefix      = fqnPrefix + "derived_roles"
@@ -156,7 +153,7 @@ func FQNFromPolicyKey(s string) string {
 
 // ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource, version and scope.
 func ResourcePolicyFQN(resource, version, scope string) string {
-	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))
+	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, resource, version)
 	return withScope(fqn, scope)
 }
 
@@ -177,7 +174,7 @@ func ScopedResourcePolicyModuleIDs(resource, version, scope string, genTree bool
 
 // PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal, version and scope.
 func PrincipalPolicyFQN(principal, version, scope string) string {
-	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, Sanitize(principal), Sanitize(version))
+	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, principal, version)
 	return withScope(fqn, scope)
 }
 
@@ -198,7 +195,7 @@ func ScopedPrincipalPolicyModuleIDs(principal, version, scope string, genTree bo
 
 // DerivedRolesFQN returns the fully-qualified module name for the given derived roles set.
 func DerivedRolesFQN(roleSetName string) string {
-	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, Sanitize(roleSetName))
+	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, roleSetName)
 }
 
 // DerivedRolesModuleID returns the module ID for the given derived roles set.
@@ -208,7 +205,7 @@ func DerivedRolesModuleID(roleSetName string) ModuleID {
 
 // ExportVariablesFQN returns the fully-qualified module name for the given exported variable definitions.
 func ExportVariablesFQN(variablesName string) string {
-	return fmt.Sprintf("%s.%s", ExportVariablesPrefix, Sanitize(variablesName))
+	return fmt.Sprintf("%s.%s", ExportVariablesPrefix, variablesName)
 }
 
 // ExportVariablesModuleID returns the module ID for the given exported variable definitions.
@@ -227,11 +224,6 @@ func withScope(fqn, scope string) string {
 	}
 
 	return fqn + "/" + scope
-}
-
-// Sanitize replaces special characters in the string with underscores.
-func Sanitize(v string) string {
-	return invalidIdentifierChars.ReplaceAllLiteralString(v, "_")
 }
 
 // ResourceRuleName returns the name of the given resource rule.

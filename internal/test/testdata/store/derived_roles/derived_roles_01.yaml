@@ -21,3 +21,6 @@ derivedRoles:
       condition:
         match:
           expr: request.principal.attr.reader == true
+
+    - name: kube_user
+      parentRoles: ["system:basic_user"]

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  principal: arn:aws:iam::123456789012:user/johndoe
+  version: default
+  rules:
+    - resource: arn:aws:sns:us-east-1:123456789012:topic-a
+      actions:
+        - action: write
+          effect: EFFECT_ALLOW
