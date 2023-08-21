@@ -1080,8 +1080,7 @@
         "kind": {
           "type": "string",
           "example": "album:photo",
-          "description": "Name of the resource kind being accessed.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+          "description": "Name of the resource kind being accessed."
         },
         "policyVersion": {
           "type": "string",
@@ -1612,7 +1611,6 @@
           ],
           "items": {
             "type": "string",
-            "pattern": "^[[:word:]\\-\\.]+$",
             "uniqueItems": true
           },
           "description": "Roles assigned to this principal from your identity management system.",
@@ -1645,8 +1643,7 @@
         "kind": {
           "type": "string",
           "example": "album:photo",
-          "description": "Name of the resource kind being accessed.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+          "description": "Name of the resource kind being accessed."
         },
         "policyVersion": {
           "type": "string",
@@ -2643,8 +2640,7 @@
         "kind": {
           "type": "string",
           "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+          "description": "Resource kind."
         },
         "attr": {
           "type": "object",
@@ -2750,8 +2746,7 @@
         "resourceKind": {
           "type": "string",
           "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+          "description": "Resource kind."
         },
         "policyVersion": {
           "type": "string",
@@ -3058,8 +3053,7 @@
         "kind": {
           "type": "string",
           "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+          "description": "Resource kind."
         },
         "policyVersion": {
           "type": "string",

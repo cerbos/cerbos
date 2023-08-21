@@ -48,7 +48,6 @@ message PlanResourcesResponse {
   string resource_kind = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Resource kind."
     example: "\"album:object\""
-    pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
   }];
 
   string policy_version = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -166,7 +165,6 @@ message CheckResourcesResponse {
       string kind = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Name of the resource kind being accessed.",
         example: "\"album:photo\"",
-        pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
       }];
       string policy_version = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."

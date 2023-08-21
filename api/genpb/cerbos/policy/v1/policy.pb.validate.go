@@ -538,17 +538,6 @@ func (m *ResourcePolicy) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if !_ResourcePolicy_Resource_Pattern.MatchString(m.GetResource()) {
-		err := ResourcePolicyValidationError{
-			field:  "Resource",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if !_ResourcePolicy_Version_Pattern.MatchString(m.GetVersion()) {
 		err := ResourcePolicyValidationError{
 			field:  "Version",
@@ -772,8 +761,6 @@ var _ interface {
 	ErrorName() string
 } = ResourcePolicyValidationError{}
 
-var _ResourcePolicy_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
-
 var _ResourcePolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
 var _ResourcePolicy_ImportDerivedRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
@@ -893,10 +880,10 @@ func (m *ResourceRule) validate(all bool) error {
 			_ResourceRule_Roles_Unique[item] = struct{}{}
 		}
 
-		if !_ResourceRule_Roles_Pattern.MatchString(item) {
+		if utf8.RuneCountInString(item) < 1 {
 			err := ResourceRuleValidationError{
 				field:  fmt.Sprintf("Roles[%v]", idx),
-				reason: "value does not match regex pattern \"^([[:word:]\\\\-\\\\.]+|\\\\*)$\"",
+				reason: "value length must be at least 1 runes",
 			}
 			if !all {
 				return err
@@ -1065,8 +1052,6 @@ var _ interface {
 
 var _ResourceRule_DerivedRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
-var _ResourceRule_Roles_Pattern = regexp.MustCompile("^([[:word:]\\-\\.]+|\\*)$")
-
 var _ResourceRule_Effect_InLookup = map[effectv1.Effect]struct{}{
 	1: {},
 	2: {},
@@ -1100,17 +1085,6 @@ func (m *PrincipalPolicy) validate(all bool) error {
 		err := PrincipalPolicyValidationError{
 			field:  "Principal",
 			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if !_PrincipalPolicy_Principal_Pattern.MatchString(m.GetPrincipal()) {
-		err := PrincipalPolicyValidationError{
-			field:  "Principal",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
 		}
 		if !all {
 			return err
@@ -1280,8 +1254,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PrincipalPolicyValidationError{}
-
-var _PrincipalPolicy_Principal_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 var _PrincipalPolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
@@ -1701,10 +1673,10 @@ func (m *RoleDef) validate(all bool) error {
 			_RoleDef_ParentRoles_Unique[item] = struct{}{}
 		}
 
-		if !_RoleDef_ParentRoles_Pattern.MatchString(item) {
+		if utf8.RuneCountInString(item) < 1 {
 			err := RoleDefValidationError{
 				field:  fmt.Sprintf("ParentRoles[%v]", idx),
-				reason: "value does not match regex pattern \"^([[:word:]\\\\-\\\\.]+|\\\\*)$\"",
+				reason: "value length must be at least 1 runes",
 			}
 			if !all {
 				return err
@@ -1821,8 +1793,6 @@ var _ interface {
 } = RoleDefValidationError{}
 
 var _RoleDef_Name_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
-
-var _RoleDef_ParentRoles_Pattern = regexp.MustCompile("^([[:word:]\\-\\.]+|\\*)$")
 
 // Validate checks the field values on ExportVariables with the rules defined
 // in the proto definition for this message. If any rules are violated, the

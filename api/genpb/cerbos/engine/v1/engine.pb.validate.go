@@ -1294,17 +1294,6 @@ func (m *Resource) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if !_Resource_Kind_Pattern.MatchString(m.GetKind()) {
-		err := ResourceValidationError{
-			field:  "Kind",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if !_Resource_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
 		err := ResourceValidationError{
 			field:  "PolicyVersion",
@@ -1472,8 +1461,6 @@ var _ interface {
 	ErrorName() string
 } = ResourceValidationError{}
 
-var _Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
-
 var _Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 var _Resource_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
@@ -1551,10 +1538,10 @@ func (m *Principal) validate(all bool) error {
 			_Principal_Roles_Unique[item] = struct{}{}
 		}
 
-		if !_Principal_Roles_Pattern.MatchString(item) {
+		if utf8.RuneCountInString(item) < 1 {
 			err := PrincipalValidationError{
 				field:  fmt.Sprintf("Roles[%v]", idx),
-				reason: "value does not match regex pattern \"^[[:word:]\\\\-\\\\.]+$\"",
+				reason: "value length must be at least 1 runes",
 			}
 			if !all {
 				return err
@@ -1710,8 +1697,6 @@ var _ interface {
 } = PrincipalValidationError{}
 
 var _Principal_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
-
-var _Principal_Roles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
 var _Principal_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
 
@@ -2053,17 +2038,6 @@ func (m *PlanResourcesInput_Resource) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if !_PlanResourcesInput_Resource_Kind_Pattern.MatchString(m.GetKind()) {
-		err := PlanResourcesInput_ResourceValidationError{
-			field:  "Kind",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	{
 		sorted_keys := make([]string, len(m.GetAttr()))
 		i := 0
@@ -2223,8 +2197,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PlanResourcesInput_ResourceValidationError{}
-
-var _PlanResourcesInput_Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
 var _PlanResourcesInput_Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 

@@ -107,17 +107,6 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "type=ResourcePolicy;issue=BadResourceName",
-			input: func() validator {
-				obj := test.GenResourcePolicy(test.NoMod())
-				rp := obj.GetResourcePolicy()
-				rp.Resource = "a?;#"
-				obj.PolicyType = &policyv1.Policy_ResourcePolicy{ResourcePolicy: rp}
-
-				return obj
-			},
-		},
-		{
 			name: "type=ResourcePolicy;issue=EmptyResourceName",
 			input: func() validator {
 				obj := test.GenResourcePolicy(test.NoMod())

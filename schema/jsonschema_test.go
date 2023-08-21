@@ -135,10 +135,10 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 			valid: false,
 		},
 		{
-			title: "invalid principal policy: principal doesn't match pattern",
+			title: "invalid principal policy: empty principal",
 			policy: func() interface{} {
 				policy := test.GenPrincipalPolicy(test.NoMod())
-				policy.GetPrincipalPolicy().Principal = "?"
+				policy.GetPrincipalPolicy().Principal = ""
 				return jsonify(t, policy)
 			}(),
 			valid: false,
@@ -198,10 +198,10 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 			valid: false,
 		},
 		{
-			title: "invalid resource policy: resource doesn't match pattern",
+			title: "invalid resource policy: empty kind",
 			policy: func() interface{} {
 				policy := test.GenResourcePolicy(test.NoMod())
-				policy.GetResourcePolicy().Resource = "?"
+				policy.GetResourcePolicy().Resource = ""
 				return jsonify(t, policy)
 			}(),
 			valid: false,
@@ -288,10 +288,10 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 			valid: false,
 		},
 		{
-			title: "invalid resource policy: rule role doesn't match pattern",
+			title: "invalid resource policy: rule role is empty",
 			policy: func() interface{} {
 				policy := test.GenResourcePolicy(test.NoMod())
-				policy.GetResourcePolicy().Rules[0].Roles = []string{"?"}
+				policy.GetResourcePolicy().Rules[0].Roles = []string{""}
 				return jsonify(t, policy)
 			}(),
 			valid: false,
