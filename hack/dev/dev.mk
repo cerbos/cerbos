@@ -11,7 +11,7 @@ $(DEV_DIR)/tls.crt:
 
 .PHONY: dev-server
 dev-server: $(DEV_DIR)/tls.crt
-	@ go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.secure.yaml 
+	@ go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.secure.yaml
 
 .PHONY: perf-server
 perf-server: $(DEV_DIR)/tls.crt
@@ -129,7 +129,7 @@ check-http:
 		$(wildcard $(DEV_DIR)/requests/check_resources/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl -k https://localhost:$(HTTP_PORT)/api/check_resources?pretty -d @$(REQ_FILE);\
+		curl -k https://localhost:$(HTTP_PORT)/api/check/resources?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
@@ -240,4 +240,4 @@ jaeger:
 		-p 14268:14268 \
 		-p 14250:14250 \
 		-p 9411:9411 \
-		jaegertracing/all-in-one:1.28 
+		jaegertracing/all-in-one:1.28
