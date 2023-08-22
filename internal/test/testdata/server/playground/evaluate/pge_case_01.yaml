@@ -22,7 +22,7 @@ playgroundEvaluate:
       "roles": ["user"]
     },
     "resource": {
-      "kind": "album:object",
+      "kind": "album_object",
       "id": "XX125",
       "attr": {
         "owner": "alicia",
@@ -37,12 +37,12 @@ playgroundEvaluate:
         {
           "action": "view",
           "effect": "EFFECT_DENY",
-          "policy": "resource.album:object.vdefault"
+          "policy": "resource.album_object.vdefault"
         },
         {
           "action": "delete",
           "effect": "EFFECT_DENY",
-          "policy": "resource.album:object.vdefault"
+          "policy": "resource.album_object.vdefault"
         }
       ]
     }

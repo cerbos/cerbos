@@ -34,7 +34,7 @@ playgroundTest:
                 [
                   {
                     "file": "policy_04_test.yaml",
-                    "name": "album:object resource policy tests",
+                    "name": "album_object resource policy tests",
                     "testCases":
                       [
                         {
@@ -61,7 +61,7 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album:object.vdefault",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",
@@ -83,7 +83,7 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album:object.vdefault",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",
@@ -112,7 +112,7 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album:object.vdefault",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",
@@ -134,7 +134,7 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album:object.vdefault",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",
@@ -156,7 +156,7 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album:object.vdefault",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",
@@ -189,7 +189,7 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album:object.vdefault",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",
@@ -215,7 +215,7 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album:object.vdefault",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",

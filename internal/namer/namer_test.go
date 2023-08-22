@@ -229,14 +229,20 @@ func TestFQNSpecialChars(t *testing.T) {
 		{
 			policyName:   "my-resource@some.domain-name/path",
 			fqnFunc:      namer.ResourcePolicyFQN,
-			wantFQN:      "cerbos.resource.my-resource@some.domain-name/path.vdefault/a.b.c",
-			wantModuleID: "5674996616851016480",
+			wantFQN:      "cerbos.resource.my_resource_some.domain_name_path.vdefault/a.b.c",
+			wantModuleID: "2652366422599377998",
 		},
 		{
 			policyName:   "my-resource@@@@some.domain-name//path",
 			fqnFunc:      namer.ResourcePolicyFQN,
-			wantFQN:      "cerbos.resource.my-resource@@@@some.domain-name//path.vdefault/a.b.c",
-			wantModuleID: "1906755550012942002",
+			wantFQN:      "cerbos.resource.my_resource_some.domain_name_path.vdefault/a.b.c",
+			wantModuleID: "2652366422599377998",
+		},
+		{
+			policyName:   "arn:aws:sns:us-east-1:123456789012:topic-foo",
+			fqnFunc:      namer.ResourcePolicyFQN,
+			wantFQN:      "cerbos.resource.arn:aws:sns:us-east-1:123456789012:topic-foo.vdefault/a.b.c",
+			wantModuleID: "9412675552925400030",
 		},
 		{
 			policyName:   "principal_name",
@@ -247,14 +253,20 @@ func TestFQNSpecialChars(t *testing.T) {
 		{
 			policyName:   "principal_name@email-domain.com",
 			fqnFunc:      namer.PrincipalPolicyFQN,
-			wantFQN:      "cerbos.principal.principal_name@email-domain.com.vdefault/a.b.c",
-			wantModuleID: "1885597368217905746",
+			wantFQN:      "cerbos.principal.principal_name_email_domain.com.vdefault/a.b.c",
+			wantModuleID: "9926962312262639256",
 		},
 		{
 			policyName:   "principal_name@@@@@email-domain.com/foo",
 			fqnFunc:      namer.PrincipalPolicyFQN,
-			wantFQN:      "cerbos.principal.principal_name@@@@@email-domain.com/foo.vdefault/a.b.c",
-			wantModuleID: "3335233789402492213",
+			wantFQN:      "cerbos.principal.principal_name_email_domain.com_foo.vdefault/a.b.c",
+			wantModuleID: "9473302746866088627",
+		},
+		{
+			policyName:   "arn:aws:iam::123456789012:user/johndoe",
+			fqnFunc:      namer.PrincipalPolicyFQN,
+			wantFQN:      "cerbos.principal.arn:aws:iam::123456789012:user/johndoe.vdefault/a.b.c",
+			wantModuleID: "5306719076896873049",
 		},
 	}
 

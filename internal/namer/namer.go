@@ -7,12 +7,19 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/util"
+)
+
+var (
+	invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
+	// Naming pattern imposed on resource and principal names before Cerbos 0.30.0.
+	oldNamePattern = regexp.MustCompile(`^[[:alpha:]][[:word:]\@\.\-/]*(\:[[:alpha:]][[:word:]\@\.\-/]*)*$`)
 )
 
 const (
@@ -153,7 +160,7 @@ func FQNFromPolicyKey(s string) string {
 
 // ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource, version and scope.
 func ResourcePolicyFQN(resource, version, scope string) string {
-	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, resource, version)
+	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, sanitize(resource), sanitize(version))
 	return withScope(fqn, scope)
 }
 
@@ -174,7 +181,7 @@ func ScopedResourcePolicyModuleIDs(resource, version, scope string, genTree bool
 
 // PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal, version and scope.
 func PrincipalPolicyFQN(principal, version, scope string) string {
-	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, principal, version)
+	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, sanitize(principal), sanitize(version))
 	return withScope(fqn, scope)
 }
 
@@ -195,7 +202,7 @@ func ScopedPrincipalPolicyModuleIDs(principal, version, scope string, genTree bo
 
 // DerivedRolesFQN returns the fully-qualified module name for the given derived roles set.
 func DerivedRolesFQN(roleSetName string) string {
-	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, roleSetName)
+	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, sanitize(roleSetName))
 }
 
 // DerivedRolesModuleID returns the module ID for the given derived roles set.
@@ -205,7 +212,7 @@ func DerivedRolesModuleID(roleSetName string) ModuleID {
 
 // ExportVariablesFQN returns the fully-qualified module name for the given exported variable definitions.
 func ExportVariablesFQN(variablesName string) string {
-	return fmt.Sprintf("%s.%s", ExportVariablesPrefix, variablesName)
+	return fmt.Sprintf("%s.%s", ExportVariablesPrefix, sanitize(variablesName))
 }
 
 // ExportVariablesModuleID returns the module ID for the given exported variable definitions.
@@ -224,6 +231,18 @@ func withScope(fqn, scope string) string {
 	}
 
 	return fqn + "/" + scope
+}
+
+// sanitize replaces special characters in the string with underscores.
+// Before Cerbos 0.30 the names of resources or principals had to follow a certain pattern. We then replaced some of
+// the non-word characters with underscores because earlier versions of Cerbos used to generate Rego code for policies.
+// Because we used the sanitized name for computing the module ID of the policy, in order to maintain backward compatibility
+// and not break database stores we still have to do the same if the name matches the pattern.
+func sanitize(v string) string {
+	if oldNamePattern.MatchString(v) {
+		return invalidIdentifierChars.ReplaceAllLiteralString(v, "_")
+	}
+	return v
 }
 
 // ResourceRuleName returns the name of the given resource rule.

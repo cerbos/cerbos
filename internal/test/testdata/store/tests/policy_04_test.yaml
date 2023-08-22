@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/TestSuite.schema.json
 ---
-name: album:object resource policy tests
+name: album_object resource policy tests
 
 principals:
   user:
@@ -11,7 +11,7 @@ principals:
 resources:
   album:
     id: album
-    kind: album:object
+    kind: album_object
     attr:
       public: true
 
