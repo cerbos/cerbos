@@ -21,13 +21,15 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
 
 const (
-	DriverName      = "mysql"
-	urlToSchemaDocs = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#mysql-schema"
+	DriverName                 = "mysql"
+	urlToSchemaDocs            = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#mysql-schema"
+	constraintViolationErrCode = 1062
 )
 
 var (
@@ -62,7 +64,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("mysql", db))
+	s, err := internal.NewDBStorage(ctx, goqu.New("mysql", db), internal.WithUpsertPolicy(upsertPolicy))
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +150,57 @@ func registerServerPubKeys(conf *Conf) error {
 
 		mysql.RegisterServerPubKey(name, rsaPK)
 	}
+	return nil
+}
+
+func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
+	pr := internal.Policy{
+		ID:          p.ID,
+		Kind:        p.Kind.String(),
+		Name:        p.Name,
+		Version:     p.Version,
+		Scope:       p.Scope,
+		Description: p.Description,
+		Disabled:    p.Disabled,
+		Definition:  internal.PolicyDefWrapper{Policy: p.Policy},
+	}
+
+	if _, err := tx.Insert(internal.PolicyTbl).Prepared(true).Rows(pr).Executor().ExecContext(ctx); err != nil {
+		mysqlErr := new(mysql.MySQLError)
+		if !errors.As(err, &mysqlErr) || mysqlErr.Number != constraintViolationErrCode {
+			return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
+		}
+
+		// Check if the existing policy name matches the name of the policy we are trying to insert.
+		// The reason for not doing an UPDATE WHERE and checking the number of affected rows is because MySQL
+		// returns 0 if the update did not change any of the columns as well.
+		var existingName string
+		ok, err := tx.Select(goqu.C(internal.PolicyTblNameCol)).
+			From(internal.PolicyTbl).
+			Where(goqu.C(internal.PolicyTblIDCol).Eq(pr.ID)).
+			Executor().ScanValContext(ctx, &existingName)
+		if !ok || err != nil {
+			return fmt.Errorf("failed to lookup policy %s: %w", p.FQN, err)
+		}
+
+		if existingName != pr.Name {
+			return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
+		}
+
+		// attempt update
+		if _, err := tx.Update(internal.PolicyTbl).
+			Prepared(true).
+			Set(pr).
+			Where(goqu.And(
+				goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
+				goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
+			)).Executor().ExecContext(ctx); err != nil {
+			return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
+		}
+
+		return nil
+	}
+
 	return nil
 }
 

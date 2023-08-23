@@ -15,9 +15,9 @@ import (
 	"runtime"
 	"strings"
 
-	// Import the mssql driver.
-	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/doug-martin/goqu/v9"
+	// Import the mssql driver.
+	_ "github.com/microsoft/go-mssqldb"
 
 	// Import the mssql dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlserver"
@@ -31,8 +31,9 @@ import (
 )
 
 const (
-	DriverName      = "sqlserver"
-	urlToSchemaDocs = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlserver-schema"
+	DriverName                 = "sqlserver"
+	urlToSchemaDocs            = "https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlserver-schema"
+	constraintViolationErrCode = 2627
 )
 
 var (
@@ -86,7 +87,7 @@ func (s *Store) Driver() string {
 
 func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
 	stm, err := tx.Prepare(`
-UPDATE dbo.[policy] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition, "description"=@description,"disabled"=@disabled,"kind"=@kind,"name"=@name,"version"=@version,"scope"=@scope where [id] = @id
+UPDATE dbo.[policy] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition, "description"=@description,"disabled"=@disabled,"kind"=@kind,"version"=@version,"scope"=@scope where [id] = @id AND [name] = @name
 IF @@ROWCOUNT = 0
 BEGIN
   INSERT INTO dbo.[policy] ("definition", "description", "disabled", "kind", "name", "version", "scope", "id") VALUES (@definition, @description, @disabled, @kind, @name, @version, @scope, @id)
@@ -115,7 +116,16 @@ END
 		sql.Named("scope", p.Scope),
 		sql.Named("id", int64(id.(uint64))))
 
-	return err
+	if err != nil {
+		//nolint: errorlint
+		if mssqlErr, ok := err.(interface{ SQLErrorNumber() int32 }); ok && mssqlErr.SQLErrorNumber() == constraintViolationErrCode {
+			return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
+		}
+
+		return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
+	}
+
+	return nil
 }
 
 func upsertSchema(ctx context.Context, tx *goqu.TxDatabase, schema internal.Schema) error {

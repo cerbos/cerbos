@@ -20,9 +20,11 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"go.uber.org/zap"
 	gosqlite3 "modernc.org/sqlite"
+	gosqlite3lib "modernc.org/sqlite/lib"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 	"github.com/cerbos/cerbos/internal/util"
@@ -99,7 +101,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db), internal.WithRegexpCacheOverride(&nameRegexpCache))
+	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithRegexpCacheOverride(&nameRegexpCache))
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +127,76 @@ func runMigrations(db *sql.DB) error {
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
+	}
+
+	return nil
+}
+
+func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
+	pr := internal.Policy{
+		ID:          p.ID,
+		Kind:        p.Kind.String(),
+		Name:        p.Name,
+		Version:     p.Version,
+		Scope:       p.Scope,
+		Description: p.Description,
+		Disabled:    p.Disabled,
+		Definition:  internal.PolicyDefWrapper{Policy: p.Policy},
+	}
+
+	if _, err := tx.Insert(internal.PolicyTbl).Prepared(true).Rows(pr).Executor().ExecContext(ctx); err != nil {
+		sqliteErr := new(gosqlite3.Error)
+		if !errors.As(err, &sqliteErr) || sqliteErr.Code() != gosqlite3lib.SQLITE_CONSTRAINT_PRIMARYKEY {
+			return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
+		}
+
+		/*
+			// Check if the existing policy name matches the name of the policy we are trying to insert.
+			// The reason for not doing an UPDATE WHERE and checking the number of affected rows is because MySQL
+			// returns 0 if the update did not change any of the columns as well.
+			var existingName string
+			ok, err := tx.Select(goqu.C(internal.PolicyTblNameCol)).
+				From(internal.PolicyTbl).
+				Where(goqu.C(internal.PolicyTblIDCol).Eq(pr.ID)).
+				Executor().ScanValContext(ctx, &existingName)
+			if !ok || err != nil {
+				return fmt.Errorf("failed to lookup policy %s: %w", p.FQN, err)
+			}
+
+			if existingName != pr.Name {
+				return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
+			}
+
+			// attempt update
+			if _, err := tx.Update(internal.PolicyTbl).
+				Prepared(true).
+				Set(pr).
+				Where(goqu.And(
+					goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
+					goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
+				)).Executor().ExecContext(ctx); err != nil {
+				return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
+			}
+		*/
+
+		res, err := tx.Update(internal.PolicyTbl).
+			Prepared(true).
+			Set(pr).
+			Where(goqu.And(
+				goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
+				goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
+			)).Executor().ExecContext(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
+		}
+
+		if affected, err := res.RowsAffected(); err != nil {
+			return fmt.Errorf("failed to get status of policy %s: %w", p.FQN, err)
+		} else if affected != 1 {
+			return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
+		}
+
+		return nil
 	}
 
 	return nil

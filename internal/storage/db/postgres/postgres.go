@@ -19,6 +19,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
@@ -64,7 +65,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("postgres", db))
+	s, err := internal.NewDBStorage(ctx, goqu.New("postgres", db), internal.WithUpsertPolicy(upsertPolicy))
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +77,40 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	}
 
 	return &Store{DBStorage: s}, nil
+}
+
+func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
+	pr := internal.Policy{
+		ID:          p.ID,
+		Kind:        p.Kind.String(),
+		Name:        p.Name,
+		Version:     p.Version,
+		Scope:       p.Scope,
+		Description: p.Description,
+		Disabled:    p.Disabled,
+		Definition:  internal.PolicyDefWrapper{Policy: p.Policy},
+	}
+	res, err := tx.Insert(goqu.T(internal.PolicyTbl).As("p")).
+		Prepared(true).
+		Rows(pr).
+		OnConflict(
+			goqu.DoUpdate(internal.PolicyTblIDCol, pr).
+				Where(
+					goqu.L("EXCLUDED." + internal.PolicyTblNameCol).Eq(goqu.L("p." + internal.PolicyTblNameCol)),
+				),
+		).
+		Executor().ExecContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
+	}
+
+	if updated, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("failed to check status of policy %s: %w", p.FQN, err)
+	} else if updated != 1 {
+		return fmt.Errorf("failed to update policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
+	}
+
+	return nil
 }
 
 type Store struct {

@@ -79,6 +79,10 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 	log := ctxzap.Extract(ctx)
 	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
 		log.Error("Failed to add/update policies", zap.Error(err))
+		if errors.Is(err, storage.ErrPolicyIDCollision) {
+			return nil, status.Error(codes.FailedPrecondition, "Policy ID conflict")
+		}
+
 		invalidPolicyErr := new(storage.InvalidPolicyError)
 		if errors.As(err, invalidPolicyErr) {
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid policy: %v", invalidPolicyErr.Message)
