@@ -150,35 +150,6 @@ func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) er
 			return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
 		}
 
-		/*
-			// Check if the existing policy name matches the name of the policy we are trying to insert.
-			// The reason for not doing an UPDATE WHERE and checking the number of affected rows is because MySQL
-			// returns 0 if the update did not change any of the columns as well.
-			var existingName string
-			ok, err := tx.Select(goqu.C(internal.PolicyTblNameCol)).
-				From(internal.PolicyTbl).
-				Where(goqu.C(internal.PolicyTblIDCol).Eq(pr.ID)).
-				Executor().ScanValContext(ctx, &existingName)
-			if !ok || err != nil {
-				return fmt.Errorf("failed to lookup policy %s: %w", p.FQN, err)
-			}
-
-			if existingName != pr.Name {
-				return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
-			}
-
-			// attempt update
-			if _, err := tx.Update(internal.PolicyTbl).
-				Prepared(true).
-				Set(pr).
-				Where(goqu.And(
-					goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
-					goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
-				)).Executor().ExecContext(ctx); err != nil {
-				return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
-			}
-		*/
-
 		res, err := tx.Update(internal.PolicyTbl).
 			Prepared(true).
 			Set(pr).

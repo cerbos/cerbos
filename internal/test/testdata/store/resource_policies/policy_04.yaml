@@ -5,7 +5,7 @@ resourcePolicy:
   version: "default"
   importDerivedRoles:
     - apatr_common_roles
-  resource: "album_object"
+  resource: "album:object"
   rules:
     - actions: ['*']
       effect: EFFECT_ALLOW
