@@ -8,7 +8,9 @@ adminAddOrUpdatePolicy:
     "policies": [
       {{- readPolicy "store/resource_policies/policy_07.yaml" | toPolicyJSON }},
       {{- readPolicy "store/resource_policies/policy_07_acme.yaml" | toPolicyJSON }},
+      {{- readPolicy "store/resource_policies/policy_11.yaml" | toPolicyJSON }},
       {{- readPolicy "store/principal_policies/policy_04.yaml" | toPolicyJSON }},
+      {{- readPolicy "store/principal_policies/policy_06.yaml" | toPolicyJSON }},
     ]
   }
   wantResponse: {"success":{}}

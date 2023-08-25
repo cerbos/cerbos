@@ -52,12 +52,23 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		rpImportDerivedRolesThatImportVariables.GetResourcePolicy().ImportDerivedRoles = []string{drImportVariables.Name}
 		rpImportDerivedRolesThatImportVariables.GetResourcePolicy().Variables = nil
 
-		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables}
+		rpDupe1 := policy.Wrap(test.GenResourcePolicy(test.Suffix("@foo")))
+		rpDupe2 := policy.Wrap(test.GenResourcePolicy(test.Suffix("@@foo")))
+		ppDupe1 := policy.Wrap(test.GenPrincipalPolicy(test.Suffix("@foo")))
+		ppDupe2 := policy.Wrap(test.GenPrincipalPolicy(test.Suffix("@@foo")))
+		drDupe1 := policy.Wrap(test.GenDerivedRoles(test.Suffix("@foo")))
+		drDupe2 := policy.Wrap(test.GenDerivedRoles(test.Suffix("@@foo")))
+		evDupe1 := policy.Wrap(test.GenExportVariables(test.Suffix("@foo")))
+		evDupe2 := policy.Wrap(test.GenExportVariables(test.Suffix("@@foo")))
+
+		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables, rpDupe1, ppDupe1, drDupe1, evDupe1}
 
 		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
 		const schID = "leave_request"
 
-		t.Run("add", func(t *testing.T) {
+		addPolicies := func(t *testing.T) {
+			t.Helper()
+
 			checkEvents := storage.TestSubscription(store)
 			require.NoError(t, store.AddOrUpdate(ctx, policyList...))
 
@@ -75,14 +86,30 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcmeHR.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drImportVariables.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpImportDerivedRolesThatImportVariables.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: evDupe1.ID},
 			}
 			checkEvents(t, timeout, wantEvents...)
 
 			stats := store.RepoStats(ctx)
-			require.Equal(t, 6, stats.PolicyCount[policy.ResourceKind])
-			require.Equal(t, 3, stats.PolicyCount[policy.PrincipalKind])
-			require.Equal(t, 3, stats.PolicyCount[policy.DerivedRolesKind])
-			require.Equal(t, 1, stats.PolicyCount[policy.ExportVariablesKind])
+			require.Equal(t, 7, stats.PolicyCount[policy.ResourceKind])
+			require.Equal(t, 4, stats.PolicyCount[policy.PrincipalKind])
+			require.Equal(t, 4, stats.PolicyCount[policy.DerivedRolesKind])
+			require.Equal(t, 2, stats.PolicyCount[policy.ExportVariablesKind])
+		}
+
+		t.Run("add_or_update", func(t *testing.T) {
+			t.Run("add", addPolicies)
+			t.Run("update", addPolicies)
+		})
+
+		t.Run("add_id_collision", func(t *testing.T) {
+			require.ErrorIs(t, store.AddOrUpdate(ctx, rpDupe2), storage.ErrPolicyIDCollision, "rpDupe2 not detected")
+			require.ErrorIs(t, store.AddOrUpdate(ctx, ppDupe2), storage.ErrPolicyIDCollision, "ppDupe2 not detected")
+			require.ErrorIs(t, store.AddOrUpdate(ctx, drDupe2), storage.ErrPolicyIDCollision, "drDupe2 not detected")
+			require.ErrorIs(t, store.AddOrUpdate(ctx, evDupe2), storage.ErrPolicyIDCollision, "evDupe2 not detected")
 		})
 
 		t.Run("get_compilation_unit_for_resource_policy", func(t *testing.T) {

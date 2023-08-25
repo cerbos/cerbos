@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: arn:aws:sns:us-east-1:123456789012:topic-a
+  importDerivedRoles:
+    - alpha
+  rules:
+    - actions:
+        - use
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - kube_user
+
+    - actions:
+        - read
+      effect: EFFECT_ALLOW
+      roles: ["system:ro_user"]

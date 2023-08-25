@@ -34,7 +34,7 @@ playgroundTest:
                 [
                   {
                     "file": "policy_04_test.yaml",
-                    "name": "album:object resource policy tests",
+                    "name": "album_object resource policy tests",
                     "testCases":
                       [
                         {

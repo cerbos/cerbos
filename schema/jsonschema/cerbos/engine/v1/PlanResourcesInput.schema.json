@@ -29,8 +29,7 @@
         },
         "kind": {
           "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z][\\--9@-Z_a-z]*(:[A-Za-z][\\--9@-Z_a-z]*)*$"
+          "minLength": 1
         },
         "policyVersion": {
           "type": "string",
@@ -68,7 +67,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+            "minLength": 1
           },
           "minItems": 1,
           "uniqueItems": true

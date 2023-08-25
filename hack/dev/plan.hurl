@@ -2,7 +2,7 @@
 POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req1.json;
-HTTP/* 200
+HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.action" == "approve"
@@ -16,7 +16,7 @@ jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.status \"PENDING_APP
 POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req2.json;
-HTTP/* 200
+HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.action" == "defer"
@@ -30,7 +30,7 @@ jsonpath "$.meta.filterDebug" == "(true)"
 POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req3.json;
-HTTP/* 200
+HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.action" == "view-as-vip"
@@ -44,7 +44,7 @@ jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"1\")"
 POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req4.json;
-HTTP/* 200
+HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.action" == "view"
@@ -58,7 +58,7 @@ jsonpath "$.meta.filterDebug" == "NO_MATCH"
 POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req5.json;
-HTTP/* 200
+HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.action" == "delete"

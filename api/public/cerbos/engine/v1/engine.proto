@@ -20,15 +20,11 @@ option java_package = "dev.cerbos.api.v1.engine";
 message PlanResourcesInput {
   message Resource {
     string kind = 1 [
-      (validate.rules).string = {
-        pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$",
-        min_len: 1
-      },
+      (validate.rules).string = {min_len: 1},
       (google.api.field_behavior) = REQUIRED,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Resource kind."
         example: "\"album:object\""
-        pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
       }
     ];
 
@@ -179,15 +175,11 @@ message OutputEntry {
 
 message Resource {
   string kind = 1 [
-    (validate.rules).string = {
-      pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$",
-      min_len: 1
-    },
+    (validate.rules).string = {min_len: 1},
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Name of the resource kind being accessed.",
       example: "\"album:photo\"",
-      pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
     }
   ];
   string policy_version = 2 [
@@ -251,14 +243,13 @@ message Principal {
       unique: true,
       min_items: 1,
       items {
-        string {pattern: "^[[:word:]\\-\\.]+$"}
+        string {min_len: 1}
       }
     },
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Roles assigned to this principal from your identity management system."
       min_items: 1
-      pattern: "^[[:word:]\\-\\.]+$"
       unique_items: true
       example: "[\"user\"]"
     }

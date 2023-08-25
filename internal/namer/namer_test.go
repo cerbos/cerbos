@@ -212,3 +212,71 @@ func TestScopedModuleIDs(t *testing.T) {
 		})
 	}
 }
+
+func TestFQNSpecialChars(t *testing.T) {
+	testCases := []struct {
+		policyName   string
+		fqnFunc      func(string, string, string) string
+		wantFQN      string
+		wantModuleID string
+	}{
+		{
+			policyName:   "resource_name",
+			fqnFunc:      namer.ResourcePolicyFQN,
+			wantFQN:      "cerbos.resource.resource_name.vdefault/a.b.c",
+			wantModuleID: "17187169266267860487",
+		},
+		{
+			policyName:   "my-resource@some.domain-name/path",
+			fqnFunc:      namer.ResourcePolicyFQN,
+			wantFQN:      "cerbos.resource.my_resource_some.domain_name_path.vdefault/a.b.c",
+			wantModuleID: "2652366422599377998",
+		},
+		{
+			policyName:   "my-resource@@@@some.domain-name//path",
+			fqnFunc:      namer.ResourcePolicyFQN,
+			wantFQN:      "cerbos.resource.my_resource_some.domain_name_path.vdefault/a.b.c",
+			wantModuleID: "2652366422599377998",
+		},
+		{
+			policyName:   "arn:aws:sns:us-east-1:123456789012:topic-foo",
+			fqnFunc:      namer.ResourcePolicyFQN,
+			wantFQN:      "cerbos.resource.arn:aws:sns:us-east-1:123456789012:topic-foo.vdefault/a.b.c",
+			wantModuleID: "9412675552925400030",
+		},
+		{
+			policyName:   "principal_name",
+			fqnFunc:      namer.PrincipalPolicyFQN,
+			wantFQN:      "cerbos.principal.principal_name.vdefault/a.b.c",
+			wantModuleID: "15622297473602434759",
+		},
+		{
+			policyName:   "principal_name@email-domain.com",
+			fqnFunc:      namer.PrincipalPolicyFQN,
+			wantFQN:      "cerbos.principal.principal_name_email_domain.com.vdefault/a.b.c",
+			wantModuleID: "9926962312262639256",
+		},
+		{
+			policyName:   "principal_name@@@@@email-domain.com/foo",
+			fqnFunc:      namer.PrincipalPolicyFQN,
+			wantFQN:      "cerbos.principal.principal_name_email_domain.com_foo.vdefault/a.b.c",
+			wantModuleID: "9473302746866088627",
+		},
+		{
+			policyName:   "arn:aws:iam::123456789012:user/johndoe",
+			fqnFunc:      namer.PrincipalPolicyFQN,
+			wantFQN:      "cerbos.principal.arn:aws:iam::123456789012:user/johndoe.vdefault/a.b.c",
+			wantModuleID: "5306719076896873049",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.policyName, func(t *testing.T) {
+			haveFQN := tc.fqnFunc(tc.policyName, "default", "a.b.c")
+			require.Equal(t, tc.wantFQN, haveFQN)
+			haveModID := namer.GenModuleIDFromFQN(haveFQN)
+			require.Equal(t, tc.wantModuleID, haveModID.String())
+		})
+	}
+}

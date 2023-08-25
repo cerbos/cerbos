@@ -107,7 +107,6 @@ func validateDerivedRoles(dr *policyv1.DerivedRoles) (err error) {
 }
 
 func validateExportVariables(p *policyv1.Policy) error {
-	//nolint:staticcheck
 	if len(p.Variables) > 0 {
 		return fmt.Errorf("export variables policies do not support the deprecated top-level variables field")
 	}

@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -31,6 +32,8 @@ import (
 )
 
 const tableLogKey = "table"
+
+var errUpsertPolicyRequired = errors.New("invalid driver configuration: upsertPolicy is required")
 
 type DBStorage interface {
 	storage.Subscribable
@@ -215,32 +218,14 @@ func (s *dbStorage) LoadSchema(ctx context.Context, urlVar string) (io.ReadClose
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
+	if s.opts.upsertPolicy == nil {
+		return errUpsertPolicyRequired
+	}
+
 	events := make([]storage.Event, len(policies))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for i, p := range policies {
-			policyRecord := Policy{
-				ID:          p.ID,
-				Kind:        p.Kind.String(),
-				Name:        p.Name,
-				Version:     p.Version,
-				Scope:       p.Scope,
-				Description: p.Description,
-				Disabled:    p.Disabled,
-				Definition:  PolicyDefWrapper{Policy: p.Policy},
-			}
-
-			var err error
-			// try to upsert this policy record
-			if s.opts.upsertPolicy != nil {
-				err = s.opts.upsertPolicy(ctx, tx, p)
-			} else {
-				_, err = tx.Insert(PolicyTbl).
-					Prepared(true).
-					Rows(policyRecord).
-					OnConflict(goqu.DoUpdate(PolicyTblIDCol, policyRecord)).
-					Executor().ExecContext(ctx)
-			}
-			if err != nil {
+			if err := s.opts.upsertPolicy(ctx, tx, p); err != nil {
 				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
 			}
 

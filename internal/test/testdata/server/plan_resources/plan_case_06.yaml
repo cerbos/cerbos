@@ -1,0 +1,25 @@
+---
+description: Special chars in policy name
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+planResources:
+  input:
+    requestId: test
+    includeMeta: true
+    action: use
+    principal:
+      id: arn:aws:iam::123456789012:user/johndoe
+      roles:
+        - system:basic_user
+        - system:ro_user
+    resource:
+      kind: arn:aws:sns:us-east-1:123456789012:topic-a
+  wantResponse:
+    requestId: test
+    action: use
+    resourceKind: arn:aws:sns:us-east-1:123456789012:topic-a
+    filter:
+      kind: KIND_ALWAYS_ALLOWED
+    meta:
+      filter_debug: "(true)"

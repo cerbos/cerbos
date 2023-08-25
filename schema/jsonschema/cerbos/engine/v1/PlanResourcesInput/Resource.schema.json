@@ -21,8 +21,7 @@
     },
     "kind": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "^[A-Za-z][\\--9@-Z_a-z]*(:[A-Za-z][\\--9@-Z_a-z]*)*$"
+      "minLength": 1
     },
     "policyVersion": {
       "type": "string",

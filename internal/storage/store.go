@@ -5,6 +5,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -20,6 +21,8 @@ var (
 	driversMu sync.RWMutex
 	drivers   = map[string]Constructor{}
 )
+
+var ErrPolicyIDCollision = errors.New("policy ID collision")
 
 // InvalidPolicyError is a custom error to signal that a policy is invalid.
 type InvalidPolicyError struct {

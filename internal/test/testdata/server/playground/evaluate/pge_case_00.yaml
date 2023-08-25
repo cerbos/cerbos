@@ -22,7 +22,7 @@ playgroundEvaluate:
       "roles": ["user"]
     },
     "resource": {
-      "kind": "album:object",
+      "kind": "album_object",
       "id": "XX125",
       "attr": {
         "owner": "alicia",

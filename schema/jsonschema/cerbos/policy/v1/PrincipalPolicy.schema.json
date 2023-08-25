@@ -191,8 +191,7 @@
   "properties": {
     "principal": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "^[A-Za-z][\\--\\.0-9@-Z_a-z]*(:[A-Za-z][\\--\\.0-9@-Z_a-z]*)*$"
+      "minLength": 1
     },
     "rules": {
       "type": "array",

@@ -1,0 +1,68 @@
+---
+description: "Special chars in policy names"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResources:
+  input: {
+    "requestId": "test",
+    "includeMeta": true,
+    "principal": {
+      "id": "arn:aws:iam::123456789012:user/johndoe",
+      "roles": [
+        "system:basic_user",
+        "system:ro_user"
+      ]
+    },
+    "resources": [
+      {
+        "actions": [
+          "write",
+          "use",
+          "read",
+          "delete"
+        ],
+        "resource": {
+          "kind": "arn:aws:sns:us-east-1:123456789012:topic-a",
+          "id": "topic-a",
+          "attr": {
+            "region": "us-east-1"
+          }
+        }
+      }
+    ]
+  }
+  wantResponse: {
+    "requestId": "test",
+    "results": [
+      {
+        "resource": {
+          "id": "topic-a",
+          "kind": "arn:aws:sns:us-east-1:123456789012:topic-a",
+        },
+        "actions": {
+          "delete": "EFFECT_DENY",
+          "read": "EFFECT_ALLOW",
+          "use": "EFFECT_ALLOW",
+          "write": "EFFECT_ALLOW"
+        },
+        "meta": {
+           "actions": {
+              "delete": {
+                 "matched_policy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
+              },
+              "read": {
+                 "matched_policy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
+              },
+              "use": {
+                 "matched_policy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
+              },
+              "write": {
+                 "matched_policy": "principal.arn:aws:iam::123456789012:user/johndoe.vdefault"
+              }
+           },
+           "effectiveDerivedRoles": ["kube_user"]
+        }
+      }
+    ]
+  }

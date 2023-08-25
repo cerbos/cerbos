@@ -4,7 +4,7 @@
 //go:build !race
 // +build !race
 
-package main
+package put_test
 
 import (
 	"bytes"
@@ -95,6 +95,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"derived_roles.import_variables",
 					"derived_roles.package_roles",
 					"export_variables.foobar",
+					"principal.arn:aws:iam::123456789012:user/johndoe.vdefault",
 					"principal.daisy_duck.vdefault",
 					"principal.donald_duck.v20210210",
 					"principal.donald_duck.vdefault",
@@ -104,6 +105,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"principal.terry_tibbs.vdefault",
 					"resource.account.vdefault",
 					"resource.album_object.vdefault",
+					"resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault",
 					"resource.equipment_request.vdefault",
 					"resource.equipment_request.vdefault/acme",
 					"resource.global.vdefault",
