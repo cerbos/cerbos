@@ -7,9 +7,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math"
+	"os"
 
-	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/config"
 	"go.elastic.co/ecszap"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -17,6 +17,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/config"
 )
 
 const Backend = "file"
@@ -33,10 +37,9 @@ func init() {
 }
 
 type Log struct {
-	accessLog        *zap.Logger
-	decisionLog      *zap.Logger
-	decisionFilter   audit.DecisionLogEntryFilter
-	ignoreSyncErrors bool
+	accessLog      *zap.Logger
+	decisionLog    *zap.Logger
+	decisionFilter audit.DecisionLogEntryFilter
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -46,23 +49,40 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	encoderConf.TimeKey = ""
 	encoderConf.MessageKey = ""
 
-	zapConf := zap.NewProductionConfig()
-	zapConf.Sampling = nil
-	zapConf.DisableCaller = true
-	zapConf.DisableStacktrace = true
-	zapConf.EncoderConfig = encoderConf
-	zapConf.OutputPaths = []string{conf.Path}
+	outputPaths := append([]string{conf.Path}, conf.AdditionalPaths...)
+	outputSyncers := make([]zapcore.WriteSyncer, len(outputPaths))
 
-	logger, err := zapConf.Build()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create logger: %w", err)
+	for i, path := range outputPaths {
+		path := path
+		switch path {
+		case "stdout":
+			outputSyncers[i] = zapcore.AddSync(syncErrIgnorer{WriteSyncer: os.Stdout})
+		case "stderr":
+			outputSyncers[i] = zapcore.AddSync(syncErrIgnorer{WriteSyncer: os.Stderr})
+		default:
+			rotator := &lumberjack.Logger{
+				Filename: path,
+				MaxSize:  math.MaxInt32,
+			}
+
+			if conf.LogRotation != nil {
+				rotator.MaxSize = int(conf.LogRotation.MaxFileSizeMB)
+				rotator.MaxAge = int(conf.LogRotation.MaxFileAgeDays)
+				rotator.MaxBackups = int(conf.LogRotation.MaxFileCount)
+			}
+
+			outputSyncers[i] = zapcore.AddSync(rotator)
+		}
 	}
 
+	encoder := zapcore.NewJSONEncoder(encoderConf)
+	core := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(outputSyncers...), zap.NewAtomicLevelAt(zap.InfoLevel))
+	logger := zap.New(core)
+
 	return &Log{
-		accessLog:        logger.Named("cerbos.audit").With(zap.String("log.kind", "access")),
-		decisionLog:      logger.Named("cerbos.audit").With(zap.String("log.kind", "decision")),
-		decisionFilter:   decisionFilter,
-		ignoreSyncErrors: (conf.Path == "stdout") || (conf.Path == "stderr"),
+		accessLog:      logger.Named("cerbos.audit").With(zap.String("log.kind", "access")),
+		decisionLog:    logger.Named("cerbos.audit").With(zap.String("log.kind", "decision")),
+		decisionFilter: decisionFilter,
 	}, nil
 }
 
@@ -105,12 +125,7 @@ func (l *Log) Close() error {
 	err1 := l.accessLog.Sync()
 	err2 := l.decisionLog.Sync()
 
-	// See https://github.com/uber-go/zap/issues/328
-	if !l.ignoreSyncErrors {
-		return multierr.Combine(err1, err2)
-	}
-
-	return nil
+	return multierr.Combine(err1, err2)
 }
 
 type protoMsg struct {
@@ -224,5 +239,15 @@ func (pl protoList) MarshalLogArray(enc zapcore.ArrayEncoder) error {
 		}
 	}
 
+	return nil
+}
+
+type syncErrIgnorer struct {
+	zapcore.WriteSyncer
+}
+
+func (s syncErrIgnorer) Sync() error {
+	// https://github.com/uber-go/zap/issues/328
+	_ = s.WriteSyncer.Sync()
 	return nil
 }

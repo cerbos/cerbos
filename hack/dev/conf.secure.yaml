@@ -29,6 +29,13 @@ audit:
       flushInterval: 5s
   file:
     path: stdout
+    additionalPaths:
+      - /tmp/audit_1.log
+      - /tmp/audit_2.log
+    logRotation:
+      maxFileSizeMB: 1
+      maxFileAgeDays: 1
+      maxFileCount: 3
 
 tracing:
   sampleProbability: 1.0
