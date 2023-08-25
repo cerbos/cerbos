@@ -64,6 +64,8 @@ type Conf struct {
 	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",example=false"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",ignore"`
+	// DisableAPIExplorer disables the API explorer UI from being served on the HTTP port.
+	DisableAPIExplorer bool `yaml:"disableAPIExplorer" conf:",example=false"`
 	// Advanced server settings.
 	Advanced AdvancedConf `yaml:"advanced"`
 }

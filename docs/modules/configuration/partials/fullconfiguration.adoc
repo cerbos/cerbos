@@ -83,6 +83,7 @@ server:
     allowedOrigins: ['*'] # AllowedOrigins is the contents of the allowed-origins header.
     disabled: false # Disabled sets whether CORS is disabled.
     maxAge: 10s # MaxAge is the max age of the CORS preflight check.
+  disableAPIExplorer: false # DisableAPIExplorer disables the API explorer UI from being served on the HTTP port.
   grpcListenAddr: ":3593" # Required. GRPCListenAddr is the dedicated GRPC address.
   httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
   logRequestPayloads: false # LogRequestPayloads defines whether the request payloads should be logged.
