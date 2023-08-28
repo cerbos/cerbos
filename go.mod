@@ -57,7 +57,7 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.4.0
 	github.com/prometheus/client_golang v1.16.0
-	github.com/pterm/pterm v0.12.67
+	github.com/pterm/pterm v0.12.66
 	github.com/rivo/tview v0.0.0-20230826224341-9754ab44dc1c
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.11.0
