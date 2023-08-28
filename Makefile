@@ -79,7 +79,7 @@ confdocs:
 
 .PHONY: deps
 deps:
-	@ go mod tidy -compat=1.19
+	@ go mod tidy -compat=1.21
 
 .PHONY: test-all
 test-all: test-race test-integration
