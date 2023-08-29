@@ -287,6 +287,16 @@ func cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m *RunnableDerivedRole, ha
 		}
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableDerivedRole.ordered_variables"]; !ok {
+		if len(m.OrderedVariables) > 0 {
+			for _, v := range m.OrderedVariables {
+				if v != nil {
+					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnableDerivedRolesSet_Metadata_hashpb_sum(m *RunnableDerivedRolesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
@@ -450,6 +460,16 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m *RunnableP
 			for _, k := range keys {
 				if m.ResourceRules[k] != nil {
 					cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ResourceRules_hashpb_sum(m.ResourceRules[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ordered_variables"]; !ok {
+		if len(m.OrderedVariables) > 0 {
+			for _, v := range m.OrderedVariables {
+				if v != nil {
+					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -630,6 +650,16 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableRe
 		}
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ordered_variables"]; !ok {
+		if len(m.OrderedVariables) > 0 {
+			for _, v := range m.OrderedVariables {
+				if v != nil {
+					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourcePolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -689,6 +719,29 @@ func cerbos_runtime_v1_RunnableVariablesSet_hashpb_sum(m *RunnableVariablesSet, 
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.ordered_variables"]; !ok {
+		if len(m.OrderedVariables) > 0 {
+			for _, v := range m.OrderedVariables {
+				if v != nil {
+					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_Variable_hashpb_sum(m *Variable, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.Variable.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.Variable.expr"]; !ok {
+		if m.Expr != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.Expr, hasher, ignore)
+		}
+
 	}
 }
 

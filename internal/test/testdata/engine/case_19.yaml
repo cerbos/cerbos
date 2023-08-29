@@ -1,0 +1,30 @@
+---
+description: Variables referencing variables
+inputs: [
+  {
+    "requestId": "test",
+    "actions": ["test"],
+    "principal": {
+      "id": "andy",
+      "roles": [
+        "employee"
+      ]
+    },
+    "resource": {
+      "kind": "variables_referencing_variables",
+      "id": "test"
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "test",
+    "actions": {
+      "test": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.variables_referencing_variables.vdefault"
+      }
+    }
+  }
+]

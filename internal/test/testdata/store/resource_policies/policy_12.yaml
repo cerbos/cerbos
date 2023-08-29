@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: variables_referencing_variables
+  variables:
+    local:
+      a: V.b
+      b: V.c
+      c: V.d
+      d: V.e
+      e: V.f
+      f: V.g
+      g: V.h
+      h: V.i
+      i: V.j
+      j: V.k
+      k: V.l
+      l: V.m
+      m: V.n
+      "n": V.o
+      o: V.p
+      p: V.q
+      q: V.r
+      r: V.s
+      s: V.t
+      t: V.u
+      u: V.v
+      v: V.w
+      w: V.x
+      x: V.y
+      "y": V.z
+      z: "true"
+  rules:
+    - actions:
+        - test
+      effect: EFFECT_ALLOW
+      roles:
+        - "*"
+      condition:
+        match:
+          expr: V.a

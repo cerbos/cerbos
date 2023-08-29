@@ -117,7 +117,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		sctx := pctx.StartScope(p.Scope)
 
 		// evaluate the variables of this policy
-		variables, err := rpe.evalParams.evaluateVariables(sctx.StartVariables(), p.Variables, input)
+		variables, err := rpe.evalParams.evaluateVariables(sctx.StartVariables(), p.OrderedVariables, input)
 		if err != nil {
 			sctx.Failed(err, "Failed to evaluate variables")
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
@@ -133,7 +133,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			}
 
 			// evaluate variables of this derived roles set
-			drVariables, err := rpe.evalParams.evaluateVariables(dctx.StartVariables(), dr.Variables, input)
+			drVariables, err := rpe.evalParams.evaluateVariables(dctx.StartVariables(), dr.OrderedVariables, input)
 			if err != nil {
 				dctx.Skipped(err, "Error evaluating variables")
 				continue
@@ -230,7 +230,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 		sctx := pctx.StartScope(p.Scope)
 		// evaluate the variables of this policy
-		variables, err := ppe.evalParams.evaluateVariables(sctx.StartVariables(), p.Variables, input)
+		variables, err := ppe.evalParams.evaluateVariables(sctx.StartVariables(), p.OrderedVariables, input)
 		if err != nil {
 			sctx.Failed(err, "Failed to evaluate variables")
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
@@ -284,19 +284,19 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 	return result, nil
 }
 
-func (ep evalParams) evaluateVariables(tctx tracer.Context, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]any, error) {
+func (ep evalParams) evaluateVariables(tctx tracer.Context, variables []*runtimev1.Variable, input *enginev1.CheckInput) (map[string]any, error) {
 	var errs error
 	evalVars := make(map[string]any, len(variables))
-	for varName, varExpr := range variables {
-		vctx := tctx.StartVariable(varName, varExpr.Original)
-		val, err := ep.evaluateCELExprToRaw(varExpr.Checked, evalVars, input)
+	for _, variable := range variables {
+		vctx := tctx.StartVariable(variable.Name, variable.Expr.Original)
+		val, err := ep.evaluateCELExprToRaw(variable.Expr.Checked, evalVars, input)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
-			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", varName, varExpr.Original, err))
+			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err))
 			continue
 		}
 
-		evalVars[varName] = val
+		evalVars[variable.Name] = val
 		vctx.ComputedResult(val)
 	}
 

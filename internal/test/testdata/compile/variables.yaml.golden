@@ -8,83 +8,92 @@
     },
     "policies": [
       {
-        "variables": {
-          "bar": {
-            "original": "2",
-            "checked": {
-              "typeMap": {
-                "1": {
-                  "primitive": "INT64"
-                }
-              },
-              "sourceInfo": {
-                "location": "<input>",
-                "lineOffsets": [
-                  2
-                ],
-                "positions": {
-                  "1": 0
-                }
-              },
-              "expr": {
-                "id": "1",
-                "constExpr": {
-                  "int64Value": "2"
-                }
-              }
-            }
-          },
-          "foo": {
-            "original": "1",
-            "checked": {
-              "typeMap": {
-                "1": {
-                  "primitive": "INT64"
-                }
-              },
-              "sourceInfo": {
-                "location": "<input>",
-                "lineOffsets": [
-                  2
-                ],
-                "positions": {
-                  "1": 0
-                }
-              },
-              "expr": {
-                "id": "1",
-                "constExpr": {
-                  "int64Value": "1"
+        "orderedVariables": [
+          {
+            "name": "bar",
+            "expr": {
+              "original": "2",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "2"
+                  }
                 }
               }
             }
           },
-          "qux": {
-            "original": "3",
-            "checked": {
-              "typeMap": {
-                "1": {
-                  "primitive": "INT64"
+          {
+            "name": "foo",
+            "expr": {
+              "original": "1",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "1"
+                  }
                 }
-              },
-              "sourceInfo": {
-                "location": "<input>",
-                "lineOffsets": [
-                  2
-                ],
-                "positions": {
-                  "1": 0
-                }
-              },
-              "expr": {
-                "id": "1",
-                "constExpr": {
-                  "int64Value": "3"
+              }
+            }
+          },
+          {
+            "name": "qux",
+            "expr": {
+              "original": "3",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "3"
+                  }
                 }
               }
             }
           }
-        }
+        ]
       }
     ]
   }

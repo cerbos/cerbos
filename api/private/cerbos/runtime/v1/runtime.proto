@@ -54,9 +54,10 @@ message RunnableResourcePolicySet {
 
     string scope = 1;
     map<string, RunnableDerivedRole> derived_roles = 2;
-    map<string, Expr> variables = 3;
+    map<string, Expr> variables = 3 [deprecated = true];
     repeated Rule rules = 4;
     cerbos.policy.v1.Schemas schemas = 5;
+    repeated Variable ordered_variables = 6;
   }
 
   Metadata meta = 1;
@@ -67,8 +68,9 @@ message RunnableResourcePolicySet {
 message RunnableDerivedRole {
   string name = 1;
   map<string, google.protobuf.Empty> parent_roles = 2;
-  map<string, Expr> variables = 3;
+  map<string, Expr> variables = 3 [deprecated = true];
   Condition condition = 4;
+  repeated Variable ordered_variables = 5;
 }
 
 message RunnableDerivedRolesSet {
@@ -86,7 +88,8 @@ message RunnableVariablesSet {
   }
 
   Metadata meta = 1;
-  map<string, Expr> variables = 2;
+  map<string, Expr> variables = 2 [deprecated = true];
+  repeated Variable ordered_variables = 3;
 }
 
 // RunnablePrincipalPolicySet is a container for all "compiled" principal policies belonging to a particular scope hierarchy.
@@ -112,8 +115,9 @@ message RunnablePrincipalPolicySet {
     }
 
     string scope = 1;
-    map<string, Expr> variables = 2;
+    map<string, Expr> variables = 2 [deprecated = true];
     map<string, ResourceRules> resource_rules = 3;
+    repeated Variable ordered_variables = 4;
   }
 
   Metadata meta = 1;
@@ -123,6 +127,11 @@ message RunnablePrincipalPolicySet {
 message Expr {
   string original = 1;
   google.api.expr.v1alpha1.CheckedExpr checked = 2;
+}
+
+message Variable {
+  string name = 1;
+  Expr expr = 2;
 }
 
 message Condition {

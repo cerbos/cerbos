@@ -127,11 +127,11 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 	}
 
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
-		DerivedRoles: referencedRoles,
-		Scope:        rp.Scope,
-		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
-		Variables:    compileAllVariables(modCtx, rp.Variables),
-		Schemas:      rp.Schemas,
+		DerivedRoles:     referencedRoles,
+		Scope:            rp.Scope,
+		Rules:            make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
+		OrderedVariables: compileVariables(modCtx, rp.Variables),
+		Schemas:          rp.Schemas,
 	}
 
 	for i, rule := range rp.Rules {
@@ -245,13 +245,13 @@ func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet
 		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
 	}
 
-	variables := compileAllVariables(modCtx, dr.Variables)
+	variables := compileVariables(modCtx, dr.Variables)
 
 	for i, def := range dr.Definitions {
 		rdr := &runtimev1.RunnableDerivedRole{
-			Name:        def.Name,
-			ParentRoles: make(map[string]*emptypb.Empty, len(def.ParentRoles)),
-			Variables:   variables,
+			Name:             def.Name,
+			ParentRoles:      make(map[string]*emptypb.Empty, len(def.ParentRoles)),
+			OrderedVariables: variables,
 		}
 
 		for _, pr := range def.ParentRoles {
@@ -382,9 +382,9 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 	}
 
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
-		Scope:         pp.Scope,
-		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
-		Variables:     compileAllVariables(modCtx, pp.Variables),
+		Scope:            pp.Scope,
+		ResourceRules:    make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
+		OrderedVariables: compileVariables(modCtx, pp.Variables),
 	}
 
 	for _, rule := range pp.Rules {
@@ -426,6 +426,9 @@ func compileExportVariables(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
+	definitions := newVariableDefinitions()
+	definitions.Add(modCtx, ev.Definitions, "")
+
 	return &runtimev1.RunnablePolicySet{
 		Fqn: modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_Variables{
@@ -433,60 +436,9 @@ func compileExportVariables(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 				Meta: &runtimev1.RunnableVariablesSet_Metadata{
 					Fqn: modCtx.fqn,
 				},
-				Variables: compileVariables(modCtx, ev.Definitions),
+				OrderedVariables: definitions.Ordered(modCtx),
 			},
 		},
-	}
-}
-
-func compileAllVariables(modCtx *moduleCtx, variables *policyv1.Variables) map[string]*runtimev1.Expr {
-	results := make(map[string]*runtimev1.Expr)
-	sources := make(map[string][]string)
-
-	for _, imp := range variables.GetImport() {
-		evModID := namer.ExportVariablesModuleID(imp)
-
-		evModCtx := modCtx.moduleCtx(evModID)
-		if evModCtx == nil {
-			modCtx.addErrWithDesc(errImportNotFound, "Variables import '%s' cannot be found", imp)
-			continue
-		}
-
-		ev := evModCtx.def.GetExportVariables()
-		if ev == nil {
-			modCtx.addErrWithDesc(errUnexpectedErr, "Not an export variables definition")
-			continue
-		}
-
-		addVariables(evModCtx, results, sources, ev.Definitions, fmt.Sprintf("import '%s'", imp))
-	}
-
-	addVariables(modCtx, results, sources, variables.GetLocal(), "policy local variables")
-	addVariables(modCtx, results, sources, modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
-
-	for name, definedIn := range sources {
-		var definedInMsg string
-		switch len(definedIn) {
-		case 1:
-			continue
-
-		case 2: //nolint:gomnd
-			definedInMsg = strings.Join(definedIn, " and ")
-
-		default:
-			definedInMsg = fmt.Sprintf("%s, and %s", strings.Join(definedIn[:len(definedIn)-1], ", "), definedIn[len(definedIn)-1])
-		}
-
-		modCtx.addErrWithDesc(errVariableRedefined, "Variable '%s' has multiple definitions in %s", name, definedInMsg)
-	}
-
-	return results
-}
-
-func addVariables(modCtx *moduleCtx, results map[string]*runtimev1.Expr, sources map[string][]string, definitions map[string]string, source string) {
-	for name, expr := range compileVariables(modCtx, definitions) {
-		results[name] = expr
-		sources[name] = append(sources[name], source)
 	}
 }
 

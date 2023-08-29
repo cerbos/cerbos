@@ -4,9 +4,8 @@
 package compile
 
 import (
-	"fmt"
-
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/ast"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -18,20 +17,6 @@ func Condition(cond *policyv1.Condition) (*runtimev1.Condition, error) {
 	mc := &moduleCtx{unitCtx: &unitCtx{errors: new(ErrorList)}, fqn: "UNKNOWN", sourceFile: "UNKNOWN"}
 	cc := compileCondition(mc, "unknown", cond)
 	return cc, mc.error()
-}
-
-func compileVariables(modCtx *moduleCtx, variables map[string]string) map[string]*runtimev1.Expr {
-	if len(variables) == 0 {
-		return nil
-	}
-
-	compiled := make(map[string]*runtimev1.Expr, len(variables))
-	for v, expr := range variables {
-		checked := compileCELExpr(modCtx, fmt.Sprintf("variable `%s`", v), expr)
-		compiled[v] = &runtimev1.Expr{Original: expr, Checked: checked}
-	}
-
-	return compiled
 }
 
 func compileCondition(modCtx *moduleCtx, parent string, cond *policyv1.Condition) *runtimev1.Condition {
@@ -95,4 +80,36 @@ func compileMatchList(modCtx *moduleCtx, parent string, matches []*policyv1.Matc
 	}
 
 	return &runtimev1.Condition_ExprList{Expr: exprList}
+}
+
+func variableReferences(modCtx *moduleCtx, parent string, expr *runtimev1.Expr) map[string]struct{} {
+	refs := make(map[string]struct{})
+
+	checkedAST, err := ast.CheckedExprToCheckedAST(expr.Checked)
+	if err != nil {
+		modCtx.addErrWithDesc(err, "Failed to convert AST of `%s` in %s", expr.Original, parent)
+		return nil
+	}
+
+	nodes := []ast.NavigableExpr{ast.NavigateCheckedAST(checkedAST)}
+	for len(nodes) > 0 {
+		node := nodes[0]
+		nodes = nodes[1:]
+
+		if node.Kind() == ast.SelectKind {
+			selectNode := node.AsSelect()
+			operandNode := selectNode.Operand()
+			if operandNode.Kind() == ast.IdentKind {
+				ident := operandNode.AsIdent()
+				if ident == conditions.CELVariablesIdent || ident == conditions.CELVariablesAbbrev {
+					refs[selectNode.FieldName()] = struct{}{}
+				}
+				continue
+			}
+		}
+
+		nodes = append(nodes, node.Children()...)
+	}
+
+	return refs
 }

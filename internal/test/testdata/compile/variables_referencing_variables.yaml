@@ -1,0 +1,14 @@
+---
+mainDef: resource_policies/example.yaml
+inputDefs:
+  resource_policies/example.yaml:
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      version: default
+      resource: example
+      variables:
+        local:
+          one: "1"
+          two: "2"
+          three: variables.one + variables.two
+          four: V.one + V.three
