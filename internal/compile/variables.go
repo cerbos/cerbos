@@ -17,7 +17,7 @@ import (
 	"gonum.org/v1/gonum/graph/topo"
 )
 
-func compileVariables(modCtx *moduleCtx, variables *policyv1.Variables) []*runtimev1.Variable {
+func compileVariables(modCtx *moduleCtx, variables *policyv1.Variables) ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
 	definitions := newVariableDefinitions()
 
 	for _, imp := range variables.GetImport() {
@@ -35,13 +35,29 @@ func compileVariables(modCtx *moduleCtx, variables *policyv1.Variables) []*runti
 			continue
 		}
 
-		definitions.Add(evModCtx, ev.Definitions, fmt.Sprintf("import '%s'", imp))
+		definitions.Compile(evModCtx, ev.Definitions, fmt.Sprintf("import '%s'", imp))
 	}
 
-	definitions.Add(modCtx, variables.GetLocal(), "policy local variables")
-	definitions.Add(modCtx, modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
+	definitions.Compile(modCtx, variables.GetLocal(), "policy local variables")
+	definitions.Compile(modCtx, modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
 
-	return definitions.Ordered(modCtx)
+	return definitions.Resolve(modCtx)
+}
+
+func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]*runtimev1.Variable, error) {
+	modCtx := &moduleCtx{
+		unitCtx: &unitCtx{errors: new(ErrorList)},
+		fqn:     fqn,
+	}
+
+	definitions := newVariableDefinitions()
+	for name, expr := range variables {
+		definitions.Add(&runtimev1.Variable{Name: name, Expr: expr})
+	}
+
+	ordered, _ := definitions.Resolve(modCtx)
+
+	return ordered, modCtx.error()
 }
 
 type variableNode struct {
@@ -57,6 +73,7 @@ type variableDefinitions struct {
 	graph   *simple.DirectedGraph
 	ids     map[string]int64
 	sources map[string][]string
+	nextID  int64
 }
 
 func newVariableDefinitions() *variableDefinitions {
@@ -67,28 +84,26 @@ func newVariableDefinitions() *variableDefinitions {
 	}
 }
 
-func (vd *variableDefinitions) Add(modCtx *moduleCtx, definitions map[string]string, source string) {
+func (vd *variableDefinitions) Compile(modCtx *moduleCtx, definitions map[string]string, source string) {
 	for name, expr := range definitions {
 		vd.sources[name] = append(vd.sources[name], source)
-		_, redefined := vd.ids[name]
-		if !redefined {
-			id := int64(len(vd.ids))
-			vd.ids[name] = id
-			vd.graph.AddNode(&variableNode{
-				id: id,
-				Variable: &runtimev1.Variable{
-					Name: name,
-					Expr: &runtimev1.Expr{
-						Original: expr,
-						Checked:  compileCELExpr(modCtx, fmt.Sprintf("variable '%s'", name), expr),
-					},
-				},
-			})
-		}
+		vd.Add(&runtimev1.Variable{
+			Name: name,
+			Expr: &runtimev1.Expr{
+				Original: expr,
+				Checked:  compileCELExpr(modCtx, fmt.Sprintf("variable '%s'", name), expr),
+			},
+		})
 	}
 }
 
-func (vd *variableDefinitions) Ordered(modCtx *moduleCtx) []*runtimev1.Variable {
+func (vd *variableDefinitions) Add(variable *runtimev1.Variable) {
+	vd.ids[variable.Name] = vd.nextID
+	vd.graph.AddNode(&variableNode{id: vd.nextID, Variable: variable})
+	vd.nextID++
+}
+
+func (vd *variableDefinitions) Resolve(modCtx *moduleCtx) ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
 	vd.reportRedefinedVariables(modCtx)
 	vd.resolveReferences(modCtx)
 
@@ -100,15 +115,18 @@ func (vd *variableDefinitions) Ordered(modCtx *moduleCtx) []*runtimev1.Variable 
 		} else {
 			modCtx.addErrWithDesc(err, "Unexpected error sorting variable definitions")
 		}
-		return nil
+		return nil, nil
 	}
 
-	variables := make([]*runtimev1.Variable, len(nodes))
+	ordered := make([]*runtimev1.Variable, len(nodes))
+	unordered := make(map[string]*runtimev1.Expr)
 	for i, node := range nodes {
-		variables[i] = node.(*variableNode).Variable //nolint:forcetypeassert
+		variable := node.(*variableNode).Variable //nolint:forcetypeassert
+		ordered[i] = variable
+		unordered[variable.Name] = variable.Expr
 	}
 
-	return variables
+	return ordered, unordered
 }
 
 func (vd *variableDefinitions) reportRedefinedVariables(modCtx *moduleCtx) {

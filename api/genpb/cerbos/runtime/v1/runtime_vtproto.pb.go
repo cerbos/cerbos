@@ -62,6 +62,11 @@ func (m *RunnablePolicySet) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		}
 		i -= size
 	}
+	if m.CompilerVersion != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.CompilerVersion))
+		i--
+		dAtA[i] = 0x30
+	}
 	if len(m.Fqn) > 0 {
 		i -= len(m.Fqn)
 		copy(dAtA[i:], m.Fqn)
@@ -1944,6 +1949,9 @@ func (m *RunnablePolicySet) SizeVT() (n int) {
 	if vtmsg, ok := m.PolicySet.(interface{ SizeVT() int }); ok {
 		n += vtmsg.SizeVT()
 	}
+	if m.CompilerVersion != 0 {
+		n += 1 + sov(uint64(m.CompilerVersion))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -2989,6 +2997,25 @@ func (m *RunnablePolicySet) UnmarshalVT(dAtA []byte) error {
 				m.PolicySet = &RunnablePolicySet_Variables{Variables: v}
 			}
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CompilerVersion", wireType)
+			}
+			m.CompilerVersion = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CompilerVersion |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

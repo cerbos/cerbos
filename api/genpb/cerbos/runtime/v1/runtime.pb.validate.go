@@ -63,6 +63,8 @@ func (m *RunnablePolicySet) validate(all bool) error {
 
 	// no validation rules for Fqn
 
+	// no validation rules for CompilerVersion
+
 	switch v := m.PolicySet.(type) {
 	case *RunnablePolicySet_ResourcePolicy:
 		if v == nil {

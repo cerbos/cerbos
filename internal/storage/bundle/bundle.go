@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cloud-api/credentials"
@@ -205,6 +206,11 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	rps := &runtimev1.RunnablePolicySet{}
 	if err := rps.UnmarshalVT(policyBytes); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal %s: %w", idHex, err)
+	}
+
+	err = compile.MigrateCompiledPolicies(rps)
+	if err != nil {
+		return nil, err
 	}
 
 	return rps, nil

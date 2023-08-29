@@ -56,5 +56,6 @@
         "ref": "cerbos:///complex_object.json"
       }
     }
-  }
+  },
+  "compilerVersion": 1
 }

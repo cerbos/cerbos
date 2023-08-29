@@ -20,6 +20,7 @@ message RunnablePolicySet {
     RunnableDerivedRolesSet derived_roles = 4;
     RunnableVariablesSet variables = 5;
   }
+  uint32 compiler_version = 6;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies belonging to a particular scope hierarchy.

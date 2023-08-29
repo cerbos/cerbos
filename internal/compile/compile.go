@@ -17,9 +17,19 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
+type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
+
 const AnyRoleVal = "*"
 
-var emptyVal = &emptypb.Empty{}
+var (
+	emptyVal = &emptypb.Empty{}
+
+	compilerVersionMigrations = []compilerVersionMigration{
+		migrateFromCompilerVersion0To1,
+	}
+
+	compilerVersion = uint32(len(compilerVersionMigrations))
+)
 
 func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager) error {
 	errs := newErrorList()
@@ -103,7 +113,8 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 	// This should be a compiler warning instead of an error.
 
 	return &runtimev1.RunnablePolicySet{
-		Fqn: modCtx.fqn,
+		CompilerVersion: compilerVersion,
+		Fqn:             modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_ResourcePolicy{
 			ResourcePolicy: rrps,
 		},
@@ -126,11 +137,14 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 		return nil
 	}
 
+	orderedVariables, unorderedVariables := compileVariables(modCtx, rp.Variables)
+
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
 		DerivedRoles:     referencedRoles,
 		Scope:            rp.Scope,
 		Rules:            make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
-		OrderedVariables: compileVariables(modCtx, rp.Variables),
+		OrderedVariables: orderedVariables,
+		Variables:        unorderedVariables,
 		Schemas:          rp.Schemas,
 	}
 
@@ -223,7 +237,8 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 func compileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 	return &runtimev1.RunnablePolicySet{
-		Fqn: modCtx.fqn,
+		CompilerVersion: compilerVersion,
+		Fqn:             modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_DerivedRoles{
 			DerivedRoles: doCompileDerivedRoles(modCtx),
 		},
@@ -245,13 +260,14 @@ func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet
 		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
 	}
 
-	variables := compileVariables(modCtx, dr.Variables)
+	orderedVariables, unorderedVariables := compileVariables(modCtx, dr.Variables)
 
 	for i, def := range dr.Definitions {
 		rdr := &runtimev1.RunnableDerivedRole{
 			Name:             def.Name,
 			ParentRoles:      make(map[string]*emptypb.Empty, len(def.ParentRoles)),
-			OrderedVariables: variables,
+			OrderedVariables: orderedVariables,
+			Variables:        unorderedVariables,
 		}
 
 		for _, pr := range def.ParentRoles {
@@ -367,7 +383,8 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 	}
 
 	return &runtimev1.RunnablePolicySet{
-		Fqn: modCtx.fqn,
+		CompilerVersion: compilerVersion,
+		Fqn:             modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_PrincipalPolicy{
 			PrincipalPolicy: rpps,
 		},
@@ -381,10 +398,13 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 		return nil
 	}
 
+	orderedVariables, unorderedVariables := compileVariables(modCtx, pp.Variables)
+
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
 		Scope:            pp.Scope,
 		ResourceRules:    make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
-		OrderedVariables: compileVariables(modCtx, pp.Variables),
+		OrderedVariables: orderedVariables,
+		Variables:        unorderedVariables,
 	}
 
 	for _, rule := range pp.Rules {
@@ -427,16 +447,19 @@ func compileExportVariables(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 	}
 
 	definitions := newVariableDefinitions()
-	definitions.Add(modCtx, ev.Definitions, "")
+	definitions.Compile(modCtx, ev.Definitions, "")
+	orderedVariables, unorderedVariables := definitions.Resolve(modCtx)
 
 	return &runtimev1.RunnablePolicySet{
-		Fqn: modCtx.fqn,
+		CompilerVersion: compilerVersion,
+		Fqn:             modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_Variables{
 			Variables: &runtimev1.RunnableVariablesSet{
 				Meta: &runtimev1.RunnableVariablesSet_Metadata{
 					Fqn: modCtx.fqn,
 				},
-				OrderedVariables: definitions.Ordered(modCtx),
+				OrderedVariables: orderedVariables,
+				Variables:        unorderedVariables,
 			},
 		},
 	}
@@ -451,4 +474,77 @@ func reportMissingAncestors(modCtx *moduleCtx) {
 			modCtx.addErrWithDesc(errMissingDefinition, "Missing ancestor policy %q", namer.PolicyKeyFromFQN(fqn))
 		}
 	}
+}
+
+// MigrateCompiledPolicies modifies a RunnablePolicySet compiled by a previous version of Cerbos to migrate it to the latest format.
+func MigrateCompiledPolicies(policies *runtimev1.RunnablePolicySet) error {
+	for version := policies.CompilerVersion; version < compilerVersion; version++ {
+		err := compilerVersionMigrations[version](policies)
+		if err != nil {
+			return fmt.Errorf("failed to migrate compiled policies from v%d to v%d: %w", version, version+1, err)
+		}
+	}
+
+	return nil
+}
+
+func migrateFromCompilerVersion0To1(policies *runtimev1.RunnablePolicySet) error {
+	switch set := policies.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_DerivedRoles:
+		err := migrateDerivedRolesFromCompilerVersion0To1(set.DerivedRoles.Meta.Fqn, set.DerivedRoles.DerivedRoles)
+		if err != nil {
+			return err
+		}
+
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		for _, principalPolicy := range set.PrincipalPolicy.Policies {
+			ordered, err := sortCompiledVariables(set.PrincipalPolicy.Meta.Fqn, principalPolicy.Variables) //nolint:staticcheck
+			if err != nil {
+				return err
+			}
+
+			principalPolicy.OrderedVariables = ordered
+		}
+
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		for _, resourcePolicy := range set.ResourcePolicy.Policies {
+			err := migrateDerivedRolesFromCompilerVersion0To1(set.ResourcePolicy.Meta.Fqn, resourcePolicy.DerivedRoles)
+			if err != nil {
+				return err
+			}
+
+			ordered, err := sortCompiledVariables(set.ResourcePolicy.Meta.Fqn, resourcePolicy.Variables) //nolint:staticcheck
+			if err != nil {
+				return err
+			}
+
+			resourcePolicy.OrderedVariables = ordered
+		}
+
+	case *runtimev1.RunnablePolicySet_Variables:
+		ordered, err := sortCompiledVariables(set.Variables.Meta.Fqn, set.Variables.Variables) //nolint:staticcheck
+		if err != nil {
+			return err
+		}
+
+		set.Variables.OrderedVariables = ordered
+
+	default:
+		return fmt.Errorf("unknown policy set type %T", set)
+	}
+
+	return nil
+}
+
+func migrateDerivedRolesFromCompilerVersion0To1(fqn string, derivedRoles map[string]*runtimev1.RunnableDerivedRole) error {
+	for _, derivedRole := range derivedRoles {
+		ordered, err := sortCompiledVariables(fqn, derivedRole.Variables) //nolint:staticcheck
+		if err != nil {
+			return err
+		}
+
+		derivedRole.OrderedVariables = ordered
+	}
+
+	return nil
 }

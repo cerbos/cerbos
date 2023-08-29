@@ -365,6 +365,10 @@ func cerbos_runtime_v1_RunnablePolicySet_hashpb_sum(m *RunnablePolicySet, hasher
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePolicySet.compiler_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.CompilerVersion)))
+
+	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Metadata_hashpb_sum(m *RunnablePrincipalPolicySet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
