@@ -23,8 +23,13 @@ audit:
       ignoreAll: false # IgnoreAll prevents any plan responses from being logged. Takes precedence over other filters.
       ignoreAlwaysAllow: false # IgnoreAlwaysAllow ignores ALWAYS_ALLOWED plans.
   backend: local # Audit backend to use.
-  file: # Configuration for the file audit backend
-    path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
+  file:
+    additionalPaths: ["stdout"] # AdditionalPaths to mirror the log output. Has performance implications. Use with caution.
+    logRotation: # LogRotation settings (optional).
+      maxFileAgeDays: 10 # MaxFileAgeDays sets the maximum age in days of old log files before they are deleted.
+      maxFileCount: 10 # MaxFileCount sets the maximum number of files to retain.
+      maxFileSizeMB: 100 # MaxFileSizeMB sets the maximum size of individual log files in megabytes.
+    path: /path/to/file.log # Required. Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   local: # Configuration for the local audit backend
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # Records older than this will be automatically deleted
@@ -95,6 +100,7 @@ The `file` backend writes audit records as newline-delimited JSON to a file or s
 NOTE: This backend cannot be queried using the Admin API, `cerbosctl audit` or `cerbosctl decisions`.
 
 
+.Minimal configuration with file output and no log rotation
 [source,yaml,linenums]
 ----
 audit:
@@ -106,10 +112,32 @@ audit:
     path: /path/to/audit.log
 ----
 
+.Configuration with log rotation and output to both stdout and a file
+[source,yaml,linenums]
+----
+audit:
+  enabled: true
+  accessLogsEnabled: true
+  decisionLogsEnabled: true
+  backend: file
+  file:
+    path: /path/to/file.log
+    additionalPaths:
+      - stdout
+    logRotation:
+      maxFileAgeDays: 10 # Maximum age in days of old log files before they are deleted.
+      maxFileCount: 10 # Maximum number of old log files to retain.
+      maxFileSizeMB: 100 # Maximum size of individual log files in megabytes.
+----
+
 
 The `path` field can be set to special names `stdout` or `stderr` to log to stdout or stderr. Note that this would result in audit logs being mixed up with normal Cerbos operational logs. It is recommended to use an actual file for audit log output if your container orchestrator has support for collecting logs from files in addition to stdout/stderr.
 
 Audit log entries can be selected by setting a filter on `log.logger == "cerbos.audit"`. Access log entries have `log.kind == "access"` and decision log entries have `log.kind == "decision"`.
+
+If log rotation is enabled, `maxFileSizeMB` is the only required setting. If `maxFileCount` and `maxFileAgeDays` settings are not defined, files are never deleted by the Cerbos process.
+
+
 
 
 [#kafka]
