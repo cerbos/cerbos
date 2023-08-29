@@ -63,6 +63,7 @@ schema:
   cacheSize: 1024 # CacheSize defines the number of schemas to cache in memory.
   enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.
 server:
+  apiExplorerEnabled: true # APIExplorerEnabled defines whether the API explorer UI is enabled.
   adminAPI: # AdminAPI defines the admin API configuration.
     adminCredentials: # AdminCredentials defines the admin user credentials.
       passwordHash: JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo= # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
@@ -83,7 +84,6 @@ server:
     allowedOrigins: ['*'] # AllowedOrigins is the contents of the allowed-origins header.
     disabled: false # Disabled sets whether CORS is disabled.
     maxAge: 10s # MaxAge is the max age of the CORS preflight check.
-  disableAPIExplorer: false # DisableAPIExplorer disables the API explorer UI from being served on the HTTP port.
   grpcListenAddr: ":3593" # Required. GRPCListenAddr is the dedicated GRPC address.
   httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
   logRequestPayloads: false # LogRequestPayloads defines whether the request payloads should be logged.
