@@ -539,7 +539,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		cerbosMux.PathPrefix(zpagesEndpoint).Handler(hm)
 	}
 
-	if !s.conf.DisableAPIExplorer {
+	if s.conf.APIExplorerEnabled {
 		cerbosMux.HandleFunc("/", schema.ServeUI)
 	}
 

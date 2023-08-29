@@ -64,8 +64,8 @@ type Conf struct {
 	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",example=false"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",ignore"`
-	// DisableAPIExplorer disables the API explorer UI from being served on the HTTP port.
-	DisableAPIExplorer bool `yaml:"disableAPIExplorer" conf:",example=false"`
+	// APIExplorerEnabled defines whether the API explorer UI is enabled.
+	APIExplorerEnabled bool `yaml:"apiExplorerEnabled" conf:",example=true"`
 	// Advanced server settings.
 	Advanced AdvancedConf `yaml:"advanced"`
 }
@@ -171,6 +171,7 @@ func (c *Conf) SetDefaults() {
 	c.HTTPListenAddr = defaultHTTPListenAddr
 	c.GRPCListenAddr = defaultGRPCListenAddr
 	c.MetricsEnabled = true
+	c.APIExplorerEnabled = true
 	c.UDSFileMode = defaultUDSFileMode
 	c.RequestLimits = RequestLimitsConf{
 		MaxActionsPerResource:  defaultMaxActionsPerResource,
