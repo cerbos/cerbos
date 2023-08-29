@@ -539,7 +539,9 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		cerbosMux.PathPrefix(zpagesEndpoint).Handler(hm)
 	}
 
-	cerbosMux.HandleFunc("/", schema.ServeUI)
+	if s.conf.APIExplorerEnabled {
+		cerbosMux.HandleFunc("/", schema.ServeUI)
+	}
 
 	httpHandler := withCORS(s.conf, cerbosMux)
 
