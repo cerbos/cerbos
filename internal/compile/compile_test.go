@@ -10,14 +10,12 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -88,23 +86,7 @@ func updateGoldenFiles(t *testing.T, schemaMgr schema.Manager, testCases []test.
 			t.Fatalf("Cannot produce golden file because compiling %q returns an error: %v", tcase.SourceFile, err)
 		}
 
-		writeGoldenFile(t, tcase.SourceFile+".golden", res)
-	}
-}
-
-func writeGoldenFile(t *testing.T, path string, contents proto.Message) {
-	t.Helper()
-	f, err := os.Create(path)
-	if err != nil {
-		t.Fatalf("Failed to create %q: %v", path, err)
-	}
-
-	defer f.Close()
-
-	_, err = f.WriteString(protojson.Format(contents))
-	if err != nil {
-		f.Close()
-		t.Fatalf("Failed to write to %q: %v", path, err)
+		test.WriteGoldenFile(t, tcase.SourceFile+".golden", res)
 	}
 }
 

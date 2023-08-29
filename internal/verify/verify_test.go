@@ -20,7 +20,6 @@ import (
 	"github.com/rogpeppe/go-internal/txtar"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -87,23 +86,7 @@ func updateGoldenFiles(t *testing.T, eng *engine.Engine, testCases []test.Case) 
 		result, err := runPolicyTests(t, eng, tc.archive)
 		require.NoError(t, err, "Failed to produce golden file for %q due to error from test run: %v", tcase.SourceFile, err)
 
-		writeGoldenFile(t, tcase.SourceFile+".golden", result)
-	}
-}
-
-func writeGoldenFile(t *testing.T, path string, contents proto.Message) {
-	t.Helper()
-	f, err := os.Create(path)
-	if err != nil {
-		t.Fatalf("Failed to create %q: %v", path, err)
-	}
-
-	defer f.Close()
-
-	_, err = f.WriteString(protojson.Format(contents))
-	if err != nil {
-		f.Close()
-		t.Fatalf("Failed to write to %q: %v", path, err)
+		test.WriteGoldenFile(t, tcase.SourceFile+".golden", result)
 	}
 }
 

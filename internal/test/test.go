@@ -4,7 +4,9 @@
 package test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +19,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -295,4 +299,13 @@ func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies 
 	}
 
 	return filtered
+}
+
+func WriteGoldenFile(t *testing.T, path string, contents proto.Message) {
+	t.Helper()
+
+	var b bytes.Buffer
+	require.NoError(t, json.Indent(&b, []byte(protojson.Format(contents)), "", "  "), "Failed to JSON-encode golden file contents")
+	b.WriteByte('\n')
+	require.NoError(t, os.WriteFile(path, b.Bytes(), 0o644), "Failed to write golden file") //nolint:gomnd,gosec
 }

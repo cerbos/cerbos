@@ -1,16 +1,16 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "suite_test.yaml",
-      "name":  "TestSuite",
-      "summary":  {
-        "overallResult":  "RESULT_ERRORED"
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
       },
-      "error":  "failed to load test fixtures from testdata: invalid TestFixture_Principals.Principals[invalid]: embedded message failed validation | caused by: invalid Principal.Id: value length must be at least 1 runes",
-      "description":  "Tests for verifying something"
+      "error": "failed to load test fixtures from testdata: invalid TestFixture_Principals.Principals[invalid]: embedded message failed validation | caused by: invalid Principal.Id: value length must be at least 1 runes",
+      "description": "Tests for verifying something"
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_ERRORED"
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
   }
 }
