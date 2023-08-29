@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema
 
-go 1.19
+go 1.21
 
 require (
 	github.com/envoyproxy/protoc-gen-validate v1.0.2

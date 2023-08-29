@@ -18,7 +18,7 @@ Submitting pull requests
 - Run the pre-commit checks that are appropriate for the kind of change. (See below for details.)
 - Submit your pull request.
     - We require all pull requests to follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) format.
-    - Use [closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to link the PR to the original issue. 
+    - Use [closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to link the PR to the original issue.
     - At least one approval from a maintainer is required to merge the pull request.
 
 
@@ -33,7 +33,7 @@ Submitting pull requests
 - Add tests to cover the functionality you are adding or modifying.
 - Add new documentation or update existing content to ensure that the documentation stays consistent with the change you are introducing. See [below](#submitting-pull-requests-for-documentation-changes) for tips on writing documentation.
 - Avoid introducing new dependencies if possible. All dependencies must have an appropriate open source licence (Apache-2.0, BSD, MIT).
-- Make sure your code is `gofmt`ed. Run `make lint` and fix any warnings produced by the linter. 
+- Make sure your code is `gofmt`ed. Run `make lint` and fix any warnings produced by the linter.
 - Sign-off your commits to provide a [DCO](https://developercertificate.org). You can do this by adding the `-s` flag to your `git commit` command.
     ```sh
     git commit -s -m 'bug: Fix for bug X'
@@ -53,7 +53,7 @@ Submitting pull requests
 Developing Cerbos
 -----------------
 
-Cerbos is developed using the [Go programming language](https://golang.org). We currently require Go 1.19.x for development.
+Cerbos is developed using the [Go programming language](https://golang.org). We currently require Go 1.21.x for development.
 
 The `Makefile` automatically installs required build tools using the versions defined in `tools/go.mod`. Run `make clean-tools` to clear the cache and force the installation of new versions.
 
@@ -61,7 +61,7 @@ Useful `make` targets:
 
 - `make build`: Compile, test and build the Cerbos binaries and container. Binaries will be output to the `dist` directory. The container name would be `ghcr.io/cerbos/cerbos:<VERSION>-prerelease`.
 - `make pre-commit`: Run tests, lint, and generate code and documentation. Run this before submitting a PR to make sure your code is ready to submit.
-- `make dev-server`: Start a Cerbos server 
+- `make dev-server`: Start a Cerbos server
 - `make docs`: Generate docs and preview in browser.
 
 
