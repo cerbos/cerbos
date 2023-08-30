@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -56,12 +55,14 @@ type Store struct {
 	repo *git.Repository
 	sf   singleflight.Group
 	*storage.SubscriptionManager
+	subDir string
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	s := &Store{
 		log:                 zap.S().Named("git.store").With("dir", conf.CheckoutDir),
 		conf:                conf,
+		subDir:              conf.getSubDir(),
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
 
@@ -227,12 +228,7 @@ func (s *Store) cloneRepo(ctx context.Context) error {
 }
 
 func (s *Store) loadAll(ctx context.Context) error {
-	policyDir := "."
-	if s.conf.SubDir != "" {
-		policyDir = s.conf.SubDir
-	}
-
-	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(policyDir))
+	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(s.subDir))
 	if err != nil {
 		return err
 	}
@@ -448,8 +444,8 @@ func (s *Store) normalizePath(path string) (string, util.IndexedFileType) {
 		return path, util.FileTypeNotIndexed
 	}
 
-	if s.conf.SubDir != "" {
-		relativePath := strings.TrimPrefix(path, strings.TrimSuffix(filepath.ToSlash(s.conf.SubDir), "/")+"/")
+	if s.subDir != "." {
+		relativePath := strings.TrimPrefix(path, s.subDir+"/")
 		if path == relativePath { // not in policies directory
 			return path, util.FileTypeNotIndexed
 		}

@@ -18,6 +18,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/internal"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/test/mocks"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -577,6 +579,106 @@ func TestReloadable(t *testing.T) {
 	store := mkEmptyStoreAndRepo(t, sourceGitDir, checkoutDir)
 
 	internal.TestSuiteReloadable(store, mkInitFn(t, sourceGitDir), mkAddFn(t, sourceGitDir, ps), mkDeleteFn(t, sourceGitDir))(t)
+}
+
+func TestNormalizePath(t *testing.T) {
+	testCases := []struct {
+		subDir       string
+		path         string
+		wantPath     string
+		wantFileType util.IndexedFileType
+	}{
+		{
+			subDir:       ".",
+			path:         "foo.yaml",
+			wantPath:     "foo.yaml",
+			wantFileType: util.FileTypePolicy,
+		},
+		{
+			subDir:       ".",
+			path:         "foo.json",
+			wantPath:     "foo.json",
+			wantFileType: util.FileTypePolicy,
+		},
+		{
+			subDir:       ".",
+			path:         "foo/bar.yaml",
+			wantPath:     "foo/bar.yaml",
+			wantFileType: util.FileTypePolicy,
+		},
+		{
+			subDir:       "foo",
+			path:         "foo/bar.yaml",
+			wantPath:     "bar.yaml",
+			wantFileType: util.FileTypePolicy,
+		},
+		{
+			subDir:       "foo",
+			path:         "foo/bar/baz.yaml",
+			wantPath:     "bar/baz.yaml",
+			wantFileType: util.FileTypePolicy,
+		},
+		{
+			subDir:       ".",
+			path:         "_schemas/foo.json",
+			wantPath:     "foo.json",
+			wantFileType: util.FileTypeSchema,
+		},
+		{
+			subDir:       ".",
+			path:         "_schemas/foo/bar.json",
+			wantPath:     "foo/bar.json",
+			wantFileType: util.FileTypeSchema,
+		},
+		{
+			subDir:       "foo",
+			path:         "foo/_schemas/bar.json",
+			wantPath:     "bar.json",
+			wantFileType: util.FileTypeSchema,
+		},
+		{
+			subDir:       "foo",
+			path:         "foo/_schemas/bar/baz.json",
+			wantPath:     "bar/baz.json",
+			wantFileType: util.FileTypeSchema,
+		},
+		{
+			subDir:       ".",
+			path:         "",
+			wantPath:     "",
+			wantFileType: util.FileTypeNotIndexed,
+		},
+		{
+			subDir:       ".",
+			path:         "foo.txt",
+			wantPath:     "foo.txt",
+			wantFileType: util.FileTypeNotIndexed,
+		},
+		{
+			subDir:       ".",
+			path:         "_schemas/foo.yaml",
+			wantPath:     "_schemas/foo.yaml",
+			wantFileType: util.FileTypeNotIndexed,
+		},
+		{
+			subDir:       "foo",
+			path:         "bar.yaml",
+			wantPath:     "bar.yaml",
+			wantFileType: util.FileTypeNotIndexed,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("subDir=%s,path=%s", tc.subDir, tc.path), func(t *testing.T) {
+			store := &Store{subDir: tc.subDir}
+
+			havePath, haveFileType := store.normalizePath(tc.path)
+
+			assert.Equal(t, tc.wantPath, havePath, "Unexpected path")
+			assert.Equal(t, tc.wantFileType, haveFileType, "Unexpected file type")
+		})
+	}
 }
 
 func mkInitFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
