@@ -224,10 +224,10 @@ func FileType(path string) IndexedFileType {
 // and a flag to indicate whether the path was actually contained in that directory.
 // The path must be "/"-separated and relative to the root policies directory.
 func RelativeSchemaPath(path string) (string, bool) {
-	schemaPath := strings.TrimPrefix(path, SchemasDirectory+"/")
-	if schemaPath == path {
-		return "", false
+	schemaPath, ok := strings.CutPrefix(path, SchemasDirectory+"/")
+	if !ok {
+		schemaPath = ""
 	}
 
-	return schemaPath, true
+	return schemaPath, ok
 }
