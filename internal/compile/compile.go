@@ -150,7 +150,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 
 	for i, rule := range rp.Rules {
 		rule.Name = namer.ResourceRuleName(rule, i+1)
-		cr := compileResourceRule(modCtx, rule)
+		cr := compileResourceRule(modCtx, rule, unorderedVariables)
 		if cr == nil {
 			continue
 		}
@@ -278,7 +278,7 @@ func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet
 			rdr.ParentRoles[pr] = emptyVal
 		}
 
-		rdr.Condition = compileCondition(modCtx, fmt.Sprintf("derived role '%s' (#%d)", def.Name, i), def.Condition)
+		rdr.Condition = compileCondition(modCtx, fmt.Sprintf("derived role '%s' (#%d)", def.Name, i), def.Condition, checkVariableReferences(unorderedVariables))
 		compiled.DerivedRoles[def.Name] = rdr
 	}
 
@@ -305,7 +305,7 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 	return modCtx.error()
 }
 
-func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
+func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule, variables map[string]*runtimev1.Expr) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
 	if len(rule.DerivedRoles) == 0 && len(rule.Roles) == 0 {
 		modCtx.addErrWithDesc(errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
@@ -313,7 +313,7 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 	parent := fmt.Sprintf("resource rule '%s'", rule.Name)
 	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{
 		Name:      rule.Name,
-		Condition: compileCondition(modCtx, parent, rule.Condition),
+		Condition: compileCondition(modCtx, parent, rule.Condition, checkVariableReferences(variables)),
 		Effect:    rule.Effect,
 	}
 
@@ -420,7 +420,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 				Action:    action.Action,
 				Name:      action.Name,
 				Effect:    action.Effect,
-				Condition: compileCondition(modCtx, ruleName, action.Condition),
+				Condition: compileCondition(modCtx, ruleName, action.Condition, checkVariableReferences(unorderedVariables)),
 			}
 
 			if action.Output != nil {

@@ -20,6 +20,10 @@ wantErrors:
     error: undefined variable
     desc: |-
       Undefined variable 'y' referenced in variable 'h'
+  - file:  resource_policies/example.yaml
+    error: undefined variable
+    desc: |-
+      Undefined variable 'z' referenced in resource rule 'bad'
 mainDef: resource_policies/example.yaml
 inputDefs:
   resource_policies/example.yaml:
@@ -37,3 +41,12 @@ inputDefs:
           f: 2 * V.g
           g: V.d
           h: V.x / variables.y
+      rules:
+        - name: bad
+          actions:
+            - "*"
+          roles:
+            - "*"
+          condition:
+            match:
+              expr: V.z > 9000
