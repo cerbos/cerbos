@@ -11,24 +11,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/lestrrat-go/httprc"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
-	cacheKind          = "jwt"
 	defaultCacheExpiry = 10 * time.Minute
 	defaultCacheSize   = 256
 )
@@ -41,7 +37,7 @@ var (
 
 type jwtHelper struct {
 	keySets map[string]keySet
-	cache   gcache.Cache
+	cache   *cache.Cache[string, struct{}]
 	verify  bool
 }
 
@@ -77,7 +73,7 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 		}
 
 		if conf.CacheSize > 0 {
-			jh.cache = mkCache(conf.CacheSize)
+			jh.cache = cache.New[string, struct{}]("jwt", uint(conf.CacheSize))
 		}
 	}
 
@@ -115,11 +111,9 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 
 	// Check whether this token has already been verified
 	if cacheKey != "" {
-		if _, err := j.cache.GetIFPresent(cacheKey); err == nil {
-			cacheHit()
+		if _, ok := j.cache.Get(cacheKey); ok {
 			return []jwt.ParseOption{jwt.WithVerify(false), jwt.WithValidate(true)}, nil
 		}
-		cacheMiss()
 	}
 
 	var ks keySet
@@ -161,7 +155,7 @@ func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT
 			expiry = exp
 		}
 
-		_ = j.cache.SetWithExpire(cacheKey, cacheEntry, expiry)
+		j.cache.SetWithExpire(cacheKey, cacheEntry, expiry)
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)
@@ -248,35 +242,4 @@ func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, error) {
 	}
 
 	return lks(ctx)
-}
-
-func mkCache(size int) gcache.Cache {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind)},
-		metrics.CacheMaxSize.M(int64(size)),
-	)
-
-	gauge := metrics.MakeCacheGauge(cacheKind)
-	return gcache.New(size).
-		ARC().
-		AddedFunc(func(_, _ any) {
-			gauge.Add(1)
-		}).
-		EvictedFunc(func(_, _ any) {
-			gauge.Add(-1)
-		}).Build()
-}
-
-func cacheHit() {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "hit")},
-		metrics.CacheAccessCount.M(1),
-	)
-}
-
-func cacheMiss() {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "miss")},
-		metrics.CacheAccessCount.M(1),
-	)
 }

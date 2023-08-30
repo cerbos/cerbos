@@ -4,23 +4,21 @@
 package util
 
 import (
-	"github.com/bluele/gcache"
+	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/gobwas/glob"
 	"go.uber.org/zap"
 )
 
-var globs = &globCache{cache: gcache.New(1024).ARC().Build()} //nolint:gomnd
+var globs = &globCache{cache: cache.New[string, glob.Glob]("glob", 1024)} //nolint:gomnd
 
 type globCache struct {
-	cache gcache.Cache
+	cache *cache.Cache[string, glob.Glob]
 }
 
 func (gc *globCache) matches(globExpr, val string) bool {
-	cachedGlob, err := gc.cache.GetIFPresent(globExpr)
-	if err == nil && cachedGlob != nil {
-		if g, ok := cachedGlob.(glob.Glob); ok {
-			return g.Match(val)
-		}
+	cachedGlob, ok := gc.cache.Get(globExpr)
+	if ok {
+		return cachedGlob.Match(val)
 	}
 
 	g, err := glob.Compile(globExpr, ':')
@@ -29,7 +27,7 @@ func (gc *globCache) matches(globExpr, val string) bool {
 		return false
 	}
 
-	_ = gc.cache.Set(globExpr, g)
+	gc.cache.Set(globExpr, g)
 	return g.Match(val)
 }
 

@@ -12,11 +12,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/bluele/gcache"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/tidwall/gjson"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -24,8 +21,8 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
@@ -35,7 +32,6 @@ const (
 	Directory = "_schemas"
 	URLScheme = "cerbos"
 	attrPath  = "attr"
-	cacheKind = "schema"
 )
 
 var alwaysValidResult = &ValidationResult{Reject: false}
@@ -81,7 +77,7 @@ type manager struct {
 	conf   *Conf
 	log    *zap.Logger
 	loader Loader
-	cache  gcache.Cache
+	cache  *cache.Cache[string, *cacheEntry]
 }
 
 func New(ctx context.Context, loader Loader) (Manager, error) {
@@ -102,7 +98,7 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 		conf:   conf,
 		log:    zap.L().Named("schema"),
 		loader: loader,
-		cache:  mkCache(int(conf.CacheSize)),
+		cache:  cache.New[string, *cacheEntry]("schema", conf.CacheSize),
 	}
 
 	if s, ok := loader.(storage.Subscribable); ok {
@@ -218,15 +214,10 @@ func attrToJSONObject(src ErrSource, attr map[string]*structpb.Value) (interface
 }
 
 func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
-	entry, err := m.cache.GetIFPresent(url)
-	if err == nil {
-		cacheHit()
-		if e, ok := entry.(*cacheEntry); ok {
-			return e.schema, e.err
-		}
+	entry, ok := m.cache.Get(url)
+	if ok {
+		return entry.schema, entry.err
 	}
-
-	cacheMiss()
 
 	e := &cacheEntry{}
 	e.schema, e.err = m.loadSchemaFromStore(ctx, url)
@@ -235,8 +226,7 @@ func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schem
 		e.err = fmt.Errorf("schema %q does not exist in the store", url)
 	}
 
-	_ = m.cache.Set(url, e)
-
+	m.cache.Set(url, e)
 	return e.schema, e.err
 }
 
@@ -300,35 +290,4 @@ func filterActionsToValidate(ignore, actions []string) []string {
 	}
 
 	return filtered
-}
-
-func mkCache(size int) gcache.Cache {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind)},
-		metrics.CacheMaxSize.M(int64(size)),
-	)
-
-	gauge := metrics.MakeCacheGauge(cacheKind)
-	return gcache.New(size).
-		ARC().
-		AddedFunc(func(_, _ any) {
-			gauge.Add(1)
-		}).
-		EvictedFunc(func(_, _ any) {
-			gauge.Add(-1)
-		}).Build()
-}
-
-func cacheHit() {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "hit")},
-		metrics.CacheAccessCount.M(1),
-	)
-}
-
-func cacheMiss() {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "miss")},
-		metrics.CacheAccessCount.M(1),
-	)
 }
