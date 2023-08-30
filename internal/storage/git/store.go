@@ -445,12 +445,11 @@ func (s *Store) normalizePath(path string) (string, util.IndexedFileType) {
 	}
 
 	if s.subDir != "." {
-		relativePath := strings.TrimPrefix(path, s.subDir+"/")
-		if path == relativePath { // not in policies directory
+		var ok bool
+		path, ok = strings.CutPrefix(path, s.subDir+"/")
+		if !ok { // not in policies directory
 			return path, util.FileTypeNotIndexed
 		}
-
-		path = relativePath
 	}
 
 	fileType := util.FileType(path)
