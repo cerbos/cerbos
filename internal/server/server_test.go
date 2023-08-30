@@ -82,6 +82,7 @@ func TestServer(t *testing.T) {
 			require.NoError(t, err, "Failed to read secret key")
 
 			conf := &bundle.Conf{
+				CacheSize:   1024,
 				Credentials: bundle.CredentialsConf{SecretKey: string(bytes.TrimSpace(keyBytes))},
 				Local: &bundle.LocalSourceConf{
 					BundlePath: filepath.Join(dir, "bundle.crbp"),

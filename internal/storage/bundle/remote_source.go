@@ -213,7 +213,13 @@ func (s *RemoteSource) removeBundle(healthy bool) {
 func (s *RemoteSource) swapBundle(bundlePath string) error {
 	s.log.Debug("Swapping bundle", zap.String("path", bundlePath))
 
-	bundle, err := Open(OpenOpts{BundlePath: bundlePath, ScratchFS: s.scratchFS, Credentials: s.credentials})
+	bundle, err := Open(OpenOpts{
+		Source:      "remote",
+		BundlePath:  bundlePath,
+		ScratchFS:   s.scratchFS,
+		Credentials: s.credentials,
+		CacheSize:   s.conf.CacheSize,
+	})
 	if err != nil {
 		s.log.Error("Failed to open bundle", zap.Error(err))
 		return fmt.Errorf("failed to open bundle: %w", err)

@@ -29,6 +29,7 @@ const (
 
 	defaultAPIEndpoint       = "https://api.cerbos.cloud"
 	defaultBootstrapHost     = "https://cdn.cerbos.cloud"
+	defaultCacheSize         = 1024
 	defaultHeartbeatInterval = 180 * time.Second
 	defaultMaxRetryWait      = 120 * time.Second
 	defaultMinRetryWait      = 1 * time.Second
@@ -47,6 +48,8 @@ type Conf struct {
 	Local *LocalSourceConf `yaml:"local"`
 	// Credentials holds bundle source credentials.
 	Credentials CredentialsConf `yaml:"credentials"`
+	// CacheSize defines the number of policies to cache in memory.
+	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
 }
 
 // CredentialsConf holds credentials for accessing the bundle service.
@@ -118,6 +121,8 @@ func (conf *Conf) Key() string {
 }
 
 func (conf *Conf) SetDefaults() {
+	conf.CacheSize = defaultCacheSize
+
 	conf.Credentials = CredentialsConf{
 		ClientID:     os.Getenv(clientIDEnvVar),
 		ClientSecret: os.Getenv(clientSecretEnvVar),
@@ -129,6 +134,10 @@ func (conf *Conf) SetDefaults() {
 func (conf *Conf) Validate() (outErr error) {
 	if conf.Local == nil && conf.Remote == nil {
 		return ErrNoSource
+	}
+
+	if conf.CacheSize == 0 {
+		outErr = multierr.Append(outErr, errors.New("cacheSize must be greater than zero"))
 	}
 
 	if err := conf.Local.validate(); err != nil {

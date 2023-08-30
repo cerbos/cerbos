@@ -308,6 +308,7 @@ func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 	t.Helper()
 
 	return &bundle.Conf{
+		CacheSize: 1024,
 		Credentials: bundle.CredentialsConf{
 			ClientID:     "client-id",
 			ClientSecret: "client-secret",

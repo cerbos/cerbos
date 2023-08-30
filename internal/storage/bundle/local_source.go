@@ -41,6 +41,7 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 		BundlePath: conf.Local.BundlePath,
 		SecretKey:  conf.Credentials.SecretKey,
 		TempDir:    conf.Local.TempDir,
+		CacheSize:  conf.CacheSize,
 	})
 }
 
@@ -48,9 +49,14 @@ type LocalParams struct {
 	BundlePath string
 	TempDir    string
 	SecretKey  string
+	CacheSize  uint
 }
 
 func NewLocalSource(params LocalParams) (*LocalSource, error) {
+	if params.CacheSize == 0 {
+		params.CacheSize = defaultCacheSize
+	}
+
 	ls := &LocalSource{params: params}
 	if err := ls.loadBundle(); err != nil {
 		return nil, err
@@ -75,9 +81,11 @@ func (ls *LocalSource) loadBundle() error {
 
 	bundlePath := ls.params.BundlePath
 	opts := OpenOpts{
+		Source:      "local",
 		BundlePath:  bundlePath,
 		ScratchFS:   afero.NewBasePathFs(afero.NewOsFs(), workDir),
 		Credentials: creds,
+		CacheSize:   ls.params.CacheSize,
 	}
 
 	bundle, err := Open(opts)
