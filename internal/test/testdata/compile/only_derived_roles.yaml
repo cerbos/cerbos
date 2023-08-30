@@ -6,6 +6,10 @@ inputDefs:
     apiVersion: "api.cerbos.dev/v1"
     derivedRoles:
       name: my_derived_roles
+      variables:
+        local:
+          owner: request.resource.attr.owner == request.principal.id
+          unused: "0"
       definitions:
         - name: tester
           parentRoles: ["dev", "qa"]
@@ -14,7 +18,7 @@ inputDefs:
           parentRoles: ["employee"]
           condition:
             match:
-              expr: request.resource.attr.owner == request.principal.id
+              expr: V.owner
 
         - name: any_employee
           parentRoles: ["employee"]

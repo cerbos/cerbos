@@ -11,14 +11,21 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/google/cel-go/common/ast"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
-func compileVariables(modCtx *moduleCtx, variables *policyv1.Variables) ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
-	definitions := newVariableDefinitions()
+func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
+	if modCtx.variables != nil {
+		return
+	}
+
+	modCtx.variables = newVariableDefinitions(modCtx)
 
 	for _, imp := range variables.GetImport() {
 		evModID := namer.ExportVariablesModuleID(imp)
@@ -29,19 +36,30 @@ func compileVariables(modCtx *moduleCtx, variables *policyv1.Variables) ([]*runt
 			continue
 		}
 
-		ev := evModCtx.def.GetExportVariables()
-		if ev == nil {
-			evModCtx.addErrWithDesc(errUnexpectedErr, "Not an export variables definition")
-			continue
-		}
-
-		definitions.Compile(evModCtx, ev.Definitions, fmt.Sprintf("import '%s'", imp))
+		compileExportVariables(evModCtx)
+		modCtx.variables.Import(evModCtx, fmt.Sprintf("import '%s'", imp))
 	}
 
-	definitions.Compile(modCtx, variables.GetLocal(), "policy local variables")
-	definitions.Compile(modCtx, modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
+	modCtx.variables.Compile(variables.GetLocal(), "policy local variables")
+	modCtx.variables.Compile(modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
 
-	return definitions.Resolve(modCtx)
+	modCtx.variables.Resolve()
+}
+
+func compileExportVariables(modCtx *moduleCtx) {
+	if modCtx.variables != nil {
+		return
+	}
+
+	modCtx.variables = newVariableDefinitions(modCtx)
+
+	ev := modCtx.def.GetExportVariables()
+	if ev == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not an export variables definition")
+		return
+	}
+
+	modCtx.variables.Compile(ev.Definitions, "definitions")
 }
 
 func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]*runtimev1.Variable, error) {
@@ -50,13 +68,13 @@ func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]
 		fqn:     fqn,
 	}
 
-	definitions := newVariableDefinitions()
+	modCtx.variables = newVariableDefinitions(modCtx)
 	for name, expr := range variables {
-		definitions.Add(&runtimev1.Variable{Name: name, Expr: expr})
+		modCtx.variables.Add(&runtimev1.Variable{Name: name, Expr: expr}, "")
 	}
+	modCtx.variables.Resolve()
 
-	ordered, _ := definitions.Resolve(modCtx)
-
+	ordered, _ := modCtx.variables.All()
 	return ordered, modCtx.error()
 }
 
@@ -70,66 +88,56 @@ func (v *variableNode) ID() int64 {
 }
 
 type variableDefinitions struct {
+	modCtx  *moduleCtx
 	graph   *simple.DirectedGraph
 	ids     map[string]int64
 	sources map[string][]string
+	used    map[string]struct{}
 	nextID  int64
 }
 
-func newVariableDefinitions() *variableDefinitions {
+func newVariableDefinitions(modCtx *moduleCtx) *variableDefinitions {
 	return &variableDefinitions{
+		modCtx:  modCtx,
 		graph:   simple.NewDirectedGraph(),
 		ids:     make(map[string]int64),
 		sources: make(map[string][]string),
 	}
 }
 
-func (vd *variableDefinitions) Compile(modCtx *moduleCtx, definitions map[string]string, source string) {
+func (vd *variableDefinitions) Compile(definitions map[string]string, source string) {
 	for name, expr := range definitions {
-		vd.sources[name] = append(vd.sources[name], source)
 		vd.Add(&runtimev1.Variable{
 			Name: name,
 			Expr: &runtimev1.Expr{
 				Original: expr,
-				Checked:  compileCELExpr(modCtx, fmt.Sprintf("variable '%s'", name), expr),
+				Checked:  compileCELExpr(vd.modCtx, fmt.Sprintf("variable '%s'", name), expr, false),
 			},
-		})
+		}, source)
 	}
 }
 
-func (vd *variableDefinitions) Add(variable *runtimev1.Variable) {
+func (vd *variableDefinitions) Import(from *moduleCtx, source string) {
+	nodes := from.variables.graph.Nodes()
+	for nodes.Next() {
+		vd.Add(nodes.Node().(*variableNode).Variable, source) //nolint:forcetypeassert
+	}
+}
+
+func (vd *variableDefinitions) Add(variable *runtimev1.Variable, source string) {
+	vd.sources[variable.Name] = append(vd.sources[variable.Name], source)
 	vd.ids[variable.Name] = vd.nextID
 	vd.graph.AddNode(&variableNode{id: vd.nextID, Variable: variable})
 	vd.nextID++
 }
 
-func (vd *variableDefinitions) Resolve(modCtx *moduleCtx) ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
-	vd.reportRedefinedVariables(modCtx)
-	vd.resolveReferences(modCtx)
-
-	nodes, err := topo.SortStabilized(vd.graph, sortVariablesByName)
-	if err != nil {
-		var cycles topo.Unorderable
-		if errors.As(err, &cycles) {
-			vd.reportCyclicalVariables(modCtx, cycles)
-		} else {
-			modCtx.addErrWithDesc(err, "Unexpected error sorting variable definitions")
-		}
-		return nil, nil
-	}
-
-	ordered := make([]*runtimev1.Variable, len(nodes))
-	unordered := make(map[string]*runtimev1.Expr)
-	for i, node := range nodes {
-		variable := node.(*variableNode).Variable //nolint:forcetypeassert
-		ordered[i] = variable
-		unordered[variable.Name] = variable.Expr
-	}
-
-	return ordered, unordered
+func (vd *variableDefinitions) Resolve() {
+	vd.reportRedefinedVariables()
+	vd.resolveReferences()
+	vd.ResetUsage()
 }
 
-func (vd *variableDefinitions) reportRedefinedVariables(modCtx *moduleCtx) {
+func (vd *variableDefinitions) reportRedefinedVariables() {
 	for name, definedIn := range vd.sources {
 		var definedInMsg string
 		switch len(definedIn) {
@@ -143,22 +151,22 @@ func (vd *variableDefinitions) reportRedefinedVariables(modCtx *moduleCtx) {
 			definedInMsg = fmt.Sprintf("%s, and %s", strings.Join(definedIn[:len(definedIn)-1], ", "), definedIn[len(definedIn)-1])
 		}
 
-		modCtx.addErrWithDesc(errVariableRedefined, "Variable '%s' has multiple definitions in %s", name, definedInMsg)
+		vd.modCtx.addErrWithDesc(errVariableRedefined, "Variable '%s' has multiple definitions in %s", name, definedInMsg)
 	}
 }
 
-func (vd *variableDefinitions) resolveReferences(modCtx *moduleCtx) {
+func (vd *variableDefinitions) resolveReferences() {
 	for referrerName, referrerID := range vd.ids {
 		referrer := vd.graph.Node(referrerID).(*variableNode) //nolint:forcetypeassert
-		for referencedName := range variableReferences(modCtx, fmt.Sprintf("variable '%s'", referrerName), referrer.Expr) {
+		for referencedName := range vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.Checked) {
 			if referencedName == referrerName {
-				modCtx.addErrWithDesc(errCyclicalVariables, "Variable '%s' references itself", referrerName)
+				vd.modCtx.addErrWithDesc(errCyclicalVariables, "Variable '%s' references itself", referrerName)
 				continue
 			}
 
 			referencedID, ok := vd.ids[referencedName]
 			if !ok {
-				modCtx.addErrWithDesc(errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedName, referrerName)
+				vd.modCtx.addErrWithDesc(errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedName, referrerName)
 				continue
 			}
 
@@ -168,7 +176,102 @@ func (vd *variableDefinitions) resolveReferences(modCtx *moduleCtx) {
 	}
 }
 
-func (vd *variableDefinitions) reportCyclicalVariables(modCtx *moduleCtx, cycles [][]graph.Node) {
+func (vd *variableDefinitions) references(parent string, expr *expr.CheckedExpr) map[string]struct{} {
+	checkedAST, err := ast.CheckedExprToCheckedAST(expr)
+	if err != nil {
+		vd.modCtx.addErrWithDesc(err, "Failed to convert expression to AST in %s", parent)
+		return nil
+	}
+
+	references := make(map[string]struct{})
+	nodes := []ast.NavigableExpr{ast.NavigateCheckedAST(checkedAST)}
+	for len(nodes) > 0 {
+		node := nodes[0]
+		nodes = nodes[1:]
+
+		if node.Kind() == ast.SelectKind {
+			selectNode := node.AsSelect()
+			operandNode := selectNode.Operand()
+			if operandNode.Kind() == ast.IdentKind {
+				ident := operandNode.AsIdent()
+				if ident == conditions.CELVariablesIdent || ident == conditions.CELVariablesAbbrev {
+					references[selectNode.FieldName()] = struct{}{}
+				}
+				continue
+			}
+		}
+
+		nodes = append(nodes, node.Children()...)
+	}
+
+	return references
+}
+
+func (vd *variableDefinitions) ResetUsage() {
+	vd.used = make(map[string]struct{}, len(vd.ids))
+}
+
+func (vd *variableDefinitions) Use(parent string, expr *expr.CheckedExpr) {
+	for name := range vd.references(parent, expr) {
+		id, defined := vd.ids[name]
+		if defined {
+			vd.use(id, name)
+		} else {
+			vd.modCtx.addErrWithDesc(errUndefinedVariable, "Undefined variable '%s' referenced in %s", name, parent)
+		}
+	}
+}
+
+func (vd *variableDefinitions) use(id int64, name string) {
+	_, alreadyUsed := vd.used[name]
+	if alreadyUsed {
+		return
+	}
+
+	vd.used[name] = struct{}{}
+
+	references := vd.graph.To(id)
+	for references.Next() {
+		referenced := references.Node().(*variableNode) //nolint:forcetypeassert
+		vd.use(referenced.id, referenced.Variable.Name)
+	}
+}
+
+func (vd *variableDefinitions) Used() ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
+	return vd.list(false)
+}
+
+func (vd *variableDefinitions) All() ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
+	return vd.list(true)
+}
+
+func (vd *variableDefinitions) list(includeUnused bool) ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
+	nodes, err := topo.SortStabilized(vd.graph, sortVariablesByName)
+	if err != nil {
+		var cycles topo.Unorderable
+		if errors.As(err, &cycles) {
+			vd.reportCyclicalVariables(cycles)
+		} else {
+			vd.modCtx.addErrWithDesc(err, "Unexpected error sorting variable definitions")
+		}
+		return nil, nil
+	}
+
+	ordered := make([]*runtimev1.Variable, 0, len(nodes))
+	unordered := make(map[string]*runtimev1.Expr, len(nodes))
+	for _, node := range nodes {
+		variable := node.(*variableNode).Variable //nolint:forcetypeassert
+		_, used := vd.used[variable.Name]
+		if used || includeUnused {
+			ordered = append(ordered, variable)
+			unordered[variable.Name] = variable.Expr
+		}
+	}
+
+	return ordered, unordered
+}
+
+func (vd *variableDefinitions) reportCyclicalVariables(cycles [][]graph.Node) {
 	for _, cycle := range cycles {
 		sortVariablesByName(cycle)
 
@@ -193,7 +296,7 @@ func (vd *variableDefinitions) reportCyclicalVariables(modCtx *moduleCtx, cycles
 		}
 
 		desc.WriteString(" form a cycle")
-		modCtx.addErrWithDesc(errCyclicalVariables, desc.String())
+		vd.modCtx.addErrWithDesc(errCyclicalVariables, desc.String())
 	}
 }
 

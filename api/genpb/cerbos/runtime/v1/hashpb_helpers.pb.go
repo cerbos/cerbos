@@ -724,16 +724,6 @@ func cerbos_runtime_v1_RunnableVariablesSet_hashpb_sum(m *RunnableVariablesSet, 
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableVariablesSet.ordered_variables"]; !ok {
-		if len(m.OrderedVariables) > 0 {
-			for _, v := range m.OrderedVariables {
-				if v != nil {
-					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
-				}
-
-			}
-		}
-	}
 }
 
 func cerbos_runtime_v1_Variable_hashpb_sum(m *Variable, hasher hash.Hash, ignore map[string]struct{}) {

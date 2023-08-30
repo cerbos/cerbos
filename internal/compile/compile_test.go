@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -63,6 +64,10 @@ func TestCompile(t *testing.T) {
 			}
 
 			require.NotNil(t, haveRes)
+
+			if len(tc.WantVariables) > 0 {
+				requireVariables(t, tc.WantVariables, haveRes)
+			}
 
 			wantRes := &runtimev1.RunnablePolicySet{}
 			require.NoError(t, protojson.Unmarshal(tcase.Want["golden"], wantRes))
@@ -222,4 +227,60 @@ func mkRandomRoleNames(n int) []string {
 	}
 
 	return roles
+}
+
+func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables, have *runtimev1.RunnablePolicySet) {
+	t.Helper()
+
+	haveVariables := make([]*privatev1.CompileTestCase_Variables, 0, len(want))
+
+	switch set := have.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_DerivedRoles:
+		haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
+			DerivedRoles: extractDerivedRoleVariables(set.DerivedRoles.DerivedRoles),
+		})
+
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		for _, policy := range set.PrincipalPolicy.Policies {
+			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
+				Scope:     policy.Scope,
+				Variables: variableNames(policy.OrderedVariables),
+			})
+		}
+
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		for _, policy := range set.ResourcePolicy.Policies {
+			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
+				Scope:        policy.Scope,
+				Variables:    variableNames(policy.OrderedVariables),
+				DerivedRoles: extractDerivedRoleVariables(policy.DerivedRoles),
+			})
+		}
+	}
+
+	require.Empty(t, cmp.Diff(want, haveVariables, protocmp.Transform(),
+		cmpopts.SortSlices(func(a, b *privatev1.CompileTestCase_Variables) bool { return a.Scope < b.Scope }),
+		protocmp.SortRepeated(func(a, b *privatev1.CompileTestCase_Variables_DerivedRole) bool { return a.Name < b.Name }),
+		protocmp.SortRepeated(func(a, b string) bool { return a < b }),
+	))
+}
+
+func extractDerivedRoleVariables(derivedRoles map[string]*runtimev1.RunnableDerivedRole) []*privatev1.CompileTestCase_Variables_DerivedRole {
+	variables := make([]*privatev1.CompileTestCase_Variables_DerivedRole, 0, len(derivedRoles))
+	for name, derivedRole := range derivedRoles {
+		variables = append(variables, &privatev1.CompileTestCase_Variables_DerivedRole{
+			Name:      name,
+			Variables: variableNames(derivedRole.OrderedVariables),
+		})
+	}
+
+	return variables
+}
+
+func variableNames(variables []*runtimev1.Variable) []string {
+	names := make([]string, len(variables))
+	for i, variable := range variables {
+		names[i] = variable.Name
+	}
+	return names
 }

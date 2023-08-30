@@ -60,7 +60,6 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 	case *policyv1.Policy_DerivedRoles:
 		rps = compileDerivedRoles(mc)
 	case *policyv1.Policy_ExportVariables:
-		rps = compileExportVariables(mc)
 	default:
 		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
 	}
@@ -138,26 +137,26 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 		return nil
 	}
 
-	orderedVariables, unorderedVariables := compileVariables(modCtx, rp.Variables)
+	compilePolicyVariables(modCtx, rp.Variables)
 
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
-		DerivedRoles:     referencedRoles,
-		Scope:            rp.Scope,
-		Rules:            make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
-		OrderedVariables: orderedVariables,
-		Variables:        unorderedVariables,
-		Schemas:          rp.Schemas,
+		DerivedRoles: referencedRoles,
+		Scope:        rp.Scope,
+		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
+		Schemas:      rp.Schemas,
 	}
 
 	for i, rule := range rp.Rules {
 		rule.Name = namer.ResourceRuleName(rule, i+1)
-		cr := compileResourceRule(modCtx, rule, unorderedVariables)
+		cr := compileResourceRule(modCtx, rule)
 		if cr == nil {
 			continue
 		}
 
 		rrp.Rules[i] = cr
 	}
+
+	rrp.OrderedVariables, rrp.Variables = modCtx.variables.Used() //nolint:staticcheck
 
 	return rrp
 }
@@ -261,14 +260,12 @@ func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet
 		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
 	}
 
-	orderedVariables, unorderedVariables := compileVariables(modCtx, dr.Variables)
+	compilePolicyVariables(modCtx, dr.Variables)
 
 	for i, def := range dr.Definitions {
 		rdr := &runtimev1.RunnableDerivedRole{
-			Name:             def.Name,
-			ParentRoles:      make(map[string]*emptypb.Empty, len(def.ParentRoles)),
-			OrderedVariables: orderedVariables,
-			Variables:        unorderedVariables,
+			Name:        def.Name,
+			ParentRoles: make(map[string]*emptypb.Empty, len(def.ParentRoles)),
 		}
 
 		for _, pr := range def.ParentRoles {
@@ -279,7 +276,9 @@ func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet
 			rdr.ParentRoles[pr] = emptyVal
 		}
 
-		rdr.Condition = compileCondition(modCtx, fmt.Sprintf("derived role '%s' (#%d)", def.Name, i), def.Condition, checkVariableReferences(unorderedVariables))
+		modCtx.variables.ResetUsage()
+		rdr.Condition = compileCondition(modCtx, fmt.Sprintf("derived role '%s' (#%d)", def.Name, i), def.Condition, true)
+		rdr.OrderedVariables, rdr.Variables = modCtx.variables.Used() //nolint:staticcheck
 		compiled.DerivedRoles[def.Name] = rdr
 	}
 
@@ -306,7 +305,7 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 	return modCtx.error()
 }
 
-func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule, variables map[string]*runtimev1.Expr) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
+func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
 	if len(rule.DerivedRoles) == 0 && len(rule.Roles) == 0 {
 		modCtx.addErrWithDesc(errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
@@ -314,7 +313,7 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule, variabl
 	parent := fmt.Sprintf("resource rule '%s'", rule.Name)
 	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{
 		Name:      rule.Name,
-		Condition: compileCondition(modCtx, parent, rule.Condition, checkVariableReferences(variables)),
+		Condition: compileCondition(modCtx, parent, rule.Condition, true),
 		Effect:    rule.Effect,
 	}
 
@@ -346,7 +345,7 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule, variabl
 	if rule.Output != nil {
 		cr.Output = &runtimev1.Expr{
 			Original: rule.Output.Expr,
-			Checked:  compileCELExpr(modCtx, parent, rule.Output.Expr),
+			Checked:  compileCELExpr(modCtx, parent, rule.Output.Expr, true),
 		}
 	}
 
@@ -399,13 +398,11 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 		return nil
 	}
 
-	orderedVariables, unorderedVariables := compileVariables(modCtx, pp.Variables)
+	compilePolicyVariables(modCtx, pp.Variables)
 
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
-		Scope:            pp.Scope,
-		ResourceRules:    make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
-		OrderedVariables: orderedVariables,
-		Variables:        unorderedVariables,
+		Scope:         pp.Scope,
+		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
 	}
 
 	for _, rule := range pp.Rules {
@@ -421,13 +418,13 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 				Action:    action.Action,
 				Name:      action.Name,
 				Effect:    action.Effect,
-				Condition: compileCondition(modCtx, ruleName, action.Condition, checkVariableReferences(unorderedVariables)),
+				Condition: compileCondition(modCtx, ruleName, action.Condition, true),
 			}
 
 			if action.Output != nil {
 				actionRule.Output = &runtimev1.Expr{
 					Original: action.Output.Expr,
-					Checked:  compileCELExpr(modCtx, ruleName, action.Output.Expr),
+					Checked:  compileCELExpr(modCtx, ruleName, action.Output.Expr, true),
 				}
 			}
 
@@ -437,33 +434,9 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 		rpp.ResourceRules[rule.Resource] = rr
 	}
 
+	rpp.OrderedVariables, rpp.Variables = modCtx.variables.Used() //nolint:staticcheck
+
 	return rpp
-}
-
-func compileExportVariables(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
-	ev := modCtx.def.GetExportVariables()
-	if ev == nil {
-		modCtx.addErrWithDesc(errUnexpectedErr, "Not an export variables definition")
-		return nil
-	}
-
-	definitions := newVariableDefinitions()
-	definitions.Compile(modCtx, ev.Definitions, "")
-	orderedVariables, unorderedVariables := definitions.Resolve(modCtx)
-
-	return &runtimev1.RunnablePolicySet{
-		CompilerVersion: compilerVersion,
-		Fqn:             modCtx.fqn,
-		PolicySet: &runtimev1.RunnablePolicySet_Variables{
-			Variables: &runtimev1.RunnableVariablesSet{
-				Meta: &runtimev1.RunnableVariablesSet_Metadata{
-					Fqn: modCtx.fqn,
-				},
-				OrderedVariables: orderedVariables,
-				Variables:        unorderedVariables,
-			},
-		},
-	}
 }
 
 func reportMissingAncestors(modCtx *moduleCtx) {
@@ -544,12 +517,6 @@ func migrateFromCompilerVersion0To1(policies *runtimev1.RunnablePolicySet) error
 		}
 
 	case *runtimev1.RunnablePolicySet_Variables:
-		ordered, err := sortCompiledVariables(set.Variables.Meta.Fqn, set.Variables.Variables) //nolint:staticcheck
-		if err != nil {
-			return err
-		}
-
-		set.Variables.OrderedVariables = ordered
 
 	default:
 		return fmt.Errorf("unknown policy set type %T", set)

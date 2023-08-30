@@ -18,7 +18,7 @@ message RunnablePolicySet {
     RunnableResourcePolicySet resource_policy = 2;
     RunnablePrincipalPolicySet principal_policy = 3;
     RunnableDerivedRolesSet derived_roles = 4;
-    RunnableVariablesSet variables = 5;
+    RunnableVariablesSet variables = 5 [deprecated = true];
   }
   uint32 compiler_version = 6;
 }
@@ -84,13 +84,14 @@ message RunnableDerivedRolesSet {
 }
 
 message RunnableVariablesSet {
+  option deprecated = true;
+
   message Metadata {
     string fqn = 1;
   }
 
   Metadata meta = 1;
-  map<string, Expr> variables = 2 [deprecated = true];
-  repeated Variable ordered_variables = 3;
+  map<string, Expr> variables = 2;
 }
 
 // RunnablePrincipalPolicySet is a container for all "compiled" principal policies belonging to a particular scope hierarchy.

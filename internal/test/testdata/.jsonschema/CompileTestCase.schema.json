@@ -545,6 +545,42 @@
           "type": "string"
         }
       }
+    },
+    "cerbos.private.v1.CompileTestCase.Variables": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "derivedRoles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.private.v1.CompileTestCase.Variables.DerivedRole"
+          }
+        },
+        "scope": {
+          "type": "string"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.private.v1.CompileTestCase.Variables.DerivedRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "type": "object",
@@ -563,6 +599,12 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/cerbos.private.v1.CompileTestCase.Error"
+      }
+    },
+    "wantVariables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.private.v1.CompileTestCase.Variables"
       }
     }
   }

@@ -874,18 +874,6 @@ func (m *RunnableVariablesSet) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.OrderedVariables) > 0 {
-		for iNdEx := len(m.OrderedVariables) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.OrderedVariables[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
 	if len(m.Variables) > 0 {
 		for k := range m.Variables {
 			v := m.Variables[k]
@@ -2332,12 +2320,6 @@ func (m *RunnableVariablesSet) SizeVT() (n int) {
 			l += 1 + sov(uint64(l))
 			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + l
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
-		}
-	}
-	if len(m.OrderedVariables) > 0 {
-		for _, e := range m.OrderedVariables {
-			l = e.SizeVT()
-			n += 1 + l + sov(uint64(l))
 		}
 	}
 	n += len(m.unknownFields)
@@ -5382,40 +5364,6 @@ func (m *RunnableVariablesSet) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.Variables[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OrderedVariables", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.OrderedVariables = append(m.OrderedVariables, &Variable{})
-			if err := m.OrderedVariables[len(m.OrderedVariables)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

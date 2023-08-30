@@ -300,8 +300,8 @@
         "parentRoles": {
           "employee": {}
         },
-        "condition": {
-          "expr": {
+        "variables": {
+          "owner": {
             "original": "request.resource.attr.owner == request.principal.id",
             "checked": {
               "referenceMap": {
@@ -418,7 +418,178 @@
               }
             }
           }
-        }
+        },
+        "condition": {
+          "expr": {
+            "original": "V.owner",
+            "checked": {
+              "referenceMap": {
+                "1": {
+                  "name": "V"
+                }
+              },
+              "typeMap": {
+                "1": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "2": {
+                  "dyn": {}
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  8
+                ],
+                "positions": {
+                  "1": 0,
+                  "2": 1
+                }
+              },
+              "expr": {
+                "id": "2",
+                "selectExpr": {
+                  "operand": {
+                    "id": "1",
+                    "identExpr": {
+                      "name": "V"
+                    }
+                  },
+                  "field": "owner"
+                }
+              }
+            }
+          }
+        },
+        "orderedVariables": [
+          {
+            "name": "owner",
+            "expr": {
+              "original": "request.resource.attr.owner == request.principal.id",
+              "checked": {
+                "referenceMap": {
+                  "1": {
+                    "name": "request"
+                  },
+                  "5": {
+                    "overloadId": [
+                      "equals"
+                    ]
+                  },
+                  "6": {
+                    "name": "request"
+                  }
+                },
+                "typeMap": {
+                  "1": {
+                    "messageType": "cerbos.engine.v1.CheckInput"
+                  },
+                  "2": {
+                    "messageType": "cerbos.engine.v1.Resource"
+                  },
+                  "3": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "4": {
+                    "dyn": {}
+                  },
+                  "5": {
+                    "primitive": "BOOL"
+                  },
+                  "6": {
+                    "messageType": "cerbos.engine.v1.CheckInput"
+                  },
+                  "7": {
+                    "messageType": "cerbos.engine.v1.Principal"
+                  },
+                  "8": {
+                    "primitive": "STRING"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    52
+                  ],
+                  "positions": {
+                    "1": 0,
+                    "2": 7,
+                    "3": 16,
+                    "4": 21,
+                    "5": 28,
+                    "6": 31,
+                    "7": 38,
+                    "8": 48
+                  }
+                },
+                "expr": {
+                  "id": "5",
+                  "callExpr": {
+                    "function": "_==_",
+                    "args": [
+                      {
+                        "id": "4",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "3",
+                            "selectExpr": {
+                              "operand": {
+                                "id": "2",
+                                "selectExpr": {
+                                  "operand": {
+                                    "id": "1",
+                                    "identExpr": {
+                                      "name": "request"
+                                    }
+                                  },
+                                  "field": "resource"
+                                }
+                              },
+                              "field": "attr"
+                            }
+                          },
+                          "field": "owner"
+                        }
+                      },
+                      {
+                        "id": "8",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "7",
+                            "selectExpr": {
+                              "operand": {
+                                "id": "6",
+                                "identExpr": {
+                                  "name": "request"
+                                }
+                              },
+                              "field": "principal"
+                            }
+                          },
+                          "field": "id"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
       },
       "tester": {
         "name": "tester",

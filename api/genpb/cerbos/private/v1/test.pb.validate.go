@@ -1030,6 +1030,40 @@ func (m *CompileTestCase) validate(all bool) error {
 
 	}
 
+	for idx, item := range m.GetWantVariables() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CompileTestCaseValidationError{
+						field:  fmt.Sprintf("WantVariables[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CompileTestCaseValidationError{
+						field:  fmt.Sprintf("WantVariables[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CompileTestCaseValidationError{
+					field:  fmt.Sprintf("WantVariables[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return CompileTestCaseMultiError(errors)
 	}
@@ -4390,6 +4424,251 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CompileTestCase_ErrorValidationError{}
+
+// Validate checks the field values on CompileTestCase_Variables with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CompileTestCase_Variables) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CompileTestCase_Variables with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CompileTestCase_VariablesMultiError, or nil if none found.
+func (m *CompileTestCase_Variables) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CompileTestCase_Variables) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Scope
+
+	for idx, item := range m.GetDerivedRoles() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CompileTestCase_VariablesValidationError{
+						field:  fmt.Sprintf("DerivedRoles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CompileTestCase_VariablesValidationError{
+						field:  fmt.Sprintf("DerivedRoles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CompileTestCase_VariablesValidationError{
+					field:  fmt.Sprintf("DerivedRoles[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return CompileTestCase_VariablesMultiError(errors)
+	}
+
+	return nil
+}
+
+// CompileTestCase_VariablesMultiError is an error wrapping multiple validation
+// errors returned by CompileTestCase_Variables.ValidateAll() if the
+// designated constraints aren't met.
+type CompileTestCase_VariablesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CompileTestCase_VariablesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CompileTestCase_VariablesMultiError) AllErrors() []error { return m }
+
+// CompileTestCase_VariablesValidationError is the validation error returned by
+// CompileTestCase_Variables.Validate if the designated constraints aren't met.
+type CompileTestCase_VariablesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CompileTestCase_VariablesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CompileTestCase_VariablesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CompileTestCase_VariablesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CompileTestCase_VariablesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CompileTestCase_VariablesValidationError) ErrorName() string {
+	return "CompileTestCase_VariablesValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CompileTestCase_VariablesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCompileTestCase_Variables.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CompileTestCase_VariablesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CompileTestCase_VariablesValidationError{}
+
+// Validate checks the field values on CompileTestCase_Variables_DerivedRole
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *CompileTestCase_Variables_DerivedRole) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CompileTestCase_Variables_DerivedRole
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// CompileTestCase_Variables_DerivedRoleMultiError, or nil if none found.
+func (m *CompileTestCase_Variables_DerivedRole) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CompileTestCase_Variables_DerivedRole) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	if len(errors) > 0 {
+		return CompileTestCase_Variables_DerivedRoleMultiError(errors)
+	}
+
+	return nil
+}
+
+// CompileTestCase_Variables_DerivedRoleMultiError is an error wrapping
+// multiple validation errors returned by
+// CompileTestCase_Variables_DerivedRole.ValidateAll() if the designated
+// constraints aren't met.
+type CompileTestCase_Variables_DerivedRoleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CompileTestCase_Variables_DerivedRoleMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CompileTestCase_Variables_DerivedRoleMultiError) AllErrors() []error { return m }
+
+// CompileTestCase_Variables_DerivedRoleValidationError is the validation error
+// returned by CompileTestCase_Variables_DerivedRole.Validate if the
+// designated constraints aren't met.
+type CompileTestCase_Variables_DerivedRoleValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CompileTestCase_Variables_DerivedRoleValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CompileTestCase_Variables_DerivedRoleValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CompileTestCase_Variables_DerivedRoleValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CompileTestCase_Variables_DerivedRoleValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CompileTestCase_Variables_DerivedRoleValidationError) ErrorName() string {
+	return "CompileTestCase_Variables_DerivedRoleValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CompileTestCase_Variables_DerivedRoleValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCompileTestCase_Variables_DerivedRole.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CompileTestCase_Variables_DerivedRoleValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CompileTestCase_Variables_DerivedRoleValidationError{}
 
 // Validate checks the field values on QueryPlannerTestSuite_Test with the
 // rules defined in the proto definition for this message. If any rules are
