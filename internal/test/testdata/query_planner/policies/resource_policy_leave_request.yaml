@@ -1,7 +1,9 @@
 ---
 apiVersion: api.cerbos.dev/v1
 variables:
-  is_owner: R.attr.owner == request.principal.id
+  is_owner: V.resource_owner == variables.principal_id
+  principal_id: request.principal.id
+  resource_owner: R.attr.owner
 resourcePolicy:
   version: "default"
   resource: "leave_request"

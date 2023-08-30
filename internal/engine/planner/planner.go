@@ -156,6 +156,11 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 			break
 		}
 
+		variables, err := variableExprs(p.OrderedVariables)
+		if err != nil {
+			return nil, err
+		}
+
 		result.Scope = p.Scope
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
@@ -167,7 +172,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					continue
 				}
 
-				filter, err := evaluateCondition(rule.Condition, input, ppe.Globals, variableExprs(p.OrderedVariables))
+				filter, err := evaluateCondition(rule.Condition, input, ppe.Globals, variables)
 				if err != nil {
 					return nil, err
 				}
@@ -209,6 +214,11 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 			break
 		}
 
+		variables, err := variableExprs(p.OrderedVariables)
+		if err != nil {
+			return nil, err
+		}
+
 		result.Scope = p.Scope
 
 		var derivedRoles []rN
@@ -219,13 +229,18 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 				continue
 			}
 
+			drVariables, err := variableExprs(dr.OrderedVariables)
+			if err != nil {
+				return nil, err
+			}
+
 			derivedRoles = append(derivedRoles, rN{
 				role: drName,
 				f: func() (*qpN, error) {
 					if dr.Condition == nil {
 						return mkTrueNode(), nil
 					}
-					node, err := evaluateCondition(dr.Condition, input, rpe.Globals, variableExprs(dr.OrderedVariables))
+					node, err := evaluateCondition(dr.Condition, input, rpe.Globals, drVariables)
 					if err != nil {
 						return nil, err
 					}
@@ -269,7 +284,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					continue
 				}
 
-				node, err := evaluateCondition(rule.Condition, input, rpe.Globals, variableExprs(p.OrderedVariables))
+				node, err := evaluateCondition(rule.Condition, input, rpe.Globals, variables)
 				if err != nil {
 					return nil, err
 				}
@@ -646,14 +661,20 @@ func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) *exprpb.Expr {
 	return pruned.Expr
 }
 
-func variableExprs(variables []*runtimev1.Variable) map[string]*exprpb.Expr {
+func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {
 	if len(variables) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	exprs := make(map[string]*exprpb.Expr, len(variables))
 	for _, variable := range variables {
-		exprs[variable.Name] = variable.Expr.Checked.Expr
+		expr, err := replaceVars(variable.Expr.Checked.Expr, exprs)
+		if err != nil {
+			return nil, err
+		}
+
+		exprs[variable.Name] = expr
 	}
-	return exprs
+
+	return exprs, nil
 }
