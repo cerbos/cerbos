@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -94,33 +95,36 @@ func (conf *Conf) Key() string {
 	return confKey
 }
 
-func (conf *Conf) Validate() error {
-	var errs []error
-
+func (conf *Conf) Validate() (errs error) {
 	switch conf.Protocol {
 	case "ssh", "http", "https", "file":
 	default:
-		errs = append(errs, fmt.Errorf("unknown git protocol: %s", conf.Protocol))
+		errs = multierr.Append(errs, fmt.Errorf("unknown git protocol: %s", conf.Protocol))
 	}
 
 	if conf.URL == "" {
-		errs = append(errs, errors.New("git URL is required"))
+		errs = multierr.Append(errs, errors.New("git URL is required"))
 	}
 
 	if conf.CheckoutDir == "" {
 		cacheDir, err := os.UserCacheDir()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("checkoutDir unspecified and failed to determine user cache dir: %w", err))
+			errs = multierr.Append(errs, fmt.Errorf("checkoutDir unspecified and failed to determine user cache dir: %w", err))
 		} else {
 			conf.CheckoutDir = filepath.Join(cacheDir, util.AppName, "git")
 		}
 	}
 
-	if len(errs) > 0 {
-		return multierr.Combine(errs...)
+	subDir := conf.getSubDir()
+	if filepath.IsAbs(subDir) || strings.HasPrefix(subDir, "../") || subDir == ".." {
+		errs = multierr.Append(errs, errors.New("subDir must be a relative path within the repository"))
 	}
 
-	return nil
+	return errs
+}
+
+func (conf *Conf) getSubDir() string {
+	return filepath.ToSlash(filepath.Clean(conf.SubDir))
 }
 
 func (conf *Conf) getBranch() string {
