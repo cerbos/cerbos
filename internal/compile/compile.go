@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -478,6 +479,27 @@ func reportMissingAncestors(modCtx *moduleCtx) {
 
 // MigrateCompiledPolicies modifies a RunnablePolicySet compiled by a previous version of Cerbos to migrate it to the latest format.
 func MigrateCompiledPolicies(policies *runtimev1.RunnablePolicySet) error {
+	if policies.CompilerVersion == compilerVersion {
+		return nil
+	}
+
+	log := zap.L().Named("compiler")
+
+	if policies.CompilerVersion > compilerVersion {
+		log.Warn(
+			"Loading policies that were compiled by a newer version of Cerbos",
+			zap.Uint32("current_compiler_version", compilerVersion),
+			zap.Uint32("policies_compiler_version", policies.CompilerVersion),
+		)
+		return nil
+	}
+
+	log.Debug(
+		"Migrating compiled policies",
+		zap.Uint32("from_compiler_version", policies.CompilerVersion),
+		zap.Uint32("to_compiler_version", compilerVersion),
+	)
+
 	for version := policies.CompilerVersion; version < compilerVersion; version++ {
 		err := compilerVersionMigrations[version](policies)
 		if err != nil {
