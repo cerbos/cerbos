@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestFixtureGetTestsTestCase.schema.json
+---
 table:
   name: Without auxData
   description: A test for multiple principals and resources, without auxiliary data.
@@ -53,9 +55,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:employee
+        id: employee
+        roles:
+          - user
       resource:
-        id: leave_request:employee
+        kind: leave_request
+        id: employee
       actions:
         - view
         - approve
@@ -69,9 +74,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:employee
+        id: employee
+        roles:
+          - user
       resource:
-        id: leave_request:manager
+        kind: leave_request
+        id: manager
       actions:
         - view
         - approve
@@ -85,9 +93,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:employee
+        id: employee
+        roles:
+          - user
       resource:
-        id: leave_request:department_head
+        kind: leave_request
+        id: department_head
       actions:
         - view
         - approve
@@ -101,9 +112,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:manager
+        id: manager
+        roles:
+          - user
       resource:
-        id: leave_request:employee
+        kind: leave_request
+        id: employee
       actions:
         - view
         - approve
@@ -117,9 +131,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:manager
+        id: manager
+        roles:
+          - user
       resource:
-        id: leave_request:manager
+        kind: leave_request
+        id: manager
       actions:
         - view
         - approve
@@ -133,9 +150,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:manager
+        id: manager
+        roles:
+          - user
       resource:
-        id: leave_request:department_head
+        kind: leave_request
+        id: department_head
       actions:
         - view
         - approve
@@ -149,9 +169,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:department_head
+        id: department_head
+        roles:
+          - user
       resource:
-        id: leave_request:employee
+        kind: leave_request
+        id: employee
       actions:
         - view
         - approve
@@ -165,9 +188,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:department_head
+        id: department_head
+        roles:
+          - user
       resource:
-        id: leave_request:manager
+        kind: leave_request
+        id: manager
       actions:
         - view
         - approve
@@ -181,9 +207,12 @@ wantTests:
     description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
-        id: user:department_head
+        id: department_head
+        roles:
+          - user
       resource:
-        id: leave_request:department_head
+        kind: leave_request
+        id: department_head
       actions:
         - view
         - approve

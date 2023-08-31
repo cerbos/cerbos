@@ -156,6 +156,11 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 			break
 		}
 
+		variables, err := variableExprs(p.OrderedVariables)
+		if err != nil {
+			return nil, err
+		}
+
 		result.Scope = p.Scope
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
@@ -165,11 +170,6 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 			for _, rule := range resourceRules.ActionRules {
 				if !matchesActionGlob(rule.Action, input.Action) {
 					continue
-				}
-
-				variables := make(map[string]*exprpb.Expr, len(p.Variables))
-				for k, v := range p.Variables {
-					variables[k] = v.Checked.Expr
 				}
 
 				filter, err := evaluateCondition(rule.Condition, input, ppe.Globals, variables)
@@ -214,6 +214,11 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 			break
 		}
 
+		variables, err := variableExprs(p.OrderedVariables)
+		if err != nil {
+			return nil, err
+		}
+
 		result.Scope = p.Scope
 
 		var derivedRoles []rN
@@ -224,15 +229,16 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 				continue
 			}
 
+			drVariables, err := variableExprs(dr.OrderedVariables)
+			if err != nil {
+				return nil, err
+			}
+
 			derivedRoles = append(derivedRoles, rN{
 				role: drName,
 				f: func() (*qpN, error) {
 					if dr.Condition == nil {
 						return mkTrueNode(), nil
-					}
-					drVariables := make(map[string]*exprpb.Expr, len(dr.Variables))
-					for k, v := range dr.Variables {
-						drVariables[k] = v.Checked.Expr
 					}
 					node, err := evaluateCondition(dr.Condition, input, rpe.Globals, drVariables)
 					if err != nil {
@@ -276,11 +282,6 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 			for actionGlob := range rule.Actions {
 				if !matchesActionGlob(actionGlob, input.Action) {
 					continue
-				}
-
-				variables := make(map[string]*exprpb.Expr, len(p.Variables))
-				for k, v := range p.Variables {
-					variables[k] = v.Checked.Expr
 				}
 
 				node, err := evaluateCondition(rule.Condition, input, rpe.Globals, variables)
@@ -658,4 +659,22 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) *exprpb.Expr {
 	pruned := interpreter.PruneAst(a.Expr(), a.SourceInfo().GetMacroCalls(), details.State())
 	return pruned.Expr
+}
+
+func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {
+	if len(variables) == 0 {
+		return nil, nil
+	}
+
+	exprs := make(map[string]*exprpb.Expr, len(variables))
+	for _, variable := range variables {
+		expr, err := replaceVars(variable.Expr.Checked.Expr, exprs)
+		if err != nil {
+			return nil, err
+		}
+
+		exprs[variable.Name] = expr
+	}
+
+	return exprs, nil
 }

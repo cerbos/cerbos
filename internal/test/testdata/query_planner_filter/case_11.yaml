@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: nested expression that cannot be simplified
 input:
@@ -8,19 +9,19 @@ input:
       operands:
         - expression:
             operator: gt
-            operands: 
-              - value: 3 
+            operands:
+              - value: 3
               - expression:
                   operator: sum
-                  operands: 
+                  operands:
                     - variable: P.attr.loginAttempts
-                    - value: 1 
-        - expression: 
+                    - value: 1
+        - expression:
             operator: and
-            operands: 
+            operands:
               - expression:
                   operator: not
-                  operands: 
+                  operands:
                     - variable: V.frozen
               - expression:
                   operator: eq
@@ -35,19 +36,19 @@ wantFilter:
       operands:
         - expression:
             operator: gt
-            operands: 
-              - value: 3 
+            operands:
+              - value: 3
               - expression:
                   operator: sum
-                  operands: 
+                  operands:
                     - variable: request.principal.attr.loginAttempts
-                    - value: 1 
-        - expression: 
+                    - value: 1
+        - expression:
             operator: and
-            operands: 
+            operands:
               - expression:
                   operator: not
-                  operands: 
+                  operands:
                     - variable: variables.frozen
               - expression:
                   operator: eq

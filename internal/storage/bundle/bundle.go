@@ -14,12 +14,16 @@ import (
 	"strings"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/cache"
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/zipfs"
+	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 )
 
@@ -35,13 +39,21 @@ type OpenOpts struct {
 	Credentials *credentials.Credentials
 	ScratchFS   afero.Fs
 	BundlePath  string
+	Source      string
+	CacheSize   uint
 }
 
 type Bundle struct {
 	bundleFS afero.Fs
 	manifest *bundlev1.Manifest
+	cache    *cache.Cache[namer.ModuleID, cacheEntry]
 	cleanup  cleanupFn
 	path     string
+}
+
+type cacheEntry struct {
+	policySet *runtimev1.RunnablePolicySet
+	err       error
 }
 
 func Open(opts OpenOpts) (*Bundle, error) {
@@ -72,6 +84,7 @@ func Open(opts OpenOpts) (*Bundle, error) {
 		manifest: manifest,
 		bundleFS: zipFS,
 		cleanup:  cleanup,
+		cache:    cache.New[namer.ModuleID, cacheEntry]("bundle", opts.CacheSize, cache.WithTags(tag.Upsert(metrics.KeyBundleSource, opts.Source))),
 	}, nil
 }
 
@@ -173,6 +186,11 @@ func loadManifest(bundleFS afero.Fs) (*bundlev1.Manifest, error) {
 
 func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	for _, id := range candidates {
+		cached, ok := b.cache.Get(id)
+		if ok {
+			return cached.policySet, cached.err
+		}
+
 		idHex := id.HexStr()
 		fileName := policyDir + idHex
 
@@ -184,7 +202,9 @@ func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (
 			return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
 		}
 
-		return b.loadPolicySet(idHex, fileName)
+		policySet, err := b.loadPolicySet(idHex, fileName)
+		b.cache.Set(id, cacheEntry{policySet: policySet, err: err})
+		return policySet, err
 	}
 
 	return nil, nil
@@ -205,6 +225,11 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	rps := &runtimev1.RunnablePolicySet{}
 	if err := rps.UnmarshalVT(policyBytes); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal %s: %w", idHex, err)
+	}
+
+	err = compile.MigrateCompiledPolicies(rps)
+	if err != nil {
+		return nil, err
 	}
 
 	return rps, nil

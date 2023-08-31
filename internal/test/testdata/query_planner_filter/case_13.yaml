@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: membership test
 input:
@@ -17,5 +18,3 @@ wantFilter:
         - variable: request.resource.attr.accountId
         - value: ["accountId1", "accountId2"]
 wantString: "(in request.resource.attr.accountId [\"accountId1\",\"accountId2\"])"
-
-

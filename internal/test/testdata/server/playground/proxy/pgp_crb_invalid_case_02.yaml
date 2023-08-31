@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "CheckResourceBatch request with missing schema file"
 wantStatus:

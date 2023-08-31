@@ -1478,27 +1478,6 @@ func cerbos_private_v1_CelTestCase_hashpb_sum(m *CelTestCase, hasher hash.Hash, 
 	}
 }
 
-func cerbos_private_v1_CodeGenTestCase_hashpb_sum(m *CodeGenTestCase, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.input_policy"]; !ok {
-		if m.InputPolicy != nil {
-			cerbos_policy_v1_Policy_hashpb_sum(m.InputPolicy, hasher, ignore)
-		}
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.want_error"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.WantError)))
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.want_rego"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.WantRego))
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.want_num_conditions"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.WantNumConditions)))
-
-	}
-}
-
 func cerbos_private_v1_CompileTestCase_Error_hashpb_sum(m *CompileTestCase_Error, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Error.file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
@@ -1511,6 +1490,46 @@ func cerbos_private_v1_CompileTestCase_Error_hashpb_sum(m *CompileTestCase_Error
 	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Error.desc"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Desc))
 
+	}
+}
+
+func cerbos_private_v1_CompileTestCase_Variables_DerivedRole_hashpb_sum(m *CompileTestCase_Variables_DerivedRole, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Variables.DerivedRole.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Variables.DerivedRole.variables"]; !ok {
+		if len(m.Variables) > 0 {
+			for _, v := range m.Variables {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_CompileTestCase_Variables_hashpb_sum(m *CompileTestCase_Variables, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Variables.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Variables.variables"]; !ok {
+		if len(m.Variables) > 0 {
+			for _, v := range m.Variables {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Variables.derived_roles"]; !ok {
+		if len(m.DerivedRoles) > 0 {
+			for _, v := range m.DerivedRoles {
+				if v != nil {
+					cerbos_private_v1_CompileTestCase_Variables_DerivedRole_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
@@ -1543,6 +1562,16 @@ func cerbos_private_v1_CompileTestCase_hashpb_sum(m *CompileTestCase, hasher has
 			for _, v := range m.WantErrors {
 				if v != nil {
 					cerbos_private_v1_CompileTestCase_Error_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.CompileTestCase.want_variables"]; !ok {
+		if len(m.WantVariables) > 0 {
+			for _, v := range m.WantVariables {
+				if v != nil {
+					cerbos_private_v1_CompileTestCase_Variables_hashpb_sum(v, hasher, ignore)
 				}
 
 			}

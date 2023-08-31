@@ -10,14 +10,13 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -66,6 +65,10 @@ func TestCompile(t *testing.T) {
 
 			require.NotNil(t, haveRes)
 
+			if len(tc.WantVariables) > 0 {
+				requireVariables(t, tc.WantVariables, haveRes)
+			}
+
 			wantRes := &runtimev1.RunnablePolicySet{}
 			require.NoError(t, protojson.Unmarshal(tcase.Want["golden"], wantRes))
 			require.Empty(t, cmp.Diff(wantRes, haveRes, protocmp.Transform()))
@@ -88,23 +91,7 @@ func updateGoldenFiles(t *testing.T, schemaMgr schema.Manager, testCases []test.
 			t.Fatalf("Cannot produce golden file because compiling %q returns an error: %v", tcase.SourceFile, err)
 		}
 
-		writeGoldenFile(t, tcase.SourceFile+".golden", res)
-	}
-}
-
-func writeGoldenFile(t *testing.T, path string, contents proto.Message) {
-	t.Helper()
-	f, err := os.Create(path)
-	if err != nil {
-		t.Fatalf("Failed to create %q: %v", path, err)
-	}
-
-	defer f.Close()
-
-	_, err = f.WriteString(protojson.Format(contents))
-	if err != nil {
-		f.Close()
-		t.Fatalf("Failed to write to %q: %v", path, err)
+		test.WriteGoldenFile(t, tcase.SourceFile+".golden", res)
 	}
 }
 
@@ -240,4 +227,51 @@ func mkRandomRoleNames(n int) []string {
 	}
 
 	return roles
+}
+
+func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables, have *runtimev1.RunnablePolicySet) {
+	t.Helper()
+
+	haveVariables := make([]*privatev1.CompileTestCase_Variables, 0, len(want))
+
+	switch set := have.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		for _, policy := range set.PrincipalPolicy.Policies {
+			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
+				Scope:     policy.Scope,
+				Variables: variableNames(policy.OrderedVariables),
+			})
+		}
+
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		for _, policy := range set.ResourcePolicy.Policies {
+			derivedRoles := make([]*privatev1.CompileTestCase_Variables_DerivedRole, 0, len(policy.DerivedRoles))
+			for name, derivedRole := range policy.DerivedRoles {
+				derivedRoles = append(derivedRoles, &privatev1.CompileTestCase_Variables_DerivedRole{
+					Name:      name,
+					Variables: variableNames(derivedRole.OrderedVariables),
+				})
+			}
+
+			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
+				Scope:        policy.Scope,
+				Variables:    variableNames(policy.OrderedVariables),
+				DerivedRoles: derivedRoles,
+			})
+		}
+	}
+
+	require.Empty(t, cmp.Diff(want, haveVariables, protocmp.Transform(),
+		cmpopts.SortSlices(func(a, b *privatev1.CompileTestCase_Variables) bool { return a.Scope < b.Scope }),
+		protocmp.SortRepeated(func(a, b *privatev1.CompileTestCase_Variables_DerivedRole) bool { return a.Name < b.Name }),
+		protocmp.SortRepeated(func(a, b string) bool { return a < b }),
+	))
+}
+
+func variableNames(variables []*runtimev1.Variable) []string {
+	names := make([]string, len(variables))
+	for i, variable := range variables {
+		names[i] = variable.Name
+	}
+	return names
 }

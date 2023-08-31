@@ -1,0 +1,1674 @@
+{
+  "fqn": "cerbos.principal.example.vdefault/alpha",
+  "principalPolicy": {
+    "meta": {
+      "fqn": "cerbos.principal.example.vdefault/alpha",
+      "principal": "example",
+      "version": "default"
+    },
+    "policies": [
+      {
+        "scope": "alpha",
+        "variables": {
+          "a": {
+            "original": "1",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "1"
+                }
+              }
+            }
+          },
+          "ab": {
+            "original": "V.a + V.b",
+            "checked": {
+              "referenceMap": {
+                "1": {
+                  "name": "V"
+                },
+                "3": {
+                  "overloadId": [
+                    "add_bytes",
+                    "add_double",
+                    "add_duration_duration",
+                    "add_duration_timestamp",
+                    "add_timestamp_duration",
+                    "add_int64",
+                    "add_list",
+                    "add_string",
+                    "add_uint64"
+                  ]
+                },
+                "4": {
+                  "name": "V"
+                }
+              },
+              "typeMap": {
+                "1": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "2": {
+                  "dyn": {}
+                },
+                "3": {
+                  "dyn": {}
+                },
+                "4": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "5": {
+                  "dyn": {}
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  10
+                ],
+                "positions": {
+                  "1": 0,
+                  "2": 1,
+                  "3": 4,
+                  "4": 6,
+                  "5": 7
+                }
+              },
+              "expr": {
+                "id": "3",
+                "callExpr": {
+                  "function": "_+_",
+                  "args": [
+                    {
+                      "id": "2",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "1",
+                          "identExpr": {
+                            "name": "V"
+                          }
+                        },
+                        "field": "a"
+                      }
+                    },
+                    {
+                      "id": "5",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "4",
+                          "identExpr": {
+                            "name": "V"
+                          }
+                        },
+                        "field": "b"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "b": {
+            "original": "2",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "2"
+                }
+              }
+            }
+          },
+          "j": {
+            "original": "10",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  3
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "10"
+                }
+              }
+            }
+          }
+        },
+        "resourceRules": {
+          "one": {
+            "actionRules": [
+              {
+                "action": "*",
+                "name": "one_rule-001",
+                "condition": {
+                  "expr": {
+                    "original": "V.ab < V.j",
+                    "checked": {
+                      "referenceMap": {
+                        "1": {
+                          "name": "V"
+                        },
+                        "3": {
+                          "overloadId": [
+                            "less_bool",
+                            "less_int64",
+                            "less_int64_double",
+                            "less_int64_uint64",
+                            "less_uint64",
+                            "less_uint64_double",
+                            "less_uint64_int64",
+                            "less_double",
+                            "less_double_int64",
+                            "less_double_uint64",
+                            "less_string",
+                            "less_bytes",
+                            "less_timestamp",
+                            "less_duration"
+                          ]
+                        },
+                        "4": {
+                          "name": "V"
+                        }
+                      },
+                      "typeMap": {
+                        "1": {
+                          "mapType": {
+                            "keyType": {
+                              "primitive": "STRING"
+                            },
+                            "valueType": {
+                              "dyn": {}
+                            }
+                          }
+                        },
+                        "2": {
+                          "dyn": {}
+                        },
+                        "3": {
+                          "primitive": "BOOL"
+                        },
+                        "4": {
+                          "mapType": {
+                            "keyType": {
+                              "primitive": "STRING"
+                            },
+                            "valueType": {
+                              "dyn": {}
+                            }
+                          }
+                        },
+                        "5": {
+                          "dyn": {}
+                        }
+                      },
+                      "sourceInfo": {
+                        "location": "<input>",
+                        "lineOffsets": [
+                          11
+                        ],
+                        "positions": {
+                          "1": 0,
+                          "2": 1,
+                          "3": 5,
+                          "4": 7,
+                          "5": 8
+                        }
+                      },
+                      "expr": {
+                        "id": "3",
+                        "callExpr": {
+                          "function": "_<_",
+                          "args": [
+                            {
+                              "id": "2",
+                              "selectExpr": {
+                                "operand": {
+                                  "id": "1",
+                                  "identExpr": {
+                                    "name": "V"
+                                  }
+                                },
+                                "field": "ab"
+                              }
+                            },
+                            {
+                              "id": "5",
+                              "selectExpr": {
+                                "operand": {
+                                  "id": "4",
+                                  "identExpr": {
+                                    "name": "V"
+                                  }
+                                },
+                                "field": "j"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                "effect": "EFFECT_ALLOW"
+              }
+            ]
+          }
+        },
+        "orderedVariables": [
+          {
+            "name": "a",
+            "expr": {
+              "original": "1",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "1"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "b",
+            "expr": {
+              "original": "2",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "2"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "ab",
+            "expr": {
+              "original": "V.a + V.b",
+              "checked": {
+                "referenceMap": {
+                  "1": {
+                    "name": "V"
+                  },
+                  "3": {
+                    "overloadId": [
+                      "add_bytes",
+                      "add_double",
+                      "add_duration_duration",
+                      "add_duration_timestamp",
+                      "add_timestamp_duration",
+                      "add_int64",
+                      "add_list",
+                      "add_string",
+                      "add_uint64"
+                    ]
+                  },
+                  "4": {
+                    "name": "V"
+                  }
+                },
+                "typeMap": {
+                  "1": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "2": {
+                    "dyn": {}
+                  },
+                  "3": {
+                    "dyn": {}
+                  },
+                  "4": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "5": {
+                    "dyn": {}
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    10
+                  ],
+                  "positions": {
+                    "1": 0,
+                    "2": 1,
+                    "3": 4,
+                    "4": 6,
+                    "5": 7
+                  }
+                },
+                "expr": {
+                  "id": "3",
+                  "callExpr": {
+                    "function": "_+_",
+                    "args": [
+                      {
+                        "id": "2",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "1",
+                            "identExpr": {
+                              "name": "V"
+                            }
+                          },
+                          "field": "a"
+                        }
+                      },
+                      {
+                        "id": "5",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "4",
+                            "identExpr": {
+                              "name": "V"
+                            }
+                          },
+                          "field": "b"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "j",
+            "expr": {
+              "original": "10",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    3
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "10"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "variables": {
+          "a": {
+            "original": "1",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "1"
+                }
+              }
+            }
+          },
+          "ab": {
+            "original": "V.a + V.b",
+            "checked": {
+              "referenceMap": {
+                "1": {
+                  "name": "V"
+                },
+                "3": {
+                  "overloadId": [
+                    "add_bytes",
+                    "add_double",
+                    "add_duration_duration",
+                    "add_duration_timestamp",
+                    "add_timestamp_duration",
+                    "add_int64",
+                    "add_list",
+                    "add_string",
+                    "add_uint64"
+                  ]
+                },
+                "4": {
+                  "name": "V"
+                }
+              },
+              "typeMap": {
+                "1": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "2": {
+                  "dyn": {}
+                },
+                "3": {
+                  "dyn": {}
+                },
+                "4": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "5": {
+                  "dyn": {}
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  10
+                ],
+                "positions": {
+                  "1": 0,
+                  "2": 1,
+                  "3": 4,
+                  "4": 6,
+                  "5": 7
+                }
+              },
+              "expr": {
+                "id": "3",
+                "callExpr": {
+                  "function": "_+_",
+                  "args": [
+                    {
+                      "id": "2",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "1",
+                          "identExpr": {
+                            "name": "V"
+                          }
+                        },
+                        "field": "a"
+                      }
+                    },
+                    {
+                      "id": "5",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "4",
+                          "identExpr": {
+                            "name": "V"
+                          }
+                        },
+                        "field": "b"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "abc": {
+            "original": "variables.ab + variables.c",
+            "checked": {
+              "referenceMap": {
+                "1": {
+                  "name": "variables"
+                },
+                "3": {
+                  "overloadId": [
+                    "add_bytes",
+                    "add_double",
+                    "add_duration_duration",
+                    "add_duration_timestamp",
+                    "add_timestamp_duration",
+                    "add_int64",
+                    "add_list",
+                    "add_string",
+                    "add_uint64"
+                  ]
+                },
+                "4": {
+                  "name": "variables"
+                }
+              },
+              "typeMap": {
+                "1": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "2": {
+                  "dyn": {}
+                },
+                "3": {
+                  "dyn": {}
+                },
+                "4": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "5": {
+                  "dyn": {}
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  27
+                ],
+                "positions": {
+                  "1": 0,
+                  "2": 9,
+                  "3": 13,
+                  "4": 15,
+                  "5": 24
+                }
+              },
+              "expr": {
+                "id": "3",
+                "callExpr": {
+                  "function": "_+_",
+                  "args": [
+                    {
+                      "id": "2",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "1",
+                          "identExpr": {
+                            "name": "variables"
+                          }
+                        },
+                        "field": "ab"
+                      }
+                    },
+                    {
+                      "id": "5",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "4",
+                          "identExpr": {
+                            "name": "variables"
+                          }
+                        },
+                        "field": "c"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "abce": {
+            "original": "variables.abc + variables.e",
+            "checked": {
+              "referenceMap": {
+                "1": {
+                  "name": "variables"
+                },
+                "3": {
+                  "overloadId": [
+                    "add_bytes",
+                    "add_double",
+                    "add_duration_duration",
+                    "add_duration_timestamp",
+                    "add_timestamp_duration",
+                    "add_int64",
+                    "add_list",
+                    "add_string",
+                    "add_uint64"
+                  ]
+                },
+                "4": {
+                  "name": "variables"
+                }
+              },
+              "typeMap": {
+                "1": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "2": {
+                  "dyn": {}
+                },
+                "3": {
+                  "dyn": {}
+                },
+                "4": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "5": {
+                  "dyn": {}
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  28
+                ],
+                "positions": {
+                  "1": 0,
+                  "2": 9,
+                  "3": 14,
+                  "4": 16,
+                  "5": 25
+                }
+              },
+              "expr": {
+                "id": "3",
+                "callExpr": {
+                  "function": "_+_",
+                  "args": [
+                    {
+                      "id": "2",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "1",
+                          "identExpr": {
+                            "name": "variables"
+                          }
+                        },
+                        "field": "abc"
+                      }
+                    },
+                    {
+                      "id": "5",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "4",
+                          "identExpr": {
+                            "name": "variables"
+                          }
+                        },
+                        "field": "e"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "b": {
+            "original": "2",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "2"
+                }
+              }
+            }
+          },
+          "c": {
+            "original": "3",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "3"
+                }
+              }
+            }
+          },
+          "e": {
+            "original": "5",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "5"
+                }
+              }
+            }
+          },
+          "f": {
+            "original": "6",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "6"
+                }
+              }
+            }
+          },
+          "h": {
+            "original": "8",
+            "checked": {
+              "typeMap": {
+                "1": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  2
+                ],
+                "positions": {
+                  "1": 0
+                }
+              },
+              "expr": {
+                "id": "1",
+                "constExpr": {
+                  "int64Value": "8"
+                }
+              }
+            }
+          }
+        },
+        "resourceRules": {
+          "one": {
+            "actionRules": [
+              {
+                "action": "*",
+                "name": "one_rule-001",
+                "condition": {
+                  "expr": {
+                    "original": "V.abce > 0",
+                    "checked": {
+                      "referenceMap": {
+                        "1": {
+                          "name": "V"
+                        },
+                        "3": {
+                          "overloadId": [
+                            "greater_int64",
+                            "greater_uint64_int64",
+                            "greater_double_int64"
+                          ]
+                        }
+                      },
+                      "typeMap": {
+                        "1": {
+                          "mapType": {
+                            "keyType": {
+                              "primitive": "STRING"
+                            },
+                            "valueType": {
+                              "dyn": {}
+                            }
+                          }
+                        },
+                        "2": {
+                          "dyn": {}
+                        },
+                        "3": {
+                          "primitive": "BOOL"
+                        },
+                        "4": {
+                          "primitive": "INT64"
+                        }
+                      },
+                      "sourceInfo": {
+                        "location": "<input>",
+                        "lineOffsets": [
+                          11
+                        ],
+                        "positions": {
+                          "1": 0,
+                          "2": 1,
+                          "3": 7,
+                          "4": 9
+                        }
+                      },
+                      "expr": {
+                        "id": "3",
+                        "callExpr": {
+                          "function": "_>_",
+                          "args": [
+                            {
+                              "id": "2",
+                              "selectExpr": {
+                                "operand": {
+                                  "id": "1",
+                                  "identExpr": {
+                                    "name": "V"
+                                  }
+                                },
+                                "field": "abce"
+                              }
+                            },
+                            {
+                              "id": "4",
+                              "constExpr": {
+                                "int64Value": "0"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                "effect": "EFFECT_ALLOW",
+                "output": {
+                  "original": "variables.f",
+                  "checked": {
+                    "referenceMap": {
+                      "1": {
+                        "name": "variables"
+                      }
+                    },
+                    "typeMap": {
+                      "1": {
+                        "mapType": {
+                          "keyType": {
+                            "primitive": "STRING"
+                          },
+                          "valueType": {
+                            "dyn": {}
+                          }
+                        }
+                      },
+                      "2": {
+                        "dyn": {}
+                      }
+                    },
+                    "sourceInfo": {
+                      "location": "<input>",
+                      "lineOffsets": [
+                        12
+                      ],
+                      "positions": {
+                        "1": 0,
+                        "2": 9
+                      }
+                    },
+                    "expr": {
+                      "id": "2",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "1",
+                          "identExpr": {
+                            "name": "variables"
+                          }
+                        },
+                        "field": "f"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "two": {
+            "actionRules": [
+              {
+                "action": "*",
+                "name": "two_rule-001",
+                "condition": {
+                  "expr": {
+                    "original": "variables.h > 0",
+                    "checked": {
+                      "referenceMap": {
+                        "1": {
+                          "name": "variables"
+                        },
+                        "3": {
+                          "overloadId": [
+                            "greater_int64",
+                            "greater_uint64_int64",
+                            "greater_double_int64"
+                          ]
+                        }
+                      },
+                      "typeMap": {
+                        "1": {
+                          "mapType": {
+                            "keyType": {
+                              "primitive": "STRING"
+                            },
+                            "valueType": {
+                              "dyn": {}
+                            }
+                          }
+                        },
+                        "2": {
+                          "dyn": {}
+                        },
+                        "3": {
+                          "primitive": "BOOL"
+                        },
+                        "4": {
+                          "primitive": "INT64"
+                        }
+                      },
+                      "sourceInfo": {
+                        "location": "<input>",
+                        "lineOffsets": [
+                          16
+                        ],
+                        "positions": {
+                          "1": 0,
+                          "2": 9,
+                          "3": 12,
+                          "4": 14
+                        }
+                      },
+                      "expr": {
+                        "id": "3",
+                        "callExpr": {
+                          "function": "_>_",
+                          "args": [
+                            {
+                              "id": "2",
+                              "selectExpr": {
+                                "operand": {
+                                  "id": "1",
+                                  "identExpr": {
+                                    "name": "variables"
+                                  }
+                                },
+                                "field": "h"
+                              }
+                            },
+                            {
+                              "id": "4",
+                              "constExpr": {
+                                "int64Value": "0"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                "effect": "EFFECT_DENY"
+              }
+            ]
+          }
+        },
+        "orderedVariables": [
+          {
+            "name": "a",
+            "expr": {
+              "original": "1",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "1"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "b",
+            "expr": {
+              "original": "2",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "2"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "ab",
+            "expr": {
+              "original": "V.a + V.b",
+              "checked": {
+                "referenceMap": {
+                  "1": {
+                    "name": "V"
+                  },
+                  "3": {
+                    "overloadId": [
+                      "add_bytes",
+                      "add_double",
+                      "add_duration_duration",
+                      "add_duration_timestamp",
+                      "add_timestamp_duration",
+                      "add_int64",
+                      "add_list",
+                      "add_string",
+                      "add_uint64"
+                    ]
+                  },
+                  "4": {
+                    "name": "V"
+                  }
+                },
+                "typeMap": {
+                  "1": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "2": {
+                    "dyn": {}
+                  },
+                  "3": {
+                    "dyn": {}
+                  },
+                  "4": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "5": {
+                    "dyn": {}
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    10
+                  ],
+                  "positions": {
+                    "1": 0,
+                    "2": 1,
+                    "3": 4,
+                    "4": 6,
+                    "5": 7
+                  }
+                },
+                "expr": {
+                  "id": "3",
+                  "callExpr": {
+                    "function": "_+_",
+                    "args": [
+                      {
+                        "id": "2",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "1",
+                            "identExpr": {
+                              "name": "V"
+                            }
+                          },
+                          "field": "a"
+                        }
+                      },
+                      {
+                        "id": "5",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "4",
+                            "identExpr": {
+                              "name": "V"
+                            }
+                          },
+                          "field": "b"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "c",
+            "expr": {
+              "original": "3",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "3"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "abc",
+            "expr": {
+              "original": "variables.ab + variables.c",
+              "checked": {
+                "referenceMap": {
+                  "1": {
+                    "name": "variables"
+                  },
+                  "3": {
+                    "overloadId": [
+                      "add_bytes",
+                      "add_double",
+                      "add_duration_duration",
+                      "add_duration_timestamp",
+                      "add_timestamp_duration",
+                      "add_int64",
+                      "add_list",
+                      "add_string",
+                      "add_uint64"
+                    ]
+                  },
+                  "4": {
+                    "name": "variables"
+                  }
+                },
+                "typeMap": {
+                  "1": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "2": {
+                    "dyn": {}
+                  },
+                  "3": {
+                    "dyn": {}
+                  },
+                  "4": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "5": {
+                    "dyn": {}
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    27
+                  ],
+                  "positions": {
+                    "1": 0,
+                    "2": 9,
+                    "3": 13,
+                    "4": 15,
+                    "5": 24
+                  }
+                },
+                "expr": {
+                  "id": "3",
+                  "callExpr": {
+                    "function": "_+_",
+                    "args": [
+                      {
+                        "id": "2",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "1",
+                            "identExpr": {
+                              "name": "variables"
+                            }
+                          },
+                          "field": "ab"
+                        }
+                      },
+                      {
+                        "id": "5",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "4",
+                            "identExpr": {
+                              "name": "variables"
+                            }
+                          },
+                          "field": "c"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "e",
+            "expr": {
+              "original": "5",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "5"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "abce",
+            "expr": {
+              "original": "variables.abc + variables.e",
+              "checked": {
+                "referenceMap": {
+                  "1": {
+                    "name": "variables"
+                  },
+                  "3": {
+                    "overloadId": [
+                      "add_bytes",
+                      "add_double",
+                      "add_duration_duration",
+                      "add_duration_timestamp",
+                      "add_timestamp_duration",
+                      "add_int64",
+                      "add_list",
+                      "add_string",
+                      "add_uint64"
+                    ]
+                  },
+                  "4": {
+                    "name": "variables"
+                  }
+                },
+                "typeMap": {
+                  "1": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "2": {
+                    "dyn": {}
+                  },
+                  "3": {
+                    "dyn": {}
+                  },
+                  "4": {
+                    "mapType": {
+                      "keyType": {
+                        "primitive": "STRING"
+                      },
+                      "valueType": {
+                        "dyn": {}
+                      }
+                    }
+                  },
+                  "5": {
+                    "dyn": {}
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    28
+                  ],
+                  "positions": {
+                    "1": 0,
+                    "2": 9,
+                    "3": 14,
+                    "4": 16,
+                    "5": 25
+                  }
+                },
+                "expr": {
+                  "id": "3",
+                  "callExpr": {
+                    "function": "_+_",
+                    "args": [
+                      {
+                        "id": "2",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "1",
+                            "identExpr": {
+                              "name": "variables"
+                            }
+                          },
+                          "field": "abc"
+                        }
+                      },
+                      {
+                        "id": "5",
+                        "selectExpr": {
+                          "operand": {
+                            "id": "4",
+                            "identExpr": {
+                              "name": "variables"
+                            }
+                          },
+                          "field": "e"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "f",
+            "expr": {
+              "original": "6",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "6"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "h",
+            "expr": {
+              "original": "8",
+              "checked": {
+                "typeMap": {
+                  "1": {
+                    "primitive": "INT64"
+                  }
+                },
+                "sourceInfo": {
+                  "location": "<input>",
+                  "lineOffsets": [
+                    2
+                  ],
+                  "positions": {
+                    "1": 0
+                  }
+                },
+                "expr": {
+                  "id": "1",
+                  "constExpr": {
+                    "int64Value": "8"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "compilerVersion": 1
+}

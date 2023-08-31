@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: membership test in a single-item map
 input:
@@ -17,5 +18,3 @@ wantFilter:
         - variable: request.resource.attr.accountId
         - value: "abc123"
 wantString: "(eq request.resource.attr.accountId \"abc123\")"
-
-

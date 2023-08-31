@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/CelTestCase.schema.json
 ---
 condition:
   none:
@@ -16,6 +17,7 @@ input: {
   },
   "resource": {
     "kind": "leave_request",
+    "id": "test",
     "attr": {
       "department": "marketing"
     }

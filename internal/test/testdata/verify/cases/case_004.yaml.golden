@@ -1,15 +1,15 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "bad_test.yaml",
-      "name":  "Unknown",
-      "summary":  {
-        "overallResult":  "RESULT_ERRORED"
+      "file": "bad_test.yaml",
+      "name": "Unknown",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
       },
-      "error":  "file is not valid: [/: expected object, but got string]"
+      "error": "file is not valid: [/: expected object, but got string]"
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_ERRORED"
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
   }
 }

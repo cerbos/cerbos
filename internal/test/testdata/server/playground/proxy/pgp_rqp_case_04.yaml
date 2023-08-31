@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Unknown resource"
 wantStatus:
@@ -63,7 +64,7 @@ playgroundProxy:
         "kind": "KIND_ALWAYS_DENIED"
       },
       "meta": {
-        "filter_debug": "NO_MATCH"
+        "filterDebug": "NO_MATCH"
       }
     }
   }

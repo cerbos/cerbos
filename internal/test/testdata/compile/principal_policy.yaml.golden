@@ -262,5 +262,6 @@
         }
       }
     ]
-  }
+  },
+  "compilerVersion": 1
 }

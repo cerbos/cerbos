@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Scoped policy: Bad department value"
 inputs: [
@@ -37,7 +38,7 @@ wantOutputs: [
   {
     "requestId": "test",
     "resourceId": "XX125",
-    "validation_errors": [
+    "validationErrors": [
       {"path":"/department", "message":"value must be one of \"marketing\", \"engineering\"", "source":"SOURCE_PRINCIPAL"},
       {"path":"/department", "message":"value must be one of \"marketing\", \"engineering\"", "source":"SOURCE_RESOURCE"}
     ],

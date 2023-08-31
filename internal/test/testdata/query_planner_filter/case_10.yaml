@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: nested expression that can be simplified
 input:
@@ -7,12 +8,12 @@ input:
       operator: or
       operands:
         - value: false
-        - expression: 
+        - expression:
             operator: and
-            operands: 
+            operands:
               - expression:
                   operator: not
-                  operands: 
+                  operands:
                     - value: false
               - expression:
                   operator: eq
@@ -28,5 +29,3 @@ wantFilter:
         - variable: request.resource.attr.department
         - value: "marketing"
 wantString: "(eq request.resource.attr.department \"marketing\")"
-
-

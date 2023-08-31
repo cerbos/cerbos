@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: OR with true value
 input:
@@ -12,5 +13,3 @@ input:
 wantFilter:
   kind: KIND_ALWAYS_ALLOWED
 wantString: "(true)"
-
-

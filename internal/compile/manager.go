@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bluele/gcache"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
@@ -26,7 +26,6 @@ import (
 )
 
 const (
-	cacheKind             = "compile"
 	negativeCacheEntryTTL = 10 * time.Second
 	storeFetchTimeout     = 2 * time.Second
 	updateQueueSize       = 32
@@ -37,7 +36,7 @@ type Manager struct {
 	store         storage.SourceStore
 	schemaMgr     schema.Manager
 	updateQueue   chan storage.Event
-	cache         gcache.Cache
+	cache         *cache.Cache[namer.ModuleID, *runtimev1.RunnablePolicySet]
 	sf            singleflight.Group
 	cacheDuration time.Duration
 }
@@ -61,7 +60,7 @@ func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.SourceSto
 		store:         store,
 		schemaMgr:     schemaMgr,
 		updateQueue:   make(chan storage.Event, updateQueueSize),
-		cache:         mkCache(int(conf.CacheSize)),
+		cache:         cache.New[namer.ModuleID, *runtimev1.RunnablePolicySet]("compile", conf.CacheSize),
 		cacheDuration: conf.CacheDuration,
 	}
 
@@ -180,9 +179,9 @@ func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePoli
 
 	if err == nil && rps != nil {
 		if c.cacheDuration > 0 {
-			_ = c.cache.SetWithExpire(unit.ModID, rps, c.cacheDuration)
+			c.cache.SetWithExpire(unit.ModID, rps, c.cacheDuration)
 		} else {
-			_ = c.cache.Set(unit.ModID, rps)
+			c.cache.Set(unit.ModID, rps)
 		}
 	}
 
@@ -207,18 +206,14 @@ func (c *Manager) evict(modID namer.ModuleID) {
 func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	keyBuilder := new(strings.Builder)
 	for _, modID := range candidates {
-		rps, err := c.cache.GetIFPresent(modID)
-		if err == nil {
-			cacheHit()
-			if rps != nil {
-				return rps.(*runtimev1.RunnablePolicySet), nil //nolint:forcetypeassert
-			}
+		rps, ok := c.cache.Get(modID)
+		if ok && rps != nil {
+			return rps, nil
 		}
+
 		keyBuilder.WriteString(modID.String())
 		keyBuilder.WriteRune('|')
 	}
-
-	cacheMiss()
 
 	key := keyBuilder.String()
 	defer c.sf.Forget(key)
@@ -257,21 +252,10 @@ func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runt
 	defer c.sf.Forget(key)
 
 	rpsVal, err, _ := c.sf.Do(key, func() (any, error) {
-		rps, err := c.cache.GetIFPresent(modID)
-		if err == nil {
-			cacheHit()
-
-			// If the value is nil, it indicates a negative cache entry (see below)
-			// Essentially, we tried to find this evaluator before and it wasn't found.
-			// We don't want to hit the store over and over again because we know it doesn't exist.
-			if rps == nil {
-				return nil, nil
-			}
-
-			return rps.(*runtimev1.RunnablePolicySet), nil //nolint:forcetypeassert
+		rps, ok := c.cache.Get(modID)
+		if ok {
+			return rps, nil
 		}
-
-		cacheMiss()
 
 		compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
 		if err != nil {
@@ -280,7 +264,7 @@ func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runt
 
 		if len(compileUnits) == 0 {
 			// store a nil value in the cache as a negative entry to prevent hitting the database again and again
-			_ = c.cache.SetWithExpire(modID, nil, negativeCacheEntryTTL)
+			c.cache.SetWithExpire(modID, nil, negativeCacheEntryTTL)
 			return nil, nil
 		}
 
@@ -308,37 +292,6 @@ func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runt
 
 	//nolint:forcetypeassert
 	return rpsVal.(*runtimev1.RunnablePolicySet), nil
-}
-
-func mkCache(size int) gcache.Cache {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind)},
-		metrics.CacheMaxSize.M(int64(size)),
-	)
-
-	gauge := metrics.MakeCacheGauge(cacheKind)
-	return gcache.New(size).
-		ARC().
-		AddedFunc(func(_, _ any) {
-			gauge.Add(1)
-		}).
-		EvictedFunc(func(_, _ any) {
-			gauge.Add(-1)
-		}).Build()
-}
-
-func cacheHit() {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "hit")},
-		metrics.CacheAccessCount.M(1),
-	)
-}
-
-func cacheMiss() {
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "miss")},
-		metrics.CacheAccessCount.M(1),
-	)
 }
 
 type PolicyCompilationErr struct {

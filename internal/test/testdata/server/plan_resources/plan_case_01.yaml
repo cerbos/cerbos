@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "auxData is used in policies"
 wantStatus:
@@ -40,6 +41,6 @@ planResources:
       "kind": "KIND_ALWAYS_ALLOWED",
     },
     "meta": {
-      "filter_debug": "(true)"
+      "filterDebug": "(true)"
     }
   }

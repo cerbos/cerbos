@@ -41,6 +41,7 @@ func (uc *unitCtx) moduleCtx(id namer.ModuleID) *moduleCtx {
 type moduleCtx struct {
 	*unitCtx
 	def        *policyv1.Policy
+	variables  *variableDefinitions
 	fqn        string
 	sourceFile string
 }

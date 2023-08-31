@@ -114,6 +114,7 @@ storage:
     workDir: ${HOME}/tmp/cerbos/work # WorkDir is the local path to check out policies to.
   bundle:
     # This section is required only if storage.driver is bundle.
+    cacheSize: 1024 # CacheSize defines the number of policies to cache in memory.
     credentials: # Credentials holds bundle source credentials.
       clientID: 92B0K05B6HOF # ClientID of the Cerbos Cloud API key. Defaults to the value of the CERBOS_CLOUD_CLIENT_ID environment variable.
       clientSecret: ${CERBOS_CLOUD_CLIENT_SECRET} # ClientSecret of the Cerbos Cloud API key. Defaults to the value of the CERBOS_CLOUD_CLIENT_SECRET environment variable.

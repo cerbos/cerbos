@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: Nil condition
 input:
@@ -5,5 +6,3 @@ input:
 wantFilter:
   kind: KIND_ALWAYS_ALLOWED
 wantString: "(true)"
-
-

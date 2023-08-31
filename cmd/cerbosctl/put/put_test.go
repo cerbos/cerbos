@@ -119,6 +119,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vstaging",
 					"resource.products.vdefault",
 					"resource.purchase_order.vdefault",
+					"resource.variables_referencing_variables.vdefault",
 				}, listPolicies(t, clientCtx))
 			})
 

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/SchemaTestCase.schema.json
 ---
 description: Bad string field and missing required int field
 schemaRefs:

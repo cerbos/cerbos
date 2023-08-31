@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: membership test in empty array
 input:
@@ -11,5 +12,3 @@ input:
 wantFilter:
   kind: KIND_ALWAYS_DENIED
 wantString: "(false)"
-
-

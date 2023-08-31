@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+wantErrors:
+  - file: resource_policies/example.yaml
+    error: cyclical variable definitions
+    desc: |-
+      Variable 'a' references itself
+  - file: resource_policies/example.yaml
+    error: cyclical variable definitions
+    desc: |-
+      Variables 'b' and 'c' form a cycle
+  - file: resource_policies/example.yaml
+    error: cyclical variable definitions
+    desc: |-
+      Variables 'd', 'e', 'f', and 'g' form a cycle
+  - file: resource_policies/example.yaml
+    error: undefined variable
+    desc: |-
+      Undefined variable 'x' referenced in variable 'h'
+  - file: resource_policies/example.yaml
+    error: undefined variable
+    desc: |-
+      Undefined variable 'y' referenced in variable 'h'
+  - file:  resource_policies/example.yaml
+    error: undefined variable
+    desc: |-
+      Undefined variable 'z' referenced in resource rule 'bad'
+mainDef: resource_policies/example.yaml
+inputDefs:
+  resource_policies/example.yaml:
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: example
+      version: default
+      variables:
+        local:
+          a: variables.a
+          b: V.c
+          c: variables.b
+          d: V.e + V.f
+          e: V.g
+          f: 2 * V.g
+          g: V.d
+          h: V.x / variables.y
+      rules:
+        - name: bad
+          actions:
+            - "*"
+          roles:
+            - "*"
+          effect: EFFECT_ALLOW
+          condition:
+            match:
+              expr: V.z > 9000

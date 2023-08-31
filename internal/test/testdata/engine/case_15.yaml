@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Wildcard roles"
 inputs: [
@@ -27,7 +28,7 @@ wantOutputs: [
   {
     "requestId": "test",
     "resourceId": "XX125",
-    "effective_derived_roles": ["any_employee"],
+    "effectiveDerivedRoles": ["any_employee"],
     "actions": {
       "view": {
         "effect": "EFFECT_ALLOW",

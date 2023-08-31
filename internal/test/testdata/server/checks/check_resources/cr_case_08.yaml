@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Special chars in policy names"
 wantStatus:
@@ -49,16 +50,16 @@ checkResources:
         "meta": {
            "actions": {
               "delete": {
-                 "matched_policy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
+                 "matchedPolicy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
               },
               "read": {
-                 "matched_policy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
+                 "matchedPolicy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
               },
               "use": {
-                 "matched_policy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
+                 "matchedPolicy": "resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault"
               },
               "write": {
-                 "matched_policy": "principal.arn:aws:iam::123456789012:user/johndoe.vdefault"
+                 "matchedPolicy": "principal.arn:aws:iam::123456789012:user/johndoe.vdefault"
               }
            },
            "effectiveDerivedRoles": ["kube_user"]

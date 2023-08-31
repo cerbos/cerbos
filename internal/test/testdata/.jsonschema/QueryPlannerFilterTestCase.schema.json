@@ -1,0 +1,77 @@
+{
+  "$id": "https://api.cerbos.test/cerbos/private/v1/QueryPlannerFilterTestCase.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.engine.v1.PlanResourcesFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression.Operand"
+        },
+        "kind": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Kind"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesFilter.Expression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression.Operand"
+          }
+        },
+        "operator": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesFilter.Expression.Operand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression"
+        },
+        "value": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        },
+        "variable": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesFilter.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ALWAYS_ALLOWED",
+        "KIND_ALWAYS_DENIED",
+        "KIND_CONDITIONAL"
+      ]
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "input": {
+      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
+    },
+    "wantFilter": {
+      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
+    },
+    "wantString": {
+      "type": "string"
+    }
+  }
+}

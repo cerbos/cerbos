@@ -1,15 +1,15 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "suite_test.yaml",
-      "name":  "Unknown",
-      "summary":  {
-        "overallResult":  "RESULT_ERRORED"
+      "file": "suite_test.yaml",
+      "name": "Unknown",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
       },
-      "error":  "file is not valid: [/options/now: 'blah' is not valid 'date-time']"
+      "error": "file is not valid: [/options/now: 'blah' is not valid 'date-time']"
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_ERRORED"
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
   }
 }

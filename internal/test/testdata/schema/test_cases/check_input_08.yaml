@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/SchemaTestCase.schema.json
 ---
 description: Only principal has an ignore clause
 schemaRefs:

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Harry defers; scoped request 'acme.hr.uk'"
 wantStatus:
@@ -49,7 +50,7 @@ planResources:
       }
     },
     "meta": {
-      "filter_debug": "(eq request.resource.attr.owner \"harry\")",
-      "matched_scope": "acme.hr.uk"
+      "filterDebug": "(eq request.resource.attr.owner \"harry\")",
+      "matchedScope": "acme.hr.uk"
     }
   }

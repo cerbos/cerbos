@@ -1,5 +1,6 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
-wantErrors: 
+wantErrors:
   - file: resource_policies/leave_request_20210210.yaml
     error: unknown derived role
     desc: |-
