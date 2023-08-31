@@ -337,3 +337,21 @@ message Trace {
   repeated Component components = 1;
   Event event = 2;
 }
+
+message Request {
+  message Principal {
+    string id = 1;
+    repeated string roles = 2;
+    map<string, google.protobuf.Value> attr = 3;
+  }
+
+  message Resource {
+    string kind = 1;
+    string id = 2;
+    map<string, google.protobuf.Value> attr = 3;
+  }
+
+  Principal principal = 1;
+  Resource resource = 2;
+  AuxData aux_data = 3;
+}

@@ -149,6 +149,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
 	defer span.End()
 
+	request := planResourcesInputToRequest(input)
 	result := &PolicyPlanResult{}
 	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
@@ -172,7 +173,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					continue
 				}
 
-				filter, err := evaluateCondition(rule.Condition, input, ppe.Globals, variables)
+				filter, err := evaluateCondition(rule.Condition, request, ppe.Globals, variables)
 				if err != nil {
 					return nil, err
 				}
@@ -190,6 +191,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
 	defer span.End()
 
+	request := planResourcesInputToRequest(input)
 	result := &PolicyPlanResult{}
 
 	vr, err := rpe.SchemaMgr.ValidatePlanResourcesInput(ctx, rpe.Policy.Schemas, input)
@@ -240,7 +242,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					if dr.Condition == nil {
 						return mkTrueNode(), nil
 					}
-					node, err := evaluateCondition(dr.Condition, input, rpe.Globals, drVariables)
+					node, err := evaluateCondition(dr.Condition, request, rpe.Globals, drVariables)
 					if err != nil {
 						return nil, err
 					}
@@ -284,7 +286,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					continue
 				}
 
-				node, err := evaluateCondition(rule.Condition, input, rpe.Globals, variables)
+				node, err := evaluateCondition(rule.Condition, request, rpe.Globals, variables)
 				if err != nil {
 					return nil, err
 				}
@@ -377,7 +379,7 @@ func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesInput, globals map[string]any, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesAst_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -387,7 +389,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_Any:
 		nodes := make([]*qpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
-			node, err := evaluateCondition(c, input, globals, variables)
+			node, err := evaluateCondition(c, request, globals, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -411,7 +413,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
-			node, err := evaluateCondition(c, input, globals, variables)
+			node, err := evaluateCondition(c, request, globals, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -434,7 +436,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
-			node, err := evaluateCondition(c, input, globals, variables)
+			node, err := evaluateCondition(c, request, globals, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -461,7 +463,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evaluateConditionExpression(t.Expr.Checked, input, globals, variables)
+		residual, err := evaluateConditionExpression(t.Expr.Checked, request, globals, variables)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -472,8 +474,8 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	return res, nil
 }
 
-func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, globals map[string]any, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
-	p, err := newEvaluator(input, globals)
+func evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
+	p, err := newEvaluator(request, globals)
 	if err != nil {
 		return nil, err
 	}
@@ -483,7 +485,7 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanR
 		return nil, err
 	}
 
-	if m := input.Resource.GetAttr(); len(m) > 0 {
+	if m := request.Resource.GetAttr(); len(m) > 0 {
 		e, err = replaceResourceVals(e, m)
 		if err != nil {
 			return nil, err
@@ -544,19 +546,18 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 	return val, residual, nil
 }
 
-func newEvaluator(input *enginev1.PlanResourcesInput, globals map[string]any) (p *partialEvaluator, err error) {
+func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
 	p = new(partialEvaluator)
 	knownVars := make(map[string]any)
-	knownVars[conditions.CELRequestIdent] = input
-	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
-	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
+	knownVars[conditions.CELRequestIdent] = request
+	knownVars[conditions.CELPrincipalAbbrev] = request.Principal
 	knownVars[conditions.CELGlobalsIdent] = globals
 	knownVars[conditions.CELGlobalsAbbrev] = globals
 
-	p.env = conditions.StdPartialEnv
-	if len(input.Resource.GetAttr()) > 0 {
+	p.env = conditions.StdEnv
+	if len(request.Resource.GetAttr()) > 0 {
 		var ds []*exprpb.Decl
-		for name, value := range input.Resource.Attr {
+		for name, value := range request.Resource.Attr {
 			for _, s := range conditions.ResourceAttributeNames(name) {
 				ds = append(ds, decls.NewVar(s, decls.Dyn))
 				knownVars[s] = value
@@ -676,4 +677,19 @@ func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, er
 	}
 
 	return exprs, nil
+}
+
+func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.Request {
+	return &enginev1.Request{
+		Principal: &enginev1.Request_Principal{
+			Id:    input.Principal.Id,
+			Roles: input.Principal.Roles,
+			Attr:  input.Principal.Attr,
+		},
+		Resource: &enginev1.Request_Resource{
+			Kind: input.Resource.Kind,
+			Attr: input.Resource.Attr,
+		},
+		AuxData: input.AuxData,
+	}
 }

@@ -42,10 +42,10 @@
                         },
                         "typeMap": {
                           "1": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                            "messageType": "cerbos.engine.v1.Request"
                           },
                           "2": {
-                            "messageType": "cerbos.engine.v1.Resource"
+                            "messageType": "cerbos.engine.v1.Request.Resource"
                           },
                           "3": {
                             "mapType": {
@@ -64,10 +64,10 @@
                             "primitive": "BOOL"
                           },
                           "6": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                            "messageType": "cerbos.engine.v1.Request"
                           },
                           "7": {
-                            "messageType": "cerbos.engine.v1.Principal"
+                            "messageType": "cerbos.engine.v1.Request.Principal"
                           },
                           "8": {
                             "mapType": {
@@ -178,10 +178,10 @@
                         },
                         "typeMap": {
                           "1": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                            "messageType": "cerbos.engine.v1.Request"
                           },
                           "2": {
-                            "messageType": "cerbos.engine.v1.Resource"
+                            "messageType": "cerbos.engine.v1.Request.Resource"
                           },
                           "3": {
                             "mapType": {
@@ -200,10 +200,10 @@
                             "primitive": "BOOL"
                           },
                           "6": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                            "messageType": "cerbos.engine.v1.Request"
                           },
                           "7": {
-                            "messageType": "cerbos.engine.v1.Principal"
+                            "messageType": "cerbos.engine.v1.Request.Principal"
                           },
                           "8": {
                             "mapType": {
@@ -323,7 +323,7 @@
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.engine.v1.Resource"
+                      "messageType": "cerbos.engine.v1.Request.Resource"
                     },
                     "2": {
                       "mapType": {
@@ -342,7 +342,7 @@
                       "primitive": "BOOL"
                     },
                     "5": {
-                      "messageType": "cerbos.engine.v1.Principal"
+                      "messageType": "cerbos.engine.v1.Request.Principal"
                     },
                     "6": {
                       "primitive": "STRING"
@@ -443,10 +443,10 @@
                     }
                   },
                   "4": {
-                    "messageType": "cerbos.engine.v1.CheckInput"
+                    "messageType": "cerbos.engine.v1.Request"
                   },
                   "5": {
-                    "messageType": "cerbos.engine.v1.Principal"
+                    "messageType": "cerbos.engine.v1.Request.Principal"
                   },
                   "6": {
                     "primitive": "STRING"
@@ -545,10 +545,10 @@
                     }
                   },
                   "4": {
-                    "messageType": "cerbos.engine.v1.CheckInput"
+                    "messageType": "cerbos.engine.v1.Request"
                   },
                   "5": {
-                    "messageType": "cerbos.engine.v1.Principal"
+                    "messageType": "cerbos.engine.v1.Request.Principal"
                   },
                   "6": {
                     "primitive": "STRING"
@@ -680,10 +680,10 @@
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.engine.v1.CheckInput"
+                      "messageType": "cerbos.engine.v1.Request"
                     },
                     "2": {
-                      "messageType": "cerbos.engine.v1.Resource"
+                      "messageType": "cerbos.engine.v1.Request.Resource"
                     },
                     "3": {
                       "mapType": {
@@ -794,10 +794,10 @@
                     }
                   },
                   "4": {
-                    "messageType": "cerbos.engine.v1.CheckInput"
+                    "messageType": "cerbos.engine.v1.Request"
                   },
                   "5": {
-                    "messageType": "cerbos.engine.v1.Resource"
+                    "messageType": "cerbos.engine.v1.Request.Resource"
                   },
                   "6": {
                     "mapType": {

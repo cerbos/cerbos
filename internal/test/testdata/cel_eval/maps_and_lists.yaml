@@ -41,9 +41,7 @@ condition:
           ["design", "engineering"].isSubset(P.attr.teams) == false
       - expr: |-
           P.attr.teams.except(["design", "engineering"]) == ["communications", "product", "commercial"]
-input: {
-  "requestId": "test",
-  "actions": ["*"],
+request: {
   "principal": {
     "id": "john",
     "roles": ["employee"],

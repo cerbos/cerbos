@@ -59,10 +59,10 @@
                       },
                       "typeMap": {
                         "1": {
-                          "messageType": "cerbos.engine.v1.CheckInput"
+                          "messageType": "cerbos.engine.v1.Request"
                         },
                         "2": {
-                          "messageType": "cerbos.engine.v1.Resource"
+                          "messageType": "cerbos.engine.v1.Request.Resource"
                         },
                         "3": {
                           "mapType": {
