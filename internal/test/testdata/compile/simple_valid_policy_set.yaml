@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
 mainDef: "resource_policies/leave_request_20210210.yaml"
 inputDefs:

@@ -460,77 +460,6 @@ func (x *CompileTestCase) GetWantErrors() []*CompileTestCase_Error {
 	return nil
 }
 
-type CodeGenTestCase struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	InputPolicy       *v12.Policy `protobuf:"bytes,1,opt,name=input_policy,json=inputPolicy,proto3" json:"input_policy,omitempty"`
-	WantError         bool        `protobuf:"varint,2,opt,name=want_error,json=wantError,proto3" json:"want_error,omitempty"`
-	WantRego          string      `protobuf:"bytes,3,opt,name=want_rego,json=wantRego,proto3" json:"want_rego,omitempty"`
-	WantNumConditions int32       `protobuf:"varint,4,opt,name=want_num_conditions,json=wantNumConditions,proto3" json:"want_num_conditions,omitempty"`
-}
-
-func (x *CodeGenTestCase) Reset() {
-	*x = CodeGenTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CodeGenTestCase) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CodeGenTestCase) ProtoMessage() {}
-
-func (x *CodeGenTestCase) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CodeGenTestCase.ProtoReflect.Descriptor instead.
-func (*CodeGenTestCase) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *CodeGenTestCase) GetInputPolicy() *v12.Policy {
-	if x != nil {
-		return x.InputPolicy
-	}
-	return nil
-}
-
-func (x *CodeGenTestCase) GetWantError() bool {
-	if x != nil {
-		return x.WantError
-	}
-	return false
-}
-
-func (x *CodeGenTestCase) GetWantRego() string {
-	if x != nil {
-		return x.WantRego
-	}
-	return ""
-}
-
-func (x *CodeGenTestCase) GetWantNumConditions() int32 {
-	if x != nil {
-		return x.WantNumConditions
-	}
-	return 0
-}
-
 type CelTestCase struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -545,7 +474,7 @@ type CelTestCase struct {
 func (x *CelTestCase) Reset() {
 	*x = CelTestCase{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[5]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -558,7 +487,7 @@ func (x *CelTestCase) String() string {
 func (*CelTestCase) ProtoMessage() {}
 
 func (x *CelTestCase) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[5]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -571,7 +500,7 @@ func (x *CelTestCase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CelTestCase.ProtoReflect.Descriptor instead.
 func (*CelTestCase) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{5}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CelTestCase) GetCondition() *v12.Match {
@@ -621,7 +550,7 @@ type SchemaTestCase struct {
 func (x *SchemaTestCase) Reset() {
 	*x = SchemaTestCase{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[6]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -634,7 +563,7 @@ func (x *SchemaTestCase) String() string {
 func (*SchemaTestCase) ProtoMessage() {}
 
 func (x *SchemaTestCase) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[6]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,7 +576,7 @@ func (x *SchemaTestCase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SchemaTestCase.ProtoReflect.Descriptor instead.
 func (*SchemaTestCase) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{6}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SchemaTestCase) GetDescription() string {
@@ -726,7 +655,7 @@ type ValidationErrContainer struct {
 func (x *ValidationErrContainer) Reset() {
 	*x = ValidationErrContainer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[7]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -739,7 +668,7 @@ func (x *ValidationErrContainer) String() string {
 func (*ValidationErrContainer) ProtoMessage() {}
 
 func (x *ValidationErrContainer) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[7]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -752,7 +681,7 @@ func (x *ValidationErrContainer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidationErrContainer.ProtoReflect.Descriptor instead.
 func (*ValidationErrContainer) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{7}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ValidationErrContainer) GetErrors() []*v13.ValidationError {
@@ -773,7 +702,7 @@ type AttrWrapper struct {
 func (x *AttrWrapper) Reset() {
 	*x = AttrWrapper{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[8]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -786,7 +715,7 @@ func (x *AttrWrapper) String() string {
 func (*AttrWrapper) ProtoMessage() {}
 
 func (x *AttrWrapper) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[8]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +728,7 @@ func (x *AttrWrapper) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttrWrapper.ProtoReflect.Descriptor instead.
 func (*AttrWrapper) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{8}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *AttrWrapper) GetAttr() map[string]*structpb.Value {
@@ -822,7 +751,7 @@ type QueryPlannerTestSuite struct {
 func (x *QueryPlannerTestSuite) Reset() {
 	*x = QueryPlannerTestSuite{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[9]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -835,7 +764,7 @@ func (x *QueryPlannerTestSuite) String() string {
 func (*QueryPlannerTestSuite) ProtoMessage() {}
 
 func (x *QueryPlannerTestSuite) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[9]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -848,7 +777,7 @@ func (x *QueryPlannerTestSuite) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPlannerTestSuite.ProtoReflect.Descriptor instead.
 func (*QueryPlannerTestSuite) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{9}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *QueryPlannerTestSuite) GetDescription() string {
@@ -885,7 +814,7 @@ type VerifyTestFixtureGetTestsTestCase struct {
 func (x *VerifyTestFixtureGetTestsTestCase) Reset() {
 	*x = VerifyTestFixtureGetTestsTestCase{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[10]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -898,7 +827,7 @@ func (x *VerifyTestFixtureGetTestsTestCase) String() string {
 func (*VerifyTestFixtureGetTestsTestCase) ProtoMessage() {}
 
 func (x *VerifyTestFixtureGetTestsTestCase) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[10]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -911,7 +840,7 @@ func (x *VerifyTestFixtureGetTestsTestCase) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use VerifyTestFixtureGetTestsTestCase.ProtoReflect.Descriptor instead.
 func (*VerifyTestFixtureGetTestsTestCase) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{10}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *VerifyTestFixtureGetTestsTestCase) GetTable() *v12.TestTable {
@@ -949,7 +878,7 @@ type QueryPlannerFilterTestCase struct {
 func (x *QueryPlannerFilterTestCase) Reset() {
 	*x = QueryPlannerFilterTestCase{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[11]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -962,7 +891,7 @@ func (x *QueryPlannerFilterTestCase) String() string {
 func (*QueryPlannerFilterTestCase) ProtoMessage() {}
 
 func (x *QueryPlannerFilterTestCase) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[11]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,7 +904,7 @@ func (x *QueryPlannerFilterTestCase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPlannerFilterTestCase.ProtoReflect.Descriptor instead.
 func (*QueryPlannerFilterTestCase) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{11}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *QueryPlannerFilterTestCase) GetDescription() string {
@@ -1019,7 +948,7 @@ type VerifyTestCase struct {
 func (x *VerifyTestCase) Reset() {
 	*x = VerifyTestCase{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[12]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1032,7 +961,7 @@ func (x *VerifyTestCase) String() string {
 func (*VerifyTestCase) ProtoMessage() {}
 
 func (x *VerifyTestCase) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[12]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1045,7 +974,7 @@ func (x *VerifyTestCase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyTestCase.ProtoReflect.Descriptor instead.
 func (*VerifyTestCase) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{12}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *VerifyTestCase) GetDescription() string {
@@ -1081,7 +1010,7 @@ type ServerTestCase_PlanResourcesCall struct {
 func (x *ServerTestCase_PlanResourcesCall) Reset() {
 	*x = ServerTestCase_PlanResourcesCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[13]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1094,7 +1023,7 @@ func (x *ServerTestCase_PlanResourcesCall) String() string {
 func (*ServerTestCase_PlanResourcesCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlanResourcesCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[13]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1136,7 +1065,7 @@ type ServerTestCase_CheckResourceSetCall struct {
 func (x *ServerTestCase_CheckResourceSetCall) Reset() {
 	*x = ServerTestCase_CheckResourceSetCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[14]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1149,7 +1078,7 @@ func (x *ServerTestCase_CheckResourceSetCall) String() string {
 func (*ServerTestCase_CheckResourceSetCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourceSetCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[14]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1191,7 +1120,7 @@ type ServerTestCase_CheckResourceBatchCall struct {
 func (x *ServerTestCase_CheckResourceBatchCall) Reset() {
 	*x = ServerTestCase_CheckResourceBatchCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[15]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1204,7 +1133,7 @@ func (x *ServerTestCase_CheckResourceBatchCall) String() string {
 func (*ServerTestCase_CheckResourceBatchCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourceBatchCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[15]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1246,7 +1175,7 @@ type ServerTestCase_CheckResourcesCall struct {
 func (x *ServerTestCase_CheckResourcesCall) Reset() {
 	*x = ServerTestCase_CheckResourcesCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[16]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1259,7 +1188,7 @@ func (x *ServerTestCase_CheckResourcesCall) String() string {
 func (*ServerTestCase_CheckResourcesCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourcesCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[16]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1301,7 +1230,7 @@ type ServerTestCase_PlaygroundValidateCall struct {
 func (x *ServerTestCase_PlaygroundValidateCall) Reset() {
 	*x = ServerTestCase_PlaygroundValidateCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1314,7 +1243,7 @@ func (x *ServerTestCase_PlaygroundValidateCall) String() string {
 func (*ServerTestCase_PlaygroundValidateCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundValidateCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1356,7 +1285,7 @@ type ServerTestCase_PlaygroundTestCall struct {
 func (x *ServerTestCase_PlaygroundTestCall) Reset() {
 	*x = ServerTestCase_PlaygroundTestCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1369,7 +1298,7 @@ func (x *ServerTestCase_PlaygroundTestCall) String() string {
 func (*ServerTestCase_PlaygroundTestCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundTestCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1411,7 +1340,7 @@ type ServerTestCase_PlaygroundEvaluateCall struct {
 func (x *ServerTestCase_PlaygroundEvaluateCall) Reset() {
 	*x = ServerTestCase_PlaygroundEvaluateCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1424,7 +1353,7 @@ func (x *ServerTestCase_PlaygroundEvaluateCall) String() string {
 func (*ServerTestCase_PlaygroundEvaluateCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundEvaluateCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1466,7 +1395,7 @@ type ServerTestCase_PlaygroundProxyCall struct {
 func (x *ServerTestCase_PlaygroundProxyCall) Reset() {
 	*x = ServerTestCase_PlaygroundProxyCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1479,7 +1408,7 @@ func (x *ServerTestCase_PlaygroundProxyCall) String() string {
 func (*ServerTestCase_PlaygroundProxyCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundProxyCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1521,7 +1450,7 @@ type ServerTestCase_AdminAddOrUpdatePolicyCall struct {
 func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) Reset() {
 	*x = ServerTestCase_AdminAddOrUpdatePolicyCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1534,7 +1463,7 @@ func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) String() string {
 func (*ServerTestCase_AdminAddOrUpdatePolicyCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1576,7 +1505,7 @@ type ServerTestCase_AdminAddOrUpdateSchemaCall struct {
 func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) Reset() {
 	*x = ServerTestCase_AdminAddOrUpdateSchemaCall{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1589,7 +1518,7 @@ func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) String() string {
 func (*ServerTestCase_AdminAddOrUpdateSchemaCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1631,7 +1560,7 @@ type ServerTestCase_Status struct {
 func (x *ServerTestCase_Status) Reset() {
 	*x = ServerTestCase_Status{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[23]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1644,7 +1573,7 @@ func (x *ServerTestCase_Status) String() string {
 func (*ServerTestCase_Status) ProtoMessage() {}
 
 func (x *ServerTestCase_Status) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[23]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1687,7 +1616,7 @@ type IndexBuilderTestCase_CompilationUnit struct {
 func (x *IndexBuilderTestCase_CompilationUnit) Reset() {
 	*x = IndexBuilderTestCase_CompilationUnit{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[24]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1700,7 +1629,7 @@ func (x *IndexBuilderTestCase_CompilationUnit) String() string {
 func (*IndexBuilderTestCase_CompilationUnit) ProtoMessage() {}
 
 func (x *IndexBuilderTestCase_CompilationUnit) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[24]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1750,7 +1679,7 @@ type CompileTestCase_Error struct {
 func (x *CompileTestCase_Error) Reset() {
 	*x = CompileTestCase_Error{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1763,7 +1692,7 @@ func (x *CompileTestCase_Error) String() string {
 func (*CompileTestCase_Error) ProtoMessage() {}
 
 func (x *CompileTestCase_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1814,7 +1743,7 @@ type QueryPlannerTestSuite_Test struct {
 func (x *QueryPlannerTestSuite_Test) Reset() {
 	*x = QueryPlannerTestSuite_Test{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[29]
+		mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1827,7 +1756,7 @@ func (x *QueryPlannerTestSuite_Test) String() string {
 func (*QueryPlannerTestSuite_Test) ProtoMessage() {}
 
 func (x *QueryPlannerTestSuite_Test) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[29]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1840,7 +1769,7 @@ func (x *QueryPlannerTestSuite_Test) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryPlannerTestSuite_Test.ProtoReflect.Descriptor instead.
 func (*QueryPlannerTestSuite_Test) Descriptor() ([]byte, []int) {
-	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{9, 0}
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{8, 0}
 }
 
 func (x *QueryPlannerTestSuite_Test) GetAction() string {
@@ -2151,131 +2080,119 @@ var file_cerbos_private_v1_test_proto_rawDesc = []byte{
 	0x12, 0x2e, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
 	0x18, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e,
 	0x76, 0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
-	0x3a, 0x02, 0x38, 0x01, 0x22, 0xba, 0x01, 0x0a, 0x0f, 0x43, 0x6f, 0x64, 0x65, 0x47, 0x65, 0x6e,
-	0x54, 0x65, 0x73, 0x74, 0x43, 0x61, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x0c, 0x69, 0x6e, 0x70, 0x75,
-	0x74, 0x5f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18,
+	0x3a, 0x02, 0x38, 0x01, 0x22, 0xab, 0x01, 0x0a, 0x0b, 0x43, 0x65, 0x6c, 0x54, 0x65, 0x73, 0x74,
+	0x43, 0x61, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x09, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f,
+	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x61, 0x74, 0x63, 0x68,
+	0x52, 0x09, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x32, 0x0a, 0x05, 0x69,
+	0x6e, 0x70, 0x75, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x65, 0x72,
+	0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x68,
+	0x65, 0x63, 0x6b, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x52, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x12,
+	0x12, 0x0a, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x77,
+	0x61, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x6f,
+	0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72,
+	0x6f, 0x72, 0x22, 0x8a, 0x03, 0x0a, 0x0e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x54, 0x65, 0x73,
+	0x74, 0x43, 0x61, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63,
+	0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x3a, 0x0a, 0x0b, 0x73, 0x63, 0x68, 0x65, 0x6d,
+	0x61, 0x5f, 0x72, 0x65, 0x66, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e,
+	0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x52, 0x0a, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52,
+	0x65, 0x66, 0x73, 0x12, 0x3f, 0x0a, 0x0b, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x5f, 0x69, 0x6e, 0x70,
+	0x75, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
+	0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x68, 0x65, 0x63,
+	0x6b, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x48, 0x00, 0x52, 0x0a, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x49,
+	0x6e, 0x70, 0x75, 0x74, 0x12, 0x58, 0x0a, 0x14, 0x70, 0x6c, 0x61, 0x6e, 0x5f, 0x72, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x5f, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x24, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69,
+	0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x73, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x48, 0x00, 0x52, 0x12, 0x70, 0x6c, 0x61, 0x6e,
+	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x1d,
+	0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x05, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x57, 0x0a,
+	0x16, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e,
+	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31,
+	0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72,
+	0x52, 0x14, 0x77, 0x61, 0x6e, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x45, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x42, 0x07, 0x0a, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x22,
+	0x53, 0x0a, 0x16, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72,
+	0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x12, 0x39, 0x0a, 0x06, 0x65, 0x72, 0x72,
+	0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x6f, 0x73, 0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x06, 0x65, 0x72,
+	0x72, 0x6f, 0x72, 0x73, 0x22, 0x9c, 0x01, 0x0a, 0x0b, 0x41, 0x74, 0x74, 0x72, 0x57, 0x72, 0x61,
+	0x70, 0x70, 0x65, 0x72, 0x12, 0x3c, 0x0a, 0x04, 0x61, 0x74, 0x74, 0x72, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x28, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x72, 0x69, 0x76,
+	0x61, 0x74, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x74, 0x74, 0x72, 0x57, 0x72, 0x61, 0x70, 0x70,
+	0x65, 0x72, 0x2e, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x61, 0x74,
+	0x74, 0x72, 0x1a, 0x4f, 0x0a, 0x09, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12,
+	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65,
+	0x79, 0x12, 0x2c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
+	0x75, 0x66, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
+	0x02, 0x38, 0x01, 0x22, 0xfb, 0x02, 0x0a, 0x15, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x6c, 0x61,
+	0x6e, 0x6e, 0x65, 0x72, 0x54, 0x65, 0x73, 0x74, 0x53, 0x75, 0x69, 0x74, 0x65, 0x12, 0x20, 0x0a,
+	0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12,
+	0x39, 0x0a, 0x09, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69,
+	0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x52,
+	0x09, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x12, 0x43, 0x0a, 0x05, 0x74, 0x65,
+	0x73, 0x74, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x6f, 0x73, 0x2e, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x6e, 0x6e, 0x65, 0x72, 0x54, 0x65, 0x73, 0x74, 0x53, 0x75,
+	0x69, 0x74, 0x65, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x05, 0x74, 0x65, 0x73, 0x74, 0x73, 0x1a,
+	0xbf, 0x01, 0x0a, 0x04, 0x54, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e,
+	0x12, 0x39, 0x0a, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25,
+	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x50, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x46,
+	0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x12, 0x49, 0x0a, 0x08, 0x72,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2d, 0x2e,
+	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x50, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x49, 0x6e,
+	0x70, 0x75, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x08, 0x72, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65,
+	0x72, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72,
+	0x72, 0x22, 0xa8, 0x01, 0x0a, 0x21, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x54, 0x65, 0x73, 0x74,
+	0x46, 0x69, 0x78, 0x74, 0x75, 0x72, 0x65, 0x47, 0x65, 0x74, 0x54, 0x65, 0x73, 0x74, 0x73, 0x54,
+	0x65, 0x73, 0x74, 0x43, 0x61, 0x73, 0x65, 0x12, 0x31, 0x0a, 0x05, 0x74, 0x61, 0x62, 0x6c, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
+	0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x54, 0x61,
+	0x62, 0x6c, 0x65, 0x52, 0x05, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x35, 0x0a, 0x0a, 0x77, 0x61,
+	0x6e, 0x74, 0x5f, 0x74, 0x65, 0x73, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x16,
 	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76,
-	0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x0b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x50,
-	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x1d, 0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72,
-	0x72, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x45,
-	0x72, 0x72, 0x6f, 0x72, 0x12, 0x1b, 0x0a, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x72, 0x65, 0x67,
-	0x6f, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x77, 0x61, 0x6e, 0x74, 0x52, 0x65, 0x67,
-	0x6f, 0x12, 0x2e, 0x0a, 0x13, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x6e, 0x75, 0x6d, 0x5f, 0x63, 0x6f,
-	0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x11,
-	0x77, 0x61, 0x6e, 0x74, 0x4e, 0x75, 0x6d, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x22, 0xab, 0x01, 0x0a, 0x0b, 0x43, 0x65, 0x6c, 0x54, 0x65, 0x73, 0x74, 0x43, 0x61, 0x73,
-	0x65, 0x12, 0x35, 0x0a, 0x09, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f,
-	0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x52, 0x09, 0x63,
-	0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x32, 0x0a, 0x05, 0x69, 0x6e, 0x70, 0x75,
-	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
-	0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b,
-	0x49, 0x6e, 0x70, 0x75, 0x74, 0x52, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x12, 0x0a, 0x04,
-	0x77, 0x61, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x77, 0x61, 0x6e, 0x74,
-	0x12, 0x1d, 0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x04,
-	0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22,
-	0x8a, 0x03, 0x0a, 0x0e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x54, 0x65, 0x73, 0x74, 0x43, 0x61,
-	0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f,
-	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70,
-	0x74, 0x69, 0x6f, 0x6e, 0x12, 0x3a, 0x0a, 0x0b, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x5f, 0x72,
-	0x65, 0x66, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63, 0x68,
-	0x65, 0x6d, 0x61, 0x73, 0x52, 0x0a, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x66, 0x73,
-	0x12, 0x3f, 0x0a, 0x0b, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x5f, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65,
-	0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e,
-	0x70, 0x75, 0x74, 0x48, 0x00, 0x52, 0x0a, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x70, 0x75,
-	0x74, 0x12, 0x58, 0x0a, 0x14, 0x70, 0x6c, 0x61, 0x6e, 0x5f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x73, 0x5f, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x24, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e,
-	0x76, 0x31, 0x2e, 0x50, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73,
-	0x49, 0x6e, 0x70, 0x75, 0x74, 0x48, 0x00, 0x52, 0x12, 0x70, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x77,
-	0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52,
-	0x09, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x57, 0x0a, 0x16, 0x77, 0x61,
-	0x6e, 0x74, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x65, 0x72,
-	0x72, 0x6f, 0x72, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x63, 0x65, 0x72,
-	0x62, 0x6f, 0x73, 0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x61,
-	0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x14, 0x77,
-	0x61, 0x6e, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72,
-	0x6f, 0x72, 0x73, 0x42, 0x07, 0x0a, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x22, 0x53, 0x0a, 0x16,
-	0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x6e,
-	0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x12, 0x39, 0x0a, 0x06, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73,
-	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
-	0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x06, 0x65, 0x72, 0x72, 0x6f, 0x72,
-	0x73, 0x22, 0x9c, 0x01, 0x0a, 0x0b, 0x41, 0x74, 0x74, 0x72, 0x57, 0x72, 0x61, 0x70, 0x70, 0x65,
-	0x72, 0x12, 0x3c, 0x0a, 0x04, 0x61, 0x74, 0x74, 0x72, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x28, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65,
-	0x2e, 0x76, 0x31, 0x2e, 0x41, 0x74, 0x74, 0x72, 0x57, 0x72, 0x61, 0x70, 0x70, 0x65, 0x72, 0x2e,
-	0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x61, 0x74, 0x74, 0x72, 0x1a,
-	0x4f, 0x0a, 0x09, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03,
-	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2c,
-	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e,
-	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
-	0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01,
-	0x22, 0xfb, 0x02, 0x0a, 0x15, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x6e, 0x6e, 0x65,
-	0x72, 0x54, 0x65, 0x73, 0x74, 0x53, 0x75, 0x69, 0x74, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65,
-	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x39, 0x0a, 0x09,
-	0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1b, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e,
-	0x76, 0x31, 0x2e, 0x50, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x52, 0x09, 0x70, 0x72,
-	0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x12, 0x43, 0x0a, 0x05, 0x74, 0x65, 0x73, 0x74, 0x73,
-	0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
-	0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x50, 0x6c, 0x61, 0x6e, 0x6e, 0x65, 0x72, 0x54, 0x65, 0x73, 0x74, 0x53, 0x75, 0x69, 0x74, 0x65,
-	0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x05, 0x74, 0x65, 0x73, 0x74, 0x73, 0x1a, 0xbf, 0x01, 0x0a,
-	0x04, 0x54, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x39, 0x0a,
-	0x04, 0x77, 0x61, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63, 0x65,
-	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50,
-	0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x46, 0x69, 0x6c, 0x74,
-	0x65, 0x72, 0x52, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x12, 0x49, 0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x63, 0x65, 0x72,
-	0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6c,
-	0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x70, 0x75, 0x74,
-	0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x22, 0xa8,
-	0x01, 0x0a, 0x21, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x54, 0x65, 0x73, 0x74, 0x46, 0x69, 0x78,
-	0x74, 0x75, 0x72, 0x65, 0x47, 0x65, 0x74, 0x54, 0x65, 0x73, 0x74, 0x73, 0x54, 0x65, 0x73, 0x74,
-	0x43, 0x61, 0x73, 0x65, 0x12, 0x31, 0x0a, 0x05, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c,
-	0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x54, 0x61, 0x62, 0x6c, 0x65,
-	0x52, 0x05, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x35, 0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f,
-	0x74, 0x65, 0x73, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x63, 0x65,
-	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54,
-	0x65, 0x73, 0x74, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x54, 0x65, 0x73, 0x74, 0x73, 0x12, 0x19,
-	0x0a, 0x08, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x07, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x22, 0xe4, 0x01, 0x0a, 0x1a, 0x51, 0x75,
-	0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x6e, 0x6e, 0x65, 0x72, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
-	0x54, 0x65, 0x73, 0x74, 0x43, 0x61, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63,
-	0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64,
-	0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x3b, 0x0a, 0x05, 0x69, 0x6e,
-	0x70, 0x75, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6c, 0x61,
-	0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
-	0x52, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x46, 0x0a, 0x0b, 0x77, 0x61, 0x6e, 0x74, 0x5f,
-	0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63,
+	0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x54, 0x65, 0x73, 0x74,
+	0x73, 0x12, 0x19, 0x0a, 0x08, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x07, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x22, 0xe4, 0x01, 0x0a,
+	0x1a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x6c, 0x61, 0x6e, 0x6e, 0x65, 0x72, 0x46, 0x69, 0x6c,
+	0x74, 0x65, 0x72, 0x54, 0x65, 0x73, 0x74, 0x43, 0x61, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64,
+	0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x3b, 0x0a,
+	0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63,
 	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e,
 	0x50, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x46, 0x69, 0x6c,
-	0x74, 0x65, 0x72, 0x52, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12,
-	0x1f, 0x0a, 0x0b, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x73, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x18, 0x04,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67,
-	0x22, 0x80, 0x01, 0x0a, 0x0e, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x54, 0x65, 0x73, 0x74, 0x43,
-	0x61, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69,
-	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x19, 0x0a, 0x08, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72,
-	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72,
-	0x12, 0x31, 0x0a, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d,
-	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76,
-	0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x52, 0x04, 0x77,
-	0x61, 0x6e, 0x74, 0x42, 0x40, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f,
-	0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
-	0x2f, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x70, 0x72, 0x69, 0x76,
-	0x61, 0x74, 0x65, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x65, 0x72, 0x52, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x46, 0x0a, 0x0b, 0x77, 0x61,
+	0x6e, 0x74, 0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x25, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x50, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73,
+	0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x46, 0x69, 0x6c, 0x74,
+	0x65, 0x72, 0x12, 0x1f, 0x0a, 0x0b, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x73, 0x74, 0x72, 0x69, 0x6e,
+	0x67, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x53, 0x74, 0x72,
+	0x69, 0x6e, 0x67, 0x22, 0x80, 0x01, 0x0a, 0x0e, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x54, 0x65,
+	0x73, 0x74, 0x43, 0x61, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73,
+	0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x19, 0x0a, 0x08, 0x77, 0x61, 0x6e, 0x74,
+	0x5f, 0x65, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x77, 0x61, 0x6e, 0x74,
+	0x45, 0x72, 0x72, 0x12, 0x31, 0x0a, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1d, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73,
+	0x52, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x42, 0x40, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62,
+	0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72,
+	0x62, 0x6f, 0x73, 0x2f, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x70,
+	0x72, 0x69, 0x76, 0x61, 0x74, 0x65, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2290,138 +2207,136 @@ func file_cerbos_private_v1_test_proto_rawDescGZIP() []byte {
 	return file_cerbos_private_v1_test_proto_rawDescData
 }
 
-var file_cerbos_private_v1_test_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_cerbos_private_v1_test_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_cerbos_private_v1_test_proto_goTypes = []interface{}{
 	(*EngineTestCase)(nil),                            // 0: cerbos.private.v1.EngineTestCase
 	(*ServerTestCase)(nil),                            // 1: cerbos.private.v1.ServerTestCase
 	(*IndexBuilderTestCase)(nil),                      // 2: cerbos.private.v1.IndexBuilderTestCase
 	(*CompileTestCase)(nil),                           // 3: cerbos.private.v1.CompileTestCase
-	(*CodeGenTestCase)(nil),                           // 4: cerbos.private.v1.CodeGenTestCase
-	(*CelTestCase)(nil),                               // 5: cerbos.private.v1.CelTestCase
-	(*SchemaTestCase)(nil),                            // 6: cerbos.private.v1.SchemaTestCase
-	(*ValidationErrContainer)(nil),                    // 7: cerbos.private.v1.ValidationErrContainer
-	(*AttrWrapper)(nil),                               // 8: cerbos.private.v1.AttrWrapper
-	(*QueryPlannerTestSuite)(nil),                     // 9: cerbos.private.v1.QueryPlannerTestSuite
-	(*VerifyTestFixtureGetTestsTestCase)(nil),         // 10: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase
-	(*QueryPlannerFilterTestCase)(nil),                // 11: cerbos.private.v1.QueryPlannerFilterTestCase
-	(*VerifyTestCase)(nil),                            // 12: cerbos.private.v1.VerifyTestCase
-	(*ServerTestCase_PlanResourcesCall)(nil),          // 13: cerbos.private.v1.ServerTestCase.PlanResourcesCall
-	(*ServerTestCase_CheckResourceSetCall)(nil),       // 14: cerbos.private.v1.ServerTestCase.CheckResourceSetCall
-	(*ServerTestCase_CheckResourceBatchCall)(nil),     // 15: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
-	(*ServerTestCase_CheckResourcesCall)(nil),         // 16: cerbos.private.v1.ServerTestCase.CheckResourcesCall
-	(*ServerTestCase_PlaygroundValidateCall)(nil),     // 17: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
-	(*ServerTestCase_PlaygroundTestCall)(nil),         // 18: cerbos.private.v1.ServerTestCase.PlaygroundTestCall
-	(*ServerTestCase_PlaygroundEvaluateCall)(nil),     // 19: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
-	(*ServerTestCase_PlaygroundProxyCall)(nil),        // 20: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
-	(*ServerTestCase_AdminAddOrUpdatePolicyCall)(nil), // 21: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
-	(*ServerTestCase_AdminAddOrUpdateSchemaCall)(nil), // 22: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
-	(*ServerTestCase_Status)(nil),                     // 23: cerbos.private.v1.ServerTestCase.Status
-	(*IndexBuilderTestCase_CompilationUnit)(nil),      // 24: cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
-	nil,                                    // 25: cerbos.private.v1.IndexBuilderTestCase.FilesEntry
-	(*CompileTestCase_Error)(nil),          // 26: cerbos.private.v1.CompileTestCase.Error
-	nil,                                    // 27: cerbos.private.v1.CompileTestCase.InputDefsEntry
-	nil,                                    // 28: cerbos.private.v1.AttrWrapper.AttrEntry
-	(*QueryPlannerTestSuite_Test)(nil),     // 29: cerbos.private.v1.QueryPlannerTestSuite.Test
-	(*v1.CheckInput)(nil),                  // 30: cerbos.engine.v1.CheckInput
-	(*v1.CheckOutput)(nil),                 // 31: cerbos.engine.v1.CheckOutput
-	(*v11.IndexBuildErrors)(nil),           // 32: cerbos.runtime.v1.IndexBuildErrors
-	(*v12.Policy)(nil),                     // 33: cerbos.policy.v1.Policy
-	(*v12.Match)(nil),                      // 34: cerbos.policy.v1.Match
-	(*v12.Schemas)(nil),                    // 35: cerbos.policy.v1.Schemas
-	(*v1.PlanResourcesInput)(nil),          // 36: cerbos.engine.v1.PlanResourcesInput
-	(*v13.ValidationError)(nil),            // 37: cerbos.schema.v1.ValidationError
-	(*v1.Principal)(nil),                   // 38: cerbos.engine.v1.Principal
-	(*v12.TestTable)(nil),                  // 39: cerbos.policy.v1.TestTable
-	(*v12.Test)(nil),                       // 40: cerbos.policy.v1.Test
-	(*v1.PlanResourcesFilter)(nil),         // 41: cerbos.engine.v1.PlanResourcesFilter
-	(*v12.TestResults)(nil),                // 42: cerbos.policy.v1.TestResults
-	(*v14.PlanResourcesRequest)(nil),       // 43: cerbos.request.v1.PlanResourcesRequest
-	(*v15.PlanResourcesResponse)(nil),      // 44: cerbos.response.v1.PlanResourcesResponse
-	(*v14.CheckResourceSetRequest)(nil),    // 45: cerbos.request.v1.CheckResourceSetRequest
-	(*v15.CheckResourceSetResponse)(nil),   // 46: cerbos.response.v1.CheckResourceSetResponse
-	(*v14.CheckResourceBatchRequest)(nil),  // 47: cerbos.request.v1.CheckResourceBatchRequest
-	(*v15.CheckResourceBatchResponse)(nil), // 48: cerbos.response.v1.CheckResourceBatchResponse
-	(*v14.CheckResourcesRequest)(nil),      // 49: cerbos.request.v1.CheckResourcesRequest
-	(*v15.CheckResourcesResponse)(nil),     // 50: cerbos.response.v1.CheckResourcesResponse
-	(*v14.PlaygroundValidateRequest)(nil),  // 51: cerbos.request.v1.PlaygroundValidateRequest
-	(*v15.PlaygroundValidateResponse)(nil), // 52: cerbos.response.v1.PlaygroundValidateResponse
-	(*v14.PlaygroundTestRequest)(nil),      // 53: cerbos.request.v1.PlaygroundTestRequest
-	(*v15.PlaygroundTestResponse)(nil),     // 54: cerbos.response.v1.PlaygroundTestResponse
-	(*v14.PlaygroundEvaluateRequest)(nil),  // 55: cerbos.request.v1.PlaygroundEvaluateRequest
-	(*v15.PlaygroundEvaluateResponse)(nil), // 56: cerbos.response.v1.PlaygroundEvaluateResponse
-	(*v14.PlaygroundProxyRequest)(nil),     // 57: cerbos.request.v1.PlaygroundProxyRequest
-	(*v15.PlaygroundProxyResponse)(nil),    // 58: cerbos.response.v1.PlaygroundProxyResponse
-	(*v14.AddOrUpdatePolicyRequest)(nil),   // 59: cerbos.request.v1.AddOrUpdatePolicyRequest
-	(*v15.AddOrUpdatePolicyResponse)(nil),  // 60: cerbos.response.v1.AddOrUpdatePolicyResponse
-	(*v14.AddOrUpdateSchemaRequest)(nil),   // 61: cerbos.request.v1.AddOrUpdateSchemaRequest
-	(*v15.AddOrUpdateSchemaResponse)(nil),  // 62: cerbos.response.v1.AddOrUpdateSchemaResponse
-	(*structpb.Value)(nil),                 // 63: google.protobuf.Value
-	(*v1.PlanResourcesInput_Resource)(nil), // 64: cerbos.engine.v1.PlanResourcesInput.Resource
+	(*CelTestCase)(nil),                               // 4: cerbos.private.v1.CelTestCase
+	(*SchemaTestCase)(nil),                            // 5: cerbos.private.v1.SchemaTestCase
+	(*ValidationErrContainer)(nil),                    // 6: cerbos.private.v1.ValidationErrContainer
+	(*AttrWrapper)(nil),                               // 7: cerbos.private.v1.AttrWrapper
+	(*QueryPlannerTestSuite)(nil),                     // 8: cerbos.private.v1.QueryPlannerTestSuite
+	(*VerifyTestFixtureGetTestsTestCase)(nil),         // 9: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase
+	(*QueryPlannerFilterTestCase)(nil),                // 10: cerbos.private.v1.QueryPlannerFilterTestCase
+	(*VerifyTestCase)(nil),                            // 11: cerbos.private.v1.VerifyTestCase
+	(*ServerTestCase_PlanResourcesCall)(nil),          // 12: cerbos.private.v1.ServerTestCase.PlanResourcesCall
+	(*ServerTestCase_CheckResourceSetCall)(nil),       // 13: cerbos.private.v1.ServerTestCase.CheckResourceSetCall
+	(*ServerTestCase_CheckResourceBatchCall)(nil),     // 14: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
+	(*ServerTestCase_CheckResourcesCall)(nil),         // 15: cerbos.private.v1.ServerTestCase.CheckResourcesCall
+	(*ServerTestCase_PlaygroundValidateCall)(nil),     // 16: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
+	(*ServerTestCase_PlaygroundTestCall)(nil),         // 17: cerbos.private.v1.ServerTestCase.PlaygroundTestCall
+	(*ServerTestCase_PlaygroundEvaluateCall)(nil),     // 18: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
+	(*ServerTestCase_PlaygroundProxyCall)(nil),        // 19: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
+	(*ServerTestCase_AdminAddOrUpdatePolicyCall)(nil), // 20: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
+	(*ServerTestCase_AdminAddOrUpdateSchemaCall)(nil), // 21: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
+	(*ServerTestCase_Status)(nil),                     // 22: cerbos.private.v1.ServerTestCase.Status
+	(*IndexBuilderTestCase_CompilationUnit)(nil),      // 23: cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
+	nil,                                    // 24: cerbos.private.v1.IndexBuilderTestCase.FilesEntry
+	(*CompileTestCase_Error)(nil),          // 25: cerbos.private.v1.CompileTestCase.Error
+	nil,                                    // 26: cerbos.private.v1.CompileTestCase.InputDefsEntry
+	nil,                                    // 27: cerbos.private.v1.AttrWrapper.AttrEntry
+	(*QueryPlannerTestSuite_Test)(nil),     // 28: cerbos.private.v1.QueryPlannerTestSuite.Test
+	(*v1.CheckInput)(nil),                  // 29: cerbos.engine.v1.CheckInput
+	(*v1.CheckOutput)(nil),                 // 30: cerbos.engine.v1.CheckOutput
+	(*v11.IndexBuildErrors)(nil),           // 31: cerbos.runtime.v1.IndexBuildErrors
+	(*v12.Match)(nil),                      // 32: cerbos.policy.v1.Match
+	(*v12.Schemas)(nil),                    // 33: cerbos.policy.v1.Schemas
+	(*v1.PlanResourcesInput)(nil),          // 34: cerbos.engine.v1.PlanResourcesInput
+	(*v13.ValidationError)(nil),            // 35: cerbos.schema.v1.ValidationError
+	(*v1.Principal)(nil),                   // 36: cerbos.engine.v1.Principal
+	(*v12.TestTable)(nil),                  // 37: cerbos.policy.v1.TestTable
+	(*v12.Test)(nil),                       // 38: cerbos.policy.v1.Test
+	(*v1.PlanResourcesFilter)(nil),         // 39: cerbos.engine.v1.PlanResourcesFilter
+	(*v12.TestResults)(nil),                // 40: cerbos.policy.v1.TestResults
+	(*v14.PlanResourcesRequest)(nil),       // 41: cerbos.request.v1.PlanResourcesRequest
+	(*v15.PlanResourcesResponse)(nil),      // 42: cerbos.response.v1.PlanResourcesResponse
+	(*v14.CheckResourceSetRequest)(nil),    // 43: cerbos.request.v1.CheckResourceSetRequest
+	(*v15.CheckResourceSetResponse)(nil),   // 44: cerbos.response.v1.CheckResourceSetResponse
+	(*v14.CheckResourceBatchRequest)(nil),  // 45: cerbos.request.v1.CheckResourceBatchRequest
+	(*v15.CheckResourceBatchResponse)(nil), // 46: cerbos.response.v1.CheckResourceBatchResponse
+	(*v14.CheckResourcesRequest)(nil),      // 47: cerbos.request.v1.CheckResourcesRequest
+	(*v15.CheckResourcesResponse)(nil),     // 48: cerbos.response.v1.CheckResourcesResponse
+	(*v14.PlaygroundValidateRequest)(nil),  // 49: cerbos.request.v1.PlaygroundValidateRequest
+	(*v15.PlaygroundValidateResponse)(nil), // 50: cerbos.response.v1.PlaygroundValidateResponse
+	(*v14.PlaygroundTestRequest)(nil),      // 51: cerbos.request.v1.PlaygroundTestRequest
+	(*v15.PlaygroundTestResponse)(nil),     // 52: cerbos.response.v1.PlaygroundTestResponse
+	(*v14.PlaygroundEvaluateRequest)(nil),  // 53: cerbos.request.v1.PlaygroundEvaluateRequest
+	(*v15.PlaygroundEvaluateResponse)(nil), // 54: cerbos.response.v1.PlaygroundEvaluateResponse
+	(*v14.PlaygroundProxyRequest)(nil),     // 55: cerbos.request.v1.PlaygroundProxyRequest
+	(*v15.PlaygroundProxyResponse)(nil),    // 56: cerbos.response.v1.PlaygroundProxyResponse
+	(*v14.AddOrUpdatePolicyRequest)(nil),   // 57: cerbos.request.v1.AddOrUpdatePolicyRequest
+	(*v15.AddOrUpdatePolicyResponse)(nil),  // 58: cerbos.response.v1.AddOrUpdatePolicyResponse
+	(*v14.AddOrUpdateSchemaRequest)(nil),   // 59: cerbos.request.v1.AddOrUpdateSchemaRequest
+	(*v15.AddOrUpdateSchemaResponse)(nil),  // 60: cerbos.response.v1.AddOrUpdateSchemaResponse
+	(*v12.Policy)(nil),                     // 61: cerbos.policy.v1.Policy
+	(*structpb.Value)(nil),                 // 62: google.protobuf.Value
+	(*v1.PlanResourcesInput_Resource)(nil), // 63: cerbos.engine.v1.PlanResourcesInput.Resource
 }
 var file_cerbos_private_v1_test_proto_depIdxs = []int32{
-	30, // 0: cerbos.private.v1.EngineTestCase.inputs:type_name -> cerbos.engine.v1.CheckInput
-	31, // 1: cerbos.private.v1.EngineTestCase.want_outputs:type_name -> cerbos.engine.v1.CheckOutput
-	23, // 2: cerbos.private.v1.ServerTestCase.want_status:type_name -> cerbos.private.v1.ServerTestCase.Status
-	14, // 3: cerbos.private.v1.ServerTestCase.check_resource_set:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceSetCall
-	15, // 4: cerbos.private.v1.ServerTestCase.check_resource_batch:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
-	17, // 5: cerbos.private.v1.ServerTestCase.playground_validate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
-	19, // 6: cerbos.private.v1.ServerTestCase.playground_evaluate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
-	21, // 7: cerbos.private.v1.ServerTestCase.admin_add_or_update_policy:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
-	20, // 8: cerbos.private.v1.ServerTestCase.playground_proxy:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
-	13, // 9: cerbos.private.v1.ServerTestCase.plan_resources:type_name -> cerbos.private.v1.ServerTestCase.PlanResourcesCall
-	22, // 10: cerbos.private.v1.ServerTestCase.admin_add_or_update_schema:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
-	18, // 11: cerbos.private.v1.ServerTestCase.playground_test:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundTestCall
-	16, // 12: cerbos.private.v1.ServerTestCase.check_resources:type_name -> cerbos.private.v1.ServerTestCase.CheckResourcesCall
-	25, // 13: cerbos.private.v1.IndexBuilderTestCase.files:type_name -> cerbos.private.v1.IndexBuilderTestCase.FilesEntry
-	32, // 14: cerbos.private.v1.IndexBuilderTestCase.want_err_list:type_name -> cerbos.runtime.v1.IndexBuildErrors
-	24, // 15: cerbos.private.v1.IndexBuilderTestCase.want_compilation_units:type_name -> cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
-	27, // 16: cerbos.private.v1.CompileTestCase.input_defs:type_name -> cerbos.private.v1.CompileTestCase.InputDefsEntry
-	26, // 17: cerbos.private.v1.CompileTestCase.want_errors:type_name -> cerbos.private.v1.CompileTestCase.Error
-	33, // 18: cerbos.private.v1.CodeGenTestCase.input_policy:type_name -> cerbos.policy.v1.Policy
-	34, // 19: cerbos.private.v1.CelTestCase.condition:type_name -> cerbos.policy.v1.Match
-	30, // 20: cerbos.private.v1.CelTestCase.input:type_name -> cerbos.engine.v1.CheckInput
-	35, // 21: cerbos.private.v1.SchemaTestCase.schema_refs:type_name -> cerbos.policy.v1.Schemas
-	30, // 22: cerbos.private.v1.SchemaTestCase.check_input:type_name -> cerbos.engine.v1.CheckInput
-	36, // 23: cerbos.private.v1.SchemaTestCase.plan_resources_input:type_name -> cerbos.engine.v1.PlanResourcesInput
-	37, // 24: cerbos.private.v1.SchemaTestCase.want_validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	37, // 25: cerbos.private.v1.ValidationErrContainer.errors:type_name -> cerbos.schema.v1.ValidationError
-	28, // 26: cerbos.private.v1.AttrWrapper.attr:type_name -> cerbos.private.v1.AttrWrapper.AttrEntry
-	38, // 27: cerbos.private.v1.QueryPlannerTestSuite.principal:type_name -> cerbos.engine.v1.Principal
-	29, // 28: cerbos.private.v1.QueryPlannerTestSuite.tests:type_name -> cerbos.private.v1.QueryPlannerTestSuite.Test
-	39, // 29: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.table:type_name -> cerbos.policy.v1.TestTable
-	40, // 30: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_tests:type_name -> cerbos.policy.v1.Test
-	41, // 31: cerbos.private.v1.QueryPlannerFilterTestCase.input:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	41, // 32: cerbos.private.v1.QueryPlannerFilterTestCase.want_filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	42, // 33: cerbos.private.v1.VerifyTestCase.want:type_name -> cerbos.policy.v1.TestResults
-	43, // 34: cerbos.private.v1.ServerTestCase.PlanResourcesCall.input:type_name -> cerbos.request.v1.PlanResourcesRequest
-	44, // 35: cerbos.private.v1.ServerTestCase.PlanResourcesCall.want_response:type_name -> cerbos.response.v1.PlanResourcesResponse
-	45, // 36: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.input:type_name -> cerbos.request.v1.CheckResourceSetRequest
-	46, // 37: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.want_response:type_name -> cerbos.response.v1.CheckResourceSetResponse
-	47, // 38: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.input:type_name -> cerbos.request.v1.CheckResourceBatchRequest
-	48, // 39: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.want_response:type_name -> cerbos.response.v1.CheckResourceBatchResponse
-	49, // 40: cerbos.private.v1.ServerTestCase.CheckResourcesCall.input:type_name -> cerbos.request.v1.CheckResourcesRequest
-	50, // 41: cerbos.private.v1.ServerTestCase.CheckResourcesCall.want_response:type_name -> cerbos.response.v1.CheckResourcesResponse
-	51, // 42: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.input:type_name -> cerbos.request.v1.PlaygroundValidateRequest
-	52, // 43: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.want_response:type_name -> cerbos.response.v1.PlaygroundValidateResponse
-	53, // 44: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.input:type_name -> cerbos.request.v1.PlaygroundTestRequest
-	54, // 45: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.want_response:type_name -> cerbos.response.v1.PlaygroundTestResponse
-	55, // 46: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.input:type_name -> cerbos.request.v1.PlaygroundEvaluateRequest
-	56, // 47: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.want_response:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse
-	57, // 48: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.input:type_name -> cerbos.request.v1.PlaygroundProxyRequest
-	58, // 49: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.want_response:type_name -> cerbos.response.v1.PlaygroundProxyResponse
-	59, // 50: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.input:type_name -> cerbos.request.v1.AddOrUpdatePolicyRequest
-	60, // 51: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.want_response:type_name -> cerbos.response.v1.AddOrUpdatePolicyResponse
-	61, // 52: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.input:type_name -> cerbos.request.v1.AddOrUpdateSchemaRequest
-	62, // 53: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.want_response:type_name -> cerbos.response.v1.AddOrUpdateSchemaResponse
-	33, // 54: cerbos.private.v1.CompileTestCase.InputDefsEntry.value:type_name -> cerbos.policy.v1.Policy
-	63, // 55: cerbos.private.v1.AttrWrapper.AttrEntry.value:type_name -> google.protobuf.Value
-	41, // 56: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	64, // 57: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
-	58, // [58:58] is the sub-list for method output_type
-	58, // [58:58] is the sub-list for method input_type
-	58, // [58:58] is the sub-list for extension type_name
-	58, // [58:58] is the sub-list for extension extendee
-	0,  // [0:58] is the sub-list for field type_name
+	29, // 0: cerbos.private.v1.EngineTestCase.inputs:type_name -> cerbos.engine.v1.CheckInput
+	30, // 1: cerbos.private.v1.EngineTestCase.want_outputs:type_name -> cerbos.engine.v1.CheckOutput
+	22, // 2: cerbos.private.v1.ServerTestCase.want_status:type_name -> cerbos.private.v1.ServerTestCase.Status
+	13, // 3: cerbos.private.v1.ServerTestCase.check_resource_set:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceSetCall
+	14, // 4: cerbos.private.v1.ServerTestCase.check_resource_batch:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
+	16, // 5: cerbos.private.v1.ServerTestCase.playground_validate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
+	18, // 6: cerbos.private.v1.ServerTestCase.playground_evaluate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
+	20, // 7: cerbos.private.v1.ServerTestCase.admin_add_or_update_policy:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
+	19, // 8: cerbos.private.v1.ServerTestCase.playground_proxy:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
+	12, // 9: cerbos.private.v1.ServerTestCase.plan_resources:type_name -> cerbos.private.v1.ServerTestCase.PlanResourcesCall
+	21, // 10: cerbos.private.v1.ServerTestCase.admin_add_or_update_schema:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
+	17, // 11: cerbos.private.v1.ServerTestCase.playground_test:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundTestCall
+	15, // 12: cerbos.private.v1.ServerTestCase.check_resources:type_name -> cerbos.private.v1.ServerTestCase.CheckResourcesCall
+	24, // 13: cerbos.private.v1.IndexBuilderTestCase.files:type_name -> cerbos.private.v1.IndexBuilderTestCase.FilesEntry
+	31, // 14: cerbos.private.v1.IndexBuilderTestCase.want_err_list:type_name -> cerbos.runtime.v1.IndexBuildErrors
+	23, // 15: cerbos.private.v1.IndexBuilderTestCase.want_compilation_units:type_name -> cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
+	26, // 16: cerbos.private.v1.CompileTestCase.input_defs:type_name -> cerbos.private.v1.CompileTestCase.InputDefsEntry
+	25, // 17: cerbos.private.v1.CompileTestCase.want_errors:type_name -> cerbos.private.v1.CompileTestCase.Error
+	32, // 18: cerbos.private.v1.CelTestCase.condition:type_name -> cerbos.policy.v1.Match
+	29, // 19: cerbos.private.v1.CelTestCase.input:type_name -> cerbos.engine.v1.CheckInput
+	33, // 20: cerbos.private.v1.SchemaTestCase.schema_refs:type_name -> cerbos.policy.v1.Schemas
+	29, // 21: cerbos.private.v1.SchemaTestCase.check_input:type_name -> cerbos.engine.v1.CheckInput
+	34, // 22: cerbos.private.v1.SchemaTestCase.plan_resources_input:type_name -> cerbos.engine.v1.PlanResourcesInput
+	35, // 23: cerbos.private.v1.SchemaTestCase.want_validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	35, // 24: cerbos.private.v1.ValidationErrContainer.errors:type_name -> cerbos.schema.v1.ValidationError
+	27, // 25: cerbos.private.v1.AttrWrapper.attr:type_name -> cerbos.private.v1.AttrWrapper.AttrEntry
+	36, // 26: cerbos.private.v1.QueryPlannerTestSuite.principal:type_name -> cerbos.engine.v1.Principal
+	28, // 27: cerbos.private.v1.QueryPlannerTestSuite.tests:type_name -> cerbos.private.v1.QueryPlannerTestSuite.Test
+	37, // 28: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.table:type_name -> cerbos.policy.v1.TestTable
+	38, // 29: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_tests:type_name -> cerbos.policy.v1.Test
+	39, // 30: cerbos.private.v1.QueryPlannerFilterTestCase.input:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	39, // 31: cerbos.private.v1.QueryPlannerFilterTestCase.want_filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	40, // 32: cerbos.private.v1.VerifyTestCase.want:type_name -> cerbos.policy.v1.TestResults
+	41, // 33: cerbos.private.v1.ServerTestCase.PlanResourcesCall.input:type_name -> cerbos.request.v1.PlanResourcesRequest
+	42, // 34: cerbos.private.v1.ServerTestCase.PlanResourcesCall.want_response:type_name -> cerbos.response.v1.PlanResourcesResponse
+	43, // 35: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.input:type_name -> cerbos.request.v1.CheckResourceSetRequest
+	44, // 36: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.want_response:type_name -> cerbos.response.v1.CheckResourceSetResponse
+	45, // 37: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.input:type_name -> cerbos.request.v1.CheckResourceBatchRequest
+	46, // 38: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.want_response:type_name -> cerbos.response.v1.CheckResourceBatchResponse
+	47, // 39: cerbos.private.v1.ServerTestCase.CheckResourcesCall.input:type_name -> cerbos.request.v1.CheckResourcesRequest
+	48, // 40: cerbos.private.v1.ServerTestCase.CheckResourcesCall.want_response:type_name -> cerbos.response.v1.CheckResourcesResponse
+	49, // 41: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.input:type_name -> cerbos.request.v1.PlaygroundValidateRequest
+	50, // 42: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.want_response:type_name -> cerbos.response.v1.PlaygroundValidateResponse
+	51, // 43: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.input:type_name -> cerbos.request.v1.PlaygroundTestRequest
+	52, // 44: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.want_response:type_name -> cerbos.response.v1.PlaygroundTestResponse
+	53, // 45: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.input:type_name -> cerbos.request.v1.PlaygroundEvaluateRequest
+	54, // 46: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.want_response:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse
+	55, // 47: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.input:type_name -> cerbos.request.v1.PlaygroundProxyRequest
+	56, // 48: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.want_response:type_name -> cerbos.response.v1.PlaygroundProxyResponse
+	57, // 49: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.input:type_name -> cerbos.request.v1.AddOrUpdatePolicyRequest
+	58, // 50: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.want_response:type_name -> cerbos.response.v1.AddOrUpdatePolicyResponse
+	59, // 51: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.input:type_name -> cerbos.request.v1.AddOrUpdateSchemaRequest
+	60, // 52: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.want_response:type_name -> cerbos.response.v1.AddOrUpdateSchemaResponse
+	61, // 53: cerbos.private.v1.CompileTestCase.InputDefsEntry.value:type_name -> cerbos.policy.v1.Policy
+	62, // 54: cerbos.private.v1.AttrWrapper.AttrEntry.value:type_name -> google.protobuf.Value
+	39, // 55: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	63, // 56: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
+	57, // [57:57] is the sub-list for method output_type
+	57, // [57:57] is the sub-list for method input_type
+	57, // [57:57] is the sub-list for extension type_name
+	57, // [57:57] is the sub-list for extension extendee
+	0,  // [0:57] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_private_v1_test_proto_init() }
@@ -2479,18 +2394,6 @@ func file_cerbos_private_v1_test_proto_init() {
 			}
 		}
 		file_cerbos_private_v1_test_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CodeGenTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CelTestCase); i {
 			case 0:
 				return &v.state
@@ -2502,7 +2405,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SchemaTestCase); i {
 			case 0:
 				return &v.state
@@ -2514,7 +2417,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ValidationErrContainer); i {
 			case 0:
 				return &v.state
@@ -2526,7 +2429,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AttrWrapper); i {
 			case 0:
 				return &v.state
@@ -2538,7 +2441,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QueryPlannerTestSuite); i {
 			case 0:
 				return &v.state
@@ -2550,7 +2453,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VerifyTestFixtureGetTestsTestCase); i {
 			case 0:
 				return &v.state
@@ -2562,7 +2465,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QueryPlannerFilterTestCase); i {
 			case 0:
 				return &v.state
@@ -2574,7 +2477,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VerifyTestCase); i {
 			case 0:
 				return &v.state
@@ -2586,7 +2489,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_PlanResourcesCall); i {
 			case 0:
 				return &v.state
@@ -2598,7 +2501,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_CheckResourceSetCall); i {
 			case 0:
 				return &v.state
@@ -2610,7 +2513,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_CheckResourceBatchCall); i {
 			case 0:
 				return &v.state
@@ -2622,7 +2525,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_CheckResourcesCall); i {
 			case 0:
 				return &v.state
@@ -2634,7 +2537,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_PlaygroundValidateCall); i {
 			case 0:
 				return &v.state
@@ -2646,7 +2549,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_PlaygroundTestCall); i {
 			case 0:
 				return &v.state
@@ -2658,7 +2561,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_PlaygroundEvaluateCall); i {
 			case 0:
 				return &v.state
@@ -2670,7 +2573,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_PlaygroundProxyCall); i {
 			case 0:
 				return &v.state
@@ -2682,7 +2585,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_AdminAddOrUpdatePolicyCall); i {
 			case 0:
 				return &v.state
@@ -2694,7 +2597,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_AdminAddOrUpdateSchemaCall); i {
 			case 0:
 				return &v.state
@@ -2706,7 +2609,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServerTestCase_Status); i {
 			case 0:
 				return &v.state
@@ -2718,7 +2621,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IndexBuilderTestCase_CompilationUnit); i {
 			case 0:
 				return &v.state
@@ -2730,7 +2633,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CompileTestCase_Error); i {
 			case 0:
 				return &v.state
@@ -2742,7 +2645,7 @@ func file_cerbos_private_v1_test_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_private_v1_test_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_private_v1_test_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QueryPlannerTestSuite_Test); i {
 			case 0:
 				return &v.state
@@ -2767,7 +2670,7 @@ func file_cerbos_private_v1_test_proto_init() {
 		(*ServerTestCase_PlaygroundTest)(nil),
 		(*ServerTestCase_CheckResources)(nil),
 	}
-	file_cerbos_private_v1_test_proto_msgTypes[6].OneofWrappers = []interface{}{
+	file_cerbos_private_v1_test_proto_msgTypes[5].OneofWrappers = []interface{}{
 		(*SchemaTestCase_CheckInput)(nil),
 		(*SchemaTestCase_PlanResourcesInput)(nil),
 	}
@@ -2777,7 +2680,7 @@ func file_cerbos_private_v1_test_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_private_v1_test_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   30,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

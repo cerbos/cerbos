@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Garbage definition"
 wantError: true

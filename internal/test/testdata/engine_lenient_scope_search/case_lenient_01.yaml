@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Scoped principal policy: lenient scope search"
 inputs: [

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
 ---
 wantErrList:
   missingImports:

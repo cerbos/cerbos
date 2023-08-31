@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/CelTestCase.schema.json
 ---
 condition:
   all:
@@ -6,7 +7,7 @@ condition:
       - expr: duration(R.attr.cooldownPeriod).getHours() == 1
       - expr: duration(R.attr.cooldownPeriod).getMilliseconds() == 3750000
       - expr: duration(R.attr.cooldownPeriod).getMinutes() == 62
-      - expr: timestamp(R.attr.lastAccessTime) - timestamp(R.attr.lastUpdateTime) < duration("36h") 
+      - expr: timestamp(R.attr.lastAccessTime) - timestamp(R.attr.lastUpdateTime) < duration("36h")
 input: {
   "requestId": "test",
   "actions": ["*"],
@@ -19,6 +20,7 @@ input: {
   },
   "resource": {
     "kind": "leave_request",
+    "id": "test",
     "attr": {
       "cooldownPeriod": "3750s",
       "lastUpdateTime": "2021-05-01T13:34:12.024Z",

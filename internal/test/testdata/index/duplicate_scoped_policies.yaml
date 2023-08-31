@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
 ---
 wantErrList:
   duplicateDefs:
@@ -83,7 +84,7 @@ files:
         - name: employee_that_owns_the_record
           parentRoles: ["employee"]
           condition:
-            match: 
+            match:
               expr: request.resource.attr.owner == request.principal.id
 
         - name: any_employee

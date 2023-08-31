@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Harry defers; scoped request 'acme.hr'"
 wantStatus:
@@ -40,7 +41,7 @@ planResources:
       "kind": "KIND_ALWAYS_ALLOWED",
     },
     "meta": {
-      "filter_debug": "(true)",
-      "matched_scope": "acme.hr"
+      "filterDebug": "(true)",
+      "matchedScope": "acme.hr"
     }
   }

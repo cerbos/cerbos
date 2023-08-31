@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/SchemaTestCase.schema.json
 ---
 description: No resource schema
 schemaRefs:

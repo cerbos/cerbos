@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Always allowed resources query plan"
 wantStatus:
@@ -72,7 +73,7 @@ playgroundProxy:
         "kind": "KIND_ALWAYS_ALLOWED"
       },
       "meta": {
-        "filter_debug": "(true)"
+        "filterDebug": "(true)"
       }
     }
   }

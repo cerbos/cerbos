@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Harry wants to create;scoped request matched by parent scope"
 wantStatus:
@@ -49,7 +50,7 @@ planResources:
       }
     },
     "meta": {
-      "filter_debug": "(eq request.resource.attr.owner \"harry\")",
-      "matched_scope": "acme"
+      "filterDebug": "(eq request.resource.attr.owner \"harry\")",
+      "matchedScope": "acme"
     }
   }

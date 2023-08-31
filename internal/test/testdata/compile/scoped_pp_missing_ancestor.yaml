@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
 wantErrors:
   - file: donald_duck.acme.hr.uk.yaml
@@ -33,4 +34,3 @@ inputDefs:
            actions:
              - action: "*"
                effect: EFFECT_DENY
-

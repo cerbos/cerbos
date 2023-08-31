@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestFixtureGetTestsTestCase.schema.json
+---
 table:
   name: Repeated expectation
   description: You can't have multiple expectations for a principal+resource pair.

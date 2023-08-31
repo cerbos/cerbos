@@ -121,13 +121,6 @@ message CompileTestCase {
   repeated Error want_errors = 3;
 }
 
-message CodeGenTestCase {
-  cerbos.policy.v1.Policy input_policy = 1;
-  bool want_error = 2;
-  string want_rego = 3;
-  int32 want_num_conditions = 4;
-}
-
 message CelTestCase {
   cerbos.policy.v1.Match condition = 1;
   cerbos.engine.v1.CheckInput input = 2;

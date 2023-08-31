@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestFixtureGetTestsTestCase.schema.json
+---
 table:
   name: Nonexistent aux data
   description: Aux data must exist in test fixtures.

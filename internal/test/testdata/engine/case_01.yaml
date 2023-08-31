@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "John tries to view and approve his own leave request"
 inputs: [

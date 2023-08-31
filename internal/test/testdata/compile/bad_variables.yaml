@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
 wantErrors:
   - file: resource_policies/example.yaml
@@ -47,6 +48,7 @@ inputDefs:
             - "*"
           roles:
             - "*"
+          effect: EFFECT_ALLOW
           condition:
             match:
               expr: V.z > 9000

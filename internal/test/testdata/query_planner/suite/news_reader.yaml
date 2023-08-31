@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
 ---
 description: News reader tests
 principal:

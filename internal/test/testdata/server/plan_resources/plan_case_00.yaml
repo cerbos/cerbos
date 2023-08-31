@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/ServerTestCase.schema.json
 ---
 description: Maggie wants to approve
 wantStatus:
@@ -48,4 +49,4 @@ planResources:
                   - variable: request.resource.attr.status
                   - value: PENDING_APPROVAL
     meta:
-      filter_debug: "(and (eq request.resource.attr.geography \"GB\") (eq request.resource.attr.status \"PENDING_APPROVAL\"))"
+      filterDebug: "(and (eq request.resource.attr.geography \"GB\") (eq request.resource.attr.status \"PENDING_APPROVAL\"))"

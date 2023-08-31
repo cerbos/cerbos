@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "John's direct manager tries to approve a draft leave request and a pending-approval leave request"
 wantStatus:

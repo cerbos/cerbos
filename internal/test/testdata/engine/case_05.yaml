@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Explicit deny from Donald Duck principal policy"
 inputs: [

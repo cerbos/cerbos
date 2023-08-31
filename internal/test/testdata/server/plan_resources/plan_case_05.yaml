@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/ServerTestCase.schema.json
 ---
 description: Validation failures
 wantStatus:
@@ -36,7 +37,7 @@ planResources:
     filter:
       kind: KIND_ALWAYS_DENIED
     meta:
-      filter_debug: (false)
+      filterDebug: (false)
     validationErrors:
       - path: /department
         message: value must be one of "marketing", "engineering"

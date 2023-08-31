@@ -26,6 +26,7 @@ TESTSPLIT := $(TOOLS_BIN_DIR)/testsplit
 
 GEN_DIR := api/genpb
 JSONSCHEMA_DIR := schema/jsonschema
+TESTDATA_JSONSCHEMA_DIR := internal/test/testdata/.jsonschema
 OPENAPI_DIR := schema/openapiv2
 MOCK_DIR := internal/test/mocks
 
@@ -104,6 +105,26 @@ define JSONSCHEMA_BUF_GEN_TEMPLATE
       "strategy": "all"\
     },\
   ]\
+}
+endef
+
+define TESTDATA_JSONSCHEMA_BUF_GEN_TEMPLATE
+{\
+  "version": "v1",\
+  "types": {\
+    "include": ["cerbos.private.v1"],\
+  },\
+  "plugins": [\
+    {\
+      "name": "jsonschema",\
+      "opt": [\
+        "baseurl=https://api.cerbos.test"\
+      ],\
+      "out": "$(TESTDATA_JSONSCHEMA_DIR)",\
+      "path": "$(PROTOC_GEN_JSONSCHEMA)",\
+      "strategy": "all"\
+    },\
+  ],\
 }
 endef
 

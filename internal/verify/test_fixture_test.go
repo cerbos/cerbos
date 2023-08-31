@@ -74,14 +74,14 @@ principals:
 func Test_testFixture_getTests(t *testing.T) {
 	tf := &testFixture{
 		principals: map[string]*v1.Principal{
-			"employee":        {Id: "user:employee"},
-			"manager":         {Id: "user:manager"},
-			"department_head": {Id: "user:department_head"},
+			"employee":        {Id: "employee", Roles: []string{"user"}},
+			"manager":         {Id: "manager", Roles: []string{"user"}},
+			"department_head": {Id: "department_head", Roles: []string{"user"}},
 		},
 		resources: map[string]*v1.Resource{
-			"employee_leave_request":        {Id: "leave_request:employee"},
-			"manager_leave_request":         {Id: "leave_request:manager"},
-			"department_head_leave_request": {Id: "leave_request:department_head"},
+			"employee_leave_request":        {Kind: "leave_request", Id: "employee"},
+			"manager_leave_request":         {Kind: "leave_request", Id: "manager"},
+			"department_head_leave_request": {Kind: "leave_request", Id: "department_head"},
 		},
 		auxData: map[string]*v1.AuxData{
 			"test_aux_data": {Jwt: map[string]*structpb.Value{"answer": structpb.NewNumberValue(42)}},

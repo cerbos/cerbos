@@ -1478,27 +1478,6 @@ func cerbos_private_v1_CelTestCase_hashpb_sum(m *CelTestCase, hasher hash.Hash, 
 	}
 }
 
-func cerbos_private_v1_CodeGenTestCase_hashpb_sum(m *CodeGenTestCase, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.input_policy"]; !ok {
-		if m.InputPolicy != nil {
-			cerbos_policy_v1_Policy_hashpb_sum(m.InputPolicy, hasher, ignore)
-		}
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.want_error"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.WantError)))
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.want_rego"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.WantRego))
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CodeGenTestCase.want_num_conditions"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.WantNumConditions)))
-
-	}
-}
-
 func cerbos_private_v1_CompileTestCase_Error_hashpb_sum(m *CompileTestCase_Error, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Error.file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.File))

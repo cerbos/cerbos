@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: AND true value with expression
 input:
@@ -21,5 +22,3 @@ wantFilter:
         - variable: request.resource.attr.department
         - value: "marketing"
 wantString: "(eq request.resource.attr.department \"marketing\")"
-
-

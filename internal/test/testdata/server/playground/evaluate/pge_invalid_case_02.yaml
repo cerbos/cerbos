@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
 ---
 description: "Missing schema file"
 wantStatus:
@@ -24,7 +25,7 @@ playgroundEvaluate:
         "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
       }
     ],
-  "actions": ["approve", "view:public"],
+    "actions": ["approve", "view:public"],
     "principal": {
       "id": "john",
       "policyVersion": "20210210",

@@ -40,7 +40,7 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean generate-proto-code generate-json-schemas generate-mocks deps confdocs
+generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks deps confdocs
 
 .PHONY: generate-proto-code
 generate-proto-code: proto-gen-deps
@@ -52,6 +52,13 @@ generate-proto-code: proto-gen-deps
 generate-json-schemas: proto-gen-deps
 	@-rm -rf $(JSONSCHEMA_DIR)
 	@ $(BUF) generate --template '$(JSONSCHEMA_BUF_GEN_TEMPLATE)' api/public
+
+.PHONY: generate-testdata-json-schemas
+generate-testdata-json-schemas: proto-gen-deps
+	@-rm -rf $(TESTDATA_JSONSCHEMA_DIR)
+	@ $(BUF) generate --template '$(TESTDATA_JSONSCHEMA_BUF_GEN_TEMPLATE)' api/private
+	@ mv $(TESTDATA_JSONSCHEMA_DIR)/cerbos/private/v1/*TestCase.schema.json $(TESTDATA_JSONSCHEMA_DIR)/cerbos/private/v1/QueryPlannerTestSuite.schema.json $(TESTDATA_JSONSCHEMA_DIR)
+	@ rm -rf $(TESTDATA_JSONSCHEMA_DIR)/cerbos
 
 .PHONY: generate-mocks
 generate-mocks: $(MOCKERY)

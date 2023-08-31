@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
 wantErrors:
   - file: principal_policies/donald_duck_20210210.yaml

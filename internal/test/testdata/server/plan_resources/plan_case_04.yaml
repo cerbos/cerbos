@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../.jsonschema/ServerTestCase.schema.json
 ---
 description: Undefined action
 wantStatus:
@@ -30,4 +31,4 @@ planResources:
     filter:
       kind: KIND_ALWAYS_DENIED
     meta:
-      filter_debug: NO_MATCH
+      filterDebug: NO_MATCH

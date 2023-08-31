@@ -1,0 +1,121 @@
+{
+  "$id": "https://api.cerbos.test/cerbos/private/v1/IndexBuilderTestCase.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.private.v1.IndexBuilderTestCase.CompilationUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ancestorFqns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "definitionFqns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mainFqn": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "disabled": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "duplicateDefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.DuplicateDef"
+          }
+        },
+        "loadFailures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.LoadFailure"
+          }
+        },
+        "missingImports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.MissingImport"
+          }
+        },
+        "missingScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.DuplicateDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "otherFile": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.LoadFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.MissingImport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "desc": {
+          "type": "string"
+        },
+        "importingFile": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "wantCompilationUnits": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.private.v1.IndexBuilderTestCase.CompilationUnit"
+      }
+    },
+    "wantErr": {
+      "type": "string"
+    },
+    "wantErrList": {
+      "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors"
+    }
+  }
+}

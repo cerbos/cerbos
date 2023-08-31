@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
 mainDef: "resource_policies/leave_request_20210210.yaml"
 inputDefs:
@@ -25,7 +26,7 @@ inputDefs:
           derivedRoles:
             - tester
           effect: EFFECT_ALLOW
- 
+
 
   "derived_roles/my_derived_roles.yaml":
     apiVersion: "api.cerbos.dev/v1"
@@ -34,4 +35,3 @@ inputDefs:
       definitions:
         - name: tester
           parentRoles: ["dev", "qa", "*"]
-

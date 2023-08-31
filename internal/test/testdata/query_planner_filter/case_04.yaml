@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: AND complex nested expression
 input:
@@ -7,9 +8,9 @@ input:
       operator: and
       operands:
         - value: true
-        - expression: 
+        - expression:
             operator: and
-            operands: 
+            operands:
               - value: true
               - expression:
                   operator: eq
@@ -25,5 +26,3 @@ wantFilter:
         - variable: request.resource.attr.department
         - value: "marketing"
 wantString: "(eq request.resource.attr.department \"marketing\")"
-
-

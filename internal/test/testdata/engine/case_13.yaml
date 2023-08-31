@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Scoped policy: first match wins (view is allowed by override)"
 inputs: [

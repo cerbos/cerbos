@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
 ---
 description: NOT true
 input:
@@ -10,5 +11,3 @@ input:
 wantFilter:
   kind: KIND_ALWAYS_DENIED
 wantString: "(false)"
-
-
