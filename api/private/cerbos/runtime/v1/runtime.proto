@@ -17,7 +17,7 @@ message RunnablePolicySet {
   oneof policy_set {
     RunnableResourcePolicySet resource_policy = 2;
     RunnablePrincipalPolicySet principal_policy = 3;
-    RunnableDerivedRolesSet derived_roles = 4;
+    RunnableDerivedRolesSet derived_roles = 4 [deprecated = true];
     RunnableVariablesSet variables = 5 [deprecated = true];
   }
   uint32 compiler_version = 6;
@@ -75,6 +75,8 @@ message RunnableDerivedRole {
 }
 
 message RunnableDerivedRolesSet {
+  option deprecated = true;
+
   message Metadata {
     string fqn = 1;
   }

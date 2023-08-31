@@ -235,11 +235,6 @@ func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables,
 	haveVariables := make([]*privatev1.CompileTestCase_Variables, 0, len(want))
 
 	switch set := have.PolicySet.(type) {
-	case *runtimev1.RunnablePolicySet_DerivedRoles:
-		haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
-			DerivedRoles: extractDerivedRoleVariables(set.DerivedRoles.DerivedRoles),
-		})
-
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		for _, policy := range set.PrincipalPolicy.Policies {
 			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
@@ -250,10 +245,18 @@ func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables,
 
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		for _, policy := range set.ResourcePolicy.Policies {
+			derivedRoles := make([]*privatev1.CompileTestCase_Variables_DerivedRole, 0, len(policy.DerivedRoles))
+			for name, derivedRole := range policy.DerivedRoles {
+				derivedRoles = append(derivedRoles, &privatev1.CompileTestCase_Variables_DerivedRole{
+					Name:      name,
+					Variables: variableNames(derivedRole.OrderedVariables),
+				})
+			}
+
 			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
 				Scope:        policy.Scope,
 				Variables:    variableNames(policy.OrderedVariables),
-				DerivedRoles: extractDerivedRoleVariables(policy.DerivedRoles),
+				DerivedRoles: derivedRoles,
 			})
 		}
 	}
@@ -263,18 +266,6 @@ func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables,
 		protocmp.SortRepeated(func(a, b *privatev1.CompileTestCase_Variables_DerivedRole) bool { return a.Name < b.Name }),
 		protocmp.SortRepeated(func(a, b string) bool { return a < b }),
 	))
-}
-
-func extractDerivedRoleVariables(derivedRoles map[string]*runtimev1.RunnableDerivedRole) []*privatev1.CompileTestCase_Variables_DerivedRole {
-	variables := make([]*privatev1.CompileTestCase_Variables_DerivedRole, 0, len(derivedRoles))
-	for name, derivedRole := range derivedRoles {
-		variables = append(variables, &privatev1.CompileTestCase_Variables_DerivedRole{
-			Name:      name,
-			Variables: variableNames(derivedRole.OrderedVariables),
-		})
-	}
-
-	return variables
 }
 
 func variableNames(variables []*runtimev1.Variable) []string {
