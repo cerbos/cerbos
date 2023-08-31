@@ -10,9 +10,7 @@ condition:
       - expr: R.attr.floatVal1 < R.attr.intVal1
       - expr: >-
           (R.attr.intVal1 < R.attr.intVal2) ? (R.attr.intVal2 - R.attr.intVal1) / R.attr.intVal1 < 0.4 : (R.attr.intVal1 - R.attr.intVal2) / R.attr.intVal1 < 0.4
-input: {
-  "requestId": "test",
-  "actions": ["*"],
+request: {
   "principal": {
     "id": "john",
     "roles": ["employee"],

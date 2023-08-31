@@ -1194,11 +1194,11 @@ func (m *CelTestCase) validate(all bool) error {
 	}
 
 	if all {
-		switch v := interface{}(m.GetInput()).(type) {
+		switch v := interface{}(m.GetRequest()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, CelTestCaseValidationError{
-					field:  "Input",
+					field:  "Request",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1206,16 +1206,16 @@ func (m *CelTestCase) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, CelTestCaseValidationError{
-					field:  "Input",
+					field:  "Request",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetRequest()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return CelTestCaseValidationError{
-				field:  "Input",
+				field:  "Request",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

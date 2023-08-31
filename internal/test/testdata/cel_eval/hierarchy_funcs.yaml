@@ -23,9 +23,7 @@ condition:
           hierarchy("a.b.c").siblingOf(hierarchy("a.b.d")) == true
       - expr: |-
           hierarchy("a.b.c.d")[1] == "b"
-input: {
-  "requestId": "test",
-  "actions": ["*"],
+request: {
   "principal": {
     "id": "john",
     "roles": ["employee"],
