@@ -32,6 +32,7 @@ func TestCloneResult(t *testing.T) {
 		"derived_roles/derived_roles_02.yaml",
 		"derived_roles/derived_roles_03.yaml",
 		"derived_roles/derived_roles_04.yaml",
+		"derived_roles/derived_roles_05.yaml",
 		"export_variables/export_variables_01.yaml",
 		"principal_policies/policy_01.yaml",
 		"principal_policies/policy_02.yaml",
@@ -59,5 +60,6 @@ func TestCloneResult(t *testing.T) {
 		"resource_policies/policy_11.yaml",
 		"resource_policies/policy_12.yaml",
 		"resource_policies/policy_13.yaml",
+		"resource_policies/policy_14.yaml",
 	}, result.updateOrAdd)
 }

@@ -342,7 +342,8 @@ message Request {
   message Principal {
     string id = 1;
     repeated string roles = 2;
-    map<string, google.protobuf.Value> attr = 3;
+    repeated string derived_roles = 3;
+    map<string, google.protobuf.Value> attr = 4;
   }
 
   message Resource {

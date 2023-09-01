@@ -16,6 +16,12 @@
         "$ref": "#/definitions/google.protobuf.Value"
       }
     },
+    "derivedRoles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "id": {
       "type": "string"
     },

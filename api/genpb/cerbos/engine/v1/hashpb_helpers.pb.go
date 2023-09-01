@@ -419,6 +419,14 @@ func cerbos_engine_v1_Request_Principal_hashpb_sum(m *Request_Principal, hasher 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.Request.Principal.derived_roles"]; !ok {
+		if len(m.DerivedRoles) > 0 {
+			for _, v := range m.DerivedRoles {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 	if _, ok := ignore["cerbos.engine.v1.Request.Principal.attr"]; !ok {
 		if len(m.Attr) > 0 {
 			keys := make([]string, len(m.Attr))

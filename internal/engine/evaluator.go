@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -119,13 +120,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 		sctx := pctx.StartScope(p.Scope)
 
-		// evaluate the variables of this policy
-		variables, err := rpe.evalParams.evaluateVariables(sctx.StartVariables(), p.OrderedVariables, request)
-		if err != nil {
-			sctx.Failed(err, "Failed to evaluate variables")
-			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
-		}
-
 		// calculate the set of effective derived roles
 		effectiveDerivedRoles := internal.StringSet{}
 		for drName, dr := range p.DerivedRoles {
@@ -157,6 +151,21 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			result.EffectiveDerivedRoles[drName] = struct{}{}
 
 			dctx.Activated()
+		}
+
+		if len(effectiveDerivedRoles) > 0 {
+			// populate `P.derivedRoles` for use in rules
+			for derivedRole := range effectiveDerivedRoles {
+				request.Principal.DerivedRoles = append(request.Principal.DerivedRoles, derivedRole)
+			}
+			sort.Strings(request.Principal.DerivedRoles)
+		}
+
+		// evaluate the variables of this policy
+		variables, err := rpe.evalParams.evaluateVariables(sctx.StartVariables(), p.OrderedVariables, request)
+		if err != nil {
+			sctx.Failed(err, "Failed to evaluate variables")
+			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		// evaluate each rule until all actions have a result
