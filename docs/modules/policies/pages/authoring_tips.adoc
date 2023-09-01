@@ -109,7 +109,7 @@ yaml.schemas: {
     "{latest-test-schema-url}": "/cerbos/**/*_test.yaml",
     "{latest-testdata-resources-schema-url}": "/cerbos/**/testdata/resources.yaml",
     "{latest-testdata-principals-schema-url}": "/cerbos/**/testdata/principals.yaml",
-    "{latest-testdata-auxdata-schema-url}": "/cerbos/**/testdata/auxdata.yaml",
+    "{latest-testdata-auxdata-schema-url}": "/cerbos/**/testdata/auxdata.yaml"
 }
 ----
 
