@@ -120,7 +120,7 @@ JSON files can specify the schema using the `$schema` top-level property.
 "$schema": "{latest-policy-schema-url}",
 ----
 
-==== Neovimxref:compile.adoc[Test suite]
+==== Neovim
 
 Easiest way to get started is to install the link:https://github.com/lspcontainers/lspcontainers.nvim[lspcontainer.nvim] plugin. With link:https://github.com/wbthomason/packer.nvim[Packer], you can use a configuration similar to the following:
 
