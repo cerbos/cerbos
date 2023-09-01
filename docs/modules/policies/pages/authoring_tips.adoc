@@ -27,13 +27,13 @@ include::ROOT:partial$attributes.adoc[]
 * The JSON schemas for Cerbos files are available at:
 ** Policy
 *** `{current-policy-schema-url}` 
-** xref:compile.adoc[Test suite]
+** xref:compile.adoc#testing[Test suite]
 *** `{current-test-schema-url}`
-** xref:compile.adoc#_sharing_test_fixtures[Principal test fixtures]
+** xref:compile.adoc#fixtures[Principal test fixtures]
 *** `{current-testdata-principals-schema-url}`
-** xref:compile.adoc#_sharing_test_fixtures[Resources test fixtures]
+** xref:compile.adoc#fixtures[Resources test fixtures]
 *** `{current-testdata-principals-schema-url}`
-** xref:compile.adoc#_sharing_test_fixtures[AuxData test fixtures]
+** xref:compile.adoc#fixtures[AuxData test fixtures]
 *** `{current-testdata-auxdata-schema-url}`
 * If you prefer to always use the latest version, they can be accessed at:
 ** `{latest-policy-schema-url}` 
@@ -71,28 +71,28 @@ Editors with support for the link:https://microsoft.github.io/language-server-pr
 # yaml-language-server: $schema={latest-policy-schema-url}
 ----
 
-The same method can be used for xref:compile.adoc[tests]:
+The same method can be used for xref:compile.adoc#testing[tests]:
 
 [source,yaml,subs="+attributes"]
 ----
 # yaml-language-server: $schema={latest-test-schema-url}
 ----
 
-xref:compile.adoc#_sharing_test_fixtures[Resource fixtures] for tests:
+xref:compile.adoc#fixtures[Resource fixtures] for tests:
 
 [source,yaml,subs="+attributes"]
 ----
 # yaml-language-server: $schema={latest-testdata-resources-schema-url}
 ----
 
-xref:compile.adoc#_sharing_test_fixtures[Principal fixtures] for tests:
+xref:compile.adoc#fixtures[Principal fixtures] for tests:
 
 [source,yaml,subs="+attributes"]
 ----
 # yaml-language-server: $schema={latest-testdata-principals-schema-url}
 ----
 
-xref:compile.adoc#_sharing_test_fixtures[Auxiliary data fixtures] for tests:
+xref:compile.adoc#fixtures[AuxData fixtures] for tests:
 
 [source,yaml,subs="+attributes"]
 ----
@@ -120,7 +120,7 @@ JSON files can specify the schema using the `$schema` top-level property.
 "$schema": "{latest-policy-schema-url}",
 ----
 
-==== Neovim
+==== Neovimxref:compile.adoc[Test suite]
 
 Easiest way to get started is to install the link:https://github.com/lspcontainers/lspcontainers.nvim[lspcontainer.nvim] plugin. With link:https://github.com/wbthomason/packer.nvim[Packer], you can use a configuration similar to the following:
 
