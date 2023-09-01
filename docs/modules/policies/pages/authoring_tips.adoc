@@ -92,7 +92,7 @@ xref:compile.adoc#_sharing_test_fixtures[Principal fixtures] for tests:
 # yaml-language-server: $schema={latest-testdata-principals-schema-url}
 ----
 
-xref:compile.adoc#_sharing_test_fixtures[AuxData fixtures] for tests:
+xref:compile.adoc#_sharing_test_fixtures[Auxiliary data fixtures] for tests:
 
 [source,yaml,subs="+attributes"]
 ----
