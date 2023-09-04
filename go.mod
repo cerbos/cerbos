@@ -9,7 +9,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.8.0
 	github.com/alecthomas/kong v0.8.0
 	github.com/alecthomas/participle/v2 v2.0.0
-	github.com/aws/aws-sdk-go v1.44.332
+	github.com/aws/aws-sdk-go v1.45.2
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cloud-api v0.1.6
@@ -29,7 +29,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.16.2
-	github.com/google/cel-go v0.17.6
+	github.com/google/cel-go v0.18.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.3.1
@@ -48,8 +48,8 @@ require (
 	github.com/lestrrat-go/httprc v1.0.4
 	github.com/lestrrat-go/jwx/v2 v2.0.12
 	github.com/mattn/go-isatty v0.0.19
-	github.com/microsoft/go-mssqldb v1.5.0
-	github.com/minio/minio-go/v7 v7.0.62
+	github.com/microsoft/go-mssqldb v1.6.0
+	github.com/minio/minio-go/v7 v7.0.63
 	github.com/nlepage/go-tarfs v1.2.1
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -57,7 +57,7 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.4.0
 	github.com/prometheus/client_golang v1.16.0
-	github.com/pterm/pterm v0.12.66
+	github.com/pterm/pterm v0.12.67
 	github.com/rivo/tview v0.0.0-20230826224341-9754ab44dc1c
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.11.0
@@ -76,16 +76,16 @@ require (
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	go.elastic.co/ecszap v1.0.2
 	go.opencensus.io v0.24.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.42.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
-	go.opentelemetry.io/contrib/propagators/autoprop v0.42.0
-	go.opentelemetry.io/contrib/propagators/b3 v1.17.0
-	go.opentelemetry.io/otel v1.16.0
-	go.opentelemetry.io/otel/bridge/opencensus v0.39.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.16.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
-	go.opentelemetry.io/otel/sdk v1.16.0
-	go.opentelemetry.io/otel/trace v1.16.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.43.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.43.0
+	go.opentelemetry.io/contrib/propagators/autoprop v0.43.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.18.0
+	go.opentelemetry.io/otel v1.17.0
+	go.opentelemetry.io/otel/bridge/opencensus v0.40.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.17.0
+	go.opentelemetry.io/otel/sdk v1.17.0
+	go.opentelemetry.io/otel/trace v1.17.0
 	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.11.0
@@ -254,14 +254,13 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	go.opentelemetry.io/contrib/propagators/aws v1.17.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.17.0 // indirect
-	go.opentelemetry.io/contrib/propagators/ot v1.17.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.16.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.16.0 // indirect
-	go.opentelemetry.io/otel/metric v1.16.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v0.39.0 // indirect
-	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
+	go.opentelemetry.io/contrib/propagators/aws v1.18.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.18.0 // indirect
+	go.opentelemetry.io/contrib/propagators/ot v1.18.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.17.0 // indirect
+	go.opentelemetry.io/otel/metric v1.17.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v0.40.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
