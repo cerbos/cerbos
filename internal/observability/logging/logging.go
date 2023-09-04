@@ -10,11 +10,13 @@ import (
 	"strings"
 	"time"
 
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/mattn/go-isatty"
 	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zapgrpc"
+	"google.golang.org/grpc/grpclog"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -90,12 +92,10 @@ func doInitLogging(ctx context.Context, level string) {
 
 	zap.ReplaceGlobals(logger.Named(util.AppName))
 	zap.RedirectStdLog(logger.Named("stdlog"))
-
-	grpc_zap.ReplaceGrpcLoggerV2(logger.Named("grpc").WithOptions(
+	grpclog.SetLoggerV2(zapgrpc.NewLogger(logger.Named("grpc").WithOptions(
 		zap.IncreaseLevel(zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl > zapcore.ErrorLevel
-		}))),
-	)
+		})))))
 
 	if minLogLevel > zap.DebugLevel {
 		handleUSR1Signal(ctx, minLogLevel, &atomicLevel)
@@ -157,4 +157,35 @@ func FromContext(ctx context.Context) *zap.Logger {
 // ToContext adds a logger to the context.
 func ToContext(ctx context.Context, log *zap.Logger) context.Context {
 	return context.WithValue(ctx, ctxLogKey, log)
+}
+
+// ReqScopeLog returns a request-scoped logger with request fields populated.
+func ReqScopeLog(ctx context.Context) *zap.Logger {
+	log := FromContext(ctx)
+	fields := GRPCLogFieldsToZap(logging.ExtractFields(ctx))
+	return log.With(fields...)
+}
+
+func GRPCLogFieldsToZap(fields logging.Fields) []zap.Field {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	out := make([]zap.Field, 0, len(fields)/2) //nolint:gomnd
+	iter := fields.Iterator()
+	for iter.Next() {
+		key, value := iter.At()
+		switch v := value.(type) {
+		case string:
+			out = append(out, zap.String(key, v))
+		case int:
+			out = append(out, zap.Int(key, v))
+		case bool:
+			out = append(out, zap.Bool(key, v))
+		default:
+			out = append(out, zap.Any(key, v))
+		}
+	}
+
+	return out
 }

@@ -7,13 +7,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 )
 
@@ -36,7 +36,7 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterc
 		ts := time.Now()
 		callID, err := NewID()
 		if err != nil {
-			ctxzap.Extract(ctx).Warn("Failed to generate call ID", zap.Error(err))
+			logging.FromContext(ctx).Warn("Failed to generate call ID", zap.Error(err))
 			return handler(ctx, req)
 		}
 
@@ -55,7 +55,7 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterc
 				Metadata:   mdExtractor(ctx),
 			}, nil
 		}); logErr != nil {
-			ctxzap.Extract(ctx).Warn("Failed to write access log entry", zap.Error(logErr))
+			logging.FromContext(ctx).Warn("Failed to write access log entry", zap.Error(logErr))
 		}
 
 		return resp, err

@@ -18,11 +18,12 @@ import (
 	"time"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
+	"github.com/bufbuild/protovalidate-go"
+	"github.com/bufbuild/protovalidate-go/legacy"
 	"github.com/gorilla/mux"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	reuseport "github.com/kavu/go_reuseport"
 	prom "github.com/prometheus/client_golang/prometheus"
@@ -40,6 +41,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/telemetry"
@@ -432,7 +434,6 @@ func checkForUnsafeAdminCredentials(log *zap.Logger, passwordHash []byte) {
 }
 
 func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server, error) {
-	payloadLog := zap.L().Named("payload")
 	telemetryInt := telemetry.Intercept()
 
 	auditInterceptor, err := audit.NewUnaryInterceptor(auditLog, accessLogExclude)
@@ -440,32 +441,32 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 		return nil, fmt.Errorf("failed to create audit unary interceptor: %w", err)
 	}
 
+	validator, err := protovalidate.New(
+		legacy.WithLegacySupport(legacy.ModeIfNotPresent),
+		protovalidate.WithMessages(&requestv1.CheckResourcesRequest{}, &requestv1.PlanResourcesRequest{}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create validator: %w", err)
+	}
+
 	opts := []grpc.ServerOption{
 		grpc.ChainStreamInterceptor(
 			grpc_recovery.StreamServerInterceptor(),
 			telemetryInt.StreamServerInterceptor(),
 			otelgrpc.StreamServerInterceptor(),
-			grpc_validator.StreamServerInterceptor(),
-			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
-			grpc_zap.StreamServerInterceptor(log,
-				grpc_zap.WithDecider(loggingDecider),
-				grpc_zap.WithMessageProducer(messageProducer),
-			),
-			grpc_zap.PayloadStreamServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
+			grpc_validator.StreamServerInterceptor(validator),
+			grpc_logging.StreamServerInterceptor(RequestLogger(log, "Handled request")),
+			grpc_logging.StreamServerInterceptor(PayloadLogger(s.conf), grpc_logging.WithLogOnEvents(grpc_logging.PayloadReceived, grpc_logging.PayloadSent)),
 		),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
 			telemetryInt.UnaryServerInterceptor(),
 			otelgrpc.UnaryServerInterceptor(),
-			grpc_validator.UnaryServerInterceptor(),
-			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
-			XForwardedHostUnaryServerInterceptor,
-			grpc_zap.UnaryServerInterceptor(log,
-				grpc_zap.WithDecider(loggingDecider),
-				grpc_zap.WithMessageProducer(messageProducer),
-			),
-			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
+			grpc_validator.UnaryServerInterceptor(validator),
+			RequestMetadataUnaryServerInterceptor,
 			auditInterceptor,
+			grpc_logging.UnaryServerInterceptor(RequestLogger(log, "Handled request")),
+			grpc_logging.UnaryServerInterceptor(PayloadLogger(s.conf), grpc_logging.WithLogOnEvents(grpc_logging.PayloadReceived, grpc_logging.PayloadSent)),
 			cerbosVersionUnaryServerInterceptor,
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),

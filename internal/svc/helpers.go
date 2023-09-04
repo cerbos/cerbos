@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	metaTagKey         = "meta"
+	metaTagKey         = "grpc.request.meta"
 	requestIDTagKey    = "request_id"
 	playgroundIDTagKey = "playground_id"
 )

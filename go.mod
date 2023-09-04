@@ -11,6 +11,7 @@ require (
 	github.com/alecthomas/participle/v2 v2.0.0
 	github.com/aws/aws-sdk-go v1.45.2
 	github.com/bluele/gcache v0.0.2
+	github.com/bufbuild/protovalidate-go v0.2.1
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cloud-api v0.1.6
 	github.com/cespare/xxhash v1.1.0
@@ -34,7 +35,6 @@ require (
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.17.1
 	github.com/iancoleman/strcase v0.3.0
@@ -110,6 +110,7 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230802163732-1c33ebd9ecfa.1 // indirect
 	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect

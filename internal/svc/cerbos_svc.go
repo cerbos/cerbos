@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -49,7 +48,7 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData, reqLimits Re
 }
 
 func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 
 	auxData, err := cs.auxData.Extract(ctx, request.AuxData)
 	if err != nil {
@@ -96,7 +95,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 // CheckResourceSet checks a batch of homogenous resources.
 // Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 	if err := cs.checkNumResourcesLimit(len(req.Resource.Instances)); err != nil {
 		log.Error("Request too large", zap.Error(err))
 		return nil, err
@@ -155,7 +154,7 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 // CheckResourceBatch checks a batch of heterogenous resources.
 // Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 	if err := cs.checkNumResourcesLimit(len(req.Resources)); err != nil {
 		log.Error("Request too large", zap.Error(err))
 		return nil, err
@@ -215,7 +214,7 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 
 // CheckResources checks a batch of heterogenous resources.
 func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.CheckResourcesRequest) (*responsev1.CheckResourcesResponse, error) {
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 	if err := cs.checkNumResourcesLimit(len(req.Resources)); err != nil {
 		log.Error("Request too large", zap.Error(err))
 		return nil, err

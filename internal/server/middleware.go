@@ -11,13 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -25,6 +22,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	cerboslogging "github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -34,56 +33,87 @@ const (
 	unknownSvc            = "Unknown service"
 )
 
-func XForwardedHostUnaryServerInterceptor(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return handler(ctx, req)
+type methodNameCtxKeyType struct{}
+
+var methodNameCtxKey = &methodNameCtxKeyType{}
+
+func RequestMetadataUnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	// New logging interceptor doesn't have access to method name so we save it to context for later use.
+	newCtx := context.WithValue(ctx, methodNameCtxKey, info.FullMethod)
+
+	reqMeta := svc.ExtractRequestFields(info.FullMethod, req)
+	xffHeaders := make(map[string]any, 2) //nolint:gomnd
+
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		xfh, ok := md["x-forwarded-host"]
+		if ok {
+			xffHeaders["x_forwarded_host"] = xfh
+		}
+
+		xff, ok := md["x-forwarded-for"]
+		if ok {
+			xffHeaders["x_forwarded_for"] = xff
+		}
 	}
 
-	headers := make(map[string]any, 2) //nolint:gomnd
+	// Fields are key-value pairs. Because we are adding "meta" and "http", the expected length is 4.
+	fields := make(logging.Fields, 0, 4) //nolint:gomnd
 
-	xfh, ok := md["x-forwarded-host"]
-	if ok {
-		headers["x_forwarded_host"] = xfh
+	if len(xffHeaders) > 0 {
+		fields = append(fields, "http", xffHeaders)
 	}
 
-	xff, ok := md["x-forwarded-for"]
-	if ok {
-		headers["x_forwarded_for"] = xff
+	if len(reqMeta) > 0 {
+		for k, v := range reqMeta {
+			fields = append(fields, k, v)
+		}
 	}
 
-	if len(headers) > 0 {
-		tags := grpc_ctxtags.Extract(ctx).Set("http", headers)
-		return handler(grpc_ctxtags.SetInContext(ctx, tags), req)
+	return handler(logging.InjectFields(newCtx, fields), req)
+}
+
+func RequestLogger(log *zap.Logger, msg string) logging.Logger {
+	return logging.LoggerFunc(func(ctx context.Context, level logging.Level, _ string, fields ...any) {
+		if method, ok := ctx.Value(methodNameCtxKey).(string); ok {
+			if method == "/grpc.health.v1.Health/Check" {
+				return
+			}
+		}
+
+		zapLvl := zap.InfoLevel
+		switch level {
+		case logging.LevelDebug:
+			zapLvl = zap.DebugLevel
+		case logging.LevelInfo:
+			zapLvl = zap.InfoLevel
+		case logging.LevelWarn:
+			zapLvl = zap.WarnLevel
+		case logging.LevelError:
+			zapLvl = zap.ErrorLevel
+		}
+
+		log.Check(zapLvl, msg).Write(cerboslogging.GRPCLogFieldsToZap(fields)...)
+	})
+}
+
+func PayloadLogger(conf *Conf) logging.Logger {
+	if conf.LogRequestPayloads {
+		log := RequestLogger(zap.L().Named("payload"), "server response payload logged as grpc.response.content field")
+		return logging.LoggerFunc(func(ctx context.Context, level logging.Level, msg string, fields ...any) {
+			if method, ok := ctx.Value(methodNameCtxKey).(string); ok {
+				if strings.HasPrefix(method, "/cerbos.svc.v1") {
+					log.Log(ctx, level, msg, fields...)
+				}
+			}
+		})
 	}
 
-	return handler(ctx, req)
+	return logging.LoggerFunc(func(_ context.Context, _ logging.Level, _ string, _ ...any) {})
 }
 
 // accessLogExclude decides which methods to exclude from being logged to the access log.
 func accessLogExclude(method string) bool {
 	return strings.HasPrefix(method, "/grpc.")
-}
-
-// loggingDecider prevents healthcheck requests from being logged.
-func loggingDecider(fullMethodName string, _ error) bool {
-	return fullMethodName != "/grpc.health.v1.Health/Check"
-}
-
-// payloadLoggingDecider decides whether to log request payloads.
-func payloadLoggingDecider(conf *Conf) grpc_logging.ServerPayloadLoggingDecider {
-	return func(ctx context.Context, fullMethodName string, servingObject any) bool {
-		return conf.LogRequestPayloads && strings.HasPrefix(fullMethodName, "/cerbos.svc.v1")
-	}
-}
-
-// messageProducer handles gRPC log messages.
-func messageProducer(ctx context.Context, _ string, level zapcore.Level, code codes.Code, err error, duration zapcore.Field) {
-	ctxzap.Extract(ctx).Check(level, "Handled request").Write(
-		zap.Error(err),
-		zap.String("grpc.code", code.String()),
-		duration,
-	)
 }
 
 // prettyJSON instructs grpc-gateway to output pretty JSON when the query parameter is present.

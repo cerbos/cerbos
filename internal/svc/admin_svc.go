@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
@@ -28,6 +27,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
@@ -76,7 +76,7 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 		policies[i] = policy.Wrap(p)
 	}
 
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
 		log.Error("Failed to add/update policies", zap.Error(err))
 		if errors.Is(err, storage.ErrPolicyIDCollision) {
@@ -104,7 +104,7 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	}
 
 	if err := ms.AddOrUpdateSchema(ctx, req.Schemas...); err != nil {
-		ctxzap.Extract(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
+		logging.ReqScopeLog(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
 		var ise storage.InvalidSchemaError
 		if ok := errors.As(err, &ise); ok {
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid schema in request: %s", ise.Message)
@@ -140,7 +140,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 
 	policyIds, err := cas.store.ListPolicyIDs(context.Background(), filterParams)
 	if err != nil {
-		ctxzap.Extract(ctx).Error("Could not get policy ids", zap.Error(err))
+		logging.ReqScopeLog(ctx).Error("Could not get policy ids", zap.Error(err))
 		return nil, status.Error(codes.Internal, "could not get policy ids")
 	}
 
@@ -164,7 +164,7 @@ func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.Get
 		return nil, status.Error(codes.Unimplemented, "Configured store does not contain policy sources")
 	}
 
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 	wrappers, err := ss.LoadPolicy(ctx, req.Id...)
 	if err != nil {
 		log.Error("Could not get policy", zap.Error(err))
@@ -197,7 +197,7 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 
 	disabledPolicies, err := ms.Disable(ctx, req.Id...)
 	if err != nil {
-		ctxzap.Extract(ctx).Error("Failed to disable policies", zap.Error(err))
+		logging.ReqScopeLog(ctx).Error("Failed to disable policies", zap.Error(err))
 		if errors.As(err, &db.ErrBreaksScopeChain{}) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
@@ -225,7 +225,7 @@ func (cas *CerbosAdminService) EnablePolicy(ctx context.Context, req *requestv1.
 
 	enabledPolicies, err := ms.Enable(ctx, req.Id...)
 	if err != nil {
-		ctxzap.Extract(ctx).Error("Failed to enable policies", zap.Error(err))
+		logging.ReqScopeLog(ctx).Error("Failed to enable policies", zap.Error(err))
 		return nil, status.Error(codes.Internal, "Failed to enable policies")
 	}
 
@@ -245,7 +245,7 @@ func (cas *CerbosAdminService) ListSchemas(ctx context.Context, _ *requestv1.Lis
 
 	schemaIds, err := cas.store.ListSchemaIDs(ctx)
 	if err != nil {
-		ctxzap.Extract(ctx).Error("Failed to list schema ids", zap.Error(err))
+		logging.ReqScopeLog(ctx).Error("Failed to list schema ids", zap.Error(err))
 		return nil, status.Error(codes.NotFound, "failed to list schema ids")
 	}
 
@@ -264,7 +264,7 @@ func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.Get
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 
 	schemas := make([]*schemav1.Schema, 0, len(req.Id))
 	for _, id := range req.Id {
@@ -303,7 +303,7 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 
 	deletedSchemas, err := ms.DeleteSchema(ctx, req.Id...)
 	if err != nil {
-		ctxzap.Extract(ctx).Error("Failed to delete the schema(s)", zap.Error(err))
+		logging.ReqScopeLog(ctx).Error("Failed to delete the schema(s)", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "Failed to delete the schema(s)")
 	}
 
@@ -311,7 +311,7 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 }
 
 func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
-	log := ctxzap.Extract(ctx)
+	log := logging.ReqScopeLog(ctx)
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
 	}
@@ -331,7 +331,7 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.R
 
 	if !req.Wait {
 		//nolint:errcheck
-		go reload(ctxzap.ToContext(context.Background(), log))
+		go reload(logging.ToContext(context.Background(), log))
 		return &responsev1.ReloadStoreResponse{}, nil
 	}
 
@@ -365,12 +365,12 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 				return nil
 			}
 
-			ctxzap.Extract(ctx).Error("Error from log iterator", zap.Error(err))
+			logging.ReqScopeLog(ctx).Error("Error from log iterator", zap.Error(err))
 			return status.Error(codes.Internal, "Iterator failure")
 		}
 
 		if err := stream.Send(rec); err != nil {
-			ctxzap.Extract(ctx).Error("Error writing to stream", zap.Error(err))
+			logging.ReqScopeLog(ctx).Error("Error writing to stream", zap.Error(err))
 			return err
 		}
 	}
