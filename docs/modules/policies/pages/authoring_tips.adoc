@@ -2,17 +2,45 @@ include::ROOT:partial$attributes.adoc[]
 
 :policy-schema-file: /policy/v1/Policy.schema.json
 :test-schema-file: /policy/v1/TestSuite.schema.json
+:testdata-principals-schema-file: /policy/v1/TestFixture/Principals.schema.json
+:testdata-resources-schema-file: /policy/v1/TestFixture/Resources.schema.json
+:testdata-auxdata-schema-file: /policy/v1/TestFixture/AuxData.schema.json
+
 :current-policy-schema-url: {app-schema-url-current}{policy-schema-file}
 :latest-policy-schema-url: {app-schema-url-latest}{policy-schema-file}
 :current-test-schema-url: {app-schema-url-current}{test-schema-file}
 :latest-test-schema-url: {app-schema-url-latest}{test-schema-file}
+:current-testdata-principals-schema-url: {app-schema-url-current}{testdata-principals-schema-file}
+:latest-testdata-principals-schema-url: {app-schema-url-latest}{testdata-principals-schema-file}
+:current-testdata-resources-schema-url: {app-schema-url-current}{testdata-resources-schema-file}
+:latest-testdata-resources-schema-url: {app-schema-url-latest}{testdata-resources-schema-file}
+:current-testdata-auxdata-schema-url: {app-schema-url-current}{testdata-auxdata-schema-file}
+:latest-testdata-auxdata-schema-url: {app-schema-url-latest}{testdata-auxdata-schema-file}
+
+
 
 = Policy authoring
 
 == Tips for working with policies
 
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
-* The JSON schema for Cerbos policies is available at `{current-policy-schema-url}` and the xref:compile.adoc[test suite] schema is available at `{current-test-schema-url}`. If you prefer to always use the latest version, they can be accessed at `{latest-policy-schema-url}` and `{latest-test-schema-url}` respectively.
+* The JSON schemas for Cerbos files are available at:
+** Policy
+*** `{current-policy-schema-url}` 
+** xref:compile.adoc#testing[Test suite]
+*** `{current-test-schema-url}`
+** xref:compile.adoc#fixtures[Principal test fixtures]
+*** `{current-testdata-principals-schema-url}`
+** xref:compile.adoc#fixtures[Resources test fixtures]
+*** `{current-testdata-principals-schema-url}`
+** xref:compile.adoc#fixtures[Auxiliary data test fixtures]
+*** `{current-testdata-auxdata-schema-url}`
+* If you prefer to always use the latest version, they can be accessed at:
+** `{latest-policy-schema-url}` 
+** `{latest-test-schema-url}` 
+** `{latest-testdata-principals-schema-url}` 
+** `{latest-testdata-resources-schema-url}` 
+** `{latest-testdata-auxdata-schema-url}` 
 
 == Policy structure
 
@@ -43,11 +71,32 @@ Editors with support for the link:https://microsoft.github.io/language-server-pr
 # yaml-language-server: $schema={latest-policy-schema-url}
 ----
 
-The same method can be used for xref:compile.adoc[tests]:
+The same method can be used for xref:compile.adoc#testing[tests]:
 
 [source,yaml,subs="+attributes"]
 ----
 # yaml-language-server: $schema={latest-test-schema-url}
+----
+
+xref:compile.adoc#fixtures[Resource fixtures] for tests:
+
+[source,yaml,subs="+attributes"]
+----
+# yaml-language-server: $schema={latest-testdata-resources-schema-url}
+----
+
+xref:compile.adoc#fixtures[Principal fixtures] for tests:
+
+[source,yaml,subs="+attributes"]
+----
+# yaml-language-server: $schema={latest-testdata-principals-schema-url}
+----
+
+xref:compile.adoc#fixtures[Auxiliary data fixtures] for tests:
+
+[source,yaml,subs="+attributes"]
+----
+# yaml-language-server: $schema={latest-testdata-auxdata-schema-url}
 ----
 
 YAML language server also supports per-directory settings. If all your Cerbos policies are contained in a specific directory, you can configure the editor to always use the correct schema for the YAML files in that directory. Refer to the link:https://github.com/redhat-developer/yaml-language-server#language-server-settings=[YAML language server documentation] for more information.
@@ -58,6 +107,9 @@ YAML language server also supports per-directory settings. If all your Cerbos po
 yaml.schemas: {
     "{latest-policy-schema-url}": "/cerbos/*",
     "{latest-test-schema-url}": "/cerbos/**/*_test.yaml",
+    "{latest-testdata-resources-schema-url}": "/cerbos/**/testdata/resources.yaml",
+    "{latest-testdata-principals-schema-url}": "/cerbos/**/testdata/principals.yaml",
+    "{latest-testdata-auxdata-schema-url}": "/cerbos/**/testdata/auxdata.yaml"
 }
 ----
 
@@ -94,7 +146,10 @@ use({
                 yaml = {
                     schemas = {
                         "{latest-policy-schema-url}": "/cerbos/*",
-                        "{latest-test-schema-url}": "/cerbos/**/*_test.yaml"
+                        "{latest-test-schema-url}": "/cerbos/**/*_test.yaml",
+                        "{latest-testdata-resources-schema-url}": "/cerbos/**/testdata/resources.yaml",
+                        "{latest-testdata-principals-schema-url}": "/cerbos/**/testdata/principals.yaml",
+                        "{latest-testdata-auxdata-schema-url}": "/cerbos/**/testdata/auxdata.yaml"
                     },
                 },
             },
@@ -135,6 +190,9 @@ After the extension is installed, hit kbd:[Ctrl+,] or menu:File[Preferences > Se
   "yaml.schemas": {
     "{latest-policy-schema-url}": "cerbos/*",
     "{latest-test-schema-url}": "/cerbos/**/*_test.yaml",
+    "{latest-testdata-resources-schema-url}": "/cerbos/**/testdata/resources.yaml",
+    "{latest-testdata-principals-schema-url}": "/cerbos/**/testdata/principals.yaml",
+    "{latest-testdata-auxdata-schema-url}": "/cerbos/**/testdata/auxdata.yaml"
   }
 }
 ----

@@ -117,6 +117,7 @@ tests: <7>
 <20> Name of the action that would produce the output
 <21> List of expected output values
 
+[#fixtures]
 === Sharing test fixtures
 
 It is possible to share principals, resources and auxData blocks between test suites stored in the same directory. Create a `testdata` directory in the directory containing your test suite files, then define shared resources, principals and auxData in `testdata/resources.yml`, `testdata/principals.yml`, `testdata/auxdata.yml` respectively (`yaml` and `json` extensions are also supported).
