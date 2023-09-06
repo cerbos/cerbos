@@ -16,7 +16,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 	"go.uber.org/zap"
@@ -30,6 +29,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -345,7 +345,7 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	if failures := changes.failures(); failures > 0 {
-		ctxzap.Extract(ctx).Warn(fmt.Sprintf("Failed to download (%d) files", failures))
+		logging.ReqScopeLog(ctx).Warn(fmt.Sprintf("Failed to download (%d) files", failures))
 	}
 
 	evts, err := s.idx.Reload(ctx)

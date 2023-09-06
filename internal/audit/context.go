@@ -7,7 +7,7 @@ import (
 	"context"
 	"strings"
 
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
@@ -28,9 +28,7 @@ type callIDCtxKeyType struct{}
 var callIDCtxKey = callIDCtxKeyType{}
 
 func NewContextWithCallID(ctx context.Context, id ID) context.Context {
-	tags := grpc_ctxtags.Extract(ctx)
-	tagCtx := grpc_ctxtags.SetInContext(ctx, tags.Set(util.AppName, map[string]any{callIDTagKey: id}))
-
+	tagCtx := logging.InjectLogField(ctx, util.AppName, map[string]any{callIDTagKey: id})
 	return context.WithValue(tagCtx, callIDCtxKey, id)
 }
 

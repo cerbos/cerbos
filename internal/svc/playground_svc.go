@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/spf13/afero"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -25,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -52,7 +52,7 @@ func NewCerbosPlaygroundService(reqLimits RequestLimits) *CerbosPlaygroundServic
 }
 
 func (cs *CerbosPlaygroundService) PlaygroundValidate(ctx context.Context, req *requestv1.PlaygroundValidateRequest) (*responsev1.PlaygroundValidateResponse, error) {
-	log := ctxzap.Extract(ctx).Named("playground")
+	log := logging.ReqScopeLog(ctx).Named("playground")
 
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
@@ -80,7 +80,7 @@ func (cs *CerbosPlaygroundService) PlaygroundValidate(ctx context.Context, req *
 }
 
 func (cs *CerbosPlaygroundService) PlaygroundTest(ctx context.Context, req *requestv1.PlaygroundTestRequest) (*responsev1.PlaygroundTestResponse, error) {
-	log := ctxzap.Extract(ctx).Named("playground")
+	log := logging.ReqScopeLog(ctx).Named("playground")
 
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
@@ -127,7 +127,7 @@ func (cs *CerbosPlaygroundService) PlaygroundTest(ctx context.Context, req *requ
 }
 
 func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *requestv1.PlaygroundEvaluateRequest) (*responsev1.PlaygroundEvaluateResponse, error) {
-	log := ctxzap.Extract(ctx).Named("playground")
+	log := logging.ReqScopeLog(ctx).Named("playground")
 
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
@@ -178,7 +178,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 }
 
 func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *requestv1.PlaygroundProxyRequest) (*responsev1.PlaygroundProxyResponse, error) {
-	log := ctxzap.Extract(ctx).Named("playground")
+	log := logging.ReqScopeLog(ctx).Named("playground")
 
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
