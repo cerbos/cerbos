@@ -45,6 +45,7 @@ audit:
     storagePath: /path/to/dir # Path to store the data
 auxData:
   jwt: # JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
+    acceptableTimeSkew: 2s # AcceptableTimeSkew sets the acceptable skew when checking exp and nbf claims.
     cacheSize: 256 # CacheSize sets the number of verified tokens cached in memory. Set to negative value to disable caching.
     disableVerification: false # DisableVerification disables JWT verification.
     keySets: # KeySets is the list of keysets to be used to verify tokens.
