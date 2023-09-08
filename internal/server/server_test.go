@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/bundle"
@@ -46,6 +47,8 @@ type testParam struct {
 type testParamGen func(*testing.T) testParam
 
 func TestServer(t *testing.T) {
+	logging.InitLogging(context.Background(), "ERROR")
+
 	t.Run("store=disk", func(t *testing.T) {
 		tpg := func(t *testing.T) testParam {
 			t.Helper()

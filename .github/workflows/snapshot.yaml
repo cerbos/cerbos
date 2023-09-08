@@ -56,6 +56,8 @@ jobs:
 
       - name: Test
         run: make test-all
+        env:
+          CERBOS_LOG_LEVEL: "debug"
 
       - name: Upload unit coverage to Coveralls
         uses: shogo82148/actions-goveralls@v1
