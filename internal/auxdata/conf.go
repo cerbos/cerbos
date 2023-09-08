@@ -27,6 +27,8 @@ type JWTConf struct {
 	DisableVerification bool `yaml:"disableVerification" conf:",example=false"`
 	// CacheSize sets the number of verified tokens cached in memory. Set to negative value to disable caching.
 	CacheSize int `yaml:"cacheSize" conf:",example=256"`
+	// AcceptableTimeSkew sets the acceptable skew when checking exp and nbf claims.
+	AcceptableTimeSkew time.Duration `yaml:"acceptableTimeSkew" conf:",example=2s"`
 }
 
 type JWTKeySet struct {
@@ -65,6 +67,10 @@ func (c *Conf) Validate() (errs error) {
 
 	if c.JWT.CacheSize == 0 {
 		c.JWT.CacheSize = defaultCacheSize
+	}
+
+	if c.JWT.AcceptableTimeSkew < 0 {
+		errs = multierr.Append(errs, fmt.Errorf("acceptableTimeSkew must be positive"))
 	}
 
 	idSet := make(map[string]struct{}, len(c.JWT.KeySets))
