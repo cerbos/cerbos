@@ -37,7 +37,7 @@ import (
 
 const (
 	requestTimeout     = 5 * time.Second
-	healthPollInterval = 50 * time.Millisecond
+	healthPollInterval = 100 * time.Millisecond
 	retryBackoffDelay  = 5
 )
 
