@@ -28,8 +28,8 @@ const (
 	adminPassword = "cerbosAdmin"
 
 	readyTimeout       = 90 * time.Second
-	readyPollInterval  = 100 * time.Millisecond
-	healthCheckTimeout = 80 * time.Millisecond
+	readyPollInterval  = 120 * time.Millisecond
+	healthCheckTimeout = 100 * time.Millisecond
 )
 
 func TestClient(t *testing.T) {
