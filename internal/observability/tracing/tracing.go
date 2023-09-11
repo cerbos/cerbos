@@ -16,7 +16,7 @@ import (
 	otelpropb3 "go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
 	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/jaeger" //nolint:staticcheck
 	otlp "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	otelprop "go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
