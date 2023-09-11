@@ -6,12 +6,12 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/adrg/xdg v0.4.0
-	github.com/alecthomas/chroma/v2 v2.8.0
+	github.com/alecthomas/chroma/v2 v2.9.1
 	github.com/alecthomas/kong v0.8.0
-	github.com/alecthomas/participle/v2 v2.0.0
-	github.com/aws/aws-sdk-go v1.45.2
+	github.com/alecthomas/participle/v2 v2.1.0
+	github.com/aws/aws-sdk-go v1.45.6
 	github.com/bluele/gcache v0.0.2
-	github.com/bufbuild/protovalidate-go v0.2.1
+	github.com/bufbuild/protovalidate-go v0.3.1
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cloud-api v0.1.6
 	github.com/cespare/xxhash v1.1.0
@@ -30,13 +30,13 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.16.2
-	github.com/google/cel-go v0.17.6
+	github.com/google/cel-go v0.18.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.17.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx-zap v0.0.0-20221202020421-94b1cb2f889f
@@ -56,13 +56,13 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/peterh/liner v1.2.2
-	github.com/planetscale/vtprotobuf v0.4.0
+	github.com/planetscale/vtprotobuf v0.5.0
 	github.com/prometheus/client_golang v1.16.0
-	github.com/pterm/pterm v0.12.66
-	github.com/rivo/tview v0.0.0-20230826224341-9754ab44dc1c
+	github.com/pterm/pterm v0.12.67
+	github.com/rivo/tview v0.0.0-20230909130259-ba6a2a345459
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.11.0
-	github.com/rs/cors v1.9.0
+	github.com/rs/cors v1.10.0
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/sony/gobreaker v0.5.0
@@ -77,32 +77,32 @@ require (
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	go.elastic.co/ecszap v1.0.2
 	go.opencensus.io v0.24.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.42.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
-	go.opentelemetry.io/contrib/propagators/autoprop v0.42.0
-	go.opentelemetry.io/contrib/propagators/b3 v1.17.0
-	go.opentelemetry.io/otel v1.16.0
-	go.opentelemetry.io/otel/bridge/opencensus v0.39.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.16.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
-	go.opentelemetry.io/otel/sdk v1.16.0
-	go.opentelemetry.io/otel/trace v1.16.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.43.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.43.0
+	go.opentelemetry.io/contrib/propagators/autoprop v0.43.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.18.0
+	go.opentelemetry.io/otel v1.17.0
+	go.opentelemetry.io/otel/bridge/opencensus v0.40.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.17.0
+	go.opentelemetry.io/otel/sdk v1.17.0
+	go.opentelemetry.io/otel/trace v1.17.0
 	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.25.0
 	gocloud.dev v0.34.0
-	golang.org/x/crypto v0.12.0
-	golang.org/x/net v0.14.0
+	golang.org/x/crypto v0.13.0
+	golang.org/x/net v0.15.0
 	golang.org/x/sync v0.3.0
-	golang.org/x/tools v0.12.0
+	golang.org/x/tools v0.13.0
 	gonum.org/v1/gonum v0.14.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d
-	google.golang.org/grpc v1.57.0
+	google.golang.org/grpc v1.58.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.12.0-dev.1
+	helm.sh/helm/v3 v3.12.3
 	modernc.org/sqlite v1.25.0
 )
 
@@ -110,7 +110,7 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230802163732-1c33ebd9ecfa.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230824200731-b9b8148056b9.1 // indirect
 	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -158,7 +158,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.3 // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
-	github.com/dlclark/regexp2 v1.4.0 // indirect
+	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/docker/cli v23.0.1+incompatible // indirect
 	github.com/docker/docker v23.0.4+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -256,22 +256,21 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	go.opentelemetry.io/contrib/propagators/aws v1.17.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.17.0 // indirect
-	go.opentelemetry.io/contrib/propagators/ot v1.17.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.16.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.16.0 // indirect
-	go.opentelemetry.io/otel/metric v1.16.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v0.39.0 // indirect
+	go.opentelemetry.io/contrib/propagators/aws v1.18.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.18.0 // indirect
+	go.opentelemetry.io/contrib/propagators/ot v1.18.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.17.0 // indirect
+	go.opentelemetry.io/otel/metric v1.17.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v0.40.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/oauth2 v0.11.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/oauth2 v0.12.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.134.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
