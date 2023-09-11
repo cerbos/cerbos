@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Buf
         uses: bufbuild/buf-setup-action@v1.26.1
@@ -92,7 +92,7 @@ jobs:
       contents: read
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: GCloud Auth
         uses: google-github-actions/auth@v1
@@ -115,7 +115,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
@@ -146,7 +146,7 @@ jobs:
       OCI_REGISTRY: ghcr.io/cerbos/helm-charts
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Helm
         uses: azure/setup-helm@v3.5
