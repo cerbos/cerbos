@@ -6,7 +6,6 @@ package conditions
 import (
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -30,16 +29,7 @@ const (
 	nowFn                       = "now"
 	timeSinceFn                 = "timeSince"
 	IDFn                        = "id"
-	noSuchKeyErrorPrefix        = "no such key: "
 )
-
-type NoSuchKeyError struct {
-	Key string
-}
-
-func (e *NoSuchKeyError) Error() string {
-	return noSuchKeyErrorPrefix + e.Key
-}
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
 func CerbosCELLib() cel.EnvOption {
@@ -148,11 +138,7 @@ func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc func() time.Time, opts .
 		return nil, nil, err
 	}
 
-	result, details, err := prg.Eval(vars)
-	if err != nil && strings.HasPrefix(err.Error(), noSuchKeyErrorPrefix) {
-		err = &NoSuchKeyError{Key: strings.TrimPrefix(err.Error(), noSuchKeyErrorPrefix)}
-	}
-	return result, details, err
+	return prg.Eval(vars)
 }
 
 func newTimeDecorator(nowFunc func() time.Time) interpreter.InterpretableDecorator {

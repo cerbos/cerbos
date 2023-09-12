@@ -491,9 +491,8 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanR
 	}
 	val, residual, err := p.evalPartially(e)
 	if err != nil {
-		// ignore expressions that access non-existent keys
-		noSuchKey := &conditions.NoSuchKeyError{}
-		if errors.As(err, &noSuchKey) {
+		// ignore expressions that are invalid
+		if types.IsError(val) {
 			return conditions.FalseExpr, nil
 		}
 
@@ -537,7 +536,7 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
 	val, details, err := conditions.Eval(p.env, ast, p.vars, time.Now, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
-		return nil, nil, err
+		return val, nil, err
 	}
 
 	residual := ResidualExpr(ast, details)
