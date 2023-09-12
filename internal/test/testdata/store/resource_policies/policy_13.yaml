@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: missing_attr
+  variables:
+    local:
+      eng: P.attr.is_engineer
+  rules:
+    - actions:
+        - use
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          any:
+            of:
+              - expr: V.eng && P.attr.org == "org-1"
+              - expr: P.attr.email == "info@example.com"
