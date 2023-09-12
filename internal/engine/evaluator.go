@@ -10,6 +10,13 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
+	"go.uber.org/multierr"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -21,11 +28,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/types/ref"
-	"go.uber.org/multierr"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
@@ -439,9 +441,8 @@ func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[str
 		conditions.CELGlobalsAbbrev:   ep.globals,
 	}, ep.nowFunc)
 	if err != nil {
-		// ignore expressions that access non-existent keys
-		noSuchKey := &conditions.NoSuchKeyError{}
-		if errors.As(err, &noSuchKey) {
+		// ignore expressions that are invalid
+		if types.IsError(result) {
 			return nil, nil
 		}
 

@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Reference to missing attr in variable
+principal:
+    id: adam
+    policyVersion: default
+    roles:
+        - user
+    attr:
+      email: info@example.com
+      org: org-1
+tests:
+    - action: "use"
+      resource:
+        kind: missing_attr
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_ALLOWED
