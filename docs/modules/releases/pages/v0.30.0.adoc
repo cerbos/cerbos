@@ -26,6 +26,7 @@ The `cerbos compile` command can now work with policies stored in zip/tar.gz arc
 === Bug Fixes
 
 * Evict policies from cache after disable or enable (link:https://github.com/cerbos/cerbos/pull/1711[#1711])
+* Ignore invalid expressions (link:https://github.com/cerbos/cerbos/pull/1799[#1799])
 * Lambda body can be a field selection (link:https://github.com/cerbos/cerbos/pull/1720[#1720])
 * Normalize Git store subdirectory config to handle leading `./` correctly (link:https://github.com/cerbos/cerbos/pull/1774[#1774])
 
