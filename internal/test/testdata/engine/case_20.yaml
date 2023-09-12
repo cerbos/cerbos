@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: Variables referencing variables
+description: Missing attribute referenced in a variable
 inputs: [
   {
     "requestId": "test",
