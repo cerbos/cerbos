@@ -5,4 +5,4 @@ plugins:
     out: schema/jsonschema
     opt: baseurl=https://api.cerbos.dev
     strategy: all
-    path: ["go", "run", "-C", "../hack/tools/protoc-gen-jsonschema", "main.go"]
+    path: [ "go", "run", "github.com/cerbos/protoc-gen-jsonschema/cmd/protoc-gen-jsonschema" ]

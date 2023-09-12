@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/validator"
 )
 
 const apiVersion = "api.cerbos.dev/v1"
@@ -125,7 +126,7 @@ func (p *Principal) Validate() error {
 		return p.err
 	}
 
-	return p.p.Validate()
+	return validator.Validate(p.p)
 }
 
 // Resource is a single resource instance.
@@ -214,7 +215,7 @@ func (r *Resource) Validate() error {
 		return r.err
 	}
 
-	return r.r.Validate()
+	return validator.Validate(r.r)
 }
 
 // ResourceSet is a container for a set of resources of the same kind.
@@ -267,7 +268,7 @@ func (rs *ResourceSet) Validate() error {
 		return rs.err
 	}
 
-	return rs.rs.Validate()
+	return validator.Validate(rs.rs)
 }
 
 // CheckResourceSetResponse is the response from the CheckResourceSet API call.
@@ -335,7 +336,7 @@ func (rb *ResourceBatch) Add(resource *Resource, actions ...string) *ResourceBat
 		Resource: resource.r,
 	}
 
-	if err := entry.Validate(); err != nil {
+	if err := validator.Validate(entry); err != nil {
 		rb.err = multierr.Append(rb.err, fmt.Errorf("invalid resource '%s': %w", resource.r.Id, err))
 		return rb
 	}
@@ -361,7 +362,7 @@ func (rb *ResourceBatch) Validate() error {
 
 	var errList error
 	for _, entry := range rb.batch {
-		if err := entry.Validate(); err != nil {
+		if err := validator.Validate(entry); err != nil {
 			errList = multierr.Append(errList, err)
 		}
 	}
@@ -859,7 +860,7 @@ func (s *Schema) AddIgnoredActions(actions ...string) *Schema {
 }
 
 func (s *Schema) Validate() error {
-	return s.s.Validate()
+	return validator.Validate(s.s)
 }
 
 func (s *Schema) build() *policyv1.Schemas_Schema {
@@ -957,7 +958,7 @@ func (rp *ResourcePolicy) build() (*policyv1.Policy, error) {
 		},
 	}
 
-	return p, policy.Validate(p)
+	return p, validator.Validate(p)
 }
 
 // ResourceRule is a rule in a resource policy.
@@ -1021,7 +1022,7 @@ func (rr *ResourceRule) Err() error {
 
 // Validate checks whether the resource rule is valid.
 func (rr *ResourceRule) Validate() error {
-	return rr.rule.Validate()
+	return validator.Validate(rr.rule)
 }
 
 // PrincipalPolicy is a builder for principal policies.
@@ -1162,7 +1163,7 @@ func (pr *PrincipalRule) Err() error {
 
 // Validate checks whether the rule is valid.
 func (pr *PrincipalRule) Validate() error {
-	return pr.rule.Validate()
+	return validator.Validate(pr.rule)
 }
 
 // DerivedRoles is a builder for derived roles.

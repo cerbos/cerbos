@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/api/genpb
 go 1.20
 
 require (
-	github.com/envoyproxy/protoc-gen-validate v1.0.2
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230830185350-7a34d6557349.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230920204549-e6e6cdab5c13
 	google.golang.org/grpc v1.58.2
