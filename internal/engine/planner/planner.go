@@ -502,6 +502,11 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Req
 		return nil, err
 	}
 
+	e, err = replaceCamelCaseFields(e)
+	if err != nil {
+		return nil, err
+	}
+
 	val, residual, err := p.evalPartially(e)
 	if err != nil {
 		// ignore expressions that are invalid
@@ -834,4 +839,33 @@ func memoize[T any](f func() (T, error)) func() (T, error) {
 		memoized = true
 		return result, err
 	}
+}
+
+func replaceCamelCaseFields(expr *exprpb.Expr) (*exprpb.Expr, error) {
+	// For some reason, the JSONFieldProvider is ignored in the planner. It _should_ work, and I haven't been able to work out why it doesn't.
+	// For now, work around the issue by rewriting camel case fields to snake case.
+	// We don't need to rewrite `request.principal.derivedRoles`, because that is handled in replacePrincipalDerivedRoles.
+	return replaceVarsGen(expr, func(input *exprpb.Expr) (*exprpb.Expr, bool, error) {
+		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
+		if !ok {
+			return nil, false, nil
+		}
+		sel := se.SelectExpr
+
+		ident := sel.Operand.GetIdentExpr()
+
+		if ident != nil && ident.Name == conditions.CELRequestIdent && sel.Field == "auxData" {
+			return &exprpb.Expr{
+				ExprKind: &exprpb.Expr_SelectExpr{
+					SelectExpr: &exprpb.Expr_Select{
+						Operand:  sel.Operand,
+						Field:    "aux_data",
+						TestOnly: sel.TestOnly,
+					},
+				},
+			}, true, nil
+		}
+
+		return nil, false, nil
+	})
 }

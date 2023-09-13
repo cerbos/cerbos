@@ -172,7 +172,10 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       condition:
         match:
-          expr: R.attr.groupID == request.aux_data.jwt.customInt
+          all:
+            of:
+              - expr: R.attr.groupID == request.aux_data.jwt.customInt
+              - expr: R.attr.groupID == request.auxData.jwt.customInt
     - actions: ["approve:non-boolean-condition"]
       roles: ["manager"]
       effect: EFFECT_ALLOW
