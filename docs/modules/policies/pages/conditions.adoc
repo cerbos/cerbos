@@ -6,7 +6,9 @@ A powerful feature of Cerbos policies is the ability to define conditions that a
 
 TIP: Cerbos ships with an interactive REPL that can be used to experiment with writing CEL conditions. It can be started by running `cerbos repl`. See xref:cli:cerbos.adoc#repl[the REPL documentation] for more information.
 
-.CEL condition
+Every condition expression must evaluate to a boolean true/false value. A condition block in a policy can contain either a single condition expression, or multiple expressions combined using the `all`, `any`, or `none` operators. These logical operators may be nested.
+
+.Condition block
 [source,yaml,linenums]
 ----
 condition:
@@ -18,28 +20,61 @@ condition:
             "GB" in request.resource.attr.geographies
 ----
 
-Within a condition block you have access to several special variables:
 
-`request`:: The entire request object containing data provided about the resource and the principal. Use dots to access nested fields. For example, the expression to get the principal's department attribute is `request.principal.attr.department`.
-`variables`:: Access variables declared in the `variables` section of the policy.
-`globals`:: Access global variables declared in the xref:configuration:engine.adoc#globals[policy engine configuration].
-`P`:: An alias for `request.principal` for accessing the principal object.
-`R`:: An alias for `request.resource` for accessing the resource object.
-`V`:: An alias for `variables` for accessing the policy variables object.
-`G`:: An alias for `globals` for accessing the global variables object.
+== Top-level identifiers
 
-Every condition expression must evaluate to a boolean true/false value. You can combine complex expressions together in a single condition block by using the `all`, `any`, or `none` operators.
+Within a condition expression, you have access to several top-level identifiers:
 
-.Quotes in expressions
-****
-Single and double quotes have special meanings in YAML. If your expression contains quotes, use the YAML block syntax to avoid parsing errors.
+`request`:: The principal, resource, and auxiliary data being used to evaluate the policy.
+`variables`:: Variables declared in the xref:variables.adoc[`variables` section of the policy].
+`globals`:: Global variables declared in the xref:configuration:engine.adoc#globals[policy engine configuration].
 
-[source,yaml]
+There are also single-letter aliases available to allow you to write terser expressions:
+
+`P`:: `request.principal`
+`R`:: `request.resource`
+`V`:: `variables`
+`G`:: `globals`
+
+.The `request` object
+
+[source,yaml,linenums]
 ----
-expr: >
-  "GB" in R.attr.geographies
-----  
-****
+request:
+  principal: <1>
+    id: alice <2>
+    roles: <3>
+      - employee
+    derivedRoles: <4>
+      - owner
+      - gb_employee
+    attr: <5>
+      geography: GB
+
+  resource: <6>
+    kind: leave_request <7>
+    id: XX125 <8>
+    attr: <9>
+      owner: alice
+
+  auxData: <10>
+    jwt: <11>
+      iss: acme.corp
+----
+<1> The principal whose permissions are being checked.
+<2> ID of the principal.
+<3> Static roles that are assigned to the principal by your identity management system.
+<4> xref:derived_roles.adoc[Derived roles] that are assigned to to the principal by Cerbos while evaluating the policy. This is only populated in conditions in resource policies, and will only include derived roles that are referenced in at least one policy rule.
+<5> Free-form context data about the principal.
+<6> The resource on which the principal is performing actions.
+<7> Resource kind.
+<8> ID of the resource instance.
+<9> Free-form context data about the resource instance.
+<10> xref:configuration:auxdata.adoc[Auxiliary data sources].
+<11> JWT claims.
+
+
+== Expressions and blocks
 
 .Single boolean expression
 [source,yaml,linenums]
@@ -114,25 +149,43 @@ The above nested block is equivalent to the following:
 ----
 condition:
   match:
-    expr: |-
+    expr: >
       (R.attr.status == "DRAFT" &&
         (R.attr.dev == true || R.attr.id.matches("^[98][0-9]+")) &&
         !(R.attr.qa == true || R.attr.canary == true))
 ----
 
+.Quotes in expressions
+****
+Single and double quotes have special meanings in YAML. To avoid parsing errors when your expression contains quotes, use the YAML block scalar syntax or wrap the expression in parentheses.
+
+[source,yaml]
+----
+expr: >
+  "GB" in R.attr.geographies
+----
+
+[source,yaml]
+----
+expr: ("GB" in R.attr.geographies)
+----
+****
+
+
 == Policy variables
 
-To avoid duplication in condition expressions, you can define xref:variables.adoc[variables].
+To avoid duplication in condition expressions, you can define xref:variables.adoc[variables in policies].
+
 
 [id="auxdata"]
-== Auxiliary Data
+== Auxiliary data
 
-If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], they can be accessed using `request.aux_data`.
+If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], they can be accessed using `request.auxData`.
 
 .Accessing JWT claims
 [source,yaml,linenums]
 ----
-"cerbie" in request.aux_data.jwt.aud && request.aux_data.jwt.iss == "cerbos"
+"cerbie" in request.auxData.jwt.aud && request.auxData.jwt.iss == "cerbos"
 ----
 
 
@@ -159,6 +212,7 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 | >=       | Greater than or equal to
 | >        | Greater than
 | in       | Membership in lists or maps
+| ? :      | Ternary condition (if-then-else)
 |===
 
 
@@ -201,7 +255,7 @@ Duration values must be specified in one of the following units. Larger units li
 [caption=]
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
-| Function | Description | Example 
+| Function | Description | Example
 | duration | Convert a string to a duration. The string must contain a valid duration suffixed by one of `ns`, `us`, `ms`, `s`, `m` or `h`. E.g. `3750s` | duration(R.attr.cooldownPeriod).getSeconds() == 3750
 | getHours | Get hours from a duration | duration(R.attr.cooldownPeriod).getHours() == 1
 | getMilliseconds | Get milliseconds from a duration | duration(R.attr.cooldownPeriod).getMilliseconds() == 3750000
@@ -280,7 +334,6 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 |===
 
 
-
 == Lists and maps
 
 .Test data
@@ -320,6 +373,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 |===
 
+
 == Math
 
 [caption=]
@@ -329,6 +383,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | math.greatest | Get the greatest valued number present in the arguments | math.greatest([1, 3, 5]) == 5
 | math.least | Get the least valued number present in the arguments | math.least([1, 3, 5]) == 1
 |===
+
 
 == Strings
 
