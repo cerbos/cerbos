@@ -19,7 +19,7 @@ all: clean build
 
 .PHONY: clean
 clean:
-	@-rm -rf $(GEN_DIR)
+	@-rm -rf $(GEN_DIR)/cerbos
 	@-rm -rf $(MOCK_DIR)
 	@-rm -rf $(DOCS_OUT_DIR)
 	@-rm -rf $(JSONSCHEMA_DIR)
@@ -40,13 +40,14 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks deps confdocs
+generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks confdocs
 
 .PHONY: generate-proto-code
 generate-proto-code: proto-gen-deps
-	@-rm -rf $(GEN_DIR)
+	@-rm -rf $(GEN_DIR)/cerbos
 	@ $(BUF) format -w
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
+	@ GOWORK=off go mod tidy -C $(GEN_DIR)
 
 .PHONY: generate-json-schemas
 generate-json-schemas: proto-gen-deps

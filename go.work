@@ -1,0 +1,9 @@
+go 1.21.1
+
+use (
+	.
+	./api/genpb
+	./hack/tools/protoc-gen-jsonschema
+	./hack/tools/testsplit
+	./tools
+)

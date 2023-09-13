@@ -132,58 +132,58 @@ $(TOOLS_BIN_DIR):
 	@ mkdir -p $(TOOLS_BIN_DIR)
 
 $(BUF): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bufbuild/buf/cmd/buf
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bufbuild/buf/cmd/buf
 
 $(GHZ): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bojand/ghz/cmd/ghz@latest
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bojand/ghz/cmd/ghz@latest
 
 $(GO_LICENSES): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/google/go-licenses
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/google/go-licenses
 
 $(GO_LICENCE_DETECTOR): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) go.elastic.co/go-licence-detector
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) go.elastic.co/go-licence-detector
 
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR)
 	@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_BIN_DIR)
 
 $(GORELEASER): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/goreleaser/goreleaser
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/goreleaser/goreleaser
 
 $(GOTESTSUM): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) gotest.tools/gotestsum
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) gotest.tools/gotestsum
 
 $(GRPCURL): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/fullstorydev/grpcurl/cmd/grpcurl
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/fullstorydev/grpcurl/cmd/grpcurl
 
 $(MOCKERY): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/vektra/mockery/v2
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/vektra/mockery/v2
 
 $(PROTOC_GEN_GO): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) google.golang.org/protobuf/cmd/protoc-gen-go
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) google.golang.org/protobuf/cmd/protoc-gen-go
 
 $(PROTOC_GEN_GO_GRPC): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 $(PROTOC_GEN_GO_HASHPB): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/cerbos/protoc-gen-go-hashpb
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/cerbos/protoc-gen-go-hashpb
 
 $(PROTOC_GEN_GO_VTPROTO): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
 
 $(PROTOC_GEN_GRPC_GATEWAY): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
 $(PROTOC_GEN_JSONSCHEMA): $(TOOLS_BIN_DIR) $(PROTOC_GEN_JSONSCHEMA_SRC_FILES)
-	@ cd $(PROTOC_GEN_JSONSCHEMA_SRC_DIR) && GOBIN=$(TOOLS_BIN_DIR) go install .
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -C $(PROTOC_GEN_JSONSCHEMA_SRC_DIR)
 
 $(PROTOC_GEN_OPENAPIV2): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 
 $(PROTOC_GEN_VALIDATE): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/envoyproxy/protoc-gen-validate
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/envoyproxy/protoc-gen-validate
 
 $(TESTSPLIT): $(TOOLS_BIN_DIR) $(TESTSPLIT_SRC_FILES)
-	@ cd $(TESTSPLIT_SRC_DIR) && GOBIN=$(TOOLS_BIN_DIR) go install .
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -C $(TESTSPLIT_SRC_DIR)
 
 .PHONY: proto-gen-deps
 proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_VTPROTO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_JSONSCHEMA) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE) $(PROTOC_GEN_GO_HASHPB)

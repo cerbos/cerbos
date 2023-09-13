@@ -23,6 +23,3 @@ unit.cover
 integration.cover
 junit.*.xml
 test-times.json
-
-go.work
-go.work.sum
