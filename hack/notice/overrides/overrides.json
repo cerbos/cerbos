@@ -6,6 +6,7 @@
 {"name": "github.com/docker/go-metrics", "licenceType": "Apache-2.0"}
 {"name": "github.com/garyburd/redigo", "licenceType": "Apache-2.0"}
 {"name": "github.com/go-errors/errors", "licenceTextOverrideFile": "licences/github.com/go-errors/errors/LICENSE.MIT"}
+{"name": "github.com/grpc-ecosystem/go-grpc-middleware/v2", "licenceType": "Apache-2.0"}
 {"name": "github.com/hudl/fargo", "licenceTextOverrideFile": "licences/github.com/hudl/fargo/LICENSE"}
 {"name": "github.com/kr/logfmt", "licenceTextOverrideFile": "licences/github.com/kr/logfmt/LICENSE"}
 {"name": "github.com/lightstep/lightstep-tracer-common/golang/gogo", "licenceTextOverrideFile": "licences/github.com/lightstep/lightstep-tracer-common/golang/gogo/LICENSE"}

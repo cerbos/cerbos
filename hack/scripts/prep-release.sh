@@ -49,7 +49,7 @@ git tag "v${VERSION}" -m "v${VERSION}"
 # Create a release branch
 SEGMENTS=(${VERSION//./ })
 RELEASE_BRANCH="v${SEGMENTS[0]}.${SEGMENTS[1]}"
-git branch "$RELEASE_BRANCH" "v${VERSION}" || true 
+git branch "$RELEASE_BRANCH" "v${VERSION}" || true
 
 # Set next version
 update_version $NEXT_VERSION
