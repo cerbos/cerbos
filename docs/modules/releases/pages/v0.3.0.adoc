@@ -5,7 +5,7 @@ include::ROOT:partial$attributes.adoc[]
 
 == Highlights
 
-Audit logs:: This release adds audit log capture and analysis capabilities to Cerbos instances. When xref:configuration:audit.adoc[audit logs are enabled], each Cerbos instance captures and stores the incoming requests and decisions made by the engine along with metadata such as the policies that contributed to the decisions. These can be viewed and analysed later using the xref:api:admin_api.doc[Admin API] or the xref:cli:ctl.adoc[`cerbos ctl`] CLI utilities.
+Audit logs:: This release adds audit log capture and analysis capabilities to Cerbos instances. When xref:configuration:audit.adoc[audit logs are enabled], each Cerbos instance captures and stores the incoming requests and decisions made by the engine along with metadata such as the policies that contributed to the decisions. These can be viewed and analysed later using the xref:api:admin_api.adoc[Admin API] or the xref:cli:ctl.adoc[`cerbos ctl`] CLI utilities.
 +
 The `cerbos ctl decisions` command provides a handy TUI for exploring the decisions made by a Cerbos instance. You can also access the raw log data using the `cerbos ctl audit` command.
 +
