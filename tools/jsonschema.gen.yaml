@@ -1,0 +1,8 @@
+---
+version: v1
+plugins:
+  - name: jsonschema
+    out: schema/jsonschema
+    opt: baseurl=https://api.cerbos.dev
+    strategy: all
+    path: ["go", "run", "-C", "../hack/tools/protoc-gen-jsonschema", "main.go"]
