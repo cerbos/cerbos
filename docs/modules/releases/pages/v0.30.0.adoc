@@ -1,0 +1,95 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.30.0]
+= Cerbos v0.30.0
+
+This release contains many enhancements, features and bug fixes to the Cerbos core engine, policy development tools and deployment methods.
+
+== Highlights
+
+xref:policies:variables.adoc[Variables] used in policies are now checked at compile time to detect unknown variables and circular references. This change helps policy authors detect problems with policies early on during development time and enables the Cerbos engine to perform runtime optimizations as well. Please note that if your existing policies reference undefined variables, this version of Cerbos will refuse to start until those issues are rectified. Before upgrading your Cerbos services or sidecars to v0.30.0, we recommend running the xref:policies:compile.adoc[`cerbos compile`] command on your policy repository to detect and fix the new compile errors.
+
+Cerbos now follows the convention of looking for `.cerbos.yaml` as the default configuration file. This is to support the common use case of including the Cerbos configuration within the policy repo itself. If you use xref:cli:cerbos.adoc#run[`cerbos run`], you may need to rename your configuration file to `.cerbos.yaml`.
+
+The `file` audit log driver now supports automatic log rotation based on file size and age. It also gains the ability to output to multiple destinations (`tee`) such as a file and `stdout`/`stderr` at the same time.
+
+Cerbos can now be configured with an acceptable skew value for validating the standard JWT time-based claims (`exp` and `nbf`).
+
+Using the new xref:cli:cerbosctl.adoc#export[`cerbosctl store export`] command, you can export your policy repository to a directory or zip/tar.gz archive. This is particularly useful when working with database stores to help troubleshoot issues using Cerbos developer tools such as the test runner and the REPL. It can also be used as a backup tool for capturing snapshots of your policy repo.
+
+The `cerbos compile` command can now work with policies stored in zip/tar.gz archives. This complements the ability of Cerbos `disk` driver to work with archive files.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Evict policies from cache after disable or enable (link:https://github.com/cerbos/cerbos/pull/1711[#1711])
+* Ignore invalid expressions (link:https://github.com/cerbos/cerbos/pull/1799[#1799])
+* Lambda body can be a field selection (link:https://github.com/cerbos/cerbos/pull/1720[#1720])
+* Normalize Git store subdirectory config to handle leading `./` correctly (link:https://github.com/cerbos/cerbos/pull/1774[#1774])
+
+=== Features
+
+* Add cerbosctl command to export policies and schemas from store (link:https://github.com/cerbos/cerbos/pull/1686[#1686])
+* Add options for intercepting gRPC operations (link:https://github.com/cerbos/cerbos/pull/1724[#1724])
+* Audit log rotation support (link:https://github.com/cerbos/cerbos/pull/1766[#1766])
+* #**BREAKING**# Check variable references at compile time (link:https://github.com/cerbos/cerbos/pull/1772[#1772])
+
+=== Enhancements
+
+* Add ability to set clusterIP (link:https://github.com/cerbos/cerbos/pull/1707[#1707])
+* Allow an image digest to be provided instead of a tag (link:https://github.com/cerbos/cerbos/pull/1735[#1735])
+* Better error messages from compile command (link:https://github.com/cerbos/cerbos/pull/1750[#1750])
+* Clean-up store resources (link:https://github.com/cerbos/cerbos/pull/1749[#1749])
+* Compile and run tests from an archive (link:https://github.com/cerbos/cerbos/pull/1721[#1721])
+* Configurable time skew for JWT validation (link:https://github.com/cerbos/cerbos/pull/1790[#1790])
+* Configuration to disable API explorer (link:https://github.com/cerbos/cerbos/pull/1767[#1767])
+* Relax naming conventions for resource kinds, principals and roles (link:https://github.com/cerbos/cerbos/pull/1762[#1762])
+* #**BREAKING**# Use `.cerbos.yaml` as conventional name for config file (link:https://github.com/cerbos/cerbos/pull/1755[#1755])
+
+=== Documentation
+
+* Add testdata schema URLs (link:https://github.com/cerbos/cerbos/pull/1779[#1779])
+* Caveats of sharing a DB with multiple instances (link:https://github.com/cerbos/cerbos/pull/1743[#1743])
+* Fix typo in 03_calling-cerbos.adoc (link:https://github.com/cerbos/cerbos/pull/1714[#1714])
+* Remove deprecated endpoint/rpc (link:https://github.com/cerbos/cerbos/pull/1734[#1734])
+* Stop building docs for older versions (link:https://github.com/cerbos/cerbos/pull/1716[#1716])
+* Update SDK examples (link:https://github.com/cerbos/cerbos/pull/1731[#1731])
+* Update examples for handling expressions beginning with quote (link:https://github.com/cerbos/cerbos/pull/1739[#1739])
+
+=== Chores
+
+* Always run `upload-test-times` after `test` (link:https://github.com/cerbos/cerbos/pull/1756[#1756])
+* Bump github.com/cyphar/filepath-securejoin from 0.2.3 to 0.2.4 in /tools (link:https://github.com/cerbos/cerbos/pull/1788[#1788])
+* Bump version to 0.30.0
+* Configure Cloud docs build (link:https://github.com/cerbos/cerbos/pull/1712[#1712])
+* Create PRs for Homebrew formula updates (link:https://github.com/cerbos/cerbos/pull/1704[#1704])
+* Debug logging for server tests (link:https://github.com/cerbos/cerbos/pull/1791[#1791])
+* Downgrade pterm to v0.12.66 (link:https://github.com/cerbos/cerbos/pull/1787[#1787])
+* Fix output path of the E2E coverage (link:https://github.com/cerbos/cerbos/pull/1757[#1757])
+* Ignore PlaygroundEnabled configuration flag (link:https://github.com/cerbos/cerbos/pull/1705[#1705])
+* Mark auxData parameter as optional in OpenAPI spec (link:https://github.com/cerbos/cerbos/pull/1723[#1723])
+* Move `gonum` dependency into correct group (link:https://github.com/cerbos/cerbos/pull/1776[#1776])
+* Publish prerelease images tagged by commit hash (link:https://github.com/cerbos/cerbos/pull/1736[#1736])
+* Switch to Coveralls (link:https://github.com/cerbos/cerbos/pull/1751[#1751])
+* Update Go to v1.20 (link:https://github.com/cerbos/cerbos/pull/1775[#1775])
+* Update bufbuild/buf-setup-action action to v1.25.0 (link:https://github.com/cerbos/cerbos/pull/1709[#1709])
+* Update bufbuild/buf-setup-action action to v1.25.1 (link:https://github.com/cerbos/cerbos/pull/1729[#1729])
+* Update bufbuild/buf-setup-action action to v1.26.0 (link:https://github.com/cerbos/cerbos/pull/1748[#1748])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1759[#1759])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1708[#1708])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1718[#1718])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1730[#1730])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1747[#1747])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1760[#1760])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1768[#1768])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1780[#1780])
+* Update go deps to v2 (major) (link:https://github.com/cerbos/cerbos/pull/1769[#1769])
+* Update helm release postgresql to v12.6.7 (link:https://github.com/cerbos/cerbos/pull/1681[#1681])
+* Update module github.com/jdxcode/netrc to v1 (link:https://github.com/cerbos/cerbos/pull/1782[#1782])
+* Upgrade gRPC middleware to v2 (link:https://github.com/cerbos/cerbos/pull/1786[#1786])
+* Upgrade to CEL 0.17 (link:https://github.com/cerbos/cerbos/pull/1717[#1717])
+* Upload test coverage from snapshot builds (link:https://github.com/cerbos/cerbos/pull/1764[#1764])
+* Use experimental 'loopvar' released with Go 1.21 (link:https://github.com/cerbos/cerbos/pull/1738[#1738])
