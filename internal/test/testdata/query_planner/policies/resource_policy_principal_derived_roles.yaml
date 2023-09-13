@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: principal_derived_roles
+  version: default
+  importDerivedRoles:
+    - principal_derived_roles
+  variables:
+    local:
+      derivedRoles: P.derivedRoles
+      oneTwoThree: V.derivedRoles == ["one", "three", "two"]
+  rules:
+    - actions:
+        - test
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - one
+        - two
+        - three
+      condition:
+        match:
+          expr: V.oneTwoThree

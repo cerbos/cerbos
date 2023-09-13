@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: principal_derived_roles
+  definitions:
+    - name: one
+      parentRoles:
+        - user
+      condition:
+        match:
+          expr: R.attr.one
+    - name: two
+      parentRoles:
+        - user
+      condition:
+        match:
+          expr: R.attr.two
+    - name: three
+      parentRoles:
+        - user
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.three
+              - none:
+                  of:
+                    - expr: R.attr.trois
+                    - expr: R.attr.tres

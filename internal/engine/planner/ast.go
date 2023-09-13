@@ -50,6 +50,7 @@ const (
 	ExistsOne          = "exists_one"
 	Map                = "map"
 	Lambda             = "lambda"
+	If                 = "if"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
@@ -88,6 +89,8 @@ func opFromCLE(fn string) (string, error) {
 		return Or, nil
 	case operators.LogicalNot:
 		return Not, nil
+	case operators.Conditional:
+		return If, nil
 	default:
 		return fn, ErrUnknownOperator
 	}
