@@ -1,8 +1,6 @@
 module github.com/cerbos/cerbos
 
-go 1.21.0
-
-toolchain go1.21.1
+go 1.21.1
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
