@@ -158,4 +158,4 @@ install-cerbosctl:
 	fi; \
 
 .PHONY: warm-cache
-warm-cache: compile proto-gen-deps $(GOTESTSUM) $(MOCKERY) $(TESTSPLIT)
+warm-cache: compile $(GOTESTSUM) $(MOCKERY) $(TESTSPLIT)
