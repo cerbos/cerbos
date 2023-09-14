@@ -1,0 +1,10 @@
+---
+version: v1
+types:
+  include: ["cerbos.private.v1"]
+plugins:
+  - name: jsonschema
+    out: internal/test/testdata/.jsonschema
+    opt: baseurl=https://api.cerbos.test
+    strategy: all
+    path: ["go", "run", "-C", "../hack/tools/protoc-gen-jsonschema", "main.go"]

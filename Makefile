@@ -19,7 +19,7 @@ all: clean build
 
 .PHONY: clean
 clean:
-	@-rm -rf $(GEN_DIR)
+	@-rm -rf $(GEN_DIR)/cerbos
 	@-rm -rf $(MOCK_DIR)
 	@-rm -rf $(DOCS_OUT_DIR)
 	@-rm -rf $(JSONSCHEMA_DIR)
@@ -40,23 +40,24 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks deps confdocs
+generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks confdocs
 
 .PHONY: generate-proto-code
-generate-proto-code: proto-gen-deps
-	@-rm -rf $(GEN_DIR)
+generate-proto-code: $(BUF)
+	@-rm -rf $(GEN_DIR)/cerbos
 	@ $(BUF) format -w
-	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
+	@ cd tools && $(BUF) generate --template=api.gen.yaml --output=.. ..
+	@ GOWORK=off go mod tidy -C $(GEN_DIR)
 
 .PHONY: generate-json-schemas
-generate-json-schemas: proto-gen-deps
+generate-json-schemas: $(BUF)
 	@-rm -rf $(JSONSCHEMA_DIR)
-	@ $(BUF) generate --template '$(JSONSCHEMA_BUF_GEN_TEMPLATE)' api/public
+	@ cd tools && $(BUF) generate --template=jsonschema.gen.yaml --output=.. ../api/public
 
 .PHONY: generate-testdata-json-schemas
-generate-testdata-json-schemas: proto-gen-deps
+generate-testdata-json-schemas: $(BUF)
 	@-rm -rf $(TESTDATA_JSONSCHEMA_DIR)
-	@ $(BUF) generate --template '$(TESTDATA_JSONSCHEMA_BUF_GEN_TEMPLATE)' api/private
+	@ cd tools && $(BUF) generate --template=testdata_jsonschema.gen.yaml --output=.. ../api/private
 	@ mv $(TESTDATA_JSONSCHEMA_DIR)/cerbos/private/v1/*TestCase.schema.json $(TESTDATA_JSONSCHEMA_DIR)/cerbos/private/v1/QueryPlannerTestSuite.schema.json $(TESTDATA_JSONSCHEMA_DIR)
 	@ rm -rf $(TESTDATA_JSONSCHEMA_DIR)/cerbos
 
