@@ -1,8 +1,6 @@
 module github.com/cerbos/cerbos/api/genpb
 
-go 1.21.0
-
-toolchain go1.21.1
+go 1.20
 
 require (
 	github.com/envoyproxy/protoc-gen-validate v1.0.2
