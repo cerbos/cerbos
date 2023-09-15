@@ -338,12 +338,12 @@ message Trace {
   Event event = 2;
 }
 
+// Data from the request, provided to expressions as the top-level `request` variable.
 message Request {
   message Principal {
     string id = 1;
     repeated string roles = 2;
-    repeated string derived_roles = 3;
-    map<string, google.protobuf.Value> attr = 4;
+    map<string, google.protobuf.Value> attr = 3;
   }
 
   message Resource {
@@ -355,4 +355,9 @@ message Request {
   Principal principal = 1;
   Resource resource = 2;
   AuxData aux_data = 3;
+}
+
+// Data from the runtime, provided to expressions as the top-level `runtime` variable.
+message Runtime {
+  repeated string effective_derived_roles = 1;
 }

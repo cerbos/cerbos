@@ -2,7 +2,7 @@
 ---
 apiVersion: api.cerbos.dev/v1
 derivedRoles:
-  name: principal_derived_roles
+  name: runtime_effective_derived_roles
   definitions:
     - name: one
       parentRoles:
@@ -10,12 +10,14 @@ derivedRoles:
       condition:
         match:
           expr: R.attr.one
+
     - name: two
       parentRoles:
         - user
       condition:
         match:
           expr: R.attr.two
+
     - name: three
       parentRoles:
         - user
@@ -28,3 +30,11 @@ derivedRoles:
                   of:
                     - expr: R.attr.trois
                     - expr: R.attr.tres
+
+    - name: not_referenced
+      parentRoles:
+        - user
+
+    - name: not_activated
+      parentRoles:
+        - admin

@@ -10,24 +10,28 @@ resourcePolicy:
     local:
       derivedRoles: runtime.effectiveDerivedRoles
       derived_roles: runtime.effective_derived_roles
+      expected: >
+        ["one", "three", "two"]
+      oneTwoThree: V.derivedRoles == V.expected
+      one_two_three: V.derived_roles == V.expected
   rules:
-    - name: camelCase
-      actions:
+    - actions:
         - camelCase
       effect: EFFECT_ALLOW
       roles:
-        - employee
-      output:
-        expr: V.derivedRoles
+        - user
+      condition:
+        match:
+          expr: V.oneTwoThree
 
-    - name: snake_case
-      actions:
+    - actions:
         - snake_case
       effect: EFFECT_ALLOW
       roles:
-        - employee
-      output:
-        expr: V.derived_roles
+        - user
+      condition:
+        match:
+          expr: V.one_two_three
 
     - name: dummy_rule_to_avoid_pruning_unreferenced_derived_roles
       actions:
@@ -36,4 +40,5 @@ resourcePolicy:
       derivedRoles:
         - one
         - two
+        - three
         - not_activated

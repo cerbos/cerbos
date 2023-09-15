@@ -1041,6 +1041,7 @@ func (x *Trace) GetEvent() *Trace_Event {
 	return nil
 }
 
+// Data from the request, provided to expressions as the top-level `request` variable.
 type Request struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1104,6 +1105,54 @@ func (x *Request) GetAuxData() *AuxData {
 	return nil
 }
 
+// Data from the runtime, provided to expressions as the top-level `runtime` variable.
+type Runtime struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EffectiveDerivedRoles []string `protobuf:"bytes,1,rep,name=effective_derived_roles,json=effectiveDerivedRoles,proto3" json:"effective_derived_roles,omitempty"`
+}
+
+func (x *Runtime) Reset() {
+	*x = Runtime{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Runtime) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Runtime) ProtoMessage() {}
+
+func (x *Runtime) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Runtime.ProtoReflect.Descriptor instead.
+func (*Runtime) Descriptor() ([]byte, []int) {
+	return file_cerbos_engine_v1_engine_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *Runtime) GetEffectiveDerivedRoles() []string {
+	if x != nil {
+		return x.EffectiveDerivedRoles
+	}
+	return nil
+}
+
 type PlanResourcesInput_Resource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1118,7 +1167,7 @@ type PlanResourcesInput_Resource struct {
 func (x *PlanResourcesInput_Resource) Reset() {
 	*x = PlanResourcesInput_Resource{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[12]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1131,7 +1180,7 @@ func (x *PlanResourcesInput_Resource) String() string {
 func (*PlanResourcesInput_Resource) ProtoMessage() {}
 
 func (x *PlanResourcesInput_Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[12]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1190,7 +1239,7 @@ type PlanResourcesAst_Node struct {
 func (x *PlanResourcesAst_Node) Reset() {
 	*x = PlanResourcesAst_Node{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[14]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1203,7 +1252,7 @@ func (x *PlanResourcesAst_Node) String() string {
 func (*PlanResourcesAst_Node) ProtoMessage() {}
 
 func (x *PlanResourcesAst_Node) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[14]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1268,7 +1317,7 @@ type PlanResourcesAst_LogicalOperation struct {
 func (x *PlanResourcesAst_LogicalOperation) Reset() {
 	*x = PlanResourcesAst_LogicalOperation{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[15]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1281,7 +1330,7 @@ func (x *PlanResourcesAst_LogicalOperation) String() string {
 func (*PlanResourcesAst_LogicalOperation) ProtoMessage() {}
 
 func (x *PlanResourcesAst_LogicalOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[15]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1323,7 +1372,7 @@ type PlanResourcesFilter_Expression struct {
 func (x *PlanResourcesFilter_Expression) Reset() {
 	*x = PlanResourcesFilter_Expression{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[16]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1336,7 +1385,7 @@ func (x *PlanResourcesFilter_Expression) String() string {
 func (*PlanResourcesFilter_Expression) ProtoMessage() {}
 
 func (x *PlanResourcesFilter_Expression) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[16]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1382,7 +1431,7 @@ type PlanResourcesFilter_Expression_Operand struct {
 func (x *PlanResourcesFilter_Expression_Operand) Reset() {
 	*x = PlanResourcesFilter_Expression_Operand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[17]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1395,7 +1444,7 @@ func (x *PlanResourcesFilter_Expression_Operand) String() string {
 func (*PlanResourcesFilter_Expression_Operand) ProtoMessage() {}
 
 func (x *PlanResourcesFilter_Expression_Operand) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[17]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1477,7 +1526,7 @@ type CheckOutput_ActionEffect struct {
 func (x *CheckOutput_ActionEffect) Reset() {
 	*x = CheckOutput_ActionEffect{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[18]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1490,7 +1539,7 @@ func (x *CheckOutput_ActionEffect) String() string {
 func (*CheckOutput_ActionEffect) ProtoMessage() {}
 
 func (x *CheckOutput_ActionEffect) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[18]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1551,7 +1600,7 @@ type Trace_Component struct {
 func (x *Trace_Component) Reset() {
 	*x = Trace_Component{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[23]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1564,7 +1613,7 @@ func (x *Trace_Component) String() string {
 func (*Trace_Component) ProtoMessage() {}
 
 func (x *Trace_Component) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[23]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1743,7 +1792,7 @@ type Trace_Event struct {
 func (x *Trace_Event) Reset() {
 	*x = Trace_Event{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[24]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1756,7 +1805,7 @@ func (x *Trace_Event) String() string {
 func (*Trace_Event) ProtoMessage() {}
 
 func (x *Trace_Event) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[24]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1819,7 +1868,7 @@ type Trace_Component_Variable struct {
 func (x *Trace_Component_Variable) Reset() {
 	*x = Trace_Component_Variable{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[25]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1832,7 +1881,7 @@ func (x *Trace_Component_Variable) String() string {
 func (*Trace_Component_Variable) ProtoMessage() {}
 
 func (x *Trace_Component_Variable) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[25]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1867,16 +1916,15 @@ type Request_Principal struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id           string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Roles        []string                   `protobuf:"bytes,2,rep,name=roles,proto3" json:"roles,omitempty"`
-	DerivedRoles []string                   `protobuf:"bytes,3,rep,name=derived_roles,json=derivedRoles,proto3" json:"derived_roles,omitempty"`
-	Attr         map[string]*structpb.Value `protobuf:"bytes,4,rep,name=attr,proto3" json:"attr,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Id    string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Roles []string                   `protobuf:"bytes,2,rep,name=roles,proto3" json:"roles,omitempty"`
+	Attr  map[string]*structpb.Value `protobuf:"bytes,3,rep,name=attr,proto3" json:"attr,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (x *Request_Principal) Reset() {
 	*x = Request_Principal{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[26]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1889,7 +1937,7 @@ func (x *Request_Principal) String() string {
 func (*Request_Principal) ProtoMessage() {}
 
 func (x *Request_Principal) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[26]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1919,13 +1967,6 @@ func (x *Request_Principal) GetRoles() []string {
 	return nil
 }
 
-func (x *Request_Principal) GetDerivedRoles() []string {
-	if x != nil {
-		return x.DerivedRoles
-	}
-	return nil
-}
-
 func (x *Request_Principal) GetAttr() map[string]*structpb.Value {
 	if x != nil {
 		return x.Attr
@@ -1946,7 +1987,7 @@ type Request_Resource struct {
 func (x *Request_Resource) Reset() {
 	*x = Request_Resource{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[27]
+		mi := &file_cerbos_engine_v1_engine_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1959,7 +2000,7 @@ func (x *Request_Resource) String() string {
 func (*Request_Resource) ProtoMessage() {}
 
 func (x *Request_Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[27]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2473,7 +2514,7 @@ var file_cerbos_engine_v1_engine_proto_rawDesc = []byte{
 	0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45,
 	0x44, 0x10, 0x00, 0x12, 0x14, 0x0a, 0x10, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x41, 0x43,
 	0x54, 0x49, 0x56, 0x41, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x53, 0x54, 0x41,
-	0x54, 0x55, 0x53, 0x5f, 0x53, 0x4b, 0x49, 0x50, 0x50, 0x45, 0x44, 0x10, 0x02, 0x22, 0xf3, 0x04,
+	0x54, 0x55, 0x53, 0x5f, 0x53, 0x4b, 0x49, 0x50, 0x50, 0x45, 0x44, 0x10, 0x02, 0x22, 0xce, 0x04,
 	0x0a, 0x07, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x41, 0x0a, 0x09, 0x70, 0x72, 0x69,
 	0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63,
 	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e,
@@ -2486,41 +2527,43 @@ var file_cerbos_engine_v1_engine_proto_rawDesc = []byte{
 	0x61, 0x75, 0x78, 0x5f, 0x64, 0x61, 0x74, 0x61, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19,
 	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76,
 	0x31, 0x2e, 0x41, 0x75, 0x78, 0x44, 0x61, 0x74, 0x61, 0x52, 0x07, 0x61, 0x75, 0x78, 0x44, 0x61,
-	0x74, 0x61, 0x1a, 0xea, 0x01, 0x0a, 0x09, 0x50, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c,
+	0x74, 0x61, 0x1a, 0xc5, 0x01, 0x0a, 0x09, 0x50, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c,
 	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64,
 	0x12, 0x14, 0x0a, 0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52,
-	0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x64, 0x65, 0x72, 0x69, 0x76, 0x65,
-	0x64, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0c, 0x64,
-	0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x52, 0x6f, 0x6c, 0x65, 0x73, 0x12, 0x41, 0x0a, 0x04, 0x61,
-	0x74, 0x74, 0x72, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x05, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x12, 0x41, 0x0a, 0x04, 0x61, 0x74, 0x74, 0x72, 0x18, 0x03,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e,
+	0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e,
+	0x50, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x2e, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x52, 0x04, 0x61, 0x74, 0x74, 0x72, 0x1a, 0x4f, 0x0a, 0x09, 0x41, 0x74, 0x74,
+	0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0xc1, 0x01, 0x0a, 0x08, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69,
+	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x40, 0x0a, 0x04, 0x61,
+	0x74, 0x74, 0x72, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x63, 0x65, 0x72, 0x62,
 	0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x2e, 0x50, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x2e, 0x41,
-	0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x61, 0x74, 0x74, 0x72, 0x1a, 0x4f,
-	0x0a, 0x09, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b,
-	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2c, 0x0a,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x56,
-	0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a,
-	0xc1, 0x01, 0x0a, 0x08, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04,
-	0x6b, 0x69, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64,
-	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64,
-	0x12, 0x40, 0x0a, 0x04, 0x61, 0x74, 0x74, 0x72, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c,
-	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76,
-	0x31, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x2e, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x61, 0x74,
-	0x74, 0x72, 0x1a, 0x4f, 0x0a, 0x09, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12,
-	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65,
-	0x79, 0x12, 0x2c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
-	0x75, 0x66, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
-	0x02, 0x38, 0x01, 0x42, 0x6f, 0x0a, 0x18, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
-	0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x5a,
-	0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65,
-	0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x65, 0x6e, 0x67, 0x69, 0x6e,
-	0x65, 0x2f, 0x76, 0x31, 0x3b, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x76, 0x31, 0xaa, 0x02, 0x14,
-	0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56, 0x31, 0x2e, 0x45, 0x6e,
-	0x67, 0x69, 0x6e, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x75, 0x65, 0x73, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x41, 0x74,
+	0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x61, 0x74, 0x74, 0x72, 0x1a, 0x4f, 0x0a,
+	0x09, 0x41, 0x74, 0x74, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
+	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2c, 0x0a, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x6f,
+	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x56, 0x61,
+	0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x41,
+	0x0a, 0x07, 0x52, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x12, 0x36, 0x0a, 0x17, 0x65, 0x66, 0x66,
+	0x65, 0x63, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x64, 0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x5f, 0x72,
+	0x6f, 0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x15, 0x65, 0x66, 0x66, 0x65,
+	0x63, 0x74, 0x69, 0x76, 0x65, 0x44, 0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x52, 0x6f, 0x6c, 0x65,
+	0x73, 0x42, 0x6f, 0x0a, 0x18, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
+	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x5a, 0x3c, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70,
+	0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f,
+	0x76, 0x31, 0x3b, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x76, 0x31, 0xaa, 0x02, 0x14, 0x43, 0x65,
+	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56, 0x31, 0x2e, 0x45, 0x6e, 0x67, 0x69,
+	0x6e, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2536,7 +2579,7 @@ func file_cerbos_engine_v1_engine_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_engine_v1_engine_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cerbos_engine_v1_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_cerbos_engine_v1_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_cerbos_engine_v1_engine_proto_goTypes = []interface{}{
 	(PlanResourcesAst_LogicalOperation_Operator)(0), // 0: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator
 	(PlanResourcesFilter_Kind)(0),                   // 1: cerbos.engine.v1.PlanResourcesFilter.Kind
@@ -2554,76 +2597,77 @@ var file_cerbos_engine_v1_engine_proto_goTypes = []interface{}{
 	(*AuxData)(nil),                                 // 13: cerbos.engine.v1.AuxData
 	(*Trace)(nil),                                   // 14: cerbos.engine.v1.Trace
 	(*Request)(nil),                                 // 15: cerbos.engine.v1.Request
-	(*PlanResourcesInput_Resource)(nil),             // 16: cerbos.engine.v1.PlanResourcesInput.Resource
-	nil,                                             // 17: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
-	(*PlanResourcesAst_Node)(nil),                   // 18: cerbos.engine.v1.PlanResourcesAst.Node
-	(*PlanResourcesAst_LogicalOperation)(nil),       // 19: cerbos.engine.v1.PlanResourcesAst.LogicalOperation
-	(*PlanResourcesFilter_Expression)(nil),          // 20: cerbos.engine.v1.PlanResourcesFilter.Expression
-	(*PlanResourcesFilter_Expression_Operand)(nil),  // 21: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
-	(*CheckOutput_ActionEffect)(nil),                // 22: cerbos.engine.v1.CheckOutput.ActionEffect
-	nil,                                             // 23: cerbos.engine.v1.CheckOutput.ActionsEntry
-	nil,                                             // 24: cerbos.engine.v1.Resource.AttrEntry
-	nil,                                             // 25: cerbos.engine.v1.Principal.AttrEntry
-	nil,                                             // 26: cerbos.engine.v1.AuxData.JwtEntry
-	(*Trace_Component)(nil),                         // 27: cerbos.engine.v1.Trace.Component
-	(*Trace_Event)(nil),                             // 28: cerbos.engine.v1.Trace.Event
-	(*Trace_Component_Variable)(nil),                // 29: cerbos.engine.v1.Trace.Component.Variable
-	(*Request_Principal)(nil),                       // 30: cerbos.engine.v1.Request.Principal
-	(*Request_Resource)(nil),                        // 31: cerbos.engine.v1.Request.Resource
-	nil,                                             // 32: cerbos.engine.v1.Request.Principal.AttrEntry
-	nil,                                             // 33: cerbos.engine.v1.Request.Resource.AttrEntry
-	(*v1.ValidationError)(nil),                      // 34: cerbos.schema.v1.ValidationError
-	(*structpb.Value)(nil),                          // 35: google.protobuf.Value
-	(*v1alpha1.CheckedExpr)(nil),                    // 36: google.api.expr.v1alpha1.CheckedExpr
-	(v11.Effect)(0),                                 // 37: cerbos.effect.v1.Effect
+	(*Runtime)(nil),                                 // 16: cerbos.engine.v1.Runtime
+	(*PlanResourcesInput_Resource)(nil),             // 17: cerbos.engine.v1.PlanResourcesInput.Resource
+	nil,                                             // 18: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
+	(*PlanResourcesAst_Node)(nil),                   // 19: cerbos.engine.v1.PlanResourcesAst.Node
+	(*PlanResourcesAst_LogicalOperation)(nil),       // 20: cerbos.engine.v1.PlanResourcesAst.LogicalOperation
+	(*PlanResourcesFilter_Expression)(nil),          // 21: cerbos.engine.v1.PlanResourcesFilter.Expression
+	(*PlanResourcesFilter_Expression_Operand)(nil),  // 22: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
+	(*CheckOutput_ActionEffect)(nil),                // 23: cerbos.engine.v1.CheckOutput.ActionEffect
+	nil,                                             // 24: cerbos.engine.v1.CheckOutput.ActionsEntry
+	nil,                                             // 25: cerbos.engine.v1.Resource.AttrEntry
+	nil,                                             // 26: cerbos.engine.v1.Principal.AttrEntry
+	nil,                                             // 27: cerbos.engine.v1.AuxData.JwtEntry
+	(*Trace_Component)(nil),                         // 28: cerbos.engine.v1.Trace.Component
+	(*Trace_Event)(nil),                             // 29: cerbos.engine.v1.Trace.Event
+	(*Trace_Component_Variable)(nil),                // 30: cerbos.engine.v1.Trace.Component.Variable
+	(*Request_Principal)(nil),                       // 31: cerbos.engine.v1.Request.Principal
+	(*Request_Resource)(nil),                        // 32: cerbos.engine.v1.Request.Resource
+	nil,                                             // 33: cerbos.engine.v1.Request.Principal.AttrEntry
+	nil,                                             // 34: cerbos.engine.v1.Request.Resource.AttrEntry
+	(*v1.ValidationError)(nil),                      // 35: cerbos.schema.v1.ValidationError
+	(*structpb.Value)(nil),                          // 36: google.protobuf.Value
+	(*v1alpha1.CheckedExpr)(nil),                    // 37: google.api.expr.v1alpha1.CheckedExpr
+	(v11.Effect)(0),                                 // 38: cerbos.effect.v1.Effect
 }
 var file_cerbos_engine_v1_engine_proto_depIdxs = []int32{
 	12, // 0: cerbos.engine.v1.PlanResourcesInput.principal:type_name -> cerbos.engine.v1.Principal
-	16, // 1: cerbos.engine.v1.PlanResourcesInput.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
+	17, // 1: cerbos.engine.v1.PlanResourcesInput.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
 	13, // 2: cerbos.engine.v1.PlanResourcesInput.aux_data:type_name -> cerbos.engine.v1.AuxData
-	18, // 3: cerbos.engine.v1.PlanResourcesAst.filter_ast:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
+	19, // 3: cerbos.engine.v1.PlanResourcesAst.filter_ast:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
 	1,  // 4: cerbos.engine.v1.PlanResourcesFilter.kind:type_name -> cerbos.engine.v1.PlanResourcesFilter.Kind
-	21, // 5: cerbos.engine.v1.PlanResourcesFilter.condition:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
+	22, // 5: cerbos.engine.v1.PlanResourcesFilter.condition:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
 	6,  // 6: cerbos.engine.v1.PlanResourcesOutput.filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	34, // 7: cerbos.engine.v1.PlanResourcesOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	35, // 7: cerbos.engine.v1.PlanResourcesOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
 	11, // 8: cerbos.engine.v1.CheckInput.resource:type_name -> cerbos.engine.v1.Resource
 	12, // 9: cerbos.engine.v1.CheckInput.principal:type_name -> cerbos.engine.v1.Principal
 	13, // 10: cerbos.engine.v1.CheckInput.aux_data:type_name -> cerbos.engine.v1.AuxData
-	23, // 11: cerbos.engine.v1.CheckOutput.actions:type_name -> cerbos.engine.v1.CheckOutput.ActionsEntry
-	34, // 12: cerbos.engine.v1.CheckOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	24, // 11: cerbos.engine.v1.CheckOutput.actions:type_name -> cerbos.engine.v1.CheckOutput.ActionsEntry
+	35, // 12: cerbos.engine.v1.CheckOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
 	10, // 13: cerbos.engine.v1.CheckOutput.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	35, // 14: cerbos.engine.v1.OutputEntry.val:type_name -> google.protobuf.Value
-	24, // 15: cerbos.engine.v1.Resource.attr:type_name -> cerbos.engine.v1.Resource.AttrEntry
-	25, // 16: cerbos.engine.v1.Principal.attr:type_name -> cerbos.engine.v1.Principal.AttrEntry
-	26, // 17: cerbos.engine.v1.AuxData.jwt:type_name -> cerbos.engine.v1.AuxData.JwtEntry
-	27, // 18: cerbos.engine.v1.Trace.components:type_name -> cerbos.engine.v1.Trace.Component
-	28, // 19: cerbos.engine.v1.Trace.event:type_name -> cerbos.engine.v1.Trace.Event
-	30, // 20: cerbos.engine.v1.Request.principal:type_name -> cerbos.engine.v1.Request.Principal
-	31, // 21: cerbos.engine.v1.Request.resource:type_name -> cerbos.engine.v1.Request.Resource
+	36, // 14: cerbos.engine.v1.OutputEntry.val:type_name -> google.protobuf.Value
+	25, // 15: cerbos.engine.v1.Resource.attr:type_name -> cerbos.engine.v1.Resource.AttrEntry
+	26, // 16: cerbos.engine.v1.Principal.attr:type_name -> cerbos.engine.v1.Principal.AttrEntry
+	27, // 17: cerbos.engine.v1.AuxData.jwt:type_name -> cerbos.engine.v1.AuxData.JwtEntry
+	28, // 18: cerbos.engine.v1.Trace.components:type_name -> cerbos.engine.v1.Trace.Component
+	29, // 19: cerbos.engine.v1.Trace.event:type_name -> cerbos.engine.v1.Trace.Event
+	31, // 20: cerbos.engine.v1.Request.principal:type_name -> cerbos.engine.v1.Request.Principal
+	32, // 21: cerbos.engine.v1.Request.resource:type_name -> cerbos.engine.v1.Request.Resource
 	13, // 22: cerbos.engine.v1.Request.aux_data:type_name -> cerbos.engine.v1.AuxData
-	17, // 23: cerbos.engine.v1.PlanResourcesInput.Resource.attr:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
-	35, // 24: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry.value:type_name -> google.protobuf.Value
-	19, // 25: cerbos.engine.v1.PlanResourcesAst.Node.logical_operation:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation
-	36, // 26: cerbos.engine.v1.PlanResourcesAst.Node.expression:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	18, // 23: cerbos.engine.v1.PlanResourcesInput.Resource.attr:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
+	36, // 24: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	20, // 25: cerbos.engine.v1.PlanResourcesAst.Node.logical_operation:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation
+	37, // 26: cerbos.engine.v1.PlanResourcesAst.Node.expression:type_name -> google.api.expr.v1alpha1.CheckedExpr
 	0,  // 27: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.operator:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator
-	18, // 28: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.nodes:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
-	21, // 29: cerbos.engine.v1.PlanResourcesFilter.Expression.operands:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
-	35, // 30: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.value:type_name -> google.protobuf.Value
-	20, // 31: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.expression:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression
-	37, // 32: cerbos.engine.v1.CheckOutput.ActionEffect.effect:type_name -> cerbos.effect.v1.Effect
-	22, // 33: cerbos.engine.v1.CheckOutput.ActionsEntry.value:type_name -> cerbos.engine.v1.CheckOutput.ActionEffect
-	35, // 34: cerbos.engine.v1.Resource.AttrEntry.value:type_name -> google.protobuf.Value
-	35, // 35: cerbos.engine.v1.Principal.AttrEntry.value:type_name -> google.protobuf.Value
-	35, // 36: cerbos.engine.v1.AuxData.JwtEntry.value:type_name -> google.protobuf.Value
+	19, // 28: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.nodes:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
+	22, // 29: cerbos.engine.v1.PlanResourcesFilter.Expression.operands:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
+	36, // 30: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.value:type_name -> google.protobuf.Value
+	21, // 31: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.expression:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression
+	38, // 32: cerbos.engine.v1.CheckOutput.ActionEffect.effect:type_name -> cerbos.effect.v1.Effect
+	23, // 33: cerbos.engine.v1.CheckOutput.ActionsEntry.value:type_name -> cerbos.engine.v1.CheckOutput.ActionEffect
+	36, // 34: cerbos.engine.v1.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	36, // 35: cerbos.engine.v1.Principal.AttrEntry.value:type_name -> google.protobuf.Value
+	36, // 36: cerbos.engine.v1.AuxData.JwtEntry.value:type_name -> google.protobuf.Value
 	2,  // 37: cerbos.engine.v1.Trace.Component.kind:type_name -> cerbos.engine.v1.Trace.Component.Kind
-	29, // 38: cerbos.engine.v1.Trace.Component.variable:type_name -> cerbos.engine.v1.Trace.Component.Variable
+	30, // 38: cerbos.engine.v1.Trace.Component.variable:type_name -> cerbos.engine.v1.Trace.Component.Variable
 	3,  // 39: cerbos.engine.v1.Trace.Event.status:type_name -> cerbos.engine.v1.Trace.Event.Status
-	37, // 40: cerbos.engine.v1.Trace.Event.effect:type_name -> cerbos.effect.v1.Effect
-	35, // 41: cerbos.engine.v1.Trace.Event.result:type_name -> google.protobuf.Value
-	32, // 42: cerbos.engine.v1.Request.Principal.attr:type_name -> cerbos.engine.v1.Request.Principal.AttrEntry
-	33, // 43: cerbos.engine.v1.Request.Resource.attr:type_name -> cerbos.engine.v1.Request.Resource.AttrEntry
-	35, // 44: cerbos.engine.v1.Request.Principal.AttrEntry.value:type_name -> google.protobuf.Value
-	35, // 45: cerbos.engine.v1.Request.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	38, // 40: cerbos.engine.v1.Trace.Event.effect:type_name -> cerbos.effect.v1.Effect
+	36, // 41: cerbos.engine.v1.Trace.Event.result:type_name -> google.protobuf.Value
+	33, // 42: cerbos.engine.v1.Request.Principal.attr:type_name -> cerbos.engine.v1.Request.Principal.AttrEntry
+	34, // 43: cerbos.engine.v1.Request.Resource.attr:type_name -> cerbos.engine.v1.Request.Resource.AttrEntry
+	36, // 44: cerbos.engine.v1.Request.Principal.AttrEntry.value:type_name -> google.protobuf.Value
+	36, // 45: cerbos.engine.v1.Request.Resource.AttrEntry.value:type_name -> google.protobuf.Value
 	46, // [46:46] is the sub-list for method output_type
 	46, // [46:46] is the sub-list for method input_type
 	46, // [46:46] is the sub-list for extension type_name
@@ -2782,6 +2826,18 @@ func file_cerbos_engine_v1_engine_proto_init() {
 			}
 		}
 		file_cerbos_engine_v1_engine_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Runtime); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_engine_v1_engine_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlanResourcesInput_Resource); i {
 			case 0:
 				return &v.state
@@ -2793,7 +2849,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlanResourcesAst_Node); i {
 			case 0:
 				return &v.state
@@ -2805,7 +2861,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlanResourcesAst_LogicalOperation); i {
 			case 0:
 				return &v.state
@@ -2817,7 +2873,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlanResourcesFilter_Expression); i {
 			case 0:
 				return &v.state
@@ -2829,7 +2885,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlanResourcesFilter_Expression_Operand); i {
 			case 0:
 				return &v.state
@@ -2841,7 +2897,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckOutput_ActionEffect); i {
 			case 0:
 				return &v.state
@@ -2853,7 +2909,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Trace_Component); i {
 			case 0:
 				return &v.state
@@ -2865,7 +2921,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Trace_Event); i {
 			case 0:
 				return &v.state
@@ -2877,7 +2933,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Trace_Component_Variable); i {
 			case 0:
 				return &v.state
@@ -2889,7 +2945,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Request_Principal); i {
 			case 0:
 				return &v.state
@@ -2901,7 +2957,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_engine_v1_engine_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_engine_v1_engine_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Request_Resource); i {
 			case 0:
 				return &v.state
@@ -2914,16 +2970,16 @@ func file_cerbos_engine_v1_engine_proto_init() {
 			}
 		}
 	}
-	file_cerbos_engine_v1_engine_proto_msgTypes[14].OneofWrappers = []interface{}{
+	file_cerbos_engine_v1_engine_proto_msgTypes[15].OneofWrappers = []interface{}{
 		(*PlanResourcesAst_Node_LogicalOperation)(nil),
 		(*PlanResourcesAst_Node_Expression)(nil),
 	}
-	file_cerbos_engine_v1_engine_proto_msgTypes[17].OneofWrappers = []interface{}{
+	file_cerbos_engine_v1_engine_proto_msgTypes[18].OneofWrappers = []interface{}{
 		(*PlanResourcesFilter_Expression_Operand_Value)(nil),
 		(*PlanResourcesFilter_Expression_Operand_Expression)(nil),
 		(*PlanResourcesFilter_Expression_Operand_Variable)(nil),
 	}
-	file_cerbos_engine_v1_engine_proto_msgTypes[23].OneofWrappers = []interface{}{
+	file_cerbos_engine_v1_engine_proto_msgTypes[24].OneofWrappers = []interface{}{
 		(*Trace_Component_Action)(nil),
 		(*Trace_Component_DerivedRole)(nil),
 		(*Trace_Component_Expr)(nil),
@@ -2941,7 +2997,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_engine_v1_engine_proto_rawDesc,
 			NumEnums:      4,
-			NumMessages:   30,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

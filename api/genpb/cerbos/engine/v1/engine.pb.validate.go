@@ -2190,6 +2190,104 @@ var _ interface {
 	ErrorName() string
 } = RequestValidationError{}
 
+// Validate checks the field values on Runtime with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Runtime) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Runtime with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in RuntimeMultiError, or nil if none found.
+func (m *Runtime) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Runtime) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return RuntimeMultiError(errors)
+	}
+
+	return nil
+}
+
+// RuntimeMultiError is an error wrapping multiple validation errors returned
+// by Runtime.ValidateAll() if the designated constraints aren't met.
+type RuntimeMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RuntimeMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RuntimeMultiError) AllErrors() []error { return m }
+
+// RuntimeValidationError is the validation error returned by Runtime.Validate
+// if the designated constraints aren't met.
+type RuntimeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RuntimeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RuntimeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RuntimeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RuntimeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RuntimeValidationError) ErrorName() string { return "RuntimeValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RuntimeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRuntime.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RuntimeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RuntimeValidationError{}
+
 // Validate checks the field values on PlanResourcesInput_Resource with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

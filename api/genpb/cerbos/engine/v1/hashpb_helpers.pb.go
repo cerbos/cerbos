@@ -419,14 +419,6 @@ func cerbos_engine_v1_Request_Principal_hashpb_sum(m *Request_Principal, hasher 
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.engine.v1.Request.Principal.derived_roles"]; !ok {
-		if len(m.DerivedRoles) > 0 {
-			for _, v := range m.DerivedRoles {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
-
-			}
-		}
-	}
 	if _, ok := ignore["cerbos.engine.v1.Request.Principal.attr"]; !ok {
 		if len(m.Attr) > 0 {
 			keys := make([]string, len(m.Attr))
@@ -534,6 +526,17 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *Resource, hasher hash.Hash, ignore 
 	if _, ok := ignore["cerbos.engine.v1.Resource.scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
 
+	}
+}
+
+func cerbos_engine_v1_Runtime_hashpb_sum(m *Runtime, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Runtime.effective_derived_roles"]; !ok {
+		if len(m.EffectiveDerivedRoles) > 0 {
+			for _, v := range m.EffectiveDerivedRoles {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
 	}
 }
 

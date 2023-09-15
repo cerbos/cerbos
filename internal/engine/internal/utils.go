@@ -12,6 +12,14 @@ type ProtoSet map[string]*emptypb.Empty
 
 type StringSet map[string]struct{}
 
+func (s StringSet) Values() []string {
+	values := make([]string, 0, len(s))
+	for v := range s {
+		values = append(values, v)
+	}
+	return values
+}
+
 func ToSet(values []string) StringSet {
 	s := make(StringSet, len(values))
 	for _, v := range values {

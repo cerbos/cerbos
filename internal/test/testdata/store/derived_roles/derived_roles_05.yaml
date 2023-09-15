@@ -2,7 +2,7 @@
 ---
 apiVersion: api.cerbos.dev/v1
 derivedRoles:
-  name: principal_derived_roles
+  name: runtime_effective_derived_roles
   definitions:
     - name: one
       parentRoles:

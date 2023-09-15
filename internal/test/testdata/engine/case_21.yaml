@@ -1,16 +1,17 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: P.derivedRoles
+description: runtime.effectiveDerivedRoles
 inputs:
   - requestId: test
     actions:
-      - test
+      - camelCase
+      - snake_case
     principal:
       id: andy
       roles:
         - employee
     resource:
-      kind: principal_derived_roles
+      kind: runtime_effective_derived_roles
       id: test
 wantOutputs:
   - requestId: test
@@ -19,11 +20,18 @@ wantOutputs:
       - one
       - two
     actions:
-      test:
+      camelCase:
         effect: EFFECT_ALLOW
-        policy: resource.principal_derived_roles.vdefault
+        policy: resource.runtime_effective_derived_roles.vdefault
+      snake_case:
+        effect: EFFECT_ALLOW
+        policy: resource.runtime_effective_derived_roles.vdefault
     outputs:
-      - src: resource.principal_derived_roles.vdefault#test
+      - src: resource.runtime_effective_derived_roles.vdefault#camelCase
+        val:
+          - one
+          - two
+      - src: resource.runtime_effective_derived_roles.vdefault#snake_case
         val:
           - one
           - two

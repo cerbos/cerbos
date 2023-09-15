@@ -497,7 +497,7 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Req
 		}
 	}
 
-	e, err = replacePrincipalDerivedRoles(e, derivedRolesList)
+	e, err = replaceRuntimeEffectiveDerivedRoles(e, derivedRolesList)
 	if err != nil {
 		return nil, err
 	}
@@ -710,14 +710,14 @@ func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 	}
 }
 
-func replacePrincipalDerivedRoles(expr *exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.Expr, error) {
+func replaceRuntimeEffectiveDerivedRoles(expr *exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.Expr, error) {
 	return replaceVarsGen(expr, func(input *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
 		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
 		if !ok {
 			return nil, false, nil
 		}
 
-		if isPrincipalDerivedRoles(se.SelectExpr) {
+		if isRuntimeEffectiveDerivedRoles(se.SelectExpr) {
 			output, err = derivedRolesList()
 			return output, true, err
 		}
@@ -726,12 +726,12 @@ func replacePrincipalDerivedRoles(expr *exprpb.Expr, derivedRolesList func() (*e
 	})
 }
 
-func isPrincipalDerivedRoles(expr *exprpb.Expr_Select) bool {
+func isRuntimeEffectiveDerivedRoles(expr *exprpb.Expr_Select) bool {
 	ident := expr.Operand.GetIdentExpr()
 
 	return ident != nil &&
-		(ident.Name == conditions.CELPrincipalField || ident.Name == conditions.CELPrincipalAbbrev) &&
-		(expr.Field == "derived_roles" || expr.Field == "derivedRoles")
+		ident.Name == conditions.CELRuntimeIdent &&
+		(expr.Field == "effective_derived_roles" || expr.Field == "effectiveDerivedRoles")
 }
 
 func mkDerivedRolesList(derivedRoles []rN) func() (*exprpb.Expr, error) {
@@ -844,7 +844,7 @@ func memoize[T any](f func() (T, error)) func() (T, error) {
 func replaceCamelCaseFields(expr *exprpb.Expr) (*exprpb.Expr, error) {
 	// For some reason, the JSONFieldProvider is ignored in the planner. It _should_ work, and I haven't been able to work out why it doesn't.
 	// For now, work around the issue by rewriting camel case fields to snake case.
-	// We don't need to rewrite `request.principal.derivedRoles`, because that is handled in replacePrincipalDerivedRoles.
+	// We don't need to rewrite `runtime.effectiveDerivedRoles`, because that is handled in replaceRuntimeEffectiveDerivedRoles.
 	return replaceVarsGen(expr, func(input *exprpb.Expr) (*exprpb.Expr, bool, error) {
 		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
 		if !ok {

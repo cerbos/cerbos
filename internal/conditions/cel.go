@@ -22,6 +22,7 @@ const (
 	CELResourceField   = "resource"
 	CELPrincipalAbbrev = "P"
 	CELPrincipalField  = "principal"
+	CELRuntimeIdent    = "runtime"
 	CELVariablesIdent  = "variables"
 	CELVariablesAbbrev = "V"
 	CELGlobalsIdent    = "globals"
@@ -39,6 +40,7 @@ var (
 		decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.Request")),
 		decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Principal")),
 		decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Resource")),
+		decls.NewVar(CELRuntimeIdent, decls.NewObjectType("cerbos.engine.v1.Runtime")),
 		decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
 		decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 		decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
@@ -47,7 +49,7 @@ var (
 
 	StdEnvOptions = []cel.EnvOption{
 		cel.CrossTypeNumericComparisons(true),
-		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}),
+		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
 		cel.Declarations(StdEnvDecls...),
 		ext.Strings(),
 		ext.Encoders(),

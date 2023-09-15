@@ -25,7 +25,8 @@ condition:
 
 Within a condition expression, you have access to several top-level identifiers:
 
-`request`:: The principal, resource, and auxiliary data being used to evaluate the policy.
+`request`:: Data provided in the check or plan request (principal, resource, and auxiliary data).
+`runtime`:: Additional data computed while evaluating the policy.
 `variables`:: Variables declared in the xref:variables.adoc[`variables` section of the policy].
 `globals`:: Global variables declared in the xref:configuration:engine.adoc#globals[policy engine configuration].
 
@@ -45,33 +46,39 @@ request:
     id: alice <2>
     roles: <3>
       - employee
-    derivedRoles: <4>
-      - owner
-      - gb_employee
-    attr: <5>
+    attr: <4>
       geography: GB
 
-  resource: <6>
-    kind: leave_request <7>
-    id: XX125 <8>
-    attr: <9>
+  resource: <5>
+    kind: leave_request <6>
+    id: XX125 <7>
+    attr: <8>
       owner: alice
 
-  auxData: <10>
-    jwt: <11>
+  auxData: <9>
+    jwt: <10>
       iss: acme.corp
 ----
 <1> The principal whose permissions are being checked.
 <2> ID of the principal.
 <3> Static roles that are assigned to the principal by your identity management system.
-<4> xref:derived_roles.adoc[Derived roles] that are assigned to to the principal by Cerbos while evaluating the policy. This is only populated in conditions in resource policies, and will only include derived roles that are referenced in at least one policy rule.
-<5> Free-form context data about the principal.
-<6> The resource on which the principal is performing actions.
-<7> Resource kind.
-<8> ID of the resource instance.
-<9> Free-form context data about the resource instance.
-<10> xref:configuration:auxdata.adoc[Auxiliary data sources].
-<11> JWT claims.
+<4> Free-form context data about the principal.
+<5> The resource on which the principal is performing actions.
+<6> Resource kind.
+<7> ID of the resource instance.
+<8> Free-form context data about the resource instance.
+<9> xref:configuration:auxdata.adoc[Auxiliary data sources].
+<10> JWT claims.
+
+.The `runtime` object
+[source,yaml,linenums]
+----
+runtime:
+  effectiveDerivedRoles: <1>
+    - owner
+    - gb_employee
+----
+<1> xref:derived_roles.adoc[Derived roles] that were assigned to to the principal by Cerbos while evaluating the policy. This is only populated in expressions in resource policies, and only includes derived roles that are referenced in at least one policy rule.
 
 
 == Expressions and blocks

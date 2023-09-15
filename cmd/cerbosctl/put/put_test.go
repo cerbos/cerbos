@@ -94,7 +94,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"derived_roles.buyer_derived_roles",
 					"derived_roles.import_variables",
 					"derived_roles.package_roles",
-					"derived_roles.principal_derived_roles",
+					"derived_roles.runtime_effective_derived_roles",
 					"export_variables.foobar",
 					"principal.arn:aws:iam::123456789012:user/johndoe.vdefault",
 					"principal.daisy_duck.vdefault",
@@ -119,9 +119,9 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vdefault/acme.hr.uk",
 					"resource.leave_request.vstaging",
 					"resource.missing_attr.vdefault",
-					"resource.principal_derived_roles.vdefault",
 					"resource.products.vdefault",
 					"resource.purchase_order.vdefault",
+					"resource.runtime_effective_derived_roles.vdefault",
 					"resource.variables_referencing_variables.vdefault",
 				}, listPolicies(t, clientCtx))
 			})
