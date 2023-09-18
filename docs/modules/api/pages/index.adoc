@@ -22,6 +22,7 @@ Alternatively, you can explore the API using the following methods as well:
 * image:java.svg[alt="Java",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"]link:https://github.com/cerbos/cerbos-sdk-java[&ensp;Java]
 * image:javascript.svg[alt="JavaScript",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-javascript"]link:https://github.com/cerbos/cerbos-sdk-javascript[&ensp;JavaScript]
 * image:dot-net.svg[alt=".NET",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-net"]link:https://github.com/cerbos/cerbos-sdk-net[&ensp;.NET]
+* image:laravel.svg[alt="Laravel",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-laravel"]link:https://github.com/cerbos/cerbos-sdk-laravel[&ensp;Laravel]
 * image:php.svg[alt="PHP",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-php"]link:https://github.com/cerbos/cerbos-sdk-php[&ensp;PHP]
 * image:python.svg[alt="Python",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-python"]link:https://github.com/cerbos/cerbos-sdk-python[&ensp;Python]
 * image:ruby.svg[alt="Ruby",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-ruby"]link:https://github.com/cerbos/cerbos-sdk-ruby[&ensp;Ruby]
