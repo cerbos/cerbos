@@ -1,6 +1,8 @@
 module github.com/cerbos/cerbos
 
-go 1.21.1
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
@@ -9,11 +11,11 @@ require (
 	github.com/alecthomas/chroma/v2 v2.9.1
 	github.com/alecthomas/kong v0.8.0
 	github.com/alecthomas/participle/v2 v2.1.0
-	github.com/aws/aws-sdk-go v1.45.11
+	github.com/aws/aws-sdk-go v1.45.6
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.3.1
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/cerbos/cerbos/api/genpb v0.0.0-20230918103500-070797280db1
+	github.com/cerbos/cerbos/api/genpb v0.0.0-20230918104646-ecb6b49639a0
 	github.com/cerbos/cloud-api v0.1.7
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
