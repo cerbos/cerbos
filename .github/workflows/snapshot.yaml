@@ -90,7 +90,7 @@ jobs:
           write_build_cache: true
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v4
+        uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
           args: release --config=.goreleaser.yml --clean --snapshot --skip-publish
