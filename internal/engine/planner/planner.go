@@ -7,10 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/types"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -35,8 +37,7 @@ type (
 	qpNLO = enginev1.PlanResourcesAst_Node_LogicalOperation
 	qpNE  = enginev1.PlanResourcesAst_Node_Expression
 	rN    = struct {
-		f    func() (*qpN, error)
-		node *qpN
+		node func() (*qpN, error)
 		role string
 	}
 
@@ -149,6 +150,9 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
 	defer span.End()
 
+	derivedRolesList := mkDerivedRolesList(nil)
+
+	request := planResourcesInputToRequest(input)
 	result := &PolicyPlanResult{}
 	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
@@ -172,7 +176,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					continue
 				}
 
-				filter, err := evaluateCondition(rule.Condition, input, ppe.Globals, variables)
+				filter, err := evaluateCondition(rule.Condition, request, ppe.Globals, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -190,6 +194,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
 	defer span.End()
 
+	request := planResourcesInputToRequest(input)
 	result := &PolicyPlanResult{}
 
 	vr, err := rpe.SchemaMgr.ValidatePlanResourcesInput(ctx, rpe.Policy.Schemas, input)
@@ -223,6 +228,8 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 
 		var derivedRoles []rN
 
+		derivedRolesList := mkDerivedRolesList(nil)
+
 		for drName, dr := range p.DerivedRoles {
 			dr := dr
 			if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
@@ -236,19 +243,24 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 
 			derivedRoles = append(derivedRoles, rN{
 				role: drName,
-				f: func() (*qpN, error) {
+				node: memoize(func() (*qpN, error) {
 					if dr.Condition == nil {
 						return mkTrueNode(), nil
 					}
-					node, err := evaluateCondition(dr.Condition, input, rpe.Globals, drVariables)
+					node, err := evaluateCondition(dr.Condition, request, rpe.Globals, drVariables, derivedRolesList)
 					if err != nil {
 						return nil, err
 					}
 					return node, nil
-				},
-				node: nil,
+				}),
 			})
 		}
+
+		sort.Slice(derivedRoles, func(i, j int) bool {
+			return derivedRoles[i].role < derivedRoles[j].role
+		})
+
+		derivedRolesList = mkDerivedRolesList(derivedRoles)
 
 		for _, rule := range p.Rules {
 			var drNode *qpN
@@ -284,7 +296,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					continue
 				}
 
-				node, err := evaluateCondition(rule.Condition, input, rpe.Globals, variables)
+				node, err := evaluateCondition(rule.Condition, request, rpe.Globals, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -313,14 +325,9 @@ func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourc
 	var nodes []*qpN
 	for _, n := range derivedRoles {
 		if _, ok := rule.DerivedRoles[n.role]; ok {
-			node := n.node
-			var err error
-			if node == nil {
-				node, err = n.f()
-				if err != nil {
-					return nil, err
-				}
-				n.node = node
+			node, err := n.node()
+			if err != nil {
+				return nil, err
 			}
 			if node != nil {
 				nodes = append(nodes, node)
@@ -377,7 +384,7 @@ func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesInput, globals map[string]any, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesAst_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -387,7 +394,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_Any:
 		nodes := make([]*qpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
-			node, err := evaluateCondition(c, input, globals, variables)
+			node, err := evaluateCondition(c, request, globals, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -411,7 +418,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
-			node, err := evaluateCondition(c, input, globals, variables)
+			node, err := evaluateCondition(c, request, globals, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -434,7 +441,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
-			node, err := evaluateCondition(c, input, globals, variables)
+			node, err := evaluateCondition(c, request, globals, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -461,7 +468,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evaluateConditionExpression(t.Expr.Checked, input, globals, variables)
+		residual, err := evaluateConditionExpression(t.Expr.Checked, request, globals, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -472,8 +479,8 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	return res, nil
 }
 
-func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, globals map[string]any, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
-	p, err := newEvaluator(input, globals)
+func evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+	p, err := newEvaluator(request, globals)
 	if err != nil {
 		return nil, err
 	}
@@ -483,12 +490,23 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanR
 		return nil, err
 	}
 
-	if m := input.Resource.GetAttr(); len(m) > 0 {
+	if m := request.Resource.GetAttr(); len(m) > 0 {
 		e, err = replaceResourceVals(e, m)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	e, err = replaceRuntimeEffectiveDerivedRoles(e, derivedRolesList)
+	if err != nil {
+		return nil, err
+	}
+
+	e, err = replaceCamelCaseFields(e)
+	if err != nil {
+		return nil, err
+	}
+
 	val, residual, err := p.evalPartially(e)
 	if err != nil {
 		// ignore expressions that are invalid
@@ -544,19 +562,18 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 	return val, residual, nil
 }
 
-func newEvaluator(input *enginev1.PlanResourcesInput, globals map[string]any) (p *partialEvaluator, err error) {
+func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
 	p = new(partialEvaluator)
 	knownVars := make(map[string]any)
-	knownVars[conditions.CELRequestIdent] = input
-	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
-	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
+	knownVars[conditions.CELRequestIdent] = request
+	knownVars[conditions.CELPrincipalAbbrev] = request.Principal
 	knownVars[conditions.CELGlobalsIdent] = globals
 	knownVars[conditions.CELGlobalsAbbrev] = globals
 
-	p.env = conditions.StdPartialEnv
-	if len(input.Resource.GetAttr()) > 0 {
+	p.env = conditions.StdEnv
+	if len(request.Resource.GetAttr()) > 0 {
 		var ds []*exprpb.Decl
-		for name, value := range input.Resource.Attr {
+		for name, value := range request.Resource.Attr {
 			for _, s := range conditions.ResourceAttributeNames(name) {
 				ds = append(ds, decls.NewVar(s, decls.Dyn))
 				knownVars[s] = value
@@ -676,4 +693,179 @@ func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, er
 	}
 
 	return exprs, nil
+}
+
+func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.Request {
+	return &enginev1.Request{
+		Principal: &enginev1.Request_Principal{
+			Id:    input.Principal.Id,
+			Roles: input.Principal.Roles,
+			Attr:  input.Principal.Attr,
+		},
+		Resource: &enginev1.Request_Resource{
+			Kind: input.Resource.Kind,
+			Attr: input.Resource.Attr,
+		},
+		AuxData: input.AuxData,
+	}
+}
+
+func replaceRuntimeEffectiveDerivedRoles(expr *exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.Expr, error) {
+	return replaceVarsGen(expr, func(input *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
+		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
+		if !ok {
+			return nil, false, nil
+		}
+
+		if isRuntimeEffectiveDerivedRoles(se.SelectExpr) {
+			output, err = derivedRolesList()
+			return output, true, err
+		}
+
+		return nil, false, nil
+	})
+}
+
+func isRuntimeEffectiveDerivedRoles(expr *exprpb.Expr_Select) bool {
+	ident := expr.Operand.GetIdentExpr()
+
+	return ident != nil &&
+		ident.Name == conditions.CELRuntimeIdent &&
+		(expr.Field == "effective_derived_roles" || expr.Field == "effectiveDerivedRoles")
+}
+
+func mkDerivedRolesList(derivedRoles []rN) func() (*exprpb.Expr, error) {
+	return memoize(func() (_ *exprpb.Expr, err error) {
+		switch len(derivedRoles) {
+		case 0:
+			return mkListExpr(nil), nil
+
+		case 1:
+			return derivedRoleListElement(derivedRoles[0])
+
+		default:
+			elements := make([]*exprpb.Expr, len(derivedRoles))
+			for i, derivedRole := range derivedRoles {
+				elements[i], err = derivedRoleListElement(derivedRole)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			return mkBinaryOperatorExpr(operators.Add, elements...), nil
+		}
+	})
+}
+
+func mkBinaryOperatorExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
+	const arity = 2
+	if len(args) == arity {
+		return plannerutils.MkCallExpr(op, args[0], args[1])
+	}
+
+	return plannerutils.MkCallExpr(op, args[0], mkBinaryOperatorExpr(op, args[1:]...))
+}
+
+func derivedRoleListElement(derivedRole rN) (*exprpb.Expr, error) {
+	conditionNode, err := derivedRole.node()
+	if err != nil {
+		return nil, err
+	}
+
+	conditionExpr, err := qpNToExpr(conditionNode)
+	if err != nil {
+		return nil, err
+	}
+
+	return plannerutils.MkCallExpr(
+		operators.Conditional,
+		conditionExpr,
+		mkListExpr([]*exprpb.Expr{mkConstStringExpr(derivedRole.role)}),
+		mkListExpr(nil),
+	), nil
+}
+
+func qpNToExpr(node *qpN) (*exprpb.Expr, error) {
+	switch n := node.Node.(type) {
+	case *enginev1.PlanResourcesAst_Node_Expression:
+		return n.Expression.Expr, nil
+
+	case *enginev1.PlanResourcesAst_Node_LogicalOperation:
+		var op string
+		switch n.LogicalOperation.Operator {
+		case enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT:
+			arg, err := qpNToExpr(n.LogicalOperation.Nodes[0])
+			if err != nil {
+				return nil, err
+			}
+			return plannerutils.MkCallExpr(operators.LogicalNot, arg), nil
+
+		case enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND:
+			op = operators.LogicalAnd
+
+		case enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_OR:
+			op = operators.LogicalOr
+
+		case enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_UNSPECIFIED:
+			return nil, errors.New("unspecified logical operator")
+		}
+
+		args := make([]*exprpb.Expr, len(n.LogicalOperation.Nodes))
+		for i, arg := range n.LogicalOperation.Nodes {
+			var err error
+			args[i], err = qpNToExpr(arg)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return mkBinaryOperatorExpr(op, args...), nil
+	}
+
+	return nil, fmt.Errorf("unknown node type %T", node.Node)
+}
+
+func memoize[T any](f func() (T, error)) func() (T, error) {
+	var result T
+	var err error
+	memoized := false
+
+	return func() (T, error) {
+		if memoized {
+			return result, err
+		}
+
+		result, err = f()
+		memoized = true
+		return result, err
+	}
+}
+
+func replaceCamelCaseFields(expr *exprpb.Expr) (*exprpb.Expr, error) {
+	// For some reason, the JSONFieldProvider is ignored in the planner. It _should_ work, and I haven't been able to work out why it doesn't.
+	// For now, work around the issue by rewriting camel case fields to snake case.
+	// We don't need to rewrite `runtime.effectiveDerivedRoles`, because that is handled in replaceRuntimeEffectiveDerivedRoles.
+	return replaceVarsGen(expr, func(input *exprpb.Expr) (*exprpb.Expr, bool, error) {
+		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
+		if !ok {
+			return nil, false, nil
+		}
+		sel := se.SelectExpr
+
+		ident := sel.Operand.GetIdentExpr()
+
+		if ident != nil && ident.Name == conditions.CELRequestIdent && sel.Field == "auxData" {
+			return &exprpb.Expr{
+				ExprKind: &exprpb.Expr_SelectExpr{
+					SelectExpr: &exprpb.Expr_Select{
+						Operand:  sel.Operand,
+						Field:    "aux_data",
+						TestOnly: sel.TestOnly,
+					},
+				},
+			}, true, nil
+		}
+
+		return nil, false, nil
+	})
 }

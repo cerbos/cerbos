@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: runtime_effective_derived_roles
+  definitions:
+    - name: one
+      parentRoles:
+        - employee
+
+    - name: two
+      parentRoles:
+        - employee
+
+    - name: not_referenced
+      parentRoles:
+        - employee
+
+    - name: not_activated
+      parentRoles:
+        - admin

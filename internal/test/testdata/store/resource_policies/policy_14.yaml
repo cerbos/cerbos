@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: runtime_effective_derived_roles
+  version: default
+  importDerivedRoles:
+    - runtime_effective_derived_roles
+  variables:
+    local:
+      derivedRoles: runtime.effectiveDerivedRoles
+      derived_roles: runtime.effective_derived_roles
+  rules:
+    - name: camelCase
+      actions:
+        - camelCase
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
+      output:
+        expr: V.derivedRoles
+
+    - name: snake_case
+      actions:
+        - snake_case
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
+      output:
+        expr: V.derived_roles
+
+    - name: dummy_rule_to_avoid_pruning_unreferenced_derived_roles
+      actions:
+        - _
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - one
+        - two
+        - not_activated

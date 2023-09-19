@@ -1,0 +1,74 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/Request.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.engine.v1.AuxData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jwt": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.Request.Principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.Request.Resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "auxData": {
+      "$ref": "#/definitions/cerbos.engine.v1.AuxData"
+    },
+    "principal": {
+      "$ref": "#/definitions/cerbos.engine.v1.Request.Principal"
+    },
+    "resource": {
+      "$ref": "#/definitions/cerbos.engine.v1.Request.Resource"
+    }
+  }
+}

@@ -5,9 +5,7 @@ condition:
     of:
       - expr: P.attr.x
       - expr: R.attr.department == "marketing"
-input: {
-  "requestId": "test",
-  "actions": ["*"],
+request: {
   "principal": {
     "id": "john",
     "roles": ["employee"]

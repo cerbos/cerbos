@@ -135,7 +135,7 @@ message CompileTestCase {
 
 message CelTestCase {
   cerbos.policy.v1.Match condition = 1;
-  cerbos.engine.v1.CheckInput input = 2;
+  cerbos.engine.v1.Request request = 2;
   bool want = 3;
   bool want_error = 4;
 }

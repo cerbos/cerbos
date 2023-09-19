@@ -13,7 +13,6 @@ import (
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/conditions/types"
 )
 
@@ -23,42 +22,48 @@ const (
 	CELResourceField   = "resource"
 	CELPrincipalAbbrev = "P"
 	CELPrincipalField  = "principal"
+	CELRuntimeIdent    = "runtime"
 	CELVariablesIdent  = "variables"
 	CELVariablesAbbrev = "V"
 	CELGlobalsIdent    = "globals"
 	CELGlobalsAbbrev   = "G"
-	CELAuxDataField    = "aux_data"
 	CELAttrField       = "attr"
 )
 
 var (
-	StdEnv        *cel.Env
-	StdPartialEnv *cel.Env
-	TrueExpr      *exprpb.CheckedExpr
-	FalseExpr     *exprpb.CheckedExpr
-)
+	TrueExpr  *exprpb.CheckedExpr
+	FalseExpr *exprpb.CheckedExpr
 
-var StdEnvDecls = []*exprpb.Decl{
-	decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
-	decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
-	decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-	decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
-	decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-	decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
-	decls.NewVar(CELGlobalsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-}
+	StdEnv *cel.Env
+
+	StdEnvDecls = []*exprpb.Decl{
+		decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.Request")),
+		decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Principal")),
+		decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Resource")),
+		decls.NewVar(CELRuntimeIdent, decls.NewObjectType("cerbos.engine.v1.Runtime")),
+		decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
+		decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+		decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
+		decls.NewVar(CELGlobalsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+	}
+
+	StdEnvOptions = []cel.EnvOption{
+		cel.CrossTypeNumericComparisons(true),
+		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
+		cel.Declarations(StdEnvDecls...),
+		ext.Strings(),
+		ext.Encoders(),
+		ext.Math(),
+		CerbosCELLib(),
+	}
+)
 
 func init() {
 	var err error
 
-	StdEnv, err = initEnv(newCELEnvOptions())
+	StdEnv, err = initEnv(StdEnvOptions)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
-	}
-
-	StdPartialEnv, err = initEnv(newCELQueryPlanEnvOptions())
-	if err != nil {
-		panic(fmt.Errorf("failed to initialize CEL environment for partial evaluation: %w", err))
 	}
 
 	FalseExpr, err = compileConstant("false")
@@ -127,39 +132,4 @@ func ExpandAbbrev(s string) string {
 	}
 
 	return expanded
-}
-
-func newCELQueryPlanEnvOptions() []cel.EnvOption {
-	return []cel.EnvOption{
-		cel.CrossTypeNumericComparisons(true),
-		cel.Types(&requestv1.PlanResourcesRequest{}, &enginev1.Principal{}, &enginev1.Resource{}),
-		cel.Declarations(
-			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.request.v1.ResourcesQueryPlanRequest")),
-			decls.NewVar(Fqn(CELPrincipalField), decls.NewObjectType("cerbos.engine.v1.Principal")),
-			decls.NewVar(Fqn(CELResourceField), decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar(Fqn(CELAuxDataField), decls.NewObjectType("cerbos.engine.v1.AuxData")),
-			decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
-			decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELGlobalsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-		),
-		ext.Strings(),
-		ext.Encoders(),
-		ext.Math(),
-		CerbosCELLib(),
-	}
-}
-
-func newCELEnvOptions() []cel.EnvOption {
-	return []cel.EnvOption{
-		cel.CrossTypeNumericComparisons(true),
-		cel.Types(&enginev1.CheckInput{}, &enginev1.Principal{}, &enginev1.Resource{}),
-		cel.Declarations(StdEnvDecls...),
-		ext.Strings(),
-		ext.Encoders(),
-		ext.Math(),
-		CerbosCELLib(),
-	}
 }

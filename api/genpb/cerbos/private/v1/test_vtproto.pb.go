@@ -1666,8 +1666,8 @@ func (m *CelTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x18
 	}
-	if m.Input != nil {
-		if vtmsg, ok := interface{}(m.Input).(interface {
+	if m.Request != nil {
+		if vtmsg, ok := interface{}(m.Request).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
 		}); ok {
 			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
@@ -1677,7 +1677,7 @@ func (m *CelTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			i -= size
 			i = encodeVarint(dAtA, i, uint64(size))
 		} else {
-			encoded, err := proto.Marshal(m.Input)
+			encoded, err := proto.Marshal(m.Request)
 			if err != nil {
 				return 0, err
 			}
@@ -3130,13 +3130,13 @@ func (m *CelTestCase) SizeVT() (n int) {
 		}
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.Input != nil {
-		if size, ok := interface{}(m.Input).(interface {
+	if m.Request != nil {
+		if size, ok := interface{}(m.Request).(interface {
 			SizeVT() int
 		}); ok {
 			l = size.SizeVT()
 		} else {
-			l = proto.Size(m.Input)
+			l = proto.Size(m.Request)
 		}
 		n += 1 + l + sov(uint64(l))
 	}
@@ -6909,7 +6909,7 @@ func (m *CelTestCase) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Input", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Request", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6936,17 +6936,17 @@ func (m *CelTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Input == nil {
-				m.Input = &v1.CheckInput{}
+			if m.Request == nil {
+				m.Request = &v1.Request{}
 			}
-			if unmarshal, ok := interface{}(m.Input).(interface {
+			if unmarshal, ok := interface{}(m.Request).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Input); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Request); err != nil {
 					return err
 				}
 			}

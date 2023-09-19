@@ -16,9 +16,7 @@ condition:
       - expr: |-
           timestamp(R.attr.lastAccessed) + duration("24h") == timestamp("2021-04-21T10:05:20.021-05:00")
 
-input: {
-  "requestId": "test",
-  "actions": ["*"],
+request: {
   "principal": {
     "id": "john",
     "roles": ["employee"],
