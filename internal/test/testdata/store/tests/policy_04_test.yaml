@@ -11,7 +11,7 @@ principals:
 resources:
   album:
     id: album
-    kind: album_object
+    kind: album:object
     attr:
       public: true
 
