@@ -9,7 +9,7 @@ import (
 
 	"github.com/alecthomas/kong"
 
-	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	internalclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 )
 
@@ -36,7 +36,7 @@ func (c *Cmd) Run(k *kong.Kong, ctx *internalclient.Context) error {
 		return fmt.Errorf("no policy id(s) provided")
 	}
 
-	disabledPolicies, err := client.BatchAdminClientCall(context.Background(), ctx.AdminClient.DisablePolicy, c.Policy.PolicyIds...)
+	disabledPolicies, err := cerbos.BatchAdminClientCall(context.Background(), ctx.AdminClient.DisablePolicy, c.Policy.PolicyIds...)
 	if err != nil {
 		return fmt.Errorf("failed to disable policies: %w", err)
 	}

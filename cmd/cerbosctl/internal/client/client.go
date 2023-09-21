@@ -7,25 +7,25 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 )
 
 var errInvalidCredentials = errors.New("invalid credentials: username and password must be non-empty strings")
 
 type Context struct {
-	Client      client.Client
-	AdminClient client.AdminClient
+	Client      *cerbos.GRPCClient
+	AdminClient *cerbos.GRPCAdminClient
 }
 
-func GetAdminClient(globals *flagset.Globals) (client.AdminClient, error) {
+func GetAdminClient(globals *flagset.Globals) (*cerbos.GRPCAdminClient, error) {
 	if globals.Username == "" || globals.Password == "" {
 		return nil, errInvalidCredentials
 	}
 
 	opts := globals.ToClientOpts()
 
-	ac, err := client.NewAdminClientWithCredentials(globals.Server, globals.Username, globals.Password, opts...)
+	ac, err := cerbos.NewAdminClientWithCredentials(globals.Server, globals.Username, globals.Password, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the admin client: %w", err)
 	}
@@ -33,10 +33,10 @@ func GetAdminClient(globals *flagset.Globals) (client.AdminClient, error) {
 	return ac, nil
 }
 
-func GetClient(globals *flagset.Globals) (client.Client, error) {
+func GetClient(globals *flagset.Globals) (*cerbos.GRPCClient, error) {
 	opts := globals.ToClientOpts()
 
-	c, err := client.New(globals.Server, opts...)
+	c, err := cerbos.New(globals.Server, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the client: %w", err)
 	}

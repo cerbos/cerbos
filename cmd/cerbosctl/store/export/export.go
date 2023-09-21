@@ -14,9 +14,9 @@ import (
 	"github.com/alecthomas/kong"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	"github.com/cerbos/cerbos/client"
 	internalclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/store/export/internal"
 	"github.com/cerbos/cerbos/internal/util"
@@ -37,7 +37,7 @@ type Cmd struct {
 }
 
 func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
-	policies, err := clientCtx.AdminClient.ListPolicies(context.Background(), client.WithIncludeDisabled())
+	policies, err := clientCtx.AdminClient.ListPolicies(context.Background(), cerbos.WithIncludeDisabled())
 	if err != nil {
 		return fmt.Errorf("failed to list policies: %w", err)
 	}
@@ -53,7 +53,7 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 	}
 	defer exporter.Close()
 
-	if err := client.BatchAdminClientCall2(context.Background(), clientCtx.AdminClient.GetPolicy, func(ctx context.Context, policies []*policyv1.Policy) error {
+	if err := cerbos.BatchAdminClientCall2(context.Background(), clientCtx.AdminClient.GetPolicy, func(_ context.Context, policies []*policyv1.Policy) error {
 		for _, p := range policies {
 			name := p.Metadata.StoreIdentifier
 
@@ -87,7 +87,7 @@ func (c *Cmd) Run(k *kong.Kong, clientCtx *internalclient.Context) error {
 		return fmt.Errorf("error while getting policies: %w", err)
 	}
 
-	if err := client.BatchAdminClientCall2(context.Background(), clientCtx.AdminClient.GetSchema, func(ctx context.Context, schemas []*schemav1.Schema) error {
+	if err := cerbos.BatchAdminClientCall2(context.Background(), clientCtx.AdminClient.GetSchema, func(_ context.Context, schemas []*schemav1.Schema) error {
 		for _, s := range schemas {
 			var pretty bytes.Buffer
 			if err := json.Indent(&pretty, s.Definition, "", "  "); err != nil {

@@ -19,8 +19,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	"github.com/cerbos/cerbos/client"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 )
@@ -72,9 +72,9 @@ func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 
 	switch kind := c.Kind; kind {
 	case "access":
-		logOptions.Type = client.AccessLogs
+		logOptions.Type = cerbos.AccessLogs
 	case "decision":
-		logOptions.Type = client.DecisionLogs
+		logOptions.Type = cerbos.DecisionLogs
 	}
 
 	logs, err := ctx.AdminClient.AuditLogs(context.Background(), logOptions)
@@ -96,7 +96,7 @@ func (c *Cmd) Validate() error {
 	return c.AuditFilters.Validate()
 }
 
-func streamLogsToWriter(writer auditLogWriter, entries <-chan *client.AuditLogEntry) error {
+func streamLogsToWriter(writer auditLogWriter, entries <-chan *cerbos.AuditLogEntry) error {
 	for e := range entries {
 		aLog, err := e.AccessLog()
 		if err != nil {

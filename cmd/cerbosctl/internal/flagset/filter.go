@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 )
 
 var errMoreThanOneFilter = errors.New("more than one filter specified: choose from either `tail`, `between`, `since` or `lookup`")
@@ -48,27 +48,27 @@ func (af *AuditFilters) Validate() error {
 	return nil
 }
 
-func (af *AuditFilters) GenOptions() client.AuditLogOptions {
+func (af *AuditFilters) GenOptions() cerbos.AuditLogOptions {
 	switch {
 	case af.Tail > 0:
-		return client.AuditLogOptions{
+		return cerbos.AuditLogOptions{
 			Tail: uint32(af.Tail),
 		}
 	case af.Between.IsSet():
-		return client.AuditLogOptions{
+		return cerbos.AuditLogOptions{
 			StartTime: af.Between.Values[0].AsTime(),
 			EndTime:   af.Between.Values[1].AsTime(),
 		}
 	case af.Since > 0:
-		return client.AuditLogOptions{
+		return cerbos.AuditLogOptions{
 			StartTime: time.Now().Add(time.Duration(-1) * af.Since),
 			EndTime:   time.Now(),
 		}
 	case af.Lookup != "":
-		return client.AuditLogOptions{
+		return cerbos.AuditLogOptions{
 			Lookup: af.Lookup,
 		}
 	default:
-		return client.AuditLogOptions{}
+		return cerbos.AuditLogOptions{}
 	}
 }

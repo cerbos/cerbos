@@ -9,20 +9,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/client/testutil"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
@@ -31,21 +29,15 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-const (
-	adminUsername     = "cerbos"
-	adminPassword     = "cerbosAdmin"
-	policiesPerType   = 30
-	readyTimeout      = 60 * time.Second
-	readyPollInterval = 50 * time.Millisecond
-)
+const policiesPerType = 30
 
 var policyKeyRegex = regexp.MustCompile(`(derived_roles|export_variables|principal|resource)\.(.+)(\.(.+))?`)
 
 func TestGetCmd(t *testing.T) {
-	s := mkServer(t)
+	s := internal.StartTestServer(t)
 	defer s.Stop() //nolint:errcheck
 
-	globals := mkGlobals(t, s.GRPCAddr())
+	globals := internal.CreateGlobalsFlagset(t, s.GRPCAddr())
 	ctx := mkClients(t, globals)
 	loadPolicies(t, ctx.AdminClient)
 	testGetCmd(ctx, globals)(t)
@@ -326,11 +318,11 @@ func noOfPoliciesInCmdOutput(t *testing.T, cmdOut string) int {
 	return count
 }
 
-func loadPolicies(t *testing.T, ac client.AdminClient) {
+func loadPolicies(t *testing.T, ac *cerbos.GRPCAdminClient) {
 	t.Helper()
 
 	for i := 0; i < policiesPerType; i++ {
-		ps := client.NewPolicySet()
+		ps := cerbos.NewPolicySet()
 
 		ps.AddPolicies(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))))
@@ -348,52 +340,6 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
 		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
 		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
-	}
-}
-
-func mkServerOpts(t *testing.T) []testutil.ServerOpt {
-	t.Helper()
-
-	serverOpts := []testutil.ServerOpt{
-		testutil.WithPolicyRepositorySQLite3(fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))),
-		testutil.WithAdminAPI(adminUsername, adminPassword),
-	}
-
-	return serverOpts
-}
-
-func mkServer(t *testing.T) *testutil.ServerInfo {
-	t.Helper()
-
-	s, err := testutil.StartCerbosServer(mkServerOpts(t)...)
-	require.NoError(t, err)
-	require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
-
-	return s
-}
-
-func serverIsReady(s *testutil.ServerInfo) func() bool {
-	return func() bool {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), readyPollInterval)
-		defer cancelFunc()
-
-		ready, err := s.IsReady(ctx)
-		if err != nil {
-			return false
-		}
-
-		return ready
-	}
-}
-
-func mkGlobals(t *testing.T, address string) *flagset.Globals {
-	t.Helper()
-
-	return &flagset.Globals{
-		Server:    address,
-		Username:  adminUsername,
-		Password:  adminPassword,
-		Plaintext: true,
 	}
 }
 
