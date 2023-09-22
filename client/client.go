@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package client provides a client implementation to interact with a Cerbos instance and check access policies.
-// Deprecated: Use github.com/cerbos/cerbos-sdk-go/cerbos instead.
+// Deprecated: Since Cerbos 0.31.0, the Go client is available as a separate package at [github.com/cerbos/cerbos-sdk-go/cerbos]
 package client
 
 import (

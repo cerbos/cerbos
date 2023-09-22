@@ -91,15 +91,6 @@ func TestAuditLogs(t *testing.T) {
 func setUpAdminClientAndPolicySet(t *testing.T) (AdminClient, *PolicySet) {
 	t.Helper()
 
-	launcher, err := testutil.NewCerbosServerLauncher()
-	require.NoError(t, err)
-	server, err := launcher.Launch(&testutil.LaunchConf{PolicyDir: test.PathToDir(t, "store")})
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	t.Cleanup(cancel)
-	require.NoError(t, server.WaitForReady(ctx), "Server failed to start")
-
 	const (
 		adminUsername = "cerbos"
 		adminPassword = "cerbosAdmin"

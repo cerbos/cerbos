@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	"github.com/cerbos/cerbos/internal/server"
 )
 
@@ -127,18 +127,18 @@ func RunSuites(t *testing.T, opts ...Opt) {
 
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
 	grpcDialOpts := []grpc.DialOption{grpc.WithPerRPCCredentials(creds)}
-	clientOpts := []client.Opt{client.WithRetryTimeout(30 * time.Second), client.WithMaxRetries(1)}
+	sdkOpts := []cerbos.Opt{cerbos.WithRetryTimeout(30 * time.Second), cerbos.WithMaxRetries(1)}
 
 	if sopt.tlsDisabled {
 		grpcDialOpts = append(grpcDialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		clientOpts = append(clientOpts, client.WithPlaintext())
+		sdkOpts = append(sdkOpts, cerbos.WithPlaintext())
 	} else {
 		tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 		grpcDialOpts = append(grpcDialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
-		clientOpts = append(clientOpts, client.WithTLSInsecure())
+		sdkOpts = append(sdkOpts, cerbos.WithTLSInsecure())
 	}
 
 	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpcDialOpts...))
 	t.Run("http", tr.RunHTTPTests(ctx.HTTPAddr(), creds))
-	t.Run("client", client.RunE2ETests(ctx.GRPCAddr(), clientOpts...))
+	t.Run("sdk", TestSDKClient(ctx.GRPCAddr(), sdkOpts...))
 }

@@ -3,6 +3,8 @@
 Cerbos Client SDK for Go
 ========================
 
+**Deprecated:** From Cerbos 0.31.0 onwards, the Go client implementation is available as a separate package on github.com/cerbos/cerbos-sdk-go.
+
 ```
 go get github.com/cerbos/cerbos/client
 ```
