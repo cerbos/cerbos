@@ -9,7 +9,7 @@ import (
 
 	"github.com/alecthomas/kong"
 
-	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/files"
@@ -43,7 +43,7 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 		return fmt.Errorf("no filename(s) provided")
 	}
 
-	policies := client.NewPolicySet()
+	policies := cerbos.NewPolicySet()
 	var errs []error
 	err := files.Find(pc.Paths, put.Recursive, util.FileTypePolicy, func(found files.Found) error {
 		f, err := found.Open()

@@ -3,7 +3,7 @@
 
 package flagset
 
-import "github.com/cerbos/cerbos/client"
+import "github.com/cerbos/cerbos-sdk-go/cerbos"
 
 type Globals struct {
 	Server        string `help:"Address of the Cerbos server" env:"CERBOS_SERVER" default:"localhost:3593"`
@@ -16,19 +16,19 @@ type Globals struct {
 	Plaintext     bool   `help:"Use plaintext protocol without TLS"`
 }
 
-func (g *Globals) ToClientOpts() []client.Opt {
-	opts := make([]client.Opt, 0)
+func (g *Globals) ToClientOpts() []cerbos.Opt {
+	opts := make([]cerbos.Opt, 0)
 	if g.Plaintext {
-		opts = append(opts, client.WithPlaintext())
+		opts = append(opts, cerbos.WithPlaintext())
 	}
 	if g.Insecure {
-		opts = append(opts, client.WithTLSInsecure())
+		opts = append(opts, cerbos.WithTLSInsecure())
 	}
 	if cert := g.CaCert; cert != "" {
-		opts = append(opts, client.WithTLSCACert(cert))
+		opts = append(opts, cerbos.WithTLSCACert(cert))
 	}
 	if cert := g.TLSClientCert; cert != "" {
-		opts = append(opts, client.WithTLSClientCert(cert, g.TLSClientKey))
+		opts = append(opts, cerbos.WithTLSClientCert(cert, g.TLSClientKey))
 	}
 
 	return opts

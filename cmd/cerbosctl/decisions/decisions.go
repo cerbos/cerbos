@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 
@@ -26,7 +27,6 @@ import (
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	"github.com/cerbos/cerbos/client"
 )
 
 var help = `Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
@@ -57,7 +57,7 @@ type Cmd struct {
 
 func (c *Cmd) Run(_ *kong.Kong, ctx *cmdclient.Context) error {
 	logOptions := c.AuditFilters.GenOptions()
-	logOptions.Type = client.DecisionLogs
+	logOptions.Type = cerbos.DecisionLogs
 
 	entries, err := ctx.AdminClient.AuditLogs(context.Background(), logOptions)
 	if err != nil {

@@ -14,35 +14,29 @@ import (
 	"path/filepath"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/alecthomas/kong"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/client/testutil"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
-const (
-	adminUsername     = "cerbos"
-	adminPassword     = "cerbosAdmin"
-	schemaFileName    = "principal.json"
-	readyTimeout      = 60 * time.Second
-	readyPollInterval = 50 * time.Millisecond
-)
+const schemaFileName = "principal.json"
 
 func TestPutCmd(t *testing.T) {
-	s := mkServer(t)
+	s := internal.StartTestServer(t)
 	defer s.Stop() //nolint:errcheck
 
-	globals := mkGlobals(t, s.GRPCAddr())
+	globals := internal.CreateGlobalsFlagset(t, s.GRPCAddr())
 	ctx := mkClients(t, globals)
 	testPutCmd(ctx, globals)(t)
 }
@@ -249,52 +243,6 @@ func writeToTmpFile(t *testing.T, p *policyv1.Policy) string {
 	require.NoError(t, err)
 
 	return f.Name()
-}
-
-func mkServerOpts(t *testing.T) []testutil.ServerOpt {
-	t.Helper()
-
-	serverOpts := []testutil.ServerOpt{
-		testutil.WithPolicyRepositorySQLite3(fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))),
-		testutil.WithAdminAPI(adminUsername, adminPassword),
-	}
-
-	return serverOpts
-}
-
-func mkServer(t *testing.T) *testutil.ServerInfo {
-	t.Helper()
-
-	s, err := testutil.StartCerbosServer(mkServerOpts(t)...)
-	require.NoError(t, err)
-	require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
-
-	return s
-}
-
-func serverIsReady(s *testutil.ServerInfo) func() bool {
-	return func() bool {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), readyPollInterval)
-		defer cancelFunc()
-
-		ready, err := s.IsReady(ctx)
-		if err != nil {
-			return false
-		}
-
-		return ready
-	}
-}
-
-func mkGlobals(t *testing.T, address string) *flagset.Globals {
-	t.Helper()
-
-	return &flagset.Globals{
-		Server:    address,
-		Username:  adminUsername,
-		Password:  adminPassword,
-		Plaintext: true,
-	}
 }
 
 func mkClients(t *testing.T, globals *flagset.Globals) *cmdclient.Context {

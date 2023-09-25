@@ -9,14 +9,14 @@ import (
 
 	"github.com/alecthomas/kong"
 
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func DoCmd(k *kong.Kong, ac client.AdminClient, kind policy.Kind, filters *flagset.Filters, format *flagset.Format, sort *flagset.Sort, args []string) error {
+func DoCmd(k *kong.Kong, ac *cerbos.GRPCAdminClient, kind policy.Kind, filters *flagset.Filters, format *flagset.Format, sort *flagset.Sort, args []string) error {
 	if len(args) == 0 {
 		if err := List(k, ac, filters, format, sort, kind); err != nil {
 			return fmt.Errorf("failed to list: %w", err)
@@ -32,19 +32,19 @@ func DoCmd(k *kong.Kong, ac client.AdminClient, kind policy.Kind, filters *flags
 	return nil
 }
 
-func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
-	var opts []client.ListPoliciesOption
+func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
+	var opts []cerbos.ListPoliciesOption
 	if filters.IncludeDisabled {
-		opts = append(opts, client.WithIncludeDisabled())
+		opts = append(opts, cerbos.WithIncludeDisabled())
 	}
 	if filters.NameRegexp != "" {
-		opts = append(opts, client.WithNameRegexp(filters.NameRegexp))
+		opts = append(opts, cerbos.WithNameRegexp(filters.NameRegexp))
 	}
 	if filters.ScopeRegexp != "" {
-		opts = append(opts, client.WithScopeRegexp(filters.ScopeRegexp))
+		opts = append(opts, cerbos.WithScopeRegexp(filters.ScopeRegexp))
 	}
 	if filters.VersionRegexp != "" {
-		opts = append(opts, client.WithVersionRegexp(filters.VersionRegexp))
+		opts = append(opts, cerbos.WithVersionRegexp(filters.VersionRegexp))
 	}
 
 	policyIds, err := c.ListPolicies(context.Background(), opts...)
@@ -58,7 +58,7 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 	}
 
 	fd := newFilterDef(kind, filters.Name, filters.Version, filters.IncludeDisabled)
-	if err := client.BatchAdminClientCall2(context.Background(), c.GetPolicy, func(ctx context.Context, policies []*policyv1.Policy) error {
+	if err := cerbos.BatchAdminClientCall2(context.Background(), c.GetPolicy, func(_ context.Context, policies []*policyv1.Policy) error {
 		filtered := make([]policy.Wrapper, 0, len(policies))
 		for _, p := range policies {
 			wp := policy.Wrap(p)
@@ -94,11 +94,11 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 	return nil
 }
 
-func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, kind policy.Kind, ids ...string) error {
+func Get(k *kong.Kong, c *cerbos.GRPCAdminClient, format *flagset.Format, kind policy.Kind, ids ...string) error {
 	foundPolicy := false
 	fd := newFilterDef(kind, nil, nil, true)
 
-	if err := client.BatchAdminClientCall2(context.Background(), c.GetPolicy, func(ctx context.Context, policies []*policyv1.Policy) error {
+	if err := cerbos.BatchAdminClientCall2(context.Background(), c.GetPolicy, func(_ context.Context, policies []*policyv1.Policy) error {
 		filtered := make([]policy.Wrapper, 0, len(policies))
 		for _, p := range policies {
 			wp := policy.Wrap(p)

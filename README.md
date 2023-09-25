@@ -1,4 +1,4 @@
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cerbos/cerbos?color=green&logo=github&sort=semver)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml)  [![Go Reference](https://pkg.go.dev/badge/github.com/cerbos/cerbos/client.svg)](https://pkg.go.dev/github.com/cerbos/cerbos/client)   [![Go Report Card](https://goreportcard.com/badge/github.com/cerbos/cerbos)](https://goreportcard.com/report/github.com/cerbos/cerbos)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cerbos/cerbos?color=green&logo=github&sort=semver)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml)  [![Go Report Card](https://goreportcard.com/badge/github.com/cerbos/cerbos)](https://goreportcard.com/report/github.com/cerbos/cerbos)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 <p align="center">
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos"/>
@@ -182,7 +182,7 @@ EOF
 
 ## Client SDKs
 
-* [Go](client/README.md)
+* [Go](https://github.com/cerbos/cerbos-sdk-go)
 * [Java](https://github.com/cerbos/cerbos-sdk-java)
 * [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
 * [.NET](https://github.com/cerbos/cerbos-sdk-net)

@@ -18,7 +18,7 @@ Alternatively, you can explore the API using the following methods as well:
 
 == Client SDKs
 
-* image:go.svg[alt="Go",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"]link:https://pkg.go.dev/github.com/cerbos/cerbos/client[&ensp;Go]
+* image:go.svg[alt="Go",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos-sdk-go/cerbos"]link:https://pkg.go.dev/github.com/cerbos/cerbos-sdk-go/cerbos[&ensp;Go]
 * image:java.svg[alt="Java",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"]link:https://github.com/cerbos/cerbos-sdk-java[&ensp;Java]
 * image:javascript.svg[alt="JavaScript",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-javascript"]link:https://github.com/cerbos/cerbos-sdk-javascript[&ensp;JavaScript]
 * image:dot-net.svg[alt=".NET",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-net"]link:https://github.com/cerbos/cerbos-sdk-net[&ensp;.NET]

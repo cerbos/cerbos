@@ -9,7 +9,7 @@ import (
 
 	"github.com/alecthomas/kong"
 
-	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/files"
@@ -43,7 +43,7 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 		return fmt.Errorf("no filename(s) provided")
 	}
 
-	schemas := client.NewSchemaSet()
+	schemas := cerbos.NewSchemaSet()
 	var errs []error
 	err := files.Find(sc.Paths, put.Recursive, util.FileTypeSchema, func(found files.Found) error {
 		f, err := found.Open()

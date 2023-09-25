@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	cerbos "github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 )
 
 func main() {

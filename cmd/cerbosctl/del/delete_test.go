@@ -17,8 +17,8 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/client/testutil"
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
@@ -26,20 +26,15 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-const (
-	adminUsername     = "cerbos"
-	adminPassword     = "cerbosAdmin"
-	readyTimeout      = 60 * time.Second
-	timeout           = 30 * time.Second
-	readyPollInterval = 50 * time.Millisecond
-)
+const timeout = 30 * time.Second
 
 func TestDeleteCmd(t *testing.T) {
-	s := mkServer(t)
+	s := internal.StartTestServer(t)
 	defer s.Stop() //nolint:errcheck
 
-	globals := mkGlobals(t, s.GRPCAddr())
-	ctx, _ := context.WithTimeout(context.Background(), timeout)
+	globals := internal.CreateGlobalsFlagset(t, s.GRPCAddr())
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	t.Cleanup(cancel)
 	cctx := mkClients(t, globals)
 	loadSchemas(t, cctx.AdminClient)
 	testDeleteCmd(ctx, cctx, globals)(t)
@@ -127,7 +122,7 @@ func testDeleteCmd(ctx context.Context, cctx *cmdclient.Context, globals *flagse
 	}
 }
 
-func loadSchemas(t *testing.T, ac client.AdminClient) {
+func loadSchemas(t *testing.T, ac *cerbos.GRPCAdminClient) {
 	t.Helper()
 
 	fsys := os.DirFS(test.PathToDir(t, filepath.Join("schema", "fs", schema.Directory)))
@@ -137,56 +132,10 @@ func loadSchemas(t *testing.T, ac client.AdminClient) {
 	s2, err := schema.ReadSchemaFromFile(fsys, "complex_object.json")
 	require.NoError(t, err)
 
-	ss := client.NewSchemaSet()
+	ss := cerbos.NewSchemaSet()
 	ss.AddSchemas(s)
 	ss.AddSchemas(s2)
 	require.NoError(t, ac.AddOrUpdateSchema(context.Background(), ss))
-}
-
-func mkServerOpts(t *testing.T) []testutil.ServerOpt {
-	t.Helper()
-
-	serverOpts := []testutil.ServerOpt{
-		testutil.WithPolicyRepositorySQLite3(fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))),
-		testutil.WithAdminAPI(adminUsername, adminPassword),
-	}
-
-	return serverOpts
-}
-
-func mkServer(t *testing.T) *testutil.ServerInfo {
-	t.Helper()
-
-	s, err := testutil.StartCerbosServer(mkServerOpts(t)...)
-	require.NoError(t, err)
-	require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
-
-	return s
-}
-
-func serverIsReady(s *testutil.ServerInfo) func() bool {
-	return func() bool {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), readyPollInterval)
-		defer cancelFunc()
-
-		ready, err := s.IsReady(ctx)
-		if err != nil {
-			return false
-		}
-
-		return ready
-	}
-}
-
-func mkGlobals(t *testing.T, address string) *flagset.Globals {
-	t.Helper()
-
-	return &flagset.Globals{
-		Server:    address,
-		Username:  adminUsername,
-		Password:  adminPassword,
-		Plaintext: true,
-	}
 }
 
 func mkClients(t *testing.T, globals *flagset.Globals) *cmdclient.Context {
