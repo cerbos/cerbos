@@ -167,3 +167,23 @@ The image reference to use in pods
 {{- end -}}
 "
 {{- end }}
+
+{{/*
+Topology spread constraints with label selector injected
+*/}}
+{{- define "cerbos.topologySpreadConstraints" -}}
+{{- if .Values.topologySpreadConstraints }}
+{{- $defaultLabels := (fromYaml (include "cerbos.selectorLabels" $)) }}
+{{- $defaultLabelSelector := (dict "labelSelector" (dict "matchLabels" $defaultLabels)) }}
+{{- $constraints := list }}
+{{- range $c := .Values.topologySpreadConstraints }}
+{{- if (hasKey $c "labelSelector") }}
+{{- $constraints = (append $constraints $c) }}
+{{- else }}
+{{- $constraints = (append $constraints (mergeOverwrite $c $defaultLabelSelector)) }}
+{{- end }}
+{{- end }}
+topologySpreadConstraints:
+{{ toYaml $constraints | indent 2 }}
+{{- end }}
+{{- end }}
