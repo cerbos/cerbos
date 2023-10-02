@@ -11,10 +11,10 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.0.2
 	github.com/fullstorydev/grpcurl v1.8.8
 	github.com/google/go-licenses v1.6.0
-	github.com/goreleaser/goreleaser v1.21.0
+	github.com/goreleaser/goreleaser v1.21.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/planetscale/vtprotobuf v0.5.0
-	github.com/vektra/mockery/v2 v2.34.0
+	github.com/vektra/mockery/v2 v2.34.2
 	go.elastic.co/go-licence-detector v0.6.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.31.0

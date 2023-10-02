@@ -1246,8 +1246,8 @@ github.com/goreleaser/chglog v0.5.0 h1:Sk6BMIpx8+vpAf8KyPit34OgWui8c7nKTMHhYx88j
 github.com/goreleaser/chglog v0.5.0/go.mod h1:Ri46M3lrMuv76FHszs3vtABR8J8k1w9JHYAzxeeOl28=
 github.com/goreleaser/fileglob v1.3.0 h1:/X6J7U8lbDpQtBvGcwwPS6OpzkNVlVEsFUVRx9+k+7I=
 github.com/goreleaser/fileglob v1.3.0/go.mod h1:Jx6BoXv3mbYkEzwm9THo7xbr5egkAraxkGorbJb4RxU=
-github.com/goreleaser/goreleaser v1.21.0 h1:V/fl/iGLPtDSUHwQW5jK79xhq1R/X4/uPeyYKmzk31s=
-github.com/goreleaser/goreleaser v1.21.0/go.mod h1:aldhx+J6NRthWY25GIZztFwfzug50IveIz/UNrCNIuk=
+github.com/goreleaser/goreleaser v1.21.2 h1:dgYtIS7aZlQuRMUMLCjDCOs4lWss85Oh60RDSO0rbWU=
+github.com/goreleaser/goreleaser v1.21.2/go.mod h1:aldhx+J6NRthWY25GIZztFwfzug50IveIz/UNrCNIuk=
 github.com/goreleaser/nfpm/v2 v2.33.1 h1:EkdAzZyVhAI9JC1vjmjjbmnNzyH1J6Cu4JCsA7YcQuc=
 github.com/goreleaser/nfpm/v2 v2.33.1/go.mod h1:8wwWWvJWmn84xo/Sqiv0aMvEGTHlHZTXTEuVSgQpkIM=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
@@ -1608,8 +1608,8 @@ github.com/ulikunitz/xz v0.5.11/go.mod h1:nbz6k7qbPmH4IRqmfOplQw/tblSgqTqBwxkY0o
 github.com/urfave/cli v1.22.12/go.mod h1:sSBEIC79qR6OvcmsD4U3KABeOTxDqQtdDnaFuUN30b8=
 github.com/vbatts/tar-split v0.11.3 h1:hLFqsOLQ1SsppQNTMpkpPXClLDfC2A3Zgy9OUU+RVck=
 github.com/vbatts/tar-split v0.11.3/go.mod h1:9QlHN18E+fEH7RdG+QAJJcuya3rqT7eXSTY7wGrAokY=
-github.com/vektra/mockery/v2 v2.34.0 h1:guzK+ZqivTzSNqp3EwM/tKiRQlkMpkMQorYXpXZ2XAs=
-github.com/vektra/mockery/v2 v2.34.0/go.mod h1:9lREs4VEeQiUS3rizYQx1saxHu2JiIhThP0q9+fDegM=
+github.com/vektra/mockery/v2 v2.34.2 h1:sB9pOos4PXHxznWgj7T+LQQJr4rni7MJaWgsw6JaOFI=
+github.com/vektra/mockery/v2 v2.34.2/go.mod h1:9lREs4VEeQiUS3rizYQx1saxHu2JiIhThP0q9+fDegM=
 github.com/vmihailenco/msgpack/v5 v5.3.5 h1:5gO0H1iULLWGhs2H5tbAHIZTV8/cYafcFOr9znI5mJU=
 github.com/vmihailenco/msgpack/v5 v5.3.5/go.mod h1:7xyJ9e+0+9SaZT0Wt1RGleJXzli6Q/V5KbhBonMG9jc=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=
