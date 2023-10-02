@@ -13,7 +13,7 @@ require (
 	github.com/alecthomas/participle/v2 v2.1.0
 	github.com/aws/aws-sdk-go v1.45.19
 	github.com/bluele/gcache v0.0.2
-	github.com/bufbuild/protovalidate-go v0.3.2
+	github.com/bufbuild/protovalidate-go v0.3.1
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cerbos-sdk-go v0.1.0
 	github.com/cerbos/cerbos/api/genpb v0.0.0-20231002074954-01a6016d0705
@@ -33,7 +33,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.16.2
-	github.com/google/cel-go v0.18.1
+	github.com/google/cel-go v0.17.6
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.3.1
