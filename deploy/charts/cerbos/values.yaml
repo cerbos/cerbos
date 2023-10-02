@@ -79,6 +79,12 @@ tolerations: []
 # Pod affinity rules.
 affinity: {}
 
+# Topology Spread Constraints rules.
+topologySpreadConstraints: []
+  # - topologyKey: topology.kubernetes.io/zone
+  #   maxSkew: 1
+  #   whenUnsatisfiable: ScheduleAnyway
+
 # Volumes to add to the pod.
 volumes: []
 
