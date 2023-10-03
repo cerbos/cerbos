@@ -18,8 +18,6 @@ import (
 	"time"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
-	"github.com/bufbuild/protovalidate-go"
-	"github.com/bufbuild/protovalidate-go/legacy"
 	"github.com/gorilla/mux"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
@@ -41,10 +39,10 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/telemetry"
+	"github.com/cerbos/cerbos/internal/validator"
 
 	// Import the default grpc encoding to ensure that it gets replaced by VT.
 	_ "google.golang.org/grpc/encoding/proto"
@@ -441,20 +439,12 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 		return nil, fmt.Errorf("failed to create audit unary interceptor: %w", err)
 	}
 
-	validator, err := protovalidate.New(
-		legacy.WithLegacySupport(legacy.ModeIfNotPresent),
-		protovalidate.WithMessages(&requestv1.CheckResourcesRequest{}, &requestv1.PlanResourcesRequest{}),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create validator: %w", err)
-	}
-
 	opts := []grpc.ServerOption{
 		grpc.ChainStreamInterceptor(
 			grpc_recovery.StreamServerInterceptor(),
 			telemetryInt.StreamServerInterceptor(),
 			otelgrpc.StreamServerInterceptor(),
-			grpc_validator.StreamServerInterceptor(validator),
+			grpc_validator.StreamServerInterceptor(validator.Validator),
 			grpc_logging.StreamServerInterceptor(RequestLogger(log, "Handled request")),
 			grpc_logging.StreamServerInterceptor(PayloadLogger(s.conf), grpc_logging.WithLogOnEvents(grpc_logging.PayloadReceived, grpc_logging.PayloadSent)),
 		),
@@ -462,7 +452,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 			grpc_recovery.UnaryServerInterceptor(),
 			telemetryInt.UnaryServerInterceptor(),
 			otelgrpc.UnaryServerInterceptor(),
-			grpc_validator.UnaryServerInterceptor(validator),
+			grpc_validator.UnaryServerInterceptor(validator.Validator),
 			RequestMetadataUnaryServerInterceptor,
 			auditInterceptor,
 			grpc_logging.UnaryServerInterceptor(RequestLogger(log, "Handled request")),

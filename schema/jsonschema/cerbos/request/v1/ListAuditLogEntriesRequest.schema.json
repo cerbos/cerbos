@@ -59,7 +59,7 @@
         "tail": {
           "type": "integer",
           "maximum": 1000,
-          "minimum": 0
+          "minimum": 1
         }
       }
     },

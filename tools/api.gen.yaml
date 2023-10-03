@@ -25,13 +25,6 @@ plugins:
     out: schema/openapiv2
     path: ["go", "run", "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"]
 
-  - name: validate
-    out: api/genpb
-    opt:
-      - paths=source_relative
-      - lang=go
-    path: ["go", "run", "github.com/envoyproxy/protoc-gen-validate"]
-
   - name: vtproto
     out: api/genpb
     opt:

@@ -10,11 +10,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/validator"
 )
 
 func TestReadPolicy(t *testing.T) {
@@ -90,17 +92,13 @@ func TestReadFileWithMultiplePolicies(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	type validator interface {
-		Validate() error
-	}
-
 	testCases := []struct {
 		name  string
-		input func() validator
+		input func() proto.Message
 	}{
 		{
 			name: "type=ResourcePolicy;issue=BadAPIVersion",
-			input: func() validator {
+			input: func() proto.Message {
 				obj := test.GenResourcePolicy(test.NoMod())
 				obj.ApiVersion = "something"
 				return obj
@@ -108,7 +106,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name: "type=ResourcePolicy;issue=EmptyResourceName",
-			input: func() validator {
+			input: func() proto.Message {
 				obj := test.GenResourcePolicy(test.NoMod())
 				rp := obj.GetResourcePolicy()
 				rp.Resource = ""
@@ -119,7 +117,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name: "type=PrincipalPolicy;issue=BadAPIVersion",
-			input: func() validator {
+			input: func() proto.Message {
 				obj := test.GenPrincipalPolicy(test.NoMod())
 				obj.ApiVersion = "something"
 				return obj
@@ -130,8 +128,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			obj := tc.input()
-			require.Error(t, obj.Validate())
+			require.Error(t, validator.Validate(tc.input()))
 		})
 	}
 }

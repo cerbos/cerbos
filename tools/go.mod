@@ -8,7 +8,7 @@ require (
 	github.com/bojand/ghz v0.117.0
 	github.com/bufbuild/buf v1.26.1
 	github.com/cerbos/protoc-gen-go-hashpb v0.2.0
-	github.com/envoyproxy/protoc-gen-validate v1.0.2
+	github.com/cerbos/protoc-gen-jsonschema v0.1.0
 	github.com/fullstorydev/grpcurl v1.8.8
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser v1.21.2
@@ -22,6 +22,7 @@ require (
 )
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230824200731-b9b8148056b9.1 // indirect
 	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -133,6 +134,7 @@ require (
 	github.com/elliotchance/orderedmap/v2 v2.2.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane v0.11.1 // indirect
+	github.com/envoyproxy/protoc-gen-validate v1.0.2 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/fgprof v0.9.3 // indirect
@@ -286,7 +288,6 @@ require (
 	gocloud.dev v0.34.0 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b // indirect
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect

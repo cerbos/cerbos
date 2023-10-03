@@ -17,6 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/validator"
 )
 
 type Config struct {
@@ -112,7 +113,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 		suite := &policyv1.TestSuite{}
 		err := util.LoadFromJSONOrYAML(fsys, file, suite)
 		if err == nil {
-			err = suite.Validate()
+			err = validator.Validate(suite)
 		}
 		if err != nil {
 			return &policyv1.TestResults_Suite{

@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "failed to load test fixtures from testdata: invalid TestFixture_Principals.Principals[invalid]: embedded message failed validation | caused by: invalid Principal.Id: value length must be at least 1 runes",
+      "error": "failed to load test fixtures from testdata: validation error:\n - principals[\"invalid\"].id: value is required [required]\n - principals[\"invalid\"].roles: value is required [required]",
       "description": "Tests for verifying something"
     }
   ],

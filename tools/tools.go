@@ -10,7 +10,7 @@ import (
 	_ "github.com/bojand/ghz/cmd/ghz"
 	_ "github.com/bufbuild/buf/cmd/buf"
 	_ "github.com/cerbos/protoc-gen-go-hashpb"
-	_ "github.com/envoyproxy/protoc-gen-validate"
+	_ "github.com/cerbos/protoc-gen-jsonschema/cmd/protoc-gen-jsonschema"
 	_ "github.com/fullstorydev/grpcurl/cmd/grpcurl"
 	_ "github.com/google/go-licenses"
 	_ "github.com/goreleaser/goreleaser"

@@ -11,29 +11,24 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
-
-	"github.com/google/go-cmp/cmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/validator"
 )
 
 type testFixture struct {
 	principals map[string]*enginev1.Principal
 	resources  map[string]*enginev1.Resource
 	auxData    map[string]*enginev1.AuxData
-}
-
-type validatableMessage interface {
-	proto.Message
-	Validate() error
 }
 
 const (
@@ -106,7 +101,7 @@ func loadAuxData(fsys fs.FS, path string) (map[string]*enginev1.AuxData, error) 
 	return nil, nil
 }
 
-func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
+func loadFixtureElement(fsys fs.FS, path string, pb proto.Message) error {
 	file, err := util.OpenOneOfSupportedFiles(fsys, path)
 	if err != nil || file == nil {
 		return err
@@ -118,7 +113,7 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 		return err
 	}
 
-	return pb.Validate()
+	return validator.Validate(pb)
 }
 
 func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {

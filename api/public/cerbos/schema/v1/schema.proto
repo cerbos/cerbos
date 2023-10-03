@@ -5,9 +5,9 @@ syntax = "proto3";
 
 package cerbos.schema.v1;
 
+import "buf/validate/validate.proto";
 import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
-import "validate/validate.proto";
 
 option csharp_namespace = "Cerbos.Api.V1.Schema";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1;schemav1";
@@ -28,7 +28,8 @@ message ValidationError {
 message Schema {
   string id = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).string = {
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
       min_len: 1,
       max_len: 255
     },
@@ -39,7 +40,8 @@ message Schema {
   ];
   bytes definition = 2 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).bytes = {min_len: 10},
+    (buf.validate.field).bytes = {min_len: 10},
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "JSON schema definition"
       example: "{\"type\":\"object\", \"properties\":{}}"

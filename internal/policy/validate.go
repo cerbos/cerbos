@@ -9,10 +9,11 @@ import (
 	"go.uber.org/multierr"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/validator"
 )
 
 func Validate(p *policyv1.Policy) error {
-	if err := p.Validate(); err != nil {
+	if err := validator.Validate(p); err != nil {
 		return err
 	}
 
@@ -107,8 +108,7 @@ func validateDerivedRoles(dr *policyv1.DerivedRoles) (err error) {
 }
 
 func validateExportVariables(p *policyv1.Policy) error {
-	//nolint:staticcheck
-	if len(p.Variables) > 0 {
+	if len(p.Variables) > 0 { //nolint:staticcheck
 		return fmt.Errorf("export variables policies do not support the deprecated top-level variables field")
 	}
 

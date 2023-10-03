@@ -5,6 +5,7 @@ syntax = "proto3";
 
 package cerbos.request.v1;
 
+import "buf/validate/validate.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/schema/v1/schema.proto";
@@ -13,7 +14,6 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
-import "validate/validate.proto";
 
 option csharp_namespace = "Cerbos.Api.V1.Request";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1;requestv1";
@@ -30,7 +30,8 @@ message PlanResourcesRequest {
   }];
 
   string action = 2 [
-    (validate.rules).string.min_len = 1,
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Action to be applied to each resource in the list."
@@ -39,12 +40,12 @@ message PlanResourcesRequest {
   ];
 
   cerbos.engine.v1.Principal principal = 3 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
 
   cerbos.engine.v1.PlanResourcesInput.Resource resource = 4 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
 
@@ -64,13 +65,14 @@ message CheckResourceSetRequest {
     example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
   }];
   repeated string actions = 2 [
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       unique: true,
       min_items: 1,
       items {
         string {min_len: 1}
       }
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of actions being performed on the set of resources."
@@ -80,11 +82,11 @@ message CheckResourceSetRequest {
     }
   ];
   cerbos.engine.v1.Principal principal = 3 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
   ResourceSet resource = 4 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
   bool include_meta = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Opt to receive request processing metadata in the response."}];
@@ -97,7 +99,8 @@ message ResourceSet {
   };
 
   string kind = 1 [
-    (validate.rules).string = {min_len: 1},
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {min_len: 1},
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Resource kind."
@@ -105,7 +108,7 @@ message ResourceSet {
     }
   ];
   string policy_version = 2 [
-    (validate.rules).string.pattern = "^[[:word:]]*$",
+    (buf.validate.field).string.pattern = "^[[:word:]]*$",
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
@@ -114,10 +117,8 @@ message ResourceSet {
     }
   ];
   map<string, AttributesMap> instances = 3 [
-    (validate.rules).map = {
-      min_pairs: 1,
-      no_sparse: true
-    },
+    (buf.validate.field).map = {min_pairs: 1},
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
@@ -126,7 +127,7 @@ message ResourceSet {
     }
   ];
   string scope = 4 [
-    (validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$",
+    (buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$",
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "A dot-separated scope that describes the hierarchy these resources belong to. This is used for determining policy inheritance."
@@ -140,10 +141,7 @@ message AttributesMap {
     json_schema: {description: "Unique identifier for the resource instance."}
   };
 
-  map<string, google.protobuf.Value> attr = 1 [
-    (validate.rules).map.no_sparse = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Key-value pairs of contextual data about this instance that should be used during policy evaluation."}
-  ];
+  map<string, google.protobuf.Value> attr = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Key-value pairs of contextual data about this instance that should be used during policy evaluation."}];
 }
 
 // Deprecated. See CheckResourcesRequest.
@@ -154,13 +152,14 @@ message CheckResourceBatchRequest {
 
   message BatchEntry {
     repeated string actions = 1 [
-      (validate.rules).repeated = {
+      (buf.validate.field).repeated = {
         unique: true,
         min_items: 1,
         items {
           string {min_len: 1}
         }
       },
+      (buf.validate.field).required = true,
       (google.api.field_behavior) = REQUIRED,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "List of actions being performed on the resource."
@@ -170,7 +169,7 @@ message CheckResourceBatchRequest {
       }
     ];
     cerbos.engine.v1.Resource resource = 2 [
-      (validate.rules).message.required = true,
+      (buf.validate.field).required = true,
       (google.api.field_behavior) = REQUIRED
     ];
   }
@@ -180,11 +179,12 @@ message CheckResourceBatchRequest {
     example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
   }];
   cerbos.engine.v1.Principal principal = 2 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
   repeated BatchEntry resources = 3 [
-    (validate.rules).repeated = {min_items: 1},
+    (buf.validate.field).repeated = {min_items: 1},
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of resources and actions."
@@ -204,13 +204,14 @@ message CheckResourcesRequest {
 
   message ResourceEntry {
     repeated string actions = 1 [
-      (validate.rules).repeated = {
+      (buf.validate.field).repeated = {
         unique: true,
         min_items: 1,
         items {
           string {min_len: 1}
         }
       },
+      (buf.validate.field).required = true,
       (google.api.field_behavior) = REQUIRED,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "List of actions being performed on the resource."
@@ -220,7 +221,7 @@ message CheckResourcesRequest {
       }
     ];
     cerbos.engine.v1.Resource resource = 2 [
-      (validate.rules).message.required = true,
+      (buf.validate.field).required = true,
       (google.api.field_behavior) = REQUIRED
     ];
   }
@@ -231,11 +232,12 @@ message CheckResourcesRequest {
   }];
   bool include_meta = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Add request processing metadata to the response."}];
   cerbos.engine.v1.Principal principal = 3 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
   repeated ResourceEntry resources = 4 [
-    (validate.rules).repeated = {min_items: 1},
+    (buf.validate.field).repeated = {min_items: 1},
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of resources and actions."
@@ -258,7 +260,8 @@ message AuxData {
     };
 
     string token = 1 [
-      (validate.rules).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (buf.validate.field).string = {min_len: 1},
       (google.api.field_behavior) = REQUIRED,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "JWT from the original request"
@@ -292,15 +295,17 @@ message AuxData {
 
 message File {
   string file_name = 1 [
-    (validate.rules).string.min_len = 1,
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
     (google.api.field_behavior) = REQUIRED
   ];
 
   bytes contents = 2 [
-    (validate.rules).bytes = {
+    (buf.validate.field).bytes = {
       min_len: 1,
       max_len: 1048576
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
 }
@@ -313,10 +318,11 @@ message PlaygroundValidateRequest {
   string playground_id = 1;
 
   repeated File files = 2 [
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       min_items: 1,
       max_items: 30
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of files."
@@ -334,10 +340,11 @@ message PlaygroundTestRequest {
   string playground_id = 1;
 
   repeated File files = 2 [
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       min_items: 1,
       max_items: 30
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of files."
@@ -355,10 +362,11 @@ message PlaygroundEvaluateRequest {
   string playground_id = 1;
 
   repeated File files = 2 [
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       min_items: 1,
       max_items: 30
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of files."
@@ -368,17 +376,17 @@ message PlaygroundEvaluateRequest {
   ];
 
   cerbos.engine.v1.Principal principal = 3 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
 
   cerbos.engine.v1.Resource resource = 4 [
-    (validate.rules).message.required = true,
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
 
   repeated string actions = 5 [
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       unique: true,
       min_items: 1,
       max_items: 50,
@@ -386,6 +394,7 @@ message PlaygroundEvaluateRequest {
         string {min_len: 1}
       }
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of actions being performed on the resource."
@@ -406,10 +415,11 @@ message PlaygroundProxyRequest {
   string playground_id = 1;
 
   repeated File files = 2 [
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       min_items: 1,
       max_items: 30
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of files."
@@ -419,7 +429,7 @@ message PlaygroundProxyRequest {
   ];
 
   oneof proxy_request {
-    option (validate.required) = true;
+    option (buf.validate.oneof).required = true;
     CheckResourceSetRequest check_resource_set = 3;
     CheckResourceBatchRequest check_resource_batch = 4;
     PlanResourcesRequest plan_resources = 5;
@@ -433,10 +443,11 @@ message AddOrUpdatePolicyRequest {
   };
 
   repeated cerbos.policy.v1.Policy policies = 1 [
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       min_items: 1,
       max_items: 10
     },
+    (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of policies."
@@ -459,10 +470,8 @@ message ListAuditLogEntriesRequest {
     };
 
     google.protobuf.Timestamp start = 1 [
-      (validate.rules).timestamp = {
-        required: true,
-        lt_now: true,
-      },
+      (buf.validate.field).required = true,
+      (buf.validate.field).timestamp.lt_now = true,
       (google.api.field_behavior) = REQUIRED,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Start date in ISO 8601 format."
@@ -470,10 +479,8 @@ message ListAuditLogEntriesRequest {
       }
     ];
     google.protobuf.Timestamp end = 2 [
-      (validate.rules).timestamp = {
-        required: true,
-        lt_now: true,
-      },
+      (buf.validate.field).required = true,
+      (buf.validate.field).timestamp.lt_now = true,
       (google.api.field_behavior) = REQUIRED,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "End date in ISO 8601 format."
@@ -483,12 +490,13 @@ message ListAuditLogEntriesRequest {
   }
 
   Kind kind = 1 [
-    (validate.rules).enum = {
+    (buf.validate.field).enum = {
       in: [
         1,
         2
       ]
     },
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Kind of log entry"
       enum: [
@@ -498,9 +506,10 @@ message ListAuditLogEntriesRequest {
     }
   ];
   oneof filter {
-    option (validate.required) = true;
+    option (buf.validate.oneof).required = true;
     uint32 tail = 2 [
-      (validate.rules).uint32.lte = 1000,
+      (buf.validate.field).uint32.gte = 1,
+      (buf.validate.field).uint32.lte = 1000,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Last N entries."
         minimum: 1
@@ -510,7 +519,7 @@ message ListAuditLogEntriesRequest {
     TimeRange between = 3;
     google.protobuf.Duration since = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Entries since N hours/minutes ago"}];
     string lookup = 5 [
-      (validate.rules).string = {pattern: "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"},
+      (buf.validate.field).string = {pattern: "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"},
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "By Call ID"
         pattern: "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"
@@ -553,7 +562,7 @@ message GetPolicyRequest {
   };
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       unique: true,
       min_items: 1,
       max_items: 25,
@@ -564,6 +573,7 @@ message GetPolicyRequest {
         }
       }
     },
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
       example: "\"principal.sarah.vdefault\""
@@ -577,7 +587,7 @@ message DisablePolicyRequest {
   };
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       unique: true,
       min_items: 1,
       max_items: 25,
@@ -588,6 +598,7 @@ message DisablePolicyRequest {
         }
       }
     },
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Unique identifier for the policy"
       example: "\"principal.sarah.vdefault\""
@@ -601,7 +612,7 @@ message EnablePolicyRequest {
   };
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       unique: true,
       min_items: 1,
       max_items: 25,
@@ -612,6 +623,7 @@ message EnablePolicyRequest {
         }
       }
     },
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Unique identifier for the policy"
       example: "\"principal.sarah.vdefault\""
@@ -626,10 +638,11 @@ message AddOrUpdateSchemaRequest {
 
   repeated cerbos.schema.v1.Schema schemas = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       min_items: 1,
       max_items: 10
     },
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of schemas."
       min_items: 1
@@ -650,7 +663,7 @@ message GetSchemaRequest {
   };
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       unique: true,
       min_items: 1,
       max_items: 25,
@@ -661,6 +674,7 @@ message GetSchemaRequest {
         }
       }
     },
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Unique identifier for the schema"
       example: "\"principal.json\""
@@ -674,7 +688,7 @@ message DeleteSchemaRequest {
   };
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).repeated = {
+    (buf.validate.field).repeated = {
       unique: true,
       min_items: 1,
       max_items: 25,
@@ -685,6 +699,7 @@ message DeleteSchemaRequest {
         }
       }
     },
+    (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Unique identifier for the schema"
       example: "\"principal.json\""
