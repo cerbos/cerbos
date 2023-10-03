@@ -199,10 +199,16 @@ message Resource {
       example: "\"XX125\""
     }
   ];
-  map<string, google.protobuf.Value> attr = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
-    example: "{\"owner\": \"bugs_bunny\"}"
-  }];
+  map<string, google.protobuf.Value> attr = 4 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
+      example: "{\"owner\": \"bugs_bunny\"}"
+    }
+  ];
   string scope = 5 [
     (buf.validate.field).string = {pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"},
     (google.api.field_behavior) = OPTIONAL,
@@ -253,10 +259,16 @@ message Principal {
       example: "[\"user\"]"
     }
   ];
-  map<string, google.protobuf.Value> attr = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
-    example: "{\"beta_tester\": true}"
-  }];
+  map<string, google.protobuf.Value> attr = 4 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
+      example: "{\"beta_tester\": true}"
+    }
+  ];
   string scope = 5 [
     (buf.validate.field).string = {pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"},
     (google.api.field_behavior) = OPTIONAL,

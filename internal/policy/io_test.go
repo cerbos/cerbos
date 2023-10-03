@@ -126,11 +126,9 @@ func TestValidate(t *testing.T) {
 		// TODO (cell) Cover other validation rules
 	}
 
-	v, err := validator.Init()
-	require.NoError(t, err)
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Error(t, v.Validate(tc.input()))
+			require.Error(t, validator.Validate(tc.input()))
 		})
 	}
 }

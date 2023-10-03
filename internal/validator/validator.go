@@ -4,8 +4,6 @@
 package validator
 
 import (
-	"fmt"
-
 	"github.com/bufbuild/protovalidate-go"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -17,22 +15,13 @@ var Validator *protovalidate.Validator
 
 func init() {
 	var err error
-	if Validator, err = Init(); err != nil {
-		zap.L().Fatal(err.Error())
-	}
-}
-
-func Init() (*protovalidate.Validator, error) {
-	v, err := protovalidate.New(
+	if Validator, err = protovalidate.New(
 		protovalidate.WithMessages(
 			&requestv1.CheckResourcesRequest{},
 			&requestv1.PlanResourcesRequest{}),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create validator: %w", err)
+	); err != nil {
+		zap.L().Fatal(err.Error())
 	}
-
-	return v, nil
 }
 
 func Validate(msg proto.Message) error {
