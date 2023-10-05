@@ -26,7 +26,7 @@ include::ROOT:partial$attributes.adoc[]
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
 * The JSON schemas for Cerbos files are available at:
 ** Policy
-*** `{current-policy-schema-url}` 
+*** `{current-policy-schema-url}`
 ** xref:compile.adoc#testing[Test suite]
 *** `{current-test-schema-url}`
 ** xref:compile.adoc#fixtures[Principal test fixtures]
@@ -36,11 +36,11 @@ include::ROOT:partial$attributes.adoc[]
 ** xref:compile.adoc#fixtures[Auxiliary data test fixtures]
 *** `{current-testdata-auxdata-schema-url}`
 * If you prefer to always use the latest version, they can be accessed at:
-** `{latest-policy-schema-url}` 
-** `{latest-test-schema-url}` 
-** `{latest-testdata-principals-schema-url}` 
-** `{latest-testdata-resources-schema-url}` 
-** `{latest-testdata-auxdata-schema-url}` 
+** `{latest-policy-schema-url}`
+** `{latest-test-schema-url}`
+** `{latest-testdata-principals-schema-url}`
+** `{latest-testdata-resources-schema-url}`
+** `{latest-testdata-auxdata-schema-url}`
 
 == Policy structure
 
@@ -122,40 +122,46 @@ JSON files can specify the schema using the `$schema` top-level property.
 
 ==== Neovim
 
-Easiest way to get started is to install the link:https://github.com/lspcontainers/lspcontainers.nvim[lspcontainer.nvim] plugin. With link:https://github.com/wbthomason/packer.nvim[Packer], you can use a configuration similar to the following:
+Refer to your plugin manager documentation to figure out how to install link:https://github.com/neovim/nvim-lspconfig/tree/master[nvim-lspconfig] and link:https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#yamlls[configure the yaml-language-server]. Plugins such as link:https://github.com/williamboman/mason-lspconfig.nvim[mason-lspconfig] can automatically download and install language servers as well.
 
+The following is an example of using link:https://github.com/folke/lazy.nvim[lazy.nvim] and link:https://github.com/williamboman/mason.nvim[mason.nvim] to install and configure yaml-language-server. It follows the link:https://github.com/folke/lazy.nvim#-structuring-your-plugins[recommended way of configuring lazy plugins].
+
+.~/.config/nvim/lua/plugins/lspconfig.lua
 [source,lua,subs="+attributes"]
 ----
-use({ 'lspcontainers/lspcontainers.nvim' })
-
-use({
-    'neovim/nvim-lspconfig',
-    config = function()
-        lspconfig = require "lspconfig"
-        lspcontainers = require "lspcontainers"
-        ...
-        lspconfig.yamlls.setup {
-            before_init = function(params)
-                params.processId = vim.NIL
-            end,
-            cmd = lspcontainers.command('yamlls', { network = "bridge", }),
-            root_dir = lspconfig.util.root_pattern(".git", vim.fn.getcwd()),
-            on_attach = on_attach,
-            capabilities = capabilities,
-            settings = {
-                yaml = {
-                    schemas = {
-                        "{latest-policy-schema-url}": "/cerbos/*",
-                        "{latest-test-schema-url}": "/cerbos/**/*_test.yaml",
-                        "{latest-testdata-resources-schema-url}": "/cerbos/**/testdata/resources.yaml",
-                        "{latest-testdata-principals-schema-url}": "/cerbos/**/testdata/principals.yaml",
-                        "{latest-testdata-auxdata-schema-url}": "/cerbos/**/testdata/auxdata.yaml"
+return {
+    {
+        "neovim/nvim-lspconfig",
+        dependencies = {
+            {
+                "williamboman/mason.nvim",
+            },
+            {
+                "williamboman/mason-lspconfig.nvim",
+                opts = {
+                    ensure_installed = { "yamlls" },
+                },
+            },
+        },
+        opts = {
+            servers = {
+                yamlls = {
+                    settings = {
+                        yaml = {
+                            schemas = {
+                                "{latest-policy-schema-url}": "/cerbos/*",
+                                "{latest-test-schema-url}": "/cerbos/**/*_test.yaml",
+                                "{latest-testdata-resources-schema-url}": "/cerbos/**/testdata/resources.yaml",
+                                "{latest-testdata-principals-schema-url}": "/cerbos/**/testdata/principals.yaml",
+                                "{latest-testdata-auxdata-schema-url}": "/cerbos/**/testdata/auxdata.yaml"
+                            },
+                        },
                     },
                 },
             },
-        }
-    end,
-})
+        },
+    }
+}
 ----
 
 ==== JetBrains IDEs
