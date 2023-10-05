@@ -44,9 +44,9 @@ type JWTKeySet struct {
 
 type InsecureKeySetOpt struct {
 	// OptionalAlg configures Cerbos to not require the alg field to be set in the key set.
-	OptionalAlg bool `yaml:"optionalAlg"`
+	OptionalAlg bool `yaml:"optionalAlg" conf:",example=false"`
 	// OptionalKid configures Cerbos to not require the kid field to be set in the key set.
-	OptionalKid bool `yaml:"optionalKid"`
+	OptionalKid bool `yaml:"optionalKid" conf:",example=false"`
 }
 
 type RemoteSource struct {
