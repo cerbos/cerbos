@@ -427,7 +427,7 @@ func checkForUnsafeAdminCredentials(log *zap.Logger, passwordHash []byte) {
 	if err != nil {
 		log.Error("Failed to check admin API credentials", zap.Error(err))
 	} else if unsafe {
-		log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
+		log.Warn("[INSECURE CONFIG] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
 	}
 }
 

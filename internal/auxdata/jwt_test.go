@@ -17,6 +17,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -46,11 +47,12 @@ func TestKeySet(t *testing.T) {
 				PEM:  isPEM,
 			}
 
-			lks := newLocalKeySet(conf)
-			ks, err := lks.keySet(context.Background())
+			lks := newLocalKeySet(conf, []any{jws.WithRequireKid(false)})
+			ks, opts, err := lks.keySet(context.Background())
 			require.NoError(t, err)
 			require.NotNil(t, ks)
 			require.True(t, ks.Len() > 0)
+			require.Len(t, opts, 1)
 		})
 
 		t.Run(fmt.Sprintf("local/data/%s", filepath.Base(k)), func(t *testing.T) {
@@ -63,11 +65,12 @@ func TestKeySet(t *testing.T) {
 				PEM:  isPEM,
 			}
 
-			lks := newLocalKeySet(conf)
-			ks, err := lks.keySet(context.Background())
+			lks := newLocalKeySet(conf, nil)
+			ks, opts, err := lks.keySet(context.Background())
 			require.NoError(t, err)
 			require.NotNil(t, ks)
 			require.True(t, ks.Len() > 0)
+			require.Nil(t, opts)
 		})
 
 		if !isPEM {
@@ -80,12 +83,13 @@ func TestKeySet(t *testing.T) {
 				ctx, cancelFn := context.WithTimeout(context.Background(), 1*time.Second)
 				defer cancelFn()
 
-				rks := newRemoteKeySet(jwk.NewCache(ctx), conf)
-				ks, err := rks.keySet(ctx)
+				rks := newRemoteKeySet(jwk.NewCache(ctx), conf, []any{jws.WithInferAlgorithmFromKey(true)})
+				ks, opts, err := rks.keySet(ctx)
 
 				require.NoError(t, err)
 				require.NotNil(t, ks)
 				require.True(t, ks.Len() > 0)
+				require.Len(t, opts, 1)
 			})
 		}
 	}
@@ -130,6 +134,30 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 				ID:    "local_data",
 				Local: &LocalSource{Data: base64.StdEncoding.EncodeToString(keyBytes)},
 			},
+			{
+				ID:     "remote_insecure",
+				Remote: &RemoteSource{URL: fmt.Sprintf("%s/%s", ts.URL, verifyKey)},
+				Insecure: InsecureKeySetOpt{
+					OptionalAlg: true,
+					OptionalKid: true,
+				},
+			},
+			{
+				ID:    "local_file_insecure",
+				Local: &LocalSource{File: filepath.Join(keysDir, verifyKey)},
+				Insecure: InsecureKeySetOpt{
+					OptionalAlg: true,
+					OptionalKid: true,
+				},
+			},
+			{
+				ID:    "local_data_insecure",
+				Local: &LocalSource{Data: base64.StdEncoding.EncodeToString(keyBytes)},
+				Insecure: InsecureKeySetOpt{
+					OptionalAlg: true,
+					OptionalKid: true,
+				},
+			},
 		},
 	}
 
@@ -167,7 +195,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 
 	for _, tc := range testCases {
 		tc := tc
-		for _, keySetID := range []string{"remote", "local_file", "local_data"} {
+		for _, keySetID := range []string{"remote", "local_file", "local_data", "remote_insecure", "local_file_insecure", "local_data_insecure"} {
 			ksID := keySetID
 			t.Run(fmt.Sprintf("%s/%s", tc.name, ksID), func(t *testing.T) {
 				input := &requestv1.AuxData_JWT{

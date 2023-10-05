@@ -67,3 +67,18 @@ auxData:
           url: https://domain.tld/.well-known/keys.jwks
 ----
 
+Some legacy authentication systems have key sets that do not contain `alg` or `kid` fields. Not having these fields defined is a security risk and the default behaviour of Cerbos is to fail the parsing of JWT. If you are aware of the risks and still want to enable those tokens to be parsed, set the `optionalAlg` and `optionalKid` options.
+
+[source,yaml,linenums]
+----
+auxData:
+  jwt:
+    keySets:
+      - id: default
+        remote:
+          url: https://domain.tld/.well-known/keys.jwks
+        insecure:
+          optionalAlg: true # Set to true only if the keyset doesn't have an alg field
+          optionalKid: true # Set to true only if the keyset doesn't have a kid field
+----
+

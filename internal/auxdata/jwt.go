@@ -13,6 +13,7 @@ import (
 
 	"github.com/lestrrat-go/httprc"
 	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -53,24 +54,35 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 	jh.acceptableSkew = conf.AcceptableTimeSkew
 
 	if jh.verify {
+		log := logging.FromContext(ctx).Named("auxdata")
 		jh.keySets = make(map[string]keySet, len(conf.KeySets))
 
 		var jwkCache *jwk.Cache
 		for _, ks := range conf.KeySets {
 			ks := ks
+			var opts []any
+			if ks.Insecure.OptionalAlg {
+				log.Warn("[INSECURE CONFIG] Enabling optional alg field for key set", zap.String("keySetID", ks.ID))
+				opts = append(opts, jws.WithInferAlgorithmFromKey(true))
+			}
+
+			if ks.Insecure.OptionalKid {
+				log.Warn("[INSECURE CONFIG] Enabling optional kid field for key set", zap.String("keySetID", ks.ID))
+				opts = append(opts, jws.WithRequireKid(false))
+			}
+
 			switch {
 			case ks.Remote != nil:
 				if jwkCache == nil {
-					log := logging.FromContext(ctx).Named("auxdata")
 					errSink := func(err error) {
 						log.Warn("Error refreshing keyset", zap.Error(err))
 					}
 
 					jwkCache = jwk.NewCache(ctx, jwk.WithErrSink(httprc.ErrSinkFunc(errSink)))
 				}
-				jh.keySets[ks.ID] = newRemoteKeySet(jwkCache, ks.Remote)
+				jh.keySets[ks.ID] = newRemoteKeySet(jwkCache, ks.Remote, opts)
 			case ks.Local != nil:
-				jh.keySets[ks.ID] = newLocalKeySet(ks.Local)
+				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, opts)
 			}
 		}
 
@@ -141,12 +153,12 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 		ks = ksDef
 	}
 
-	jwks, err := ks.keySet(ctx)
+	jwks, jwksOpts, err := ks.keySet(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve keyset: %w", err)
 	}
 
-	return append(opts, jwt.WithKeySet(jwks), jwt.WithValidate(true)), nil
+	return append(opts, jwt.WithKeySet(jwks, jwksOpts...), jwt.WithValidate(true)), nil
 }
 
 func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption, cacheKey string) (map[string]*structpb.Value, error) {
@@ -187,64 +199,66 @@ func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT
 }
 
 type keySet interface {
-	keySet(context.Context) (jwk.Set, error)
+	keySet(context.Context) (jwk.Set, []any, error)
 }
 
 // remoteKeySet holds an auto-refreshing remote keyset.
 type remoteKeySet struct {
 	*jwk.Cache
-	url string
+	url     string
+	options []any
 }
 
-func newRemoteKeySet(cache *jwk.Cache, src *RemoteSource) *remoteKeySet {
+func newRemoteKeySet(cache *jwk.Cache, src *RemoteSource, options []any) *remoteKeySet {
 	if src.RefreshInterval > 0 {
 		_ = cache.Register(src.URL, jwk.WithRefreshInterval(src.RefreshInterval))
 	} else {
 		_ = cache.Register(src.URL)
 	}
 
-	return &remoteKeySet{Cache: cache, url: src.URL}
+	return &remoteKeySet{Cache: cache, url: src.URL, options: options}
 }
 
-func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, error) {
-	return rks.Get(ctx, rks.url)
+func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
+	ks, err := rks.Get(ctx, rks.url)
+	return ks, rks.options, err
 }
 
 // localKeySet represents a keyset defined manually through the configuration.
-type localKeySet func(context.Context) (jwk.Set, error)
+type localKeySet func(context.Context) (jwk.Set, []any, error)
 
-func newLocalKeySet(src *LocalSource) localKeySet {
+func newLocalKeySet(src *LocalSource, options []any) localKeySet {
 	if src.Data != "" {
 		kbytes, err := base64.StdEncoding.DecodeString(src.Data)
 		if err != nil {
-			return func(context.Context) (jwk.Set, error) {
-				return nil, fmt.Errorf("failed to apply base64 decoder to key data: %w", err)
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, fmt.Errorf("failed to apply base64 decoder to key data: %w", err)
 			}
 		}
 
 		ks, err := jwk.Parse(kbytes, jwk.WithPEM(src.PEM))
 		if err != nil {
-			return func(context.Context) (jwk.Set, error) {
-				return nil, fmt.Errorf("failed to parse key data: %w", err)
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, fmt.Errorf("failed to parse key data: %w", err)
 			}
 		}
 
-		return func(context.Context) (jwk.Set, error) { return ks, nil }
+		return func(context.Context) (jwk.Set, []any, error) { return ks, options, nil }
 	}
 
 	ks, err := jwk.ReadFile(src.File, jwk.WithPEM(src.PEM))
 	if err != nil {
-		return func(context.Context) (jwk.Set, error) {
-			return nil, fmt.Errorf("failed to read keyset from '%s': %w", src.File, err)
+		return func(context.Context) (jwk.Set, []any, error) {
+			return nil, nil, fmt.Errorf("failed to read keyset from '%s': %w", src.File, err)
 		}
 	}
 
-	return func(context.Context) (jwk.Set, error) { return ks, nil }
+	return func(context.Context) (jwk.Set, []any, error) { return ks, options, nil }
 }
 
-func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, error) {
+func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	if lks == nil {
-		return nil, errNilLocalKeySet
+		return nil, nil, errNilLocalKeySet
 	}
 
 	return lks(ctx)

@@ -38,6 +38,15 @@ type JWTKeySet struct {
 	Local *LocalSource `yaml:"local"`
 	// ID is the unique reference to this keyset.
 	ID string `yaml:"id" conf:"required,example=ks1"`
+	// Insecure options for relaxing security. Not recommended for production use. Use with caution.
+	Insecure InsecureKeySetOpt `yaml:"insecure"`
+}
+
+type InsecureKeySetOpt struct {
+	// OptionalAlg configures Cerbos to not require the alg field to be set in the key set.
+	OptionalAlg bool `yaml:"optionalAlg" conf:",example=false"`
+	// OptionalKid configures Cerbos to not require the kid field to be set in the key set.
+	OptionalKid bool `yaml:"optionalKid" conf:",example=false"`
 }
 
 type RemoteSource struct {
