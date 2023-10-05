@@ -51,6 +51,9 @@ auxData:
     keySets: # KeySets is the list of keysets to be used to verify tokens.
       - 
         id: ks1 # Required. ID is the unique reference to this keyset.
+        insecure: # Insecure options for relaxing security. Not recommended for production use. Use with caution.
+          optionalAlg: <DEFAULT_VALUE_NOT_SET> # OptionalAlg configures Cerbos to not require the alg field to be set in the key set.
+          optionalKid: <DEFAULT_VALUE_NOT_SET> # OptionalKid configures Cerbos to not require the kid field to be set in the key set.
         local: # Local defines a local keyset. Mutually exclusive with Remote.
           data: base64encodedJWK # Data is the encoded JWK data for this keyset. Mutually exclusive with File.
           file: /path/to/keys.jwk # File is the path to file containing JWK data. Mutually exclusive with Data.
