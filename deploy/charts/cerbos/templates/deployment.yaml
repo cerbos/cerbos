@@ -132,3 +132,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- include "cerbos.topologySpreadConstraints" . | nindent 6}}
