@@ -11,12 +11,12 @@ require (
 	github.com/alecthomas/chroma/v2 v2.9.1
 	github.com/alecthomas/kong v0.8.0
 	github.com/alecthomas/participle/v2 v2.1.0
-	github.com/aws/aws-sdk-go v1.45.19
+	github.com/aws/aws-sdk-go v1.45.24
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.3.1
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cerbos-sdk-go v0.2.0
-	github.com/cerbos/cerbos/api/genpb v0.0.0-20231002074954-01a6016d0705
+	github.com/cerbos/cerbos/api/genpb v0.0.0-20231005154708-56f7683cab97
 	github.com/cerbos/cloud-api v0.1.7
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
@@ -62,7 +62,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.5.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/pterm/pterm v0.12.69
-	github.com/rivo/tview v0.0.0-20230928053139-9bc1d28d88a9
+	github.com/rivo/tview v0.0.0-20231007183732-6c844bdc5f7a
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.11.0
 	github.com/rs/cors v1.10.1
@@ -95,12 +95,12 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.26.0
 	gocloud.dev v0.34.0
-	golang.org/x/crypto v0.13.0
-	golang.org/x/net v0.15.0
-	golang.org/x/sync v0.3.0
-	golang.org/x/tools v0.13.0
+	golang.org/x/crypto v0.14.0
+	golang.org/x/net v0.16.0
+	golang.org/x/sync v0.4.0
+	golang.org/x/tools v0.14.0
 	gonum.org/v1/gonum v0.14.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20230920204549-e6e6cdab5c13
+	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -114,10 +114,10 @@ require (
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230914171853-63dfe56cc2c4.1 // indirect
-	cloud.google.com/go v0.110.7 // indirect
+	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v1.1.1 // indirect
+	cloud.google.com/go/iam v1.1.2 // indirect
 	cloud.google.com/go/storage v1.31.0 // indirect
 	connectrpc.com/connect v1.11.1 // indirect
 	connectrpc.com/otelconnect v0.5.0 // indirect
@@ -271,16 +271,16 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.12.0 // indirect
+	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.134.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920183334-c177e329c48b // indirect
+	google.golang.org/genproto v0.0.0-20230920204549-e6e6cdab5c13 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
