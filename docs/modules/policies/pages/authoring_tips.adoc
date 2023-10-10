@@ -32,7 +32,7 @@ include::ROOT:partial$attributes.adoc[]
 ** xref:compile.adoc#fixtures[Principal test fixtures]
 *** `{current-testdata-principals-schema-url}`
 ** xref:compile.adoc#fixtures[Resources test fixtures]
-*** `{current-testdata-principals-schema-url}`
+*** `{current-testdata-resources-schema-url}`
 ** xref:compile.adoc#fixtures[Auxiliary data test fixtures]
 *** `{current-testdata-auxdata-schema-url}`
 * If you prefer to always use the latest version, they can be accessed at:
