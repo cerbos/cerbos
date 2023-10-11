@@ -26,19 +26,22 @@ import (
 )
 
 // Files runs tests using the policy files in the given file system.
-func Files(ctx context.Context, fsys fs.FS) (*policyv1.TestResults, error) {
-	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
-	if err != nil {
-		idxErrs := new(index.BuildError)
-		if errors.As(err, &idxErrs) {
-			return nil, &compile.Errors{
-				Errors: &runtimev1.Errors{
-					Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
-				},
+func Files(ctx context.Context, fsys fs.FS, idx index.Index) (*policyv1.TestResults, error) {
+	if idx == nil {
+		var err error
+		idx, err = index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
+		if err != nil {
+			idxErrs := new(index.BuildError)
+			if errors.As(err, &idxErrs) {
+				return nil, &compile.Errors{
+					Errors: &runtimev1.Errors{
+						Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
+					},
+				}
 			}
-		}
 
-		return nil, fmt.Errorf("failed to build index: %w", err)
+			return nil, fmt.Errorf("failed to build index: %w", err)
+		}
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})

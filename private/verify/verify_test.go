@@ -17,7 +17,7 @@ import (
 )
 
 func TestFiles(t *testing.T) {
-	results, err := verify.Files(context.Background(), os.DirFS(test.PathToDir(t, "store")))
+	results, err := verify.Files(context.Background(), os.DirFS(test.PathToDir(t, "store")), nil)
 	require.NoError(t, err)
 
 	require.Equal(t, results.Summary.OverallResult, policyv1.TestResults_RESULT_PASSED)

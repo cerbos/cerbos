@@ -39,19 +39,19 @@ func (e *Errors) Error() string {
 	}
 }
 
-func Files(ctx context.Context, fsys fs.FS) (<-chan Artefact, error) {
+func Files(ctx context.Context, fsys fs.FS) (index.Index, <-chan Artefact, error) {
 	idx, err := index.Build(ctx, fsys)
 	if err != nil {
 		idxErrs := new(index.BuildError)
 		if errors.As(err, &idxErrs) {
-			return nil, &Errors{
+			return nil, nil, &Errors{
 				Errors: &runtimev1.Errors{
 					Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
 				},
 			}
 		}
 
-		return nil, fmt.Errorf("failed to build index: %w", err)
+		return nil, nil, fmt.Errorf("failed to build index: %w", err)
 	}
 
 	outChan := make(chan Artefact, 1)
@@ -97,5 +97,5 @@ func Files(ctx context.Context, fsys fs.FS) (<-chan Artefact, error) {
 		}
 	}()
 
-	return outChan, nil
+	return idx, outChan, nil
 }

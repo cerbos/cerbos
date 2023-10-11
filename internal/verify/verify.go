@@ -77,16 +77,16 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 		return nil, err
 	}
 
-	fixtures := make(map[string]*testFixture, len(fixtureDefs))
+	fixtures := make(map[string]*TestFixture, len(fixtureDefs))
 
-	getFixture := func(path string) (*testFixture, error) {
+	getFixture := func(path string) (*TestFixture, error) {
 		f, ok := fixtures[path]
 		if ok {
 			return f, nil
 		}
 
 		if _, exists := fixtureDefs[path]; exists {
-			f, err := loadTestFixture(fsys, path)
+			f, err := LoadTestFixture(fsys, path)
 			if err != nil {
 				return nil, err
 			}
