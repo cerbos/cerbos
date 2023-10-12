@@ -163,8 +163,8 @@ require (
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
-	github.com/docker/cli v23.0.3+incompatible // indirect
-	github.com/docker/docker v23.0.4+incompatible // indirect
+	github.com/docker/cli v24.0.6+incompatible // indirect
+	github.com/docker/docker v24.0.6+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -187,6 +187,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
+	github.com/google/pprof v0.0.0-20230926050212-f7f687d19a98 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/wire v0.5.0 // indirect
@@ -195,10 +196,11 @@ require (
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-hclog v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
-	github.com/imdario/mergo v0.3.15 // indirect
+	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
@@ -230,7 +232,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc4 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
@@ -249,7 +251,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.2.0 // indirect
-	github.com/spf13/cast v1.5.0 // indirect
+	github.com/spf13/cast v1.5.1 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
