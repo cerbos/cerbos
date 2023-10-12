@@ -77,7 +77,7 @@ func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
-	pdpID := util.PDPIdentifier(s.conf.Credentials.InstanceID)
+	pdpID := util.PDPIdentifier(s.conf.Credentials.PDPID)
 	s.log = s.log.With(zap.String("instance", pdpID.Instance))
 
 	tlsConf := &tls.Config{
@@ -131,7 +131,7 @@ func (s *RemoteSource) InitWithClient(ctx context.Context, client CloudAPIClient
 	// into offline mode.
 	// TODO(cell): Implement automatic online/offline mode
 	if shouldWorkOffline() {
-		s.log.Warn(fmt.Sprintf("Working in offline mode because the %s environment variable is set", offlineEnvVar))
+		s.log.Warn("Working in offline mode because the CERBOS_HUB_OFFLINE environment variable is set")
 		return s.fetchBundleOffline()
 	}
 
@@ -155,7 +155,7 @@ func (s *RemoteSource) InitWithClient(ctx context.Context, client CloudAPIClient
 }
 
 func shouldWorkOffline() bool {
-	v := os.Getenv(offlineEnvVar)
+	v := getEnv(offlineKey)
 	offline, err := strconv.ParseBool(v)
 	if err != nil {
 		return false
@@ -259,7 +259,7 @@ func (s *RemoteSource) startWatchLoop(ctx context.Context, noBundleBackoff backo
 	if err != nil {
 		if !errors.Is(err, cloudapi.ErrBundleNotFound) {
 			s.log.Warn("Terminating bundle watch", zap.Error(err))
-			stats.Record(ctx, metrics.CloudConnectedCount.M(0))
+			stats.Record(ctx, metrics.HubConnectedCount.M(0))
 			return
 		}
 
@@ -267,8 +267,8 @@ func (s *RemoteSource) startWatchLoop(ctx context.Context, noBundleBackoff backo
 		wait = noBundleBackoff.NextBackOff()
 		if wait == backoff.Stop {
 			s.log.Warn("Giving up waiting for the bundle to re-appear: terminating bundle watch")
-			s.log.Info("Restart this instance to re-establish connection to Cerbos Cloud")
-			stats.Record(ctx, metrics.CloudConnectedCount.M(0))
+			s.log.Info("Restart this instance to re-establish connection to Cerbos Hub")
+			stats.Record(ctx, metrics.HubConnectedCount.M(0))
 			return
 		}
 	}
@@ -318,7 +318,7 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 			incEventMetric("error")
 
 			if errors.Is(err, cloudapi.ErrAuthenticationFailed) {
-				s.log.Error("Failed to authenticate to Cerbos Cloud", zap.Error(err))
+				s.log.Error("Failed to authenticate to Cerbos Hub", zap.Error(err))
 				s.removeBundle(false)
 				return backoff.Permanent(err)
 			}
@@ -335,7 +335,7 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 		return 0, err
 	}
 
-	stats.Record(ctx, metrics.CloudConnectedCount.M(1))
+	stats.Record(ctx, metrics.HubConnectedCount.M(1))
 
 	eventChan := watchHandle.ServerEvents()
 	errorChan := watchHandle.Errors()

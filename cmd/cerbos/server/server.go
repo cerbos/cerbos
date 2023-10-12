@@ -50,7 +50,7 @@ type Cmd struct {
 	DebugListenAddr string       `help:"Address to start the gops listener" placeholder:":6666"`
 	LogLevel        LogLevelFlag `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
 	Config          string       `help:"Path to config file" optional:"" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
-	CloudBundle     string       `help:"Use Cerbos Cloud to pull the policy bundle with the given label. Overrides the store defined in the configuration." optional:"" env:"CERBOS_CLOUD_BUNDLE"`
+	HubBundle       string       `help:"Use Cerbos Hub to pull the policy bundle with the given label. Overrides the store defined in the configuration." optional:"" env:"CERBOS_HUB_BUNDLE,CERBOS_CLOUD_BUNDLE"`
 	Set             []string     `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	ZPagesEnabled   bool         `help:"Enable zpages" hidden:""`
 }
@@ -84,16 +84,16 @@ func (c *Cmd) Run() error {
 		}
 	}
 
-	if c.CloudBundle != "" {
+	if c.HubBundle != "" {
 		for _, override := range []string{
 			"storage.driver=bundle",
-			fmt.Sprintf("storage.bundle.remote.bundleLabel=%s", c.CloudBundle),
+			fmt.Sprintf("storage.bundle.remote.bundleLabel=%s", c.HubBundle),
 		} {
 			if err := strvals.ParseInto(override, confOverrides); err != nil {
-				return fmt.Errorf("failed to parse cloud override [%s]: %w", override, err)
+				return fmt.Errorf("failed to parse Cerbos Hub override [%s]: %w", override, err)
 			}
 		}
-		log.Infof("Adding configuration override to use Cerbos Cloud bundle labelled %q", c.CloudBundle)
+		log.Infof("Adding configuration override to use Cerbos Hub bundle labelled %q", c.HubBundle)
 	}
 
 	// load configuration

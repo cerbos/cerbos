@@ -20,13 +20,6 @@ import (
 const (
 	confKey = storage.ConfKey + "." + DriverName
 
-	bundleLabelEnvVar  = "CERBOS_CLOUD_BUNDLE"
-	clientIDEnvVar     = "CERBOS_CLOUD_CLIENT_ID"
-	clientSecretEnvVar = "CERBOS_CLOUD_CLIENT_SECRET" //nolint:gosec
-	instanceIDEnvVar   = "CERBOS_PDP_ID"
-	offlineEnvVar      = "CERBOS_CLOUD_OFFLINE"
-	secretKeyEnvVar    = "CERBOS_CLOUD_SECRET_KEY" //nolint:gosec
-
 	defaultAPIEndpoint       = "https://api.cerbos.cloud"
 	defaultBootstrapHost     = "https://cdn.cerbos.cloud"
 	defaultCacheSize         = 1024
@@ -38,6 +31,42 @@ const (
 )
 
 var ErrNoSource = errors.New("at least one of local or remote sources must be defined")
+
+type envVarKey int
+
+const (
+	bundleLabelKey envVarKey = iota
+	clientIDKey
+	clientSecretKey
+	offlineKey
+	pdpIDKey
+	workspaceSecretKey
+)
+
+var envVars = map[envVarKey][]string{
+	bundleLabelKey:     {"CERBOS_HUB_BUNDLE", "CERBOS_CLOUD_BUNDLE"},
+	clientIDKey:        {"CERBOS_HUB_CLIENT_ID", "CERBOS_CLOUD_CLIENT_ID"},
+	clientSecretKey:    {"CERBOS_HUB_CLIENT_SECRET", "CERBOS_CLOUD_CLIENT_SECRET"},
+	offlineKey:         {"CERBOS_HUB_OFFLINE", "CERBOS_CLOUD_OFFLINE"},
+	pdpIDKey:           {"CERBOS_HUB_PDP_ID", "CERBOS_PDP_ID"},
+	workspaceSecretKey: {"CERBOS_HUB_WORKSPACE_SECRET", "CERBOS_CLOUD_SECRET_KEY"},
+}
+
+func getEnv(key envVarKey) string {
+	varNames, ok := envVars[key]
+	if !ok {
+		return ""
+	}
+
+	for _, v := range varNames {
+		val, ok := os.LookupEnv(v)
+		if ok {
+			return val
+		}
+	}
+
+	return ""
+}
 
 // Conf is required (if driver is set to 'bundle') configuration for bundle storage driver.
 // +desc=This section is required only if storage.driver is bundle.
@@ -54,18 +83,22 @@ type Conf struct {
 
 // CredentialsConf holds credentials for accessing the bundle service.
 type CredentialsConf struct {
-	// InstanceID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_PDP_ID environment variable.
-	InstanceID string `yaml:"instanceID" conf:",example=crb-004"`
-	// ClientID of the Cerbos Cloud API key. Defaults to the value of the CERBOS_CLOUD_CLIENT_ID environment variable.
+	// PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
+	PDPID string `yaml:"pdpID" conf:",example=crb-004"`
+	// ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
 	ClientID string `yaml:"clientID" conf:",example=92B0K05B6HOF"`
-	// ClientSecret of the Cerbos Cloud API key. Defaults to the value of the CERBOS_CLOUD_CLIENT_SECRET environment variable.
-	ClientSecret string `yaml:"clientSecret" conf:",example=${CERBOS_CLOUD_CLIENT_SECRET}"`
-	// SecretKey to decrypt the bundles. Defaults to the value of the CERBOS_CLOUD_SECRET_KEY environment variable.
-	SecretKey string `yaml:"secretKey" conf:",example=${CERBOS_CLOUD_SECRET_KEY}"`
+	// ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
+	ClientSecret string `yaml:"clientSecret" conf:",example=${CERBOS_HUB_CLIENT_SECRET}"`
+	// WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
+	WorkspaceSecret string `yaml:"workspaceSecret" conf:",example=${CERBOS_HUB_WORKSPACE_SECRET}"`
+	// Deprecated: Use PDPID
+	InstanceID string `yaml:"instanceID" conf:",ignore"`
+	// Deprecated: Use WorkspaceSecret
+	SecretKey string `yaml:"secretKey" conf:",ignore"`
 }
 
 func (cc CredentialsConf) ToCredentials() (*credentials.Credentials, error) {
-	return credentials.New(cc.ClientID, cc.ClientSecret, cc.SecretKey)
+	return credentials.New(cc.ClientID, cc.ClientSecret, cc.WorkspaceSecret)
 }
 
 // LocalSourceConf holds configuration for local bundle store.
@@ -124,10 +157,10 @@ func (conf *Conf) SetDefaults() {
 	conf.CacheSize = defaultCacheSize
 
 	conf.Credentials = CredentialsConf{
-		ClientID:     os.Getenv(clientIDEnvVar),
-		ClientSecret: os.Getenv(clientSecretEnvVar),
-		InstanceID:   os.Getenv(instanceIDEnvVar),
-		SecretKey:    os.Getenv(secretKeyEnvVar),
+		ClientID:        getEnv(clientIDKey),
+		ClientSecret:    getEnv(clientSecretKey),
+		PDPID:           getEnv(pdpIDKey),
+		WorkspaceSecret: getEnv(workspaceSecretKey),
 	}
 }
 
@@ -146,6 +179,16 @@ func (conf *Conf) Validate() (outErr error) {
 
 	if err := conf.Remote.validate(); err != nil {
 		outErr = multierr.Append(outErr, err)
+	}
+
+	// SecretKey was renamed to WorkspaceSecret in Cerbos 0.31.0
+	if conf.Credentials.WorkspaceSecret == "" && conf.Credentials.SecretKey != "" {
+		conf.Credentials.WorkspaceSecret = conf.Credentials.SecretKey
+	}
+
+	// InstanceID was renamed to PDPID in Cerbos 0.31.0
+	if conf.Credentials.PDPID == "" && conf.Credentials.InstanceID != "" {
+		conf.Credentials.PDPID = conf.Credentials.InstanceID
 	}
 
 	return outErr
@@ -174,7 +217,7 @@ func (lc *LocalSourceConf) setDefaults() error {
 	}
 
 	if lc.TempDir == "" {
-		dir, err := os.MkdirTemp("", "cerbos-cloud-*")
+		dir, err := os.MkdirTemp("", "cerbos-hub-*")
 		if err != nil {
 			return fmt.Errorf("failed to create temporary directory: %w", err)
 		}
@@ -187,6 +230,10 @@ func (lc *LocalSourceConf) setDefaults() error {
 func (rc *RemoteSourceConf) validate() error {
 	if rc == nil {
 		return nil
+	}
+
+	if rc.BundleLabel == "" {
+		rc.BundleLabel = getEnv(bundleLabelKey)
 	}
 
 	if strings.TrimSpace(rc.BundleLabel) == "" {
@@ -202,11 +249,11 @@ func (rc *RemoteSourceConf) setDefaults() error {
 	}
 
 	if rc.BundleLabel == "" {
-		rc.BundleLabel = os.Getenv(bundleLabelEnvVar)
+		rc.BundleLabel = getEnv(bundleLabelKey)
 	}
 
 	if rc.TempDir == "" {
-		dir, err := os.MkdirTemp("", "cerbos-cloud-*")
+		dir, err := os.MkdirTemp("", "cerbos-hub-*")
 		if err != nil {
 			return fmt.Errorf("failed to create temporary directory: %w", err)
 		}
@@ -219,7 +266,7 @@ func (rc *RemoteSourceConf) setDefaults() error {
 			return fmt.Errorf("failed to determine cache directory: %w", err)
 		}
 
-		dir := filepath.Join(cacheDir, "cerbos-cloud")
+		dir := filepath.Join(cacheDir, "cerbos-hub")
 		//nolint:gomnd
 		if err := os.MkdirAll(dir, 0o764); err != nil {
 			return fmt.Errorf("failed to create cache dir %q: %w", dir, err)

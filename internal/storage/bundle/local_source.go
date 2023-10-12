@@ -39,7 +39,7 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 
 	return NewLocalSource(LocalParams{
 		BundlePath: conf.Local.BundlePath,
-		SecretKey:  conf.Credentials.SecretKey,
+		SecretKey:  conf.Credentials.WorkspaceSecret,
 		TempDir:    conf.Local.TempDir,
 		CacheSize:  conf.CacheSize,
 	})

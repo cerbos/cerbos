@@ -59,15 +59,15 @@ func AppShortVersion() string {
 	return sb.String()
 }
 
-func PDPIdentifier(instanceID string) *pdpv1.Identifier {
-	if instanceID == "" {
+func PDPIdentifier(pdpID string) *pdpv1.Identifier {
+	if pdpID == "" {
 		//nolint:gosec
 		nodeID := md5.Sum(uuid.NodeID())
-		instanceID = fmt.Sprintf("%X-%d", nodeID, os.Getpid())
+		pdpID = fmt.Sprintf("%X-%d", nodeID, os.Getpid())
 	}
 
 	return &pdpv1.Identifier{
-		Instance: instanceID,
+		Instance: pdpID,
 		Version:  AppShortVersion(),
 	}
 }

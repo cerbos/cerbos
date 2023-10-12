@@ -43,7 +43,7 @@ storage:
     local:
       bundlePath: internal/test/testdata/bundle/bundle.crbp
     credentials:
-      secretKey: CERBOS-1PVCDJFES5KDVJPL2Y8U6NEW7W6NHL5Z8HG7KSUGJRTCWSN4RJW4Q8HVPZE
+      worksworkspaceSecret: CERBOS-1PVCDJFES5KDVJPL2Y8U6NEW7W6NHL5Z8HG7KSUGJRTCWSN4RJW4Q8HVPZE
 
 schema:
   enforcement: reject

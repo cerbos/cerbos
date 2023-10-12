@@ -140,14 +140,14 @@ var (
 		Aggregation: view.LastValue(),
 	}
 
-	CloudConnectedCount = stats.Int64(
-		"cerbos.dev/cloud/connected",
-		"Is the instance connected to Cerbos Cloud",
+	HubConnectedCount = stats.Int64(
+		"cerbos.dev/hub/connected",
+		"Is the instance connected to Cerbos Hub",
 		stats.UnitDimensionless,
 	)
 
-	CloudConnectedCountView = &view.View{
-		Measure:     CloudConnectedCount,
+	HubConnectedCountView = &view.View{
+		Measure:     HubConnectedCount,
 		Aggregation: view.LastValue(),
 	}
 
@@ -255,11 +255,11 @@ var DefaultCerbosViews = []*view.View{
 	BundleStoreUpdatesCountView,
 	CacheAccessCountView,
 	CacheMaxSizeView,
-	CloudConnectedCountView,
 	CompileDurationView,
 	EngineCheckLatencyView,
 	EngineCheckBatchSizeView,
 	EnginePlanLatencyView,
+	HubConnectedCountView,
 	IndexCRUDCountView,
 	IndexEntryCountView,
 	StorePollCountView,

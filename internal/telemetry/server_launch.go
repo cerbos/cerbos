@@ -120,7 +120,7 @@ func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 			}
 		case bundle.DriverName:
 			if bundleConf, err := bundle.GetConf(); err == nil {
-				pdpID := util.PDPIdentifier(bundleConf.Credentials.InstanceID)
+				pdpID := util.PDPIdentifier(bundleConf.Credentials.PDPID)
 				b := &telemetryv1.ServerLaunch_Features_Storage_Bundle{
 					PdpId:    pdpID.GetInstance(),
 					ClientId: bundleConf.Credentials.ClientID,
