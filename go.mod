@@ -96,7 +96,7 @@ require (
 	go.uber.org/zap v1.26.0
 	gocloud.dev v0.34.0
 	golang.org/x/crypto v0.14.0
-	golang.org/x/net v0.16.0
+	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.4.0
 	golang.org/x/tools v0.14.0
 	gonum.org/v1/gonum v0.14.0
