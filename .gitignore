@@ -19,7 +19,8 @@ internal/confdocs/
 
 coverage.out
 e2e.cover
-unit.cover
+go.work.sum
 integration.cover
 junit.*.xml
 test-times.json
+unit.cover
