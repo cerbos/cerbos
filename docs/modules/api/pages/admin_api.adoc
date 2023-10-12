@@ -8,7 +8,7 @@ Authentication is mandatory for the Admin API. Currently only basic authenticati
 
 IMPORTANT: Always change the default credentials and enable TLS for the endpoint when enabling the Admin API. See xref:configuration:server.adoc[Server configuration] for more information.
 
-NOTE: The Admin API is still under heavy development and might include breaking changes in future releases.
+NOTE: The Admin API is still under development and might include breaking changes in future releases.
 
 == Audit Logs
 
@@ -129,8 +129,6 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 GET /admin/policies
 ----
 
-NOTE: This endpoint is still under development and should be considered unstable.
-
 Issue a GET request to the endpoint to list the policies available in the store. If the policy store supports filtering, you can optionally pass filter parameters to reduce the result set.
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
@@ -154,8 +152,6 @@ curl -k -u cerbos:cerbosAdmin \
 ----
 GET /admin/policy?id=policy_id
 ----
-
-NOTE: This endpoint is still under development and should be considered unstable.
 
 Issue a GET request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to retrieve. The list of IDs available in the store can be retrieved using the `ListPolicies` API call described above.
 
