@@ -310,10 +310,10 @@ func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 	return &bundle.Conf{
 		CacheSize: 1024,
 		Credentials: bundle.CredentialsConf{
-			ClientID:     "client-id",
-			ClientSecret: "client-secret",
-			SecretKey:    loadKey(t),
-			InstanceID:   "instanceid",
+			ClientID:        "client-id",
+			ClientSecret:    "client-secret",
+			WorkspaceSecret: loadKey(t),
+			PDPID:           "pdpid",
 		},
 		Remote: &bundle.RemoteSourceConf{
 			BundleLabel:       "label",

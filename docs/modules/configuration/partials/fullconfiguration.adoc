@@ -120,10 +120,10 @@ storage:
     # This section is required only if storage.driver is bundle.
     cacheSize: 1024 # CacheSize defines the number of policies to cache in memory.
     credentials: # Credentials holds bundle source credentials.
-      clientID: 92B0K05B6HOF # ClientID of the Cerbos Cloud API key. Defaults to the value of the CERBOS_CLOUD_CLIENT_ID environment variable.
-      clientSecret: ${CERBOS_CLOUD_CLIENT_SECRET} # ClientSecret of the Cerbos Cloud API key. Defaults to the value of the CERBOS_CLOUD_CLIENT_SECRET environment variable.
-      instanceID: crb-004 # InstanceID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_PDP_ID environment variable.
-      secretKey: ${CERBOS_CLOUD_SECRET_KEY} # SecretKey to decrypt the bundles. Defaults to the value of the CERBOS_CLOUD_SECRET_KEY environment variable.
+      clientID: 92B0K05B6HOF # ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
+      clientSecret: ${CERBOS_HUB_CLIENT_SECRET} # ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
+      pdpID: crb-004 # PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
+      workspaceSecret: ${CERBOS_HUB_WORKSPACE_SECRET} # WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
     local: # Local holds configuration for local bundle source.
       bundlePath: /path/to/bundle.crbp # Required. BundlePath is the full path to the local bundle file.
       tempDir: ${TEMP} # TempDir is the directory to use for temporary files.

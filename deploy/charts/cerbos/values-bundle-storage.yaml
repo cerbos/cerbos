@@ -1,11 +1,11 @@
-# Illustrates how to connect to Cerbos Cloud
+# Illustrates how to connect to Cerbos Hub
 # Prerequisites:
-# - Sign-up to Cerbos Cloud and follow the instructions to create an API key
-# - Create a Kubernetes secret named `cerbos-cloud-credentials`:
-#      kubectl create secret generic cerbos-cloud-credentials \
-#         --from-literal=CERBOS_CLOUD_CLIENT_ID=<YOUR_CLIENT_ID> \
-#         --from-literal=CERBOS_CLOUD_CLIENT_SECRET=<YOUR_CLIENT_SECRET> \
-#         --from-literal=CERBOS_CLOUD_SECRET_KEY=<YOUR_SECRET_KEY>
+# - Sign-up to Cerbos Hub and follow the instructions to create client credentials.
+# - Create a Kubernetes secret named `cerbos-hub-credentials`:
+#      kubectl create secret generic cerbos-hub-credentials \
+#         --from-literal=CERBOS_HUB_CLIENT_ID=<YOUR_CLIENT_ID> \
+#         --from-literal=CERBOS_HUB_CLIENT_SECRET=<YOUR_CLIENT_SECRET> \
+#         --from-literal=CERBOS_HUB_WORKSPACE_SECRET=<YOUR_WORKSPACE_SECRET>
 
 cerbos:
   config:
@@ -14,10 +14,9 @@ cerbos:
       driver: "bundle"
       bundle:
         remote:
-          bundleLabel: "YOUR_LABEL" # Alternatively, add `CERBOS_CLOUD_BUNDLE=<YOUR_LABEL>` to the secret you created above.
+          bundleLabel: "YOUR_LABEL" # Alternatively, add `CERBOS_HUB_BUNDLE=<YOUR_LABEL>` to the secret you created above.
 
 # Create environment variables from the secret.
 envFrom:
   - secretRef:
-      name: cerbos-cloud-credentials
-
+      name: cerbos-hub-credentials

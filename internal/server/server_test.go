@@ -86,7 +86,7 @@ func TestServer(t *testing.T) {
 
 			conf := &bundle.Conf{
 				CacheSize:   1024,
-				Credentials: bundle.CredentialsConf{SecretKey: string(bytes.TrimSpace(keyBytes))},
+				Credentials: bundle.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))},
 				Local: &bundle.LocalSourceConf{
 					BundlePath: filepath.Join(dir, "bundle.crbp"),
 					TempDir:    t.TempDir(),
