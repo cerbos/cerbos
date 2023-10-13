@@ -273,6 +273,7 @@ message TestFixture {
 
 message TestOptions {
   google.protobuf.Timestamp now = 1;
+  bool lenient_scope_search = 2;
 }
 
 message TestSuite {

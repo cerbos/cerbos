@@ -12,6 +12,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "lenientScopeSearch": {
+      "type": "boolean"
+    },
     "now": {
       "$ref": "#/definitions/google.protobuf.Timestamp"
     }

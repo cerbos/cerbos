@@ -996,6 +996,10 @@ func cerbos_policy_v1_TestOptions_hashpb_sum(m *v11.TestOptions, hasher hash.Has
 		}
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestOptions.lenient_scope_search"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.LenientScopeSearch)))
+
+	}
 }
 
 func cerbos_policy_v1_TestResults_Action_hashpb_sum(m *v11.TestResults_Action, hasher hash.Hash, ignore map[string]struct{}) {
