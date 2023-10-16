@@ -219,7 +219,7 @@ jobs:
           github_token: ${{ github.token }}
 
       - name: Lint protos
-        uses: bufbuild/buf-lint-action@v1.0.3
+        uses: bufbuild/buf-lint-action@v1.1.0
 
       - name: Check formatting
         run: buf format --diff --exit-code
