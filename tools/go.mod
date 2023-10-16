@@ -8,13 +8,13 @@ require (
 	github.com/bojand/ghz v0.117.0
 	github.com/bufbuild/buf v1.27.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.2.0
-	github.com/cerbos/protoc-gen-jsonschema v0.1.0
+	github.com/cerbos/protoc-gen-jsonschema v0.1.1
 	github.com/fullstorydev/grpcurl v1.8.8
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser v1.21.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/planetscale/vtprotobuf v0.5.0
-	github.com/vektra/mockery/v2 v2.35.2
+	github.com/vektra/mockery/v2 v2.35.4
 	go.elastic.co/go-licence-detector v0.6.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.31.0
@@ -22,7 +22,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230824200731-b9b8148056b9.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230914171853-63dfe56cc2c4.1 // indirect
 	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
