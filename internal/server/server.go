@@ -18,6 +18,11 @@ import (
 	"time"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/telemetry"
+	"github.com/cerbos/cerbos/internal/validator"
+	"github.com/cloudflare/certinel/fswatcher"
 	"github.com/gorilla/mux"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
@@ -25,6 +30,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	reuseport "github.com/kavu/go_reuseport"
 	prom "github.com/prometheus/client_golang/prometheus"
+	"github.com/sourcegraph/conc/pool"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
@@ -33,16 +39,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
-
-	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/telemetry"
-	"github.com/cerbos/cerbos/internal/validator"
 
 	// Import the default grpc encoding to ensure that it gets replaced by VT.
 	_ "google.golang.org/grpc/encoding/proto"
@@ -203,28 +203,30 @@ type Param struct {
 type Server struct {
 	conf       *Conf
 	cancelFunc context.CancelFunc
-	group      *errgroup.Group
+	pool       *pool.ContextPool
 	health     *health.Server
 	ocExporter *prometheus.Exporter
+	tlsConfig  *tls.Config
 }
 
 func NewServer(conf *Conf) *Server {
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	group, _ := errgroup.WithContext(ctx)
-
 	return &Server{
-		conf:       conf,
-		cancelFunc: cancelFunc,
-		group:      group,
-		health:     health.NewServer(),
+		conf:   conf,
+		health: health.NewServer(),
 	}
 }
 
 func (s *Server) Start(ctx context.Context, param Param) error {
+	ctx, cancelFunc := context.WithCancel(ctx)
+	s.pool = pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
+	s.cancelFunc = cancelFunc
+
 	defer s.cancelFunc()
 
 	log := zap.L().Named("server")
+	if err := s.initializeTLSConfig(log); err != nil {
+		log.Error("Failed to initialize TLS configuration", zap.Error(err))
+	}
 
 	// It would be nice to have a single port to serve both gRPC and HTTP. Unfortunately, cmux
 	// can't deal effectively with both gRPC and HTTP/2 when TLS is enabled (see https://github.com/soheilhy/cmux/issues/68).
@@ -258,7 +260,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		return err
 	}
 
-	s.group.Go(func() error {
+	s.pool.Go(func(ctx context.Context) error {
 		<-ctx.Done()
 		log.Info("Shutting down")
 
@@ -279,8 +281,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		return nil
 	})
 
-	err = s.group.Wait()
-	if err != nil {
+	if err := s.pool.Wait(); err != nil {
 		log.Error("Stopping server due to error", zap.Error(err))
 		return err
 	}
@@ -301,62 +302,68 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 	return nil
 }
 
+func (s *Server) initializeTLSConfig(log *zap.Logger) error {
+	if s.conf.TLS == nil || (s.conf.TLS.Cert == "" || s.conf.TLS.Key == "") {
+		return nil
+	}
+	conf := s.conf.TLS
+
+	certinel, err := fswatcher.New(conf.Cert, conf.Key)
+	if err != nil {
+		return fmt.Errorf("failed to load certificate and key: %w", err)
+	}
+
+	s.pool.Go(func(ctx context.Context) (outErr error) {
+		log.Info("Starting certificate watcher")
+		if err := certinel.Start(ctx); err != nil {
+			if !errors.Is(err, context.Canceled) {
+				log.Error("Stopping certificate watcher due to error", zap.Error(err))
+				return err
+			}
+		}
+
+		log.Info("Stopping certificate watcher")
+		return nil
+	})
+
+	s.tlsConfig = util.DefaultTLSConfig()
+	s.tlsConfig.GetCertificate = certinel.GetCertificate
+
+	if conf.CACert != "" {
+		if _, err := os.Stat(conf.CACert); err != nil {
+			//nolint:nilerr
+			return nil
+		}
+
+		certPool := x509.NewCertPool()
+		bs, err := os.ReadFile(conf.CACert)
+		if err != nil {
+			return fmt.Errorf("failed to load CA certificate: %w", err)
+		}
+
+		ok := certPool.AppendCertsFromPEM(bs)
+		if !ok {
+			return errors.New("failed to append certificates to the pool")
+		}
+
+		s.tlsConfig.ClientAuth = tls.VerifyClientCertIfGiven
+		s.tlsConfig.ClientCAs = certPool
+	}
+
+	return nil
+}
+
 func (s *Server) createListener(listenAddr string) (net.Listener, error) {
 	l, err := s.parseAndOpen(listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
 	}
 
-	tlsConf, err := s.getTLSConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	if tlsConf != nil {
-		l = tls.NewListener(l, tlsConf)
+	if s.tlsConfig != nil {
+		l = tls.NewListener(l, s.tlsConfig)
 	}
 
 	return l, nil
-}
-
-func (s *Server) getTLSConfig() (*tls.Config, error) {
-	if s.conf.TLS == nil || (s.conf.TLS.Cert == "" || s.conf.TLS.Key == "") {
-		return nil, nil
-	}
-	// TODO (cell) Configure TLS with reloadable certificates
-
-	conf := s.conf.TLS
-
-	certificate, err := tls.LoadX509KeyPair(conf.Cert, conf.Key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load certificate and key: %w", err)
-	}
-
-	tlsConfig := util.DefaultTLSConfig()
-	tlsConfig.Certificates = []tls.Certificate{certificate}
-
-	if conf.CACert != "" {
-		if _, err := os.Stat(conf.CACert); err != nil {
-			//nolint:nilerr
-			return tlsConfig, nil
-		}
-
-		certPool := x509.NewCertPool()
-		bs, err := os.ReadFile(conf.CACert)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load CA certificate: %w", err)
-		}
-
-		ok := certPool.AppendCertsFromPEM(bs)
-		if !ok {
-			return nil, errors.New("failed to append certificates to the pool")
-		}
-
-		tlsConfig.ClientAuth = tls.VerifyClientCertIfGiven
-		tlsConfig.ClientCAs = certPool
-	}
-
-	return tlsConfig, nil
 }
 
 func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, error) {
@@ -400,7 +407,7 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 		s.health.SetServingStatus(svcv1.CerbosPlaygroundService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
-	s.group.Go(func() error {
+	s.pool.Go(func(_ context.Context) error {
 		log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))
 
 		cleanup, err := admin.Register(server)
@@ -545,7 +552,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		IdleTimeout:       s.conf.Advanced.HTTP.IdleTimeout,
 	}
 
-	s.group.Go(func() error {
+	s.pool.Go(func(ctx context.Context) error {
 		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
 		err := h.Serve(l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -572,12 +579,8 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 func (s *Server) mkGRPCConn(ctx context.Context) (*grpc.ClientConn, error) {
 	opts := defaultGRPCDialOpts()
 
-	tlsConf, err := s.getTLSConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create TLS config: %w", err)
-	}
-
-	if tlsConf != nil {
+	if s.tlsConfig != nil {
+		tlsConf := s.tlsConfig.Clone()
 		tlsConf.InsecureSkipVerify = true // we are connecting as localhost which would differ from what the cert is issued for.
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
 	} else {
