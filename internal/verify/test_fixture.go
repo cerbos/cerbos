@@ -25,10 +25,10 @@ import (
 	"github.com/cerbos/cerbos/internal/validator"
 )
 
-type testFixture struct {
-	principals map[string]*enginev1.Principal
-	resources  map[string]*enginev1.Resource
-	auxData    map[string]*enginev1.AuxData
+type TestFixture struct {
+	Principals map[string]*enginev1.Principal
+	Resources  map[string]*enginev1.Resource
+	AuxData    map[string]*enginev1.AuxData
 }
 
 const (
@@ -38,19 +38,19 @@ const (
 
 var auxDataFileNames = []string{"auxdata", "auxData", "aux_data"}
 
-func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
-	tf = new(testFixture)
-	tf.principals, err = loadPrincipals(fsys, path)
+func LoadTestFixture(fsys fs.FS, path string) (tf *TestFixture, err error) {
+	tf = new(TestFixture)
+	tf.Principals, err = loadPrincipals(fsys, path)
 	if err != nil {
 		return nil, err
 	}
 
-	tf.resources, err = loadResources(fsys, path)
+	tf.Resources, err = loadResources(fsys, path)
 	if err != nil {
 		return nil, err
 	}
 
-	tf.auxData, err = loadAuxData(fsys, path)
+	tf.AuxData, err = loadAuxData(fsys, path)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func loadFixtureElement(fsys fs.FS, path string, pb proto.Message) error {
 	return validator.Validate(pb)
 }
 
-func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {
+func (tf *TestFixture) checkDupes(suite *policyv1.TestSuite) error {
 	dupes := make(map[string]struct{})
 	var errs error
 	for _, t := range suite.Tests {
@@ -129,7 +129,7 @@ func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {
 	return errs
 }
 
-func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
+func (tf *TestFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
 		File:        file,
 		Name:        suite.Name,
@@ -337,7 +337,7 @@ func addAction(resource *policyv1.TestResults_Resource, name string) *policyv1.T
 	return action
 }
 
-func (tf *testFixture) getTests(suite *policyv1.TestSuite) ([]*policyv1.Test, error) {
+func (tf *TestFixture) getTests(suite *policyv1.TestSuite) ([]*policyv1.Test, error) {
 	var allTests []*policyv1.Test
 
 	for _, table := range suite.Tests {
@@ -352,7 +352,7 @@ func (tf *testFixture) getTests(suite *policyv1.TestSuite) ([]*policyv1.Test, er
 	return allTests, nil
 }
 
-func (tf *testFixture) buildTests(suite *policyv1.TestSuite, table *policyv1.TestTable) ([]*policyv1.Test, error) {
+func (tf *TestFixture) buildTests(suite *policyv1.TestSuite, table *policyv1.TestTable) ([]*policyv1.Test, error) {
 	matrix, err := buildTestMatrix(table)
 	if err != nil {
 		return nil, err
@@ -370,7 +370,7 @@ func (tf *testFixture) buildTests(suite *policyv1.TestSuite, table *policyv1.Tes
 	return tests, nil
 }
 
-func (tf *testFixture) buildTest(suite *policyv1.TestSuite, table *policyv1.TestTable, matrixElement testMatrixElement) (*policyv1.Test, error) {
+func (tf *TestFixture) buildTest(suite *policyv1.TestSuite, table *policyv1.TestTable, matrixElement testMatrixElement) (*policyv1.Test, error) {
 	name := &policyv1.Test_TestName{
 		TestTableName: table.Name,
 		PrincipalKey:  matrixElement.Principal,
@@ -414,13 +414,13 @@ func (tf *testFixture) buildTest(suite *policyv1.TestSuite, table *policyv1.Test
 	}, nil
 }
 
-func (tf *testFixture) lookupPrincipal(ts *policyv1.TestSuite, k string) (*enginev1.Principal, error) {
+func (tf *TestFixture) lookupPrincipal(ts *policyv1.TestSuite, k string) (*enginev1.Principal, error) {
 	if v, ok := ts.Principals[k]; ok {
 		return v, nil
 	}
 
 	if tf != nil {
-		if v, ok := tf.principals[k]; ok {
+		if v, ok := tf.Principals[k]; ok {
 			return v, nil
 		}
 	}
@@ -428,13 +428,13 @@ func (tf *testFixture) lookupPrincipal(ts *policyv1.TestSuite, k string) (*engin
 	return nil, fmt.Errorf("principal %q not found", k)
 }
 
-func (tf *testFixture) lookupResource(ts *policyv1.TestSuite, k string) (*enginev1.Resource, error) {
+func (tf *TestFixture) lookupResource(ts *policyv1.TestSuite, k string) (*enginev1.Resource, error) {
 	if v, ok := ts.Resources[k]; ok {
 		return v, nil
 	}
 
 	if tf != nil {
-		if v, ok := tf.resources[k]; ok {
+		if v, ok := tf.Resources[k]; ok {
 			return v, nil
 		}
 	}
@@ -442,7 +442,7 @@ func (tf *testFixture) lookupResource(ts *policyv1.TestSuite, k string) (*engine
 	return nil, fmt.Errorf("resource %q not found", k)
 }
 
-func (tf *testFixture) lookupAuxData(ts *policyv1.TestSuite, k string) (*enginev1.AuxData, error) {
+func (tf *TestFixture) lookupAuxData(ts *policyv1.TestSuite, k string) (*enginev1.AuxData, error) {
 	if k == "" {
 		return nil, nil
 	}
@@ -452,7 +452,7 @@ func (tf *testFixture) lookupAuxData(ts *policyv1.TestSuite, k string) (*enginev
 	}
 
 	if tf != nil {
-		if v, ok := tf.auxData[k]; ok {
+		if v, ok := tf.AuxData[k]; ok {
 			return v, nil
 		}
 	}
