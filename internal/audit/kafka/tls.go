@@ -40,7 +40,7 @@ func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSki
 	tlsConfig := &tls.Config{
 		RootCAs:            caCertPool,
 		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: insecureSkipVerify,
+		InsecureSkipVerify: insecureSkipVerify, //nolint:gosec
 	}
 
 	if certPath == "" && keyPath == "" {
