@@ -186,12 +186,17 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 	}}
 
 	nowFunc := time.Now
-	if test.Options != nil && test.Options.Now != nil {
-		ts := test.Options.Now.AsTime()
-		nowFunc = func() time.Time { return ts }
+	lenientScopeSearch := false
+	if test.Options != nil {
+		if test.Options.Now != nil {
+			ts := test.Options.Now.AsTime()
+			nowFunc = func() time.Time { return ts }
+		}
+
+		lenientScopeSearch = test.Options.LenientScopeSearch
 	}
 
-	actual, traces, err := performCheck(ctx, eng, inputs, trace, nowFunc)
+	actual, traces, err := performCheck(ctx, eng, inputs, trace, nowFunc, lenientScopeSearch)
 	details.EngineTrace = traces
 
 	if err != nil {
@@ -268,14 +273,20 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 	return details
 }
 
-func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, trace bool, nowFunc func() time.Time) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
+func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, trace bool, nowFunc func() time.Time, lenientScopeSearch bool) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
+	checkOpts := []engine.CheckOpt{engine.WithNowFunc(nowFunc)}
+	if lenientScopeSearch {
+		checkOpts = append(checkOpts, engine.WithLenientScopeSearch())
+	}
+
 	if !trace {
-		output, err := eng.Check(ctx, inputs, engine.WithNowFunc(nowFunc))
+		output, err := eng.Check(ctx, inputs, checkOpts...)
 		return output, nil, err
 	}
 
 	traceCollector := tracer.NewCollector()
-	output, err := eng.Check(ctx, inputs, engine.WithTraceSink(traceCollector), engine.WithNowFunc(nowFunc))
+	checkOpts = append(checkOpts, engine.WithTraceSink(traceCollector))
+	output, err := eng.Check(ctx, inputs, checkOpts...)
 	return output, traceCollector.Traces(), err
 }
 

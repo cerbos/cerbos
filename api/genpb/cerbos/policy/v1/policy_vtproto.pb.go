@@ -1628,6 +1628,16 @@ func (m *TestOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.LenientScopeSearch {
+		i--
+		if m.LenientScopeSearch {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x10
+	}
 	if m.Now != nil {
 		if vtmsg, ok := interface{}(m.Now).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
@@ -3941,6 +3951,9 @@ func (m *TestOptions) SizeVT() (n int) {
 			l = proto.Size(m.Now)
 		}
 		n += 1 + l + sov(uint64(l))
+	}
+	if m.LenientScopeSearch {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -8867,6 +8880,26 @@ func (m *TestOptions) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LenientScopeSearch", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.LenientScopeSearch = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

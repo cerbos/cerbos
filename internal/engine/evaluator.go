@@ -34,22 +34,24 @@ import (
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type evalParams struct {
-	globals map[string]any
-	nowFunc func() time.Time
+	globals            map[string]any
+	nowFunc            func() time.Time
+	lenientScopeSearch bool
 }
 
-func defaultEvalParams(globals map[string]any) evalParams {
+func defaultEvalParams(conf *Conf) evalParams {
 	return evalParams{
-		globals: globals,
-		nowFunc: time.Now,
+		globals:            conf.Globals,
+		nowFunc:            time.Now,
+		lenientScopeSearch: conf.LenientScopeSearch,
 	}
 }
 
 type evalContext struct {
-	evalParams
 	request               *enginev1.Request
 	runtime               *enginev1.Runtime
 	effectiveDerivedRoles internal.StringSet
+	evalParams
 }
 
 func newEvalContext(ep evalParams, request *enginev1.Request) *evalContext {

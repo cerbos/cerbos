@@ -27,7 +27,8 @@ name: AlbumObjectTestSuite <1>
 description: Tests for verifying the album:object resource policy <2>
 options:
   now: "2022-08-02T15:00:00Z" <3>
-principals: <4>
+  lenientScopeSearch: true <4>
+principals: <5>
   alicia:
     id: aliciaID
     roles:
@@ -36,7 +37,7 @@ principals: <4>
     id: bradleyID
     roles:
       - user
-resources: <5>
+resources: <6>
   alicia_album:
     id: XX125
     kind: album:object
@@ -53,36 +54,37 @@ resources: <5>
       owner: bradleyID
       public: false
       flagged: false
-auxData: <6>
+auxData: <7>
   validJWT:
     jwt:
       iss: my.domain
       aud: ["x", "y"]
       myField: value
-tests: <7>
-  - name: Accessing an album <8>
+tests: <8>
+  - name: Accessing an album <9>
     options:
-      now: "2022-08-03T15:00:00Z" <9>
-    input: <10>
-      principals: <11>
+      now: "2022-08-03T15:00:00Z" <10>
+      lenientScopeSearch: false <11>
+    input: <12>
+      principals: <13>
         - alicia
         - bradley
-      resources: <12>
+      resources: <14>
         - alicia_album
         - bradley_album
-      actions: <13>
+      actions: <15>
         - view
         - delete
-      auxData: validJWT <14>
-    expected: <15>
-      - principal: alicia <16>
-        resource: alicia_album <17>
-        actions: <18>
+      auxData: validJWT <16>
+    expected: <17>
+      - principal: alicia <18>
+        resource: alicia_album <19>
+        actions: <20>
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
-        outputs: <19>
-          - action: view <20>
-            expected: <21>
+        outputs: <21>
+          - action: view <22>
+            expected: <23>
               - src: resource.album.vdefault#view-rule
                 val:
                   key1: value1
@@ -98,24 +100,26 @@ tests: <7>
 <1> Name of the test suite
 <2> Description of the test suite
 <3> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to all tests in the suite unless overridden locally.
-<4> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
-<5> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
-<6> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
-<7> List of tests in this suite
-<8> Name of the test
-<9> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to this test only and takes precedence over the global suite option.
-<10> Input to the policy engine
-<11> List of keys of principal fixtures to test
-<12> List of keys of resource fixtures to test
-<13> List of actions to test
-<14> Key of auxiliary data fixture to test (optional)
-<15> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
-<16> Key of the principal fixture under test
-<17> Key of the resource fixture under test
-<18> Expected outcomes for each action for the principal+resource pair
-<19> Optional list of xref:outputs.adoc[output values] to match
-<20> Name of the action that would produce the output
-<21> List of expected output values
+<4> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test suite
+<5> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
+<6> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
+<7> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
+<8> List of tests in this suite
+<9> Name of the test
+<10> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to this test only and takes precedence over the global suite option.
+<11> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test. Applies to just this test and takes precedence over the global suite option.
+<12> Input to the policy engine
+<13> List of keys of principal fixtures to test
+<14> List of keys of resource fixtures to test
+<15> List of actions to test
+<16> Key of auxiliary data fixture to test (optional)
+<17> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
+<18> Key of the principal fixture under test
+<19> Key of the resource fixture under test
+<20> Expected outcomes for each action for the principal+resource pair
+<21> Optional list of xref:outputs.adoc[output values] to match
+<22> Name of the action that would produce the output
+<23> List of expected output values
 
 [#fixtures]
 === Sharing test fixtures

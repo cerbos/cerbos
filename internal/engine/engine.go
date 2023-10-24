@@ -50,13 +50,13 @@ type checkOptions struct {
 	evalParams evalParams
 }
 
-func newCheckOptions(ctx context.Context, globals map[string]any, opts ...CheckOpt) *checkOptions {
+func newCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *checkOptions {
 	var tracerSink tracer.Sink
 	if debugEnabled, ok := os.LookupEnv("CERBOS_DEBUG_ENGINE"); ok && debugEnabled != "false" {
 		tracerSink = tracer.NewZapSink(logging.FromContext(ctx).Named("tracer"))
 	}
 
-	co := &checkOptions{tracerSink: tracerSink, evalParams: defaultEvalParams(globals)}
+	co := &checkOptions{tracerSink: tracerSink, evalParams: defaultEvalParams(conf)}
 	for _, opt := range opts {
 		opt(co)
 	}
@@ -82,6 +82,13 @@ func WithZapTraceSink(log *zap.Logger) CheckOpt {
 func WithNowFunc(nowFunc func() time.Time) CheckOpt {
 	return func(co *checkOptions) {
 		co.evalParams.nowFunc = nowFunc
+	}
+}
+
+// WithLenientScopeSearch enables lenient scope search.
+func WithLenientScopeSearch() CheckOpt {
+	return func(co *checkOptions) {
+		co.evalParams.lenientScopeSearch = true
 	}
 }
 
@@ -206,7 +213,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
-	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope)
+	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope, engine.conf.LenientScopeSearch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -223,7 +230,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope)
+	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, engine.conf.LenientScopeSearch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -296,7 +303,7 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, 
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
-		checkOpts := newCheckOptions(ctx, engine.conf.Globals, opts...)
+		checkOpts := newCheckOptions(ctx, engine.conf, opts...)
 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
@@ -484,7 +491,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 }
 
 func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {
-	rps, err := engine.getPrincipalPolicySet(ctx, principal, policyVer, scope)
+	rps, err := engine.getPrincipalPolicySet(ctx, principal, policyVer, scope, eparams.lenientScopeSearch)
 	if err != nil {
 		return nil, err
 	}
@@ -496,12 +503,12 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams e
 	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
 }
 
-func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string) (*runtimev1.RunnablePolicySet, error) {
+func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.GetPrincipalPolicy")
 	defer span.End()
 	span.SetAttributes(tracing.PolicyName(principal), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
 
-	principalModIDs := namer.ScopedPrincipalPolicyModuleIDs(principal, policyVer, scope, engine.conf.LenientScopeSearch)
+	principalModIDs := namer.ScopedPrincipalPolicyModuleIDs(principal, policyVer, scope, lenientScopeSearch)
 	rps, err := engine.policyLoader.GetFirstMatch(ctx, principalModIDs)
 	if err != nil {
 		tracing.MarkFailed(span, http.StatusInternalServerError, err)
@@ -512,7 +519,7 @@ func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, poli
 }
 
 func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string) (Evaluator, error) {
-	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope)
+	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, eparams.lenientScopeSearch)
 	if err != nil {
 		return nil, err
 	}
@@ -524,12 +531,12 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams ev
 	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
 }
 
-func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policyVer, scope string) (*runtimev1.RunnablePolicySet, error) {
+func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.GetResourcePolicy")
 	defer span.End()
 	span.SetAttributes(tracing.PolicyName(resource), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
 
-	resourceModIDs := namer.ScopedResourcePolicyModuleIDs(resource, policyVer, scope, engine.conf.LenientScopeSearch)
+	resourceModIDs := namer.ScopedResourcePolicyModuleIDs(resource, policyVer, scope, lenientScopeSearch)
 	rps, err := engine.policyLoader.GetFirstMatch(ctx, resourceModIDs)
 	if err != nil {
 		tracing.MarkFailed(span, http.StatusInternalServerError, err)
