@@ -18,9 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type Index interface {
-	index.Index
-}
+type Index = index.Index
 
 type Artefact struct {
 	Error      error
