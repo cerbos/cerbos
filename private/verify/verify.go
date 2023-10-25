@@ -26,7 +26,7 @@ import (
 )
 
 // Files runs tests using the policy files in the given file system.
-func Files(ctx context.Context, fsys fs.FS, idx index.Index) (*policyv1.TestResults, error) {
+func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestResults, error) {
 	if idx == nil {
 		var err error
 		idx, err = index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
