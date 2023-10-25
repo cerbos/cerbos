@@ -18,6 +18,8 @@ import (
 	"go.uber.org/zap"
 )
 
+type Index = index.Index
+
 type Artefact struct {
 	Error      error
 	PolicySet  *runtimev1.RunnablePolicySet
@@ -39,7 +41,7 @@ func (e *Errors) Error() string {
 	}
 }
 
-func Files(ctx context.Context, fsys fs.FS) (index.Index, <-chan Artefact, error) {
+func Files(ctx context.Context, fsys fs.FS) (Index, <-chan Artefact, error) {
 	idx, err := index.Build(ctx, fsys)
 	if err != nil {
 		idxErrs := new(index.BuildError)
