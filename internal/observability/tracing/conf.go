@@ -26,7 +26,7 @@ var (
 type Conf struct {
 	// ServiceName is the name of the service reported to the exporter.
 	ServiceName *string `yaml:"serviceName" conf:",example=cerbos"`
-	// Jaeger configures the Jaeger exporter.
+	// [Deprecated] Jaeger [For full information, look the docs] configures the Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
 	// OTLP configures the OpenTelemetry exporter.
 	OTLP *OTLPConf `yaml:"otlp"`
@@ -41,9 +41,9 @@ type Conf struct {
 type JaegerConf struct {
 	// [Deprecated] Use top level ServiceName config. ServiceName is the name of the service to report to Jaeger.
 	ServiceName string `yaml:"serviceName" conf:",example=cerbos"`
-	// AgentEndpoint is the Jaeger agent endpoint to report to.
+	// [Deprecated] AgentEndpoint is the Jaeger agent endpoint to report to.
 	AgentEndpoint string `yaml:"agentEndpoint" conf:",example=\"localhost:6831\""`
-	// CollectorEndpoint is the Jaeger collector endpoint to report to.
+	// [Deprecated] CollectorEndpoint is the Jaeger collector endpoint to report to.
 	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"http://localhost:14268/api/traces\""`
 }
 
