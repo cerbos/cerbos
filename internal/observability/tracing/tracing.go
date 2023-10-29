@@ -6,6 +6,7 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"net"
 	"net/http"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
 	"go.opentelemetry.io/otel/exporters/jaeger" //nolint:staticcheck
 	otlp "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	otlphttp "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	otelprop "go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
@@ -83,14 +85,27 @@ func configureJaeger(ctx context.Context) error {
 }
 
 func configureOTLP(ctx context.Context) error {
-	conn, err := grpc.DialContext(ctx, conf.OTLP.CollectorEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return fmt.Errorf("failed to dial otlp collector: %w", err)
-	}
+	var exporter *otlptrace.Exporter
+	var err error
 
-	exporter, err := otlp.New(ctx, otlp.WithGRPCConn(conn))
-	if err != nil {
-		return fmt.Errorf("failed to create otlp exporter: %w", err)
+	switch conf.OTLP.Protocol {
+	case "grpc":
+		conn, err := grpc.DialContext(ctx, conf.OTLP.CollectorEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return fmt.Errorf("failed to dial otlp collector: %w", err)
+		}
+
+		exporter, err = otlp.New(ctx, otlp.WithGRPCConn(conn))
+		if err != nil {
+			return fmt.Errorf("failed to create otlp exporter: %w", err)
+		}
+	case "http":
+		exporter, err = otlphttp.New(ctx, otlphttp.WithEndpoint(conf.OTLP.CollectorEndpoint))
+		if err != nil {
+			return fmt.Errorf("failed to create otlp exporter: %w", err)
+		}
+	default:
+		return fmt.Errorf("unknown OTLP protocol %q. Supported protocols are 'grpc' and 'http'", conf.OTLP.Protocol)
 	}
 
 	return configureOtel(ctx, conf.ServiceName, exporter)

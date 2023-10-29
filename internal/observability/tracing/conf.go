@@ -48,6 +48,8 @@ type JaegerConf struct {
 }
 
 type OTLPConf struct {
+	// Protocol is the protocol to use for the OTLP exporter.
+	Protocol string `yaml:"protocol" conf:",example=grpc"`
 	// CollectorEndpoint is the Open Telemetry collector endpoint to export to.
 	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"otel:4317\""`
 }
@@ -77,6 +79,10 @@ func (c *Conf) Validate() error {
 		if c.OTLP.CollectorEndpoint == "" {
 			return errOTLPEndpointUndefined
 		}
+		if c.OTLP.Protocol == "" {
+			c.OTLP.Protocol = "grpc"
+		}
+
 		return nil
 
 	default:

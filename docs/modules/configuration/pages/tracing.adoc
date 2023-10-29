@@ -59,5 +59,6 @@ tracing:
   sampleProbability: 0.5
   exporter: otlp
   otlp:
+    protocol: grpc # or http
     collectorEndpoint: "otel:4317"
 ----
