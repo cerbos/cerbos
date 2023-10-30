@@ -40,7 +40,28 @@ func (g *TestFixtureGetter) LoadTestFixture(path string) (*verify.TestFixture, e
 
 		g.cache[path] = fixture
 	}
+
 	return fixture, nil
+}
+
+type TestFixtureCtx struct {
+	Fixture *verify.TestFixture
+	Path    string
+}
+
+func (g *TestFixtureGetter) GetAllTestFixtures() []*TestFixtureCtx {
+	fixtures := make([]*TestFixtureCtx, len(g.cache))
+
+	var i int
+	for path, fixture := range g.cache {
+		fixtures[i] = &TestFixtureCtx{
+			Path:    path,
+			Fixture: fixture,
+		}
+		i++
+	}
+
+	return fixtures
 }
 
 func Check(ctx context.Context, idx index.Index, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {

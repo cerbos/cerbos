@@ -25,10 +25,25 @@ import (
 	"github.com/cerbos/cerbos/internal/validator"
 )
 
+type Principals struct {
+	Fixtures map[string]*enginev1.Principal
+	FilePath string
+}
+
+type Resources struct {
+	Fixtures map[string]*enginev1.Resource
+	FilePath string
+}
+
+type AuxData struct {
+	Fixtures map[string]*enginev1.AuxData
+	FilePath string
+}
+
 type TestFixture struct {
-	Principals map[string]*enginev1.Principal
-	Resources  map[string]*enginev1.Resource
-	AuxData    map[string]*enginev1.AuxData
+	Principals *Principals
+	Resources  *Resources
+	AuxData    *AuxData
 }
 
 const (
@@ -58,56 +73,77 @@ func LoadTestFixture(fsys fs.FS, path string) (tf *TestFixture, err error) {
 	return tf, nil
 }
 
-func loadResources(fsys fs.FS, path string) (map[string]*enginev1.Resource, error) {
+func loadResources(fsys fs.FS, path string) (*Resources, error) {
+	fp, err := util.GetOneOfSupportedFileNames(fsys, filepath.Join(path, resourcesFileName))
+	if err != nil {
+		if errors.Is(err, util.ErrNoMatchingFiles) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
 	pb := &policyv1.TestFixture_Resources{}
-	fp := filepath.Join(path, resourcesFileName)
 	if err := loadFixtureElement(fsys, fp, pb); err != nil {
+		return nil, err
+	}
+
+	return &Resources{
+		FilePath: fp,
+		Fixtures: pb.Resources,
+	}, nil
+}
+
+func loadPrincipals(fsys fs.FS, path string) (*Principals, error) {
+	fp, err := util.GetOneOfSupportedFileNames(fsys, filepath.Join(path, principalsFileName))
+	if err != nil {
 		if errors.Is(err, util.ErrNoMatchingFiles) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	return pb.Resources, nil
-}
-
-func loadPrincipals(fsys fs.FS, path string) (map[string]*enginev1.Principal, error) {
 	pb := &policyv1.TestFixture_Principals{}
-	fp := filepath.Join(path, principalsFileName)
 	if err := loadFixtureElement(fsys, fp, pb); err != nil {
-		if errors.Is(err, util.ErrNoMatchingFiles) {
-			return nil, nil
-		}
 		return nil, err
 	}
 
-	return pb.Principals, nil
+	return &Principals{
+		FilePath: fp,
+		Fixtures: pb.Principals,
+	}, nil
 }
 
-func loadAuxData(fsys fs.FS, path string) (map[string]*enginev1.AuxData, error) {
-	pb := &policyv1.TestFixture_AuxData{}
+func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
 	for _, fn := range auxDataFileNames {
-		fp := filepath.Join(path, fn)
-		if err := loadFixtureElement(fsys, fp, pb); err != nil {
+		fp, err := util.GetOneOfSupportedFileNames(fsys, filepath.Join(path, fn))
+		if err != nil {
 			if errors.Is(err, util.ErrNoMatchingFiles) {
 				continue
 			}
 			return nil, err
 		}
 
-		return pb.AuxData, nil
+		pb := &policyv1.TestFixture_AuxData{}
+		if err := loadFixtureElement(fsys, fp, pb); err != nil {
+			return nil, err
+		}
+
+		return &AuxData{
+			FilePath: fp,
+			Fixtures: pb.AuxData,
+		}, nil
 	}
 
 	return nil, nil
 }
 
 func loadFixtureElement(fsys fs.FS, path string, pb proto.Message) error {
-	file, err := util.OpenOneOfSupportedFiles(fsys, path)
-	if err != nil || file == nil {
+	file, err := fsys.Open(path)
+	if err != nil {
 		return err
 	}
-
 	defer file.Close()
+
 	err = util.ReadJSONOrYAML(file, pb)
 	if err != nil {
 		return err
@@ -431,7 +467,7 @@ func (tf *TestFixture) lookupPrincipal(ts *policyv1.TestSuite, k string) (*engin
 	}
 
 	if tf != nil {
-		if v, ok := tf.Principals[k]; ok {
+		if v, ok := tf.Principals.Fixtures[k]; ok {
 			return v, nil
 		}
 	}
@@ -445,7 +481,7 @@ func (tf *TestFixture) lookupResource(ts *policyv1.TestSuite, k string) (*engine
 	}
 
 	if tf != nil {
-		if v, ok := tf.Resources[k]; ok {
+		if v, ok := tf.Resources.Fixtures[k]; ok {
 			return v, nil
 		}
 	}
@@ -463,7 +499,7 @@ func (tf *TestFixture) lookupAuxData(ts *policyv1.TestSuite, k string) (*enginev
 	}
 
 	if tf != nil {
-		if v, ok := tf.AuxData[k]; ok {
+		if v, ok := tf.AuxData.Fixtures[k]; ok {
 			return v, nil
 		}
 	}
