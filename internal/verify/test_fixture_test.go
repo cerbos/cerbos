@@ -37,15 +37,15 @@ principals:
 	fsys[expectedPath] = newMapFile(principals)
 
 	tests := []struct {
-		want    *PrincipalsTestFixture
+		want    *Principals
 		name    string
 		wantErr bool
 	}{
 		{
 			name: "a/" + util.TestDataDirectory,
-			want: &PrincipalsTestFixture{
+			want: &Principals{
 				FilePath: expectedPath,
-				Map: map[string]*v1.Principal{
+				Fixtures: map[string]*v1.Principal{
 					"harry": {
 						Id:    "harry",
 						Roles: []string{"employee"},
@@ -77,22 +77,22 @@ principals:
 
 func Test_testFixture_getTests(t *testing.T) {
 	tf := &TestFixture{
-		Principals: &PrincipalsTestFixture{
-			Map: map[string]*v1.Principal{
+		Principals: &Principals{
+			Fixtures: map[string]*v1.Principal{
 				"employee":        {Id: "employee", Roles: []string{"user"}},
 				"manager":         {Id: "manager", Roles: []string{"user"}},
 				"department_head": {Id: "department_head", Roles: []string{"user"}},
 			},
 		},
-		Resources: &ResourcesTestFixture{
-			Map: map[string]*v1.Resource{
+		Resources: &Resources{
+			Fixtures: map[string]*v1.Resource{
 				"employee_leave_request":        {Kind: "leave_request", Id: "employee"},
 				"manager_leave_request":         {Kind: "leave_request", Id: "manager"},
 				"department_head_leave_request": {Kind: "leave_request", Id: "department_head"},
 			},
 		},
-		AuxData: &AuxDataTestFixture{
-			Map: map[string]*v1.AuxData{
+		AuxData: &AuxData{
+			Fixtures: map[string]*v1.AuxData{
 				"test_aux_data": {Jwt: map[string]*structpb.Value{"answer": structpb.NewNumberValue(42)}},
 			},
 		},
