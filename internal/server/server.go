@@ -468,6 +468,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: s.conf.Advanced.GRPC.MaxConnectionAge}),
+		grpc.MaxConcurrentStreams(s.conf.Advanced.GRPC.MaxConcurrentStreams),
 		grpc.ConnectionTimeout(s.conf.Advanced.GRPC.ConnectionTimeout),
 		grpc.MaxRecvMsgSize(int(s.conf.Advanced.GRPC.MaxRecvMsgSizeBytes)),
 		grpc.UnknownServiceHandler(handleUnknownServices),

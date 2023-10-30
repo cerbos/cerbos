@@ -18,23 +18,24 @@ import (
 )
 
 const (
-	confKey                        = "server"
-	defaultAdminPassword           = "cerbosAdmin"
-	defaultAdminUsername           = "cerbos"
-	defaultGRPCConnectionTimeout   = 60 * time.Second
-	defaultGRPCListenAddr          = ":3593"
-	defaultGRPCMaxConnectionAge    = 10 * time.Minute
-	defaultGRPCMaxRecvMsgSizeBytes = 4 * 1024 * 1024 // 4MiB
-	defaultHTTPIdleTimeout         = 120 * time.Second
-	defaultHTTPListenAddr          = ":3592"
-	defaultHTTPReadHeaderTimeout   = 15 * time.Second
-	defaultHTTPReadTimeout         = 30 * time.Second
-	defaultHTTPWriteTimeout        = 30 * time.Second
-	defaultMaxActionsPerResource   = 50
-	defaultMaxResourcesPerRequest  = 50
-	defaultRawAdminPasswordHash    = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
-	defaultUDSFileMode             = "0o766"
-	requestItemsMax                = 500
+	confKey                         = "server"
+	defaultAdminPassword            = "cerbosAdmin"
+	defaultAdminUsername            = "cerbos"
+	defaultGRPCConnectionTimeout    = 60 * time.Second
+	defaultGRPCListenAddr           = ":3593"
+	defaultGRPCMaxConcurrentStreams = 1024
+	defaultGRPCMaxConnectionAge     = 10 * time.Minute
+	defaultGRPCMaxRecvMsgSizeBytes  = 4 * 1024 * 1024 // 4MiB
+	defaultHTTPIdleTimeout          = 120 * time.Second
+	defaultHTTPListenAddr           = ":3592"
+	defaultHTTPReadHeaderTimeout    = 15 * time.Second
+	defaultHTTPReadTimeout          = 30 * time.Second
+	defaultHTTPWriteTimeout         = 30 * time.Second
+	defaultMaxActionsPerResource    = 50
+	defaultMaxResourcesPerRequest   = 50
+	defaultRawAdminPasswordHash     = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+	defaultUDSFileMode              = "0o766"
+	requestItemsMax                 = 500
 )
 
 var (
@@ -161,6 +162,8 @@ type AdvancedGRPCConf struct {
 	MaxConnectionAge time.Duration `yaml:"maxConnectionAge" conf:",example=600s"`
 	// ConnectionTimeout sets the timeout for establishing a new connection.
 	ConnectionTimeout time.Duration `yaml:"connectionTimeout" conf:",example=60s"`
+	// MaxConcurrentStreams sets the maximum concurrent streams per connection. Defaults to 1024. Set to 0 to allow the maximum possible number of streams.
+	MaxConcurrentStreams uint32 `yaml:"maxConcurrentStreams" conf:",example=1024"`
 }
 
 func (c *Conf) Key() string {
@@ -193,9 +196,10 @@ func (c *Conf) SetDefaults() {
 			IdleTimeout:       defaultHTTPIdleTimeout,
 		},
 		GRPC: AdvancedGRPCConf{
-			MaxRecvMsgSizeBytes: defaultGRPCMaxRecvMsgSizeBytes,
-			MaxConnectionAge:    defaultGRPCMaxConnectionAge,
-			ConnectionTimeout:   defaultGRPCConnectionTimeout,
+			MaxRecvMsgSizeBytes:  defaultGRPCMaxRecvMsgSizeBytes,
+			MaxConcurrentStreams: defaultGRPCMaxConcurrentStreams,
+			MaxConnectionAge:     defaultGRPCMaxConnectionAge,
+			ConnectionTimeout:    defaultGRPCConnectionTimeout,
 		},
 	}
 }
