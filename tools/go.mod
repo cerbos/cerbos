@@ -6,10 +6,10 @@ toolchain go1.21.1
 
 require (
 	github.com/bojand/ghz v0.117.0
-	github.com/bufbuild/buf v1.27.1
+	github.com/bufbuild/buf v1.27.2
 	github.com/cerbos/protoc-gen-go-hashpb v0.2.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.1
-	github.com/fullstorydev/grpcurl v1.8.8
+	github.com/fullstorydev/grpcurl v1.8.9
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser v1.21.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
@@ -205,7 +205,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/karrick/godirwalk v1.16.1 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.17.1 // indirect
+	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf // indirect
