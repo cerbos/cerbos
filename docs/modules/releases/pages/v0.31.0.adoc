@@ -13,6 +13,8 @@ xref:configuration:engine.adoc#lenient_scopes[Lenient scope search] can now be e
 
 You can now xref:configuration:auxdata.adoc[configure Cerbos] to not reject legacy JWTs that don't have `kid` or `alg` claims. The default behaviour of Cerbos is to reject such tokens because they are considered insecure.
 
+In light of the the recently discovered HTTP/2 rapid reset vulnerability affecting all public HTTP/2 implementations, Cerbos now includes a configuration option to limit the number of maximum concurrent streams per gRPC connection. The default is 1024 concurrent streams. You can set `server.advanced.grpc.maxConcurrentStreams` configuration to 0 to get back the previous behaviour of virtually unlimited concurrent streams.
+
 The Cerbos Go SDK is now a separate Go module available at `github.com/cerbos/cerbos-sdk-go`. This makes the SDK leaner and more secure with fewer dependencies to manage. The `client` package available from `github.com/cerbos/cerbos/client` is now deprecated and will be removed in a future release. Migration in most cases would just require updating the import paths. Refer to the README at https://github.com/cerbos/cerbos-sdk-go or link:https://pkg.go.dev/github.com/cerbos/cerbos-sdk-go[Go docs] for more information.
 
 
@@ -33,6 +35,7 @@ The Cerbos Go SDK is now a separate Go module available at `github.com/cerbos/ce
 
 * Add support for defining topology spread constraints (link:https://github.com/cerbos/cerbos/pull/1821[#1821])
 * Allow parsing JWTs with legacy keysets (link:https://github.com/cerbos/cerbos/pull/1823[#1823])
+* #**BREAKING**# Configure gRPC max concurrent streams (link:https://github.com/cerbos/cerbos/pull/1853[#1853])
 * Deprecate client package (link:https://github.com/cerbos/cerbos/pull/1815[#1815])
 * Lenient scope search in tests (link:https://github.com/cerbos/cerbos/pull/1838[#1838])
 * Migrate to protovalidate (link:https://github.com/cerbos/cerbos/pull/1800[#1800])
@@ -69,4 +72,5 @@ The Cerbos Go SDK is now a separate Go module available at `github.com/cerbos/ce
 * Update go deps (link:https://github.com/cerbos/cerbos/pull/1826[#1826])
 * Update go deps (link:https://github.com/cerbos/cerbos/pull/1839[#1839])
 * Update go deps (link:https://github.com/cerbos/cerbos/pull/1845[#1845])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1852[#1852])
 * Update goreleaser/goreleaser-action action to v5 (link:https://github.com/cerbos/cerbos/pull/1808[#1808])
