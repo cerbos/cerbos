@@ -33,23 +33,27 @@ principals:
       team: design
 `
 	fsys := make(fstest.MapFS)
-	fsys["a/"+util.TestDataDirectory+"/principals.yaml"] = newMapFile(principals)
+	expectedPath := "a/" + util.TestDataDirectory + "/principals.yaml"
+	fsys[expectedPath] = newMapFile(principals)
 
 	tests := []struct {
-		want    map[string]*v1.Principal
+		want    *PrincipalsTestFixture
 		name    string
 		wantErr bool
 	}{
 		{
 			name: "a/" + util.TestDataDirectory,
-			want: map[string]*v1.Principal{
-				"harry": {
-					Id:    "harry",
-					Roles: []string{"employee"},
-					Attr: map[string]*structpb.Value{
-						"department": structpb.NewStringValue("marketing"),
-						"geography":  structpb.NewStringValue("GB"),
-						"team":       structpb.NewStringValue("design"),
+			want: &PrincipalsTestFixture{
+				FilePath: expectedPath,
+				Map: map[string]*v1.Principal{
+					"harry": {
+						Id:    "harry",
+						Roles: []string{"employee"},
+						Attr: map[string]*structpb.Value{
+							"department": structpb.NewStringValue("marketing"),
+							"geography":  structpb.NewStringValue("GB"),
+							"team":       structpb.NewStringValue("design"),
+						},
 					},
 				},
 			},
@@ -73,18 +77,24 @@ principals:
 
 func Test_testFixture_getTests(t *testing.T) {
 	tf := &TestFixture{
-		Principals: map[string]*v1.Principal{
-			"employee":        {Id: "employee", Roles: []string{"user"}},
-			"manager":         {Id: "manager", Roles: []string{"user"}},
-			"department_head": {Id: "department_head", Roles: []string{"user"}},
+		Principals: &PrincipalsTestFixture{
+			Map: map[string]*v1.Principal{
+				"employee":        {Id: "employee", Roles: []string{"user"}},
+				"manager":         {Id: "manager", Roles: []string{"user"}},
+				"department_head": {Id: "department_head", Roles: []string{"user"}},
+			},
 		},
-		Resources: map[string]*v1.Resource{
-			"employee_leave_request":        {Kind: "leave_request", Id: "employee"},
-			"manager_leave_request":         {Kind: "leave_request", Id: "manager"},
-			"department_head_leave_request": {Kind: "leave_request", Id: "department_head"},
+		Resources: &ResourcesTestFixture{
+			Map: map[string]*v1.Resource{
+				"employee_leave_request":        {Kind: "leave_request", Id: "employee"},
+				"manager_leave_request":         {Kind: "leave_request", Id: "manager"},
+				"department_head_leave_request": {Kind: "leave_request", Id: "department_head"},
+			},
 		},
-		AuxData: map[string]*v1.AuxData{
-			"test_aux_data": {Jwt: map[string]*structpb.Value{"answer": structpb.NewNumberValue(42)}},
+		AuxData: &AuxDataTestFixture{
+			Map: map[string]*v1.AuxData{
+				"test_aux_data": {Jwt: map[string]*structpb.Value{"answer": structpb.NewNumberValue(42)}},
+			},
 		},
 	}
 

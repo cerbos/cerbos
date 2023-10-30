@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"sync"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
@@ -20,16 +21,21 @@ import (
 type TestFixtureGetter struct {
 	fsys  fs.FS
 	cache map[string]*verify.TestFixture
+	mut   sync.RWMutex
 }
 
 func NewTestFixtureGetter(fsys fs.FS) *TestFixtureGetter {
 	return &TestFixtureGetter{
 		fsys:  fsys,
 		cache: make(map[string]*verify.TestFixture),
+		mut:   sync.RWMutex{},
 	}
 }
 
-func (g *TestFixtureGetter) LoadTestFixture(path string) (*verify.TestFixture, error) {
+func (g *TestFixtureGetter) Load(path string) (*verify.TestFixture, error) {
+	g.mut.Lock()
+	defer g.mut.Unlock()
+
 	fixture, ok := g.cache[path]
 	if !ok {
 		var err error
@@ -40,7 +46,31 @@ func (g *TestFixtureGetter) LoadTestFixture(path string) (*verify.TestFixture, e
 
 		g.cache[path] = fixture
 	}
+
 	return fixture, nil
+}
+
+type TestFixtureCtx struct {
+	Fixture *verify.TestFixture
+	Path    string
+}
+
+func (g *TestFixtureGetter) LoadAll() <-chan *TestFixtureCtx {
+	g.mut.RLock()
+	defer g.mut.RUnlock()
+
+	c := make(chan *TestFixtureCtx)
+	go func() {
+		for path, fixture := range g.cache {
+			c <- &TestFixtureCtx{
+				Path:    path,
+				Fixture: fixture,
+			}
+		}
+		close(c)
+	}()
+
+	return c
 }
 
 func Check(ctx context.Context, idx index.Index, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {

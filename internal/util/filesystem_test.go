@@ -37,7 +37,7 @@ func TestIsSupportedTestFile(t *testing.T) {
 	}
 }
 
-func TestOpenOneOfSupportedFiles(t *testing.T) {
+func TestGetOneOfSupportedFileNames(t *testing.T) {
 	fsys := make(fstest.MapFS)
 	file := &fstest.MapFile{Data: []byte{}}
 	fsys["testdata/a.json"] = file
@@ -46,27 +46,24 @@ func TestOpenOneOfSupportedFiles(t *testing.T) {
 	fsys["testdata/d.csv"] = file
 
 	tests := []struct {
-		fileName string
-		wantErr  bool
+		fileName, expectedNewFileName string
+		wantErr                       bool
 	}{
-		{"a", false},
-		{"b", false},
-		{"c", false},
-		{"d", true},
-		{"not_exist", true},
+		{"a", "testdata/a.json", false},
+		{"b", "testdata/b.yml", false},
+		{"c", "testdata/c.yaml", false},
+		{"d", "", true},
+		{"not_exist", "", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.fileName, func(t *testing.T) {
 			is := require.New(t)
-			file, err := util.OpenOneOfSupportedFiles(fsys, filepath.Join("testdata", tt.fileName))
-			if err == nil && file != nil {
-				file.Close()
-			}
+			newName, err := util.GetOneOfSupportedFileNames(fsys, filepath.Join("testdata", tt.fileName))
 			if tt.wantErr {
 				is.Error(err)
-				is.Nil(file)
 			} else {
 				is.NoError(err)
+				is.Equal(tt.expectedNewFileName, newName)
 			}
 		})
 	}
