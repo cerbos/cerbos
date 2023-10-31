@@ -5,7 +5,6 @@ package check
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -29,19 +28,13 @@ func NewTestFixtureGetter(fsys fs.FS) *TestFixtureGetter {
 	}
 }
 
-func (g *TestFixtureGetter) LoadTestFixture(path string) (*verify.TestFixture, error) {
-	fixture, ok := g.cache[path]
-	if !ok {
-		var err error
-		fixture, err = verify.LoadTestFixture(g.fsys, path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load test fixture file: %w", err)
-		}
-
+func (g *TestFixtureGetter) LoadTestFixture(path string) (fixture *verify.TestFixture) {
+	fixture = g.cache[path]
+	if fixture == nil {
+		fixture, _ = verify.LoadTestFixture(g.fsys, path, true)
 		g.cache[path] = fixture
 	}
-
-	return fixture, nil
+	return
 }
 
 type TestFixtureCtx struct {

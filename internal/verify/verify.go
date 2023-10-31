@@ -86,7 +86,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 		}
 
 		if _, exists := fixtureDefs[path]; exists {
-			f, err := LoadTestFixture(fsys, path)
+			f, err := LoadTestFixture(fsys, path, false)
 			if err != nil {
 				return nil, err
 			}
