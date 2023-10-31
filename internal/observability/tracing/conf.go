@@ -39,16 +39,16 @@ type Conf struct {
 }
 
 type JaegerConf struct {
-	// [Deprecated] Use top level ServiceName config. ServiceName is the name of the service to report to Jaeger.
+	// Use top level ServiceName config. ServiceName is the name of the service to report to Jaeger.
 	ServiceName string `yaml:"serviceName" conf:",example=cerbos"`
-	// [Deprecated] AgentEndpoint is the Jaeger agent endpoint to report to.
+	// AgentEndpoint is the Jaeger agent endpoint to report to.
 	AgentEndpoint string `yaml:"agentEndpoint" conf:",example=\"localhost:6831\""`
-	// [Deprecated] CollectorEndpoint is the Jaeger collector endpoint to report to.
+	// CollectorEndpoint is the Jaeger collector endpoint to report to.
 	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"http://localhost:14268/api/traces\""`
 }
 
 type OTLPConf struct {
-	// Protocol is the protocol to use for the OTLP exporter.
+	// Protocol is the protocol to use for the OTLP exporter. Valid values are "grpc" (default) or "http/protobuf".
 	Protocol string `yaml:"protocol" conf:",example=grpc"`
 	// CollectorEndpoint is the Open Telemetry collector endpoint to export to.
 	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"otel:4317\""`

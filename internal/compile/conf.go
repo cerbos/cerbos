@@ -29,6 +29,7 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.CacheSize = defaultCacheSize
+
 }
 
 func (c *Conf) Validate() (outErr error) {
