@@ -26,18 +26,21 @@ import (
 )
 
 type Principals struct {
-	Fixtures map[string]*enginev1.Principal
-	FilePath string
+	LoadError error
+	Fixtures  map[string]*enginev1.Principal
+	FilePath  string
 }
 
 type Resources struct {
-	Fixtures map[string]*enginev1.Resource
-	FilePath string
+	LoadError error
+	Fixtures  map[string]*enginev1.Resource
+	FilePath  string
 }
 
 type AuxData struct {
-	Fixtures map[string]*enginev1.AuxData
-	FilePath string
+	LoadError error
+	Fixtures  map[string]*enginev1.AuxData
+	FilePath  string
 }
 
 type TestFixture struct {
@@ -53,20 +56,20 @@ const (
 
 var auxDataFileNames = []string{"auxdata", "auxData", "aux_data"}
 
-func LoadTestFixture(fsys fs.FS, path string) (tf *TestFixture, err error) {
+func LoadTestFixture(fsys fs.FS, path string, continueOnError bool) (tf *TestFixture, err error) {
 	tf = new(TestFixture)
 	tf.Principals, err = loadPrincipals(fsys, path)
-	if err != nil {
+	if err != nil && !continueOnError {
 		return nil, err
 	}
 
 	tf.Resources, err = loadResources(fsys, path)
-	if err != nil {
+	if err != nil && !continueOnError {
 		return nil, err
 	}
 
 	tf.AuxData, err = loadAuxData(fsys, path)
-	if err != nil {
+	if err != nil && !continueOnError {
 		return nil, err
 	}
 
@@ -82,15 +85,18 @@ func loadResources(fsys fs.FS, path string) (*Resources, error) {
 		return nil, err
 	}
 
-	pb := &policyv1.TestFixture_Resources{}
-	if err := loadFixtureElement(fsys, fp, pb); err != nil {
-		return nil, err
+	resources := &Resources{
+		FilePath: fp,
 	}
 
-	return &Resources{
-		FilePath: fp,
-		Fixtures: pb.Resources,
-	}, nil
+	pb := &policyv1.TestFixture_Resources{}
+	if err := loadFixtureElement(fsys, fp, pb); err != nil {
+		resources.LoadError = err
+		return resources, err
+	}
+
+	resources.Fixtures = pb.Resources
+	return resources, nil
 }
 
 func loadPrincipals(fsys fs.FS, path string) (*Principals, error) {
@@ -102,15 +108,18 @@ func loadPrincipals(fsys fs.FS, path string) (*Principals, error) {
 		return nil, err
 	}
 
-	pb := &policyv1.TestFixture_Principals{}
-	if err := loadFixtureElement(fsys, fp, pb); err != nil {
-		return nil, err
+	principals := &Principals{
+		FilePath: fp,
 	}
 
-	return &Principals{
-		FilePath: fp,
-		Fixtures: pb.Principals,
-	}, nil
+	pb := &policyv1.TestFixture_Principals{}
+	if err := loadFixtureElement(fsys, fp, pb); err != nil {
+		principals.LoadError = err
+		return principals, err
+	}
+
+	principals.Fixtures = pb.Principals
+	return principals, nil
 }
 
 func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
@@ -123,15 +132,18 @@ func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
 			return nil, err
 		}
 
-		pb := &policyv1.TestFixture_AuxData{}
-		if err := loadFixtureElement(fsys, fp, pb); err != nil {
-			return nil, err
+		auxData := &AuxData{
+			FilePath: fp,
 		}
 
-		return &AuxData{
-			FilePath: fp,
-			Fixtures: pb.AuxData,
-		}, nil
+		pb := &policyv1.TestFixture_AuxData{}
+		if err := loadFixtureElement(fsys, fp, pb); err != nil {
+			auxData.LoadError = err
+			return auxData, err
+		}
+
+		auxData.Fixtures = pb.AuxData
+		return auxData, nil
 	}
 
 	return nil, nil
