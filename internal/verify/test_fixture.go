@@ -26,21 +26,21 @@ import (
 )
 
 type Principals struct {
+	LoadError error
 	Fixtures  map[string]*enginev1.Principal
 	FilePath  string
-	LoadError error
 }
 
 type Resources struct {
+	LoadError error
 	Fixtures  map[string]*enginev1.Resource
 	FilePath  string
-	LoadError error
 }
 
 type AuxData struct {
+	LoadError error
 	Fixtures  map[string]*enginev1.AuxData
 	FilePath  string
-	LoadError error
 }
 
 type TestFixture struct {
