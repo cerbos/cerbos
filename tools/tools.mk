@@ -32,7 +32,7 @@ $(BUF): $(TOOLS_BIN_DIR)
 	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bufbuild/buf/cmd/buf
 
 $(GHZ): $(TOOLS_BIN_DIR)
-	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bojand/ghz/cmd/ghz@latest
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install github.com/bojand/ghz/cmd/ghz@latest
 
 $(GO_LICENSES): $(TOOLS_BIN_DIR)
 	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/google/go-licenses
