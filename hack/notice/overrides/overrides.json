@@ -1,5 +1,9 @@
 {"name": "github.com/acomagu/bufpipe", "licenceTextOverrideFile": "licences/github.com/acomagu/bufpipe/LICENSE"}
+{"name": "github.com/ajstarks/svgo", "licenceType": "CC-BY-4.0"}
+{"name": "github.com/alibabacloud-go/cr-20160607", "licenceType": "Apache-2.0"}
+{"name": "github.com/alibabacloud-go/tea-xml", "licenceType": "Apache-2.0"}
 {"name": "github.com/bmizerany/assert", "licenceType": "UNKNOWN"}
+{"name": "github.com/caarlos0/sshmarshal", "licenceType": "Public Domain"}
 {"name": "github.com/cerbos/cloud-api", "licenceType": "Apache-2.0"}
 {"name": "github.com/chzyer/logex", "licenceTextOverrideFile": "licences/github.com/chzyer/logex/LICENSE"}
 {"name": "github.com/dnaeon/go-vcr", "licenceType": "BSD-2-Clause"}

@@ -72,7 +72,7 @@ generate-mocks: $(MOCKERY)
 .PHONY: generate-notice
 generate-notice: $(GO_LICENCE_DETECTOR)
 	@ go mod download
-	@ go list -m -json all | $(GO_LICENCE_DETECTOR) -includeIndirect \
+	@ GOWORK=off go list -m -json all | $(GO_LICENCE_DETECTOR) -includeIndirect \
 		-noticeTemplate=hack/notice/templates/NOTICE.txt.tmpl \
 		-overrides=hack/notice/overrides/overrides.json \
 		-rules=hack/notice/rules.json \
