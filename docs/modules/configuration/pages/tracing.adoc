@@ -20,10 +20,7 @@ link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observ
 
 == Jaeger [Deprecated]
 
-[IMPORTANT]
-====
-The Jaeger exporter is deprecated and will be removed in a future release. Please use the OTLP exporter instead.
-====
+NOTE: Jaeger now supports OTLP and it's recommended to use the OTLP exporter instead. The native Jaeger exporter is deprecated and will be removed in a future release.
 
 
 .Send trace data to Jaeger Agent (compact Thrift)
