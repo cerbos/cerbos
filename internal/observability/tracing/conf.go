@@ -26,7 +26,7 @@ var (
 type Conf struct {
 	// ServiceName is the name of the service reported to the exporter.
 	ServiceName *string `yaml:"serviceName" conf:",example=cerbos"`
-	// [Deprecated] Jaeger [For full information, look the docs] configures the Jaeger exporter.
+	// [Deprecated] Use OTLP exporter. Jaeger configures the native Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
 	// OTLP configures the OpenTelemetry exporter.
 	OTLP *OTLPConf `yaml:"otlp"`
