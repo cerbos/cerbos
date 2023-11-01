@@ -9,15 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -147,8 +146,9 @@ func TestCmpSelectAndCall(t *testing.T) {
 }
 
 func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
-	expander := func(eh parser.ExprHelper, t *expr.Expr, args []*expr.Expr) (*expr.Expr, *common.Error) {
-		return eh.Select(eh.Select(eh.Ident("R"), "attr"), "geo"), nil
+	expander := func(eh parser.ExprHelper, _ celast.Expr, _ []celast.Expr) (celast.Expr, *common.Error) {
+		sel := eh.NewSelect(eh.NewSelect(eh.NewIdent("R"), "attr"), "geo")
+		return sel, nil
 	}
 	geo := parser.NewReceiverMacro("geo", 0, expander)
 	env, _ := cel.NewEnv(
@@ -262,9 +262,6 @@ func TestPartialEvaluation(t *testing.T) {
 			t.Log(out.Type())
 			is.NoError(err)
 			residual, err := env.ResidualAst(ast, det)
-			is.NoError(err)
-			bytes, err := yaml.Marshal(residual.Expr())
-			log.Print("\n", string(bytes))
 			is.NoError(err)
 			astToString, err := cel.AstToString(residual)
 			is.NoError(err)

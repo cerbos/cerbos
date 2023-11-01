@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -40,7 +41,11 @@ func Test_evaluateCondition(t *testing.T) {
 	unparse := func(t *testing.T, expr *expr.CheckedExpr) string {
 		t.Helper()
 		require.NotNil(t, expr)
-		source, err := parser.Unparse(expr.Expr, expr.SourceInfo)
+		astExpr, err := celast.ProtoToExpr(expr.Expr)
+		require.NoError(t, err)
+		srcInfo, err := celast.ProtoToSourceInfo(expr.SourceInfo)
+		require.NoError(t, err)
+		source, err := parser.Unparse(astExpr, srcInfo)
 		require.NoError(t, err)
 		return source
 	}
@@ -253,33 +258,47 @@ func TestResidualExpr(t *testing.T) {
 	for _, tt := range tests {
 		s := tt
 		t.Run(s, func(t *testing.T) {
-			var err error
+			now := time.Now()
+			nowFn := func() time.Time {
+				return now
+			}
+
 			is := require.New(t)
 			ast, iss := env.Compile(s)
 			is.Nil(iss, iss.Err())
-			e := ast.Expr()
-			e, err = replaceVars(e, variables)
+			e, err := cel.AstToCheckedExpr(ast)
 			is.NoError(err)
-			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err := conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			ex, err := replaceVars(e.Expr, variables)
 			is.NoError(err)
-
+			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: ex})
+			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
 			residualAst, err := env.ResidualAst(ast, det)
 			is.NoError(err)
-			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err = conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			re, err := cel.AstToParsedExpr(residualAst)
 			is.NoError(err)
-			residualExpr := ResidualExpr(ast, det)
+			wantResidualExpr := re.Expr
+
+			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: ex})
+			_, det, err = conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			p := partialEvaluator{env, pvars}
-			err = p.evalComprehensionBody(residualExpr)
+			haveResidualExpr, err := ResidualExpr(ast, det)
 			is.NoError(err)
-			is.Empty(cmp.Diff(residualExpr, residualAst.Expr(), protocmp.Transform(), ignoreID))
+			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
+			err = p.evalComprehensionBody(haveResidualExpr)
+			is.NoError(err)
+			is.Empty(cmp.Diff(wantResidualExpr, haveResidualExpr, protocmp.Transform(), ignoreID))
 		})
 	}
 }
 
 func TestPartialEvaluationWithGlobalVars(t *testing.T) {
+	now := time.Now()
+	nowStr := now.Format(time.RFC3339Nano)
+	nowFn := func() time.Time {
+		return now
+	}
+
 	tests := []struct {
 		expr, want string
 	}{
@@ -324,12 +343,12 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			want: `R.attr.geo in ["GB", "US"]`,
 		},
 		{
-			expr: "R.attr.items.filter(x, x.price > now())",
-			want: "R.attr.items.filter(x, x.price > now())",
+			expr: `R.attr.items.filter(x, x.price > now())`,
+			want: fmt.Sprintf(`R.attr.items.filter(x, x.price > timestamp("%s"))`, nowStr),
 		},
 		{
 			expr: `timestamp(R.attr.lastAccessed) > now()`,
-			want: `timestamp(R.attr.lastAccessed) > now()`,
+			want: fmt.Sprintf(`timestamp(R.attr.lastAccessed) > timestamp("%s")`, nowStr),
 		},
 		{
 			expr: `intersect(R.attr.workspaces, V.gb_us)`,
@@ -345,24 +364,29 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is := require.New(t)
 			ast, iss := env.Compile(tt.expr)
 			is.Nil(iss, iss.Err())
-			e := ast.Expr()
-			e, err = replaceVars(e, variables)
+
+			pe, err := cel.AstToParsedExpr(ast)
+			is.NoError(err)
+			e, err := replaceVars(pe.Expr, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err := conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
+			haveExpr, err := ResidualExpr(ast, det)
+			is.NoError(err)
+			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
+			err = p.evalComprehensionBody(haveExpr)
+			internal.UpdateIds(haveExpr)
 			is.NoError(err)
 
-			residualExpr := ResidualExpr(ast, det)
-			p := partialEvaluator{env, pvars}
-			err = p.evalComprehensionBody(residualExpr)
-			internal.UpdateIds(residualExpr)
-			is.NoError(err)
 			wantAst, iss := env.Parse(tt.want)
-			wantExpr := wantAst.Expr()
+			pe, err = cel.AstToParsedExpr(wantAst)
+			is.NoError(err)
+			wantExpr := pe.Expr
 			internal.UpdateIds(wantExpr)
 			is.Nil(iss, iss.Err())
-			is.Empty(cmp.Diff(residualExpr, wantExpr, protocmp.Transform(), ignoreID),
-				"{\"got\": %s,\n\"want\": %s}", protojson.Format(residualExpr), protojson.Format(wantExpr))
+			is.Empty(cmp.Diff(wantExpr, haveExpr, protocmp.Transform(), ignoreID),
+				"{\"got\": %s,\n\"want\": %s}", protojson.Format(haveExpr), protojson.Format(wantExpr))
 		})
 	}
 }
@@ -393,9 +417,11 @@ func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string
 		"gb_us":  `["gb", "us"].map(t, t.upperAscii())`,
 		"info":   `{"country": "GB", "language": "en"}`,
 	} {
-		e, iss := env.Compile(txt)
+		ast, iss := env.Compile(txt)
 		require.Nil(t, iss, iss.Err())
-		variables[k] = e.Expr()
+		ex, err := cel.AstToParsedExpr(ast)
+		require.NoError(t, err)
+		variables[k] = ex.Expr
 	}
 	return env, pvars, variables
 }

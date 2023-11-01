@@ -81,7 +81,7 @@ principalPolicy:
           condition:
             match:
               expr: |-
-                R.attr.sessions.all(x, timestamp(x.lastAccessed) < now())
+                R.attr.sessions.all(x, timestamp(x.lastAccessed).timeSince() < duration("1h"))
           effect: EFFECT_ALLOW
           name: timestamp
         - action: timeline

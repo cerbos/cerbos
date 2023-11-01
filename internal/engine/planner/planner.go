@@ -12,12 +12,12 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/types"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -546,8 +546,9 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Req
 }
 
 type partialEvaluator struct {
-	env  *cel.Env
-	vars interpreter.PartialActivation
+	env   *cel.Env
+	vars  interpreter.PartialActivation
+	nowFn func() time.Time
 }
 
 func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
@@ -557,13 +558,12 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 		return val, nil, err
 	}
 
-	residual := ResidualExpr(ast, details)
-
-	return val, residual, nil
+	residual, err := ResidualExpr(ast, details)
+	return val, residual, err
 }
 
 func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
-	p = new(partialEvaluator)
+	p = &partialEvaluator{nowFn: time.Now}
 	knownVars := make(map[string]any)
 	knownVars[conditions.CELRequestIdent] = request
 	knownVars[conditions.CELPrincipalAbbrev] = request.Principal
@@ -596,16 +596,16 @@ func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partial
 }
 
 func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {
-	return evalComprehensionBodyImpl(p.env, p.vars, e)
+	return evalComprehensionBodyImpl(p.env, p.vars, p.nowFn, e)
 }
 
-func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation, e *exprpb.Expr) (err error) {
+func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e *exprpb.Expr) (err error) {
 	if e == nil {
 		return nil
 	}
 	impl := func(e1 *exprpb.Expr) {
 		if err == nil {
-			err = evalComprehensionBodyImpl(env, pvars, e1)
+			err = evalComprehensionBodyImpl(env, pvars, nowFn, e1)
 		}
 	}
 	switch e := e.ExprKind.(type) {
@@ -647,13 +647,16 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 			return err
 		}
 		var det *cel.EvalDetails
-		_, det, err = conditions.Eval(env1, ast, pvars1, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		_, det, err = conditions.Eval(env1, ast, pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
 			return err
 		}
-		le = ResidualExpr(ast, det)
+		le, err = ResidualExpr(ast, det)
+		if err != nil {
+			return err
+		}
 		loopStep.CallExpr.Args[i] = le
-		err = evalComprehensionBodyImpl(env1, pvars1, le)
+		err = evalComprehensionBodyImpl(env1, pvars1, nowFn, le)
 		if err != nil {
 			return err
 		}
@@ -667,14 +670,24 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 	return err
 }
 
-// ResidualExpr evaluates `residual expression` of the partial evaluation.
-// There are two approaches for this:
-// 1. ast := env.ResidualAst(); ast.Expr()
-// 2. ResidualExpr()
-// The former is the built-in approach, but unlike the latter doesn't support CEL comprehensions.
-func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) *exprpb.Expr {
-	pruned := interpreter.PruneAst(a.Expr(), a.SourceInfo().GetMacroCalls(), details.State())
-	return pruned.Expr
+func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
+	pe, err := cel.AstToParsedExpr(a)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parsed expression from AST: %w", err)
+	}
+
+	expr, err := celast.ProtoToExpr(pe.Expr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert proto to expr: %w", err)
+	}
+
+	sourceInfo, err := celast.ProtoToSourceInfo(pe.SourceInfo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert sourceInfo: %w", err)
+	}
+
+	prunedAST := interpreter.PruneAst(expr, sourceInfo.MacroCalls(), details.State())
+	return celast.ExprToProto(prunedAST.Expr())
 }
 
 func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {
