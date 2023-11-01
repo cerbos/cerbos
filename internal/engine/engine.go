@@ -45,18 +45,36 @@ type PolicyLoader interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
-type checkOptions struct {
+type CheckOptions struct {
 	tracerSink tracer.Sink
 	evalParams evalParams
 }
 
-func newCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *checkOptions {
+func (co *CheckOptions) NowFunc() func() time.Time {
+	return co.evalParams.nowFunc
+}
+
+func (co *CheckOptions) LenientScopeSearch() bool {
+	return co.evalParams.lenientScopeSearch
+}
+
+func (co *CheckOptions) Globals() map[string]any {
+	return co.evalParams.globals
+}
+
+func ApplyCheckOptions(opts ...CheckOpt) *CheckOptions {
+	conf := &Conf{}
+	conf.SetDefaults()
+	return newCheckOptions(context.Background(), conf, opts...)
+}
+
+func newCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *CheckOptions {
 	var tracerSink tracer.Sink
 	if debugEnabled, ok := os.LookupEnv("CERBOS_DEBUG_ENGINE"); ok && debugEnabled != "false" {
 		tracerSink = tracer.NewZapSink(logging.FromContext(ctx).Named("tracer"))
 	}
 
-	co := &checkOptions{tracerSink: tracerSink, evalParams: defaultEvalParams(conf)}
+	co := &CheckOptions{tracerSink: tracerSink, evalParams: defaultEvalParams(conf)}
 	for _, opt := range opts {
 		opt(co)
 	}
@@ -65,10 +83,10 @@ func newCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *checkOp
 }
 
 // CheckOpt defines options for engine Check calls.
-type CheckOpt func(*checkOptions)
+type CheckOpt func(*CheckOptions)
 
 func WithTraceSink(tracerSink tracer.Sink) CheckOpt {
-	return func(co *checkOptions) {
+	return func(co *CheckOptions) {
 		co.tracerSink = tracerSink
 	}
 }
@@ -80,14 +98,14 @@ func WithZapTraceSink(log *zap.Logger) CheckOpt {
 
 // WithNowFunc sets the function for determining `now` during condition evaluation.
 func WithNowFunc(nowFunc func() time.Time) CheckOpt {
-	return func(co *checkOptions) {
+	return func(co *CheckOptions) {
 		co.evalParams.nowFunc = nowFunc
 	}
 }
 
 // WithLenientScopeSearch enables lenient scope search.
 func WithLenientScopeSearch() CheckOpt {
-	return func(co *checkOptions) {
+	return func(co *CheckOptions) {
 		co.evalParams.lenientScopeSearch = true
 	}
 }
@@ -367,7 +385,7 @@ func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.C
 	return outputs, checkErr
 }
 
-func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *CheckOptions) ([]*enginev1.CheckOutput, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.CheckSerial")
 	defer span.End()
 
@@ -385,7 +403,7 @@ func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckI
 	return outputs, nil
 }
 
-func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *CheckOptions) ([]*enginev1.CheckOutput, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.CheckParallel")
 	defer span.End()
 
@@ -414,7 +432,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {
+func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *CheckOptions) (*enginev1.CheckOutput, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
@@ -676,7 +694,7 @@ type workOut struct {
 type workIn struct {
 	ctx       context.Context
 	input     *enginev1.CheckInput
-	checkOpts *checkOptions
+	checkOpts *CheckOptions
 	out       chan<- workOut
 	index     int
 }
