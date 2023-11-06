@@ -81,6 +81,7 @@ server:
   advanced: # Advanced server settings.
     grpc: # GRPC server settings.
       connectionTimeout: 60s # ConnectionTimeout sets the timeout for establishing a new connection.
+      maxConcurrentStreams: 1024 # MaxConcurrentStreams sets the maximum concurrent streams per connection. Defaults to 1024. Set to 0 to allow the maximum possible number of streams.
       maxConnectionAge: 600s # MaxConnectionAge sets the maximum age of a connection.
       maxRecvMsgSizeBytes: 4194304 # MaxRecvMsgSizeBytes sets the maximum size of a single request message. Defaults to 4MiB. Affects performance and resource utilisation.
     http: # HTTP server settings.

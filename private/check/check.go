@@ -5,7 +5,6 @@ package check
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -14,6 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
@@ -29,18 +29,55 @@ func NewTestFixtureGetter(fsys fs.FS) *TestFixtureGetter {
 	}
 }
 
-func (g *TestFixtureGetter) LoadTestFixture(path string) (*verify.TestFixture, error) {
-	fixture, ok := g.cache[path]
-	if !ok {
-		var err error
-		fixture, err = verify.LoadTestFixture(g.fsys, path)
+func (g *TestFixtureGetter) PreCacheTestFixtures() error {
+	err := fs.WalkDir(g.fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil, fmt.Errorf("failed to load test fixture file: %w", err)
+			return err
 		}
 
+		if !d.IsDir() {
+			return nil
+		}
+
+		// We need to search the filesystem for any directory `**/testdata`, omitting nested matches, e.g. `**/testdata/**/testdata`
+		if d.Name() == util.TestDataDirectory {
+			g.LoadTestFixture(path)
+			return fs.SkipDir
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (g *TestFixtureGetter) LoadTestFixture(path string) (fixture *verify.TestFixture) {
+	fixture = g.cache[path]
+	if fixture == nil {
+		fixture, _ = verify.LoadTestFixture(g.fsys, path, true)
 		g.cache[path] = fixture
 	}
-	return fixture, nil
+	return
+}
+
+type TestFixtureCtx struct {
+	Fixture *verify.TestFixture
+	Path    string
+}
+
+func (g *TestFixtureGetter) GetAllTestFixtures() []*TestFixtureCtx {
+	fixtures := make([]*TestFixtureCtx, len(g.cache))
+
+	var i int
+	for path, fixture := range g.cache {
+		fixtures[i] = &TestFixtureCtx{
+			Path:    path,
+			Fixture: fixture,
+		}
+		i++
+	}
+
+	return fixtures
 }
 
 func Check(ctx context.Context, idx index.Index, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {

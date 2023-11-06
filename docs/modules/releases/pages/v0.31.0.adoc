@@ -1,0 +1,76 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.31.0]
+= Cerbos v0.31.0
+
+== Highlights
+
+This release introduces the `runtime.effectiveDerivedRoles` variable which can be used in policy condition expressions to inspect the set of activated derived roles in the current policy execution context. This feature makes it easier to write advanced policy rules without duplicating the logic used to define derived roles. Refer to xref:policies:conditions.adoc#top_level_identifiers[documentation] for more information.
+
+Cerbos server now automatically detects when the TLS certificates change on disk and reloads them without requiring a service restart. This makes automated certificate rotation painless and encourages better security practices through short-lived certificates.
+
+xref:configuration:engine.adoc#lenient_scopes[Lenient scope search] can now be enabled for policy test suites either globally or on a per-test basis.
+
+You can now xref:configuration:auxdata.adoc[configure Cerbos] to not reject legacy JWTs that don't have `kid` or `alg` claims. The default behaviour of Cerbos is to reject such tokens because they are considered insecure.
+
+In light of the the recently discovered HTTP/2 rapid reset vulnerability affecting all public HTTP/2 implementations, Cerbos now includes a configuration option to limit the number of maximum concurrent streams per gRPC connection. The default is 1024 concurrent streams. You can set `server.advanced.grpc.maxConcurrentStreams` configuration to 0 to get back the previous behaviour of virtually unlimited concurrent streams.
+
+The Cerbos Go SDK is now a separate Go module available at `github.com/cerbos/cerbos-sdk-go`. This makes the SDK leaner and more secure with fewer dependencies to manage. The `client` package available from `github.com/cerbos/cerbos/client` is now deprecated and will be removed in a future release. Migration in most cases would just require updating the import paths. Refer to the README at https://github.com/cerbos/cerbos-sdk-go or link:https://pkg.go.dev/github.com/cerbos/cerbos-sdk-go[Go docs] for more information.
+
+
+== Changelog
+
+
+=== Bug fixes
+
+* Correct link to resources test fixture schema (link:https://github.com/cerbos/cerbos/pull/1829[#1829])
+* Fix resource kind in test (link:https://github.com/cerbos/cerbos/pull/1813[#1813])
+
+=== Features
+
+* #**BREAKING**# Make `runtime.effectiveDerivedRoles` available in CEL expressions (link:https://github.com/cerbos/cerbos/pull/1778[#1778])
+* Reload certificates when they change on disk (link:https://github.com/cerbos/cerbos/pull/1841[#1841])
+
+=== Enhancements
+
+* Add support for defining topology spread constraints (link:https://github.com/cerbos/cerbos/pull/1821[#1821])
+* Allow parsing JWTs with legacy keysets (link:https://github.com/cerbos/cerbos/pull/1823[#1823])
+* #**BREAKING**# Configure gRPC max concurrent streams (link:https://github.com/cerbos/cerbos/pull/1853[#1853])
+* Deprecate client package (link:https://github.com/cerbos/cerbos/pull/1815[#1815])
+* Lenient scope search in tests (link:https://github.com/cerbos/cerbos/pull/1838[#1838])
+* Migrate to protovalidate (link:https://github.com/cerbos/cerbos/pull/1800[#1800])
+* Separate Go module for API definitions (link:https://github.com/cerbos/cerbos/pull/1801[#1801])
+
+=== Documentation
+
+* Remove unstable warning from Admin API (link:https://github.com/cerbos/cerbos/pull/1835[#1835])
+* Update Neovim yamlls configuration section (link:https://github.com/cerbos/cerbos/pull/1824[#1824])
+
+=== Chores
+
+* Add link to Laravel SDK (link:https://github.com/cerbos/cerbos/pull/1810[#1810])
+* Bump golang.org/x/net from 0.15.0 to 0.17.0 in /api/genpb (link:https://github.com/cerbos/cerbos/pull/1830[#1830])
+* Bump golang.org/x/net from 0.15.0 to 0.17.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1831[#1831])
+* Bump golang.org/x/net from 0.16.0 to 0.17.0 (link:https://github.com/cerbos/cerbos/pull/1833[#1833])
+* Bump google.golang.org/grpc from 1.58.0 to 1.58.3 in /tools (link:https://github.com/cerbos/cerbos/pull/1848[#1848])
+* Bump version to 0.31.0
+* Drop replace directive for API module (link:https://github.com/cerbos/cerbos/pull/1802[#1802])
+* Remove coverage badge (link:https://github.com/cerbos/cerbos/pull/1811[#1811])
+* Rename Cerbos Cloud to Cerbos Hub (link:https://github.com/cerbos/cerbos/pull/1836[#1836])
+* Set go.mod version to 1.21 (link:https://github.com/cerbos/cerbos/pull/1809[#1809])
+* Set go.work version to 1.21 (link:https://github.com/cerbos/cerbos/pull/1817[#1817])
+* Update Buf modules (link:https://github.com/cerbos/cerbos/pull/1822[#1822])
+* Update actions/checkout action to v4 (link:https://github.com/cerbos/cerbos/pull/1806[#1806])
+* Update amannn/action-semantic-pull-request action to v5.3.0 (link:https://github.com/cerbos/cerbos/pull/1819[#1819])
+* Update bufbuild/buf-lint-action action to v1.1.0 (link:https://github.com/cerbos/cerbos/pull/1840[#1840])
+* Update bufbuild/buf-setup-action action to v1.27.0 (link:https://github.com/cerbos/cerbos/pull/1827[#1827])
+* Update bufbuild/buf-setup-action action to v1.27.1 (link:https://github.com/cerbos/cerbos/pull/1844[#1844])
+* Update github actions deps to v3 (major) (link:https://github.com/cerbos/cerbos/pull/1807[#1807])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1805[#1805])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1816[#1816])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1818[#1818])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1826[#1826])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1839[#1839])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1845[#1845])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1852[#1852])
+* Update goreleaser/goreleaser-action action to v5 (link:https://github.com/cerbos/cerbos/pull/1808[#1808])

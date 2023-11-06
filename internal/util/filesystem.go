@@ -158,29 +158,20 @@ func LoadFromJSONOrYAML(fsys fs.FS, path string, dest proto.Message) error {
 	return ReadJSONOrYAML(f, dest)
 }
 
-// OpenOneOfSupportedFiles attempts to open a fileName adding supported extensions.
-func OpenOneOfSupportedFiles(fsys fs.FS, fileName string) (fs.File, error) {
+// GetOneOfSupportedFileNames attempts to retrieve a fileName adding supported extensions.
+func GetOneOfSupportedFileNames(fsys fs.FS, fileName string) (string, error) {
 	matches, err := fs.Glob(fsys, fileName+".*")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	var filepath string
+
 	for _, match := range matches {
 		if IsSupportedFileType(match) {
-			filepath = match
-			break
+			return match, nil
 		}
 	}
-	if filepath == "" {
-		return nil, ErrNoMatchingFiles
-	}
 
-	file, err := fsys.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	return file, nil
+	return "", ErrNoMatchingFiles
 }
 
 type IndexedFileType uint8

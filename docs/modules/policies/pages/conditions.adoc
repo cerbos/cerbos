@@ -21,6 +21,7 @@ condition:
 ----
 
 
+[#top_level_identifiers]
 == Top-level identifiers
 
 Within a condition expression, you have access to several top-level identifiers:

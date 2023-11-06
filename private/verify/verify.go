@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"time"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -90,11 +91,17 @@ func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, er
 	return results, nil
 }
 
-type simpleChecker interface {
-	Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
+type CheckOptions interface {
+	Globals() map[string]any
+	NowFunc() func() time.Time
+	LenientScopeSearch() bool
 }
 
-func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleChecker) (*policyv1.TestResults, error) {
+type Checker interface {
+	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts CheckOptions) ([]*enginev1.CheckOutput, error)
+}
+
+func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker) (*policyv1.TestResults, error) {
 	results, err := verify.Verify(ctx, fsys, checkFunc(eng.Check), verify.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
@@ -103,8 +110,8 @@ func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleChecker) (*pol
 	return results, nil
 }
 
-type checkFunc func(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
+type checkFunc func(context.Context, []*enginev1.CheckInput, CheckOptions) ([]*enginev1.CheckOutput, error)
 
-func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, _ ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
-	return f(ctx, inputs)
+func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+	return f(ctx, inputs, engine.ApplyCheckOptions(opts...))
 }
