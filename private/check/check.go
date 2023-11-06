@@ -13,6 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
@@ -26,6 +27,28 @@ func NewTestFixtureGetter(fsys fs.FS) *TestFixtureGetter {
 		fsys:  fsys,
 		cache: make(map[string]*verify.TestFixture),
 	}
+}
+
+func (g *TestFixtureGetter) PreCacheTestFixtures() error {
+	err := fs.WalkDir(g.fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !d.IsDir() {
+			return nil
+		}
+
+		// We need to search the filesystem for any directory `**/testdata`, omitting nested matches, e.g. `**/testdata/**/testdata`
+		if d.Name() == util.TestDataDirectory {
+			g.LoadTestFixture(path)
+			return fs.SkipDir
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (g *TestFixtureGetter) LoadTestFixture(path string) (fixture *verify.TestFixture) {
