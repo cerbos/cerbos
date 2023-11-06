@@ -4,13 +4,13 @@ include::ROOT:partial$attributes.adoc[]
 
 == Listen addresses
 
-By default the server will start an HTTP server on port `3592` and a gRPC server on `3593` that will listen on all available interfaces. 
+By default the server will start an HTTP server on port `3592` and a gRPC server on `3593` that will listen on all available interfaces.
 
 .Listen on all available interfaces (default)
 [source,yaml,linenums]
 ----
 server:
-  httpListenAddr: ":3592" 
+  httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
 ----
 
@@ -18,7 +18,7 @@ server:
 [source,yaml,linenums]
 ----
 server:
-  httpListenAddr: "192.168.0.17:3592" 
+  httpListenAddr: "192.168.0.17:3592"
   grpcListenAddr: "192.168.0.17:3593"
 ----
 
@@ -26,7 +26,7 @@ server:
 [source,yaml,linenums]
 ----
 server:
-  httpListenAddr: "unix:/var/sock/cerbos.http" 
+  httpListenAddr: "unix:/var/sock/cerbos.http"
   grpcListenAddr: "unix:/var/sock/cerbos.grpc"
 ----
 
@@ -34,12 +34,12 @@ server:
 [source,yaml,linenums]
 ----
 server:
-  httpListenAddr: "unix:/var/sock/cerbos.http" 
+  httpListenAddr: "unix:/var/sock/cerbos.http"
   grpcListenAddr: "unix:/var/sock/cerbos.grpc"
   udsFileMode: 0o776
 ----
 
-== Metrics 
+== Metrics
 
 By default, Prometheus metrics are available to scrape from the `/_cerbos/metrics` HTTP endpoint. If you want to disable metrics reporting, set `metricsEnabled` to `false`.
 
@@ -68,12 +68,12 @@ You can enable transport layer security (TLS) by defining the paths to the certi
 [source,yaml,linenums]
 ----
 server:
-  tls: 
+  tls:
     cert: /path/to/certificate
     key: /path/to/private_key
 ----
 
-NOTE: For production use cases that require automatic certificate reloading, workload identities and other advanced features, we recommend running a proxy server such as link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] in front of the Cerbos server. 
+NOTE: For production use cases that require automatic certificate reloading, workload identities and other advanced features, we recommend running a proxy server such as link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] in front of the Cerbos server.
 
 
 == CORS
@@ -94,9 +94,9 @@ server:
 [#request-limits]
 == Request limits
 
-By default, each Cerbos API request can include a batch of 50 resources with up to 50 actions to be checked for each resource. This limit is in place to prevent the server from being overloaded by very large requests -- which affects throughput and CPU,memory,I/O usage. 
+By default, each Cerbos API request can include a batch of 50 resources with up to 50 actions to be checked for each resource. This limit is in place to prevent the server from being overloaded by very large requests -- which affects throughput and CPU,memory,I/O usage.
 
-WARNING: Changing these settings could have a large impact on the performance and resource utilisation of Cerbos instances. 
+WARNING: Changing these settings could have a large impact on the performance and resource utilisation of Cerbos instances.
 
 [source,yaml,linenums]
 ----
@@ -112,7 +112,7 @@ server:
 
 The xref:api:admin_api.adoc[Cerbos Admin API] provides administration functions such as adding or updating policies (if the underlying storage engine supports it) to the running Cerbos instance. It is disabled by default.
 
-Authentication is mandatory for the Admin API. See xref:api:admin_api.adoc[Cerbos Admin API documentation] for more details. 
+Authentication is mandatory for the Admin API. See xref:api:admin_api.adoc[Cerbos Admin API documentation] for more details.
 
 IMPORTANT: TLS should be enabled to ensure that credentials are transmitted securely over the network. We also highly recommend changing the default username and password when deploying Cerbos.
 
@@ -146,14 +146,5 @@ echo "cerbosAdmin" | htpasswd -niBC 10 cerbos | cut -d ':' -f 2 | base64
 
 ====
 
-NOTE: The output of the above command for a given password value is not deterministic. It will vary between invocations or between different machines. This is because the `bcrypt` algorithm uses a salt (random noise) to make password cracking harder. 
+NOTE: The output of the above command for a given password value is not deterministic. It will vary between invocations or between different machines. This is because the `bcrypt` algorithm uses a salt (random noise) to make password cracking harder.
 
-== Enable Playground
-
-The Cerbos playground API is disabled by default. To enable it, set `playgroundEnabled` to `true`.
-
-[source,yaml,linenums]
-----
-server:
-  playgroundEnabled: true
-----
