@@ -478,7 +478,7 @@ func (tf *TestFixture) lookupPrincipal(ts *policyv1.TestSuite, k string) (*engin
 		return v, nil
 	}
 
-	if tf != nil {
+	if tf != nil && tf.Principals != nil {
 		if v, ok := tf.Principals.Fixtures[k]; ok {
 			return v, nil
 		}
@@ -492,7 +492,7 @@ func (tf *TestFixture) lookupResource(ts *policyv1.TestSuite, k string) (*engine
 		return v, nil
 	}
 
-	if tf != nil {
+	if tf != nil && tf.Resources != nil {
 		if v, ok := tf.Resources.Fixtures[k]; ok {
 			return v, nil
 		}
@@ -510,7 +510,7 @@ func (tf *TestFixture) lookupAuxData(ts *policyv1.TestSuite, k string) (*enginev
 		return v, nil
 	}
 
-	if tf != nil {
+	if tf != nil && tf.AuxData != nil {
 		if v, ok := tf.AuxData.Fixtures[k]; ok {
 			return v, nil
 		}
