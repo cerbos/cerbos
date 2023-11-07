@@ -1,4 +1,5 @@
 :app-version: {page-component-display-version}
+:app-alternative-docker-img: docker.io/cerbos/cerbos:{app-version}
 :app-container-registry: ghcr.io
 :app-docker-img: {app-container-registry}/cerbos/cerbos:{app-version}
 :app-github-url: https://github.com/cerbos/cerbos
