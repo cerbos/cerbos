@@ -99,7 +99,7 @@ func configureOTLP(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to create otlp exporter: %w", err)
 		}
-	case "http":
+	case "http/protobuf":
 		exporter, err = otlphttp.New(ctx, otlphttp.WithEndpoint(conf.OTLP.CollectorEndpoint))
 		if err != nil {
 			return fmt.Errorf("failed to create otlp exporter: %w", err)

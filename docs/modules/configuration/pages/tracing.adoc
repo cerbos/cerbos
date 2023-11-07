@@ -18,6 +18,22 @@ link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observ
 
 ****
 
+
+[#otlp]
+== OTLP
+
+.Send trace data to an OTLP collector
+[source,yaml,linenums]
+----
+tracing:
+  serviceName: cerbos
+  sampleProbability: 0.5
+  exporter: otlp
+  otlp:
+    protocol: grpc # or http/protobuf
+    collectorEndpoint: "otel:4317"
+----
+
 == Jaeger [Deprecated]
 
 NOTE: Jaeger now supports OTLP and it's recommended to use the OTLP exporter instead. The native Jaeger exporter is deprecated and will be removed in a future release.
@@ -43,19 +59,4 @@ tracing:
   exporter: jaeger
   jaeger:
     collectorEndpoint: "http://localhost:14268/api/traces"
-----
-
-[#otlp]
-== OTLP
-
-.Send trace data to an OTLP collector
-[source,yaml,linenums]
-----
-tracing:
-  serviceName: cerbos
-  sampleProbability: 0.5
-  exporter: otlp
-  otlp:
-    protocol: grpc # or http
-    collectorEndpoint: "otel:4317"
 ----
