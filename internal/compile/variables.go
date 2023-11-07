@@ -177,32 +177,28 @@ func (vd *variableDefinitions) resolveReferences() {
 }
 
 func (vd *variableDefinitions) references(parent string, expr *expr.CheckedExpr) map[string]struct{} {
-	checkedAST, err := ast.CheckedExprToCheckedAST(expr)
+	exprAST, err := ast.ToAST(expr)
 	if err != nil {
 		vd.modCtx.addErrWithDesc(err, "Failed to convert expression to AST in %s", parent)
 		return nil
 	}
 
 	references := make(map[string]struct{})
-	nodes := []ast.NavigableExpr{ast.NavigateCheckedAST(checkedAST)}
-	for len(nodes) > 0 {
-		node := nodes[0]
-		nodes = nodes[1:]
-
-		if node.Kind() == ast.SelectKind {
-			selectNode := node.AsSelect()
-			operandNode := selectNode.Operand()
-			if operandNode.Kind() == ast.IdentKind {
-				ident := operandNode.AsIdent()
-				if ident == conditions.CELVariablesIdent || ident == conditions.CELVariablesAbbrev {
-					references[selectNode.FieldName()] = struct{}{}
-				}
-				continue
-			}
+	visitor := ast.NewExprVisitor(func(e ast.Expr) {
+		if e.Kind() != ast.SelectKind {
+			return
 		}
 
-		nodes = append(nodes, node.Children()...)
-	}
+		selectNode := e.AsSelect()
+		operandNode := selectNode.Operand()
+		if operandNode.Kind() == ast.IdentKind {
+			ident := operandNode.AsIdent()
+			if ident == conditions.CELVariablesIdent || ident == conditions.CELVariablesAbbrev {
+				references[selectNode.FieldName()] = struct{}{}
+			}
+		}
+	})
+	ast.PreOrderVisit(exprAST.Expr(), visitor)
 
 	return references
 }

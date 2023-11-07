@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -287,7 +288,7 @@ func TestQueryPlan(t *testing.T) {
 					} else {
 						is.NoError(err)
 						is.NotNil(response)
-						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s", response.FilterDebug)
+						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s\n%s\n", response.FilterDebug, protojson.Format(response.Filter))
 					}
 				})
 			}

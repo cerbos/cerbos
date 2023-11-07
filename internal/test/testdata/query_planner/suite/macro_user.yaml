@@ -266,11 +266,16 @@ tests:
                       operator: lt
                       operands:
                         - expression:
-                            operator: timestamp
+                            operator: timeSince
                             operands:
-                              - variable: x.lastAccessed
+                              - expression:
+                                  operator: timestamp
+                                  operands:
+                                    - variable: x.lastAccessed
                         - expression:
-                            operator: now
+                            operator: duration
+                            operands:
+                              - value: 3600s
                   - variable: x
   - action: timeline
     resource:
