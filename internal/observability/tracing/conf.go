@@ -79,13 +79,14 @@ func (c *Conf) Validate() error {
 		if c.OTLP.CollectorEndpoint == "" {
 			return errOTLPEndpointUndefined
 		}
-		if c.OTLP.Protocol == "" {
-			c.OTLP.Protocol = "grpc"
-		}
 
 		return nil
 
 	default:
 		return fmt.Errorf("unknown trace exporter %s", c.Exporter)
 	}
+}
+
+func (c *Conf) SetDefaults() {
+	c.OTLP.Protocol = "grpc"
 }
