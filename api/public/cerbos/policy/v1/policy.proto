@@ -355,6 +355,14 @@ message TestTable {
         min_pairs: 1,
         keys: {
           string: {min_len: 1}
+        },
+        values: {
+          enum: {
+            in: [
+              1,
+              2
+            ]
+          }
         }
       },
       (buf.validate.field).required = true
@@ -407,6 +415,14 @@ message Test {
       min_pairs: 1,
       keys: {
         string: {min_len: 1}
+      },
+      values: {
+        enum: {
+          in: [
+            1,
+            2
+          ]
+        }
       }
     },
     (buf.validate.field).required = true

@@ -5,6 +5,7 @@ package verify
 
 import (
 	"fmt"
+	"strings"
 
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -57,13 +58,27 @@ func buildTestMatrix(table *policyv1.TestTable) ([]testMatrixElement, error) {
 }
 
 func buildExpectationLookup(table *policyv1.TestTable) (map[testMatrixKey]testMatrixExpectations, error) {
-	lookup := make(map[testMatrixKey]testMatrixExpectations, len(table.Expected))
+	inputActions := table.Input.GetActions()
+	inputActionsMap := make(map[string]struct{}, len(inputActions))
+	for _, a := range inputActions {
+		inputActionsMap[a] = struct{}{}
+	}
 
+	lookup := make(map[testMatrixKey]testMatrixExpectations, len(table.Expected))
 	for _, expectation := range table.Expected {
 		key := testMatrixKey{Principal: expectation.Principal, Resource: expectation.Resource}
-
 		if _, ok := lookup[key]; ok {
 			return nil, fmt.Errorf("found multiple expectations for principal %q and resource %q", key.Principal, key.Resource)
+		}
+
+		var extraExpectations []string
+		for a := range expectation.Actions {
+			if _, ok := inputActionsMap[a]; !ok {
+				extraExpectations = append(extraExpectations, a)
+			}
+		}
+		if len(extraExpectations) > 0 {
+			return nil, fmt.Errorf("found expectations for actions that do not exist in the input actions list: [%s]", strings.Join(extraExpectations, ","))
 		}
 
 		tmExpectation := testMatrixExpectations{actions: expectation.Actions}

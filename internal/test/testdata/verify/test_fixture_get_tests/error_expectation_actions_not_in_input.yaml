@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=../../.jsonschema/VerifyTestFixtureGetTestsTestCase.schema.json
 ---
 table:
-  name: Expectation not in input
-  description: You can't have an expectation for a principal+resource pair not in input.
+  name: Expectation actions not in input
+  description: You can't have an expectation for an action not in input.
   input:
     principals:
       - employee
@@ -13,11 +13,13 @@ table:
       - view
       - approve
   expected:
-    - principal: department_head
+    - principal: employee
       resource: employee_leave_request
       actions:
         view: EFFECT_ALLOW
         approve: EFFECT_ALLOW
+        delete: EFFECT_DENY
+        reject: EFFECT_DENY
 
 wantErr: |-
-  invalid test "Expectation not in input": found an expectation for principal "department_head" and resource "employee_leave_request", but at least one of these is not present in input
+  invalid test "Expectation actions not in input": found expectations for actions that do not exist in the input actions list: [delete,reject]
