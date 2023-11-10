@@ -66,6 +66,9 @@ func TestVerify(t *testing.T) {
 			require.NoError(t, err, "Test suite failed")
 			require.Empty(t, cmp.Diff(tc.want, have,
 				protocmp.Transform(),
+				protocmp.SortRepeated(func(a, b *policyv1.TestResults_Suite) bool {
+					return a.File > b.File
+				}),
 				cmp.Comparer(func(s1, s2 string) bool {
 					return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
 				}),

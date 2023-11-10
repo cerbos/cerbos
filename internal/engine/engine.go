@@ -110,6 +110,13 @@ func WithLenientScopeSearch() CheckOpt {
 	}
 }
 
+// WithGlobals sets the global variables for the engine.
+func WithGlobals(globals map[string]any) CheckOpt {
+	return func(co *CheckOptions) {
+		co.evalParams.globals = globals
+	}
+}
+
 type Engine struct {
 	schemaMgr         schema.Manager
 	auditLog          audit.Log

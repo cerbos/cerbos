@@ -233,18 +233,28 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 		AuxData:   test.Input.AuxData,
 	}}
 
-	nowFunc := time.Now
-	lenientScopeSearch := false
-	if test.Options != nil {
-		if test.Options.Now != nil {
-			ts := test.Options.Now.AsTime()
-			nowFunc = func() time.Time { return ts }
-		}
-
-		lenientScopeSearch = test.Options.LenientScopeSearch
+	opts := checkOptions{
+		nowFunc: time.Now,
+		trace:   trace,
 	}
 
-	actual, traces, err := performCheck(ctx, eng, inputs, trace, nowFunc, lenientScopeSearch)
+	if test.Options != nil {
+		opts.lenientScopeSearch = test.Options.LenientScopeSearch
+
+		if test.Options.Now != nil {
+			ts := test.Options.Now.AsTime()
+			opts.nowFunc = func() time.Time { return ts }
+		}
+
+		if len(test.Options.Globals) > 0 {
+			opts.globals = make(map[string]any, len(test.Options.Globals))
+			for k, v := range test.Options.Globals {
+				opts.globals[k] = v.AsInterface()
+			}
+		}
+	}
+
+	actual, traces, err := performCheck(ctx, eng, inputs, opts)
 	details.EngineTrace = traces
 
 	if err != nil {
@@ -321,13 +331,20 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 	return details
 }
 
-func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, trace bool, nowFunc func() time.Time, lenientScopeSearch bool) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
-	checkOpts := []engine.CheckOpt{engine.WithNowFunc(nowFunc)}
-	if lenientScopeSearch {
+type checkOptions struct {
+	nowFunc            func() time.Time
+	globals            map[string]any
+	trace              bool
+	lenientScopeSearch bool
+}
+
+func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, opts checkOptions) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
+	checkOpts := []engine.CheckOpt{engine.WithNowFunc(opts.nowFunc), engine.WithGlobals(opts.globals)}
+	if opts.lenientScopeSearch {
 		checkOpts = append(checkOpts, engine.WithLenientScopeSearch())
 	}
 
-	if !trace {
+	if !opts.trace {
 		output, err := eng.Check(ctx, inputs, checkOpts...)
 		return output, nil, err
 	}

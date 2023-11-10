@@ -2,15 +2,6 @@
   "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestTable/Expectation.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.effect.v1.Effect": {
-      "type": "string",
-      "enum": [
-        "EFFECT_UNSPECIFIED",
-        "EFFECT_ALLOW",
-        "EFFECT_DENY",
-        "EFFECT_NO_MATCH"
-      ]
-    },
     "cerbos.engine.v1.OutputEntry": {
       "type": "object",
       "additionalProperties": false,
@@ -61,7 +52,11 @@
       "type": "object",
       "minProperties": 1,
       "additionalProperties": {
-        "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        "type": "string",
+        "enum": [
+          "EFFECT_ALLOW",
+          "EFFECT_DENY"
+        ]
       },
       "propertyNames": {
         "type": "string",
