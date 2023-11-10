@@ -5,6 +5,7 @@ package verify
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -78,6 +79,7 @@ func buildExpectationLookup(table *policyv1.TestTable) (map[testMatrixKey]testMa
 			}
 		}
 		if len(extraExpectations) > 0 {
+			sort.Strings(extraExpectations)
 			return nil, fmt.Errorf("found expectations for actions that do not exist in the input actions list: [%s]", strings.Join(extraExpectations, ","))
 		}
 
