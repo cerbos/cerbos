@@ -1,0 +1,60 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    id: john
+    roles:
+      - employee
+-- testdata/resources.yaml --
+---
+resources:
+  foo:
+    kind: global
+    id: XX125
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Test globals
+options:
+  globals:
+    environment: test
+  now: "2022-08-02T15:00:00Z"
+tests:
+  - name: With global globals
+    input:
+      principals:
+        - john
+      resources:
+        - foo
+      actions:
+        - test
+        - testfoo
+    expected:
+      - principal: john
+        resource: foo
+        actions:
+          test: EFFECT_ALLOW
+          testfoo: EFFECT_DENY
+
+  - name: With local globals
+    options:
+      globals:
+        environment: hell
+        my_map:
+          foo: ["wibble", "wobble"]
+      now: "2022-08-03T15:00:00Z"
+    input:
+      principals:
+        - john
+      resources:
+        - foo
+      actions:
+        - test
+        - testfoo
+    expected:
+      - principal: john
+        resource: foo
+        actions:
+          test: EFFECT_DENY
+          testfoo: EFFECT_ALLOW

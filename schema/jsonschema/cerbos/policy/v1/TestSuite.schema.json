@@ -107,6 +107,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "globals": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
         "lenientScopeSearch": {
           "type": "boolean"
         },

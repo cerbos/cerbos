@@ -1000,6 +1000,25 @@ func cerbos_policy_v1_TestOptions_hashpb_sum(m *v11.TestOptions, hasher hash.Has
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.LenientScopeSearch)))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestOptions.globals"]; !ok {
+		if len(m.Globals) > 0 {
+			keys := make([]string, len(m.Globals))
+			i := 0
+			for k := range m.Globals {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Globals[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Globals[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestResults_Action_hashpb_sum(m *v11.TestResults_Action, hasher hash.Hash, ignore map[string]struct{}) {
