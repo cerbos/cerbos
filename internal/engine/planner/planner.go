@@ -671,22 +671,8 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 }
 
 func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
-	pe, err := cel.AstToParsedExpr(a)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get parsed expression from AST: %w", err)
-	}
-
-	expr, err := celast.ProtoToExpr(pe.Expr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert proto to expr: %w", err)
-	}
-
-	sourceInfo, err := celast.ProtoToSourceInfo(pe.SourceInfo)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert sourceInfo: %w", err)
-	}
-
-	prunedAST := interpreter.PruneAst(expr, sourceInfo.MacroCalls(), details.State())
+	ast := a.NativeRep()
+	prunedAST := interpreter.PruneAst(ast.Expr(), ast.SourceInfo().MacroCalls(), details.State())
 	return celast.ExprToProto(prunedAST.Expr())
 }
 
