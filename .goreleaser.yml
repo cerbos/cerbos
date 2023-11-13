@@ -90,6 +90,9 @@ dockers:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
       - "ghcr.io/cerbos/cerbos:latest-amd64"
       - "ghcr.io/cerbos/cerbos:dev-amd64"
+      - "docker.io/cerbos/cerbos:{{ .Version }}-amd64"
+      - "docker.io/cerbos/cerbos:latest-amd64"
+      - "docker.io/cerbos/cerbos:dev-amd64"
     ids:
       - cerbos
     goarch: amd64
@@ -109,6 +112,9 @@ dockers:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
       - "ghcr.io/cerbos/cerbos:latest-arm64"
       - "ghcr.io/cerbos/cerbos:dev-arm64"
+      - "docker.io/cerbos/cerbos:{{ .Version }}-arm64"
+      - "docker.io/cerbos/cerbos:latest-arm64"
+      - "docker.io/cerbos/cerbos:dev-arm64"
     ids:
       - cerbos
     goarch: arm64
@@ -128,6 +134,9 @@ dockers:
       - "ghcr.io/cerbos/cerbosctl:{{ .Version }}-amd64"
       - "ghcr.io/cerbos/cerbosctl:latest-amd64"
       - "ghcr.io/cerbos/cerbosctl:dev-amd64"
+      - "docker.io/cerbos/cerbosctl:{{ .Version }}-amd64"
+      - "docker.io/cerbos/cerbosctl:latest-amd64"
+      - "docker.io/cerbos/cerbosctl:dev-amd64"
     ids:
       - cerbosctl
     goarch: amd64
@@ -147,6 +156,9 @@ dockers:
       - "ghcr.io/cerbos/cerbosctl:{{ .Version }}-arm64"
       - "ghcr.io/cerbos/cerbosctl:latest-arm64"
       - "ghcr.io/cerbos/cerbosctl:dev-arm64"
+      - "docker.io/cerbos/cerbosctl:{{ .Version }}-arm64"
+      - "docker.io/cerbos/cerbosctl:latest-arm64"
+      - "docker.io/cerbos/cerbosctl:dev-arm64"
     ids:
       - cerbosctl
     goarch: arm64
@@ -190,6 +202,36 @@ docker_manifests:
     image_templates:
       - "ghcr.io/cerbos/cerbosctl:dev-amd64"
       - "ghcr.io/cerbos/cerbosctl:dev-arm64"
+
+  - name_template: "docker.io/cerbos/cerbos:{{ .Version }}"
+    image_templates:
+      - "docker.io/cerbos/cerbos:{{ .Version }}-amd64"
+      - "docker.io/cerbos/cerbos:{{ .Version }}-arm64"
+
+  - name_template: "docker.io/cerbos/cerbosctl:{{ .Version }}"
+    image_templates:
+      - "docker.io/cerbos/cerbosctl:{{ .Version }}-amd64"
+      - "docker.io/cerbos/cerbosctl:{{ .Version }}-arm64"
+
+  - name_template: "docker.io/cerbos/cerbos:latest"
+    image_templates:
+      - "docker.io/cerbos/cerbos:latest-amd64"
+      - "docker.io/cerbos/cerbos:latest-arm64"
+
+  - name_template: "docker.io/cerbos/cerbosctl:latest"
+    image_templates:
+      - "docker.io/cerbos/cerbosctl:latest-amd64"
+      - "docker.io/cerbos/cerbosctl:latest-arm64"
+
+  - name_template: "docker.io/cerbos/cerbos:dev"
+    image_templates:
+      - "docker.io/cerbos/cerbos:dev-amd64"
+      - "docker.io/cerbos/cerbos:dev-arm64"
+
+  - name_template: "docker.io/cerbos/cerbosctl:dev"
+    image_templates:
+      - "docker.io/cerbos/cerbosctl:dev-amd64"
+      - "docker.io/cerbos/cerbosctl:dev-arm64"
 
 brews:
   - repository:

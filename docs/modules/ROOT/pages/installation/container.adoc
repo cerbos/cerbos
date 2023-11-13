@@ -35,3 +35,5 @@ EOF
 ----
 docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart:/quickstart -p 3592:3592 {app-docker-img} server --config=/quickstart/.cerbos.yaml
 ----
+
+NOTE: Cerbos container images are mirrored to Docker Hub and the latest version is available at {app-alternative-docker-img} as well.

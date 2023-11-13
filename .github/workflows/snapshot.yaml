@@ -83,6 +83,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
       - name: Install Go and cache dependencies
         uses: ./.github/actions/setup-go
         with:
@@ -116,6 +123,20 @@ jobs:
           docker manifest push ghcr.io/cerbos/cerbosctl:${{ github.sha }}
           docker manifest create ghcr.io/cerbos/cerbosctl:dev ghcr.io/cerbos/cerbosctl:dev-arm64 ghcr.io/cerbos/cerbosctl:dev-amd64
           docker manifest push ghcr.io/cerbos/cerbosctl:dev
+
+      - name: Push Cerbos dev images to Docker Hub
+        run: |
+          docker push docker.io/cerbos/cerbos:dev-amd64
+          docker push docker.io/cerbos/cerbos:dev-arm64
+          docker manifest create docker.io/cerbos/cerbos:dev docker.io/cerbos/cerbos:dev-arm64 docker.io/cerbos/cerbos:dev-amd64
+          docker manifest push docker.io/cerbos/cerbos:dev
+
+      - name: Push Cerbosctl dev images to Docker Hub
+        run: |
+          docker push docker.io/cerbos/cerbosctl:dev-amd64
+          docker push docker.io/cerbos/cerbosctl:dev-arm64
+          docker manifest create docker.io/cerbos/cerbosctl:dev docker.io/cerbos/cerbosctl:dev-arm64 docker.io/cerbos/cerbosctl:dev-amd64
+          docker manifest push docker.io/cerbos/cerbosctl:dev
 
   publishProtos:
     name: Publish Protobufs
