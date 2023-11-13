@@ -450,7 +450,6 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 		grpc.ChainStreamInterceptor(
 			grpc_recovery.StreamServerInterceptor(),
 			telemetryInt.StreamServerInterceptor(),
-			otelgrpc.StreamServerInterceptor(),
 			grpc_validator.StreamServerInterceptor(validator.Validator),
 			grpc_logging.StreamServerInterceptor(RequestLogger(log, "Handled request")),
 			grpc_logging.StreamServerInterceptor(PayloadLogger(s.conf), grpc_logging.WithLogOnEvents(grpc_logging.PayloadReceived, grpc_logging.PayloadSent)),
@@ -458,7 +457,6 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
 			telemetryInt.UnaryServerInterceptor(),
-			otelgrpc.UnaryServerInterceptor(),
 			grpc_validator.UnaryServerInterceptor(validator.Validator),
 			RequestMetadataUnaryServerInterceptor,
 			auditInterceptor,
@@ -466,7 +464,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 			grpc_logging.UnaryServerInterceptor(PayloadLogger(s.conf), grpc_logging.WithLogOnEvents(grpc_logging.PayloadReceived, grpc_logging.PayloadSent)),
 			cerbosVersionUnaryServerInterceptor,
 		),
-		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: s.conf.Advanced.GRPC.MaxConnectionAge}),
 		grpc.MaxConcurrentStreams(s.conf.Advanced.GRPC.MaxConcurrentStreams),
 		grpc.ConnectionTimeout(s.conf.Advanced.GRPC.ConnectionTimeout),
@@ -573,7 +571,7 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 	return []grpc.DialOption{
 		grpc.WithUserAgent("grpc-gateway"),
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minGRPCConnectTimeout}),
-		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	}
 }
 
