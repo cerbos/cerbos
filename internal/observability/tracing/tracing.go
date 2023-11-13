@@ -10,12 +10,10 @@ import (
 	"net/http"
 	"strings"
 
-	octrace "go.opencensus.io/trace"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	otelpropb3 "go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
-	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
 	"go.opentelemetry.io/otel/exporters/jaeger" //nolint:staticcheck
 	otlp "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	otelprop "go.opentelemetry.io/otel/propagation"
@@ -24,6 +22,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
 	"go.opentelemetry.io/otel/semconv/v1.18.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -49,7 +48,7 @@ func InitFromConf(ctx context.Context, conf Conf) error {
 	case otlpExporter:
 		return configureOTLP(ctx)
 	case "":
-		otel.SetTracerProvider(trace.NewNoopTracerProvider())
+		otel.SetTracerProvider(noop.NewTracerProvider())
 		return nil
 	default:
 		return fmt.Errorf("unknown exporter %q", conf.Exporter)
@@ -130,7 +129,6 @@ func configureOtel(ctx context.Context, svcName *string, exporter tracesdk.SpanE
 
 	otel.SetTracerProvider(traceProvider)
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator(otelprop.TraceContext{}, otelprop.Baggage{}, otelpropb3.New()))
-	octrace.DefaultTracer = ocbridge.NewTracer(traceProvider.Tracer("cerbos"))
 
 	go func() {
 		<-ctx.Done()
