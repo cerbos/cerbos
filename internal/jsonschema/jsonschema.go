@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -96,6 +97,10 @@ func newValidationErrorList(validationErr *jsonschema.ValidationError) validatio
 	for _, err := range validationErr.Causes {
 		errs = append(errs, newValidationErrorList(err)...)
 	}
+
+	sort.Slice(errs, func(i, j int) bool {
+		return errs[i].Path > errs[j].Path
+	})
 
 	return errs
 }
