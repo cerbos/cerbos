@@ -34,7 +34,7 @@ const (
 	redpandaVersion = "v23.2.15"
 
 	defaultIntegrationTopic = "cerbos"
-	maxWait                 = 150 * time.Second
+	maxWait                 = 120 * time.Second
 )
 
 func TestProduceWithTLS(t *testing.T) {
@@ -264,10 +264,15 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 	}
 
 	var clientOpts []kgo.Opt
+	exposedPort := "9092/tcp"
 	if tlsConfig != nil {
 		testDataAbsPath, err := filepath.Abs("testdata/valid")
 		require.NoError(t, err)
 
+		exposedPort = "65136/tcp"
+		runOpts.ExposedPorts = append(runOpts.ExposedPorts, "65136/tcp")
+		delete(runOpts.PortBindings, "9092/tcp")
+		runOpts.PortBindings["65136/tcp"] = []docker.PortBinding{{HostIP: host, HostPort: port}}
 		runOpts.Cmd = append(runOpts.Cmd, "--config", "/conf/rpconfig.yaml")
 		runOpts.Mounts = []string{fmt.Sprintf("%s:/conf", testDataAbsPath)}
 
@@ -283,8 +288,8 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 		_ = pool.Purge(resource)
 	})
 
-	t.Logf("Advertised: %s | Seed brokers: %s", hostPort, resource.GetHostPort("9092/tcp"))
-	clientOpts = append(clientOpts, kgo.SeedBrokers(resource.GetHostPort("9092/tcp")))
+	t.Logf("Advertised: %s | Seed brokers: %s", hostPort, resource.GetHostPort(exposedPort))
+	clientOpts = append(clientOpts, kgo.SeedBrokers(resource.GetHostPort(exposedPort)))
 
 	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
 		ctx, cancelFunc := context.WithCancel(context.Background())
