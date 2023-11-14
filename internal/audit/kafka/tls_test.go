@@ -26,7 +26,7 @@ func TestNewTLSConfig(t *testing.T) {
 	_, err = kafka.NewTLSConfig(ctx, 0, false, "path/to/ca", "", "path/to/key")
 	require.EqualError(t, err, "certPath and keyPath must both be empty or both be non-empty")
 
-	caCertPath := "testdata/valid/ca.crt"
+	caCertPath := "testdata/valid/rpk/ca.crt"
 	_, err = kafka.NewTLSConfig(ctx, 0, false, caCertPath, "", "")
 	require.NoError(t, err)
 
