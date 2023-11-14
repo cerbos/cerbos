@@ -1,0 +1,16 @@
+{
+  "suites": [
+    {
+      "file": "udf_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
+      },
+      "error": "Failed to load the test suite: invalid test \"John and his leave request\": resource \"pending_leave_request\" not found",
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
+  }
+}
