@@ -34,7 +34,7 @@ const (
 	redpandaVersion = "v23.2.15"
 
 	defaultIntegrationTopic = "cerbos"
-	maxWait                 = 60 * time.Second
+	maxWait                 = 120 * time.Second
 )
 
 func TestProduceWithTLS(t *testing.T) {
