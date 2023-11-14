@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/kafka"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -34,20 +36,20 @@ const (
 	redpandaVersion = "v23.2.15"
 
 	defaultIntegrationTopic = "cerbos"
-	maxWait                 = 120 * time.Second
+	maxWait                 = 60 * time.Second
 )
 
 func TestProduceWithTLS(t *testing.T) {
 	// Redpanda tries to create a temporary configuration file in /etc/redpanda (or whichever directory specified by --config)
 	// When that directory is a docker mount, the temp file creation fails because the Redpanda process is running as a user who
 	// doesn't have enough privileges to do so.
-	t.Skip("TLS cannot be tested on Docker due to https://github.com/redpanda-data/redpanda/issues/12717")
+	// t.Skip("TLS cannot be tested on Docker due to https://github.com/redpanda-data/redpanda/issues/12717")
 	t.Parallel()
 
 	ctx := context.Background()
 
 	// setup kafka
-	uri := newKafkaBrokerWithTLS(t, defaultIntegrationTopic, "testdata/valid/rpk/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
+	uri := newKafkaBrokerWithTLS(t, defaultIntegrationTopic, "testdata/valid/certs/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
 	log, err := newLog(map[string]any{
 		"audit": map[string]any{
 			"enabled": true,
@@ -55,7 +57,7 @@ func TestProduceWithTLS(t *testing.T) {
 			"kafka": map[string]any{
 				"authentication": map[string]any{
 					"tls": map[string]any{
-						"caPath":         "testdata/valid/rpk/ca.crt",
+						"caPath":         "testdata/valid/certs/ca.crt",
 						"certPath":       "testdata/valid/client/tls.crt",
 						"keyPath":        "testdata/valid/client/tls.key",
 						"reloadInterval": "10s",
@@ -238,11 +240,31 @@ func newKafkaBroker(t *testing.T, topic string) string {
 func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string {
 	t.Helper()
 
-	hostPort, err := util.GetFreeListenAddr()
+	/*
+		hostPort, err := util.GetFreeListenAddr()
+		require.NoError(t, err, "Failed to find free address")
+
+		host, port, err := net.SplitHostPort(hostPort)
+		require.NoError(t, err, "Failed to split free address: %s", hostPort)
+	*/
+
+	port, err := util.GetFreePort()
 	require.NoError(t, err, "Failed to find free address")
 
-	host, port, err := net.SplitHostPort(hostPort)
-	require.NoError(t, err, "Failed to split free address: %s", hostPort)
+	testDataAbsPath, err := filepath.Abs("testdata/valid")
+	require.NoError(t, err)
+
+	cfg := test.RenderTemplate(t, filepath.Join(testDataAbsPath, "redpanda", "redpanda.yaml.gotmpl"), struct {
+		TLSEnabled bool
+		Port       int
+	}{
+		TLSEnabled: tlsConfig != nil,
+		Port:       port,
+	})
+	t.Logf("Config:\n%s\n", string(cfg))
+
+	tempDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "redpanda.yaml"), cfg, 0o644))
 
 	pool, err := dockertest.NewPool("")
 	require.NoError(t, err, "Failed to connect to Docker")
@@ -251,38 +273,30 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 	runOpts := &dockertest.RunOptions{
 		Repository: redpandaImage,
 		Tag:        redpandaVersion,
+		Entrypoint: []string{"/opt/redpanda/bin/redpanda"},
 		Cmd: []string{
-			"redpanda",
-			"start",
-			"--mode", "dev-container",
-			// kafka admin client will retrieve the advertised address from the broker
-			// so we need it to use the same port that is exposed on the container
-			"--advertise-kafka-addr", hostPort,
+			"--redpanda-cfg",
+			"/etc/redpanda/redpanda.yaml",
+			"--unsafe-bypass-fsync=true",
+			"--reserve-memory=0M",
+			"--overprovisioned",
+			"--lock-memory=false",
 		},
 		ExposedPorts: []string{
 			"9092/tcp",
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9092/tcp": {{HostIP: host, HostPort: port}},
+			"9092/tcp": {{HostPort: strconv.Itoa(port)}},
+		},
+		Mounts: []string{
+			fmt.Sprintf("%s:/certs", filepath.Join(testDataAbsPath, "certs")),
+			fmt.Sprintf("%s:/etc/redpanda", tempDir),
 		},
 	}
 
 	var clientOpts []kgo.Opt
 	exposedPort := "9092/tcp"
 	if tlsConfig != nil {
-		testDataAbsPath, err := filepath.Abs("testdata/valid")
-		require.NoError(t, err)
-
-		exposedPort = "65136/tcp"
-		runOpts.ExposedPorts = append(runOpts.ExposedPorts, exposedPort)
-		runOpts.PortBindings[docker.Port(exposedPort)] = []docker.PortBinding{{HostIP: host, HostPort: port}}
-		delete(runOpts.PortBindings, docker.Port(exposedPort))
-
-		runOpts.Mounts = []string{
-			fmt.Sprintf("%s:/var/lib/redpanda/.config/rpk", filepath.Join(testDataAbsPath, "rpk")),
-			fmt.Sprintf("%s:/etc/redpanda", filepath.Join(testDataAbsPath, "redpanda")),
-		}
-
 		clientOpts = append(clientOpts, kgo.DialTLSConfig(tlsConfig))
 	}
 
@@ -295,8 +309,8 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 		_ = pool.Purge(resource)
 	})
 
-	t.Logf("Advertised: %s | Seed brokers: %s", hostPort, resource.GetHostPort(exposedPort))
-	clientOpts = append(clientOpts, kgo.SeedBrokers(resource.GetHostPort(exposedPort)))
+	brokerAddr := net.JoinHostPort("localhost", resource.GetPort(exposedPort))
+	clientOpts = append(clientOpts, kgo.SeedBrokers(brokerAddr))
 
 	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
 		ctx, cancelFunc := context.WithCancel(context.Background())
@@ -320,14 +334,24 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 	require.NoError(t, err)
 
 	require.NoError(t, pool.Retry(func() error {
-		return client.Ping(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+
+		if err := client.Ping(ctx); err != nil {
+			t.Logf("Ping failed: %v", err)
+			return err
+		}
+
+		return nil
 	}), "Failed to connect to Kafka")
 
 	// create topic
-	_, err = kadm.NewClient(client).CreateTopic(context.Background(), 1, 1, nil, topic)
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	t.Cleanup(cancel)
+	_, err = kadm.NewClient(client).CreateTopic(ctx, 1, 1, nil, topic)
 	require.NoError(t, err, "Failed to create Kafka topic")
 
-	return hostPort
+	return brokerAddr
 }
 
 func fetchKafkaTopic(t *testing.T, uri string, topic string, tlsEnabled bool) ([]*kgo.Record, error) {
