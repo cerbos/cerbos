@@ -1,25 +1,25 @@
 redpanda:
-    data_directory: /var/lib/redpanda/data
-    seed_servers: []
-    kafka_api:
-        - address: 0.0.0.0
-          port: 9092
-    kafka_api_tls:
-        - key_file: /etc/redpanda/tls.key
-          cert_file: /etc/redpanda/tls.crt
-          truststore_file: /etc/redpanda/ca.crt
-          enabled: true
-          require_client_auth: true
-    advertised_kafka_api:
-        - address: localhost
-          port: 65136
-    developer_mode: true
-    auto_create_topics_enabled: true
-    fetch_reads_debounce_timeout: 10
-    group_initial_rebalance_delay: 0
-    group_topic_partitions: 3
-    log_segment_size_min: 1
-    storage_min_free_bytes: 10485760
-    topic_partitions_per_shard: 1000
+  data_directory: /var/lib/redpanda/data
+  seed_servers: []
+  kafka_api:
+    - address: 0.0.0.0
+      port: 9092
+  kafka_api_tls:
+    - key_file: /conf/tls.key
+      cert_file: /conf/tls.crt
+      truststore_file: /conf/ca.crt
+      enabled: true
+      require_client_auth: true
+  advertised_kafka_api:
+    - address: localhost
+      port: 65136
+  developer_mode: true
+  auto_create_topics_enabled: true
+  fetch_reads_debounce_timeout: 10
+  group_initial_rebalance_delay: 0
+  group_topic_partitions: 3
+  log_segment_size_min: 1
+  storage_min_free_bytes: 10485760
+  topic_partitions_per_shard: 1000
 rpk:
-    overprovisioned: true
+  overprovisioned: true

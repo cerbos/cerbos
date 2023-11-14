@@ -8,9 +8,11 @@ package kafka_test
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net"
+	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 	"time"
 
@@ -29,9 +31,10 @@ import (
 
 const (
 	redpandaImage   = "redpandadata/redpanda"
-	redpandaVersion = "v23.1.5"
+	redpandaVersion = "v23.2.15"
 
 	defaultIntegrationTopic = "cerbos"
+	maxWait                 = 150 * time.Second
 )
 
 func TestProduceWithTLS(t *testing.T) {
@@ -211,77 +214,37 @@ func TestAsyncProduce(t *testing.T) {
 func newKafkaBrokerWithTLS(t *testing.T, topic, caPath, certPath, keyPath string) string {
 	t.Helper()
 
-	testDataAbsPath, err := filepath.Abs("testdata/valid")
-	require.NoError(t, err)
-
-	pool, err := dockertest.NewPool("")
-	require.NoError(t, err, "Failed to connect to Docker")
-
-	hostPort := 65136
-
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: redpandaImage,
-		Tag:        redpandaVersion,
-		Cmd: []string{
-			"redpanda",
-			"start",
-			"--mode", "dev-container",
-			// kafka admin client will retrieve the advertised address from the broker
-			// so we need it to use the same port that is exposed on the container
-			"--config", "/etc/redpanda/rpconfig.yaml",
-			"--advertise-kafka-addr", fmt.Sprintf("localhost:%d", hostPort),
-		},
-		ExposedPorts: []string{
-			"9092/tcp",
-		},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9092/tcp": {{HostIP: "localhost", HostPort: strconv.Itoa(hostPort)}},
-		},
-		Mounts: []string{
-			fmt.Sprintf("%s:/etc/redpanda", testDataAbsPath),
-		},
-	}, func(config *docker.HostConfig) {
-		config.AutoRemove = true
-	})
-	require.NoError(t, err, "Failed to start container")
-
-	t.Cleanup(func() {
-		_ = pool.Purge(resource)
-	})
-
-	brokerDSN := fmt.Sprintf("localhost:%d", hostPort)
-	duration := 10 * time.Second
-	skipVerify := false
-
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
+	duration := 10 * time.Second
+	skipVerify := false
 	tlsConfig, err := kafka.NewTLSConfig(ctx, duration, skipVerify, caPath, certPath, keyPath)
 	require.NoError(t, err)
 
-	client, err := kgo.NewClient(kgo.SeedBrokers(brokerDSN), kgo.DialTLSConfig(tlsConfig))
-	require.NoError(t, err)
-
-	require.NoError(t, pool.Retry(func() error {
-		return client.Ping(context.Background())
-	}), "Failed to connect to Kafka")
-	// create topic
-	_, err = kadm.NewClient(client).CreateTopic(context.Background(), 1, 1, nil, topic)
-	require.NoError(t, err, "Failed to create Kafka topic")
-
-	return brokerDSN
+	return startKafkaBroker(t, topic, tlsConfig)
 }
 
 func newKafkaBroker(t *testing.T, topic string) string {
 	t.Helper()
 
-	hostPort, err := util.GetFreePort()
-	require.NoError(t, err, "Unable to get free port")
+	return startKafkaBroker(t, topic, nil)
+}
+
+func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string {
+	t.Helper()
+
+	hostPort, err := util.GetFreeListenAddr()
+	require.NoError(t, err, "Failed to find free address")
+
+	host, port, err := net.SplitHostPort(hostPort)
+	require.NoError(t, err, "Failed to split free address: %s", hostPort)
 
 	pool, err := dockertest.NewPool("")
 	require.NoError(t, err, "Failed to connect to Docker")
+	pool.MaxWait = maxWait
 
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+	runOpts := &dockertest.RunOptions{
 		Repository: redpandaImage,
 		Tag:        redpandaVersion,
 		Cmd: []string{
@@ -290,26 +253,58 @@ func newKafkaBroker(t *testing.T, topic string) string {
 			"--mode", "dev-container",
 			// kafka admin client will retrieve the advertised address from the broker
 			// so we need it to use the same port that is exposed on the container
-			"--advertise-kafka-addr", fmt.Sprintf("localhost:%d", hostPort),
+			"--advertise-kafka-addr", hostPort,
 		},
 		ExposedPorts: []string{
 			"9092/tcp",
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9092/tcp": {{HostIP: "localhost", HostPort: strconv.Itoa(hostPort)}},
+			"9092/tcp": {{HostIP: host, HostPort: port}},
 		},
-	}, func(config *docker.HostConfig) {
+	}
+
+	var clientOpts []kgo.Opt
+	if tlsConfig != nil {
+		testDataAbsPath, err := filepath.Abs("testdata/valid")
+		require.NoError(t, err)
+
+		runOpts.Cmd = append(runOpts.Cmd, "--config", "/conf/rpconfig.yaml")
+		runOpts.Mounts = []string{fmt.Sprintf("%s:/conf", testDataAbsPath)}
+
+		clientOpts = append(clientOpts, kgo.DialTLSConfig(tlsConfig))
+	}
+
+	resource, err := pool.RunWithOptions(runOpts, func(config *docker.HostConfig) {
 		config.AutoRemove = true
 	})
-
 	require.NoError(t, err, "Failed to start container")
 
 	t.Cleanup(func() {
 		_ = pool.Purge(resource)
 	})
 
-	brokerDSN := fmt.Sprintf("localhost:%d", hostPort)
-	client, err := kgo.NewClient(kgo.SeedBrokers(brokerDSN))
+	t.Logf("Advertised: %s | Seed brokers: %s", hostPort, resource.GetHostPort("9092/tcp"))
+	clientOpts = append(clientOpts, kgo.SeedBrokers(resource.GetHostPort("9092/tcp")))
+
+	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		go func() {
+			if err := pool.Client.Logs(docker.LogsOptions{
+				Context:      ctx,
+				Container:    resource.Container.ID,
+				OutputStream: os.Stdout,
+				ErrorStream:  os.Stderr,
+				Stdout:       true,
+				Stderr:       true,
+				Follow:       true,
+			}); err != nil {
+				cancelFunc()
+			}
+		}()
+		t.Cleanup(cancelFunc)
+	}
+
+	client, err := kgo.NewClient(clientOpts...)
 	require.NoError(t, err)
 
 	require.NoError(t, pool.Retry(func() error {
@@ -320,7 +315,7 @@ func newKafkaBroker(t *testing.T, topic string) string {
 	_, err = kadm.NewClient(client).CreateTopic(context.Background(), 1, 1, nil, topic)
 	require.NoError(t, err, "Failed to create Kafka topic")
 
-	return brokerDSN
+	return hostPort
 }
 
 func fetchKafkaTopic(t *testing.T, uri string, topic string, tlsEnabled bool) ([]*kgo.Record, error) {

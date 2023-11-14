@@ -110,6 +110,7 @@ jobs:
           CERBOS_TEST_LOG_LEVEL: "debug"
           CERBOS_DEBUG_DB: "true"
           CERBOS_DEBUG_ENGINE: "true"
+          CERBOS_DEBUG_KAFKA: "true"
 
       - name: Upload JUnit reports
         uses: actions/upload-artifact@v3
