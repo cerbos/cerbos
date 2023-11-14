@@ -5,9 +5,9 @@ redpanda:
     - address: 0.0.0.0
       port: 9092
   kafka_api_tls:
-    - key_file: /conf/tls.key
-      cert_file: /conf/tls.crt
-      truststore_file: /conf/ca.crt
+    - key_file: /var/lib/redpanda/.config/rpk/tls.key
+      cert_file: /var/lib/redpanda/.config/rpk/tls.crt
+      truststore_file: /var/lib/redpanda/.config/rpk/ca.crt
       enabled: true
       require_client_auth: true
   advertised_kafka_api:

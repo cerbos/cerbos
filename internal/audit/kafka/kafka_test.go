@@ -34,16 +34,20 @@ const (
 	redpandaVersion = "v23.2.15"
 
 	defaultIntegrationTopic = "cerbos"
-	maxWait                 = 120 * time.Second
+	maxWait                 = 60 * time.Second
 )
 
 func TestProduceWithTLS(t *testing.T) {
+	// Redpanda tries to create a temporary configuration file in /etc/redpanda (or whichever directory specified by --config)
+	// When that directory is a docker mount, the temp file creation fails because the Redpanda process is running as a user who
+	// doesn't have enough privileges to do so.
+	t.Skip("TLS cannot be tested on Docker due to https://github.com/redpanda-data/redpanda/issues/12717")
 	t.Parallel()
 
 	ctx := context.Background()
 
 	// setup kafka
-	uri := newKafkaBrokerWithTLS(t, defaultIntegrationTopic, "testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
+	uri := newKafkaBrokerWithTLS(t, defaultIntegrationTopic, "testdata/valid/rpk/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
 	log, err := newLog(map[string]any{
 		"audit": map[string]any{
 			"enabled": true,
@@ -51,7 +55,7 @@ func TestProduceWithTLS(t *testing.T) {
 			"kafka": map[string]any{
 				"authentication": map[string]any{
 					"tls": map[string]any{
-						"caPath":         "testdata/valid/ca.crt",
+						"caPath":         "testdata/valid/rpk/ca.crt",
 						"certPath":       "testdata/valid/client/tls.crt",
 						"keyPath":        "testdata/valid/client/tls.key",
 						"reloadInterval": "10s",
@@ -270,11 +274,14 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 		require.NoError(t, err)
 
 		exposedPort = "65136/tcp"
-		runOpts.ExposedPorts = append(runOpts.ExposedPorts, "65136/tcp")
-		delete(runOpts.PortBindings, "9092/tcp")
-		runOpts.PortBindings["65136/tcp"] = []docker.PortBinding{{HostIP: host, HostPort: port}}
-		runOpts.Cmd = append(runOpts.Cmd, "--config", "/conf/rpconfig.yaml")
-		runOpts.Mounts = []string{fmt.Sprintf("%s:/conf", testDataAbsPath)}
+		runOpts.ExposedPorts = append(runOpts.ExposedPorts, exposedPort)
+		runOpts.PortBindings[docker.Port(exposedPort)] = []docker.PortBinding{{HostIP: host, HostPort: port}}
+		delete(runOpts.PortBindings, docker.Port(exposedPort))
+
+		runOpts.Mounts = []string{
+			fmt.Sprintf("%s:/var/lib/redpanda/.config/rpk", filepath.Join(testDataAbsPath, "rpk")),
+			fmt.Sprintf("%s:/etc/redpanda", filepath.Join(testDataAbsPath, "redpanda")),
+		}
 
 		clientOpts = append(clientOpts, kgo.DialTLSConfig(tlsConfig))
 	}
