@@ -26,19 +26,28 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     },
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "defer",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     }
                   ]
@@ -59,7 +68,10 @@
                     {
                       "name": "remind",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     }
                   ]
@@ -80,7 +92,10 @@
                     {
                       "name": "remind",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     }
                   ]

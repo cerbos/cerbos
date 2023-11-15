@@ -19,6 +19,10 @@
       </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="admin.company.read" name="Company Test 1">
+      <success type="RESULT_PASSED">
+        <actual>EFFECT_ALLOW</actual>
+        <expected>EFFECT_ALLOW</expected>
+      </success>
       <properties>
         <property name="principal">admin</property>
         <property name="resource">company</property>
@@ -26,6 +30,16 @@
       </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="user.company.create" name="Company Test 2">
+      <success type="RESULT_PASSED">
+        <outputs>
+          <output src="resource.company.vdefault#rule-001">
+            <expected><![CDATA[{"principal":"user","resource":"xx1"}]]></expected>
+            <actual><![CDATA[{"principal":"user","resource":"xx1"}]]></actual>
+          </output>
+        </outputs>
+        <actual>EFFECT_ALLOW</actual>
+        <expected>EFFECT_ALLOW</expected>
+      </success>
       <properties>
         <property name="principal">user</property>
         <property name="resource">company</property>

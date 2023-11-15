@@ -30,19 +30,58 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#public-view",
+                              "val": {
+                                "formatted_string": "id:john",
+                                "id": "john",
+                                "keys": "XX125",
+                                "some_bool": true,
+                                "some_list": [
+                                  "foo",
+                                  "bar"
+                                ],
+                                "something_nested": {
+                                  "nested_bool": false,
+                                  "nested_formatted_string": "id:john",
+                                  "nested_list": [
+                                    "nest_foo",
+                                    1.01
+                                  ],
+                                  "nested_str": "foo"
+                                }
+                              }
+                            }
+                          ]
+                        }
                       }
                     },
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault/acme#rule-001",
+                              "val": "create_allowed:john"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -53,19 +92,58 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#public-view",
+                              "val": {
+                                "formatted_string": "id:john",
+                                "id": "john",
+                                "keys": "XX125",
+                                "some_bool": true,
+                                "some_list": [
+                                  "foo",
+                                  "bar"
+                                ],
+                                "something_nested": {
+                                  "nested_bool": false,
+                                  "nested_formatted_string": "id:john",
+                                  "nested_list": [
+                                    "nest_foo",
+                                    1.01
+                                  ],
+                                  "nested_str": "foo"
+                                }
+                              }
+                            }
+                          ]
+                        }
                       }
                     },
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault/acme#rule-001",
+                              "val": "create_allowed:john"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -136,13 +214,25 @@
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault/acme#rule-001",
+                              "val": "create_allowed:bev"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -171,13 +261,31 @@
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#rule-002",
+                              "val": "approval_status:bev:PENDING_APPROVAL"
+                            }
+                          ]
+                        }
                       }
                     },
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault/acme#rule-001",
+                              "val": "create_allowed:bev"
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -193,19 +301,64 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#public-view",
+                              "val": {
+                                "formatted_string": "id:terry_tibbs",
+                                "id": "terry_tibbs",
+                                "keys": "XX125",
+                                "some_bool": true,
+                                "some_list": [
+                                  "foo",
+                                  "bar"
+                                ],
+                                "something_nested": {
+                                  "nested_bool": false,
+                                  "nested_formatted_string": "id:terry_tibbs",
+                                  "nested_list": [
+                                    "nest_foo",
+                                    1.01
+                                  ],
+                                  "nested_str": "foo"
+                                }
+                              }
+                            }
+                          ]
+                        }
                       }
                     },
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "principal.terry_tibbs.vdefault#create-rule",
+                              "val": [
+                                "foo",
+                                [
+                                  "bar",
+                                  true
+                                ]
+                              ]
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -216,19 +369,64 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#public-view",
+                              "val": {
+                                "formatted_string": "id:terry_tibbs",
+                                "id": "terry_tibbs",
+                                "keys": "XX125",
+                                "some_bool": true,
+                                "some_list": [
+                                  "foo",
+                                  "bar"
+                                ],
+                                "something_nested": {
+                                  "nested_bool": false,
+                                  "nested_formatted_string": "id:terry_tibbs",
+                                  "nested_list": [
+                                    "nest_foo",
+                                    1.01
+                                  ],
+                                  "nested_str": "foo"
+                                }
+                              }
+                            }
+                          ]
+                        }
                       }
                     },
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "principal.terry_tibbs.vdefault#create-rule",
+                              "val": [
+                                "foo",
+                                [
+                                  "bar",
+                                  true
+                                ]
+                              ]
+                            }
+                          ]
+                        }
                       }
                     }
                   ]

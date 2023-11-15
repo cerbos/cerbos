@@ -11,6 +11,18 @@
         "EFFECT_NO_MATCH"
       ]
     },
+    "cerbos.engine.v1.OutputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "val": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
     "cerbos.engine.v1.Trace": {
       "type": "object",
       "additionalProperties": false,
@@ -191,6 +203,21 @@
         "RESULT_ERRORED"
       ]
     },
+    "cerbos.policy.v1.TestResults.Success": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
+          }
+        }
+      }
+    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -213,6 +240,9 @@
     },
     "result": {
       "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
+    },
+    "success": {
+      "$ref": "#/definitions/cerbos.policy.v1.TestResults.Success"
     }
   }
 }

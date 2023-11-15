@@ -1343,6 +1343,9 @@
         "error": {
           "type": "string"
         },
+        "success": {
+          "$ref": "#/definitions/TestResultsSuccess"
+        },
         "engineTrace": {
           "type": "array",
           "items": {
@@ -1394,6 +1397,21 @@
         "RESULT_ERRORED"
       ],
       "default": "RESULT_UNSPECIFIED"
+    },
+    "TestResultsSuccess": {
+      "type": "object",
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1OutputEntry"
+          }
+        }
+      }
     },
     "TestResultsSuite": {
       "type": "object",

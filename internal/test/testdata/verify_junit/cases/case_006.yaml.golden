@@ -2,6 +2,10 @@
   <testsuite description="Tests for verifying the company resource policy" name="CompanyTestSuite" file="suite_test.yaml" errors="0" failures="0" skipped="0" tests="2">
     <properties></properties>
     <testcase file="suite_test.yaml" classname="admin.company.create" name="Company Test 1">
+      <success type="RESULT_PASSED">
+        <actual>EFFECT_ALLOW</actual>
+        <expected>EFFECT_ALLOW</expected>
+      </success>
       <properties>
         <property name="principal">admin</property>
         <property name="resource">company</property>
@@ -9,6 +13,10 @@
       </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="admin.company.create" name="Company Test 2">
+      <success type="RESULT_PASSED">
+        <actual>EFFECT_ALLOW</actual>
+        <expected>EFFECT_ALLOW</expected>
+      </success>
       <properties>
         <property name="principal">admin</property>
         <property name="resource">company</property>

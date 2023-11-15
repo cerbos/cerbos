@@ -115,47 +115,71 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 
 					switch a.Details.Result {
 					case policyv1.TestResults_RESULT_ERRORED:
-						testCase.Error = &testError{Type: a.Details.Result.String()}
+						testCase.Error = &testError{Type: a.Details.Result.String(), Value: a.Details.GetError()}
 						summary.Errors++
 					case policyv1.TestResults_RESULT_FAILED:
-						f, _ := a.Details.Outcome.(*policyv1.TestResults_Details_Failure)
-						testCase.Failure = &failure{
-							Type:    a.Details.Result.String(),
-							Message: "Effect expectation unsatisfied",
-							resultFailed: resultFailed{
-								Actual:   f.Failure.Actual.String(),
-								Expected: f.Failure.Expected.String(),
-							},
-						}
-
-						if len(f.Failure.Outputs) > 0 {
-							outputSet := make([]output, len(f.Failure.Outputs))
-							for i, o := range f.Failure.Outputs {
-								switch t := o.Outcome.(type) {
-								case *policyv1.TestResults_OutputFailure_Mismatched:
-									outputSet[i] = output{
-										Src:      o.Src,
-										Actual:   outputValue{Value: renderValue(t.Mismatched.Actual)},
-										Expected: outputValue{Value: renderValue(t.Mismatched.Expected)},
-									}
-								case *policyv1.TestResults_OutputFailure_Missing:
-									outputSet[i] = output{
-										Src:      o.Src,
-										Expected: outputValue{Value: renderValue(t.Missing.Expected)},
-									}
-								default:
-									outputSet[i] = output{
-										Src: o.Src,
-									}
-								}
+						if f := a.Details.GetFailure(); f != nil {
+							testCase.Failure = &failure{
+								Type:    a.Details.Result.String(),
+								Message: "Effect expectation unsatisfied",
+								resultFailed: resultFailed{
+									Actual:   f.Actual.String(),
+									Expected: f.Expected.String(),
+								},
 							}
 
-							testCase.Failure.Message = "Output expectation unsatisfied"
-							testCase.Failure.Outputs = &outputSet
+							if len(f.Outputs) > 0 {
+								outputSet := make([]output, len(f.Outputs))
+								for i, o := range f.Outputs {
+									switch t := o.Outcome.(type) {
+									case *policyv1.TestResults_OutputFailure_Mismatched:
+										outputSet[i] = output{
+											Src:      o.Src,
+											Actual:   outputValue{Value: renderValue(t.Mismatched.Actual)},
+											Expected: outputValue{Value: renderValue(t.Mismatched.Expected)},
+										}
+									case *policyv1.TestResults_OutputFailure_Missing:
+										outputSet[i] = output{
+											Src:      o.Src,
+											Expected: outputValue{Value: renderValue(t.Missing.Expected)},
+										}
+									default:
+										outputSet[i] = output{
+											Src: o.Src,
+										}
+									}
+								}
+
+								testCase.Failure.Message = "Output expectation unsatisfied"
+								testCase.Failure.Outputs = &outputSet
+							}
 						}
 
 						summary.Failures++
 					case policyv1.TestResults_RESULT_PASSED:
+						if s := a.Details.GetSuccess(); s != nil {
+							testCase.Success = &success{
+								Type: a.Details.Result.String(),
+								resultSuccess: resultSuccess{
+									Actual:   s.Effect.String(),
+									Expected: s.Effect.String(),
+								},
+							}
+
+							if len(s.Outputs) > 0 {
+								outputSet := make([]output, len(s.Outputs))
+								for i, o := range s.Outputs {
+									val := outputValue{Value: renderValue(o.Val)}
+									outputSet[i] = output{
+										Src:      o.Src,
+										Actual:   val,
+										Expected: val,
+									}
+								}
+								testCase.Success.Outputs = &outputSet
+							}
+						}
+
 					case policyv1.TestResults_RESULT_SKIPPED:
 						summary.Skipped++
 						testCase.Skipped = &skipped{
@@ -209,6 +233,7 @@ type testCase struct {
 	Skipped    *skipped   `xml:"skipped,omitempty"`
 	Failure    *failure   `xml:"failure,omitempty"`
 	Error      *testError `xml:"error,omitempty"`
+	Success    *success   `xml:"success,omitempty"`
 	File       string     `xml:"file,attr"`
 	Classname  string     `xml:"classname,attr"`
 	Name       string     `xml:"name,attr"`
@@ -219,6 +244,18 @@ type testError struct {
 	XMLName xml.Name `xml:"error"`
 	Type    string   `xml:"type,attr,omitempty"`
 	Value   string   `xml:",chardata"` //nolint:tagliatelle
+}
+
+type success struct {
+	resultSuccess
+	XMLName xml.Name `xml:"success"`
+	Type    string   `xml:"type,attr,omitempty"`
+}
+
+type resultSuccess struct {
+	Outputs  *[]output `xml:"outputs>output,omitempty"`
+	Actual   string    `xml:"actual,omitempty"`
+	Expected string    `xml:"expected,omitempty"`
 }
 
 type failure struct {

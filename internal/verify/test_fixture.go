@@ -328,6 +328,12 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 	}
 
 	details.Result = policyv1.TestResults_RESULT_PASSED
+	details.Outcome = &policyv1.TestResults_Details_Success{
+		Success: &policyv1.TestResults_Success{
+			Effect:  actual[0].Actions[action].Effect,
+			Outputs: actual[0].Outputs,
+		},
+	}
 	return details
 }
 

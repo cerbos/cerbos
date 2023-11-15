@@ -26,7 +26,10 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     }
                   ]
@@ -47,7 +50,10 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     }
                   ]
