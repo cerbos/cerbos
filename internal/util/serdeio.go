@@ -119,7 +119,7 @@ func newYAMLDecoder(src *bufio.Reader) decoderFunc {
 			return ErrEmptyFile
 		}
 
-		jsonBytes, err := yaml.YAMLToJSON(buf.Bytes())
+		jsonBytes, err := yaml.YAMLToJSON(yamlBytes)
 		if err != nil {
 			return fmt.Errorf("failed to convert YAML to JSON: %w", err)
 		}
