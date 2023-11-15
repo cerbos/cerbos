@@ -5,44 +5,38 @@ wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
 playgroundEvaluate:
-  input: {
-    "playgroundId": "test",
-    "files": [
-      {
-        "fileName": "common_roles.yaml",
-        "contents": "rubbish"
-      },
-      {
-        "fileName": "resource.yaml",
-        "contents": "rubbish"
-      }
-    ],
-    "actions": ["view", "delete"],
-    "principal": {
-      "id": "eduardo",
-      "roles": ["user"]
-    },
-    "resource": {
-      "kind": "album_object",
-      "id": "XX125",
-      "attr": {
-        "owner": "alicia",
-        "public": false
-      }
-    }
-  }
-  wantResponse: {
-    "playgroundId": "test",
-    "failure": {
-      "errors": [
+  input:
+    {
+      "playgroundId": "test",
+      "files":
+        [
+          { "fileName": "common_roles.yaml", "contents": "rubbish" },
+          { "fileName": "resource.yaml", "contents": "rubbish" },
+        ],
+      "actions": ["view", "delete"],
+      "principal": { "id": "eduardo", "roles": ["user"] },
+      "resource":
         {
-          "file": "resource.yaml",
-          "error": "Failed to read: failed to unmarshal file resource.yaml: yaml: invalid leading UTF-8 octet"
+          "kind": "album_object",
+          "id": "XX125",
+          "attr": { "owner": "alicia", "public": false },
         },
-        {
-          "file": "common_roles.yaml",
-          "error": "Failed to read: failed to unmarshal file common_roles.yaml: yaml: invalid leading UTF-8 octet"
-        }
-      ]
     }
-  }
+  wantResponse:
+    {
+      "playgroundId": "test",
+      "failure":
+        {
+          "errors":
+            [
+              {
+                "file": "resource.yaml",
+                "error": "Failed to read: failed to unmarshal file resource.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+              },
+              {
+                "file": "common_roles.yaml",
+                "error": "Failed to read: failed to unmarshal file common_roles.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+              },
+            ],
+        },
+    }

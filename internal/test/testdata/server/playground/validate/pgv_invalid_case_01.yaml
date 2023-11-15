@@ -5,31 +5,30 @@ wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
 playgroundValidate:
-  input: {
-    "playgroundId": "test",
-    "files": [
-      {
-        "fileName": "common_roles.yaml",
-        "contents": "rubbish"
-      },
-      {
-        "fileName": "resource.yaml",
-        "contents": "rubbish"
-      }
-    ]
-  }
-  wantResponse: {
-    "playgroundId": "test",
-    "failure": {
-      "errors": [
-        {
-          "file": "resource.yaml",
-          "error": "Failed to read: failed to unmarshal file resource.yaml: yaml: invalid leading UTF-8 octet"
-        },
-        {
-          "file": "common_roles.yaml",
-          "error": "Failed to read: failed to unmarshal file common_roles.yaml: yaml: invalid leading UTF-8 octet"
-        }
-      ]
+  input:
+    {
+      "playgroundId": "test",
+      "files":
+        [
+          { "fileName": "common_roles.yaml", "contents": "rubbish" },
+          { "fileName": "resource.yaml", "contents": "rubbish" },
+        ],
     }
-  }
+  wantResponse:
+    {
+      "playgroundId": "test",
+      "failure":
+        {
+          "errors":
+            [
+              {
+                "file": "resource.yaml",
+                "error": "Failed to read: failed to unmarshal file resource.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+              },
+              {
+                "file": "common_roles.yaml",
+                "error": "Failed to read: failed to unmarshal file common_roles.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+              },
+            ],
+        },
+    }

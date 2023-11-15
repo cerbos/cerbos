@@ -13,8 +13,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ghodss/yaml"
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"gopkg.in/yaml.v3"
 
 	"github.com/cerbos/cerbos/schema"
 )
