@@ -362,7 +362,7 @@ func fetchKafkaTopic(t *testing.T, uri string, topic string, tlsEnabled bool) ([
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
-		tlsConfig, err := kafka.NewTLSConfig(ctx, duration, skipVerify, "testdata/valid/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
+		tlsConfig, err := kafka.NewTLSConfig(ctx, duration, skipVerify, "testdata/valid/certs/ca.crt", "testdata/valid/client/tls.crt", "testdata/valid/client/tls.key")
 		if err != nil {
 			return nil, err
 		}
