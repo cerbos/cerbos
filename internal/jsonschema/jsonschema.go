@@ -4,6 +4,7 @@
 package jsonschema
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +20,8 @@ import (
 )
 
 var (
+	ErrEmptyFile = errors.New("empty file")
+
 	policySchema *jsonschema.Schema
 	testSchema   *jsonschema.Schema
 )
@@ -54,6 +57,10 @@ func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
 	data, err := io.ReadAll(f)
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %w", path, err)
+	}
+
+	if len(bytes.TrimSpace(data)) == 0 {
+		return fmt.Errorf("%w: %s", ErrEmptyFile, path)
 	}
 
 	var y any

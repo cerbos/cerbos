@@ -26,6 +26,7 @@ var (
 	jsonStart           = []byte("{")
 	yamlSep             = []byte("---")
 	yamlComment         = []byte("#")
+	ErrEmptyFile        = errors.New("empty file")
 	ErrMultipleYAMLDocs = errors.New("more than one YAML document detected")
 )
 
@@ -61,6 +62,10 @@ func newJSONDecoder(src *bufio.Reader) decoderFunc {
 		jsonBytes, err := io.ReadAll(src)
 		if err != nil {
 			return err
+		}
+
+		if len(bytes.TrimSpace(jsonBytes)) == 0 {
+			return ErrEmptyFile
 		}
 
 		if err := protojson.Unmarshal(jsonBytes, dest); err != nil {
@@ -107,6 +112,11 @@ func newYAMLDecoder(src *bufio.Reader) decoderFunc {
 
 		if err := s.Err(); err != nil {
 			return fmt.Errorf("failed to read from source: %w", err)
+		}
+
+		yamlBytes := buf.Bytes()
+		if len(bytes.TrimSpace(yamlBytes)) == 0 {
+			return ErrEmptyFile
 		}
 
 		jsonBytes, err := yaml.YAMLToJSON(buf.Bytes())
