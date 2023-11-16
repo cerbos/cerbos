@@ -40,10 +40,6 @@ const (
 )
 
 func TestProduceWithTLS(t *testing.T) {
-	// Redpanda tries to create a temporary configuration file in /etc/redpanda (or whichever directory specified by --config)
-	// When that directory is a docker mount, the temp file creation fails because the Redpanda process is running as a user who
-	// doesn't have enough privileges to do so.
-	// t.Skip("TLS cannot be tested on Docker due to https://github.com/redpanda-data/redpanda/issues/12717")
 	t.Parallel()
 
 	ctx := context.Background()
@@ -239,14 +235,6 @@ func newKafkaBroker(t *testing.T, topic string) string {
 
 func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string {
 	t.Helper()
-
-	/*
-		hostPort, err := util.GetFreeListenAddr()
-		require.NoError(t, err, "Failed to find free address")
-
-		host, port, err := net.SplitHostPort(hostPort)
-		require.NoError(t, err, "Failed to split free address: %s", hostPort)
-	*/
 
 	port, err := util.GetFreePort()
 	require.NoError(t, err, "Failed to find free address")
