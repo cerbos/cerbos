@@ -40,8 +40,6 @@ const (
 )
 
 func TestProduceWithTLS(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	// setup kafka
@@ -89,8 +87,6 @@ func TestProduceWithTLS(t *testing.T) {
 }
 
 func TestSyncProduce(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	// setup kafka
@@ -130,8 +126,6 @@ func TestSyncProduce(t *testing.T) {
 }
 
 func TestCompression(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	// setup kafka
@@ -171,8 +165,6 @@ func TestCompression(t *testing.T) {
 }
 
 func TestAsyncProduce(t *testing.T) {
-	t.Parallel()
-
 	ctx := context.Background()
 
 	// setup kafka
