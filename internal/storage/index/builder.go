@@ -5,6 +5,7 @@ package index
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -113,12 +114,18 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 		}
 
 		if err := internaljsonschema.ValidatePolicy(fsys, filePath); err != nil {
+			if errors.Is(err, internaljsonschema.ErrEmptyFile) {
+				return nil
+			}
 			ib.addLoadFailure(filePath, err)
 			return nil
 		}
 
 		p := &policyv1.Policy{}
 		if err := util.LoadFromJSONOrYAML(fsys, filePath, p); err != nil {
+			if errors.Is(err, util.ErrEmptyFile) {
+				return nil
+			}
 			ib.addLoadFailure(filePath, err)
 			return nil
 		}

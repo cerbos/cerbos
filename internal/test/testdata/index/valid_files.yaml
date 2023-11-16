@@ -225,6 +225,14 @@ files:
         roles:
           - admin
 
+  "empty_resource.yaml": ""
+
+  "commented_resource.yaml": |-
+    # I am commented out
+    # Foo
+
+  "empty_resource.json": "           "
+
 wantCompilationUnits:
   - mainFqn: cerbos.principal.donald_duck.v20210210
     definitionFqns:

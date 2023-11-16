@@ -4,6 +4,7 @@
 package jsonschema
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -12,13 +13,15 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ghodss/yaml"
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"gopkg.in/yaml.v3"
 
 	"github.com/cerbos/cerbos/schema"
 )
 
 var (
+	ErrEmptyFile = errors.New("empty file")
+
 	policySchema *jsonschema.Schema
 	testSchema   *jsonschema.Schema
 )
@@ -56,6 +59,10 @@ func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
 		return fmt.Errorf("failed to read file %s: %w", path, err)
 	}
 
+	if len(bytes.TrimSpace(data)) == 0 {
+		return fmt.Errorf("%w: %s", ErrEmptyFile, path)
+	}
+
 	var y any
 	if err := yaml.Unmarshal(data, &y); err != nil {
 		return fmt.Errorf("failed to unmarshal file %s: %w", path, err)
@@ -67,68 +74,56 @@ func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
 			return fmt.Errorf("unable to validate file %s: %w", path, err)
 		}
 
-		return newValidationErrorList(validationErr)
+		return newValidationError(validationErr)
 	}
 
 	return nil
 }
 
-func newValidationError(err *jsonschema.ValidationError) validationError {
-	path := "/"
-	if err.InstanceLocation != "" {
-		path = err.InstanceLocation
+func newValidationError(ve *jsonschema.ValidationError) error {
+	toVisit := ve.Causes
+	leaves := make(map[string]map[string]struct{})
+	for ; len(toVisit) > 0; toVisit = toVisit[1:] {
+		ve := toVisit[0]
+		if ve == nil {
+			continue
+		}
+
+		if len(ve.Causes) > 0 {
+			toVisit = append(toVisit, ve.Causes...)
+			continue
+		}
+
+		path := "/"
+		if ve.InstanceLocation != "" {
+			path = ve.InstanceLocation
+		}
+
+		if leaves[path] == nil {
+			leaves[path] = make(map[string]struct{})
+		}
+		leaves[path][ve.Message] = struct{}{}
 	}
-	return validationError{
-		Path:    path,
-		Message: err.Message,
+
+	verrs := make([]string, len(leaves))
+	i := 0
+	for path, issues := range leaves {
+		verrs[i] = fmt.Sprintf("%s: [%s]", path, sortIssues(issues))
+		i++
 	}
+
+	sort.Strings(verrs)
+	return fmt.Errorf("file is not valid: { %s }", strings.Join(verrs, ","))
 }
 
-func newValidationErrorList(validationErr *jsonschema.ValidationError) validationErrorList {
-	if validationErr == nil {
-		return nil
+func sortIssues(m map[string]struct{}) string {
+	values := make([]string, len(m))
+	i := 0
+	for v := range m {
+		values[i] = v
+		i++
 	}
 
-	if len(validationErr.Causes) == 0 {
-		return validationErrorList{newValidationError(validationErr)}
-	}
-
-	var errs validationErrorList
-	for _, err := range validationErr.Causes {
-		errs = append(errs, newValidationErrorList(err)...)
-	}
-
-	sort.Slice(errs, func(i, j int) bool {
-		return errs[i].Path > errs[j].Path
-	})
-
-	return errs
-}
-
-type validationError struct {
-	Path    string
-	Message string
-}
-
-func (e validationError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Path, e.Message)
-}
-
-type validationErrorList []validationError
-
-func (e validationErrorList) Error() string {
-	return fmt.Sprintf("file is not valid: [%s]", strings.Join(e.ErrorMessages(), ", "))
-}
-
-func (e validationErrorList) ErrorMessages() []string {
-	if len(e) == 0 {
-		return nil
-	}
-
-	msgs := make([]string, len(e))
-	for i, err := range e {
-		msgs[i] = err.Error()
-	}
-
-	return msgs
+	sort.Strings(values)
+	return strings.Join(values, " | ")
 }

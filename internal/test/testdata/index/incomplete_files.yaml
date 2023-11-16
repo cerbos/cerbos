@@ -2,9 +2,12 @@
 ---
 wantErrList:
   loadFailures:
-    - error: "file is not valid: [/derivedRoles: missing properties: 'definitions']"
+    - error: "file is not valid: { /derivedRoles: [missing properties: 'definitions'] }"
       file: derived.yaml
-    - error: "file is not valid: [/: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles', /: missing properties: 'exportVariables']"
+    - error: "file is not valid: { /resourcePolicy/version: [expected string, but got boolean] }"
+      file: foo.yaml
+    - error: |-
+        file is not valid: { /: [missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
       file: resource.yaml
 files:
   "resource.yaml": |-
@@ -16,3 +19,9 @@ files:
     apiVersion: "api.cerbos.dev/v1"
     derivedRoles:
       name: my_derived_roles
+
+  "foo.yaml": |-
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: foo
+      version: yes

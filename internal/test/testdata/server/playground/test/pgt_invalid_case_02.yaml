@@ -5,40 +5,39 @@ wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
 playgroundTest:
-  input: {
-    "playgroundId": "test",
-    "files": [
-      {
-        "fileName": "common_roles.yaml",
-        "contents": "{{ fileString `store/derived_roles/common_roles.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_04.yaml",
-        "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_04_test.yaml",
-        "contents": "rubbish"
-      }
-    ]
-  }
-  wantResponse: {
-    "playgroundId": "test",
-    "success": {
-      "results": {
-        "suites": [
+  input:
+    {
+      "playgroundId": "test",
+      "files":
+        [
           {
-            "file": "policy_04_test.yaml",
-            "name": "Unknown",
-            "error": "failed to unmarshal file policy_04_test.yaml: yaml: invalid leading UTF-8 octet",
-            "summary": {
-              "overallResult": "RESULT_ERRORED"
-            }
-          }
+            "fileName": "common_roles.yaml",
+            "contents": "{{ fileString `store/derived_roles/common_roles.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_04.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
+          },
+          { "fileName": "policy_04_test.yaml", "contents": "rubbish" },
         ],
-        "summary": {
-          "overallResult": "RESULT_ERRORED"
-        }
-      }
     }
-  }
+  wantResponse:
+    {
+      "playgroundId": "test",
+      "success":
+        {
+          "results":
+            {
+              "suites":
+                [
+                  {
+                    "file": "policy_04_test.yaml",
+                    "name": "Unknown",
+                    "error": "failed to unmarshal file policy_04_test.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+                    "summary": { "overallResult": "RESULT_ERRORED" },
+                  },
+                ],
+              "summary": { "overallResult": "RESULT_ERRORED" },
+            },
+        },
+    }

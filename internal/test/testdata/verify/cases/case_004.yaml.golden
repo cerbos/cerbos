@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "file is not valid: [/: expected object, but got string]"
+      "error": "file is not valid: { /: [expected object, but got string] }"
     }
   ],
   "summary": {

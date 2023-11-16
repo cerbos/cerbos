@@ -3,10 +3,16 @@
 wantErrList:
   loadFailures:
     - error: |-
-        file is not valid: [/: missing properties: 'apiVersion', /: additionalProperties 'key' not allowed, /: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles', /: missing properties: 'exportVariables']
+        file is not valid: { /: [expected object, but got string] }
+      file: invalid.json
+    - error: |-
+        file is not valid: { /: [expected object, but got string] }
+      file: invalid.yml
+    - error: |-
+        file is not valid: { /: [additionalProperties 'key' not allowed | missing properties: 'apiVersion' | missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
       file: principal.json
     - error: |-
-        file is not valid: [/: missing properties: 'apiVersion', /: additionalProperties 'some' not allowed, /: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles', /: missing properties: 'exportVariables']
+        file is not valid: { /: [additionalProperties 'some' not allowed | missing properties: 'apiVersion' | missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
       file: resource.yaml
 files:
   "resource.yaml": |-
@@ -15,3 +21,21 @@ files:
 
   "principal.json": |-
     {"key": "value"}
+
+  "empty.yaml": ""
+
+  "empty_whitespace.yaml": "          "
+
+  "commented.yaml": |-
+    # I am commented out
+    # Foo
+
+  "invalid.yml": |-
+    wat
+
+  "empty.json": ""
+
+  "empty_whitespace.json": "           "
+
+  "invalid.json": |-
+    wat
