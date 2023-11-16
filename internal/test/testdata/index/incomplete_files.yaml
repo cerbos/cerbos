@@ -6,7 +6,7 @@ wantErrList:
       file: derived.yaml
     - error: "file is not valid: [/resourcePolicy/version: expected string, but got boolean]"
       file: foo.yaml
-    - error: "file is not valid: [/: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles', /: missing properties: 'exportVariables']"
+    - error: "file is not valid: [/: missing properties: 'derivedRoles']"
       file: resource.yaml
 files:
   "resource.yaml": |-

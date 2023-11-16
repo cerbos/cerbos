@@ -15,7 +15,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "file is not valid: [/tests/0/expected/0/actions/view:public: value must be one of \"EFFECT_ALLOW\", \"EFFECT_DENY\", /tests/0/expected/0/actions/approve: value must be one of \"EFFECT_ALLOW\", \"EFFECT_DENY\"]"
+      "error": "file is not valid: [/tests/0/expected/0/actions/approve: value must be one of \"EFFECT_ALLOW\", \"EFFECT_DENY\"|/tests/0/expected/0/actions/view:public: value must be one of \"EFFECT_ALLOW\", \"EFFECT_DENY\"]"
     }
   ],
   "summary": {

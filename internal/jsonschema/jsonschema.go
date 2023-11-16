@@ -74,68 +74,56 @@ func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
 			return fmt.Errorf("unable to validate file %s: %w", path, err)
 		}
 
-		return newValidationErrorList(validationErr)
+		return newValidationError(validationErr)
 	}
 
 	return nil
 }
 
-func newValidationError(err *jsonschema.ValidationError) validationError {
-	path := "/"
-	if err.InstanceLocation != "" {
-		path = err.InstanceLocation
-	}
-	return validationError{
-		Path:    path,
-		Message: err.Message,
-	}
-}
+func newValidationError(err *jsonschema.ValidationError) error {
+	toVisit := err.Causes
+	var leaves []validationError
+	for ; len(toVisit) > 0; toVisit = toVisit[1:] {
+		ve := toVisit[0]
+		if ve == nil {
+			continue
+		}
 
-func newValidationErrorList(validationErr *jsonschema.ValidationError) validationErrorList {
-	if validationErr == nil {
-		return nil
-	}
+		if len(ve.Causes) > 0 {
+			toVisit = append(toVisit, ve.Causes...)
+			continue
+		}
 
-	if len(validationErr.Causes) == 0 {
-		return validationErrorList{newValidationError(validationErr)}
-	}
-
-	var errs validationErrorList
-	for _, err := range validationErr.Causes {
-		errs = append(errs, newValidationErrorList(err)...)
+		path := "/"
+		if ve.InstanceLocation != "" {
+			path = ve.InstanceLocation
+		}
+		leaves = append(leaves, validationError{path: path, message: ve.Message})
 	}
 
-	sort.Slice(errs, func(i, j int) bool {
-		return errs[i].Path > errs[j].Path
+	// sort the leaves by path and message, group by path and take the first message for each path to produce a stable set of errors
+
+	sort.Slice(leaves, func(i, j int) bool {
+		if leaves[i].path == leaves[j].path {
+			return leaves[i].message < leaves[j].message
+		}
+
+		return leaves[i].path < leaves[j].path
 	})
 
-	return errs
+	var msgs []string
+	currPath := ""
+	for _, l := range leaves {
+		if l.path != currPath {
+			msgs = append(msgs, fmt.Sprintf("%s: %s", l.path, l.message))
+		}
+		currPath = l.path
+	}
+
+	return fmt.Errorf("file is not valid: [%s]", strings.Join(msgs, "|"))
 }
 
 type validationError struct {
-	Path    string
-	Message string
-}
-
-func (e validationError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Path, e.Message)
-}
-
-type validationErrorList []validationError
-
-func (e validationErrorList) Error() string {
-	return fmt.Sprintf("file is not valid: [%s]", strings.Join(e.ErrorMessages(), ", "))
-}
-
-func (e validationErrorList) ErrorMessages() []string {
-	if len(e) == 0 {
-		return nil
-	}
-
-	msgs := make([]string, len(e))
-	for i, err := range e {
-		msgs[i] = err.Error()
-	}
-
-	return msgs
+	path    string
+	message string
 }
