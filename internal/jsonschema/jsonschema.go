@@ -80,9 +80,9 @@ func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
 	return nil
 }
 
-func newValidationError(err *jsonschema.ValidationError) error {
-	toVisit := err.Causes
-	var leaves []validationError
+func newValidationError(ve *jsonschema.ValidationError) error {
+	toVisit := ve.Causes
+	leaves := make(map[string]map[string]struct{})
 	for ; len(toVisit) > 0; toVisit = toVisit[1:] {
 		ve := toVisit[0]
 		if ve == nil {
@@ -98,32 +98,32 @@ func newValidationError(err *jsonschema.ValidationError) error {
 		if ve.InstanceLocation != "" {
 			path = ve.InstanceLocation
 		}
-		leaves = append(leaves, validationError{path: path, message: ve.Message})
+
+		if leaves[path] == nil {
+			leaves[path] = make(map[string]struct{})
+		}
+		leaves[path][ve.Message] = struct{}{}
 	}
 
-	// sort the leaves by path and message, group by path and take the first message for each path to produce a stable set of errors
-
-	sort.Slice(leaves, func(i, j int) bool {
-		if leaves[i].path == leaves[j].path {
-			return leaves[i].message < leaves[j].message
-		}
-
-		return leaves[i].path < leaves[j].path
-	})
-
-	var msgs []string
-	currPath := ""
-	for _, l := range leaves {
-		if l.path != currPath {
-			msgs = append(msgs, fmt.Sprintf("%s: %s", l.path, l.message))
-		}
-		currPath = l.path
+	verrs := make([]string, len(leaves))
+	i := 0
+	for path, issues := range leaves {
+		verrs[i] = fmt.Sprintf("%s: [%s]", path, sortIssues(issues))
+		i++
 	}
 
-	return fmt.Errorf("file is not valid: [%s]", strings.Join(msgs, "|"))
+	sort.Strings(verrs)
+	return fmt.Errorf("file is not valid: { %s }", strings.Join(verrs, ","))
 }
 
-type validationError struct {
-	path    string
-	message string
+func sortIssues(m map[string]struct{}) string {
+	values := make([]string, len(m))
+	i := 0
+	for v := range m {
+		values[i] = v
+		i++
+	}
+
+	sort.Strings(values)
+	return strings.Join(values, " | ")
 }

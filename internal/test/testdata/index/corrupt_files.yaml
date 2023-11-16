@@ -3,16 +3,16 @@
 wantErrList:
   loadFailures:
     - error: |-
-        file is not valid: [/: expected object, but got string]
+        file is not valid: { /: [expected object, but got string] }
       file: invalid.json
     - error: |-
-        file is not valid: [/: expected object, but got string]
+        file is not valid: { /: [expected object, but got string] }
       file: invalid.yml
     - error: |-
-        file is not valid: [/: additionalProperties 'key' not allowed]
+        file is not valid: { /: [additionalProperties 'key' not allowed | missing properties: 'apiVersion' | missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
       file: principal.json
     - error: |-
-        file is not valid: [/: additionalProperties 'some' not allowed]
+        file is not valid: { /: [additionalProperties 'some' not allowed | missing properties: 'apiVersion' | missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
       file: resource.yaml
 files:
   "resource.yaml": |-
