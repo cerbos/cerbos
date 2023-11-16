@@ -55,6 +55,8 @@ playgroundTest:
                                             "details":
                                               {
                                                 "result": "RESULT_PASSED",
+                                                "success":
+                                                  { "effect": "EFFECT_ALLOW" },
                                                 "engineTrace":
                                                   [
                                                     {

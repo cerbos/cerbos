@@ -6,6 +6,7 @@ package verification
 import (
 	"encoding/xml"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/pterm/pterm"
@@ -262,6 +263,21 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 		o.appendNode(resultLevel, fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.GetError()))
 
 	default:
+		if o.verbose {
+			if success := action.Details.GetSuccess(); success != nil {
+				o.appendNode(resultLevel, fmt.Sprintf("%s %s", "RESULT:", colored.PassedTest(success.Effect)))
+				if len(success.Outputs) > 0 {
+					o.appendNode(resultLevel, "OUTPUTS:")
+					sort.Slice(success.Outputs, func(i, j int) bool {
+						return success.Outputs[i].Src < success.Outputs[j].Src
+					})
+					for _, output := range success.Outputs {
+						o.appendNode(outputSrcLevel, colored.TestOutputSrc(output.Src))
+						o.appendNode(outputErrKindLevel, singleLineJSON(output.Val))
+					}
+				}
+			}
+		}
 	}
 }
 

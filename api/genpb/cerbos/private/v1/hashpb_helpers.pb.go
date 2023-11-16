@@ -1050,6 +1050,11 @@ func cerbos_policy_v1_TestResults_Details_hashpb_sum(m *v11.TestResults_Details,
 			case *v11.TestResults_Details_Error:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.Error))
 
+			case *v11.TestResults_Details_Success:
+				if t.Success != nil {
+					cerbos_policy_v1_TestResults_Success_hashpb_sum(t.Success, hasher, ignore)
+				}
+
 			}
 		}
 	}
@@ -1160,6 +1165,23 @@ func cerbos_policy_v1_TestResults_Resource_hashpb_sum(m *v11.TestResults_Resourc
 			for _, v := range m.Actions {
 				if v != nil {
 					cerbos_policy_v1_TestResults_Action_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_Success_hashpb_sum(m *v11.TestResults_Success, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Success.effect"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Effect)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Success.outputs"]; !ok {
+		if len(m.Outputs) > 0 {
+			for _, v := range m.Outputs {
+				if v != nil {
+					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
 				}
 
 			}

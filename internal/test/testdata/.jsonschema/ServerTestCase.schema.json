@@ -848,6 +848,9 @@
         },
         "result": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
+        },
+        "success": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Success"
         }
       }
     },
@@ -944,6 +947,21 @@
         "RESULT_FAILED",
         "RESULT_ERRORED"
       ]
+    },
+    "cerbos.policy.v1.TestResults.Success": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.OutputEntry"
+          }
+        }
+      }
     },
     "cerbos.policy.v1.TestResults.Suite": {
       "type": "object",

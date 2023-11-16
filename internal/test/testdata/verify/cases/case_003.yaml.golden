@@ -26,13 +26,19 @@
                     {
                       "name": "delete",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     },
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     }
                   ]
@@ -48,13 +54,19 @@
                     {
                       "name": "delete",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "approve",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     }
                   ]

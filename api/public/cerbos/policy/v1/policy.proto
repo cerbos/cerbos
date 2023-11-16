@@ -487,6 +487,7 @@ message TestResults {
     oneof outcome {
       Failure failure = 2;
       string error = 3;
+      Success success = 5;
     }
     repeated cerbos.engine.v1.Trace engine_trace = 4;
   }
@@ -512,6 +513,11 @@ message TestResults {
     cerbos.effect.v1.Effect expected = 1;
     cerbos.effect.v1.Effect actual = 2;
     repeated OutputFailure outputs = 3;
+  }
+
+  message Success {
+    cerbos.effect.v1.Effect effect = 1;
+    repeated cerbos.engine.v1.OutputEntry outputs = 2;
   }
 
   repeated Suite suites = 1;

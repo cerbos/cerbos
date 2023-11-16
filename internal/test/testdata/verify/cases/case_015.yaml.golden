@@ -26,13 +26,19 @@
                     {
                       "name": "test",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     },
                     {
                       "name": "testfoo",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     }
                   ]
@@ -53,13 +59,19 @@
                     {
                       "name": "test",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
                       }
                     },
                     {
                       "name": "testfoo",
                       "details": {
-                        "result": "RESULT_PASSED"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
                       }
                     }
                   ]
