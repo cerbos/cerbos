@@ -269,6 +269,8 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 			"--reserve-memory=0M",
 			"--overprovisioned",
 			"--lock-memory=false",
+			"--default-log-level=error",
+			"--logger-log-level=kafka=info:request_auth=debug:security=debug",
 		},
 		ExposedPorts: []string{
 			"9092/tcp",
