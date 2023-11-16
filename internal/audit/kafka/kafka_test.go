@@ -274,7 +274,10 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 			"9092/tcp",
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9092/tcp": {{HostIP: "::1", HostPort: strconv.Itoa(port)}},
+			"9092/tcp": {
+				{HostIP: "::1", HostPort: strconv.Itoa(port)},
+				{HostIP: "127.0.0.1", HostPort: strconv.Itoa(port)},
+			},
 		},
 		Mounts: []string{
 			fmt.Sprintf("%s:/certs", filepath.Join(testDataAbsPath, "certs")),
