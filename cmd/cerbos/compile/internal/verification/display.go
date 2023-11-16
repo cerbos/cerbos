@@ -269,7 +269,7 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 				if len(success.Outputs) > 0 {
 					o.appendNode(resultLevel, "OUTPUTS:")
 					sort.Slice(success.Outputs, func(i, j int) bool {
-						return success.Outputs[i].Src > success.Outputs[j].Src
+						return success.Outputs[i].Src < success.Outputs[j].Src
 					})
 					for _, output := range success.Outputs {
 						o.appendNode(outputSrcLevel, colored.TestOutputSrc(output.Src))
