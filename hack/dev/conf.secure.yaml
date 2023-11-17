@@ -37,12 +37,19 @@ audit:
       maxFileAgeDays: 1
       maxFileCount: 3
 
-tracing:
-  sampleProbability: 1.0
-  exporter: jaeger
-  jaeger:
-    agentEndpoint: "localhost:6831"
-    serviceName: "cerbos"
+otel:
+  serviceName: "cerbos"
+  tracing:
+    sampleProbability: 1.0
+    collectorProtocol: grpc
+    collectorEndpoint: localhost:4317
+
+#tracing:
+#  sampleProbability: 1.0
+#  exporter: jaeger
+#  jaeger:
+#    agentEndpoint: "localhost:6831"
+#    serviceName: "cerbos"
 
 storage:
   driver: "disk"

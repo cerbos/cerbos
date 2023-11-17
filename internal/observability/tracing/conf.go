@@ -3,26 +3,10 @@
 
 package tracing
 
-import (
-	"errors"
-	"fmt"
-)
-
-const (
-	confKey        = "tracing"
-	jaegerExporter = "jaeger"
-	otlpExporter   = "otlp"
-)
-
-var (
-	errJaegerConfigUndefined   = errors.New("jaeger configuration is empty")
-	errJaegerEndpointUndefined = errors.New("jaeger endpoint undefined")
-
-	errOTLPConfigUndefined   = errors.New("otlp configuration is empty")
-	errOTLPEndpointUndefined = errors.New("otlp endpoint undefined")
-)
+const confKey = "tracing"
 
 // Conf is optional configuration for tracing.
+// Deprecated: Use the otel package instead.
 type Conf struct {
 	// ServiceName is the name of the service reported to the exporter.
 	ServiceName *string `yaml:"serviceName" conf:",example=cerbos"`
@@ -54,32 +38,4 @@ type OTLPConf struct {
 
 func (c *Conf) Key() string {
 	return confKey
-}
-
-func (c *Conf) Validate() error {
-	switch c.Exporter {
-	case "":
-		return nil
-
-	case jaegerExporter:
-		if c.Jaeger == nil {
-			return errJaegerConfigUndefined
-		}
-		if c.Jaeger.AgentEndpoint == "" && c.Jaeger.CollectorEndpoint == "" {
-			return errJaegerEndpointUndefined
-		}
-		return nil
-
-	case otlpExporter:
-		if c.OTLP == nil {
-			return errOTLPConfigUndefined
-		}
-		if c.OTLP.CollectorEndpoint == "" {
-			return errOTLPEndpointUndefined
-		}
-		return nil
-
-	default:
-		return fmt.Errorf("unknown trace exporter %s", c.Exporter)
-	}
 }
