@@ -19,7 +19,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/observability/otel"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/server"
 )
 
@@ -108,11 +108,11 @@ func (c *Cmd) Run() error {
 	}
 
 	// initialize tracing
-	otelDone, err := otel.Init(ctx)
+	tracingDone, err := tracing.Init(ctx)
 	if err != nil {
 		return err
 	}
-	defer otelDone()
+	defer tracingDone()
 
 	if err := server.Start(ctx, c.ZPagesEnabled); err != nil {
 		log.Errorw("Failed to start server", "error", err)
