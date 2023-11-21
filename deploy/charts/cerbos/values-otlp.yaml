@@ -1,4 +1,4 @@
-# Illustrates how to deploy Cerbos with an auto-injected Jaeger agent.
+# Illustrates how to deploy Cerbos with traces exported via OTLP.
 
 cerbos:
   config:
@@ -7,19 +7,15 @@ cerbos:
       driver: "sqlite3"
       sqlite3:
         dsn: "file:/data/cerbos.sqlite?mode=rwc&_fk=true"
-    # Configure tracing
-    tracing:
-      serviceName: cerbos
-      sampleProbability: 0.5
-      exporter: jaeger
-      jaeger:
-        agentEndpoint: "localhost:6831"
 
-
-# Annotate the deployment to inject the Jaeger agent.
-deployment:
-  annotations:
-    sidecar.jaegertracing.io/inject: "true"
+# Environment variables to configure OTLP exporter.
+env:
+  - name: OTEL_SERVICE_NAME
+    value: cerbos.myns.svc
+  - name: OTEL_TRACE_SAMPLER
+    value: parentbased_always_on
+  - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+    value: https://otlp.monitoring.svc.cluster.local
 
 # Optional common labels for resources.
 commonLabels:
@@ -45,4 +41,3 @@ volumes:
 volumeMounts:
   - name: cerbos-policies
     mountPath: /data
-
