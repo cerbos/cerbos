@@ -28,7 +28,6 @@ var noopCloseFn = func() error { return nil }
 func InitTraces(ctx context.Context, env Env) (func() error, error) {
 	if isDisabled(env) {
 		otel.SetTracerProvider(noop.NewTracerProvider())
-		zap.L().Named("otel").Info("Traces disabled because OpenTelemetry SDK is disabled by environment variable")
 		return noopCloseFn, nil
 	}
 
@@ -75,7 +74,7 @@ func InitTracesWithExporter(ctx context.Context, env Env, exporter tracesdk.Span
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator(otelprop.TraceContext{}, otelprop.Baggage{}, otelpropb3.New()))
 
 	return func() error {
-		if err := traceProvider.Shutdown(context.TODO()); err != nil {
+		if err := traceProvider.Shutdown(context.Background()); err != nil {
 			zap.L().Warn("Failed to cleanly shutdown trace exporter", zap.Error(err))
 			return err
 		}
@@ -85,29 +84,36 @@ func InitTracesWithExporter(ctx context.Context, env Env, exporter tracesdk.Span
 }
 
 func createSampler(env Env) (sampler tracesdk.Sampler, err error) {
-	samplerImpl := env.GetOrDefault(TracesSamplerEV, ParentBasedTraceIDRatioSampler)
+	log := zap.L().Named("otel")
+	samplerImpl := env.GetOrDefault(TracesSamplerEV, ParentBasedAlwaysOffSampler)
 	switch samplerImpl {
 	case AlwaysOffSampler:
+		log.Debug("Using always off sampler")
 		return decorateSampler(tracesdk.NeverSample()), nil
 	case AlwaysOnSampler:
+		log.Debug("Using always on sampler")
 		return decorateSampler(tracesdk.AlwaysSample()), nil
 	case ParentBasedAlwaysOffSampler:
+		log.Debug("Using parent-based always off sampler")
 		return decorateSampler(tracesdk.ParentBased(tracesdk.NeverSample())), nil
 	case ParentBasedAlwaysOnSampler:
+		log.Debug("Using parent-based always on sampler")
 		return decorateSampler(tracesdk.ParentBased(tracesdk.AlwaysSample())), nil
 	case ParentBasedTraceIDRatioSampler:
-		f := env.GetOrDefault(TracesSamplerArgEV, "1.0")
+		f := env.GetOrDefault(TracesSamplerArgEV, "0.1")
 		sampleFraction, err := strconv.ParseFloat(f, 32)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse trace ID ratio value %q: %w", f, err)
 		}
+		log.Debug(fmt.Sprintf("Using parent-based trace ID ratio sampler with fraction %f", sampleFraction))
 		return decorateSampler(tracesdk.ParentBased(tracesdk.TraceIDRatioBased(sampleFraction))), nil
 	case TraceIDRatioSampler:
-		f := env.GetOrDefault(TracesSamplerArgEV, "1.0")
+		f := env.GetOrDefault(TracesSamplerArgEV, "0.1")
 		sampleFraction, err := strconv.ParseFloat(f, 32)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse trace ID ratio value %q: %w", f, err)
 		}
+		log.Debug(fmt.Sprintf("Using trace ID ratio sampler with fraction %f", sampleFraction))
 		return decorateSampler(tracesdk.TraceIDRatioBased(sampleFraction)), nil
 	default:
 		return nil, fmt.Errorf("trace sampler %q is not supported", samplerImpl)

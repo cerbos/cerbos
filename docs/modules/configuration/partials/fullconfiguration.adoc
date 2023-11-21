@@ -211,12 +211,12 @@ telemetry:
   reportInterval: 1h # ReportInterval is the interval between telemetry pings.
   stateDir: ${HOME}/.config/cerbos # StateDir is used to persist state to avoid repeatedly sending the data over and over again.
 tracing:
-  exporter: jaeger # Exporter is the type of trace exporter to use.
-  jaeger: # Jaeger configures the Jaeger exporter.
+  exporter: jaeger # [Deprecated] Only OTLP is supported.
+  jaeger: # [Deprecated] Use OTLP to send traces to Jaeger.
     agentEndpoint: "localhost:6831" # AgentEndpoint is the Jaeger agent endpoint to report to.
     collectorEndpoint: "http://localhost:14268/api/traces" # CollectorEndpoint is the Jaeger collector endpoint to report to.
     serviceName: cerbos # [Deprecated] Use top level ServiceName config. ServiceName is the name of the service to report to Jaeger.
-  otlp: # OTLP configures the OpenTelemetry exporter.
+  otlp: # [Deprecated] Use OpenTelemetry environment variables to configure OTLP.
     collectorEndpoint: "otel:4317" # CollectorEndpoint is the Open Telemetry collector endpoint to export to.
-  sampleProbability: 0.1 # SampleProbability is the probability of sampling expressed as a number between 0 and 1.
-  serviceName: cerbos # ServiceName is the name of the service reported to the exporter.
+  sampleProbability: 0.1 # [Deprecated] Use OTEL_TRACES_SAMPLER and OTEL_TRACES_SAMPLER_ARG to configure trace sampler.
+  serviceName: cerbos # [Deprecated] Use OTEL_SERVICE_NAME environment variable.

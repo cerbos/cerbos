@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger" //nolint:staticcheck
 	"go.opentelemetry.io/otel/semconv/v1.13.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -34,24 +33,28 @@ func Init(ctx context.Context) (func() error, error) {
 }
 
 func InitFromConf(ctx context.Context, conf Conf) (func() error, error) {
-	log := zap.L().Named("tracing")
-	log.Warn("Tracing configuration is deprecated in favour of standard OpenTelemetry environment variables. Next version of Cerbos will completely drop support for configuring tracing via .cerbos.yaml. Please refer to https://docs.cerbos.dev/cerbos/latest/configuration/tracing for migration instructions.")
 	switch conf.Exporter {
 	case jaegerExporter:
+		warnConfigDeprecation(true)
 		return configureJaeger(ctx)
 	case otlpExporter:
+		warnConfigDeprecation(false)
 		return configureOTLP(ctx)
-	case "":
-		otelsdk.SetTracerProvider(noop.NewTracerProvider())
-		return func() error { return nil }, nil
 	default:
-		return nil, fmt.Errorf("unknown exporter %q", conf.Exporter)
+		return otel.InitTraces(ctx, otel.Env(os.LookupEnv))
+	}
+}
+
+func warnConfigDeprecation(jaeger bool) {
+	log := zap.L().Named("tracing")
+	if jaeger {
+		log.Warn("[DEPRECATED CONFIG] Jaeger trace exporter is deprecated in favour of OTLP. Next version of Cerbos will drop support for jaeger exporter. Please refer to https://docs.cerbos.dev/cerbos/latest/configuration/tracing#migration for migration instructions.")
+	} else {
+		log.Warn("[DEPRECATED CONFIG] File-based tracing configuration is deprecated in favour of configuration through OpenTelemetry environment variables. Next version of Cerbos will drop support for configuring tracing via Cerbos configuration file. Please refer to https://docs.cerbos.dev/cerbos/latest/configuration/tracing#migration for migration instructions.")
 	}
 }
 
 func configureJaeger(ctx context.Context) (func() error, error) {
-	log := zap.L().Named("tracing")
-	log.Warn("Jaeger trace exporter is deprecated in favour of OTLP. Next version of Cerbos will completely drop support for jaeger exporter. Please refer to https://docs.cerbos.dev/cerbos/latest/configuration/tracing for migration instructions.")
 	var endpoint jaeger.EndpointOption
 	if conf.Jaeger.AgentEndpoint != "" {
 		agentHost, agentPort, err := net.SplitHostPort(conf.Jaeger.AgentEndpoint)
@@ -81,7 +84,7 @@ func configureJaeger(ctx context.Context) (func() error, error) {
 	envMap := map[string]string{
 		otel.ServiceNameEV.Name:      *svcName,
 		otel.TracesSamplerEV.Name:    otel.ParentBasedTraceIDRatioSampler,
-		otel.TracesSamplerArgEV.Name: fmt.Sprintf("%f", conf.SampleProbability),
+		otel.TracesSamplerArgEV.Name: fmt.Sprintf("%0.2f", conf.SampleProbability),
 	}
 
 	env := func(key string) (string, bool) {
@@ -110,7 +113,7 @@ func configureOTLP(ctx context.Context) (func() error, error) {
 	envMap := map[string]string{
 		otel.ServiceNameEV.Name:            *svcName,
 		otel.TracesSamplerEV.Name:          otel.ParentBasedTraceIDRatioSampler,
-		otel.TracesSamplerArgEV.Name:       fmt.Sprintf("%f", conf.SampleProbability),
+		otel.TracesSamplerArgEV.Name:       fmt.Sprintf("%0.2f", conf.SampleProbability),
 		otel.TracesEndpointEV.Name:         conf.OTLP.CollectorEndpoint,
 		otel.TracesEndpointInsecureEV.Name: "true",
 	}

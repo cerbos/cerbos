@@ -1,57 +1,68 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Tracing block
+= Distributed traces
 
-Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. To enable tracing, set `sampleProbability` to a value between 0.0 and 1.0. Setting the probability to 1.0 makes Cerbos capture tracing information for all requests and setting it to 0.0 disables capturing any traces.
+Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. Traces from Cerbos can be exported to any compatible collector that uses the OpenTelemetry OTLP protocol.
 
-The system to export the trace data must be specified using the `exporter` setting. Currently link:https://www.jaegertracing.io[Jaeger] and link:https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md[OTLP collectors] are supported. If using Jaeger, traces can be sent to either a Jaeger Agent (compact Thrift format) or a Jaeger Collector (Thrift format).
+Trace configuration should be done using link:https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/[OpenTelemetry environment variables]. The following environment variables are supported.
 
+[%header,cols=".^1m,6a",grid=rows]
+|===
+| Environment variable | Description
 
-.OpenTelemetry
-****
-link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observability. Cerbos supports OpenTelemetry with a few caveats due to limitations in the current Go implementation of OpenTelemetry.
+| OTEL_SDK_DISABLED
+| Disable traces if set to `true`
 
+| OTEL_SERVICE_NAME
+| Service name reported in the traces. Defaults to `cerbos`.
 
-* gRPC clients should use the link:https://github.com/open-telemetry/opentelemetry-go-contrib/tree/main/propagators/opencensus[OpenCensus binary propagation format] for distributed traces.
+| OTEL_TRACES_SAMPLER
+| link:https://opentelemetry.io/docs/specs/otel/trace/sdk/#sampling[Trace sampler]. Defaults to `parentbased_always_off`. Supported values: +
+--
+`always_on`:: Record every trace.
+`always_off`:: Don't record any traces.
+`traceidratio`:: Record a fraction of traces based on ID. Set `OTEL_TRACES_SAMPLER_ARG` to a value between 0 and 1 to define the fraction.
+`parentbased_always_on`:: Record all traces except those where the parent span is not sampled.
+`parentbased_always_off`:: Don't record any traces unless the parent span is sampled.
+`parentbased_traceidratio`:: Record a fraction of traces where the parent span is sampled. Set `OTEL_TRACES_SAMPLER_ARG` to a value between 0 and 1 to define the fraction.
+--
 
-* Metrics are not yet supported.
+| OTEL_TRACES_SAMPLER_ARG
+| Set the sampling ratio when `OTEL_TRACES_SAMPLER` is a ratio-based sampler. Defaults to `0.1`.
 
-****
+| OTEL_EXPORTER_OTLP_TRACES_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT
+| Address of the OTLP collector (for example: `https://localhost:4317`). If not defined, traces are disabled.
 
-== Jaeger
+| OTEL_EXPORTER_OTLP_TRACES_INSECURE or OTEL_EXPORTER_OTLP_INSECURE
+| Skip validating the TLS certificate of the endpoint
 
-.Send trace data to Jaeger Agent (compact Thrift)
-[source,yaml,linenums]
-----
-tracing:
-  serviceName: cerbos
-  sampleProbability: 0.5
-  exporter: jaeger
-  jaeger:
-    agentEndpoint: "localhost:6831"
-----
+| OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE or OTEL_EXPORTER_OTLP_CERTIFICATE
+| Path to the certificate to use for validating the server's TLS credentials.
 
-.Send trace data to Jaeger Collector (Thrift)
-[source,yaml,linenums]
-----
-tracing:
-  serviceName: cerbos
-  sampleProbability: 0.5
-  exporter: jaeger
-  jaeger:
-    collectorEndpoint: "http://localhost:14268/api/traces"
-----
+| OTEL_EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE or OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE
+| Path to the client certificate to use for mTLS
 
-[#otlp]
-== OTLP
+| OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY or OTEL_EXPORTER_OTLP_CLIENT_KEY
+| Path to the client key to use for mTLS
 
-.Send trace data to an OTLP collector
-[source,yaml,linenums]
-----
-tracing:
-  serviceName: cerbos
-  sampleProbability: 0.5
-  exporter: otlp
-  otlp:
-    collectorEndpoint: "otel:4317"
-----
+| OTEL_EXPORTER_OTLP_TRACES_PROTOCOL or OTEL_EXPORTER_OTLP_PROTOCOL
+| OTLP protocol. Supported values are `grpc` and `http/protobuf`. Defaults to `grpc`.
+|===
+
+Refer to https://opentelemetry.io/docs/specs/otel/protocol/exporter/ for more information about exporter configuration through environment variables. Note that the OpenTelemetry Go SDK used by Cerbos might not have full support for some of the environment variables listed on the OpenTelemetry specification.
+
+[#migration]
+== Migrating tracing configuration from previous Cerbos versions
+
+From Cerbos 0.32.0, the preferred method of trace configuration is through the OpenTelemetry environment variables described above. The `tracing` section of the Cerbos configuration file is deprecated and will be removed in Cerbos 0.33.0. Native Jaeger protocol is deprecated as well and will be removed in Cerbos 0.33.0. Follow the instructions below to migrate your existing configuration.
+
+[%header,cols=".^1m,6a",grid=rows]
+|===
+| Configuration setting | New configuration
+
+| tracing.serviceName | Set `OTEL_SERVICE_NAME` environment variable
+| tracing.sampleProbability | Set `OTEL_TRACES_SAMPLER` to `parentbased_traceidratio` and `OTEL_TRACES_SAMPLER_ARG` to the probability value
+| tracing.jaeger.agentEndpoint or tracing.jaeger.collectorEndpoint | Jaeger now has link:https://www.jaegertracing.io/docs/1.51/apis/#opentelemetry-protocol-stable[stable support for OTLP] and is the recommended way to send traces. Set `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` to the address of your Jaeger instance (for example: `https://your.jaeger.instance:4317`) and, optionally, set `OTEL_EXPORTER_OTLP_TRACES_INSECURE=true` if Jaeger is using a self-signed certificate. If you want to use the HTTP API or customize other aspects, refer to the documentation above for other supported environment variables.
+| tracing.otlp.collectorEndpoint | Set `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` to the value of the collector endpoint and `OTEL_EXPORTER_OTLP_INSECURE=true` to emulate the behaviour of Cerbos OTLP exporter before version 0.32.0.
+|===
+

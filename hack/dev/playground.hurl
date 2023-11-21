@@ -29,7 +29,7 @@ HTTP 400
 header "Content-Type" == "application/json"
 jsonpath "$.failure.errors" count == 2
 jsonpath "$.failure.errors[?(@.file == 'resource.yaml')].error" nth 0 == "Derived roles import 'apatr_common_roles' not found"
-jsonpath "$.failure.errors[?(@.file == 'common_roles.yaml')].error" nth 0 == "Failed to read: file is not valid: [/: missing properties: 'resourcePolicy', /: missing properties: 'principalPolicy', /: missing properties: 'derivedRoles', /: missing properties: 'exportVariables']"
+jsonpath "$.failure.errors[?(@.file == 'common_roles.yaml')].error" nth 0 == "Failed to read: file is not valid: { /: [missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }"
 
 
 # Playground evaluate request 1

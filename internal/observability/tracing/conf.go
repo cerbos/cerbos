@@ -23,18 +23,19 @@ var (
 )
 
 // Conf is optional configuration for tracing.
+// Deprecated: use Otel environment variables instead. https://opentelemetry.io/docs/specs/otel/protocol/exporter/
 type Conf struct {
-	// ServiceName is the name of the service reported to the exporter.
+	// [Deprecated] Use OTEL_SERVICE_NAME environment variable.
 	ServiceName *string `yaml:"serviceName" conf:",example=cerbos"`
-	// Jaeger configures the Jaeger exporter.
+	// [Deprecated] Use OTLP to send traces to Jaeger.
 	Jaeger *JaegerConf `yaml:"jaeger"`
-	// OTLP configures the OpenTelemetry exporter.
+	// [Deprecated] Use OpenTelemetry environment variables to configure OTLP.
 	OTLP *OTLPConf `yaml:"otlp"`
 	// [Deprecated] PropagationFormat is no longer used. Traces in trace-context, baggage, or b3 formats are automatically detected and propagated.
 	PropagationFormat string `yaml:"propagationFormat" conf:",ignore"`
-	// Exporter is the type of trace exporter to use.
+	// [Deprecated] Only OTLP is supported.
 	Exporter string `yaml:"exporter" conf:",example=jaeger"`
-	// SampleProbability is the probability of sampling expressed as a number between 0 and 1.
+	// [Deprecated] Use OTEL_TRACES_SAMPLER and OTEL_TRACES_SAMPLER_ARG to configure trace sampler.
 	SampleProbability float64 `yaml:"sampleProbability" conf:",example=0.1"`
 }
 

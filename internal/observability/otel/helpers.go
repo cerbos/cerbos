@@ -9,7 +9,8 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"go.uber.org/zap"
 )
 
 type EnvVar struct {
@@ -64,13 +65,26 @@ func (env Env) GetOrDefault(ev EnvVar, defaultVal string) string {
 }
 
 func isDisabled(env Env) bool {
-	v := env.GetOrDefault(DisabledEV, "false")
-	disabled, err := strconv.ParseBool(v)
-	if err != nil {
-		return false
+	log := zap.L().Named("otel")
+	dv, ok := env.Get(DisabledEV)
+	if ok {
+		disabled, err := strconv.ParseBool(dv)
+		if err != nil {
+			log.Warn("Disabling traces because OTEL_SDK_DISABLED environment variable couldn't be parsed", zap.Error(err))
+			return false
+		}
+
+		if disabled {
+			log.Debug("Disabling traces because OTEL_SDK_DISABLED environment variable is set")
+		}
+		return disabled
 	}
 
-	return disabled
+	_, endpointDefined := env.Get(TracesEndpointEV)
+	if !endpointDefined {
+		log.Debug("Disabling traces because neither OTEL_EXPORTER_OTLP_ENDPOINT nor OTEL_EXPORTER_OTLP_TRACES_ENDPOINT is defined")
+	}
+	return !endpointDefined
 }
 
 func NewResource(ctx context.Context, serviceName string) (*resource.Resource, error) {
