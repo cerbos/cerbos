@@ -108,9 +108,15 @@ func (c *Cmd) Run() error {
 	}
 
 	// initialize tracing
-	if err := tracing.Init(ctx); err != nil {
+	tracingDone, err := tracing.Init(ctx)
+	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := tracingDone(); err != nil {
+			log.Warnw("Trace exporter did not shutdown cleanly", "error", err)
+		}
+	}()
 
 	if err := server.Start(ctx, c.ZPagesEnabled); err != nil {
 		log.Errorw("Failed to start server", "error", err)

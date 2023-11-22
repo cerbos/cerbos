@@ -30,13 +30,6 @@ audit:
   file:
     path: stdout
 
-tracing:
-  sampleProbability: 1.0
-  exporter: jaeger
-  jaeger:
-    agentEndpoint: "localhost:6831"
-    serviceName: "cerbos"
-
 storage:
   driver: "bundle"
   bundle:

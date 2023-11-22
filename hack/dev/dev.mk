@@ -11,7 +11,11 @@ $(DEV_DIR)/tls.crt:
 
 .PHONY: dev-server
 dev-server: $(DEV_DIR)/tls.crt
-	@ go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.secure.yaml
+	@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
+		OTEL_EXPORTER_OTLP_INSECURE=true \
+		OTEL_TRACES_SAMPLER=parentbased_traceidratio \
+		OTEL_TRACES_SAMPLER_ARG=1.0 \
+		go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.secure.yaml
 
 .PHONY: perf-server
 perf-server: $(DEV_DIR)/tls.crt
@@ -19,7 +23,10 @@ perf-server: $(DEV_DIR)/tls.crt
 
 .PHONY: dev-server-insecure
 dev-server-insecure:
-	@ go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.insecure.yaml
+	@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
+		OTEL_EXPORTER_OTLP_INSECURE=true \
+		OTEL_TRACES_SAMPLER=parentbased_always_on \
+		go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.insecure.yaml
 
 .PHONY: protoset
 protoset: $(BUF)
@@ -231,13 +238,9 @@ perf: $(GHZ)
 .PHONY: jaeger
 jaeger:
 	@ docker run -i -t --rm --name jaeger \
-		-e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
-		-p 5775:5775/udp \
-		-p 6831:6831/udp \
-		-p 6832:6832/udp \
-		-p 5778:5778 \
+		-e COLLECTOR_OTLP_ENABLED=true \
+		-p 14269:14269 \
 		-p 16686:16686 \
-		-p 14268:14268 \
-		-p 14250:14250 \
-		-p 9411:9411 \
-		jaegertracing/all-in-one:1.28
+		-p 4317:4317 \
+		-p 6831:6831/udp \
+		jaegertracing/all-in-one:1.51
