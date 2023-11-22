@@ -16,8 +16,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
 
@@ -290,14 +288,10 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 		case <-ticker.C:
 			if err := s.updateIndex(ctx); err != nil {
 				s.log.Errorw("Failed to check for updates", "error", err)
-				_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
-					tag.Upsert(metrics.KeyStoreDriver, DriverName),
-				}, metrics.StoreSyncErrorCount.M(1))
+				metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
 			}
 
-			_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
-				tag.Upsert(metrics.KeyStoreDriver, DriverName),
-			}, metrics.StorePollCount.M(1))
+			metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
 		}
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"io/fs"
 	"path"
 
-	"go.opencensus.io/stats"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -290,8 +289,7 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	}
 
 	logger.Info(fmt.Sprintf("Found %d executable policies", len(idx.executables)))
-
-	stats.Record(context.Background(), metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
+	metrics.Add(context.Background(), metrics.IndexEntryCount(), int64(len(idx.modIDToFile)))
 
 	return &index{
 		fsys:         fsys,

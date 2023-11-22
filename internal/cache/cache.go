@@ -8,51 +8,33 @@ import (
 	"time"
 
 	"github.com/bluele/gcache"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/cerbos/cerbos/internal/observability/metrics"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 )
 
 type Cache[K, V any] struct {
-	cache gcache.Cache
-	config
+	cache     gcache.Cache
+	hitAttrs  []attribute.KeyValue
+	missAttrs []attribute.KeyValue
 }
 
-type config struct {
-	tagMutators []tag.Mutator
-}
-
-type Option func(*config)
-
-func WithTags(mutators ...tag.Mutator) Option {
-	return func(conf *config) {
-		conf.tagMutators = mutators
-	}
-}
-
-func New[K, V any](kind string, size uint, options ...Option) *Cache[K, V] {
-	cache := &Cache[K, V]{}
-
-	for _, option := range options {
-		option(&cache.config)
+func New[K, V any](kind string, size uint, attributes ...attribute.KeyValue) *Cache[K, V] {
+	attrs := append([]attribute.KeyValue{metrics.KindKey(kind)}, attributes...)
+	cache := &Cache[K, V]{
+		hitAttrs:  append([]attribute.KeyValue{metrics.ResultKey("hit")}, attrs...),
+		missAttrs: append([]attribute.KeyValue{metrics.ResultKey("miss")}, attrs...),
 	}
 
-	cache.tagMutators = append(cache.tagMutators, tag.Upsert(metrics.KeyCacheKind, kind))
-
-	_ = stats.RecordWithTags(context.Background(),
-		cache.tagMutators,
-		metrics.CacheMaxSize.M(int64(size)),
-	)
-
-	gauge := metrics.MakeCacheGauge(kind)
+	metrics.Add(context.Background(), metrics.CacheMaxSize(), int64(size), attrs...)
 	cache.cache = gcache.
 		New(int(size)).
 		ARC().
 		AddedFunc(func(_, _ any) {
-			gauge.Add(1)
+			metrics.Add(context.Background(), metrics.CacheLiveObjGauge(), 1, attrs...)
 		}).
 		EvictedFunc(func(_, _ any) {
-			gauge.Add(-1)
+			metrics.Add(context.Background(), metrics.CacheLiveObjGauge(), -1, attrs...)
 		}).
 		Build()
 
@@ -96,15 +78,9 @@ func (c *Cache[K, V]) Purge() {
 }
 
 func (c *Cache[K, V]) hit() {
-	_ = stats.RecordWithTags(context.Background(),
-		append(c.tagMutators, tag.Upsert(metrics.KeyCacheResult, "hit")),
-		metrics.CacheAccessCount.M(1),
-	)
+	metrics.Inc(context.Background(), metrics.CacheAccessCount(), c.hitAttrs...)
 }
 
 func (c *Cache[K, V]) miss() {
-	_ = stats.RecordWithTags(context.Background(),
-		append(c.tagMutators, tag.Upsert(metrics.KeyCacheResult, "miss")),
-		metrics.CacheAccessCount.M(1),
-	)
+	metrics.Inc(context.Background(), metrics.CacheAccessCount(), c.missAttrs...)
 }

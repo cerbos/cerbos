@@ -9,15 +9,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/plugin/kzap"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
@@ -216,10 +215,8 @@ func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 				break
 			}
 		}
-		_ = stats.RecordWithTags(ctx,
-			[]tag.Mutator{tag.Upsert(metrics.KeyAuditKind, kind)},
-			metrics.AuditErrorCount.M(1),
-		)
+
+		metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(kind))
 	})
 	return nil
 }

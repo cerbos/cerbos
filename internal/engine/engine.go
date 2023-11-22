@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
 )
@@ -215,7 +216,7 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 }
 
 func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
-	output, err := measurePlanLatency(func() (output *enginev1.PlanResourcesOutput, err error) {
+	output, err := metrics.RecordDuration2(metrics.EnginePlanLatency(), func() (output *enginev1.PlanResourcesOutput, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Plan")
 		defer span.End()
 
@@ -324,7 +325,7 @@ func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanR
 }
 
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
-	outputs, err := measureCheckLatency(len(inputs), func() (outputs []*enginev1.CheckOutput, err error) {
+	outputs, err := metrics.RecordDuration2(metrics.EngineCheckLatency(), func() (outputs []*enginev1.CheckOutput, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
@@ -344,6 +345,7 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, 
 
 		return outputs, err
 	})
+	metrics.EngineCheckBatchSize().Record(context.Background(), int64(len(inputs)))
 
 	return engine.logCheckDecision(ctx, inputs, outputs, err)
 }

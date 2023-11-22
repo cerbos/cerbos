@@ -12,8 +12,6 @@ import (
 	"sort"
 	"sync"
 
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -268,6 +266,8 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 
+	startCount := len(idx.modIDToFile)
+
 	// Is this is a duplicate of another file?
 	if otherFile, ok := idx.modIDToFile[modID]; ok && otherFile != entry.File {
 		return evt, fmt.Errorf("policy is already defined in %s: %w", otherFile, ErrDuplicatePolicy)
@@ -308,8 +308,8 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	}
 
 	statsCtx := context.Background()
-	stats.Record(statsCtx, metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
-	_ = stats.RecordWithTags(statsCtx, []tag.Mutator{tag.Upsert(metrics.KeyIndexCRUDKind, crudKind)}, metrics.IndexCRUDCount.M(1))
+	metrics.Add(statsCtx, metrics.IndexEntryCount(), int64(len(idx.modIDToFile)-startCount))
+	metrics.Inc(statsCtx, metrics.IndexCRUDCount(), metrics.KindKey(crudKind))
 
 	return evt, nil
 }
@@ -331,6 +331,8 @@ func (idx *index) addDep(child, parent namer.ModuleID) {
 func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
+
+	startCount := len(idx.modIDToFile)
 
 	modID, ok := idx.fileToModID[entry.File]
 	if !ok {
@@ -354,8 +356,8 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	delete(idx.executables, modID)
 
 	statsCtx := context.Background()
-	stats.Record(statsCtx, metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
-	_ = stats.RecordWithTags(statsCtx, []tag.Mutator{tag.Upsert(metrics.KeyIndexCRUDKind, "delete")}, metrics.IndexCRUDCount.M(1))
+	metrics.Add(statsCtx, metrics.IndexEntryCount(), int64(len(idx.modIDToFile)-startCount))
+	metrics.Inc(statsCtx, metrics.IndexCRUDCount(), metrics.KindKey("delete"))
 
 	return evt, nil
 }

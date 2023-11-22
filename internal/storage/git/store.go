@@ -15,8 +15,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -525,14 +523,10 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 		case <-ticker.C:
 			if err := s.updateIndex(ctx); err != nil {
 				s.log.Errorw("Failed to check for updates", "error", err)
-				_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
-					tag.Upsert(metrics.KeyStoreDriver, DriverName),
-				}, metrics.StoreSyncErrorCount.M(1))
+				metrics.Inc(context.Background(), metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
 			}
 
-			_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
-				tag.Upsert(metrics.KeyStoreDriver, DriverName),
-			}, metrics.StorePollCount.M(1))
+			metrics.Inc(context.Background(), metrics.StorePollCount(), metrics.DriverKey(DriverName))
 		}
 	}
 }
