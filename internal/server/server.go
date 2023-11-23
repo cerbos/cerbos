@@ -17,11 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"contrib.go.opencensus.io/exporter/prometheus"
-	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/telemetry"
-	"github.com/cerbos/cerbos/internal/validator"
 	"github.com/cloudflare/certinel/fswatcher"
 	"github.com/gorilla/mux"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
@@ -29,12 +24,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	reuseport "github.com/kavu/go_reuseport"
-	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/sourcegraph/conc/pool"
-	"go.opencensus.io/plugin/ocgrpc"
-	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/zpages"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
@@ -43,6 +33,11 @@ import (
 	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
+
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/telemetry"
+	"github.com/cerbos/cerbos/internal/validator"
 
 	// Import the default grpc encoding to ensure that it gets replaced by VT.
 	_ "google.golang.org/grpc/encoding/proto"
@@ -100,23 +95,15 @@ const (
 	metricsEndpoint    = "/_cerbos/metrics"
 	playgroundEndpoint = "/api/playground"
 	schemaEndpoint     = "/schema/swagger.json"
-	zpagesEndpoint     = "/_cerbos/debug"
 )
 
 var ErrInvalidStore = errors.New("store does not implement either SourceStore or BinaryStore interfaces")
 
-func Start(ctx context.Context, zpagesEnabled bool) error {
+func Start(ctx context.Context) error {
 	// get configuration
 	conf, err := GetConf()
 	if err != nil {
-		return fmt.Errorf("failed to read server configuration: %w", err)
-	}
-
-	// create Prom exporter.
-	// this is done early to prevent metrics from other components from being discarded because there's no exporter registered.
-	ocExporter, err := initOCPromExporter(conf)
-	if err != nil {
-		return fmt.Errorf("failed to create Prometheus exporter: %w", err)
+		return fmt.Errorf("failed to load server configuration: %w", err)
 	}
 
 	// create audit log
@@ -184,20 +171,18 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	s := NewServer(conf)
-	s.ocExporter = ocExporter
 
 	telemetry.Start(ctx, store)
 	defer telemetry.Stop()
 
-	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store, ZPagesEnabled: zpagesEnabled})
+	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store})
 }
 
 type Param struct {
-	AuditLog      audit.Log
-	AuxData       *auxdata.AuxData
-	Engine        *engine.Engine
-	Store         storage.Store
-	ZPagesEnabled bool
+	AuditLog audit.Log
+	AuxData  *auxdata.AuxData
+	Engine   *engine.Engine
+	Store    storage.Store
 }
 
 type Server struct {
@@ -205,7 +190,6 @@ type Server struct {
 	cancelFunc context.CancelFunc
 	pool       *pool.ContextPool
 	health     *health.Server
-	ocExporter *prometheus.Exporter
 	tlsConfig  *tls.Config
 }
 
@@ -254,7 +238,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		return err
 	}
 
-	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, param.ZPagesEnabled)
+	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer)
 	if err != nil {
 		log.Error("Failed to start HTTP server", zap.Error(err))
 		return err
@@ -475,7 +459,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 	return grpc.NewServer(opts...), nil
 }
 
-func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) {
+func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server) (*http.Server, error) {
 	log := zap.S().Named("http")
 
 	grpcConn, err := s.mkGRPCConn(ctx)
@@ -525,15 +509,12 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	cerbosMux.Path(healthEndpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 
-	if s.conf.MetricsEnabled && s.ocExporter != nil {
-		cerbosMux.Path(metricsEndpoint).Handler(s.ocExporter)
-	}
-
-	if zpagesEnabled {
-		hm := http.NewServeMux()
-		zpages.Handle(hm, zpagesEndpoint)
-
-		cerbosMux.PathPrefix(zpagesEndpoint).Handler(hm)
+	if s.conf.MetricsEnabled {
+		h, err := metrics.NewHandler()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Prometheus handler: %w", err)
+		}
+		cerbosMux.Path(metricsEndpoint).Handler(h)
 	}
 
 	if s.conf.APIExplorerEnabled {
@@ -571,7 +552,6 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 	return []grpc.DialOption{
 		grpc.WithUserAgent("grpc-gateway"),
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minGRPCConnectTimeout}),
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	}
 }
 
@@ -636,37 +616,4 @@ func toUDSFileMode(modeStr string) os.FileMode {
 
 	// Ignore everything but the last 9 bits which hold the user, group and world perms.
 	return os.FileMode(m & 0o777)
-}
-
-func initOCPromExporter(conf *Conf) (*prometheus.Exporter, error) {
-	if !conf.MetricsEnabled {
-		return nil, nil
-	}
-
-	if err := view.Register(ocgrpc.DefaultServerViews...); err != nil {
-		return nil, fmt.Errorf("failed to register gRPC server views: %w", err)
-	}
-
-	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
-		return nil, fmt.Errorf("failed to register HTTP server views: %w", err)
-	}
-
-	if err := view.Register(metrics.DefaultCerbosViews...); err != nil {
-		return nil, fmt.Errorf("failed to register Cerbos views: %w", err)
-	}
-
-	registry, ok := prom.DefaultRegisterer.(*prom.Registry)
-	if !ok {
-		registry = nil
-	}
-
-	exporter, err := prometheus.NewExporter(prometheus.Options{Registry: registry})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Prometheus exporter: %w", err)
-	}
-
-	view.RegisterExporter(exporter)
-	view.SetReportingPeriod(metricsReportingInterval)
-
-	return exporter, nil
 }

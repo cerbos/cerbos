@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"time"
 
+	"go.opentelemetry.io/otel/metric"
+
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 )
 
 // instrument wraps the given source to produce metrics.
@@ -82,22 +82,18 @@ func (is instrumentedSource) SourceKind() string {
 func measureBinaryOp[T any](ctx context.Context, source, opName string, op func(context.Context) (T, error)) (T, error) {
 	startTime := time.Now()
 	result, err := withTrace(ctx, source, opName, op)
-
-	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
+	latencyMs := metrics.TotalTimeMS(startTime)
 
 	status := "success"
 	if err != nil {
 		status = "failure"
 	}
 
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{
-			tag.Upsert(metrics.KeyBundleSource, source),
-			tag.Upsert(metrics.KeyBundleOp, opName),
-			tag.Upsert(metrics.KeyBundleOpStatus, status),
-		},
-		metrics.BundleStoreLatency.M(latencyMs),
-	)
+	metrics.BundleStoreLatency().Record(context.Background(), latencyMs, metric.WithAttributes(
+		metrics.SourceKey(source),
+		metrics.OpKey(opName),
+		metrics.StatusKey(status),
+	))
 
 	return result, err
 }

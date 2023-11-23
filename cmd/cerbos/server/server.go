@@ -19,6 +19,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/otel"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/server"
 )
@@ -52,7 +53,6 @@ type Cmd struct {
 	Config          string       `help:"Path to config file" optional:"" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
 	HubBundle       string       `help:"Use Cerbos Hub to pull the policy bundle with the given label. Overrides the store defined in the configuration." optional:"" env:"CERBOS_HUB_BUNDLE,CERBOS_CLOUD_BUNDLE"`
 	Set             []string     `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
-	ZPagesEnabled   bool         `help:"Enable zpages" hidden:""`
 }
 
 func (c *Cmd) Run() error {
@@ -61,15 +61,24 @@ func (c *Cmd) Run() error {
 
 	logging.InitLogging(ctx, string(c.LogLevel))
 	defer zap.L().Sync() //nolint:errcheck
-
 	log := zap.S().Named("server")
 
 	undo, err := maxprocs.Set(maxprocs.Logger(log.Infof))
 	defer undo()
-
 	if err != nil {
 		log.Warnw("Failed to adjust GOMAXPROCS", "error", err)
 	}
+
+	// initialize metrics
+	metricsDone, err := otel.InitMetrics(ctx, otel.Env(os.LookupEnv))
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := metricsDone(); err != nil {
+			log.Warnw("Metrics exporter did not shutdown cleanly", "error", err)
+		}
+	}()
 
 	if c.DebugListenAddr != "" {
 		startDebugListener(c.DebugListenAddr)
@@ -118,7 +127,7 @@ func (c *Cmd) Run() error {
 		}
 	}()
 
-	if err := server.Start(ctx, c.ZPagesEnabled); err != nil {
+	if err := server.Start(ctx); err != nil {
 		log.Errorw("Failed to start server", "error", err)
 		return err
 	}

@@ -14,8 +14,6 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 )
 
 const (
@@ -140,10 +138,7 @@ func (lw *logWrapper) WriteAccessLogEntry(ctx context.Context, entry AccessLogEn
 	}
 
 	if err := lw.backend.WriteAccessLogEntry(ctx, entry); err != nil {
-		_ = stats.RecordWithTags(ctx,
-			[]tag.Mutator{tag.Upsert(metrics.KeyAuditKind, KindAccess)},
-			metrics.AuditErrorCount.M(1),
-		)
+		metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindAccess))
 		return err
 	}
 
@@ -156,10 +151,7 @@ func (lw *logWrapper) WriteDecisionLogEntry(ctx context.Context, entry DecisionL
 	}
 
 	if err := lw.backend.WriteDecisionLogEntry(ctx, entry); err != nil {
-		_ = stats.RecordWithTags(ctx,
-			[]tag.Mutator{tag.Upsert(metrics.KeyAuditKind, KindDecision)},
-			metrics.AuditErrorCount.M(1),
-		)
+		metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindDecision))
 		return err
 	}
 

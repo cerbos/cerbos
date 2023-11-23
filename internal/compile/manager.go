@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -173,10 +171,9 @@ func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) 
 }
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {
-	startTime := time.Now()
-	rps, err := Compile(unit, c.schemaMgr)
-	durationMs := float64(time.Since(startTime)) / float64(time.Millisecond)
-
+	rps, err := metrics.RecordDuration2(metrics.CompileDuration(), func() (*runtimev1.RunnablePolicySet, error) {
+		return Compile(unit, c.schemaMgr)
+	})
 	if err == nil && rps != nil {
 		if c.cacheDuration > 0 {
 			c.cache.SetWithExpire(unit.ModID, rps, c.cacheDuration)
@@ -184,17 +181,6 @@ func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePoli
 			c.cache.Set(unit.ModID, rps)
 		}
 	}
-
-	status := "success"
-	if err != nil {
-		status = "failure"
-	}
-
-	_ = stats.RecordWithTags(
-		context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCompileStatus, status)},
-		metrics.CompileDuration.M(durationMs),
-	)
 
 	return rps, err
 }

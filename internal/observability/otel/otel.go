@@ -6,11 +6,9 @@ package otel
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
-	"go.uber.org/zap"
 )
 
 type EnvVar struct {
@@ -21,16 +19,24 @@ type EnvVar struct {
 var (
 	DisabledEV               = EnvVar{Name: "OTEL_SDK_DISABLED"}
 	MetricsEndpointEV        = EnvVar{Name: "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", Alt: "OTEL_EXPORTER_OTLP_ENDPOINT"}
+	MetricsExporterEV        = EnvVar{Name: "OTEL_METRICS_EXPORTER"}
+	MetricsExportIntervalEV  = EnvVar{Name: "OTEL_METRIC_EXPORT_INTERVAL"}
+	MetricsExportTimeoutEV   = EnvVar{Name: "OTEL_METRIC_EXPORT_TIMEOUT"}
 	MetricsProtocolEV        = EnvVar{Name: "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", Alt: "OTEL_EXPORTER_OTLP_PROTOCOL"}
 	ServiceNameEV            = EnvVar{Name: "OTEL_SERVICE_NAME"}
 	TracesEndpointEV         = EnvVar{Name: "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", Alt: "OTEL_EXPORTER_OTLP_ENDPOINT"}
 	TracesEndpointInsecureEV = EnvVar{Name: "OTEL_EXPORTER_OTLP_TRACES_INSECURE", Alt: "OTEL_EXPORTER_OTLP_INSECURE"}
+	TracesExporterEV         = EnvVar{Name: "OTEL_TRACES_EXPORTER"}
 	TracesSamplerEV          = EnvVar{Name: "OTEL_TRACES_SAMPLER"}
 	TracesSamplerArgEV       = EnvVar{Name: "OTEL_TRACES_SAMPLER_ARG"}
 	TracesProtocolEV         = EnvVar{Name: "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", Alt: "OTEL_EXPORTER_OTLP_PROTOCOL"}
 )
 
 const (
+	NoneExporter       = "none"
+	OTLPExporter       = "otlp"
+	PrometheusExporter = "prometheus"
+
 	GRPCProtocol         = "grpc"
 	HTTPProtobufProtocol = "http/protobuf"
 
@@ -43,6 +49,8 @@ const (
 	ParentBasedTraceIDRatioSampler = "parentbased_traceidratio"
 	TraceIDRatioSampler            = "traceidratio"
 )
+
+var noopCloseFn = func() error { return nil }
 
 type Env func(string) (string, bool)
 
@@ -64,30 +72,7 @@ func (env Env) GetOrDefault(ev EnvVar, defaultVal string) string {
 	return val
 }
 
-func isDisabled(env Env) bool {
-	log := zap.L().Named("otel")
-	dv, ok := env.Get(DisabledEV)
-	if ok {
-		disabled, err := strconv.ParseBool(dv)
-		if err != nil {
-			log.Warn("Disabling traces because OTEL_SDK_DISABLED environment variable couldn't be parsed", zap.Error(err))
-			return false
-		}
-
-		if disabled {
-			log.Debug("Disabling traces because OTEL_SDK_DISABLED environment variable is set")
-		}
-		return disabled
-	}
-
-	_, endpointDefined := env.Get(TracesEndpointEV)
-	if !endpointDefined {
-		log.Debug("Disabling traces because neither OTEL_EXPORTER_OTLP_ENDPOINT nor OTEL_EXPORTER_OTLP_TRACES_ENDPOINT is defined")
-	}
-	return !endpointDefined
-}
-
-func NewResource(ctx context.Context, serviceName string) (*resource.Resource, error) {
+func newResource(ctx context.Context, serviceName string) (*resource.Resource, error) {
 	res, err := resource.New(ctx,
 		resource.WithAttributes(semconv.ServiceNameKey.String(serviceName)),
 		resource.WithProcessPID(),

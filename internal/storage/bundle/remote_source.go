@@ -25,8 +25,6 @@ import (
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/go-logr/zapr"
 	"github.com/spf13/afero"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 )
 
@@ -177,7 +175,7 @@ func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 	bdlPath, err = s.client.GetBundle(ctx, s.conf.Remote.BundleLabel)
 	if err != nil {
 		s.log.Error("Failed to fetch bundle using the API", zap.Error(err))
-		stats.Record(ctx, metrics.BundleFetchErrorsCount.M(1))
+		metrics.Inc(ctx, metrics.BundleFetchErrorsCount())
 		return fmt.Errorf("failed to fetch bundle: %w", err)
 	}
 
@@ -237,7 +235,7 @@ func (s *RemoteSource) swapBundle(bundlePath string) error {
 		}
 	}
 
-	stats.Record(context.Background(), metrics.BundleStoreUpdatesCount.M(1))
+	metrics.Inc(context.Background(), metrics.BundleStoreUpdatesCount())
 
 	return nil
 }
@@ -259,16 +257,16 @@ func (s *RemoteSource) startWatchLoop(ctx context.Context, noBundleBackoff backo
 	if err != nil {
 		if !errors.Is(err, cloudapi.ErrBundleNotFound) {
 			s.log.Warn("Terminating bundle watch", zap.Error(err))
-			stats.Record(ctx, metrics.HubConnectedCount.M(0))
+			metrics.Add(ctx, metrics.HubConnected(), -1)
 			return
 		}
 
-		stats.Record(ctx, metrics.BundleNotFoundErrorsCount.M(1))
+		metrics.Inc(ctx, metrics.BundleNotFoundErrorsCount())
 		wait = noBundleBackoff.NextBackOff()
 		if wait == backoff.Stop {
 			s.log.Warn("Giving up waiting for the bundle to re-appear: terminating bundle watch")
 			s.log.Info("Restart this instance to re-establish connection to Cerbos Hub")
-			stats.Record(ctx, metrics.HubConnectedCount.M(0))
+			metrics.Add(ctx, metrics.HubConnected(), -1)
 			return
 		}
 	}
@@ -296,11 +294,7 @@ func (s *RemoteSource) startWatchLoop(ctx context.Context, noBundleBackoff backo
 }
 
 func incEventMetric(event string) {
-	_ = stats.RecordWithTags(
-		context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyBundleRemoteEvent, event)},
-		metrics.BundleStoreRemoteEventsCount.M(1),
-	)
+	metrics.Inc(context.Background(), metrics.BundleStoreRemoteEventsCount(), metrics.RemoteEventKey(event))
 }
 
 func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
@@ -335,7 +329,7 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 		return 0, err
 	}
 
-	stats.Record(ctx, metrics.HubConnectedCount.M(1))
+	metrics.Add(ctx, metrics.HubConnected(), 1)
 
 	eventChan := watchHandle.ServerEvents()
 	errorChan := watchHandle.Errors()

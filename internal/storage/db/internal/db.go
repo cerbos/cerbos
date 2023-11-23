@@ -18,8 +18,6 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jackc/pgtype"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -286,9 +284,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 		return err
 	}
 
-	_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
-		tag.Upsert(metrics.KeyIndexCRUDKind, "upsert"),
-	}, metrics.IndexCRUDCount.M(int64(len(policies))))
+	metrics.Add(context.Background(), metrics.IndexCRUDCount(), int64(len(policies)), metrics.KindKey("upsert"))
 
 	s.NotifySubscribers(events...)
 	return nil

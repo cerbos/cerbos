@@ -204,7 +204,7 @@ func (c *Cmd) startPDP(ctx context.Context) (*pdpInstance, error) {
 	instance.stopFn = stopFn
 
 	c.goroutine(func() {
-		instance.errors <- server.Start(serverCtx, false)
+		instance.errors <- server.Start(serverCtx)
 		close(instance.errors)
 	})
 

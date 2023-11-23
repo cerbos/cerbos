@@ -11,22 +11,31 @@ $(DEV_DIR)/tls.crt:
 
 .PHONY: dev-server
 dev-server: $(DEV_DIR)/tls.crt
-	@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
-		OTEL_EXPORTER_OTLP_INSECURE=true \
+	@ OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4317 \
+		OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=grpc \
 		OTEL_TRACES_SAMPLER=parentbased_traceidratio \
 		OTEL_TRACES_SAMPLER_ARG=1.0 \
-		go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.secure.yaml
+		OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://localhost:9090/api/v1/otlp/v1/metrics \
+		OTEL_METRICS_EXPORTER=otlp \
+		OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=http/protobuf \
+		OTEL_EXPORTER_OTLP_INSECURE=true \
+		go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --config=$(DEV_DIR)/conf.secure.yaml
 
 .PHONY: perf-server
 perf-server: $(DEV_DIR)/tls.crt
-	@ go run cmd/cerbos/main.go server --log-level=error --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.secure.yaml --set=tracing.sampleProbability=0 --set=storage.disk.watchForChanges=false
+	@ go run cmd/cerbos/main.go server --log-level=error --debug-listen-addr=":6666" --config=$(DEV_DIR)/conf.secure.yaml --set=tracing.sampleProbability=0 --set=storage.disk.watchForChanges=false
 
 .PHONY: dev-server-insecure
 dev-server-insecure:
-	@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
+	@ OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4317 \
+		OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=grpc \
+		OTEL_TRACES_SAMPLER=parentbased_traceidratio \
+		OTEL_TRACES_SAMPLER_ARG=1.0 \
+		OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://localhost:9090/api/v1/otlp/v1/metrics \
+		OTEL_METRICS_EXPORTER=otlp \
+		OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=http/protobuf \
 		OTEL_EXPORTER_OTLP_INSECURE=true \
-		OTEL_TRACES_SAMPLER=parentbased_always_on \
-		go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --z-pages-enabled --config=$(DEV_DIR)/conf.insecure.yaml
+		go run cmd/cerbos/main.go server --log-level=debug --debug-listen-addr=":6666" --config=$(DEV_DIR)/conf.insecure.yaml
 
 .PHONY: protoset
 protoset: $(BUF)
@@ -244,3 +253,11 @@ jaeger:
 		-p 4317:4317 \
 		-p 6831:6831/udp \
 		jaegertracing/all-in-one:1.51
+
+.PHONY: prometheus
+prometheus:
+	@ docker run -i -t --rm --name=prometheus \
+		-p 9090:9090 \
+		bitnami/prometheus:latest \
+		--config.file=/opt/bitnami/prometheus/conf/prometheus.yml \
+		--enable-feature=otlp-write-receiver

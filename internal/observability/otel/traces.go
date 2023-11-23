@@ -23,16 +23,20 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-var noopCloseFn = func() error { return nil }
+func InitTracesWithExporter(ctx context.Context, env Env, exporter tracesdk.SpanExporter) (func() error, error) {
+	return doInitTraces(ctx, env, exporter)
+}
 
 func InitTraces(ctx context.Context, env Env) (func() error, error) {
-	if isDisabled(env) {
+	if _, endpointDefined := env.Get(TracesEndpointEV); !endpointDefined {
+		zap.L().Named("otel").Warn("Disabling OTLP traces because neither OTEL_EXPORTER_OTLP_ENDPOINT nor OTEL_EXPORTER_OTLP_TRACES_ENDPOINT is defined")
 		otel.SetTracerProvider(noop.NewTracerProvider())
 		return noopCloseFn, nil
 	}
 
 	var exporter *otlptrace.Exporter
 	var err error
+
 	protocol := env.GetOrDefault(TracesProtocolEV, GRPCProtocol)
 	switch protocol {
 	case GRPCProtocol:
@@ -43,21 +47,21 @@ func InitTraces(ctx context.Context, env Env) (func() error, error) {
 		err = fmt.Errorf("otlp exporter protocol %q is not supported", protocol)
 	}
 	if err != nil {
-		return noopCloseFn, fmt.Errorf("failed to initialize trace exporter: %w", err)
+		return nil, fmt.Errorf("failed to initialize trace exporter: %w", err)
 	}
 
-	return InitTracesWithExporter(ctx, env, exporter)
+	return doInitTraces(ctx, env, exporter)
 }
 
-func InitTracesWithExporter(ctx context.Context, env Env, exporter tracesdk.SpanExporter) (func() error, error) {
+func doInitTraces(ctx context.Context, env Env, exporter tracesdk.SpanExporter) (func() error, error) {
+	res, err := newResource(ctx, env.GetOrDefault(ServiceNameEV, util.AppName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Otel resource: %w", err)
+	}
+
 	sampler, err := createSampler(env)
 	if err != nil {
 		return noopCloseFn, fmt.Errorf("failed to initialize trace sampler: %w", err)
-	}
-
-	res, err := NewResource(ctx, env.GetOrDefault(ServiceNameEV, util.AppName))
-	if err != nil {
-		return noopCloseFn, fmt.Errorf("failed to create Otel resource: %w", err)
 	}
 
 	traceProvider := tracesdk.NewTracerProvider(

@@ -23,7 +23,6 @@ import (
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/zipfs"
-	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 )
 
@@ -84,7 +83,7 @@ func Open(opts OpenOpts) (*Bundle, error) {
 		manifest: manifest,
 		bundleFS: zipFS,
 		cleanup:  cleanup,
-		cache:    cache.New[namer.ModuleID, cacheEntry]("bundle", opts.CacheSize, cache.WithTags(tag.Upsert(metrics.KeyBundleSource, opts.Source))),
+		cache:    cache.New[namer.ModuleID, cacheEntry]("bundle", opts.CacheSize, metrics.SourceKey(opts.Source)),
 	}, nil
 }
 
