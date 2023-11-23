@@ -1,0 +1,93 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Observability
+
+Cerbos is designed from the ground up to be cloud native and has first-class support for observability via OpenTelemetry metrics and distributed traces.
+
+[#metrics]
+== Metrics
+
+By default, Cerbos exposes a metrics endpoint at `/_cerbos/metrics` that can be scraped by Prometheus or other metrics scrapers that support the Prometheus metrics format. This endpoint can be disabled by setting `server.metricsEnabled` configuration value to `false` (see xref:server.adoc[]).
+
+Cerbos also has support for OpenTelemetry protocol (OTLP) push metrics. It can be configured using link:https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/[OpenTelemetry environment variables]. The following environment variables are supported.
+
+[%header,cols=".^1m,6a",grid=rows]
+|===
+| Environment variable | Description
+
+| OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT
+| Address of the OTLP metrics receiver (for example: `https://localhost:9090/api/v1/otlp/v1/metrics`). If not defined, OTLP metrics are disabled.
+
+| OTEL_EXPORTER_OTLP_METRICS_INSECURE or OTEL_EXPORTER_OTLP_INSECURE
+| Skip validating the TLS certificate of the endpoint
+
+| OTEL_EXPORTER_OTLP_METRICS_CERTIFICATE or OTEL_EXPORTER_OTLP_CERTIFICATE
+| Path to the certificate to use for validating the server's TLS credentials.
+
+| OTEL_EXPORTER_OTLP_METRICS_CLIENT_CERTIFICATE or OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE
+| Path to the client certificate to use for mTLS
+
+| OTEL_EXPORTER_OTLP_METRICS_CLIENT_KEY or OTEL_EXPORTER_OTLP_CLIENT_KEY
+| Path to the client key to use for mTLS
+
+| OTEL_EXPORTER_OTLP_METRICS_PROTOCOL or OTEL_EXPORTER_OTLP_PROTOCOL
+| OTLP protocol. Supported values are `grpc` and `http/protobuf`. Defaults to `grpc`.
+
+| OTEL_METRICS_EXPORTER
+| Set to `otlp` to enable the OTLP exporter. Defaults to `prometheus`.
+|===
+
+Refer to https://opentelemetry.io/docs/specs/otel/protocol/exporter/ for more information about exporter configuration through environment variables. Note that the OpenTelemetry Go SDK used by Cerbos might not have full support for some of the environment variables listed on the OpenTelemetry specification.
+
+TIP: `OTEL_METRICS_EXPORTER` and `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` are the only required environment variables to enable OTLP metrics.
+
+[#traces]
+== Traces
+
+Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. Traces from Cerbos can be exported to any compatible collector that supports the OpenTelemetry protocol (OTLP).
+
+Trace configuration should be done using link:https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/[OpenTelemetry environment variables]. The following environment variables are supported.
+
+[%header,cols=".^1m,6a",grid=rows]
+|===
+| Environment variable | Description
+
+| OTEL_SERVICE_NAME
+| Service name reported in the traces. Defaults to `cerbos`.
+
+| OTEL_TRACES_SAMPLER
+| link:https://opentelemetry.io/docs/specs/otel/trace/sdk/#sampling[Trace sampler]. Defaults to `parentbased_always_off`. Supported values: +
+--
+`always_on`:: Record every trace.
+`always_off`:: Don't record any traces.
+`traceidratio`:: Record a fraction of traces based on ID. Set `OTEL_TRACES_SAMPLER_ARG` to a value between 0 and 1 to define the fraction.
+`parentbased_always_on`:: Record all traces except those where the parent span is not sampled.
+`parentbased_always_off`:: Don't record any traces unless the parent span is sampled.
+`parentbased_traceidratio`:: Record a fraction of traces where the parent span is sampled. Set `OTEL_TRACES_SAMPLER_ARG` to a value between 0 and 1 to define the fraction.
+--
+
+| OTEL_TRACES_SAMPLER_ARG
+| Set the sampling ratio when `OTEL_TRACES_SAMPLER` is a ratio-based sampler. Defaults to `0.1`.
+
+| OTEL_EXPORTER_OTLP_TRACES_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT
+| Address of the OTLP collector (for example: `https://localhost:4317`). If not defined, traces are disabled.
+
+| OTEL_EXPORTER_OTLP_TRACES_INSECURE or OTEL_EXPORTER_OTLP_INSECURE
+| Skip validating the TLS certificate of the endpoint
+
+| OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE or OTEL_EXPORTER_OTLP_CERTIFICATE
+| Path to the certificate to use for validating the server's TLS credentials.
+
+| OTEL_EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE or OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE
+| Path to the client certificate to use for mTLS
+
+| OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY or OTEL_EXPORTER_OTLP_CLIENT_KEY
+| Path to the client key to use for mTLS
+
+| OTEL_EXPORTER_OTLP_TRACES_PROTOCOL or OTEL_EXPORTER_OTLP_PROTOCOL
+| OTLP protocol. Supported values are `grpc` and `http/protobuf`. Defaults to `grpc`.
+|===
+
+Refer to https://opentelemetry.io/docs/specs/otel/protocol/exporter/ for more information about exporter configuration through environment variables. Note that the OpenTelemetry Go SDK used by Cerbos might not have full support for some of the environment variables listed on the OpenTelemetry specification.
+
+TIP: `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is the only required environment variable to enable OTLP trace exports.
