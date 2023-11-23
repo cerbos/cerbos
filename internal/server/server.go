@@ -552,7 +552,6 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 	return []grpc.DialOption{
 		grpc.WithUserAgent("grpc-gateway"),
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minGRPCConnectTimeout}),
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	}
 }
 

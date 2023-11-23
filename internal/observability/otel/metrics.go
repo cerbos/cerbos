@@ -16,7 +16,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/util"
@@ -108,18 +107,19 @@ func createOTLPMetricsExporter(ctx context.Context, env Env) (sdkmetric.Reader, 
 
 func dropHighCardinalityLabels() sdkmetric.View {
 	attributeFilter := func(attr attribute.KeyValue) bool {
+		attrStr := string(attr.Key)
 		switch {
-		case attr.Key == semconv.HTTPClientIPKey:
+		case attrStr == "http.client_ip":
 			return false
-		case attr.Key == semconv.HTTPUserAgentKey:
+		case attrStr == "http.user_agent":
 			return false
-		case attr.Key == semconv.HTTPFlavorKey:
+		case attrStr == "http.flavor":
 			return false
-		case attr.Key == semconv.HTTPSchemeKey:
+		case attrStr == "http.scheme":
 			return false
-		case strings.HasPrefix(string(attr.Key), "net.peer."):
+		case strings.HasPrefix(attrStr, "net.peer."):
 			return false
-		case strings.HasPrefix(string(attr.Key), "net.sock.peer."):
+		case strings.HasPrefix(attrStr, "net.sock.peer."):
 			return false
 		}
 		return true
