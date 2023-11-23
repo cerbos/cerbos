@@ -33,6 +33,12 @@ Cerbos also has support for OpenTelemetry protocol (OTLP) push metrics. It can b
 | OTEL_EXPORTER_OTLP_METRICS_PROTOCOL or OTEL_EXPORTER_OTLP_PROTOCOL
 | OTLP protocol. Supported values are `grpc` and `http/protobuf`. Defaults to `grpc`.
 
+| OTEL_METRIC_EXPORT_INTERVAL
+| The export interval in milliseconds. Defaults to 60000.
+
+| OTEL_METRIC_EXPORT_TIMEOUT
+| Timeout for exporting the data in milliseconds. Defaults to 30000.
+
 | OTEL_METRICS_EXPORTER
 | Set to `otlp` to enable the OTLP exporter. Defaults to `prometheus`.
 |===
