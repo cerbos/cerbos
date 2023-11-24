@@ -9,6 +9,7 @@ import (
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	hash "hash"
 	math "math"
@@ -384,6 +385,25 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Metadata_hashpb_sum(m *Runnabl
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Version))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes"]; !ok {
+		if len(m.SourceAttributes) > 0 {
+			keys := make([]string, len(m.SourceAttributes))
+			i := 0
+			for k := range m.SourceAttributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.SourceAttributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m *RunnablePrincipalPolicySet_Policy_ActionRule, hasher hash.Hash, ignore map[string]struct{}) {
@@ -512,6 +532,25 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Metadata_hashpb_sum(m *Runnable
 	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Version))
 
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes"]; !ok {
+		if len(m.SourceAttributes) > 0 {
+			keys := make([]string, len(m.SourceAttributes))
+			i := 0
+			for k := range m.SourceAttributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.SourceAttributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
@@ -1253,6 +1292,41 @@ func google_protobuf_Duration_hashpb_sum(m *durationpb.Duration, hasher hash.Has
 func google_protobuf_Empty_hashpb_sum(m *emptypb.Empty, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
+func google_protobuf_ListValue_hashpb_sum(m *structpb.ListValue, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["google.protobuf.ListValue.values"]; !ok {
+		if len(m.Values) > 0 {
+			for _, v := range m.Values {
+				if v != nil {
+					google_protobuf_Value_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func google_protobuf_Struct_hashpb_sum(m *structpb.Struct, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["google.protobuf.Struct.fields"]; !ok {
+		if len(m.Fields) > 0 {
+			keys := make([]string, len(m.Fields))
+			i := 0
+			for k := range m.Fields {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Fields[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Fields[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func google_protobuf_Timestamp_hashpb_sum(m *timestamppb.Timestamp, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["google.protobuf.Timestamp.seconds"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Seconds)))
@@ -1261,5 +1335,36 @@ func google_protobuf_Timestamp_hashpb_sum(m *timestamppb.Timestamp, hasher hash.
 	if _, ok := ignore["google.protobuf.Timestamp.nanos"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Nanos)))
 
+	}
+}
+
+func google_protobuf_Value_hashpb_sum(m *structpb.Value, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Kind != nil {
+		if _, ok := ignore["google.protobuf.Value.kind"]; !ok {
+			switch t := m.Kind.(type) {
+			case *structpb.Value_NullValue:
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(t.NullValue)))
+
+			case *structpb.Value_NumberValue:
+				_, _ = hasher.Write(protowire.AppendFixed64(nil, math.Float64bits(t.NumberValue)))
+
+			case *structpb.Value_StringValue:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.StringValue))
+
+			case *structpb.Value_BoolValue:
+				_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(t.BoolValue)))
+
+			case *structpb.Value_StructValue:
+				if t.StructValue != nil {
+					google_protobuf_Struct_hashpb_sum(t.StructValue, hasher, ignore)
+				}
+
+			case *structpb.Value_ListValue:
+				if t.ListValue != nil {
+					google_protobuf_ListValue_hashpb_sum(t.ListValue, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }

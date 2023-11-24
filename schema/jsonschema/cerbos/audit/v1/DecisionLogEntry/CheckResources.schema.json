@@ -69,6 +69,12 @@
             "type": "string"
           }
         },
+        "effectivePolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.PolicyInfo"
+          }
+        },
         "outputs": {
           "type": "array",
           "items": {
@@ -113,6 +119,21 @@
         },
         "val": {
           "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
+    "cerbos.engine.v1.PolicyInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "type": "string"
+        },
+        "sourceAttributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
         }
       }
     },

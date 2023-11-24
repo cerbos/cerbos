@@ -146,6 +146,16 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v1.CheckOutput, hasher hash.Hash
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.effective_policies"]; !ok {
+		if len(m.EffectivePolicies) > 0 {
+			for _, v := range m.EffectivePolicies {
+				if v != nil {
+					cerbos_engine_v1_PolicyInfo_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_engine_v1_OutputEntry_hashpb_sum(m *v1.OutputEntry, hasher hash.Hash, ignore map[string]struct{}) {
@@ -277,6 +287,32 @@ func cerbos_engine_v1_PlanResourcesInput_hashpb_sum(m *v1.PlanResourcesInput, ha
 	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.include_meta"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeMeta)))
 
+	}
+}
+
+func cerbos_engine_v1_PolicyInfo_hashpb_sum(m *v1.PolicyInfo, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.PolicyInfo.policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PolicyInfo.source_attributes"]; !ok {
+		if len(m.SourceAttributes) > 0 {
+			keys := make([]string, len(m.SourceAttributes))
+			i := 0
+			for k := range m.SourceAttributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.SourceAttributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
@@ -684,6 +720,25 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *v11.Metadata, hasher hash.Hash, ign
 	if _, ok := ignore["cerbos.policy.v1.Metadata.store_identifier"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.StoreIdentifier))
 
+	}
+	if _, ok := ignore["cerbos.policy.v1.Metadata.source_attributes"]; !ok {
+		if len(m.SourceAttributes) > 0 {
+			keys := make([]string, len(m.SourceAttributes))
+			i := 0
+			for k := range m.SourceAttributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.SourceAttributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

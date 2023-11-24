@@ -115,7 +115,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 	request := checkInputToRequest(input)
-	result := newEvalResult(input.Actions)
+	result := newEvalResult(&enginev1.PolicyInfo{Policy: policyKey, SourceAttributes: rpe.policy.Meta.SourceAttributes}, input.Actions)
 	effectiveRoles := internal.ToSet(input.Principal.Roles)
 
 	pctx := tctx.StartPolicy(rpe.policy.Meta.Fqn)
@@ -264,7 +264,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 	policyKey := namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn)
 	evalCtx := newEvalContext(ppe.evalParams, checkInputToRequest(input))
-	result := newEvalResult(input.Actions)
+	result := newEvalResult(&enginev1.PolicyInfo{Policy: policyKey, SourceAttributes: ppe.policy.Meta.SourceAttributes}, input.Actions)
 
 	pctx := tctx.StartPolicy(ppe.policy.Meta.Fqn)
 	for _, p := range ppe.policy.Policies {
@@ -519,12 +519,14 @@ type PolicyEvalResult struct {
 	Effects               map[string]EffectInfo
 	EffectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
+	EffectivePolicy       *enginev1.PolicyInfo
 	ValidationErrors      []*schemav1.ValidationError
 	Outputs               []*enginev1.OutputEntry
 }
 
-func newEvalResult(actions []string) *PolicyEvalResult {
+func newEvalResult(policy *enginev1.PolicyInfo, actions []string) *PolicyEvalResult {
 	per := &PolicyEvalResult{
+		EffectivePolicy:       policy,
 		Effects:               make(map[string]EffectInfo, len(actions)),
 		EffectiveDerivedRoles: make(map[string]struct{}),
 		toResolve:             make(map[string]struct{}, len(actions)),

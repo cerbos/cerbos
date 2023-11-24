@@ -167,6 +167,12 @@
             }
           ]
         },
+        "sourceAttributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
         "sourceFile": {
           "type": "string"
         },
@@ -530,6 +536,10 @@
           }
         }
       }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "type": "object",

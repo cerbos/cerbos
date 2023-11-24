@@ -402,6 +402,25 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *Metadata, hasher hash.Hash, ignore 
 		_, _ = hasher.Write(protowire.AppendString(nil, m.StoreIdentifier))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.Metadata.source_attributes"]; !ok {
+		if len(m.SourceAttributes) > 0 {
+			keys := make([]string, len(m.SourceAttributes))
+			i := 0
+			for k := range m.SourceAttributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.SourceAttributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map[string]struct{}) {

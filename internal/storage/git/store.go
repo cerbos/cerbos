@@ -17,6 +17,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -29,6 +30,8 @@ import (
 )
 
 const DriverName = "git"
+
+var driverAttr = policy.SourceDriver(DriverName)
 
 var (
 	_ storage.SourceStore = (*Store)(nil)
@@ -226,7 +229,12 @@ func (s *Store) cloneRepo(ctx context.Context) error {
 }
 
 func (s *Store) loadAll(ctx context.Context) error {
-	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(s.subDir))
+	head, err := s.repo.Head()
+	if err != nil {
+		return fmt.Errorf("failed to get HEAD: %w", err)
+	}
+
+	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(s.subDir), index.WithSourceAttributes(driverAttr, commitHashAttr(head.Hash())))
 	if err != nil {
 		return err
 	}
@@ -392,7 +400,13 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		return nil
 	}
 
-	s.log.Infow("Detected repository changes")
+	head, err := s.repo.Head()
+	if err != nil {
+		return fmt.Errorf("failed to get HEAD: %w", err)
+	}
+	headHash := head.Hash()
+
+	s.log.Infow("Detected repository changes", "head", headHash)
 
 	for _, c := range changes {
 		s.log.Debugw("Processing change", "change", c)
@@ -404,7 +418,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 			switch fromType {
 			case util.FileTypePolicy:
 				s.log.Debugf("Removing policy %s", fromPath)
-				if err := s.applyIndexUpdate(c.From, storage.EventDeleteOrDisablePolicy); err != nil {
+				if err := s.applyIndexUpdate(c.From, storage.EventDeleteOrDisablePolicy, headHash); err != nil {
 					return err
 				}
 
@@ -420,7 +434,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		switch toType {
 		case util.FileTypePolicy:
 			s.log.Debugf("Add/update policy %s", toPath)
-			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
+			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy, headHash); err != nil {
 				return err
 			}
 
@@ -458,13 +472,13 @@ func (s *Store) normalizePath(path string) (string, util.IndexedFileType) {
 	return path, fileType
 }
 
-func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventKind) error {
+func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventKind, headHash plumbing.Hash) error {
 	idxFn := s.idx.Delete
 	entry := index.Entry{File: ce.Name}
 
 	if eventKind == storage.EventAddOrUpdatePolicy {
 		s.log.Debugw("Reading policy", "path", ce.Name)
-		p, err := s.readPolicyFromBlob(ce.TreeEntry.Hash)
+		p, err := s.readPolicyFromBlob(ce.TreeEntry.Hash, headHash)
 		if err != nil {
 			s.log.Errorw("Failed to read policy", "path", ce.Name, "error", err)
 			return err
@@ -483,7 +497,7 @@ func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventK
 	return nil
 }
 
-func (s *Store) readPolicyFromBlob(hash plumbing.Hash) (*policyv1.Policy, error) {
+func (s *Store) readPolicyFromBlob(hash, headHash plumbing.Hash) (*policyv1.Policy, error) {
 	blob, err := s.repo.BlobObject(hash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get blob for %s: %w", hash, err)
@@ -501,7 +515,11 @@ func (s *Store) readPolicyFromBlob(hash plumbing.Hash) (*policyv1.Policy, error)
 		return nil, fmt.Errorf("failed to read policy from blob %s: %w", hash, err)
 	}
 
-	return p, nil
+	return policy.WithSourceAttributes(p, driverAttr, commitHashAttr(headHash)), nil
+}
+
+func commitHashAttr(hash plumbing.Hash) policy.SourceAttribute {
+	return policy.SourceAttribute{Key: "commit_hash", Value: structpb.NewStringValue(hash.String())}
 }
 
 func (s *Store) pollForUpdates(ctx context.Context) {

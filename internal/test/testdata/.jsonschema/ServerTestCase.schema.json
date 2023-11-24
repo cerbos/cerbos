@@ -459,6 +459,12 @@
             }
           ]
         },
+        "sourceAttributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
         "sourceFile": {
           "type": "string"
         },

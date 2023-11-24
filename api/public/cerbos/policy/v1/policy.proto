@@ -41,6 +41,7 @@ message Metadata {
   google.protobuf.UInt64Value hash = 3;
   string store_identifer = 4 [deprecated = true];
   string store_identifier = 5;
+  map<string, google.protobuf.Value> source_attributes = 6;
 }
 
 message ResourcePolicy {

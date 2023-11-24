@@ -145,6 +145,11 @@ message CheckInput {
   AuxData aux_data = 5;
 }
 
+message PolicyInfo {
+  string policy = 1;
+  map<string, google.protobuf.Value> source_attributes = 2;
+}
+
 message CheckOutput {
   message ActionEffect {
     cerbos.effect.v1.Effect effect = 1;
@@ -158,6 +163,7 @@ message CheckOutput {
   repeated string effective_derived_roles = 4;
   repeated cerbos.schema.v1.ValidationError validation_errors = 5;
   repeated OutputEntry outputs = 6;
+  repeated PolicyInfo effective_policies = 7;
 }
 
 message OutputEntry {

@@ -37,6 +37,8 @@ import (
 
 const DriverName = "blob"
 
+var driverSourceAttr = policy.SourceDriver(DriverName)
+
 var (
 	_ storage.SourceStore = (*Store)(nil)
 	_ storage.Reloadable  = (*Store)(nil)
@@ -194,7 +196,7 @@ func (s *Store) init(ctx context.Context) error {
 	}
 
 	var err error
-	s.idx, err = index.Build(ctx, s.fsys, index.WithRootDir("."))
+	s.idx, err = index.Build(ctx, s.fsys, index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
 	if err != nil {
 		s.log.Errorw("Failed to build index", "error", err)
 		return err
@@ -243,7 +245,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		entry := index.Entry{File: f, Policy: policy.Wrap(p)}
+		entry := index.Entry{File: f, Policy: policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr))}
 		event, err = s.idx.AddOrUpdate(entry)
 		if err != nil {
 			return err

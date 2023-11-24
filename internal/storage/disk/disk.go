@@ -55,7 +55,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	idx, err := index.Build(ctx, fsys)
+	idx, err := index.Build(ctx, fsys, index.WithSourceAttributes(policy.SourceDriver(DriverName)))
 	if err != nil {
 		return nil, err
 	}

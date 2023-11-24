@@ -491,6 +491,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	output.EffectiveDerivedRoles = result.effectiveDerivedRoles
 	output.ValidationErrors = result.validationErrors
 	output.Outputs = result.outputs
+	output.EffectivePolicies = result.getEffectivePolicies()
 
 	return output, nil
 }
@@ -634,6 +635,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 
 type evaluationResult struct {
 	effects               map[string]EffectInfo
+	effectivePolicies     map[string]*enginev1.PolicyInfo
 	effectiveDerivedRoles []string
 	validationErrors      []*schemav1.ValidationError
 	outputs               []*enginev1.OutputEntry
@@ -641,6 +643,13 @@ type evaluationResult struct {
 
 // merge the results by only updating the actions that have a no_match effect.
 func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
+	if res.EffectivePolicy != nil {
+		if er.effectivePolicies == nil {
+			er.effectivePolicies = make(map[string]*enginev1.PolicyInfo)
+		}
+		er.effectivePolicies[res.EffectivePolicy.Policy] = res.EffectivePolicy
+	}
+
 	hasNoMatches := false
 
 	if er.effects == nil {
@@ -692,6 +701,18 @@ func (er *evaluationResult) setDefaultsForUnmatchedActions(tctx tracer.Context, 
 			Policy: noPolicyMatch,
 		}
 	}
+}
+
+func (er *evaluationResult) getEffectivePolicies() []*enginev1.PolicyInfo {
+	p := make([]*enginev1.PolicyInfo, len(er.effectivePolicies))
+	i := 0
+	for _, v := range er.effectivePolicies {
+		v := v
+		p[i] = v
+		i++
+	}
+
+	return p
 }
 
 type workOut struct {

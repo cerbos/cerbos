@@ -57,13 +57,13 @@ type Index interface {
 
 type index struct {
 	fsys         fs.FS
+	sfGroup      singleflight.Group
 	fileToModID  map[string]namer.ModuleID
 	executables  map[namer.ModuleID]struct{}
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	schemaLoader *SchemaLoader
-	sfGroup      singleflight.Group
 	stats        storage.RepoStats
 	buildOpts    buildOptions
 	mu           sync.RWMutex
@@ -218,7 +218,7 @@ func (idx *index) loadPolicy(id namer.ModuleID) (*policyv1.Policy, error) {
 		return nil, err
 	}
 
-	return policy.WithMetadata(p, fileName, nil, fileName), nil
+	return policy.WithMetadata(p, fileName, nil, fileName, idx.buildOpts.sourceAttributes...), nil
 }
 
 func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {

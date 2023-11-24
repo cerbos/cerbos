@@ -76,9 +76,10 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 
 	rrps := &runtimev1.RunnableResourcePolicySet{
 		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
-			Fqn:      modCtx.fqn,
-			Resource: rp.Resource,
-			Version:  rp.Version,
+			Fqn:              modCtx.fqn,
+			Resource:         rp.Resource,
+			Version:          rp.Version,
+			SourceAttributes: modCtx.def.GetMetadata().GetSourceAttributes(),
 		},
 		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(ancestors)+1),
 	}
@@ -345,9 +346,10 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 
 	rpps := &runtimev1.RunnablePrincipalPolicySet{
 		Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
-			Fqn:       modCtx.fqn,
-			Principal: pp.Principal,
-			Version:   pp.Version,
+			Fqn:              modCtx.fqn,
+			Principal:        pp.Principal,
+			Version:          pp.Version,
+			SourceAttributes: modCtx.def.GetMetadata().GetSourceAttributes(),
 		},
 		Policies: make([]*runtimev1.RunnablePrincipalPolicySet_Policy, len(ancestors)+1),
 	}

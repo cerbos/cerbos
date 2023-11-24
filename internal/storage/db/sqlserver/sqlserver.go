@@ -63,7 +63,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("sqlserver", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithUpsertSchema(upsertSchema))
+	s, err := internal.NewDBStorage(ctx, goqu.New("sqlserver", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithUpsertSchema(upsertSchema), internal.WithSourceAttributes(policy.SourceDriver(DriverName)))
 	if err != nil {
 		return nil, err
 	}
