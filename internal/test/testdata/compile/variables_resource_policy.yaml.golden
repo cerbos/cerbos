@@ -4,7 +4,10 @@
     "meta": {
       "fqn": "cerbos.resource.example.vdefault/alpha",
       "resource": "example",
-      "version": "default"
+      "version": "default",
+      "sourceAttributes": {
+        "source": "example.alpha.yaml"
+      }
     },
     "policies": [
       {

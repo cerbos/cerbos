@@ -64,6 +64,28 @@ func cerbos_audit_v1_AccessLogEntry_hashpb_sum(m *v1.AccessLogEntry, hasher hash
 	}
 }
 
+func cerbos_audit_v1_AuditTrail_hashpb_sum(m *v1.AuditTrail, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.AuditTrail.effective_policies"]; !ok {
+		if len(m.EffectivePolicies) > 0 {
+			keys := make([]string, len(m.EffectivePolicies))
+			i := 0
+			for k := range m.EffectivePolicies {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.EffectivePolicies[k] != nil {
+					cerbos_audit_v1_PolicyInfo_hashpb_sum(m.EffectivePolicies[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_audit_v1_DecisionLogEntry_CheckResources_hashpb_sum(m *v1.DecisionLogEntry_CheckResources, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.CheckResources.inputs"]; !ok {
 		if len(m.Inputs) > 0 {
@@ -186,6 +208,12 @@ func cerbos_audit_v1_DecisionLogEntry_hashpb_sum(m *v1.DecisionLogEntry, hasher 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.audit_trail"]; !ok {
+		if m.AuditTrail != nil {
+			cerbos_audit_v1_AuditTrail_hashpb_sum(m.AuditTrail, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_audit_v1_MetaValues_hashpb_sum(m *v1.MetaValues, hasher hash.Hash, ignore map[string]struct{}) {
@@ -215,6 +243,28 @@ func cerbos_audit_v1_Peer_hashpb_sum(m *v1.Peer, hasher hash.Hash, ignore map[st
 	if _, ok := ignore["cerbos.audit.v1.Peer.forwarded_for"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ForwardedFor))
 
+	}
+}
+
+func cerbos_audit_v1_PolicyInfo_hashpb_sum(m *v1.PolicyInfo, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicyInfo.source_attributes"]; !ok {
+		if len(m.SourceAttributes) > 0 {
+			keys := make([]string, len(m.SourceAttributes))
+			i := 0
+			for k := range m.SourceAttributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.SourceAttributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
@@ -339,16 +389,6 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v11.CheckOutput, hasher hash.Has
 			for _, v := range m.Outputs {
 				if v != nil {
 					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore)
-				}
-
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.engine.v1.CheckOutput.effective_policies"]; !ok {
-		if len(m.EffectivePolicies) > 0 {
-			for _, v := range m.EffectivePolicies {
-				if v != nil {
-					cerbos_engine_v1_PolicyInfo_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -524,42 +564,6 @@ func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *v11.PlanResourcesOutput,
 			for _, v := range m.ValidationErrors {
 				if v != nil {
 					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
-				}
-
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.engine.v1.PlanResourcesOutput.effective_policies"]; !ok {
-		if len(m.EffectivePolicies) > 0 {
-			for _, v := range m.EffectivePolicies {
-				if v != nil {
-					cerbos_engine_v1_PolicyInfo_hashpb_sum(v, hasher, ignore)
-				}
-
-			}
-		}
-	}
-}
-
-func cerbos_engine_v1_PolicyInfo_hashpb_sum(m *v11.PolicyInfo, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.engine.v1.PolicyInfo.policy"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
-
-	}
-	if _, ok := ignore["cerbos.engine.v1.PolicyInfo.source_attributes"]; !ok {
-		if len(m.SourceAttributes) > 0 {
-			keys := make([]string, len(m.SourceAttributes))
-			i := 0
-			for k := range m.SourceAttributes {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.SourceAttributes[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
 				}
 
 			}

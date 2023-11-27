@@ -1859,6 +1859,17 @@
       },
       "description": "Unique identifier for the resource instance."
     },
+    "v1AuditTrail": {
+      "type": "object",
+      "properties": {
+        "effectivePolicies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1PolicyInfo"
+          }
+        }
+      }
+    },
     "v1CheckInput": {
       "type": "object",
       "properties": {
@@ -1920,13 +1931,6 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1OutputEntry"
-          }
-        },
-        "effectivePolicies": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyInfo"
           }
         }
       }
@@ -2326,6 +2330,9 @@
           "additionalProperties": {
             "$ref": "#/definitions/v1MetaValues"
           }
+        },
+        "auditTrail": {
+          "$ref": "#/definitions/v1AuditTrail"
         }
       }
     },
@@ -2722,13 +2729,6 @@
             "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           }
-        },
-        "effectivePolicies": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyInfo"
-          }
         }
       }
     },
@@ -2955,9 +2955,6 @@
     "v1PolicyInfo": {
       "type": "object",
       "properties": {
-        "policy": {
-          "type": "string"
-        },
         "sourceAttributes": {
           "type": "object",
           "additionalProperties": {}

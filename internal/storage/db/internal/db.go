@@ -347,7 +347,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 			units[row.UnitID] = unit
 		}
 
-		unit.AddDefinition(row.ID, row.Definition.Policy)
+		unit.AddDefinition(row.ID, policy.WithSourceAttributes(row.Definition.Policy, s.opts.sourceAttributes...))
 	}
 
 	return units, nil

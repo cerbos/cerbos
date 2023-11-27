@@ -1,0 +1,32 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/AuditTrail.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.audit.v1.PolicyInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sourceAttributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "effectivePolicies": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.audit.v1.PolicyInfo"
+      }
+    }
+  }
+}

@@ -4,7 +4,10 @@
     "meta": {
       "fqn": "cerbos.principal.donald_duck.v20210210/acme.hr.uk",
       "principal": "donald_duck",
-      "version": "20210210"
+      "version": "20210210",
+      "sourceAttributes": {
+        "source": "donald_duck.acme.hr.uk.yaml"
+      }
     },
     "policies": [
       {

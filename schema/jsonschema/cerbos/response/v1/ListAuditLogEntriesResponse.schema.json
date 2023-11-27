@@ -30,10 +30,25 @@
         }
       }
     },
+    "cerbos.audit.v1.AuditTrail": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effectivePolicies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.audit.v1.PolicyInfo"
+          }
+        }
+      }
+    },
     "cerbos.audit.v1.DecisionLogEntry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "auditTrail": {
+          "$ref": "#/definitions/cerbos.audit.v1.AuditTrail"
+        },
         "callId": {
           "type": "string"
         },
@@ -138,6 +153,18 @@
         }
       }
     },
+    "cerbos.audit.v1.PolicyInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sourceAttributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "cerbos.effect.v1.Effect": {
       "type": "string",
       "enum": [
@@ -203,12 +230,6 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
-        },
-        "effectivePolicies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.PolicyInfo"
           }
         },
         "outputs": {
@@ -367,12 +388,6 @@
         "action": {
           "type": "string"
         },
-        "effectivePolicies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.PolicyInfo"
-          }
-        },
         "filter": {
           "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
         },
@@ -395,21 +410,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
-          }
-        }
-      }
-    },
-    "cerbos.engine.v1.PolicyInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "policy": {
-          "type": "string"
-        },
-        "sourceAttributes": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/google.protobuf.Value"
           }
         }
       }

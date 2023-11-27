@@ -53,21 +53,6 @@
         "KIND_CONDITIONAL"
       ]
     },
-    "cerbos.engine.v1.PolicyInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "policy": {
-          "type": "string"
-        },
-        "sourceAttributes": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/google.protobuf.Value"
-          }
-        }
-      }
-    },
     "cerbos.schema.v1.ValidationError": {
       "type": "object",
       "additionalProperties": false,
@@ -101,12 +86,6 @@
   "properties": {
     "action": {
       "type": "string"
-    },
-    "effectivePolicies": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/cerbos.engine.v1.PolicyInfo"
-      }
     },
     "filter": {
       "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"

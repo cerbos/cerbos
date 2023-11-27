@@ -18,6 +18,7 @@ import (
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -115,7 +116,8 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 	request := checkInputToRequest(input)
-	result := newEvalResult(&enginev1.PolicyInfo{Policy: policyKey, SourceAttributes: rpe.policy.Meta.SourceAttributes}, input.Actions)
+	trail := &auditv1.AuditTrail{EffectivePolicies: map[string]*auditv1.PolicyInfo{policyKey: {SourceAttributes: rpe.policy.Meta.SourceAttributes}}}
+	result := newEvalResult(input.Actions, trail)
 	effectiveRoles := internal.ToSet(input.Principal.Roles)
 
 	pctx := tctx.StartPolicy(rpe.policy.Meta.Fqn)
@@ -264,7 +266,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 	policyKey := namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn)
 	evalCtx := newEvalContext(ppe.evalParams, checkInputToRequest(input))
-	result := newEvalResult(&enginev1.PolicyInfo{Policy: policyKey, SourceAttributes: ppe.policy.Meta.SourceAttributes}, input.Actions)
+	trail := &auditv1.AuditTrail{EffectivePolicies: map[string]*auditv1.PolicyInfo{policyKey: {SourceAttributes: ppe.policy.Meta.SourceAttributes}}}
+	result := newEvalResult(input.Actions, trail)
 
 	pctx := tctx.StartPolicy(ppe.policy.Meta.Fqn)
 	for _, p := range ppe.policy.Policies {
@@ -519,18 +522,18 @@ type PolicyEvalResult struct {
 	Effects               map[string]EffectInfo
 	EffectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
-	EffectivePolicy       *enginev1.PolicyInfo
+	AuditTrail            *auditv1.AuditTrail
 	ValidationErrors      []*schemav1.ValidationError
 	Outputs               []*enginev1.OutputEntry
 }
 
-func newEvalResult(policy *enginev1.PolicyInfo, actions []string) *PolicyEvalResult {
+func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEvalResult {
 	per := &PolicyEvalResult{
-		EffectivePolicy:       policy,
 		Effects:               make(map[string]EffectInfo, len(actions)),
 		EffectiveDerivedRoles: make(map[string]struct{}),
 		toResolve:             make(map[string]struct{}, len(actions)),
 		Outputs:               []*enginev1.OutputEntry{},
+		AuditTrail:            auditTrail,
 	}
 
 	for _, a := range actions {

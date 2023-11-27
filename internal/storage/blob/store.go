@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	// Import gcsblob package to register GCS driver.
 	"gocloud.dev/blob/gcsblob"
@@ -37,14 +38,18 @@ import (
 
 const DriverName = "blob"
 
-var driverSourceAttr = policy.SourceDriver(DriverName)
-
 var (
 	_ storage.SourceStore = (*Store)(nil)
 	_ storage.Reloadable  = (*Store)(nil)
 )
 
 var ErrUnsupportedBucketScheme = errors.New("currently only \"s3\" and \"gs\" bucket URL schemes are supported")
+
+var driverSourceAttr = policy.SourceDriver(DriverName)
+
+func etagSourceAttr(etag []byte) policy.SourceAttribute {
+	return policy.SourceAttribute{Key: "etag", Value: structpb.NewStringValue(string(etag))}
+}
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
@@ -236,16 +241,16 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
-		if schemaFile, ok := util.RelativeSchemaPath(f); ok {
+		if schemaFile, ok := util.RelativeSchemaPath(f.file); ok {
 			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
 			continue
 		}
 
-		p, err = policy.ReadPolicyFromFile(s.fsys, f)
+		p, err = policy.ReadPolicyFromFile(s.fsys, f.file)
 		if err != nil {
 			return err
 		}
-		entry := index.Entry{File: f, Policy: policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr))}
+		entry := index.Entry{File: f.file, Policy: policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(f.etag)))}
 		event, err = s.idx.AddOrUpdate(entry)
 		if err != nil {
 			return err

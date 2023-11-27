@@ -4,7 +4,10 @@
     "meta": {
       "fqn": "cerbos.principal.donald_duck.v20210210",
       "principal": "donald_duck",
-      "version": "20210210"
+      "version": "20210210",
+      "sourceAttributes": {
+        "source": "principal_policies/donald_duck_20210210.yaml"
+      }
     },
     "policies": [
       {

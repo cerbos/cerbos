@@ -6,6 +6,7 @@ syntax = "proto3";
 package cerbos.audit.v1;
 
 import "cerbos/engine/v1/engine.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 option csharp_namespace = "Cerbos.Api.V1.Audit";
@@ -48,6 +49,7 @@ message DecisionLogEntry {
     PlanResources plan_resources = 8;
   }
   map<string, MetaValues> metadata = 15;
+  AuditTrail audit_trail = 16;
 }
 
 message MetaValues {
@@ -59,4 +61,12 @@ message Peer {
   string auth_info = 2;
   string user_agent = 3;
   string forwarded_for = 4;
+}
+
+message PolicyInfo {
+  map<string, google.protobuf.Value> source_attributes = 1;
+}
+
+message AuditTrail {
+  map<string, PolicyInfo> effective_policies = 1;
 }

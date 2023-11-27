@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -193,8 +194,8 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 				return
 			}
 
-			result, err := engine.evaluate(work.ctx, work.input, work.checkOpts)
-			work.out <- workOut{index: work.index, result: result, err: err}
+			result, trail, err := engine.evaluate(work.ctx, work.input, work.checkOpts)
+			work.out <- workOut{index: work.index, result: result, trail: trail, err: err}
 		}
 	}
 
@@ -216,41 +217,46 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 }
 
 func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
-	output, err := metrics.RecordDuration2(metrics.EnginePlanLatency(), func() (output *enginev1.PlanResourcesOutput, err error) {
+	output, trail, err := metrics.RecordDuration3(metrics.EnginePlanLatency(), func() (output *enginev1.PlanResourcesOutput, trail *auditv1.AuditTrail, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Plan")
 		defer span.End()
 
-		output, err = engine.doPlanResources(ctx, input)
+		output, trail, err = engine.doPlanResources(ctx, input)
 		if err != nil {
 			tracing.MarkFailed(span, http.StatusBadRequest, err)
 		}
 
-		return output, err
+		return output, trail, err
 	})
 
-	return engine.logPlanDecision(ctx, input, output, err)
+	return engine.logPlanDecision(ctx, input, output, err, trail)
 }
 
-func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
+func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
 	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope, engine.conf.LenientScopeSearch)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
+		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 
 	result := new(planner.PolicyPlanResult)
+	auditTrail := &auditv1.AuditTrail{EffectivePolicies: make(map[string]*auditv1.PolicyInfo, 2)} //nolint:gomnd
 
 	if policy := policySet.GetPrincipalPolicy(); policy != nil {
 		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: engine.conf.Globals}
 		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
+		}
+
+		auditTrail.EffectivePolicies[namer.PolicyKeyFromFQN(policySet.GetFqn())] = &auditv1.PolicyInfo{
+			SourceAttributes: policy.GetMeta().GetSourceAttributes(),
 		}
 	}
 
@@ -258,14 +264,18 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
 	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, engine.conf.LenientScopeSearch)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
 
 	if policy := policySet.GetResourcePolicy(); policy != nil {
 		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: engine.conf.Globals, SchemaMgr: engine.schemaMgr}
 		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
+		}
+
+		auditTrail.EffectivePolicies[namer.PolicyKeyFromFQN(policySet.GetFqn())] = &auditv1.PolicyInfo{
+			SourceAttributes: policy.GetMeta().GetSourceAttributes(),
 		}
 
 		result = planner.CombinePlans(result, plan)
@@ -273,17 +283,17 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	output, err := result.ToPlanResourcesOutput(input)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if result.Empty() {
 		output.FilterDebug = noPolicyMatch
 	}
 
-	return output, nil
+	return output, auditTrail, nil
 }
 
-func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error) (*enginev1.PlanResourcesOutput, error) {
+func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {
 	if err := engine.auditLog.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
 		callID, ok := audit.CallIDFromContext(ctx)
 		if !ok {
@@ -310,6 +320,7 @@ func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanR
 			Method: &auditv1.DecisionLogEntry_PlanResources_{
 				PlanResources: planRes,
 			},
+			AuditTrail: trail,
 		}
 
 		if engine.metadataExtractor != nil {
@@ -325,7 +336,7 @@ func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanR
 }
 
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
-	outputs, err := metrics.RecordDuration2(metrics.EngineCheckLatency(), func() (outputs []*enginev1.CheckOutput, err error) {
+	outputs, trail, err := metrics.RecordDuration3(metrics.EngineCheckLatency(), func() (outputs []*enginev1.CheckOutput, trail *auditv1.AuditTrail, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
@@ -334,23 +345,23 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
 		if len(inputs) < parallelismThreshold || len(engine.workerPool) == 0 {
-			outputs, err = engine.checkSerial(ctx, inputs, checkOpts)
+			outputs, trail, err = engine.checkSerial(ctx, inputs, checkOpts)
 		} else {
-			outputs, err = engine.checkParallel(ctx, inputs, checkOpts)
+			outputs, trail, err = engine.checkParallel(ctx, inputs, checkOpts)
 		}
 
 		if err != nil {
 			tracing.MarkFailed(span, http.StatusBadRequest, err)
 		}
 
-		return outputs, err
+		return outputs, trail, err
 	})
 	metrics.EngineCheckBatchSize().Record(context.Background(), int64(len(inputs)))
 
-	return engine.logCheckDecision(ctx, inputs, outputs, err)
+	return engine.logCheckDecision(ctx, inputs, outputs, err, trail)
 }
 
-func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, checkErr error) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, checkErr error, trail *auditv1.AuditTrail) ([]*enginev1.CheckOutput, error) {
 	if err := engine.auditLog.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
 		ctx, span := tracing.StartSpan(ctx, "audit.WriteDecisionLog")
 		defer span.End()
@@ -380,6 +391,7 @@ func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.C
 			Method: &auditv1.DecisionLogEntry_CheckResources_{
 				CheckResources: checkRes,
 			},
+			AuditTrail: trail,
 		}
 
 		if engine.metadataExtractor != nil {
@@ -394,54 +406,58 @@ func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.C
 	return outputs, checkErr
 }
 
-func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *CheckOptions) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *CheckOptions) ([]*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.CheckSerial")
 	defer span.End()
 
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
+	trail := &auditv1.AuditTrail{}
 
 	for i, input := range inputs {
-		o, err := engine.evaluate(ctx, input, checkOpts)
+		o, t, err := engine.evaluate(ctx, input, checkOpts)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		outputs[i] = o
+		trail = mergeTrails(trail, t)
 	}
 
-	return outputs, nil
+	return outputs, trail, nil
 }
 
-func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *CheckOptions) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *CheckOptions) ([]*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.CheckParallel")
 	defer span.End()
 
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
+	trail := &auditv1.AuditTrail{}
 	collector := make(chan workOut, len(inputs))
 
 	for i, input := range inputs {
 		if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: input, out: collector, checkOpts: checkOpts}); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	for i := 0; i < len(inputs); i++ {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, nil, ctx.Err()
 		case wo := <-collector:
 			if wo.err != nil {
-				return nil, wo.err
+				return nil, nil, wo.err
 			}
 
 			outputs[wo.index] = wo.result
+			trail = mergeTrails(trail, wo.trail)
 		}
 	}
 
-	return outputs, nil
+	return outputs, trail, nil
 }
 
-func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *CheckOptions) (*enginev1.CheckOutput, error) {
+func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *CheckOptions) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
@@ -450,7 +466,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		tracing.MarkFailed(span, http.StatusRequestTimeout, err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	output := &enginev1.CheckOutput{
@@ -461,7 +477,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 
 	ec, err := engine.buildEvaluationCtx(ctx, checkOpts.evalParams, input)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	tctx := tracer.Start(checkOpts.tracerSink)
@@ -470,7 +486,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	result, err := ec.evaluate(ctx, tctx, input)
 	if err != nil {
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
-		return nil, fmt.Errorf("failed to evaluate policies: %w", err)
+		return nil, nil, fmt.Errorf("failed to evaluate policies: %w", err)
 	}
 
 	// update the output
@@ -491,9 +507,8 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	output.EffectiveDerivedRoles = result.effectiveDerivedRoles
 	output.ValidationErrors = result.validationErrors
 	output.Outputs = result.outputs
-	output.EffectivePolicies = result.getEffectivePolicies()
 
-	return output, nil
+	return output, result.auditTrail, nil
 }
 
 func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams, input *enginev1.CheckInput) (*evaluationCtx, error) {
@@ -635,7 +650,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 
 type evaluationResult struct {
 	effects               map[string]EffectInfo
-	effectivePolicies     map[string]*enginev1.PolicyInfo
+	auditTrail            *auditv1.AuditTrail
 	effectiveDerivedRoles []string
 	validationErrors      []*schemav1.ValidationError
 	outputs               []*enginev1.OutputEntry
@@ -643,13 +658,7 @@ type evaluationResult struct {
 
 // merge the results by only updating the actions that have a no_match effect.
 func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
-	if res.EffectivePolicy != nil {
-		if er.effectivePolicies == nil {
-			er.effectivePolicies = make(map[string]*enginev1.PolicyInfo)
-		}
-		er.effectivePolicies[res.EffectivePolicy.Policy] = res.EffectivePolicy
-	}
-
+	er.auditTrail = mergeTrails(er.auditTrail, res.AuditTrail)
 	hasNoMatches := false
 
 	if er.effects == nil {
@@ -703,21 +712,10 @@ func (er *evaluationResult) setDefaultsForUnmatchedActions(tctx tracer.Context, 
 	}
 }
 
-func (er *evaluationResult) getEffectivePolicies() []*enginev1.PolicyInfo {
-	p := make([]*enginev1.PolicyInfo, len(er.effectivePolicies))
-	i := 0
-	for _, v := range er.effectivePolicies {
-		v := v
-		p[i] = v
-		i++
-	}
-
-	return p
-}
-
 type workOut struct {
 	err    error
 	result *enginev1.CheckOutput
+	trail  *auditv1.AuditTrail
 	index  int
 }
 
@@ -727,4 +725,19 @@ type workIn struct {
 	checkOpts *CheckOptions
 	out       chan<- workOut
 	index     int
+}
+
+func mergeTrails(a, b *auditv1.AuditTrail) *auditv1.AuditTrail {
+	switch {
+	case a == nil || len(a.EffectivePolicies) == 0:
+		return b
+	case b == nil || len(b.EffectivePolicies) == 0:
+		return a
+	default:
+		if a.EffectivePolicies == nil {
+			a.EffectivePolicies = make(map[string]*auditv1.PolicyInfo, len(b.EffectivePolicies))
+		}
+		maps.Copy(a.EffectivePolicies, b.EffectivePolicies)
+		return a
+	}
 }

@@ -63,7 +63,7 @@ func TestWith(t *testing.T) {
 		require.Equal(t, wrapperspb.UInt64(util.HashPB(p, policy.IgnoreHashFields)), p.Metadata.Hash)
 		require.Equal(t, source, p.Metadata.SourceFile)
 		require.Equal(t, keyVal, p.Metadata.Annotations[keyVal])
-		require.Equal(t, source, p.Metadata.SourceAttributes["source"].String())
+		require.Equal(t, source, p.Metadata.SourceAttributes["source"].GetStringValue())
 	})
 }
 

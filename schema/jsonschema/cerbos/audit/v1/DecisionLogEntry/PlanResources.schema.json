@@ -123,12 +123,6 @@
         "action": {
           "type": "string"
         },
-        "effectivePolicies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.PolicyInfo"
-          }
-        },
         "filter": {
           "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
         },
@@ -151,21 +145,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
-          }
-        }
-      }
-    },
-    "cerbos.engine.v1.PolicyInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "policy": {
-          "type": "string"
-        },
-        "sourceAttributes": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/google.protobuf.Value"
           }
         }
       }

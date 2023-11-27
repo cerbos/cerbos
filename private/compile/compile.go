@@ -9,13 +9,16 @@ import (
 	"fmt"
 	"io/fs"
 
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
-	"go.uber.org/zap"
 )
 
 type Index = index.Index
@@ -41,8 +44,18 @@ func (e *Errors) Error() string {
 	}
 }
 
-func Files(ctx context.Context, fsys fs.FS) (Index, <-chan Artefact, error) {
-	idx, err := index.Build(ctx, fsys)
+type SourceAttribute struct {
+	Value *structpb.Value
+	Key   string
+}
+
+func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-chan Artefact, error) {
+	srcAttrs := make([]policy.SourceAttribute, len(attrs))
+	for i, a := range attrs {
+		srcAttrs[i] = policy.SourceAttribute{Key: a.Key, Value: a.Value}
+	}
+
+	idx, err := index.Build(ctx, fsys, index.WithSourceAttributes(srcAttrs...))
 	if err != nil {
 		idxErrs := new(index.BuildError)
 		if errors.As(err, &idxErrs) {

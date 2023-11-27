@@ -4,7 +4,10 @@
     "meta": {
       "fqn": "cerbos.resource.leave_request.v20210210/acme.hr.uk",
       "resource": "leave_request",
-      "version": "20210210"
+      "version": "20210210",
+      "sourceAttributes": {
+        "source": "leave_request.acme.hr.uk.yaml"
+      }
     },
     "policies": [
       {
