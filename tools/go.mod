@@ -7,21 +7,21 @@ toolchain go1.21.1
 require (
 	github.com/bufbuild/buf v1.28.1
 	github.com/cerbos/protoc-gen-go-hashpb v0.2.0
-	github.com/cerbos/protoc-gen-jsonschema v0.1.1
+	github.com/cerbos/protoc-gen-jsonschema v0.1.2
 	github.com/fullstorydev/grpcurl v1.8.9
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser v1.22.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1
 	github.com/planetscale/vtprotobuf v0.5.0
-	github.com/vektra/mockery/v2 v2.37.1
+	github.com/vektra/mockery/v2 v2.38.0
 	go.elastic.co/go-licence-detector v0.6.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
-	google.golang.org/protobuf v1.31.1-0.20231108070948-a8317fb7c568
+	google.golang.org/protobuf v1.31.1-0.20231124085615-9b87403568fd
 	gotest.tools/gotestsum v1.11.0
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231106192134-1baebb0a1518.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231115204500-e097f827e652.2 // indirect
 	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.31.0-20231111212044-1119bf4b707e.2 // indirect
 	cloud.google.com/go v0.110.9 // indirect
 	cloud.google.com/go/compute v1.23.2 // indirect
