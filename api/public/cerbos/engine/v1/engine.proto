@@ -121,6 +121,7 @@ message PlanResourcesOutput {
   PlanResourcesFilter filter = 6;
   string filter_debug = 7;
   repeated cerbos.schema.v1.ValidationError validation_errors = 8;
+  repeated PolicyInfo effective_policies = 9;
 }
 
 message CheckInput {

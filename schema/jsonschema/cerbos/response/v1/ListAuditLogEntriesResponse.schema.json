@@ -367,6 +367,12 @@
         "action": {
           "type": "string"
         },
+        "effectivePolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.PolicyInfo"
+          }
+        },
         "filter": {
           "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
         },

@@ -529,6 +529,16 @@ func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *v11.PlanResourcesOutput,
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesOutput.effective_policies"]; !ok {
+		if len(m.EffectivePolicies) > 0 {
+			for _, v := range m.EffectivePolicies {
+				if v != nil {
+					cerbos_engine_v1_PolicyInfo_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_engine_v1_PolicyInfo_hashpb_sum(m *v11.PolicyInfo, hasher hash.Hash, ignore map[string]struct{}) {

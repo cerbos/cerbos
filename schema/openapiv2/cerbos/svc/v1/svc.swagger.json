@@ -2722,6 +2722,13 @@
             "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           }
+        },
+        "effectivePolicies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PolicyInfo"
+          }
         }
       }
     },
