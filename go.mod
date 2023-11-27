@@ -10,18 +10,18 @@ require (
 	github.com/alecthomas/chroma/v2 v2.11.1
 	github.com/alecthomas/kong v0.8.1
 	github.com/alecthomas/participle/v2 v2.1.0
-	github.com/aws/aws-sdk-go v1.48.0
+	github.com/aws/aws-sdk-go v1.48.4
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.4.2
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cerbos-sdk-go v0.2.1
-	github.com/cerbos/cerbos/api/genpb v0.0.0-20231116171151-7dd5d0c8f5b8
+	github.com/cerbos/cerbos/api/genpb v0.0.0-20231123140427-ce425d92a037
 	github.com/cerbos/cloud-api v0.1.10
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/cloudflare/certinel v0.4.0
 	github.com/dgraph-io/badger/v4 v4.2.0
-	github.com/doug-martin/goqu/v9 v9.18.0
+	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/fatih/color v1.16.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.25.0
@@ -53,7 +53,7 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.0.17
 	github.com/mattn/go-isatty v0.0.20
 	github.com/microsoft/go-mssqldb v1.6.0
-	github.com/minio/minio-go/v7 v7.0.63
+	github.com/minio/minio-go/v7 v7.0.64
 	github.com/nlepage/go-tarfs v1.2.1
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -61,8 +61,8 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.5.0
 	github.com/prometheus/client_golang v1.17.0
-	github.com/pterm/pterm v0.12.70
-	github.com/rivo/tview v0.0.0-20231115183240-7c9e464bac02
+	github.com/pterm/pterm v0.12.71
+	github.com/rivo/tview v0.0.0-20231126152417-33a1d271f2b6
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.11.0
 	github.com/rs/cors v1.10.1
