@@ -214,4 +214,4 @@ Check out [how to contribute](CONTRIBUTING.md).
 
 ## Stargazers ⭐
 
-[![Stargazers repo roster for cerbos/cerbos](https://reporoster.com/stars/cerbos/cerbos)](https://github.com/cerbos/cerbos)
+[![Stargazers repo roster for @cerbos/cerbos](https://reporoster.com/stars/cerbos/cerbos)](https://github.com/cerbos/cerbos/stargazers)
