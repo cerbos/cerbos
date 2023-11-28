@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	otelsdk "go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger" //nolint:staticcheck
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/semconv/v1.13.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -110,6 +111,11 @@ func configureOTLP(ctx context.Context) (func() error, error) {
 		}
 	}
 
+	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithEndpoint(conf.OTLP.CollectorEndpoint), otlptracegrpc.WithInsecure())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create OTLP exporter: %w", err)
+	}
+
 	envMap := map[string]string{
 		otel.ServiceNameEV.Name:            *svcName,
 		otel.TracesSamplerEV.Name:          otel.ParentBasedTraceIDRatioSampler,
@@ -128,7 +134,7 @@ func configureOTLP(ctx context.Context) (func() error, error) {
 		return os.LookupEnv(key)
 	}
 
-	return otel.InitTraces(ctx, otel.Env(env))
+	return otel.InitTracesWithExporter(ctx, otel.Env(env), exporter)
 }
 
 func HTTPHandler(handler http.Handler, path string) http.Handler {
