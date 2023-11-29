@@ -1,0 +1,60 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.32.0]
+= Cerbos v0.32.0
+
+== Highlights
+
+This release includes a major update to the Cerbos internals to fully migrate from OpenCensus to OpenTelemetry for distributed traces and metrics. Migrating to OpenTelemetry gives users the ability to use push metrics, fine tune trace sampling, and integrate Cerbos with the wider ecosystem of link:https://opentelemetry.io/ecosystem/vendors/[observability products that support the OpenTelemetry protocol (OTLP)]. As part of this migration, configuring traces using the `tracing` block of Cerbos configuration file is now deprecated and we advise users to xref:configuration:tracing.adoc#migration[migrate existing configuration] to use the xref:configuration:observability.adoc[well-known OpenTelemetry environment variables] instead. Support for the Jaeger native protocol has been deprecated as well in favour of OTLP and it will be removed in the next release of Cerbos along with support for trace configuration via the `tracing` configuration block.
+
+While we have strived to keep all metric names unchanged, some subtle differences between OpenCensus and OpenTelemetry instruments might have an impact on your existing dashboards and metric-based alerts. Please review your dashboards and metric-based alerts after the upgrade to make sure they are still functioning as expected.
+
+The policy test framework now includes support for defining the contents of xref:configuration:engine.adoc#globals[`globals`] per test case or for the whole test suite.
+
+When running tests with the `--verbose` flag, the result output will now include the expected effects and policy outputs for successful test cases as well.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Ignore empty files in policy repository (link:https://github.com/cerbos/cerbos/pull/1882[#1882])
+
+=== Features
+
+* Better support for OTLP  (link:https://github.com/cerbos/cerbos/pull/1886[#1886])
+* #**BREAKING**# Switch metrics to OpenTelemetry and add support for push metrics (link:https://github.com/cerbos/cerbos/pull/1887[#1887])
+
+=== Enhancements
+
+* Detect and warn about invalid test suites (link:https://github.com/cerbos/cerbos/pull/1868[#1868])
+* Include expected effect and outputs for successful tests (link:https://github.com/cerbos/cerbos/pull/1881[#1881])
+* Mirror Cerbos image to Docker Hub (link:https://github.com/cerbos/cerbos/pull/1867[#1867])
+
+=== Documentation
+
+* Remove outdated playground section (link:https://github.com/cerbos/cerbos/pull/1864[#1864])
+
+=== Chores
+
+* Access to check options from custom checkers (link:https://github.com/cerbos/cerbos/pull/1861[#1861])
+* Add pre-cache API to TestFixtureGetter (link:https://github.com/cerbos/cerbos/pull/1866[#1866])
+* Add tests to check fixture loading from testdata (link:https://github.com/cerbos/cerbos/pull/1877[#1877])
+* Allow LoadTestFixture to continue on error (link:https://github.com/cerbos/cerbos/pull/1859[#1859])
+* Bump github.com/sigstore/cosign/v2 from 2.0.3-0.20230523133326-0544abd8fc8a to 2.2.1 in /tools (link:https://github.com/cerbos/cerbos/pull/1869[#1869])
+* Bump go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc from 0.45.0 to 0.46.0 (link:https://github.com/cerbos/cerbos/pull/1871[#1871])
+* Bump version to 0.32.0
+* Enable Otel interceptor for grpc-gateway client (link:https://github.com/cerbos/cerbos/pull/1892[#1892])
+* Fix Kafka integration tests (link:https://github.com/cerbos/cerbos/pull/1878[#1878])
+* Fix legacy OTLP exporter initialization (link:https://github.com/cerbos/cerbos/pull/1891[#1891])
+* Replace deprecated GoReleaser `--skip-publish` flag (link:https://github.com/cerbos/cerbos/pull/1893[#1893])
+* Simplify residual expression (link:https://github.com/cerbos/cerbos/pull/1876[#1876])
+* Update amannn/action-semantic-pull-request action to v5.4.0 (link:https://github.com/cerbos/cerbos/pull/1862[#1862])
+* Update bufbuild/buf-setup-action action to v1.28.0 (link:https://github.com/cerbos/cerbos/pull/1873[#1873])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1884[#1884])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1863[#1863])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1874[#1874])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1885[#1885])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1888[#1888])
+* Upgrade to CEL 0.18 (link:https://github.com/cerbos/cerbos/pull/1860[#1860])
