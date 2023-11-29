@@ -100,7 +100,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --config=.goreleaser.yml --clean --snapshot --skip-publish
+          args: release --config=.goreleaser.yml --clean --snapshot --skip=publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
