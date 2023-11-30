@@ -460,10 +460,7 @@
           ]
         },
         "sourceAttributes": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/google.protobuf.Value"
-          }
+          "$ref": "#/definitions/cerbos.policy.v1.SourceAttributes"
         },
         "sourceFile": {
           "type": "string"
@@ -806,6 +803,18 @@
         "ref": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "cerbos.policy.v1.SourceAttributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
         }
       }
     },

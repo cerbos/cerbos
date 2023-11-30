@@ -6,7 +6,16 @@
       "principal": "example",
       "version": "default",
       "sourceAttributes": {
-        "source": "example.alpha.yaml"
+        "principal.example.vdefault": {
+          "attributes": {
+            "source": "example.yaml"
+          }
+        },
+        "principal.example.vdefault/alpha": {
+          "attributes": {
+            "source": "example.alpha.yaml"
+          }
+        }
       }
     },
     "policies": [

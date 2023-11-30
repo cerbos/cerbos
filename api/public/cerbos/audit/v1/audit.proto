@@ -6,7 +6,7 @@ syntax = "proto3";
 package cerbos.audit.v1;
 
 import "cerbos/engine/v1/engine.proto";
-import "google/protobuf/struct.proto";
+import "cerbos/policy/v1/policy.proto";
 import "google/protobuf/timestamp.proto";
 
 option csharp_namespace = "Cerbos.Api.V1.Audit";
@@ -63,10 +63,6 @@ message Peer {
   string forwarded_for = 4;
 }
 
-message PolicyInfo {
-  map<string, google.protobuf.Value> source_attributes = 1;
-}
-
 message AuditTrail {
-  map<string, PolicyInfo> effective_policies = 1;
+  map<string, cerbos.policy.v1.SourceAttributes> effective_policies = 1;
 }

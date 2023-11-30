@@ -55,6 +55,28 @@ func cerbos_policy_v1_Schemas_hashpb_sum(m *v1.Schemas, hasher hash.Hash, ignore
 	}
 }
 
+func cerbos_policy_v1_SourceAttributes_hashpb_sum(m *v1.SourceAttributes, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.SourceAttributes.attributes"]; !ok {
+		if len(m.Attributes) > 0 {
+			keys := make([]string, len(m.Attributes))
+			i := 0
+			for k := range m.Attributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Attributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Attributes[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(m *CompileErrors_Err, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
@@ -398,7 +420,7 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Metadata_hashpb_sum(m *Runnabl
 
 			for _, k := range keys {
 				if m.SourceAttributes[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+					cerbos_policy_v1_SourceAttributes_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
 				}
 
 			}
@@ -546,7 +568,7 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Metadata_hashpb_sum(m *Runnable
 
 			for _, k := range keys {
 				if m.SourceAttributes[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+					cerbos_policy_v1_SourceAttributes_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
 				}
 
 			}

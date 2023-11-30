@@ -6,7 +6,11 @@
       "principal": "donald_duck",
       "version": "20210210",
       "sourceAttributes": {
-        "source": "principal_policies/donald_duck_20210210.yaml"
+        "principal.donald_duck.v20210210": {
+          "attributes": {
+            "source": "principal_policies/donald_duck_20210210.yaml"
+          }
+        }
       }
     },
     "policies": [

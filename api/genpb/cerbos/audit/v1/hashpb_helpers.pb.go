@@ -5,7 +5,8 @@ package auditv1
 
 import (
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -74,7 +75,7 @@ func cerbos_audit_v1_AuditTrail_hashpb_sum(m *AuditTrail, hasher hash.Hash, igno
 
 			for _, k := range keys {
 				if m.EffectivePolicies[k] != nil {
-					cerbos_audit_v1_PolicyInfo_hashpb_sum(m.EffectivePolicies[k], hasher, ignore)
+					cerbos_policy_v1_SourceAttributes_hashpb_sum(m.EffectivePolicies[k], hasher, ignore)
 				}
 
 			}
@@ -239,28 +240,6 @@ func cerbos_audit_v1_Peer_hashpb_sum(m *Peer, hasher hash.Hash, ignore map[strin
 	if _, ok := ignore["cerbos.audit.v1.Peer.forwarded_for"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ForwardedFor))
 
-	}
-}
-
-func cerbos_audit_v1_PolicyInfo_hashpb_sum(m *PolicyInfo, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.audit.v1.PolicyInfo.source_attributes"]; !ok {
-		if len(m.SourceAttributes) > 0 {
-			keys := make([]string, len(m.SourceAttributes))
-			i := 0
-			for k := range m.SourceAttributes {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.SourceAttributes[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
-				}
-
-			}
-		}
 	}
 }
 
@@ -647,7 +626,29 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *v1.Resource, hasher hash.Hash, igno
 	}
 }
 
-func cerbos_schema_v1_ValidationError_hashpb_sum(m *v11.ValidationError, hasher hash.Hash, ignore map[string]struct{}) {
+func cerbos_policy_v1_SourceAttributes_hashpb_sum(m *v11.SourceAttributes, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.SourceAttributes.attributes"]; !ok {
+		if len(m.Attributes) > 0 {
+			keys := make([]string, len(m.Attributes))
+			i := 0
+			for k := range m.Attributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Attributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Attributes[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_schema_v1_ValidationError_hashpb_sum(m *v12.ValidationError, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.schema.v1.ValidationError.path"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Path))
 

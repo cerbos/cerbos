@@ -20,6 +20,7 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
@@ -246,7 +247,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	result := new(planner.PolicyPlanResult)
-	auditTrail := &auditv1.AuditTrail{EffectivePolicies: make(map[string]*auditv1.PolicyInfo, 2)} //nolint:gomnd
+	auditTrail := &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes, 2)} //nolint:gomnd
 
 	if policy := policySet.GetPrincipalPolicy(); policy != nil {
 		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: engine.conf.Globals}
@@ -255,9 +256,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			return nil, nil, err
 		}
 
-		auditTrail.EffectivePolicies[namer.PolicyKeyFromFQN(policySet.GetFqn())] = &auditv1.PolicyInfo{
-			SourceAttributes: policy.GetMeta().GetSourceAttributes(),
-		}
+		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
 	}
 
 	// get the resource policy check
@@ -274,10 +273,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			return nil, nil, err
 		}
 
-		auditTrail.EffectivePolicies[namer.PolicyKeyFromFQN(policySet.GetFqn())] = &auditv1.PolicyInfo{
-			SourceAttributes: policy.GetMeta().GetSourceAttributes(),
-		}
-
+		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
 		result = planner.CombinePlans(result, plan)
 	}
 
@@ -735,7 +731,7 @@ func mergeTrails(a, b *auditv1.AuditTrail) *auditv1.AuditTrail {
 		return a
 	default:
 		if a.EffectivePolicies == nil {
-			a.EffectivePolicies = make(map[string]*auditv1.PolicyInfo, len(b.EffectivePolicies))
+			a.EffectivePolicies = make(map[string]*policyv1.SourceAttributes, len(b.EffectivePolicies))
 		}
 		maps.Copy(a.EffectivePolicies, b.EffectivePolicies)
 		return a

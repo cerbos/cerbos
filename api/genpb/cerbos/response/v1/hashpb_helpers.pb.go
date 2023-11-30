@@ -78,7 +78,7 @@ func cerbos_audit_v1_AuditTrail_hashpb_sum(m *v1.AuditTrail, hasher hash.Hash, i
 
 			for _, k := range keys {
 				if m.EffectivePolicies[k] != nil {
-					cerbos_audit_v1_PolicyInfo_hashpb_sum(m.EffectivePolicies[k], hasher, ignore)
+					cerbos_policy_v1_SourceAttributes_hashpb_sum(m.EffectivePolicies[k], hasher, ignore)
 				}
 
 			}
@@ -243,28 +243,6 @@ func cerbos_audit_v1_Peer_hashpb_sum(m *v1.Peer, hasher hash.Hash, ignore map[st
 	if _, ok := ignore["cerbos.audit.v1.Peer.forwarded_for"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ForwardedFor))
 
-	}
-}
-
-func cerbos_audit_v1_PolicyInfo_hashpb_sum(m *v1.PolicyInfo, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.audit.v1.PolicyInfo.source_attributes"]; !ok {
-		if len(m.SourceAttributes) > 0 {
-			keys := make([]string, len(m.SourceAttributes))
-			i := 0
-			for k := range m.SourceAttributes {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.SourceAttributes[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
-				}
-
-			}
-		}
 	}
 }
 
@@ -892,23 +870,10 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *v12.Metadata, hasher hash.Hash, ign
 
 	}
 	if _, ok := ignore["cerbos.policy.v1.Metadata.source_attributes"]; !ok {
-		if len(m.SourceAttributes) > 0 {
-			keys := make([]string, len(m.SourceAttributes))
-			i := 0
-			for k := range m.SourceAttributes {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.SourceAttributes[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
-				}
-
-			}
+		if m.SourceAttributes != nil {
+			cerbos_policy_v1_SourceAttributes_hashpb_sum(m.SourceAttributes, hasher, ignore)
 		}
+
 	}
 }
 
@@ -1211,6 +1176,28 @@ func cerbos_policy_v1_Schemas_hashpb_sum(m *v12.Schemas, hasher hash.Hash, ignor
 			cerbos_policy_v1_Schemas_Schema_hashpb_sum(m.ResourceSchema, hasher, ignore)
 		}
 
+	}
+}
+
+func cerbos_policy_v1_SourceAttributes_hashpb_sum(m *v12.SourceAttributes, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.SourceAttributes.attributes"]; !ok {
+		if len(m.Attributes) > 0 {
+			keys := make([]string, len(m.Attributes))
+			i := 0
+			for k := range m.Attributes {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Attributes[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Attributes[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

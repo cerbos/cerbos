@@ -216,15 +216,17 @@ func WithSourceAttributes(p *policyv1.Policy, attrs ...SourceAttribute) *policyv
 	}
 
 	if p.Metadata.SourceAttributes == nil {
-		p.Metadata.SourceAttributes = make(map[string]*structpb.Value, len(attrs))
+		p.Metadata.SourceAttributes = &policyv1.SourceAttributes{
+			Attributes: make(map[string]*structpb.Value, len(attrs)),
+		}
 	}
 
 	for _, a := range attrs {
-		p.Metadata.SourceAttributes[a.Key] = a.Value
+		p.Metadata.SourceAttributes.Attributes[a.Key] = a.Value
 	}
 
 	if p.Metadata.SourceFile != "" {
-		p.Metadata.SourceAttributes["source"] = structpb.NewStringValue(p.Metadata.SourceFile)
+		p.Metadata.SourceAttributes.Attributes["source"] = structpb.NewStringValue(p.Metadata.SourceFile)
 	}
 
 	return p

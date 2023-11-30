@@ -6,13 +6,12 @@ package runtimev1
 
 import (
 	fmt "fmt"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	structpb "google.golang.org/protobuf/types/known/structpb"
 	io "io"
 	bits "math/bits"
 )
@@ -3282,10 +3281,10 @@ func (m *RunnableResourcePolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.SourceAttributes == nil {
-				m.SourceAttributes = make(map[string]*structpb.Value)
+				m.SourceAttributes = make(map[string]*v1.SourceAttributes)
 			}
 			var mapkey string
-			var mapvalue *structpb.Value
+			var mapvalue *v1.SourceAttributes
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -3359,7 +3358,7 @@ func (m *RunnableResourcePolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &structpb.Value{}
+					mapvalue = &v1.SourceAttributes{}
 					if unmarshal, ok := interface{}(mapvalue).(interface {
 						UnmarshalVT([]byte) error
 					}); ok {
@@ -3933,7 +3932,7 @@ func (m *RunnableResourcePolicySet_Policy_Rule) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Effect |= v1.Effect(b&0x7F) << shift
+				m.Effect |= v11.Effect(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -4379,7 +4378,7 @@ func (m *RunnableResourcePolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Schemas == nil {
-				m.Schemas = &v11.Schemas{}
+				m.Schemas = &v1.Schemas{}
 			}
 			if unmarshal, ok := interface{}(m.Schemas).(interface {
 				UnmarshalVT([]byte) error
@@ -4578,7 +4577,7 @@ func (m *RunnableResourcePolicySet) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Schemas == nil {
-				m.Schemas = &v11.Schemas{}
+				m.Schemas = &v1.Schemas{}
 			}
 			if unmarshal, ok := interface{}(m.Schemas).(interface {
 				UnmarshalVT([]byte) error
@@ -5786,10 +5785,10 @@ func (m *RunnablePrincipalPolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.SourceAttributes == nil {
-				m.SourceAttributes = make(map[string]*structpb.Value)
+				m.SourceAttributes = make(map[string]*v1.SourceAttributes)
 			}
 			var mapkey string
-			var mapvalue *structpb.Value
+			var mapvalue *v1.SourceAttributes
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -5863,7 +5862,7 @@ func (m *RunnablePrincipalPolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &structpb.Value{}
+					mapvalue = &v1.SourceAttributes{}
 					if unmarshal, ok := interface{}(mapvalue).(interface {
 						UnmarshalVT([]byte) error
 					}); ok {
@@ -6058,7 +6057,7 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) UnmarshalVT(dAtA []byte) 
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Effect |= v1.Effect(b&0x7F) << shift
+				m.Effect |= v11.Effect(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

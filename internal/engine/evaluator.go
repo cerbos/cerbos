@@ -116,7 +116,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 	request := checkInputToRequest(input)
-	trail := &auditv1.AuditTrail{EffectivePolicies: map[string]*auditv1.PolicyInfo{policyKey: {SourceAttributes: rpe.policy.Meta.SourceAttributes}}}
+	trail := &auditv1.AuditTrail{EffectivePolicies: rpe.policy.GetMeta().GetSourceAttributes()}
 	result := newEvalResult(input.Actions, trail)
 	effectiveRoles := internal.ToSet(input.Principal.Roles)
 
@@ -266,7 +266,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 	policyKey := namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn)
 	evalCtx := newEvalContext(ppe.evalParams, checkInputToRequest(input))
-	trail := &auditv1.AuditTrail{EffectivePolicies: map[string]*auditv1.PolicyInfo{policyKey: {SourceAttributes: ppe.policy.Meta.SourceAttributes}}}
+	trail := &auditv1.AuditTrail{EffectivePolicies: ppe.policy.GetMeta().GetSourceAttributes()}
 	result := newEvalResult(input.Actions, trail)
 
 	pctx := tctx.StartPolicy(ppe.policy.Meta.Fqn)

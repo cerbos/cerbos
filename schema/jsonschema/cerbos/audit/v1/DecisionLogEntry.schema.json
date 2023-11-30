@@ -9,7 +9,7 @@
         "effectivePolicies": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/cerbos.audit.v1.PolicyInfo"
+            "$ref": "#/definitions/cerbos.policy.v1.SourceAttributes"
           }
         }
       }
@@ -77,18 +77,6 @@
         },
         "userAgent": {
           "type": "string"
-        }
-      }
-    },
-    "cerbos.audit.v1.PolicyInfo": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "sourceAttributes": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/google.protobuf.Value"
-          }
         }
       }
     },
@@ -415,6 +403,18 @@
         "scope": {
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+        }
+      }
+    },
+    "cerbos.policy.v1.SourceAttributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
         }
       }
     },

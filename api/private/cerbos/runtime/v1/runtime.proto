@@ -9,7 +9,6 @@ import "cerbos/effect/v1/effect.proto";
 import "cerbos/policy/v1/policy.proto";
 import "google/api/expr/v1alpha1/checked.proto";
 import "google/protobuf/empty.proto";
-import "google/protobuf/struct.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1;runtimev1";
 
@@ -41,7 +40,7 @@ message RunnableResourcePolicySet {
     string fqn = 1;
     string resource = 2;
     string version = 3;
-    map<string, google.protobuf.Value> source_attributes = 4;
+    map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 4;
   }
 
   message Policy {
@@ -105,7 +104,7 @@ message RunnablePrincipalPolicySet {
     string fqn = 1;
     string principal = 2;
     string version = 3;
-    map<string, google.protobuf.Value> source_attributes = 4;
+    map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 4;
   }
 
   message Policy {
