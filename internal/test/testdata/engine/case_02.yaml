@@ -1,101 +1,219 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "John's direct manager tries to approve a draft leave request and a pending-approval leave request"
-inputs: [
-  {
-    "requestId": "test1",
-    "actions": [
-      "approve"
-    ],
-    "principal": {
-      "id": "sally",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee",
-        "manager"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+inputs:
+  [
+    {
+      "requestId": "test1",
+      "actions": ["approve"],
+      "principal":
+        {
+          "id": "sally",
+          "policyVersion": "20210210",
+          "roles": ["employee", "manager"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX125",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX125",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL"
-      }
-    }
-  },
-  {
-    "requestId": "test2",
-    "actions": [
-      "approve"
-    ],
-    "principal": {
-      "id": "sally",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee",
-        "manager"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test2",
+      "actions": ["approve"],
+      "principal":
+        {
+          "id": "sally",
+          "policyVersion": "20210210",
+          "roles": ["employee", "manager"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX150",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX150",
+              "owner": "john",
+              "team": "design",
+              "status": "DRAFT",
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX150",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX150",
-        "owner": "john",
-        "team": "design",
-        "status": "DRAFT"
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test1",
-    "resourceId": "XX125",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.leave_request.v20210210"
-      }
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test1",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.v20210210",
+            },
+        },
+      "effectiveDerivedRoles": ["any_employee", "direct_manager"],
     },
-    "effectiveDerivedRoles": [
-      "any_employee",
-      "direct_manager"
-    ]
-  },
-  {
-    "requestId": "test2",
-    "resourceId": "XX150",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_DENY",
-        "policy": "resource.leave_request.v20210210"
-      }
+    {
+      "requestId": "test2",
+      "resourceId": "XX150",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.leave_request.v20210210",
+            },
+        },
+      "effectiveDerivedRoles": ["any_employee", "direct_manager"],
     },
-    "effectiveDerivedRoles": [
-      "any_employee",
-      "direct_manager"
-    ]
-  }
-]
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJVT7XKB706GNBH647T5DP9",
+      "timestamp": "2023-12-01T14:16:40.627961611Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test1",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "sally",
+                    "policyVersion": "20210210",
+                    "roles": ["employee", "manager"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve"],
+              },
+              {
+                "requestId": "test2",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX150",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX150",
+                        "owner": "john",
+                        "status": "DRAFT",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "sally",
+                    "policyVersion": "20210210",
+                    "roles": ["employee", "manager"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test1",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.v20210210",
+                      },
+                  },
+                "effectiveDerivedRoles": ["direct_manager", "any_employee"],
+              },
+              {
+                "requestId": "test2",
+                "resourceId": "XX150",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.leave_request.v20210210",
+                      },
+                  },
+                "effectiveDerivedRoles": ["direct_manager", "any_employee"],
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.leave_request.v20210210":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_01.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

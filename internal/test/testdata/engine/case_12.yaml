@@ -1,57 +1,106 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Scoped policy: missing policy"
-inputs: [
-  {
-    "requestId": "test",
-    "actions": [
-      "create",
-      "delete",
-      "view:public"
-    ],
-    "principal": {
-      "id": "john",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "ip_address": "10.20.0.13"
-      }
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["create", "delete", "view:public"],
+      "principal":
+        {
+          "id": "john",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "ip_address": "10.20.0.13",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request_x",
+          "scope": "acme.hr.fr",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request_x",
-      "scope": "acme.hr.fr",
-      "id": "XX125",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX125",
-        "owner": "john",
-        "team": "design"
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "XX125",
-    "actions": {
-      "view:public": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
-      },
-      "delete": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
-      },
-      "create": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
-      }
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+          "delete": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+          "create": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXWJHC8E57CT0VMJPDXV76",
+      "timestamp": "2023-12-01T14:52:54.188678834Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request_x",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                    "scope": "acme.hr.fr",
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "ip_address": "10.20.0.13",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["create", "delete", "view:public"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "create": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+                    "delete": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+                    "view:public":
+                      { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+                  },
+              },
+            ],
+        },
+    },
+  ]

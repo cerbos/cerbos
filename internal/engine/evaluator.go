@@ -15,12 +15,14 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/multierr"
+	"golang.org/x/exp/maps"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -116,7 +118,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 	request := checkInputToRequest(input)
-	trail := &auditv1.AuditTrail{EffectivePolicies: rpe.policy.GetMeta().GetSourceAttributes()}
+	trail := newAuditTrail(rpe.policy.GetMeta().GetSourceAttributes())
 	result := newEvalResult(input.Actions, trail)
 	effectiveRoles := internal.ToSet(input.Principal.Roles)
 
@@ -266,7 +268,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 	policyKey := namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn)
 	evalCtx := newEvalContext(ppe.evalParams, checkInputToRequest(input))
-	trail := &auditv1.AuditTrail{EffectivePolicies: ppe.policy.GetMeta().GetSourceAttributes()}
+	trail := newAuditTrail(ppe.policy.GetMeta().GetSourceAttributes())
 	result := newEvalResult(input.Actions, trail)
 
 	pctx := tctx.StartPolicy(ppe.policy.Meta.Fqn)
@@ -599,4 +601,8 @@ func checkInputToRequest(input *enginev1.CheckInput) *enginev1.Request {
 		},
 		AuxData: input.AuxData,
 	}
+}
+
+func newAuditTrail(srcAttr map[string]*policyv1.SourceAttributes) *auditv1.AuditTrail {
+	return &auditv1.AuditTrail{EffectivePolicies: maps.Clone(srcAttr)}
 }

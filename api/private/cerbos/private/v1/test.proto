@@ -5,6 +5,7 @@ syntax = "proto3";
 
 package cerbos.private.v1;
 
+import "cerbos/audit/v1/audit.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/request/v1/request.proto";
@@ -20,6 +21,7 @@ message EngineTestCase {
   repeated cerbos.engine.v1.CheckInput inputs = 2;
   repeated cerbos.engine.v1.CheckOutput want_outputs = 3;
   bool want_error = 4;
+  repeated cerbos.audit.v1.DecisionLogEntry want_decision_logs = 5;
 }
 
 message ServerTestCase {

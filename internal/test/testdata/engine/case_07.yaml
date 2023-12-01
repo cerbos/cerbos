@@ -1,1207 +1,2539 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Donald Duck tries to view and approve a load of leave requests"
-inputs: [
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX100",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX100",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX100",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX100",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX101",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX101",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX101",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX101",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX102",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX102",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX102",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX102",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX103",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX103",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX103",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX103",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX104",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX104",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX104",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX104",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX105",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX105",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX105",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX105",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX106",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX106",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX106",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX106",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX107",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX107",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX107",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX107",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX108",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX108",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX108",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX108",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX109",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX109",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX109",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX109",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX110",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX110",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX110",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX110",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX111",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX111",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX111",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX111",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX112",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX112",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX112",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX112",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX113",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX113",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX113",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX113",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX114",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX114",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX114",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX114",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX115",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX115",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX115",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX115",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX116",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX116",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX116",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX116",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX117",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX117",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX117",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX117",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX118",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX118",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX118",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX118",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX119",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX119",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX119",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX119",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX120",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX120",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX120",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX120",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX121",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX121",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX121",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX121",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX122",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX122",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX122",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX122",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX123",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX123",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX123",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX123",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "actions": [
-      "approve",
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX124",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX124",
+              "owner": "john",
+              "team": "design",
+              "status": "PENDING_APPROVAL",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "id": "XX124",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX124",
-        "owner": "john",
-        "team": "design",
-        "status": "PENDING_APPROVAL",
-        "dev_record": true
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "XX100",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX101",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX102",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX103",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX104",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX105",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX106",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX107",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX108",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX109",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX110",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX111",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX112",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX113",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX114",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX115",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX116",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX117",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX118",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX119",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX120",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX121",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX122",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX123",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  },
-  {
-    "requestId": "test",
-    "resourceId": "XX124",
-    "actions": {
-      "approve": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      },
-      "view:public": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX100",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX101",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX102",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX103",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX104",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX105",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX106",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX107",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX108",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX109",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX110",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX111",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX112",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX113",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX114",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX115",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX116",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX117",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX118",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX119",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX120",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX121",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX122",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX123",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX124",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJX2EAFF1P82QA4R5XHZDTF",
+      "timestamp": "2023-12-01T14:38:37.903572953Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX100",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX100",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX101",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX101",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX102",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX102",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX103",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX103",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX104",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX104",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX105",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX105",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX106",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX106",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX107",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX107",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX108",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX108",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX109",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX109",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX110",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX110",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX111",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX111",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX112",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX112",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX113",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX113",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX114",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX114",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX115",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX115",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX116",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX116",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX117",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX117",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX118",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX118",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX119",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX119",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX120",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX120",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX121",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX121",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX122",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX122",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX123",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX123",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX124",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX124",
+                        "owner": "john",
+                        "status": "PENDING_APPROVAL",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["approve", "view:public"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX100",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX101",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX102",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX103",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX104",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX105",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX106",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX107",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX108",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX109",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX110",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX111",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX112",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX113",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX114",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX115",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX116",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX117",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX118",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX119",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX120",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX121",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX122",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX123",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX124",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "principal.donald_duck.v20210210":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_01.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

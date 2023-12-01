@@ -1,102 +1,237 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "CEL expression combination using parentheses"
-inputs: [
-  {
-    "requestId": "test1",
-    "actions": [
-      "view",
-      "delete"
-    ],
-    "principal": {
-      "id": "123",
-      "roles": ["user"],
-      "attr": {
-        "orgId": "foo",
-        "jobRoles": ["buyer"],
-        "tags": {
-          "brands": ["brand"],
-          "classes": ["*"],
-          "regions": ["*"]
-        }
-      }
+inputs:
+  [
+    {
+      "requestId": "test1",
+      "actions": ["view", "delete"],
+      "principal":
+        {
+          "id": "123",
+          "roles": ["user"],
+          "attr":
+            {
+              "orgId": "foo",
+              "jobRoles": ["buyer"],
+              "tags":
+                { "brands": ["brand"], "classes": ["*"], "regions": ["*"] },
+            },
+        },
+      "resource":
+        {
+          "kind": "purchase_order",
+          "id": "X111",
+          "attr":
+            {
+              "ownerOrgId": "foo",
+              "tags":
+                { "brand": "brand", "class": "Footwear", "region": "EMEA" },
+            },
+        },
     },
-    "resource": {
-      "kind": "purchase_order",
-      "id": "X111",
-      "attr": {
-        "ownerOrgId": "foo",
-        "tags": {
-          "brand": "brand",
-          "class": "Footwear",
-          "region": "EMEA"
-        }
-      }
-    }
-  },
-  {
-    "requestId": "test2",
-    "actions": [
-      "view",
-      "delete"
-    ],
-    "principal": {
-      "id": "123",
-      "roles": ["user"],
-      "attr": {
-        "orgId": "foo",
-        "jobRoles": ["buyer"],
-        "tags": {
-          "brands": ["brand"],
-          "classes": ["*"],
-          "regions": ["*"]
-        }
-      }
+    {
+      "requestId": "test2",
+      "actions": ["view", "delete"],
+      "principal":
+        {
+          "id": "123",
+          "roles": ["user"],
+          "attr":
+            {
+              "orgId": "foo",
+              "jobRoles": ["buyer"],
+              "tags":
+                { "brands": ["brand"], "classes": ["*"], "regions": ["*"] },
+            },
+        },
+      "resource":
+        {
+          "kind": "purchase_order",
+          "id": "X222",
+          "attr":
+            {
+              "ownerOrgId": "foo",
+              "tags":
+                {
+                  "brand": "wibblewobble",
+                  "class": "Footwear",
+                  "region": "EMEA",
+                },
+            },
+        },
     },
-    "resource": {
-      "kind": "purchase_order",
-      "id": "X222",
-      "attr": {
-        "ownerOrgId": "foo",
-        "tags": {
-          "brand": "wibblewobble",
-          "class": "Footwear",
-          "region": "EMEA"
-        }
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test1",
-    "resourceId": "X111",
-    "actions": {
-      "view": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.purchase_order.vdefault"
-      },
-      "delete": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.purchase_order.vdefault"
-      }
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test1",
+      "resourceId": "X111",
+      "actions":
+        {
+          "view":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.purchase_order.vdefault",
+            },
+          "delete":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.purchase_order.vdefault",
+            },
+        },
+      "effectiveDerivedRoles": ["buyer"],
     },
-    "effectiveDerivedRoles": [
-      "buyer"
-    ]
-  },
-  {
-    "requestId": "test2",
-    "resourceId": "X222",
-    "actions": {
-      "view": {
-        "effect": "EFFECT_DENY",
-        "policy": "resource.purchase_order.vdefault"
-      },
-      "delete": {
-        "effect": "EFFECT_DENY",
-        "policy": "resource.purchase_order.vdefault"
-      }
-    }
-  }
-]
+    {
+      "requestId": "test2",
+      "resourceId": "X222",
+      "actions":
+        {
+          "view":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.purchase_order.vdefault",
+            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.purchase_order.vdefault",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXRY55QF0YHSS90VBY230Y",
+      "timestamp": "2023-12-01T14:50:55.013931146Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test1",
+                "resource":
+                  {
+                    "kind": "purchase_order",
+                    "id": "X111",
+                    "attr":
+                      {
+                        "ownerOrgId": "foo",
+                        "tags":
+                          {
+                            "brand": "brand",
+                            "class": "Footwear",
+                            "region": "EMEA",
+                          },
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "123",
+                    "roles": ["user"],
+                    "attr":
+                      {
+                        "jobRoles": ["buyer"],
+                        "orgId": "foo",
+                        "tags":
+                          {
+                            "brands": ["brand"],
+                            "classes": ["*"],
+                            "regions": ["*"],
+                          },
+                      },
+                  },
+                "actions": ["view", "delete"],
+              },
+              {
+                "requestId": "test2",
+                "resource":
+                  {
+                    "kind": "purchase_order",
+                    "id": "X222",
+                    "attr":
+                      {
+                        "ownerOrgId": "foo",
+                        "tags":
+                          {
+                            "brand": "wibblewobble",
+                            "class": "Footwear",
+                            "region": "EMEA",
+                          },
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "123",
+                    "roles": ["user"],
+                    "attr":
+                      {
+                        "jobRoles": ["buyer"],
+                        "orgId": "foo",
+                        "tags":
+                          {
+                            "brands": ["brand"],
+                            "classes": ["*"],
+                            "regions": ["*"],
+                          },
+                      },
+                  },
+                "actions": ["view", "delete"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test1",
+                "resourceId": "X111",
+                "actions":
+                  {
+                    "delete":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.purchase_order.vdefault",
+                      },
+                    "view":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.purchase_order.vdefault",
+                      },
+                  },
+                "effectiveDerivedRoles": ["buyer"],
+              },
+              {
+                "requestId": "test2",
+                "resourceId": "X222",
+                "actions":
+                  {
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.purchase_order.vdefault",
+                      },
+                    "view":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.purchase_order.vdefault",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.purchase_order.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_03.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

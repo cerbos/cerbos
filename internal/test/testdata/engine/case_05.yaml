@@ -1,49 +1,127 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Explicit deny from Donald Duck principal policy"
-inputs: [
-  {
-    "requestId": "test",
-    "actions": [
-      "view:public"
-    ],
-    "principal": {
-      "id": "donald_duck",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design",
-        "managed_geographies": "GB"
-      }
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "salary_record",
+          "policyVersion": "20210210",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+              "dev_record": true,
+            },
+        },
     },
-    "resource": {
-      "kind": "salary_record",
-      "policyVersion": "20210210",
-      "id": "XX125",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX125",
-        "owner": "john",
-        "team": "design",
-        "dev_record": true
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "XX125",
-    "actions": {
-      "view:public": {
-        "effect": "EFFECT_DENY",
-        "policy": "principal.donald_duck.v20210210"
-      }
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "principal.donald_duck.v20210210",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJWWJQSEEJ5FE3HGH0KXWZ4",
+      "timestamp": "2023-12-01T14:35:25.817247054Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "salary_record",
+                    "policyVersion": "20210210",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["view:public"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "view:public":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "principal.donald_duck.v20210210",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "principal.donald_duck.v20210210":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_01.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

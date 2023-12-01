@@ -1,51 +1,99 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "No policy match"
-inputs: [
-  {
-    "requestId": "test",
-    "actions": [
-      "view:public",
-      "approve"
-    ],
-    "principal": {
-      "id": "john",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design"
-      }
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["view:public", "approve"],
+      "principal":
+        {
+          "id": "john",
+          "roles": ["employee"],
+          "attr":
+            { "department": "marketing", "geography": "GB", "team": "design" },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "policyVersion": "xxx",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
     },
-    "resource": {
-      "kind": "leave_request",
-      "policyVersion": "xxx",
-      "id": "XX125",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX125",
-        "owner": "john",
-        "team": "design"
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "XX125",
-    "actions": {
-      "view:public": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
-      },
-      "approve": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
-      }
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+          "approve": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJWYCZD22KHX0V9SFWMBE2E",
+      "timestamp": "2023-12-01T14:36:25.453336812Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "xxx",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["view:public", "approve"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "approve":
+                      { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+                    "view:public":
+                      { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+                  },
+              },
+            ],
+        },
+    },
+  ]

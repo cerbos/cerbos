@@ -1,31 +1,72 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: Globals
-inputs: [
-  {
-    "requestId": "test",
-    "actions": ["test"],
-    "principal": {
-      "id": "andy",
-      "roles": [
-        "employee"
-      ]
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["test"],
+      "principal": { "id": "andy", "roles": ["employee"] },
+      "resource": { "kind": "global", "id": "test" },
     },
-    "resource": {
-      "kind": "global",
-      "id": "test"
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "test",
-    "actions": {
-      "test": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.global.vdefault"
-      }
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "test",
+      "actions":
+        {
+          "test":
+            { "effect": "EFFECT_ALLOW", "policy": "resource.global.vdefault" },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJY2X3E9J7E3PH2Y8Z1QBJ4",
+      "timestamp": "2023-12-01T14:56:21.614337311Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource": { "kind": "global", "id": "test" },
+                "principal": { "id": "andy", "roles": ["employee"] },
+                "actions": ["test"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "test",
+                "actions":
+                  {
+                    "test":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.global.vdefault",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.global.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_08.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

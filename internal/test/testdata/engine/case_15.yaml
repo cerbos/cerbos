@@ -1,39 +1,89 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Wildcard roles"
-inputs: [
-  {
-    "requestId": "test",
-    "actions": [
-      "view",
-    ],
-    "principal": {
-      "id": "john",
-      "roles": [
-        "employee"
-      ],
-      "attr": {}
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["view"],
+      "principal": { "id": "john", "roles": ["employee"], "attr": {} },
+      "resource":
+        {
+          "policyVersion": "20210210",
+          "kind": "leave_request",
+          "id": "XX125",
+          "attr": { "public": true },
+        },
     },
-    "resource": {
-      "policyVersion": "20210210",
-      "kind": "leave_request",
-      "id": "XX125",
-      "attr": {
-        "public": true
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "XX125",
-    "effectiveDerivedRoles": ["any_employee"],
-    "actions": {
-      "view": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.leave_request.v20210210",
-      },
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "effectiveDerivedRoles": ["any_employee"],
+      "actions":
+        {
+          "view":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.v20210210",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXZPPR3RY8MFXVDX7KJCH2",
+      "timestamp": "2023-12-01T14:54:36.760466701Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX125",
+                    "attr": { "public": true },
+                  },
+                "principal": { "id": "john", "roles": ["employee"] },
+                "actions": ["view"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "view":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.v20210210",
+                      },
+                  },
+                "effectiveDerivedRoles": ["any_employee"],
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.leave_request.v20210210":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_01.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

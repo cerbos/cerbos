@@ -35,3 +35,69 @@ wantOutputs:
         val:
           - one
           - two
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJY5WCDB03ECX7FW642KVK7",
+      "timestamp": "2023-12-01T14:57:59.181380904Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  { "kind": "runtime_effective_derived_roles", "id": "test" },
+                "principal": { "id": "andy", "roles": ["employee"] },
+                "actions": ["camelCase", "snake_case"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "test",
+                "actions":
+                  {
+                    "camelCase":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.runtime_effective_derived_roles.vdefault",
+                      },
+                    "snake_case":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.runtime_effective_derived_roles.vdefault",
+                      },
+                  },
+                "effectiveDerivedRoles": ["one", "two"],
+                "outputs":
+                  [
+                    {
+                      "src": "resource.runtime_effective_derived_roles.vdefault#camelCase",
+                      "val": ["one", "two"],
+                    },
+                    {
+                      "src": "resource.runtime_effective_derived_roles.vdefault#snake_case",
+                      "val": ["one", "two"],
+                    },
+                  ],
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.runtime_effective_derived_roles.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_14.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]
