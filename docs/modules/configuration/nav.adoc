@@ -7,4 +7,3 @@
 * xref:server.adoc[Server]
 * xref:storage.adoc[Storage]
 * xref:telemetry.adoc[Telemetry]
-* xref:tracing.adoc[Tracing (deprecated)]
