@@ -20,7 +20,6 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/otel"
-	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/server"
 )
 
@@ -117,7 +116,7 @@ func (c *Cmd) Run() error {
 	}
 
 	// initialize tracing
-	tracingDone, err := tracing.Init(ctx)
+	tracingDone, err := otel.InitTraces(ctx, otel.Env(os.LookupEnv))
 	if err != nil {
 		return err
 	}

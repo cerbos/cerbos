@@ -3,7 +3,7 @@
 
 //go:build e2e
 
-package jaeger_test
+package otlp_test
 
 import (
 	"testing"
@@ -11,6 +11,6 @@ import (
 	"github.com/cerbos/cerbos/internal/test/e2e"
 )
 
-func TestJaeger(t *testing.T) {
-	e2e.RunSuites(t, e2e.WithContextID("jaeger"), e2e.WithMutableStoreSuites())
+func TestOTLP(t *testing.T) {
+	e2e.RunSuites(t, e2e.WithContextID("otlp"), e2e.WithMutableStoreSuites())
 }
