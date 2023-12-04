@@ -16,7 +16,7 @@ require (
 	github.com/vektra/mockery/v2 v2.38.0
 	go.elastic.co/go-licence-detector v0.6.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
-	google.golang.org/protobuf v1.31.1-0.20231124085615-9b87403568fd
+	google.golang.org/protobuf v1.31.1-0.20231128094519-2087447a6b4a
 	gotest.tools/gotestsum v1.11.0
 )
 
