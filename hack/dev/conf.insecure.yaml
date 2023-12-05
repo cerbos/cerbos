@@ -6,7 +6,7 @@ server:
   playgroundEnabled: true
   adminAPI:
     enabled: true
-    adminCredentials: 
+    adminCredentials:
       username: cerbos
       passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
 
@@ -24,13 +24,6 @@ audit:
     storagePath: /tmp/cerbos_auditlog
   file:
     path: stdout
-
-tracing:
-  sampleProbability: 1.0
-  exporter: jaeger
-  jaeger:
-    agentEndpoint: "localhost:6831"
-    serviceName: "cerbos"
 
 storage:
   driver: "disk"

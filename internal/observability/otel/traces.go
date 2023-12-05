@@ -20,6 +20,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/zap"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -28,6 +29,8 @@ func InitTracesWithExporter(ctx context.Context, env Env, exporter tracesdk.Span
 }
 
 func InitTraces(ctx context.Context, env Env) (func() error, error) {
+	checkOutdatedConfig()
+
 	if _, endpointDefined := env.Get(TracesEndpointEV); !endpointDefined {
 		zap.L().Named("otel").Warn("Disabling OTLP traces because neither OTEL_EXPORTER_OTLP_ENDPOINT nor OTEL_EXPORTER_OTLP_TRACES_ENDPOINT is defined")
 		otel.SetTracerProvider(noop.NewTracerProvider())
@@ -50,7 +53,16 @@ func InitTraces(ctx context.Context, env Env) (func() error, error) {
 		return nil, fmt.Errorf("failed to initialize trace exporter: %w", err)
 	}
 
+	zap.S().Named("otel").Infof("Initialized OTLP trace exporter with protocol=%s", protocol)
 	return doInitTraces(ctx, env, exporter)
+}
+
+func checkOutdatedConfig() {
+	var oldConf struct{}
+	// if the tracing block exists, this would result in an error because it cannot be unmarshaled into a struct{}
+	if err := config.Get("tracing", &oldConf); err != nil {
+		zap.L().Named("otel").Warn("[UNSUPPORTED CONFIG] Traces must be configured using OpenTelemetry environment variables. The `tracing` configuration block is no longer supported. See https://docs.cerbos.dev/cerbos/latest/configuration/observability#traces")
+	}
 }
 
 func doInitTraces(ctx context.Context, env Env, exporter tracesdk.SpanExporter) (func() error, error) {

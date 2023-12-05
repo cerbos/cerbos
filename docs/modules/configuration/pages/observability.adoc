@@ -54,6 +54,8 @@ Cerbos supports distributed tracing to provide insights into application perform
 
 Trace configuration should be done using link:https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/[OpenTelemetry environment variables]. The following environment variables are supported.
 
+TIP: If you are upgrading from a Cerbos version older than 0.33.0, refer to xref:tracing.adoc#migration[migration instructions] for information about mapping file-based configuration to environment variables.
+
 [%header,cols=".^1m,6a",grid=rows]
 |===
 | Environment variable | Description
