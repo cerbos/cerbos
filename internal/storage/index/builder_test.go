@@ -131,22 +131,27 @@ func TestBuildIndexWithDisk(t *testing.T) {
 	})
 
 	t.Run("check_stats", func(t *testing.T) {
-		stats := idx.RepoStats(context.Background())
-		require.GreaterOrEqual(t, 3, stats.SchemaCount)
-
-		for _, k := range []policy.Kind{policy.DerivedRolesKind, policy.PrincipalKind, policy.ResourceKind} {
-			t.Run(k.String(), func(t *testing.T) {
-				require.Greater(t, stats.PolicyCount[k], 2)
-				require.Greater(t, stats.AvgConditionCount[k], float64(0.1))
-				require.Greater(t, stats.AvgRuleCount[k], float64(1.0))
-			})
+		want := storage.RepoStats{
+			PolicyCount:       statsMap[int](6, 1, 8, 18),
+			RuleCount:         statsMap[int](15, 2, 10, 45),
+			ConditionCount:    statsMap[int](7, 0, 3, 19),
+			AvgRuleCount:      statsMap[float64](2.5, 2, 1.25, 2.5),
+			AvgConditionCount: statsMap[float64](1.1666666666666667, 0, 0.375, 1.0555555555555556),
+			SchemaCount:       3,
 		}
 
-		t.Run(policy.ExportVariablesKindStr, func(t *testing.T) {
-			require.GreaterOrEqual(t, stats.PolicyCount[policy.ExportVariablesKind], 1)
-			require.GreaterOrEqual(t, stats.AvgRuleCount[policy.ExportVariablesKind], float64(1.0))
-			require.Zero(t, stats.AvgConditionCount[policy.ExportVariablesKind])
-		})
+		stats := idx.RepoStats(context.Background())
+
+		require.Equal(t, want.SchemaCount, stats.SchemaCount, "Schema counts don't match")
+		for _, k := range []policy.Kind{policy.DerivedRolesKind, policy.ExportVariablesKind, policy.PrincipalKind, policy.ResourceKind} {
+			t.Run(k.String(), func(t *testing.T) {
+				require.Equal(t, want.AvgConditionCount[k], stats.AvgConditionCount[k], "Average condition counts don't match")
+				require.Equal(t, want.AvgRuleCount[k], stats.AvgRuleCount[k], "Average rule counts don't match")
+				require.Equal(t, want.ConditionCount[k], stats.ConditionCount[k], "Condition counts don't match")
+				require.Equal(t, want.PolicyCount[k], stats.PolicyCount[k], "Policy counts don't match")
+				require.Equal(t, want.RuleCount[k], stats.RuleCount[k], "Rule counts don't match")
+			})
+		}
 	})
 
 	t.Run("add_empty", func(t *testing.T) {
@@ -225,6 +230,27 @@ func TestBuildIndex(t *testing.T) {
 			}
 		})
 	}
+}
+
+func statsMap[T int | float64](derivedRoles, exportVariables, principal, resource T) map[policy.Kind]T {
+	m := make(map[policy.Kind]T)
+	if derivedRoles != 0 {
+		m[policy.DerivedRolesKind] = derivedRoles
+	}
+
+	if exportVariables != 0 {
+		m[policy.ExportVariablesKind] = exportVariables
+	}
+
+	if principal != 0 {
+		m[policy.PrincipalKind] = principal
+	}
+
+	if resource != 0 {
+		m[policy.ResourceKind] = resource
+	}
+
+	return m
 }
 
 func readTestCase(t *testing.T, data []byte) *privatev1.IndexBuilderTestCase {

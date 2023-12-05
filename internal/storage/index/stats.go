@@ -37,15 +37,19 @@ func (s *statsCollector) collate() storage.RepoStats {
 	is := storage.RepoStats{
 		PolicyCount:       s.policyCount,
 		SchemaCount:       len(s.schemaRefs),
+		ConditionCount:    make(map[policy.Kind]int),
+		RuleCount:         make(map[policy.Kind]int),
 		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCount)),
 		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCount)),
 	}
 
 	for k, c := range s.ruleCount {
+		is.RuleCount[k] = c
 		is.AvgRuleCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
 	for k, c := range s.conditionCount {
+		is.ConditionCount[k] = c
 		is.AvgConditionCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 

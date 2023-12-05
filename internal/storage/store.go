@@ -249,6 +249,8 @@ func NewReloadEvent() Event {
 
 type RepoStats struct {
 	PolicyCount       map[policy.Kind]int
+	RuleCount         map[policy.Kind]int
+	ConditionCount    map[policy.Kind]int
 	AvgRuleCount      map[policy.Kind]float64
 	AvgConditionCount map[policy.Kind]float64
 	SchemaCount       int
