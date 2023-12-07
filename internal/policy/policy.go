@@ -212,13 +212,21 @@ func SourceFile(source string) SourceAttribute {
 // WithSourceAttributes adds given source attributes to the policy.
 func WithSourceAttributes(p *policyv1.Policy, attrs ...SourceAttribute) *policyv1.Policy {
 	if p.Metadata == nil {
-		p.Metadata = &policyv1.Metadata{}
+		p.Metadata = &policyv1.Metadata{
+			SourceAttributes: &policyv1.SourceAttributes{
+				Attributes: make(map[string]*structpb.Value, len(attrs)),
+			},
+		}
 	}
 
 	if p.Metadata.SourceAttributes == nil {
 		p.Metadata.SourceAttributes = &policyv1.SourceAttributes{
 			Attributes: make(map[string]*structpb.Value, len(attrs)),
 		}
+	}
+
+	if p.Metadata.SourceAttributes.Attributes == nil {
+		p.Metadata.SourceAttributes.Attributes = make(map[string]*structpb.Value, len(attrs))
 	}
 
 	for _, a := range attrs {
