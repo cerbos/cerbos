@@ -23,6 +23,7 @@ const (
 
 func StartTestServer(t *testing.T) *testutil.CerbosServerInstance {
 	t.Helper()
+	t.Setenv("CERBOS_TEST_DEBUG", "true")
 
 	conf := testutil.LaunchConf{
 		Cmd: []string{
