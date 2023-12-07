@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -192,14 +193,54 @@ func GetScope(p *policyv1.Policy) string {
 	}
 }
 
+// SourceAttribute holds structured information about the policy from its source.
+type SourceAttribute struct {
+	Value *structpb.Value
+	Key   string
+}
+
+// SourceDriver creates a source attribute for the storage driver.
+func SourceDriver(driver string) SourceAttribute {
+	return SourceAttribute{Key: "driver", Value: structpb.NewStringValue(driver)}
+}
+
+// SourceFile creates a source attribute describing the file name of the policy.
+func SourceFile(source string) SourceAttribute {
+	return SourceAttribute{Key: "source", Value: structpb.NewStringValue(source)}
+}
+
+// WithSourceAttributes adds given source attributes to the policy.
+func WithSourceAttributes(p *policyv1.Policy, attrs ...SourceAttribute) *policyv1.Policy {
+	if p.Metadata == nil {
+		p.Metadata = &policyv1.Metadata{}
+	}
+
+	if p.Metadata.SourceAttributes == nil {
+		p.Metadata.SourceAttributes = &policyv1.SourceAttributes{
+			Attributes: make(map[string]*structpb.Value, len(attrs)),
+		}
+	}
+
+	for _, a := range attrs {
+		p.Metadata.SourceAttributes.Attributes[a.Key] = a.Value
+	}
+
+	if p.Metadata.SourceFile != "" {
+		p.Metadata.SourceAttributes.Attributes["source"] = structpb.NewStringValue(p.Metadata.SourceFile)
+	}
+
+	return p
+}
+
 // WithMetadata adds metadata to the policy.
-func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string, storeIdentifier string) *policyv1.Policy {
+func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string, storeIdentifier string, sourceAttr ...SourceAttribute) *policyv1.Policy {
 	if p.Metadata == nil {
 		p.Metadata = &policyv1.Metadata{}
 	}
 
 	p.Metadata.SourceFile = source
 	p.Metadata.Annotations = annotations
+	p = WithSourceAttributes(p, sourceAttr...)
 
 	if p.Metadata.StoreIdentifier == "" {
 		p = WithStoreIdentifier(p, storeIdentifier)

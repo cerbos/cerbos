@@ -22,7 +22,13 @@ func TestCloneResult(t *testing.T) {
 	is.NoError(err)
 	result, err := cloner.Clone(ctx)
 	is.NoError(err)
-	is.Equal([]string{
+
+	have := make([]string, len(result.updateOrAdd))
+	for i, v := range result.updateOrAdd {
+		have[i] = v.file
+	}
+
+	want := []string{
 		"_schemas/principal.json",
 		"_schemas/resources/leave_request.json",
 		"_schemas/resources/purchase_order.json",
@@ -61,5 +67,7 @@ func TestCloneResult(t *testing.T) {
 		"resource_policies/policy_12.yaml",
 		"resource_policies/policy_13.yaml",
 		"resource_policies/policy_14.yaml",
-	}, result.updateOrAdd)
+	}
+
+	is.Equal(want, have)
 }

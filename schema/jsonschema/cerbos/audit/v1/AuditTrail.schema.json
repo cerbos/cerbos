@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/policy/v1/Metadata.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/AuditTrail.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "cerbos.policy.v1.SourceAttributes": {
@@ -22,35 +22,11 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "annotations": {
+    "effectivePolicies": {
       "type": "object",
       "additionalProperties": {
-        "type": "string"
+        "$ref": "#/definitions/cerbos.policy.v1.SourceAttributes"
       }
-    },
-    "hash": {
-      "oneOf": [
-        {
-          "type": "integer",
-          "minimum": 0
-        },
-        {
-          "type": "string",
-          "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
-        }
-      ]
-    },
-    "sourceAttributes": {
-      "$ref": "#/definitions/cerbos.policy.v1.SourceAttributes"
-    },
-    "sourceFile": {
-      "type": "string"
-    },
-    "storeIdentifer": {
-      "type": "string"
-    },
-    "storeIdentifier": {
-      "type": "string"
     }
   }
 }

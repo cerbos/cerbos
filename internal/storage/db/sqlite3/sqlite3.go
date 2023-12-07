@@ -101,7 +101,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithRegexpCacheOverride(&nameRegexpCache))
+	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithRegexpCacheOverride(&nameRegexpCache), internal.WithSourceAttributes(policy.SourceDriver(DriverName)))
 	if err != nil {
 		return nil, err
 	}

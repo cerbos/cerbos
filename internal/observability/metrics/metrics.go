@@ -215,6 +215,18 @@ func RecordDuration2[T any](hist metric.Float64Histogram, fn func() (T, error)) 
 	return res, err
 }
 
+func RecordDuration3[A, B any](hist metric.Float64Histogram, fn func() (A, B, error)) (A, B, error) {
+	start := time.Now()
+	a, b, err := fn()
+	totalTime := TotalTimeMS(start)
+	if err != nil {
+		hist.Record(context.Background(), totalTime, metric.WithAttributes(StatusKey("failure")))
+	} else {
+		hist.Record(context.Background(), totalTime, metric.WithAttributes(StatusKey("success")))
+	}
+	return a, b, err
+}
+
 func TotalTimeMS(startTime time.Time) float64 {
 	return float64(time.Since(startTime)) / float64(time.Millisecond)
 }

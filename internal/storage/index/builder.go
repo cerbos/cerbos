@@ -42,6 +42,7 @@ func (ibe *BuildError) Error() string {
 
 type buildOptions struct {
 	rootDir              string
+	sourceAttributes     []policy.SourceAttribute
 	buildFailureLogLevel zapcore.Level
 }
 
@@ -56,6 +57,12 @@ func WithBuildFailureLogLevel(level zapcore.Level) BuildOpt {
 func WithRootDir(rootDir string) BuildOpt {
 	return func(o *buildOptions) {
 		o.rootDir = rootDir
+	}
+}
+
+func WithSourceAttributes(attrs ...policy.SourceAttribute) BuildOpt {
+	return func(o *buildOptions) {
+		o.sourceAttributes = attrs
 	}
 }
 
@@ -139,7 +146,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		ib.addPolicy(filePath, policy.Wrap(policy.WithMetadata(p, filePath, nil, filePath)))
+		ib.addPolicy(filePath, policy.Wrap(policy.WithMetadata(p, filePath, nil, filePath, opts.sourceAttributes...)))
 
 		return nil
 	})

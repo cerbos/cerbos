@@ -52,3 +52,70 @@ wantOutputs: [
     ]
   }
 ]
+wantDecisionLogs: [
+{
+  "callId": "01HGJXHHK2JBH6ZWFR7CA3F47A",
+  "timestamp": "2023-12-01T14:46:52.770492394Z",
+  "checkResources": {
+    "inputs": [
+      {
+        "requestId": "test",
+        "resource": {
+          "kind": "leave_request",
+          "policyVersion": "staging",
+          "id": "XX125",
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        },
+        "principal": {
+          "id": "john",
+          "policyVersion": "20210210",
+          "roles": [
+            "employee"
+          ],
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "team": "design"
+          }
+        },
+        "actions": [
+          "view:public",
+          "approve"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "requestId": "test",
+        "resourceId": "XX125",
+        "actions": {
+          "approve": {
+            "effect": "EFFECT_DENY",
+            "policy": "resource.leave_request.vstaging"
+          },
+          "view:public": {
+            "effect": "EFFECT_ALLOW",
+            "policy": "resource.leave_request.vstaging"
+          }
+        }
+      }
+    ]
+  },
+  "auditTrail": {
+    "effectivePolicies": {
+      "resource.leave_request.vstaging": {
+        "attributes": {
+          "driver": "disk",
+          "source": "resource_policies/policy_02.yaml"
+        }
+      }
+    }
+  }
+}
+]

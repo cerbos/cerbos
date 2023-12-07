@@ -376,6 +376,6 @@ func requireCompilationUnit(t *testing.T, wantModID namer.ModuleID, wantDefiniti
 	require.Len(t, have.Definitions, len(wantDefinitions))
 	for _, wantDefinition := range wantDefinitions {
 		require.Contains(t, have.Definitions, wantDefinition.ID)
-		require.Empty(t, cmp.Diff(wantDefinition, have.Definitions[wantDefinition.ID], protocmp.Transform()))
+		require.Empty(t, cmp.Diff(wantDefinition, have.Definitions[wantDefinition.ID], protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "metadata")))
 	}
 }

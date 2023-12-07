@@ -6,12 +6,13 @@ package privatev1
 
 import (
 	fmt "fmt"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	v16 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -55,6 +56,30 @@ func (m *EngineTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.WantDecisionLogs) > 0 {
+		for iNdEx := len(m.WantDecisionLogs) - 1; iNdEx >= 0; iNdEx-- {
+			if vtmsg, ok := interface{}(m.WantDecisionLogs[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.WantDecisionLogs[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
 	}
 	if m.WantError {
 		i--
@@ -2469,6 +2494,18 @@ func (m *EngineTestCase) SizeVT() (n int) {
 	if m.WantError {
 		n += 2
 	}
+	if len(m.WantDecisionLogs) > 0 {
+		for _, e := range m.WantDecisionLogs {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
+		}
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -3618,6 +3655,48 @@ func (m *EngineTestCase) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.WantError = bool(v != 0)
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WantDecisionLogs", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WantDecisionLogs = append(m.WantDecisionLogs, &v11.DecisionLogEntry{})
+			if unmarshal, ok := interface{}(m.WantDecisionLogs[len(m.WantDecisionLogs)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.WantDecisionLogs[len(m.WantDecisionLogs)-1]); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -3699,7 +3778,7 @@ func (m *ServerTestCase_PlanResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.PlanResourcesRequest{}
+				m.Input = &v12.PlanResourcesRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -3743,7 +3822,7 @@ func (m *ServerTestCase_PlanResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.PlanResourcesResponse{}
+				m.WantResponse = &v13.PlanResourcesResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -3838,7 +3917,7 @@ func (m *ServerTestCase_CheckResourceSetCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.CheckResourceSetRequest{}
+				m.Input = &v12.CheckResourceSetRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -3882,7 +3961,7 @@ func (m *ServerTestCase_CheckResourceSetCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.CheckResourceSetResponse{}
+				m.WantResponse = &v13.CheckResourceSetResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -3977,7 +4056,7 @@ func (m *ServerTestCase_CheckResourceBatchCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.CheckResourceBatchRequest{}
+				m.Input = &v12.CheckResourceBatchRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4021,7 +4100,7 @@ func (m *ServerTestCase_CheckResourceBatchCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.CheckResourceBatchResponse{}
+				m.WantResponse = &v13.CheckResourceBatchResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -4116,7 +4195,7 @@ func (m *ServerTestCase_CheckResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.CheckResourcesRequest{}
+				m.Input = &v12.CheckResourcesRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4160,7 +4239,7 @@ func (m *ServerTestCase_CheckResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.CheckResourcesResponse{}
+				m.WantResponse = &v13.CheckResourcesResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -4255,7 +4334,7 @@ func (m *ServerTestCase_PlaygroundValidateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.PlaygroundValidateRequest{}
+				m.Input = &v12.PlaygroundValidateRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4299,7 +4378,7 @@ func (m *ServerTestCase_PlaygroundValidateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.PlaygroundValidateResponse{}
+				m.WantResponse = &v13.PlaygroundValidateResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -4394,7 +4473,7 @@ func (m *ServerTestCase_PlaygroundTestCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.PlaygroundTestRequest{}
+				m.Input = &v12.PlaygroundTestRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4438,7 +4517,7 @@ func (m *ServerTestCase_PlaygroundTestCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.PlaygroundTestResponse{}
+				m.WantResponse = &v13.PlaygroundTestResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -4533,7 +4612,7 @@ func (m *ServerTestCase_PlaygroundEvaluateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.PlaygroundEvaluateRequest{}
+				m.Input = &v12.PlaygroundEvaluateRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4577,7 +4656,7 @@ func (m *ServerTestCase_PlaygroundEvaluateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.PlaygroundEvaluateResponse{}
+				m.WantResponse = &v13.PlaygroundEvaluateResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -4672,7 +4751,7 @@ func (m *ServerTestCase_PlaygroundProxyCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.PlaygroundProxyRequest{}
+				m.Input = &v12.PlaygroundProxyRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4716,7 +4795,7 @@ func (m *ServerTestCase_PlaygroundProxyCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.PlaygroundProxyResponse{}
+				m.WantResponse = &v13.PlaygroundProxyResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -4811,7 +4890,7 @@ func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.AddOrUpdatePolicyRequest{}
+				m.Input = &v12.AddOrUpdatePolicyRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4855,7 +4934,7 @@ func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.AddOrUpdatePolicyResponse{}
+				m.WantResponse = &v13.AddOrUpdatePolicyResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -4950,7 +5029,7 @@ func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v11.AddOrUpdateSchemaRequest{}
+				m.Input = &v12.AddOrUpdateSchemaRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -4994,7 +5073,7 @@ func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantResponse == nil {
-				m.WantResponse = &v12.AddOrUpdateSchemaResponse{}
+				m.WantResponse = &v13.AddOrUpdateSchemaResponse{}
 			}
 			if unmarshal, ok := interface{}(m.WantResponse).(interface {
 				UnmarshalVT([]byte) error
@@ -6033,7 +6112,7 @@ func (m *IndexBuilderTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantErrList == nil {
-				m.WantErrList = &v13.IndexBuildErrors{}
+				m.WantErrList = &v14.IndexBuildErrors{}
 			}
 			if unmarshal, ok := interface{}(m.WantErrList).(interface {
 				UnmarshalVT([]byte) error
@@ -6637,10 +6716,10 @@ func (m *CompileTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.InputDefs == nil {
-				m.InputDefs = make(map[string]*v14.Policy)
+				m.InputDefs = make(map[string]*v15.Policy)
 			}
 			var mapkey string
-			var mapvalue *v14.Policy
+			var mapvalue *v15.Policy
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -6714,7 +6793,7 @@ func (m *CompileTestCase) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &v14.Policy{}
+					mapvalue = &v15.Policy{}
 					if unmarshal, ok := interface{}(mapvalue).(interface {
 						UnmarshalVT([]byte) error
 					}); ok {
@@ -6893,7 +6972,7 @@ func (m *CelTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Condition == nil {
-				m.Condition = &v14.Match{}
+				m.Condition = &v15.Match{}
 			}
 			if unmarshal, ok := interface{}(m.Condition).(interface {
 				UnmarshalVT([]byte) error
@@ -7104,7 +7183,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.SchemaRefs == nil {
-				m.SchemaRefs = &v14.Schemas{}
+				m.SchemaRefs = &v15.Schemas{}
 			}
 			if unmarshal, ok := interface{}(m.SchemaRefs).(interface {
 				UnmarshalVT([]byte) error
@@ -7281,7 +7360,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantValidationErrors = append(m.WantValidationErrors, &v15.ValidationError{})
+			m.WantValidationErrors = append(m.WantValidationErrors, &v16.ValidationError{})
 			if unmarshal, ok := interface{}(m.WantValidationErrors[len(m.WantValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -7374,7 +7453,7 @@ func (m *ValidationErrContainer) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Errors = append(m.Errors, &v15.ValidationError{})
+			m.Errors = append(m.Errors, &v16.ValidationError{})
 			if unmarshal, ok := interface{}(m.Errors[len(m.Errors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -8008,7 +8087,7 @@ func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Table == nil {
-				m.Table = &v14.TestTable{}
+				m.Table = &v15.TestTable{}
 			}
 			if unmarshal, ok := interface{}(m.Table).(interface {
 				UnmarshalVT([]byte) error
@@ -8051,7 +8130,7 @@ func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantTests = append(m.WantTests, &v14.Test{})
+			m.WantTests = append(m.WantTests, &v15.Test{})
 			if unmarshal, ok := interface{}(m.WantTests[len(m.WantTests)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -8432,7 +8511,7 @@ func (m *VerifyTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Want == nil {
-				m.Want = &v14.TestResults{}
+				m.Want = &v15.TestResults{}
 			}
 			if unmarshal, ok := interface{}(m.Want).(interface {
 				UnmarshalVT([]byte) error

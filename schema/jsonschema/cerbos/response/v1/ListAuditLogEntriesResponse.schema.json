@@ -30,10 +30,25 @@
         }
       }
     },
+    "cerbos.audit.v1.AuditTrail": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effectivePolicies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.policy.v1.SourceAttributes"
+          }
+        }
+      }
+    },
     "cerbos.audit.v1.DecisionLogEntry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "auditTrail": {
+          "$ref": "#/definitions/cerbos.audit.v1.AuditTrail"
+        },
         "callId": {
           "type": "string"
         },
@@ -461,6 +476,18 @@
         "scope": {
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+        }
+      }
+    },
+    "cerbos.policy.v1.SourceAttributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
         }
       }
     },

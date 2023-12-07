@@ -177,7 +177,7 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*pol
 	policies := make([]*policy.Wrapper, len(recs))
 	for i, rec := range recs {
 		pk := namer.PolicyKey(rec.Definition.Policy)
-		wp := policy.Wrap(policy.WithMetadata(rec.Definition.Policy, "", nil, pk))
+		wp := policy.Wrap(policy.WithMetadata(rec.Definition.Policy, "", nil, pk, s.opts.sourceAttributes...))
 		wp.Disabled = rec.Disabled
 		policies[i] = &wp
 	}
@@ -347,7 +347,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 			units[row.UnitID] = unit
 		}
 
-		unit.AddDefinition(row.ID, row.Definition.Policy)
+		unit.AddDefinition(row.ID, policy.WithSourceAttributes(row.Definition.Policy, s.opts.sourceAttributes...))
 	}
 
 	return units, nil

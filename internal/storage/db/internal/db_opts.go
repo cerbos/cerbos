@@ -21,9 +21,10 @@ type (
 )
 
 type dbOpt struct {
-	upsertPolicy upsertPolicyFunc
-	upsertSchema upsertSchemaFunc
-	regexpCache  *util.RegexpCache
+	upsertPolicy     upsertPolicyFunc
+	upsertSchema     upsertSchemaFunc
+	regexpCache      *util.RegexpCache
+	sourceAttributes []policy.SourceAttribute
 }
 
 func newDbOpt() *dbOpt {
@@ -52,5 +53,12 @@ func WithUpsertPolicy(f upsertPolicyFunc) DBOpt {
 func WithRegexpCacheOverride(c *util.RegexpCache) DBOpt {
 	return func(opt *dbOpt) {
 		opt.regexpCache = c
+	}
+}
+
+// WithSourceAttributes sets the policy source attributes.
+func WithSourceAttributes(attr ...policy.SourceAttribute) DBOpt {
+	return func(opt *dbOpt) {
+		opt.sourceAttributes = attr
 	}
 }

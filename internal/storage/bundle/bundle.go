@@ -226,8 +226,7 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 		return nil, fmt.Errorf("failed to unmarshal %s: %w", idHex, err)
 	}
 
-	err = compile.MigrateCompiledPolicies(rps)
-	if err != nil {
+	if err := compile.MigrateCompiledPolicies(rps); err != nil {
 		return nil, err
 	}
 

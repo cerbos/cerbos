@@ -4,7 +4,29 @@
     "meta": {
       "fqn": "cerbos.resource.leave_request.v20210210/acme.hr.uk",
       "resource": "leave_request",
-      "version": "20210210"
+      "version": "20210210",
+      "sourceAttributes": {
+        "resource.leave_request.v20210210": {
+          "attributes": {
+            "source": "leave_request.yaml"
+          }
+        },
+        "resource.leave_request.v20210210/acme": {
+          "attributes": {
+            "source": "leave_request.acme.yaml"
+          }
+        },
+        "resource.leave_request.v20210210/acme.hr": {
+          "attributes": {
+            "source": "leave_request.acme.hr.yaml"
+          }
+        },
+        "resource.leave_request.v20210210/acme.hr.uk": {
+          "attributes": {
+            "source": "leave_request.acme.hr.uk.yaml"
+          }
+        }
+      }
     },
     "policies": [
       {

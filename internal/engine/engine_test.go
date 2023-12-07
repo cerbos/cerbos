@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"slices"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -17,6 +19,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -35,7 +38,8 @@ import (
 var dummy int
 
 func TestCheck(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, param{schemaEnforcement: schema.EnforcementNone})
+	mockAuditLog := &mockAuditLog{}
+	eng, cancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone})
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -44,6 +48,7 @@ func TestCheck(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
+			mockAuditLog.clear()
 
 			traceCollector := tracer.NewCollector()
 			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
@@ -61,12 +66,21 @@ func TestCheck(t *testing.T) {
 					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
 				))
 			}
+
+			haveDecisionLogs := mockAuditLog.getDecisionLogs()
+			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
+				haveDecisionLogs,
+				protocmp.Transform(),
+				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp"),
+			))
 		})
 	}
 }
 
 func TestCheckWithLenientScopeSearch(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, param{schemaEnforcement: schema.EnforcementNone, lenientScopeSearch: true})
+	mockAuditLog := &mockAuditLog{}
+	eng, cancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone, lenientScopeSearch: true})
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -76,6 +90,7 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
+			mockAuditLog.clear()
 
 			traceCollector := tracer.NewCollector()
 			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
@@ -93,6 +108,14 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
 				))
 			}
+
+			haveDecisionLogs := mockAuditLog.getDecisionLogs()
+			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
+				haveDecisionLogs,
+				protocmp.Transform(),
+				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp"),
+			))
 		})
 	}
 }
@@ -196,6 +219,7 @@ type param struct {
 	schemaEnforcement  schema.Enforcement
 	subDir             string
 	lenientScopeSearch bool
+	auditLog           audit.Log
 }
 
 func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
@@ -217,7 +241,10 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
 	var auditLog audit.Log
-	if p.enableAuditLog {
+	switch {
+	case p.auditLog != nil:
+		auditLog = p.auditLog
+	case p.enableAuditLog:
 		conf := &local.Conf{
 			StoragePath: tb.TempDir(),
 		}
@@ -226,7 +253,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
 		auditLog, err = local.NewLog(conf, decisionFilter)
 		require.NoError(tb, err)
-	} else {
+	default:
 		auditLog = audit.NewNopLog()
 	}
 
@@ -313,4 +340,56 @@ func (s *testTraceSink) AddTrace(trace *enginev1.Trace) {
 	var stdout bytes.Buffer
 	printer.New(&stdout, io.Discard).PrintTrace(trace)
 	s.t.Logf("%s\n", stdout.String())
+}
+
+var _ audit.Log = (*mockAuditLog)(nil)
+
+type mockAuditLog struct {
+	mu           sync.RWMutex
+	decisionLogs []*auditv1.DecisionLogEntry
+	errors       []error
+}
+
+func (m *mockAuditLog) WriteAccessLogEntry(_ context.Context, _ audit.AccessLogEntryMaker) error {
+	return nil
+}
+
+func (m *mockAuditLog) WriteDecisionLogEntry(_ context.Context, entry audit.DecisionLogEntryMaker) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	e, err := entry()
+	if err != nil {
+		m.errors = append(m.errors, err)
+		return err
+	}
+
+	m.decisionLogs = append(m.decisionLogs, e)
+	return nil
+}
+
+func (m *mockAuditLog) Close() error {
+	return nil
+}
+
+func (m *mockAuditLog) Enabled() bool {
+	return true
+}
+
+func (m *mockAuditLog) Backend() string {
+	return "mock"
+}
+
+func (m *mockAuditLog) clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.decisionLogs = nil
+}
+
+func (m *mockAuditLog) getDecisionLogs() []*auditv1.DecisionLogEntry {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	decisionLogs := slices.Clone(m.decisionLogs)
+	return decisionLogs
 }

@@ -167,6 +167,9 @@
             }
           ]
         },
+        "sourceAttributes": {
+          "$ref": "#/definitions/cerbos.policy.v1.SourceAttributes"
+        },
         "sourceFile": {
           "type": "string"
         },
@@ -436,6 +439,18 @@
         }
       }
     },
+    "cerbos.policy.v1.SourceAttributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "cerbos.policy.v1.Variables": {
       "type": "object",
       "additionalProperties": false,
@@ -455,6 +470,10 @@
           }
         }
       }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "allOf": [

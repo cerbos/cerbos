@@ -4,7 +4,14 @@
     "meta": {
       "fqn": "cerbos.resource.leave_request.v20210210",
       "resource": "leave_request",
-      "version": "20210210"
+      "version": "20210210",
+      "sourceAttributes": {
+        "resource.leave_request.v20210210": {
+          "attributes": {
+            "source": "resource_policies/leave_request_20210210.yaml"
+          }
+        }
+      }
     },
     "policies": [
       {

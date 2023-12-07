@@ -1859,6 +1859,17 @@
       },
       "description": "Unique identifier for the resource instance."
     },
+    "v1AuditTrail": {
+      "type": "object",
+      "properties": {
+        "effectivePolicies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1SourceAttributes"
+          }
+        }
+      }
+    },
     "v1CheckInput": {
       "type": "object",
       "properties": {
@@ -2319,6 +2330,9 @@
           "additionalProperties": {
             "$ref": "#/definitions/v1MetaValues"
           }
+        },
+        "auditTrail": {
+          "$ref": "#/definitions/v1AuditTrail"
         }
       }
     },
@@ -2564,6 +2578,9 @@
         },
         "storeIdentifier": {
           "type": "string"
+        },
+        "sourceAttributes": {
+          "$ref": "#/definitions/v1SourceAttributes"
         }
       }
     },
@@ -3168,6 +3185,15 @@
         }
       },
       "description": "Server info response"
+    },
+    "v1SourceAttributes": {
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      }
     },
     "v1TestResultsAction": {
       "type": "object",

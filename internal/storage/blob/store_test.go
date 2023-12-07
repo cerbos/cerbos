@@ -182,7 +182,7 @@ func TestStore_updateIndex(t *testing.T) {
 	schemaFile := filepath.Join(schema.Directory, "principal.json")
 	store, err := NewStore(ctx, conf, clonerFunc(func(_ context.Context) (*CloneResult, error) {
 		return &CloneResult{
-			updateOrAdd: []string{policyFile, schemaFile},
+			updateOrAdd: []fileInfo{{file: policyFile, etag: []byte("policy")}, {file: schemaFile, etag: []byte("schema")}},
 			delete:      []string{policyFile, schemaFile},
 		}, nil
 	}))

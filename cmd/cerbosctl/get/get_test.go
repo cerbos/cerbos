@@ -324,21 +324,21 @@ func loadPolicies(t *testing.T, ac *cerbos.GRPCAdminClient) {
 	for i := 0; i < policiesPerType; i++ {
 		ps := cerbos.NewPolicySet()
 
-		ps.AddPolicies(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(test.GenExportVariables(test.Suffix(strconv.Itoa(i))))
+		ps.AddPolicies(withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i)))))
+		ps.AddPolicies(withMeta(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i)))))
+		ps.AddPolicies(withMeta(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i)))))
+		ps.AddPolicies(withMeta(test.GenExportVariables(test.Suffix(strconv.Itoa(i)))))
 
-		ps.AddPolicies(test.GenDisabledPrincipalPolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
-		ps.AddPolicies(test.GenDisabledResourcePolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
-		ps.AddPolicies(test.GenDisabledDerivedRoles(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
-		ps.AddPolicies(test.GenDisabledExportVariables(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
+		ps.AddPolicies(withMeta(test.GenDisabledPrincipalPolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i)))))
+		ps.AddPolicies(withMeta(test.GenDisabledResourcePolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i)))))
+		ps.AddPolicies(withMeta(test.GenDisabledDerivedRoles(test.Suffix(fmt.Sprintf("_disabled_%d", i)))))
+		ps.AddPolicies(withMeta(test.GenDisabledExportVariables(test.Suffix(fmt.Sprintf("_disabled_%d", i)))))
 
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme"))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr.uk"))
-		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
-		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
+		ps.AddPolicies(withMeta(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme")))
+		ps.AddPolicies(withMeta(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr")))
+		ps.AddPolicies(withMeta(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr.uk")))
+		ps.AddPolicies(withMeta(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme")))
+		ps.AddPolicies(withMeta(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr")))
 		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 	}
 }
@@ -379,5 +379,5 @@ func withScope(p *policyv1.Policy, scope string) *policyv1.Policy {
 }
 
 func withMeta(p *policyv1.Policy) *policyv1.Policy {
-	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p))
+	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p), policy.SourceDriver("test"))
 }

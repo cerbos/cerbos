@@ -2,6 +2,18 @@
   "$id": "https://api.cerbos.dev/cerbos/audit/v1/DecisionLogEntry.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.audit.v1.AuditTrail": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effectivePolicies": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.policy.v1.SourceAttributes"
+          }
+        }
+      }
+    },
     "cerbos.audit.v1.DecisionLogEntry.CheckResources": {
       "type": "object",
       "additionalProperties": false,
@@ -394,6 +406,18 @@
         }
       }
     },
+    "cerbos.policy.v1.SourceAttributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "cerbos.schema.v1.ValidationError": {
       "type": "object",
       "additionalProperties": false,
@@ -431,6 +455,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "auditTrail": {
+      "$ref": "#/definitions/cerbos.audit.v1.AuditTrail"
+    },
     "callId": {
       "type": "string"
     },

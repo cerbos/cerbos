@@ -1,46 +1,97 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Wildcard roles on account resource"
-inputs: [
-  {
-    "requestId": "test",
-    "actions": [
-      "create",
-      "delete",
-      "edit"
-    ],
-    "principal": {
-      "id": "john",
-      "roles": [
-        "user"
-      ],
-      "attr": {}
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["create", "delete", "edit"],
+      "principal": { "id": "john", "roles": ["user"], "attr": {} },
+      "resource":
+        {
+          "policyVersion": "default",
+          "kind": "account",
+          "id": "XX125",
+          "attr": {},
+        },
     },
-    "resource": {
-      "policyVersion": "default",
-      "kind": "account",
-      "id": "XX125",
-      "attr": {}
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "XX125",
-    "actions": {
-      "create": {
-        "effect": "EFFECT_DENY",
-        "policy": "resource.account.vdefault",
-      },
-      "delete": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.account.vdefault",
-      },
-      "edit": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.account.vdefault",
-      },
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "create":
+            { "effect": "EFFECT_DENY", "policy": "resource.account.vdefault" },
+          "delete":
+            { "effect": "EFFECT_ALLOW", "policy": "resource.account.vdefault" },
+          "edit":
+            { "effect": "EFFECT_ALLOW", "policy": "resource.account.vdefault" },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJY0TAZGFQ44FJY68B1FE9W",
+      "timestamp": "2023-12-01T14:55:13.247715677Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "account",
+                    "policyVersion": "default",
+                    "id": "XX125",
+                  },
+                "principal": { "id": "john", "roles": ["user"] },
+                "actions": ["create", "delete", "edit"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "create":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.account.vdefault",
+                      },
+                    "delete":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.account.vdefault",
+                      },
+                    "edit":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.account.vdefault",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.account.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_06.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

@@ -57,12 +57,13 @@ func TestWith(t *testing.T) {
 		require.Empty(t, p.Metadata)
 
 		keyVal := "test"
-		p = policy.WithMetadata(p, source, map[string]string{keyVal: keyVal}, policyKey)
+		p = policy.WithMetadata(p, source, map[string]string{keyVal: keyVal}, policyKey, policy.SourceFile(source))
 		require.NotEmpty(t, p.Metadata)
 		require.Equal(t, fmt.Sprintf(derivedRolesFmt, 1), policyKey)
 		require.Equal(t, wrapperspb.UInt64(util.HashPB(p, policy.IgnoreHashFields)), p.Metadata.Hash)
 		require.Equal(t, source, p.Metadata.SourceFile)
 		require.Equal(t, keyVal, p.Metadata.Annotations[keyVal])
+		require.Equal(t, source, p.Metadata.SourceAttributes.Attributes["source"].GetStringValue())
 	})
 }
 

@@ -4,7 +4,29 @@
     "meta": {
       "fqn": "cerbos.principal.donald_duck.v20210210/acme.hr.uk",
       "principal": "donald_duck",
-      "version": "20210210"
+      "version": "20210210",
+      "sourceAttributes": {
+        "principal.donald_duck.v20210210": {
+          "attributes": {
+            "source": "donald_duck.yaml"
+          }
+        },
+        "principal.donald_duck.v20210210/acme": {
+          "attributes": {
+            "source": "donald_duck.acme.yaml"
+          }
+        },
+        "principal.donald_duck.v20210210/acme.hr": {
+          "attributes": {
+            "source": "donald_duck.acme.hr.yaml"
+          }
+        },
+        "principal.donald_duck.v20210210/acme.hr.uk": {
+          "attributes": {
+            "source": "donald_duck.acme.hr.uk.yaml"
+          }
+        }
+      }
     },
     "policies": [
       {

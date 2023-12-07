@@ -65,7 +65,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("postgres", db), internal.WithUpsertPolicy(upsertPolicy))
+	s, err := internal.NewDBStorage(ctx, goqu.New("postgres", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithSourceAttributes(policy.SourceDriver(DriverName)))
 	if err != nil {
 		return nil, err
 	}

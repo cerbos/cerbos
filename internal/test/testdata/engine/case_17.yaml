@@ -1,49 +1,111 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Only principal policy with no matching resource policy (#1397)"
-inputs: [
-  {
-    "requestId": "test",
-    "actions": [
-      "view",
-      "edit"
-    ],
-    "principal": {
-      "id": "daisy_duck",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "finance",
-        "geography": "GB",
-      }
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["view", "edit"],
+      "principal":
+        {
+          "id": "daisy_duck",
+          "roles": ["employee"],
+          "attr": { "department": "finance", "geography": "GB" },
+        },
+      "resource":
+        {
+          "kind": "expenses",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
     },
-    "resource": {
-      "kind": "expenses",
-      "id": "XX125",
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "id": "XX125",
-        "owner": "john",
-        "team": "design",
-      }
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "XX125",
-    "actions": {
-      "view": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "principal.daisy_duck.vdefault"
-      },
-      "edit": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
-      }
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.daisy_duck.vdefault",
+            },
+          "edit": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJY1VG7P5YG8J5T2YXZVZKS",
+      "timestamp": "2023-12-01T14:55:47.207406692Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "expenses",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "daisy_duck",
+                    "roles": ["employee"],
+                    "attr": { "department": "finance", "geography": "GB" },
+                  },
+                "actions": ["view", "edit"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "edit": { "effect": "EFFECT_DENY", "policy": "NO_MATCH" },
+                    "view":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.daisy_duck.vdefault",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "principal.daisy_duck.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_03.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

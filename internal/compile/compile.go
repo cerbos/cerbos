@@ -76,19 +76,21 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 
 	rrps := &runtimev1.RunnableResourcePolicySet{
 		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
-			Fqn:      modCtx.fqn,
-			Resource: rp.Resource,
-			Version:  rp.Version,
+			Fqn:              modCtx.fqn,
+			Resource:         rp.Resource,
+			Version:          rp.Version,
+			SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
 		},
 		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(ancestors)+1),
 	}
 
-	compiled := compileResourcePolicy(modCtx, schemaMgr)
+	compiled, srcAttr := compileResourcePolicy(modCtx, schemaMgr)
 	if compiled == nil {
 		return nil
 	}
 
 	rrps.Policies[0] = compiled
+	rrps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(modCtx.fqn)] = srcAttr
 
 	for i, ancestor := range ancestors {
 		ancModCtx := modCtx.moduleCtx(ancestor)
@@ -97,11 +99,12 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 			return nil
 		}
 
-		compiled := compileResourcePolicy(ancModCtx, schemaMgr)
+		compiled, srcAttr := compileResourcePolicy(ancModCtx, schemaMgr)
 		if compiled == nil {
 			return nil
 		}
 		rrps.Policies[i+1] = compiled
+		rrps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(ancModCtx.fqn)] = srcAttr
 	}
 
 	// Only schema in effect is the schema defined by the "root" policy.
@@ -119,20 +122,20 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 	}
 }
 
-func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtimev1.RunnableResourcePolicySet_Policy {
+func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtimev1.RunnableResourcePolicySet_Policy, *policyv1.SourceAttributes) {
 	rp := modCtx.def.GetResourcePolicy()
 	if rp == nil {
 		modCtx.addErrWithDesc(errUnexpectedErr, "Not a resource policy definition")
-		return nil
+		return nil, nil
 	}
 
 	referencedRoles, err := compileImportedDerivedRoles(modCtx, rp)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 
 	if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
-		return nil
+		return nil, nil
 	}
 
 	compilePolicyVariables(modCtx, rp.Variables)
@@ -156,7 +159,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 
 	rrp.OrderedVariables, rrp.Variables = modCtx.variables.Used() //nolint:staticcheck
 
-	return rrp
+	return rrp, modCtx.def.GetMetadata().GetSourceAttributes()
 }
 
 func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) (map[string]*runtimev1.RunnableDerivedRole, error) {
@@ -345,14 +348,17 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 
 	rpps := &runtimev1.RunnablePrincipalPolicySet{
 		Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
-			Fqn:       modCtx.fqn,
-			Principal: pp.Principal,
-			Version:   pp.Version,
+			Fqn:              modCtx.fqn,
+			Principal:        pp.Principal,
+			Version:          pp.Version,
+			SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
 		},
 		Policies: make([]*runtimev1.RunnablePrincipalPolicySet_Policy, len(ancestors)+1),
 	}
 
-	rpps.Policies[0] = compilePrincipalPolicy(modCtx)
+	compiled, srcAttr := compilePrincipalPolicy(modCtx)
+	rpps.Policies[0] = compiled
+	rpps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(modCtx.fqn)] = srcAttr
 
 	for i, ancestor := range ancestors {
 		ancModCtx := modCtx.moduleCtx(ancestor)
@@ -361,7 +367,9 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 			return nil
 		}
 
-		rpps.Policies[i+1] = compilePrincipalPolicy(ancModCtx)
+		compiled, srcAttr := compilePrincipalPolicy(ancModCtx)
+		rpps.Policies[i+1] = compiled
+		rpps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(ancModCtx.fqn)] = srcAttr
 	}
 
 	return &runtimev1.RunnablePolicySet{
@@ -373,11 +381,11 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 	}
 }
 
-func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolicySet_Policy {
+func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPolicySet_Policy, *policyv1.SourceAttributes) {
 	pp := modCtx.def.GetPrincipalPolicy()
 	if pp == nil {
 		modCtx.addErrWithDesc(errUnexpectedErr, "Not a principal policy definition")
-		return nil
+		return nil, nil
 	}
 
 	compilePolicyVariables(modCtx, pp.Variables)
@@ -418,7 +426,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 
 	rpp.OrderedVariables, rpp.Variables = modCtx.variables.Used() //nolint:staticcheck
 
-	return rpp
+	return rpp, modCtx.def.GetMetadata().GetSourceAttributes()
 }
 
 func reportMissingAncestors(modCtx *moduleCtx) {

@@ -1,31 +1,76 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: Variables referencing variables
-inputs: [
-  {
-    "requestId": "test",
-    "actions": ["test"],
-    "principal": {
-      "id": "andy",
-      "roles": [
-        "employee"
-      ]
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["test"],
+      "principal": { "id": "andy", "roles": ["employee"] },
+      "resource": { "kind": "variables_referencing_variables", "id": "test" },
     },
-    "resource": {
-      "kind": "variables_referencing_variables",
-      "id": "test"
-    }
-  }
-]
-wantOutputs: [
-  {
-    "requestId": "test",
-    "resourceId": "test",
-    "actions": {
-      "test": {
-        "effect": "EFFECT_ALLOW",
-        "policy": "resource.variables_referencing_variables.vdefault"
-      }
-    }
-  }
-]
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "test",
+      "actions":
+        {
+          "test":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.variables_referencing_variables.vdefault",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJY3T9PYR7XRT46Z47HY0RY",
+      "timestamp": "2023-12-01T14:56:51.510915684Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  { "kind": "variables_referencing_variables", "id": "test" },
+                "principal": { "id": "andy", "roles": ["employee"] },
+                "actions": ["test"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "test",
+                "actions":
+                  {
+                    "test":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.variables_referencing_variables.vdefault",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.variables_referencing_variables.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_12.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

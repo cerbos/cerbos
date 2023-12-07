@@ -55,8 +55,13 @@ func NewCloner(bucket *blob.Bucket, fsys clonerFS) (*Cloner, error) {
 	return c, nil
 }
 
+type fileInfo struct {
+	file string
+	etag []byte
+}
+
 type CloneResult struct {
-	updateOrAdd   []string
+	updateOrAdd   []fileInfo
 	delete        []string
 	failuresCount int
 }
@@ -99,7 +104,7 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			c.log.Errorw("Failed to download file", "error", err, "file", file)
 			cr.failuresCount++
 		} else {
-			cr.updateOrAdd = append(cr.updateOrAdd, file)
+			cr.updateOrAdd = append(cr.updateOrAdd, fileInfo{file: file, etag: eTag})
 		}
 	}
 
