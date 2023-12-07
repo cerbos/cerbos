@@ -73,7 +73,7 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 
 	policies := make([]policy.Wrapper, len(req.Policies))
 	for i, p := range req.Policies {
-		policies[i] = policy.Wrap(p)
+		policies[i] = policy.Wrap(policy.WithSourceAttributes(p, policy.SourceUpdateTSNow()))
 	}
 
 	log := logging.ReqScopeLog(ctx)
