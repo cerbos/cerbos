@@ -379,5 +379,5 @@ func withScope(p *policyv1.Policy, scope string) *policyv1.Policy {
 }
 
 func withMeta(p *policyv1.Policy) *policyv1.Policy {
-	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p), policy.SourceDriver("test"))
+	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p), policy.SourceDriver("sqlite3"))
 }
