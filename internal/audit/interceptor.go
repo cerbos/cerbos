@@ -10,6 +10,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -58,6 +60,30 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterc
 			logging.FromContext(ctx).Warn("Failed to write access log entry", zap.Error(logErr))
 		}
 
+		setCerbosCallID(string(callID), resp)
 		return resp, err
 	}, nil
+}
+
+type cerbosAPIResponse interface {
+	proto.Message
+	GetCerbosCallId() string
+}
+
+func setCerbosCallID(callID string, resp any) {
+	if resp == nil {
+		return
+	}
+
+	// don't panic in case there's nil pointer error
+	defer func() {
+		_ = recover()
+	}()
+
+	if r, ok := resp.(cerbosAPIResponse); ok {
+		fd := r.ProtoReflect().Descriptor().Fields().ByTextName("cerbos_call_id")
+		if fd != nil {
+			r.ProtoReflect().Set(fd, protoreflect.ValueOf(callID))
+		}
+	}
 }

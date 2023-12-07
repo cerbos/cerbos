@@ -410,7 +410,13 @@ func compareProto(t *testing.T, want, have proto.Message) {
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
 		protocmp.SortRepeated(cmpValidationError),
+		protocmp.IgnoreFields(&responsev1.CheckResourcesResponse{}, "cerbos_call_id"),
+		protocmp.IgnoreFields(&responsev1.PlanResourcesResponse{}, "cerbos_call_id"),
 	))
+
+	if h, ok := have.(interface{ GetCerbosCallId() string }); ok {
+		require.NotEmpty(t, h.GetCerbosCallId(), "Cerbos call ID is empty")
+	}
 }
 
 func cmpPlaygroundEvalResult(a, b *responsev1.PlaygroundEvaluateResponse_EvalResult) bool {

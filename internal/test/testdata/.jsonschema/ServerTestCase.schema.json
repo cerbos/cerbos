@@ -1782,6 +1782,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "cerbosCallId": {
+          "type": "string"
+        },
         "requestId": {
           "type": "string"
         },
@@ -1876,6 +1879,9 @@
       "additionalProperties": false,
       "properties": {
         "action": {
+          "type": "string"
+        },
+        "cerbosCallId": {
           "type": "string"
         },
         "filter": {

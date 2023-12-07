@@ -31,6 +31,7 @@ jsonpath "$.results[1].actions[*]" count == 3
 jsonpath "$.results[1].actions['approve']" == "EFFECT_DENY"
 jsonpath "$.results[1].actions['create']" == "EFFECT_DENY"
 jsonpath "$.results[1].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.cerbosCallId" exists
 
 # Valid CheckResources request 2
 POST {{protocol}}://{{host}}:{{port}}/api/check/resources
@@ -54,6 +55,7 @@ jsonpath "$.results[1].actions[*]" count == 3
 jsonpath "$.results[1].actions['view:public']" == "EFFECT_ALLOW"
 jsonpath "$.results[1].actions['delete']" == "EFFECT_DENY"
 jsonpath "$.results[1].actions['create']" == "EFFECT_ALLOW"
+jsonpath "$.cerbosCallId" exists
 
 # Invalid CheckResources request 1
 POST {{protocol}}://{{host}}:{{port}}/api/check/resources
@@ -80,3 +82,4 @@ jsonpath "$.results[1].actions['approve']" == "EFFECT_DENY"
 jsonpath "$.results[1].actions['create']" == "EFFECT_DENY"
 jsonpath "$.results[1].actions['view:public']" == "EFFECT_DENY"
 jsonpath "$.results[1].validationErrors[*]" count == 2
+jsonpath "$.cerbosCallId" exists

@@ -1825,6 +1825,10 @@ func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesRespo
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.cerbos_call_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.CerbosCallId))
+
+	}
 }
 
 func cerbos_response_v1_DeleteSchemaResponse_hashpb_sum(m *DeleteSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1964,6 +1968,10 @@ func cerbos_response_v1_PlanResourcesResponse_hashpb_sum(m *PlanResourcesRespons
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.cerbos_call_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.CerbosCallId))
+
 	}
 }
 

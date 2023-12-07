@@ -60,6 +60,8 @@ message PlanResourcesResponse {
   Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
 
   repeated cerbos.schema.v1.ValidationError validation_errors = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
+
+  string cerbos_call_id = 8 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Audit log call ID associated with this request"}];
 }
 
 // Deprecated. See CheckResourcesResponse.
@@ -231,6 +233,7 @@ message CheckResourcesResponse {
     description: "Result for each resource"
     example: "[{\"resource\": {\"Id\":\"XX125\", \"kind\":\"album:object\"}, \"actions\":{\"view\":\"EFFECT_ALLOW\",\"comment\":\"EFFECT_DENY\"}}]"
   }];
+  string cerbos_call_id = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Audit log call ID associated with this request"}];
 }
 
 message PlaygroundFailure {
