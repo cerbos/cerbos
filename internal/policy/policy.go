@@ -6,6 +6,7 @@ package policy
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -207,6 +208,16 @@ func SourceDriver(driver string) SourceAttribute {
 // SourceFile creates a source attribute describing the file name of the policy.
 func SourceFile(source string) SourceAttribute {
 	return SourceAttribute{Key: "source", Value: structpb.NewStringValue(source)}
+}
+
+// SourceUpdateTS creates a source attribute describing the time a policy was updated in a mutable store.
+func SourceUpdateTS(timestamp time.Time) SourceAttribute {
+	return SourceAttribute{Key: "update_ts", Value: structpb.NewStringValue(timestamp.Format(time.RFC3339))}
+}
+
+// SourceUpdateTSNow creates a source attribute setting the update time to now.
+func SourceUpdateTSNow() SourceAttribute {
+	return SourceUpdateTS(time.Now())
 }
 
 // WithSourceAttributes adds given source attributes to the policy.

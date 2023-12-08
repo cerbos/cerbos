@@ -270,7 +270,7 @@ func mustNew(t *testing.T, cli any) *kong.Kong {
 }
 
 func withMeta(p *policyv1.Policy) *policyv1.Policy {
-	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p))
+	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p), policy.SourceDriver("sqlite3"))
 }
 
 const (
