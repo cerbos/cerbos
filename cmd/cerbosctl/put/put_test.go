@@ -16,9 +16,11 @@ import (
 	"testing"
 
 	"github.com/alecthomas/kong"
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
@@ -56,15 +58,6 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 		drPath := writeToTmpFile(t, dr)
 		ppPath := writeToTmpFile(t, pp)
 		rpPath := writeToTmpFile(t, rp)
-
-		expectedEv, err := protojson.Marshal(ev)
-		require.NoError(t, err)
-		expectedDr, err := protojson.Marshal(dr)
-		require.NoError(t, err)
-		expectedPp, err := protojson.Marshal(pp)
-		require.NoError(t, err)
-		expectedRp, err := protojson.Marshal(rp)
-		require.NoError(t, err)
 
 		pathToZip := filepath.Join("testdata", "store.zip")
 		t.Run("cerbosctl put", func(t *testing.T) {
@@ -131,10 +124,18 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				outPp := getPolicy(t, clientCtx, globals, policy.PrincipalKind, namer.PolicyKey(pp))
 				outRp := getPolicy(t, clientCtx, globals, policy.ResourceKind, namer.PolicyKey(rp))
 
-				require.JSONEq(t, string(expectedEv), outEv)
-				require.JSONEq(t, string(expectedDr), outDr)
-				require.JSONEq(t, string(expectedPp), outPp)
-				require.JSONEq(t, string(expectedRp), outRp)
+				requirePolicyEq := func(t *testing.T, want *policyv1.Policy, haveJSON string) {
+					t.Helper()
+
+					var have policyv1.Policy
+					require.NoError(t, protojson.Unmarshal([]byte(haveJSON), &have), "Failed to unmarshal policy")
+					require.Empty(t, cmp.Diff(want, &have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Metadata{}, "source_attributes")))
+				}
+
+				requirePolicyEq(t, ev, outEv)
+				requirePolicyEq(t, dr, outDr)
+				requirePolicyEq(t, pp, outPp)
+				requirePolicyEq(t, rp, outRp)
 			})
 
 			t.Run("put schemas recursive", func(t *testing.T) {

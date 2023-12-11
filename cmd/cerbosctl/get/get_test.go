@@ -15,8 +15,10 @@ import (
 	"testing"
 
 	"github.com/alecthomas/kong"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -207,6 +209,14 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 
 			t.Run("compare output", func(t *testing.T) {
+				requirePolicyEq := func(t *testing.T, want *policyv1.Policy, haveJSON []byte) {
+					t.Helper()
+
+					var have policyv1.Policy
+					require.NoError(t, protojson.Unmarshal(haveJSON, &have), "Failed to unmarshal policy")
+					require.Empty(t, cmp.Diff(want, &have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Metadata{}, "source_attributes")))
+				}
+
 				testCases := []struct {
 					policy *policyv1.Policy
 					kind   policy.Kind
@@ -267,9 +277,8 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 
 					err = ctx.Run(clientCtx, globals)
 					require.NoError(t, err)
-					expected, err := protojson.Marshal(tc.policy)
-					require.NoError(t, err)
-					require.JSONEq(t, string(expected), out.String())
+
+					requirePolicyEq(t, tc.policy, out.Bytes())
 				}
 			})
 
