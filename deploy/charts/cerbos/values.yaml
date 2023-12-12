@@ -33,6 +33,9 @@ serviceAccount:
 # Annotations to add to the pod.
 podAnnotations: {}
 
+# Labels to add to the pod.
+podLabels: {}
+
 # Common labels to add to the resources.
 commonLabels: {}
 
