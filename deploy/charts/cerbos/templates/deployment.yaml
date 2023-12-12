@@ -24,6 +24,9 @@ spec:
         {{- with .Values.commonLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- include "cerbos.podAnnotations" . | nindent 6 }}
     spec:
       {{- with .Values.imagePullSecrets }}
