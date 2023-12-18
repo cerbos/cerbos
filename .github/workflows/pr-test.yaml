@@ -62,7 +62,7 @@ jobs:
     steps:
       - name: Download previous test times
         continue-on-error: true
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v3
         with:
           workflow: pr-test.yaml
           name: test-times
