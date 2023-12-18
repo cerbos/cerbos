@@ -10,6 +10,7 @@ jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.policyVersion" == "20210210"
 jsonpath "$.filter" != null
 jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.status \"PENDING_APPROVAL\")"
+jsonpath "$.cerbosCallId" exists
 
 
 # Plan resources request 2
@@ -24,6 +25,7 @@ jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.policyVersion" == "20210210"
 jsonpath "$.filter.kind" == "KIND_ALWAYS_ALLOWED"
 jsonpath "$.meta.filterDebug" == "(true)"
+jsonpath "$.cerbosCallId" exists
 
 
 # Plan resources request 3
@@ -38,6 +40,7 @@ jsonpath "$.resourceKind" == "album:object"
 jsonpath "$.policyVersion" == "default"
 jsonpath "$.filter.kind" == "KIND_CONDITIONAL"
 jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"1\")"
+jsonpath "$.cerbosCallId" exists
 
 
 # Plan resources request 4
@@ -52,6 +55,7 @@ jsonpath "$.resourceKind" == "album:object"
 jsonpath "$.policyVersion" == "nonexistent"
 jsonpath "$.filter.kind" == "KIND_ALWAYS_DENIED"
 jsonpath "$.meta.filterDebug" == "NO_MATCH"
+jsonpath "$.cerbosCallId" exists
 
 
 # Plan resources request 5 (scoped policies)
@@ -66,3 +70,4 @@ jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.filter.kind" == "KIND_CONDITIONAL"
 jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"john\")"
 jsonpath "$.meta.matchedScope" == "acme.hr.uk"
+jsonpath "$.cerbosCallId" exists

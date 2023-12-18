@@ -2271,6 +2271,10 @@
             "$ref": "#/definitions/CheckResourcesResponseResultEntry"
           },
           "description": "Result for each resource"
+        },
+        "cerbosCallId": {
+          "type": "string",
+          "description": "Audit log call ID associated with this request"
         }
       },
       "description": "Response from the check resources API call."
@@ -2803,6 +2807,10 @@
             "$ref": "#/definitions/v1ValidationError"
           },
           "description": "List of validation errors (if schema validation is enabled)"
+        },
+        "cerbosCallId": {
+          "type": "string",
+          "description": "Audit log call ID associated with this request"
         }
       },
       "description": "Resources query plan response for a set of resources."
