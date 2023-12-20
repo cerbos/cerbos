@@ -513,6 +513,194 @@
                   }
                 }
               }
+            },
+            "outputInfo": {
+              "expr": {
+                "original": "\"wildcard:%s\".format([request.principal.id])",
+                "checked": {
+                  "referenceMap": {
+                    "2": {
+                      "overloadId": [
+                        "string_format"
+                      ]
+                    },
+                    "4": {
+                      "name": "request"
+                    }
+                  },
+                  "typeMap": {
+                    "1": {
+                      "primitive": "STRING"
+                    },
+                    "2": {
+                      "primitive": "STRING"
+                    },
+                    "3": {
+                      "listType": {
+                        "elemType": {
+                          "primitive": "STRING"
+                        }
+                      }
+                    },
+                    "4": {
+                      "messageType": "cerbos.engine.v1.Request"
+                    },
+                    "5": {
+                      "messageType": "cerbos.engine.v1.Request.Principal"
+                    },
+                    "6": {
+                      "primitive": "STRING"
+                    }
+                  },
+                  "sourceInfo": {
+                    "location": "<input>",
+                    "lineOffsets": [
+                      45
+                    ],
+                    "positions": {
+                      "1": 0,
+                      "2": 20,
+                      "3": 21,
+                      "4": 22,
+                      "5": 29,
+                      "6": 39
+                    }
+                  },
+                  "expr": {
+                    "id": "2",
+                    "callExpr": {
+                      "target": {
+                        "id": "1",
+                        "constExpr": {
+                          "stringValue": "wildcard:%s"
+                        }
+                      },
+                      "function": "format",
+                      "args": [
+                        {
+                          "id": "3",
+                          "listExpr": {
+                            "elements": [
+                              {
+                                "id": "6",
+                                "selectExpr": {
+                                  "operand": {
+                                    "id": "5",
+                                    "selectExpr": {
+                                      "operand": {
+                                        "id": "4",
+                                        "identExpr": {
+                                          "name": "request"
+                                        }
+                                      },
+                                      "field": "principal"
+                                    }
+                                  },
+                                  "field": "id"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "when": {
+                "condFail": {
+                  "original": "\"fail:wildcard:%s\".format([request.principal.id])",
+                  "checked": {
+                    "referenceMap": {
+                      "2": {
+                        "overloadId": [
+                          "string_format"
+                        ]
+                      },
+                      "4": {
+                        "name": "request"
+                      }
+                    },
+                    "typeMap": {
+                      "1": {
+                        "primitive": "STRING"
+                      },
+                      "2": {
+                        "primitive": "STRING"
+                      },
+                      "3": {
+                        "listType": {
+                          "elemType": {
+                            "primitive": "STRING"
+                          }
+                        }
+                      },
+                      "4": {
+                        "messageType": "cerbos.engine.v1.Request"
+                      },
+                      "5": {
+                        "messageType": "cerbos.engine.v1.Request.Principal"
+                      },
+                      "6": {
+                        "primitive": "STRING"
+                      }
+                    },
+                    "sourceInfo": {
+                      "location": "<input>",
+                      "lineOffsets": [
+                        50
+                      ],
+                      "positions": {
+                        "1": 0,
+                        "2": 25,
+                        "3": 26,
+                        "4": 27,
+                        "5": 34,
+                        "6": 44
+                      }
+                    },
+                    "expr": {
+                      "id": "2",
+                      "callExpr": {
+                        "target": {
+                          "id": "1",
+                          "constExpr": {
+                            "stringValue": "fail:wildcard:%s"
+                          }
+                        },
+                        "function": "format",
+                        "args": [
+                          {
+                            "id": "3",
+                            "listExpr": {
+                              "elements": [
+                                {
+                                  "id": "6",
+                                  "selectExpr": {
+                                    "operand": {
+                                      "id": "5",
+                                      "selectExpr": {
+                                        "operand": {
+                                          "id": "4",
+                                          "identExpr": {
+                                            "name": "request"
+                                          }
+                                        },
+                                        "field": "principal"
+                                      }
+                                    },
+                                    "field": "id"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           {
@@ -615,6 +803,100 @@
                   }
                 }
               }
+            },
+            "outputInfo": {
+              "expr": {
+                "original": "\"create:%s\".format([request.principal.id])",
+                "checked": {
+                  "referenceMap": {
+                    "2": {
+                      "overloadId": [
+                        "string_format"
+                      ]
+                    },
+                    "4": {
+                      "name": "request"
+                    }
+                  },
+                  "typeMap": {
+                    "1": {
+                      "primitive": "STRING"
+                    },
+                    "2": {
+                      "primitive": "STRING"
+                    },
+                    "3": {
+                      "listType": {
+                        "elemType": {
+                          "primitive": "STRING"
+                        }
+                      }
+                    },
+                    "4": {
+                      "messageType": "cerbos.engine.v1.Request"
+                    },
+                    "5": {
+                      "messageType": "cerbos.engine.v1.Request.Principal"
+                    },
+                    "6": {
+                      "primitive": "STRING"
+                    }
+                  },
+                  "sourceInfo": {
+                    "location": "<input>",
+                    "lineOffsets": [
+                      43
+                    ],
+                    "positions": {
+                      "1": 0,
+                      "2": 18,
+                      "3": 19,
+                      "4": 20,
+                      "5": 27,
+                      "6": 37
+                    }
+                  },
+                  "expr": {
+                    "id": "2",
+                    "callExpr": {
+                      "target": {
+                        "id": "1",
+                        "constExpr": {
+                          "stringValue": "create:%s"
+                        }
+                      },
+                      "function": "format",
+                      "args": [
+                        {
+                          "id": "3",
+                          "listExpr": {
+                            "elements": [
+                              {
+                                "id": "6",
+                                "selectExpr": {
+                                  "operand": {
+                                    "id": "5",
+                                    "selectExpr": {
+                                      "operand": {
+                                        "id": "4",
+                                        "identExpr": {
+                                          "name": "request"
+                                        }
+                                      },
+                                      "field": "principal"
+                                    }
+                                  },
+                                  "field": "id"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
             }
           },
           {
@@ -648,6 +930,33 @@
                   "id": "1",
                   "constExpr": {
                     "stringValue": "something_arbitrary"
+                  }
+                }
+              }
+            },
+            "outputInfo": {
+              "expr": {
+                "original": "\"something_arbitrary\"",
+                "checked": {
+                  "typeMap": {
+                    "1": {
+                      "primitive": "STRING"
+                    }
+                  },
+                  "sourceInfo": {
+                    "location": "<input>",
+                    "lineOffsets": [
+                      22
+                    ],
+                    "positions": {
+                      "1": 0
+                    }
+                  },
+                  "expr": {
+                    "id": "1",
+                    "constExpr": {
+                      "stringValue": "something_arbitrary"
+                    }
                   }
                 }
               }
@@ -900,6 +1209,144 @@
                         }
                       }
                     ]
+                  }
+                }
+              }
+            },
+            "outputInfo": {
+              "expr": {
+                "original": "\"pending_approval:%s\".format([request.resource.attr.status == \"PENDING_APPROVAL\"])",
+                "checked": {
+                  "referenceMap": {
+                    "2": {
+                      "overloadId": [
+                        "string_format"
+                      ]
+                    },
+                    "4": {
+                      "name": "request"
+                    },
+                    "8": {
+                      "overloadId": [
+                        "equals"
+                      ]
+                    }
+                  },
+                  "typeMap": {
+                    "1": {
+                      "primitive": "STRING"
+                    },
+                    "2": {
+                      "primitive": "STRING"
+                    },
+                    "3": {
+                      "listType": {
+                        "elemType": {
+                          "primitive": "BOOL"
+                        }
+                      }
+                    },
+                    "4": {
+                      "messageType": "cerbos.engine.v1.Request"
+                    },
+                    "5": {
+                      "messageType": "cerbos.engine.v1.Request.Resource"
+                    },
+                    "6": {
+                      "mapType": {
+                        "keyType": {
+                          "primitive": "STRING"
+                        },
+                        "valueType": {
+                          "dyn": {}
+                        }
+                      }
+                    },
+                    "7": {
+                      "dyn": {}
+                    },
+                    "8": {
+                      "primitive": "BOOL"
+                    },
+                    "9": {
+                      "primitive": "STRING"
+                    }
+                  },
+                  "sourceInfo": {
+                    "location": "<input>",
+                    "lineOffsets": [
+                      83
+                    ],
+                    "positions": {
+                      "1": 0,
+                      "2": 28,
+                      "3": 29,
+                      "4": 30,
+                      "5": 37,
+                      "6": 46,
+                      "7": 51,
+                      "8": 59,
+                      "9": 62
+                    }
+                  },
+                  "expr": {
+                    "id": "2",
+                    "callExpr": {
+                      "target": {
+                        "id": "1",
+                        "constExpr": {
+                          "stringValue": "pending_approval:%s"
+                        }
+                      },
+                      "function": "format",
+                      "args": [
+                        {
+                          "id": "3",
+                          "listExpr": {
+                            "elements": [
+                              {
+                                "id": "8",
+                                "callExpr": {
+                                  "function": "_==_",
+                                  "args": [
+                                    {
+                                      "id": "7",
+                                      "selectExpr": {
+                                        "operand": {
+                                          "id": "6",
+                                          "selectExpr": {
+                                            "operand": {
+                                              "id": "5",
+                                              "selectExpr": {
+                                                "operand": {
+                                                  "id": "4",
+                                                  "identExpr": {
+                                                    "name": "request"
+                                                  }
+                                                },
+                                                "field": "resource"
+                                              }
+                                            },
+                                            "field": "attr"
+                                          }
+                                        },
+                                        "field": "status"
+                                      }
+                                    },
+                                    {
+                                      "id": "9",
+                                      "constExpr": {
+                                        "stringValue": "PENDING_APPROVAL"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
                   }
                 }
               }

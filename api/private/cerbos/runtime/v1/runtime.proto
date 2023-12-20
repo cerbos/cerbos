@@ -51,7 +51,8 @@ message RunnableResourcePolicySet {
       map<string, google.protobuf.Empty> roles = 4;
       Condition condition = 5;
       cerbos.effect.v1.Effect effect = 6;
-      Expr output = 7;
+      Expr output = 7 [deprecated = true];
+      Output output_info = 8;
     }
 
     string scope = 1;
@@ -113,7 +114,8 @@ message RunnablePrincipalPolicySet {
       string name = 2;
       Condition condition = 3;
       cerbos.effect.v1.Effect effect = 4;
-      Expr output = 5;
+      Expr output = 5 [deprecated = true];
+      Output output_info = 6;
     }
 
     message ResourceRules {
@@ -133,6 +135,15 @@ message RunnablePrincipalPolicySet {
 message Expr {
   string original = 1;
   google.api.expr.v1alpha1.CheckedExpr checked = 2;
+}
+
+message Output {
+  message When {
+    Expr cond_fail = 1;
+  }
+
+  Expr expr = 1;
+  When when = 2;
 }
 
 message Variable {

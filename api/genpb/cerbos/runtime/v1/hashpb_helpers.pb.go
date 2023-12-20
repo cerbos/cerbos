@@ -261,6 +261,30 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher h
 	}
 }
 
+func cerbos_runtime_v1_Output_When_hashpb_sum(m *Output_When, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.Output.When.cond_fail"]; !ok {
+		if m.CondFail != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.CondFail, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_runtime_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.Output.expr"]; !ok {
+		if m.Expr != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.Expr, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.Output.when"]; !ok {
+		if m.When != nil {
+			cerbos_runtime_v1_Output_When_hashpb_sum(m.When, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m *RunnableDerivedRole, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnableDerivedRole.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
@@ -450,6 +474,12 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m
 	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output"]; !ok {
 		if m.Output != nil {
 			cerbos_runtime_v1_Expr_hashpb_sum(m.Output, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output_info"]; !ok {
+		if m.OutputInfo != nil {
+			cerbos_runtime_v1_Output_hashpb_sum(m.OutputInfo, hasher, ignore)
 		}
 
 	}
@@ -651,6 +681,12 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Rule_hashpb_sum(m *Runna
 	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output"]; !ok {
 		if m.Output != nil {
 			cerbos_runtime_v1_Expr_hashpb_sum(m.Output, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output_info"]; !ok {
+		if m.OutputInfo != nil {
+			cerbos_runtime_v1_Output_hashpb_sum(m.OutputInfo, hasher, ignore)
 		}
 
 	}

@@ -227,6 +227,9 @@ func (p *Printer) printTraceComponent(component *enginev1.Trace_Component) {
 	case enginev1.Trace_Component_KIND_VARIABLES:
 		p.Printf(colored.TraceComponentKey("variables"))
 
+	case enginev1.Trace_Component_KIND_OUTPUT:
+		p.Printf("%s=%s", colored.TraceComponentKey("output"), component.GetOutput())
+
 	default:
 		p.Printf(colored.ErrorMsg("<unexpected trace component!>"))
 	}

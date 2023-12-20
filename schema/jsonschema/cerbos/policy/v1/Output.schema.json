@@ -1,11 +1,25 @@
 {
   "$id": "https://api.cerbos.dev/cerbos/policy/v1/Output.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.policy.v1.Output.When": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condFail": {
+          "type": "string"
+        }
+      }
+    }
+  },
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "expr": {
       "type": "string"
+    },
+    "when": {
+      "$ref": "#/definitions/cerbos.policy.v1.Output.When"
     }
   }
 }

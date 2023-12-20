@@ -40,3 +40,6 @@ resourcePolicy:
       output:
         expr: |-
           "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])
+        when:
+          condFail: |-
+            "condition_failed"

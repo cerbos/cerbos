@@ -230,7 +230,12 @@ message Match {
 }
 
 message Output {
+  message When {
+    string cond_fail = 1;
+  }
+
   string expr = 1;
+  When when = 2;
 }
 
 message Schemas {

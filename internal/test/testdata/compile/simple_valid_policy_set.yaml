@@ -23,6 +23,9 @@ inputDefs:
           output:
             expr: |-
               "wildcard:%s".format([request.principal.id])
+            when:
+              condFail: |-
+                "fail:wildcard:%s".format([request.principal.id])
         - actions: ["create"]
           derivedRoles:
             - employee_that_owns_the_record

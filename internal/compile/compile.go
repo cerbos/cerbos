@@ -328,9 +328,22 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 	}
 
 	if rule.Output != nil {
-		cr.Output = &runtimev1.Expr{
+		expr := &runtimev1.Expr{
 			Original: rule.Output.Expr,
 			Checked:  compileCELExpr(modCtx, parent, rule.Output.Expr, true),
+		}
+		cr.Output = expr
+		cr.OutputInfo = &runtimev1.Output{
+			Expr: expr,
+		}
+
+		if rule.Output.When != nil {
+			cr.OutputInfo.When = &runtimev1.Output_When{
+				CondFail: &runtimev1.Expr{
+					Original: rule.Output.When.CondFail,
+					Checked:  compileCELExpr(modCtx, parent, rule.Output.When.CondFail, true),
+				},
+			}
 		}
 	}
 
@@ -412,9 +425,22 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 			}
 
 			if action.Output != nil {
-				actionRule.Output = &runtimev1.Expr{
+				expr := &runtimev1.Expr{
 					Original: action.Output.Expr,
 					Checked:  compileCELExpr(modCtx, ruleName, action.Output.Expr, true),
+				}
+				actionRule.Output = expr
+				actionRule.OutputInfo = &runtimev1.Output{
+					Expr: expr,
+				}
+
+				if action.Output.When != nil {
+					actionRule.OutputInfo.When = &runtimev1.Output_When{
+						CondFail: &runtimev1.Expr{
+							Original: action.Output.When.CondFail,
+							Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.CondFail, true),
+						},
+					}
 				}
 			}
 

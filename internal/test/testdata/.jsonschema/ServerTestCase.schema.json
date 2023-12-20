@@ -479,6 +479,18 @@
       "properties": {
         "expr": {
           "type": "string"
+        },
+        "when": {
+          "$ref": "#/definitions/cerbos.policy.v1.Output.When"
+        }
+      }
+    },
+    "cerbos.policy.v1.Output.When": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condFail": {
+          "type": "string"
         }
       }
     },
