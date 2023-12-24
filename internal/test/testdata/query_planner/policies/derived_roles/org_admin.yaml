@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: org_admin_role
+  definitions:
+    - name: org_admin
+      parentRoles:
+        - USER_ORG
+      condition:
+        match:
+          any:
+            of:
+              - expr: R.kind == "organization" && R.attr.team == "RED"
+              - expr: R.kind != "organization" && R.attr.team == "BLUE"
