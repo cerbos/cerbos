@@ -572,7 +572,8 @@ func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partial
 
 	p.env = conditions.StdEnv
 
-	var ds []*exprpb.Decl
+	const nNameVariants = 2 // qualified, unqualified name
+	ds := make([]*exprpb.Decl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
 	if len(request.Resource.GetAttr()) > 0 {
 		for name, value := range request.Resource.Attr {
 			for _, s := range conditions.ResourceAttributeNames(name) {
