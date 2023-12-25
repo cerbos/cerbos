@@ -571,19 +571,23 @@ func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partial
 	knownVars[conditions.CELGlobalsAbbrev] = globals
 
 	p.env = conditions.StdEnv
+
+	var ds []*exprpb.Decl
 	if len(request.Resource.GetAttr()) > 0 {
-		var ds []*exprpb.Decl
 		for name, value := range request.Resource.Attr {
 			for _, s := range conditions.ResourceAttributeNames(name) {
 				ds = append(ds, decls.NewVar(s, decls.Dyn))
 				knownVars[s] = value
 			}
 		}
-		p.env, err = p.env.Extend(cel.Declarations(ds...))
-		if err != nil {
-			return nil, err
-		}
 	}
+	knownVars["R.kind"] = request.Resource.GetKind()
+	ds = append(ds, decls.NewVar("R.kind", decls.String))
+	p.env, err = p.env.Extend(cel.Declarations(ds...))
+	if err != nil {
+		return nil, err
+	}
+
 	p.vars, err = cel.PartialVars(knownVars,
 		cel.AttributePattern(conditions.CELResourceAbbrev),
 		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))

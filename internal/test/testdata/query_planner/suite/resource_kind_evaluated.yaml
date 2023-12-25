@@ -17,5 +17,5 @@ tests:
           expression:
             operator: eq
             operands:
-              - value: RED
               - variable: request.resource.attr.team
+              - value: RED

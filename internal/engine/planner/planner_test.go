@@ -101,6 +101,17 @@ func Test_evaluateCondition(t *testing.T) {
 			}),
 			want: `R.attr.owner == "harry"`,
 		},
+		{
+			args: compile(`R.kind == P.attr.resource_name`, &enginev1.Request{
+				Principal: &enginev1.Request_Principal{
+					Attr: map[string]*structpb.Value{"resource_name": structpb.NewStringValue("resource-1")},
+				},
+				Resource: &enginev1.Request_Resource{
+					Kind: "resource-1",
+				},
+			}),
+			want: "true",
+		},
 		{ // this test case reproduced the issue #1340
 			args: compile(`P.attr.department_role[R.attr.department] == "ADMIN"`, &enginev1.Request{
 				Principal: &enginev1.Request_Principal{
