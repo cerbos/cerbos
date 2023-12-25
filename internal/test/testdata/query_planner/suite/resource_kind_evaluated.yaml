@@ -19,3 +19,15 @@ tests:
             operands:
               - variable: request.resource.attr.team
               - value: RED
+    - action: read
+      resource:
+        kind: not-organization
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.team
+              - value: BLUE

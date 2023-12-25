@@ -3,7 +3,7 @@
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: default
-  resource: organization
+  resource: not-organization
   importDerivedRoles:
     - org_admin_role
   rules:
