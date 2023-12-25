@@ -12,4 +12,4 @@ derivedRoles:
           any:
             of:
               - expr: R.kind == "organization" && R.attr.team == "RED"
-              - expr: R.kind != "organization" && R.attr.team == "BLUE"
+              - expr: request.resource.kind != "organization" && R.attr.team == "BLUE"

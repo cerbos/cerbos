@@ -581,8 +581,10 @@ func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partial
 			}
 		}
 	}
-	knownVars["R.kind"] = request.Resource.GetKind()
-	ds = append(ds, decls.NewVar("R.kind", decls.String))
+	for _, s := range conditions.ResourceFieldNames(conditions.CELResourceKindField) {
+		ds = append(ds, decls.NewVar(s, decls.String))
+		knownVars[s] = request.Resource.GetKind()
+	}
 	p.env, err = p.env.Extend(cel.Declarations(ds...))
 	if err != nil {
 		return nil, err
