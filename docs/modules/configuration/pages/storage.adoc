@@ -240,6 +240,11 @@ storage:
       maxIdle: 5
 ----
 
+=== Connection retries
+
+include::partial$connretry.adoc[]
+
+
 [#postgres-schema]
 === Database object definitions
 
@@ -329,6 +334,9 @@ storage:
       maxIdle: 5
 ----
 
+=== Connection retries
+
+include::partial$connretry.adoc[]
 
 [#mysql-schema]
 === Database object definitions
@@ -382,6 +390,9 @@ storage:
       maxIdle: 5
 ----
 
+=== Connection retries
+
+include::partial$connretry.adoc[]
 
 [#sqlserver-schema]
 === Database object definitions

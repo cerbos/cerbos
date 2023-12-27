@@ -170,6 +170,10 @@ storage:
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1 
+    connRetry: 
+      maxAttempts: 3
+      initialInterval: 0.5s
+      maxInterval: 60s 
     dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. DSN is the data source connection string.
     serverPubKey: 
       mykey: testdata/server_public_key.pem 
@@ -192,6 +196,10 @@ storage:
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1 
+    connRetry: 
+      maxAttempts: 3
+      initialInterval: 0.5s
+      maxInterval: 60s 
     skipSchemaCheck: false # SkipSchemaCheck skips checking for required database tables on startup.
     url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
   sqlite3:
@@ -204,6 +212,10 @@ storage:
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1 
+    connRetry: 
+      maxAttempts: 3
+      initialInterval: 0.5s
+      maxInterval: 60s 
     skipSchemaCheck: false # SkipSchemaCheck skips checking for required database tables on startup.
     url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/microsoft/go-mssqldb#connection-parameters-and-dsn.
 telemetry:
