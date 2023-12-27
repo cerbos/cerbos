@@ -17,17 +17,18 @@ import (
 )
 
 const (
-	CELRequestIdent    = "request"
-	CELResourceAbbrev  = "R"
-	CELResourceField   = "resource"
-	CELPrincipalAbbrev = "P"
-	CELPrincipalField  = "principal"
-	CELRuntimeIdent    = "runtime"
-	CELVariablesIdent  = "variables"
-	CELVariablesAbbrev = "V"
-	CELGlobalsIdent    = "globals"
-	CELGlobalsAbbrev   = "G"
-	CELAttrField       = "attr"
+	CELRequestIdent      = "request"
+	CELResourceAbbrev    = "R"
+	CELResourceKindField = "kind"
+	CELResourceField     = "resource"
+	CELPrincipalAbbrev   = "P"
+	CELPrincipalField    = "principal"
+	CELRuntimeIdent      = "runtime"
+	CELVariablesIdent    = "variables"
+	CELVariablesAbbrev   = "V"
+	CELGlobalsIdent      = "globals"
+	CELGlobalsAbbrev     = "G"
+	CELAttrField         = "attr"
 )
 
 var (
@@ -109,6 +110,13 @@ func ResourceAttributeNames(s string) []string {
 	return []string{
 		fmt.Sprintf("%s.%s.%s", CELResourceAbbrev, CELAttrField, s),     // R.attr.<s>
 		fmt.Sprintf("%s.%s.%s", Fqn(CELResourceField), CELAttrField, s), // request.resource.attr.<s>
+	}
+}
+
+func ResourceFieldNames(s string) []string {
+	return []string{
+		fmt.Sprintf("%s.%s", CELResourceAbbrev, s),     // R.<s>
+		fmt.Sprintf("%s.%s", Fqn(CELResourceField), s), // request.resource.<s>
 	}
 }
 
