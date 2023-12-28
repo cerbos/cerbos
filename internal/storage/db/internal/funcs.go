@@ -52,9 +52,7 @@ func ansiConcatWithSep(sep string, args ...any) exp.Expression {
 	}
 }
 
-const DBConnectionRetries = 3
-
-func ConnectWithRetries(driverName, connStr string, retries uint64) (*sqlx.DB, error) {
+func ConnectWithRetries(driverName, connStr string, retryConf *ConnRetryConf) (*sqlx.DB, error) {
 	var db *sqlx.DB
 
 	connectFn := func() error {
@@ -63,7 +61,7 @@ func ConnectWithRetries(driverName, connStr string, retries uint64) (*sqlx.DB, e
 		return err
 	}
 
-	err := backoff.Retry(connectFn, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), retries))
+	err := backoff.Retry(connectFn, retryConf.BackoffConf())
 	if err != nil {
 		return nil, err
 	}

@@ -131,14 +131,14 @@ func TestConnectWithRetries(t *testing.T) {
 
 	t.Run("connect_with_no_retries", func(t *testing.T) {
 		defer resetConn()
-		_, err := internal.ConnectWithRetries(driverName, "", 0)
+		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 0})
 		require.NoError(t, err)
 		require.Equal(t, 0, mc.attempts)
 	})
 
 	t.Run("connect_with_no_failures", func(t *testing.T) {
 		defer resetConn()
-		_, err := internal.ConnectWithRetries(driverName, "", 1)
+		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 1})
 		require.NoError(t, err)
 		require.Equal(t, 0, mc.attempts)
 	})
@@ -146,7 +146,7 @@ func TestConnectWithRetries(t *testing.T) {
 	t.Run("connect_with_retry", func(t *testing.T) {
 		defer resetConn()
 		mc.nFailures = 1
-		_, err := internal.ConnectWithRetries(driverName, "", 1)
+		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 1})
 		require.NoError(t, err)
 		require.Equal(t, 1, mc.attempts)
 	})
@@ -154,7 +154,7 @@ func TestConnectWithRetries(t *testing.T) {
 	t.Run("connect_with_error", func(t *testing.T) {
 		defer resetConn()
 		mc.nFailures = 2
-		_, err := internal.ConnectWithRetries(driverName, "", 1)
+		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 1})
 		require.Error(t, err)
 		require.Equal(t, 2, mc.attempts)
 	})

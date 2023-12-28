@@ -1,0 +1,7 @@
+Cerbos attempts to connect to the database on startup and exits if connection cannot be established after three attempts. You can configure the connection retry settings using the `connRetry` options.
+
+`maxAttempts`:: Maximum number of connection attempts before giving up
+`initialInterval`:: The time to wait before the second connection attempt. Subsequent attempts have increasing wait times (exponential backoff) derived from a combination of this value and the retry attempt number
+`maxInterval`:: Maximum amount of time to wait between retries. This affects the maximum value produced by the exponential backoff algorithm.
+
+CAUTION: Changing the retry settings affect the availability of Cerbos and the time it takes to detect and recover from a failure. For example, if the database connection details are incorrect or have changed, it will take longer for a Cerbos PDP to fail on startup because of retries.
