@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 WORKSPACE="/github/workspace"
-ANTORA_VERSION=${ANTORA_VERSION:-"3.1.2"}
+ANTORA_VERSION=${ANTORA_VERSION:-"3.1.6"}
 
 rm -rf "${SCRIPT_DIR}/build"
 docker run -v "$SOURCE_DIR":"${WORKSPACE}/cerbos":Z --rm -t "docker.io/antora/antora:${ANTORA_VERSION}" antora --stacktrace --clean "${WORKSPACE}/cerbos/docs/antora-playbook.yml"
@@ -18,7 +18,7 @@ UNAME=$(uname -s)
 OPEN_CMD=xdg-open
 
 if [[ "$UNAME" == "Darwin" ]]; then
-    OPEN_CMD=open
+	OPEN_CMD=open
 fi
 
 $OPEN_CMD "${SCRIPT_DIR}/build/cerbos/prerelease/index.html"
