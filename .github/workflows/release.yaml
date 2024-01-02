@@ -107,7 +107,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY}}
 
       - name: Install Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1.1.1
+        uses: google-github-actions/setup-gcloud@v2.0.1
 
       - name: Publish JSON schemas
         run: |-
@@ -164,7 +164,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY}}
 
       - name: Install Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1.1.1
+        uses: google-github-actions/setup-gcloud@v2.0.1
 
       - name: Package Helm chart
         run: |-
