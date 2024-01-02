@@ -10,13 +10,13 @@ require (
 	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/alecthomas/kong v0.8.1
 	github.com/alecthomas/participle/v2 v2.1.1
-	github.com/aws/aws-sdk-go v1.49.10
+	github.com/aws/aws-sdk-go v1.49.13
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.4.3
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cerbos-sdk-go v0.2.1
 	github.com/cerbos/cerbos/api/genpb v0.32.0
-	github.com/cerbos/cloud-api v0.1.12
+	github.com/cerbos/cloud-api v0.1.13
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/cloudflare/certinel v0.4.0
@@ -59,9 +59,9 @@ require (
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.5.0
-	github.com/prometheus/client_golang v1.17.0
-	github.com/pterm/pterm v0.12.72
-	github.com/rivo/tview v0.0.0-20231206124440-5f078138442e
+	github.com/prometheus/client_golang v1.18.0
+	github.com/pterm/pterm v0.12.73
+	github.com/rivo/tview v0.0.0-20240101144852-b3bd1aa5e9f2
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.12.0
 	github.com/rs/cors v1.10.1
@@ -99,7 +99,7 @@ require (
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.26.0
-	gocloud.dev v0.35.0
+	gocloud.dev v0.36.0
 	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b
 	golang.org/x/net v0.19.0
@@ -125,7 +125,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/storage v1.35.1 // indirect
-	connectrpc.com/connect v1.13.0 // indirect
+	connectrpc.com/connect v1.14.0 // indirect
 	connectrpc.com/otelconnect v0.6.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/age v1.1.1 // indirect
@@ -137,25 +137,25 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.23.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.1 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.25.5 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.4 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.5 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.14.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.4 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.4 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.7.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.2.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.2.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.16.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.44.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.17.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.20.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.25.4 // indirect
-	github.com/aws/smithy-go v1.17.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.24.0 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.4 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.26.1 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.12 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.10 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.15.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.9 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.7.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.2.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.2.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.16.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.47.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.18.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.26.5 // indirect
+	github.com/aws/smithy-go v1.19.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
@@ -179,7 +179,7 @@ require (
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
-	github.com/go-logr/logr v1.3.0 // indirect
+	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
@@ -228,7 +228,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
+	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -246,8 +246,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.11.1 // indirect
+	github.com/prometheus/common v0.45.0 // indirect
+	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rs/xid v1.5.0 // indirect
