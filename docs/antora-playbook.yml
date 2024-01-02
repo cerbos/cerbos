@@ -9,7 +9,7 @@ site:
 content:
   sources:
     - url: ./../
-      branches: [HEAD, 'v*']
+      branches: [HEAD, 'v{0..9}*']
       edit_url: 'https://github.com/cerbos/cerbos/tree/main/{path}'
       start_path: docs
     - url: https://github.com/cerbos/cloud-docs.git
@@ -25,7 +25,7 @@ asciidoc:
     experimental: true
     page-pagination: true
   extensions:
-  - ./supplemental-ui/tabs-block/extension.js
+    - ./supplemental-ui/tabs-block/extension.js
 ui:
   bundle:
     url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/master/raw/build/ui-bundle.zip?job=bundle-stable
