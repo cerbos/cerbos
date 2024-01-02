@@ -175,7 +175,8 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 			return nil
 		}
 
-		if filepath.Ext(path) == ".yaml" {
+		ext := filepath.Ext(path)
+		if ext == ".yaml" || ext == ".json" {
 			entries = append(entries, path)
 		}
 

@@ -1,0 +1,6 @@
+{
+    "description": "Invalid type for policyVersion field",
+    "wantErrors": [
+        "7:9 [$.resourcePolicy.resource.kind] expected string value got MappingValue"
+    ]
+}

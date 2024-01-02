@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy: &resourceTmpl
+  version: 20210210
+  importDerivedRoles:
+    - alpha
+    - beta
+  schemas:
+    principalSchema:
+      ref: cerbos:///principal.json
+    resourceSchema:
+      ref: cerbos:///resources/leave_request.json
+  resource: leave_request
+  rules:
+    - actions: ['*']
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+      name: wildcard
+
+    - actions: ["create"]
+      derivedRoles:
+        - employee_that_owns_the_record
+      effect: EFFECT_ALLOW
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  <<: *resourceTmpl
+  version: default
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  <<: *resourceTmpl
+  version: foo
+

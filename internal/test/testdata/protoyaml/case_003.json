@@ -1,0 +1,6 @@
+{
+    "description": "Valid resource policy with unknown field foo",
+    "wantErrors": [
+        "4:1 [$.foo] unknown field foo"
+    ]
+}

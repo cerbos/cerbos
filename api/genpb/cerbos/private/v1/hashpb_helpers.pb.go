@@ -2084,6 +2084,31 @@ func cerbos_private_v1_IndexBuilderTestCase_hashpb_sum(m *IndexBuilderTestCase, 
 	}
 }
 
+func cerbos_private_v1_ProtoYamlTestCase_hashpb_sum(m *ProtoYamlTestCase, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.want"]; !ok {
+		if len(m.Want) > 0 {
+			for _, v := range m.Want {
+				if v != nil {
+					cerbos_policy_v1_Policy_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.want_errors"]; !ok {
+		if len(m.WantErrors) > 0 {
+			for _, v := range m.WantErrors {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
 func cerbos_private_v1_QueryPlannerFilterTestCase_hashpb_sum(m *QueryPlannerFilterTestCase, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.QueryPlannerFilterTestCase.description"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
