@@ -15,20 +15,21 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       name: public-view
       output:
-        expr: |-
-          {
-            "id": P.id,
-            "keys": R.attr.id,
-            "formatted_%s".format(["string"]): "id:%s".format([P.id]),
-            "some_bool": true,
-            "some_list": ["foo", "bar"],
-            "something_nested": {
-              "nested_str": "foo",
-              "nested_bool": false,
-              "nested_list": ["nest_foo", 1.01],
-              "nested_formatted_%s".format(["string"]): "id:%s".format([P.id]),
-            },
-          }
+        when:
+          ruleActivated: |-
+            {
+              "id": P.id,
+              "keys": R.attr.id,
+              "formatted_%s".format(["string"]): "id:%s".format([P.id]),
+              "some_bool": true,
+              "some_list": ["foo", "bar"],
+              "something_nested": {
+                "nested_str": "foo",
+                "nested_bool": false,
+                "nested_list": ["nest_foo", 1.01],
+                "nested_formatted_%s".format(["string"]): "id:%s".format([P.id]),
+              },
+            }
 
     - actions: ["approve"]
       condition:
@@ -39,7 +40,9 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       output:
         expr: |-
-          "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])
+          "output_expr"
         when:
-          condFail: |-
-            "condition_failed"
+          ruleActivated: |-
+            "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])
+          ruleNotActivated: |-
+            "rule_not_activated"

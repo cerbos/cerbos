@@ -21,26 +21,28 @@ inputDefs:
             - admin
           name: wildcard
           output:
-            expr: |-
-              "wildcard:%s".format([request.principal.id])
             when:
-              condFail: |-
-                "fail:wildcard:%s".format([request.principal.id])
+              ruleActivated: |-
+                "wildcard:%s".format([request.principal.id])
+              ruleNotActivated: |-
+                "rule_not_activated:wildcard:%s".format([request.principal.id])
         - actions: ["create"]
           derivedRoles:
             - employee_that_owns_the_record
           effect: EFFECT_ALLOW
           output:
-            expr: |-
-              "create:%s".format([request.principal.id])
+            when:
+              ruleActivated: |-
+                "create:%s".format([request.principal.id])
         - actions: ["view:*"]
           derivedRoles:
             - employee_that_owns_the_record
             - direct_manager
           effect: EFFECT_ALLOW
           output:
-            expr: |-
-              "something_arbitrary"
+            when:
+              ruleNotActivated: |-
+                "something_arbitrary"
         - actions: ["view:public"]
           derivedRoles:
             - any_employee
@@ -53,8 +55,9 @@ inputDefs:
             - direct_manager
           effect: EFFECT_ALLOW
           output:
-            expr: |-
-              "pending_approval:%s".format([request.resource.attr.status == "PENDING_APPROVAL"])
+            when:
+              ruleActivated: |-
+                "pending_approval:%s".format([request.resource.attr.status == "PENDING_APPROVAL"])
 
   "derived_roles/my_derived_roles.yaml":
     apiVersion: "api.cerbos.dev/v1"

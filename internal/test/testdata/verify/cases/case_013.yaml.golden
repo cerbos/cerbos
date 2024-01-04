@@ -180,6 +180,10 @@
                                   "nested_str": "foo"
                                 }
                               }
+                            },
+                            {
+                              "src": "resource.equipment_request.vdefault#rule-002",
+                              "val": "rule_not_activated"
                             }
                           ]
                         }
@@ -190,7 +194,13 @@
                       "details": {
                         "result": "RESULT_PASSED",
                         "success": {
-                          "effect": "EFFECT_DENY"
+                          "effect": "EFFECT_DENY",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#rule-002",
+                              "val": "rule_not_activated"
+                            }
+                          ]
                         }
                       }
                     },
@@ -242,6 +252,10 @@
                                   "nested_str": "foo"
                                 }
                               }
+                            },
+                            {
+                              "src": "resource.equipment_request.vdefault#rule-002",
+                              "val": "rule_not_activated"
                             }
                           ]
                         }

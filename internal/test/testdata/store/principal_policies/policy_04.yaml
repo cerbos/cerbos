@@ -11,12 +11,14 @@ principalPolicy:
           action: "reject"
           effect: EFFECT_ALLOW
           output:
-            expr: |-
-              ["foo"]
+            when:
+              ruleActivated: |-
+                ["foo"]  
 
         - name: create-rule
           action: "create"
           effect: EFFECT_ALLOW
           output:
-            expr: |-
-              ["foo", ["bar", true]]
+            when:
+              ruleActivated: |-
+                ["foo", ["bar", true]]

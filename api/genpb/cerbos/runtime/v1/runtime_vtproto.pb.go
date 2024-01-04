@@ -271,8 +271,8 @@ func (m *RunnableResourcePolicySet_Policy_Rule) MarshalToSizedBufferVT(dAtA []by
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.OutputInfo != nil {
-		size, err := m.OutputInfo.MarshalToSizedBufferVT(dAtA[:i])
+	if m.EmitOutput != nil {
+		size, err := m.EmitOutput.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1071,8 +1071,8 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) MarshalToSizedBufferVT(dA
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.OutputInfo != nil {
-		size, err := m.OutputInfo.MarshalToSizedBufferVT(dAtA[:i])
+	if m.EmitOutput != nil {
+		size, err := m.EmitOutput.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1411,8 +1411,18 @@ func (m *Output_When) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.CondFail != nil {
-		size, err := m.CondFail.MarshalToSizedBufferVT(dAtA[:i])
+	if m.RuleNotActivated != nil {
+		size, err := m.RuleNotActivated.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.RuleActivated != nil {
+		size, err := m.RuleActivated.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1456,16 +1466,6 @@ func (m *Output) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	if m.When != nil {
 		size, err := m.When.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarint(dAtA, i, uint64(size))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Expr != nil {
-		size, err := m.Expr.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -2295,8 +2295,8 @@ func (m *RunnableResourcePolicySet_Policy_Rule) SizeVT() (n int) {
 		l = m.Output.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.OutputInfo != nil {
-		l = m.OutputInfo.SizeVT()
+	if m.EmitOutput != nil {
+		l = m.EmitOutput.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -2599,8 +2599,8 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) SizeVT() (n int) {
 		l = m.Output.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.OutputInfo != nil {
-		l = m.OutputInfo.SizeVT()
+	if m.EmitOutput != nil {
+		l = m.EmitOutput.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -2719,8 +2719,12 @@ func (m *Output_When) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.CondFail != nil {
-		l = m.CondFail.SizeVT()
+	if m.RuleActivated != nil {
+		l = m.RuleActivated.SizeVT()
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.RuleNotActivated != nil {
+		l = m.RuleNotActivated.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -2733,10 +2737,6 @@ func (m *Output) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Expr != nil {
-		l = m.Expr.SizeVT()
-		n += 1 + l + sov(uint64(l))
-	}
 	if m.When != nil {
 		l = m.When.SizeVT()
 		n += 1 + l + sov(uint64(l))
@@ -4131,7 +4131,7 @@ func (m *RunnableResourcePolicySet_Policy_Rule) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 8:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OutputInfo", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EmitOutput", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4158,10 +4158,10 @@ func (m *RunnableResourcePolicySet_Policy_Rule) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.OutputInfo == nil {
-				m.OutputInfo = &Output{}
+			if m.EmitOutput == nil {
+				m.EmitOutput = &Output{}
 			}
-			if err := m.OutputInfo.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.EmitOutput.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -6292,7 +6292,7 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) UnmarshalVT(dAtA []byte) 
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OutputInfo", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EmitOutput", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6319,10 +6319,10 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) UnmarshalVT(dAtA []byte) 
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.OutputInfo == nil {
-				m.OutputInfo = &Output{}
+			if m.EmitOutput == nil {
+				m.EmitOutput = &Output{}
 			}
-			if err := m.OutputInfo.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.EmitOutput.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -7087,7 +7087,7 @@ func (m *Output_When) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CondFail", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RuleActivated", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7114,10 +7114,46 @@ func (m *Output_When) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.CondFail == nil {
-				m.CondFail = &Expr{}
+			if m.RuleActivated == nil {
+				m.RuleActivated = &Expr{}
 			}
-			if err := m.CondFail.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.RuleActivated.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RuleNotActivated", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RuleNotActivated == nil {
+				m.RuleNotActivated = &Expr{}
+			}
+			if err := m.RuleNotActivated.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -7173,42 +7209,6 @@ func (m *Output) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Expr", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Expr == nil {
-				m.Expr = &Expr{}
-			}
-			if err := m.Expr.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field When", wireType)
 			}

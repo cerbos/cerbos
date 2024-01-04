@@ -16,8 +16,9 @@ inputDefs:
                   expr: "request.resource.attr.dev_record == true"
               effect: EFFECT_ALLOW
               output:
-                expr: |-
-                  "donald_duck_dev_record_override:%s".format([request.resource.attr.dev_record == true])
+                when:
+                  ruleActivated: |-
+                    "donald_duck_dev_record_override:%s".format([request.resource.attr.dev_record == true])
 
         - resource: salary_record
           actions:

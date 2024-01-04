@@ -197,7 +197,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "condFail": {
+        "ruleActivated": {
+          "type": "string"
+        },
+        "ruleNotActivated": {
           "type": "string"
         }
       }

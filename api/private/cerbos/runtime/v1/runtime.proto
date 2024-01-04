@@ -52,7 +52,7 @@ message RunnableResourcePolicySet {
       Condition condition = 5;
       cerbos.effect.v1.Effect effect = 6;
       Expr output = 7 [deprecated = true];
-      Output output_info = 8;
+      Output emit_output = 8;
     }
 
     string scope = 1;
@@ -115,7 +115,7 @@ message RunnablePrincipalPolicySet {
       Condition condition = 3;
       cerbos.effect.v1.Effect effect = 4;
       Expr output = 5 [deprecated = true];
-      Output output_info = 6;
+      Output emit_output = 6;
     }
 
     message ResourceRules {
@@ -139,11 +139,11 @@ message Expr {
 
 message Output {
   message When {
-    Expr cond_fail = 1;
+    Expr rule_activated = 1;
+    Expr rule_not_activated = 2;
   }
 
-  Expr expr = 1;
-  When when = 2;
+  When when = 1;
 }
 
 message Variable {

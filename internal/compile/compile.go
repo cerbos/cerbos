@@ -327,24 +327,33 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 		}
 	}
 
+	//nolint:dupl
 	if rule.Output != nil {
-		expr := &runtimev1.Expr{
-			Original: rule.Output.Expr,
-			Checked:  compileCELExpr(modCtx, parent, rule.Output.Expr, true),
-		}
-		cr.Output = expr
-		cr.OutputInfo = &runtimev1.Output{
-			Expr: expr,
-		}
-
-		if rule.Output.When != nil {
-			cr.OutputInfo.When = &runtimev1.Output_When{
-				CondFail: &runtimev1.Expr{
-					Original: rule.Output.When.CondFail,
-					Checked:  compileCELExpr(modCtx, parent, rule.Output.When.CondFail, true),
-				},
+		when := &runtimev1.Output_When{}
+		// TODO: Remove this block when output.expr field no longer exists
+		//nolint:staticcheck
+		if rule.Output.Expr != "" {
+			when.RuleActivated = &runtimev1.Expr{
+				Original: rule.Output.Expr, //nolint:staticcheck
+				Checked:  compileCELExpr(modCtx, parent, rule.Output.Expr, true),
 			}
 		}
+
+		if rule.Output.When != nil && rule.Output.When.RuleActivated != "" {
+			when.RuleActivated = &runtimev1.Expr{
+				Original: rule.Output.When.RuleActivated,
+				Checked:  compileCELExpr(modCtx, parent, rule.Output.When.RuleActivated, true),
+			}
+		}
+
+		if rule.Output.When != nil && rule.Output.When.RuleNotActivated != "" {
+			when.RuleNotActivated = &runtimev1.Expr{
+				Original: rule.Output.When.RuleNotActivated,
+				Checked:  compileCELExpr(modCtx, parent, rule.Output.When.RuleNotActivated, true),
+			}
+		}
+
+		cr.EmitOutput = &runtimev1.Output{When: when}
 	}
 
 	return cr
@@ -415,7 +424,6 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 
 		for i, action := range rule.Actions {
 			action.Name = namer.PrincipalResourceActionRuleName(action, rule.Resource, i+1)
-
 			ruleName := fmt.Sprintf("rule '%s' (#%d) of resource '%s'", action.Name, i+1, rule.Resource)
 			actionRule := &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
 				Action:    action.Action,
@@ -424,24 +432,33 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 				Condition: compileCondition(modCtx, ruleName, action.Condition, true),
 			}
 
+			//nolint:dupl
 			if action.Output != nil {
-				expr := &runtimev1.Expr{
-					Original: action.Output.Expr,
-					Checked:  compileCELExpr(modCtx, ruleName, action.Output.Expr, true),
-				}
-				actionRule.Output = expr
-				actionRule.OutputInfo = &runtimev1.Output{
-					Expr: expr,
-				}
-
-				if action.Output.When != nil {
-					actionRule.OutputInfo.When = &runtimev1.Output_When{
-						CondFail: &runtimev1.Expr{
-							Original: action.Output.When.CondFail,
-							Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.CondFail, true),
-						},
+				when := &runtimev1.Output_When{}
+				// TODO: Remove this block when output.expr field no longer exists
+				//nolint:staticcheck
+				if action.Output.Expr != "" {
+					when.RuleActivated = &runtimev1.Expr{
+						Original: action.Output.Expr, //nolint:staticcheck
+						Checked:  compileCELExpr(modCtx, ruleName, action.Output.Expr, true),
 					}
 				}
+
+				if action.Output.When != nil && action.Output.When.RuleActivated != "" {
+					when.RuleActivated = &runtimev1.Expr{
+						Original: action.Output.When.RuleActivated,
+						Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.RuleActivated, true),
+					}
+				}
+
+				if action.Output.When != nil && action.Output.When.RuleNotActivated != "" {
+					when.RuleNotActivated = &runtimev1.Expr{
+						Original: action.Output.When.RuleNotActivated,
+						Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.RuleNotActivated, true),
+					}
+				}
+
+				actionRule.EmitOutput = &runtimev1.Output{When: when}
 			}
 
 			rr.ActionRules[i] = actionRule

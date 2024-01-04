@@ -2,10 +2,14 @@ include::ROOT:partial$attributes.adoc[]
 
 = Outputs
 
-You can define an optional expression to be evaluated when a policy rule is activated or not activated.
+You can define an optional expression to be evaluated when a policy rule is fully activated (`action`, `roles` and
+`derivedRoles` match and `condition` is satisfied) or partially activated (`condition` is not satisfied).
 The collected outputs from all the rules are included in the Cerbos API response.
 
-Output expressions are useful if you want to take specific actions in your application based on the triggered rules. For example, if your policy contains a rule that denies access if the request is issued outside working hours, it could output a string that explains the restriction. Your application could then display that back to the user so that they know the specific reason why the request was denied.
+Output expressions are useful if you want to take specific actions in your application based on the triggered rules.
+For example, if your policy contains a rule that denies access if the request is issued outside working hours, it could
+output a string that explains the restriction. Your application could then display that back to the user so that they
+know the specific reason why the request was denied.
 
 Consider the following policy definition:
 
@@ -25,10 +29,10 @@ resourcePolicy:
         match:
           expr: now().getHours() > 18 || now().getHours() < 8
       output:
-        expr: |-
-          {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can only be accessed between 0800 and 1800"}
         when:
-          condFail: |-
+          ruleActivated: |-
+            {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can only be accessed between 0800 and 1800"}
+          ruleNotActivated: |-
             {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can be accessed at this time"}
 ----
 
@@ -108,7 +112,8 @@ If a request is made inside working hours, the response would resemble the follo
 }
 ----
 
-NOTE: The expression stated in the `output.when.condFail` will be executed if the condition in the relevant rule is failed.
+NOTE: Depending on the evaluation result of the expression(s) under the `condition.match`, the result of the expression
+`output.when.ruleActivated` or `output.when.ruleNotActivated` will be rendered in the output.
 
 Output expressions can be any valid CEL expression. You can return simple values such as strings, numbers and booleans or complex values such as maps and lists.
 

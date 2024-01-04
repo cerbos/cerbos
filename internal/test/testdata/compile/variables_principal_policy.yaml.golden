@@ -1056,97 +1056,52 @@
                   }
                 },
                 "effect": "EFFECT_ALLOW",
-                "output": {
-                  "original": "variables.f",
-                  "checked": {
-                    "referenceMap": {
-                      "1": {
-                        "name": "variables"
-                      }
-                    },
-                    "typeMap": {
-                      "1": {
-                        "mapType": {
-                          "keyType": {
-                            "primitive": "STRING"
-                          },
-                          "valueType": {
-                            "dyn": {}
-                          }
-                        }
-                      },
-                      "2": {
-                        "dyn": {}
-                      }
-                    },
-                    "sourceInfo": {
-                      "location": "<input>",
-                      "lineOffsets": [
-                        12
-                      ],
-                      "positions": {
-                        "1": 0,
-                        "2": 9
-                      }
-                    },
-                    "expr": {
-                      "id": "2",
-                      "selectExpr": {
-                        "operand": {
-                          "id": "1",
-                          "identExpr": {
+                "emitOutput": {
+                  "when": {
+                    "ruleActivated": {
+                      "original": "variables.f",
+                      "checked": {
+                        "referenceMap": {
+                          "1": {
                             "name": "variables"
                           }
                         },
-                        "field": "f"
-                      }
-                    }
-                  }
-                },
-                "outputInfo": {
-                  "expr": {
-                    "original": "variables.f",
-                    "checked": {
-                      "referenceMap": {
-                        "1": {
-                          "name": "variables"
-                        }
-                      },
-                      "typeMap": {
-                        "1": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
-                        },
-                        "2": {
-                          "dyn": {}
-                        }
-                      },
-                      "sourceInfo": {
-                        "location": "<input>",
-                        "lineOffsets": [
-                          12
-                        ],
-                        "positions": {
-                          "1": 0,
-                          "2": 9
-                        }
-                      },
-                      "expr": {
-                        "id": "2",
-                        "selectExpr": {
-                          "operand": {
-                            "id": "1",
-                            "identExpr": {
-                              "name": "variables"
+                        "typeMap": {
+                          "1": {
+                            "mapType": {
+                              "keyType": {
+                                "primitive": "STRING"
+                              },
+                              "valueType": {
+                                "dyn": {}
+                              }
                             }
                           },
-                          "field": "f"
+                          "2": {
+                            "dyn": {}
+                          }
+                        },
+                        "sourceInfo": {
+                          "location": "<input>",
+                          "lineOffsets": [
+                            12
+                          ],
+                          "positions": {
+                            "1": 0,
+                            "2": 9
+                          }
+                        },
+                        "expr": {
+                          "id": "2",
+                          "selectExpr": {
+                            "operand": {
+                              "id": "1",
+                              "identExpr": {
+                                "name": "variables"
+                              }
+                            },
+                            "field": "f"
+                          }
                         }
                       }
                     }

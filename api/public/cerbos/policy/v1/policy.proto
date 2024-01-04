@@ -231,10 +231,11 @@ message Match {
 
 message Output {
   message When {
-    string cond_fail = 1;
+    string rule_activated = 1;
+    string rule_not_activated = 2;
   }
 
-  string expr = 1;
+  string expr = 1 [deprecated = true];
   When when = 2;
 }
 

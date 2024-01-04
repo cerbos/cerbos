@@ -1,8 +1,25 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: Output condFail
+description: Test output.when.ruleActivated, output.when.ruleNotActivated and deprecated output.expr doesn't interfere
 
 inputs:
+  - requestId: test
+    actions:
+      - approve
+    principal:
+      id: abc
+      roles:
+        - manager
+      attr:
+        geography: GB
+        managed_geographies: GB
+    resource:
+      kind: equipment_request
+      id: test
+      attr:
+        geography: GB
+        status: PENDING_APPROVAL
+
   - requestId: test
     actions:
       - approve
@@ -27,11 +44,23 @@ wantOutputs:
       - direct_manager
     actions:
       approve:
+        effect: EFFECT_ALLOW
+        policy: resource.equipment_request.vdefault
+    outputs:
+      - src: resource.equipment_request.vdefault#rule-002
+        val: approval_status:abc:PENDING_APPROVAL
+
+  - requestId: test
+    resourceId: test
+    effectiveDerivedRoles:
+      - direct_manager
+    actions:
+      approve:
         effect: EFFECT_DENY
         policy: resource.equipment_request.vdefault
     outputs:
       - src: resource.equipment_request.vdefault#rule-002
-        val: condition_failed
+        val: rule_not_activated
 
 wantDecisionLogs:
   - callId: 01HKA8W61K5D3SHQSKC4ANEMSZ
@@ -59,8 +88,37 @@ wantDecisionLogs:
             id: test
             attr:
               geography: GB
+              status: PENDING_APPROVAL
+
+        - requestId: test
+          actions:
+            - approve
+          principal:
+            id: abc
+            roles:
+              - manager
+            attr:
+              geography: GB
+              managed_geographies: GB
+          resource:
+            kind: equipment_request
+            id: test
+            attr:
+              geography: GB
               status: DRAFT
       outputs:
+        - requestId: test
+          resourceId: test
+          actions:
+            approve:
+              effect: EFFECT_ALLOW
+              policy: resource.equipment_request.vdefault
+          effectiveDerivedRoles:
+            - direct_manager
+          outputs:
+            - src: resource.equipment_request.vdefault#rule-002
+              val: approval_status:abc:PENDING_APPROVAL
+
         - requestId: test
           resourceId: test
           actions:
@@ -71,4 +129,4 @@ wantDecisionLogs:
             - direct_manager
           outputs:
             - src: resource.equipment_request.vdefault#rule-002
-              val: condition_failed
+              val: rule_not_activated

@@ -235,33 +235,32 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				}
 			}
 
-			if rule.Output == nil && rule.OutputInfo == nil {
-				continue
-			}
-
-			var output *enginev1.OutputEntry
-			octx := rctx.StartOutput(rule.Name)
-			if !ruleActivated && rule.OutputInfo != nil && rule.OutputInfo.When != nil && rule.OutputInfo.When.CondFail != nil {
-				output = &enginev1.OutputEntry{
+			// TODO: Remove this block when rule.Output field no longer exists
+			//nolint:dupl
+			if rule.Output != nil && ruleActivated { //nolint:staticcheck
+				var output *enginev1.OutputEntry
+				octx := rctx.StartOutput(rule.Name)
+				result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
 					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-					Val: evalCtx.evaluateProtobufValueCELExpr(rule.OutputInfo.When.CondFail.Checked, variables),
+					Val: evalCtx.evaluateProtobufValueCELExpr(rule.Output.Checked, variables), //nolint:staticcheck
+				})
+				octx.ComputedOutput(output)
+			} else if rule.EmitOutput != nil && rule.EmitOutput.When != nil {
+				var output *enginev1.OutputEntry
+				octx := rctx.StartOutput(rule.Name)
+				if ruleActivated && rule.EmitOutput.When.RuleActivated != nil {
+					result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
+						Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
+						Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.RuleActivated.Checked, variables),
+					})
+				} else if !ruleActivated && rule.EmitOutput.When.RuleNotActivated != nil {
+					result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
+						Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
+						Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.RuleNotActivated.Checked, variables),
+					})
 				}
-			} else if ruleActivated && rule.OutputInfo != nil && rule.OutputInfo.Expr != nil {
-				output = &enginev1.OutputEntry{
-					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-					Val: evalCtx.evaluateProtobufValueCELExpr(rule.OutputInfo.Expr.Checked, variables),
-				}
-			} else if ruleActivated && rule.Output != nil {
-				output = &enginev1.OutputEntry{
-					Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-					Val: evalCtx.evaluateProtobufValueCELExpr(rule.Output.Checked, variables),
-				}
+				octx.ComputedOutput(output)
 			}
-
-			if output != nil {
-				result.Outputs = append(result.Outputs, output)
-			}
-			octx.ComputedOutput(output)
 		}
 	}
 
@@ -329,33 +328,32 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 					ruleActivated = true
 				}
 
-				if rule.Output == nil && rule.OutputInfo == nil {
-					continue
-				}
-
-				var output *enginev1.OutputEntry
-				octx := rctx.StartOutput(rule.Name)
-				if !ruleActivated && rule.OutputInfo != nil && rule.OutputInfo.When != nil && rule.OutputInfo.When.CondFail != nil {
-					output = &enginev1.OutputEntry{
+				// TODO: Remove this block when rule.Output field no longer exists
+				//nolint:dupl
+				if rule.Output != nil && ruleActivated { //nolint:staticcheck
+					var output *enginev1.OutputEntry
+					octx := rctx.StartOutput(rule.Name)
+					result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
 						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-						Val: evalCtx.evaluateProtobufValueCELExpr(rule.OutputInfo.When.CondFail.Checked, variables),
+						Val: evalCtx.evaluateProtobufValueCELExpr(rule.Output.Checked, variables), //nolint:staticcheck
+					})
+					octx.ComputedOutput(output)
+				} else if rule.EmitOutput != nil && rule.EmitOutput.When != nil {
+					var output *enginev1.OutputEntry
+					octx := rctx.StartOutput(rule.Name)
+					if ruleActivated && rule.EmitOutput.When.RuleActivated != nil {
+						result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
+							Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
+							Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.RuleActivated.Checked, variables),
+						})
+					} else if !ruleActivated && rule.EmitOutput.When.RuleNotActivated != nil {
+						result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
+							Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
+							Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.RuleNotActivated.Checked, variables),
+						})
 					}
-				} else if ruleActivated && rule.OutputInfo != nil && rule.OutputInfo.Expr != nil {
-					output = &enginev1.OutputEntry{
-						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-						Val: evalCtx.evaluateProtobufValueCELExpr(rule.OutputInfo.Expr.Checked, variables),
-					}
-				} else if ruleActivated && rule.Output != nil {
-					output = &enginev1.OutputEntry{
-						Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-						Val: evalCtx.evaluateProtobufValueCELExpr(rule.Output.Checked, variables),
-					}
+					octx.ComputedOutput(output)
 				}
-
-				if output != nil {
-					result.Outputs = append(result.Outputs, output)
-				}
-				octx.ComputedOutput(output)
 			}
 		}
 	}

@@ -3898,97 +3898,52 @@
               }
             },
             "effect": "EFFECT_ALLOW",
-            "output": {
-              "original": "V.abcl",
-              "checked": {
-                "referenceMap": {
-                  "1": {
-                    "name": "V"
-                  }
-                },
-                "typeMap": {
-                  "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
-                  },
-                  "2": {
-                    "dyn": {}
-                  }
-                },
-                "sourceInfo": {
-                  "location": "<input>",
-                  "lineOffsets": [
-                    7
-                  ],
-                  "positions": {
-                    "1": 0,
-                    "2": 1
-                  }
-                },
-                "expr": {
-                  "id": "2",
-                  "selectExpr": {
-                    "operand": {
-                      "id": "1",
-                      "identExpr": {
+            "emitOutput": {
+              "when": {
+                "ruleActivated": {
+                  "original": "V.abcl",
+                  "checked": {
+                    "referenceMap": {
+                      "1": {
                         "name": "V"
                       }
                     },
-                    "field": "abcl"
-                  }
-                }
-              }
-            },
-            "outputInfo": {
-              "expr": {
-                "original": "V.abcl",
-                "checked": {
-                  "referenceMap": {
-                    "1": {
-                      "name": "V"
-                    }
-                  },
-                  "typeMap": {
-                    "1": {
-                      "mapType": {
-                        "keyType": {
-                          "primitive": "STRING"
-                        },
-                        "valueType": {
-                          "dyn": {}
-                        }
-                      }
-                    },
-                    "2": {
-                      "dyn": {}
-                    }
-                  },
-                  "sourceInfo": {
-                    "location": "<input>",
-                    "lineOffsets": [
-                      7
-                    ],
-                    "positions": {
-                      "1": 0,
-                      "2": 1
-                    }
-                  },
-                  "expr": {
-                    "id": "2",
-                    "selectExpr": {
-                      "operand": {
-                        "id": "1",
-                        "identExpr": {
-                          "name": "V"
+                    "typeMap": {
+                      "1": {
+                        "mapType": {
+                          "keyType": {
+                            "primitive": "STRING"
+                          },
+                          "valueType": {
+                            "dyn": {}
+                          }
                         }
                       },
-                      "field": "abcl"
+                      "2": {
+                        "dyn": {}
+                      }
+                    },
+                    "sourceInfo": {
+                      "location": "<input>",
+                      "lineOffsets": [
+                        7
+                      ],
+                      "positions": {
+                        "1": 0,
+                        "2": 1
+                      }
+                    },
+                    "expr": {
+                      "id": "2",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "1",
+                          "identExpr": {
+                            "name": "V"
+                          }
+                        },
+                        "field": "abcl"
+                      }
                     }
                   }
                 }

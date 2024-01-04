@@ -1200,7 +1200,10 @@
     "OutputWhen": {
       "type": "object",
       "properties": {
-        "condFail": {
+        "ruleActivated": {
+          "type": "string"
+        },
+        "ruleNotActivated": {
           "type": "string"
         }
       }

@@ -262,21 +262,21 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher h
 }
 
 func cerbos_runtime_v1_Output_When_hashpb_sum(m *Output_When, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.Output.When.cond_fail"]; !ok {
-		if m.CondFail != nil {
-			cerbos_runtime_v1_Expr_hashpb_sum(m.CondFail, hasher, ignore)
+	if _, ok := ignore["cerbos.runtime.v1.Output.When.rule_activated"]; !ok {
+		if m.RuleActivated != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.RuleActivated, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.Output.When.rule_not_activated"]; !ok {
+		if m.RuleNotActivated != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.RuleNotActivated, hasher, ignore)
 		}
 
 	}
 }
 
 func cerbos_runtime_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.Output.expr"]; !ok {
-		if m.Expr != nil {
-			cerbos_runtime_v1_Expr_hashpb_sum(m.Expr, hasher, ignore)
-		}
-
-	}
 	if _, ok := ignore["cerbos.runtime.v1.Output.when"]; !ok {
 		if m.When != nil {
 			cerbos_runtime_v1_Output_When_hashpb_sum(m.When, hasher, ignore)
@@ -477,9 +477,9 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m
 		}
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output_info"]; !ok {
-		if m.OutputInfo != nil {
-			cerbos_runtime_v1_Output_hashpb_sum(m.OutputInfo, hasher, ignore)
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.emit_output"]; !ok {
+		if m.EmitOutput != nil {
+			cerbos_runtime_v1_Output_hashpb_sum(m.EmitOutput, hasher, ignore)
 		}
 
 	}
@@ -684,9 +684,9 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Rule_hashpb_sum(m *Runna
 		}
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output_info"]; !ok {
-		if m.OutputInfo != nil {
-			cerbos_runtime_v1_Output_hashpb_sum(m.OutputInfo, hasher, ignore)
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.emit_output"]; !ok {
+		if m.EmitOutput != nil {
+			cerbos_runtime_v1_Output_hashpb_sum(m.EmitOutput, hasher, ignore)
 		}
 
 	}

@@ -1,4 +1,4 @@
-include::ROOT:partial$attributes.adoc[]
+    include::ROOT:partial$attributes.adoc[]
 
 = Resource policies
 
@@ -36,8 +36,11 @@ resourcePolicy:
         match:
           expr: request.resource.attr.public == true
       output: <10>
-        expr: |-
-          "view_allowed:%s".format([request.principal.id])
+        when:
+          ruleActivated: |-
+            "view_allowed:%s".format([request.principal.id])
+          ruleNotActivated: |-
+            "view_not_allowed:%s".format([request.principal.id])
 
     - name: moderator_rule <11>
       actions: ['view', 'delete']
@@ -62,8 +65,8 @@ resourcePolicy:
 <7> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <8> This rule applies to a derived role.
 <9> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
-<10> Optional output for the rule. You can define a single expression per rule which will be evaluated and output in the response.
-An output expression can contain anything that condition expressions can have.
+<10> Optional output for the action rule. You can define two expressions to be evaluated and output in the response
+depending on whether the rule activates or not.
 <11> Optional name for the rule.
 <12> Optional section for defining schemas that apply to this resource kind.
 <13> Optional schema for validating the principal attributes.

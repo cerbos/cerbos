@@ -13,4 +13,5 @@ principalPolicy:
         - action: swim
           effect: EFFECT_ALLOW
           output:
-            expr: V.foo
+            when:
+              ruleActivated: V.foo

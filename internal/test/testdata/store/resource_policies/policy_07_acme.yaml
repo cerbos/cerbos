@@ -21,5 +21,6 @@ resourcePolicy:
               - expr: R.attr.department == P.attr.department
               - expr: P.attr.team == "design"
       output:
-        expr: |-
-          "create_allowed:%s".format([request.principal.id])
+        when:
+          ruleActivated: |-
+            "create_allowed:%s".format([request.principal.id])
