@@ -1,26 +1,10 @@
 {
-    "description": "Valid YAML but constraints not satisfied",
+    "description": "Condition starting with quote",
     "want": [
         {
             "apiVersion": "api.cerbos.dev/v1",
-            "variables": {
-                "pending_approval": "(\"PENDING_APPROVAL\")",
-                "principal_location": "(P.attr.ip_address.inIPAddrRange(\"10.20.0.0/16\") ? \"GB\" : \"\")"
-            },
             "resourcePolicy": {
                 "version": "20210210",
-                "importDerivedRoles": [
-                    "alpha",
-                    "beta"
-                ],
-                "schemas": {
-                    "principalSchema": {
-                        "ref": "cerbos:///principal.json"
-                    },
-                    "resourceSchema": {
-                        "ref": "cerbos:///resources/leave_request.json"
-                    }
-                },
                 "resource": "leave_request",
                 "rules": [
                     {
@@ -35,86 +19,6 @@
                     },
                     {
                         "actions": [
-                            "create"
-                        ],
-                        "derivedRoles": [
-                            "employee_that_owns_the_record"
-                        ],
-                        "effect": "EFFECT_ALLOW"
-                    },
-                    {
-                        "actions": [
-                            "view"
-                        ],
-                        "condition": {
-                            "match": {
-                                "expr": "request.resource.attr.public == true"
-                            }
-                        },
-                        "roles": [
-                            "*"
-                        ],
-                        "effect": "EFFECT_ALLOW"
-                    },
-                    {
-                        "actions": [
-                            "view"
-                        ],
-                        "derivedRoles": [
-                            "reader"
-                        ],
-                        "effect": "EFFECT_ALLOW"
-                    },
-                    {
-                        "actions": [
-                            "view:*"
-                        ],
-                        "derivedRoles": [
-                            "employee_that_owns_the_record",
-                            "direct_manager"
-                        ],
-                        "effect": "EFFECT_ALLOW"
-                    },
-                    {
-                        "actions": [
-                            "view:public"
-                        ],
-                        "derivedRoles": [
-                            "any_employee"
-                        ],
-                        "effect": "EFFECT_ALLOW",
-                        "name": "public-view"
-                    },
-                    {
-                        "actions": [
-                            "approve"
-                        ],
-                        "condition": {
-                            "match": {
-                                "expr": "request.resource.attr.status == V.pending_approval"
-                            }
-                        },
-                        "derivedRoles": [
-                            "direct_manager"
-                        ],
-                        "effect": "EFFECT_ALLOW"
-                    },
-                    {
-                        "actions": [
-                            "delete"
-                        ],
-                        "condition": {
-                            "match": {
-                                "expr": "request.resource.attr.geography == variables.principal_location"
-                            }
-                        },
-                        "derivedRoles": [
-                            "direct_manager"
-                        ],
-                        "effect": "EFFECT_ALLOW"
-                    },
-                    {
-                        "actions": [
                             "defer"
                         ],
                         "effect": "EFFECT_ALLOW",
@@ -126,10 +30,13 @@
                                 "all": {
                                     "of": [
                                         {
-                                            "expr": "\"cerbos-jwt-tests\" in request.aux_data.jwt.aud"
+                                            "expr": "\"cerbos-jwt-tests\" in request.auxData.jwt.aud"
                                         },
                                         {
-                                            "expr": "\"A\" in request.aux_data.jwt.customArray"
+                                            "expr": "\"A\" in request.auxData.jwt.customArray"
+                                        },
+                                        {
+                                            "expr": "'x' in request.auxData.jwt.customArray"
                                         }
                                     ]
                                 }
@@ -151,138 +58,6 @@
                         }
                     }
                 ]
-            }
-        },
-        {
-            "apiVersion": "api.cerbos.dev/v1",
-            "derivedRoles": {
-                "name": "alpha",
-                "definitions": [
-                    {
-                        "name": "admin",
-                        "parentRoles": [
-                            "admin"
-                        ]
-                    },
-                    {
-                        "name": "tester",
-                        "parentRoles": [
-                            "dev",
-                            "qa"
-                        ]
-                    },
-                    {
-                        "name": "employee_that_owns_the_record",
-                        "parentRoles": [
-                            "employee"
-                        ],
-                        "condition": {
-                            "match": {
-                                "expr": "R.attr.owner == P.id"
-                            }
-                        }
-                    },
-                    {
-                        "name": "reader",
-                        "parentRoles": [
-                            "*"
-                        ],
-                        "condition": {
-                            "match": {
-                                "expr": "request.principal.attr.reader == true"
-                            }
-                        }
-                    },
-                    {
-                        "name": "kube_user",
-                        "parentRoles": [
-                            "system:basic_user"
-                        ]
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "api.cerbos.dev/v1",
-            "variables": {
-                "same_geography": "request.resource.attr.geography == request.principal.attr.geography"
-            },
-            "derivedRoles": {
-                "name": "beta",
-                "definitions": [
-                    {
-                        "name": "any_employee",
-                        "parentRoles": [
-                            "employee"
-                        ]
-                    },
-                    {
-                        "name": "direct_manager",
-                        "parentRoles": [
-                            "manager"
-                        ],
-                        "condition": {
-                            "match": {
-                                "all": {
-                                    "of": [
-                                        {
-                                            "expr": "V.same_geography"
-                                        },
-                                        {
-                                            "expr": "request.resource.attr.geography == request.principal.attr.managed_geographies"
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "api.cerbos.dev/v1",
-            "variables": {
-                "is_dev_record": "request.resource.attr.dev_record == true"
-            },
-            "principalPolicy": {
-                "principal": "donald_duck",
-                "version": "20210210",
-                "rules": [
-                    {
-                        "resource": "*",
-                        "actions": [
-                            {
-                                "action": "*",
-                                "condition": {
-                                    "match": {
-                                        "expr": "variables.is_dev_record"
-                                    }
-                                },
-                                "effect": "EFFECT_ALLOW",
-                                "name": "dev_admin"
-                            }
-                        ]
-                    },
-                    {
-                        "resource": "salary_record",
-                        "actions": [
-                            {
-                                "action": "*",
-                                "effect": "EFFECT_DENY"
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "api.cerbos.dev/v1",
-            "exportVariables": {
-                "name": "foobar",
-                "definitions": {
-                    "foo": "42",
-                    "bar": "R.attr.foo == V.foo"
-                }
             }
         }
     ]

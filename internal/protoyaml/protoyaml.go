@@ -11,10 +11,12 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"unsafe"
 
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml/ast"
+	"github.com/goccy/go-yaml/lexer"
 	"github.com/goccy/go-yaml/parser"
+	"github.com/goccy/go-yaml/token"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -41,13 +43,40 @@ func (pe ParseError) Unwrap() error {
 	return pe.Err
 }
 
+type unmarshalOpts struct {
+	fixInvalidStrings   bool
+	ignoreUnknownFields bool
+}
+
+type UnmarshalOpt func(*unmarshalOpts)
+
+// WithFixInvalidStrings makes the unmarshaler handle values that are partially quoted such as: "foo" bar.
+func WithFixInvalidStrings() UnmarshalOpt {
+	return func(uo *unmarshalOpts) {
+		uo.fixInvalidStrings = true
+	}
+}
+
+// WithIgnoreUnknownFields ignores unknown fields not defined in the protobuf schema.
+func WithIgnoreUnknownFields() UnmarshalOpt {
+	return func(uo *unmarshalOpts) {
+		uo.ignoreUnknownFields = true
+	}
+}
+
 type Unmarshaler[T proto.Message] struct {
 	factory func() T
 	anchors map[string]ast.Node
+	unmarshalOpts
 }
 
-func NewUnmarshaler[T proto.Message](factory func() T) *Unmarshaler[T] {
-	return &Unmarshaler[T]{factory: factory}
+func NewUnmarshaler[T proto.Message](factory func() T, opts ...UnmarshalOpt) *Unmarshaler[T] {
+	uo := unmarshalOpts{}
+	for _, o := range opts {
+		o(&uo)
+	}
+
+	return &Unmarshaler[T]{factory: factory, unmarshalOpts: uo}
 }
 
 func (u *Unmarshaler[T]) UnmarshalReader(r io.Reader) ([]T, error) {
@@ -60,19 +89,18 @@ func (u *Unmarshaler[T]) UnmarshalReader(r io.Reader) ([]T, error) {
 }
 
 func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, outErr error) {
-	f, err := parser.ParseBytes(contents, 0)
+	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
+	if u.fixInvalidStrings {
+		t = fixStringsStartingWithQuotes(t)
+	}
+
+	f, err := parser.Parse(t, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse contents: %w", err)
 	}
 
 	if len(f.Docs) == 0 {
 		return nil, nil
-	}
-
-	m := u.factory()
-	validator, err := protovalidate.New(protovalidate.WithDescriptors(m.ProtoReflect().Descriptor()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate validator: %w", err)
 	}
 
 	out := make([]T, 0, len(f.Docs))
@@ -83,22 +111,68 @@ func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, outErr error) {
 			continue
 		}
 
-		if err := validator.Validate(t); err != nil {
-			verr := new(protovalidate.ValidationError)
-			if errors.As(err, &verr) {
-				outErr = errors.Join(outErr, fmt.Errorf("validation error: %w", err))
-				continue
-			}
-
-			for _, v := range verr.Violations {
-				fmt.Printf(">> %s: %s\n", v.GetFieldPath(), v.GetMessage())
-			}
-		}
-
 		out = append(out, t)
 	}
 
 	return out, outErr
+}
+
+func fixStringsStartingWithQuotes(tokens token.Tokens) token.Tokens {
+	newTokens := make(token.Tokens, 0, len(tokens))
+	i := 0
+	for {
+		if i >= len(tokens) {
+			break
+		}
+		tok := tokens[i]
+
+		if tok.Prev != nil && tok.Prev.Type != token.MappingValueType {
+			newTokens = append(newTokens, tok)
+			i++
+			continue
+		}
+
+		if !(tok.Type == token.DoubleQuoteType || tok.Type == token.SingleQuoteType) {
+			newTokens = append(newTokens, tok)
+			i++
+			continue
+		}
+
+		if tok.Next == nil || tok.Next.Position.Line != tok.Position.Line {
+			newTokens = append(newTokens, tok)
+			i++
+			continue
+		}
+
+		var origin strings.Builder
+		var nextTok *token.Token
+
+		origin.WriteString(tok.Origin)
+		i++
+
+		for t := tok.Next; t != nil && t.Position.Line == tok.Position.Line; t = t.Next {
+			origin.WriteString(t.Origin)
+			i++
+			nextTok = t.Next
+		}
+
+		o := origin.String()
+		v := strings.TrimSpace(o)
+
+		var fixedTok *token.Token
+		switch tok.Type {
+		case token.DoubleQuoteType:
+			fixedTok = token.SingleQuote(v, o, tok.Position)
+		case token.SingleQuoteType:
+			fixedTok = token.DoubleQuote(v, o, tok.Position)
+		default:
+			fixedTok = token.Folded(v, o, tok.Position)
+		}
+		fixedTok.Next = nextTok
+		newTokens = append(newTokens, fixedTok)
+	}
+
+	return newTokens
 }
 
 func (u *Unmarshaler[T]) unmarshalDoc(doc *ast.DocumentNode) (T, error) {
@@ -148,6 +222,9 @@ func (u *Unmarshaler[T]) unmarshalMapping(v ast.MapNode, out protoreflect.Messag
 		}
 
 		if field == nil {
+			if u.ignoreUnknownFields {
+				continue
+			}
 			return errorf(kn, "unknown field %s", keyValue)
 		}
 

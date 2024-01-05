@@ -29,7 +29,7 @@ func TestUnmarshaler(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			tc, input := loadTestCase(t, testCase)
-			u := protoyaml.NewUnmarshaler(func() *policyv1.Policy { return &policyv1.Policy{} })
+			u := protoyaml.NewUnmarshaler(func() *policyv1.Policy { return &policyv1.Policy{} }, protoyaml.WithFixInvalidStrings())
 			have, err := u.UnmarshalReader(input)
 
 			t.Cleanup(func() {
