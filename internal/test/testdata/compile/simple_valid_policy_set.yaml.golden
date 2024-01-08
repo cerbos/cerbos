@@ -516,8 +516,8 @@
                     }
                   }
                 },
-                "ruleNotActivated": {
-                  "original": "\"rule_not_activated:wildcard:%s\".format([request.principal.id])",
+                "conditionNotMet": {
+                  "original": "\"condition_not_met:wildcard:%s\".format([request.principal.id])",
                   "checked": {
                     "referenceMap": {
                       "2": {
@@ -556,15 +556,15 @@
                     "sourceInfo": {
                       "location": "<input>",
                       "lineOffsets": [
-                        64
+                        63
                       ],
                       "positions": {
                         "1": 0,
-                        "2": 39,
-                        "3": 40,
-                        "4": 41,
-                        "5": 48,
-                        "6": 58
+                        "2": 38,
+                        "3": 39,
+                        "4": 40,
+                        "5": 47,
+                        "6": 57
                       }
                     },
                     "expr": {
@@ -573,7 +573,7 @@
                         "target": {
                           "id": "1",
                           "constExpr": {
-                            "stringValue": "rule_not_activated:wildcard:%s"
+                            "stringValue": "condition_not_met:wildcard:%s"
                           }
                         },
                         "function": "format",
@@ -729,7 +729,7 @@
             "effect": "EFFECT_ALLOW",
             "emitOutput": {
               "when": {
-                "ruleNotActivated": {
+                "conditionNotMet": {
                   "original": "\"something_arbitrary\"",
                   "checked": {
                     "typeMap": {

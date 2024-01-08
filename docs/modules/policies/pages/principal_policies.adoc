@@ -30,8 +30,8 @@ principalPolicy:
             when:
               ruleActivated: |-
                 "wildcard_override:%s".format([request.principal.id])
-              ruleNotActivated: |-
-                "wildcard_rule_not_activated:%s".format([request.principal.id])
+              conditionNotMet: |-
+                "wildcard_condition_not_met:%s".format([request.principal.id])
 
     - resource: employee_profile
       actions:

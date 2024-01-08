@@ -39,7 +39,7 @@ resourcePolicy:
         when:
           ruleActivated: |-
             "view_allowed:%s".format([request.principal.id])
-          ruleNotActivated: |-
+          conditionNotMet: |-
             "view_not_allowed:%s".format([request.principal.id])
 
     - name: moderator_rule <11>

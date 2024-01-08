@@ -882,8 +882,8 @@ func cerbos_policy_v1_Output_When_hashpb_sum(m *v12.Output_When, hasher hash.Has
 		_, _ = hasher.Write(protowire.AppendString(nil, m.RuleActivated))
 
 	}
-	if _, ok := ignore["cerbos.policy.v1.Output.When.rule_not_activated"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.RuleNotActivated))
+	if _, ok := ignore["cerbos.policy.v1.Output.When.condition_not_met"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ConditionNotMet))
 
 	}
 }

@@ -268,9 +268,9 @@ func cerbos_runtime_v1_Output_When_hashpb_sum(m *Output_When, hasher hash.Hash, 
 		}
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.Output.When.rule_not_activated"]; !ok {
-		if m.RuleNotActivated != nil {
-			cerbos_runtime_v1_Expr_hashpb_sum(m.RuleNotActivated, hasher, ignore)
+	if _, ok := ignore["cerbos.runtime.v1.Output.When.condition_not_met"]; !ok {
+		if m.ConditionNotMet != nil {
+			cerbos_runtime_v1_Expr_hashpb_sum(m.ConditionNotMet, hasher, ignore)
 		}
 
 	}

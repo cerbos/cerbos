@@ -44,5 +44,5 @@ resourcePolicy:
         when:
           ruleActivated: |-
             "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])
-          ruleNotActivated: |-
-            "rule_not_activated"
+          conditionNotMet: |-
+            "condition_not_met"

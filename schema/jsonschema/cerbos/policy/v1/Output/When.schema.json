@@ -4,10 +4,10 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "ruleActivated": {
+    "conditionNotMet": {
       "type": "string"
     },
-    "ruleNotActivated": {
+    "ruleActivated": {
       "type": "string"
     }
   }

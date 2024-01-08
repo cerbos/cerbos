@@ -32,7 +32,7 @@ resourcePolicy:
         when:
           ruleActivated: |-
             {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can only be accessed between 0800 and 1800"}
-          ruleNotActivated: |-
+          conditionNotMet: |-
             {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can be accessed at this time"}
 ----
 
@@ -113,7 +113,7 @@ If a request is made inside working hours, the response would resemble the follo
 ----
 
 NOTE: Depending on the evaluation result of the expression(s) under the `condition.match`, the result of the expression
-`output.when.ruleActivated` or `output.when.ruleNotActivated` will be rendered in the output.
+`output.when.ruleActivated` or `output.when.conditionNotMet` will be rendered in the output.
 
 Output expressions can be any valid CEL expression. You can return simple values such as strings, numbers and booleans or complex values such as maps and lists.
 

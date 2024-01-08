@@ -24,8 +24,8 @@ inputDefs:
             when:
               ruleActivated: |-
                 "wildcard:%s".format([request.principal.id])
-              ruleNotActivated: |-
-                "rule_not_activated:wildcard:%s".format([request.principal.id])
+              conditionNotMet: |-
+                "condition_not_met:wildcard:%s".format([request.principal.id])
         - actions: ["create"]
           derivedRoles:
             - employee_that_owns_the_record
@@ -41,7 +41,7 @@ inputDefs:
           effect: EFFECT_ALLOW
           output:
             when:
-              ruleNotActivated: |-
+              conditionNotMet: |-
                 "something_arbitrary"
         - actions: ["view:public"]
           derivedRoles:

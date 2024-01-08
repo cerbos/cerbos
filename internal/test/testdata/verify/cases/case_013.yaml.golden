@@ -183,7 +183,7 @@
                             },
                             {
                               "src": "resource.equipment_request.vdefault#rule-002",
-                              "val": "rule_not_activated"
+                              "val": "condition_not_met"
                             }
                           ]
                         }
@@ -198,7 +198,7 @@
                           "outputs": [
                             {
                               "src": "resource.equipment_request.vdefault#rule-002",
-                              "val": "rule_not_activated"
+                              "val": "condition_not_met"
                             }
                           ]
                         }
@@ -255,7 +255,7 @@
                             },
                             {
                               "src": "resource.equipment_request.vdefault#rule-002",
-                              "val": "rule_not_activated"
+                              "val": "condition_not_met"
                             }
                           ]
                         }

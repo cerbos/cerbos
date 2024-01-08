@@ -1411,8 +1411,8 @@ func (m *Output_When) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.RuleNotActivated != nil {
-		size, err := m.RuleNotActivated.MarshalToSizedBufferVT(dAtA[:i])
+	if m.ConditionNotMet != nil {
+		size, err := m.ConditionNotMet.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -2723,8 +2723,8 @@ func (m *Output_When) SizeVT() (n int) {
 		l = m.RuleActivated.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.RuleNotActivated != nil {
-		l = m.RuleNotActivated.SizeVT()
+	if m.ConditionNotMet != nil {
+		l = m.ConditionNotMet.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -7123,7 +7123,7 @@ func (m *Output_When) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RuleNotActivated", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConditionNotMet", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7150,10 +7150,10 @@ func (m *Output_When) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.RuleNotActivated == nil {
-				m.RuleNotActivated = &Expr{}
+			if m.ConditionNotMet == nil {
+				m.ConditionNotMet = &Expr{}
 			}
-			if err := m.RuleNotActivated.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.ConditionNotMet.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

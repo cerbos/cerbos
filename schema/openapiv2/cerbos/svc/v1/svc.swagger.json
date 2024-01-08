@@ -1203,7 +1203,7 @@
         "ruleActivated": {
           "type": "string"
         },
-        "ruleNotActivated": {
+        "conditionNotMet": {
           "type": "string"
         }
       }

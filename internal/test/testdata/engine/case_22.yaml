@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: Test output.when.ruleActivated, output.when.ruleNotActivated and deprecated output.expr doesn't interfere
+description: Test output.when.ruleActivated, output.when.conditionNotMet and deprecated output.expr doesn't interfere
 
 inputs:
   - requestId: test
@@ -60,7 +60,7 @@ wantOutputs:
         policy: resource.equipment_request.vdefault
     outputs:
       - src: resource.equipment_request.vdefault#rule-002
-        val: rule_not_activated
+        val: condition_not_met
 
 wantDecisionLogs:
   - callId: 01HKA8W61K5D3SHQSKC4ANEMSZ
@@ -129,4 +129,4 @@ wantDecisionLogs:
             - direct_manager
           outputs:
             - src: resource.equipment_request.vdefault#rule-002
-              val: rule_not_activated
+              val: condition_not_met

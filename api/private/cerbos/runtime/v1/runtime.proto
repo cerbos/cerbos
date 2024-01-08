@@ -140,7 +140,7 @@ message Expr {
 message Output {
   message When {
     Expr rule_activated = 1;
-    Expr rule_not_activated = 2;
+    Expr condition_not_met = 2;
   }
 
   When when = 1;

@@ -346,10 +346,10 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 			}
 		}
 
-		if rule.Output.When != nil && rule.Output.When.RuleNotActivated != "" {
-			when.RuleNotActivated = &runtimev1.Expr{
-				Original: rule.Output.When.RuleNotActivated,
-				Checked:  compileCELExpr(modCtx, parent, rule.Output.When.RuleNotActivated, true),
+		if rule.Output.When != nil && rule.Output.When.ConditionNotMet != "" {
+			when.ConditionNotMet = &runtimev1.Expr{
+				Original: rule.Output.When.ConditionNotMet,
+				Checked:  compileCELExpr(modCtx, parent, rule.Output.When.ConditionNotMet, true),
 			}
 		}
 
@@ -451,10 +451,10 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 					}
 				}
 
-				if action.Output.When != nil && action.Output.When.RuleNotActivated != "" {
-					when.RuleNotActivated = &runtimev1.Expr{
-						Original: action.Output.When.RuleNotActivated,
-						Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.RuleNotActivated, true),
+				if action.Output.When != nil && action.Output.When.ConditionNotMet != "" {
+					when.ConditionNotMet = &runtimev1.Expr{
+						Original: action.Output.When.ConditionNotMet,
+						Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.ConditionNotMet, true),
 					}
 				}
 
