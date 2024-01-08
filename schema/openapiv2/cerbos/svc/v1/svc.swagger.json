@@ -1107,42 +1107,6 @@
         }
       }
     },
-    "DecisionLogEntryCheckResources": {
-      "type": "object",
-      "properties": {
-        "inputs": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1CheckInput"
-          }
-        },
-        "outputs": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1CheckOutput"
-          }
-        },
-        "error": {
-          "type": "string"
-        }
-      }
-    },
-    "DecisionLogEntryPlanResources": {
-      "type": "object",
-      "properties": {
-        "input": {
-          "$ref": "#/definitions/v1PlanResourcesInput"
-        },
-        "output": {
-          "$ref": "#/definitions/v1PlanResourcesOutput"
-        },
-        "error": {
-          "type": "string"
-        }
-      }
-    },
     "ExpressionOperand": {
       "type": "object",
       "properties": {
@@ -2324,10 +2288,10 @@
           "description": "Deprecated. Use method.check_resources.error instead."
         },
         "checkResources": {
-          "$ref": "#/definitions/DecisionLogEntryCheckResources"
+          "$ref": "#/definitions/v1DecisionLogEntryCheckResources"
         },
         "planResources": {
-          "$ref": "#/definitions/DecisionLogEntryPlanResources"
+          "$ref": "#/definitions/v1DecisionLogEntryPlanResources"
         },
         "metadata": {
           "type": "object",
@@ -2337,6 +2301,42 @@
         },
         "auditTrail": {
           "$ref": "#/definitions/v1AuditTrail"
+        }
+      }
+    },
+    "v1DecisionLogEntryCheckResources": {
+      "type": "object",
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1CheckInput"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1CheckOutput"
+          }
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DecisionLogEntryPlanResources": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "$ref": "#/definitions/v1PlanResourcesInput"
+        },
+        "output": {
+          "$ref": "#/definitions/v1PlanResourcesOutput"
+        },
+        "error": {
+          "type": "string"
         }
       }
     },
