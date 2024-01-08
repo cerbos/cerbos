@@ -11,7 +11,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.9
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser v1.23.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0
 	github.com/planetscale/vtprotobuf v0.5.0
 	github.com/vektra/mockery/v2 v2.39.1
 	go.elastic.co/go-licence-detector v0.6.0
@@ -23,7 +23,7 @@ require (
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231115204500-e097f827e652.2 // indirect
 	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.31.0-20231111212044-1119bf4b707e.2 // indirect
-	cloud.google.com/go v0.110.10 // indirect
+	cloud.google.com/go v0.111.0 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
@@ -297,10 +297,10 @@ require (
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.151.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20231120223509-83a465c0220f // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
-	google.golang.org/grpc v1.59.0 // indirect
+	google.golang.org/genproto v0.0.0-20231212172506-995d672761c0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240102182953-50ed04b92917 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917 // indirect
+	google.golang.org/grpc v1.60.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
