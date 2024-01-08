@@ -86,9 +86,7 @@ func (i *statsInterceptors) collectStats(ctx context.Context, method string) {
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		if v := md.Get("grpcgateway-user-agent"); len(v) > 0 {
-			mInfo.userAgent = v[0]
-		} else if v := md.Get("user-agent"); len(v) > 0 {
+		if v := md.Get("user-agent"); len(v) > 0 {
 			mInfo.userAgent = v[0]
 		}
 	}

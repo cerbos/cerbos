@@ -469,6 +469,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	gwmux := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(customHTTPResponseCode),
+		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) { return key, true }),
 		runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
 			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
 			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
