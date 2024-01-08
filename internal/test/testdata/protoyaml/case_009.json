@@ -1,23 +1,23 @@
 {
-    "description": "Valid collection of policies in a single file",
+    "description": "Validation errors",
+    "wantError": true,
     "want": [
         {
             "message": {
-                "apiVersion": "api.cerbos.dev/v1",
+                "apiVersion": "api.cerbos.dev/vfoo",
                 "variables": {
                     "pending_approval": "(\"PENDING_APPROVAL\")",
                     "principal_location": "(P.attr.ip_address.inIPAddrRange(\"10.20.0.0/16\") ? \"GB\" : \"\")"
                 },
                 "resourcePolicy": {
                     "version": "20210210",
+                    "scope": "¬s",
                     "importDerivedRoles": [
                         "alpha",
                         "beta"
                     ],
                     "schemas": {
-                        "principalSchema": {
-                            "ref": "cerbos:///principal.json"
-                        },
+                        "principalSchema": {},
                         "resourceSchema": {
                             "ref": "cerbos:///resources/leave_request.json"
                         }
@@ -39,7 +39,7 @@
                                 "create"
                             ],
                             "derivedRoles": [
-                                "employee_that_owns_the_record"
+                                ""
                             ],
                             "effect": "EFFECT_ALLOW"
                         },
@@ -153,7 +153,45 @@
                         }
                     ]
                 }
-            }
+            },
+            "errors": [
+                {
+                    "kind": "KIND_VALIDATION_ERROR",
+                    "position": {
+                        "line": 3,
+                        "column": 1,
+                        "path": "$.apiVersion"
+                    },
+                    "message": "value must equal `api.cerbos.dev/v1`"
+                },
+                {
+                    "kind": "KIND_VALIDATION_ERROR",
+                    "position": {
+                        "line": 10,
+                        "column": 3,
+                        "path": "$.resource_policy.scope"
+                    },
+                    "message": "value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
+                },
+                {
+                    "kind": "KIND_VALIDATION_ERROR",
+                    "position": {
+                        "line": 16,
+                        "column": 7,
+                        "path": "$.schemas.principal_schema.ref"
+                    },
+                    "message": "value is required"
+                },
+                {
+                    "kind": "KIND_VALIDATION_ERROR",
+                    "position": {
+                        "line": 29,
+                        "column": 11,
+                        "path": "$.resource_policy.rules[1].derived_roles[0]"
+                    },
+                    "message": "value does not match regex pattern `^[[:word:]\\-\\.]+$`"
+                }
+            ]
         },
         {
             "message": {

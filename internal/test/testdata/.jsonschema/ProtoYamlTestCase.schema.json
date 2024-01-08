@@ -546,6 +546,61 @@
         }
       }
     },
+    "cerbos.private.v1.ProtoYamlTestCase.Want": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.source.v1.Error"
+          }
+        },
+        "message": {
+          "$ref": "#/definitions/cerbos.policy.v1.Policy"
+        }
+      }
+    },
+    "cerbos.source.v1.Error": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/cerbos.source.v1.Error.Kind"
+        },
+        "message": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
+        }
+      }
+    },
+    "cerbos.source.v1.Error.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_PARSE_ERROR",
+        "KIND_VALIDATION_ERROR"
+      ]
+    },
+    "cerbos.source.v1.Position": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -560,14 +615,11 @@
     "want": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/cerbos.policy.v1.Policy"
+        "$ref": "#/definitions/cerbos.private.v1.ProtoYamlTestCase.Want"
       }
     },
-    "wantErrors": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "wantError": {
+      "type": "boolean"
     }
   }
 }

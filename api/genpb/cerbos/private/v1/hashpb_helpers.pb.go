@@ -11,6 +11,7 @@ import (
 	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	v16 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v17 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -2084,6 +2085,25 @@ func cerbos_private_v1_IndexBuilderTestCase_hashpb_sum(m *IndexBuilderTestCase, 
 	}
 }
 
+func cerbos_private_v1_ProtoYamlTestCase_Want_hashpb_sum(m *ProtoYamlTestCase_Want, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.Want.message"]; !ok {
+		if m.Message != nil {
+			cerbos_policy_v1_Policy_hashpb_sum(m.Message, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.Want.errors"]; !ok {
+		if len(m.Errors) > 0 {
+			for _, v := range m.Errors {
+				if v != nil {
+					cerbos_source_v1_Error_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_private_v1_ProtoYamlTestCase_hashpb_sum(m *ProtoYamlTestCase, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.description"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
@@ -2093,19 +2113,15 @@ func cerbos_private_v1_ProtoYamlTestCase_hashpb_sum(m *ProtoYamlTestCase, hasher
 		if len(m.Want) > 0 {
 			for _, v := range m.Want {
 				if v != nil {
-					cerbos_policy_v1_Policy_hashpb_sum(v, hasher, ignore)
+					cerbos_private_v1_ProtoYamlTestCase_Want_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.want_errors"]; !ok {
-		if len(m.WantErrors) > 0 {
-			for _, v := range m.WantErrors {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
+	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.want_error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.WantError)))
 
-			}
-		}
 	}
 }
 
@@ -3606,6 +3622,38 @@ func cerbos_schema_v1_ValidationError_hashpb_sum(m *v16.ValidationError, hasher 
 	}
 	if _, ok := ignore["cerbos.schema.v1.ValidationError.source"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Source)))
+
+	}
+}
+
+func cerbos_source_v1_Error_hashpb_sum(m *v17.Error, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.source.v1.Error.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Kind)))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.Error.position"]; !ok {
+		if m.Position != nil {
+			cerbos_source_v1_Position_hashpb_sum(m.Position, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.source.v1.Error.message"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Message))
+
+	}
+}
+
+func cerbos_source_v1_Position_hashpb_sum(m *v17.Position, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.source.v1.Position.line"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Line)))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.Position.column"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Column)))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.Position.path"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Path))
 
 	}
 }

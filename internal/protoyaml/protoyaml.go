@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/lexer"
 	"github.com/goccy/go-yaml/parser"
@@ -20,6 +21,8 @@ import (
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 )
 
 const (
@@ -43,7 +46,19 @@ func (pe ParseError) Unwrap() error {
 	return pe.Err
 }
 
+type ValidationError struct {
+	Msg  string
+	Path string
+	Line int
+	Col  int
+}
+
+func (ve ValidationError) Error() string {
+	return fmt.Sprintf("%d:%d [%s] %v", ve.Line, ve.Col, ve.Path, ve.Msg)
+}
+
 type unmarshalOpts struct {
+	validator           *protovalidate.Validator
 	fixInvalidStrings   bool
 	ignoreUnknownFields bool
 }
@@ -64,10 +79,101 @@ func WithIgnoreUnknownFields() UnmarshalOpt {
 	}
 }
 
+// WithValidate validates the unmarshaled message using protovalidate.
+func WithValidator(validator *protovalidate.Validator) UnmarshalOpt {
+	return func(uo *unmarshalOpts) {
+		uo.validator = validator
+	}
+}
+
 type Unmarshaler[T proto.Message] struct {
 	factory func() T
 	anchors map[string]ast.Node
 	unmarshalOpts
+}
+
+type unmarshalCtx struct {
+	srcCtx    *sourcev1.SourceContext
+	protoPath string
+}
+
+func (uc *unmarshalCtx) forField(fd protoreflect.FieldDescriptor, n ast.Node) *unmarshalCtx {
+	return uc.forMapItem(string(fd.Name()), n)
+}
+
+func (uc *unmarshalCtx) forListItem(i int, n ast.Node) *unmarshalCtx {
+	newPath := fmt.Sprintf("%s[%d]", uc.protoPath, i)
+	uc.recordFieldPosition(newPath, n)
+	return &unmarshalCtx{protoPath: newPath, srcCtx: uc.srcCtx}
+}
+
+func (uc *unmarshalCtx) forMapItem(key string, n ast.Node) *unmarshalCtx {
+	var newPath string
+	if uc.protoPath != "" {
+		newPath = uc.protoPath + "." + key
+	} else {
+		newPath = key
+	}
+
+	uc.recordFieldPosition(newPath, n)
+	return &unmarshalCtx{protoPath: newPath, srcCtx: uc.srcCtx}
+}
+
+func (uc *unmarshalCtx) recordFieldPosition(path string, n ast.Node) {
+	if n != nil {
+		if tok := n.GetToken(); tok != nil && tok.Position != nil {
+			uc.srcCtx.FieldPositions[path] = &sourcev1.Position{Line: uint32(tok.Position.Line), Column: uint32(tok.Position.Column), Path: n.GetPath()}
+		}
+	}
+}
+
+func (uc *unmarshalCtx) errorf(n ast.Node, msg string, args ...any) error {
+	err := fmt.Errorf(msg, args...)
+	if n == nil {
+		return uc.recordParseError(ParseError{Err: err})
+	}
+
+	tok := n.GetToken()
+	if tok == nil {
+		return uc.recordParseError(ParseError{Err: err, Path: n.GetPath()})
+	}
+
+	return uc.recordParseError(ParseError{
+		Line: tok.Position.Line,
+		Col:  tok.Position.Column,
+		Path: n.GetPath(),
+		Err:  err,
+	})
+}
+
+func (uc *unmarshalCtx) recordParseError(pe ParseError) error {
+	uc.srcCtx.Errors = append(uc.srcCtx.Errors, &sourcev1.Error{
+		Kind:     sourcev1.Error_KIND_PARSE_ERROR,
+		Position: &sourcev1.Position{Line: uint32(pe.Line), Column: uint32(pe.Col), Path: pe.Path},
+		Message:  pe.Err.Error(),
+	})
+
+	return pe
+}
+
+func (uc *unmarshalCtx) verrorf(path, msg string) error {
+	verr := ValidationError{Msg: msg, Path: path}
+	if pos, ok := uc.srcCtx.FieldPositions[path]; ok {
+		verr.Line = int(pos.Line)
+		verr.Col = int(pos.Column)
+	}
+
+	return uc.recordValidationError(verr)
+}
+
+func (uc *unmarshalCtx) recordValidationError(ve ValidationError) error {
+	uc.srcCtx.Errors = append(uc.srcCtx.Errors, &sourcev1.Error{
+		Kind:     sourcev1.Error_KIND_VALIDATION_ERROR,
+		Position: &sourcev1.Position{Line: uint32(ve.Line), Column: uint32(ve.Col), Path: ve.Path},
+		Message:  ve.Msg,
+	})
+
+	return ve
 }
 
 func NewUnmarshaler[T proto.Message](factory func() T, opts ...UnmarshalOpt) *Unmarshaler[T] {
@@ -79,16 +185,16 @@ func NewUnmarshaler[T proto.Message](factory func() T, opts ...UnmarshalOpt) *Un
 	return &Unmarshaler[T]{factory: factory, unmarshalOpts: uo}
 }
 
-func (u *Unmarshaler[T]) UnmarshalReader(r io.Reader) ([]T, error) {
+func (u *Unmarshaler[T]) UnmarshalReader(r io.Reader) ([]T, []*sourcev1.SourceContext, error) {
 	contents, err := io.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read contents: %w", err)
+		return nil, nil, fmt.Errorf("failed to read contents: %w", err)
 	}
 
 	return u.unmarshal(contents)
 }
 
-func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, outErr error) {
+func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, _ []*sourcev1.SourceContext, outErr error) {
 	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
 	if u.fixInvalidStrings {
 		t = fixStringsStartingWithQuotes(t)
@@ -96,25 +202,30 @@ func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, outErr error) {
 
 	f, err := parser.Parse(t, 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse contents: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse contents: %w", err)
 	}
 
 	if len(f.Docs) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	out := make([]T, 0, len(f.Docs))
+	outMsg := make([]T, 0, len(f.Docs))
+	outSrc := make([]*sourcev1.SourceContext, 0, len(f.Docs))
 	for _, doc := range f.Docs {
-		t, err := u.unmarshalDoc(doc)
-		if err != nil {
+		msg := u.factory()
+		srcCtx := &sourcev1.SourceContext{FieldPositions: make(map[string]*sourcev1.Position)}
+		uctx := &unmarshalCtx{srcCtx: srcCtx}
+		if err := u.unmarshalDoc(uctx, doc, msg); err != nil {
 			outErr = errors.Join(outErr, err)
-			continue
+		} else if err := u.validate(uctx, msg); err != nil {
+			outErr = errors.Join(outErr, err)
 		}
 
-		out = append(out, t)
+		outMsg = append(outMsg, msg)
+		outSrc = append(outSrc, srcCtx)
 	}
 
-	return out, outErr
+	return outMsg, outSrc, outErr
 }
 
 func fixStringsStartingWithQuotes(tokens token.Tokens) token.Tokens {
@@ -175,20 +286,17 @@ func fixStringsStartingWithQuotes(tokens token.Tokens) token.Tokens {
 	return newTokens
 }
 
-func (u *Unmarshaler[T]) unmarshalDoc(doc *ast.DocumentNode) (T, error) {
-	obj := u.factory()
-	outReflect := obj.ProtoReflect()
-
+func (u *Unmarshaler[T]) unmarshalDoc(uctx *unmarshalCtx, doc *ast.DocumentNode, msg T) error {
 	baseNode, ok := doc.Body.(ast.MapNode)
 	if !ok {
-		return obj, errorf(doc.Body, "unexpected node type %s", doc.Body.Type())
+		return uctx.errorf(doc.Body, "unexpected node type %s", doc.Body.Type())
 	}
 
-	err := u.unmarshalMapping(baseNode, outReflect)
-	return obj, err
+	msgReflect := msg.ProtoReflect()
+	return u.unmarshalMapping(uctx, baseNode, msgReflect)
 }
 
-func (u *Unmarshaler[T]) unmarshalMapping(v ast.MapNode, out protoreflect.Message) error {
+func (u *Unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out protoreflect.Message) error {
 	fields := out.Descriptor().Fields()
 	seen := make(map[protowire.Number]string, fields.Len())
 	seenOneOfs := make(map[int]string)
@@ -202,18 +310,18 @@ func (u *Unmarshaler[T]) unmarshalMapping(v ast.MapNode, out protoreflect.Messag
 		case *ast.StringNode:
 			keyValue = kt.Value
 		case *ast.MergeKeyNode:
-			mn, err := u.resolveMerge(items.Value())
+			mn, err := u.resolveMerge(uctx, items.Value())
 			if err != nil {
 				return err
 			}
 
-			if err := u.unmarshalMapping(mn, out); err != nil {
+			if err := u.unmarshalMapping(uctx, mn, out); err != nil {
 				return err
 			}
 
 			continue
 		default:
-			return errorf(kn, "unexpected key type %s", kn.Type())
+			return uctx.errorf(kn, "unexpected key type %s", kn.Type())
 		}
 
 		field := fields.ByJSONName(keyValue)
@@ -225,36 +333,36 @@ func (u *Unmarshaler[T]) unmarshalMapping(v ast.MapNode, out protoreflect.Messag
 			if u.ignoreUnknownFields {
 				continue
 			}
-			return errorf(kn, "unknown field %s", keyValue)
+			return uctx.errorf(kn, "unknown field %s", keyValue)
 		}
 
 		if prev, ok := seen[field.Number()]; ok {
-			return errorf(kn, "duplicate field definition: previous definition at %s", prev)
+			return uctx.errorf(kn, "duplicate field definition: previous definition at %s", prev)
 		}
 		seen[field.Number()] = pos(kn)
 
 		switch {
 		case field.IsList():
 			list := out.Mutable(field).List()
-			if err := u.unmarshalList(items.Value(), field, list); err != nil {
+			if err := u.unmarshalList(uctx.forField(field, kn), items.Value(), field, list); err != nil {
 				return err
 			}
 		case field.IsMap():
 			mmap := out.Mutable(field).Map()
-			if err := u.unmarshalMap(items.Value(), field, mmap); err != nil {
+			if err := u.unmarshalMap(uctx.forField(field, kn), items.Value(), field, mmap); err != nil {
 				return err
 			}
 		default:
 			if oof := field.ContainingOneof(); oof != nil {
 				idx := oof.Index()
 				if prev, ok := seenOneOfs[idx]; ok {
-					return errorf(kn, "invalid value: oneof field is already set at %s", prev)
+					return uctx.errorf(kn, "invalid value: oneof field is already set at %s", prev)
 				}
 
 				seenOneOfs[idx] = pos(kn)
 			}
 
-			if err := u.unmarshalSingular(items.Value(), field, out); err != nil {
+			if err := u.unmarshalSingular(uctx.forField(field, kn), items.Value(), field, out); err != nil {
 				return err
 			}
 		}
@@ -263,26 +371,26 @@ func (u *Unmarshaler[T]) unmarshalMapping(v ast.MapNode, out protoreflect.Messag
 	return nil
 }
 
-func (u *Unmarshaler[T]) resolveMerge(n ast.Node) (ast.MapNode, error) {
+func (u *Unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNode, error) {
 	if an, ok := n.(*ast.AliasNode); ok {
 		anchorName := an.Value.GetToken().Value
 		aliased, ok := u.anchors[anchorName]
 		if !ok {
-			return nil, errorf(n, "unknown anchor %q", anchorName)
+			return nil, uctx.errorf(n, "unknown anchor %q", anchorName)
 		}
 
 		mn, ok := aliased.(ast.MapNode)
 		if !ok {
-			return nil, errorf(n, "expected map alias got %s", aliased.Type())
+			return nil, uctx.errorf(n, "expected map alias got %s", aliased.Type())
 		}
 
 		return mn, nil
 	}
 
-	return nil, errorf(n, "not an alias")
+	return nil, uctx.errorf(n, "not an alias")
 }
 
-func (u *Unmarshaler[T]) resolveNode(n ast.Node) (ast.Node, error) {
+func (u *Unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, error) {
 	switch t := n.(type) {
 	case *ast.AnchorNode:
 		anchorName := t.Name.GetToken().Value
@@ -293,7 +401,7 @@ func (u *Unmarshaler[T]) resolveNode(n ast.Node) (ast.Node, error) {
 		}
 
 		if _, ok := u.anchors[anchorName]; ok {
-			return nil, errorf(n, "duplicate anchor definition %q", t.String())
+			return nil, uctx.errorf(n, "duplicate anchor definition %q", t.String())
 		}
 
 		u.anchors[anchorName] = t.Value
@@ -302,7 +410,7 @@ func (u *Unmarshaler[T]) resolveNode(n ast.Node) (ast.Node, error) {
 		anchorName := t.Value.GetToken().Value
 		an, ok := u.anchors[anchorName]
 		if !ok {
-			return nil, errorf(n, "unknown anchor %q", anchorName)
+			return nil, uctx.errorf(n, "unknown anchor %q", anchorName)
 		}
 
 		return an, nil
@@ -311,30 +419,30 @@ func (u *Unmarshaler[T]) resolveNode(n ast.Node) (ast.Node, error) {
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalList(n ast.Node, fd protoreflect.FieldDescriptor, list protoreflect.List) error {
-	nn, err := u.resolveNode(n)
+func (u *Unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, list protoreflect.List) error {
+	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return err
 	}
 
 	sn, ok := nn.(*ast.SequenceNode)
 	if !ok {
-		return errorf(n, "expected sequence got %s", nn.Type())
+		return uctx.errorf(n, "expected sequence got %s", nn.Type())
 	}
 
 	switch fd.Kind() {
 	case protoreflect.MessageKind, protoreflect.GroupKind:
-		for _, item := range sn.Values {
+		for i, item := range sn.Values {
 			val := list.NewElement()
-			if err := u.unmarshalMessage(item, val.Message()); err != nil {
+			if err := u.unmarshalMessage(uctx.forListItem(i, item), item, val.Message()); err != nil {
 				return err
 			}
 
 			list.Append(val)
 		}
 	default:
-		for _, item := range sn.Values {
-			val, err := u.unmarshalScalar(item, fd)
+		for i, item := range sn.Values {
+			val, err := u.unmarshalScalar(uctx.forListItem(i, item), item, fd)
 			if err != nil {
 				return err
 			}
@@ -346,46 +454,46 @@ func (u *Unmarshaler[T]) unmarshalList(n ast.Node, fd protoreflect.FieldDescript
 	return nil
 }
 
-func (u *Unmarshaler[T]) unmarshalMap(n ast.Node, fd protoreflect.FieldDescriptor, mmap protoreflect.Map) error {
-	nn, err := u.resolveNode(n)
+func (u *Unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, mmap protoreflect.Map) error {
+	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return err
 	}
 
 	mn, ok := nn.(ast.MapNode)
 	if !ok {
-		return errorf(n, "expected map got %s", nn.Type())
+		return uctx.errorf(n, "expected map got %s", nn.Type())
 	}
 
-	var valueFn func(ast.Node) (protoreflect.Value, error)
+	var valueFn func(*unmarshalCtx, ast.Node) (protoreflect.Value, error)
 	switch fd.MapValue().Kind() {
 	case protoreflect.MessageKind, protoreflect.GroupKind:
-		valueFn = func(n ast.Node) (protoreflect.Value, error) {
+		valueFn = func(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
 			val := mmap.NewValue()
-			if err := u.unmarshalMessage(n, val.Message()); err != nil {
+			if err := u.unmarshalMessage(uctx, n, val.Message()); err != nil {
 				return protoreflect.Value{}, err
 			}
 
 			return val, nil
 		}
 	default:
-		valueFn = func(n ast.Node) (protoreflect.Value, error) {
-			return u.unmarshalScalar(n, fd.MapValue())
+		valueFn = func(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
+			return u.unmarshalScalar(uctx, n, fd.MapValue())
 		}
 	}
 
 	items := mn.MapRange()
 	for items.Next() {
-		key, err := u.unmarshalMapKey(items.Key(), fd.MapKey())
+		key, err := u.unmarshalMapKey(uctx, items.Key(), fd.MapKey())
 		if err != nil {
 			return err
 		}
 
 		if mmap.Has(key) {
-			return errorf(items.Key(), "duplicate map key")
+			return uctx.errorf(items.Key(), "duplicate map key")
 		}
 
-		val, err := valueFn(items.Value())
+		val, err := valueFn(uctx.forMapItem(key.String(), items.Key()), items.Value())
 		if err != nil {
 			return err
 		}
@@ -396,17 +504,17 @@ func (u *Unmarshaler[T]) unmarshalMap(n ast.Node, fd protoreflect.FieldDescripto
 	return nil
 }
 
-func (u *Unmarshaler[T]) unmarshalSingular(n ast.Node, fd protoreflect.FieldDescriptor, out protoreflect.Message) error {
+func (u *Unmarshaler[T]) unmarshalSingular(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, out protoreflect.Message) error {
 	if k := fd.Kind(); k == protoreflect.MessageKind || k == protoreflect.GroupKind {
 		value := out.NewField(fd)
-		if err := u.unmarshalMessage(n, value.Message()); err != nil {
+		if err := u.unmarshalMessage(uctx, n, value.Message()); err != nil {
 			return err
 		}
 		out.Set(fd, value)
 		return nil
 	}
 
-	value, err := u.unmarshalScalar(n, fd)
+	value, err := u.unmarshalScalar(uctx, n, fd)
 	if err != nil {
 		return err
 	}
@@ -415,54 +523,54 @@ func (u *Unmarshaler[T]) unmarshalSingular(n ast.Node, fd protoreflect.FieldDesc
 	return nil
 }
 
-func (u *Unmarshaler[T]) unmarshalScalar(n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
-	nn, err := u.resolveNode(n)
+func (u *Unmarshaler[T]) unmarshalScalar(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
+	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return protoreflect.Value{}, err
 	}
 
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
-		return u.unmarshalBool(nn)
+		return u.unmarshalBool(uctx, nn)
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
-		return u.unmarshalInt(nn, bitSize32)
+		return u.unmarshalInt(uctx, nn, bitSize32)
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
-		return u.unmarshalInt(nn, bitSize64)
+		return u.unmarshalInt(uctx, nn, bitSize64)
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
-		return u.unmarshalUint(nn, bitSize32)
+		return u.unmarshalUint(uctx, nn, bitSize32)
 	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		return u.unmarshalUint(nn, bitSize64)
+		return u.unmarshalUint(uctx, nn, bitSize64)
 	case protoreflect.EnumKind:
-		return u.unmarshalEnum(nn, fd)
+		return u.unmarshalEnum(uctx, nn, fd)
 	case protoreflect.FloatKind:
-		return u.unmarshalFloat(nn, bitSize32)
+		return u.unmarshalFloat(uctx, nn, bitSize32)
 	case protoreflect.DoubleKind:
-		return u.unmarshalFloat(nn, bitSize64)
+		return u.unmarshalFloat(uctx, nn, bitSize64)
 	case protoreflect.StringKind:
-		return u.unmarshalString(nn)
+		return u.unmarshalString(uctx, nn)
 	case protoreflect.BytesKind:
-		return u.unmarshalBytes(nn)
+		return u.unmarshalBytes(uctx, nn)
 	default:
-		return protoreflect.Value{}, errorf(n, "unknown scalar type")
+		return protoreflect.Value{}, uctx.errorf(n, "unknown scalar type")
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalBool(n ast.Node) (protoreflect.Value, error) {
+func (u *Unmarshaler[T]) unmarshalBool(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
 	bn, ok := n.(*ast.BoolNode)
 	if !ok {
-		return protoreflect.Value{}, errorf(n, "expected boolean value got %s", n.Type())
+		return protoreflect.Value{}, uctx.errorf(n, "expected boolean value got %s", n.Type())
 	}
 
 	return protoreflect.ValueOfBool(bn.Value), nil
 }
 
-func (u *Unmarshaler[T]) unmarshalEnum(n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
+func (u *Unmarshaler[T]) unmarshalEnum(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.StringNode:
 		if ev := fd.Enum().Values().ByName(protoreflect.Name(t.Value)); ev != nil {
 			return protoreflect.ValueOfEnum(ev.Number()), nil
 		}
-		return protoreflect.Value{}, errorf(n, "invalid enum value %q", t.Value)
+		return protoreflect.Value{}, uctx.errorf(n, "invalid enum value %q", t.Value)
 	case *ast.IntegerNode:
 		switch tv := t.Value.(type) {
 		case uint64:
@@ -470,16 +578,16 @@ func (u *Unmarshaler[T]) unmarshalEnum(n ast.Node, fd protoreflect.FieldDescript
 		case int64:
 			return protoreflect.ValueOfEnum(protoreflect.EnumNumber(tv)), nil
 		default:
-			return protoreflect.Value{}, errorf(n, "invalid enum value %q", t.Value)
+			return protoreflect.Value{}, uctx.errorf(n, "invalid enum value %q", t.Value)
 		}
 	case *ast.NullNode:
 		return protoreflect.ValueOfEnum(0), nil
 	default:
-		return protoreflect.Value{}, errorf(n, "invalid enum value")
+		return protoreflect.Value{}, uctx.errorf(n, "invalid enum value")
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalString(n ast.Node) (protoreflect.Value, error) {
+func (u *Unmarshaler[T]) unmarshalString(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.StringNode:
 		return protoreflect.ValueOfString(t.Value), nil
@@ -494,15 +602,15 @@ func (u *Unmarshaler[T]) unmarshalString(n ast.Node) (protoreflect.Value, error)
 		case int64:
 			return protoreflect.ValueOfString(strconv.FormatInt(tv, 10)), nil
 		default:
-			return protoreflect.Value{}, errorf(n, "unexpected integer value %q", t.Value)
+			return protoreflect.Value{}, uctx.errorf(n, "unexpected integer value %q", t.Value)
 		}
 	default:
-		return protoreflect.Value{}, errorf(n, "expected string value got %s", n.Type())
+		return protoreflect.Value{}, uctx.errorf(n, "expected string value got %s", n.Type())
 	}
 }
 
 //nolint:dupl
-func (u *Unmarshaler[T]) unmarshalInt(n ast.Node, bitSize int) (protoreflect.Value, error) {
+func (u *Unmarshaler[T]) unmarshalInt(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.IntegerNode:
 		switch tv := t.Value.(type) {
@@ -517,25 +625,25 @@ func (u *Unmarshaler[T]) unmarshalInt(n ast.Node, bitSize int) (protoreflect.Val
 			}
 			return protoreflect.ValueOfInt64(tv), nil
 		default:
-			return protoreflect.Value{}, errorf(n, "invalid integer value %q", t.Value)
+			return protoreflect.Value{}, uctx.errorf(n, "invalid integer value %q", t.Value)
 		}
 	case *ast.StringNode:
 		s := strings.TrimSpace(t.Value)
 		v, err := strconv.ParseInt(s, base10, bitSize)
 		if err != nil {
-			return protoreflect.Value{}, errorf(n, "invalid integer value %q: %w", v, err)
+			return protoreflect.Value{}, uctx.errorf(n, "invalid integer value %q: %w", v, err)
 		}
 		if bitSize == bitSize32 {
 			return protoreflect.ValueOfInt32(int32(v)), nil
 		}
 		return protoreflect.ValueOfInt64(v), nil
 	default:
-		return protoreflect.Value{}, errorf(n, "expected integer value got %s", n.Type())
+		return protoreflect.Value{}, uctx.errorf(n, "expected integer value got %s", n.Type())
 	}
 }
 
 //nolint:dupl
-func (u *Unmarshaler[T]) unmarshalUint(n ast.Node, bitSize int) (protoreflect.Value, error) {
+func (u *Unmarshaler[T]) unmarshalUint(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.IntegerNode:
 		switch tv := t.Value.(type) {
@@ -550,24 +658,24 @@ func (u *Unmarshaler[T]) unmarshalUint(n ast.Node, bitSize int) (protoreflect.Va
 			}
 			return protoreflect.ValueOfUint64(uint64(tv)), nil
 		default:
-			return protoreflect.Value{}, errorf(n, "invalid integer value %q", t.Value)
+			return protoreflect.Value{}, uctx.errorf(n, "invalid integer value %q", t.Value)
 		}
 	case *ast.StringNode:
 		s := strings.TrimSpace(t.Value)
 		v, err := strconv.ParseUint(s, base10, bitSize)
 		if err != nil {
-			return protoreflect.Value{}, errorf(n, "invalid integer value %q: %w", v, err)
+			return protoreflect.Value{}, uctx.errorf(n, "invalid integer value %q: %w", v, err)
 		}
 		if bitSize == bitSize32 {
 			return protoreflect.ValueOfUint32(uint32(v)), nil
 		}
 		return protoreflect.ValueOfUint64(v), nil
 	default:
-		return protoreflect.Value{}, errorf(n, "expected integer value got %s", n.Type())
+		return protoreflect.Value{}, uctx.errorf(n, "expected integer value got %s", n.Type())
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalFloat(n ast.Node, bitSize int) (protoreflect.Value, error) {
+func (u *Unmarshaler[T]) unmarshalFloat(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.IntegerNode:
 		switch tv := t.Value.(type) {
@@ -582,7 +690,7 @@ func (u *Unmarshaler[T]) unmarshalFloat(n ast.Node, bitSize int) (protoreflect.V
 			}
 			return protoreflect.ValueOfFloat64(float64(tv)), nil
 		default:
-			return protoreflect.Value{}, errorf(n, "invalid float value %q", t.Value)
+			return protoreflect.Value{}, uctx.errorf(n, "invalid float value %q", t.Value)
 		}
 	case *ast.FloatNode:
 		if bitSize == bitSize32 {
@@ -610,7 +718,7 @@ func (u *Unmarshaler[T]) unmarshalFloat(n ast.Node, bitSize int) (protoreflect.V
 			s := strings.TrimSpace(t.Value)
 			v, err := strconv.ParseFloat(s, bitSize)
 			if err != nil {
-				return protoreflect.Value{}, errorf(n, "invalid float value %q: %w", s, err)
+				return protoreflect.Value{}, uctx.errorf(n, "invalid float value %q: %w", s, err)
 			}
 
 			if bitSize == bitSize32 {
@@ -619,11 +727,11 @@ func (u *Unmarshaler[T]) unmarshalFloat(n ast.Node, bitSize int) (protoreflect.V
 			return protoreflect.ValueOfFloat64(v), nil
 		}
 	default:
-		return protoreflect.Value{}, errorf(n, "expected float value got %s", n.Type())
+		return protoreflect.Value{}, uctx.errorf(n, "expected float value got %s", n.Type())
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalBytes(n ast.Node) (protoreflect.Value, error) {
+func (u *Unmarshaler[T]) unmarshalBytes(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
 	var s string
 	switch t := n.(type) {
 	case *ast.StringNode:
@@ -631,7 +739,7 @@ func (u *Unmarshaler[T]) unmarshalBytes(n ast.Node) (protoreflect.Value, error) 
 	case *ast.LiteralNode:
 		s = t.Value.Value
 	default:
-		return protoreflect.Value{}, errorf(n, "expected string value got %s", n.Type())
+		return protoreflect.Value{}, uctx.errorf(n, "expected string value got %s", n.Type())
 	}
 
 	enc := base64.StdEncoding
@@ -645,30 +753,30 @@ func (u *Unmarshaler[T]) unmarshalBytes(n ast.Node) (protoreflect.Value, error) 
 
 	b, err := enc.DecodeString(s)
 	if err != nil {
-		return protoreflect.Value{}, errorf(n, "failed to decode bytes: %w", err)
+		return protoreflect.Value{}, uctx.errorf(n, "failed to decode bytes: %w", err)
 	}
 
 	return protoreflect.ValueOfBytes(b), nil
 }
 
-func (u *Unmarshaler[T]) unmarshalMessage(n ast.Node, out protoreflect.Message) error {
-	nn, err := u.resolveNode(n)
+func (u *Unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out protoreflect.Message) error {
+	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return err
 	}
 
 	mn, ok := nn.(ast.MapNode)
 	if !ok {
-		return errorf(n, "expected object got %s", nn.Type())
+		return uctx.errorf(n, "expected object got %s", nn.Type())
 	}
 
-	return u.unmarshalMapping(mn, out)
+	return u.unmarshalMapping(uctx, mn, out)
 }
 
-func (u *Unmarshaler[T]) unmarshalMapKey(n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.MapKey, error) {
+func (u *Unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.MapKey, error) {
 	sn, ok := n.(*ast.StringNode)
 	if !ok {
-		return protoreflect.MapKey{}, errorf(n, "expected string got %s", n.Type())
+		return protoreflect.MapKey{}, uctx.errorf(n, "expected string got %s", n.Type())
 	}
 
 	switch fd.Kind() {
@@ -681,54 +789,58 @@ func (u *Unmarshaler[T]) unmarshalMapKey(n ast.Node, fd protoreflect.FieldDescri
 		case "false":
 			return protoreflect.ValueOfBool(false).MapKey(), nil
 		default:
-			return protoreflect.MapKey{}, errorf(n, "invalid boolean value %q", sn.Value)
+			return protoreflect.MapKey{}, uctx.errorf(n, "invalid boolean value %q", sn.Value)
 		}
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
 		v, err := strconv.ParseInt(sn.Value, 10, 32)
 		if err != nil {
-			return protoreflect.MapKey{}, errorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.errorf(n, "invalid integer value %q: %w", sn.Value, err)
 		}
 		return protoreflect.ValueOfInt32(int32(v)).MapKey(), nil
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
 		v, err := strconv.ParseInt(sn.Value, 10, 64)
 		if err != nil {
-			return protoreflect.MapKey{}, errorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.errorf(n, "invalid integer value %q: %w", sn.Value, err)
 		}
 		return protoreflect.ValueOfInt64(v).MapKey(), nil
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
 		v, err := strconv.ParseUint(sn.Value, 10, 32)
 		if err != nil {
-			return protoreflect.MapKey{}, errorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.errorf(n, "invalid integer value %q: %w", sn.Value, err)
 		}
 		return protoreflect.ValueOfUint32(uint32(v)).MapKey(), nil
 	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
 		v, err := strconv.ParseUint(sn.Value, 10, 64)
 		if err != nil {
-			return protoreflect.MapKey{}, errorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.errorf(n, "invalid integer value %q: %w", sn.Value, err)
 		}
 		return protoreflect.ValueOfUint64(v).MapKey(), nil
 	default:
-		return protoreflect.MapKey{}, errorf(n, "unsupported map key type %s", fd.Kind())
+		return protoreflect.MapKey{}, uctx.errorf(n, "unsupported map key type %s", fd.Kind())
 	}
 }
 
-func errorf(n ast.Node, msg string, args ...any) error {
-	err := fmt.Errorf(msg, args...)
-	if n == nil {
+func (u *Unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
+	if u.validator == nil {
+		return nil
+	}
+
+	err := u.validator.Validate(msg)
+	if err == nil {
+		return nil
+	}
+
+	verrs := new(protovalidate.ValidationError)
+	if !errors.As(err, &verrs) {
 		return err
 	}
 
-	tok := n.GetToken()
-	if tok == nil {
-		return ParseError{Err: err, Path: n.GetPath()}
+	for _, v := range verrs.Violations {
+		path := v.GetFieldPath()
+		outErr = errors.Join(outErr, uctx.verrorf(path, v.GetMessage()))
 	}
 
-	return ParseError{
-		Line: tok.Position.Line,
-		Col:  tok.Position.Column,
-		Path: n.GetPath(),
-		Err:  fmt.Errorf(msg, args...),
-	}
+	return outErr
 }
 
 func pos(n ast.Node) string {

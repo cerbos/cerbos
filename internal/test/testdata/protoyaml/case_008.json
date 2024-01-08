@@ -2,62 +2,64 @@
     "description": "Condition starting with quote",
     "want": [
         {
-            "apiVersion": "api.cerbos.dev/v1",
-            "resourcePolicy": {
-                "version": "20210210",
-                "resource": "leave_request",
-                "rules": [
-                    {
-                        "actions": [
-                            "*"
-                        ],
-                        "effect": "EFFECT_ALLOW",
-                        "roles": [
-                            "admin"
-                        ],
-                        "name": "wildcard"
-                    },
-                    {
-                        "actions": [
-                            "defer"
-                        ],
-                        "effect": "EFFECT_ALLOW",
-                        "roles": [
-                            "employee"
-                        ],
-                        "condition": {
-                            "match": {
-                                "all": {
-                                    "of": [
-                                        {
-                                            "expr": "\"cerbos-jwt-tests\" in request.auxData.jwt.aud"
-                                        },
-                                        {
-                                            "expr": "\"A\" in request.auxData.jwt.customArray"
-                                        },
-                                        {
-                                            "expr": "'x' in request.auxData.jwt.customArray"
-                                        }
-                                    ]
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "version": "20210210",
+                    "resource": "leave_request",
+                    "rules": [
+                        {
+                            "actions": [
+                                "*"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "roles": [
+                                "admin"
+                            ],
+                            "name": "wildcard"
+                        },
+                        {
+                            "actions": [
+                                "defer"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "roles": [
+                                "employee"
+                            ],
+                            "condition": {
+                                "match": {
+                                    "all": {
+                                        "of": [
+                                            {
+                                                "expr": "\"cerbos-jwt-tests\" in request.auxData.jwt.aud"
+                                            },
+                                            {
+                                                "expr": "\"A\" in request.auxData.jwt.customArray"
+                                            },
+                                            {
+                                                "expr": "'x' in request.auxData.jwt.customArray"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "actions": [
+                                "remind"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "derivedRoles": [
+                                "direct_manager"
+                            ],
+                            "condition": {
+                                "match": {
+                                    "expr": "timestamp(request.resource.attr.modifiedAt).timeSince() == duration(\"24h\")"
                                 }
                             }
                         }
-                    },
-                    {
-                        "actions": [
-                            "remind"
-                        ],
-                        "effect": "EFFECT_ALLOW",
-                        "derivedRoles": [
-                            "direct_manager"
-                        ],
-                        "condition": {
-                            "match": {
-                                "expr": "timestamp(request.resource.attr.modifiedAt).timeSince() == duration(\"24h\")"
-                            }
-                        }
-                    }
-                ]
+                    ]
+                }
             }
         }
     ]
