@@ -8,6 +8,15 @@
 
 Cerbos is an authorization layer that evolves with your product. It enables you to define powerful, context-aware access control rules for your application resources in simple, intuitive YAML policies; managed and deployed via your Git-ops infrastructure. It provides highly available APIs to make simple requests to evaluate policies and make dynamic access decisions for your application.
 
+This repo has everything you need to set up a self-hosted Cerbos Policy Decision Point (PDP). [Sign up for a free Cerbos Hub account](https://cerbos.dev/product-cerbos-hub?utm_campaign=brand_cerbos&utm_source=github) to streamline your policy authoring and distribution workflow to self-hosted PDPs.
+
+With Cerbos Hub you can:
+
+- Collaborate with colleagues to author and share policies in fully-interactive private playgrounds
+- Quickly and efficiently distribute policy updates to your whole PDP fleet
+- Build special policy bundles for client-side or in-browser authorization
+- Easily integrate with Cerbos in serverless and edge deployments
+
 ## Key concepts, at a glance 👀
 
 **_PRINCIPAL:_** oftentimes just the "user", but can also represent: other applications, services, bots or anything you can think of. The "thing" that's trying to carry out an... ↙️
@@ -29,9 +38,15 @@ These APIs can be called via [cURL](#api-request), or in production via one of o
 
 **_RBAC -> ABAC:_** If simple RBAC doesn't cut it, you can extend the decision-making by implementing attribute based rules. Implement `conditions` in your resource policies which are evaluated dynamically at runtime using contextual data, for much more granular control. Add conditions in [derived roles](https://docs.cerbos.dev/cerbos/latest/policies/derived_roles.html) to dynamically extend the RBAC roles. Or use [principal policies](https://docs.cerbos.dev/cerbos/latest/policies/principal_policies.html) for more particular overrides for a specific user.
 
+**_CERBOS HUB:_** A cloud-hosted control plane to streamline your Cerbos PDP deployment. Includes a comprehensive CI/CD solution for testing and distributing policy updates securely and efficiently, collaborative private playgrounds for quick prototyping and experimentation, and an exclusive Embedded PDP solution for deploying your policies to browsers and serverless/edge applications.
+
+## How Cerbos PDP works with your application:
+
 <p align="center">
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
 </p>
+
+Learn more about how Cerbos PDP and Cerobs Hub work together to solve your authorization headaches [here](https://cerbos.dev/how-it-works?utm_campaign=brand_cerbos&utm_source=github).
 
 ## Learn more
 
@@ -40,6 +55,7 @@ These APIs can be called via [cURL](#api-request), or in production via one of o
 * Read the [full documentation](https://docs.cerbos.dev)
 * Explore some of our [demo repositories](https://github.com/cerbos)
 * Try online with the [Cerbos playground](https://play.cerbos.dev)
+* Learn more about [Cerbos Hub](https://cerbos.dev/product-cerbos-hub?utm_campaign=brand_cerbos&utm_source=github) and make an account
 
 ## Used by
 
