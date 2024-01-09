@@ -35,6 +35,7 @@ message Error {
   Kind kind = 1;
   Position position = 2;
   string message = 3;
+  string context = 4;
 }
 
 message SourceContext {

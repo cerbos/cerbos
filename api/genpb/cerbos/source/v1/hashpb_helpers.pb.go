@@ -528,6 +528,10 @@ func cerbos_source_v1_Error_hashpb_sum(m *Error, hasher hash.Hash, ignore map[st
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Message))
 
 	}
+	if _, ok := ignore["cerbos.source.v1.Error.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Context))
+
+	}
 }
 
 func cerbos_source_v1_ParsedFile_hashpb_sum(m *ParsedFile, hasher hash.Hash, ignore map[string]struct{}) {

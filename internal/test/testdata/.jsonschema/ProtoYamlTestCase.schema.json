@@ -565,6 +565,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "context": {
+          "type": "string"
+        },
         "kind": {
           "$ref": "#/definitions/cerbos.source.v1.Error.Kind"
         },

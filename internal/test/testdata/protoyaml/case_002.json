@@ -290,7 +290,8 @@
                     "name": "foobar",
                     "definitions": {
                         "foo": "42",
-                        "bar": "R.attr.foo == V.foo"
+                        "bar": "R.attr.foo == V.foo",
+                        "baz": "true"
                     }
                 }
             }

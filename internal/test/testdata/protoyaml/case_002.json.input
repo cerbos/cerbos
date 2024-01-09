@@ -84,6 +84,7 @@ resourcePolicy:
       condition:
         match:
           expr: 'timestamp(request.resource.attr.modifiedAt).timeSince() == duration("24h")'
+...
 ---
 apiVersion: "api.cerbos.dev/v1"
 derivedRoles:
@@ -109,6 +110,7 @@ derivedRoles:
 
     - name: kube_user
       parentRoles: ["system:basic_user"]
+...
 ---
 apiVersion: "api.cerbos.dev/v1"
 variables:
@@ -127,6 +129,7 @@ derivedRoles:
             of:
               - expr: V.same_geography
               - expr: request.resource.attr.geography == request.principal.attr.managed_geographies
+...
 ---
 apiVersion: "api.cerbos.dev/v1"
 variables:
@@ -153,5 +156,6 @@ apiVersion: api.cerbos.dev/v1
 exportVariables:
   name: foobar
   definitions:
-    foo: "42"
+    foo: !!str 42
     bar: R.attr.foo == V.foo
+    baz: !!str true

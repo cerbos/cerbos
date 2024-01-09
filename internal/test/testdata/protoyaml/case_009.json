@@ -169,7 +169,7 @@
                     "position": {
                         "line": 10,
                         "column": 3,
-                        "path": "$.resource_policy.scope"
+                        "path": "$.resourcePolicy.scope"
                     },
                     "message": "value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
                 },
@@ -178,7 +178,7 @@
                     "position": {
                         "line": 16,
                         "column": 7,
-                        "path": "$.schemas.principal_schema.ref"
+                        "path": "$.resourcePolicy.schemas.principalSchema.ref"
                     },
                     "message": "value is required"
                 },
@@ -187,7 +187,7 @@
                     "position": {
                         "line": 29,
                         "column": 11,
-                        "path": "$.resource_policy.rules[1].derived_roles[0]"
+                        "path": "$.resourcePolicy.rules[1].derivedRoles[0]"
                     },
                     "message": "value does not match regex pattern `^[[:word:]\\-\\.]+$`"
                 }

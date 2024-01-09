@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 
@@ -64,17 +65,24 @@ func TestUnmarshaler(t *testing.T) {
 					hm := haveMsg[i]
 					require.Empty(t, cmp.Diff(want.Message, hm, protocmp.Transform()))
 					if len(want.Errors) > 0 {
-						require.Empty(t, cmp.Diff(want.Errors, haveSrc[i].Errors, protocmp.Transform(), protocmp.SortRepeated(func(a, b *sourcev1.Error) bool {
-							if a.Position.Line == b.Position.Line {
-								return a.Position.Column > b.Position.Column
-							}
-							return a.Position.Line > b.Position.Line
-						})))
+						sortErrors(want.Errors)
+						sortErrors(haveSrc[i].Errors)
+						require.Empty(t, cmp.Diff(want.Errors, haveSrc[i].Errors, protocmp.Transform(), protocmp.IgnoreFields(&sourcev1.Error{}, "context")))
 					}
 				}
 			}
 		})
 	}
+}
+
+func sortErrors(errs []*sourcev1.Error) {
+	sort.Slice(errs, func(i, j int) bool {
+		if errs[i].Position.Line == errs[j].Position.Line {
+			return errs[i].Position.Column > errs[j].Position.Column
+		}
+
+		return errs[i].Position.Line > errs[j].Position.Line
+	})
 }
 
 func loadTestCase(t *testing.T, tc test.Case) (*privatev1.ProtoYamlTestCase, io.Reader) {

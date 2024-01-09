@@ -3641,6 +3641,10 @@ func cerbos_source_v1_Error_hashpb_sum(m *v17.Error, hasher hash.Hash, ignore ma
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Message))
 
 	}
+	if _, ok := ignore["cerbos.source.v1.Error.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Context))
+
+	}
 }
 
 func cerbos_source_v1_Position_hashpb_sum(m *v17.Position, hasher hash.Hash, ignore map[string]struct{}) {
