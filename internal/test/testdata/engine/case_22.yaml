@@ -1,66 +1,148 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: Test output.when.ruleActivated, output.when.conditionNotMet and deprecated output.expr doesn't interfere
+description: Test output.when.ruleActivated, output.when.conditionNotMet and deprecated output.expr
 
 inputs:
-  - requestId: test
+  - requestId: both-expr-and-when-defined-rule-activated
     actions:
-      - approve
+      - assign
     principal:
-      id: abc
+      id: john
       roles:
-        - manager
-      attr:
-        geography: GB
-        managed_geographies: GB
+        - employee
     resource:
       kind: equipment_request
-      id: test
+      id: equipment_request_1
       attr:
-        geography: GB
-        status: PENDING_APPROVAL
+        ownerId: john
 
-  - requestId: test
+  - requestId: both-expr-and-when-defined-cond-not-met
     actions:
-      - approve
+      - assign
     principal:
-      id: abc
+      id: john
       roles:
-        - manager
-      attr:
-        geography: GB
-        managed_geographies: GB
+        - employee
     resource:
       kind: equipment_request
-      id: test
+      id: equipment_request_2
       attr:
-        geography: GB
-        status: DRAFT
+        ownerId: johnny
+
+  - requestId: only-cond-not-met-defined-rule-activated
+    actions:
+      - cancel
+    principal:
+      id: anakin
+      roles:
+        - employee
+    resource:
+      kind: equipment_request
+      id: equipment_request_3
+      attr:
+        ownerId: anakin
+
+  - requestId: only-cond-not-met-defined-cond-not-met
+    actions:
+      - cancel
+    principal:
+      id: anakin
+      roles:
+        - employee
+    resource:
+      kind: equipment_request
+      id: equipment_request_4
+      attr:
+        ownerId: darth_vader
+
+  - requestId: both-cond-not-met-and-rule-activated-defined-but-cond-never-satisfied
+    actions:
+      - resend
+    principal:
+      id: oguzhan
+      roles:
+        - direct_manager
+    resource:
+      kind: equipment_request
+      id: equipment_request_5
+
+  - requestId: deprecated-expr-field
+    actions:
+      - deprecated
+    principal:
+      id: oguzhan
+      roles:
+        - employee
+    resource:
+      kind: equipment_request
+      id: equipment_request_6
+      attr:
+        ownerId: oguzhan
 
 wantOutputs:
-  - requestId: test
-    resourceId: test
+  - requestId: both-expr-and-when-defined-rule-activated
+    resourceId: equipment_request_1
     effectiveDerivedRoles:
-      - direct_manager
+      - any_employee
     actions:
-      approve:
+      assign:
         effect: EFFECT_ALLOW
         policy: resource.equipment_request.vdefault
     outputs:
-      - src: resource.equipment_request.vdefault#rule-002
-        val: approval_status:abc:PENDING_APPROVAL
+      - src: resource.equipment_request.vdefault#output-assign
+        val: assign_rule_activated
 
-  - requestId: test
-    resourceId: test
+  - requestId: both-expr-and-when-defined-cond-not-met
+    resourceId: equipment_request_2
     effectiveDerivedRoles:
-      - direct_manager
+      - any_employee
     actions:
-      approve:
+      assign:
         effect: EFFECT_DENY
         policy: resource.equipment_request.vdefault
     outputs:
-      - src: resource.equipment_request.vdefault#rule-002
-        val: condition_not_met
+      - src: resource.equipment_request.vdefault#output-assign
+        val: assign_condition_not_met
+
+  - requestId: only-cond-not-met-defined-rule-activated
+    resourceId: equipment_request_3
+    effectiveDerivedRoles:
+      - any_employee
+    actions:
+      cancel:
+        effect: EFFECT_ALLOW
+        policy: resource.equipment_request.vdefault
+
+  - requestId: only-cond-not-met-defined-cond-not-met
+    resourceId: equipment_request_4
+    effectiveDerivedRoles:
+      - any_employee
+    actions:
+      cancel:
+        effect: EFFECT_DENY
+        policy: resource.equipment_request.vdefault
+    outputs:
+      - src: resource.equipment_request.vdefault#output-cancel
+        val: cancel_condition_not_met
+
+  - requestId: both-cond-not-met-and-rule-activated-defined-but-cond-never-satisfied
+    resourceId: equipment_request_5
+    actions:
+      resend:
+        effect: EFFECT_DENY
+        policy: resource.equipment_request.vdefault
+
+  - requestId: deprecated-expr-field
+    resourceId: equipment_request_6
+    effectiveDerivedRoles:
+      - any_employee
+    actions:
+      deprecated:
+        effect: EFFECT_ALLOW
+        policy: resource.equipment_request.vdefault
+    outputs:
+      - src: resource.equipment_request.vdefault#output-deprecated
+        val: deprecated_rule_activated
 
 wantDecisionLogs:
   - callId: 01HKA8W61K5D3SHQSKC4ANEMSZ
@@ -73,60 +155,143 @@ wantDecisionLogs:
             source: resource_policies/policy_07.yaml
     checkResources:
       inputs:
-        - requestId: test
+        - requestId: both-expr-and-when-defined-rule-activated
           actions:
-            - approve
+            - assign
           principal:
-            id: abc
+            id: john
             roles:
-              - manager
-            attr:
-              geography: GB
-              managed_geographies: GB
+              - employee
           resource:
             kind: equipment_request
-            id: test
+            id: equipment_request_1
             attr:
-              geography: GB
-              status: PENDING_APPROVAL
+              ownerId: john
 
-        - requestId: test
+        - requestId: both-expr-and-when-defined-cond-not-met
           actions:
-            - approve
+            - assign
           principal:
-            id: abc
+            id: john
             roles:
-              - manager
-            attr:
-              geography: GB
-              managed_geographies: GB
+              - employee
           resource:
             kind: equipment_request
-            id: test
+            id: equipment_request_2
             attr:
-              geography: GB
-              status: DRAFT
-      outputs:
-        - requestId: test
-          resourceId: test
+              ownerId: johnny
+
+        - requestId: only-cond-not-met-defined-rule-activated
           actions:
-            approve:
+            - cancel
+          principal:
+            id: anakin
+            roles:
+              - employee
+          resource:
+            kind: equipment_request
+            id: equipment_request_3
+            attr:
+              ownerId: anakin
+
+        - requestId: only-cond-not-met-defined-cond-not-met
+          actions:
+            - cancel
+          principal:
+            id: anakin
+            roles:
+              - employee
+          resource:
+            kind: equipment_request
+            id: equipment_request_4
+            attr:
+              ownerId: darth_vader
+
+        - requestId: both-cond-not-met-and-rule-activated-defined-but-cond-never-satisfied
+          actions:
+            - resend
+          principal:
+            id: oguzhan
+            roles:
+              - direct_manager
+          resource:
+            kind: equipment_request
+            id: equipment_request_5
+
+        - requestId: deprecated-expr-field
+          actions:
+            - deprecated
+          principal:
+            id: oguzhan
+            roles:
+              - employee
+          resource:
+            kind: equipment_request
+            id: equipment_request_6
+            attr:
+              ownerId: oguzhan
+
+      outputs:
+        - requestId: both-expr-and-when-defined-rule-activated
+          resourceId: equipment_request_1
+          actions:
+            assign:
               effect: EFFECT_ALLOW
               policy: resource.equipment_request.vdefault
           effectiveDerivedRoles:
-            - direct_manager
+            - any_employee
           outputs:
-            - src: resource.equipment_request.vdefault#rule-002
-              val: approval_status:abc:PENDING_APPROVAL
+            - src: resource.equipment_request.vdefault#output-assign
+              val: assign_rule_activated
 
-        - requestId: test
-          resourceId: test
+        - requestId: both-expr-and-when-defined-cond-not-met
+          resourceId: equipment_request_2
           actions:
-            approve:
+            assign:
               effect: EFFECT_DENY
               policy: resource.equipment_request.vdefault
           effectiveDerivedRoles:
-            - direct_manager
+            - any_employee
           outputs:
-            - src: resource.equipment_request.vdefault#rule-002
-              val: condition_not_met
+            - src: resource.equipment_request.vdefault#output-assign
+              val: assign_condition_not_met
+
+        - requestId: only-cond-not-met-defined-rule-activated
+          resourceId: equipment_request_3
+          actions:
+            cancel:
+              effect: EFFECT_ALLOW
+              policy: resource.equipment_request.vdefault
+          effectiveDerivedRoles:
+            - any_employee
+
+        - requestId: only-cond-not-met-defined-cond-not-met
+          resourceId: equipment_request_4
+          actions:
+            cancel:
+              effect: EFFECT_DENY
+              policy: resource.equipment_request.vdefault
+          effectiveDerivedRoles:
+            - any_employee
+          outputs:
+            - src: resource.equipment_request.vdefault#output-cancel
+              val: cancel_condition_not_met
+
+        - requestId: both-cond-not-met-and-rule-activated-defined-but-cond-never-satisfied
+          resourceId: equipment_request_5
+          actions:
+            resend:
+              effect: EFFECT_DENY
+              policy: resource.equipment_request.vdefault
+
+        - requestId: deprecated-expr-field
+          resourceId: equipment_request_6
+          effectiveDerivedRoles:
+            - any_employee
+          actions:
+            deprecated:
+              effect: EFFECT_ALLOW
+              policy: resource.equipment_request.vdefault
+          outputs:
+            - src: resource.equipment_request.vdefault#output-deprecated
+              val: deprecated_rule_activated

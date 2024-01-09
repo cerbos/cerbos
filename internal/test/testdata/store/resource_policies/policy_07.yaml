@@ -46,3 +46,60 @@ resourcePolicy:
             "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])
           conditionNotMet: |-
             "condition_not_met"
+
+    - name: output-assign
+      actions: ["assign"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == R.attr.ownerId
+      output:
+        expr: |-
+          "assign_rule_activated_with_expr"
+        when:
+          ruleActivated: |-
+            "assign_rule_activated"
+          conditionNotMet: |-
+            "assign_condition_not_met"
+
+    - name: output-cancel
+      actions: ["cancel"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == R.attr.ownerId
+      output:
+        when:
+          conditionNotMet: |-
+            "cancel_condition_not_met"
+
+    - name: output-resend
+      actions: ["resend"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == "never_activated"
+      output:
+        when:
+          ruleActivated: |-
+            "resend_rule_activated"
+          conditionNotMet: |-
+            "resend_condition_not_met"
+
+    - name: output-deprecated
+      actions: ["deprecated"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == R.attr.ownerId
+      output:
+        expr: |-
+          "deprecated_rule_activated"

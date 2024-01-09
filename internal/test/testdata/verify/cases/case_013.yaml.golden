@@ -180,10 +180,6 @@
                                   "nested_str": "foo"
                                 }
                               }
-                            },
-                            {
-                              "src": "resource.equipment_request.vdefault#rule-002",
-                              "val": "condition_not_met"
                             }
                           ]
                         }
@@ -252,10 +248,6 @@
                                   "nested_str": "foo"
                                 }
                               }
-                            },
-                            {
-                              "src": "resource.equipment_request.vdefault#rule-002",
-                              "val": "condition_not_met"
                             }
                           ]
                         }

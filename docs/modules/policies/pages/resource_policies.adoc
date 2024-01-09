@@ -65,8 +65,8 @@ resourcePolicy:
 <7> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <8> This rule applies to a derived role.
 <9> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
-<10> Optional output for the action rule. You can define two expressions to be evaluated and output in the response
-depending on whether the rule activates or not.
+<10> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on
+whether the rule is activated or not activated because of a condition failure.
 <11> Optional name for the rule.
 <12> Optional section for defining schemas that apply to this resource kind.
 <13> Optional schema for validating the principal attributes.
