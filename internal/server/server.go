@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/textproto"
 	"os"
 	"strconv"
 	"strings"
@@ -469,7 +470,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	gwmux := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(customHTTPResponseCode),
-		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) { return key, true }),
+		runtime.WithIncomingHeaderMatcher(incomingHeaderMatcher),
 		runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
 			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
 			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
@@ -618,4 +619,26 @@ func toUDSFileMode(modeStr string) os.FileMode {
 
 	// Ignore everything but the last 9 bits which hold the user, group and world perms.
 	return os.FileMode(m & 0o777)
+}
+
+func incomingHeaderMatcher(key string) (string, bool) {
+	switch textproto.CanonicalMIMEHeaderKey(key) {
+	case
+		// The request sent by the gateway will have a different content length
+		"Content-Length",
+
+		// Translated to X-Forwarded-Host by the gateway
+		"Host",
+
+		// Connection-specific headers must be removed when translating HTTP/1.x to HTTP/2 (https://httpwg.org/specs/rfc9113.html#ConnectionSpecific)
+		"Connection",
+		"Keep-Alive",
+		"Proxy-Connection",
+		"Transfer-Encoding",
+		"Upgrade":
+		return "", false
+
+	default:
+		return name, true
+	}
 }
