@@ -14,3 +14,9 @@ from = "/cerbos/latest/:module/_images/*"
 to = "/cerbos/prerelease/:module/_images/:splat"
 status = 302
 force = true
+
+[[redirects]]
+from = "/cerbos/:version/*"
+to = "/cerbos/latest/:splat"
+status = 404
+
