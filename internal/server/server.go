@@ -646,6 +646,6 @@ func incomingHeaderMatcher(key string) (string, bool) {
 		return "", false
 
 	default:
-		return name, true
+		return key, true
 	}
 }
