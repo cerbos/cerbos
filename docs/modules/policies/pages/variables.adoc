@@ -16,6 +16,8 @@ resourcePolicy:
   variables:
     local: <1>
       flagged_resource: request.resource.attr.flagged
+      label: '"latest"' # assigning a string literal
+      teams: '["red", "blue"]' # assigning an array
   # ...
 ----
 <1> Map of variable name to expression.
@@ -34,6 +36,8 @@ exportVariables:
   name: apatr_common_variables <1>
   definitions: <2>
     flagged_resource: request.resource.attr.flagged
+    label: '"latest"' # assigning a string literal
+    teams: '["red", "blue"]' # assigning an array
 ----
 <1> Name to use when importing this set of variables.
 <2> Map of variable name to expression.
