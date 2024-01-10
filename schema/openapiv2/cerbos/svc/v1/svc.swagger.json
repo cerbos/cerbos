@@ -1197,6 +1197,17 @@
         "expected": {}
       }
     },
+    "OutputWhen": {
+      "type": "object",
+      "properties": {
+        "ruleActivated": {
+          "type": "string"
+        },
+        "conditionNotMet": {
+          "type": "string"
+        }
+      }
+    },
     "PlanResourcesFilterExpression": {
       "type": "object",
       "properties": {
@@ -2593,6 +2604,9 @@
       "properties": {
         "expr": {
           "type": "string"
+        },
+        "when": {
+          "$ref": "#/definitions/OutputWhen"
         }
       }
     },

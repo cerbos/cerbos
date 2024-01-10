@@ -12,8 +12,9 @@ resourcePolicy:
       roles:
         - user
       output:
-        expr: |-
-          {"principal": P.id, "resource": R.id}
+        when:
+          ruleActivated: |-
+            {"principal": P.id, "resource": R.id}
 
     - actions:
         - "*"

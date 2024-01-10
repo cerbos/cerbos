@@ -52,7 +52,9 @@ inputDefs:
                 match:
                   expr: V.abce > 0
               output:
-                expr: variables.f
+                when:
+                  ruleActivated: |-
+                    variables.f
 
         - resource: two
           actions:

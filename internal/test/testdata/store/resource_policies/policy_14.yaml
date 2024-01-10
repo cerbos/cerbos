@@ -18,7 +18,8 @@ resourcePolicy:
       roles:
         - employee
       output:
-        expr: V.derivedRoles
+        when:
+          ruleActivated: V.derivedRoles
 
     - name: snake_case
       actions:
@@ -27,7 +28,8 @@ resourcePolicy:
       roles:
         - employee
       output:
-        expr: V.derived_roles
+        when:
+          ruleActivated: V.derived_roles
 
     - name: dummy_rule_to_avoid_pruning_unreferenced_derived_roles
       actions:

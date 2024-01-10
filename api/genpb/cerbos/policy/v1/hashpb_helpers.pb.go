@@ -410,9 +410,26 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *Metadata, hasher hash.Hash, ignore 
 	}
 }
 
+func cerbos_policy_v1_Output_When_hashpb_sum(m *Output_When, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Output.When.rule_activated"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.RuleActivated))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Output.When.condition_not_met"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ConditionNotMet))
+
+	}
+}
+
 func cerbos_policy_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.Output.expr"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Expr))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Output.when"]; !ok {
+		if m.When != nil {
+			cerbos_policy_v1_Output_When_hashpb_sum(m.When, hasher, ignore)
+		}
 
 	}
 }

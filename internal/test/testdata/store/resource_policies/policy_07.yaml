@@ -15,20 +15,21 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       name: public-view
       output:
-        expr: |-
-          {
-            "id": P.id,
-            "keys": R.attr.id,
-            "formatted_%s".format(["string"]): "id:%s".format([P.id]),
-            "some_bool": true,
-            "some_list": ["foo", "bar"],
-            "something_nested": {
-              "nested_str": "foo",
-              "nested_bool": false,
-              "nested_list": ["nest_foo", 1.01],
-              "nested_formatted_%s".format(["string"]): "id:%s".format([P.id]),
-            },
-          }
+        when:
+          ruleActivated: |-
+            {
+              "id": P.id,
+              "keys": R.attr.id,
+              "formatted_%s".format(["string"]): "id:%s".format([P.id]),
+              "some_bool": true,
+              "some_list": ["foo", "bar"],
+              "something_nested": {
+                "nested_str": "foo",
+                "nested_bool": false,
+                "nested_list": ["nest_foo", 1.01],
+                "nested_formatted_%s".format(["string"]): "id:%s".format([P.id]),
+              },
+            }
 
     - actions: ["approve"]
       condition:
@@ -39,4 +40,66 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       output:
         expr: |-
-          "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])
+          "output_expr"
+        when:
+          ruleActivated: |-
+            "approval_status:%s:%s".format([request.principal.id, request.resource.attr.status])
+          conditionNotMet: |-
+            "condition_not_met"
+
+    - name: output-assign
+      actions: ["assign"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == R.attr.ownerId
+      output:
+        expr: |-
+          "assign_rule_activated_with_expr"
+        when:
+          ruleActivated: |-
+            "assign_rule_activated"
+          conditionNotMet: |-
+            "assign_condition_not_met"
+
+    - name: output-cancel
+      actions: ["cancel"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == R.attr.ownerId
+      output:
+        when:
+          conditionNotMet: |-
+            "cancel_condition_not_met"
+
+    - name: output-resend
+      actions: ["resend"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == "never_activated"
+      output:
+        when:
+          ruleActivated: |-
+            "resend_rule_activated"
+          conditionNotMet: |-
+            "resend_condition_not_met"
+
+    - name: output-deprecated
+      actions: ["deprecated"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      condition:
+        match:
+          expr: P.id == R.attr.ownerId
+      output:
+        expr: |-
+          "deprecated_rule_activated"

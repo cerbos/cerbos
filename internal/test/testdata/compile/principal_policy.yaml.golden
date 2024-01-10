@@ -118,138 +118,142 @@
                   }
                 },
                 "effect": "EFFECT_ALLOW",
-                "output": {
-                  "original": "\"donald_duck_dev_record_override:%s\".format([request.resource.attr.dev_record == true])",
-                  "checked": {
-                    "referenceMap": {
-                      "2": {
-                        "overloadId": [
-                          "string_format"
-                        ]
-                      },
-                      "4": {
-                        "name": "request"
-                      },
-                      "8": {
-                        "overloadId": [
-                          "equals"
-                        ]
-                      }
-                    },
-                    "typeMap": {
-                      "1": {
-                        "primitive": "STRING"
-                      },
-                      "2": {
-                        "primitive": "STRING"
-                      },
-                      "3": {
-                        "listType": {
-                          "elemType": {
-                            "primitive": "BOOL"
-                          }
-                        }
-                      },
-                      "4": {
-                        "messageType": "cerbos.engine.v1.Request"
-                      },
-                      "5": {
-                        "messageType": "cerbos.engine.v1.Request.Resource"
-                      },
-                      "6": {
-                        "mapType": {
-                          "keyType": {
-                            "primitive": "STRING"
+                "emitOutput": {
+                  "when": {
+                    "ruleActivated": {
+                      "original": "\"donald_duck_dev_record_override:%s\".format([request.resource.attr.dev_record == true])",
+                      "checked": {
+                        "referenceMap": {
+                          "2": {
+                            "overloadId": [
+                              "string_format"
+                            ]
                           },
-                          "valueType": {
-                            "dyn": {}
-                          }
-                        }
-                      },
-                      "7": {
-                        "dyn": {}
-                      },
-                      "8": {
-                        "primitive": "BOOL"
-                      },
-                      "9": {
-                        "primitive": "BOOL"
-                      }
-                    },
-                    "sourceInfo": {
-                      "location": "<input>",
-                      "lineOffsets": [
-                        88
-                      ],
-                      "positions": {
-                        "1": 0,
-                        "2": 43,
-                        "3": 44,
-                        "4": 45,
-                        "5": 52,
-                        "6": 61,
-                        "7": 66,
-                        "8": 78,
-                        "9": 81
-                      }
-                    },
-                    "expr": {
-                      "id": "2",
-                      "callExpr": {
-                        "target": {
-                          "id": "1",
-                          "constExpr": {
-                            "stringValue": "donald_duck_dev_record_override:%s"
+                          "4": {
+                            "name": "request"
+                          },
+                          "8": {
+                            "overloadId": [
+                              "equals"
+                            ]
                           }
                         },
-                        "function": "format",
-                        "args": [
-                          {
-                            "id": "3",
-                            "listExpr": {
-                              "elements": [
-                                {
-                                  "id": "8",
-                                  "callExpr": {
-                                    "function": "_==_",
-                                    "args": [
-                                      {
-                                        "id": "7",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "6",
+                        "typeMap": {
+                          "1": {
+                            "primitive": "STRING"
+                          },
+                          "2": {
+                            "primitive": "STRING"
+                          },
+                          "3": {
+                            "listType": {
+                              "elemType": {
+                                "primitive": "BOOL"
+                              }
+                            }
+                          },
+                          "4": {
+                            "messageType": "cerbos.engine.v1.Request"
+                          },
+                          "5": {
+                            "messageType": "cerbos.engine.v1.Request.Resource"
+                          },
+                          "6": {
+                            "mapType": {
+                              "keyType": {
+                                "primitive": "STRING"
+                              },
+                              "valueType": {
+                                "dyn": {}
+                              }
+                            }
+                          },
+                          "7": {
+                            "dyn": {}
+                          },
+                          "8": {
+                            "primitive": "BOOL"
+                          },
+                          "9": {
+                            "primitive": "BOOL"
+                          }
+                        },
+                        "sourceInfo": {
+                          "location": "<input>",
+                          "lineOffsets": [
+                            88
+                          ],
+                          "positions": {
+                            "1": 0,
+                            "2": 43,
+                            "3": 44,
+                            "4": 45,
+                            "5": 52,
+                            "6": 61,
+                            "7": 66,
+                            "8": 78,
+                            "9": 81
+                          }
+                        },
+                        "expr": {
+                          "id": "2",
+                          "callExpr": {
+                            "target": {
+                              "id": "1",
+                              "constExpr": {
+                                "stringValue": "donald_duck_dev_record_override:%s"
+                              }
+                            },
+                            "function": "format",
+                            "args": [
+                              {
+                                "id": "3",
+                                "listExpr": {
+                                  "elements": [
+                                    {
+                                      "id": "8",
+                                      "callExpr": {
+                                        "function": "_==_",
+                                        "args": [
+                                          {
+                                            "id": "7",
                                             "selectExpr": {
                                               "operand": {
-                                                "id": "5",
+                                                "id": "6",
                                                 "selectExpr": {
                                                   "operand": {
-                                                    "id": "4",
-                                                    "identExpr": {
-                                                      "name": "request"
+                                                    "id": "5",
+                                                    "selectExpr": {
+                                                      "operand": {
+                                                        "id": "4",
+                                                        "identExpr": {
+                                                          "name": "request"
+                                                        }
+                                                      },
+                                                      "field": "resource"
                                                     }
                                                   },
-                                                  "field": "resource"
+                                                  "field": "attr"
                                                 }
                                               },
-                                              "field": "attr"
+                                              "field": "dev_record"
                                             }
                                           },
-                                          "field": "dev_record"
-                                        }
-                                      },
-                                      {
-                                        "id": "9",
-                                        "constExpr": {
-                                          "boolValue": true
-                                        }
+                                          {
+                                            "id": "9",
+                                            "constExpr": {
+                                              "boolValue": true
+                                            }
+                                          }
+                                        ]
                                       }
-                                    ]
-                                  }
+                                    }
+                                  ]
                                 }
-                              ]
-                            }
+                              }
+                            ]
                           }
-                        ]
+                        }
                       }
                     }
                   }

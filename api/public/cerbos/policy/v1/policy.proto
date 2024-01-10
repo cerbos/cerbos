@@ -230,7 +230,13 @@ message Match {
 }
 
 message Output {
-  string expr = 1;
+  message When {
+    string rule_activated = 1;
+    string condition_not_met = 2;
+  }
+
+  string expr = 1 [deprecated = true];
+  When when = 2;
 }
 
 message Schemas {

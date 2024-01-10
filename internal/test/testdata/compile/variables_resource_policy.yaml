@@ -120,7 +120,8 @@ inputDefs:
             match:
               expr: variables.m > 0
           output:
-            expr: V.abcl
+            when:
+              ruleActivated: V.abcl
 
         - effect: EFFECT_DENY
           actions:
