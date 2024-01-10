@@ -623,9 +623,16 @@ func toUDSFileMode(modeStr string) os.FileMode {
 
 func incomingHeaderMatcher(key string) (string, bool) {
 	switch textproto.CanonicalMIMEHeaderKey(key) {
+	// The gateway sets its own user agent, so we need to alias it
+	case "User-Agent":
+		return "Grpcgateway-User-Agent", true
+
 	case
 		// The request sent by the gateway will have a different content length
 		"Content-Length",
+
+		// Reserved for aliasing the incoming User-Agent header
+		"Grpcgateway-User-Agent",
 
 		// Translated to X-Forwarded-Host by the gateway
 		"Host",
