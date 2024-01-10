@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	delimiter    = "|"
-	userAgentKey = "user-agent"
-	xffKey       = "x-forwarded-for"
-	callIDTagKey = "call_id"
+	delimiter          = "|"
+	grpcGWUserAgentKey = "grpcgateway-user-agent"
+	userAgentKey       = "user-agent"
+	xffKey             = "x-forwarded-for"
+	callIDTagKey       = "call_id"
 )
 
 type callIDCtxKeyType struct{}
@@ -61,7 +62,9 @@ func PeerFromContext(ctx context.Context) *auditv1.Peer {
 		return pp
 	}
 
-	if ua, ok := md[userAgentKey]; ok {
+	if ua, ok := md[grpcGWUserAgentKey]; ok {
+		pp.UserAgent = strings.Join(ua, delimiter)
+	} else if ua, ok := md[userAgentKey]; ok {
 		pp.UserAgent = strings.Join(ua, delimiter)
 	}
 

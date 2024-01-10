@@ -21,7 +21,7 @@ const (
 	defaultGCInterval      = 15 * time.Minute
 	defaultRetentionPeriod = (7 * 24) * time.Hour //nolint:gomnd
 
-	minFlushInterval   = 5 * time.Second
+	minFlushInterval   = 1 * time.Second
 	minRetentionPeriod = 1 * time.Hour
 	maxRetentionPeriod = (30 * 24) * time.Hour //nolint:gomnd
 )
