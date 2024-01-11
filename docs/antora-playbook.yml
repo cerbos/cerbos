@@ -5,12 +5,12 @@ site:
   start_page: cerbos:ROOT:index.adoc
   robots: allow
   keys:
-    google_analytics: 'G-8G3G3MS838'
+    google_analytics: "G-8G3G3MS838"
 content:
   sources:
     - url: ./../
-      branches: [HEAD, 'v{0..9}*']
-      edit_url: 'https://github.com/cerbos/cerbos/tree/main/{path}'
+      branches: [HEAD, "v{0..9}*", "!v0.{0..29}"]
+      edit_url: "https://github.com/cerbos/cerbos/tree/main/{path}"
       start_path: docs
     - url: https://github.com/cerbos/cloud-docs.git
 urls:
