@@ -2556,15 +2556,29 @@ func (m *ProtoYamlTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.WantError {
-		i--
-		if m.WantError {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
+	if len(m.WantErrors) > 0 {
+		for iNdEx := len(m.WantErrors) - 1; iNdEx >= 0; iNdEx-- {
+			if vtmsg, ok := interface{}(m.WantErrors[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.WantErrors[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x1a
 		}
-		i--
-		dAtA[i] = 0x18
 	}
 	if len(m.Want) > 0 {
 		for iNdEx := len(m.Want) - 1; iNdEx >= 0; iNdEx-- {
@@ -3674,8 +3688,17 @@ func (m *ProtoYamlTestCase) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
-	if m.WantError {
-		n += 2
+	if len(m.WantErrors) > 0 {
+		for _, e := range m.WantErrors {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
+		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -8977,10 +9000,10 @@ func (m *ProtoYamlTestCase) UnmarshalVT(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WantError", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WantErrors", wireType)
 			}
-			var v int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -8990,12 +9013,34 @@ func (m *ProtoYamlTestCase) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.WantError = bool(v != 0)
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WantErrors = append(m.WantErrors, &v17.Error{})
+			if unmarshal, ok := interface{}(m.WantErrors[len(m.WantErrors)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.WantErrors[len(m.WantErrors)-1]); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

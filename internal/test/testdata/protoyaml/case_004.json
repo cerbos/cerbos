@@ -1,6 +1,16 @@
 {
     "description": "Invalid type for policyVersion field",
-    "wantError": true,
+    "wantErrors": [
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 7,
+                "column": 9,
+                "path": "$.resourcePolicy.resource.kind"
+            },
+            "message": "expected string value got MappingValue"
+        }
+    ],
     "want": [
         {
             "message": {

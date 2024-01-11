@@ -200,5 +200,5 @@ message ProtoYamlTestCase {
   }
   string description = 1;
   repeated Want want = 2;
-  bool want_error = 3;
+  repeated cerbos.source.v1.Error want_errors = 3;
 }

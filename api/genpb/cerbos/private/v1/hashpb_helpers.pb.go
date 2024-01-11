@@ -2119,9 +2119,15 @@ func cerbos_private_v1_ProtoYamlTestCase_hashpb_sum(m *ProtoYamlTestCase, hasher
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.want_error"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.WantError)))
+	if _, ok := ignore["cerbos.private.v1.ProtoYamlTestCase.want_errors"]; !ok {
+		if len(m.WantErrors) > 0 {
+			for _, v := range m.WantErrors {
+				if v != nil {
+					cerbos_source_v1_Error_hashpb_sum(v, hasher, ignore)
+				}
 
+			}
+		}
 	}
 }
 

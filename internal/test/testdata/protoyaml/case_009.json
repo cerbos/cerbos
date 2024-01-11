@@ -1,6 +1,43 @@
 {
     "description": "Validation errors",
-    "wantError": true,
+    "wantErrors": [
+        {
+            "kind": "KIND_VALIDATION_ERROR",
+            "position": {
+                "line": 3,
+                "column": 1,
+                "path": "$.apiVersion"
+            },
+            "message": "value must equal `api.cerbos.dev/v1`"
+        },
+        {
+            "kind": "KIND_VALIDATION_ERROR",
+            "position": {
+                "line": 10,
+                "column": 3,
+                "path": "$.resourcePolicy.scope"
+            },
+            "message": "value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
+        },
+        {
+            "kind": "KIND_VALIDATION_ERROR",
+            "position": {
+                "line": 16,
+                "column": 7,
+                "path": "$.resourcePolicy.schemas.principalSchema.ref"
+            },
+            "message": "value is required"
+        },
+        {
+            "kind": "KIND_VALIDATION_ERROR",
+            "position": {
+                "line": 29,
+                "column": 11,
+                "path": "$.resourcePolicy.rules[1].derivedRoles[0]"
+            },
+            "message": "value does not match regex pattern `^[[:word:]\\-\\.]+$`"
+        }
+    ],
     "want": [
         {
             "message": {

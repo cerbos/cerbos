@@ -5,19 +5,7 @@ syntax = "proto3";
 
 package cerbos.source.v1;
 
-import "cerbos/policy/v1/policy.proto";
-
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1;sourcev1";
-
-message ParsedFile {
-  string path = 1;
-  repeated ParsedPolicy policies = 2;
-}
-
-message ParsedPolicy {
-  cerbos.policy.v1.Policy policy = 1;
-  SourceContext source_context = 2;
-}
 
 message Position {
   uint32 line = 1;

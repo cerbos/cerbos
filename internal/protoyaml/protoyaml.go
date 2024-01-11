@@ -35,18 +35,10 @@ const (
 
 type unmarshalOpts struct {
 	validator           *protovalidate.Validator
-	fixInvalidStrings   bool
 	ignoreUnknownFields bool
 }
 
 type UnmarshalOpt func(*unmarshalOpts)
-
-// WithFixInvalidStrings makes the unmarshaler handle values that are partially quoted such as: "foo" bar.
-func WithFixInvalidStrings() UnmarshalOpt {
-	return func(uo *unmarshalOpts) {
-		uo.fixInvalidStrings = true
-	}
-}
 
 // WithIgnoreUnknownFields ignores unknown fields not defined in the protobuf schema.
 func WithIgnoreUnknownFields() UnmarshalOpt {
@@ -88,8 +80,11 @@ func (u *Unmarshaler[T]) UnmarshalReader(r io.Reader) ([]T, []*sourcev1.SourceCo
 
 func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, _ []*sourcev1.SourceContext, outErr error) {
 	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
-	if u.fixInvalidStrings {
-		t = fixStringsStartingWithQuotes(t)
+	if errs := detectStringStartingWithQuote(t); len(errs) > 0 {
+		for _, err := range errs {
+			outErr = errors.Join(outErr, NewUnmarshalError(err))
+		}
+		return nil, nil, outErr
 	}
 
 	f, err := parser.Parse(t, 0)
@@ -120,8 +115,8 @@ func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, _ []*sourcev1.Source
 	return outMsg, outSrc, outErr
 }
 
-func fixStringsStartingWithQuotes(tokens token.Tokens) token.Tokens {
-	newTokens := make(token.Tokens, 0, len(tokens))
+func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Error) {
+	var errPrinter printer.Printer
 	i := 0
 	for {
 		if i >= len(tokens) {
@@ -130,52 +125,37 @@ func fixStringsStartingWithQuotes(tokens token.Tokens) token.Tokens {
 		tok := tokens[i]
 
 		if tok.Prev != nil && tok.Prev.Type != token.MappingValueType {
-			newTokens = append(newTokens, tok)
 			i++
 			continue
 		}
 
 		if !(tok.Type == token.DoubleQuoteType || tok.Type == token.SingleQuoteType) {
-			newTokens = append(newTokens, tok)
 			i++
 			continue
 		}
 
 		if tok.Next == nil || tok.Next.Position.Line != tok.Position.Line {
-			newTokens = append(newTokens, tok)
 			i++
 			continue
 		}
 
-		var origin strings.Builder
-		var nextTok *token.Token
-
-		origin.WriteString(tok.Origin)
 		i++
-
 		for t := tok.Next; t != nil && t.Position.Line == tok.Position.Line; t = t.Next {
-			origin.WriteString(t.Origin)
 			i++
-			nextTok = t.Next
 		}
 
-		o := origin.String()
-		v := strings.TrimSpace(o)
-
-		var fixedTok *token.Token
-		switch tok.Type {
-		case token.DoubleQuoteType:
-			fixedTok = token.SingleQuote(v, o, tok.Position)
-		case token.SingleQuoteType:
-			fixedTok = token.DoubleQuote(v, o, tok.Position)
-		default:
-			fixedTok = token.Folded(v, o, tok.Position)
-		}
-		fixedTok.Next = nextTok
-		newTokens = append(newTokens, fixedTok)
+		outErrs = append(outErrs, &sourcev1.Error{
+			Kind:    sourcev1.Error_KIND_PARSE_ERROR,
+			Message: "invalid YAML string: use a literal or folded block for strings containing quotes",
+			Position: &sourcev1.Position{
+				Line:   uint32(tok.Position.Line),
+				Column: uint32(tok.Position.Column),
+			},
+			Context: errPrinter.PrintErrorToken(tok, false),
+		})
 	}
 
-	return newTokens
+	return outErrs
 }
 
 func (u *Unmarshaler[T]) unmarshalDoc(uctx *unmarshalCtx, doc *ast.DocumentNode, msg T) error {
@@ -527,7 +507,7 @@ func (u *Unmarshaler[T]) unmarshalInt(uctx *unmarshalCtx, n ast.Node, bitSize in
 		s := strings.TrimSpace(t.Value)
 		v, err := strconv.ParseInt(s, base10, bitSize)
 		if err != nil {
-			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %w", v, err)
+			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %v", v, err)
 		}
 		if bitSize == bitSize32 {
 			return protoreflect.ValueOfInt32(int32(v)), nil
@@ -560,7 +540,7 @@ func (u *Unmarshaler[T]) unmarshalUint(uctx *unmarshalCtx, n ast.Node, bitSize i
 		s := strings.TrimSpace(t.Value)
 		v, err := strconv.ParseUint(s, base10, bitSize)
 		if err != nil {
-			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %w", v, err)
+			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %v", v, err)
 		}
 		if bitSize == bitSize32 {
 			return protoreflect.ValueOfUint32(uint32(v)), nil
@@ -614,7 +594,7 @@ func (u *Unmarshaler[T]) unmarshalFloat(uctx *unmarshalCtx, n ast.Node, bitSize 
 			s := strings.TrimSpace(t.Value)
 			v, err := strconv.ParseFloat(s, bitSize)
 			if err != nil {
-				return protoreflect.Value{}, uctx.perrorf(n, "invalid float value %q: %w", s, err)
+				return protoreflect.Value{}, uctx.perrorf(n, "invalid float value %q: %v", s, err)
 			}
 
 			if bitSize == bitSize32 {
@@ -649,7 +629,7 @@ func (u *Unmarshaler[T]) unmarshalBytes(uctx *unmarshalCtx, n ast.Node) (protore
 
 	b, err := enc.DecodeString(s)
 	if err != nil {
-		return protoreflect.Value{}, uctx.perrorf(n, "failed to decode bytes: %w", err)
+		return protoreflect.Value{}, uctx.perrorf(n, "failed to decode bytes: %v", err)
 	}
 
 	return protoreflect.ValueOfBytes(b), nil
@@ -690,25 +670,25 @@ func (u *Unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd prot
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
 		v, err := strconv.ParseInt(sn.Value, 10, 32)
 		if err != nil {
-			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %v", sn.Value, err)
 		}
 		return protoreflect.ValueOfInt32(int32(v)).MapKey(), nil
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
 		v, err := strconv.ParseInt(sn.Value, 10, 64)
 		if err != nil {
-			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %v", sn.Value, err)
 		}
 		return protoreflect.ValueOfInt64(v).MapKey(), nil
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
 		v, err := strconv.ParseUint(sn.Value, 10, 32)
 		if err != nil {
-			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %v", sn.Value, err)
 		}
 		return protoreflect.ValueOfUint32(uint32(v)).MapKey(), nil
 	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
 		v, err := strconv.ParseUint(sn.Value, 10, 64)
 		if err != nil {
-			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %w", sn.Value, err)
+			return protoreflect.MapKey{}, uctx.perrorf(n, "invalid integer value %q: %v", sn.Value, err)
 		}
 		return protoreflect.ValueOfUint64(v).MapKey(), nil
 	default:
@@ -799,46 +779,41 @@ func (uc *unmarshalCtx) recordFieldPosition(path string, n ast.Node) {
 }
 
 func (uc *unmarshalCtx) perrorf(n ast.Node, msg string, args ...any) error {
-	err := fmt.Errorf(msg, args...)
+	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_PARSE_ERROR, Message: fmt.Sprintf(msg, args...)}
 	if n == nil {
-		return uc.recordParseError(ParseError{Err: err})
+		uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
+		return NewUnmarshalError(err)
 	}
 
+	err.Position = &sourcev1.Position{Path: n.GetPath()}
 	tok := n.GetToken()
 	if tok == nil {
-		return uc.recordParseError(ParseError{Err: err, Path: n.GetPath()})
+		uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
+		return NewUnmarshalError(err)
 	}
 
-	return uc.recordParseError(ParseError{
-		Line:    tok.Position.Line,
-		Col:     tok.Position.Column,
-		Path:    n.GetPath(),
-		Err:     err,
-		Context: uc.errPrinter.PrintErrorToken(n.GetToken(), false),
-	})
-}
+	var errPrinter printer.Printer
+	err.Position.Line = uint32(tok.Position.Line)
+	err.Position.Column = uint32(tok.Position.Column)
+	err.Context = errPrinter.PrintErrorToken(tok, false)
 
-func (uc *unmarshalCtx) recordParseError(pe ParseError) error {
-	uc.srcCtx.Errors = append(uc.srcCtx.Errors, &sourcev1.Error{
-		Kind:     sourcev1.Error_KIND_PARSE_ERROR,
-		Position: &sourcev1.Position{Line: uint32(pe.Line), Column: uint32(pe.Col), Path: pe.Path},
-		Message:  pe.Err.Error(),
-		Context:  pe.Context,
-	})
-
-	return pe
+	uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
+	return NewUnmarshalError(err)
 }
 
 func (uc *unmarshalCtx) verrorf(path, msg string) error {
-	verr := ValidationError{Msg: msg, Path: path}
+	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_VALIDATION_ERROR, Message: msg}
 	if pos, ok := uc.srcCtx.FieldPositions[path]; ok {
-		verr.Line = int(pos.Line)
-		verr.Col = int(pos.Column)
-		verr.Path = pos.Path
-		verr.Context = uc.buildErrContext(pos.Path)
+		err.Position = &sourcev1.Position{
+			Line:   pos.Line,
+			Column: pos.Column,
+			Path:   pos.Path,
+		}
+		err.Context = uc.buildErrContext(pos.Path)
 	}
 
-	return uc.recordValidationError(verr)
+	uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
+	return NewUnmarshalError(err)
 }
 
 func (uc *unmarshalCtx) buildErrContext(path string) string {
@@ -859,49 +834,19 @@ func (uc *unmarshalCtx) buildErrContext(path string) string {
 	return uc.errPrinter.PrintErrorToken(node.GetToken(), false)
 }
 
-func (uc *unmarshalCtx) recordValidationError(ve ValidationError) error {
-	uc.srcCtx.Errors = append(uc.srcCtx.Errors, &sourcev1.Error{
-		Kind:     sourcev1.Error_KIND_VALIDATION_ERROR,
-		Position: &sourcev1.Position{Line: uint32(ve.Line), Column: uint32(ve.Col), Path: ve.Path},
-		Message:  ve.Msg,
-		Context:  ve.Context,
-	})
-
-	return ve
+type UnmarshalError struct {
+	Err *sourcev1.Error
 }
 
-type ParseError struct {
-	Err     error
-	Path    string
-	Context string
-	Line    int
-	Col     int
+func NewUnmarshalError(err *sourcev1.Error) UnmarshalError {
+	return UnmarshalError{Err: err}
 }
 
-func (pe ParseError) Error() string {
-	if pe.Context == "" {
-		return fmt.Sprintf("%d:%d <%s> %v", pe.Line, pe.Col, pe.Path, pe.Err)
+func (ue UnmarshalError) Error() string {
+	pos := ue.Err.GetPosition()
+	if ue.Err.GetContext() == "" {
+		return fmt.Sprintf("%d:%d <%s> %s", pos.GetLine(), pos.GetColumn(), pos.GetPath(), ue.Err.GetMessage())
 	}
 
-	return fmt.Sprintf("%d:%d <%s> %v\n%s", pe.Line, pe.Col, pe.Path, pe.Err, pe.Context)
-}
-
-func (pe ParseError) Unwrap() error {
-	return pe.Err
-}
-
-type ValidationError struct {
-	Msg     string
-	Path    string
-	Context string
-	Line    int
-	Col     int
-}
-
-func (ve ValidationError) Error() string {
-	if ve.Context == "" {
-		return fmt.Sprintf("%d:%d <%s> %v", ve.Line, ve.Col, ve.Path, ve.Msg)
-	}
-
-	return fmt.Sprintf("%d:%d <%s> %s\n%s", ve.Line, ve.Col, ve.Path, ve.Msg, ve.Context)
+	return fmt.Sprintf("%d:%d <%s> %s\n%s", pos.GetLine(), pos.GetColumn(), pos.GetPath(), ue.Err.GetMessage(), ue.Err.GetContext())
 }

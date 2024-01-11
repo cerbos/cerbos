@@ -1,6 +1,16 @@
 {
     "description": "Valid resource policy with unknown field foo",
-    "wantError": true,
+    "wantErrors": [
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 4,
+                "column": 1,
+                "path": "$.foo"
+            },
+            "message": "unknown field foo"
+        }
+    ],
     "want": [
         {
             "message": {

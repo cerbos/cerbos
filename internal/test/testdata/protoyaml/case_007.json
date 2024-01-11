@@ -1,6 +1,25 @@
 {
     "description": "Mix of valid and invalid policies in a single file",
-    "wantError": true,
+    "wantErrors": [
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 3,
+                "column": 1,
+                "path": "$.wibble"
+            },
+            "message": "unknown field wibble"
+        },
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 5,
+                "column": 1,
+                "path": "$"
+            },
+            "message": "unexpected node type String"
+        }
+    ],
     "want": [
         {
             "message": {

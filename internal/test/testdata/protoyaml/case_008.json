@@ -1,66 +1,29 @@
 {
     "description": "Condition starting with quote",
-    "want": [
+    "wantErrors": [
         {
-            "message": {
-                "apiVersion": "api.cerbos.dev/v1",
-                "resourcePolicy": {
-                    "version": "20210210",
-                    "resource": "leave_request",
-                    "rules": [
-                        {
-                            "actions": [
-                                "*"
-                            ],
-                            "effect": "EFFECT_ALLOW",
-                            "roles": [
-                                "admin"
-                            ],
-                            "name": "wildcard"
-                        },
-                        {
-                            "actions": [
-                                "defer"
-                            ],
-                            "effect": "EFFECT_ALLOW",
-                            "roles": [
-                                "employee"
-                            ],
-                            "condition": {
-                                "match": {
-                                    "all": {
-                                        "of": [
-                                            {
-                                                "expr": "\"cerbos-jwt-tests\" in request.auxData.jwt.aud"
-                                            },
-                                            {
-                                                "expr": "\"A\" in request.auxData.jwt.customArray"
-                                            },
-                                            {
-                                                "expr": "'x' in request.auxData.jwt.customArray"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "actions": [
-                                "remind"
-                            ],
-                            "effect": "EFFECT_ALLOW",
-                            "derivedRoles": [
-                                "direct_manager"
-                            ],
-                            "condition": {
-                                "match": {
-                                    "expr": "timestamp(request.resource.attr.modifiedAt).timeSince() == duration(\"24h\")"
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 21,
+                "column": 23
+            },
+            "message": "invalid YAML string: use a literal or folded block for strings containing quotes"
+        },
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 22,
+                "column": 23
+            },
+            "message": "invalid YAML string: use a literal or folded block for strings containing quotes"
+        },
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 23,
+                "column": 23
+            },
+            "message": "invalid YAML string: use a literal or folded block for strings containing quotes"
         }
     ]
 }
