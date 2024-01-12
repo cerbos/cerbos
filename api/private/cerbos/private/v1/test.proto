@@ -12,6 +12,7 @@ import "cerbos/request/v1/request.proto";
 import "cerbos/response/v1/response.proto";
 import "cerbos/runtime/v1/runtime.proto";
 import "cerbos/schema/v1/schema.proto";
+import "cerbos/source/v1/source.proto";
 import "google/protobuf/struct.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1";
@@ -190,4 +191,14 @@ message VerifyTestCase {
   string description = 1;
   bool want_err = 2;
   cerbos.policy.v1.TestResults want = 3;
+}
+
+message ProtoYamlTestCase {
+  message Want {
+    cerbos.policy.v1.Policy message = 1;
+    repeated cerbos.source.v1.Error errors = 2;
+  }
+  string description = 1;
+  repeated Want want = 2;
+  repeated cerbos.source.v1.Error want_errors = 3;
 }

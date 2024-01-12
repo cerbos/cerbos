@@ -1,0 +1,131 @@
+{
+    "description": "Valid collection of policies with anchors",
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "version": "20210210",
+                    "importDerivedRoles": [
+                        "alpha",
+                        "beta"
+                    ],
+                    "schemas": {
+                        "principalSchema": {
+                            "ref": "cerbos:///principal.json"
+                        },
+                        "resourceSchema": {
+                            "ref": "cerbos:///resources/leave_request.json"
+                        }
+                    },
+                    "resource": "leave_request",
+                    "rules": [
+                        {
+                            "actions": [
+                                "*"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "roles": [
+                                "admin"
+                            ],
+                            "name": "wildcard"
+                        },
+                        {
+                            "actions": [
+                                "create"
+                            ],
+                            "derivedRoles": [
+                                "employee_that_owns_the_record"
+                            ],
+                            "effect": "EFFECT_ALLOW"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "version": "default",
+                    "importDerivedRoles": [
+                        "alpha",
+                        "beta"
+                    ],
+                    "schemas": {
+                        "principalSchema": {
+                            "ref": "cerbos:///principal.json"
+                        },
+                        "resourceSchema": {
+                            "ref": "cerbos:///resources/leave_request.json"
+                        }
+                    },
+                    "resource": "leave_request",
+                    "rules": [
+                        {
+                            "actions": [
+                                "*"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "roles": [
+                                "admin"
+                            ],
+                            "name": "wildcard"
+                        },
+                        {
+                            "actions": [
+                                "create"
+                            ],
+                            "derivedRoles": [
+                                "employee_that_owns_the_record"
+                            ],
+                            "effect": "EFFECT_ALLOW"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "version": "foo",
+                    "importDerivedRoles": [
+                        "alpha",
+                        "beta"
+                    ],
+                    "schemas": {
+                        "principalSchema": {
+                            "ref": "cerbos:///principal.json"
+                        },
+                        "resourceSchema": {
+                            "ref": "cerbos:///resources/leave_request.json"
+                        }
+                    },
+                    "resource": "leave_request",
+                    "rules": [
+                        {
+                            "actions": [
+                                "*"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "roles": [
+                                "admin"
+                            ],
+                            "name": "wildcard"
+                        },
+                        {
+                            "actions": [
+                                "create"
+                            ],
+                            "derivedRoles": [
+                                "employee_that_owns_the_record"
+                            ],
+                            "effect": "EFFECT_ALLOW"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

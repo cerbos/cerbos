@@ -1,0 +1,32 @@
+{
+    "description": "Invalid type for policyVersion field",
+    "wantErrors": [
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 7,
+                "column": 9,
+                "path": "$.resourcePolicy.resource.kind"
+            },
+            "message": "expected string value got MappingValue"
+        }
+    ],
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1"
+            },
+            "errors": [
+                {
+                    "kind": "KIND_PARSE_ERROR",
+                    "position": {
+                        "line": 7,
+                        "column": 9,
+                        "path": "$.resourcePolicy.resource.kind"
+                    },
+                    "message": "expected string value got MappingValue"
+                }
+            ]
+        }
+    ]
+}

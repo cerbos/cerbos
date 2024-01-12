@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: leave_request
+  scope: null
+  version: "20210210"
+  importDerivedRoles: ["alpha", "beta"]
+  schemas:
+    principalSchema:
+      ref: "cerbos:///principal.json"
+    resourceSchema:
+      ref: "cerbos:///resources/leave_request.json"
+  rules:
+  - actions: ['*']
+    effect: EFFECT_ALLOW
+    roles:
+    - admin
+    name: wildcard
+

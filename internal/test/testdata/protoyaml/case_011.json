@@ -1,0 +1,38 @@
+{
+    "description": "Valid single resource policy with odd indentation",
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "version": "20210210",
+                    "importDerivedRoles": [
+                        "alpha",
+                        "beta"
+                    ],
+                    "schemas": {
+                        "principalSchema": {
+                            "ref": "cerbos:///principal.json"
+                        },
+                        "resourceSchema": {
+                            "ref": "cerbos:///resources/leave_request.json"
+                        }
+                    },
+                    "resource": "leave_request",
+                    "rules": [
+                        {
+                            "actions": [
+                                "*"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "roles": [
+                                "admin"
+                            ],
+                            "name": "wildcard"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
