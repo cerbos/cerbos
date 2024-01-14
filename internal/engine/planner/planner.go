@@ -146,7 +146,9 @@ func (p *PolicyPlanResult) toAST() *qpN {
 		return mkNodeFromLO(mkAndLogicalOperation(append(p.DenyFilter, allowFilter)))
 	}
 }
-
+func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
+	return &evalContext{ppe.NowFn}
+}
 func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
@@ -168,7 +170,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		}
 
 		result.Scope = p.Scope
-		evalCtx := &evalContext{ppe.NowFn}
+		evalCtx := ppe.evalContext()
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
 				continue
@@ -191,7 +193,9 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 
 	return result, nil
 }
-
+func (rpe *ResourcePolicyEvaluator) evalContext() *evalContext {
+	return &evalContext{rpe.NowFn}
+}
 func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
@@ -232,7 +236,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 		var derivedRoles []rN
 
 		derivedRolesList := mkDerivedRolesList(nil)
-		evalCtx := &evalContext{rpe.NowFn}
+		evalCtx := rpe.evalContext()
 		for drName, dr := range p.DerivedRoles {
 			dr := dr
 			if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
