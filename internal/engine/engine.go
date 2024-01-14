@@ -217,12 +217,14 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 	}
 }
 
-func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
+func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanResourcesInput, opts ...CheckOpt) (*enginev1.PlanResourcesOutput, error) {
 	output, trail, err := metrics.RecordDuration3(metrics.EnginePlanLatency(), func() (output *enginev1.PlanResourcesOutput, trail *auditv1.AuditTrail, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Plan")
 		defer span.End()
 
-		output, trail, err = engine.doPlanResources(ctx, input)
+		checkOpts := newCheckOptions(ctx, engine.conf, opts...)
+
+		output, trail, err = engine.doPlanResources(ctx, input, checkOpts)
 		if err != nil {
 			tracing.MarkFailed(span, http.StatusBadRequest, err)
 		}
@@ -233,7 +235,7 @@ func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanRes
 	return engine.logPlanDecision(ctx, input, output, err, trail)
 }
 
-func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanResourcesInput, opts *CheckOptions) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, nil, err
@@ -241,7 +243,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
-	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope, engine.conf.LenientScopeSearch)
+	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope, opts.LenientScopeSearch())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -251,7 +253,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	now := time.Now()
 	nowFn := func() time.Time { return now }
 	if policy := policySet.GetPrincipalPolicy(); policy != nil {
-		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: engine.conf.Globals, NowFn: nowFn}
+		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: opts.Globals(), NowFn: nowFn}
 		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, nil, err
@@ -262,13 +264,13 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, engine.conf.LenientScopeSearch)
+	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
 
 	if policy := policySet.GetResourcePolicy(); policy != nil {
-		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: engine.conf.Globals, SchemaMgr: engine.schemaMgr, NowFn: nowFn}
+		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: nowFn}
 		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, nil, err
