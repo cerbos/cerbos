@@ -479,7 +479,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evaluateConditionExpression(t.Expr.Checked, request, globals, variables, derivedRolesList)
+		residual, err := evalCtx.evaluateConditionExpression(t.Expr.Checked, request, globals, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -490,8 +490,8 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	return res, nil
 }
 
-func evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
-	p, err := newEvaluator(request, globals)
+func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+	p, err := evalCtx.newEvaluator(request, globals)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +575,7 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn func() time.Time) *partialEvaluator {
 	return &partialEvaluator{env, vars, nowFn}
 }
-func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
+func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
 	knownVars := make(map[string]any)
 	knownVars[conditions.CELRequestIdent] = request
 	knownVars[conditions.CELPrincipalAbbrev] = request.Principal
@@ -611,7 +611,7 @@ func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partial
 		return nil, err
 	}
 
-	return newPartialEvaluator(env, vars, time.Now), nil
+	return newPartialEvaluator(env, vars, evalCtx.timeFn), nil
 }
 
 func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {
