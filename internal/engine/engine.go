@@ -248,9 +248,10 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	result := new(planner.PolicyPlanResult)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes, 2)} //nolint:gomnd
-
+	now := time.Now()
+	nowFn := func() time.Time { return now }
 	if policy := policySet.GetPrincipalPolicy(); policy != nil {
-		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: engine.conf.Globals}
+		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: engine.conf.Globals, NowFn: nowFn}
 		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, nil, err
@@ -267,7 +268,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	if policy := policySet.GetResourcePolicy(); policy != nil {
-		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: engine.conf.Globals, SchemaMgr: engine.schemaMgr}
+		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: engine.conf.Globals, SchemaMgr: engine.schemaMgr, NowFn: nowFn}
 		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, nil, err
