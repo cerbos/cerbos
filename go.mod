@@ -16,7 +16,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cerbos/cerbos-sdk-go v0.2.1
 	github.com/cerbos/cerbos/api/genpb v0.32.1-0.20240112120557-3027bc9c152d
-	github.com/cerbos/cloud-api v0.1.14
+	github.com/cerbos/cloud-api v0.1.15
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/cloudflare/certinel v0.4.1
@@ -127,7 +127,7 @@ require (
 	cloud.google.com/go/iam v1.1.5 // indirect
 	cloud.google.com/go/storage v1.35.1 // indirect
 	connectrpc.com/connect v1.14.0 // indirect
-	connectrpc.com/otelconnect v0.6.1-0.20231227182756-eb9596a6386d // indirect
+	connectrpc.com/otelconnect v0.7.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/age v1.1.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
