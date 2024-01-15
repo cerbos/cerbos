@@ -146,9 +146,11 @@ func (p *PolicyPlanResult) toAST() *qpN {
 		return mkNodeFromLO(mkAndLogicalOperation(append(p.DenyFilter, allowFilter)))
 	}
 }
+
 func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{ppe.NowFn}
 }
+
 func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
@@ -193,9 +195,11 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 
 	return result, nil
 }
+
 func (rpe *ResourcePolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{rpe.NowFn}
 }
+
 func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
@@ -572,9 +576,11 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 	residual, err := ResidualExpr(ast, details)
 	return val, residual, err
 }
+
 func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn func() time.Time) *partialEvaluator {
 	return &partialEvaluator{env, vars, nowFn}
 }
+
 func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
 	knownVars := make(map[string]any)
 	knownVars[conditions.CELRequestIdent] = request
@@ -606,7 +612,6 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals map[
 	vars, err := cel.PartialVars(knownVars,
 		cel.AttributePattern(conditions.CELResourceAbbrev),
 		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
-
 	if err != nil {
 		return nil, err
 	}

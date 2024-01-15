@@ -311,7 +311,7 @@ func TestQueryPlan(t *testing.T) {
 					}
 					nowFnCallsCounter := 0
 					nowFn := func() time.Time {
-						nowFnCallsCounter += 1
+						nowFnCallsCounter++
 						return time.Now()
 					}
 					response, err := eng.PlanResources(context.Background(), request, WithNowFunc(nowFn))
