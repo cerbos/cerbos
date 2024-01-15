@@ -12,6 +12,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -308,14 +309,19 @@ func TestQueryPlan(t *testing.T) {
 						IncludeMeta: true,
 						AuxData:     auxData,
 					}
-
-					response, err := eng.PlanResources(context.Background(), request)
+					nowFnCallsCounter := 0
+					nowFn := func() time.Time {
+						nowFnCallsCounter += 1
+						return time.Now()
+					}
+					response, err := eng.PlanResources(context.Background(), request, WithNowFunc(nowFn))
 					if tt.WantErr {
 						is.Error(err)
 					} else {
 						is.NoError(err)
 						is.NotNil(response)
 						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s\n%s\n", response.FilterDebug, protojson.Format(response.Filter))
+						is.True(nowFnCallsCounter == 1, "time function called %d times - should be called once", nowFnCallsCounter)
 					}
 				})
 			}

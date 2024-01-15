@@ -250,7 +250,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	result := new(planner.PolicyPlanResult)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes, 2)} //nolint:gomnd
-	now := time.Now()
+	now := opts.NowFunc()()
 	nowFn := func() time.Time { return now }
 	if policy := policySet.GetPrincipalPolicy(); policy != nil {
 		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: opts.Globals(), NowFn: nowFn}
