@@ -321,7 +321,7 @@ func TestQueryPlan(t *testing.T) {
 						is.NoError(err)
 						is.NotNil(response)
 						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s\n%s\n", response.FilterDebug, protojson.Format(response.Filter))
-						is.True(nowFnCallsCounter == 1, "time function called %d times - should be called once", nowFnCallsCounter)
+						is.Equal(1, nowFnCallsCounter, "time function should be called once")
 					}
 				})
 			}
