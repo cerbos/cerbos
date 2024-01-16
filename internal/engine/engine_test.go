@@ -290,6 +290,8 @@ func TestQueryPlan(t *testing.T) {
 	auxData.Jwt["customInt"] = structpb.NewNumberValue(42)
 
 	suites := test.LoadTestCases(t, "query_planner/suite")
+	timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395716+13:00")
+	require.NoError(t, err)
 	for _, suite := range suites {
 		s := suite
 		t.Run(s.Name, func(t *testing.T) {
@@ -312,7 +314,7 @@ func TestQueryPlan(t *testing.T) {
 					nowFnCallsCounter := 0
 					nowFn := func() time.Time {
 						nowFnCallsCounter++
-						return time.Now()
+						return timestamp
 					}
 					response, err := eng.PlanResources(context.Background(), request, WithNowFunc(nowFn))
 					if tt.WantErr {
