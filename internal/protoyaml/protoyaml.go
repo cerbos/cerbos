@@ -140,19 +140,27 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 		}
 
 		i++
+		invalid := false
 		for t := tok.Next; t != nil && t.Position.Line == tok.Position.Line; t = t.Next {
+			switch t.Type {
+			case token.CollectEntryType, token.CommentType, token.AnchorType:
+			default:
+				invalid = true
+			}
 			i++
 		}
 
-		outErrs = append(outErrs, &sourcev1.Error{
-			Kind:    sourcev1.Error_KIND_PARSE_ERROR,
-			Message: "invalid YAML string: use a literal or folded block for strings containing quotes",
-			Position: &sourcev1.Position{
-				Line:   uint32(tok.Position.Line),
-				Column: uint32(tok.Position.Column),
-			},
-			Context: errPrinter.PrintErrorToken(tok, false),
-		})
+		if invalid {
+			outErrs = append(outErrs, &sourcev1.Error{
+				Kind:    sourcev1.Error_KIND_PARSE_ERROR,
+				Message: "invalid YAML string: use a literal or folded block for strings containing quotes",
+				Position: &sourcev1.Position{
+					Line:   uint32(tok.Position.Line),
+					Column: uint32(tok.Position.Column),
+				},
+				Context: errPrinter.PrintErrorToken(tok, false),
+			})
+		}
 	}
 
 	return outErrs

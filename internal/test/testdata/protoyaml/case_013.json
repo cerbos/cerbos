@@ -1,0 +1,32 @@
+{
+    "description": "JSON resource policy with unknown field",
+    "wantErrors": [
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 5,
+                "column": 5,
+                "path": "$.resourcePolicy.foo"
+            },
+            "message": "unknown field foo"
+        }
+    ],
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1"
+            },
+            "errors": [
+                {
+                    "kind": "KIND_PARSE_ERROR",
+                    "position": {
+                        "line": 5,
+                        "column": 5,
+                        "path": "$.resourcePolicy.foo"
+                    },
+                    "message": "unknown field foo"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+  "apiVersion": "api.cerbos.dev/v1",
+  "resourcePolicy": {
+    "version": "20210210",
+    "foo": "bar",
+    "resource": "leave_request",
+    "rules": [
+      {
+        "actions": [
+          "*"
+        ],
+        "effect": "EFFECT_ALLOW",
+        "roles": [
+          "admin"
+        ],
+        "name": "wildcard"
+      }
+    ]
+  }
+}
