@@ -52,10 +52,10 @@ As announced earlier, this release removes the deprecated `client` package and d
 
 == Changelog
 
-
 === Bug Fixes
 
 * Don't forward connection-specific headers via gRPC-Gateway (link:https://github.com/cerbos/cerbos/pull/1938[#1938])
+* Query planner doesn't use stable time (link:https://github.com/cerbos/cerbos/pull/1949[#1949])
 * Query planner must (pre)evaluate expressions with resource kind (link:https://github.com/cerbos/cerbos/pull/1921[#1921])
 * Restore `User-Agent` header aliasing (link:https://github.com/cerbos/cerbos/pull/1941[#1941])
 
@@ -92,6 +92,7 @@ As announced earlier, this release removes the deprecated `client` package and d
 * Downgrade github.com/chigopher/pathlib (link:https://github.com/cerbos/cerbos/pull/1924[#1924])
 * Ignore source attributes in cerbosctl tests (link:https://github.com/cerbos/cerbos/pull/1908[#1908])
 * Readme update (link:https://github.com/cerbos/cerbos/pull/1937[#1937])
+* Revert "docs: Fix image URLs (link:https://github.com/cerbos/cerbos/pull/1943[#1943])
 * Tag API module during release (link:https://github.com/cerbos/cerbos/pull/1909[#1909])
 * Tidy dependencies (link:https://github.com/cerbos/cerbos/pull/1899[#1899])
 * Tidy dependencies (link:https://github.com/cerbos/cerbos/pull/1907[#1907])
@@ -106,6 +107,8 @@ As announced earlier, this release removes the deprecated `client` package and d
 * Update go deps (link:https://github.com/cerbos/cerbos/pull/1922[#1922])
 * Update go deps (link:https://github.com/cerbos/cerbos/pull/1928[#1928])
 * Update go deps (link:https://github.com/cerbos/cerbos/pull/1933[#1933])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1950[#1950])
 * Update google-github-actions/auth action to v2 (link:https://github.com/cerbos/cerbos/pull/1897[#1897])
 * Update google-github-actions/setup-gcloud action to v2 (link:https://github.com/cerbos/cerbos/pull/1929[#1929])
 * Update module golang.org/x/crypto to v0.17.0 [security] (link:https://github.com/cerbos/cerbos/pull/1917[#1917])
+* YAML to Protobuf parser  (link:https://github.com/cerbos/cerbos/pull/1939[#1939])
