@@ -19,8 +19,10 @@ resourcePolicy:
           all:
             of:
               - expr: "cerbos-jwt-tests" in request.auxData.jwt.aud
-              - expr: "A" in request.auxData.jwt.customArray
+              - expr: '"A" in request.auxData.jwt.customArray' # this one is properly quoted
               - expr: 'x' in request.auxData.jwt.customArray
+              - expr: > # this one is properly folded
+                  'y' in request.auxData.jwt.customArray
 
     - actions: ["remind"]
       effect: EFFECT_ALLOW

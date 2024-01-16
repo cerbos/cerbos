@@ -12,14 +12,6 @@
         {
             "kind": "KIND_PARSE_ERROR",
             "position": {
-                "line": 22,
-                "column": 23
-            },
-            "message": "invalid YAML string: use a literal or folded block for strings containing quotes"
-        },
-        {
-            "kind": "KIND_PARSE_ERROR",
-            "position": {
                 "line": 23,
                 "column": 23
             },
