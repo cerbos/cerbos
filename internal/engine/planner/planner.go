@@ -53,11 +53,13 @@ type ResourcePolicyEvaluator struct {
 	Policy    *runtimev1.RunnableResourcePolicySet
 	Globals   map[string]any
 	SchemaMgr schema.Manager
+	NowFn     func() time.Time
 }
 
 type PrincipalPolicyEvaluator struct {
 	Policy  *runtimev1.RunnablePrincipalPolicySet
 	Globals map[string]any
+	NowFn   func() time.Time
 }
 
 func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *PolicyPlanResult {
@@ -145,6 +147,10 @@ func (p *PolicyPlanResult) toAST() *qpN {
 	}
 }
 
+func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
+	return &evalContext{ppe.NowFn}
+}
+
 func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
@@ -166,6 +172,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		}
 
 		result.Scope = p.Scope
+		evalCtx := ppe.evalContext()
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
 				continue
@@ -176,7 +183,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					continue
 				}
 
-				filter, err := evaluateCondition(rule.Condition, request, ppe.Globals, variables, derivedRolesList)
+				filter, err := evalCtx.evaluateCondition(rule.Condition, request, ppe.Globals, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -187,6 +194,10 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	}
 
 	return result, nil
+}
+
+func (rpe *ResourcePolicyEvaluator) evalContext() *evalContext {
+	return &evalContext{rpe.NowFn}
 }
 
 func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
@@ -229,7 +240,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 		var derivedRoles []rN
 
 		derivedRolesList := mkDerivedRolesList(nil)
-
+		evalCtx := rpe.evalContext()
 		for drName, dr := range p.DerivedRoles {
 			dr := dr
 			if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
@@ -247,7 +258,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					if dr.Condition == nil {
 						return mkTrueNode(), nil
 					}
-					node, err := evaluateCondition(dr.Condition, request, rpe.Globals, drVariables, derivedRolesList)
+					node, err := evalCtx.evaluateCondition(dr.Condition, request, rpe.Globals, drVariables, derivedRolesList)
 					if err != nil {
 						return nil, err
 					}
@@ -296,7 +307,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					continue
 				}
 
-				node, err := evaluateCondition(rule.Condition, request, rpe.Globals, variables, derivedRolesList)
+				node, err := evalCtx.evaluateCondition(rule.Condition, request, rpe.Globals, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -384,7 +395,11 @@ func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
+type evalContext struct {
+	timeFn func() time.Time
+}
+
+func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -394,7 +409,7 @@ func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request
 	case *runtimev1.Condition_Any:
 		nodes := make([]*qpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
-			node, err := evaluateCondition(c, request, globals, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(c, request, globals, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -418,7 +433,7 @@ func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
-			node, err := evaluateCondition(c, request, globals, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(c, request, globals, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -441,7 +456,7 @@ func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
-			node, err := evaluateCondition(c, request, globals, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(c, request, globals, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -468,7 +483,7 @@ func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evaluateConditionExpression(t.Expr.Checked, request, globals, variables, derivedRolesList)
+		residual, err := evalCtx.evaluateConditionExpression(t.Expr.Checked, request, globals, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -479,8 +494,8 @@ func evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request
 	return res, nil
 }
 
-func evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
-	p, err := newEvaluator(request, globals)
+func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+	p, err := evalCtx.newEvaluator(request, globals)
 	if err != nil {
 		return nil, err
 	}
@@ -553,7 +568,7 @@ type partialEvaluator struct {
 
 func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
-	val, details, err := conditions.Eval(p.env, ast, p.vars, time.Now, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	val, details, err := conditions.Eval(p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return val, nil, err
 	}
@@ -562,15 +577,18 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 	return val, residual, err
 }
 
-func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
-	p = &partialEvaluator{nowFn: time.Now}
+func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn func() time.Time) *partialEvaluator {
+	return &partialEvaluator{env, vars, nowFn}
+}
+
+func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
 	knownVars := make(map[string]any)
 	knownVars[conditions.CELRequestIdent] = request
 	knownVars[conditions.CELPrincipalAbbrev] = request.Principal
 	knownVars[conditions.CELGlobalsIdent] = globals
 	knownVars[conditions.CELGlobalsAbbrev] = globals
 
-	p.env = conditions.StdEnv
+	env := conditions.StdEnv
 
 	const nNameVariants = 2 // qualified, unqualified name
 	ds := make([]*exprpb.Decl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
@@ -586,20 +604,19 @@ func newEvaluator(request *enginev1.Request, globals map[string]any) (p *partial
 		ds = append(ds, decls.NewVar(s, decls.String))
 		knownVars[s] = request.Resource.GetKind()
 	}
-	p.env, err = p.env.Extend(cel.Declarations(ds...))
+	env, err = env.Extend(cel.Declarations(ds...))
 	if err != nil {
 		return nil, err
 	}
 
-	p.vars, err = cel.PartialVars(knownVars,
+	vars, err := cel.PartialVars(knownVars,
 		cel.AttributePattern(conditions.CELResourceAbbrev),
 		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
-
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
+	return newPartialEvaluator(env, vars, evalCtx.timeFn), nil
 }
 
 func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {

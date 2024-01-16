@@ -12,6 +12,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -289,6 +290,8 @@ func TestQueryPlan(t *testing.T) {
 	auxData.Jwt["customInt"] = structpb.NewNumberValue(42)
 
 	suites := test.LoadTestCases(t, "query_planner/suite")
+	timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395716+13:00")
+	require.NoError(t, err)
 	for _, suite := range suites {
 		s := suite
 		t.Run(s.Name, func(t *testing.T) {
@@ -308,14 +311,19 @@ func TestQueryPlan(t *testing.T) {
 						IncludeMeta: true,
 						AuxData:     auxData,
 					}
-
-					response, err := eng.PlanResources(context.Background(), request)
+					nowFnCallsCounter := 0
+					nowFn := func() time.Time {
+						nowFnCallsCounter++
+						return timestamp
+					}
+					response, err := eng.PlanResources(context.Background(), request, WithNowFunc(nowFn))
 					if tt.WantErr {
 						is.Error(err)
 					} else {
 						is.NoError(err)
 						is.NotNil(response)
 						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s\n%s\n", response.FilterDebug, protojson.Format(response.Filter))
+						is.Equal(1, nowFnCallsCounter, "time function should be called once")
 					}
 				})
 			}

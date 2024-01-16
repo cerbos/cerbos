@@ -32,3 +32,10 @@ resourcePolicy:
         match:
           expr: |-
             R.attr.environment == G.environment
+    - actions: ["now-once"]
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: now() == timestamp("2024-01-16T10:18:27.395716+13:00") && now() == now()
