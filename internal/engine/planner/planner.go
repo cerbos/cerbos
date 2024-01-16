@@ -568,7 +568,7 @@ type partialEvaluator struct {
 
 func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
-	val, details, err := conditions.Eval(p.env, ast, p.vars, time.Now, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	val, details, err := conditions.Eval(p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return val, nil, err
 	}
