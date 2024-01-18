@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
@@ -24,11 +25,12 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/protoyaml"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-func TestUnmarshaler(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	testCases := test.LoadTestCases(t, "protoyaml")
 	validator, err := protovalidate.New(protovalidate.WithMessages(&policyv1.Policy{}))
 	require.NoError(t, err)
@@ -36,8 +38,7 @@ func TestUnmarshaler(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			tc, input := loadTestCase(t, testCase)
-			u := protoyaml.NewUnmarshaler(func() *policyv1.Policy { return &policyv1.Policy{} }, protoyaml.WithValidator(validator))
-			haveMsg, haveSrc, err := u.UnmarshalReader(input)
+			haveMsg, haveSrc, err := protoyaml.Unmarshal(input, func() *policyv1.Policy { return &policyv1.Policy{} }, protoyaml.WithValidator(validator))
 
 			t.Cleanup(func() {
 				if t.Failed() {
@@ -135,6 +136,43 @@ func loadTestCase(t *testing.T, tc test.Case) (*privatev1.ProtoYamlTestCase, io.
 	require.NoError(t, protojson.Unmarshal(tc.Input, &pytc), "Failed to read test case")
 
 	return &pytc, bytes.NewReader(tc.Want["input"])
+}
+
+func TestFind(t *testing.T) {
+	rnd := rand.New(rand.NewSource(42)) //nolint:gosec
+	testCases := test.LoadTestCases(t, "protoyaml")
+	for _, testCase := range testCases {
+		tc, input := loadTestCase(t, testCase)
+		if len(tc.Want) == 0 {
+			continue
+		}
+
+		t.Run(testCase.Name, func(t *testing.T) {
+			want, match := findCandidate(t, rnd, tc.Want)
+			have := &policyv1.Policy{}
+			require.NoError(t, protoyaml.Find(input, match, have))
+			require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+		})
+	}
+}
+
+func findCandidate(t *testing.T, rnd *rand.Rand, items []*privatev1.ProtoYamlTestCase_Want) (*policyv1.Policy, func(*policyv1.Policy) bool) {
+	t.Helper()
+
+	for i := 0; i < 5; i++ {
+		idx := rnd.Intn(len(items))
+		if m := items[idx].Message; m != nil && m.GetPolicyType() != nil {
+			fqn := namer.FQN(m)
+			t.Logf("Selected: index=%d FQN=%s", idx, fqn)
+			match := func(msg *policyv1.Policy) bool {
+				return namer.FQN(msg) == fqn
+			}
+			return m, match
+		}
+	}
+
+	t.Skip("Unable to find candidate")
+	return nil, nil
 }
 
 func TestWalkAST(t *testing.T) {
