@@ -87,7 +87,7 @@ func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, _ []*sourcev1.Source
 		return nil, nil, outErr
 	}
 
-	f, err := parser.Parse(t, 0)
+	f, err := parser.Parse(t, parser.ParseComments)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -99,10 +99,17 @@ func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, _ []*sourcev1.Source
 	outMsg := make([]T, 0, len(f.Docs))
 	outSrc := make([]*sourcev1.SourceContext, 0, len(f.Docs))
 	for _, doc := range f.Docs {
+		// Ignore documents not structured as policies
+		bodyNode, ok := doc.Body.(ast.MapNode)
+		if !ok {
+			continue
+		}
+
 		msg := u.factory()
 		srcCtx := &sourcev1.SourceContext{FieldPositions: make(map[string]*sourcev1.Position)}
 		uctx := &unmarshalCtx{doc: doc, srcCtx: srcCtx}
-		if err := u.unmarshalDoc(uctx, doc, msg); err != nil {
+
+		if err := u.unmarshalMapping(uctx, bodyNode, msg.ProtoReflect()); err != nil {
 			outErr = errors.Join(outErr, err)
 		} else if err := u.validate(uctx, msg); err != nil {
 			outErr = errors.Join(outErr, err)
