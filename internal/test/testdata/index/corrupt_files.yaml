@@ -2,18 +2,45 @@
 ---
 wantErrList:
   loadFailures:
-    - error: |-
-        file is not valid: { /: [expected object, but got string] }
-      file: invalid.json
-    - error: |-
-        file is not valid: { /: [expected object, but got string] }
-      file: invalid.yml
-    - error: |-
-        file is not valid: { /: [additionalProperties 'key' not allowed | missing properties: 'apiVersion' | missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
-      file: principal.json
-    - error: |-
-        file is not valid: { /: [additionalProperties 'some' not allowed | missing properties: 'apiVersion' | missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
-      file: resource.yaml
+    - file: invalid.json
+      error: invalid document
+      errorDetail:
+        kind: KIND_PARSE_ERROR
+        message: invalid document
+        position:
+          line: 1
+          column: 1
+          path: $
+
+    - file: invalid.yml
+      error: invalid document
+      errorDetail:
+        kind: KIND_PARSE_ERROR
+        message: invalid document
+        position:
+          line: 1
+          column: 1
+          path: $
+
+    - file: principal.json
+      error: 'unknown field "key"'
+      errorDetail:
+        kind: KIND_PARSE_ERROR
+        message: 'unknown field "key"'
+        position:
+          line: 1
+          column: 2
+          path: $.key
+
+    - file: resource.yaml
+      error: 'unknown field "some"'
+      errorDetail:
+        kind: KIND_PARSE_ERROR
+        message: 'unknown field "some"'
+        position:
+          line: 2
+          column: 1
+          path: $.some
 files:
   "resource.yaml": |-
     ---

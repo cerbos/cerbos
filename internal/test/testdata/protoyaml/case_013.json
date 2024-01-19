@@ -8,7 +8,7 @@
                 "column": 5,
                 "path": "$.resourcePolicy.foo"
             },
-            "message": "unknown field foo"
+            "message": "unknown field \"foo\""
         }
     ],
     "want": [
@@ -24,7 +24,7 @@
                         "column": 5,
                         "path": "$.resourcePolicy.foo"
                     },
-                    "message": "unknown field foo"
+                    "message": "unknown field \"foo\""
                 }
             ]
         }

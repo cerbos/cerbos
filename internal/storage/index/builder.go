@@ -14,12 +14,12 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/protoyaml"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -119,20 +119,23 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		if err := internaljsonschema.ValidatePolicy(fsys, filePath); err != nil {
-			if errors.Is(err, internaljsonschema.ErrEmptyFile) {
-				return nil
-			}
+		p, sc, err := policy.ReadPolicyWithSourceContext(fsys, filePath)
+		if err != nil {
 			ib.addLoadFailure(filePath, err)
 			return nil
 		}
 
-		p := &policyv1.Policy{}
-		if err := util.LoadFromJSONOrYAML(fsys, filePath, p); err != nil {
-			if errors.Is(err, util.ErrEmptyFile) {
-				return nil
-			}
-			ib.addLoadFailure(filePath, err)
+		if sc != nil && len(sc.Errors) > 0 {
+			ib.addErrors(filePath, sc.Errors)
+			return nil
+		}
+
+		if p == nil {
+			return nil
+		}
+
+		if p.Disabled {
+			ib.numDisabled++
 			return nil
 		}
 
@@ -141,13 +144,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		if p.Disabled {
-			ib.addDisabled(filePath)
-			return nil
-		}
-
-		ib.addPolicy(filePath, policy.Wrap(policy.WithMetadata(p, filePath, nil, filePath, opts.sourceAttributes...)))
-
+		ib.addPolicy(filePath, policy.Wrap(policy.WithMetadata(p, filePath, nil, filePath, opts.sourceAttributes...)), sc)
 		return nil
 	})
 	if err != nil {
@@ -161,26 +158,26 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 }
 
 type indexBuilder struct {
-	executables   map[namer.ModuleID]struct{}
+	executables   ModuleIDSet
 	modIDToFile   map[namer.ModuleID]string
 	fileToModID   map[string]namer.ModuleID
-	dependents    map[namer.ModuleID]map[namer.ModuleID]struct{}
-	dependencies  map[namer.ModuleID]map[namer.ModuleID]struct{}
+	dependents    map[namer.ModuleID]ModuleIDSet
+	dependencies  map[namer.ModuleID]ModuleIDSet
 	missing       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
 	missingScopes map[namer.ModuleID]string
 	stats         *statsCollector
 	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
 	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
-	disabled      []string
+	numDisabled   int
 }
 
 func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
-		executables:   make(map[namer.ModuleID]struct{}),
+		executables:   make(ModuleIDSet),
 		modIDToFile:   make(map[namer.ModuleID]string),
 		fileToModID:   make(map[string]namer.ModuleID),
-		dependents:    make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
-		dependencies:  make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
+		dependents:    make(map[namer.ModuleID]ModuleIDSet),
+		dependencies:  make(map[namer.ModuleID]ModuleIDSet),
 		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
 		missingScopes: make(map[namer.ModuleID]string),
 		stats:         newStatsCollector(),
@@ -188,19 +185,39 @@ func newIndexBuilder() *indexBuilder {
 }
 
 func (idx *indexBuilder) addLoadFailure(file string, err error) {
-	idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error()})
+	//nolint:errorlint
+	if unwrappable, ok := err.(interface{ Unwrap() []error }); ok {
+		errs := unwrappable.Unwrap()
+		for _, e := range errs {
+			idx.addLoadFailure(file, e)
+		}
+
+		return
+	}
+
+	var uErr protoyaml.UnmarshalError
+	if errors.As(err, &uErr) {
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.Message, ErrorDetail: uErr.Err})
+	} else {
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error()})
+	}
 }
 
-func (idx *indexBuilder) addDisabled(file string) {
-	idx.disabled = append(idx.disabled, file)
+func (idx *indexBuilder) addErrors(file string, errs []*sourcev1.Error) {
+	for _, e := range errs {
+		e := e
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: e.Message, ErrorDetail: e})
+	}
 }
 
-func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
-	// Is this is a duplicate of another file?
+func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper, srcCtx *sourcev1.SourceContext) {
+	// Is this policy defined elsewhere?
 	if otherFile, ok := idx.modIDToFile[p.ID]; ok && (otherFile != file) {
 		idx.duplicates = append(idx.duplicates, &runtimev1.IndexBuildErrors_DuplicateDef{
 			File:      file,
 			OtherFile: otherFile,
+			Policy:    namer.PolicyKeyFromFQN(p.FQN),
+			Position:  srcCtx.FieldPositions["$"],
 		})
 
 		return
@@ -221,7 +238,8 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 		// not executable
 	}
 
-	for _, dep := range policy.Dependencies(p.Policy) {
+	deps, paths := policy.Dependencies(p.Policy)
+	for i, dep := range deps {
 		depID := namer.GenModuleIDFromFQN(dep)
 
 		idx.addDep(p.ID, depID)
@@ -240,8 +258,10 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 			}
 
 			idx.missing[depID] = append(idx.missing[depID], &runtimev1.IndexBuildErrors_MissingImport{
-				ImportingFile: file,
-				Desc:          fmt.Sprintf("%s import '%s' not found", desc, namer.SimpleName(dep)),
+				ImportingFile:   file,
+				ImportingPolicy: namer.PolicyKeyFromFQN(p.FQN),
+				Desc:            fmt.Sprintf("%s import '%s' not found", desc, namer.SimpleName(dep)),
+				Position:        srcCtx.FieldPositions[paths[i]],
 			})
 		}
 	}
@@ -275,7 +295,7 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	if nErr > 0 {
 		err := &BuildError{
 			IndexBuildErrors: &runtimev1.IndexBuildErrors{
-				Disabled:      idx.disabled,
+				NumDisabled:   uint32(idx.numDisabled),
 				DuplicateDefs: idx.duplicates,
 				LoadFailures:  idx.loadFailures,
 			},
@@ -340,8 +360,10 @@ func logBuildFailure(logger *zap.Logger, level zapcore.Level, err *BuildError) {
 		fields = append(fields, zap.Any("duplicates", err.DuplicateDefs))
 	}
 
-	if len(err.Disabled) > 0 {
-		fields = append(fields, zap.Strings("disabled", err.Disabled))
+	if err.NumDisabled > 0 {
+		fields = append(fields, zap.Int("disabled", int(err.NumDisabled)))
+	} else if len(err.Disabled) > 0 { //nolint:staticcheck
+		fields = append(fields, zap.Strings("disabled", err.Disabled)) //nolint:staticcheck
 	}
 
 	ce.Write(fields...)

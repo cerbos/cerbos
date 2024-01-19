@@ -1,0 +1,26 @@
+{
+    "description": "JSON object on single line",
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "resource": "leave_request",
+                    "version": "20210210",
+                    "rules": [
+                        {
+                            "actions": [
+                                "*"
+                            ],
+                            "roles": [
+                                "admin"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "name": "wildcard"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -4,6 +4,7 @@ wantErrList:
   duplicateDefs:
     - file: resource_acme_hr.yaml
       otherFile: resource_acme.yaml
+      policy: resource.leave_request.v20210210/acme
 files:
   "resource.yaml": |-
     ---

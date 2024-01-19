@@ -35,6 +35,11 @@ func ReadJSONOrYAML(src io.Reader, dest proto.Message) error {
 	return d.decode(dest)
 }
 
+func IsJSON(src []byte) bool {
+	trimmed := bytes.TrimLeftFunc(src, unicode.IsSpace)
+	return bytes.HasPrefix(trimmed, jsonStart)
+}
+
 func mkDecoder(src io.Reader) decoder {
 	buf := bufio.NewReaderSize(src, bufSize)
 	prelude, _ := buf.Peek(bufSize)

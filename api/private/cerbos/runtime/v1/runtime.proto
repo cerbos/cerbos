@@ -7,6 +7,7 @@ package cerbos.runtime.v1;
 
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/policy/v1/policy.proto";
+import "cerbos/source/v1/source.proto";
 import "google/api/expr/v1alpha1/checked.proto";
 import "google/protobuf/empty.proto";
 
@@ -23,8 +24,9 @@ message RunnablePolicySet {
   uint32 compiler_version = 6;
 }
 
-// RunnableResourcePolicySet is a container for all "compiled" resource policies belonging to a particular scope hierarchy.
-// For example, consider the following policy files:
+// RunnableResourcePolicySet is a container for all "compiled" resource policies
+// belonging to a particular scope hierarchy. For example, consider the
+// following policy files:
 //
 // Resource       Version     Scope
 // --------------------------------
@@ -33,8 +35,9 @@ message RunnablePolicySet {
 // leave_request  default     foo
 // leave_request  staging     foo
 //
-// After "compiling", the above would result in two RunnableResourcePolicySet objects. One containing the three
-// leave_request:default polcies and one containing the single leave_request:staging policy.
+// After "compiling", the above would result in two RunnableResourcePolicySet
+// objects. One containing the three leave_request:default polcies and one
+// containing the single leave_request:staging policy.
 message RunnableResourcePolicySet {
   message Metadata {
     string fqn = 1;
@@ -98,8 +101,9 @@ message RunnableVariablesSet {
   map<string, Expr> variables = 2;
 }
 
-// RunnablePrincipalPolicySet is a container for all "compiled" principal policies belonging to a particular scope hierarchy.
-// See the description of RunnableResourcePolicySet to get an idea about how this is constructed.
+// RunnablePrincipalPolicySet is a container for all "compiled" principal
+// policies belonging to a particular scope hierarchy. See the description of
+// RunnableResourcePolicySet to get an idea about how this is constructed.
 message RunnablePrincipalPolicySet {
   message Metadata {
     string fqn = 1;
@@ -169,6 +173,7 @@ message CompileErrors {
     string file = 1;
     string error = 2;
     string description = 3;
+    cerbos.source.v1.Position position = 4;
   }
 
   repeated Err errors = 1;
@@ -178,23 +183,29 @@ message IndexBuildErrors {
   message DuplicateDef {
     string file = 1;
     string other_file = 2;
+    string policy = 3;
+    cerbos.source.v1.Position position = 4;
   }
 
   message MissingImport {
     string importing_file = 1;
     string desc = 2;
+    string importing_policy = 3;
+    cerbos.source.v1.Position position = 4;
   }
 
   message LoadFailure {
     string file = 1;
-    string error = 2;
+    string error = 2 [deprecated = true];
+    cerbos.source.v1.Error error_detail = 3;
   }
 
-  repeated string disabled = 1;
+  repeated string disabled = 1 [deprecated = true];
   repeated DuplicateDef duplicate_defs = 2;
   repeated LoadFailure load_failures = 3;
   repeated MissingImport missing_imports = 4;
   repeated string missing_scopes = 5;
+  uint32 num_disabled = 6;
 }
 
 message Errors {

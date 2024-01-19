@@ -20,11 +20,13 @@ import (
 	"github.com/goccy/go-yaml/parser"
 	"github.com/goccy/go-yaml/printer"
 	"github.com/goccy/go-yaml/token"
+	"github.com/stoewer/go-strcase"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -116,15 +118,21 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 	outMsg := make([]T, 0, len(f.Docs))
 	outSrc := make([]*sourcev1.SourceContext, 0, len(f.Docs))
 	for _, doc := range f.Docs {
+		msg := factory()
+		uctx := &unmarshalCtx{doc: doc, srcCtx: &sourcev1.SourceContext{}}
+
 		bodyNode, ok := doc.Body.(ast.MapNode)
 		if !ok {
-			// Ignore documents not structured as policies
+			// ignore commented out documents
+			if doc.Body.Type() == ast.CommentType {
+				continue
+			}
+
+			outErr = errors.Join(outErr, uctx.perrorf(doc.Body, "invalid document"))
+			outMsg = append(outMsg, msg)
+			outSrc = append(outSrc, uctx.srcCtx)
 			continue
 		}
-
-		msg := factory()
-		srcCtx := &sourcev1.SourceContext{FieldPositions: make(map[string]*sourcev1.Position)}
-		uctx := &unmarshalCtx{doc: doc, srcCtx: srcCtx}
 
 		if err := u.unmarshalMapping(uctx, bodyNode, msg.ProtoReflect()); err != nil {
 			outErr = errors.Join(outErr, err)
@@ -133,7 +141,7 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 		}
 
 		outMsg = append(outMsg, msg)
-		outSrc = append(outSrc, srcCtx)
+		outSrc = append(outSrc, uctx.srcCtx)
 	}
 
 	return outMsg, outSrc, outErr
@@ -141,7 +149,7 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 
 func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
-	if detectProblems {
+	if detectProblems && !util.IsJSON(contents) {
 		if errs := detectStringStartingWithQuote(t); len(errs) > 0 {
 			for _, err := range errs {
 				outErr = errors.Join(outErr, NewUnmarshalError(err))
@@ -267,7 +275,7 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 			if u.ignoreUnknownFields {
 				continue
 			}
-			return uctx.perrorf(kn, "unknown field %s", keyValue)
+			return uctx.perrorf(kn, "unknown field %q", keyValue)
 		}
 
 		if prev, ok := seen[field.Number()]; ok {
@@ -835,6 +843,10 @@ func (uc *unmarshalCtx) forMapItem(key string, n ast.Node) *unmarshalCtx {
 func (uc *unmarshalCtx) recordFieldPosition(path string, n ast.Node) {
 	if uc.srcCtx != nil && n != nil {
 		if tok := n.GetToken(); tok != nil && tok.Position != nil {
+			if uc.srcCtx.FieldPositions == nil {
+				uc.srcCtx.FieldPositions = make(map[string]*sourcev1.Position)
+			}
+
 			uc.srcCtx.FieldPositions[path] = &sourcev1.Position{Line: uint32(tok.Position.Line), Column: uint32(tok.Position.Column), Path: n.GetPath()}
 		}
 	}
@@ -870,7 +882,7 @@ func (uc *unmarshalCtx) perrorf(n ast.Node, msg string, args ...any) error {
 }
 
 func (uc *unmarshalCtx) verrorf(path, msg string) error {
-	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_VALIDATION_ERROR, Message: msg}
+	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_VALIDATION_ERROR, Message: fmt.Sprintf("%s: %s", strcase.LowerCamelCase(path), msg)}
 	if uc.srcCtx != nil {
 		if pos, ok := uc.srcCtx.FieldPositions[path]; ok {
 			err.Position = &sourcev1.Position{

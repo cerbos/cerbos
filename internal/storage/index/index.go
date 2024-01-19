@@ -32,6 +32,8 @@ var (
 	ErrPolicyNotFound = errors.New("policy not found")
 )
 
+type ModuleIDSet map[namer.ModuleID]struct{}
+
 type Entry struct {
 	File   string
 	Policy policy.Wrapper
@@ -59,9 +61,9 @@ type index struct {
 	fsys         fs.FS
 	sfGroup      singleflight.Group
 	fileToModID  map[string]namer.ModuleID
-	executables  map[namer.ModuleID]struct{}
-	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
-	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
+	executables  ModuleIDSet
+	dependents   map[namer.ModuleID]ModuleIDSet
+	dependencies map[namer.ModuleID]ModuleIDSet
 	modIDToFile  map[namer.ModuleID]string
 	schemaLoader *SchemaLoader
 	stats        storage.RepoStats

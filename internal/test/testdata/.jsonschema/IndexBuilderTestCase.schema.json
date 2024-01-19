@@ -56,6 +56,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "numDisabled": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },
@@ -68,6 +72,12 @@
         },
         "otherFile": {
           "type": "string"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
         }
       }
     },
@@ -77,6 +87,9 @@
       "properties": {
         "error": {
           "type": "string"
+        },
+        "errorDetail": {
+          "$ref": "#/definitions/cerbos.source.v1.Error"
         },
         "file": {
           "type": "string"
@@ -91,6 +104,55 @@
           "type": "string"
         },
         "importingFile": {
+          "type": "string"
+        },
+        "importingPolicy": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
+        }
+      }
+    },
+    "cerbos.source.v1.Error": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/cerbos.source.v1.Error.Kind"
+        },
+        "message": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
+        }
+      }
+    },
+    "cerbos.source.v1.Error.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_PARSE_ERROR",
+        "KIND_VALIDATION_ERROR"
+      ]
+    },
+    "cerbos.source.v1.Position": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "path": {
           "type": "string"
         }
       }

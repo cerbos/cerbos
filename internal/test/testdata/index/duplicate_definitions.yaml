@@ -4,6 +4,7 @@ wantErrList:
   duplicateDefs:
     - file: derived2.yaml
       otherFile: derived1.yaml
+      policy: derived_roles.my_derived_roles
 files:
   "derived1.yaml": |-
     ---

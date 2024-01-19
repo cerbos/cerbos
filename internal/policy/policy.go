@@ -89,20 +89,24 @@ func KindFromFQN(fqn string) Kind {
 }
 
 // Dependencies returns the module names of dependencies of the policy.
-func Dependencies(p *policyv1.Policy) []string {
+func Dependencies(p *policyv1.Policy) ([]string, []string) {
 	var importDerivedRoles []string
 	var importVariables []string
+	var importVariablesProtoPath string
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		importDerivedRoles = pt.ResourcePolicy.ImportDerivedRoles
 		importVariables = pt.ResourcePolicy.Variables.GetImport()
+		importVariablesProtoPath = "resource_policy.variables.import"
 
 	case *policyv1.Policy_PrincipalPolicy:
 		importVariables = pt.PrincipalPolicy.Variables.GetImport()
+		importVariablesProtoPath = "principal_policy.variables.import"
 
 	case *policyv1.Policy_DerivedRoles:
 		importVariables = pt.DerivedRoles.Variables.GetImport()
+		importVariablesProtoPath = "derived_roles.variables.import"
 
 	case *policyv1.Policy_ExportVariables:
 
@@ -111,16 +115,19 @@ func Dependencies(p *policyv1.Policy) []string {
 	}
 
 	dependencies := make([]string, 0, len(importDerivedRoles)+len(importVariables))
+	paths := make([]string, 0, len(dependencies))
 
-	for _, dr := range importDerivedRoles {
+	for i, dr := range importDerivedRoles {
 		dependencies = append(dependencies, namer.DerivedRolesFQN(dr))
+		paths = append(paths, fmt.Sprintf("resource_policy.import_derived_roles[%d]", i))
 	}
 
-	for _, v := range importVariables {
+	for i, v := range importVariables {
 		dependencies = append(dependencies, namer.ExportVariablesFQN(v))
+		paths = append(paths, fmt.Sprintf("%s[%d]", importVariablesProtoPath, i))
 	}
 
-	return dependencies
+	return dependencies, paths
 }
 
 // Ancestors returns the module IDs of the ancestors of this policy from most recent to oldest.
@@ -370,7 +377,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 }
 
 func (pw Wrapper) Dependencies() []namer.ModuleID {
-	fqns := Dependencies(pw.Policy)
+	fqns, _ := Dependencies(pw.Policy)
 	modIDs := make([]namer.ModuleID, len(fqns))
 	for i, fqn := range fqns {
 		modIDs[i] = namer.GenModuleIDFromFQN(fqn)

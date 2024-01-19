@@ -8,7 +8,16 @@
                 "column": 1,
                 "path": "$.wibble"
             },
-            "message": "unknown field wibble"
+            "message": "unknown field \"wibble\""
+        },
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 5,
+                "column": 1,
+                "path": "$"
+            },
+            "message": "invalid document"
         }
     ],
     "want": [
@@ -24,7 +33,21 @@
                         "column": 1,
                         "path": "$.wibble"
                     },
-                    "message": "unknown field wibble"
+                    "message": "unknown field \"wibble\""
+                }
+            ]
+        },
+        {
+            "message": {},
+            "errors": [
+                {
+                    "kind": "KIND_PARSE_ERROR",
+                    "position": {
+                        "line": 5,
+                        "column": 1,
+                        "path": "$"
+                    },
+                    "message": "invalid document"
                 }
             ]
         },

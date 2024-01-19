@@ -3533,6 +3533,16 @@ func cerbos_runtime_v1_IndexBuildErrors_DuplicateDef_hashpb_sum(m *v15.IndexBuil
 		_, _ = hasher.Write(protowire.AppendString(nil, m.OtherFile))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.position"]; !ok {
+		if m.Position != nil {
+			cerbos_source_v1_Position_hashpb_sum(m.Position, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m *v15.IndexBuildErrors_LoadFailure, hasher hash.Hash, ignore map[string]struct{}) {
@@ -3544,6 +3554,12 @@ func cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m *v15.IndexBuild
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_detail"]; !ok {
+		if m.ErrorDetail != nil {
+			cerbos_source_v1_Error_hashpb_sum(m.ErrorDetail, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *v15.IndexBuildErrors_MissingImport, hasher hash.Hash, ignore map[string]struct{}) {
@@ -3553,6 +3569,16 @@ func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *v15.IndexBui
 	}
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.desc"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Desc))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.importing_policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ImportingPolicy))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.position"]; !ok {
+		if m.Position != nil {
+			cerbos_source_v1_Position_hashpb_sum(m.Position, hasher, ignore)
+		}
 
 	}
 }
@@ -3603,6 +3629,10 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *v15.IndexBuildErrors, hash
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.num_disabled"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.NumDisabled)))
+
 	}
 }
 

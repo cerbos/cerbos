@@ -20,6 +20,7 @@ import (
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -187,6 +188,17 @@ func TestBuildIndex(t *testing.T) {
 						protocmp.Transform(),
 						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
 							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),
+						protocmp.SortRepeated(func(a, b *runtimev1.IndexBuildErrors_LoadFailure) bool {
+							if a.ErrorDetail != nil && b.ErrorDetail != nil {
+								if a.ErrorDetail.GetPosition().GetLine() == b.ErrorDetail.GetPosition().GetLine() {
+									return a.ErrorDetail.GetPosition().GetColumn() > b.ErrorDetail.GetPosition().GetColumn()
+								}
+								return a.ErrorDetail.GetPosition().GetLine() > b.ErrorDetail.GetPosition().GetLine()
+							}
+
+							return a.File > b.File
+						}),
+						protocmp.IgnoreFields(&sourcev1.Error{}, "context"),
 						cmp.Comparer(func(s1, s2 string) bool {
 							return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
 						}),

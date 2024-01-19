@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
 
@@ -17,6 +18,7 @@ func init() {
 	var err error
 	if Validator, err = protovalidate.New(
 		protovalidate.WithMessages(
+			&policyv1.Policy{},
 			&requestv1.CheckResourcesRequest{},
 			&requestv1.PlanResourcesRequest{}),
 	); err != nil {

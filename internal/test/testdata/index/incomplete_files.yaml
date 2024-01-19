@@ -2,13 +2,17 @@
 ---
 wantErrList:
   loadFailures:
-    - error: "file is not valid: { /derivedRoles: [missing properties: 'definitions'] }"
-      file: derived.yaml
-    - error: "file is not valid: { /resourcePolicy/version: [expected string, but got boolean] }"
-      file: foo.yaml
-    - error: |-
-        file is not valid: { /: [missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }
-      file: resource.yaml
+    - file: derived.yaml
+      error: "derivedRoles.definitions: value is required"
+      errorDetail:
+        kind: KIND_VALIDATION_ERROR
+        message: "derivedRoles.definitions: value is required"
+
+    - file: resource.yaml
+      error: "policyType: exactly one field is required in oneof"
+      errorDetail:
+        kind: KIND_VALIDATION_ERROR
+        message: "policyType: exactly one field is required in oneof"
 files:
   "resource.yaml": |-
     ---

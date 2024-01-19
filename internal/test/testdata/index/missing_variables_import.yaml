@@ -3,7 +3,12 @@
 wantErrList:
   missingImports:
     - importingFile: resource.yaml
+      importingPolicy: resource.leave_request.v20210210
       desc: "Variables import 'my_variables' not found"
+      position:
+        line: 7
+        column: 9
+        path: $.resourcePolicy.variables.import[0]
 files:
   "test.txt": |-
     this is some text

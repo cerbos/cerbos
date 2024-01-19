@@ -8,7 +8,7 @@
                 "column": 3,
                 "path": "$.apiVersion"
             },
-            "message": "value must equal `api.cerbos.dev/v1`"
+            "message": "apiVersion: value must equal `api.cerbos.dev/v1`"
         },
         {
             "kind": "KIND_VALIDATION_ERROR",
@@ -17,7 +17,7 @@
                 "column": 5,
                 "path": "$.resourcePolicy.scope"
             },
-            "message": "value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
+            "message": "resourcePolicy.scope: value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
         },
         {
             "kind": "KIND_VALIDATION_ERROR",
@@ -26,7 +26,7 @@
                 "column": 9,
                 "path": "$.resourcePolicy.schemas.principalSchema.ref"
             },
-            "message": "value is required"
+            "message": "resourcePolicy.schemas.principalSchema.ref: value is required"
         },
         {
             "kind": "KIND_VALIDATION_ERROR",
@@ -35,7 +35,7 @@
                 "column": 11,
                 "path": "$.resourcePolicy.rules[1].derivedRoles[0]"
             },
-            "message": "value does not match regex pattern `^[[:word:]\\-\\.]+$`"
+            "message": "resourcePolicy.rules[1].derivedRoles[0]: value does not match regex pattern `^[[:word:]\\-\\.]+$`"
         }
     ],
     "want": [
@@ -199,7 +199,7 @@
                         "column": 3,
                         "path": "$.apiVersion"
                     },
-                    "message": "value must equal `api.cerbos.dev/v1`"
+                    "message": "apiVersion: value must equal `api.cerbos.dev/v1`"
                 },
                 {
                     "kind": "KIND_VALIDATION_ERROR",
@@ -208,7 +208,7 @@
                         "column": 5,
                         "path": "$.resourcePolicy.scope"
                     },
-                    "message": "value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
+                    "message": "resourcePolicy.scope: value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
                 },
                 {
                     "kind": "KIND_VALIDATION_ERROR",
@@ -217,7 +217,7 @@
                         "column": 9,
                         "path": "$.resourcePolicy.schemas.principalSchema.ref"
                     },
-                    "message": "value is required"
+                    "message": "resourcePolicy.schemas.principalSchema.ref: value is required"
                 },
                 {
                     "kind": "KIND_VALIDATION_ERROR",
@@ -226,7 +226,7 @@
                         "column": 11,
                         "path": "$.resourcePolicy.rules[1].derivedRoles[0]"
                     },
-                    "message": "value does not match regex pattern `^[[:word:]\\-\\.]+$`"
+                    "message": "resourcePolicy.rules[1].derivedRoles[0]: value does not match regex pattern `^[[:word:]\\-\\.]+$`"
                 }
             ]
         }

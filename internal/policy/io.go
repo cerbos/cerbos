@@ -10,7 +10,11 @@ import (
 	"io/fs"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/protoyaml"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/validator"
 )
 
 func ReadPolicyFromFile(fsys fs.FS, path string) (*policyv1.Policy, error) {
@@ -18,7 +22,6 @@ func ReadPolicyFromFile(fsys fs.FS, path string) (*policyv1.Policy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %w", path, err)
 	}
-
 	defer f.Close()
 
 	return ReadPolicy(f)
@@ -26,12 +29,39 @@ func ReadPolicyFromFile(fsys fs.FS, path string) (*policyv1.Policy, error) {
 
 // ReadPolicy reads a policy from the given reader.
 func ReadPolicy(src io.Reader) (*policyv1.Policy, error) {
-	policy := &policyv1.Policy{}
-	if err := util.ReadJSONOrYAML(src, policy); err != nil {
+	p := &policyv1.Policy{}
+	if err := util.ReadJSONOrYAML(src, p); err != nil {
 		return nil, err
 	}
 
-	return policy, nil
+	return p, nil
+}
+
+// ReadPolicyWithSourceContext reads a policy and returns it along with information about its source.
+func ReadPolicyWithSourceContext(fsys fs.FS, path string) (*policyv1.Policy, *sourcev1.SourceContext, error) {
+	f, err := fsys.Open(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open %s: %w", path, err)
+	}
+	defer f.Close()
+
+	policies, contexts, err := protoyaml.Unmarshal(f, func() *policyv1.Policy { return &policyv1.Policy{} }, protoyaml.WithValidator(validator.Validator))
+	switch len(policies) {
+	case 0:
+		return nil, nil, err
+	case 1:
+		return policies[0], contexts[0], err
+	default:
+		// TODO: Temporary restriction during parser migration to protoyaml.
+		return nil, nil, util.ErrMultipleYAMLDocs
+	}
+}
+
+// FindPolicy finds a policy by ID from the given reader.
+func FindPolicy(src io.Reader, modID namer.ModuleID) (*policyv1.Policy, error) {
+	p := &policyv1.Policy{}
+	err := protoyaml.Find(src, func(h *policyv1.Policy) bool { return namer.GenModuleID(h) == modID }, p)
+	return p, err
 }
 
 // WritePolicy writes a policy as YAML to the destination.

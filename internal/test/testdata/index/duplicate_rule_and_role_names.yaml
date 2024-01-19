@@ -9,7 +9,10 @@ wantErrList:
         action rule #2 for resource leave_request has the same name as action rule #1: 'myrule'
       file: principal.yaml
     - error: |-
-        rule #2 has the same name as rule #1: 'myrule'; rule #3 has the same name as rule #1: 'myrule'
+        rule #2 has the same name as rule #1: 'myrule'
+      file: resource.yaml
+    - error: |-
+        rule #3 has the same name as rule #1: 'myrule'
       file: resource.yaml
 files:
   "test.txt": |-

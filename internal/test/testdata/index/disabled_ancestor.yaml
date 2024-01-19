@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
 ---
 wantErrList:
-  disabled: ["resource_acme_hr.yaml"]
   missingScopes: ["resource.leave_request.v20210210/acme.hr"]
+  numDisabled: 1
 files:
   "resource.yaml": |-
     ---
