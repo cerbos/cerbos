@@ -4,7 +4,9 @@ wantErrList:
   missingImports:
     - importingFile: resource.yaml
       importingPolicy: resource.leave_request.v20210210
-      desc: "Derived roles import 'my_derived_roles' not found"
+      importKind: derived roles
+      importName: my_derived_roles
+      desc: "cannot find derived roles 'my_derived_roles' imported by policy resource.leave_request.v20210210"
       position:
         line: 5
         column: 5

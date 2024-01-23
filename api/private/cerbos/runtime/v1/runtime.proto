@@ -191,7 +191,10 @@ message IndexBuildErrors {
     string importing_file = 1;
     string desc = 2;
     string importing_policy = 3;
-    cerbos.source.v1.Position position = 4;
+    string import_kind = 4;
+    string import_name = 5;
+    cerbos.source.v1.Position position = 6;
+    string context = 7;
   }
 
   message LoadFailure {

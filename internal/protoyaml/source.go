@@ -31,11 +31,11 @@ func (sc SourceCtx) StartPosition() *sourcev1.Position {
 	return nil
 }
 
-func (sc SourceCtx) PositionForPath(path string) *sourcev1.Position {
+func (sc SourceCtx) PositionForProtoPath(path string) *sourcev1.Position {
 	return sc.GetFieldPositions()[path]
 }
 
-func (sc SourceCtx) ContextForPath(path string) string {
+func (sc SourceCtx) ContextForYAMLPath(path string) string {
 	if path == "" {
 		return ""
 	}
@@ -45,11 +45,20 @@ func (sc SourceCtx) ContextForPath(path string) string {
 		return ""
 	}
 
-	node, err := yamlPath.FilterNode(sc.doc)
+	node, err := yamlPath.FilterNode(sc.doc.Body)
 	if err != nil {
 		return ""
 	}
 
 	var errPrinter printer.Printer
 	return errPrinter.PrintErrorToken(node.GetToken(), false)
+}
+
+func (sc SourceCtx) PositionAndContextForProtoPath(path string) (pos *sourcev1.Position, context string) {
+	pos = sc.PositionForProtoPath(path)
+	if pos != nil {
+		context = sc.ContextForYAMLPath(pos.GetPath())
+	}
+
+	return pos, context
 }

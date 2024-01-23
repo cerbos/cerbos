@@ -199,6 +199,7 @@ func TestBuildIndex(t *testing.T) {
 							return a.File > b.File
 						}),
 						protocmp.IgnoreFields(&sourcev1.Error{}, "context"),
+						protocmp.IgnoreFields(&runtimev1.IndexBuildErrors_MissingImport{}, "context"),
 						cmp.Comparer(func(s1, s2 string) bool {
 							return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
 						}),

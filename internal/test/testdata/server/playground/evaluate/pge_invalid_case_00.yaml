@@ -33,7 +33,7 @@ playgroundEvaluate:
             [
               {
                 "file": "resource.yaml",
-                "error": "Derived roles import 'apatr_common_roles' not found",
+                "error": "cannot find derived roles 'apatr_common_roles' imported by policy resource.album_object.vdefault",
                 "details": { "line": 7, "column": 7 },
               },
             ],

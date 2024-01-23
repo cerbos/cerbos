@@ -4,7 +4,9 @@ wantErrList:
   missingImports:
     - importingFile: resource.yaml
       importingPolicy: resource.leave_request.v20210210
-      desc: "Variables import 'my_variables' not found"
+      importKind: variables
+      importName: my_variables
+      desc: "cannot find variables 'my_variables' imported by policy resource.leave_request.v20210210"
       position:
         line: 7
         column: 9

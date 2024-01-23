@@ -200,7 +200,7 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 	if errors.As(err, &uErr) {
 		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.Message, ErrorDetails: uErr.Err})
 	} else {
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error()})
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error(), ErrorDetails: &sourcev1.Error{Message: err.Error()}})
 	}
 }
 
@@ -255,22 +255,27 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx protoyaml.SourceCtx, p po
 
 		// the dependent may not have been loaded by the indexer yet because it's still walking the directory.
 		if _, exists := idx.modIDToFile[depID]; !exists {
+			policyKey := namer.PolicyKeyFromFQN(p.FQN)
 			kind := policy.KindFromFQN(dep)
-			var desc string
+			var kindStr string
 			switch kind {
 			case policy.DerivedRolesKind:
-				desc = "Derived roles"
+				kindStr = "derived roles"
 			case policy.ExportVariablesKind:
-				desc = "Variables"
+				kindStr = "variables"
 			default:
 				panic(fmt.Errorf("unexpected import kind %s", kind))
 			}
 
+			pos, context := srcCtx.PositionAndContextForProtoPath(paths[i])
 			idx.missing[depID] = append(idx.missing[depID], &runtimev1.IndexBuildErrors_MissingImport{
 				ImportingFile:   file,
-				ImportingPolicy: namer.PolicyKeyFromFQN(p.FQN),
-				Desc:            fmt.Sprintf("%s import '%s' not found", desc, namer.SimpleName(dep)),
-				Position:        srcCtx.FieldPositions[paths[i]],
+				ImportingPolicy: policyKey,
+				ImportKind:      kindStr,
+				ImportName:      namer.SimpleName(dep),
+				Desc:            fmt.Sprintf("cannot find %s '%s' imported by policy %s", kindStr, namer.SimpleName(dep), policyKey),
+				Position:        pos,
+				Context:         context,
 			})
 		}
 	}

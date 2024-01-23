@@ -117,6 +117,7 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 
 	outMsg := make([]T, 0, len(f.Docs))
 	outSrc := make([]SourceCtx, 0, len(f.Docs))
+	invalidDocSeen := false
 	for _, doc := range f.Docs {
 		msg := factory()
 		uctx := newUnmarshalCtx(doc)
@@ -128,11 +129,19 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 				continue
 			}
 
+			// If given an invalid file with multiple lines of text, the parser generates a "doc" for each line.
+			// Ignore a consecutive run of such docs.
+			if invalidDocSeen {
+				continue
+			}
+
 			outErr = errors.Join(outErr, uctx.perrorf(doc.Body, "invalid document: contents are not valid YAML or JSON"))
 			outMsg = append(outMsg, msg)
 			outSrc = append(outSrc, uctx.toSourceCtx())
+			invalidDocSeen = true
 			continue
 		}
+		invalidDocSeen = false
 
 		if err := u.unmarshalMapping(uctx, bodyNode, msg.ProtoReflect()); err != nil {
 			outErr = errors.Join(outErr, err)
@@ -929,7 +938,7 @@ func (uc *unmarshalCtx) buildErrContext(path string) string {
 		return ""
 	}
 
-	node, err := yamlPath.FilterNode(uc.doc)
+	node, err := yamlPath.FilterNode(uc.doc.Body)
 	if err != nil {
 		return ""
 	}

@@ -254,10 +254,22 @@ func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *IndexBuildEr
 		_, _ = hasher.Write(protowire.AppendString(nil, m.ImportingPolicy))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.import_kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ImportKind))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.import_name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ImportName))
+
+	}
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.position"]; !ok {
 		if m.Position != nil {
 			cerbos_source_v1_Position_hashpb_sum(m.Position, hasher, ignore)
 		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Context))
 
 	}
 }
