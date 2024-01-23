@@ -23,11 +23,13 @@ playgroundValidate:
             [
               {
                 "file": "resource.yaml",
-                "error": "Failed to read: failed to unmarshal file resource.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+                "error": "Failed to read: invalid document: contents are not valid YAML or JSON",
+                "details": { "line": 1, "column": 1 },
               },
               {
                 "file": "common_roles.yaml",
-                "error": "Failed to read: failed to unmarshal file common_roles.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+                "error": "Failed to read: invalid document: contents are not valid YAML or JSON",
+                "details": { "line": 1, "column": 1 },
               },
             ],
         },

@@ -2,7 +2,12 @@
 ---
 wantErrList:
   missingScopes: ["resource.leave_request.v20210210/acme.hr"]
-  numDisabled: 1
+  disabledDefs:
+    - file: resource_acme_hr.yaml
+      policy: resource.leave_request.v20210210/acme.hr
+      position:
+        line: 2
+        column: 11
 files:
   "resource.yaml": |-
     ---

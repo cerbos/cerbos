@@ -72,7 +72,10 @@ message CheckResourceSetResponse {
 
   message ActionEffectMap {
     map<string, cerbos.effect.v1.Effect> actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Mapping of each action to an effect."}];
-    repeated cerbos.schema.v1.ValidationError validation_errors = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description:
+        "List of validation errors (if schema validation is "
+        "enabled)"
+}];
   }
 
   message Meta {
@@ -99,18 +102,32 @@ message CheckResourceSetResponse {
         json_schema: {description: "Unique resource instance ID supplied in the request."}
       };
       map<string, EffectMeta> actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Metadata about the effect calculated for each action on this resource instance."
-        example: "{\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}"
+        description:
+          "Metadata about the effect calculated for each "
+          "action on this resource instance."
+        example:
+          "{\"view:*\":{\"matched_policy\": "
+          "\"album:object:default\"},\"comment\":{\"matched_"
+          "policy\": \"album:object:default\"}}"
       }];
       repeated string effective_derived_roles = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Derived roles that were effective during policy evaluation."
+        description:
+          "Derived roles that were effective during policy "
+          "evaluation."
         example: "[\"owner\"]"
       }];
     }
 
     map<string, ActionMeta> resource_instances = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Metadata about resource instances."
-      example: "{\"XX125\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}, \"XX225\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}}}"
+      example:
+        "{\"XX125\": {\"actions\": {\"view:*\":{\"matched_policy\": "
+        "\"album:object:default\"},\"comment\":{\"matched_policy\": "
+        "\"album:object:default\"}}, \"effective_derived_roles\": "
+        "[\"owner\"]}, \"XX225\": {\"actions\": "
+        "{\"view:*\":{\"matched_policy\": "
+        "\"album:object:default\"},\"comment\":{\"matched_policy\": "
+        "\"album:object:default\"}}}}"
     }];
   }
 
@@ -119,8 +136,14 @@ message CheckResourceSetResponse {
     example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
   }];
   map<string, ActionEffectMap> resource_instances = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Results for each resource instance, keyed by the ID supplied in the request"
-    example: "{\"XX125\":{\"actions\":{\"view:*\":\"EFFECT_ALLOW\", \"comment\": \"EFFECT_ALLOW\"}}, \"XX225\":{\"actions\":{\"view:*\":\"EFFECT_DENY\", \"comment\": \"EFFECT_DENY\"}}}"
+    description:
+      "Results for each resource instance, keyed by the ID "
+      "supplied in the request"
+    example:
+      "{\"XX125\":{\"actions\":{\"view:*\":\"EFFECT_ALLOW\", "
+      "\"comment\": \"EFFECT_ALLOW\"}}, "
+      "\"XX225\":{\"actions\":{\"view:*\":\"EFFECT_DENY\", "
+      "\"comment\": \"EFFECT_DENY\"}}}"
   }];
   Meta meta = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
 }
@@ -140,7 +163,10 @@ message CheckResourceBatchResponse {
       description: "Mapping of each action to an effect."
       example: "{\"view\":\"EFFECT_ALLOW\"}"
     }];
-    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description:
+        "List of validation errors (if schema validation is "
+        "enabled)"
+}];
   }
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -149,7 +175,9 @@ message CheckResourceBatchResponse {
   }];
   repeated ActionEffectMap results = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Result for each resource"
-    example: "[{\"resourceId\":\"XX125\",\"actions\":{\"view\":\"EFFECT_ALLOW\"}}]"
+    example:
+      "[{\"resourceId\":\"XX125\",\"actions\":{\"view\":\"EFFECT_"
+      "ALLOW\"}}]"
   }];
 }
 
@@ -169,12 +197,18 @@ message CheckResourcesResponse {
         example: "\"album:photo\"",
       }];
       string policy_version = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
+        description:
+          "The policy version to use to evaluate this request. "
+          "If not specified, will default to the "
+          "server-configured default version."
         pattern: "^[[:word:]]*$"
         example: "\"default\""
       }];
       string scope = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
+        description:
+          "A dot-separated scope that describes the hierarchy "
+          "this resource belongs to. This is used for "
+          "determining policy inheritance."
         pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
         example: "\"acme.corp\""
       }];
@@ -200,11 +234,18 @@ message CheckResourcesResponse {
       }
 
       map<string, EffectMeta> actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Metadata about the effect calculated for each action on this resource instance."
-        example: "{\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}"
+        description:
+          "Metadata about the effect calculated for each "
+          "action on this resource instance."
+        example:
+          "{\"view:*\":{\"matched_policy\": "
+          "\"album:object:default\"},\"comment\":{\"matched_"
+          "policy\": \"album:object:default\"}}"
       }];
       repeated string effective_derived_roles = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Derived roles that were effective during policy evaluation."
+        description:
+          "Derived roles that were effective during policy "
+          "evaluation."
         example: "[\"owner\"]"
       }];
     }
@@ -214,14 +255,24 @@ message CheckResourcesResponse {
       description: "Mapping of each action to an effect."
       example: "{\"view\":\"EFFECT_ALLOW\"}"
     }];
-    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description:
+        "List of validation errors (if schema validation is "
+        "enabled)"
+}];
     Meta meta = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Metadata about policy evaluation"
-      example: "{\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}"
+      example:
+        "{\"actions\": {\"view:*\":{\"matched_policy\": "
+        "\"album:object:default\"},\"comment\":{\"matched_policy\":"
+        " \"album:object:default\"}}, \"effective_derived_roles\": "
+        "[\"owner\"]}"
     }];
     repeated cerbos.engine.v1.OutputEntry outputs = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Output for each rule with outputs configured"
-      example: "[{\"src\": \"resource.expense.v1/acme#rule-001\", \"val\": \"view_allowed:alice\"}, {\"src\": \"resource.expense.v1/acme#rule-002\", \"val\": \"foo\"}]"
+      example:
+        "[{\"src\": \"resource.expense.v1/acme#rule-001\", "
+        "\"val\": \"view_allowed:alice\"}, {\"src\": "
+        "\"resource.expense.v1/acme#rule-002\", \"val\": \"foo\"}]"
     }];
   }
 
@@ -231,7 +282,10 @@ message CheckResourcesResponse {
   }];
   repeated ResultEntry results = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Result for each resource"
-    example: "[{\"resource\": {\"Id\":\"XX125\", \"kind\":\"album:object\"}, \"actions\":{\"view\":\"EFFECT_ALLOW\",\"comment\":\"EFFECT_DENY\"}}]"
+    example:
+      "[{\"resource\": {\"Id\":\"XX125\", \"kind\":\"album:object\"}, "
+      "\"actions\":{\"view\":\"EFFECT_ALLOW\",\"comment\":\"EFFECT_"
+      "DENY\"}}]"
   }];
   string cerbos_call_id = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Audit log call ID associated with this request"}];
 }
@@ -241,9 +295,16 @@ message PlaygroundFailure {
     json_schema: {description: "Playground response"}
   };
 
+  message ErrorDetails {
+    uint32 line = 1;
+    uint32 column = 2;
+    string context = 3;
+  }
+
   message Error {
     string file = 1;
     string error = 2;
+    ErrorDetails details = 3;
   }
 
   repeated Error errors = 1;

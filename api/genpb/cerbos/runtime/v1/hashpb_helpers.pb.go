@@ -186,6 +186,23 @@ func cerbos_runtime_v1_Expr_hashpb_sum(m *Expr, hasher hash.Hash, ignore map[str
 	}
 }
 
+func cerbos_runtime_v1_IndexBuildErrors_Disabled_hashpb_sum(m *IndexBuildErrors_Disabled, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.Disabled.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.Disabled.policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.Disabled.position"]; !ok {
+		if m.Position != nil {
+			cerbos_source_v1_Position_hashpb_sum(m.Position, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_runtime_v1_IndexBuildErrors_DuplicateDef_hashpb_sum(m *IndexBuildErrors_DuplicateDef, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
@@ -216,9 +233,9 @@ func cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m *IndexBuildErro
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_detail"]; !ok {
-		if m.ErrorDetail != nil {
-			cerbos_source_v1_Error_hashpb_sum(m.ErrorDetail, hasher, ignore)
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_details"]; !ok {
+		if m.ErrorDetails != nil {
+			cerbos_source_v1_Error_hashpb_sum(m.ErrorDetails, hasher, ignore)
 		}
 
 	}
@@ -292,9 +309,15 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher h
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.num_disabled"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.NumDisabled)))
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.disabled_defs"]; !ok {
+		if len(m.DisabledDefs) > 0 {
+			for _, v := range m.DisabledDefs {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_Disabled_hashpb_sum(v, hasher, ignore)
+				}
 
+			}
+		}
 	}
 }
 

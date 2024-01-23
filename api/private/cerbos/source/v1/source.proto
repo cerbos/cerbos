@@ -26,7 +26,14 @@ message Error {
   string context = 4;
 }
 
+message StartPosition {
+  uint32 line = 1;
+  uint32 column = 2;
+  uint32 offset = 3;
+}
+
 message SourceContext {
-  map<string, Position> field_positions = 1;
-  repeated Error errors = 2;
+  StartPosition start_position = 1;
+  map<string, Position> field_positions = 2;
+  repeated Error errors = 3;
 }

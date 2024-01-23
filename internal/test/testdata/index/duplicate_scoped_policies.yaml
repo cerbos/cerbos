@@ -5,6 +5,9 @@ wantErrList:
     - file: resource_acme_hr.yaml
       otherFile: resource_acme.yaml
       policy: resource.leave_request.v20210210/acme
+      position:
+        line: 2
+        column: 11
 files:
   "resource.yaml": |-
     ---

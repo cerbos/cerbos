@@ -197,7 +197,13 @@ message IndexBuildErrors {
   message LoadFailure {
     string file = 1;
     string error = 2 [deprecated = true];
-    cerbos.source.v1.Error error_detail = 3;
+    cerbos.source.v1.Error error_details = 3;
+  }
+
+  message Disabled {
+    string file = 1;
+    string policy = 2;
+    cerbos.source.v1.Position position = 3;
   }
 
   repeated string disabled = 1 [deprecated = true];
@@ -205,7 +211,7 @@ message IndexBuildErrors {
   repeated LoadFailure load_failures = 3;
   repeated MissingImport missing_imports = 4;
   repeated string missing_scopes = 5;
-  uint32 num_disabled = 6;
+  repeated Disabled disabled_defs = 6;
 }
 
 message Errors {

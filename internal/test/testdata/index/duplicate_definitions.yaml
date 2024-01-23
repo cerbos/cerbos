@@ -5,6 +5,9 @@ wantErrList:
     - file: derived2.yaml
       otherFile: derived1.yaml
       policy: derived_roles.my_derived_roles
+      position:
+        line: 2
+        column: 11
 files:
   "derived1.yaml": |-
     ---

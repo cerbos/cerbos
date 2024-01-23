@@ -75,7 +75,7 @@ func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...Unmar
 
 		proto.Reset(out)
 		refOut := out.ProtoReflect()
-		uctx := &unmarshalCtx{doc: doc}
+		uctx := newUnmarshalCtxWithoutSourceCtx(doc)
 
 		if err := u.unmarshalMapping(uctx, bodyNode, refOut); err != nil {
 			continue
@@ -91,7 +91,7 @@ func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...Unmar
 	return ErrNotFound
 }
 
-func Unmarshal[T proto.Message](r io.Reader, factory func() T, opts ...UnmarshalOpt) ([]T, []*sourcev1.SourceContext, error) {
+func Unmarshal[T proto.Message](r io.Reader, factory func() T, opts ...UnmarshalOpt) ([]T, []SourceCtx, error) {
 	contents, err := io.ReadAll(r)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read contents: %w", err)
@@ -100,7 +100,7 @@ func Unmarshal[T proto.Message](r io.Reader, factory func() T, opts ...Unmarshal
 	return UnmarshalBytes(contents, factory, opts...)
 }
 
-func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...UnmarshalOpt) (_ []T, _ []*sourcev1.SourceContext, outErr error) {
+func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...UnmarshalOpt) (_ []T, _ []SourceCtx, outErr error) {
 	f, err := parse(contents, true)
 	if err != nil {
 		return nil, nil, err
@@ -116,10 +116,10 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 	}
 
 	outMsg := make([]T, 0, len(f.Docs))
-	outSrc := make([]*sourcev1.SourceContext, 0, len(f.Docs))
+	outSrc := make([]SourceCtx, 0, len(f.Docs))
 	for _, doc := range f.Docs {
 		msg := factory()
-		uctx := &unmarshalCtx{doc: doc, srcCtx: &sourcev1.SourceContext{}}
+		uctx := newUnmarshalCtx(doc)
 
 		bodyNode, ok := doc.Body.(ast.MapNode)
 		if !ok {
@@ -128,9 +128,9 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 				continue
 			}
 
-			outErr = errors.Join(outErr, uctx.perrorf(doc.Body, "invalid document"))
+			outErr = errors.Join(outErr, uctx.perrorf(doc.Body, "invalid document: contents are not valid YAML or JSON"))
 			outMsg = append(outMsg, msg)
-			outSrc = append(outSrc, uctx.srcCtx)
+			outSrc = append(outSrc, uctx.toSourceCtx())
 			continue
 		}
 
@@ -141,7 +141,7 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 		}
 
 		outMsg = append(outMsg, msg)
-		outSrc = append(outSrc, uctx.srcCtx)
+		outSrc = append(outSrc, uctx.toSourceCtx())
 	}
 
 	return outMsg, outSrc, outErr
@@ -809,6 +809,26 @@ type unmarshalCtx struct {
 	protoPath  string
 }
 
+func newUnmarshalCtx(doc *ast.DocumentNode) *unmarshalCtx {
+	var startPos *sourcev1.StartPosition
+	if doc != nil && doc.GetToken() != nil {
+		if p := doc.GetToken().Position; p != nil {
+			startPos = &sourcev1.StartPosition{Line: uint32(p.Line), Column: uint32(p.Column), Offset: uint32(p.Offset)}
+		}
+	}
+
+	return &unmarshalCtx{
+		doc: doc,
+		srcCtx: &sourcev1.SourceContext{
+			StartPosition: startPos,
+		},
+	}
+}
+
+func newUnmarshalCtxWithoutSourceCtx(doc *ast.DocumentNode) *unmarshalCtx {
+	return &unmarshalCtx{doc: doc}
+}
+
 func (uc *unmarshalCtx) forPath(path string) *unmarshalCtx {
 	return &unmarshalCtx{
 		errPrinter: uc.errPrinter,
@@ -915,6 +935,10 @@ func (uc *unmarshalCtx) buildErrContext(path string) string {
 	}
 
 	return uc.errPrinter.PrintErrorToken(node.GetToken(), false)
+}
+
+func (uc *unmarshalCtx) toSourceCtx() SourceCtx {
+	return newSourceCtx(uc.srcCtx, uc.doc)
 }
 
 type UnmarshalError struct {

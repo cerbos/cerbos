@@ -189,11 +189,11 @@ func TestBuildIndex(t *testing.T) {
 						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
 							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),
 						protocmp.SortRepeated(func(a, b *runtimev1.IndexBuildErrors_LoadFailure) bool {
-							if a.ErrorDetail != nil && b.ErrorDetail != nil {
-								if a.ErrorDetail.GetPosition().GetLine() == b.ErrorDetail.GetPosition().GetLine() {
-									return a.ErrorDetail.GetPosition().GetColumn() > b.ErrorDetail.GetPosition().GetColumn()
+							if a.ErrorDetails != nil && b.ErrorDetails != nil {
+								if a.ErrorDetails.GetPosition().GetLine() == b.ErrorDetails.GetPosition().GetLine() {
+									return a.ErrorDetails.GetPosition().GetColumn() > b.ErrorDetails.GetPosition().GetColumn()
 								}
-								return a.ErrorDetail.GetPosition().GetLine() > b.ErrorDetail.GetPosition().GetLine()
+								return a.ErrorDetails.GetPosition().GetLine() > b.ErrorDetails.GetPosition().GetLine()
 							}
 
 							return a.File > b.File

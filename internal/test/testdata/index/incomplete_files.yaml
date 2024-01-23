@@ -4,13 +4,13 @@ wantErrList:
   loadFailures:
     - file: derived.yaml
       error: "derivedRoles.definitions: value is required"
-      errorDetail:
+      errorDetails:
         kind: KIND_VALIDATION_ERROR
         message: "derivedRoles.definitions: value is required"
 
     - file: resource.yaml
       error: "policyType: exactly one field is required in oneof"
-      errorDetail:
+      errorDetails:
         kind: KIND_VALIDATION_ERROR
         message: "policyType: exactly one field is required in oneof"
 files:

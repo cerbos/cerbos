@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -125,8 +126,8 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		if sc != nil && len(sc.Errors) > 0 {
-			ib.addErrors(filePath, sc.Errors)
+		if len(sc.GetErrors()) > 0 {
+			ib.addErrors(filePath, sc.GetErrors())
 			return nil
 		}
 
@@ -135,7 +136,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 		}
 
 		if p.Disabled {
-			ib.numDisabled++
+			ib.addDisabled(filePath, sc, p)
 			return nil
 		}
 
@@ -144,7 +145,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		ib.addPolicy(filePath, policy.Wrap(policy.WithMetadata(p, filePath, nil, filePath, opts.sourceAttributes...)), sc)
+		ib.addPolicy(filePath, sc, policy.Wrap(policy.WithMetadata(p, filePath, nil, filePath, opts.sourceAttributes...)))
 		return nil
 	})
 	if err != nil {
@@ -168,7 +169,7 @@ type indexBuilder struct {
 	stats         *statsCollector
 	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
 	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
-	numDisabled   int
+	disabled      []*runtimev1.IndexBuildErrors_Disabled
 }
 
 func newIndexBuilder() *indexBuilder {
@@ -197,7 +198,7 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 
 	var uErr protoyaml.UnmarshalError
 	if errors.As(err, &uErr) {
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.Message, ErrorDetail: uErr.Err})
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.Message, ErrorDetails: uErr.Err})
 	} else {
 		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error()})
 	}
@@ -206,18 +207,26 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 func (idx *indexBuilder) addErrors(file string, errs []*sourcev1.Error) {
 	for _, e := range errs {
 		e := e
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: e.Message, ErrorDetail: e})
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: e.Message, ErrorDetails: e})
 	}
 }
 
-func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper, srcCtx *sourcev1.SourceContext) {
+func (idx *indexBuilder) addDisabled(file string, srcCtx protoyaml.SourceCtx, p *policyv1.Policy) {
+	idx.disabled = append(idx.disabled, &runtimev1.IndexBuildErrors_Disabled{
+		File:     file,
+		Policy:   namer.PolicyKey(p),
+		Position: srcCtx.StartPosition(),
+	})
+}
+
+func (idx *indexBuilder) addPolicy(file string, srcCtx protoyaml.SourceCtx, p policy.Wrapper) {
 	// Is this policy defined elsewhere?
 	if otherFile, ok := idx.modIDToFile[p.ID]; ok && (otherFile != file) {
 		idx.duplicates = append(idx.duplicates, &runtimev1.IndexBuildErrors_DuplicateDef{
 			File:      file,
 			OtherFile: otherFile,
 			Policy:    namer.PolicyKeyFromFQN(p.FQN),
-			Position:  srcCtx.FieldPositions["$"],
+			Position:  srcCtx.StartPosition(),
 		})
 
 		return
@@ -295,9 +304,9 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	if nErr > 0 {
 		err := &BuildError{
 			IndexBuildErrors: &runtimev1.IndexBuildErrors{
-				NumDisabled:   uint32(idx.numDisabled),
 				DuplicateDefs: idx.duplicates,
 				LoadFailures:  idx.loadFailures,
+				DisabledDefs:  idx.disabled,
 			},
 			nErr: nErr,
 		}
@@ -360,10 +369,8 @@ func logBuildFailure(logger *zap.Logger, level zapcore.Level, err *BuildError) {
 		fields = append(fields, zap.Any("duplicates", err.DuplicateDefs))
 	}
 
-	if err.NumDisabled > 0 {
-		fields = append(fields, zap.Int("disabled", int(err.NumDisabled)))
-	} else if len(err.Disabled) > 0 { //nolint:staticcheck
-		fields = append(fields, zap.Strings("disabled", err.Disabled)) //nolint:staticcheck
+	if len(err.DisabledDefs) > 0 {
+		fields = append(fields, zap.Any("disabled", err.DisabledDefs))
 	}
 
 	ce.Write(fields...)

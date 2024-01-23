@@ -412,6 +412,7 @@ func compareProto(t *testing.T, want, have proto.Message) {
 		protocmp.SortRepeated(cmpValidationError),
 		protocmp.IgnoreFields(&responsev1.CheckResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlanResourcesResponse{}, "cerbos_call_id"),
+		protocmp.IgnoreFields(&responsev1.PlaygroundFailure_ErrorDetails{}, "context"),
 	))
 
 	if h, ok := have.(interface{ GetCerbosCallId() string }); ok {

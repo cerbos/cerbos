@@ -809,7 +809,7 @@ type IndexBuildErrors struct {
 	LoadFailures   []*IndexBuildErrors_LoadFailure   `protobuf:"bytes,3,rep,name=load_failures,json=loadFailures,proto3" json:"load_failures,omitempty"`
 	MissingImports []*IndexBuildErrors_MissingImport `protobuf:"bytes,4,rep,name=missing_imports,json=missingImports,proto3" json:"missing_imports,omitempty"`
 	MissingScopes  []string                          `protobuf:"bytes,5,rep,name=missing_scopes,json=missingScopes,proto3" json:"missing_scopes,omitempty"`
-	NumDisabled    uint32                            `protobuf:"varint,6,opt,name=num_disabled,json=numDisabled,proto3" json:"num_disabled,omitempty"`
+	DisabledDefs   []*IndexBuildErrors_Disabled      `protobuf:"bytes,6,rep,name=disabled_defs,json=disabledDefs,proto3" json:"disabled_defs,omitempty"`
 }
 
 func (x *IndexBuildErrors) Reset() {
@@ -880,11 +880,11 @@ func (x *IndexBuildErrors) GetMissingScopes() []string {
 	return nil
 }
 
-func (x *IndexBuildErrors) GetNumDisabled() uint32 {
+func (x *IndexBuildErrors) GetDisabledDefs() []*IndexBuildErrors_Disabled {
 	if x != nil {
-		return x.NumDisabled
+		return x.DisabledDefs
 	}
-	return 0
+	return nil
 }
 
 type Errors struct {
@@ -1929,8 +1929,8 @@ type IndexBuildErrors_LoadFailure struct {
 
 	File string `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
 	// Deprecated: Marked as deprecated in cerbos/runtime/v1/runtime.proto.
-	Error       string     `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
-	ErrorDetail *v12.Error `protobuf:"bytes,3,opt,name=error_detail,json=errorDetail,proto3" json:"error_detail,omitempty"`
+	Error        string     `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	ErrorDetails *v12.Error `protobuf:"bytes,3,opt,name=error_details,json=errorDetails,proto3" json:"error_details,omitempty"`
 }
 
 func (x *IndexBuildErrors_LoadFailure) Reset() {
@@ -1980,9 +1980,72 @@ func (x *IndexBuildErrors_LoadFailure) GetError() string {
 	return ""
 }
 
-func (x *IndexBuildErrors_LoadFailure) GetErrorDetail() *v12.Error {
+func (x *IndexBuildErrors_LoadFailure) GetErrorDetails() *v12.Error {
 	if x != nil {
-		return x.ErrorDetail
+		return x.ErrorDetails
+	}
+	return nil
+}
+
+type IndexBuildErrors_Disabled struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	File     string        `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	Policy   string        `protobuf:"bytes,2,opt,name=policy,proto3" json:"policy,omitempty"`
+	Position *v12.Position `protobuf:"bytes,3,opt,name=position,proto3" json:"position,omitempty"`
+}
+
+func (x *IndexBuildErrors_Disabled) Reset() {
+	*x = IndexBuildErrors_Disabled{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[41]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *IndexBuildErrors_Disabled) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IndexBuildErrors_Disabled) ProtoMessage() {}
+
+func (x *IndexBuildErrors_Disabled) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[41]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IndexBuildErrors_Disabled.ProtoReflect.Descriptor instead.
+func (*IndexBuildErrors_Disabled) Descriptor() ([]byte, []int) {
+	return file_cerbos_runtime_v1_runtime_proto_rawDescGZIP(), []int{11, 3}
+}
+
+func (x *IndexBuildErrors_Disabled) GetFile() string {
+	if x != nil {
+		return x.File
+	}
+	return ""
+}
+
+func (x *IndexBuildErrors_Disabled) GetPolicy() string {
+	if x != nil {
+		return x.Policy
+	}
+	return ""
+}
+
+func (x *IndexBuildErrors_Disabled) GetPosition() *v12.Position {
+	if x != nil {
+		return x.Position
 	}
 	return nil
 }
@@ -2376,8 +2439,8 @@ var file_cerbos_runtime_v1_runtime_proto_rawDesc = []byte{
 	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x36, 0x0a, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69,
 	0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
 	0x73, 0x2e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x73, 0x69,
-	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xc4,
-	0x06, 0x0a, 0x10, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45, 0x72, 0x72,
+	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xe6,
+	0x07, 0x0a, 0x10, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45, 0x72, 0x72,
 	0x6f, 0x72, 0x73, 0x12, 0x1e, 0x0a, 0x08, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18,
 	0x01, 0x20, 0x03, 0x28, 0x09, 0x42, 0x02, 0x18, 0x01, 0x52, 0x08, 0x64, 0x69, 0x73, 0x61, 0x62,
 	0x6c, 0x65, 0x64, 0x12, 0x57, 0x0a, 0x0e, 0x64, 0x75, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x65,
@@ -2399,9 +2462,12 @@ var file_cerbos_runtime_v1_runtime_proto_rawDesc = []byte{
 	0x6d, 0x69, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x49, 0x6d, 0x70, 0x6f, 0x72, 0x74, 0x73, 0x12, 0x25,
 	0x0a, 0x0e, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x5f, 0x73, 0x63, 0x6f, 0x70, 0x65, 0x73,
 	0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x53,
-	0x63, 0x6f, 0x70, 0x65, 0x73, 0x12, 0x21, 0x0a, 0x0c, 0x6e, 0x75, 0x6d, 0x5f, 0x64, 0x69, 0x73,
-	0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0b, 0x6e, 0x75, 0x6d,
-	0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x1a, 0x91, 0x01, 0x0a, 0x0c, 0x44, 0x75, 0x70,
+	0x63, 0x6f, 0x70, 0x65, 0x73, 0x12, 0x51, 0x0a, 0x0d, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65,
+	0x64, 0x5f, 0x64, 0x65, 0x66, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x63,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45, 0x72, 0x72, 0x6f, 0x72,
+	0x73, 0x2e, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x52, 0x0c, 0x64, 0x69, 0x73, 0x61,
+	0x62, 0x6c, 0x65, 0x64, 0x44, 0x65, 0x66, 0x73, 0x1a, 0x91, 0x01, 0x0a, 0x0c, 0x44, 0x75, 0x70,
 	0x6c, 0x69, 0x63, 0x61, 0x74, 0x65, 0x44, 0x65, 0x66, 0x12, 0x12, 0x0a, 0x04, 0x66, 0x69, 0x6c,
 	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x12, 0x1d, 0x0a,
 	0x0a, 0x6f, 0x74, 0x68, 0x65, 0x72, 0x5f, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
@@ -2421,31 +2487,38 @@ var file_cerbos_runtime_v1_runtime_proto_rawDesc = []byte{
 	0x6c, 0x69, 0x63, 0x79, 0x12, 0x36, 0x0a, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e,
 	0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
 	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x77, 0x0a, 0x0b,
+	0x6f, 0x6e, 0x52, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x1a, 0x79, 0x0a, 0x0b,
 	0x4c, 0x6f, 0x61, 0x64, 0x46, 0x61, 0x69, 0x6c, 0x75, 0x72, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x66,
 	0x69, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x12,
 	0x18, 0x0a, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x02,
-	0x18, 0x01, 0x52, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x3a, 0x0a, 0x0c, 0x65, 0x72, 0x72,
-	0x6f, 0x72, 0x5f, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x17, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
-	0x76, 0x31, 0x2e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x0b, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x44,
-	0x65, 0x74, 0x61, 0x69, 0x6c, 0x22, 0xb0, 0x01, 0x0a, 0x06, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x73,
-	0x12, 0x53, 0x0a, 0x12, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x5f,
-	0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63,
-	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x2e, 0x76, 0x31,
-	0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45, 0x72, 0x72, 0x6f, 0x72,
-	0x73, 0x48, 0x00, 0x52, 0x10, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45,
-	0x72, 0x72, 0x6f, 0x72, 0x73, 0x12, 0x49, 0x0a, 0x0e, 0x63, 0x6f, 0x6d, 0x70, 0x69, 0x6c, 0x65,
-	0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e,
-	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x2e, 0x76,
-	0x31, 0x2e, 0x43, 0x6f, 0x6d, 0x70, 0x69, 0x6c, 0x65, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x48,
-	0x00, 0x52, 0x0d, 0x63, 0x6f, 0x6d, 0x70, 0x69, 0x6c, 0x65, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x73,
-	0x42, 0x06, 0x0a, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x42, 0x40, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65,
-	0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63,
-	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x2f, 0x76, 0x31,
-	0x3b, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x18, 0x01, 0x52, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x3c, 0x0a, 0x0d, 0x65, 0x72, 0x72,
+	0x6f, 0x72, 0x5f, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x17, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x0c, 0x65, 0x72, 0x72, 0x6f, 0x72,
+	0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x1a, 0x6e, 0x0a, 0x08, 0x44, 0x69, 0x73, 0x61, 0x62,
+	0x6c, 0x65, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x70, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12,
+	0x36, 0x0a, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x08, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xb0, 0x01, 0x0a, 0x06, 0x45, 0x72, 0x72, 0x6f,
+	0x72, 0x73, 0x12, 0x53, 0x0a, 0x12, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x5f, 0x62, 0x75, 0x69, 0x6c,
+	0x64, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23,
+	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x45, 0x72, 0x72,
+	0x6f, 0x72, 0x73, 0x48, 0x00, 0x52, 0x10, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x42, 0x75, 0x69, 0x6c,
+	0x64, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x12, 0x49, 0x0a, 0x0e, 0x63, 0x6f, 0x6d, 0x70, 0x69,
+	0x6c, 0x65, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x20, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6d, 0x70, 0x69, 0x6c, 0x65, 0x45, 0x72, 0x72, 0x6f, 0x72,
+	0x73, 0x48, 0x00, 0x52, 0x0d, 0x63, 0x6f, 0x6d, 0x70, 0x69, 0x6c, 0x65, 0x45, 0x72, 0x72, 0x6f,
+	0x72, 0x73, 0x42, 0x06, 0x0a, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x42, 0x40, 0x5a, 0x3e, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f,
+	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62,
+	0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x2f,
+	0x76, 0x31, 0x3b, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2460,7 +2533,7 @@ func file_cerbos_runtime_v1_runtime_proto_rawDescGZIP() []byte {
 	return file_cerbos_runtime_v1_runtime_proto_rawDescData
 }
 
-var file_cerbos_runtime_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_cerbos_runtime_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_cerbos_runtime_v1_runtime_proto_goTypes = []interface{}{
 	(*RunnablePolicySet)(nil),                     // 0: cerbos.runtime.v1.RunnablePolicySet
 	(*RunnableResourcePolicySet)(nil),             // 1: cerbos.runtime.v1.RunnableResourcePolicySet
@@ -2503,13 +2576,14 @@ var file_cerbos_runtime_v1_runtime_proto_goTypes = []interface{}{
 	(*IndexBuildErrors_DuplicateDef)(nil),  // 38: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef
 	(*IndexBuildErrors_MissingImport)(nil), // 39: cerbos.runtime.v1.IndexBuildErrors.MissingImport
 	(*IndexBuildErrors_LoadFailure)(nil),   // 40: cerbos.runtime.v1.IndexBuildErrors.LoadFailure
-	(*v1.Schemas)(nil),                     // 41: cerbos.policy.v1.Schemas
-	(*v1alpha1.CheckedExpr)(nil),           // 42: google.api.expr.v1alpha1.CheckedExpr
-	(*v1.SourceAttributes)(nil),            // 43: cerbos.policy.v1.SourceAttributes
-	(v11.Effect)(0),                        // 44: cerbos.effect.v1.Effect
-	(*emptypb.Empty)(nil),                  // 45: google.protobuf.Empty
-	(*v12.Position)(nil),                   // 46: cerbos.source.v1.Position
-	(*v12.Error)(nil),                      // 47: cerbos.source.v1.Error
+	(*IndexBuildErrors_Disabled)(nil),      // 41: cerbos.runtime.v1.IndexBuildErrors.Disabled
+	(*v1.Schemas)(nil),                     // 42: cerbos.policy.v1.Schemas
+	(*v1alpha1.CheckedExpr)(nil),           // 43: google.api.expr.v1alpha1.CheckedExpr
+	(*v1.SourceAttributes)(nil),            // 44: cerbos.policy.v1.SourceAttributes
+	(v11.Effect)(0),                        // 45: cerbos.effect.v1.Effect
+	(*emptypb.Empty)(nil),                  // 46: google.protobuf.Empty
+	(*v12.Position)(nil),                   // 47: cerbos.source.v1.Position
+	(*v12.Error)(nil),                      // 48: cerbos.source.v1.Error
 }
 var file_cerbos_runtime_v1_runtime_proto_depIdxs = []int32{
 	1,  // 0: cerbos.runtime.v1.RunnablePolicySet.resource_policy:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet
@@ -2518,7 +2592,7 @@ var file_cerbos_runtime_v1_runtime_proto_depIdxs = []int32{
 	4,  // 3: cerbos.runtime.v1.RunnablePolicySet.variables:type_name -> cerbos.runtime.v1.RunnableVariablesSet
 	13, // 4: cerbos.runtime.v1.RunnableResourcePolicySet.meta:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata
 	14, // 5: cerbos.runtime.v1.RunnableResourcePolicySet.policies:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy
-	41, // 6: cerbos.runtime.v1.RunnableResourcePolicySet.schemas:type_name -> cerbos.policy.v1.Schemas
+	42, // 6: cerbos.runtime.v1.RunnableResourcePolicySet.schemas:type_name -> cerbos.policy.v1.Schemas
 	22, // 7: cerbos.runtime.v1.RunnableDerivedRole.parent_roles:type_name -> cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry
 	23, // 8: cerbos.runtime.v1.RunnableDerivedRole.variables:type_name -> cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry
 	9,  // 9: cerbos.runtime.v1.RunnableDerivedRole.condition:type_name -> cerbos.runtime.v1.Condition
@@ -2529,7 +2603,7 @@ var file_cerbos_runtime_v1_runtime_proto_depIdxs = []int32{
 	27, // 14: cerbos.runtime.v1.RunnableVariablesSet.variables:type_name -> cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry
 	28, // 15: cerbos.runtime.v1.RunnablePrincipalPolicySet.meta:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata
 	29, // 16: cerbos.runtime.v1.RunnablePrincipalPolicySet.policies:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy
-	42, // 17: cerbos.runtime.v1.Expr.checked:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	43, // 17: cerbos.runtime.v1.Expr.checked:type_name -> google.api.expr.v1alpha1.CheckedExpr
 	35, // 18: cerbos.runtime.v1.Output.when:type_name -> cerbos.runtime.v1.Output.When
 	6,  // 19: cerbos.runtime.v1.Variable.expr:type_name -> cerbos.runtime.v1.Expr
 	36, // 20: cerbos.runtime.v1.Condition.all:type_name -> cerbos.runtime.v1.Condition.ExprList
@@ -2540,55 +2614,57 @@ var file_cerbos_runtime_v1_runtime_proto_depIdxs = []int32{
 	38, // 25: cerbos.runtime.v1.IndexBuildErrors.duplicate_defs:type_name -> cerbos.runtime.v1.IndexBuildErrors.DuplicateDef
 	40, // 26: cerbos.runtime.v1.IndexBuildErrors.load_failures:type_name -> cerbos.runtime.v1.IndexBuildErrors.LoadFailure
 	39, // 27: cerbos.runtime.v1.IndexBuildErrors.missing_imports:type_name -> cerbos.runtime.v1.IndexBuildErrors.MissingImport
-	11, // 28: cerbos.runtime.v1.Errors.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
-	10, // 29: cerbos.runtime.v1.Errors.compile_errors:type_name -> cerbos.runtime.v1.CompileErrors
-	15, // 30: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
-	17, // 31: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
-	18, // 32: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
-	16, // 33: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.rules:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
-	41, // 34: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.schemas:type_name -> cerbos.policy.v1.Schemas
-	8,  // 35: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
-	43, // 36: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	19, // 37: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.actions:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
-	20, // 38: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
-	21, // 39: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
-	9,  // 40: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.condition:type_name -> cerbos.runtime.v1.Condition
-	44, // 41: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.effect:type_name -> cerbos.effect.v1.Effect
-	6,  // 42: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output:type_name -> cerbos.runtime.v1.Expr
-	7,  // 43: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.emit_output:type_name -> cerbos.runtime.v1.Output
-	2,  // 44: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
-	6,  // 45: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	45, // 46: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry.value:type_name -> google.protobuf.Empty
-	45, // 47: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry.value:type_name -> google.protobuf.Empty
-	45, // 48: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry.value:type_name -> google.protobuf.Empty
-	45, // 49: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry.value:type_name -> google.protobuf.Empty
-	6,  // 50: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	2,  // 51: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
-	6,  // 52: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	30, // 53: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
-	33, // 54: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
-	34, // 55: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.resource_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
-	8,  // 56: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
-	43, // 57: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	9,  // 58: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.condition:type_name -> cerbos.runtime.v1.Condition
-	44, // 59: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.effect:type_name -> cerbos.effect.v1.Effect
-	6,  // 60: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output:type_name -> cerbos.runtime.v1.Expr
-	7,  // 61: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.emit_output:type_name -> cerbos.runtime.v1.Output
-	31, // 62: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules.action_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
-	6,  // 63: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	32, // 64: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry.value:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
-	6,  // 65: cerbos.runtime.v1.Output.When.rule_activated:type_name -> cerbos.runtime.v1.Expr
-	6,  // 66: cerbos.runtime.v1.Output.When.condition_not_met:type_name -> cerbos.runtime.v1.Expr
-	9,  // 67: cerbos.runtime.v1.Condition.ExprList.expr:type_name -> cerbos.runtime.v1.Condition
-	46, // 68: cerbos.runtime.v1.CompileErrors.Err.position:type_name -> cerbos.source.v1.Position
-	46, // 69: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.position:type_name -> cerbos.source.v1.Position
-	46, // 70: cerbos.runtime.v1.IndexBuildErrors.MissingImport.position:type_name -> cerbos.source.v1.Position
-	47, // 71: cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_detail:type_name -> cerbos.source.v1.Error
-	72, // [72:72] is the sub-list for method output_type
-	72, // [72:72] is the sub-list for method input_type
-	72, // [72:72] is the sub-list for extension type_name
-	72, // [72:72] is the sub-list for extension extendee
-	0,  // [0:72] is the sub-list for field type_name
+	41, // 28: cerbos.runtime.v1.IndexBuildErrors.disabled_defs:type_name -> cerbos.runtime.v1.IndexBuildErrors.Disabled
+	11, // 29: cerbos.runtime.v1.Errors.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
+	10, // 30: cerbos.runtime.v1.Errors.compile_errors:type_name -> cerbos.runtime.v1.CompileErrors
+	15, // 31: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
+	17, // 32: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
+	18, // 33: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
+	16, // 34: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.rules:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
+	42, // 35: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.schemas:type_name -> cerbos.policy.v1.Schemas
+	8,  // 36: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	44, // 37: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	19, // 38: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.actions:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
+	20, // 39: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
+	21, // 40: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
+	9,  // 41: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.condition:type_name -> cerbos.runtime.v1.Condition
+	45, // 42: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.effect:type_name -> cerbos.effect.v1.Effect
+	6,  // 43: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output:type_name -> cerbos.runtime.v1.Expr
+	7,  // 44: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.emit_output:type_name -> cerbos.runtime.v1.Output
+	2,  // 45: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
+	6,  // 46: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	46, // 47: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry.value:type_name -> google.protobuf.Empty
+	46, // 48: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry.value:type_name -> google.protobuf.Empty
+	46, // 49: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry.value:type_name -> google.protobuf.Empty
+	46, // 50: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry.value:type_name -> google.protobuf.Empty
+	6,  // 51: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	2,  // 52: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
+	6,  // 53: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	30, // 54: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
+	33, // 55: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
+	34, // 56: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.resource_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
+	8,  // 57: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	44, // 58: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	9,  // 59: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.condition:type_name -> cerbos.runtime.v1.Condition
+	45, // 60: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.effect:type_name -> cerbos.effect.v1.Effect
+	6,  // 61: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output:type_name -> cerbos.runtime.v1.Expr
+	7,  // 62: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.emit_output:type_name -> cerbos.runtime.v1.Output
+	31, // 63: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules.action_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
+	6,  // 64: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	32, // 65: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry.value:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
+	6,  // 66: cerbos.runtime.v1.Output.When.rule_activated:type_name -> cerbos.runtime.v1.Expr
+	6,  // 67: cerbos.runtime.v1.Output.When.condition_not_met:type_name -> cerbos.runtime.v1.Expr
+	9,  // 68: cerbos.runtime.v1.Condition.ExprList.expr:type_name -> cerbos.runtime.v1.Condition
+	47, // 69: cerbos.runtime.v1.CompileErrors.Err.position:type_name -> cerbos.source.v1.Position
+	47, // 70: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.position:type_name -> cerbos.source.v1.Position
+	47, // 71: cerbos.runtime.v1.IndexBuildErrors.MissingImport.position:type_name -> cerbos.source.v1.Position
+	48, // 72: cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_details:type_name -> cerbos.source.v1.Error
+	47, // 73: cerbos.runtime.v1.IndexBuildErrors.Disabled.position:type_name -> cerbos.source.v1.Position
+	74, // [74:74] is the sub-list for method output_type
+	74, // [74:74] is the sub-list for method input_type
+	74, // [74:74] is the sub-list for extension type_name
+	74, // [74:74] is the sub-list for extension extendee
+	0,  // [0:74] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_runtime_v1_runtime_proto_init() }
@@ -2933,6 +3009,18 @@ func file_cerbos_runtime_v1_runtime_proto_init() {
 				return nil
 			}
 		}
+		file_cerbos_runtime_v1_runtime_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*IndexBuildErrors_Disabled); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_cerbos_runtime_v1_runtime_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*RunnablePolicySet_ResourcePolicy)(nil),
@@ -2956,7 +3044,7 @@ func file_cerbos_runtime_v1_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_runtime_v1_runtime_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   41,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

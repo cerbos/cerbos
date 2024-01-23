@@ -33,6 +33,12 @@
             "type": "string"
           }
         },
+        "disabledDefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.Disabled"
+          }
+        },
         "duplicateDefs": {
           "type": "array",
           "items": {
@@ -56,10 +62,21 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.Disabled": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string"
         },
-        "numDisabled": {
-          "type": "integer",
-          "minimum": 0
+        "policy": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
         }
       }
     },
@@ -88,7 +105,7 @@
         "error": {
           "type": "string"
         },
-        "errorDetail": {
+        "errorDetails": {
           "$ref": "#/definitions/cerbos.source.v1.Error"
         },
         "file": {

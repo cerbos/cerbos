@@ -17,7 +17,7 @@
                 "column": 1,
                 "path": "$"
             },
-            "message": "invalid document"
+            "message": "invalid document: contents are not valid YAML or JSON"
         }
     ],
     "want": [
@@ -47,7 +47,7 @@
                         "column": 1,
                         "path": "$"
                     },
-                    "message": "invalid document"
+                    "message": "invalid document: contents are not valid YAML or JSON"
                 }
             ]
         },

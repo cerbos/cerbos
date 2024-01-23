@@ -3,20 +3,20 @@
 wantErrList:
   loadFailures:
     - file: invalid.json
-      error: invalid document
-      errorDetail:
+      error: "invalid document: contents are not valid YAML or JSON"
+      errorDetails:
         kind: KIND_PARSE_ERROR
-        message: invalid document
+        message: "invalid document: contents are not valid YAML or JSON"
         position:
           line: 1
           column: 1
           path: $
 
     - file: invalid.yml
-      error: invalid document
-      errorDetail:
+      error: "invalid document: contents are not valid YAML or JSON"
+      errorDetails:
         kind: KIND_PARSE_ERROR
-        message: invalid document
+        message: "invalid document: contents are not valid YAML or JSON"
         position:
           line: 1
           column: 1
@@ -24,7 +24,7 @@ wantErrList:
 
     - file: principal.json
       error: 'unknown field "key"'
-      errorDetail:
+      errorDetails:
         kind: KIND_PARSE_ERROR
         message: 'unknown field "key"'
         position:
@@ -34,7 +34,7 @@ wantErrList:
 
     - file: resource.yaml
       error: 'unknown field "some"'
-      errorDetail:
+      errorDetails:
         kind: KIND_PARSE_ERROR
         message: 'unknown field "some"'
         position:
