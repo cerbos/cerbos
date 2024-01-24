@@ -22,7 +22,7 @@ for VALUES_FILE in "${CHART_DIR}"/values*; do
         -schema-location default \
         -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
         -summary
-    helm template cerbos-test "$CHART_DIR" --values="$VALUES_FILE" --kube-version="$MIN_KUBE_VERSION" | pluto detect - --target-versions k8s=v"$MIN_KUBE_VERSION"
+    helm template cerbos-test "$CHART_DIR" --values="$VALUES_FILE" --kube-version="$MIN_KUBE_VERSION" | pluto detect - --target-version v"$MIN_KUBE_VERSION"
     echo " "
 done
 
