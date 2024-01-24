@@ -12,7 +12,7 @@ if ! command -v kubeconform &> /dev/null; then
     go install github.com/yannh/kubeconform/cmd/kubeconform@latest
 fi
 if ! command -v pluto &> /dev/null; then
-    brew install FairwindsOps/tap/pluto
+    go install github.com/fairwindsops/pluto@latest 
 fi
 
 for VALUES_FILE in "${CHART_DIR}"/values*; do
