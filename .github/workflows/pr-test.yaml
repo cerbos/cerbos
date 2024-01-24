@@ -250,8 +250,5 @@ jobs:
         with:
           go-version: '>=1.21'
 
-      - name: Download Pluto
-        uses: FairwindsOps/pluto/github-action@master
-
       - name: Test Helm chart
         run: ./deploy/charts/validate.sh
