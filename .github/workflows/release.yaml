@@ -9,6 +9,9 @@ jobs:
     name: Release Binaries
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,6 +57,11 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-go-
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.1.1
+        with:
+          cosign-release: 'v2.1.1'
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v5
