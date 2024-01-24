@@ -140,7 +140,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		if err := policy.Validate(p); err != nil {
+		if err := policy.Validate(p, sc); err != nil {
 			ib.addLoadFailure(filePath, err)
 			return nil
 		}
@@ -198,10 +198,17 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 
 	var uErr protoyaml.UnmarshalError
 	if errors.As(err, &uErr) {
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.Message, ErrorDetails: uErr.Err})
-	} else {
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error(), ErrorDetails: &sourcev1.Error{Message: err.Error()}})
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.GetMessage(), ErrorDetails: uErr.Err})
+		return
 	}
+
+	var vErr policy.ValidationError
+	if errors.As(err, &vErr) {
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: vErr.Err.GetMessage(), ErrorDetails: vErr.Err})
+		return
+	}
+
+	idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error(), ErrorDetails: &sourcev1.Error{Message: err.Error()}})
 }
 
 func (idx *indexBuilder) addErrors(file string, errs []*sourcev1.Error) {

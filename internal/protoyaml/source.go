@@ -36,7 +36,7 @@ func (sc SourceCtx) PositionForProtoPath(path string) *sourcev1.Position {
 }
 
 func (sc SourceCtx) ContextForYAMLPath(path string) string {
-	if path == "" {
+	if sc.doc == nil || path == "" {
 		return ""
 	}
 

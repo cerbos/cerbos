@@ -4,6 +4,8 @@ wantErrList:
   loadFailures:
     - error: more than one YAML document detected
       file: principal.yaml
+      errorDetails:
+        message: more than one YAML document detected
 files:
   "principal.yaml": |-
     ---
