@@ -236,3 +236,19 @@ jobs:
         with:
           against: https://github.com/cerbos/cerbos.git#tag=${{ steps.latest-release.outputs.tag }}
           since: https://github.com/cerbos/cerbos.git#branch=main
+
+  test-helm:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
+    name: Helm test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.21'
+
+      - name: Test Helm chart
+        run: ./deploy/charts/validate.sh
