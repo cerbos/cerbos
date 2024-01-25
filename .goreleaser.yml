@@ -87,6 +87,18 @@ nfpms:
         dst: /etc/systemd/system/cerbos.service
       - dst: /var/cerbos/policies
         type: dir
+
+signs:
+  - cmd: cosign
+    args:
+      - sign-blob
+      - --yes
+      - --rekor-url
+      - https://rekor.sigstore.dev/
+      - "--output-signature=${signature}"
+      - "${artifact}"
+    artifacts: all
+
 dockers:
   - id: cerbos-amd64
     dockerfile: Dockerfile.cerbos
@@ -236,6 +248,18 @@ docker_manifests:
     image_templates:
       - "docker.io/cerbos/cerbosctl:dev-amd64"
       - "docker.io/cerbos/cerbosctl:dev-arm64"
+
+docker_signs:
+  - id: sign-images
+    cmd: cosign
+    args:
+      - sign
+      - --yes
+      - --rekor-url
+      - https://rekor.sigstore.dev/
+      - "${artifact}"
+    artifacts: all
+    output: true
 
 brews:
   - repository:
