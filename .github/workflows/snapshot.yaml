@@ -58,6 +58,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: ["tests"]
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
