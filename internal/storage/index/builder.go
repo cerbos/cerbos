@@ -19,8 +19,8 @@ import (
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/protoyaml"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -196,7 +196,7 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 		return
 	}
 
-	var uErr protoyaml.UnmarshalError
+	var uErr parser.UnmarshalError
 	if errors.As(err, &uErr) {
 		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.GetMessage(), ErrorDetails: uErr.Err})
 		return
@@ -218,7 +218,7 @@ func (idx *indexBuilder) addErrors(file string, errs []*sourcev1.Error) {
 	}
 }
 
-func (idx *indexBuilder) addDisabled(file string, srcCtx protoyaml.SourceCtx, p *policyv1.Policy) {
+func (idx *indexBuilder) addDisabled(file string, srcCtx parser.SourceCtx, p *policyv1.Policy) {
 	idx.disabled = append(idx.disabled, &runtimev1.IndexBuildErrors_Disabled{
 		File:     file,
 		Policy:   namer.PolicyKey(p),
@@ -226,7 +226,7 @@ func (idx *indexBuilder) addDisabled(file string, srcCtx protoyaml.SourceCtx, p 
 	})
 }
 
-func (idx *indexBuilder) addPolicy(file string, srcCtx protoyaml.SourceCtx, p policy.Wrapper) {
+func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p policy.Wrapper) {
 	// Is this policy defined elsewhere?
 	if otherFile, ok := idx.modIDToFile[p.ID]; ok && (otherFile != file) {
 		idx.duplicates = append(idx.duplicates, &runtimev1.IndexBuildErrors_DuplicateDef{

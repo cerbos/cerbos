@@ -11,7 +11,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/protoyaml"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/validator"
 )
@@ -37,29 +37,29 @@ func ReadPolicy(src io.Reader) (*policyv1.Policy, error) {
 }
 
 // ReadPolicyWithSourceContext reads a policy and returns it along with information about its source.
-func ReadPolicyWithSourceContext(fsys fs.FS, path string) (*policyv1.Policy, protoyaml.SourceCtx, error) {
+func ReadPolicyWithSourceContext(fsys fs.FS, path string) (*policyv1.Policy, parser.SourceCtx, error) {
 	f, err := fsys.Open(path)
 	if err != nil {
-		return nil, protoyaml.SourceCtx{}, fmt.Errorf("failed to open %s: %w", path, err)
+		return nil, parser.SourceCtx{}, fmt.Errorf("failed to open %s: %w", path, err)
 	}
 	defer f.Close()
 
-	policies, contexts, err := protoyaml.Unmarshal(f, func() *policyv1.Policy { return &policyv1.Policy{} }, protoyaml.WithValidator(validator.Validator))
+	policies, contexts, err := parser.Unmarshal(f, func() *policyv1.Policy { return &policyv1.Policy{} }, parser.WithValidator(validator.Validator))
 	switch len(policies) {
 	case 0:
-		return nil, protoyaml.SourceCtx{}, err
+		return nil, parser.SourceCtx{}, err
 	case 1:
 		return policies[0], contexts[0], err
 	default:
 		// TODO: Temporary restriction during parser migration to protoyaml.
-		return nil, protoyaml.SourceCtx{}, util.ErrMultipleYAMLDocs
+		return nil, parser.SourceCtx{}, util.ErrMultipleYAMLDocs
 	}
 }
 
 // FindPolicy finds a policy by ID from the given reader.
 func FindPolicy(src io.Reader, modID namer.ModuleID) (*policyv1.Policy, error) {
 	p := &policyv1.Policy{}
-	err := protoyaml.Find(src, func(h *policyv1.Policy) bool { return namer.GenModuleID(h) == modID }, p)
+	err := parser.Find(src, func(h *policyv1.Policy) bool { return namer.GenModuleID(h) == modID }, p)
 	return p, err
 }
 

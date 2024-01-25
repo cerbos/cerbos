@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package protoyaml
+package parser
 
 import (
 	"github.com/goccy/go-yaml"

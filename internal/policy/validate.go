@@ -9,7 +9,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
-	"github.com/cerbos/cerbos/internal/protoyaml"
+	"github.com/cerbos/cerbos/internal/parser"
 )
 
 type ValidationError struct {
@@ -29,7 +29,7 @@ func (ve ValidationError) Error() string {
 	return fmt.Sprintf("%d:%d <%s> %s\n%s", pos.GetLine(), pos.GetColumn(), pos.GetPath(), ve.Err.GetMessage(), ve.Err.GetContext())
 }
 
-func Validate(p *policyv1.Policy, sc protoyaml.SourceCtx) error {
+func Validate(p *policyv1.Policy, sc parser.SourceCtx) error {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		return validateResourcePolicy(pt.ResourcePolicy, sc)
@@ -44,7 +44,7 @@ func Validate(p *policyv1.Policy, sc protoyaml.SourceCtx) error {
 	}
 }
 
-func validateResourcePolicy(rp *policyv1.ResourcePolicy, sc protoyaml.SourceCtx) (outErr error) {
+func validateResourcePolicy(rp *policyv1.ResourcePolicy, sc parser.SourceCtx) (outErr error) {
 	ruleNames := make(map[string]int, len(rp.Rules))
 	for i, rule := range rp.Rules {
 		ruleName := rule.Name
@@ -85,7 +85,7 @@ func resourcePolicyRuleProtoPath(idx int) string {
 	return fmt.Sprintf("resource_policy.rules[%d]", idx)
 }
 
-func validatePrincipalPolicy(rp *policyv1.PrincipalPolicy, sc protoyaml.SourceCtx) (outErr error) {
+func validatePrincipalPolicy(rp *policyv1.PrincipalPolicy, sc parser.SourceCtx) (outErr error) {
 	resourceNames := make(map[string]int, len(rp.Rules))
 	for i, resourceRules := range rp.Rules {
 		if idx, exists := resourceNames[resourceRules.Resource]; exists {
@@ -135,7 +135,7 @@ func principalPolicyActionRuleProtoPath(parentIdx, idx int) string {
 	return fmt.Sprintf("principal_policy.rules[%d].actions[%d]", parentIdx, idx)
 }
 
-func validateDerivedRoles(dr *policyv1.DerivedRoles, sc protoyaml.SourceCtx) (outErr error) {
+func validateDerivedRoles(dr *policyv1.DerivedRoles, sc parser.SourceCtx) (outErr error) {
 	roleNames := make(map[string]int, len(dr.Definitions))
 	for i, rd := range dr.Definitions {
 		// Check for name clashes
@@ -161,7 +161,7 @@ func derivedRoleRuleProtoPath(idx int) string {
 	return fmt.Sprintf("derived_roles.definitions[%d]", idx)
 }
 
-func validateExportVariables(p *policyv1.Policy, sc protoyaml.SourceCtx) error {
+func validateExportVariables(p *policyv1.Policy, sc parser.SourceCtx) error {
 	if len(p.Variables) > 0 { //nolint:staticcheck
 		pos, context := sc.PositionAndContextForProtoPath("variables")
 		return newValidationError("export variables policies do not support the deprecated top-level variables field", pos, context)

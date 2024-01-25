@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package protoyaml_test
+package parser_test
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ import (
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/protoyaml"
+	parser1 "github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -38,7 +38,7 @@ func TestUnmarshal(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			tc, input := loadTestCase(t, testCase)
-			haveMsg, haveSrc, err := protoyaml.Unmarshal(input, func() *policyv1.Policy { return &policyv1.Policy{} }, protoyaml.WithValidator(validator))
+			haveMsg, haveSrc, err := parser1.Unmarshal(input, func() *policyv1.Policy { return &policyv1.Policy{} }, parser1.WithValidator(validator))
 
 			t.Cleanup(func() {
 				if t.Failed() {
@@ -97,7 +97,7 @@ func unwrapErrors(t *testing.T, err error) (allErrs []*sourcev1.Error) {
 		return allErrs
 	}
 
-	var unmarshalErr protoyaml.UnmarshalError
+	var unmarshalErr parser1.UnmarshalError
 	if errors.As(err, &unmarshalErr) {
 		allErrs = append(allErrs, unmarshalErr.Err)
 	} else {
@@ -150,7 +150,7 @@ func TestFind(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			want, match := findCandidate(t, rnd, tc.Want)
 			have := &policyv1.Policy{}
-			require.NoError(t, protoyaml.Find(input, match, have))
+			require.NoError(t, parser1.Find(input, match, have))
 			require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
 		})
 	}
