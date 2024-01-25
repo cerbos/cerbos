@@ -3,7 +3,7 @@ name: Snapshots
 on:
   push:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
     branches:
       - main
 jobs:
@@ -95,6 +95,11 @@ jobs:
         with:
           cross_compiling: true
           write_build_cache: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.1.1
+        with:
+          cosign-release: "v2.1.1"
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v5
