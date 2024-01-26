@@ -34,6 +34,7 @@ import (
 	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
+	"google.golang.org/grpc/metadata"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
@@ -478,6 +479,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
 		}),
+		runtime.WithMetadata(setPeerMetadata),
 		runtime.WithRoutingErrorHandler(handleRoutingError),
 		runtime.WithHealthEndpointAt(healthpb.NewHealthClient(grpcConn), healthEndpoint),
 	)
@@ -648,4 +650,8 @@ func incomingHeaderMatcher(key string) (string, bool) {
 	default:
 		return key, true
 	}
+}
+
+func setPeerMetadata(_ context.Context, req *http.Request) metadata.MD {
+	return metadata.Pairs(audit.HTTPRemoteAddrKey, req.RemoteAddr)
 }

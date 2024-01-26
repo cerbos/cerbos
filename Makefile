@@ -124,7 +124,7 @@ build: generate lint test package
 
 .PHONY: package
 package: $(GORELEASER)
-	@ TELEMETRY_WRITE_KEY=$(TELEMETRY_WRITE_KEY) TELEMETRY_URL=$(TELEMETRY_URL) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip=publish --clean
+	@ TELEMETRY_WRITE_KEY=$(TELEMETRY_WRITE_KEY) TELEMETRY_URL=$(TELEMETRY_URL) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
 
 .PHONY: docs
 docs: confdocs
