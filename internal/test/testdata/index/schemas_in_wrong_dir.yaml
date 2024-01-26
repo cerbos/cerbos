@@ -5,6 +5,9 @@ wantErrList:
     - error: |-
         _schemas directory must be under the root of the storage directory
       file: policies/_schemas
+      errorDetails:
+        message: |-
+          _schemas directory must be under the root of the storage directory
 files:
   "policies/_schemas/principal.json": |-
     {

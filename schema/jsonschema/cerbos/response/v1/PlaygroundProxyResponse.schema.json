@@ -345,11 +345,31 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "details": {
+          "$ref": "#/definitions/cerbos.response.v1.PlaygroundFailure.ErrorDetails"
+        },
         "error": {
           "type": "string"
         },
         "file": {
           "type": "string"
+        }
+      }
+    },
+    "cerbos.response.v1.PlaygroundFailure.ErrorDetails": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "context": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },

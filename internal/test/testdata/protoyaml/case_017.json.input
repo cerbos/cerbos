@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+#---
+#apiVersion: api.cerbos.dev/v1
+#variables:
+#  pending_approval: ("PENDING_APPROVAL")
+#  principal_location: |-
+#    (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")
+#resourcePolicy:
+#  version: "20210210"
+#  importDerivedRoles:
+#    - alpha
+#    - beta
+#  schemas:
+#    principalSchema:
+#      ref: cerbos:///principal.json
+#    resourceSchema:
+#      ref: cerbos:///resources/leave_request.json
+#  resource: leave_request
+#  rules:
+#    - actions: ['*']
+#      effect: EFFECT_ALLOW
+#      roles:
+#        - admin
+#      name: wildcard

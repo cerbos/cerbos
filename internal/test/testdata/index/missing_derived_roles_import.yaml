@@ -3,7 +3,14 @@
 wantErrList:
   missingImports:
     - importingFile: resource.yaml
-      desc: "Derived roles import 'my_derived_roles' not found"
+      importingPolicy: resource.leave_request.v20210210
+      importKind: derived roles
+      importName: my_derived_roles
+      desc: "cannot find derived roles 'my_derived_roles' imported by policy resource.leave_request.v20210210"
+      position:
+        line: 5
+        column: 5
+        path: $.resourcePolicy.importDerivedRoles[0]
 files:
   "test.txt": |-
     this is some text

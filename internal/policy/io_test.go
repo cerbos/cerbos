@@ -57,6 +57,13 @@ func TestReadPolicy(t *testing.T) {
 					require.NoError(t, err)
 					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
 				})
+
+				t.Run(format+"_source_context", func(t *testing.T) {
+					have, haveCtx, err := policy.ReadPolicyWithSourceContext(os.DirFS(dir), tc.input+"."+format)
+					require.NoError(t, err)
+					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
+					require.NotNil(t, haveCtx)
+				})
 			}
 		})
 	}

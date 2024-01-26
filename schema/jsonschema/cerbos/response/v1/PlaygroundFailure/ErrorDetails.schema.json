@@ -1,0 +1,19 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlaygroundFailure/ErrorDetails.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "column": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "context": {
+      "type": "string"
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

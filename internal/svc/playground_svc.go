@@ -317,7 +317,11 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 	for _, dd := range errs.DuplicateDefs {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  dd.File,
-			Error: fmt.Sprintf("%s is a duplicate of %s", dd.File, dd.OtherFile),
+			Error: fmt.Sprintf("Policy %s is defined in both %s and %s", dd.Policy, dd.File, dd.OtherFile),
+			Details: &responsev1.PlaygroundFailure_ErrorDetails{
+				Line:   dd.GetPosition().GetLine(),
+				Column: dd.GetPosition().GetColumn(),
+			},
 		})
 	}
 
@@ -325,6 +329,10 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  mi.ImportingFile,
 			Error: mi.Desc,
+			Details: &responsev1.PlaygroundFailure_ErrorDetails{
+				Line:   mi.GetPosition().GetLine(),
+				Column: mi.GetPosition().GetColumn(),
+			},
 		})
 	}
 
@@ -335,16 +343,34 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 	}
 
 	for _, lf := range errs.LoadFailures {
+		var details *responsev1.PlaygroundFailure_ErrorDetails
+		var msg string
+		if ed := lf.GetErrorDetails(); ed != nil {
+			msg = fmt.Sprintf("Failed to read: %s", ed.GetMessage())
+			details = &responsev1.PlaygroundFailure_ErrorDetails{
+				Line:    ed.GetPosition().GetLine(),
+				Column:  ed.GetPosition().GetColumn(),
+				Context: ed.GetContext(),
+			}
+		} else {
+			msg = fmt.Sprintf("Failed to read: %s", lf.Error) //nolint:staticcheck
+		}
+
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			File:  lf.File,
-			Error: fmt.Sprintf("Failed to read: %s", lf.Error),
+			File:    lf.File,
+			Error:   msg,
+			Details: details,
 		})
 	}
 
-	for _, d := range errs.Disabled {
+	for _, d := range errs.DisabledDefs {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			File:  d,
-			Error: "Disabled policy",
+			File:  d.File,
+			Error: fmt.Sprintf("Disabled policy: %s", d.Policy),
+			Details: &responsev1.PlaygroundFailure_ErrorDetails{
+				Line:   d.GetPosition().GetLine(),
+				Column: d.GetPosition().GetColumn(),
+			},
 		})
 	}
 

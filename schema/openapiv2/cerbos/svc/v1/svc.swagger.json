@@ -1292,6 +1292,25 @@
         },
         "error": {
           "type": "string"
+        },
+        "details": {
+          "$ref": "#/definitions/PlaygroundFailureErrorDetails"
+        }
+      }
+    },
+    "PlaygroundFailureErrorDetails": {
+      "type": "object",
+      "properties": {
+        "line": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "column": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "context": {
+          "type": "string"
         }
       }
     },

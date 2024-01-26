@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package protoyaml
+package parser
 
 import (
 	"encoding/base64"
@@ -20,11 +20,13 @@ import (
 	"github.com/goccy/go-yaml/parser"
 	"github.com/goccy/go-yaml/printer"
 	"github.com/goccy/go-yaml/token"
+	"github.com/stoewer/go-strcase"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -33,61 +35,73 @@ const (
 	bitSize64 = 64
 )
 
-type unmarshalOpts struct {
-	validator           *protovalidate.Validator
-	ignoreUnknownFields bool
-}
+var ErrNotFound = errors.New("not found")
 
-type UnmarshalOpt func(*unmarshalOpts)
-
-// WithIgnoreUnknownFields ignores unknown fields not defined in the protobuf schema.
-func WithIgnoreUnknownFields() UnmarshalOpt {
-	return func(uo *unmarshalOpts) {
-		uo.ignoreUnknownFields = true
+// Find a single document from the multi-document stream.
+// TODO(cell): Optimize!
+// For our use case, this could be optimized by storing the offset of each document and directly seeking to that offset.
+// However, there are a couple of problems with that:
+//  1. The offsets reported by the parser are not always reliable (I am yet to figure out why)
+//  2. If YAML anchors have been used, we need to resolve those first by reading through the entire file anyway
+//     However, this is a relatively niche case and we can handle that case lazily (seek first, read, and resolve anchors only if they exist in the doc)
+//
+// In the interest of time, I am leaving those optimizations for later.
+func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...UnmarshalOpt) error {
+	contents, err := io.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("failed to read contents: %w", err)
 	}
-}
 
-// WithValidate validates the unmarshaled message using protovalidate.
-func WithValidator(validator *protovalidate.Validator) UnmarshalOpt {
-	return func(uo *unmarshalOpts) {
-		uo.validator = validator
+	f, err := parse(contents, false)
+	if err != nil {
+		return err
 	}
-}
 
-type Unmarshaler[T proto.Message] struct {
-	factory func() T
-	anchors map[string]ast.Node
-	unmarshalOpts
-}
+	if len(f.Docs) == 0 {
+		return ErrNotFound
+	}
 
-func NewUnmarshaler[T proto.Message](factory func() T, opts ...UnmarshalOpt) *Unmarshaler[T] {
-	uo := unmarshalOpts{}
+	u := &unmarshaler[T]{unmarshalOpts: unmarshalOpts{}}
 	for _, o := range opts {
-		o(&uo)
+		o(&u.unmarshalOpts)
 	}
 
-	return &Unmarshaler[T]{factory: factory, unmarshalOpts: uo}
+	for _, doc := range f.Docs {
+		bodyNode, ok := doc.Body.(ast.MapNode)
+		if !ok {
+			// Ignore documents not structured as policies
+			continue
+		}
+
+		proto.Reset(out)
+		refOut := out.ProtoReflect()
+		uctx := newUnmarshalCtxWithoutSourceCtx(doc)
+
+		if err := u.unmarshalMapping(uctx, bodyNode, refOut); err != nil {
+			continue
+		}
+
+		if !match(out) {
+			continue
+		}
+
+		return u.validate(uctx, out)
+	}
+
+	return ErrNotFound
 }
 
-func (u *Unmarshaler[T]) UnmarshalReader(r io.Reader) ([]T, []*sourcev1.SourceContext, error) {
+func Unmarshal[T proto.Message](r io.Reader, factory func() T, opts ...UnmarshalOpt) ([]T, []SourceCtx, error) {
 	contents, err := io.ReadAll(r)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read contents: %w", err)
 	}
 
-	return u.unmarshal(contents)
+	return UnmarshalBytes(contents, factory, opts...)
 }
 
-func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, _ []*sourcev1.SourceContext, outErr error) {
-	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
-	if errs := detectStringStartingWithQuote(t); len(errs) > 0 {
-		for _, err := range errs {
-			outErr = errors.Join(outErr, NewUnmarshalError(err))
-		}
-		return nil, nil, outErr
-	}
-
-	f, err := parser.Parse(t, 0)
+func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...UnmarshalOpt) (_ []T, _ []SourceCtx, outErr error) {
+	f, err := parse(contents, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -96,23 +110,64 @@ func (u *Unmarshaler[T]) unmarshal(contents []byte) (_ []T, _ []*sourcev1.Source
 		return nil, nil, nil
 	}
 
+	u := &unmarshaler[T]{unmarshalOpts: unmarshalOpts{}}
+	for _, o := range opts {
+		o(&u.unmarshalOpts)
+	}
+
 	outMsg := make([]T, 0, len(f.Docs))
-	outSrc := make([]*sourcev1.SourceContext, 0, len(f.Docs))
+	outSrc := make([]SourceCtx, 0, len(f.Docs))
+	invalidDocSeen := false
 	for _, doc := range f.Docs {
-		msg := u.factory()
-		srcCtx := &sourcev1.SourceContext{FieldPositions: make(map[string]*sourcev1.Position)}
-		uctx := &unmarshalCtx{doc: doc, srcCtx: srcCtx}
-		if err := u.unmarshalDoc(uctx, doc, msg); err != nil {
+		msg := factory()
+		uctx := newUnmarshalCtx(doc)
+
+		bodyNode, ok := doc.Body.(ast.MapNode)
+		if !ok {
+			// ignore commented out documents
+			if doc.Body.Type() == ast.CommentType {
+				continue
+			}
+
+			// If given an invalid file with multiple lines of text, the parser generates a "doc" for each line.
+			// Ignore a consecutive run of such docs.
+			if invalidDocSeen {
+				continue
+			}
+
+			outErr = errors.Join(outErr, uctx.perrorf(doc.Body, "invalid document: contents are not valid YAML or JSON"))
+			outMsg = append(outMsg, msg)
+			outSrc = append(outSrc, uctx.toSourceCtx())
+			invalidDocSeen = true
+			continue
+		}
+		invalidDocSeen = false
+
+		if err := u.unmarshalMapping(uctx, bodyNode, msg.ProtoReflect()); err != nil {
 			outErr = errors.Join(outErr, err)
 		} else if err := u.validate(uctx, msg); err != nil {
 			outErr = errors.Join(outErr, err)
 		}
 
 		outMsg = append(outMsg, msg)
-		outSrc = append(outSrc, srcCtx)
+		outSrc = append(outSrc, uctx.toSourceCtx())
 	}
 
 	return outMsg, outSrc, outErr
+}
+
+func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
+	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
+	if detectProblems && !util.IsJSON(contents) {
+		if errs := detectStringStartingWithQuote(t); len(errs) > 0 {
+			for _, err := range errs {
+				outErr = errors.Join(outErr, NewUnmarshalError(err))
+			}
+			return nil, outErr
+		}
+	}
+
+	return parser.Parse(t, parser.ParseComments)
 }
 
 func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Error) {
@@ -166,17 +221,33 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 	return outErrs
 }
 
-func (u *Unmarshaler[T]) unmarshalDoc(uctx *unmarshalCtx, doc *ast.DocumentNode, msg T) error {
-	baseNode, ok := doc.Body.(ast.MapNode)
-	if !ok {
-		return uctx.perrorf(doc.Body, "unexpected node type %s", doc.Body.Type())
-	}
-
-	msgReflect := msg.ProtoReflect()
-	return u.unmarshalMapping(uctx, baseNode, msgReflect)
+type unmarshalOpts struct {
+	validator           *protovalidate.Validator
+	ignoreUnknownFields bool
 }
 
-func (u *Unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out protoreflect.Message) error {
+type UnmarshalOpt func(*unmarshalOpts)
+
+// WithIgnoreUnknownFields ignores unknown fields not defined in the protobuf schema.
+func WithIgnoreUnknownFields() UnmarshalOpt {
+	return func(uo *unmarshalOpts) {
+		uo.ignoreUnknownFields = true
+	}
+}
+
+// WithValidate validates the unmarshaled message using protovalidate.
+func WithValidator(validator *protovalidate.Validator) UnmarshalOpt {
+	return func(uo *unmarshalOpts) {
+		uo.validator = validator
+	}
+}
+
+type unmarshaler[T proto.Message] struct {
+	anchors map[string]ast.Node
+	unmarshalOpts
+}
+
+func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out protoreflect.Message) error {
 	fields := out.Descriptor().Fields()
 	seen := make(map[protowire.Number]string, fields.Len())
 	seenOneOfs := make(map[int]string)
@@ -213,7 +284,7 @@ func (u *Unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 			if u.ignoreUnknownFields {
 				continue
 			}
-			return uctx.perrorf(kn, "unknown field %s", keyValue)
+			return uctx.perrorf(kn, "unknown field %q", keyValue)
 		}
 
 		if prev, ok := seen[field.Number()]; ok {
@@ -251,7 +322,7 @@ func (u *Unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 	return nil
 }
 
-func (u *Unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNode, error) {
+func (u *unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNode, error) {
 	if an, ok := n.(*ast.AliasNode); ok {
 		anchorName := an.Value.GetToken().Value
 		aliased, ok := u.anchors[anchorName]
@@ -270,7 +341,7 @@ func (u *Unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNo
 	return nil, uctx.perrorf(n, "not an alias")
 }
 
-func (u *Unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, error) {
+func (u *unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, error) {
 	switch t := n.(type) {
 	case *ast.AnchorNode:
 		anchorName := t.Name.GetToken().Value
@@ -301,7 +372,7 @@ func (u *Unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, 
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, list protoreflect.List) error {
+func (u *unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, list protoreflect.List) error {
 	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return err
@@ -336,7 +407,7 @@ func (u *Unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protor
 	return nil
 }
 
-func (u *Unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, mmap protoreflect.Map) error {
+func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, mmap protoreflect.Map) error {
 	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return err
@@ -386,7 +457,7 @@ func (u *Unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protore
 	return nil
 }
 
-func (u *Unmarshaler[T]) unmarshalSingular(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, out protoreflect.Message) error {
+func (u *unmarshaler[T]) unmarshalSingular(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, out protoreflect.Message) error {
 	if k := fd.Kind(); k == protoreflect.MessageKind || k == protoreflect.GroupKind {
 		value := out.NewField(fd)
 		if err := u.unmarshalMessage(uctx, n, value.Message()); err != nil {
@@ -405,7 +476,7 @@ func (u *Unmarshaler[T]) unmarshalSingular(uctx *unmarshalCtx, n ast.Node, fd pr
 	return nil
 }
 
-func (u *Unmarshaler[T]) unmarshalScalar(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalScalar(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
 	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return protoreflect.Value{}, err
@@ -437,7 +508,7 @@ func (u *Unmarshaler[T]) unmarshalScalar(uctx *unmarshalCtx, n ast.Node, fd prot
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalBool(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalBool(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
 	bn, ok := n.(*ast.BoolNode)
 	if !ok {
 		return protoreflect.Value{}, uctx.perrorf(n, "expected boolean value got %s", n.Type())
@@ -446,7 +517,7 @@ func (u *Unmarshaler[T]) unmarshalBool(uctx *unmarshalCtx, n ast.Node) (protoref
 	return protoreflect.ValueOfBool(bn.Value), nil
 }
 
-func (u *Unmarshaler[T]) unmarshalEnum(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalEnum(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.StringNode:
 		if ev := fd.Enum().Values().ByName(protoreflect.Name(t.Value)); ev != nil {
@@ -469,7 +540,7 @@ func (u *Unmarshaler[T]) unmarshalEnum(uctx *unmarshalCtx, n ast.Node, fd protor
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalString(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalString(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.StringNode:
 		return protoreflect.ValueOfString(t.Value), nil
@@ -494,7 +565,7 @@ func (u *Unmarshaler[T]) unmarshalString(uctx *unmarshalCtx, n ast.Node) (protor
 }
 
 //nolint:dupl
-func (u *Unmarshaler[T]) unmarshalInt(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalInt(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.IntegerNode:
 		switch tv := t.Value.(type) {
@@ -527,7 +598,7 @@ func (u *Unmarshaler[T]) unmarshalInt(uctx *unmarshalCtx, n ast.Node, bitSize in
 }
 
 //nolint:dupl
-func (u *Unmarshaler[T]) unmarshalUint(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalUint(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.IntegerNode:
 		switch tv := t.Value.(type) {
@@ -559,7 +630,7 @@ func (u *Unmarshaler[T]) unmarshalUint(uctx *unmarshalCtx, n ast.Node, bitSize i
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalFloat(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalFloat(uctx *unmarshalCtx, n ast.Node, bitSize int) (protoreflect.Value, error) {
 	switch t := n.(type) {
 	case *ast.IntegerNode:
 		switch tv := t.Value.(type) {
@@ -615,7 +686,7 @@ func (u *Unmarshaler[T]) unmarshalFloat(uctx *unmarshalCtx, n ast.Node, bitSize 
 	}
 }
 
-func (u *Unmarshaler[T]) unmarshalBytes(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
+func (u *unmarshaler[T]) unmarshalBytes(uctx *unmarshalCtx, n ast.Node) (protoreflect.Value, error) {
 	var s string
 	switch t := n.(type) {
 	case *ast.StringNode:
@@ -643,7 +714,7 @@ func (u *Unmarshaler[T]) unmarshalBytes(uctx *unmarshalCtx, n ast.Node) (protore
 	return protoreflect.ValueOfBytes(b), nil
 }
 
-func (u *Unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out protoreflect.Message) error {
+func (u *unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out protoreflect.Message) error {
 	nn, err := u.resolveNode(uctx, n)
 	if err != nil {
 		return err
@@ -657,7 +728,7 @@ func (u *Unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out pr
 	return u.unmarshalMapping(uctx, mn, out)
 }
 
-func (u *Unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.MapKey, error) {
+func (u *unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.MapKey, error) {
 	sn, ok := n.(*ast.StringNode)
 	if !ok {
 		return protoreflect.MapKey{}, uctx.perrorf(n, "expected string got %s", n.Type())
@@ -704,7 +775,7 @@ func (u *Unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd prot
 	}
 }
 
-func (u *Unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
+func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 	if u.validator == nil {
 		return nil
 	}
@@ -747,6 +818,26 @@ type unmarshalCtx struct {
 	protoPath  string
 }
 
+func newUnmarshalCtx(doc *ast.DocumentNode) *unmarshalCtx {
+	var startPos *sourcev1.StartPosition
+	if doc != nil && doc.GetToken() != nil {
+		if p := doc.GetToken().Position; p != nil {
+			startPos = &sourcev1.StartPosition{Line: uint32(p.Line), Column: uint32(p.Column), Offset: uint32(p.Offset)}
+		}
+	}
+
+	return &unmarshalCtx{
+		doc: doc,
+		srcCtx: &sourcev1.SourceContext{
+			StartPosition: startPos,
+		},
+	}
+}
+
+func newUnmarshalCtxWithoutSourceCtx(doc *ast.DocumentNode) *unmarshalCtx {
+	return &unmarshalCtx{doc: doc}
+}
+
 func (uc *unmarshalCtx) forPath(path string) *unmarshalCtx {
 	return &unmarshalCtx{
 		errPrinter: uc.errPrinter,
@@ -779,24 +870,34 @@ func (uc *unmarshalCtx) forMapItem(key string, n ast.Node) *unmarshalCtx {
 }
 
 func (uc *unmarshalCtx) recordFieldPosition(path string, n ast.Node) {
-	if n != nil {
+	if uc.srcCtx != nil && n != nil {
 		if tok := n.GetToken(); tok != nil && tok.Position != nil {
+			if uc.srcCtx.FieldPositions == nil {
+				uc.srcCtx.FieldPositions = make(map[string]*sourcev1.Position)
+			}
+
 			uc.srcCtx.FieldPositions[path] = &sourcev1.Position{Line: uint32(tok.Position.Line), Column: uint32(tok.Position.Column), Path: n.GetPath()}
 		}
+	}
+}
+
+func (uc *unmarshalCtx) addError(err *sourcev1.Error) {
+	if uc.srcCtx != nil {
+		uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
 	}
 }
 
 func (uc *unmarshalCtx) perrorf(n ast.Node, msg string, args ...any) error {
 	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_PARSE_ERROR, Message: fmt.Sprintf(msg, args...)}
 	if n == nil {
-		uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
+		uc.addError(err)
 		return NewUnmarshalError(err)
 	}
 
 	err.Position = &sourcev1.Position{Path: n.GetPath()}
 	tok := n.GetToken()
 	if tok == nil {
-		uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
+		uc.addError(err)
 		return NewUnmarshalError(err)
 	}
 
@@ -805,22 +906,25 @@ func (uc *unmarshalCtx) perrorf(n ast.Node, msg string, args ...any) error {
 	err.Position.Column = uint32(tok.Position.Column)
 	err.Context = errPrinter.PrintErrorToken(tok, false)
 
-	uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
+	uc.addError(err)
 	return NewUnmarshalError(err)
 }
 
 func (uc *unmarshalCtx) verrorf(path, msg string) error {
-	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_VALIDATION_ERROR, Message: msg}
-	if pos, ok := uc.srcCtx.FieldPositions[path]; ok {
-		err.Position = &sourcev1.Position{
-			Line:   pos.Line,
-			Column: pos.Column,
-			Path:   pos.Path,
+	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_VALIDATION_ERROR, Message: fmt.Sprintf("%s: %s", strcase.LowerCamelCase(path), msg)}
+	if uc.srcCtx != nil {
+		if pos, ok := uc.srcCtx.FieldPositions[path]; ok {
+			err.Position = &sourcev1.Position{
+				Line:   pos.Line,
+				Column: pos.Column,
+				Path:   pos.Path,
+			}
+			err.Context = uc.buildErrContext(pos.Path)
 		}
-		err.Context = uc.buildErrContext(pos.Path)
+
+		uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
 	}
 
-	uc.srcCtx.Errors = append(uc.srcCtx.Errors, err)
 	return NewUnmarshalError(err)
 }
 
@@ -834,12 +938,16 @@ func (uc *unmarshalCtx) buildErrContext(path string) string {
 		return ""
 	}
 
-	node, err := yamlPath.FilterNode(uc.doc)
+	node, err := yamlPath.FilterNode(uc.doc.Body)
 	if err != nil {
 		return ""
 	}
 
 	return uc.errPrinter.PrintErrorToken(node.GetToken(), false)
+}
+
+func (uc *unmarshalCtx) toSourceCtx() SourceCtx {
+	return newSourceCtx(uc.srcCtx, uc.doc)
 }
 
 type UnmarshalError struct {

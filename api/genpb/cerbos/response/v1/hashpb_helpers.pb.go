@@ -2089,6 +2089,21 @@ func cerbos_response_v1_PlaygroundEvaluateResponse_hashpb_sum(m *PlaygroundEvalu
 	}
 }
 
+func cerbos_response_v1_PlaygroundFailure_ErrorDetails_hashpb_sum(m *PlaygroundFailure_ErrorDetails, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.PlaygroundFailure.ErrorDetails.line"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Line)))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.PlaygroundFailure.ErrorDetails.column"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Column)))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.PlaygroundFailure.ErrorDetails.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Context))
+
+	}
+}
+
 func cerbos_response_v1_PlaygroundFailure_Error_hashpb_sum(m *PlaygroundFailure_Error, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.PlaygroundFailure.Error.file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
@@ -2096,6 +2111,12 @@ func cerbos_response_v1_PlaygroundFailure_Error_hashpb_sum(m *PlaygroundFailure_
 	}
 	if _, ok := ignore["cerbos.response.v1.PlaygroundFailure.Error.error"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.PlaygroundFailure.Error.details"]; !ok {
+		if m.Details != nil {
+			cerbos_response_v1_PlaygroundFailure_ErrorDetails_hashpb_sum(m.Details, hasher, ignore)
+		}
 
 	}
 }

@@ -20,6 +20,7 @@ import (
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -187,6 +188,18 @@ func TestBuildIndex(t *testing.T) {
 						protocmp.Transform(),
 						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
 							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),
+						protocmp.SortRepeated(func(a, b *runtimev1.IndexBuildErrors_LoadFailure) bool {
+							if a.ErrorDetails != nil && b.ErrorDetails != nil {
+								if a.ErrorDetails.GetPosition().GetLine() == b.ErrorDetails.GetPosition().GetLine() {
+									return a.ErrorDetails.GetPosition().GetColumn() > b.ErrorDetails.GetPosition().GetColumn()
+								}
+								return a.ErrorDetails.GetPosition().GetLine() > b.ErrorDetails.GetPosition().GetLine()
+							}
+
+							return a.File > b.File
+						}),
+						protocmp.IgnoreFields(&sourcev1.Error{}, "context"),
+						protocmp.IgnoreFields(&runtimev1.IndexBuildErrors_MissingImport{}, "context"),
 						cmp.Comparer(func(s1, s2 string) bool {
 							return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
 						}),

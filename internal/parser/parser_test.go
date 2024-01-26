@@ -1,13 +1,14 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package protoyaml_test
+package parser_test
 
 import (
 	"bytes"
 	"errors"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
@@ -15,7 +16,7 @@ import (
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml/ast"
-	"github.com/goccy/go-yaml/parser"
+	yamlparser "github.com/goccy/go-yaml/parser"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -24,11 +25,12 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
-	"github.com/cerbos/cerbos/internal/protoyaml"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-func TestUnmarshaler(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	testCases := test.LoadTestCases(t, "protoyaml")
 	validator, err := protovalidate.New(protovalidate.WithMessages(&policyv1.Policy{}))
 	require.NoError(t, err)
@@ -36,8 +38,7 @@ func TestUnmarshaler(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			tc, input := loadTestCase(t, testCase)
-			u := protoyaml.NewUnmarshaler(func() *policyv1.Policy { return &policyv1.Policy{} }, protoyaml.WithValidator(validator))
-			haveMsg, haveSrc, err := u.UnmarshalReader(input)
+			haveMsg, haveSrc, err := parser.Unmarshal(input, func() *policyv1.Policy { return &policyv1.Policy{} }, parser.WithValidator(validator))
 
 			t.Cleanup(func() {
 				if t.Failed() {
@@ -96,7 +97,7 @@ func unwrapErrors(t *testing.T, err error) (allErrs []*sourcev1.Error) {
 		return allErrs
 	}
 
-	var unmarshalErr protoyaml.UnmarshalError
+	var unmarshalErr parser.UnmarshalError
 	if errors.As(err, &unmarshalErr) {
 		allErrs = append(allErrs, unmarshalErr.Err)
 	} else {
@@ -137,13 +138,50 @@ func loadTestCase(t *testing.T, tc test.Case) (*privatev1.ProtoYamlTestCase, io.
 	return &pytc, bytes.NewReader(tc.Want["input"])
 }
 
+func TestFind(t *testing.T) {
+	rnd := rand.New(rand.NewSource(42)) //nolint:gosec
+	testCases := test.LoadTestCases(t, "protoyaml")
+	for _, testCase := range testCases {
+		tc, input := loadTestCase(t, testCase)
+		if len(tc.Want) == 0 {
+			continue
+		}
+
+		t.Run(testCase.Name, func(t *testing.T) {
+			want, match := findCandidate(t, rnd, tc.Want)
+			have := &policyv1.Policy{}
+			require.NoError(t, parser.Find(input, match, have))
+			require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+		})
+	}
+}
+
+func findCandidate(t *testing.T, rnd *rand.Rand, items []*privatev1.ProtoYamlTestCase_Want) (*policyv1.Policy, func(*policyv1.Policy) bool) {
+	t.Helper()
+
+	for i := 0; i < 5; i++ {
+		idx := rnd.Intn(len(items))
+		if m := items[idx].Message; m != nil && m.GetPolicyType() != nil {
+			fqn := namer.FQN(m)
+			t.Logf("Selected: index=%d FQN=%s", idx, fqn)
+			match := func(msg *policyv1.Policy) bool {
+				return namer.FQN(msg) == fqn
+			}
+			return m, match
+		}
+	}
+
+	t.Skip("Unable to find candidate")
+	return nil, nil
+}
+
 func TestWalkAST(t *testing.T) {
 	file := os.Getenv("CERBOS_PROTOYAML_WALK")
 	if file == "" {
 		t.Skip()
 	}
 
-	f, err := parser.ParseFile(file, 0)
+	f, err := yamlparser.ParseFile(file, 0)
 	require.NoError(t, err)
 
 	for _, doc := range f.Docs {

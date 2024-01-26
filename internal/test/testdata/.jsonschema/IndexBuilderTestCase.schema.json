@@ -33,6 +33,12 @@
             "type": "string"
           }
         },
+        "disabledDefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.Disabled"
+          }
+        },
         "duplicateDefs": {
           "type": "array",
           "items": {
@@ -59,6 +65,21 @@
         }
       }
     },
+    "cerbos.runtime.v1.IndexBuildErrors.Disabled": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
+        }
+      }
+    },
     "cerbos.runtime.v1.IndexBuildErrors.DuplicateDef": {
       "type": "object",
       "additionalProperties": false,
@@ -68,6 +89,12 @@
         },
         "otherFile": {
           "type": "string"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
         }
       }
     },
@@ -78,6 +105,9 @@
         "error": {
           "type": "string"
         },
+        "errorDetails": {
+          "$ref": "#/definitions/cerbos.source.v1.Error"
+        },
         "file": {
           "type": "string"
         }
@@ -87,10 +117,68 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "context": {
+          "type": "string"
+        },
         "desc": {
           "type": "string"
         },
+        "importKind": {
+          "type": "string"
+        },
+        "importName": {
+          "type": "string"
+        },
         "importingFile": {
+          "type": "string"
+        },
+        "importingPolicy": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
+        }
+      }
+    },
+    "cerbos.source.v1.Error": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/cerbos.source.v1.Error.Kind"
+        },
+        "message": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
+        }
+      }
+    },
+    "cerbos.source.v1.Error.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_PARSE_ERROR",
+        "KIND_VALIDATION_ERROR"
+      ]
+    },
+    "cerbos.source.v1.Position": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "path": {
           "type": "string"
         }
       }

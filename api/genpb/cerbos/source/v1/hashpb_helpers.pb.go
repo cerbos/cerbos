@@ -46,6 +46,12 @@ func cerbos_source_v1_Position_hashpb_sum(m *Position, hasher hash.Hash, ignore 
 }
 
 func cerbos_source_v1_SourceContext_hashpb_sum(m *SourceContext, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.source.v1.SourceContext.start_position"]; !ok {
+		if m.StartPosition != nil {
+			cerbos_source_v1_StartPosition_hashpb_sum(m.StartPosition, hasher, ignore)
+		}
+
+	}
 	if _, ok := ignore["cerbos.source.v1.SourceContext.field_positions"]; !ok {
 		if len(m.FieldPositions) > 0 {
 			keys := make([]string, len(m.FieldPositions))
@@ -74,5 +80,20 @@ func cerbos_source_v1_SourceContext_hashpb_sum(m *SourceContext, hasher hash.Has
 
 			}
 		}
+	}
+}
+
+func cerbos_source_v1_StartPosition_hashpb_sum(m *StartPosition, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.source.v1.StartPosition.line"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Line)))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.StartPosition.column"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Column)))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.StartPosition.offset"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Offset)))
+
 	}
 }

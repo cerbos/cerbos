@@ -5,27 +5,33 @@ wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
 playgroundTest:
-  input: {
-    "playgroundId": "test",
-    "files": [
-      {
-        "fileName": "resource.yaml",
-        "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_04_test.yaml",
-        "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}"
-      }
-    ]
-  }
-  wantResponse: {
-    "playgroundId": "test",
-    "failure": {
-      "errors": [
-        {
-          "file": "resource.yaml",
-          "error": "Derived roles import 'apatr_common_roles' not found"
-        }
-      ]
+  input:
+    {
+      "playgroundId": "test",
+      "files":
+        [
+          {
+            "fileName": "resource.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_04_test.yaml",
+            "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}",
+          },
+        ],
     }
-  }
+  wantResponse:
+    {
+      "playgroundId": "test",
+      "failure":
+        {
+          "errors":
+            [
+              {
+                "file": "resource.yaml",
+                "error": "cannot find derived roles 'apatr_common_roles' imported by policy resource.album_object.vdefault",
+                "details": { "line": 7, "column": 7 },
+              },
+            ],
+        },
+    }
