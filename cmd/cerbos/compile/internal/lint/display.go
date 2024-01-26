@@ -41,7 +41,7 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 	}
 
 	if len(errs.MissingScopes) > 0 {
-		p.Println(colored.Header("Missing Scopes"))
+		p.Println(colored.Header("Missing scopes"))
 		for _, mi := range errs.MissingScopes {
 			p.Printf("scoped policy %s is required but no definition found\n", colored.PolicyKey(mi))
 		}
@@ -57,7 +57,7 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 	}
 
 	if len(errs.MissingImports) > 0 {
-		p.Println(colored.Header("Missing Imports"))
+		p.Println(colored.Header("Missing imports"))
 		for _, mi := range errs.MissingImports {
 			p.Printf("%s cannot find %s %q imported by %s\n", colored.Position(mi.GetImportingFile(), mi.GetPosition()), mi.ImportKind, mi.ImportName, colored.PolicyKey(mi.ImportingPolicy))
 			if c := mi.GetContext(); c != "" {
