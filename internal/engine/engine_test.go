@@ -73,7 +73,7 @@ func TestCheck(t *testing.T) {
 				haveDecisionLogs,
 				protocmp.Transform(),
 				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp"),
+				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
 			))
 		})
 	}
@@ -115,7 +115,7 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 				haveDecisionLogs,
 				protocmp.Transform(),
 				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp"),
+				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
 			))
 		})
 	}
