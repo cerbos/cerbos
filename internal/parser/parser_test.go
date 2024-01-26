@@ -16,7 +16,7 @@ import (
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml/ast"
-	"github.com/goccy/go-yaml/parser"
+	yamlparser "github.com/goccy/go-yaml/parser"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -26,7 +26,7 @@ import (
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
-	parser1 "github.com/cerbos/cerbos/internal/parser"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -38,7 +38,7 @@ func TestUnmarshal(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			tc, input := loadTestCase(t, testCase)
-			haveMsg, haveSrc, err := parser1.Unmarshal(input, func() *policyv1.Policy { return &policyv1.Policy{} }, parser1.WithValidator(validator))
+			haveMsg, haveSrc, err := parser.Unmarshal(input, func() *policyv1.Policy { return &policyv1.Policy{} }, parser.WithValidator(validator))
 
 			t.Cleanup(func() {
 				if t.Failed() {
@@ -97,7 +97,7 @@ func unwrapErrors(t *testing.T, err error) (allErrs []*sourcev1.Error) {
 		return allErrs
 	}
 
-	var unmarshalErr parser1.UnmarshalError
+	var unmarshalErr parser.UnmarshalError
 	if errors.As(err, &unmarshalErr) {
 		allErrs = append(allErrs, unmarshalErr.Err)
 	} else {
@@ -150,7 +150,7 @@ func TestFind(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			want, match := findCandidate(t, rnd, tc.Want)
 			have := &policyv1.Policy{}
-			require.NoError(t, parser1.Find(input, match, have))
+			require.NoError(t, parser.Find(input, match, have))
 			require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
 		})
 	}
@@ -181,7 +181,7 @@ func TestWalkAST(t *testing.T) {
 		t.Skip()
 	}
 
-	f, err := parser.ParseFile(file, 0)
+	f, err := yamlparser.ParseFile(file, 0)
 	require.NoError(t, err)
 
 	for _, doc := range f.Docs {
