@@ -17,7 +17,6 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -45,7 +44,7 @@ func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
 	}
 
 	modCtx.variables.Compile(variables.GetLocal(), policy.VariablesLocalProtoPath(modCtx.def), "policy local variables")
-	modCtx.variables.Compile(modCtx.def.Variables, "variables", "deprecated top-level policy variables") //nolint:staticcheck
+	modCtx.variables.Compile(modCtx.def.Variables, "variables", "top-level policy variables (deprecated)") //nolint:staticcheck
 
 	modCtx.variables.Resolve()
 }
@@ -74,7 +73,7 @@ func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]
 
 	modCtx.variables = newVariableDefinitions(modCtx)
 	for name, expr := range variables {
-		modCtx.variables.Add(&runtimev1.Variable{Name: name, Expr: expr}, variableSource{})
+		modCtx.variables.Add(&runtimev1.Variable{Name: name, Expr: expr}, "")
 	}
 	modCtx.variables.Resolve()
 
@@ -84,25 +83,18 @@ func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]
 
 type variableNode struct {
 	*runtimev1.Variable
-	source variableSource
-	id     int64
+	id int64
 }
 
 func (v *variableNode) ID() int64 {
 	return v.id
 }
 
-type variableSource struct {
-	position    *sourcev1.Position
-	description string
-	file        string
-}
-
 type variableDefinitions struct {
 	modCtx  *moduleCtx
 	graph   *simple.DirectedGraph
 	ids     map[string]int64
-	sources map[string][]variableSource
+	sources map[string][]string
 	used    map[string]struct{}
 	nextID  int64
 }
@@ -112,36 +104,33 @@ func newVariableDefinitions(modCtx *moduleCtx) *variableDefinitions {
 		modCtx:  modCtx,
 		graph:   simple.NewDirectedGraph(),
 		ids:     make(map[string]int64),
-		sources: make(map[string][]variableSource),
+		sources: make(map[string][]string),
 	}
 }
 
-func (vd *variableDefinitions) Compile(definitions map[string]string, path, srcDesc string) {
+func (vd *variableDefinitions) Compile(definitions map[string]string, path, source string) {
 	for name, expr := range definitions {
-		varPath := path + "." + name
-		pos := vd.modCtx.srcCtx.PositionForProtoPath(varPath)
 		vd.Add(&runtimev1.Variable{
 			Name: name,
 			Expr: &runtimev1.Expr{
 				Original: expr,
-				Checked:  compileCELExpr(vd.modCtx, varPath, expr, false),
+				Checked:  compileCELExpr(vd.modCtx, path, expr, false),
 			},
-		}, variableSource{description: srcDesc, file: vd.modCtx.sourceFile, position: pos})
+		}, source)
 	}
 }
 
-func (vd *variableDefinitions) Import(from *moduleCtx, srcDesc string) {
+func (vd *variableDefinitions) Import(from *moduleCtx, source string) {
 	nodes := from.variables.graph.Nodes()
 	for nodes.Next() {
-		variable := nodes.Node().(*variableNode) //nolint:forcetypeassert
-		vd.Add(variable.Variable, variableSource{description: srcDesc, file: variable.source.file, position: variable.source.position})
+		vd.Add(nodes.Node().(*variableNode).Variable, source) //nolint:forcetypeassert
 	}
 }
 
-func (vd *variableDefinitions) Add(variable *runtimev1.Variable, source variableSource) {
+func (vd *variableDefinitions) Add(variable *runtimev1.Variable, source string) {
 	vd.sources[variable.Name] = append(vd.sources[variable.Name], source)
 	vd.ids[variable.Name] = vd.nextID
-	vd.graph.AddNode(&variableNode{id: vd.nextID, Variable: variable, source: source})
+	vd.graph.AddNode(&variableNode{id: vd.nextID, Variable: variable})
 	vd.nextID++
 }
 
@@ -159,33 +148,14 @@ func (vd *variableDefinitions) reportRedefinedVariables() {
 			continue
 
 		case 2: //nolint:gomnd
-			dil := genDefinedInList(definedIn, vd.modCtx.sourceFile)
-			definedInMsg = strings.Join(dil, " and ")
+			definedInMsg = strings.Join(definedIn, " and ")
 
 		default:
-			dil := genDefinedInList(definedIn, vd.modCtx.sourceFile)
-			definedInMsg = fmt.Sprintf("%s, and %s", strings.Join(dil[:len(dil)-1], ", "), dil[len(dil)-1])
+			definedInMsg = fmt.Sprintf("%s, and %s", strings.Join(definedIn[:len(definedIn)-1], ", "), definedIn[len(definedIn)-1])
 		}
 
 		vd.modCtx.addErrWithDesc(errVariableRedefined, "Variable '%s' has multiple definitions in %s", name, definedInMsg)
 	}
-}
-
-func genDefinedInList(sources []variableSource, file string) []string {
-	out := make([]string, len(sources))
-	for i, s := range sources {
-		if s.position != nil {
-			if s.file == file {
-				out[i] = fmt.Sprintf("%s (%d:%d)", s.description, s.position.GetLine(), s.position.GetColumn())
-			} else {
-				out[i] = fmt.Sprintf("%s (%s:%d:%d)", s.description, s.file, s.position.GetLine(), s.position.GetColumn())
-			}
-		} else {
-			out[i] = s.description
-		}
-	}
-
-	return out
 }
 
 func (vd *variableDefinitions) resolveReferences() {
@@ -209,10 +179,10 @@ func (vd *variableDefinitions) resolveReferences() {
 	}
 }
 
-func (vd *variableDefinitions) references(referrer string, expr *expr.CheckedExpr) map[string]struct{} {
+func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) map[string]struct{} {
 	exprAST, err := ast.ToAST(expr)
 	if err != nil {
-		vd.modCtx.addErrWithDesc(err, "Failed to convert expression of %s to AST", referrer)
+		vd.modCtx.addErrForProtoPath(path, err, "Failed to convert expression to AST")
 		return nil
 	}
 
