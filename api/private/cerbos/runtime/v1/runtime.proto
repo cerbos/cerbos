@@ -18,8 +18,8 @@ message RunnablePolicySet {
   oneof policy_set {
     RunnableResourcePolicySet resource_policy = 2;
     RunnablePrincipalPolicySet principal_policy = 3;
-    RunnableDerivedRolesSet derived_roles = 4 [deprecated = true];
-    RunnableVariablesSet variables = 5 [deprecated = true];
+    RunnableDerivedRolesSet derived_roles = 4 [ deprecated = true ];
+    RunnableVariablesSet variables = 5 [ deprecated = true ];
   }
   uint32 compiler_version = 6;
 }
@@ -54,13 +54,13 @@ message RunnableResourcePolicySet {
       map<string, google.protobuf.Empty> roles = 4;
       Condition condition = 5;
       cerbos.effect.v1.Effect effect = 6;
-      Expr output = 7 [deprecated = true];
+      Expr output = 7 [ deprecated = true ];
       Output emit_output = 8;
     }
 
     string scope = 1;
     map<string, RunnableDerivedRole> derived_roles = 2;
-    map<string, Expr> variables = 3 [deprecated = true];
+    map<string, Expr> variables = 3 [ deprecated = true ];
     repeated Rule rules = 4;
     cerbos.policy.v1.Schemas schemas = 5;
     repeated Variable ordered_variables = 6;
@@ -74,7 +74,7 @@ message RunnableResourcePolicySet {
 message RunnableDerivedRole {
   string name = 1;
   map<string, google.protobuf.Empty> parent_roles = 2;
-  map<string, Expr> variables = 3 [deprecated = true];
+  map<string, Expr> variables = 3 [ deprecated = true ];
   Condition condition = 4;
   repeated Variable ordered_variables = 5;
 }
@@ -82,9 +82,7 @@ message RunnableDerivedRole {
 message RunnableDerivedRolesSet {
   option deprecated = true;
 
-  message Metadata {
-    string fqn = 1;
-  }
+  message Metadata { string fqn = 1; }
 
   Metadata meta = 1;
   map<string, RunnableDerivedRole> derived_roles = 2;
@@ -93,9 +91,7 @@ message RunnableDerivedRolesSet {
 message RunnableVariablesSet {
   option deprecated = true;
 
-  message Metadata {
-    string fqn = 1;
-  }
+  message Metadata { string fqn = 1; }
 
   Metadata meta = 1;
   map<string, Expr> variables = 2;
@@ -118,16 +114,14 @@ message RunnablePrincipalPolicySet {
       string name = 2;
       Condition condition = 3;
       cerbos.effect.v1.Effect effect = 4;
-      Expr output = 5 [deprecated = true];
+      Expr output = 5 [ deprecated = true ];
       Output emit_output = 6;
     }
 
-    message ResourceRules {
-      repeated ActionRule action_rules = 1;
-    }
+    message ResourceRules { repeated ActionRule action_rules = 1; }
 
     string scope = 1;
-    map<string, Expr> variables = 2 [deprecated = true];
+    map<string, Expr> variables = 2 [ deprecated = true ];
     map<string, ResourceRules> resource_rules = 3;
     repeated Variable ordered_variables = 4;
   }
@@ -156,9 +150,7 @@ message Variable {
 }
 
 message Condition {
-  message ExprList {
-    repeated Condition expr = 1;
-  }
+  message ExprList { repeated Condition expr = 1; }
 
   oneof op {
     ExprList all = 1;
@@ -200,7 +192,7 @@ message IndexBuildErrors {
 
   message LoadFailure {
     string file = 1;
-    string error = 2 [deprecated = true];
+    string error = 2 [ deprecated = true ];
     cerbos.source.v1.Error error_details = 3;
   }
 
@@ -210,7 +202,7 @@ message IndexBuildErrors {
     cerbos.source.v1.Position position = 3;
   }
 
-  repeated string disabled = 1 [deprecated = true];
+  repeated string disabled = 1 [ deprecated = true ];
   repeated DuplicateDef duplicate_defs = 2;
   repeated LoadFailure load_failures = 3;
   repeated MissingImport missing_imports = 4;
