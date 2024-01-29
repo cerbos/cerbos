@@ -3,34 +3,10 @@
 wantErrors:
   - file: donald_duck.acme.hr.uk.yaml
     error: missing policy definition
-    desc: |-
+    description: |-
       Missing ancestor policy "principal.donald_duck.v20210210/acme"
   - file: donald_duck.acme.hr.uk.yaml
     error: missing policy definition
-    desc: |-
+    description: |-
       Missing ancestor policy "principal.donald_duck.v20210210"
 mainDef: "donald_duck.acme.hr.uk.yaml"
-inputDefs:
-  "donald_duck.acme.hr.yaml":
-     apiVersion: "api.cerbos.dev/v1"
-     principalPolicy:
-       principal: donald_duck
-       version: "20210210"
-       scope: "acme.hr"
-       rules:
-         - resource: leave_request
-           actions:
-             - action: "*"
-               effect: EFFECT_ALLOW
-
-  "donald_duck.acme.hr.uk.yaml":
-     apiVersion: "api.cerbos.dev/v1"
-     principalPolicy:
-       principal: donald_duck
-       version: "20210210"
-       scope: "acme.hr.uk"
-       rules:
-         - resource: leave_request
-           actions:
-             - action: "*"
-               effect: EFFECT_DENY

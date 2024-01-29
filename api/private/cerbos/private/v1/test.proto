@@ -113,12 +113,6 @@ message IndexBuilderTestCase {
 }
 
 message CompileTestCase {
-  message Error {
-    string file = 1;
-    string error = 2;
-    string desc = 3;
-  }
-
   message Variables {
     message DerivedRole {
       string name = 1;
@@ -131,9 +125,8 @@ message CompileTestCase {
   }
 
   string main_def = 1;
-  map<string, cerbos.policy.v1.Policy> input_defs = 2;
-  repeated Error want_errors = 3;
-  repeated Variables want_variables = 4;
+  repeated cerbos.runtime.v1.CompileErrors.Err want_errors = 2;
+  repeated Variables want_variables = 3;
 }
 
 message CelTestCase {

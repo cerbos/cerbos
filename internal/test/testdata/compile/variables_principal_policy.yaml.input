@@ -1,0 +1,78 @@
+-- variables_one.yaml --
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: one
+  definitions:
+    a: "1"
+    b: "2"
+    c: "3"
+    d: "4"
+    ab: V.a + V.b
+    abc: variables.ab + variables.c
+    abcd: V.abc + V.d
+
+-- variables_two.yaml --
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: two
+  definitions:
+    e: "5"
+    f: "6"
+    g: "7"
+
+-- example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  principal: example
+  version: default
+  variables:
+    import:
+      - one
+      - two
+    local:
+      h: "8"
+      i: "9"
+      abce: variables.abc + variables.e
+  rules:
+    - resource: one
+      actions:
+        - effect: EFFECT_ALLOW
+          action: "*"
+          condition:
+            match:
+              expr: V.abce > 0
+          output:
+            when:
+              ruleActivated: |-
+                variables.f
+
+    - resource: two
+      actions:
+        - effect: EFFECT_DENY
+          action: "*"
+          condition:
+            match:
+              expr: variables.h > 0
+
+-- example.alpha.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  principal: example
+  version: default
+  scope: alpha
+  variables:
+    import:
+      - one
+    local:
+      j: "10"
+      k: "11"
+  rules:
+    - resource: one
+      actions:
+        - effect: EFFECT_ALLOW
+          action: "*"
+          condition:
+            match:
+              expr: V.ab < V.j

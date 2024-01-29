@@ -1,0 +1,144 @@
+-- variables_one.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: one
+  definitions:
+    a: "1"
+    b: "2"
+    c: "3"
+    d: "4"
+    ab: V.a + V.b
+    abc: variables.ab + variables.c
+    abcd: V.abc + V.d
+
+-- variables_two.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: two
+  definitions:
+    e: "5"
+    f: "6"
+
+-- derived_roles_one.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: one
+  variables:
+    import:
+      - one
+      - two
+    local:
+      g: "7"
+      h: "8"
+      i: "9"
+      abg: variables.ab + variables.g
+      hi: V.h + V.i
+  definitions:
+    - name: A
+      parentRoles:
+        - user
+      condition:
+        match:
+          all:
+            of:
+              - expr: V.abg > 0
+              - any:
+                  of:
+                    - expr: variables.c < variables.h
+                    - expr: V.e > 0
+    - name: B
+      parentRoles:
+        - user
+      condition:
+        match:
+          none:
+            of:
+              - expr: V.b > V.c
+              - expr: variables.f > variables.hi
+
+-- derived_roles_two.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: two
+  variables:
+    import:
+      - one
+      - two
+    local:
+      j: "10"
+      k: "11"
+  definitions:
+    - name: C
+      parentRoles:
+        - user
+      condition:
+        match:
+          expr: V.a + V.d + V.e == V.j
+
+-- example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  importDerivedRoles:
+    - one
+    - two
+  variables:
+    import:
+      - one
+    local:
+      l: "12"
+      m: "13"
+      abcl: variables.abc + variables.l
+  rules:
+    - effect: EFFECT_ALLOW
+      actions:
+        - "*"
+      roles:
+        - "*"
+      condition:
+        match:
+          expr: variables.m > 0
+      output:
+        when:
+          ruleActivated: V.abcl
+
+    - effect: EFFECT_DENY
+      actions:
+        - "*"
+      derivedRoles:
+        - A
+        - B
+        - C
+
+-- example.alpha.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  scope: alpha
+  importDerivedRoles:
+    - one
+    - two
+  variables:
+    import:
+      - one
+      - two
+    local:
+      "n": "14"
+      o: "15"
+  rules:
+    - effect: EFFECT_ALLOW
+      actions:
+        - "*"
+      derivedRoles:
+        - B
+      condition:
+        match:
+          expr: variables.n > variables.ab

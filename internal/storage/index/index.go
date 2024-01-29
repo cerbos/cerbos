@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 )
@@ -95,7 +96,7 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 			continue
 		}
 
-		p, err := idx.loadPolicy(id)
+		p, sc, err := idx.loadPolicy(id)
 		if err != nil {
 			return nil, err
 		}
@@ -103,8 +104,9 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 		policyKey := namer.PolicyKey(p)
 
 		cu := &policy.CompilationUnit{
-			ModID:       id,
-			Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
+			ModID:          id,
+			Definitions:    map[namer.ModuleID]*policyv1.Policy{id: p},
+			SourceContexts: map[namer.ModuleID]parser.SourceCtx{id: sc},
 		}
 
 		// add dependencies
@@ -114,11 +116,11 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 
 		// load ancestors of the policy
 		for _, ancestor := range cu.Ancestors() {
-			p, err := idx.loadPolicy(ancestor)
+			p, sc, err := idx.loadPolicy(ancestor)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
 			}
-			cu.AddDefinition(ancestor, p)
+			cu.AddDefinition(ancestor, p, sc)
 			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
 				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
 			}
@@ -141,7 +143,7 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			continue
 		}
 
-		p, err := idx.loadPolicy(id)
+		p, sc, err := idx.loadPolicy(id)
 		if err != nil {
 			return nil, err
 		}
@@ -149,8 +151,9 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 		policyKey := namer.PolicyKey(p)
 
 		cu := &policy.CompilationUnit{
-			ModID:       id,
-			Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
+			ModID:          id,
+			Definitions:    map[namer.ModuleID]*policyv1.Policy{id: p},
+			SourceContexts: map[namer.ModuleID]parser.SourceCtx{id: sc},
 		}
 
 		result[id] = cu
@@ -162,11 +165,11 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 
 		// load ancestors of the policy
 		for _, ancestor := range cu.Ancestors() {
-			p, err := idx.loadPolicy(ancestor)
+			p, sc, err := idx.loadPolicy(ancestor)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
 			}
-			cu.AddDefinition(ancestor, p)
+			cu.AddDefinition(ancestor, p, sc)
 			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
 				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
 			}
@@ -185,12 +188,12 @@ func (idx *index) addDepsToCompilationUnit(cu *policy.CompilationUnit, id namer.
 	for dep := range deps {
 		_, ok := cu.Definitions[dep]
 		if !ok {
-			p, err := idx.loadPolicy(dep)
+			p, sc, err := idx.loadPolicy(dep)
 			if err != nil {
 				return err
 			}
 
-			cu.AddDefinition(dep, p)
+			cu.AddDefinition(dep, p, sc)
 		}
 
 		err := idx.addDepsToCompilationUnit(cu, dep)
@@ -202,25 +205,25 @@ func (idx *index) addDepsToCompilationUnit(cu *policy.CompilationUnit, id namer.
 	return nil
 }
 
-func (idx *index) loadPolicy(id namer.ModuleID) (*policyv1.Policy, error) {
+func (idx *index) loadPolicy(id namer.ModuleID) (*policyv1.Policy, parser.SourceCtx, error) {
 	fileName, ok := idx.modIDToFile[id]
 	if !ok {
-		return nil, fmt.Errorf("policy id %q does not exist: %w", id.String(), ErrPolicyNotFound)
+		return nil, parser.SourceCtx{}, fmt.Errorf("policy id %q does not exist: %w", id.String(), ErrPolicyNotFound)
 	}
 
 	f, err := idx.fsys.Open(fileName)
 	if err != nil {
-		return nil, err
+		return nil, parser.SourceCtx{}, err
 	}
 
 	defer f.Close()
 
-	p, err := policy.ReadPolicy(f)
+	p, sc, err := policy.FindPolicy(f, id)
 	if err != nil {
-		return nil, err
+		return nil, sc, err
 	}
 
-	return policy.WithMetadata(p, fileName, nil, fileName, idx.buildOpts.sourceAttributes...), nil
+	return policy.WithMetadata(p, fileName, nil, fileName, idx.buildOpts.sourceAttributes...), sc, nil
 }
 
 func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
@@ -471,7 +474,7 @@ func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapp
 
 	policies := make([]*policy.Wrapper, len(file))
 	for i, f := range file {
-		p, err := idx.loadPolicy(idx.fileToModID[f])
+		p, _, err := idx.loadPolicy(idx.fileToModID[f])
 		if err != nil {
 			return nil, fmt.Errorf("failed to load policy file with file path %s: %w", f, err)
 		}

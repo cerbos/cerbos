@@ -1,26 +1,3 @@
 # yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
 mainDef: "principal_policies/donald_duck_20210210.yaml"
-inputDefs:
-  "principal_policies/donald_duck_20210210.yaml":
-    apiVersion: "api.cerbos.dev/v1"
-    principalPolicy:
-      principal: donald_duck
-      version: "20210210"
-      rules:
-        - resource: leave_request
-          actions:
-            - action: "*"
-              condition:
-                match:
-                  expr: "request.resource.attr.dev_record == true"
-              effect: EFFECT_ALLOW
-              output:
-                when:
-                  ruleActivated: |-
-                    "donald_duck_dev_record_override:%s".format([request.resource.attr.dev_record == true])
-
-        - resource: salary_record
-          actions:
-            - action: "*"
-              effect: EFFECT_DENY

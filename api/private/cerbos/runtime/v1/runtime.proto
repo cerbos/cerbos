@@ -174,6 +174,7 @@ message CompileErrors {
     string error = 2;
     string description = 3;
     cerbos.source.v1.Position position = 4;
+    string context = 5;
   }
 
   repeated Err errors = 1;

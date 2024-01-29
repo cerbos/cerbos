@@ -3,19 +3,10 @@
 wantErrors:
   - file: resource_policies/example.yaml
     error: import not found
-    desc: |-
+    description: |-
       Variables import 'example' cannot be found
+    position:
+      line: 10
+      column: 9
+      path: "$.resourcePolicy.variables.import[0]"
 mainDef: resource_policies/example.yaml
-inputDefs:
-  resource_policies/example.yaml:
-    apiVersion: api.cerbos.dev/v1
-    variables:
-      foo: "1"
-    resourcePolicy:
-      resource: example
-      version: default
-      variables:
-        import:
-          - example
-        local:
-          bar: "3"

@@ -1880,21 +1880,6 @@ func cerbos_private_v1_CelTestCase_hashpb_sum(m *CelTestCase, hasher hash.Hash, 
 	}
 }
 
-func cerbos_private_v1_CompileTestCase_Error_hashpb_sum(m *CompileTestCase_Error, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Error.file"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Error.error"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
-
-	}
-	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Error.desc"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Desc))
-
-	}
-}
-
 func cerbos_private_v1_CompileTestCase_Variables_DerivedRole_hashpb_sum(m *CompileTestCase_Variables_DerivedRole, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.CompileTestCase.Variables.DerivedRole.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
@@ -1940,30 +1925,11 @@ func cerbos_private_v1_CompileTestCase_hashpb_sum(m *CompileTestCase, hasher has
 		_, _ = hasher.Write(protowire.AppendString(nil, m.MainDef))
 
 	}
-	if _, ok := ignore["cerbos.private.v1.CompileTestCase.input_defs"]; !ok {
-		if len(m.InputDefs) > 0 {
-			keys := make([]string, len(m.InputDefs))
-			i := 0
-			for k := range m.InputDefs {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.InputDefs[k] != nil {
-					cerbos_policy_v1_Policy_hashpb_sum(m.InputDefs[k], hasher, ignore)
-				}
-
-			}
-		}
-	}
 	if _, ok := ignore["cerbos.private.v1.CompileTestCase.want_errors"]; !ok {
 		if len(m.WantErrors) > 0 {
 			for _, v := range m.WantErrors {
 				if v != nil {
-					cerbos_private_v1_CompileTestCase_Error_hashpb_sum(v, hasher, ignore)
+					cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -3542,6 +3508,31 @@ func cerbos_response_v1_PlaygroundValidateResponse_hashpb_sum(m *v14.PlaygroundV
 
 			}
 		}
+	}
+}
+
+func cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(m *v15.CompileErrors_Err, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.position"]; !ok {
+		if m.Position != nil {
+			cerbos_source_v1_Position_hashpb_sum(m.Position, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Context))
+
 	}
 }
 

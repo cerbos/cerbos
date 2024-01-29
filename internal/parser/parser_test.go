@@ -149,9 +149,11 @@ func TestFind(t *testing.T) {
 
 		t.Run(testCase.Name, func(t *testing.T) {
 			want, match := findCandidate(t, rnd, tc.Want)
-			have := &policyv1.Policy{}
-			require.NoError(t, parser.Find(input, match, have))
-			require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+			havePolicy := &policyv1.Policy{}
+			haveSrcCtx, err := parser.Find(input, match, havePolicy)
+			require.NoError(t, err)
+			require.NotNil(t, haveSrcCtx.SourceContext)
+			require.Empty(t, cmp.Diff(want, havePolicy, protocmp.Transform()))
 		})
 	}
 }

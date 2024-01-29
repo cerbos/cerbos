@@ -9,15 +9,17 @@ import (
 	"sort"
 	"strings"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/google/cel-go/common/ast"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
@@ -27,12 +29,13 @@ func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
 
 	modCtx.variables = newVariableDefinitions(modCtx)
 
-	for _, imp := range variables.GetImport() {
+	for i, imp := range variables.GetImport() {
 		evModID := namer.ExportVariablesModuleID(imp)
 
 		evModCtx := modCtx.moduleCtx(evModID)
 		if evModCtx == nil {
-			modCtx.addErrWithDesc(errImportNotFound, "Variables import '%s' cannot be found", imp)
+			path := policy.VariablesImportProtoPath(modCtx.def, i)
+			modCtx.addErrForProtoPath(path, errImportNotFound, "Variables import '%s' cannot be found", imp)
 			continue
 		}
 
@@ -40,8 +43,8 @@ func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
 		modCtx.variables.Import(evModCtx, fmt.Sprintf("import '%s'", imp))
 	}
 
-	modCtx.variables.Compile(variables.GetLocal(), "policy local variables")
-	modCtx.variables.Compile(modCtx.def.Variables, "top-level policy variables (deprecated)") //nolint:staticcheck
+	modCtx.variables.Compile(variables.GetLocal(), policy.VariablesLocalProtoPath(modCtx.def), "policy local variables")
+	modCtx.variables.Compile(modCtx.def.Variables, "variables", "top-level policy variables (deprecated)") //nolint:staticcheck
 
 	modCtx.variables.Resolve()
 }
@@ -59,7 +62,7 @@ func compileExportVariables(modCtx *moduleCtx) {
 		return
 	}
 
-	modCtx.variables.Compile(ev.Definitions, "definitions")
+	modCtx.variables.Compile(ev.Definitions, policy.ExportVariablesVariableProtoPath(), "definitions")
 }
 
 func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]*runtimev1.Variable, error) {
@@ -105,13 +108,13 @@ func newVariableDefinitions(modCtx *moduleCtx) *variableDefinitions {
 	}
 }
 
-func (vd *variableDefinitions) Compile(definitions map[string]string, source string) {
+func (vd *variableDefinitions) Compile(definitions map[string]string, path, source string) {
 	for name, expr := range definitions {
 		vd.Add(&runtimev1.Variable{
 			Name: name,
 			Expr: &runtimev1.Expr{
 				Original: expr,
-				Checked:  compileCELExpr(vd.modCtx, fmt.Sprintf("variable '%s'", name), expr, false),
+				Checked:  compileCELExpr(vd.modCtx, path, expr, false),
 			},
 		}, source)
 	}
@@ -176,10 +179,10 @@ func (vd *variableDefinitions) resolveReferences() {
 	}
 }
 
-func (vd *variableDefinitions) references(parent string, expr *expr.CheckedExpr) map[string]struct{} {
+func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) map[string]struct{} {
 	exprAST, err := ast.ToAST(expr)
 	if err != nil {
-		vd.modCtx.addErrWithDesc(err, "Failed to convert expression to AST in %s", parent)
+		vd.modCtx.addErrForProtoPath(path, err, "Failed to convert expression to AST")
 		return nil
 	}
 
@@ -207,13 +210,13 @@ func (vd *variableDefinitions) ResetUsage() {
 	vd.used = make(map[string]struct{}, len(vd.ids))
 }
 
-func (vd *variableDefinitions) Use(parent string, expr *expr.CheckedExpr) {
-	for name := range vd.references(parent, expr) {
+func (vd *variableDefinitions) Use(path string, expr *expr.CheckedExpr) {
+	for name := range vd.references(path, expr) {
 		id, defined := vd.ids[name]
 		if defined {
 			vd.use(id, name)
 		} else {
-			vd.modCtx.addErrWithDesc(errUndefinedVariable, "Undefined variable '%s' referenced in %s", name, parent)
+			vd.modCtx.addErrForProtoPath(path, errUndefinedVariable, "Undefined variable '%s'", name)
 		}
 	}
 }

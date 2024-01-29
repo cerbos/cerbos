@@ -46,19 +46,19 @@ var ErrNotFound = errors.New("not found")
 //     However, this is a relatively niche case and we can handle that case lazily (seek first, read, and resolve anchors only if they exist in the doc)
 //
 // In the interest of time, I am leaving those optimizations for later.
-func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...UnmarshalOpt) error {
+func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...UnmarshalOpt) (SourceCtx, error) {
 	contents, err := io.ReadAll(r)
 	if err != nil {
-		return fmt.Errorf("failed to read contents: %w", err)
+		return SourceCtx{}, fmt.Errorf("failed to read contents: %w", err)
 	}
 
 	f, err := parse(contents, false)
 	if err != nil {
-		return err
+		return SourceCtx{}, err
 	}
 
 	if len(f.Docs) == 0 {
-		return ErrNotFound
+		return SourceCtx{}, ErrNotFound
 	}
 
 	u := &unmarshaler[T]{unmarshalOpts: unmarshalOpts{}}
@@ -75,7 +75,7 @@ func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...Unmar
 
 		proto.Reset(out)
 		refOut := out.ProtoReflect()
-		uctx := newUnmarshalCtxWithoutSourceCtx(doc)
+		uctx := newUnmarshalCtx(doc)
 
 		if err := u.unmarshalMapping(uctx, bodyNode, refOut); err != nil {
 			continue
@@ -85,10 +85,10 @@ func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...Unmar
 			continue
 		}
 
-		return u.validate(uctx, out)
+		return uctx.toSourceCtx(), u.validate(uctx, out)
 	}
 
-	return ErrNotFound
+	return SourceCtx{}, ErrNotFound
 }
 
 func Unmarshal[T proto.Message](r io.Reader, factory func() T, opts ...UnmarshalOpt) ([]T, []SourceCtx, error) {
@@ -189,7 +189,7 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 			continue
 		}
 
-		if tok.Next == nil || tok.Next.Position.Line != tok.Position.Line {
+		if tok.Next == nil || tok.Next.Type == token.MappingValueType || tok.Next.Position.Line != tok.Position.Line {
 			i++
 			continue
 		}
@@ -198,7 +198,7 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 		invalid := false
 		for t := tok.Next; t != nil && t.Position.Line == tok.Position.Line; t = t.Next {
 			switch t.Type {
-			case token.CollectEntryType, token.CommentType, token.AnchorType:
+			case token.CollectEntryType, token.CommentType, token.AnchorType, token.MappingEndType:
 			default:
 				invalid = true
 			}
@@ -832,10 +832,6 @@ func newUnmarshalCtx(doc *ast.DocumentNode) *unmarshalCtx {
 			StartPosition: startPos,
 		},
 	}
-}
-
-func newUnmarshalCtxWithoutSourceCtx(doc *ast.DocumentNode) *unmarshalCtx {
-	return &unmarshalCtx{doc: doc}
 }
 
 func (uc *unmarshalCtx) forPath(path string) *unmarshalCtx {

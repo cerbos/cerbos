@@ -121,7 +121,7 @@
                 "emitOutput": {
                   "when": {
                     "ruleActivated": {
-                      "original": "\"donald_duck_dev_record_override:%s\".format([request.resource.attr.dev_record == true])",
+                      "original": "\"donald_duck_dev_record_override:%s\".format([request.resource.attr.dev_record == true])\n",
                       "checked": {
                         "referenceMap": {
                           "2": {
@@ -181,7 +181,8 @@
                         "sourceInfo": {
                           "location": "<input>",
                           "lineOffsets": [
-                            88
+                            88,
+                            89
                           ],
                           "positions": {
                             "1": 0,

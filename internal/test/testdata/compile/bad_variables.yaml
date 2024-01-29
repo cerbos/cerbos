@@ -3,52 +3,30 @@
 wantErrors:
   - file: resource_policies/example.yaml
     error: cyclical variable definitions
-    desc: |-
+    description: |-
       Variable 'a' references itself
   - file: resource_policies/example.yaml
     error: cyclical variable definitions
-    desc: |-
+    description: |-
       Variables 'b' and 'c' form a cycle
   - file: resource_policies/example.yaml
     error: cyclical variable definitions
-    desc: |-
+    description: |-
       Variables 'd', 'e', 'f', and 'g' form a cycle
   - file: resource_policies/example.yaml
     error: undefined variable
-    desc: |-
+    description: |-
       Undefined variable 'x' referenced in variable 'h'
   - file: resource_policies/example.yaml
     error: undefined variable
-    desc: |-
+    description: |-
       Undefined variable 'y' referenced in variable 'h'
-  - file:  resource_policies/example.yaml
+  - file: resource_policies/example.yaml
     error: undefined variable
-    desc: |-
-      Undefined variable 'z' referenced in resource rule 'bad'
+    description: |-
+      Undefined variable 'z'
+    position:
+      line: 25
+      column: 11
+      path: "$.resourcePolicy.rules[0].condition.match.expr"
 mainDef: resource_policies/example.yaml
-inputDefs:
-  resource_policies/example.yaml:
-    apiVersion: api.cerbos.dev/v1
-    resourcePolicy:
-      resource: example
-      version: default
-      variables:
-        local:
-          a: variables.a
-          b: V.c
-          c: variables.b
-          d: V.e + V.f
-          e: V.g
-          f: 2 * V.g
-          g: V.d
-          h: V.x / variables.y
-      rules:
-        - name: bad
-          actions:
-            - "*"
-          roles:
-            - "*"
-          effect: EFFECT_ALLOW
-          condition:
-            match:
-              expr: V.z > 9000

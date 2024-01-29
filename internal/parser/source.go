@@ -20,6 +20,10 @@ func newSourceCtx(srcCtx *sourcev1.SourceContext, doc *ast.DocumentNode) SourceC
 	return SourceCtx{doc: doc, SourceContext: srcCtx}
 }
 
+func NewEmptySourceCtx() SourceCtx {
+	return SourceCtx{}
+}
+
 func (sc SourceCtx) StartPosition() *sourcev1.Position {
 	if sp := sc.GetStartPosition(); sp != nil {
 		return &sourcev1.Position{
