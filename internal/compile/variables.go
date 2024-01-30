@@ -114,7 +114,7 @@ func (vd *variableDefinitions) Compile(definitions map[string]string, path, sour
 			Name: name,
 			Expr: &runtimev1.Expr{
 				Original: expr,
-				Checked:  compileCELExpr(vd.modCtx, path, expr, false),
+				Checked:  compileCELExpr(vd.modCtx, path+"."+name, expr, false),
 			},
 		}, source)
 	}

@@ -220,12 +220,12 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 				for i, dri := range imp {
 					pos := modCtx.srcCtx.PositionForProtoPath(dri.path)
 					if pos != nil {
-						rdList[i] = fmt.Sprintf("  - %s (imported as %q at %d:%d)", dri.sourceFile, dri.importName, pos.GetLine(), pos.GetColumn())
+						rdList[i] = fmt.Sprintf("%s (imported as %q at %d:%d)", dri.sourceFile, dri.importName, pos.GetLine(), pos.GetColumn())
 					} else {
-						rdList[i] = fmt.Sprintf("  - %s (imported as %q)", dri.sourceFile, dri.importName)
+						rdList[i] = fmt.Sprintf("%s (imported as %q)", dri.sourceFile, dri.importName)
 					}
 				}
-				ambiguousRoles[r] = strings.Join(rdList, "\n")
+				ambiguousRoles[r] = strings.Join(rdList, ", ")
 				continue
 			}
 
@@ -238,7 +238,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	}
 
 	for ar, impList := range ambiguousRoles {
-		modCtx.addErrWithDesc(errAmbiguousDerivedRole, "Derived role %q is defined in more than one import:\n%s", ar, impList)
+		modCtx.addErrWithDesc(errAmbiguousDerivedRole, "Derived role %q is defined in more than one import: %s", ar, impList)
 	}
 
 	return referencedRoles, modCtx.error()

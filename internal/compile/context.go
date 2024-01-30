@@ -6,11 +6,8 @@ package compile
 import (
 	"fmt"
 
-	"github.com/stoewer/go-strcase"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -63,10 +60,7 @@ func (mc *moduleCtx) addErrWithDesc(err error, description string, params ...any
 
 func (mc *moduleCtx) addErrForProtoPath(path string, err error, description string, args ...any) {
 	pos, context := mc.srcCtx.PositionAndContextForProtoPath(path)
-	if pos == nil {
-		pos = &sourcev1.Position{Path: fmt.Sprintf("$.%s", strcase.LowerCamelCase(path))}
-	}
-
+	fmt.Printf("path=%s pos=%+v\n", path, pos)
 	mc.errors.Add(&Error{
 		CompileErrors_Err: &runtimev1.CompileErrors_Err{
 			File:        mc.sourceFile,
