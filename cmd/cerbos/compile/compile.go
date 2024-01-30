@@ -105,7 +105,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	schemaMgr := internalschema.NewFromConf(ctx, store, internalschema.NewConf(enforcement))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
-		compErr := new(compile.ErrorList)
+		compErr := new(compile.ErrorSet)
 		if errors.As(err, &compErr) {
 			return internalcompile.Display(p, *compErr, c.Output, colorLevel)
 		}

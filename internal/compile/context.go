@@ -15,11 +15,11 @@ import (
 
 type unitCtx struct {
 	unit   *policy.CompilationUnit
-	errors *ErrorList
+	errors *ErrorSet
 }
 
 func newUnitCtx(unit *policy.CompilationUnit) *unitCtx {
-	return &unitCtx{unit: unit, errors: newErrorList()}
+	return &unitCtx{unit: unit, errors: newErrorSet()}
 }
 
 func (uc *unitCtx) error() error {
@@ -60,7 +60,6 @@ func (mc *moduleCtx) addErrWithDesc(err error, description string, params ...any
 
 func (mc *moduleCtx) addErrForProtoPath(path string, err error, description string, args ...any) {
 	pos, context := mc.srcCtx.PositionAndContextForProtoPath(path)
-	fmt.Printf("path=%s pos=%+v\n", path, pos)
 	mc.errors.Add(&Error{
 		CompileErrors_Err: &runtimev1.CompileErrors_Err{
 			File:        mc.sourceFile,

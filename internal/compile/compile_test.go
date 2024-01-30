@@ -54,16 +54,16 @@ func TestCompile(t *testing.T) {
 			cu := mkCompilationUnit(t, tc.MainDef, archive)
 			haveRes, haveErr := compile.Compile(cu, schemaMgr)
 			if len(tc.WantErrors) > 0 {
-				errList := new(compile.ErrorList)
-				require.True(t, errors.As(haveErr, &errList))
+				errSet := new(compile.ErrorSet)
+				require.True(t, errors.As(haveErr, &errSet))
 				t.Cleanup(func() {
 					if t.Failed() {
-						t.Logf("GOT ERR:\n%s\n", protojson.Format(errList.CompileErrors))
+						t.Logf("GOT ERR:\n%s\n", protojson.Format(errSet.Errors()))
 					}
 				})
 
-				require.Len(t, errList.Errors, len(tc.WantErrors))
-				requireErrors(t, tc.WantErrors, errList.Errors)
+				require.Len(t, errSet.Errors, len(tc.WantErrors))
+				requireErrors(t, tc.WantErrors, errSet.Errors().GetErrors())
 
 				return
 			}

@@ -33,7 +33,7 @@ var (
 )
 
 func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager) error {
-	errs := newErrorList()
+	errs := newErrorSet()
 
 	for unit := range queue {
 		if _, err := Compile(unit, schemaMgr); err != nil {

@@ -67,7 +67,7 @@ func compileExportVariables(modCtx *moduleCtx) {
 
 func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]*runtimev1.Variable, error) {
 	modCtx := &moduleCtx{
-		unitCtx: &unitCtx{errors: new(ErrorList)},
+		unitCtx: &unitCtx{errors: new(ErrorSet)},
 		fqn:     fqn,
 	}
 
@@ -110,13 +110,20 @@ func newVariableDefinitions(modCtx *moduleCtx) *variableDefinitions {
 
 func (vd *variableDefinitions) Compile(definitions map[string]string, path, source string) {
 	for name, expr := range definitions {
-		vd.Add(&runtimev1.Variable{
+		varPath := path + "." + name
+		variable := &runtimev1.Variable{
 			Name: name,
 			Expr: &runtimev1.Expr{
 				Original: expr,
-				Checked:  compileCELExpr(vd.modCtx, path+"."+name, expr, false),
+				Checked:  compileCELExpr(vd.modCtx, varPath, expr, false),
 			},
-		}, source)
+		}
+
+		if checked := variable.Expr.GetChecked(); checked != nil {
+			vd.checkSelfReferences(name, checked, varPath)
+		}
+
+		vd.Add(variable, source)
 	}
 }
 
@@ -163,7 +170,7 @@ func (vd *variableDefinitions) resolveReferences() {
 		referrer := vd.graph.Node(referrerID).(*variableNode) //nolint:forcetypeassert
 		for referencedName := range vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.Checked) {
 			if referencedName == referrerName {
-				vd.modCtx.addErrWithDesc(errCyclicalVariables, "Variable '%s' references itself", referrerName)
+				// cyclic references have already been checked before
 				continue
 			}
 
@@ -187,7 +194,36 @@ func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) m
 	}
 
 	references := make(map[string]struct{})
-	visitor := ast.NewExprVisitor(func(e ast.Expr) {
+	action := func(varName string) {
+		references[varName] = struct{}{}
+	}
+
+	ast.PreOrderVisit(exprAST.Expr(), variableVisitor(action))
+	return references
+}
+
+func (vd *variableDefinitions) checkSelfReferences(name string, expr *expr.CheckedExpr, path string) {
+	exprAST, err := ast.ToAST(expr)
+	if err != nil {
+		vd.modCtx.addErrForProtoPath(path, err, "Failed to convert expression to AST")
+		return
+	}
+
+	hasSelfRef := false
+	action := func(varName string) {
+		if varName == name {
+			hasSelfRef = true
+		}
+	}
+
+	ast.PreOrderVisit(exprAST.Expr(), variableVisitor(action))
+	if hasSelfRef {
+		vd.modCtx.addErrForProtoPath(path, errCyclicalVariables, "Variable '%s' references itself", name)
+	}
+}
+
+func variableVisitor(action func(string)) ast.Visitor {
+	return ast.NewExprVisitor(func(e ast.Expr) {
 		if e.Kind() != ast.SelectKind {
 			return
 		}
@@ -197,13 +233,10 @@ func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) m
 		if operandNode.Kind() == ast.IdentKind {
 			ident := operandNode.AsIdent()
 			if ident == conditions.CELVariablesIdent || ident == conditions.CELVariablesAbbrev {
-				references[selectNode.FieldName()] = struct{}{}
+				action(selectNode.FieldName())
 			}
 		}
 	})
-	ast.PreOrderVisit(exprAST.Expr(), visitor)
-
-	return references
 }
 
 func (vd *variableDefinitions) ResetUsage() {
