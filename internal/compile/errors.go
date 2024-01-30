@@ -142,6 +142,9 @@ func (e *Error) Error() string {
 
 func errorString(err *runtimev1.CompileErrors_Err) string {
 	if err.Description != "" {
+		if err.Position != nil {
+			return fmt.Sprintf("%s:%d:%d: %s (%s)", err.File, err.Position.GetLine(), err.Position.GetColumn(), err.Description, err.Error)
+		}
 		return fmt.Sprintf("%s: %s (%s)", err.File, err.Description, err.Error)
 	}
 	return fmt.Sprintf("%s: %s", err.File, err.Error)

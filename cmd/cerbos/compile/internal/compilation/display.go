@@ -4,6 +4,7 @@
 package compilation
 
 import (
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -24,7 +25,7 @@ func Display(p *printer.Printer, errs compile.ErrorSet, output flagset.OutputFor
 }
 
 func displayJSON(p *printer.Printer, errs compile.ErrorSet, colorLevel outputcolor.Level) error {
-	if err := p.PrintJSON(map[string]compile.ErrorSet{"compileErrors": errs}, colorLevel); err != nil {
+	if err := p.PrintJSON(map[string]*runtimev1.CompileErrors{"compileErrors": errs.Errors()}, colorLevel); err != nil {
 		return err
 	}
 

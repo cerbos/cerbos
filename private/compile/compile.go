@@ -93,7 +93,7 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 				if errors.As(artefact.Error, &compErrs) {
 					artefact.Error = &Errors{
 						Errors: &runtimev1.Errors{
-							Kind: &runtimev1.Errors_CompileErrors{CompileErrors: compErrs.CompileErrors},
+							Kind: &runtimev1.Errors_CompileErrors{CompileErrors: compErrs.Errors()},
 						},
 					}
 				}

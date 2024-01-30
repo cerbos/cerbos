@@ -70,3 +70,17 @@ func (mc *moduleCtx) addErrForProtoPath(path string, err error, description stri
 		},
 	})
 }
+
+func (mc *moduleCtx) variableCtx(source, path string) *variableCtx {
+	return &variableCtx{moduleCtx: mc, path: path, source: source}
+}
+
+type variableCtx struct {
+	*moduleCtx
+	path   string
+	source string
+}
+
+func (vc *variableCtx) withSource(source string) *variableCtx {
+	return &variableCtx{moduleCtx: vc.moduleCtx, path: vc.path, source: source}
+}

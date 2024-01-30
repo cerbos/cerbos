@@ -44,7 +44,7 @@ func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
 	}
 
 	modCtx.variables.Compile(variables.GetLocal(), policy.VariablesLocalProtoPath(modCtx.def), "policy local variables")
-	modCtx.variables.Compile(modCtx.def.Variables, "variables", "top-level policy variables (deprecated)") //nolint:staticcheck
+	modCtx.variables.Compile(modCtx.def.Variables, "variables", "deprecated top-level policy variables") //nolint:staticcheck
 
 	modCtx.variables.Resolve()
 }
@@ -73,7 +73,7 @@ func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]
 
 	modCtx.variables = newVariableDefinitions(modCtx)
 	for name, expr := range variables {
-		modCtx.variables.Add(&runtimev1.Variable{Name: name, Expr: expr}, "")
+		modCtx.variables.Add(&runtimev1.Variable{Name: name, Expr: expr}, modCtx.variableCtx("", fmt.Sprintf("variables.%s", name)))
 	}
 	modCtx.variables.Resolve()
 
@@ -83,7 +83,8 @@ func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]
 
 type variableNode struct {
 	*runtimev1.Variable
-	id int64
+	varCtx *variableCtx
+	id     int64
 }
 
 func (v *variableNode) ID() int64 {
@@ -94,7 +95,7 @@ type variableDefinitions struct {
 	modCtx  *moduleCtx
 	graph   *simple.DirectedGraph
 	ids     map[string]int64
-	sources map[string][]string
+	sources map[string][]*variableCtx
 	used    map[string]struct{}
 	nextID  int64
 }
@@ -104,7 +105,7 @@ func newVariableDefinitions(modCtx *moduleCtx) *variableDefinitions {
 		modCtx:  modCtx,
 		graph:   simple.NewDirectedGraph(),
 		ids:     make(map[string]int64),
-		sources: make(map[string][]string),
+		sources: make(map[string][]*variableCtx),
 	}
 }
 
@@ -119,25 +120,22 @@ func (vd *variableDefinitions) Compile(definitions map[string]string, path, sour
 			},
 		}
 
-		if checked := variable.Expr.GetChecked(); checked != nil {
-			vd.checkSelfReferences(name, checked, varPath)
-		}
-
-		vd.Add(variable, source)
+		vd.Add(variable, vd.modCtx.variableCtx(source, varPath))
 	}
 }
 
 func (vd *variableDefinitions) Import(from *moduleCtx, source string) {
 	nodes := from.variables.graph.Nodes()
 	for nodes.Next() {
-		vd.Add(nodes.Node().(*variableNode).Variable, source) //nolint:forcetypeassert
+		variable := nodes.Node().(*variableNode) //nolint:forcetypeassert
+		vd.Add(variable.Variable, variable.varCtx.withSource(source))
 	}
 }
 
-func (vd *variableDefinitions) Add(variable *runtimev1.Variable, source string) {
-	vd.sources[variable.Name] = append(vd.sources[variable.Name], source)
+func (vd *variableDefinitions) Add(variable *runtimev1.Variable, varCtx *variableCtx) {
+	vd.sources[variable.Name] = append(vd.sources[variable.Name], varCtx)
 	vd.ids[variable.Name] = vd.nextID
-	vd.graph.AddNode(&variableNode{id: vd.nextID, Variable: variable})
+	vd.graph.AddNode(&variableNode{id: vd.nextID, Variable: variable, varCtx: varCtx})
 	vd.nextID++
 }
 
@@ -155,14 +153,29 @@ func (vd *variableDefinitions) reportRedefinedVariables() {
 			continue
 
 		case 2: //nolint:gomnd
-			definedInMsg = strings.Join(definedIn, " and ")
+			definedInMsg = strings.Join(variableDefinitionPlaces(definedIn), " and ")
 
 		default:
-			definedInMsg = fmt.Sprintf("%s, and %s", strings.Join(definedIn[:len(definedIn)-1], ", "), definedIn[len(definedIn)-1])
+			dil := variableDefinitionPlaces(definedIn)
+			definedInMsg = fmt.Sprintf("%s, and %s", strings.Join(dil[:len(dil)-1], ", "), dil[len(dil)-1])
 		}
 
 		vd.modCtx.addErrWithDesc(errVariableRedefined, "Variable '%s' has multiple definitions in %s", name, definedInMsg)
 	}
+}
+
+func variableDefinitionPlaces(contexts []*variableCtx) []string {
+	out := make([]string, len(contexts))
+	for i, vc := range contexts {
+		pos := vc.srcCtx.PositionForProtoPath(vc.path)
+		if pos != nil {
+			out[i] = fmt.Sprintf("%s (%s:%d:%d)", vc.source, vc.sourceFile, pos.GetLine(), pos.GetColumn())
+		} else {
+			out[i] = fmt.Sprintf("%s (%s)", vc.source, vc.sourceFile)
+		}
+	}
+
+	return out
 }
 
 func (vd *variableDefinitions) resolveReferences() {
@@ -170,13 +183,13 @@ func (vd *variableDefinitions) resolveReferences() {
 		referrer := vd.graph.Node(referrerID).(*variableNode) //nolint:forcetypeassert
 		for referencedName := range vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.Checked) {
 			if referencedName == referrerName {
-				// cyclic references have already been checked before
+				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errCyclicalVariables, "Variable '%s' references itself", referencedName)
 				continue
 			}
 
 			referencedID, ok := vd.ids[referencedName]
 			if !ok {
-				vd.modCtx.addErrWithDesc(errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedName, referrerName)
+				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedName, referrerName)
 				continue
 			}
 
@@ -200,26 +213,6 @@ func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) m
 
 	ast.PreOrderVisit(exprAST.Expr(), variableVisitor(action))
 	return references
-}
-
-func (vd *variableDefinitions) checkSelfReferences(name string, expr *expr.CheckedExpr, path string) {
-	exprAST, err := ast.ToAST(expr)
-	if err != nil {
-		vd.modCtx.addErrForProtoPath(path, err, "Failed to convert expression to AST")
-		return
-	}
-
-	hasSelfRef := false
-	action := func(varName string) {
-		if varName == name {
-			hasSelfRef = true
-		}
-	}
-
-	ast.PreOrderVisit(exprAST.Expr(), variableVisitor(action))
-	if hasSelfRef {
-		vd.modCtx.addErrForProtoPath(path, errCyclicalVariables, "Variable '%s' references itself", name)
-	}
 }
 
 func variableVisitor(action func(string)) ast.Visitor {
@@ -324,11 +317,22 @@ func (vd *variableDefinitions) reportCyclicalVariables(cycles [][]graph.Node) {
 				desc.WriteString(", ")
 			}
 
-			fmt.Fprintf(&desc, "'%s'", node.(*variableNode).Name) //nolint:forcetypeassert
+			variable := node.(*variableNode) //nolint:forcetypeassert
+			pos := variable.varCtx.srcCtx.PositionForProtoPath(variable.varCtx.path)
+			if pos != nil {
+				fmt.Fprintf(&desc, "'%s' (%s:%d:%d)", variable.Name, variable.varCtx.sourceFile, pos.GetLine(), pos.GetColumn())
+			} else {
+				fmt.Fprintf(&desc, "'%s'", variable.Name)
+			}
 		}
 
 		desc.WriteString(" form a cycle")
-		vd.modCtx.addErrWithDesc(errCyclicalVariables, desc.String())
+		if len(cycle) > 0 {
+			firstItem := cycle[0].(*variableNode) //nolint:forcetypeassert
+			firstItem.varCtx.addErrForProtoPath(firstItem.varCtx.path, errCyclicalVariables, desc.String())
+		} else {
+			vd.modCtx.addErrWithDesc(errCyclicalVariables, desc.String())
+		}
 	}
 }
 

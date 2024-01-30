@@ -56,14 +56,15 @@ func TestCompile(t *testing.T) {
 			if len(tc.WantErrors) > 0 {
 				errSet := new(compile.ErrorSet)
 				require.True(t, errors.As(haveErr, &errSet))
+				haveErrors := errSet.Errors()
 				t.Cleanup(func() {
 					if t.Failed() {
-						t.Logf("GOT ERR:\n%s\n", protojson.Format(errSet.Errors()))
+						t.Logf("GOT ERR:\n%s\n", protojson.Format(haveErrors))
 					}
 				})
 
-				require.Len(t, errSet.Errors, len(tc.WantErrors))
-				requireErrors(t, tc.WantErrors, errSet.Errors().GetErrors())
+				require.Len(t, haveErrors.GetErrors(), len(tc.WantErrors))
+				requireErrors(t, tc.WantErrors, haveErrors.GetErrors())
 
 				return
 			}

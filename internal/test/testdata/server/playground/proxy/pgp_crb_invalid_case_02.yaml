@@ -5,117 +5,122 @@ wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
 playgroundProxy:
-  input: {
-    "playgroundId": "test",
-    "files": [
-      {
-        "fileName": "derived_roles_01.yaml",
-        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "derived_roles_02.yaml",
-        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_01.yaml",
-        "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_02.yaml",
-        "contents": "{{ fileString `store/principal_policies/policy_01.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "_schemas/principal.json",
-        "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
-      }
-    ],
-    "checkResourceBatch": {
-      "requestId": "test",
-      "principal": {
-        "id": "john",
-        "policyVersion": "20210210",
-        "roles": [
-          "employee"
+  input:
+    {
+      "playgroundId": "test",
+      "files":
+        [
+          {
+            "fileName": "derived_roles_01.yaml",
+            "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "derived_roles_02.yaml",
+            "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_01.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_02.yaml",
+            "contents": "{{ fileString `store/principal_policies/policy_01.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "_schemas/principal.json",
+            "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
+          },
         ],
-        "attr": {
-          "department": "accounting",
-          "geography": "GB",
-          "team": "design"
-        }
-      },
-      "resources": [
+      "checkResourceBatch":
         {
-          "actions": [
-            "view:public",
-            "approve",
-            "defer"
-          ],
-          "resource": {
-            "kind": "leave_request",
-            "policyVersion": "20210210",
-            "id": "XX125",
-            "attr": {
-              "department": "accounting",
-              "geography": "GB",
-              "id": "XX125",
-              "owner": "john",
-              "team": "design"
-            }
-          }
+          "requestId": "test",
+          "principal":
+            {
+              "id": "john",
+              "policyVersion": "20210210",
+              "roles": ["employee"],
+              "attr":
+                {
+                  "department": "accounting",
+                  "geography": "GB",
+                  "team": "design",
+                },
+            },
+          "resources":
+            [
+              {
+                "actions": ["view:public", "approve", "defer"],
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "accounting",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                  },
+              },
+              {
+                "actions": ["view:public", "approve"],
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "policyVersion": "20210210",
+                    "id": "YY125",
+                    "attr":
+                      {
+                        "department": "engineering",
+                        "geography": "GB",
+                        "id": "YY125",
+                        "owner": "jenny",
+                        "team": "backend",
+                      },
+                  },
+              },
+              {
+                "actions": ["view:public", "delete", "edit"],
+                "resource":
+                  {
+                    "kind": "salary_record",
+                    "policyVersion": "20210210",
+                    "id": "YY525",
+                    "attr":
+                      {
+                        "department": "engineering",
+                        "geography": "GB",
+                        "id": "YY525",
+                        "owner": "mark",
+                        "team": "backend",
+                      },
+                  },
+              },
+            ],
+          "auxData":
+            {
+              "jwt":
+                {
+                  "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX",
+                },
+            },
         },
+    }
+  wantResponse:
+    {
+      "playgroundId": "test",
+      "failure":
         {
-          "actions": [
-            "view:public",
-            "approve"
-          ],
-          "resource": {
-            "kind": "leave_request",
-            "policyVersion": "20210210",
-            "id": "YY125",
-            "attr": {
-              "department": "engineering",
-              "geography": "GB",
-              "id": "YY125",
-              "owner": "jenny",
-              "team": "backend"
-            }
-          }
+          "errors":
+            [
+              {
+                "file": "policy_01.yaml",
+                "error": 'Failed to load resource schema "cerbos:///resources/leave_request.json": schema "cerbos:///resources/leave_request.json" does not exist in the store (invalid schema)',
+                "details": { "line": 17, "column": 7 },
+              },
+            ],
         },
-        {
-          "actions": [
-            "view:public",
-            "delete",
-            "edit"
-          ],
-          "resource": {
-            "kind": "salary_record",
-            "policyVersion": "20210210",
-            "id": "YY525",
-            "attr": {
-              "department": "engineering",
-              "geography": "GB",
-              "id": "YY525",
-              "owner": "mark",
-              "team": "backend"
-            }
-          }
-        }
-      ],
-      "auxData": {
-        "jwt": {
-          "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX"
-        }
-      }
     }
-  }
-  wantResponse: {
-    "playgroundId": "test",
-    "failure": {
-      "errors": [
-        {
-          "file": "policy_01.yaml",
-          "error": "Failed to load resource schema \"cerbos:///resources/leave_request.json\": schema \"cerbos:///resources/leave_request.json\" does not exist in the store (invalid schema)"
-        }
-      ]
-    }
-  }

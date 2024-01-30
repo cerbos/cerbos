@@ -4,5 +4,5 @@ wantErrors:
   - file: resource_policies/example.yaml
     error: variable redefined
     description: |-
-      Variable 'foo' has multiple definitions in import 'example', policy local variables, and top-level policy variables (deprecated)
+      Variable 'foo' has multiple definitions in import 'example' (export_variables/example.yaml:6:5), policy local variables (resource_policies/example.yaml:12:7), and deprecated top-level policy variables (resource_policies/example.yaml:4:3)
 mainDef: resource_policies/example.yaml
