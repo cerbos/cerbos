@@ -34,7 +34,7 @@ func PrincipalPolicyRuleProtoPath(idx int) string {
 }
 
 func PrincipalPolicyActionRuleProtoPath(parentIdx, idx int) string {
-	return fmt.Sprintf("principal_policy.rules[%d].actions[%d]", parentIdx, idx)
+	return fmt.Sprintf("%s.actions[%d]", PrincipalPolicyRuleProtoPath(parentIdx), idx)
 }
 
 func DerivedRoleConditionProtoPath(idx int) string {
