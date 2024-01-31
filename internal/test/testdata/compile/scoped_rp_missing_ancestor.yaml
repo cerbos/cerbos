@@ -3,96 +3,11 @@
 wantErrors:
   - file: leave_request.acme.hr.uk.yaml
     error: missing policy definition
-    desc: |-
+    description: |-
       Missing ancestor policy "resource.leave_request.v20210210/acme.hr"
 
   - file: leave_request.acme.hr.uk.yaml
     error: missing policy definition
-    desc: |-
+    description: |-
       Missing ancestor policy "resource.leave_request.v20210210"
 mainDef: "leave_request.acme.hr.uk.yaml"
-inputDefs:
-  "leave_request.acme.yaml":
-    apiVersion: api.cerbos.dev/v1
-    resourcePolicy:
-      resource: leave_request
-      version: "20210210"
-      scope: "acme"
-      importDerivedRoles:
-        - my_derived_roles
-      schemas:
-        principalSchema:
-          ref: cerbos:///complex_object.json
-        resourceSchema:
-          ref: cerbos:///complex_object.json
-      rules:
-        - actions: ['*']
-          effect: EFFECT_ALLOW
-          roles:
-            - admin
-          name: wildcard
-        - actions: ["create"]
-          derivedRoles:
-            - employee_that_owns_the_record
-          effect: EFFECT_ALLOW
-        - actions: ["view:*"]
-          derivedRoles:
-            - employee_that_owns_the_record
-            - direct_manager
-          effect: EFFECT_ALLOW
-        - actions: ["view:public"]
-          derivedRoles:
-            - any_employee
-          effect: EFFECT_ALLOW
-        - actions: ["approve"]
-          condition:
-            match:
-              expr: request.resource.attr.status == "PENDING_APPROVAL"
-          derivedRoles:
-            - direct_manager
-          effect: EFFECT_ALLOW
-
-  "leave_request.acme.hr.uk.yaml":
-    apiVersion: api.cerbos.dev/v1
-    resourcePolicy:
-      resource: leave_request
-      version: "20210210"
-      scope: "acme.hr.uk"
-      importDerivedRoles:
-        - my_derived_roles
-      rules:
-        - actions: ["approve"]
-          condition:
-            match:
-              expr: request.resource.attr.status == "PENDING_APPROVAL"
-          derivedRoles:
-            - direct_manager
-          roles:
-            - hr_bp
-          effect: EFFECT_ALLOW
-
-  "my_derived_roles.yaml":
-    apiVersion: "api.cerbos.dev/v1"
-    derivedRoles:
-      name: my_derived_roles
-      definitions:
-        - name: tester
-          parentRoles: ["dev", "qa"]
-
-        - name: employee_that_owns_the_record
-          parentRoles: ["employee"]
-          condition:
-            match:
-              expr: R.attr.owner == P.id
-
-        - name: any_employee
-          parentRoles: ["employee"]
-
-        - name: direct_manager
-          parentRoles: ["manager"]
-          condition:
-            match:
-              all:
-                of:
-                  - expr: "request.resource.attr.geography == request.principal.attr.geography"
-                  - expr: "request.resource.attr.geography == request.principal.attr.managed_geographies"

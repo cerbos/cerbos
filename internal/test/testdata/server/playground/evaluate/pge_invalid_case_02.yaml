@@ -5,60 +5,64 @@ wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
 playgroundEvaluate:
-  input: {
-    "playgroundId": "test",
-    "files": [
-      {
-        "fileName": "derived_roles_01.yaml",
-        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "derived_roles_02.yaml",
-        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_01.yaml",
-        "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "_schemas/principal.json",
-        "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
-      }
-    ],
-    "actions": ["approve", "view:public"],
-    "principal": {
-      "id": "john",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "accounting",
-        "geography": "GB",
-        "team": "design"
-      }
-    },
-    "resource": {
-      "id": "XX125",
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "attr": {
-        "department": "accounting",
-        "geography": "GB",
-        "id": "XX125",
-        "owner": "john",
-        "team": "design"
-      }
-    }
-  }
-  wantResponse: {
-    "playgroundId": "test",
-    "failure": {
-      "errors": [
+  input:
+    {
+      "playgroundId": "test",
+      "files":
+        [
+          {
+            "fileName": "derived_roles_01.yaml",
+            "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "derived_roles_02.yaml",
+            "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_01.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "_schemas/principal.json",
+            "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
+          },
+        ],
+      "actions": ["approve", "view:public"],
+      "principal":
         {
-          "file": "policy_01.yaml",
-          "error": "Failed to load resource schema \"cerbos:///resources/leave_request.json\": schema \"cerbos:///resources/leave_request.json\" does not exist in the store (invalid schema)"
-        }
-      ]
+          "id": "john",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            { "department": "accounting", "geography": "GB", "team": "design" },
+        },
+      "resource":
+        {
+          "id": "XX125",
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "attr":
+            {
+              "department": "accounting",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
     }
-  }
+  wantResponse:
+    {
+      "playgroundId": "test",
+      "failure":
+        {
+          "errors":
+            [
+              {
+                "file": "policy_01.yaml",
+                "error": 'Failed to load resource schema "cerbos:///resources/leave_request.json": schema "cerbos:///resources/leave_request.json" does not exist in the store (invalid schema)',
+                "details": { "line": 17, "column": 7 },
+              },
+            ],
+        },
+    }

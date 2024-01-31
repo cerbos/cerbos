@@ -1,0 +1,16 @@
+-- resource_policies/leave_request_20210210.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: leave_request
+  version: default
+  rules:
+    - actions: ['*']
+      roles: ["admin"]
+      effect: EFFECT_ALLOW
+      name: wildcard
+    - actions: ["create"]
+      roles: ["admin"]
+      effect: EFFECT_ALLOW
+    - actions: ["view:*"]
+      effect: EFFECT_ALLOW

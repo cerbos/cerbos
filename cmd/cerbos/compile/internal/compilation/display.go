@@ -4,6 +4,7 @@
 package compilation
 
 import (
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -12,7 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
+func Display(p *printer.Printer, errs compile.ErrorSet, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
 	switch output {
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs, colorLevel)
@@ -23,18 +24,23 @@ func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFo
 	return compileerrors.ErrFailed
 }
 
-func displayJSON(p *printer.Printer, errs compile.ErrorList, colorLevel outputcolor.Level) error {
-	if err := p.PrintJSON(map[string]compile.ErrorList{"compileErrors": errs}, colorLevel); err != nil {
+func displayJSON(p *printer.Printer, errs compile.ErrorSet, colorLevel outputcolor.Level) error {
+	if err := p.PrintJSON(map[string]*runtimev1.CompileErrors{"compileErrors": errs.Errors()}, colorLevel); err != nil {
 		return err
 	}
 
 	return compileerrors.ErrFailed
 }
 
-func displayList(p *printer.Printer, errs compile.ErrorList) error {
+func displayList(p *printer.Printer, errs compile.ErrorSet) error {
 	p.Println(colored.Header("Compilation errors"))
-	for _, err := range errs.Errors {
-		p.Printf("%s: %s (%s)\n", colored.FileName(err.File), colored.ErrorMsg(err.Description), err.Error)
+	errList := errs.Errors().GetErrors()
+	for _, err := range errList {
+		p.Printf("%s %s <%s>\n", colored.Position(err.GetFile(), err.GetPosition()), colored.ErrorMsg(err.GetDescription()), err.GetError())
+		if ctx := err.GetContext(); ctx != "" {
+			p.Println(ctx)
+		}
+		p.Println()
 	}
 
 	return compileerrors.ErrFailed

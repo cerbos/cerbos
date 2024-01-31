@@ -33,7 +33,7 @@ var (
 )
 
 func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager) error {
-	errs := newErrorList()
+	errs := newErrorSet()
 
 	for unit := range queue {
 		if _, err := Compile(unit, schemaMgr); err != nil {
@@ -149,7 +149,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 
 	for i, rule := range rp.Rules {
 		rule.Name = namer.ResourceRuleName(rule, i+1)
-		cr := compileResourceRule(modCtx, rule)
+		cr := compileResourceRule(modCtx, policy.ResourcePolicyRuleProtoPath(i), rule)
 		if cr == nil {
 			continue
 		}
@@ -167,16 +167,18 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 		compiledRoles map[string]*runtimev1.RunnableDerivedRole
 		importName    string
 		sourceFile    string
+		path          string
 	}
 
 	roleImports := make(map[string][]derivedRoleInfo)
 
-	for _, imp := range rp.ImportDerivedRoles {
+	for i, imp := range rp.ImportDerivedRoles {
 		impID := namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
+		path := policy.ResourcePolicyImportDerivedRolesProtoPath(i)
 
 		drModCtx := modCtx.moduleCtx(impID)
 		if drModCtx == nil {
-			modCtx.addErrWithDesc(errImportNotFound, "Derived roles import '%s' cannot be found", imp)
+			modCtx.addErrForProtoPath(path, errImportNotFound, "Derived roles import %q cannot be found", imp)
 			continue
 		}
 
@@ -190,6 +192,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 				importName:    imp,
 				sourceFile:    drModCtx.sourceFile,
 				compiledRoles: compiledRoles,
+				path:          path,
 			})
 		}
 	}
@@ -197,14 +200,14 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	referencedRoles := make(map[string]*runtimev1.RunnableDerivedRole)
 
 	// used to dedupe error messages
-	unknownRoles := make(map[string]struct{})
+	unknownRoles := make(map[string]string)
 	ambiguousRoles := make(map[string]string)
 
-	for _, rule := range rp.Rules {
-		for _, r := range rule.DerivedRoles {
+	for i, rule := range rp.Rules {
+		for j, r := range rule.DerivedRoles {
 			imp, ok := roleImports[r]
 			if !ok {
-				unknownRoles[r] = struct{}{}
+				unknownRoles[r] = policy.ResourcePolicyRuleReferencedDerivedRoleProtoPath(i, j)
 				continue
 			}
 
@@ -215,9 +218,14 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 				rdList := make([]string, len(imp))
 				for i, dri := range imp {
-					rdList[i] = fmt.Sprintf("%s (imported as '%s')", dri.sourceFile, dri.importName)
+					pos := modCtx.srcCtx.PositionForProtoPath(dri.path)
+					if pos != nil {
+						rdList[i] = fmt.Sprintf("%s (imported as %q at %d:%d)", dri.sourceFile, dri.importName, pos.GetLine(), pos.GetColumn())
+					} else {
+						rdList[i] = fmt.Sprintf("%s (imported as %q)", dri.sourceFile, dri.importName)
+					}
 				}
-				ambiguousRoles[r] = strings.Join(rdList, ",")
+				ambiguousRoles[r] = strings.Join(rdList, ", ")
 				continue
 			}
 
@@ -225,12 +233,12 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 		}
 	}
 
-	for ur := range unknownRoles {
-		modCtx.addErrWithDesc(errUnknownDerivedRole, "Derived role '%s' is not defined in any imports", ur)
+	for ur, urPath := range unknownRoles {
+		modCtx.addErrForProtoPath(urPath, errUnknownDerivedRole, "Derived role %q is not defined in any imports", ur)
 	}
 
 	for ar, impList := range ambiguousRoles {
-		modCtx.addErrWithDesc(errAmbiguousDerivedRole, "Derived role '%s' is defined in more than one import: [%s]", ar, impList)
+		modCtx.addErrWithDesc(errAmbiguousDerivedRole, "Derived role %q is defined in more than one import: %s", ar, impList)
 	}
 
 	return referencedRoles, modCtx.error()
@@ -262,7 +270,9 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 		}
 
 		modCtx.variables.ResetUsage()
-		rdr.Condition = compileCondition(modCtx, fmt.Sprintf("derived role '%s' (#%d)", def.Name, i), def.Condition, true)
+		if def.Condition != nil {
+			rdr.Condition = compileCondition(modCtx, policy.DerivedRoleConditionProtoPath(i), def.Condition, true)
+		}
 		rdr.OrderedVariables, rdr.Variables = modCtx.variables.Used() //nolint:staticcheck
 		compiled[def.Name] = rdr
 	}
@@ -277,28 +287,27 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 
 	if ps := rp.Schemas.PrincipalSchema; ps != nil && ps.Ref != "" {
 		if err := schemaMgr.CheckSchema(context.TODO(), ps.Ref); err != nil {
-			modCtx.addErrWithDesc(errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
+			modCtx.addErrForProtoPath(policy.ResourcePolicyPrincipalSchemaProtoPath(), errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
 		}
 	}
 
 	if rs := rp.Schemas.ResourceSchema; rs != nil && rs.Ref != "" {
 		if err := schemaMgr.CheckSchema(context.TODO(), rs.Ref); err != nil {
-			modCtx.addErrWithDesc(errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
+			modCtx.addErrForProtoPath(policy.ResourcePolicyResourceSchemaProtoPath(), errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
 		}
 	}
 
 	return modCtx.error()
 }
 
-func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
+func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
 	if len(rule.DerivedRoles) == 0 && len(rule.Roles) == 0 {
-		modCtx.addErrWithDesc(errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
+		modCtx.addErrForProtoPath(path, errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
 
-	parent := fmt.Sprintf("resource rule '%s'", rule.Name)
 	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{
 		Name:      rule.Name,
-		Condition: compileCondition(modCtx, parent, rule.Condition, true),
+		Condition: compileCondition(modCtx, path+".condition", rule.Condition, true),
 		Effect:    rule.Effect,
 	}
 
@@ -335,21 +344,21 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 		if rule.Output.Expr != "" {
 			when.RuleActivated = &runtimev1.Expr{
 				Original: rule.Output.Expr, //nolint:staticcheck
-				Checked:  compileCELExpr(modCtx, parent, rule.Output.Expr, true),
+				Checked:  compileCELExpr(modCtx, path+".output.expr", rule.Output.Expr, true),
 			}
 		}
 
 		if rule.Output.When != nil && rule.Output.When.RuleActivated != "" {
 			when.RuleActivated = &runtimev1.Expr{
 				Original: rule.Output.When.RuleActivated,
-				Checked:  compileCELExpr(modCtx, parent, rule.Output.When.RuleActivated, true),
+				Checked:  compileCELExpr(modCtx, path+".output.when.rule_activated", rule.Output.When.RuleActivated, true),
 			}
 		}
 
 		if rule.Output.When != nil && rule.Output.When.ConditionNotMet != "" {
 			when.ConditionNotMet = &runtimev1.Expr{
 				Original: rule.Output.When.ConditionNotMet,
-				Checked:  compileCELExpr(modCtx, parent, rule.Output.When.ConditionNotMet, true),
+				Checked:  compileCELExpr(modCtx, path+".output.when.condition_not_met", rule.Output.When.ConditionNotMet, true),
 			}
 		}
 
@@ -417,19 +426,19 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
 	}
 
-	for _, rule := range pp.Rules {
+	for ruleNum, rule := range pp.Rules {
 		rr := &runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules{
 			ActionRules: make([]*runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule, len(rule.Actions)),
 		}
 
 		for i, action := range rule.Actions {
 			action.Name = namer.PrincipalResourceActionRuleName(action, rule.Resource, i+1)
-			ruleName := fmt.Sprintf("rule '%s' (#%d) of resource '%s'", action.Name, i+1, rule.Resource)
+			path := policy.PrincipalPolicyActionRuleProtoPath(ruleNum, i)
 			actionRule := &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
 				Action:    action.Action,
 				Name:      action.Name,
 				Effect:    action.Effect,
-				Condition: compileCondition(modCtx, ruleName, action.Condition, true),
+				Condition: compileCondition(modCtx, path+".condition", action.Condition, true),
 			}
 
 			//nolint:dupl
@@ -440,21 +449,21 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 				if action.Output.Expr != "" {
 					when.RuleActivated = &runtimev1.Expr{
 						Original: action.Output.Expr, //nolint:staticcheck
-						Checked:  compileCELExpr(modCtx, ruleName, action.Output.Expr, true),
+						Checked:  compileCELExpr(modCtx, path+".output.expr", action.Output.Expr, true),
 					}
 				}
 
 				if action.Output.When != nil && action.Output.When.RuleActivated != "" {
 					when.RuleActivated = &runtimev1.Expr{
 						Original: action.Output.When.RuleActivated,
-						Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.RuleActivated, true),
+						Checked:  compileCELExpr(modCtx, path+".output.when.rule_activated", action.Output.When.RuleActivated, true),
 					}
 				}
 
 				if action.Output.When != nil && action.Output.When.ConditionNotMet != "" {
 					when.ConditionNotMet = &runtimev1.Expr{
 						Original: action.Output.When.ConditionNotMet,
-						Checked:  compileCELExpr(modCtx, ruleName, action.Output.When.ConditionNotMet, true),
+						Checked:  compileCELExpr(modCtx, path+".output.when.condition_not_met", action.Output.When.ConditionNotMet, true),
 					}
 				}
 

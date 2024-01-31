@@ -4,6 +4,8 @@
 package compile
 
 import (
+	"fmt"
+
 	"github.com/google/cel-go/cel"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -13,73 +15,73 @@ import (
 )
 
 func Condition(cond *policyv1.Condition) (*runtimev1.Condition, error) {
-	mc := &moduleCtx{unitCtx: &unitCtx{errors: new(ErrorList)}, fqn: "UNKNOWN", sourceFile: "UNKNOWN"}
+	mc := &moduleCtx{unitCtx: &unitCtx{errors: new(ErrorSet)}, fqn: "UNKNOWN", sourceFile: "UNKNOWN"}
 	cc := compileCondition(mc, "unknown", cond, false)
 	return cc, mc.error()
 }
 
-func compileCondition(modCtx *moduleCtx, parent string, cond *policyv1.Condition, markReferencedVariablesAsUsed bool) *runtimev1.Condition {
+func compileCondition(modCtx *moduleCtx, path string, cond *policyv1.Condition, markReferencedVariablesAsUsed bool) *runtimev1.Condition {
 	if cond == nil {
 		return nil
 	}
 
 	switch c := cond.Condition.(type) {
 	case *policyv1.Condition_Match:
-		return compileMatch(modCtx, parent, c.Match, markReferencedVariablesAsUsed)
+		return compileMatch(modCtx, path+".match", c.Match, markReferencedVariablesAsUsed)
 	default:
-		modCtx.addErrWithDesc(errScriptsUnsupported, "Unsupported feature in %s", parent)
+		modCtx.addErrForProtoPath(path, errScriptsUnsupported, "Unsupported feature")
 		return nil
 	}
 }
 
-func compileMatch(modCtx *moduleCtx, parent string, match *policyv1.Match, markReferencedVariablesAsUsed bool) *runtimev1.Condition {
+func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markReferencedVariablesAsUsed bool) *runtimev1.Condition {
 	if match == nil {
 		return nil
 	}
 
 	switch t := match.Op.(type) {
 	case *policyv1.Match_Expr:
-		expr := &runtimev1.Expr{Original: t.Expr, Checked: compileCELExpr(modCtx, parent, t.Expr, markReferencedVariablesAsUsed)}
+		expr := &runtimev1.Expr{Original: t.Expr, Checked: compileCELExpr(modCtx, path+".expr", t.Expr, markReferencedVariablesAsUsed)}
 		return &runtimev1.Condition{Op: &runtimev1.Condition_Expr{Expr: expr}}
 	case *policyv1.Match_All:
-		exprList := compileMatchList(modCtx, parent, t.All.Of, markReferencedVariablesAsUsed)
+		exprList := compileMatchList(modCtx, path+".all.of", t.All.Of, markReferencedVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
 	case *policyv1.Match_Any:
-		exprList := compileMatchList(modCtx, parent, t.Any.Of, markReferencedVariablesAsUsed)
+		exprList := compileMatchList(modCtx, path+".any.of", t.Any.Of, markReferencedVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
 	case *policyv1.Match_None:
-		exprList := compileMatchList(modCtx, parent, t.None.Of, markReferencedVariablesAsUsed)
+		exprList := compileMatchList(modCtx, path+".none.of", t.None.Of, markReferencedVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_None{None: exprList}}
 	default:
-		modCtx.addErrWithDesc(errUnexpectedErr, "Unknown match operation in %s: %T", parent, t)
+		modCtx.addErrForProtoPath(path, errUnexpectedErr, "Unknown match operation: %T", t)
 		return nil
 	}
 }
 
-func compileCELExpr(modCtx *moduleCtx, parent, expr string, markReferencedVariablesAsUsed bool) *exprpb.CheckedExpr {
+func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedVariablesAsUsed bool) *exprpb.CheckedExpr {
 	celAST, issues := conditions.StdEnv.Compile(expr)
 	if issues != nil && issues.Err() != nil {
-		modCtx.addErrWithDesc(newCELCompileError(expr, issues), "Invalid expression in %s", parent)
+		modCtx.addErrForProtoPath(path, newCELCompileError(expr, issues), "Invalid expression: `%s`", expr)
 		return nil
 	}
 
 	checkedExpr, err := cel.AstToCheckedExpr(celAST)
 	if err != nil {
-		modCtx.addErrWithDesc(err, "Failed to convert AST of `%s` in %s", expr, parent)
+		modCtx.addErrForProtoPath(path, err, "Failed to convert AST of `%s`", expr)
 		return nil
 	}
 
 	if markReferencedVariablesAsUsed {
-		modCtx.variables.Use(parent, checkedExpr)
+		modCtx.variables.Use(path, checkedExpr)
 	}
 
 	return checkedExpr
 }
 
-func compileMatchList(modCtx *moduleCtx, parent string, matches []*policyv1.Match, markReferencedVariablesAsUsed bool) *runtimev1.Condition_ExprList {
+func compileMatchList(modCtx *moduleCtx, path string, matches []*policyv1.Match, markReferencedVariablesAsUsed bool) *runtimev1.Condition_ExprList {
 	exprList := make([]*runtimev1.Condition, len(matches))
 	for i, m := range matches {
-		exprList[i] = compileMatch(modCtx, parent, m, markReferencedVariablesAsUsed)
+		exprList[i] = compileMatch(modCtx, fmt.Sprintf("%s[%d]", path, i), m, markReferencedVariablesAsUsed)
 	}
 
 	return &runtimev1.Condition_ExprList{Expr: exprList}

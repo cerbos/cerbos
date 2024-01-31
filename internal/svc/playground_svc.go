@@ -277,7 +277,7 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.File) (*
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementWarn))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
-		compErr := new(compile.ErrorList)
+		compErr := new(compile.ErrorSet)
 		if errors.As(err, &compErr) {
 			pf := processCompileErrors(ctx, compErr)
 			return nil, pf, nil
@@ -379,13 +379,19 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 	return &responsev1.PlaygroundFailure{Errors: errors}
 }
 
-func processCompileErrors(ctx context.Context, errs *compile.ErrorList) *responsev1.PlaygroundFailure {
-	errors := make([]*responsev1.PlaygroundFailure_Error, len(errs.Errors))
+func processCompileErrors(ctx context.Context, errs *compile.ErrorSet) *responsev1.PlaygroundFailure {
+	compileErrs := errs.Errors().GetErrors()
+	errors := make([]*responsev1.PlaygroundFailure_Error, len(compileErrs))
 
-	for i, err := range errs.Errors {
+	for i, err := range compileErrs {
 		errors[i] = &responsev1.PlaygroundFailure_Error{
 			File:  err.File,
 			Error: fmt.Sprintf("%s (%s)", err.Description, err.Error),
+			Details: &responsev1.PlaygroundFailure_ErrorDetails{
+				Line:    err.GetPosition().GetLine(),
+				Column:  err.GetPosition().GetColumn(),
+				Context: err.GetContext(),
+			},
 		}
 	}
 

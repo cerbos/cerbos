@@ -1,0 +1,26 @@
+-- resource_policies/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  variables:
+    local:
+      a: variables.a
+      b: V.c
+      c: variables.b
+      d: V.e + V.f
+      e: V.g
+      f: 2 * V.g
+      g: V.d
+      h: V.x / variables.y
+  rules:
+    - name: bad
+      actions:
+        - "*"
+      roles:
+        - "*"
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: V.z > 9000

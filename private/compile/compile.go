@@ -89,11 +89,11 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 
 			if artefact.Error != nil {
 				log.Error("Compilation failed", zap.Error(artefact.Error))
-				compErrs := new(internalcompile.ErrorList)
+				compErrs := new(internalcompile.ErrorSet)
 				if errors.As(artefact.Error, &compErrs) {
 					artefact.Error = &Errors{
 						Errors: &runtimev1.Errors{
-							Kind: &runtimev1.Errors_CompileErrors{CompileErrors: compErrs.CompileErrors},
+							Kind: &runtimev1.Errors_CompileErrors{CompileErrors: compErrs.Errors()},
 						},
 					}
 				}

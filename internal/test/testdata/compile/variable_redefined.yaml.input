@@ -1,0 +1,21 @@
+-- resource_policies/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+variables:
+  foo: "1"
+resourcePolicy:
+  resource: example
+  version: default
+  variables:
+    import:
+      - example
+    local:
+      foo: "3"
+
+-- export_variables/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: example
+  definitions:
+    foo: "2"

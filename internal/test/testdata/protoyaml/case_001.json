@@ -5,6 +5,7 @@
             "message": {
                 "apiVersion": "api.cerbos.dev/v1",
                 "variables": {
+                    "x": "y",
                     "pending_approval": "(\"PENDING_APPROVAL\")",
                     "principal_location": "(P.attr.ip_address.inIPAddrRange(\"10.20.0.0/16\") ? \"GB\" : \"\")"
                 },

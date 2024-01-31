@@ -97,6 +97,10 @@ func cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(m *CompileErrors_Err, hasher
 		}
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Context))
+
+	}
 }
 
 func cerbos_runtime_v1_CompileErrors_hashpb_sum(m *CompileErrors, hasher hash.Hash, ignore map[string]struct{}) {

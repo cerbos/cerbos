@@ -23,6 +23,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -347,7 +348,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 			units[row.UnitID] = unit
 		}
 
-		unit.AddDefinition(row.ID, policy.WithSourceAttributes(row.Definition.Policy, s.opts.sourceAttributes...))
+		unit.AddDefinition(row.ID, policy.WithSourceAttributes(row.Definition.Policy, s.opts.sourceAttributes...), parser.NewEmptySourceCtx())
 	}
 
 	return units, nil

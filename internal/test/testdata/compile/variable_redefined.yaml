@@ -3,25 +3,6 @@
 wantErrors:
   - file: resource_policies/example.yaml
     error: variable redefined
-    desc: |-
-      Variable 'foo' has multiple definitions in import 'example', policy local variables, and top-level policy variables (deprecated)
+    description: |-
+      Variable 'foo' has multiple definitions in import 'example' (export_variables/example.yaml:6:5), policy local variables (resource_policies/example.yaml:12:7), and deprecated top-level policy variables (resource_policies/example.yaml:4:3)
 mainDef: resource_policies/example.yaml
-inputDefs:
-  resource_policies/example.yaml:
-    apiVersion: api.cerbos.dev/v1
-    variables:
-      foo: "1"
-    resourcePolicy:
-      resource: example
-      version: default
-      variables:
-        import:
-          - example
-        local:
-          foo: "3"
-  export_variables/example.yaml:
-    apiVersion: api.cerbos.dev/v1
-    exportVariables:
-      name: example
-      definitions:
-        foo: "2"
