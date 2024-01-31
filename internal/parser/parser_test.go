@@ -31,7 +31,7 @@ import (
 )
 
 func TestUnmarshal(t *testing.T) {
-	testCases := test.LoadTestCases(t, "protoyaml")
+	testCases := test.LoadTestCases(t, "parser")
 	validator, err := protovalidate.New(protovalidate.WithMessages(&policyv1.Policy{}))
 	require.NoError(t, err)
 
@@ -140,7 +140,7 @@ func loadTestCase(t *testing.T, tc test.Case) (*privatev1.ProtoYamlTestCase, io.
 
 func TestFind(t *testing.T) {
 	rnd := rand.New(rand.NewSource(42)) //nolint:gosec
-	testCases := test.LoadTestCases(t, "protoyaml")
+	testCases := test.LoadTestCases(t, "parser")
 	for _, testCase := range testCases {
 		tc, input := loadTestCase(t, testCase)
 		if len(tc.Want) == 0 {
