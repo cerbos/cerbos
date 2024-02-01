@@ -1,0 +1,14 @@
+{
+    "description": "Invalid YAML file with unterminated string",
+    "wantErrors": [
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 1,
+                "column": 1,
+                "path": "$"
+            },
+            "message": "invalid document: contents are not valid YAML or JSON"
+        }
+    ]
+}
