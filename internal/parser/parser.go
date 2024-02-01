@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -22,6 +23,7 @@ import (
 	"github.com/goccy/go-yaml/printer"
 	"github.com/goccy/go-yaml/token"
 	"github.com/stoewer/go-strcase"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -37,6 +39,8 @@ const (
 )
 
 var ErrNotFound = errors.New("not found")
+
+var protoErrPrefix = regexp.MustCompile(`proto:(\x{00a0}|\x{0020})+\(line\s+\d+:\d+\):\s*`)
 
 // Find a single document from the multi-document stream.
 // TODO(cell): Optimize!
@@ -182,11 +186,26 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Error) {
 	var errPrinter printer.Printer
 	i := 0
+	flowBlock := 0
 	for {
 		if i >= len(tokens) {
 			break
 		}
 		tok := tokens[i]
+
+		// Check whether we are inside a flow block (e.g. foo: {"x": "y"})
+		if tok.Indicator == token.FlowCollectionIndicator {
+			if tok.Type == token.MappingStartType || tok.Type == token.SequenceStartType {
+				flowBlock++
+			} else {
+				flowBlock--
+			}
+		}
+
+		if flowBlock > 0 {
+			i++
+			continue
+		}
 
 		if tok.Prev != nil && tok.Prev.Type != token.MappingValueType {
 			i++
@@ -729,12 +748,35 @@ func (u *unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out pr
 		return err
 	}
 
+	if out.Descriptor().FullName().Parent() == "google.protobuf" {
+		return u.unmarshalWKT(uctx, n, out)
+	}
+
 	mn, ok := nn.(ast.MapNode)
 	if !ok {
 		return uctx.perrorf(n, "expected object got %s", nn.Type())
 	}
 
 	return u.unmarshalMapping(uctx, mn, out)
+}
+
+func (u *unmarshaler[T]) unmarshalWKT(uctx *unmarshalCtx, n ast.Node, out protoreflect.Message) error {
+	// Google's well-known type handling is hidden inside an internal package and can't be used directly.
+	// The code is complicated and copying it here is probably not a good idea.
+	// Cerbos policies don't use any WKTs. Only the test suite definitions and fixtures use them so
+	// resorting to this slightly inefficient hack is OK for now.
+	nodeStr := n.String()
+	jsonBytes, err := yaml.YAMLToJSON(unsafe.Slice(unsafe.StringData(nodeStr), len(nodeStr)))
+	if err != nil {
+		return uctx.perrorf(n, "failed to convert well-known type: %v", err)
+	}
+
+	if err := protojson.Unmarshal(jsonBytes, out.Interface()); err != nil {
+		errStr := protoErrPrefix.ReplaceAllString(err.Error(), "")
+		return uctx.perrorf(n, "failed to unmarshal well-known type: %s", errStr)
+	}
+
+	return nil
 }
 
 func (u *unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.MapKey, error) {

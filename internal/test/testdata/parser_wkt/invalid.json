@@ -1,0 +1,8 @@
+{
+    "duration": "10s",
+    "repeatedStringWrapper": [
+        {
+            "foo": "bar"
+        }
+    ]
+}
