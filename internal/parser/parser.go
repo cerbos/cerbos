@@ -281,14 +281,14 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 	seenOneOfs := make(map[int]string)
 	items := v.MapRange()
 
+	// Find all the merge keys first and populate the message because they need to overwritten by new values
+	// Basically, ensuring that "bar" is set to "baz" in the following case regardless of what value "bar" has
+	// in the "anchor" map.
+	// x:
+	//  bar: baz
+	//  <<: *anchor
 	for items.Next() {
-		kn := items.Key()
-
-		var keyValue string
-		switch kt := kn.(type) {
-		case *ast.StringNode:
-			keyValue = kt.Value
-		case *ast.MergeKeyNode:
+		if items.Key().Type() == ast.MergeKeyType {
 			mn, err := u.resolveMerge(uctx, items.Value())
 			if err != nil {
 				return err
@@ -297,7 +297,19 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 			if err := u.unmarshalMapping(uctx, mn, out); err != nil {
 				return err
 			}
+		}
+	}
 
+	items = v.MapRange()
+	for items.Next() {
+		kn := items.Key()
+
+		var keyValue string
+		switch kt := kn.(type) {
+		case *ast.StringNode:
+			keyValue = kt.Value
+		case *ast.MergeKeyNode:
+			// already handled above
 			continue
 		default:
 			return uctx.perrorf(kn, "unexpected key type %s", kn.Type())
@@ -328,7 +340,18 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 			}
 		case field.IsMap():
 			mmap := out.Mutable(field).Map()
-			if err := u.unmarshalMap(uctx.forField(field, kn), items.Value(), field, mmap); err != nil {
+
+			nn, err := u.resolveNode(uctx, items.Value())
+			if err != nil {
+				return err
+			}
+
+			mn, ok := nn.(ast.MapNode)
+			if !ok {
+				return uctx.perrorf(items.Value(), "expected map got %s", nn.Type())
+			}
+
+			if err := u.unmarshalMap(uctx.forField(field, kn), mn, field, mmap, true); err != nil {
 				return err
 			}
 		default:
@@ -378,18 +401,15 @@ func (u *unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, 
 	switch t := n.(type) {
 	case *ast.AnchorNode:
 		anchorName := t.Name.GetToken().Value
-		if u.anchors == nil {
-			u.anchors = make(map[string]ast.Node)
-			u.anchors[anchorName] = t.Value
-			return t.Value, nil
-		}
-
 		if _, ok := u.anchors[anchorName]; ok {
 			return nil, uctx.perrorf(n, "duplicate anchor definition %q", t.String())
 		}
 
+		if u.anchors == nil {
+			u.anchors = make(map[string]ast.Node)
+		}
 		u.anchors[anchorName] = t.Value
-		return t.Value, nil
+		return u.resolveNode(uctx, t.Value)
 	case *ast.AliasNode:
 		anchorName := t.Value.GetToken().Value
 		an, ok := u.anchors[anchorName]
@@ -399,7 +419,7 @@ func (u *unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, 
 
 		return u.resolveAlias(uctx, an)
 	case *ast.TagNode:
-		return t.Value, nil
+		return u.resolveAlias(uctx, t.Value)
 	default:
 		return n, nil
 	}
@@ -518,17 +538,7 @@ func (u *unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protor
 	return nil
 }
 
-func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, mmap protoreflect.Map) error {
-	nn, err := u.resolveNode(uctx, n)
-	if err != nil {
-		return err
-	}
-
-	mn, ok := nn.(ast.MapNode)
-	if !ok {
-		return uctx.perrorf(n, "expected map got %s", nn.Type())
-	}
-
+func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.MapNode, fd protoreflect.FieldDescriptor, mmap protoreflect.Map, overwriteKeys bool) error {
 	var valueFn func(*unmarshalCtx, ast.Node) (protoreflect.Value, error)
 	switch fd.MapValue().Kind() {
 	case protoreflect.MessageKind, protoreflect.GroupKind:
@@ -546,23 +556,37 @@ func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protore
 		}
 	}
 
-	items := mn.MapRange()
+	items := n.MapRange()
 	for items.Next() {
-		key, err := u.unmarshalMapKey(uctx, items.Key(), fd.MapKey())
+		key := items.Key()
+		if key.Type() == ast.MergeKeyType {
+			kn, err := u.resolveMerge(uctx, items.Value())
+			if err != nil {
+				return err
+			}
+
+			if err := u.unmarshalMap(uctx, kn, fd, mmap, false); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		keyVal, err := u.unmarshalMapKey(uctx, key, fd.MapKey())
 		if err != nil {
 			return err
 		}
 
-		if mmap.Has(key) {
-			return uctx.perrorf(items.Key(), "duplicate map key")
+		if !overwriteKeys && mmap.Has(keyVal) {
+			continue
 		}
 
-		val, err := valueFn(uctx.forMapItem(key.String(), items.Key()), items.Value())
+		val, err := valueFn(uctx.forMapItem(keyVal.String(), key), items.Value())
 		if err != nil {
 			return err
 		}
 
-		mmap.Set(key, val)
+		mmap.Set(keyVal, val)
 	}
 
 	return nil

@@ -30,6 +30,6 @@ resourcePolicy:
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
-  <<: *resourceTmpl
   version: foo
+  <<: *resourceTmpl
 
