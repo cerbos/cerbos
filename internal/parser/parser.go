@@ -358,9 +358,14 @@ func (u *unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNo
 			return nil, uctx.perrorf(n, "unknown anchor %q", anchorName)
 		}
 
-		mn, ok := aliased.(ast.MapNode)
+		resolved, err := u.resolveAlias(uctx, aliased)
+		if err != nil {
+			return nil, err
+		}
+
+		mn, ok := resolved.(ast.MapNode)
 		if !ok {
-			return nil, uctx.perrorf(n, "expected map alias got %s", aliased.Type())
+			return nil, uctx.perrorf(n, "expected map alias got %s", resolved.Type())
 		}
 
 		return mn, nil
@@ -392,12 +397,90 @@ func (u *unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, 
 			return nil, uctx.perrorf(n, "unknown anchor %q", anchorName)
 		}
 
-		return an, nil
+		return u.resolveAlias(uctx, an)
 	case *ast.TagNode:
 		return t.Value, nil
 	default:
 		return n, nil
 	}
+}
+
+// adapted from https://github.com/goccy/go-yaml/blob/31fe1baacec127337140701face2e64a356075fd/decode.go#L355
+func (u *unmarshaler[T]) resolveAlias(uctx *unmarshalCtx, n ast.Node) (ast.Node, error) {
+	switch nn := n.(type) {
+	case *ast.AnchorNode:
+		return u.resolveAlias(uctx, nn.Value)
+	case *ast.MappingNode:
+		for idx, v := range nn.Values {
+			value, err := u.resolveAlias(uctx, v)
+			if err != nil {
+				return nil, err
+			}
+
+			vv, ok := value.(*ast.MappingValueNode)
+			if !ok {
+				return nil, uctx.perrorf(vv, "unexpected node type %s", vv.Type())
+			}
+			nn.Values[idx] = vv
+		}
+	case *ast.TagNode:
+		value, err := u.resolveAlias(uctx, nn.Value)
+		if err != nil {
+			return nil, err
+		}
+		nn.Value = value
+	case *ast.MappingKeyNode:
+		value, err := u.resolveAlias(uctx, nn.Value)
+		if err != nil {
+			return nil, err
+		}
+		nn.Value = value
+	case *ast.MappingValueNode:
+		//nolint:nestif
+		if nn.Key.Type() == ast.MergeKeyType && nn.Value.Type() == ast.AliasType {
+			value, err := u.resolveAlias(uctx, nn.Value)
+			if err != nil {
+				return nil, err
+			}
+			keyColumn := nn.Key.GetToken().Position.Column
+			requiredColumn := keyColumn + 2 //nolint:gomnd
+			value.AddColumn(requiredColumn)
+			nn.Value = value
+		} else {
+			key, err := u.resolveAlias(uctx, nn.Key)
+			if err != nil {
+				return nil, err
+			}
+
+			k, ok := key.(ast.MapKeyNode)
+			if !ok {
+				return nil, uctx.perrorf(key, "unexpected node type %s", key.Type())
+			}
+			nn.Key = k
+			value, err := u.resolveAlias(uctx, nn.Value)
+			if err != nil {
+				return nil, err
+			}
+			nn.Value = value
+		}
+	case *ast.SequenceNode:
+		for idx, v := range nn.Values {
+			value, err := u.resolveAlias(uctx, v)
+			if err != nil {
+				return nil, err
+			}
+			nn.Values[idx] = value
+		}
+	case *ast.AliasNode:
+		aliasName := nn.Value.GetToken().Value
+		node, ok := u.anchors[aliasName]
+		if !ok {
+			return nil, uctx.perrorf(n, "unknown alias %s", aliasName)
+		}
+		return u.resolveAlias(uctx, node)
+	}
+
+	return n, nil
 }
 
 func (u *unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, list protoreflect.List) error {
