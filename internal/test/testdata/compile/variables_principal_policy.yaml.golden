@@ -1059,7 +1059,7 @@
                 "emitOutput": {
                   "when": {
                     "ruleActivated": {
-                      "original": "variables.f\n",
+                      "original": "variables.f",
                       "checked": {
                         "referenceMap": {
                           "1": {
@@ -1084,8 +1084,7 @@
                         "sourceInfo": {
                           "location": "<input>",
                           "lineOffsets": [
-                            12,
-                            13
+                            12
                           ],
                           "positions": {
                             "1": 0,
