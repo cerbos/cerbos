@@ -875,7 +875,7 @@
             "emitOutput": {
               "when": {
                 "ruleActivated": {
-                  "original": "\"pending_approval:%s\".format([request.resource.attr.status == \"PENDING_APPROVAL\"])\n",
+                  "original": "\"pending_approval:%s\".format([request.resource.attr.status == \"PENDING_APPROVAL\"])",
                   "checked": {
                     "referenceMap": {
                       "2": {
@@ -935,8 +935,7 @@
                     "sourceInfo": {
                       "location": "<input>",
                       "lineOffsets": [
-                        83,
-                        84
+                        83
                       ],
                       "positions": {
                         "1": 0,
