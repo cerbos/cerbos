@@ -10,7 +10,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/alecthomas/kong v0.8.1
 	github.com/alecthomas/participle/v2 v2.1.1
-	github.com/aws/aws-sdk-go v1.50.1
+	github.com/aws/aws-sdk-go v1.50.10
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.5.0
 	github.com/cenkalti/backoff/v4 v4.2.1
@@ -32,19 +32,19 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gobwas/glob v0.2.3
-	github.com/goccy/go-yaml v1.11.2
+	github.com/goccy/go-yaml v1.11.3
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/google/cel-go v0.19.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/gops v0.3.28
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jackc/pgtype v1.14.1
 	github.com/jackc/pgx-zap v0.0.0-20221202020421-94b1cb2f889f
-	github.com/jackc/pgx/v5 v5.5.2
+	github.com/jackc/pgx/v5 v5.5.3
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.2.0
@@ -59,10 +59,10 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/peterh/liner v1.2.2
-	github.com/planetscale/vtprotobuf v0.5.0
+	github.com/planetscale/vtprotobuf v0.6.0
 	github.com/prometheus/client_golang v1.18.0
-	github.com/pterm/pterm v0.12.75
-	github.com/rivo/tview v0.0.0-20240122063236-8526c9fe1b54
+	github.com/pterm/pterm v0.12.78
+	github.com/rivo/tview v0.0.0-20240204151237-861aa94d61c8
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.12.0
 	github.com/rs/cors v1.10.1
@@ -108,8 +108,8 @@ require (
 	golang.org/x/sync v0.6.0
 	golang.org/x/tools v0.17.0
 	gonum.org/v1/gonum v0.14.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80
-	google.golang.org/grpc v1.60.1
+	google.golang.org/genproto/googleapis/api v0.0.0-20240125205218-1f4bbc51befe
+	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -251,7 +251,7 @@ require (
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rivo/uniseg v0.4.7-0.20240127222946-601bbb3750c2 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/segmentio/backo-go v1.0.0 // indirect
@@ -283,7 +283,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/oauth2 v0.15.0 // indirect
+	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
@@ -292,7 +292,7 @@ require (
 	google.golang.org/api v0.152.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

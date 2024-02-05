@@ -5,14 +5,14 @@ go 1.21
 toolchain go1.21.1
 
 require (
-	github.com/bufbuild/buf v1.28.1
+	github.com/bufbuild/buf v1.29.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.2.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.2
 	github.com/fullstorydev/grpcurl v1.8.9
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser v1.23.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0
-	github.com/planetscale/vtprotobuf v0.5.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
+	github.com/planetscale/vtprotobuf v0.6.0
 	github.com/vektra/mockery/v2 v2.40.1
 	go.elastic.co/go-licence-detector v0.6.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
