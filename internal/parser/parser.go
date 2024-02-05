@@ -581,7 +581,7 @@ func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.MapNode, fd prot
 			continue
 		}
 
-		val, err := valueFn(uctx.forMapItem(keyVal.String(), key), items.Value())
+		val, err := valueFn(uctx.forMapItem(keyVal.String(), items.Value()), items.Value())
 		if err != nil {
 			return err
 		}
@@ -880,7 +880,7 @@ func (u *unmarshaler[T]) unmarshalWKT(uctx *unmarshalCtx, n ast.Node, out protor
 
 	if err := protojson.Unmarshal(jsonBytes, out.Interface()); err != nil {
 		errStr := protoErrPrefix.ReplaceAllString(err.Error(), "")
-		return uctx.perrorf(n, "failed to unmarshal well-known type: %s", errStr)
+		return uctx.perrorf(n, "failed to parse value: %s", errStr)
 	}
 
 	return nil
@@ -1002,7 +1002,15 @@ func (uc *unmarshalCtx) forPath(path string) *unmarshalCtx {
 }
 
 func (uc *unmarshalCtx) forField(fd protoreflect.FieldDescriptor, n ast.Node) *unmarshalCtx {
-	return uc.forMapItem(string(fd.Name()), n)
+	var newPath string
+	if uc.protoPath != "" {
+		newPath = uc.protoPath + "." + string(fd.Name())
+	} else {
+		newPath = string(fd.Name())
+	}
+
+	uc.recordFieldPosition(newPath, n)
+	return uc.forPath(newPath)
 }
 
 func (uc *unmarshalCtx) forListItem(i int, n ast.Node) *unmarshalCtx {
@@ -1012,13 +1020,7 @@ func (uc *unmarshalCtx) forListItem(i int, n ast.Node) *unmarshalCtx {
 }
 
 func (uc *unmarshalCtx) forMapItem(key string, n ast.Node) *unmarshalCtx {
-	var newPath string
-	if uc.protoPath != "" {
-		newPath = uc.protoPath + "." + key
-	} else {
-		newPath = key
-	}
-
+	newPath := fmt.Sprintf("%s[%q]", uc.protoPath, key)
 	uc.recordFieldPosition(newPath, n)
 	return uc.forPath(newPath)
 }
@@ -1113,10 +1115,32 @@ func NewUnmarshalError(err *sourcev1.Error) UnmarshalError {
 }
 
 func (ue UnmarshalError) Error() string {
+	return ue.StringWithoutContext()
+}
+
+func (ue UnmarshalError) StringWithoutContext() string {
 	pos := ue.Err.GetPosition()
-	if ue.Err.GetContext() == "" {
-		return fmt.Sprintf("%d:%d <%s> %s", pos.GetLine(), pos.GetColumn(), pos.GetPath(), ue.Err.GetMessage())
+	if pos != nil {
+		return fmt.Sprintf("%d:%d %s", pos.GetLine(), pos.GetColumn(), ue.Err.GetMessage())
 	}
 
-	return fmt.Sprintf("%d:%d <%s> %s\n%s", pos.GetLine(), pos.GetColumn(), pos.GetPath(), ue.Err.GetMessage(), ue.Err.GetContext())
+	return ue.Err.GetMessage()
+}
+
+func (ue UnmarshalError) Format(state fmt.State, verb rune) {
+	switch verb {
+	case 's':
+		fmt.Fprint(state, ue.StringWithoutContext())
+	case 'q':
+		fmt.Fprintf(state, "%q", ue.StringWithoutContext())
+	case 'v':
+		switch {
+		case state.Flag('+'):
+			fmt.Fprintf(state, "%s\n%s", ue.StringWithoutContext(), ue.Err.GetContext())
+		case state.Flag('#'):
+			fmt.Fprintf(state, "%T %s", ue, ue.StringWithoutContext())
+		default:
+			fmt.Fprint(state, ue.StringWithoutContext())
+		}
+	}
 }
