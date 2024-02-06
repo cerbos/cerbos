@@ -8,7 +8,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cerbos/cerbos/internal/namer"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -155,6 +155,7 @@ func runPolicyTests(t *testing.T, eng *engine.Engine, archive *txtar.Archive) (*
 
 	return runPolicyTestsWithConf(t, eng, archive, Config{})
 }
+
 func runPolicyTestsWithConf(t *testing.T, eng *engine.Engine, archive *txtar.Archive, conf Config) (*policyv1.TestResults, error) {
 	t.Helper()
 

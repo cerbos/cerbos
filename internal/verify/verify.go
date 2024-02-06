@@ -6,11 +6,12 @@ package verify
 import (
 	"context"
 	"fmt"
-	"github.com/cerbos/cerbos/internal/namer"
 	"io/fs"
 	"path/filepath"
 	"regexp"
 	"sort"
+
+	"github.com/cerbos/cerbos/internal/namer"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -21,10 +22,10 @@ import (
 )
 
 type Config struct {
-	Run           string
-	Trace         bool
 	RunResources  map[string]struct{}
 	RunPrincipals map[string]struct{}
+	Run           string
+	Trace         bool
 }
 
 type TestFilter struct {
@@ -46,12 +47,14 @@ func newTestFilter(conf *Config) (*TestFilter, error) {
 	f.runResources = conf.RunResources
 	return f, nil
 }
+
 func (f *TestFilter) ShouldRun(name string) bool {
 	if f.runRegex == nil {
 		return true
 	}
 	return f.runRegex.MatchString(name)
 }
+
 func (f *TestFilter) ShouldRunResource(r *enginev1.Resource) bool {
 	if len(f.runResources) == 0 {
 		return true
@@ -59,6 +62,7 @@ func (f *TestFilter) ShouldRunResource(r *enginev1.Resource) bool {
 	_, ok := f.runResources[namer.ResourcePolicyFQN(r.Kind, r.PolicyVersion, r.Scope)]
 	return ok
 }
+
 func (f *TestFilter) ShouldRunPrincipal(p *enginev1.Principal) bool {
 	if len(f.runPrincipals) == 0 {
 		return true
