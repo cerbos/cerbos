@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -77,6 +78,44 @@ func TestVerify(t *testing.T) {
 	}
 }
 
+func TestVerifyWithTestFilter(t *testing.T) {
+	testCases := test.LoadTestCases(t, filepath.Join("verify", "cases"))
+
+	eng := mkEngine(t)
+	resource := "leave_request"
+	conf := Config{
+		RunResources: map[string]struct{}{
+			namer.ResourcePolicyFQN(resource, "20210210", ""): {},
+		},
+	}
+	for _, tcase := range testCases {
+		tc := readVerifyTestCase(t, tcase)
+		t.Run(tcase.Name, func(t *testing.T) {
+			have, err := runPolicyTestsWithConf(t, eng, tc.archive, conf)
+			t.Log(protojson.Format(have))
+			if tc.WantErr {
+				require.Error(t, err, "Expected error")
+				return
+			}
+
+			for _, suite := range have.Suites {
+				for _, trTestCase := range suite.TestCases {
+					for _, trPrincipal := range trTestCase.Principals {
+						for _, trResource := range trPrincipal.Resources {
+							for _, trAction := range trResource.Actions {
+								if trAction.Details.Result != policyv1.TestResults_RESULT_SKIPPED {
+									require.True(t, strings.HasSuffix(trResource.Name, resource),
+										"not skipped test resource name %q expected to have suffix %q", trResource.Name, resource)
+								}
+							}
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
 func updateGoldenFiles(t *testing.T, eng *engine.Engine, testCases []test.Case) {
 	t.Helper()
 
@@ -114,10 +153,16 @@ func readVerifyTestCase(t *testing.T, tcase test.Case) *TestCase {
 func runPolicyTests(t *testing.T, eng *engine.Engine, archive *txtar.Archive) (*policyv1.TestResults, error) {
 	t.Helper()
 
+	return runPolicyTestsWithConf(t, eng, archive, Config{})
+}
+
+func runPolicyTestsWithConf(t *testing.T, eng *engine.Engine, archive *txtar.Archive, conf Config) (*policyv1.TestResults, error) {
+	t.Helper()
+
 	dir := t.TempDir()
 	require.NoError(t, txtar.Write(archive, dir), "Failed to expand archive")
 
-	return Verify(context.Background(), os.DirFS(dir), eng, Config{})
+	return Verify(context.Background(), os.DirFS(dir), eng, conf)
 }
 
 const (
