@@ -103,21 +103,27 @@ type Checker interface {
 
 type Opt func(config *verify.Config)
 
-func WithResourceTestFilter(name string) Opt {
+func WithResourceTestFilter(names ...string) Opt {
 	return func(config *verify.Config) {
 		if config.RunResources == nil {
-			config.RunResources = make(map[string]struct{})
+			config.RunResources = make(map[string]struct{}, len(names))
 		}
-		config.RunResources[name] = struct{}{}
+		
+		for _, n := range names {
+		    config.RunResources[n] = struct{}{}
+		}
 	}
 }
 
-func WithPrincipalTestFilter(name string) Opt {
+func WithPrincipalTestFilter(names ...string) Opt {
 	return func(config *verify.Config) {
 		if config.RunPrincipals == nil {
-			config.RunPrincipals = make(map[string]struct{})
+			config.RunPrincipals = make(map[string]struct{}, len(names))
 		}
-		config.RunPrincipals[name] = struct{}{}
+		
+		for _, n := range names {
+		    config.RunPrincipals[n] = struct{}{}
+		}
 	}
 }
 
