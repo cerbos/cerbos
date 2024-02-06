@@ -5,8 +5,8 @@ package verify
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/namer"
 	"io/fs"
 	"path/filepath"
 	"regexp"
@@ -21,11 +21,49 @@ import (
 )
 
 type Config struct {
-	Run   string
-	Trace bool
+	Run           string
+	Trace         bool
+	RunResources  map[string]struct{}
+	RunPrincipals map[string]struct{}
 }
 
-var ErrTestFixtureNotFound = errors.New("test fixture not found")
+type TestFilter struct {
+	runRegex      *regexp.Regexp
+	runResources  map[string]struct{}
+	runPrincipals map[string]struct{}
+}
+
+func newTestFilter(conf *Config) (*TestFilter, error) {
+	f := new(TestFilter)
+	if conf.Run != "" {
+		runRegex, err := regexp.Compile(conf.Run)
+		if err != nil {
+			return nil, fmt.Errorf("invalid run specification: %w", err)
+		}
+		f.runRegex = runRegex
+	}
+	return f, nil
+}
+func (f *TestFilter) ShouldRun(name string) bool {
+	if f.runRegex == nil {
+		return true
+	}
+	return f.runRegex.MatchString(name)
+}
+func (f *TestFilter) ShouldRunResource(r *enginev1.Resource) bool {
+	if len(f.runResources) == 0 {
+		return true
+	}
+	_, ok := f.runResources[namer.ResourcePolicyFQN(r.Kind, r.PolicyVersion, r.Scope)]
+	return ok
+}
+func (f *TestFilter) ShouldRunPrincipal(p *enginev1.Principal) bool {
+	if len(f.runPrincipals) == 0 {
+		return true
+	}
+	_, ok := f.runPrincipals[namer.PrincipalPolicyFQN(p.Id, p.PolicyVersion, p.Scope)]
+	return ok
+}
 
 type Checker interface {
 	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error)
@@ -33,23 +71,14 @@ type Checker interface {
 
 // Verify runs the test suites from the provided directory.
 func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv1.TestResults, error) {
-	var shouldRun func(string) bool
-
-	if conf.Run == "" {
-		shouldRun = func(_ string) bool { return true }
-	} else {
-		runRegex, err := regexp.Compile(conf.Run)
-		if err != nil {
-			return nil, fmt.Errorf("invalid run specification: %w", err)
-		}
-
-		shouldRun = func(name string) bool { return runRegex.MatchString(name) }
+	testFilter, err := newTestFilter(&conf)
+	if err != nil {
+		return nil, err
 	}
-
 	var suiteDefs []string
 	fixtureDefs := make(map[string]struct{})
 
-	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -140,7 +169,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 			}
 		}
 
-		return fixture.runTestSuite(ctx, eng, shouldRun, file, suite, conf.Trace)
+		return fixture.runTestSuite(ctx, eng, testFilter, file, suite, conf.Trace)
 	}
 
 	results := &policyv1.TestResults{

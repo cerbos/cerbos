@@ -177,7 +177,7 @@ func (tf *TestFixture) checkDupes(suite *policyv1.TestSuite) error {
 	return errs
 }
 
-func (tf *TestFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
+func (tf *TestFixture) runTestSuite(ctx context.Context, eng Checker, filter *TestFilter, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
 		File:        file,
 		Name:        suite.Name,
@@ -208,8 +208,24 @@ func (tf *TestFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 			return suiteResult
 		}
 
+		if !filter.ShouldRunResource(test.Input.Resource) {
+			testResult := &policyv1.TestResults_Details{
+				Result: policyv1.TestResults_RESULT_SKIPPED,
+			}
+			for _, action := range test.Input.Actions {
+				addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
+			}
+		}
+		if !filter.ShouldRunPrincipal(test.Input.Principal) {
+			testResult := &policyv1.TestResults_Details{
+				Result: policyv1.TestResults_RESULT_SKIPPED,
+			}
+			for _, action := range test.Input.Actions {
+				addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
+			}
+		}
 		for _, action := range test.Input.Actions {
-			testResult := runTest(ctx, eng, test, action, shouldRun, suite, trace)
+			testResult := runTest(ctx, eng, test, action, filter, suite, trace)
 			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
 		}
 	}
@@ -217,10 +233,10 @@ func (tf *TestFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 	return suiteResult
 }
 
-func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, shouldRun func(string) bool, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
+func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, filter *TestFilter, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
 	details := &policyv1.TestResults_Details{}
 
-	if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", suite.Name, test.Name.String())) {
+	if test.Skip || !filter.ShouldRun(fmt.Sprintf("%s/%s", suite.Name, test.Name.String())) {
 		details.Result = policyv1.TestResults_RESULT_SKIPPED
 		return details
 	}
