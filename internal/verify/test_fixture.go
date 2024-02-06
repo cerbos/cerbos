@@ -215,6 +215,7 @@ func (tf *TestFixture) runTestSuite(ctx context.Context, eng Checker, filter *Te
 			for _, action := range test.Input.Actions {
 				addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
 			}
+			continue
 		}
 		if !filter.ShouldRunPrincipal(test.Input.Principal) {
 			testResult := &policyv1.TestResults_Details{
@@ -223,6 +224,7 @@ func (tf *TestFixture) runTestSuite(ctx context.Context, eng Checker, filter *Te
 			for _, action := range test.Input.Actions {
 				addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
 			}
+			continue
 		}
 		for _, action := range test.Input.Actions {
 			testResult := runTest(ctx, eng, test, action, filter, suite, trace)

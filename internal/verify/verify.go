@@ -42,6 +42,8 @@ func newTestFilter(conf *Config) (*TestFilter, error) {
 		}
 		f.runRegex = runRegex
 	}
+	f.runPrincipals = conf.RunPrincipals
+	f.runResources = conf.RunResources
 	return f, nil
 }
 func (f *TestFilter) ShouldRun(name string) bool {

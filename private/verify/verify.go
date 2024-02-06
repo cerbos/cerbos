@@ -101,8 +101,32 @@ type Checker interface {
 	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts CheckOptions) ([]*enginev1.CheckOutput, error)
 }
 
-func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker) (*policyv1.TestResults, error) {
-	results, err := verify.Verify(ctx, fsys, checkFunc(eng.Check), verify.Config{})
+type Opt func(config *verify.Config)
+
+func WithResourceTestFilter(name string) Opt {
+	return func(config *verify.Config) {
+		if config.RunResources == nil {
+			config.RunResources = make(map[string]struct{})
+		}
+		config.RunResources[name] = struct{}{}
+	}
+}
+
+func WithPrincipalTestFilter(name string) Opt {
+	return func(config *verify.Config) {
+		if config.RunPrincipals == nil {
+			config.RunPrincipals = make(map[string]struct{})
+		}
+		config.RunPrincipals[name] = struct{}{}
+	}
+}
+
+func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker, opts ...Opt) (*policyv1.TestResults, error) {
+	config := new(verify.Config)
+	for _, opt := range opts {
+		opt(config)
+	}
+	results, err := verify.Verify(ctx, fsys, checkFunc(eng.Check), *config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}
