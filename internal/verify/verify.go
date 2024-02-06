@@ -28,14 +28,14 @@ type Config struct {
 	Trace         bool
 }
 
-type TestFilter struct {
+type testFilter struct {
 	runRegex      *regexp.Regexp
 	runResources  map[string]struct{}
 	runPrincipals map[string]struct{}
 }
 
-func newTestFilter(conf *Config) (*TestFilter, error) {
-	f := new(TestFilter)
+func newTestFilter(conf *Config) (*testFilter, error) {
+	f := new(testFilter)
 	if conf.Run != "" {
 		runRegex, err := regexp.Compile(conf.Run)
 		if err != nil {
@@ -48,14 +48,14 @@ func newTestFilter(conf *Config) (*TestFilter, error) {
 	return f, nil
 }
 
-func (f *TestFilter) ShouldRun(name string) bool {
+func (f *testFilter) ShouldRun(name string) bool {
 	if f.runRegex == nil {
 		return true
 	}
 	return f.runRegex.MatchString(name)
 }
 
-func (f *TestFilter) ShouldRunResource(r *enginev1.Resource) bool {
+func (f *testFilter) ShouldRunResource(r *enginev1.Resource) bool {
 	if len(f.runResources) == 0 {
 		return true
 	}
@@ -63,7 +63,7 @@ func (f *TestFilter) ShouldRunResource(r *enginev1.Resource) bool {
 	return ok
 }
 
-func (f *TestFilter) ShouldRunPrincipal(p *enginev1.Principal) bool {
+func (f *testFilter) ShouldRunPrincipal(p *enginev1.Principal) bool {
 	if len(f.runPrincipals) == 0 {
 		return true
 	}
