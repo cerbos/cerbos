@@ -108,9 +108,9 @@ func WithResourceTestFilter(names ...string) Opt {
 		if config.RunResources == nil {
 			config.RunResources = make(map[string]struct{}, len(names))
 		}
-		
+
 		for _, n := range names {
-		    config.RunResources[n] = struct{}{}
+			config.RunResources[n] = struct{}{}
 		}
 	}
 }
@@ -120,9 +120,9 @@ func WithPrincipalTestFilter(names ...string) Opt {
 		if config.RunPrincipals == nil {
 			config.RunPrincipals = make(map[string]struct{}, len(names))
 		}
-		
+
 		for _, n := range names {
-		    config.RunPrincipals[n] = struct{}{}
+			config.RunPrincipals[n] = struct{}{}
 		}
 	}
 }
