@@ -576,12 +576,6 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m
 		}
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.metadata"]; !ok {
-		if m.Metadata != nil {
-			cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_Metadata_hashpb_sum(m.Metadata, hasher, ignore)
-		}
-
-	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_Metadata_hashpb_sum(m *RunnablePrincipalPolicySet_Policy_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
@@ -669,6 +663,12 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m *RunnableP
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.metadata"]; !ok {
+		if m.Metadata != nil {
+			cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_Metadata_hashpb_sum(m.Metadata, hasher, ignore)
+		}
+
 	}
 }
 

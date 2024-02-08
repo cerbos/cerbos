@@ -129,7 +129,6 @@ message RunnablePrincipalPolicySet {
       cerbos.effect.v1.Effect effect = 4;
       Expr output = 5 [deprecated = true];
       Output emit_output = 6;
-      Metadata metadata = 7;
     }
 
     message ResourceRules {
@@ -140,6 +139,7 @@ message RunnablePrincipalPolicySet {
     map<string, Expr> variables = 2 [deprecated = true];
     map<string, ResourceRules> resource_rules = 3;
     repeated Variable ordered_variables = 4;
+    Metadata metadata = 5;
   }
 
   Metadata meta = 1;
