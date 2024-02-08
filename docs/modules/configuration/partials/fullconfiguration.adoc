@@ -74,6 +74,12 @@ engine:
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
   globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.
   lenientScopeSearch: false # LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
+hub:
+  credentials: # Credentials holds Cerbos Hub client credentials.
+    clientID: 92B0K05B6HOF # ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
+    clientSecret: ${CERBOS_HUB_CLIENT_SECRET} # ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
+    pdpID: crb-004 # PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
+    workspaceSecret: ${CERBOS_HUB_WORKSPACE_SECRET} # WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
 schema:
   cacheSize: 1024 # CacheSize defines the number of schemas to cache in memory.
   enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.
@@ -126,11 +132,6 @@ storage:
   bundle:
     # This section is required only if storage.driver is bundle.
     cacheSize: 1024 # CacheSize defines the number of policies to cache in memory.
-    credentials: # Credentials holds bundle source credentials.
-      clientID: 92B0K05B6HOF # ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
-      clientSecret: ${CERBOS_HUB_CLIENT_SECRET} # ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
-      pdpID: crb-004 # PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
-      workspaceSecret: ${CERBOS_HUB_WORKSPACE_SECRET} # WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
     local: # Local holds configuration for local bundle source.
       bundlePath: /path/to/bundle.crbp # Required. BundlePath is the full path to the local bundle file.
       tempDir: ${TEMP} # TempDir is the directory to use for temporary files.

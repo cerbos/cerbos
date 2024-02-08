@@ -30,13 +30,15 @@ audit:
   file:
     path: stdout
 
+hub:
+  credentials:
+    workspaceSecret: CERBOS-1HDHY70IHFLXD-4SPXE0NZUG25FE5RW5PD7FKGPKP5CZAG53TR6HHAAN7NPMYP0YES4RQFVS
+
 storage:
   driver: "bundle"
   bundle:
     local:
       bundlePath: internal/test/testdata/bundle/bundle.crbp
-    credentials:
-      workspaceSecret: CERBOS-1HDHY70IHFLXD-4SPXE0NZUG25FE5RW5PD7FKGPKP5CZAG53TR6HHAAN7NPMYP0YES4RQFVS
 
 schema:
   enforcement: reject

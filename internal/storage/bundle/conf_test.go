@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage/bundle"
 )
 
@@ -85,6 +86,59 @@ func TestConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "file/valid-credentials-from-hub",
+			conf: map[string]any{
+				"hub": map[string]any{
+					"credentials": map[string]any{
+						"pdpID":           "pdp-id",
+						"clientID":        "client-id",
+						"clientSecret":    "client-secret",
+						"workspaceSecret": "workspace-secret",
+					},
+				},
+				"storage": map[string]any{
+					"bundle": map[string]any{
+						"cacheSize": 1024,
+						"remote": map[string]any{
+							"bundleLabel": "latest",
+							"tempDir":     "/tmp",
+							"cacheDir":    "/tmp",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "file/duplicate-credentials",
+			conf: map[string]any{
+				"hub": map[string]any{
+					"credentials": map[string]any{
+						"pdpID":           "pdp-id",
+						"clientID":        "client-id",
+						"clientSecret":    "client-secret",
+						"workspaceSecret": "workspace-secret",
+					},
+				},
+				"storage": map[string]any{
+					"bundle": map[string]any{
+						"cacheSize": 1024,
+						"credentials": map[string]any{
+							"pdpID":           "pdp-id",
+							"clientID":        "client-id",
+							"clientSecret":    "client-secret",
+							"workspaceSecret": "workspace-secret",
+						},
+						"remote": map[string]any{
+							"bundleLabel": "latest",
+							"tempDir":     "/tmp",
+							"cacheDir":    "/tmp",
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "env/valid-config",
 			conf: map[string]any{
 				"storage": map[string]any{
@@ -151,7 +205,7 @@ func TestConfig(t *testing.T) {
 
 	want := &bundle.Conf{
 		CacheSize: 1024,
-		Credentials: bundle.CredentialsConf{
+		Credentials: hub.CredentialsConf{
 			PDPID:           "pdp-id",
 			ClientID:        "client-id",
 			ClientSecret:    "client-secret",
@@ -180,7 +234,7 @@ func TestConfig(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Empty(t, cmp.Diff(want, have, cmpopts.IgnoreFields(bundle.CredentialsConf{}, "InstanceID", "SecretKey")))
+			require.Empty(t, cmp.Diff(want, have, cmpopts.IgnoreFields(hub.CredentialsConf{}, "InstanceID", "SecretKey")))
 		})
 	}
 }

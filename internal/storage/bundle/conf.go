@@ -12,16 +12,13 @@ import (
 	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cloud-api/credentials"
 	"go.uber.org/multierr"
 )
 
 const (
-	confKey = storage.ConfKey + "." + DriverName
-
-	defaultAPIEndpoint       = "https://api.cerbos.cloud"
-	defaultBootstrapHost     = "https://cdn.cerbos.cloud"
+	confKey                  = storage.ConfKey + "." + DriverName
 	defaultCacheSize         = 1024
 	defaultHeartbeatInterval = 180 * time.Second
 	defaultMaxRetryWait      = 120 * time.Second
@@ -30,43 +27,10 @@ const (
 	minHeartbeatInterval     = 30 * time.Second
 )
 
-var ErrNoSource = errors.New("at least one of local or remote sources must be defined")
-
-type envVarKey int
-
-const (
-	bundleLabelKey envVarKey = iota
-	clientIDKey
-	clientSecretKey
-	offlineKey
-	pdpIDKey
-	workspaceSecretKey
+var (
+	ErrDuplicateCredentials = errors.New("both cerbosHub.credentials and storage.bundle.credentials are defined: please use cerbosHub.credentials")
+	ErrNoSource             = errors.New("at least one of local or remote sources must be defined")
 )
-
-var envVars = map[envVarKey][]string{
-	bundleLabelKey:     {"CERBOS_HUB_BUNDLE", "CERBOS_CLOUD_BUNDLE"},
-	clientIDKey:        {"CERBOS_HUB_CLIENT_ID", "CERBOS_CLOUD_CLIENT_ID"},
-	clientSecretKey:    {"CERBOS_HUB_CLIENT_SECRET", "CERBOS_CLOUD_CLIENT_SECRET"},
-	offlineKey:         {"CERBOS_HUB_OFFLINE", "CERBOS_CLOUD_OFFLINE"},
-	pdpIDKey:           {"CERBOS_HUB_PDP_ID", "CERBOS_PDP_ID"},
-	workspaceSecretKey: {"CERBOS_HUB_WORKSPACE_SECRET", "CERBOS_CLOUD_SECRET_KEY"},
-}
-
-func getEnv(key envVarKey) string {
-	varNames, ok := envVars[key]
-	if !ok {
-		return ""
-	}
-
-	for _, v := range varNames {
-		val, ok := os.LookupEnv(v)
-		if ok {
-			return val
-		}
-	}
-
-	return ""
-}
 
 // Conf is required (if driver is set to 'bundle') configuration for bundle storage driver.
 // +desc=This section is required only if storage.driver is bundle.
@@ -76,29 +40,9 @@ type Conf struct {
 	// Local holds configuration for local bundle source.
 	Local *LocalSourceConf `yaml:"local"`
 	// Credentials holds bundle source credentials.
-	Credentials CredentialsConf `yaml:"credentials"`
+	Credentials hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
 	// CacheSize defines the number of policies to cache in memory.
 	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
-}
-
-// CredentialsConf holds credentials for accessing the bundle service.
-type CredentialsConf struct {
-	// PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
-	PDPID string `yaml:"pdpID" conf:",example=crb-004"`
-	// ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
-	ClientID string `yaml:"clientID" conf:",example=92B0K05B6HOF"`
-	// ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
-	ClientSecret string `yaml:"clientSecret" conf:",example=${CERBOS_HUB_CLIENT_SECRET}"`
-	// WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
-	WorkspaceSecret string `yaml:"workspaceSecret" conf:",example=${CERBOS_HUB_WORKSPACE_SECRET}"`
-	// Deprecated: Use PDPID
-	InstanceID string `yaml:"instanceID" conf:",ignore"`
-	// Deprecated: Use WorkspaceSecret
-	SecretKey string `yaml:"secretKey" conf:",ignore"`
-}
-
-func (cc CredentialsConf) ToCredentials() (*credentials.Credentials, error) {
-	return credentials.New(cc.ClientID, cc.ClientSecret, cc.WorkspaceSecret)
 }
 
 // LocalSourceConf holds configuration for local bundle store.
@@ -141,6 +85,37 @@ type ConnectionConf struct {
 	HeartbeatInterval time.Duration `yaml:"heartbeatInterval" conf:",example=2m"`
 }
 
+func (cc *ConnectionConf) setDefaultsForUnsetFields() {
+	if cc.APIEndpoint == "" {
+		cc.APIEndpoint = hub.DefaultAPIEndpoint
+	}
+
+	if cc.BootstrapEndpoint == "" {
+		cc.BootstrapEndpoint = hub.DefaultBootstrapHost
+	}
+
+	if cc.MinRetryWait == 0 {
+		cc.MinRetryWait = defaultMinRetryWait
+	}
+
+	if cc.MaxRetryWait == 0 {
+		cc.MaxRetryWait = defaultMaxRetryWait
+	}
+
+	if cc.NumRetries == 0 {
+		cc.NumRetries = defaultNumRetries
+	}
+
+	switch {
+	case cc.HeartbeatInterval < 0:
+		cc.HeartbeatInterval = 0
+	case cc.HeartbeatInterval == 0:
+		cc.HeartbeatInterval = defaultHeartbeatInterval
+	case cc.HeartbeatInterval > 0 && cc.HeartbeatInterval < minHeartbeatInterval:
+		cc.HeartbeatInterval = minHeartbeatInterval
+	}
+}
+
 // TLSConf holds TLS configuration for the remote connection.
 type TLSConf struct {
 	// Authority overrides the Cerbos PDP server authority if it is different from what is provided in the address.
@@ -155,13 +130,6 @@ func (conf *Conf) Key() string {
 
 func (conf *Conf) SetDefaults() {
 	conf.CacheSize = defaultCacheSize
-
-	conf.Credentials = CredentialsConf{
-		ClientID:        getEnv(clientIDKey),
-		ClientSecret:    getEnv(clientSecretKey),
-		PDPID:           getEnv(pdpIDKey),
-		WorkspaceSecret: getEnv(workspaceSecretKey),
-	}
 }
 
 func (conf *Conf) Validate() (outErr error) {
@@ -181,17 +149,28 @@ func (conf *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, err)
 	}
 
-	// SecretKey was renamed to WorkspaceSecret in Cerbos 0.31.0
-	if conf.Credentials.WorkspaceSecret == "" && conf.Credentials.SecretKey != "" {
-		conf.Credentials.WorkspaceSecret = conf.Credentials.SecretKey
-	}
-
-	// InstanceID was renamed to PDPID in Cerbos 0.31.0
-	if conf.Credentials.PDPID == "" && conf.Credentials.InstanceID != "" {
-		conf.Credentials.PDPID = conf.Credentials.InstanceID
+	if err := conf.validateCredentials(); err != nil {
+		outErr = multierr.Append(outErr, err)
 	}
 
 	return outErr
+}
+
+func (conf *Conf) validateCredentials() error {
+	hubConf, err := hub.GetConf()
+	if err != nil {
+		return fmt.Errorf("failed to read Cerbos Hub configuration: %w", err)
+	}
+
+	switch {
+	case hubConf.Credentials.IsUnset():
+		return conf.Credentials.Validate()
+	case conf.Credentials.IsUnset():
+		conf.Credentials = hubConf.Credentials
+		return conf.Credentials.Validate()
+	default:
+		return ErrDuplicateCredentials
+	}
 }
 
 func (lc *LocalSourceConf) validate() error {
@@ -211,7 +190,7 @@ func (lc *LocalSourceConf) validate() error {
 	return nil
 }
 
-func (lc *LocalSourceConf) setDefaults() error {
+func (lc *LocalSourceConf) setDefaultsForUnsetFields() error {
 	if lc == nil {
 		return errors.New("configuration is undefined")
 	}
@@ -233,7 +212,7 @@ func (rc *RemoteSourceConf) validate() error {
 	}
 
 	if rc.BundleLabel == "" {
-		rc.BundleLabel = getEnv(bundleLabelKey)
+		rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
 	}
 
 	if strings.TrimSpace(rc.BundleLabel) == "" {
@@ -243,13 +222,13 @@ func (rc *RemoteSourceConf) validate() error {
 	return nil
 }
 
-func (rc *RemoteSourceConf) setDefaults() error {
+func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 	if rc == nil {
 		return errors.New("configuration is undefined")
 	}
 
 	if rc.BundleLabel == "" {
-		rc.BundleLabel = getEnv(bundleLabelKey)
+		rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
 	}
 
 	if rc.TempDir == "" {
@@ -275,35 +254,7 @@ func (rc *RemoteSourceConf) setDefaults() error {
 		rc.CacheDir = dir
 	}
 
-	if rc.Connection.APIEndpoint == "" {
-		rc.Connection.APIEndpoint = defaultAPIEndpoint
-	}
-
-	if rc.Connection.BootstrapEndpoint == "" {
-		rc.Connection.BootstrapEndpoint = defaultBootstrapHost
-	}
-
-	if rc.Connection.MinRetryWait == 0 {
-		rc.Connection.MinRetryWait = defaultMinRetryWait
-	}
-
-	if rc.Connection.MaxRetryWait == 0 {
-		rc.Connection.MaxRetryWait = defaultMaxRetryWait
-	}
-
-	if rc.Connection.NumRetries == 0 {
-		rc.Connection.NumRetries = defaultNumRetries
-	}
-
-	switch {
-	case rc.Connection.HeartbeatInterval < 0:
-		rc.Connection.HeartbeatInterval = 0
-	case rc.Connection.HeartbeatInterval == 0:
-		rc.Connection.HeartbeatInterval = defaultHeartbeatInterval
-	case rc.Connection.HeartbeatInterval > 0 && rc.Connection.HeartbeatInterval < minHeartbeatInterval:
-		rc.Connection.HeartbeatInterval = minHeartbeatInterval
-	}
-
+	rc.Connection.setDefaultsForUnsetFields()
 	return nil
 }
 

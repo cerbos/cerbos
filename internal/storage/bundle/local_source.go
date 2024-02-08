@@ -33,7 +33,7 @@ type LocalSource struct {
 }
 
 func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error) {
-	if err := conf.Local.setDefaults(); err != nil {
+	if err := conf.Local.setDefaultsForUnsetFields(); err != nil {
 		return nil, err
 	}
 

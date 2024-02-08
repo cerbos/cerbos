@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/test"
@@ -310,7 +311,7 @@ func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 
 	return &bundle.Conf{
 		CacheSize: 1024,
-		Credentials: bundle.CredentialsConf{
+		Credentials: hub.CredentialsConf{
 			ClientID:        "client-id",
 			ClientSecret:    "client-secret",
 			WorkspaceSecret: loadKey(t),
