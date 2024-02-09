@@ -266,7 +266,7 @@ func WithMetadata(p *policyv1.Policy, source string, annotations map[string]stri
 	}
 
 	p.Metadata.SourceFile = source
-	p.Metadata.Annotations = annotations
+	p.Metadata.Annotations = mergeAnnotations(p.Metadata.Annotations, annotations)
 	p = WithSourceAttributes(p, sourceAttr...)
 
 	if p.Metadata.StoreIdentifier == "" {
@@ -278,6 +278,25 @@ func WithMetadata(p *policyv1.Policy, source string, annotations map[string]stri
 	}
 
 	return p
+}
+
+func mergeAnnotations(a, b map[string]string) map[string]string {
+	if a == nil {
+		return b
+	}
+
+	if b == nil {
+		return a
+	}
+
+	c := make(map[string]string, len(a)+len(b))
+	for k, v := range a {
+		c[k] = v
+	}
+	for k, v := range b {
+		c[k] = v
+	}
+	return c
 }
 
 // WithStoreIdentifier adds the store identifier to the metadata.
