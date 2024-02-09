@@ -125,7 +125,7 @@ func (r *tlsReloader) reload(ctx context.Context) {
 }
 
 func (r *tlsReloader) GetCertificateFunc() func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
-	return func(chi *tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	return func(_ *tls.CertificateRequestInfo) (*tls.Certificate, error) {
 		r.mu.RLock()
 		defer r.mu.RUnlock()
 

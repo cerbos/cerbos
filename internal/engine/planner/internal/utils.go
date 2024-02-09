@@ -5,7 +5,7 @@ package internal
 
 import exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-func UpdateIds(e *exprpb.Expr) {
+func UpdateIDs(e *exprpb.Expr) {
 	var n int64
 	ids := make(map[*exprpb.Expr]int64)
 

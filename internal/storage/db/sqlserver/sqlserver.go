@@ -115,7 +115,6 @@ END
 		sql.Named("version", p.Version),
 		sql.Named("scope", p.Scope),
 		sql.Named("id", int64(id.(uint64))))
-
 	if err != nil {
 		//nolint: errorlint
 		if mssqlErr, ok := err.(interface{ SQLErrorNumber() int32 }); ok && mssqlErr.SQLErrorNumber() == constraintViolationErrCode {

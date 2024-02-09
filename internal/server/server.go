@@ -536,7 +536,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		IdleTimeout:       s.conf.Advanced.HTTP.IdleTimeout,
 	}
 
-	s.pool.Go(func(ctx context.Context) error {
+	s.pool.Go(func(_ context.Context) error {
 		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
 		err := h.Serve(l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {

@@ -138,15 +138,15 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		IncludeDisabled: req.IncludeDisabled,
 	}
 
-	policyIds, err := cas.store.ListPolicyIDs(context.Background(), filterParams)
+	policyIDs, err := cas.store.ListPolicyIDs(context.Background(), filterParams)
 	if err != nil {
 		logging.ReqScopeLog(ctx).Error("Could not get policy ids", zap.Error(err))
 		return nil, status.Error(codes.Internal, "could not get policy ids")
 	}
 
-	sort.Strings(policyIds)
+	sort.Strings(policyIDs)
 	return &responsev1.ListPoliciesResponse{
-		PolicyIds: policyIds,
+		PolicyIds: policyIDs,
 	}, nil
 }
 
@@ -243,15 +243,15 @@ func (cas *CerbosAdminService) ListSchemas(ctx context.Context, _ *requestv1.Lis
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	schemaIds, err := cas.store.ListSchemaIDs(ctx)
+	schemaIDs, err := cas.store.ListSchemaIDs(ctx)
 	if err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to list schema ids", zap.Error(err))
 		return nil, status.Error(codes.NotFound, "failed to list schema ids")
 	}
 
-	sort.Strings(schemaIds)
+	sort.Strings(schemaIDs)
 	return &responsev1.ListSchemasResponse{
-		SchemaIds: schemaIds,
+		SchemaIds: schemaIDs,
 	}, nil
 }
 

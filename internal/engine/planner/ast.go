@@ -151,7 +151,7 @@ func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err
 		return nil, fmt.Errorf("failed to clone an expression: %v", e)
 	}
 	output = r(output)
-	internal.UpdateIds(output)
+	internal.UpdateIDs(output)
 
 	return output, err
 }

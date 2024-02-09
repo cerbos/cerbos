@@ -17,7 +17,7 @@ import (
 )
 
 func List(k *kong.Kong, c *cerbos.GRPCAdminClient, format *flagset.Format) error {
-	schemaIds, err := c.ListSchemas(context.Background())
+	schemaIDs, err := c.ListSchemas(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting schemas: %w", err)
 	}
@@ -27,8 +27,8 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, format *flagset.Format) error
 		tw.SetHeader([]string{"SCHEMA ID"})
 	}
 
-	sort.Strings(schemaIds)
-	for _, id := range schemaIds {
+	sort.Strings(schemaIDs)
+	for _, id := range schemaIDs {
 		tw.Append([]string{id})
 	}
 	tw.Render()

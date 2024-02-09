@@ -24,7 +24,7 @@ cerbosctl get schemas principal.json`
 type Cmd struct {
 	flagset.Format
 
-	SchemaIds []string `arg:"" name:"id" optional:"" help:"list of schema ids to retrieve"`
+	SchemaIds []string `arg:"" name:"id" optional:"" help:"list of schema ids to retrieve"` //nolint:revive
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {

@@ -50,7 +50,7 @@ var nameRegexpCache util.RegexpCache
 func init() {
 	nameRegexpCache = *util.NewRegexpCache()
 
-	gosqlite3.MustRegisterDeterministicScalarFunction("regexp", nRegexpFnArgs, func(ctx *gosqlite3.FunctionContext, args []driver.Value) (driver.Value, error) {
+	gosqlite3.MustRegisterDeterministicScalarFunction("regexp", nRegexpFnArgs, func(_ *gosqlite3.FunctionContext, args []driver.Value) (driver.Value, error) {
 		if args[0] == nil || args[1] == nil {
 			return nil, nil
 		}

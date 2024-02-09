@@ -140,7 +140,7 @@ func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 		} else {
 			output = mkLogicalOr(opts)
 		}
-		internal.UpdateIds(output)
+		internal.UpdateIDs(output)
 		return true, output, nil
 	}
 

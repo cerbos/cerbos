@@ -388,14 +388,14 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is.NoError(err)
 			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
 			err = p.evalComprehensionBody(haveExpr)
-			internal.UpdateIds(haveExpr)
+			internal.UpdateIDs(haveExpr)
 			is.NoError(err)
 
 			wantAst, iss := env.Parse(tt.want)
 			pe, err = cel.AstToParsedExpr(wantAst)
 			is.NoError(err)
 			wantExpr := pe.Expr
-			internal.UpdateIds(wantExpr)
+			internal.UpdateIDs(wantExpr)
 			is.Nil(iss, iss.Err())
 			is.Empty(cmp.Diff(wantExpr, haveExpr, protocmp.Transform(), ignoreID),
 				"{\"got\": %s,\n\"want\": %s}", protojson.Format(haveExpr), protojson.Format(wantExpr))
