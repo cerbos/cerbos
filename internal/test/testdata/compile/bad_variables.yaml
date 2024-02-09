@@ -15,7 +15,7 @@ wantErrors:
       Undefined variable 'y' referenced in variable 'h'
     position:
       line: 15
-      column: 7
+      column: 10
       path: "$.resourcePolicy.variables.local.h"
   - file: resource_policies/example.yaml
     error: undefined variable
@@ -23,23 +23,23 @@ wantErrors:
       Undefined variable 'x' referenced in variable 'h'
     position:
       line: 15
-      column: 7
+      column: 10
       path: "$.resourcePolicy.variables.local.h"
   - file: resource_policies/example.yaml
     error: cyclical variable definitions
     description: |-
-      Variables 'd' (resource_policies/example.yaml:11:7), 'e' (resource_policies/example.yaml:12:7), 'f' (resource_policies/example.yaml:13:7), and 'g' (resource_policies/example.yaml:14:7) form a cycle
+      Variables 'd' (resource_policies/example.yaml:11:10), 'e' (resource_policies/example.yaml:12:10), 'f' (resource_policies/example.yaml:13:10), and 'g' (resource_policies/example.yaml:14:10) form a cycle
     position:
       line: 11
-      column: 7
+      column: 10
       path: "$.resourcePolicy.variables.local.d"
   - file: resource_policies/example.yaml
     error: cyclical variable definitions
     description: |-
-      Variables 'b' (resource_policies/example.yaml:9:7) and 'c' (resource_policies/example.yaml:10:7) form a cycle
+      Variables 'b' (resource_policies/example.yaml:9:10) and 'c' (resource_policies/example.yaml:10:10) form a cycle
     position:
       line: 9
-      column: 7
+      column: 10
       path: "$.resourcePolicy.variables.local.b"
   - file: resource_policies/example.yaml
     error: cyclical variable definitions
@@ -47,6 +47,6 @@ wantErrors:
       Variable 'a' references itself
     position:
       line: 8
-      column: 7
+      column: 10
       path: "$.resourcePolicy.variables.local.a"
 mainDef: resource_policies/example.yaml

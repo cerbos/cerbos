@@ -111,7 +111,7 @@ func newVariableDefinitions(modCtx *moduleCtx) *variableDefinitions {
 
 func (vd *variableDefinitions) Compile(definitions map[string]string, path, source string) {
 	for name, expr := range definitions {
-		varPath := path + "." + name
+		varPath := fmt.Sprintf("%s[%q]", path, name)
 		variable := &runtimev1.Variable{
 			Name: name,
 			Expr: &runtimev1.Expr{

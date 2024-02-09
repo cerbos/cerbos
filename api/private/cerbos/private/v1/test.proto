@@ -13,7 +13,11 @@ import "cerbos/response/v1/response.proto";
 import "cerbos/runtime/v1/runtime.proto";
 import "cerbos/schema/v1/schema.proto";
 import "cerbos/source/v1/source.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1";
 
@@ -194,4 +198,49 @@ message ProtoYamlTestCase {
   string description = 1;
   repeated Want want = 2;
   repeated cerbos.source.v1.Error want_errors = 3;
+}
+
+// Taken from
+// https://github.com/bufbuild/protobuf-conformance/blob/main/proto/google/protobuf/test_messages_proto3.proto
+message WellKnownTypes {
+  message Nested {
+    string string_field = 1;
+    google.protobuf.Value value_field = 2;
+  }
+
+  google.protobuf.BoolValue bool_wrapper = 1;
+  google.protobuf.Int32Value int32_wrapper = 2;
+  google.protobuf.Int64Value int64_wrapper = 3;
+  google.protobuf.UInt32Value uint32_wrapper = 4;
+  google.protobuf.UInt64Value uint64_wrapper = 5;
+  google.protobuf.FloatValue float_wrapper = 6;
+  google.protobuf.DoubleValue double_wrapper = 7;
+  google.protobuf.StringValue string_wrapper = 8;
+  google.protobuf.BytesValue bytes_wrapper = 9;
+
+  repeated google.protobuf.BoolValue repeated_bool_wrapper = 10;
+  repeated google.protobuf.Int32Value repeated_int32_wrapper = 11;
+  repeated google.protobuf.Int64Value repeated_int64_wrapper = 12;
+  repeated google.protobuf.UInt32Value repeated_uint32_wrapper = 13;
+  repeated google.protobuf.UInt64Value repeated_uint64_wrapper = 14;
+  repeated google.protobuf.FloatValue repeated_float_wrapper = 15;
+  repeated google.protobuf.DoubleValue repeated_double_wrapper = 16;
+  repeated google.protobuf.StringValue repeated_string_wrapper = 17;
+  repeated google.protobuf.BytesValue repeated_bytes_wrapper = 18;
+
+  google.protobuf.Duration duration = 19;
+  google.protobuf.Timestamp timestamp = 20;
+  google.protobuf.Struct struct = 21;
+  google.protobuf.Any any = 22;
+  google.protobuf.Value value = 23;
+  google.protobuf.NullValue null_value = 24;
+
+  repeated google.protobuf.Duration repeated_duration = 25;
+  repeated google.protobuf.Timestamp repeated_timestamp = 26;
+  repeated google.protobuf.Struct repeated_struct = 27;
+  repeated google.protobuf.Any repeated_any = 28;
+  repeated google.protobuf.Value repeated_value = 29;
+  repeated google.protobuf.ListValue repeated_list_value = 30;
+
+  Nested optional_nested_msg = 31;
 }

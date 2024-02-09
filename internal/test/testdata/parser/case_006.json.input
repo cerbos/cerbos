@@ -15,13 +15,12 @@ resourcePolicy: &resourceTmpl
   rules:
     - actions: ['*']
       effect: EFFECT_ALLOW
-      roles:
+      derivedRoles: &dr
         - admin
       name: wildcard
 
     - actions: ["create"]
-      derivedRoles:
-        - employee_that_owns_the_record
+      derivedRoles: *dr
       effect: EFFECT_ALLOW
 ---
 apiVersion: api.cerbos.dev/v1
@@ -31,6 +30,6 @@ resourcePolicy:
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
-  <<: *resourceTmpl
   version: foo
+  <<: *resourceTmpl
 

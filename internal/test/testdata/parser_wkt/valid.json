@@ -1,0 +1,91 @@
+{
+  "boolWrapper": true,
+  "int32Wrapper": 42,
+  "int64Wrapper": 42,
+  "uint32Wrapper": 42,
+  "uint64Wrapper": 42,
+  "floatWrapper": 32.5,
+  "doubleWrapper": 32.5,
+  "stringWrapper": "foo",
+  "bytesWrapper": "Zm9v",
+  "repeatedBoolWrapper": [
+    true,
+    false
+  ],
+  "repeatedInt32Wrapper": [
+    42,
+    43
+  ],
+  "repeatedInt64Wrapper": [
+    43,
+    44
+  ],
+  "repeatedUint32Wrapper": [
+    44,
+    45
+  ],
+  "repeatedUint64Wrapper": [
+    45,
+    46
+  ],
+  "repeatedFloatWrapper": [
+    3.14,
+    3.5
+  ],
+  "repeatedDoubleWrapper": [
+    6.14,
+    6.5
+  ],
+  "repeatedStringWrapper": [
+    "foo",
+    "bar"
+  ],
+  "repeatedBytesWrapper": [
+    "Zm9v",
+    "Zm9v"
+  ],
+  "duration": "10s",
+  "timestamp": "2022-08-02T15:00:00Z",
+  "struct": {
+    "foo": "bar",
+    "wibble": "wobble"
+  },
+  "value": "bar",
+  "nullValue": null,
+  "repeatedDuration": [
+    "5s",
+    "10s"
+  ],
+  "repeatedTimestamp": [
+    "2022-08-02T15:00:00Z",
+    "2022-08-02T15:00:00Z"
+  ],
+  "repeatedStruct": [
+    {
+      "foo": "bar",
+      "wibble": "wobble"
+    },
+    {
+      "foo": "bar",
+      "wibble": "wobble"
+    }
+  ],
+  "repeatedValue": [
+    12,
+    "foo"
+  ],
+  "repeatedListValue": [
+    [
+      "x",
+      "y"
+    ],
+    [
+      1,
+      2
+    ]
+  ],
+  "optionalNestedMsg": {
+    "stringField": "baz",
+    "valueField": 12
+  }
+}

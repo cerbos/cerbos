@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -22,6 +23,7 @@ import (
 	"github.com/goccy/go-yaml/printer"
 	"github.com/goccy/go-yaml/token"
 	"github.com/stoewer/go-strcase"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -37,6 +39,8 @@ const (
 )
 
 var ErrNotFound = errors.New("not found")
+
+var protoErrPrefix = regexp.MustCompile(`proto:(\x{00a0}|\x{0020})+\(line\s+\d+:\d+\):\s*`)
 
 // Find a single document from the multi-document stream.
 // TODO(cell): Optimize!
@@ -182,11 +186,26 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Error) {
 	var errPrinter printer.Printer
 	i := 0
+	flowBlock := 0
 	for {
 		if i >= len(tokens) {
 			break
 		}
 		tok := tokens[i]
+
+		// Check whether we are inside a flow block (e.g. foo: {"x": "y"})
+		if tok.Indicator == token.FlowCollectionIndicator {
+			if tok.Type == token.MappingStartType || tok.Type == token.SequenceStartType {
+				flowBlock++
+			} else {
+				flowBlock--
+			}
+		}
+
+		if flowBlock > 0 {
+			i++
+			continue
+		}
 
 		if tok.Prev != nil && tok.Prev.Type != token.MappingValueType {
 			i++
@@ -262,14 +281,14 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 	seenOneOfs := make(map[int]string)
 	items := v.MapRange()
 
+	// Find all the merge keys first and populate the message because they need to overwritten by new values
+	// Basically, ensuring that "bar" is set to "baz" in the following case regardless of what value "bar" has
+	// in the "anchor" map.
+	// x:
+	//  bar: baz
+	//  <<: *anchor
 	for items.Next() {
-		kn := items.Key()
-
-		var keyValue string
-		switch kt := kn.(type) {
-		case *ast.StringNode:
-			keyValue = kt.Value
-		case *ast.MergeKeyNode:
+		if items.Key().Type() == ast.MergeKeyType {
 			mn, err := u.resolveMerge(uctx, items.Value())
 			if err != nil {
 				return err
@@ -278,7 +297,19 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 			if err := u.unmarshalMapping(uctx, mn, out); err != nil {
 				return err
 			}
+		}
+	}
 
+	items = v.MapRange()
+	for items.Next() {
+		kn := items.Key()
+
+		var keyValue string
+		switch kt := kn.(type) {
+		case *ast.StringNode:
+			keyValue = kt.Value
+		case *ast.MergeKeyNode:
+			// already handled above
 			continue
 		default:
 			return uctx.perrorf(kn, "unexpected key type %s", kn.Type())
@@ -309,7 +340,18 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out
 			}
 		case field.IsMap():
 			mmap := out.Mutable(field).Map()
-			if err := u.unmarshalMap(uctx.forField(field, kn), items.Value(), field, mmap); err != nil {
+
+			nn, err := u.resolveNode(uctx, items.Value())
+			if err != nil {
+				return err
+			}
+
+			mn, ok := nn.(ast.MapNode)
+			if !ok {
+				return uctx.perrorf(items.Value(), "expected map got %s", nn.Type())
+			}
+
+			if err := u.unmarshalMap(uctx.forField(field, kn), mn, field, mmap, true); err != nil {
 				return err
 			}
 		default:
@@ -339,9 +381,14 @@ func (u *unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNo
 			return nil, uctx.perrorf(n, "unknown anchor %q", anchorName)
 		}
 
-		mn, ok := aliased.(ast.MapNode)
+		resolved, err := u.resolveAlias(uctx, aliased)
+		if err != nil {
+			return nil, err
+		}
+
+		mn, ok := resolved.(ast.MapNode)
 		if !ok {
-			return nil, uctx.perrorf(n, "expected map alias got %s", aliased.Type())
+			return nil, uctx.perrorf(n, "expected map alias got %s", resolved.Type())
 		}
 
 		return mn, nil
@@ -354,18 +401,15 @@ func (u *unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, 
 	switch t := n.(type) {
 	case *ast.AnchorNode:
 		anchorName := t.Name.GetToken().Value
-		if u.anchors == nil {
-			u.anchors = make(map[string]ast.Node)
-			u.anchors[anchorName] = t.Value
-			return t.Value, nil
-		}
-
 		if _, ok := u.anchors[anchorName]; ok {
 			return nil, uctx.perrorf(n, "duplicate anchor definition %q", t.String())
 		}
 
+		if u.anchors == nil {
+			u.anchors = make(map[string]ast.Node)
+		}
 		u.anchors[anchorName] = t.Value
-		return t.Value, nil
+		return u.resolveNode(uctx, t.Value)
 	case *ast.AliasNode:
 		anchorName := t.Value.GetToken().Value
 		an, ok := u.anchors[anchorName]
@@ -373,12 +417,90 @@ func (u *unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, 
 			return nil, uctx.perrorf(n, "unknown anchor %q", anchorName)
 		}
 
-		return an, nil
+		return u.resolveAlias(uctx, an)
 	case *ast.TagNode:
-		return t.Value, nil
+		return u.resolveAlias(uctx, t.Value)
 	default:
 		return n, nil
 	}
+}
+
+// adapted from https://github.com/goccy/go-yaml/blob/31fe1baacec127337140701face2e64a356075fd/decode.go#L355
+func (u *unmarshaler[T]) resolveAlias(uctx *unmarshalCtx, n ast.Node) (ast.Node, error) {
+	switch nn := n.(type) {
+	case *ast.AnchorNode:
+		return u.resolveAlias(uctx, nn.Value)
+	case *ast.MappingNode:
+		for idx, v := range nn.Values {
+			value, err := u.resolveAlias(uctx, v)
+			if err != nil {
+				return nil, err
+			}
+
+			vv, ok := value.(*ast.MappingValueNode)
+			if !ok {
+				return nil, uctx.perrorf(vv, "unexpected node type %s", vv.Type())
+			}
+			nn.Values[idx] = vv
+		}
+	case *ast.TagNode:
+		value, err := u.resolveAlias(uctx, nn.Value)
+		if err != nil {
+			return nil, err
+		}
+		nn.Value = value
+	case *ast.MappingKeyNode:
+		value, err := u.resolveAlias(uctx, nn.Value)
+		if err != nil {
+			return nil, err
+		}
+		nn.Value = value
+	case *ast.MappingValueNode:
+		//nolint:nestif
+		if nn.Key.Type() == ast.MergeKeyType && nn.Value.Type() == ast.AliasType {
+			value, err := u.resolveAlias(uctx, nn.Value)
+			if err != nil {
+				return nil, err
+			}
+			keyColumn := nn.Key.GetToken().Position.Column
+			requiredColumn := keyColumn + 2 //nolint:gomnd
+			value.AddColumn(requiredColumn)
+			nn.Value = value
+		} else {
+			key, err := u.resolveAlias(uctx, nn.Key)
+			if err != nil {
+				return nil, err
+			}
+
+			k, ok := key.(ast.MapKeyNode)
+			if !ok {
+				return nil, uctx.perrorf(key, "unexpected node type %s", key.Type())
+			}
+			nn.Key = k
+			value, err := u.resolveAlias(uctx, nn.Value)
+			if err != nil {
+				return nil, err
+			}
+			nn.Value = value
+		}
+	case *ast.SequenceNode:
+		for idx, v := range nn.Values {
+			value, err := u.resolveAlias(uctx, v)
+			if err != nil {
+				return nil, err
+			}
+			nn.Values[idx] = value
+		}
+	case *ast.AliasNode:
+		aliasName := nn.Value.GetToken().Value
+		node, ok := u.anchors[aliasName]
+		if !ok {
+			return nil, uctx.perrorf(n, "unknown alias %s", aliasName)
+		}
+		return u.resolveAlias(uctx, node)
+	}
+
+	return n, nil
 }
 
 func (u *unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, list protoreflect.List) error {
@@ -416,17 +538,7 @@ func (u *unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protor
 	return nil
 }
 
-func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, mmap protoreflect.Map) error {
-	nn, err := u.resolveNode(uctx, n)
-	if err != nil {
-		return err
-	}
-
-	mn, ok := nn.(ast.MapNode)
-	if !ok {
-		return uctx.perrorf(n, "expected map got %s", nn.Type())
-	}
-
+func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.MapNode, fd protoreflect.FieldDescriptor, mmap protoreflect.Map, overwriteKeys bool) error {
 	var valueFn func(*unmarshalCtx, ast.Node) (protoreflect.Value, error)
 	switch fd.MapValue().Kind() {
 	case protoreflect.MessageKind, protoreflect.GroupKind:
@@ -444,23 +556,37 @@ func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.Node, fd protore
 		}
 	}
 
-	items := mn.MapRange()
+	items := n.MapRange()
 	for items.Next() {
-		key, err := u.unmarshalMapKey(uctx, items.Key(), fd.MapKey())
+		key := items.Key()
+		if key.Type() == ast.MergeKeyType {
+			kn, err := u.resolveMerge(uctx, items.Value())
+			if err != nil {
+				return err
+			}
+
+			if err := u.unmarshalMap(uctx, kn, fd, mmap, false); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		keyVal, err := u.unmarshalMapKey(uctx, key, fd.MapKey())
 		if err != nil {
 			return err
 		}
 
-		if mmap.Has(key) {
-			return uctx.perrorf(items.Key(), "duplicate map key")
+		if !overwriteKeys && mmap.Has(keyVal) {
+			continue
 		}
 
-		val, err := valueFn(uctx.forMapItem(key.String(), items.Key()), items.Value())
+		val, err := valueFn(uctx.forMapItem(keyVal.String(), items.Value()), items.Value())
 		if err != nil {
 			return err
 		}
 
-		mmap.Set(key, val)
+		mmap.Set(keyVal, val)
 	}
 
 	return nil
@@ -729,12 +855,35 @@ func (u *unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out pr
 		return err
 	}
 
+	if out.Descriptor().FullName().Parent() == "google.protobuf" {
+		return u.unmarshalWKT(uctx, n, out)
+	}
+
 	mn, ok := nn.(ast.MapNode)
 	if !ok {
 		return uctx.perrorf(n, "expected object got %s", nn.Type())
 	}
 
 	return u.unmarshalMapping(uctx, mn, out)
+}
+
+func (u *unmarshaler[T]) unmarshalWKT(uctx *unmarshalCtx, n ast.Node, out protoreflect.Message) error {
+	// Google's well-known type handling is hidden inside an internal package and can't be used directly.
+	// The code is complicated and copying it here is probably not a good idea.
+	// Cerbos policies don't use any WKTs. Only the test suite definitions and fixtures use them so
+	// resorting to this slightly inefficient hack is OK for now.
+	nodeStr := n.String()
+	jsonBytes, err := yaml.YAMLToJSON(unsafe.Slice(unsafe.StringData(nodeStr), len(nodeStr)))
+	if err != nil {
+		return uctx.perrorf(n, "failed to convert well-known type: %v", err)
+	}
+
+	if err := protojson.Unmarshal(jsonBytes, out.Interface()); err != nil {
+		errStr := protoErrPrefix.ReplaceAllString(err.Error(), "")
+		return uctx.perrorf(n, "failed to parse value: %s", errStr)
+	}
+
+	return nil
 }
 
 func (u *unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.MapKey, error) {
@@ -853,7 +1002,15 @@ func (uc *unmarshalCtx) forPath(path string) *unmarshalCtx {
 }
 
 func (uc *unmarshalCtx) forField(fd protoreflect.FieldDescriptor, n ast.Node) *unmarshalCtx {
-	return uc.forMapItem(string(fd.Name()), n)
+	var newPath string
+	if uc.protoPath != "" {
+		newPath = uc.protoPath + "." + string(fd.Name())
+	} else {
+		newPath = string(fd.Name())
+	}
+
+	uc.recordFieldPosition(newPath, n)
+	return uc.forPath(newPath)
 }
 
 func (uc *unmarshalCtx) forListItem(i int, n ast.Node) *unmarshalCtx {
@@ -863,13 +1020,7 @@ func (uc *unmarshalCtx) forListItem(i int, n ast.Node) *unmarshalCtx {
 }
 
 func (uc *unmarshalCtx) forMapItem(key string, n ast.Node) *unmarshalCtx {
-	var newPath string
-	if uc.protoPath != "" {
-		newPath = uc.protoPath + "." + key
-	} else {
-		newPath = key
-	}
-
+	newPath := fmt.Sprintf("%s[%q]", uc.protoPath, key)
 	uc.recordFieldPosition(newPath, n)
 	return uc.forPath(newPath)
 }
@@ -964,10 +1115,32 @@ func NewUnmarshalError(err *sourcev1.Error) UnmarshalError {
 }
 
 func (ue UnmarshalError) Error() string {
+	return ue.StringWithoutContext()
+}
+
+func (ue UnmarshalError) StringWithoutContext() string {
 	pos := ue.Err.GetPosition()
-	if ue.Err.GetContext() == "" {
-		return fmt.Sprintf("%d:%d <%s> %s", pos.GetLine(), pos.GetColumn(), pos.GetPath(), ue.Err.GetMessage())
+	if pos != nil {
+		return fmt.Sprintf("%d:%d %s", pos.GetLine(), pos.GetColumn(), ue.Err.GetMessage())
 	}
 
-	return fmt.Sprintf("%d:%d <%s> %s\n%s", pos.GetLine(), pos.GetColumn(), pos.GetPath(), ue.Err.GetMessage(), ue.Err.GetContext())
+	return ue.Err.GetMessage()
+}
+
+func (ue UnmarshalError) Format(state fmt.State, verb rune) {
+	switch verb {
+	case 's':
+		fmt.Fprint(state, ue.StringWithoutContext())
+	case 'q':
+		fmt.Fprintf(state, "%q", ue.StringWithoutContext())
+	case 'v':
+		switch {
+		case state.Flag('+'):
+			fmt.Fprintf(state, "%s\n%s", ue.StringWithoutContext(), ue.Err.GetContext())
+		case state.Flag('#'):
+			fmt.Fprintf(state, "%T %s", ue, ue.StringWithoutContext())
+		default:
+			fmt.Fprint(state, ue.StringWithoutContext())
+		}
+	}
 }

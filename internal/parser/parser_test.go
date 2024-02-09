@@ -10,9 +10,11 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml/ast"
@@ -21,6 +23,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
@@ -136,6 +142,152 @@ func loadTestCase(t *testing.T, tc test.Case) (*privatev1.ProtoYamlTestCase, io.
 	require.NoError(t, protojson.Unmarshal(tc.Input, &pytc), "Failed to read test case")
 
 	return &pytc, bytes.NewReader(tc.Want["input"])
+}
+
+func TestUnmarshalWKT(t *testing.T) {
+	structVal, err := structpb.NewStruct(map[string]any{"foo": "bar", "wibble": "wobble"})
+	require.NoError(t, err)
+	timestampVal, err := time.Parse(time.RFC3339, "2022-08-02T15:00:00Z")
+	require.NoError(t, err)
+	listVal1, err := structpb.NewList([]any{"x", "y"})
+	require.NoError(t, err)
+	listVal2, err := structpb.NewList([]any{1, 2})
+	require.NoError(t, err)
+
+	want := &privatev1.WellKnownTypes{
+		BoolWrapper:   wrapperspb.Bool(true),
+		Int32Wrapper:  wrapperspb.Int32(42),
+		Int64Wrapper:  wrapperspb.Int64(42),
+		Uint32Wrapper: wrapperspb.UInt32(42),
+		Uint64Wrapper: wrapperspb.UInt64(42),
+		FloatWrapper:  wrapperspb.Float(32.5),
+		DoubleWrapper: wrapperspb.Double(32.5),
+		StringWrapper: wrapperspb.String("foo"),
+		BytesWrapper:  wrapperspb.Bytes([]byte("foo")),
+		RepeatedBoolWrapper: []*wrapperspb.BoolValue{
+			wrapperspb.Bool(true),
+			wrapperspb.Bool(false),
+		},
+		RepeatedInt32Wrapper: []*wrapperspb.Int32Value{
+			wrapperspb.Int32(42),
+			wrapperspb.Int32(43),
+		},
+		RepeatedInt64Wrapper: []*wrapperspb.Int64Value{
+			wrapperspb.Int64(43),
+			wrapperspb.Int64(44),
+		},
+		RepeatedUint32Wrapper: []*wrapperspb.UInt32Value{
+			wrapperspb.UInt32(44),
+			wrapperspb.UInt32(45),
+		},
+		RepeatedUint64Wrapper: []*wrapperspb.UInt64Value{
+			wrapperspb.UInt64(45),
+			wrapperspb.UInt64(46),
+		},
+		RepeatedFloatWrapper: []*wrapperspb.FloatValue{
+			wrapperspb.Float(3.14),
+			wrapperspb.Float(3.5),
+		},
+		RepeatedDoubleWrapper: []*wrapperspb.DoubleValue{
+			wrapperspb.Double(6.14),
+			wrapperspb.Double(6.5),
+		},
+		RepeatedStringWrapper: []*wrapperspb.StringValue{
+			wrapperspb.String("foo"),
+			wrapperspb.String("bar"),
+		},
+		RepeatedBytesWrapper: []*wrapperspb.BytesValue{
+			wrapperspb.Bytes([]byte("foo")),
+			wrapperspb.Bytes([]byte("foo")),
+		},
+		Duration:  durationpb.New(10 * time.Second),
+		Timestamp: timestamppb.New(timestampVal),
+		Struct:    structVal,
+		Value:     structpb.NewStringValue("bar"),
+		NullValue: structpb.NullValue_NULL_VALUE,
+		RepeatedDuration: []*durationpb.Duration{
+			durationpb.New(5 * time.Second),
+			durationpb.New(10 * time.Second),
+		},
+		RepeatedTimestamp: []*timestamppb.Timestamp{
+			timestamppb.New(timestampVal),
+			timestamppb.New(timestampVal),
+		},
+		RepeatedStruct: []*structpb.Struct{
+			structVal,
+			structVal,
+		},
+		RepeatedValue: []*structpb.Value{
+			structpb.NewNumberValue(12),
+			structpb.NewStringValue("foo"),
+		},
+		RepeatedListValue: []*structpb.ListValue{
+			listVal1,
+			listVal2,
+		},
+		OptionalNestedMsg: &privatev1.WellKnownTypes_Nested{
+			StringField: "baz",
+			ValueField:  structpb.NewNumberValue(12),
+		},
+	}
+
+	testCases := []struct {
+		name     string
+		input    string
+		want     []*privatev1.WellKnownTypes
+		wantErrs []*sourcev1.Error
+	}{
+		{
+			name:  "Valid YAML",
+			input: "valid.yaml",
+			want:  []*privatev1.WellKnownTypes{want},
+		},
+		{
+			name:  "Valid JSON",
+			input: "valid.json",
+			want:  []*privatev1.WellKnownTypes{want},
+		},
+		{
+			name:  "YAML with incorrect value type",
+			input: "invalid.yaml",
+			wantErrs: []*sourcev1.Error{
+				{
+					Kind:     sourcev1.Error_KIND_PARSE_ERROR,
+					Message:  "failed to parse value: invalid value for string type: {",
+					Position: &sourcev1.Position{Line: 3, Column: 25, Path: "$.repeatedStringWrapper[0]"},
+				},
+			},
+		},
+		{
+			name:  "JSON with incorrect value type",
+			input: "invalid.json",
+			wantErrs: []*sourcev1.Error{
+				{
+					Kind:     sourcev1.Error_KIND_PARSE_ERROR,
+					Message:  "failed to parse value: invalid value for string type: {",
+					Position: &sourcev1.Position{Line: 4, Column: 9, Path: "$.repeatedStringWrapper[0]"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			inputFile := filepath.Join(test.PathToDir(t, "parser_wkt"), tc.input)
+			input, err := os.ReadFile(inputFile)
+			require.NoError(t, err, "Failed to read %s", inputFile)
+
+			have, _, err := parser.UnmarshalBytes(input, func() *privatev1.WellKnownTypes { return &privatev1.WellKnownTypes{} })
+			if len(tc.wantErrs) > 0 {
+				requireErrors(t, tc.wantErrs, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Len(t, have, len(tc.want))
+			require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+		})
+	}
 }
 
 func TestFind(t *testing.T) {
