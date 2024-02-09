@@ -113,7 +113,7 @@
     },
     "name": {
       "type": "string",
-      "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+      "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
     },
     "parentRoles": {
       "type": "array",

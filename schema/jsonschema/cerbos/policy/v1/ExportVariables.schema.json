@@ -16,7 +16,7 @@
     "name": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+      "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
     }
   }
 }
