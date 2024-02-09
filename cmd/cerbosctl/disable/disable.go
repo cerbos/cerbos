@@ -28,7 +28,7 @@ type Cmd struct {
 }
 
 type PolicyCmd struct {
-	PolicyIds []string `arg:"" name:"id" help:"list of policy ids to disable"`
+	PolicyIds []string `arg:"" name:"id" help:"list of policy ids to disable"` //nolint:revive
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *internalclient.Context) error {

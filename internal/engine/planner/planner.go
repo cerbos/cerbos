@@ -661,7 +661,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		if err != nil {
 			return err
 		}
-		plannerutils.UpdateIds(le)
+		plannerutils.UpdateIDs(le)
 		ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: le})
 
 		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar))

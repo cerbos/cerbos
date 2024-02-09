@@ -64,7 +64,7 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 
 	var baseStore, fallbackStore storage.Store
-	p.Go(func(ctx context.Context) error {
+	p.Go(func(_ context.Context) error {
 		var err error
 		baseStore, err = getStore(conf.BaseDriver)
 		if err != nil {
@@ -73,7 +73,7 @@ func NewStore(ctx context.Context, conf *Conf, confW *config.Wrapper) (*Store, e
 		return nil
 	})
 
-	p.Go(func(ctx context.Context) error {
+	p.Go(func(_ context.Context) error {
 		var err error
 		fallbackStore, err = getStore(conf.FallbackDriver)
 		if err != nil {

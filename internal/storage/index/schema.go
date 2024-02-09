@@ -31,7 +31,7 @@ func NewSchemaLoader(fsys fs.FS, rootDir string) *SchemaLoader {
 }
 
 func (sl *SchemaLoader) ListIDs(_ context.Context) ([]string, error) {
-	var schemaIds []string
+	var schemaIDs []string
 	err := fs.WalkDir(sl.fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
@@ -49,7 +49,7 @@ func (sl *SchemaLoader) ListIDs(_ context.Context) ([]string, error) {
 		}
 
 		if !util.IsHidden(d.Name()) && util.IsJSONFileTypeExt(d.Name()) {
-			schemaIds = append(schemaIds, path)
+			schemaIDs = append(schemaIDs, path)
 		}
 
 		return nil
@@ -58,7 +58,7 @@ func (sl *SchemaLoader) ListIDs(_ context.Context) ([]string, error) {
 		return nil, fmt.Errorf("failed to walk schemas directory: %w", err)
 	}
 
-	return schemaIds, nil
+	return schemaIDs, nil
 }
 
 func (sl *SchemaLoader) Load(_ context.Context, id string) (io.ReadCloser, error) {

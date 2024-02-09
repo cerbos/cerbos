@@ -47,7 +47,7 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 		opts = append(opts, cerbos.WithVersionRegexp(filters.VersionRegexp))
 	}
 
-	policyIds, err := c.ListPolicies(context.Background(), opts...)
+	policyIDs, err := c.ListPolicies(context.Background(), opts...)
 	if err != nil {
 		return fmt.Errorf("error while requesting policies: %w", err)
 	}
@@ -85,7 +85,7 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 		}
 
 		return nil
-	}, policyIds...); err != nil {
+	}, policyIDs...); err != nil {
 		return fmt.Errorf("error while listing policies: %w", err)
 	}
 

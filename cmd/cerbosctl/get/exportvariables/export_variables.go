@@ -46,7 +46,7 @@ type Cmd struct {
 	flagset.Format
 	flagset.Sort
 
-	PolicyIds []string `arg:"" name:"id" optional:"" help:"list of policy ids to retrieve"`
+	PolicyIds []string `arg:"" name:"id" optional:"" help:"list of policy ids to retrieve"` //nolint:revive
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {

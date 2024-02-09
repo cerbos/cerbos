@@ -23,7 +23,7 @@ cerbosctl delete schema principal.json leave_request.json
 cerbosctl delete s principal.json leave_request.json`
 
 type SchemaCmd struct {
-	SchemaIds []string `arg:"" name:"id" help:"list of schema ids to delete"`
+	SchemaIds []string `arg:"" name:"id" help:"list of schema ids to delete"` //nolint:revive
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {

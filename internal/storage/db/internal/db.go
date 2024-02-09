@@ -767,17 +767,17 @@ func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	}
 	defer res.Close()
 
-	var schemaIds []string
+	var schemaIDs []string
 	for res.Next() {
 		var id string
 		if err := res.ScanVal(&id); err != nil {
 			return nil, fmt.Errorf("could not scan row: %w", err)
 		}
 
-		schemaIds = append(schemaIds, id)
+		schemaIDs = append(schemaIDs, id)
 	}
 
-	return schemaIds, nil
+	return schemaIDs, nil
 }
 
 func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
