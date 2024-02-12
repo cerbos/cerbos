@@ -148,7 +148,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+            "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
           },
           "uniqueItems": true
         },
@@ -161,7 +161,7 @@
         },
         "name": {
           "type": "string",
-          "pattern": "^([A-Za-z][\\--\\.0-9@-Z_a-z]*)*$"
+          "pattern": "^([A-Za-z][\\-\\.0-9@-Z_a-z]*)*$"
         },
         "output": {
           "$ref": "#/definitions/cerbos.policy.v1.Output"
@@ -230,7 +230,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+            "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
           },
           "uniqueItems": true
         },
@@ -254,7 +254,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
+        "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
       },
       "uniqueItems": true
     },
