@@ -200,7 +200,7 @@ jobs:
           check-latest: true
           cache: false
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3.7.0
+        uses: golangci/golangci-lint-action@v3.7.1
         with:
           version: latest
           args: '--config=.golangci.yaml -v'
