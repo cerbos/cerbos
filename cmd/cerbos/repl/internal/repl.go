@@ -36,6 +36,7 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/outputcolor"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
@@ -430,9 +431,10 @@ func (r *REPL) loadPolicy(path string) error {
 	}
 	defer f.Close()
 
-	p, err := policy.ReadPolicy(f)
+	p, _, err := policy.ReadPolicyWithSourceContextFromReader(f)
 	if err != nil {
-		return fmt.Errorf("failed to read policy file: %w", err)
+		r.printLoadError(err)
+		return fmt.Errorf("failed to read policy file %s", path)
 	}
 
 	ph := &policyHolder{key: namer.PolicyKey(p)}
@@ -498,6 +500,25 @@ func (r *REPL) loadPolicy(path string) error {
 	}
 
 	return nil
+}
+
+func (r *REPL) printLoadError(err error) {
+	u, ok := err.(interface{ Unwrap() []error }) //nolint:errorlint
+	if ok {
+		unwrapped := u.Unwrap()
+		for _, ue := range unwrapped {
+			r.printLoadError(ue)
+		}
+
+		return
+	}
+
+	var unmarshalErr parser.UnmarshalError
+	if errors.As(err, &unmarshalErr) {
+		r.output.Println(colored.REPLError(fmt.Sprintf("%+v", unmarshalErr)))
+	} else {
+		r.output.PrintErr("Error:", err)
+	}
 }
 
 func (r *REPL) mergeVariableDefinitions(policyKey string, policyVariables *policyv1.Variables, deprecatedTopLevel map[string]string) (map[string]string, error) {
