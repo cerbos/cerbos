@@ -80,6 +80,7 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 			Resource:         rp.Resource,
 			Version:          rp.Version,
 			SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
+			Annotations:      modCtx.def.GetMetadata().GetAnnotations(),
 		},
 		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(ancestors)+1),
 	}
@@ -145,9 +146,6 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		Scope:        rp.Scope,
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
 		Schemas:      rp.Schemas,
-	}
-	if a := modCtx.def.GetMetadata().GetAnnotations(); a != nil {
-		rrp.Metadata = &runtimev1.RunnableResourcePolicySet_Policy_Metadata{Annotations: a}
 	}
 
 	for i, rule := range rp.Rules {
@@ -386,6 +384,7 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 			Principal:        pp.Principal,
 			Version:          pp.Version,
 			SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
+			Annotations:      modCtx.def.GetMetadata().GetAnnotations(),
 		},
 		Policies: make([]*runtimev1.RunnablePrincipalPolicySet_Policy, len(ancestors)+1),
 	}
@@ -427,9 +426,6 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
 		Scope:         pp.Scope,
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
-	}
-	if a := modCtx.def.GetMetadata().GetAnnotations(); a != nil {
-		rpp.Metadata = &runtimev1.RunnablePrincipalPolicySet_Policy_Metadata{Annotations: a}
 	}
 
 	for ruleNum, rule := range pp.Rules {
