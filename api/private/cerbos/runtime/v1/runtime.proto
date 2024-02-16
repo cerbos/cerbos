@@ -44,12 +44,10 @@ message RunnableResourcePolicySet {
     string resource = 2;
     string version = 3;
     map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 4;
+    map<string, string> annotations = 5;
   }
 
   message Policy {
-    message Metadata {
-      map<string, string> annotations = 1;
-    }
     message Rule {
       string name = 1;
       map<string, google.protobuf.Empty> actions = 2;
@@ -67,7 +65,6 @@ message RunnableResourcePolicySet {
     repeated Rule rules = 4;
     cerbos.policy.v1.Schemas schemas = 5;
     repeated Variable ordered_variables = 6;
-    Metadata metadata = 7;
   }
 
   Metadata meta = 1;
@@ -116,12 +113,10 @@ message RunnablePrincipalPolicySet {
     string principal = 2;
     string version = 3;
     map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 4;
+    map<string, string> annotations = 5;
   }
 
   message Policy {
-    message Metadata {
-      map<string, string> annotations = 1;
-    }
     message ActionRule {
       string action = 1;
       string name = 2;
@@ -139,7 +134,6 @@ message RunnablePrincipalPolicySet {
     map<string, Expr> variables = 2 [deprecated = true];
     map<string, ResourceRules> resource_rules = 3;
     repeated Variable ordered_variables = 4;
-    Metadata metadata = 5;
   }
 
   Metadata meta = 1;

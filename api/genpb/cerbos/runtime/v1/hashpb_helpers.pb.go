@@ -543,6 +543,23 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Metadata_hashpb_sum(m *Runnabl
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.annotations"]; !ok {
+		if len(m.Annotations) > 0 {
+			keys := make([]string, len(m.Annotations))
+			i := 0
+			for k := range m.Annotations {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				_, _ = hasher.Write(protowire.AppendString(nil, m.Annotations[k]))
+
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m *RunnablePrincipalPolicySet_Policy_ActionRule, hasher hash.Hash, ignore map[string]struct{}) {
@@ -575,26 +592,6 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m
 			cerbos_runtime_v1_Output_hashpb_sum(m.EmitOutput, hasher, ignore)
 		}
 
-	}
-}
-
-func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_Metadata_hashpb_sum(m *RunnablePrincipalPolicySet_Policy_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.Metadata.annotations"]; !ok {
-		if len(m.Annotations) > 0 {
-			keys := make([]string, len(m.Annotations))
-			i := 0
-			for k := range m.Annotations {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				_, _ = hasher.Write(protowire.AppendString(nil, m.Annotations[k]))
-
-			}
-		}
 	}
 }
 
@@ -664,12 +661,6 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m *RunnableP
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.metadata"]; !ok {
-		if m.Metadata != nil {
-			cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_Metadata_hashpb_sum(m.Metadata, hasher, ignore)
-		}
-
-	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_hashpb_sum(m *RunnablePrincipalPolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -723,10 +714,7 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Metadata_hashpb_sum(m *Runnable
 			}
 		}
 	}
-}
-
-func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Metadata_hashpb_sum(m *RunnableResourcePolicySet_Policy_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Metadata.annotations"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.annotations"]; !ok {
 		if len(m.Annotations) > 0 {
 			keys := make([]string, len(m.Annotations))
 			i := 0
@@ -899,12 +887,6 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableRe
 
 			}
 		}
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.metadata"]; !ok {
-		if m.Metadata != nil {
-			cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Metadata_hashpb_sum(m.Metadata, hasher, ignore)
-		}
-
 	}
 }
 

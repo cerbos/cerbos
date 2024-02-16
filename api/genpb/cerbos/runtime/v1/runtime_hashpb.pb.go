@@ -42,14 +42,6 @@ func (m *RunnableResourcePolicySet_Policy) HashPB(hasher hash.Hash, ignore map[s
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *RunnableResourcePolicySet_Policy_Metadata) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
-	if m != nil {
-		cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Metadata_hashpb_sum(m, hasher, ignore)
-	}
-}
-
-// HashPB computes a hash of the message using the given hash function
-// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *RunnableResourcePolicySet_Policy_Rule) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Rule_hashpb_sum(m, hasher, ignore)
@@ -117,14 +109,6 @@ func (m *RunnablePrincipalPolicySet_Metadata) HashPB(hasher hash.Hash, ignore ma
 func (m *RunnablePrincipalPolicySet_Policy) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m, hasher, ignore)
-	}
-}
-
-// HashPB computes a hash of the message using the given hash function
-// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *RunnablePrincipalPolicySet_Policy_Metadata) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
-	if m != nil {
-		cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_Metadata_hashpb_sum(m, hasher, ignore)
 	}
 }
 
