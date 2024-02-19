@@ -1,0 +1,64 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.34.0]
+= Cerbos v0.34.0
+
+== Highlights
+
+In this release, we have reworked the internals of Cerbos to significantly improve the syntax error messages with better descriptions, precise locations, and contextual information.Based on frequently asked support questions, the policy parser has been made smarter to detect common policy authoring mistakes and warn users about them as well. These usability enhancements are targeted at making the output of `cerbos compile` easier to understand and help you debug policy syntax issues quicker.
+
+Thanks to Cerbos community member @psolarcz, all Cerbos release artifacts are now signed and can be verified using link:https://www.sigstore.dev[sigstore] tools. Previously, only the container images were signed.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Record HTTP remote address as peer address for HTTP requests (link:https://github.com/cerbos/cerbos/pull/1964[#1964])
+
+=== Features
+
+* Better diagnostic error messages for policy issues (link:https://github.com/cerbos/cerbos/pull/1960[#1960])
+
+=== Enhancements
+
+* Better compilation errors (link:https://github.com/cerbos/cerbos/pull/1968[#1968])
+* Detailed load errors in REPL (link:https://github.com/cerbos/cerbos/pull/1985[#1985])
+* Sign release artifacts (link:https://github.com/cerbos/cerbos/pull/1959[#1959])
+* Validate Helm chart in CI (link:https://github.com/cerbos/cerbos/pull/1957[#1957])
+
+=== Documentation
+
+* Fix branch filter (link:https://github.com/cerbos/cerbos/pull/1958[#1958])
+
+=== Chores
+
+* Add JSON test cases for parser (link:https://github.com/cerbos/cerbos/pull/1952[#1952])
+* Add ability to parse well-known types (link:https://github.com/cerbos/cerbos/pull/1972[#1972])
+* Add correct permissions to snapshot job (link:https://github.com/cerbos/cerbos/pull/1962[#1962])
+* Add cosign to snapshot build job (link:https://github.com/cerbos/cerbos/pull/1961[#1961])
+* Bump github.com/opencontainers/runc from 1.1.5 to 1.1.12 (link:https://github.com/cerbos/cerbos/pull/1971[#1971])
+* Bump helm.sh/helm/v3 from 3.14.0 to 3.14.1 (link:https://github.com/cerbos/cerbos/pull/1986[#1986])
+* Bump version to 0.34.0
+* Copy metadata to runtime policies (link:https://github.com/cerbos/cerbos/pull/1981[#1981])
+* Fix workflow permissions (link:https://github.com/cerbos/cerbos/pull/1963[#1963])
+* Handle invalid YAML files containing unterminated strings (link:https://github.com/cerbos/cerbos/pull/1970[#1970])
+* Move compiled policies annotations to *PolicySet (link:https://github.com/cerbos/cerbos/pull/1988[#1988])
+* Readme update (link:https://github.com/cerbos/cerbos/pull/1965[#1965])
+* Readme update (link:https://github.com/cerbos/cerbos/pull/1966[#1966])
+* Reduce Docker healthcheck interval (link:https://github.com/cerbos/cerbos/pull/1978[#1978])
+* Remove start-period from Docker health check (link:https://github.com/cerbos/cerbos/pull/1979[#1979])
+* Switch workspace mode off for vulnerability check (link:https://github.com/cerbos/cerbos/pull/1953[#1953])
+* Update actions/cache action to v4 (link:https://github.com/cerbos/cerbos/pull/1955[#1955])
+* Update actions/setup-go action to v5 (link:https://github.com/cerbos/cerbos/pull/1990[#1990])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1973[#1973])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1983[#1983])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1954[#1954])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1974[#1974])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1984[#1984])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1989[#1989])
+* Update header to have tabs for PDP and Hub (link:https://github.com/cerbos/cerbos/pull/1975[#1975])
+* Update module github.com/goreleaser/goreleaser to v1.24.0 [security] (link:https://github.com/cerbos/cerbos/pull/1976[#1976])
+* Use Go 1.22 (link:https://github.com/cerbos/cerbos/pull/1982[#1982])
+* Use master version of govulncheck (link:https://github.com/cerbos/cerbos/pull/1967[#1967])
