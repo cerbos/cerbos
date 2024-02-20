@@ -60,5 +60,6 @@ Thanks to Cerbos community member @psolarcz, all Cerbos release artifacts are no
 * Update go deps (link:https://github.com/cerbos/cerbos/pull/1989[#1989])
 * Update header to have tabs for PDP and Hub (link:https://github.com/cerbos/cerbos/pull/1975[#1975])
 * Update module github.com/goreleaser/goreleaser to v1.24.0 [security] (link:https://github.com/cerbos/cerbos/pull/1976[#1976])
+* Update test filtering logic (link:https://github.com/cerbos/cerbos/pull/1992[#1992])
 * Use Go 1.22 (link:https://github.com/cerbos/cerbos/pull/1982[#1982])
 * Use master version of govulncheck (link:https://github.com/cerbos/cerbos/pull/1967[#1967])
