@@ -17,7 +17,7 @@ resourcePolicy:
       ref: cerbos:///resources/leave_request.json
   resource: leave_request
   rules:
-    - actions: ['*']
+    - actions: ["*"]
       effect: EFFECT_ALLOW
       roles:
         - admin
@@ -63,7 +63,9 @@ resourcePolicy:
     - actions: ["delete"]
       condition:
         match:
-          expr: request.resource.attr.geography == variables.principal_location
+          expr: |
+            // comment
+            request.resource.attr.geography == variables.principal_location
       derivedRoles:
         - direct_manager
       effect: EFFECT_ALLOW
