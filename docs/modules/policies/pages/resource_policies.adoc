@@ -1,4 +1,4 @@
-    include::ROOT:partial$attributes.adoc[]
+include::ROOT:partial$attributes.adoc[]
 
 = Resource policies
 
