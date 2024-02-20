@@ -64,7 +64,9 @@ resourcePolicy:
     - actions: ["delete"]
       condition:
         match:
-          expr: request.resource.attr.geography == variables.principal_location
+          expr: |
+            // Some comment
+            request.resource.attr.geography == variables.principal_location
       derivedRoles:
         - direct_manager
       effect: EFFECT_ALLOW

@@ -107,7 +107,7 @@
                             ],
                             "condition": {
                                 "match": {
-                                    "expr": "request.resource.attr.geography == variables.principal_location"
+                                    "expr": "// Some comment\nrequest.resource.attr.geography == variables.principal_location\n"
                                 }
                             },
                             "derivedRoles": [

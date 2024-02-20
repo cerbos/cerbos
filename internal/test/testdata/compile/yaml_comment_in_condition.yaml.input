@@ -1,0 +1,21 @@
+-- resource_policies/leave_request_20210210.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: leave_request
+  version: "20210210"
+  rules:
+    - actions: ['*']
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+      name: wildcard
+    - actions: ["approve"]
+      condition:
+        match:
+          expr: |-
+            # YAML comment
+            request.resource.attr.status == "PENDING_APPROVAL"
+      roles:
+        - direct_manager
+      effect: EFFECT_ALLOW
