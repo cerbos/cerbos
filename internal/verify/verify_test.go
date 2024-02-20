@@ -87,6 +87,9 @@ func TestVerifyWithTestFilter(t *testing.T) {
 		RunResources: map[string]struct{}{
 			namer.ResourcePolicyFQN(resource, "20210210", ""): {},
 		},
+		RunPrincipals: map[string]struct{}{
+			namer.PrincipalPolicyFQN("no-such-principal", "20210210", ""): {},
+		},
 	}
 	for _, tcase := range testCases {
 		tc := readVerifyTestCase(t, tcase)
