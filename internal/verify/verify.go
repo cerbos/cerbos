@@ -59,7 +59,11 @@ func (f *testFilter) ShouldRunResource(r *enginev1.Resource) bool {
 	if len(f.runResources) == 0 {
 		return true
 	}
-	_, ok := f.runResources[namer.ResourcePolicyFQN(r.Kind, r.PolicyVersion, r.Scope)]
+	v := r.PolicyVersion
+	if v == "" {
+		v = namer.DefaultVersion
+	}
+	_, ok := f.runResources[namer.ResourcePolicyFQN(r.Kind, v, r.Scope)]
 	return ok
 }
 
@@ -67,7 +71,11 @@ func (f *testFilter) ShouldRunPrincipal(p *enginev1.Principal) bool {
 	if len(f.runPrincipals) == 0 {
 		return true
 	}
-	_, ok := f.runPrincipals[namer.PrincipalPolicyFQN(p.Id, p.PolicyVersion, p.Scope)]
+	v := p.PolicyVersion
+	if v == "" {
+		v = namer.DefaultVersion
+	}
+	_, ok := f.runPrincipals[namer.PrincipalPolicyFQN(p.Id, v, p.Scope)]
 	return ok
 }
 
