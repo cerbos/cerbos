@@ -47,18 +47,13 @@ func TestBadgerLog(t *testing.T) {
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
 	db, err := local.NewLog(conf, decisionFilter)
 	require.NoError(t, err)
+	defer db.Close()
 
 	require.Equal(t, local.Backend, db.Backend())
 	require.True(t, db.Enabled())
 
 	loadData(t, db, startDate)
-	db.Close()
-
-	// re-open the db
-	db, err = local.NewLog(conf, decisionFilter)
-	require.NoError(t, err)
-
-	defer db.Close()
+	db.ForceSync()
 
 	t.Run("lastNAccessLogEntries", func(t *testing.T) {
 		n := 100

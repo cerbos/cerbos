@@ -45,16 +45,21 @@ func init() {
 	})
 }
 
+type TriggerSignal struct {
+	ResponseCh chan struct{}
+}
+
 // Log implements the decisionlog interface with Badger as the backing store.
 type Log struct {
 	logger         *zap.Logger
-	db             *badgerv4.DB
+	Db             *badgerv4.DB
 	buffer         chan *badgerv4.Entry
-	stopChan       chan struct{}
+	StopChan       chan struct{}
 	decisionFilter audit.DecisionLogEntryFilter
-	wg             sync.WaitGroup
+	Wg             sync.WaitGroup
 	ttl            time.Duration
 	stopOnce       sync.Once
+	trigger        chan TriggerSignal
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -76,43 +81,61 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	maxBatchSize := int(conf.Advanced.MaxBatchSize)
 	ttl := conf.RetentionPeriod
 
+	ticker := time.NewTicker(flushInterval)
+	defer ticker.Stop()
+
 	l := &Log{
 		logger:         logger,
-		db:             db,
+		Db:             db,
 		buffer:         make(chan *badgerv4.Entry, bufferSize),
-		stopChan:       make(chan struct{}),
+		StopChan:       make(chan struct{}),
 		ttl:            ttl,
 		decisionFilter: decisionFilter,
+		trigger:        make(chan TriggerSignal, 1),
 	}
 
-	l.wg.Add(1)
+	go StartTriggerLoop(ticker, l.trigger, l.StopChan)
+
+	l.Wg.Add(1)
 	go l.batchWriter(maxBatchSize, flushInterval)
 
 	if gcInterval > 0 {
-		l.wg.Add(1)
+		l.Wg.Add(1)
 		go l.gc(gcInterval)
 	}
 
 	return l, nil
 }
 
-func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
-	ticker := time.NewTicker(flushInterval)
-	defer ticker.Stop()
+func StartTriggerLoop(ticker *time.Ticker, triggerCh chan TriggerSignal, stopCh chan struct{}) {
+	for {
+		select {
+		case <-ticker.C:
+			select {
+			case triggerCh <- TriggerSignal{}:
+			default:
+			}
+		case <-stopCh:
+			return
+		}
+	}
+}
 
-	batch := newBatcher(l.db, maxBatchSize)
+func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
+	batch := newBatcher(l.Db, maxBatchSize)
 	logger := l.logger.With(zap.String("component", "batcher"))
 
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
-		case <-l.stopChan:
+		case <-l.StopChan:
 			batch.flush()
-			l.wg.Done()
+			l.Wg.Done()
 			return
 		case entry, ok := <-l.buffer:
+			// TODO(saml) I can't see `close(l.buffer)` anywhere, is this required?
 			if !ok {
 				batch.flush()
-				l.wg.Done()
+				l.Wg.Done()
 				return
 			}
 
@@ -120,8 +143,11 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 				logger.Warn("Failed to add entry to batch", zap.Error(err))
 				continue
 			}
-		case <-ticker.C:
+		case sig := <-l.trigger:
 			batch.flush()
+			if sig.ResponseCh != nil {
+				sig.ResponseCh <- struct{}{}
+			}
 		}
 	}
 
@@ -137,12 +163,12 @@ func (l *Log) gc(gcInterval time.Duration) {
 
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
-		case <-l.stopChan:
-			l.wg.Done()
+		case <-l.StopChan:
+			l.Wg.Done()
 			return
 		case <-ticker.C:
 			logger.Debug("Running value log GC")
-			if err := l.db.RunValueLogGC(badgerDiscardRatio); err != nil {
+			if err := l.Db.RunValueLogGC(badgerDiscardRatio); err != nil {
 				if !errors.Is(err, badgerv4.ErrNoRewrite) {
 					logger.Error("Failed to run value log GC", zap.Error(err))
 				}
@@ -163,6 +189,13 @@ func (l *Log) Enabled() bool {
 	return true
 }
 
+// ForceSync forces a sync operation and blocks until completion
+func (l *Log) ForceSync() {
+	wait := make(chan struct{}, 1)
+	l.trigger <- TriggerSignal{ResponseCh: wait}
+	<-wait
+}
+
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
 	rec, err := record()
 	if err != nil {
@@ -179,9 +212,9 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := genKey(accessLogPrefix, callID)
+	key := GenKey(accessLogPrefix, callID)
 
-	return l.write(ctx, key, value)
+	return l.Write(ctx, key, value)
 }
 
 func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLogEntryMaker) error {
@@ -207,12 +240,13 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := genKey(decisionLogPrefix, callID)
+	key := GenKey(decisionLogPrefix, callID)
 
-	return l.write(ctx, key, value)
+	return l.Write(ctx, key, value)
 }
 
-func (l *Log) write(ctx context.Context, key, value []byte) error {
+func (l *Log) Write(ctx context.Context, key, value []byte) error {
+	// TODO(saml) do we want the addition of the log plus the isSynced entry to be in a transaction?
 	select {
 	case l.buffer <- badgerv4.NewEntry(key, value).WithTTL(l.ttl):
 		return nil
@@ -236,7 +270,7 @@ func (l *Log) LastNDecisionLogEntries(ctx context.Context, n uint) audit.Decisio
 }
 
 func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector) {
-	err := l.db.View(func(txn *badgerv4.Txn) error {
+	err := l.Db.View(func(txn *badgerv4.Txn) error {
 		opts := badgerv4.DefaultIteratorOptions
 		opts.Reverse = true
 
@@ -295,7 +329,7 @@ func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, 
 		return
 	}
 
-	err = l.db.View(func(txn *badgerv4.Txn) error {
+	err = l.Db.View(func(txn *badgerv4.Txn) error {
 		opts := badgerv4.DefaultIteratorOptions
 
 		it := txn.NewIterator(opts)
@@ -349,8 +383,8 @@ func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collect
 		return
 	}
 
-	key := genKey(prefix, idBytes)
-	err = l.db.View(func(txn *badgerv4.Txn) error {
+	key := GenKey(prefix, idBytes)
+	err = l.Db.View(func(txn *badgerv4.Txn) error {
 		item, err := txn.Get(key)
 		if err != nil {
 			if errors.Is(err, badgerv4.ErrKeyNotFound) {
@@ -369,14 +403,14 @@ func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collect
 func (l *Log) Close() error {
 	var err error
 	l.stopOnce.Do(func() {
-		close(l.stopChan)
-		l.wg.Wait()
-		err = l.db.Close()
+		close(l.StopChan)
+		l.Wg.Wait()
+		err = l.Db.Close()
 	})
 	return err
 }
 
-func genKey(prefix []byte, id audit.IDBytes) []byte {
+func GenKey(prefix []byte, id audit.IDBytes) []byte {
 	var key [keyLen]byte
 	copy(key[:keyTSStart], prefix)
 	copy(key[keyTSStart:], id[:])
@@ -395,7 +429,7 @@ func genKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
 		return nil, err
 	}
 
-	return genKey(prefix, idBytes), nil
+	return GenKey(prefix, idBytes), nil
 }
 
 func minScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
