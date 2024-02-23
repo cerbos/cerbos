@@ -113,7 +113,7 @@ require (
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.14.1
+	helm.sh/helm/v3 v3.14.2
 	modernc.org/sqlite v1.29.1
 )
 
