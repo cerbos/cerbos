@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
@@ -82,14 +83,14 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 }
 
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
-	err := l.Log.WriteAccessLogEntry(ctx, record)
+	rec, err := record()
 	if err != nil {
 		return err
 	}
 
-	// TODO(saml) can we refactor to only retrieve the record and callID once? Overkill?
-	rec, err := record()
-	if err != nil {
+	if err := l.Log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+		return rec, nil
+	}); err != nil {
 		return err
 	}
 
@@ -104,14 +105,14 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 }
 
 func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLogEntryMaker) error {
-	err := l.Log.WriteDecisionLogEntry(ctx, record)
+	rec, err := record()
 	if err != nil {
 		return err
 	}
 
-	// TODO(saml) can we refactor to only retrieve the record and callID once? Overkill?
-	rec, err := record()
-	if err != nil {
+	if err := l.Log.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+		return rec, nil
+	}); err != nil {
 		return err
 	}
 
