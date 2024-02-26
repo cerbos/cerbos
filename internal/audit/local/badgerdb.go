@@ -131,14 +131,7 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 			batch.flush()
 			l.Wg.Done()
 			return
-		case entry, ok := <-l.buffer:
-			// TODO(saml) I can't see `close(l.buffer)` anywhere, is this required?
-			if !ok {
-				batch.flush()
-				l.Wg.Done()
-				return
-			}
-
+		case entry := <-l.buffer:
 			if err := batch.add(entry); err != nil {
 				logger.Warn("Failed to add entry to batch", zap.Error(err))
 				continue

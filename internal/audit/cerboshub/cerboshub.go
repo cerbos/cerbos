@@ -24,9 +24,9 @@ const (
 )
 
 var (
-	SyncStatusPrefix   = []byte("s") // TODO(saml) bigger prefix for safety?
-	AccessSyncPrefix   = []byte("sacc")
-	DecisionSyncPrefix = []byte("sdec")
+	SyncStatusPrefix   = []byte("bs") // "b" for contiguity with audit log keys in LSM, "s" because "sync"
+	AccessSyncPrefix   = []byte("bsacc")
+	DecisionSyncPrefix = []byte("bsdec")
 )
 
 func init() {
