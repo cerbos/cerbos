@@ -7,6 +7,18 @@ include::partial$attributes.adoc[]
 docker run --rm --name cerbos -p 3592:3592 {app-docker-img}
 ----
 
+[NOTE]
+====
+
+Cerbos images can be verified using link:https://www.sigstore.dev[sigstore] tools as follows:
+
+[source,sh,subs="attributes"]
+----
+cosign verify --certificate-oidc-issuer="https://token.actions.githubusercontent.com" --certificate-identity-regexp="github.com/cerbos/cerbos" {app-docker-img}
+----
+
+====
+
 By default, the container is configured to listen on ports 3592 (HTTP) and 3593 (gRPC) and watch for policy files on the volume mounted at `/policies`. You can override these by creating a new xref:configuration:index.adoc[configuration file].
 
 .Create a directory to hold the config file and policies.
@@ -37,3 +49,5 @@ docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart:/quickstart -p 3592
 ----
 
 NOTE: Cerbos container images are mirrored to Docker Hub and the latest version is available at {app-alternative-docker-img} as well.
+
+
