@@ -14,7 +14,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       protos: ${{ steps.filter.outputs.protos }}
     steps:
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
