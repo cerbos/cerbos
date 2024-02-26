@@ -239,7 +239,6 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 }
 
 func (l *Log) Write(ctx context.Context, key, value []byte) error {
-	// TODO(saml) do we want the addition of the log plus the isSynced entry to be in a transaction?
 	select {
 	case l.buffer <- badgerv4.NewEntry(key, value).WithTTL(l.ttl):
 		return nil
