@@ -209,7 +209,7 @@ func loadData(t *testing.T, db *cerboshub.Log, startDate time.Time) [][]byte {
 
 		callID, err := audit.ID(string(id)).Repr()
 		require.NoError(t, err)
-		// We insert decision sync logs in the latter half as it then inserts into the array in the same
+		// We insert decision sync logs in the latter half as this is the same
 		// order that Badger retrieves keys from the LSM
 		syncKeys[i] = local.GenKey(cerboshub.AccessSyncPrefix, callID)
 		syncKeys[i+numRecords] = local.GenKey(cerboshub.DecisionSyncPrefix, callID)

@@ -158,14 +158,17 @@ func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval time.Duration) 
 					}
 					batch := keys[i:end]
 
-					if err := l.Db.Update(func(txn *badgerv4.Txn) error {
+					{
+						wb := l.Db.NewWriteBatch()
+						defer wb.Cancel()
+
 						if err := l.syncer.Sync(context.Background(), batch); err != nil {
 							return err
 						}
 
-						return l.deleteKeys(batch)
-					}); err != nil {
-						return err
+						if err := l.deleteKeys(wb, batch); err != nil {
+							return err
+						}
 					}
 				}
 
@@ -195,8 +198,7 @@ func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval time.Duration) 
 	go l.batchSyncer(maxBatchSize, numGo, flushInterval)
 }
 
-func (l *Log) deleteKeys(keys [][]byte) error {
-	wb := l.Db.NewWriteBatch()
+func (l *Log) deleteKeys(wb *badgerv4.WriteBatch, keys [][]byte) error {
 	for _, k := range keys {
 		if err := wb.Delete(k); err != nil {
 			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
