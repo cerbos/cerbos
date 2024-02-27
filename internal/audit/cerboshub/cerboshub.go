@@ -127,7 +127,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 }
 
 func (l *Log) batchSyncer(batchSize, numGo int, flushInterval time.Duration) {
-	logger := l.logger.With(zap.String("component", "ingest-syncer"))
+	logger := l.logger.With(zap.String("component", "syncer"))
 
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
