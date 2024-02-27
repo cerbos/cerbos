@@ -59,8 +59,9 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 
 	logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 
-	batchSize := int(conf.Ingest.BatchSize)
+	maxBatchSize := int(conf.Ingest.MaxBatchSize)
 	flushInterval := conf.Ingest.FlushInterval
+	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
 	ticker := time.NewTicker(flushInterval)
@@ -77,7 +78,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	go local.StartTriggerLoop(ticker, l.trigger, l.StopChan)
 
 	l.Wg.Add(1)
-	go l.batchSyncer(batchSize, numGo, flushInterval)
+	go l.batchSyncer(maxBatchSize, numGo, flushInterval, flushTimeout)
 
 	return l, nil
 }
@@ -126,7 +127,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	return l.Write(ctx, key, nil)
 }
 
-func (l *Log) batchSyncer(batchSize, numGo int, flushInterval time.Duration) {
+func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval, flushTimeout time.Duration) {
 	logger := l.logger.With(zap.String("component", "syncer"))
 
 	for i := 0; i < goroutineResetThreshold; i++ {
@@ -141,53 +142,59 @@ func (l *Log) batchSyncer(batchSize, numGo int, flushInterval time.Duration) {
 			stream.NumGo = numGo
 			stream.Prefix = SyncStatusPrefix
 
-			stream.Send = func(buf *z.Buffer) error {
-				kvList, err := badgerv4.BufferToKVList(buf)
-				if err != nil {
-					return err
-				}
+			{
+				// TODO(saml) consider if granular control of timeouts is necessary
+				ctx, cancelFn := context.WithDeadline(context.Background(), time.Now().Add(flushTimeout))
+				defer cancelFn()
 
-				keys := make([][]byte, len(kvList.Kv))
-				for i, kv := range kvList.Kv {
-					keys[i] = kv.Key
-				}
-
-				for i := 0; i < len(keys); i += batchSize {
-					end := i + batchSize
-					if end > len(keys) {
-						end = len(keys)
+				stream.Send = func(buf *z.Buffer) error {
+					kvList, err := badgerv4.BufferToKVList(buf)
+					if err != nil {
+						return err
 					}
-					batch := keys[i:end]
 
-					{
-						wb := l.Db.NewWriteBatch()
-						defer wb.Cancel()
+					keys := make([][]byte, len(kvList.Kv))
+					for i, kv := range kvList.Kv {
+						keys[i] = kv.Key
+					}
 
-						if err := l.syncer.Sync(context.Background(), batch); err != nil {
-							return err
+					for i := 0; i < len(keys); i += maxBatchSize {
+						end := i + maxBatchSize
+						if end > len(keys) {
+							end = len(keys)
 						}
+						batch := keys[i:end]
 
-						if err := l.deleteKeys(wb, batch); err != nil {
-							return err
+						{
+							wb := l.Db.NewWriteBatch()
+							defer wb.Cancel()
+
+							if err := l.syncer.Sync(ctx, batch); err != nil {
+								return err
+							}
+
+							if err := l.deleteKeys(wb, batch); err != nil {
+								return err
+							}
 						}
+					}
+
+					return nil
+				}
+
+				newFlushInterval := flushInterval
+				if err := stream.Orchestrate(ctx); err != nil {
+					var ingestErr ErrIngestBackoff
+					if errors.As(err, &ingestErr) {
+						logger.Warn("svc-ingest issued backoff", zap.Error(err))
+						newFlushInterval = ingestErr.Backoff
+					} else {
+						logger.Warn("Failed sync", zap.Error(err))
 					}
 				}
 
-				return nil
+				l.ticker.Reset(newFlushInterval)
 			}
-
-			newFlushInterval := flushInterval
-			if err := stream.Orchestrate(context.Background()); err != nil {
-				var ingestErr ErrIngestBackoff
-				if errors.As(err, &ingestErr) {
-					logger.Warn("svc-ingest issued backoff", zap.Error(err))
-					newFlushInterval = ingestErr.Backoff
-				} else {
-					logger.Warn("Failed sync", zap.Error(err))
-				}
-			}
-
-			l.ticker.Reset(newFlushInterval)
 
 			if sig.ResponseCh != nil {
 				sig.ResponseCh <- struct{}{}
@@ -196,7 +203,7 @@ func (l *Log) batchSyncer(batchSize, numGo int, flushInterval time.Duration) {
 	}
 
 	// restart the goroutine with a fresh stack
-	go l.batchSyncer(batchSize, numGo, flushInterval)
+	go l.batchSyncer(maxBatchSize, numGo, flushInterval, flushTimeout)
 }
 
 func (l *Log) deleteKeys(wb *badgerv4.WriteBatch, keys [][]byte) error {

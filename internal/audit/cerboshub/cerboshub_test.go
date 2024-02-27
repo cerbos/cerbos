@@ -83,9 +83,10 @@ func TestCerbosHubLog(t *testing.T) {
 			},
 		},
 		cerboshub.IngestConf{
-			FlushInterval: 1 * time.Second,
+			MaxBatchSize:  batchSize,
+			FlushInterval: 2 * time.Second,
+			FlushTimeout:  1 * time.Second,
 			NumGoRoutines: 8,
-			BatchSize:     batchSize,
 		},
 	}
 
