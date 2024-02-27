@@ -230,8 +230,8 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 	case *ast.StructType:
 		for _, f := range t.Fields.List {
 			if len(f.Names) == 0 {
-				i, ok := f.Type.(*ast.Ident)
-				if ok {
+				switch i := f.Type.(type) {
+				case *ast.Ident:
 					ts, ok := i.Obj.Decl.(*ast.TypeSpec)
 					if ok {
 						st, ok := ts.Type.(*ast.StructType)
@@ -240,6 +240,9 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 							continue
 						}
 					}
+				case *ast.SelectorExpr:
+					// TODO(saml) investigate how to retrieve the conf data from the non-local embedded struct
+					continue
 				}
 			}
 
