@@ -59,7 +59,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 
 	logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 
-	maxBatchSize := int(conf.Ingest.BatchSize)
+	batchSize := int(conf.Ingest.BatchSize)
 	flushInterval := conf.Ingest.FlushInterval
 	numGo := int(conf.Ingest.NumGoRoutines)
 
@@ -77,7 +77,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	go local.StartTriggerLoop(ticker, l.trigger, l.StopChan)
 
 	l.Wg.Add(1)
-	go l.batchSyncer(maxBatchSize, numGo, flushInterval)
+	go l.batchSyncer(batchSize, numGo, flushInterval)
 
 	return l, nil
 }
@@ -126,7 +126,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	return l.Write(ctx, key, nil)
 }
 
-func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval time.Duration) {
+func (l *Log) batchSyncer(batchSize, numGo int, flushInterval time.Duration) {
 	logger := l.logger.With(zap.String("component", "ingest-syncer"))
 
 	for i := 0; i < goroutineResetThreshold; i++ {
@@ -152,8 +152,8 @@ func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval time.Duration) 
 					keys[i] = kv.Key
 				}
 
-				for i := 0; i < len(keys); i += maxBatchSize {
-					end := i + maxBatchSize
+				for i := 0; i < len(keys); i += batchSize {
+					end := i + batchSize
 					if end > len(keys) {
 						end = len(keys)
 					}
@@ -196,7 +196,7 @@ func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval time.Duration) 
 	}
 
 	// restart the goroutine with a fresh stack
-	go l.batchSyncer(maxBatchSize, numGo, flushInterval)
+	go l.batchSyncer(batchSize, numGo, flushInterval)
 }
 
 func (l *Log) deleteKeys(wb *badgerv4.WriteBatch, keys [][]byte) error {
