@@ -42,6 +42,8 @@ type mockSyncer struct {
 }
 
 func newMockSyncer(t *testing.T) *mockSyncer {
+	t.Helper()
+
 	return &mockSyncer{
 		IngestSyncer: mocks.NewIngestSyncer(t),
 		synced:       make(map[string]struct{}),
@@ -108,7 +110,7 @@ func TestCerbosHubLog(t *testing.T) {
 		t.Helper()
 
 		keys := [][]byte{}
-		db.Db.View(func(txn *badgerv4.Txn) error {
+		err := db.Db.View(func(txn *badgerv4.Txn) error {
 			opts := badgerv4.DefaultIteratorOptions
 			opts.PrefetchValues = false
 			it := txn.NewIterator(opts)
@@ -121,6 +123,7 @@ func TestCerbosHubLog(t *testing.T) {
 			}
 			return nil
 		})
+		require.NoError(t, err)
 
 		return keys
 	}

@@ -9,8 +9,8 @@ import (
 )
 
 type ErrIngestBackoff struct {
-	Backoff    time.Duration
 	underlying error
+	Backoff    time.Duration
 }
 
 func (e ErrIngestBackoff) Error() string {
@@ -21,14 +21,13 @@ type IngestSyncer interface {
 	Sync(context.Context, [][]byte) error
 }
 
-// Impl implements the IngestSyncer interface
-type Impl struct {
-}
+// Impl implements the IngestSyncer interface.
+type Impl struct{}
 
 func NewIngestSyncer() *Impl {
 	return &Impl{}
 }
 
-func (i *Impl) Sync(ctx context.Context, kvs [][]byte) error {
+func (i *Impl) Sync(_ context.Context, _ [][]byte) error {
 	return nil
 }

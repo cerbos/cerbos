@@ -55,11 +55,11 @@ type Log struct {
 	Db             *badgerv4.DB
 	buffer         chan *badgerv4.Entry
 	StopChan       chan struct{}
+	trigger        chan TriggerSignal
 	decisionFilter audit.DecisionLogEntryFilter
 	Wg             sync.WaitGroup
 	ttl            time.Duration
 	stopOnce       sync.Once
-	trigger        chan TriggerSignal
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -182,7 +182,7 @@ func (l *Log) Enabled() bool {
 	return true
 }
 
-// ForceSync forces a sync operation and blocks until completion
+// ForceSync forces a sync operation and blocks until completion.
 func (l *Log) ForceSync() {
 	wait := make(chan struct{}, 1)
 	l.trigger <- TriggerSignal{ResponseCh: wait}

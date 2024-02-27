@@ -214,7 +214,7 @@ func (l *Log) deleteKeys(wb *badgerv4.WriteBatch, keys [][]byte) error {
 	return wb.Flush()
 }
 
-// ForceSync forces a sync operation and blocks until completion
+// ForceSync forces a sync operation and blocks until completion.
 func (l *Log) ForceSync() {
 	l.Log.ForceSync()
 
