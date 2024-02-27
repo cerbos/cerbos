@@ -78,6 +78,7 @@ func TestCerbosHubLog(t *testing.T) {
 			StoragePath:     t.TempDir(),
 			RetentionPeriod: 24 * time.Hour,
 			Advanced: local.AdvancedConf{
+				BufferSize:    1,
 				MaxBatchSize:  32,
 				FlushInterval: 1 * time.Second,
 			},
@@ -89,6 +90,8 @@ func TestCerbosHubLog(t *testing.T) {
 			NumGoRoutines: 8,
 		},
 	}
+
+	require.NoError(t, conf.Validate())
 
 	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
 	require.NoError(t, err)
