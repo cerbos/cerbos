@@ -9,8 +9,9 @@ image:
 #  repository: mcr.microsoft.com/mssql/server
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-#  tag: "2019-latest"
-  tag: latest
+  # tag: "2019-latest"
+  # https://mcr.microsoft.com/v2/azure-sql-edge/tags/list
+  tag: 1.0.7
 
 ACCEPT_EULA:
     value: "y"
