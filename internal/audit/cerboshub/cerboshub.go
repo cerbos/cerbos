@@ -31,15 +31,15 @@ var (
 )
 
 func init() {
-	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
+	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, _ audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read cerboshub audit log configuration: %w", err)
 		}
 
-		syncer := NewIngestSyncer()
-
-		return NewLog(conf, decisionFilter, syncer)
+		// syncer := NewIngestSyncer()
+		// return NewLog(conf, decisionFilter, syncer)
+		return nil, errors.New("backend not available")
 	})
 }
 
@@ -128,82 +128,84 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 }
 
 func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval, flushTimeout time.Duration) {
-	logger := l.logger.With(zap.String("component", "syncer"))
-
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
 		case <-l.StopChan:
 			l.Wg.Done()
 			return
 		case sig := <-l.trigger:
-			// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
-			// Subsequent writes aren't blocked.
-			stream := l.Db.NewStream()
-			stream.NumGo = numGo
-			stream.Prefix = SyncStatusPrefix
-
-			{
-				// TODO(saml) consider if granular control of timeouts is necessary
-				ctx, cancelFn := context.WithDeadline(context.Background(), time.Now().Add(flushTimeout))
-				defer cancelFn()
-
-				stream.Send = func(buf *z.Buffer) error {
-					kvList, err := badgerv4.BufferToKVList(buf)
-					if err != nil {
-						return err
-					}
-
-					keys := make([][]byte, len(kvList.Kv))
-					for i, kv := range kvList.Kv {
-						keys[i] = kv.Key
-					}
-
-					for i := 0; i < len(keys); i += maxBatchSize {
-						end := i + maxBatchSize
-						if end > len(keys) {
-							end = len(keys)
-						}
-						batch := keys[i:end]
-
-						{
-							wb := l.Db.NewWriteBatch()
-							defer wb.Cancel()
-
-							if err := l.syncer.Sync(ctx, batch); err != nil {
-								return err
-							}
-
-							if err := l.deleteKeys(wb, batch); err != nil {
-								return err
-							}
-						}
-					}
-
-					return nil
-				}
-
-				newFlushInterval := flushInterval
-				if err := stream.Orchestrate(ctx); err != nil {
-					var ingestErr ErrIngestBackoff
-					if errors.As(err, &ingestErr) {
-						logger.Warn("svc-ingest issued backoff", zap.Error(err))
-						newFlushInterval = ingestErr.Backoff
-					} else {
-						logger.Warn("Failed sync", zap.Error(err))
-					}
-				}
-
-				l.ticker.Reset(newFlushInterval)
-			}
-
-			if sig.ResponseCh != nil {
-				sig.ResponseCh <- struct{}{}
-			}
+			l.stream(maxBatchSize, numGo, flushInterval, flushTimeout, sig)
 		}
 	}
 
 	// restart the goroutine with a fresh stack
 	go l.batchSyncer(maxBatchSize, numGo, flushInterval, flushTimeout)
+}
+
+func (l *Log) stream(maxBatchSize, numGo int, flushInterval, flushTimeout time.Duration, sig local.TriggerSignal) {
+	logger := l.logger.With(zap.String("component", "syncer"))
+
+	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
+	// Subsequent writes aren't blocked.
+	stream := l.Db.NewStream()
+	stream.NumGo = numGo
+	stream.Prefix = SyncStatusPrefix
+
+	ctx, cancelFn := context.WithTimeout(context.Background(), flushTimeout)
+	defer cancelFn()
+
+	stream.Send = func(buf *z.Buffer) error {
+		kvList, err := badgerv4.BufferToKVList(buf)
+		if err != nil {
+			return err
+		}
+
+		keys := make([][]byte, len(kvList.Kv))
+		for i, kv := range kvList.Kv {
+			keys[i] = kv.Key
+		}
+
+		for i := 0; i < len(keys); i += maxBatchSize {
+			end := i + maxBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+
+			if err := l.sync(ctx, keys[i:end]); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	newFlushInterval := flushInterval
+	if err := stream.Orchestrate(ctx); err != nil {
+		var ingestErr ErrIngestBackoff
+		if errors.As(err, &ingestErr) {
+			logger.Warn("svc-ingest issued backoff", zap.Error(err))
+			newFlushInterval = ingestErr.Backoff
+		} else {
+			logger.Warn("Failed sync", zap.Error(err))
+		}
+	}
+
+	l.ticker.Reset(newFlushInterval)
+
+	if sig.ResponseCh != nil {
+		sig.ResponseCh <- struct{}{}
+	}
+}
+
+func (l *Log) sync(ctx context.Context, batch [][]byte) error {
+	if err := l.syncer.Sync(ctx, batch); err != nil {
+		return err
+	}
+
+	wb := l.Db.NewWriteBatch()
+	defer wb.Cancel()
+
+	return l.deleteKeys(wb, batch)
 }
 
 func (l *Log) deleteKeys(wb *badgerv4.WriteBatch, keys [][]byte) error {
