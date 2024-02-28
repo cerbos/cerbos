@@ -52,7 +52,7 @@ type Log struct {
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer) (*Log, error) {
-	log, err := local.NewLog(&conf.Conf, decisionFilter)
+	localLog, err := local.NewLog(&conf.Conf, decisionFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -64,18 +64,30 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
+	triggerCh := make(chan local.TriggerSignal, 1)
 	ticker := time.NewTicker(flushInterval)
-	defer ticker.Stop()
+	go func() {
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				select {
+				case triggerCh <- local.TriggerSignal{}:
+				default:
+				}
+			case <-localLog.StopChan:
+				return
+			}
+		}
+	}()
 
 	l := &Log{
-		Log:     log,
+		Log:     localLog,
 		logger:  logger,
 		syncer:  syncer,
 		ticker:  ticker,
-		trigger: make(chan local.TriggerSignal, 1),
+		trigger: triggerCh,
 	}
-
-	go local.StartTriggerLoop(ticker, l.trigger, l.StopChan)
 
 	l.Wg.Add(1)
 	go l.batchSyncer(maxBatchSize, numGo, flushInterval, flushTimeout)

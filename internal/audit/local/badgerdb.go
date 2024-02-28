@@ -81,20 +81,33 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	maxBatchSize := int(conf.Advanced.MaxBatchSize)
 	ttl := conf.RetentionPeriod
 
+	triggerCh := make(chan TriggerSignal, 1)
+	stopCh := make(chan struct{})
 	ticker := time.NewTicker(flushInterval)
-	defer ticker.Stop()
+	go func() {
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				select {
+				case triggerCh <- TriggerSignal{}:
+				default:
+				}
+			case <-stopCh:
+				return
+			}
+		}
+	}()
 
 	l := &Log{
 		logger:         logger,
 		Db:             db,
 		buffer:         make(chan *badgerv4.Entry, bufferSize),
-		StopChan:       make(chan struct{}),
+		StopChan:       stopCh,
 		ttl:            ttl,
 		decisionFilter: decisionFilter,
-		trigger:        make(chan TriggerSignal, 1),
+		trigger:        triggerCh,
 	}
-
-	go StartTriggerLoop(ticker, l.trigger, l.StopChan)
 
 	l.Wg.Add(1)
 	go l.batchWriter(maxBatchSize, flushInterval)
@@ -105,20 +118,6 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	}
 
 	return l, nil
-}
-
-func StartTriggerLoop(ticker *time.Ticker, triggerCh chan TriggerSignal, stopCh chan struct{}) {
-	for {
-		select {
-		case <-ticker.C:
-			select {
-			case triggerCh <- TriggerSignal{}:
-			default:
-			}
-		case <-stopCh:
-			return
-		}
-	}
 }
 
 func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
