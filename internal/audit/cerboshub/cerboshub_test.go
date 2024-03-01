@@ -139,7 +139,7 @@ func TestCerbosHubLog(t *testing.T) {
 
 		wantKeys := loadData(t, db, startDate)
 
-		db.ForceSync(true)
+		db.ForceWrite(true)
 
 		keys := getLocalKeys()
 		require.Len(t, keys, len(wantKeys), "incorrect number of keys: %d", len(keys))
@@ -153,7 +153,7 @@ func TestCerbosHubLog(t *testing.T) {
 
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches)
 
-		db.ForceSync(false)
+		db.ForceWrite(false)
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
@@ -170,7 +170,7 @@ func TestCerbosHubLog(t *testing.T) {
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(errors.New("some error")).Once()
 
-		db.ForceSync(false)
+		db.ForceWrite(false)
 
 		require.True(t, syncer.hasKeys(loadedKeys[0:initialNBatches*int(batchSize)]), "some keys should have been synced")
 		require.Len(t, getLocalKeys(), (numRecords*2)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
@@ -190,7 +190,7 @@ func TestCerbosHubLog(t *testing.T) {
 		}).Once()
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches - initialNBatches)
 
-		db.ForceSync(false)
+		db.ForceWrite(false)
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")

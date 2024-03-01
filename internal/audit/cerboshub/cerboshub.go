@@ -20,8 +20,6 @@ import (
 )
 
 const (
-	goroutineResetThreshold = 1 << 16
-
 	Backend = "cerboshub"
 )
 
@@ -115,9 +113,9 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 }
 
 type mutexTimer struct {
+	expireCh chan struct{}
 	t        *time.Timer
 	mu       sync.RWMutex
-	expireCh chan struct{}
 }
 
 func newMutexTimer() *mutexTimer {

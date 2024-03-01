@@ -53,7 +53,7 @@ func TestBadgerLog(t *testing.T) {
 	require.True(t, db.Enabled())
 
 	loadData(t, db, startDate)
-	db.ForceSync()
+	db.ForceWrite(true)
 
 	t.Run("lastNAccessLogEntries", func(t *testing.T) {
 		n := 100

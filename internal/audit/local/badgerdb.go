@@ -57,11 +57,11 @@ type Log struct {
 	buffer         chan *badgerv4.Entry
 	stopChan       chan struct{}
 	trigger        chan TriggerSignal
+	callbackFn     func()
 	decisionFilter audit.DecisionLogEntryFilter
 	wg             sync.WaitGroup
 	ttl            time.Duration
 	stopOnce       sync.Once
-	callbackFn     func()
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -195,11 +195,18 @@ func (l *Log) Enabled() bool {
 	return true
 }
 
-// ForceSync forces a sync operation and blocks until completion.
-func (l *Log) ForceSync(bypassSync bool) {
-	wait := make(chan struct{}, 1)
-	l.trigger <- TriggerSignal{wait, bypassSync}
-	<-wait
+// ForceWrite forces a write operation and blocks until completion.
+func (l *Log) ForceWrite(bypassSync bool) {
+	sig := TriggerSignal{}
+	if l.callbackFn != nil {
+		sig.bypassSync = bypassSync
+		wait := make(chan struct{}, 1)
+		sig.ResponseCh = wait
+		defer func() {
+			<-wait
+		}()
+	}
+	l.trigger <- sig
 }
 
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
