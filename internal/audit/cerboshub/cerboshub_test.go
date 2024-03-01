@@ -192,7 +192,8 @@ func TestCerbosHubLog(t *testing.T) {
 
 		db.ForceWrite(false)
 		// The second callbackFn call happens in a separate goroutine. A short sleep gives it time to complete
-		time.Sleep(50 * time.Millisecond)
+		// TODO(saml) remove this sleep with some proper wait mechanism
+		time.Sleep(100 * time.Millisecond)
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
