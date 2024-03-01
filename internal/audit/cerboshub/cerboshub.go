@@ -161,10 +161,10 @@ func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlus
 		if errors.As(err, &ingestErr) {
 			logger.Warn("svc-ingest issued backoff", zap.Error(err))
 			muTimer.set(ingestErr.Backoff)
-			schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger)
-		} else {
-			logger.Warn("Failed sync", zap.Error(err))
+			go schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger)
+			return
 		}
+		logger.Warn("Failed sync", zap.Error(err))
 	}
 
 	// Set a min wait duration regardless of if events are pending.
