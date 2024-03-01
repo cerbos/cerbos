@@ -15,17 +15,17 @@ import (
 const (
 	confKey = audit.ConfKey + ".cerboshub"
 
-	defaultMaxBatchSize  = 16
-	defaultFlushInterval = 30 * time.Second
-	defaultFlushTimeout  = 5 * time.Second
-	defaultNumGoRoutines = 8
+	defaultMaxBatchSize     = 16
+	defaultMinFlushInterval = 5 * time.Second
+	defaultFlushTimeout     = 5 * time.Second
+	defaultNumGoRoutines    = 8
 
-	minFlushInterval = 1 * time.Second
-	maxFlushTimeout  = 10 * time.Second
+	minMinFlushInterval = 2 * time.Second
+	maxFlushTimeout     = 10 * time.Second
 )
 
 var (
-	errInvalidFlushInterval = fmt.Errorf("flushInterval must be at least %s", minFlushInterval)
+	errInvalidFlushInterval = fmt.Errorf("flushInterval must be at least %s", minMinFlushInterval)
 	errInvalidFlushTimeout  = fmt.Errorf("flushTimeout cannot be more than %s", maxFlushTimeout)
 )
 
@@ -35,10 +35,10 @@ type Conf struct {
 }
 
 type IngestConf struct {
-	MaxBatchSize  uint          `yaml:"maxBatchSize" conf:",example=32"`
-	FlushInterval time.Duration `yaml:"flushInterval" conf:",example=10s"`
-	FlushTimeout  time.Duration `yaml:"flushTimeout" conf:",example=5s"`
-	NumGoRoutines uint          `yaml:"numGoRoutines" conf:",example=8"`
+	MaxBatchSize     uint          `yaml:"maxBatchSize" conf:",example=32"`
+	MinFlushInterval time.Duration `yaml:"minFlushInterval" conf:",example=10s"`
+	FlushTimeout     time.Duration `yaml:"flushTimeout" conf:",example=5s"`
+	NumGoRoutines    uint          `yaml:"numGoRoutines" conf:",example=8"`
 }
 
 func (c *Conf) Key() string {
@@ -49,7 +49,7 @@ func (c *Conf) SetDefaults() {
 	c.Conf.SetDefaults()
 
 	c.Ingest.MaxBatchSize = defaultMaxBatchSize
-	c.Ingest.FlushInterval = defaultFlushInterval
+	c.Ingest.MinFlushInterval = defaultMinFlushInterval
 	c.Ingest.FlushTimeout = defaultFlushTimeout
 	c.Ingest.NumGoRoutines = defaultNumGoRoutines
 }
@@ -63,7 +63,7 @@ func (c *Conf) Validate() error {
 		return errors.New("maxBatchSize must be at least 1")
 	}
 
-	if c.Ingest.FlushInterval < minFlushInterval {
+	if c.Ingest.MinFlushInterval < minMinFlushInterval {
 		return errInvalidFlushInterval
 	}
 
@@ -71,8 +71,12 @@ func (c *Conf) Validate() error {
 		return errInvalidFlushTimeout
 	}
 
-	if c.Ingest.FlushTimeout > c.Ingest.FlushInterval {
+	if c.Ingest.FlushTimeout > c.Ingest.MinFlushInterval {
 		return errors.New("flushTimeout cannot be longer than flushInterval")
+	}
+
+	if c.Ingest.MinFlushInterval >= c.Advanced.FlushInterval {
+		return errors.New("ingest.minFlushInterval must be less than advanced.flushInterval")
 	}
 
 	return nil

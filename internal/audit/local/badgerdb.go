@@ -47,6 +47,7 @@ func init() {
 
 type TriggerSignal struct {
 	ResponseCh chan struct{}
+	bypassSync bool
 }
 
 // Log implements the decisionlog interface with Badger as the backing store.
@@ -54,12 +55,13 @@ type Log struct {
 	logger         *zap.Logger
 	Db             *badgerv4.DB
 	buffer         chan *badgerv4.Entry
-	StopChan       chan struct{}
+	stopChan       chan struct{}
 	trigger        chan TriggerSignal
 	decisionFilter audit.DecisionLogEntryFilter
-	Wg             sync.WaitGroup
+	wg             sync.WaitGroup
 	ttl            time.Duration
 	stopOnce       sync.Once
+	callbackFn     func()
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -103,21 +105,25 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 		logger:         logger,
 		Db:             db,
 		buffer:         make(chan *badgerv4.Entry, bufferSize),
-		StopChan:       stopCh,
+		stopChan:       stopCh,
 		ttl:            ttl,
 		decisionFilter: decisionFilter,
 		trigger:        triggerCh,
 	}
 
-	l.Wg.Add(1)
+	l.wg.Add(1)
 	go l.batchWriter(maxBatchSize, flushInterval)
 
 	if gcInterval > 0 {
-		l.Wg.Add(1)
+		l.wg.Add(1)
 		go l.gc(gcInterval)
 	}
 
 	return l, nil
+}
+
+func (l *Log) RegisterCallback(fn func()) {
+	l.callbackFn = fn
 }
 
 func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
@@ -126,9 +132,9 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
-		case <-l.StopChan:
+		case <-l.stopChan:
 			batch.flush()
-			l.Wg.Done()
+			l.wg.Done()
 			return
 		case entry := <-l.buffer:
 			if err := batch.add(entry); err != nil {
@@ -137,8 +143,16 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 			}
 		case sig := <-l.trigger:
 			batch.flush()
-			if sig.ResponseCh != nil {
-				sig.ResponseCh <- struct{}{}
+			if l.callbackFn != nil {
+				go func() {
+					if !sig.bypassSync {
+						l.callbackFn()
+					}
+
+					if sig.ResponseCh != nil {
+						sig.ResponseCh <- struct{}{}
+					}
+				}()
 			}
 		}
 	}
@@ -155,8 +169,8 @@ func (l *Log) gc(gcInterval time.Duration) {
 
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
-		case <-l.StopChan:
-			l.Wg.Done()
+		case <-l.stopChan:
+			l.wg.Done()
 			return
 		case <-ticker.C:
 			logger.Debug("Running value log GC")
@@ -182,9 +196,9 @@ func (l *Log) Enabled() bool {
 }
 
 // ForceSync forces a sync operation and blocks until completion.
-func (l *Log) ForceSync() {
+func (l *Log) ForceSync(bypassSync bool) {
 	wait := make(chan struct{}, 1)
-	l.trigger <- TriggerSignal{ResponseCh: wait}
+	l.trigger <- TriggerSignal{wait, bypassSync}
 	<-wait
 }
 
@@ -394,8 +408,8 @@ func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collect
 func (l *Log) Close() error {
 	var err error
 	l.stopOnce.Do(func() {
-		close(l.StopChan)
-		l.Wg.Wait()
+		close(l.stopChan)
+		l.wg.Wait()
 		err = l.Db.Close()
 	})
 	return err

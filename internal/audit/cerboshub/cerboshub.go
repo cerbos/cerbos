@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -45,10 +46,6 @@ func init() {
 
 type Log struct {
 	*local.Log
-	logger  *zap.Logger
-	syncer  IngestSyncer
-	ticker  *time.Ticker
-	trigger chan local.TriggerSignal
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer) (*Log, error) {
@@ -59,40 +56,18 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 
 	logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 
+	minFlushInterval := conf.Ingest.MinFlushInterval
 	maxBatchSize := int(conf.Ingest.MaxBatchSize)
-	flushInterval := conf.Ingest.FlushInterval
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
-	triggerCh := make(chan local.TriggerSignal, 1)
-	ticker := time.NewTicker(flushInterval)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				select {
-				case triggerCh <- local.TriggerSignal{}:
-				default:
-				}
-			case <-localLog.StopChan:
-				return
-			}
-		}
-	}()
+	localLog.RegisterCallback(func() {
+		schedule(localLog.Db, newMutexTimer(), syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger)
+	})
 
-	l := &Log{
-		Log:     localLog,
-		logger:  logger,
-		syncer:  syncer,
-		ticker:  ticker,
-		trigger: triggerCh,
-	}
-
-	l.Wg.Add(1)
-	go l.batchSyncer(maxBatchSize, numGo, flushInterval, flushTimeout)
-
-	return l, nil
+	return &Log{
+		localLog,
+	}, nil
 }
 
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
@@ -139,27 +114,71 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	return l.Write(ctx, key, nil)
 }
 
-func (l *Log) batchSyncer(maxBatchSize, numGo int, flushInterval, flushTimeout time.Duration) {
-	for i := 0; i < goroutineResetThreshold; i++ {
-		select {
-		case <-l.StopChan:
-			l.Wg.Done()
+type mutexTimer struct {
+	t        *time.Timer
+	mu       sync.RWMutex
+	expireCh chan struct{}
+}
+
+func newMutexTimer() *mutexTimer {
+	return &mutexTimer{
+		expireCh: make(chan struct{}, 1),
+	}
+}
+
+func (mt *mutexTimer) set(waitDuration time.Duration) {
+	mt.mu.Lock()
+	defer mt.mu.Unlock()
+
+	if mt.t == nil {
+		mt.t = time.AfterFunc(waitDuration, func() {
+			mt.expireCh <- struct{}{}
+			// TODO(saml) could close/recreate a new channel each time if we want more than one listener
+			// close(mt.wait)
+
+			mt.mu.Lock()
+			mt.t = nil
+			mt.mu.Unlock()
+		})
+	}
+}
+
+func (mt *mutexTimer) wait() {
+	{
+		mt.mu.RLock()
+		defer mt.mu.RUnlock()
+		if mt.t == nil {
 			return
-		case sig := <-l.trigger:
-			l.stream(maxBatchSize, numGo, flushInterval, flushTimeout, sig)
 		}
 	}
 
-	// restart the goroutine with a fresh stack
-	go l.batchSyncer(maxBatchSize, numGo, flushInterval, flushTimeout)
+	<-mt.expireCh
 }
 
-func (l *Log) stream(maxBatchSize, numGo int, flushInterval, flushTimeout time.Duration, sig local.TriggerSignal) {
-	logger := l.logger.With(zap.String("component", "syncer"))
+func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlushInterval, flushTimeout time.Duration, maxBatchSize, numGo int, logger *zap.Logger) {
+	muTimer.wait()
 
+	if err := streamLogs(db, syncer, maxBatchSize, numGo, flushTimeout); err != nil {
+		var ingestErr ErrIngestBackoff
+		if errors.As(err, &ingestErr) {
+			logger.Warn("svc-ingest issued backoff", zap.Error(err))
+			muTimer.set(ingestErr.Backoff)
+			schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger)
+		} else {
+			logger.Warn("Failed sync", zap.Error(err))
+		}
+	}
+
+	// Set a min wait duration regardless of if events are pending.
+	// This prevents a retry completion occurring immediately before the next sync
+	// (and therefore burdening the backend).
+	muTimer.set(minFlushInterval)
+}
+
+func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration) error {
 	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
 	// Subsequent writes aren't blocked.
-	stream := l.Db.NewStream()
+	stream := db.NewStream()
 	stream.NumGo = numGo
 	stream.Prefix = SyncStatusPrefix
 
@@ -183,7 +202,7 @@ func (l *Log) stream(maxBatchSize, numGo int, flushInterval, flushTimeout time.D
 				end = len(keys)
 			}
 
-			if err := l.sync(ctx, keys[i:end]); err != nil {
+			if err := syncThenDelete(ctx, db, syncer, keys[i:end]); err != nil {
 				return err
 			}
 		}
@@ -191,40 +210,21 @@ func (l *Log) stream(maxBatchSize, numGo int, flushInterval, flushTimeout time.D
 		return nil
 	}
 
-	newFlushInterval := flushInterval
-	if err := stream.Orchestrate(ctx); err != nil {
-		var ingestErr ErrIngestBackoff
-		if errors.As(err, &ingestErr) {
-			logger.Warn("svc-ingest issued backoff", zap.Error(err))
-			newFlushInterval = ingestErr.Backoff
-		} else {
-			logger.Warn("Failed sync", zap.Error(err))
-		}
-	}
-
-	l.ticker.Reset(newFlushInterval)
-
-	if sig.ResponseCh != nil {
-		sig.ResponseCh <- struct{}{}
-	}
+	return stream.Orchestrate(ctx)
 }
 
-func (l *Log) sync(ctx context.Context, batch [][]byte) error {
-	if err := l.syncer.Sync(ctx, batch); err != nil {
+func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, batch [][]byte) error {
+	if err := syncer.Sync(ctx, batch); err != nil {
 		return err
 	}
 
-	wb := l.Db.NewWriteBatch()
+	wb := db.NewWriteBatch()
 	defer wb.Cancel()
 
-	return l.deleteKeys(wb, batch)
-}
-
-func (l *Log) deleteKeys(wb *badgerv4.WriteBatch, keys [][]byte) error {
-	for _, k := range keys {
+	for _, k := range batch {
 		if err := wb.Delete(k); err != nil {
 			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
-				wb = l.Db.NewWriteBatch()
+				wb = db.NewWriteBatch()
 				_ = wb.Delete(k)
 			} else {
 				return err
@@ -233,17 +233,6 @@ func (l *Log) deleteKeys(wb *badgerv4.WriteBatch, keys [][]byte) error {
 	}
 
 	return wb.Flush()
-}
-
-// ForceSync forces a sync operation and blocks until completion.
-func (l *Log) ForceSync() {
-	l.Log.ForceSync()
-
-	done := make(chan struct{}, 1)
-	l.trigger <- local.TriggerSignal{
-		ResponseCh: done,
-	}
-	<-done
 }
 
 func (l *Log) Backend() string {

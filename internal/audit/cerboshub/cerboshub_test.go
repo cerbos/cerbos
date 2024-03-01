@@ -80,14 +80,14 @@ func TestCerbosHubLog(t *testing.T) {
 			Advanced: local.AdvancedConf{
 				BufferSize:    1,
 				MaxBatchSize:  32,
-				FlushInterval: 1 * time.Second,
+				FlushInterval: 10 * time.Second,
 			},
 		},
 		cerboshub.IngestConf{
-			MaxBatchSize:  batchSize,
-			FlushInterval: 2 * time.Second,
-			FlushTimeout:  1 * time.Second,
-			NumGoRoutines: 8,
+			MaxBatchSize:     batchSize,
+			MinFlushInterval: 2 * time.Second,
+			FlushTimeout:     1 * time.Second,
+			NumGoRoutines:    8,
 		},
 	}
 
@@ -139,8 +139,7 @@ func TestCerbosHubLog(t *testing.T) {
 
 		wantKeys := loadData(t, db, startDate)
 
-		// Flush on embedded type, as `db.ForceSync()` flushes and deletes keys as well
-		db.Log.ForceSync()
+		db.ForceSync(true)
 
 		keys := getLocalKeys()
 		require.Len(t, keys, len(wantKeys), "incorrect number of keys: %d", len(keys))
@@ -154,7 +153,7 @@ func TestCerbosHubLog(t *testing.T) {
 
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches)
 
-		db.ForceSync()
+		db.ForceSync(false)
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
@@ -171,7 +170,7 @@ func TestCerbosHubLog(t *testing.T) {
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(errors.New("some error")).Once()
 
-		db.ForceSync()
+		db.ForceSync(false)
 
 		require.True(t, syncer.hasKeys(loadedKeys[0:initialNBatches*int(batchSize)]), "some keys should have been synced")
 		require.Len(t, getLocalKeys(), (numRecords*2)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
@@ -187,17 +186,11 @@ func TestCerbosHubLog(t *testing.T) {
 		// Server responds with backoff after first N pages
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(cerboshub.ErrIngestBackoff{
-			Backoff: time.Minute * 1, // we simulate the next call with an additional call to ForceSync
+			Backoff: 0,
 		}).Once()
-
-		db.ForceSync()
-
-		require.True(t, syncer.hasKeys(loadedKeys[0:initialNBatches*int(batchSize)]), "some keys should have been synced")
-		require.Len(t, getLocalKeys(), (numRecords*2)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
-
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches - initialNBatches)
 
-		db.ForceSync()
+		db.ForceSync(false)
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
