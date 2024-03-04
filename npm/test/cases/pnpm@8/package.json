@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "packageManager": "pnpm@8.15.4",
+  "dependencies": {
+    "cerbos": "latest",
+    "cerbosctl": "latest"
+  }
+}

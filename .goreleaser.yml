@@ -26,6 +26,15 @@ builds:
       - -trimpath
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}} -X github.com/cerbos/cerbos/internal/telemetry.WriteKey={{.Env.TELEMETRY_WRITE_KEY}} -X github.com/cerbos/cerbos/internal/telemetry.DataPlaneURL={{.Env.TELEMETRY_URL}}
+    hooks:
+      post:
+        - cmd: hack/scripts/copy-binary-to-npm-package.sh
+          env:
+            - BINARY_NAME=cerbos
+            - BINARY_OS={{ .Os }}
+            - BINARY_ARCH={{ .Arch }}
+            - BINARY_VERSION={{ .Version }}
+            - BINARY_PATH={{ .Path }}
 
   - main: ./cmd/cerbosctl
     binary: cerbosctl
@@ -46,6 +55,16 @@ builds:
       - -trimpath
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}} -X github.com/cerbos/cerbos/internal/telemetry.WriteKey={{.Env.TELEMETRY_WRITE_KEY}} -X github.com/cerbos/cerbos/internal/telemetry.DataPlaneURL={{.Env.TELEMETRY_URL}}
+    hooks:
+      post:
+        - cmd: hack/scripts/copy-binary-to-npm-package.sh
+          env:
+            - BINARY_NAME=cerbosctl
+            - BINARY_OS={{ .Os }}
+            - BINARY_ARCH={{ .Arch }}
+            - BINARY_VERSION={{ .Version }}
+            - BINARY_PATH={{ .Path }}
+
 universal_binaries:
   - id: "cerbos"
     replace: false
@@ -53,6 +72,7 @@ universal_binaries:
   - id: "cerbosctl"
     replace: false
     name_template: "cerbosctl"
+
 archives:
   - id: cerbos
     builds:
@@ -63,6 +83,7 @@ archives:
     builds:
       - cerbosctl
     name_template: 'cerbosctl_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+
 nfpms:
   - id: cerbos
     package_name: cerbos
