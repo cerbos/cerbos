@@ -177,6 +177,7 @@ func TestCerbosHubLog(t *testing.T) {
 	})
 
 	t.Run("deletesSyncKeysAfterBackoff", func(t *testing.T) {
+		t.Skip("TODO: We need to block until retry goroutine is complete")
 		t.Cleanup(purgeKeys)
 
 		loadedKeys := loadData(t, db, startDate)
