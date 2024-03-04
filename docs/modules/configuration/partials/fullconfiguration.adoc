@@ -11,6 +11,12 @@ audit:
   enabled: false # Enabled defines whether audit logging is enabled.
   excludeMetadataKeys: ['authorization'] # ExcludeMetadataKeys defines which gRPC request metadata keys should be excluded from the audit logs. Takes precedence over includeMetadataKeys.
   includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in the audit logs.
+  cerboshub:
+    ingest: 
+      flushTimeout: 5s 
+      maxBatchSize: 32 
+      minFlushInterval: 10s 
+      numGoRoutines: 8
   file:
     additionalPaths: [stdout] # AdditionalPaths to mirror the log output. Has performance implications. Use with caution.
     logRotation: # LogRotation settings (optional).
