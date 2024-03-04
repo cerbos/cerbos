@@ -19,17 +19,26 @@ CHARTS_DIR="${SCRIPT_DIR}/../../deploy/charts/cerbos"
 
 update_version() {
     local VER="$1"
+    local PRE="${2:-}"
 
     echo "Setting version to $VER"
 
     # Docs version
     sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"${VER}@\"#" "${DOCS_DIR}/antora-playbook.yml"
     sed -i -E "s#^version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VER\"#" "${DOCS_DIR}/antora.yml"
-    sed -i -E "/^prerelease:/d" "${DOCS_DIR}/antora.yml"
+
+    if [[ -z "$PRE" ]]; then
+        sed -i -E "/^prerelease:/d" "${DOCS_DIR}/antora.yml"
+    else
+        sed -i -E "/^version:/a prerelease: ${PRE}" "${DOCS_DIR}/antora.yml"
+    fi
 
     # Helm chart version
     sed -i -E "s#appVersion: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#appVersion: \"$VER\"#" "${CHARTS_DIR}/Chart.yaml"
     sed -i -E "s#version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VER\"#" "${CHARTS_DIR}/Chart.yaml"
+
+    # npm package versions
+    go run ./hack/tools/generate-npm-packages
 }
 
 set_branch() {
@@ -52,11 +61,9 @@ RELEASE_BRANCH="v${SEGMENTS[0]}.${SEGMENTS[1]}"
 git branch "$RELEASE_BRANCH" "v${VERSION}" || true
 
 # Set next version
-update_version $NEXT_VERSION
+update_version $NEXT_VERSION "-prerelease"
 # Set Antora branch to HEAD (author mode)
 set_branch "HEAD"
-# Mark it as a pre-release
-sed -i -E "/^version:/a prerelease: -prerelease" "${DOCS_DIR}/antora.yml"
 # Commit changes
 git -C "$PROJECT_DIR" commit -s -a -m "chore(version): Bump version to $NEXT_VERSION"
 

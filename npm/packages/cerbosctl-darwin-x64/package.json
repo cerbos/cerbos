@@ -1,0 +1,30 @@
+{
+  "name": "@cerbos/cerbosctl-darwin-x64",
+  "version": "0.32.0",
+  "description": "The darwin-x64 binary for cerbosctl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cerbos/cerbos.git",
+    "directory": "npm/packages/cerbosctl-darwin-x64"
+  },
+  "homepage": "https://cerbos.dev",
+  "bugs": {
+    "url": "https://github.com/cerbos/cerbos/issues"
+  },
+  "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
+  "license": "Apache-2.0",
+  "cpu": [
+    "x64"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "main": "./cerbosctl-darwin-x64",
+  "files": [
+    "cerbosctl-darwin-x64"
+  ],
+  "scripts": {
+    "prepack": "test -f cerbosctl-darwin-x64"
+  },
+  "preferUnplugged": true
+}

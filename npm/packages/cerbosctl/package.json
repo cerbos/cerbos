@@ -1,0 +1,29 @@
+{
+  "name": "cerbosctl",
+  "version": "0.32.0",
+  "description": "The cerbosctl binary",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cerbos/cerbos.git",
+    "directory": "npm/packages/cerbosctl"
+  },
+  "homepage": "https://cerbos.dev",
+  "bugs": {
+    "url": "https://github.com/cerbos/cerbos/issues"
+  },
+  "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
+  "license": "Apache-2.0",
+  "bin": {
+    "cerbosctl": "index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "scripts": {},
+  "optionalDependencies": {
+    "@cerbos/cerbosctl-darwin-arm64": "0.32.0",
+    "@cerbos/cerbosctl-darwin-x64": "0.32.0",
+    "@cerbos/cerbosctl-linux-arm64": "0.32.0",
+    "@cerbos/cerbosctl-linux-x64": "0.32.0"
+  }
+}
