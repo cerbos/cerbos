@@ -1,0 +1,24 @@
+{
+  "name": "{{ .Name }}",
+  "version": "{{ .Version }}",
+  "description": "The {{ .Name }} binary",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cerbos/cerbos.git",
+    "directory": "npm/packages/{{ .Name }}"
+  },
+  "homepage": "https://cerbos.dev",
+  "bugs": {
+    "url": "https://github.com/cerbos/cerbos/issues"
+  },
+  "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
+  "license": "Apache-2.0",
+  "bin": {
+    "{{ .Name }}": "index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "scripts": {},
+  "optionalDependencies": {{ .OptionalDependencies }}
+}

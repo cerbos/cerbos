@@ -1,0 +1,30 @@
+{
+  "name": "@cerbos/cerbosctl-linux-x64",
+  "version": "0.35.0-prerelease",
+  "description": "The linux-x64 binary for cerbosctl",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cerbos/cerbos.git",
+    "directory": "npm/packages/cerbosctl-linux-x64"
+  },
+  "homepage": "https://cerbos.dev",
+  "bugs": {
+    "url": "https://github.com/cerbos/cerbos/issues"
+  },
+  "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
+  "license": "Apache-2.0",
+  "cpu": [
+    "x64"
+  ],
+  "os": [
+    "linux"
+  ],
+  "main": "./cerbosctl-linux-x64",
+  "files": [
+    "cerbosctl-linux-x64"
+  ],
+  "scripts": {
+    "prepack": "test -f cerbosctl-linux-x64"
+  },
+  "preferUnplugged": true
+}
