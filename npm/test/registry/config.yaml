@@ -1,0 +1,14 @@
+auth:
+
+log:
+  type: stdout
+  level: fatal
+
+max_body_size: 100mb
+
+packages:
+  "**":
+    access: $all
+    publish: $all
+
+storage: ./storage
