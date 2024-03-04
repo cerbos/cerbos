@@ -50,6 +50,7 @@ require (
 	github.com/jwalton/go-supportscolor v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lestrrat-go/httprc v1.0.4
+	github.com/lestrrat-go/httprc/v2 v2.0.0
 	github.com/lestrrat-go/jwx/v2 v2.0.20
 	github.com/mattn/go-isatty v0.0.20
 	github.com/microsoft/go-mssqldb v1.7.0
