@@ -26,12 +26,12 @@ const (
 func main() {
 	//nolint: govet
 	var cli struct {
-		Compile     compile.Cmd     `cmd:"" help:"Compile and test policies"`
-		Server      server.Cmd      `cmd:"" help:"Start Cerbos server (PDP)"`
-		Healthcheck healthcheck.Cmd `cmd:"" help:"Healthcheck utility" aliases:"hc"`
-		Run         run.Cmd         `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
-		Repl        repl.Cmd        `cmd:"" help:"Start a REPL to try out conditions"`
-		Version     kong.VersionFlag
+		Compile     compile.Cmd      `cmd:"" help:"Compile and test policies"`
+		Server      server.Cmd       `cmd:"" help:"Start Cerbos server (PDP)"`
+		Healthcheck healthcheck.Cmd  `cmd:"" help:"Healthcheck utility" aliases:"hc"`
+		Run         run.Cmd          `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
+		Repl        repl.Cmd         `cmd:"" help:"Start a REPL to try out conditions"`
+		Version     kong.VersionFlag `help:"Show cerbos version"`
 	}
 
 	ctx := kong.Parse(&cli,

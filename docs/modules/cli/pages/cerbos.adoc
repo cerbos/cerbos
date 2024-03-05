@@ -67,7 +67,7 @@ Arguments:
 
 Flags:
   -h, --help                       Show context-sensitive help.
-      --version
+      --version                    Show cerbos version
 
       --ignore-schemas             Ignore schemas during compilation
       --tests=STRING               Path to the directory containing tests. Defaults to policy directory.
@@ -122,7 +122,7 @@ cerbos healthcheck --kind=http --host-port=10.0.1.5:3592 --no-tls
 
 Flags:
   -h, --help           Show context-sensitive help.
-      --version
+      --version        Show cerbos version
 
       --kind="grpc"    Healthcheck kind (grpc,http) ($CERBOS_HC_KIND)
       --insecure       Do not verify server certificate ($CERBOS_HC_INSECURE)
@@ -293,7 +293,7 @@ Arguments:
 
 Flags:
   -h, --help                                    Show context-sensitive help.
-      --version
+      --version                                 Show cerbos version
 
       --log-level="info"                        Log level (debug,info,warn,error)
       --config=.cerbos.yaml                     Path to config file
@@ -325,7 +325,7 @@ cerbos server --config=/path/to/.cerbos.yaml --set=server.adminAPI.enabled=true 
 
 Flags:
   -h, --help                                    Show context-sensitive help.
-      --version
+      --version                                 Show cerbos version
 
       --debug-listen-addr=:6666                 Address to start the gops listener
       --log-level="info"                        Log level (debug,info,warn,error)
