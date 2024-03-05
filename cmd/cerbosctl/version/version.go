@@ -13,7 +13,9 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-type Cmd struct{}
+type Cmd struct {
+	Client kong.VersionFlag `help:"Only show cerbosctl version"`
+}
 
 func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 	_, err := fmt.Fprintf(k.Stdout, "Client version %s; commit sha: %s, build date: %s\n", util.Version, util.Commit, util.BuildDate)
