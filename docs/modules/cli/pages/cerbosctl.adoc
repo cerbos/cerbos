@@ -1,6 +1,6 @@
 include::ROOT:partial$attributes.adoc[]
 
-= `cerbosctl` 
+= `cerbosctl`
 :page-aliases: ctl.adoc
 
 This utility can be downloaded as a separate container or a tar archive. It is automatically installed when installing Cerbos through xref:ROOT:installation/binary.adoc#linux-packages[Linux packages or the Homebrew tap].
@@ -13,14 +13,14 @@ docker run -it {cerbosctl-docker-img} \
     --server=192.168.1.10:3593 \
     --username=user \
     --password=password \
-    get rp  
+    get rp
 ----
 
 .Download and run the appropriate binary from {app-github-releases-page}
 [caption=]
 [%header,cols=".^1,.^1,3m",grid=rows]
 |===
-|OS | Arch | Bundle 
+|OS | Arch | Bundle
 |Linux | x86-64 | cerbosctl_{app-version}_Linux_x86_64.tar.gz
 |Linux | arm64 | cerbosctl_{app-version}_Linux_arm64.tar.gz
 |MacOS | universal | cerbosctl_{app-version}_Darwin_all.tar.gz
@@ -33,63 +33,84 @@ Cerbosctl requires the xref:configuration:server.adoc#admin-api[Admin API to be 
 
 The server address to connect to and the credentials to authenticate can be provided through environment variables or as arguments to the command.
 
-[source,sh]
+[source]
 ----
-Cerbos instance administration commands
+Usage: cerbosctl <command>
+
+A CLI for managing Cerbos
+
 The Cerbos Admin API must be enabled in order for these commands to work.
-The Admin API requires credentials. They can be provided using a netrc file, 
-environment variables or command-line arguments. 
+The Admin API requires credentials. They can be provided using a netrc file,
+environment variables or command-line arguments.
 
 Environment variables
 
-CERBOS_SERVER: gRPC address of the Cerbos server
-CERBOS_USERNAME: Admin username
-CERBOS_PASSWORD: Admin password
+  - CERBOS_SERVER: gRPC address of the Cerbos server
+  - CERBOS_USERNAME: Admin username
+  - CERBOS_PASSWORD: Admin password
 
-When more than one method is used to provide credentials, the precedence from lowest to 
-highest is: netrc < environment < command line.
+When more than one method is used to provide credentials, the precedence from
+lowest to highest is: netrc < environment < command line.
 
-Usage:
-  cerbosctl [command]
+Examples
 
-Examples:
+    # Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer
+    cerbosctl --server=localhost:3593 --username=user --password=password --insecure decisions
 
-# Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer
-cerbosctl --server=localhost:3593 --username=user --password=password --insecure decisions
-
-# Connect to a non-TLS server and launch the decisions viewer
-cerbosctl --server=localhost:3593 --username=user --password=password --plaintext decisions
-
-Available Commands:
-  audit       View audit logs
-  completion  Generate the autocompletion script for the specified shell
-  decisions   Interactive decision log viewer
-  disable     Disable policies
-  enable      Enable policies
-  get         List or view policies and schemas
-  help        Help about any command
-  put         Put policies or schemas
-  store       Store operations
-  version     Show cerbosctl and PDP version
+    # Connect to a non-TLS server and launch the decisions viewer
+    cerbosctl --server=localhost:3593 --username=user --password=password --plaintext decisions
 
 Flags:
-      --ca-cert string       Path to the CA certificate for verifying server identity
-      --client-cert string   Path to the TLS client certificate
-      --client-key string    Path to the TLS client key
-  -h, --help                 help for cerbosctl
-      --insecure             Skip validating server certificate
-      --password string      Admin password
-      --plaintext            Use plaintext protocol without TLS
-      --server string        Address of the Cerbos server
-      --username string      Admin username
-  -v, --version              version for cerbosctl
+  -h, --help                       Show context-sensitive help.
+      --server="localhost:3593"    Address of the Cerbos server ($CERBOS_SERVER)
+      --username=STRING            Admin username ($CERBOS_USERNAME)
+      --password=STRING            Admin password ($CERBOS_PASSWORD)
+      --ca-cert=STRING             Path to the CA certificate for verifying server identity
+      --client-cert=STRING         Path to the TLS client certificate
+      --client-key=STRING          Path to the TLS client key
+      --insecure                   Skip validating server certificate
+      --plaintext                  Use plaintext protocol without TLS
 
-Use "cerbosctl [command] --help" for more information about a command.
+Commands:
+  get derived_roles (derived_role,dr) [<id> ...]
+
+  get export_variables (ev) [<id> ...]
+
+  get principal_policies (principal_policy,pp) [<id> ...]
+
+  get resource_policies (resource_policy,rp) [<id> ...]
+
+  get schemas (schema,s) [<id> ...]
+
+  store export (e) <path>
+
+  store reload (r)
+
+  delete schema (schemas,s) <id> ...
+
+  disable policy (policies,p) <id> ...
+
+  enable policy (policies,p) <id> ...
+
+  put policy (policies,p) <paths> ...
+
+  put schema (schemas,s) <paths> ...
+
+  decisions
+    Interactive decision log viewer
+
+  audit
+    View audit logs
+
+  version
+    Show cerbosctl and PDP version
+
+Run "cerbosctl <command> --help" for more information on a command.
 ----
 
 
 [#audit]
-== `audit` 
+== `audit`
 
 This command allows you to view the audit logs captured by the Cerbos server. xref:configuration:audit.adoc[Audit logging] must be enabled on the server to obtain the data through this command.
 
@@ -98,7 +119,7 @@ This command allows you to view the audit logs captured by the Cerbos server. xr
 ****
 
 tail:: Get the last N records (e.g. `--tail=10`)
-between:: Get records between two ISO-8601 timestamps. If the last timestamp is left out, get records from the first timestamp up to now. 
+between:: Get records between two ISO-8601 timestamps. If the last timestamp is left out, get records from the first timestamp up to now.
 +
 - `--between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z`: From midnight of 2021-07-01 to midnight of 2021-07-02.
 - `--between=2021-07-01T00:00:00Z`: From midnight of 2021-07-01 to now.
