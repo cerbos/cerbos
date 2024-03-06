@@ -79,7 +79,7 @@ tests: <9>
       actions: <17>
         - view
         - delete
-      auxData: validJWT <17>
+      auxData: validJWT <18>
     expected: <19>
       - principal: alicia <20>
         resource: alicia_album <21>
