@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = AuxData block
 
+include::ROOT:partial$version-check.adoc[]
+
+
 The `auxData` block configures the auxiliary data sources that can be referenced in policy conditions.
 
 

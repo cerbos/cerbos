@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Cerbos Policies
 
+include::ROOT:partial$version-check.adoc[]
+
+
 There are four kinds of Cerbos policies:
 
 xref:derived_roles.adoc[Derived roles]:: Traditional RBAC roles are usually broad groupings with no context awareness. Derived roles are a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch.

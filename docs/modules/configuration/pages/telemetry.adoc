@@ -1,6 +1,9 @@
 include::ROOT:partial$attributes.adoc[]
 
 = Telemetry
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: ROOT:telemetry.adoc
 
 Cerbos developers rely on anonymous usage data to help prioritise new features and improve the product. The information collected is completely anonymous, never shared with external entities, and you can opt out at any time.

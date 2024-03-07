@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-orm-sqlalchemy]
 = Tutorial: Using Cerbos with SQLAlchemy
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: tutorials:orm/sqlalchemy/index.adoc
 
 If you maintain an application that handles any _state_ at all, it's likely that you've had to figure out how to both store that state, as well as how to load it into the application layer and act on it in any which way your business logic requires.

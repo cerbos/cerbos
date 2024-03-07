@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Resource policies
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Resource policies define rules for actions that can be performed on a given resource. A resource is an application-specific concept that applies to anything that requires access rules. For example, in an HR application, a resource can be as coarse-grained as a full employee record or as fine-grained as a single field in the record.
 
 Multiple rules can be defined for the same action on a resource for different roles and/or with different conditions. If more than one rule matches a given input, then a rule specifying `EFFECT_DENY` will take precedence over one specifying `EFFECT_ALLOW`.

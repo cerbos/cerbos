@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-auth-magic]
 = Tutorial: Using Cerbos with Magic
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: tutorials:authentication/magic/index.adoc
 
 The demise of passwords has https://www.forbes.com/sites/forbestechcouncil/2020/03/06/the-inevitable-death-of-passwords/[long been predicted] due to the ongoing leaks, hacks and breaches in recent years.

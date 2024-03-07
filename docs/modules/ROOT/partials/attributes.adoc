@@ -12,13 +12,3 @@
 :cerbosctl-docker-img: {app-container-registry}/cerbos/cerbosctl:{app-version}
 :tutorial-base: {app-github-url}/tree/main/docs/modules/ROOT/examples/tutorial
 
-ifndef::page-component-version-is-latest[]
-NOTE: This documentation is for
-ifeval::["{page-component-version}" > "{page-component-latest-version}"]
-an as-yet unreleased
-endif::[]
-ifeval::["{page-component-version}" < "{page-component-latest-version}"]
-a previous
-endif::[]
-version of Cerbos. Choose {page-component-latest-version} from the version picker at the top right or navigate to https://docs.cerbos.dev for the latest version.
-endif::page-component-version-is-latest[]

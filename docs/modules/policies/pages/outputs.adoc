@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Outputs
 
+include::ROOT:partial$version-check.adoc[]
+
+
 You can define an optional expression to be evaluated when a policy rule is fully activated (`action`, `roles` and
 `derivedRoles` match and `condition` is satisfied) or partially activated (`condition` is not satisfied).
 The collected outputs from all the rules are included in the Cerbos API response.

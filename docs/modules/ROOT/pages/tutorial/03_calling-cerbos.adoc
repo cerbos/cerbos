@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Calling Cerbos
 
+include::partial$version-check.adoc[]
+
+
 NOTE: The policies for this section can be found link:{tutorial-base}/04-calling-cerbos/cerbos[on GitHub].
 
 Now that you know the policies are valid, it is time to make your first call to Cerbos to make an authorization check.
