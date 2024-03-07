@@ -40,7 +40,7 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks confdocs
+generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks generate-npm-packages confdocs
 
 .PHONY: generate-proto-code
 generate-proto-code: $(BUF)
@@ -69,6 +69,10 @@ generate-mocks: $(MOCKERY)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage --name=Store --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/bundle --name=CloudAPIClient --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=github.com/cerbos/cloud-api/bundle --name=WatchHandle --output=$(MOCK_DIR)
+
+.PHONY: generate-npm-packages
+generate-npm-packages:
+	@ go run ./hack/tools/generate-npm-packages
 
 .PHONY: generate-notice
 generate-notice: $(GO_LICENCE_DETECTOR)
@@ -108,6 +112,10 @@ test-integration: $(GOTESTSUM) $(TESTSPLIT)
 .PHONY: test-times
 test-times: $(TESTSPLIT)
 	@ $(TESTSPLIT) combine --kinds=unit,integration --total=$(TESTSPLIT_TOTAL)
+
+.PHONY: test-npm-packages
+test-npm-packages:
+	@ cd npm && corepack npm test
 
 .PHONY: coverage
 coverage:

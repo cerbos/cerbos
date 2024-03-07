@@ -1,0 +1,29 @@
+{
+  "name": "cerbos",
+  "version": "0.35.0-prerelease",
+  "description": "The cerbos binary",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cerbos/cerbos.git",
+    "directory": "npm/packages/cerbos"
+  },
+  "homepage": "https://cerbos.dev",
+  "bugs": {
+    "url": "https://github.com/cerbos/cerbos/issues"
+  },
+  "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
+  "license": "Apache-2.0",
+  "bin": {
+    "cerbos": "index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "scripts": {},
+  "optionalDependencies": {
+    "@cerbos/cerbos-darwin-arm64": "0.35.0-prerelease",
+    "@cerbos/cerbos-darwin-x64": "0.35.0-prerelease",
+    "@cerbos/cerbos-linux-arm64": "0.35.0-prerelease",
+    "@cerbos/cerbos-linux-x64": "0.35.0-prerelease"
+  }
+}

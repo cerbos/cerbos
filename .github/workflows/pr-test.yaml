@@ -12,6 +12,7 @@ jobs:
     outputs:
       code: ${{ steps.filter.outputs.code }}
       docs: ${{ steps.filter.outputs.docs }}
+      npm: ${{ steps.filter.outputs.npm }}
       protos: ${{ steps.filter.outputs.protos }}
     steps:
       - uses: dorny/paths-filter@v3
@@ -19,10 +20,14 @@ jobs:
         with:
           filters: |
             code:
-              - '!(docs/**)'
+              - '!(.node-version|{docs,npm}/**)'
             docs:
               - .github/workflows/pr-test.yaml
               - 'docs/**'
+            npm:
+              - .github/workflows/pr-test.yaml
+              - 'npm/**'
+              - .node-version
             protos:
               - .github/workflows/pr-test.yaml
               - '**/*.proto'
@@ -252,3 +257,75 @@ jobs:
 
       - name: Test Helm chart
         run: ./deploy/charts/validate.sh
+
+  build-npm:
+    needs: changes
+    if: ${{ needs.changes.outputs.npm == 'true' }}
+    name: Build npm packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go and cache dependencies
+        uses: ./.github/actions/setup-go
+        with:
+          cross_compiling: true
+
+      - name: Build binaries
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: build --config=.goreleaser.yml --clean --snapshot
+        env:
+          TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
+          TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
+
+      - name: Collect npm packages
+        run: tar --create --verbose --file npm.tar npm
+
+      - name: Upload npm packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: npm.tar
+
+  test-npm:
+    needs: build-npm
+    name: Test npm packages
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 10
+    steps:
+      - name: Check out .node-version file
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .node-version
+          sparse-checkout-cone-mode: false
+
+      - name: Download npm packages
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-packages
+
+      - name: Extract npm packages
+        run: tar --extract --verbose --file npm.tar
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: npm/test/registry/package-lock.json
+          node-version-file: .node-version
+
+      - name: Test npm packages
+        working-directory: npm
+        run: corepack npm test
