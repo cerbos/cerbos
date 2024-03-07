@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Deploy Cerbos as a systemd service
 
+include::ROOT:partial$version-check.adoc[]
+
+
 The xref:ROOT:installation/binary.adoc#linux-packages[Cerbos Linux packages] will automatically create a systemd service during installation. If you are using the tarballs to create a custom installation, you can modify the following sample systemd service definition to match your requirements.
 
 

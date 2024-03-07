@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Deploy Cerbos to Serverless/FaaS environments
 
+include::ROOT:partial$version-check.adoc[]
+
+
 == AWS Lambda
 
 You can deploy Cerbos to AWS Lambda by building a special container image that includes the Lambda runtime and the Cerbos binary. See https://github.com/cerbos/cerbos-aws-lambda for an example. The repository also contains an example of an AWS Lambda function that creates an AWS API Gateway endpoint to communicate with Cerbos over the HTTP protocol.

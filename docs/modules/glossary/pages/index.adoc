@@ -3,6 +3,9 @@ include::ROOT:partial$attributes.adoc[]
 [glossary]
 = Glossary of Cerbos terms
 
+include::ROOT:partial$version-check.adoc[]
+
+
 [glossary]
 
 ACTION::

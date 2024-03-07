@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Policy authoring
 
+include::partial$version-check.adoc[]
+
+
 NOTE: The policies for this section can be found link:{tutorial-base}/03-resource-definition/cerbos[on GitHub].
 
 == Authentication roles

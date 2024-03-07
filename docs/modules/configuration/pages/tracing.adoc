@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Tracing block
 
+include::ROOT:partial$version-check.adoc[]
+
+
 IMPORTANT: The `tracing` block was deprecated in Cerbos 0.32.0 and removed in Cerbos 0.33.0. Refer to xref:observability.adoc#traces[observability configuration] for information about configuring traces.
 
 [#migration]

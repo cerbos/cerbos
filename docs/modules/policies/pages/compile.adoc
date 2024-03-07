@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Validating and testing policies
 
+include::ROOT:partial$version-check.adoc[]
+
+
 == Validating policies
 
 You can use the Cerbos compiler to make sure that your policies are valid before pushing them to a production Cerbos instance. We recommend setting up a git hook or a CI step to run the Cerbos compiler before you push any policy changes to production.

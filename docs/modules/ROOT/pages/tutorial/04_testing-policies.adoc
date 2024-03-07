@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Testing policies
 
+include::partial$version-check.adoc[]
+
+
 NOTE: The policies for this section can be found link:{tutorial-base}/05-testing-policies/cerbos[on GitHub].
 
 Cerbos allows you to write xref:policies:compile.adoc[tests for policies] and run them as part of the compilation stage to make sure that the policies do exactly what you expect. This saves the manual effort of running example requests over and over to ensure the policy logic is as you expect.
