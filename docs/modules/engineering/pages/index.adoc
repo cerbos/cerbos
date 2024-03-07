@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Why we built Cerbos this way
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Welcome! The purpose of this section is to give some insight into how decisions were made when designing and building Cerbos, for the more _curious_ of our users.
 
 * xref:why_cerbos_runs_as_a_separate_process.adoc[Why Cerbos runs as a separate process]

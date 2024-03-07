@@ -3,6 +3,9 @@ include::ROOT:partial$attributes.adoc[]
 [#tutorial-auth-jwt]
 
 = Tutorial: Using Cerbos with JWT
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: tutorials:authentication/jwt/index.adoc
 
 

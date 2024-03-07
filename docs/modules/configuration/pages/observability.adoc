@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Observability
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Cerbos is designed from the ground up to be cloud native and has first-class support for observability via OpenTelemetry metrics and distributed traces.
 
 [#metrics]

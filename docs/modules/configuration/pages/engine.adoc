@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Engine block
 
+include::ROOT:partial$version-check.adoc[]
+
+
 == Default policy version
 
 xref:policies:index.adoc[Cerbos policies] have a `version` field to support use cases such as having different policies for different environments (production, staging etc.) or for gradual rollout of a new version of an application. By default, when a request does not explicitly specify the policy version, the Cerbos engine attempts to find a matching policy that has its version set to `default`. You can change this fallback value by setting the `defaultPolicyVersion`. For example, if you have a Cerbos deployment for your staging environment, you may want to set `defaultPolicyVersion: staging` to ensure that the default policies in effect are the ones versioned as `staging`.

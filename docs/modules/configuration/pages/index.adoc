@@ -3,6 +3,9 @@ include::ROOT:partial$attributes.adoc[]
 [[configuration]]
 = Configuration
 
+include::ROOT:partial$version-check.adoc[]
+
+
 The Cerbos server is configured with a YAML file, conventionally named `.cerbos.yaml`. Start the server by passing the configuration file using the `--config` flag. The values defined in the file can be overridden from the command-line by using the `--set` flag. The `--set` flag can be used multiple times. For example, to override `server.httpListenAddr` and `engine.defaultPolicyVersion`, the `--set` flag can be used as follows:
 
 [source,sh,subs="attributes"]
