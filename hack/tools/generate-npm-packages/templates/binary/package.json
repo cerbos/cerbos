@@ -1,0 +1,30 @@
+{
+  "name": "@cerbos/{{ .Name }}",
+  "version": "{{ .Version }}",
+  "description": "The {{ .OS }}-{{ .Arch }} binary for {{ .Binary }}",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cerbos/cerbos.git",
+    "directory": "npm/packages/{{ .Name }}"
+  },
+  "homepage": "https://cerbos.dev",
+  "bugs": {
+    "url": "https://github.com/cerbos/cerbos/issues"
+  },
+  "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
+  "license": "Apache-2.0",
+  "cpu": [
+    "{{ .Arch }}"
+  ],
+  "os": [
+    "{{ .OS }}"
+  ],
+  "main": "./{{ .Name }}",
+  "files": [
+    "{{ .Name }}"
+  ],
+  "scripts": {
+    "prepack": "test -f {{ .Name }}"
+  },
+  "preferUnplugged": true
+}

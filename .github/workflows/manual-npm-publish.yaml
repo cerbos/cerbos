@@ -1,0 +1,12 @@
+name: Publish npm packages from an existing GitHub release
+on: workflow_dispatch
+jobs:
+  publish-npm-packages:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Download binaries
+      run: hack/scripts/download-released-binaries-to-npm-packages.sh
+
+    - name: Publish npm packages
+      uses: ./.github/actions/publish-npm-packages

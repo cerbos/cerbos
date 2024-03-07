@@ -1,0 +1,30 @@
+{
+  "name": "@cerbos/cerbos-darwin-arm64",
+  "version": "0.32.0",
+  "description": "The darwin-arm64 binary for cerbos",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cerbos/cerbos.git",
+    "directory": "npm/packages/cerbos-darwin-arm64"
+  },
+  "homepage": "https://cerbos.dev",
+  "bugs": {
+    "url": "https://github.com/cerbos/cerbos/issues"
+  },
+  "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
+  "license": "Apache-2.0",
+  "cpu": [
+    "arm64"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "main": "./cerbos-darwin-arm64",
+  "files": [
+    "cerbos-darwin-arm64"
+  ],
+  "scripts": {
+    "prepack": "test -f cerbos-darwin-arm64"
+  },
+  "preferUnplugged": true
+}
