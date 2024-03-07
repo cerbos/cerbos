@@ -2,6 +2,11 @@ name: Publish npm packages
 
 description: Publish npm packages (assuming binaries have already been copied into the correct locations)
 
+inputs:
+  token:
+    description: npm authentication token
+    required: true
+
 runs:
   using: composite
 
@@ -16,4 +21,4 @@ runs:
       working-directory: npm
       run: corepack npm publish --workspaces --access=public --provenance
       env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        NODE_AUTH_TOKEN: ${{ inputs.token }}

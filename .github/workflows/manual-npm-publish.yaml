@@ -14,3 +14,5 @@ jobs:
 
       - name: Publish npm packages
         uses: ./.github/actions/publish-npm-packages
+        with:
+          token: ${{ secrets.NPM_PUBLISH_TOKEN }}
