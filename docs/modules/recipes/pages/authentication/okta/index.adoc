@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-auth-okta]
 = Tutorial: Using Cerbos with Okta
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: tutorials:authentication/okta/index.adoc
 
 An example application of integrating https://cerbos.dev[Cerbos] with an https://expressjs.com/[Express] server using https://okta.com/[Okta] for authentication.

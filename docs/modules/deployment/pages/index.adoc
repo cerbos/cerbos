@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Cerbos deployment patterns
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Cerbos can be deployed as a service or as a sidecar. Which mode to choose depends on your requirements.
 
 == Service model

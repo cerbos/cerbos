@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Adding conditions
 
+include::partial$version-check.adoc[]
+
+
 NOTE: The policies for this section can be found link:{tutorial-base}/06-adding-conditions/cerbos[on GitHub].
 
 In the previous section, an RBAC policy was created that allowed anyone with a `user` role to update a user resource - this isn't what is intended as it would allow users to update other users' profiles.
