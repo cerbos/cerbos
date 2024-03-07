@@ -5,6 +5,9 @@ jobs:
     name: Publish npm packages
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -14,3 +17,5 @@ jobs:
 
       - name: Publish npm packages
         uses: ./.github/actions/publish-npm-packages
+        with:
+          token: ${{ secrets.NPM_PUBLISH_TOKEN }}
