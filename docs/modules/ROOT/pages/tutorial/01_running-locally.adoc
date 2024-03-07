@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Running locally
 
+include::partial$version-check.adoc[]
+
+
 As the developers of Cerbforce began their investigation of the system, the first step was getting a Cerbos instance up and running locally.
 
 == Container

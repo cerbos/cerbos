@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Run from container
 
+include::partial$version-check.adoc[]
+
+
 [source,sh,subs="attributes"]
 ----
 docker run --rm --name cerbos -p 3592:3592 {app-docker-img}

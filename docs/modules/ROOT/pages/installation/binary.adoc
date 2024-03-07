@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Install from binary
 
+include::partial$version-check.adoc[]
+
+
 Cerbos binaries are available for multiple operating systems and architectures. See the link:{app-github-releases-page}[releases page] for all available downloads.
 
 [caption=]

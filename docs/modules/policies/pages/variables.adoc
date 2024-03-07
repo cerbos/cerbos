@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Variables
 
+include::ROOT:partial$version-check.adoc[]
+
+
 You can use variables to reduce duplication in xref:conditions.adoc[policy condition expressions]. Variables may either be defined locally within a policy, or in a standalone `exportVariables` policy file that can be imported by other policies.
 
 == Defining local variables

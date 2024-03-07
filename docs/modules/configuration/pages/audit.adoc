@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Audit block
 
+include::ROOT:partial$version-check.adoc[]
+
+
 The `audit` block configures the audit logging settings for the Cerbos instance. Audit logs capture access records and decisions made by the engine along with the associated context data.
 
 

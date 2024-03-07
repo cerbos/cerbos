@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Derived roles
 
+include::partial$version-check.adoc[]
+
+
 NOTE: The policies for this section can be found link:{tutorial-base}/07-derived-roles/cerbos[on GitHub].
 
 The business requirements for Cerbforce state that only an owner of Contacts and Companies are allowed to delete them from the system. With Cerbos, the aim is to keep policies as simple as possible and not repeat logic across different resources, so in this situation, a xref:policies:derived_roles.adoc[Derived Role] can enable help.

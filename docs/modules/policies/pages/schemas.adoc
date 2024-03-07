@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Schemas
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Cerbos policies rely on context data about the principal and the resource(s) that are submitted through the `attr` fields of the xref:api:index.adoc[API request]. While the free-form nature of these fields gives you maximum flexibility to author policies that work on data of any shape or form, they can become difficult to reason about and make it harder to enforce system-wide standards and conventions. 
 
 Using the link:http://json-schema.org[JSON Schema] support built into Cerbos, you can define schemas for all your principal and resource attributes on a per-resource basis by specifying them in the resource policy. The Cerbos PDP will validate the incoming requests and either log warnings or completely reject them based on the schema enforcement configuration in effect. 
