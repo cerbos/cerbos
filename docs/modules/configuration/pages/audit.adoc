@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Audit block
 
+include::ROOT:partial$version-check.adoc[]
+
+
 The `audit` block configures the audit logging settings for the Cerbos instance. Audit logs capture access records and decisions made by the engine along with the associated context data.
 
 Cerbos API responses include a `cerbosCallId` field that contains the unique identifier under which the request was logged to the audit log (if enabled) and the Cerbos activity log. It is recommended that applications log this ID as part of their activity logs too so that those log entries can be joined together with Cerbos logs during log analysis to build a complete picture of the authorization decisions.

@@ -1,6 +1,9 @@
 include::ROOT:partial$attributes.adoc[]
 
 = `cerbos`
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: compile.adoc, server.adoc
 
 See xref:ROOT:installation/binary.adoc[] or xref:ROOT:installation/container.adoc[] for instructions on how to install the `cerbos` binary.

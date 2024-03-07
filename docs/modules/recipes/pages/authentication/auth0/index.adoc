@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-auth-auth0]
 = Tutorial: Using Cerbos with Auth0
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: tutorials:authentication/auth0/index.adoc
 
 
