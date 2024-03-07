@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Attribute schema
 
+include::partial$version-check.adoc[]
+
+
 NOTE: The policies for this section can be found link:{tutorial-base}/09-attribute-schema/cerbos[on GitHub].
 
 An additional check bit of business logic has been introduced for the `contact` resource which requires the `active` attribute of a contact to be set to `True` to be able to `update` or `delete` it. This is so that old contacts are kept for reporting purposes and can't be accidentally deleted or updated.

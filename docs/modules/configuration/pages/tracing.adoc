@@ -2,56 +2,23 @@ include::ROOT:partial$attributes.adoc[]
 
 = Tracing block
 
-Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. To enable tracing, set `sampleProbability` to a value between 0.0 and 1.0. Setting the probability to 1.0 makes Cerbos capture tracing information for all requests and setting it to 0.0 disables capturing any traces.
-
-The system to export the trace data must be specified using the `exporter` setting. Currently link:https://www.jaegertracing.io[Jaeger] and link:https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md[OTLP collectors] are supported. If using Jaeger, traces can be sent to either a Jaeger Agent (compact Thrift format) or a Jaeger Collector (Thrift format).
+include::ROOT:partial$version-check.adoc[]
 
 
-.OpenTelemetry
-****
-link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observability. Cerbos supports OpenTelemetry with a few caveats due to limitations in the current Go implementation of OpenTelemetry.
+IMPORTANT: The `tracing` block was deprecated in Cerbos 0.32.0 and removed in Cerbos 0.33.0. Refer to xref:observability.adoc#traces[observability configuration] for information about configuring traces.
 
+[#migration]
+== Migrating tracing configuration from previous Cerbos versions
 
-* gRPC clients should use the link:https://github.com/open-telemetry/opentelemetry-go-contrib/tree/main/propagators/opencensus[OpenCensus binary propagation format] for distributed traces.
+From Cerbos 0.32.0, the preferred method of trace configuration is through the OpenTelemetry environment variables described in xref:observability.adoc#traces[observability configuration]. The `tracing` section is no longer supported by Cerbos versions starting from 0.33.0. Native Jaeger protocol is superseded by OTLP as well and no longer supported. Follow the instructions below to migrate your existing configuration.
 
-* Metrics are not yet supported.
+[%header,cols=".^1m,6a",grid=rows]
+|===
+| Configuration setting | New configuration
 
-****
+| tracing.serviceName | Set `OTEL_SERVICE_NAME` environment variable
+| tracing.sampleProbability | Set `OTEL_TRACES_SAMPLER` to `parentbased_traceidratio` and `OTEL_TRACES_SAMPLER_ARG` to the probability value
+| tracing.jaeger.agentEndpoint or tracing.jaeger.collectorEndpoint | Jaeger now has link:https://www.jaegertracing.io/docs/1.51/apis/#opentelemetry-protocol-stable[stable support for OTLP] and is the recommended way to send traces. Set `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` to the address of your Jaeger instance (for example: `https://your.jaeger.instance:4317`) and, optionally, set `OTEL_EXPORTER_OTLP_TRACES_INSECURE=true` if Jaeger is using a self-signed certificate. If you want to use the HTTP API or customize other aspects, refer to the documentation above for other supported environment variables.
+| tracing.otlp.collectorEndpoint | Set `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` to the value of the collector endpoint and `OTEL_EXPORTER_OTLP_INSECURE=true` to emulate the behaviour of Cerbos OTLP exporter before version 0.32.0.
+|===
 
-== Jaeger
-
-.Send trace data to Jaeger Agent (compact Thrift)
-[source,yaml,linenums]
-----
-tracing:
-  serviceName: cerbos
-  sampleProbability: 0.5
-  exporter: jaeger
-  jaeger:
-    agentEndpoint: "localhost:6831"
-----
-
-.Send trace data to Jaeger Collector (Thrift)
-[source,yaml,linenums]
-----
-tracing:
-  serviceName: cerbos
-  sampleProbability: 0.5
-  exporter: jaeger
-  jaeger:
-    collectorEndpoint: "http://localhost:14268/api/traces"
-----
-
-[#otlp]
-== OTLP
-
-.Send trace data to an OTLP collector
-[source,yaml,linenums]
-----
-tracing:
-  serviceName: cerbos
-  sampleProbability: 0.5
-  exporter: otlp
-  otlp:
-    collectorEndpoint: "otel:4317"
-----

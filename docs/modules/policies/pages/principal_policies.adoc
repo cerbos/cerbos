@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Principal policies
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Principal policies define overrides for a specific user.
 
 [source,yaml,linenums]
@@ -27,8 +30,12 @@ principalPolicy:
               expr: variables.is_dev_record
           effect: EFFECT_ALLOW
           output: <10>
-            expr: |-
-              "wildcard_override:%s".format([request.principal.id])
+            when:
+              ruleActivated: |-
+                "wildcard_override:%s".format([request.principal.id])
+              conditionNotMet: |-
+                "wildcard_condition_not_met:%s".format([request.principal.id])
+
     - resource: employee_profile
       actions:
         - name: view_employee_profile
@@ -54,5 +61,5 @@ principalPolicy:
 <7> Optional name for the rule.
 <8> Actions that can be performed on the resource. Wildcards are supported here.
 <9> Optional conditions required to match this rule.
-<10> Optional output for the action rule. You can define a single expression per rule which will be evaluated and output in the response.
-An output expression can contain anything that condition expressions can have.
+<10> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on
+whether the rule is activated or not activated because of a condition failure.

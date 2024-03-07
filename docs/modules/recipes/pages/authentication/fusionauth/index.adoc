@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-auth-fusionauth]
 = Tutorial: Using Cerbos with FusionAuth
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: tutorials:authentication/fusionauth/index.adoc
 
 

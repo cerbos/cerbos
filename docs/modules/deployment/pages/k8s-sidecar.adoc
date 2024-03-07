@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Deploy Cerbos as a sidecar
 
+include::ROOT:partial$version-check.adoc[]
+
+
 The sidecar deployment model might be a preferrable option under the following circumstances:
 
 * You have a self-contained application that does not need to share policies with other applications in your environment.

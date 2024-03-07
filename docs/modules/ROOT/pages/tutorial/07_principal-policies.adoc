@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Principal policies
 
+include::partial$version-check.adoc[]
+
+
 NOTE: The policies for this section can be found link:{tutorial-base}/08-principal-policies/cerbos[on GitHub].
 
 The final type of policy that Cerbos supports is a xref:policies:principal_policies.adoc[principal policy] which is a special type that allows user-specific overrides to be defined.

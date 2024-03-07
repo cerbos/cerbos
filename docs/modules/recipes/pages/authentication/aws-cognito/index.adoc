@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-auth-aws-cognito]
 = Tutorial: Using Cerbos with AWS Cognito
+
+include::ROOT:partial$version-check.adoc[]
+
 :page-aliases: tutorials:authentication/aws-cognito/index.adoc
 
 An example application of integrating https://cerbos.dev[Cerbos] with a https://fastapi.tiangolo.com/[FastAPI] server using https://aws.amazon.com/cognito/[AWS Cognito] for authentication.

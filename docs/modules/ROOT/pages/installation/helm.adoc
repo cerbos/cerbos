@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Install from Helm chart
 
+include::partial$version-check.adoc[]
+
+
 Add the Cerbos Helm repository:
 
 [source,sh,subs="attributes,macros"]
