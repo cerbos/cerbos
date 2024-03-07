@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Principal policies
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Principal policies define overrides for a specific user.
 
 [source,yaml,linenums]

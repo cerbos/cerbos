@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = The Cerbos Admin API
 
+include::ROOT:partial$version-check.adoc[]
+
+
 The Admin API is an optional component of the Cerbos PDP that must be enabled by setting the `server.adminAPI.enabled` to `true` in the configuration. (See xref:configuration:server.adoc#admin-api[Admin API configuration] for details).
 
 Authentication is mandatory for the Admin API. Currently only basic authentication with a single admin user is supported. If no credentials are configured using the xref:configuration:server.adoc#admin-api[configuration], the default username and password is `cerbos` and `cerbosAdmin`.

@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Storage block
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Cerbos supports multiple backends for storing policies. Which storage driver to use is defined by the `driver` setting.
 
 [id="disk-driver"]

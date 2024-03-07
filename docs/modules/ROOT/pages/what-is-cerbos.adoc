@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = What is Cerbos?
 
+include::partial$version-check.adoc[]
+
+
 == Authorization-as-a-Service
 
 One of the key tenants that allows many successful systems to scale is the adoption of a microservices architecture where each component can be scaled to meet the exact demands of the system. 

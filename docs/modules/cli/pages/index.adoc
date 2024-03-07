@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Cerbos CLI
 
+include::ROOT:partial$version-check.adoc[]
+
+
 Every link:{app-github-releases-page}[Cerbos release] ships with two binaries:
 
 xref:cerbos.adoc[`cerbos`]:: The Cerbos server (PDP) and the compiler/test runner
