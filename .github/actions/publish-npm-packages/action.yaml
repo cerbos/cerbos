@@ -15,6 +15,7 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version-file: .node-version
+        registry-url: https://registry.npmjs.com
 
     - name: Publish npm packages
       shell: bash
