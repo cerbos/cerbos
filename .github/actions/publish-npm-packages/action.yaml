@@ -1,0 +1,25 @@
+name: Publish npm packages
+
+description: Publish npm packages (assuming binaries have already been copied into the correct locations)
+
+inputs:
+  token:
+    description: npm authentication token
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: .node-version
+        registry-url: https://registry.npmjs.com
+
+    - name: Publish npm packages
+      shell: bash
+      working-directory: npm
+      run: corepack npm publish --workspaces --access=public --provenance
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.token }}

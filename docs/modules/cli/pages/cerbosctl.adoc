@@ -3,7 +3,7 @@ include::ROOT:partial$attributes.adoc[]
 = `cerbosctl` 
 :page-aliases: ctl.adoc
 
-This utility can be downloaded as a separate container or a tar archive. It is automatically installed when installing Cerbos through xref:ROOT:installation/binary.adoc#linux-packages[Linux packages or the Homebrew tap].
+This utility can be downloaded as a separate container, tar archive, or link:https://www.npmjs.com/package/cerbosctl[npm package]. It is automatically installed when installing Cerbos through xref:ROOT:installation/binary.adoc#linux-packages[Linux packages or the Homebrew tap].
 
 
 .Run from the container

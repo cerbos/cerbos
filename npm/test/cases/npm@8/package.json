@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "packageManager": "npm@8.19.4",
+  "dependencies": {
+    "cerbos": "latest",
+    "cerbosctl": "latest"
+  }
+}
