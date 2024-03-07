@@ -6,6 +6,18 @@ cerbos.bin
 hack/dev/tls.crt
 hack/dev/tls.key
 internal/confdocs/
+npm/packages/cerbos-*-*/cerbos-*-*
+npm/packages/cerbosctl-*-*/cerbosctl-*-*
+npm/test/cases/*/.npm/
+npm/test/cases/*/.pnpm/
+npm/test/cases/*/.yarn/
+npm/test/cases/*/.pnp.*
+npm/test/cases/*/package-lock.json
+npm/test/cases/*/pnpm-lock.yaml
+npm/test/cases/*/yarn.lock
+npm/test/registry/node_modules/
+npm/test/registry/storage/
+**/node_modules/
 
 # Local Netlify folder
 .netlify

@@ -3,6 +3,7 @@ go 1.21
 use (
 	.
 	./api/genpb
+	./hack/tools/generate-npm-packages
 	./hack/tools/testsplit
 	./tools
 )

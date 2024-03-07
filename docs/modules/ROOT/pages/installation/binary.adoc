@@ -57,3 +57,17 @@ You can install Cerbos binaries using Homebrew as well.
 brew tap cerbos/tap
 brew install cerbos
 ----
+
+[id="npm"]
+== npm
+
+You can install Cerbos binaries from the npm registry. This removes a separate setup step for JavaScript projects and allows you to lock Cerbos to a specific version to ensure a consistent development environment.
+
+link:https://www.npmjs.com/package/cerbos[cerbos] and link:https://www.npmjs.com/package/cerbosctl[cerbosctl] are available as separate packages.
+
+[source,sh]
+----
+npm install --save-dev cerbos cerbosctl
+----
+
+Note that the npm packages rely on platform-specific optional dependencies, so make sure you don't omit these when installing dependencies (for example, don't pass the `--no-optional` flag to `npm`).
