@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Conditions
 
+include::ROOT:partial$version-check.adoc[]
+
+
 A powerful feature of Cerbos policies is the ability to define conditions that are evaluated against the data provided in the request. Conditions are written using the link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)].
 
 TIP: Cerbos ships with an interactive REPL that can be used to experiment with writing CEL conditions. It can be started by running `cerbos repl`. See xref:cli:cerbos.adoc#repl[the REPL documentation] for more information.

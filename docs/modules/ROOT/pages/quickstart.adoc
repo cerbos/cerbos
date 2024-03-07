@@ -2,6 +2,9 @@ include::partial$attributes.adoc[]
 
 = Quickstart
 
+include::partial$version-check.adoc[]
+
+
 
 Create a directory to store the policies.
 

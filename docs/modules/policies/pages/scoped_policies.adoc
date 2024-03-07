@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Scoped Policies
 
+include::ROOT:partial$version-check.adoc[]
+
+
 TIP: Scoped Policies are optional and are only evaluated if a "scope" is passed in the request, and there are matching "scope" attributes defined in the policies. Read on to find out more.
 
 Scoped policies offer a way to model hierarchical relationships that regularly occur in many situations. Typically the requirement is to have a base set of policies that can then be overridden for specific cases. For example, a multi-tenant SaaS system could have a standard set of access rules that can then be customised to suit the requirements of the different tenants. Another example is a large organization that might want to have regional or departmental customisations to their global access rules.

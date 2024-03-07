@@ -2,10 +2,17 @@ include::ROOT:partial$attributes.adoc[]
 
 = Outputs
 
-You can define an optional expression to be evaluated when a policy rule is activated. The collected outputs from all the activated rules are included in the Cerbos API response.
+include::ROOT:partial$version-check.adoc[]
 
-Output expressions are useful if you want to take specific actions in your application based on the triggered rules. For example, if your policy contains a rule that denies access if the request is issued outside working hours, it could output a string that explains the restriction. Your application could then display that back to the user so that they know the specific reason why the request was denied.
 
+You can define an optional expression to be evaluated when a policy rule is fully activated (`action`, `roles` and
+`derivedRoles` match and `condition` is satisfied) or partially activated (`condition` is not satisfied).
+The collected outputs from all the rules are included in the Cerbos API response.
+
+Output expressions are useful if you want to take specific actions in your application based on the triggered rules.
+For example, if your policy contains a rule that denies access if the request is issued outside working hours, it could
+output a string that explains the restriction. Your application could then display that back to the user so that they
+know the specific reason why the request was denied.
 
 Consider the following policy definition:
 
@@ -25,8 +32,11 @@ resourcePolicy:
         match:
           expr: now().getHours() > 18 || now().getHours() < 8
       output:
-        expr: |-
-          {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can only be accessed between 0800 and 1800"}
+        when:
+          ruleActivated: |-
+            {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can only be accessed between 0800 and 1800"}
+          conditionNotMet: |-
+            {"principal": P.id, "resource": R.id, "timestamp": now(), "message": "System can be accessed at this time"}
 ----
 
 If a request is made outside working hours, the response from Cerbos would resemble the following:
@@ -66,6 +76,47 @@ If a request is made outside working hours, the response from Cerbos would resem
   ]
 }
 ----
+
+If a request is made inside working hours, the response would resemble the following:
+
+[source,json,linenums]
+----
+{
+  "requestId": "xx-010023-23459",
+  "results": [
+    {
+      "resource": {
+        "id": "bastion_002",
+        "kind": "system_access"
+      },
+      "actions": {
+        "login": "EFFECT_ALLOW"
+      },
+      "meta": {
+        "actions": {
+          "login": {
+            "matchedPolicy": "resource.system_access.vdefault"
+          }
+        }
+      },
+      "outputs": [
+        {
+          "src": "resource.system_access.vdefault#working-hours-only",
+          "val": {
+            "message": "System can be accessed at this time",
+            "principal": "john",
+            "resource": "bastion_002",
+            "timestamp": "2023-06-02T21:53:58.319506543+01:00"
+          }
+        }
+      ]
+    }
+  ]
+}
+----
+
+NOTE: Depending on the evaluation result of the expression(s) under the `condition.match`, the result of the expression
+`output.when.ruleActivated` or `output.when.conditionNotMet` will be rendered in the output.
 
 Output expressions can be any valid CEL expression. You can return simple values such as strings, numbers and booleans or complex values such as maps and lists.
 

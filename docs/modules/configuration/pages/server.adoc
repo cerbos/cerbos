@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Server block
 
+include::ROOT:partial$version-check.adoc[]
+
+
 == Listen addresses
 
 By default the server will start an HTTP server on port `3592` and a gRPC server on `3593` that will listen on all available interfaces.
