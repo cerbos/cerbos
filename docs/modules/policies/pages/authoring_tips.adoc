@@ -21,6 +21,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Policy authoring
 
+include::ROOT:partial$version-check.adoc[]
+
+
 == Tips for working with policies
 
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.

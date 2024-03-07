@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Best Practices and Recipes
 
+include::ROOT:partial$version-check.adoc[]
+
+
 A collection of tips and code snippets designed to help you write cleaner, more optimised Cerbos policies.
 
 == Modelling policies

@@ -1,6 +1,9 @@
 include::partial$attributes.adoc[]
 
 = Tutorial
+
+include::partial$version-check.adoc[]
+
 :page-aliases: ROOT:usage.adoc
 
 == Cerbforce

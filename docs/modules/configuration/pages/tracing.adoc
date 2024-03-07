@@ -2,12 +2,15 @@ include::ROOT:partial$attributes.adoc[]
 
 = Tracing block
 
-IMPORTANT: The `tracing` block is deprecated and will be removed in Cerbos 0.33.0. Refer to xref:observability.adoc#traces[observability configuration] for information about configuring traces.
+include::ROOT:partial$version-check.adoc[]
+
+
+IMPORTANT: The `tracing` block was deprecated in Cerbos 0.32.0 and removed in Cerbos 0.33.0. Refer to xref:observability.adoc#traces[observability configuration] for information about configuring traces.
 
 [#migration]
 == Migrating tracing configuration from previous Cerbos versions
 
-From Cerbos 0.32.0, the preferred method of trace configuration is through the OpenTelemetry environment variables described in xref:observability.adoc#traces[observability configuration]. The `tracing` section of the Cerbos configuration file is deprecated and will be removed in Cerbos 0.33.0. Native Jaeger protocol is deprecated as well and will be removed in Cerbos 0.33.0. Follow the instructions below to migrate your existing configuration.
+From Cerbos 0.32.0, the preferred method of trace configuration is through the OpenTelemetry environment variables described in xref:observability.adoc#traces[observability configuration]. The `tracing` section is no longer supported by Cerbos versions starting from 0.33.0. Native Jaeger protocol is superseded by OTLP as well and no longer supported. Follow the instructions below to migrate your existing configuration.
 
 [%header,cols=".^1m,6a",grid=rows]
 |===

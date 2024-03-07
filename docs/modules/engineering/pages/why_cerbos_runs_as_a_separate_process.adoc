@@ -2,6 +2,9 @@ include::ROOT:partial$attributes.adoc[]
 
 = Why Cerbos runs as a separate process
 
+include::ROOT:partial$version-check.adoc[]
+
+
 If you’re used to traditional authorization approaches, you’d be surprised to find that Cerbos is not a library that you can embed into your application. Instead, Cerbos is designed to be run as a sidecar or a service alongside your application. There are several reasons why we have chosen this approach. To provide a bit of background, let’s consider how modern software development works in the era of cloud native computing.
 
 Nowadays, the trend is towards microservice architectures where system functionality is split between multiple services that are fairly independent of each other. They are probably owned by different teams within the organization and even developed using different programming languages and tools. Automated CI/CD pipelines deploy new versions of these services many times a day.
