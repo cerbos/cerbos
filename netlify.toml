@@ -15,8 +15,49 @@ to = "/cerbos/prerelease/:module/_images/:splat"
 status = 302
 force = true
 
+
+# Version-specific redirects because Netlify creates a redirect loop if we try to use a version wildcard.
+
+[[redirects]]
+from = "/cerbos/0.31.0/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.31.0/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.32.0/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.32.0/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.33.0/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.33.0/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
+
+# IMG_REDIRECTS_END
+
+# This has to be at the bottom for the above redirects to work
 [[redirects]]
 from = "/cerbos/:version/*"
 to = "/cerbos/latest/:splat"
 status = 404
-
