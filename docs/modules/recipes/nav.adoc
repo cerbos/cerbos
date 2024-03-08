@@ -14,3 +14,4 @@
 * ORM Integration
 ** xref:orm/prisma/index.adoc[Prisma]
 ** xref:orm/sqlalchemy/index.adoc[SQLAlchemy]
+* xref:ui.adoc[Checking permissions in your UI]
