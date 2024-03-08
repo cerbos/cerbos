@@ -319,7 +319,7 @@ NOTE: The hierarchy functions are Cerbos-specific extensions to CEL.
 |===
 
 
-== IP Addresses
+== IP addresses
 
 NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 

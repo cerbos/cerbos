@@ -28,7 +28,7 @@ chmod +x {app-name}
 ----
 
 [id="linux-packages"]
-== Linux Packages
+== Linux packages
 
 Cerbos DEB and RPM packages can be installed on any Linux distribution that supports one of those package formats. You can download the appropriate package for your system from the link:{app-github-releases-page}[releases page].
 

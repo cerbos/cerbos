@@ -1,17 +1,17 @@
 .Recipes
-* Example Apps
+* Example apps
 ** xref:photo-share/index.adoc[Photo-share application]
 ** link:https://github.com/cerbos/demo-rest[Demo of securing a REST API with Cerbos]
 ** link:https://github.com/cerbos/demo-multitenant-saas[Modelling a multi-tenant SaaS with Cerbos]
 ** link:https://github.com/cerbos/demo-admin-api[Admin API demo with Go and React]
-* Authentication Integration
+* Authentication integration
 ** xref:authentication/auth0/index.adoc[Auth0]
 ** xref:authentication/fusionauth/index.adoc[FusionAuth]
 ** xref:authentication/jwt/index.adoc[JWT]
 ** xref:authentication/magic/index.adoc[Magic]
 ** xref:authentication/okta/index.adoc[Okta]
 ** xref:authentication/aws-cognito/index.adoc[AWS Cognito]
-* ORM Integration
+* ORM integration
 ** xref:orm/prisma/index.adoc[Prisma]
 ** xref:orm/sqlalchemy/index.adoc[SQLAlchemy]
 * xref:ui.adoc[Checking permissions in your UI]

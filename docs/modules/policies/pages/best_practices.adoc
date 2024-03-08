@@ -1,6 +1,6 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Best Practices and Recipes
+= Best practices and recipes
 
 include::ROOT:partial$version-check.adoc[]
 
