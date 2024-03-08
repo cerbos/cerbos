@@ -40,6 +40,29 @@ update_version() {
 	go run ./hack/tools/generate-npm-packages
 }
 
+add_redirects() {
+	local VER="$1"
+	local STANZA=$(
+		cat <<EOF
+
+[[redirects]]
+from = "/cerbos/$VER/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/$VER/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
+
+EOF
+	)
+
+	gawk -i inplace -v stanza="$STANZA" '/^# IMG_REDIRECTS_END/ { print stanza; } 1' "${PROJECT_DIR}/netlify.toml"
+}
+
 set_branch() {
 	local BRANCH="$1"
 	sed -i -E "s#branches:.*#branches: [${BRANCH}, 'v{0..9}*', '!v0.{0..29}']#g" "${DOCS_DIR}/antora-playbook.yml"
@@ -49,6 +72,8 @@ set_branch() {
 make generate-notice
 # Set release version and tag
 update_version $VERSION
+# Create netlify redirects
+add_redirects $VERSION
 # Set Antora branch to HEAD (author mode)
 set_branch "HEAD"
 # Commit changes and tag release
