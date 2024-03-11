@@ -62,10 +62,6 @@ type RemoteSource struct {
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
-	if err := conf.Remote.setDefaultsForUnsetFields(); err != nil {
-		return nil, err
-	}
-
 	credentials, err := conf.Credentials.ToCredentials()
 	if err != nil {
 		return nil, fmt.Errorf("invalid credentials: %w", err)

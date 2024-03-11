@@ -5,6 +5,7 @@ package bundle_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -38,6 +39,10 @@ func TestConfig(t *testing.T) {
 							"bundleLabel": "latest",
 							"tempDir":     "/tmp",
 							"cacheDir":    "/tmp",
+							"connection": map[string]any{
+								"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+								"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							},
 						},
 					},
 				},
@@ -59,6 +64,10 @@ func TestConfig(t *testing.T) {
 							"bundleLabel": "latest",
 							"tempDir":     "/tmp",
 							"cacheDir":    "/tmp",
+							"connection": map[string]any{
+								"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+								"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							},
 						},
 					},
 				},
@@ -79,6 +88,10 @@ func TestConfig(t *testing.T) {
 						"remote": map[string]any{
 							"tempDir":  "/tmp",
 							"cacheDir": "/tmp",
+							"connection": map[string]any{
+								"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+								"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							},
 						},
 					},
 				},
@@ -86,7 +99,7 @@ func TestConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "file/valid-credentials-from-hub",
+			name: "file/valid-config-from-hub",
 			conf: map[string]any{
 				"hub": map[string]any{
 					"credentials": map[string]any{
@@ -94,6 +107,10 @@ func TestConfig(t *testing.T) {
 						"clientID":        "client-id",
 						"clientSecret":    "client-secret",
 						"workspaceSecret": "workspace-secret",
+					},
+					"connection": map[string]any{
+						"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+						"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
 					},
 				},
 				"storage": map[string]any{
@@ -118,6 +135,10 @@ func TestConfig(t *testing.T) {
 						"clientSecret":    "client-secret",
 						"workspaceSecret": "workspace-secret",
 					},
+					"connection": map[string]any{
+						"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+						"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+					},
 				},
 				"storage": map[string]any{
 					"bundle": map[string]any{
@@ -139,6 +160,38 @@ func TestConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "file/duplicate-connection",
+			conf: map[string]any{
+				"hub": map[string]any{
+					"credentials": map[string]any{
+						"pdpID":           "pdp-id",
+						"clientID":        "client-id",
+						"clientSecret":    "client-secret",
+						"workspaceSecret": "workspace-secret",
+					},
+					"connection": map[string]any{
+						"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+						"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+					},
+				},
+				"storage": map[string]any{
+					"bundle": map[string]any{
+						"cacheSize": 1024,
+						"remote": map[string]any{
+							"bundleLabel": "latest",
+							"tempDir":     "/tmp",
+							"cacheDir":    "/tmp",
+							"connection": map[string]any{
+								"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+								"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "env/valid-config",
 			conf: map[string]any{
 				"storage": map[string]any{
@@ -147,6 +200,10 @@ func TestConfig(t *testing.T) {
 						"remote": map[string]any{
 							"tempDir":  "/tmp",
 							"cacheDir": "/tmp",
+							"connection": map[string]any{
+								"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+								"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							},
 						},
 					},
 				},
@@ -168,6 +225,10 @@ func TestConfig(t *testing.T) {
 						"remote": map[string]any{
 							"tempDir":  "/tmp",
 							"cacheDir": "/tmp",
+							"connection": map[string]any{
+								"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+								"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							},
 						},
 					},
 				},
@@ -189,6 +250,10 @@ func TestConfig(t *testing.T) {
 						"remote": map[string]any{
 							"tempDir":  "/tmp",
 							"cacheDir": "/tmp",
+							"connection": map[string]any{
+								"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+								"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							},
 						},
 					},
 				},
@@ -215,6 +280,14 @@ func TestConfig(t *testing.T) {
 			BundleLabel: "latest",
 			TempDir:     "/tmp",
 			CacheDir:    "/tmp",
+			Connection: hub.ConnectionConf{
+				APIEndpoint:       "https://api.stg-spitfire.cerbos.tech",
+				BootstrapEndpoint: "https://cdn.stg-spitfire.cerbos.tech",
+				MinRetryWait:      1 * time.Second,
+				MaxRetryWait:      120 * time.Second,
+				NumRetries:        5,
+				HeartbeatInterval: 180 * time.Second,
+			},
 		},
 	}
 

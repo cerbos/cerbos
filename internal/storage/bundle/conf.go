@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/hub"
@@ -18,18 +17,14 @@ import (
 )
 
 const (
-	confKey                  = storage.ConfKey + "." + DriverName
-	defaultCacheSize         = 1024
-	defaultHeartbeatInterval = 180 * time.Second
-	defaultMaxRetryWait      = 120 * time.Second
-	defaultMinRetryWait      = 1 * time.Second
-	defaultNumRetries        = 5
-	minHeartbeatInterval     = 30 * time.Second
+	confKey          = storage.ConfKey + "." + DriverName
+	defaultCacheSize = 1024
 )
 
 var (
-	ErrDuplicateCredentials = errors.New("both cerbosHub.credentials and storage.bundle.credentials are defined: please use cerbosHub.credentials")
-	ErrNoSource             = errors.New("at least one of local or remote sources must be defined")
+	ErrDuplicateConnectionConf = errors.New("both hub.connection and storage.bundle.remote.connection are defined: please use hub.connection")
+	ErrDuplicateCredentials    = errors.New("both hub.credentials and storage.bundle.credentials are defined: please use hub.credentials")
+	ErrNoSource                = errors.New("at least one of local or remote sources must be defined")
 )
 
 // Conf is required (if driver is set to 'bundle') configuration for bundle storage driver.
@@ -62,66 +57,9 @@ type RemoteSourceConf struct {
 	// TempDir is the directory to use for temporary files.
 	TempDir string `yaml:"tempDir" conf:",example=${TEMP}"`
 	// Connection defines settings for the remote server connection.
-	Connection ConnectionConf `yaml:"connection"`
+	Connection hub.ConnectionConf `yaml:"connection" conf:",ignore"`
 	// DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
 	DisableAutoUpdate bool `yaml:"disableAutoUpdate"`
-}
-
-// ConnectionConf holds configuration for the remote connection.
-type ConnectionConf struct {
-	// TLS defines settings for TLS connections.
-	TLS TLSConf `yaml:"tls"`
-	// APIEndpoint is the address of the API server.
-	APIEndpoint string `yaml:"apiEndpoint" conf:"required,example=https://api.cerbos.cloud"`
-	// BootstrapEndpoint is the addresses of the server serving the bootstrap configuration.
-	BootstrapEndpoint string `yaml:"bootstrapEndpoint" conf:"required,example=https://cdn.cerbos.cloud"`
-	// MinRetryWait is the minimum amount of time to wait between retries.
-	MinRetryWait time.Duration `yaml:"minRetryWait" conf:",example=1s"`
-	// MaxRetryWait is the maximum amount of time to wait between retries.
-	MaxRetryWait time.Duration `yaml:"maxRetryWait" conf:",example=120s"`
-	// NumRetries is the number of times to retry before giving up.
-	NumRetries uint `yaml:"numRetries" conf:",example=5"`
-	// HeartbeatInterval is the interval for sending regular heartbeats.
-	HeartbeatInterval time.Duration `yaml:"heartbeatInterval" conf:",example=2m"`
-}
-
-func (cc *ConnectionConf) setDefaultsForUnsetFields() {
-	if cc.APIEndpoint == "" {
-		cc.APIEndpoint = hub.DefaultAPIEndpoint
-	}
-
-	if cc.BootstrapEndpoint == "" {
-		cc.BootstrapEndpoint = hub.DefaultBootstrapHost
-	}
-
-	if cc.MinRetryWait == 0 {
-		cc.MinRetryWait = defaultMinRetryWait
-	}
-
-	if cc.MaxRetryWait == 0 {
-		cc.MaxRetryWait = defaultMaxRetryWait
-	}
-
-	if cc.NumRetries == 0 {
-		cc.NumRetries = defaultNumRetries
-	}
-
-	switch {
-	case cc.HeartbeatInterval < 0:
-		cc.HeartbeatInterval = 0
-	case cc.HeartbeatInterval == 0:
-		cc.HeartbeatInterval = defaultHeartbeatInterval
-	case cc.HeartbeatInterval > 0 && cc.HeartbeatInterval < minHeartbeatInterval:
-		cc.HeartbeatInterval = minHeartbeatInterval
-	}
-}
-
-// TLSConf holds TLS configuration for the remote connection.
-type TLSConf struct {
-	// Authority overrides the Cerbos PDP server authority if it is different from what is provided in the address.
-	Authority string `yaml:"authority" conf:",example=domain.tld"`
-	// CACert is the path to the CA certificate chain to use for certificate verification.
-	CACert string `yaml:"caCert" conf:",example=/path/to/CA_certificate"`
 }
 
 func (conf *Conf) Key() string {
@@ -219,7 +157,7 @@ func (rc *RemoteSourceConf) validate() error {
 		return errors.New("bundleLabel must be specified")
 	}
 
-	return nil
+	return rc.setDefaultsForUnsetFields()
 }
 
 func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
@@ -254,8 +192,22 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 		rc.CacheDir = dir
 	}
 
-	rc.Connection.setDefaultsForUnsetFields()
-	return nil
+	hubConf, err := hub.GetConf()
+	if err != nil {
+		return fmt.Errorf("failed to read Cerbos Hub configuration: %w", err)
+	}
+
+	hubConnConfUnset := hubConf.Connection.IsUnset()
+	remoteConnConfUnset := rc.Connection.IsUnset()
+
+	switch {
+	case !hubConnConfUnset && !remoteConnConfUnset:
+		return ErrDuplicateConnectionConf
+	case remoteConnConfUnset:
+		rc.Connection = hubConf.Connection
+	}
+
+	return rc.Connection.Validate()
 }
 
 func GetConf() (*Conf, error) {

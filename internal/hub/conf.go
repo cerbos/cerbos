@@ -5,6 +5,7 @@ package hub
 
 import (
 	"os"
+	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cloud-api/credentials"
@@ -47,15 +48,21 @@ func GetEnv(key EnvVarKey) string {
 }
 
 const (
-	confKey = "hub"
-
-	DefaultAPIEndpoint   = "https://api.cerbos.cloud"
-	DefaultBootstrapHost = "https://cdn.cerbos.cloud"
+	confKey                  = "hub"
+	defaultAPIEndpoint       = "https://api.cerbos.cloud"
+	defaultBootstrapHost     = "https://cdn.cerbos.cloud"
+	defaultHeartbeatInterval = 180 * time.Second
+	defaultMaxRetryWait      = 120 * time.Second
+	defaultMinRetryWait      = 1 * time.Second
+	defaultNumRetries        = 5
+	minHeartbeatInterval     = 30 * time.Second
 )
 
 type Conf struct {
 	// Credentials holds Cerbos Hub client credentials.
 	Credentials CredentialsConf `yaml:"credentials"`
+	// Connection holds advanced connection settings for Cerbos Hub.
+	Connection ConnectionConf `yaml:"connection"`
 }
 
 func (conf *Conf) Key() string {
@@ -102,6 +109,69 @@ func (cc CredentialsConf) ToCredentials() (*credentials.Credentials, error) {
 	return credentials.New(cc.ClientID, cc.ClientSecret, cc.WorkspaceSecret)
 }
 
+// ConnectionConf holds configuration for the remote connection.
+type ConnectionConf struct {
+	// TLS defines settings for TLS connections.
+	TLS TLSConf `yaml:"tls"`
+	// APIEndpoint is the address of the API server.
+	APIEndpoint string `yaml:"apiEndpoint" conf:"required,example=https://api.cerbos.cloud"`
+	// BootstrapEndpoint is the addresses of the server serving the bootstrap configuration.
+	BootstrapEndpoint string `yaml:"bootstrapEndpoint" conf:"required,example=https://cdn.cerbos.cloud"`
+	// MinRetryWait is the minimum amount of time to wait between retries.
+	MinRetryWait time.Duration `yaml:"minRetryWait" conf:",example=1s"`
+	// MaxRetryWait is the maximum amount of time to wait between retries.
+	MaxRetryWait time.Duration `yaml:"maxRetryWait" conf:",example=120s"`
+	// NumRetries is the number of times to retry before giving up.
+	NumRetries uint `yaml:"numRetries" conf:",example=5"`
+	// HeartbeatInterval is the interval for sending regular heartbeats.
+	HeartbeatInterval time.Duration `yaml:"heartbeatInterval" conf:",example=2m"`
+}
+
+func (cc ConnectionConf) IsUnset() bool {
+	return cc == ConnectionConf{}
+}
+
+func (cc *ConnectionConf) Validate() error {
+	if cc.APIEndpoint == "" {
+		cc.APIEndpoint = defaultAPIEndpoint
+	}
+
+	if cc.BootstrapEndpoint == "" {
+		cc.BootstrapEndpoint = defaultBootstrapHost
+	}
+
+	if cc.MinRetryWait == 0 {
+		cc.MinRetryWait = defaultMinRetryWait
+	}
+
+	if cc.MaxRetryWait == 0 {
+		cc.MaxRetryWait = defaultMaxRetryWait
+	}
+
+	if cc.NumRetries == 0 {
+		cc.NumRetries = defaultNumRetries
+	}
+
+	switch {
+	case cc.HeartbeatInterval < 0:
+		cc.HeartbeatInterval = 0
+	case cc.HeartbeatInterval == 0:
+		cc.HeartbeatInterval = defaultHeartbeatInterval
+	case cc.HeartbeatInterval > 0 && cc.HeartbeatInterval < minHeartbeatInterval:
+		cc.HeartbeatInterval = minHeartbeatInterval
+	}
+
+	return nil
+}
+
+// TLSConf holds TLS configuration for the remote connection.
+type TLSConf struct {
+	// Authority overrides the Cerbos PDP server authority if it is different from what is provided in the address.
+	Authority string `yaml:"authority" conf:",example=domain.tld"`
+	// CACert is the path to the CA certificate chain to use for certificate verification.
+	CACert string `yaml:"caCert" conf:",example=/path/to/CA_certificate"`
+}
+
 func (conf *Conf) SetDefaults() {
 	conf.Credentials = CredentialsConf{
 		ClientID:        GetEnv(ClientIDKey),
@@ -111,7 +181,7 @@ func (conf *Conf) SetDefaults() {
 	}
 }
 
-func (conf *Conf) Validate() error {
+func (conf *Conf) Validate() (outErr error) {
 	return conf.Credentials.Validate()
 }
 

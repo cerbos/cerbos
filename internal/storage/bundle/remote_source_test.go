@@ -309,7 +309,7 @@ func TestRemoteSource(t *testing.T) {
 func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 	t.Helper()
 
-	return &bundle.Conf{
+	conf := &bundle.Conf{
 		CacheSize: 1024,
 		Credentials: hub.CredentialsConf{
 			ClientID:        "client-id",
@@ -322,6 +322,9 @@ func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 			DisableAutoUpdate: disableAutoUpdate,
 		},
 	}
+
+	require.NoError(t, conf.Validate())
+	return conf
 }
 
 func waitForCallsDone(t *testing.T, callsDone <-chan struct{}) {
