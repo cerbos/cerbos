@@ -8,13 +8,13 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma/v2 v2.12.0
-	github.com/alecthomas/kong v0.8.1
+	github.com/alecthomas/kong v0.9.0
 	github.com/alecthomas/participle/v2 v2.1.1
-	github.com/aws/aws-sdk-go v1.50.30
+	github.com/aws/aws-sdk-go v1.50.35
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.6.0
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/cerbos/cerbos-sdk-go v0.2.2
+	github.com/cerbos/cerbos-sdk-go v0.2.3
 	github.com/cerbos/cerbos/api/genpb v0.34.0
 	github.com/cerbos/cloud-api v0.1.17
 	github.com/cespare/xxhash v1.1.0
@@ -31,11 +31,11 @@ require (
 	github.com/go-cmd/cmd v1.4.2
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/go-logr/zapr v1.3.0
-	github.com/go-sql-driver/mysql v1.7.1
+	github.com/go-sql-driver/mysql v1.8.0
 	github.com/gobwas/glob v0.2.3
 	github.com/goccy/go-yaml v1.11.3
 	github.com/golang-migrate/migrate/v4 v4.17.0
-	github.com/google/cel-go v0.20.0
+	github.com/google/cel-go v0.20.1
 	github.com/google/go-cmp v0.6.0
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.6.0
@@ -45,7 +45,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jackc/pgtype v1.14.2
 	github.com/jackc/pgx-zap v0.0.0-20221202020421-94b1cb2f889f
-	github.com/jackc/pgx/v5 v5.5.3
+	github.com/jackc/pgx/v5 v5.5.5
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.2.0
@@ -54,7 +54,7 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.0.21
 	github.com/mattn/go-isatty v0.0.20
 	github.com/microsoft/go-mssqldb v1.7.0
-	github.com/minio/minio-go/v7 v7.0.68
+	github.com/minio/minio-go/v7 v7.0.69
 	github.com/nlepage/go-tarfs v1.2.1
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -63,7 +63,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/pterm/pterm v0.12.79
-	github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e
+	github.com/rivo/tview v0.0.0-20240307173318-e804876934a1
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.12.0
 	github.com/rs/cors v1.10.1
@@ -105,17 +105,17 @@ require (
 	gocloud.dev v0.36.0
 	golang.org/x/crypto v0.21.0
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
-	golang.org/x/net v0.21.0
+	golang.org/x/net v0.22.0
 	golang.org/x/sync v0.6.0
-	golang.org/x/tools v0.18.0
+	golang.org/x/tools v0.19.0
 	gonum.org/v1/gonum v0.14.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240228224816-df926f6c8641
-	google.golang.org/grpc v1.62.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20240308144416-29370a3891b7
+	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.14.2
-	modernc.org/sqlite v1.29.2
+	modernc.org/sqlite v1.29.3
 )
 
 require (
@@ -132,6 +132,7 @@ require (
 	connectrpc.com/otelconnect v0.7.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	filippo.io/age v1.1.1 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
@@ -229,7 +230,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/mattn/go-sqlite3 v1.14.16 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -282,7 +283,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.1.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.15.0 // indirect
+	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
@@ -292,7 +293,7 @@ require (
 	google.golang.org/api v0.162.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240228201840-1f18d85a4ec2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240228224816-df926f6c8641 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
