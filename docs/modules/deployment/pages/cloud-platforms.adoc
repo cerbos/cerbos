@@ -145,3 +145,127 @@ primary_region = '<REGION>' <2>
 <1> The name of the link:https://fly.io/docs/apps[Fly App]
 <2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
 <3> Bucket name
+
+=== Using LiteFS as a policy repository
+
+Cerbos `sqlite3` driver can be used with storage backend such as link:https://fly.io/docs/litefs[LiteFS]. There are some
+steps to take to use LiteFS with Cerbos.
+
+==== LiteFS configuration
+
+Create a LiteFS configuration file (`litefs.yml`).
+
+.litefs.yml
+[source,yaml,linenums]
+----
+data:
+  dir: "/var/lib/litefs"
+
+exec:
+  - cmd: "/cerbos server --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=file:/litefs/db" <1>
+
+exit-on-error: false
+
+fuse:
+  dir: "/litefs"
+
+lease:
+  advertise-url: "http://${FLY_ALLOC_ID}.vm.${FLY_APP_NAME}.internal:20202"
+  candidate: ${FLY_REGION == PRIMARY_REGION}
+  consul:
+    url: "${FLY_CONSUL_URL}"
+    key: "${FLY_APP_NAME}/primary"
+  promote: true
+  type: "consul"
+----
+<1> LiteFS requires us to set the command in the LiteFS configuration instead of using the Dockerfile. When LiteFS is
+run it runs the command specified and waits until it exits.
+
+NOTE: link:https://fly.io/docs/litefs/getting-started-docker/#configuring-litefs[Configuring LiteFS] page shows
+additional parameters for configuration.
+
+=== Dockerfile
+
+Create a Dockerfile (`Dockerfile`)
+
+.Dockerfile
+[source,Dockerfile,subs="attributes+"]
+----
+FROM flyio/litefs:0.5 AS litefs
+
+FROM ghcr.io/cerbos/cerbos:{app-version} AS cerbos
+
+FROM alpine:3.16 AS base
+RUN apk add fuse3 sqlite
+ADD litefs.yml /etc/litefs.yml
+COPY --from=cerbos /cerbos /cerbos
+COPY --from=litefs /usr/local/bin/litefs /usr/local/bin/litefs
+
+ENTRYPOINT ["litefs"]
+CMD ["mount"]
+----
+
+=== Create a `fly.toml` to launch Cerbos
+[source,toml,linenums,subs="attributes+"]
+----
+app = '<APPLICATION_NAME>' <1>
+primary_region = '<REGION>' <2>
+
+[build]
+  dockerfile = "Dockerfile"
+
+[mounts]
+  source = "litefs"
+  destination = "/var/lib/litefs" <3>
+
+[[services]]
+  protocol = ''
+  internal_port = 3592
+
+[[services.ports]]
+    port = 3592
+    handlers = ['tls', 'http']
+
+[[services.http_checks]]
+    interval = '5s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'get'
+    path = '/_cerbos/health'
+    protocol = 'http'
+
+[[services]]
+  protocol = ''
+  internal_port = 3593
+
+[[services.ports]]
+    port = 3593
+    handlers = ['tls']
+
+    [services.ports.tls_options]
+      alpn = ['h2']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[metrics]
+  port = 3592
+  path = "/_cerbos/metrics"
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
+<2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+<3> Destination must be equal to the one specified in the `litefs.yaml`
+
+=== Lease configuration
+
+Add a Consul URL by running the following command.
+
+[source,bash]
+----
+flyctl consul attach
+----
+
+NOTE: See more details in link:https://fly.io/docs/litefs/getting-started-fly/#lease-configuration[lease configuration]
+section.
