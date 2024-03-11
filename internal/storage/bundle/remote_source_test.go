@@ -15,6 +15,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/test/mocks"
+	"github.com/cerbos/cloud-api/base"
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -115,7 +116,7 @@ func TestRemoteSource(t *testing.T) {
 				Run(func(_ context.Context, _ string) {
 					close(callsDone)
 				}).
-				Return(nil, cloudapi.ErrAuthenticationFailed).
+				Return(nil, base.ErrAuthenticationFailed).
 				Once()
 
 			rs, err := bundle.NewRemoteSource(mkConf(t, false))

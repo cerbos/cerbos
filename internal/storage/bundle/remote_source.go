@@ -21,6 +21,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cloud-api/base"
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/go-logr/zapr"
@@ -97,18 +98,20 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 	}
 
 	clientConf := cloudapi.ClientConf{
-		Logger:            zapr.NewLogger(s.log),
-		PDPIdentifier:     pdpID,
-		TLS:               tlsConf,
-		Credentials:       s.credentials,
-		APIEndpoint:       s.conf.Remote.Connection.APIEndpoint,
-		BootstrapEndpoint: s.conf.Remote.Connection.BootstrapEndpoint,
-		RetryWaitMin:      s.conf.Remote.Connection.MinRetryWait,
-		RetryWaitMax:      s.conf.Remote.Connection.MaxRetryWait,
-		RetryMaxAttempts:  int(s.conf.Remote.Connection.NumRetries),
-		HeartbeatInterval: s.conf.Remote.Connection.HeartbeatInterval,
-		CacheDir:          s.conf.Remote.CacheDir,
-		TempDir:           s.conf.Remote.TempDir,
+		ClientConf: base.ClientConf{
+			Logger:            zapr.NewLogger(s.log),
+			PDPIdentifier:     pdpID,
+			TLS:               tlsConf,
+			Credentials:       s.credentials,
+			APIEndpoint:       s.conf.Remote.Connection.APIEndpoint,
+			BootstrapEndpoint: s.conf.Remote.Connection.BootstrapEndpoint,
+			RetryWaitMin:      s.conf.Remote.Connection.MinRetryWait,
+			RetryWaitMax:      s.conf.Remote.Connection.MaxRetryWait,
+			RetryMaxAttempts:  int(s.conf.Remote.Connection.NumRetries),
+			HeartbeatInterval: s.conf.Remote.Connection.HeartbeatInterval,
+		},
+		CacheDir: s.conf.Remote.CacheDir,
+		TempDir:  s.conf.Remote.TempDir,
 	}
 
 	client, err := cloudapi.NewClient(clientConf)
@@ -311,7 +314,7 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 			s.mu.Unlock()
 			incEventMetric("error")
 
-			if errors.Is(err, cloudapi.ErrAuthenticationFailed) {
+			if errors.Is(err, base.ErrAuthenticationFailed) {
 				s.log.Error("Failed to authenticate to Cerbos Hub", zap.Error(err))
 				s.removeBundle(false)
 				return backoff.Permanent(err)
