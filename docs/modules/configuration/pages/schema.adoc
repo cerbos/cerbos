@@ -1,6 +1,6 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Schema Block
+= Schema block
 
 include::ROOT:partial$version-check.adoc[]
 
@@ -20,4 +20,3 @@ See xref:policies:schemas.adoc[] for more information about schemas.
 schema:
   enforcement: reject
 ----
-

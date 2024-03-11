@@ -1,6 +1,6 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Scoped Policies
+= Scoped policies
 
 include::ROOT:partial$version-check.adoc[]
 
@@ -83,4 +83,3 @@ image::decision_flow.png[]
 * Variables and derived roles imports are not inherited between policies. Explicitly import any derived roles and re-define any variables in each policy that requires them.
 * First match wins. As illustrated in the flow chart above, scoped policies are evaluated from the most specific to the least specific. The first policy to produce a decision (ALLOW/DENY) for an action is the winner. The remaining policies cannot override the decision for that particular action (but they will still be evaluated if there are other actions that don't yet have a decision).
 * Unless xref:configuration:engine.adoc#lenient_scopes[lenient scope search] is enabled, a policy file matching the exact scope requested in the API request must exist in the store.
-
