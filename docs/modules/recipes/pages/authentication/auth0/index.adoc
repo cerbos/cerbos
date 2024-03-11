@@ -16,7 +16,7 @@ An example application of integrating https://cerbos.dev[Cerbos] with an https:/
 * Docker for running the xref:ROOT:installation/container.adoc[Cerbos Policy Decision Point (PDP)]
 * An https://auth0.com/[Auth0] account if you want to use your own
 
-== Getting Started
+== Getting started
 
 . Clone the repo
 +

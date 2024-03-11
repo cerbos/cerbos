@@ -20,7 +20,7 @@ https://cerbos.dev/video/using-cerbos-with-fusionauth[Demo Video]
 
 * docker-compose
 
-== Getting Started
+== Getting started
 
 . Clone the repo
 +

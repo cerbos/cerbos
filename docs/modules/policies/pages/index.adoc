@@ -1,6 +1,6 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Cerbos Policies
+= Cerbos policies
 
 include::ROOT:partial$version-check.adoc[]
 
