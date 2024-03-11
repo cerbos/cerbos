@@ -8,6 +8,7 @@ atomicgo.dev/schedule v0.1.0 h1:nTthAbhZS5YZmgYbb2+DH8uQIZcTlIrd4eYr3UQxEjs=
 atomicgo.dev/schedule v0.1.0/go.mod h1:xeUa3oAkiuHYh8bKiQBRojqAMq3PXXbJujjb0hw8pEU=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20240221180331-f05a6f4403ce.1 h1:AmmAwHbvaeOIxDKG2+aTn5C36HjmFIMkrdTp49rp80Q=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.32.0-20240221180331-f05a6f4403ce.1/go.mod h1:tiTMKD8j6Pd/D2WzREoweufjzaJKHZg35f/VGcZ2v3I=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.33.0-20240221180331-f05a6f4403ce.1/go.mod h1:Tgn5bgL220vkFOI0KPStlcClPeOJzAv4uT+V8JXGUnw=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.112.0 h1:tpFCD7hpHFlQ8yPwT3x+QeXqc2T6+n6T+hmABHfDUSM=
 cloud.google.com/go v0.112.0/go.mod h1:3jEEVwZ/MHU4djK5t5RHuKOA/GbLddgTdVubX1qnPD4=
@@ -160,6 +161,8 @@ github.com/cerbos/cerbos/api/genpb v0.34.0 h1:HY8k9HVHv000EKU61KrhAia5TmjW4sX2AX
 github.com/cerbos/cerbos/api/genpb v0.34.0/go.mod h1:KEUMaRkMsCvEcOI8aptMFscKh6H2bfWgjjjSmRWKg8g=
 github.com/cerbos/cloud-api v0.1.17 h1:DiiVhrkGQVPfRSipqAOhhmPXwGDjuy8KVE/G5D9ZAyA=
 github.com/cerbos/cloud-api v0.1.17/go.mod h1:iXJaWIfuho/FpIhYyonsLDLiDBqNghvj1hgOPlAXCQE=
+github.com/cerbos/cloud-api v0.1.18-0.20240311082340-cd73b618b1fd h1:bGjPBhNwtsKxSibrkAtF9y/nwonylgcXRL7kJwHG/48=
+github.com/cerbos/cloud-api v0.1.18-0.20240311082340-cd73b618b1fd/go.mod h1:enuBEz4y/96jl0ejsd91H2kWgda5ausOqRAeMH6e7tw=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
