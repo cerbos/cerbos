@@ -45,9 +45,8 @@ func init() {
 	})
 }
 
-type TriggerSignal struct {
-	ResponseCh chan struct{}
-	bypassSync bool
+type triggerSignal struct {
+	responseCh chan error
 }
 
 // Log implements the decisionlog interface with Badger as the backing store.
@@ -56,8 +55,8 @@ type Log struct {
 	Db             *badgerv4.DB
 	buffer         chan *badgerv4.Entry
 	stopChan       chan struct{}
-	trigger        chan TriggerSignal
-	callbackFn     func()
+	trigger        chan triggerSignal
+	callbackFn     func(chan error)
 	decisionFilter audit.DecisionLogEntryFilter
 	wg             sync.WaitGroup
 	ttl            time.Duration
@@ -83,7 +82,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	maxBatchSize := int(conf.Advanced.MaxBatchSize)
 	ttl := conf.RetentionPeriod
 
-	triggerCh := make(chan TriggerSignal, 1)
+	triggerCh := make(chan triggerSignal, 1)
 	stopCh := make(chan struct{})
 	ticker := time.NewTicker(flushInterval)
 	go func() {
@@ -92,7 +91,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 			select {
 			case <-ticker.C:
 				select {
-				case triggerCh <- TriggerSignal{}:
+				case triggerCh <- triggerSignal{}:
 				default:
 				}
 			case <-stopCh:
@@ -122,7 +121,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	return l, nil
 }
 
-func (l *Log) RegisterCallback(fn func()) {
+func (l *Log) RegisterCallback(fn func(chan error)) {
 	l.callbackFn = fn
 }
 
@@ -145,13 +144,7 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 			batch.flush()
 			if l.callbackFn != nil {
 				go func() {
-					if !sig.bypassSync {
-						l.callbackFn()
-					}
-
-					if sig.ResponseCh != nil {
-						sig.ResponseCh <- struct{}{}
-					}
+					l.callbackFn(sig.responseCh)
 				}()
 			}
 		}
@@ -196,14 +189,12 @@ func (l *Log) Enabled() bool {
 }
 
 // ForceWrite forces a write operation and blocks until completion.
-func (l *Log) ForceWrite(bypassSync bool) {
-	sig := TriggerSignal{}
+func (l *Log) ForceWrite() {
+	sig := triggerSignal{}
 	if l.callbackFn != nil {
-		sig.bypassSync = bypassSync
-		wait := make(chan struct{}, 1)
-		sig.ResponseCh = wait
+		sig.responseCh = make(chan error, 1)
 		defer func() {
-			<-wait
+			<-sig.responseCh
 		}()
 	}
 	l.trigger <- sig

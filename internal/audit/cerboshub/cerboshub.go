@@ -59,8 +59,8 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
-	localLog.RegisterCallback(func() {
-		schedule(localLog.Db, newMutexTimer(), syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger)
+	localLog.RegisterCallback(func(errCh chan error) {
+		schedule(localLog.Db, newMutexTimer(), syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, errCh)
 	})
 
 	return &Log{
@@ -153,15 +153,16 @@ func (mt *mutexTimer) wait() {
 	<-mt.expireCh
 }
 
-func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlushInterval, flushTimeout time.Duration, maxBatchSize, numGo int, logger *zap.Logger) {
+func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlushInterval, flushTimeout time.Duration, maxBatchSize, numGo int, logger *zap.Logger, errCh chan error) {
 	muTimer.wait()
 
-	if err := streamLogs(db, syncer, maxBatchSize, numGo, flushTimeout); err != nil {
+	err := streamLogs(db, syncer, maxBatchSize, numGo, flushTimeout)
+	if err != nil {
 		var ingestErr ErrIngestBackoff
 		if errors.As(err, &ingestErr) {
 			logger.Warn("svc-ingest issued backoff", zap.Error(err))
 			muTimer.set(ingestErr.Backoff)
-			go schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger)
+			go schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, errCh)
 			return
 		}
 		logger.Warn("Failed sync", zap.Error(err))
@@ -171,6 +172,8 @@ func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlus
 	// This prevents a retry completion occurring immediately before the next sync
 	// (and therefore burdening the backend).
 	muTimer.set(minFlushInterval)
+
+	errCh <- err
 }
 
 func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration) error {

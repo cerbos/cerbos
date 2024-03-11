@@ -18,8 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
-	gocmp "github.com/google/go-cmp/cmp"
-	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -134,26 +132,14 @@ func TestCerbosHubLog(t *testing.T) {
 
 	wantNumBatches := int(math.Ceil(numRecords * 2 / float64(batchSize)))
 
-	t.Run("insertsKeys", func(t *testing.T) {
-		t.Cleanup(purgeKeys)
-
-		wantKeys := loadData(t, db, startDate)
-
-		db.ForceWrite(true)
-
-		keys := getLocalKeys()
-		require.Len(t, keys, len(wantKeys), "incorrect number of keys: %d", len(keys))
-		require.Empty(t, gocmp.Diff(wantKeys, keys, protocmp.Transform()))
-	})
-
-	t.Run("deletesKeys", func(t *testing.T) {
+	t.Run("insertsAndDeletesKeys", func(t *testing.T) {
 		t.Cleanup(purgeKeys)
 
 		loadedKeys := loadData(t, db, startDate)
 
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches)
 
-		db.ForceWrite(false)
+		db.ForceWrite()
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
@@ -170,7 +156,7 @@ func TestCerbosHubLog(t *testing.T) {
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(errors.New("some error")).Once()
 
-		db.ForceWrite(false)
+		db.ForceWrite()
 
 		require.True(t, syncer.hasKeys(loadedKeys[0:initialNBatches*int(batchSize)]), "some keys should have been synced")
 		require.Len(t, getLocalKeys(), (numRecords*2)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
@@ -191,10 +177,7 @@ func TestCerbosHubLog(t *testing.T) {
 		}).Once()
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches - initialNBatches)
 
-		db.ForceWrite(false)
-		// The second callbackFn call happens in a separate goroutine. A short sleep gives it time to complete
-		// TODO(saml) remove this sleep with some proper wait mechanism
-		time.Sleep(100 * time.Millisecond)
+		db.ForceWrite()
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
