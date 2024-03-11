@@ -19,6 +19,21 @@
   "files": [
     "index.js"
   ],
+  "keywords": [
+    "Cerbos",
+    "authorization",
+    "access control",
+    "roles",
+    "permissions",
+    "policy",
+    "security",
+    "role-based access control",
+    "RBAC",
+    "attribute-based access control",
+    "ABAC",
+    "policy decision point",
+    "PDP"
+  ],
   "scripts": {},
   "optionalDependencies": {
     "@cerbos/cerbosctl-darwin-arm64": "0.35.0-prerelease",
