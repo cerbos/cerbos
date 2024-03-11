@@ -1,0 +1,49 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Integrating permission checks into your user interface
+
+include::ROOT:partial$version-check.adoc[]
+
+It's a common requirement to make permission checks in the user interface layer of your application.
+For example, you might want to hide the "Edit" button if the current user isn't allowed to edit the corresponding resource.
+
+You can tackle this by checking the user's permissions in the back end of your application and including the results in your API responses, by calling the Cerbos PDP directly from the browser, or by evaluating your policies in the browser.
+
+NOTE: Checking permissions in the user interface is not a substitute for performing checks in the back end.
+
+== Including permissions in API responses
+
+You can add a `permissions` field to relevant API responses, and populate it by calling the Cerbos PDP's xref:api:index.adoc#check-resources[CheckResources] API with multiple actions.
+For example, an API response from a blog application might look like this:
+
+[source,json]
+----
+{
+  "blog_post": {
+    "title": "Why are we building Cerbos?",
+    "author": "Emre Baran & Charith Ellawala",
+    "permissions": {
+      "edit": true,
+      "delete": false
+    }
+  }
+}
+----
+
+This pattern can be readily tailored to your requirements.
+It's a great way to ensure that the front and back ends of your application agree on your policy rules.
+
+== Calling the Cerbos PDP from the browser
+
+The Cerbos PDP API is available via REST, so you can perform permissions checks directly from the browser.
+The link:https://www.npmjs.com/package/@cerbos/http[`@cerbos/http` JavaScript SDK] wraps the REST API to make it easier to integrate into your application.
+
+WARNING: Exposing the PDP to the internet has security and performance implications.
+An attacker could use the API to probe your authorization policies much more easily than through your user interface.
+You could mitigate this to some extent by keeping the PDP behind a reverse proxy that authenticates and rate-limits API calls.
+You might also want to use a separate deployment with only a subset of your policies.
+
+== Evaluating policies in the browser
+
+You can use link:https://docs.cerbos.dev/cerbos-hub/decision-points-embedded[Cerbos Hub's embedded PDPs] to evaluate your authorization policies directly in the browser.
+This allows you to perform permission checks on the front end without changing the back end.

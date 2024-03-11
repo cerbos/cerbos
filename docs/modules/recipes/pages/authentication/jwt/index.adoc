@@ -19,7 +19,7 @@ authentication.
 * Node.js
 * Docker for running the xref:ROOT:installation/container.adoc[Cerbos Policy Decision Point (PDP)]
 
-== Getting Started
+== Getting started
 
 . Clone the repo
 +

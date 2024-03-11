@@ -1,6 +1,6 @@
 include::partial$attributes.adoc[]
 
-= Policy authoring
+= Resource definition
 
 include::partial$version-check.adoc[]
 

@@ -36,7 +36,7 @@ storage:
 CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
 
 [id="disk-driver-archives"]
-=== Archive Files
+=== Archive files
 
 Alternatively, you can opt to archive and/or compress your policies directory into a Zip (`.zip`), Tar (`.tar`) or Gzip file (`.tgz` or `.tar.gz`). The archive is assumed to be laid out like a standard policy directory. It must contain no non-policy YAML files.
 

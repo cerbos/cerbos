@@ -19,7 +19,7 @@ https://cerbos.dev/video/using-cerbos-with-aws-cognito[Demo Video]
 * Docker for running the https://docs.cerbos.dev/cerbos/latest/installation/container.html[Cerbos Policy Decision Point (PDP)]
 * A configured AWS Cognito User Pool (https://docs.aws.amazon.com/cognito/latest/developerguide/getting-started-with-cognito-user-pools.html[set-up guide])
 
-== Getting Started
+== Getting started
 
 . Clone the repo
 +
