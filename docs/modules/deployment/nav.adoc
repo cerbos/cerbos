@@ -3,3 +3,4 @@
 - xref:k8s-sidecar.adoc[Kubernetes sidecar]
 - xref:systemd.adoc[Systemd service]
 - xref:serverless-faas.adoc[Serverless/FaaS environments]
+- xref:cloud-platforms.adoc[Cloud platforms]

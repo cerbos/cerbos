@@ -1,0 +1,147 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Deploy Cerbos to Cloud platforms
+
+include::ROOT:partial$version-check.adoc[]
+
+== Fly.io
+
+You can deploy Cerbos on Fly.io as a link:https://fly.io/docs/apps[Fly Launch] app. The following `fly.toml` file shows
+how to deploy Cerbos with healthchecks and metrics:
+[source,toml,linenums,subs="attributes+"]
+----
+app = '<APPLICATION_NAME>' <1>
+primary_region = '<REGION>' <2>
+
+[build]
+  image = 'ghcr.io/cerbos/cerbos:{app-version}'
+
+[[mounts]]
+  source = 'policies'
+  destination = '/policies'
+  initial_size = '1GB'
+
+[[services]]
+  protocol = ''
+  internal_port = 3592
+
+[[services.ports]]
+    port = 3592
+    handlers = ['tls', 'http']
+
+[[services.http_checks]]
+    interval = '5s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'get'
+    path = '/_cerbos/health'
+    protocol = 'http'
+
+[[services]]
+  protocol = ''
+  internal_port = 3593
+
+[[services.ports]]
+    port = 3593
+    handlers = ['tls']
+
+    [services.ports.tls_options]
+      alpn = ['h2']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[metrics]
+  port = 3592
+  path = "/_cerbos/metrics"
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
+<2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+
+The example above launches a Cerbos instance with the
+xref:configuration:index.adoc#minimal-configuration[minimal configuration] using an empty
+link:https://fly.io/docs/reference/volumes/[Fly volume] mounted as the policy directory. For production use cases, we
+recommend using either xref:configuration:storage.adoc#blob-driver[blob],
+xref:configuration:storage.adoc#git-driver[git] or xref:configuration:storage.adoc[one of the database drivers] as the
+Cerbos  policy storage backend. Cerbos can be xref:configuration:index.adoc[configured entirely from the command line]
+using the `--set` flags. On the Fly.io platform, they can be set by overriding the `cmd` setting in the
+link:https://fly.io/docs/reference/configuration/#the-experimental-section[experimental section] of the `fly.toml` file.
+
+=== Using Tigris as a policy repository
+
+Cerbos `blob` driver can be used with any S3-compatible blob storage backend such as
+link:https://fly.io/docs/reference/tigris[Tigris]. To set the credentials for accessing the bucket, use the
+`flyctl secrets` command.
+[source,bash]
+----
+flyctl secrets set AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID>
+flyctl secrets set AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY>
+----
+
+[source,toml,linenums,subs="attributes+"]
+----
+app = '<APPLICATION_NAME>' <1>
+primary_region = '<REGION>' <2>
+
+[build]
+  image = 'ghcr.io/cerbos/cerbos:{app-version}'
+
+[experimental]
+  cmd = [
+    'server',
+    '--set', 'storage.driver=blob',
+    '--set', 'storage.blob.bucket=s3://<BUCKET_NAME>?endpoint=fly.storage.tigris.dev&region=auto', <3>
+    '--set', 'storage.blob.downloadTimeout=30s',
+    '--set', 'storage.blob.prefix=policies',
+    '--set', 'storage.blob.updatePollInterval=15s',
+    '--set', 'storage.blob.workDir=/policies'
+  ]
+
+[[mounts]]
+  source = 'policies'
+  destination = '/policies'
+  initial_size = '1GB'
+
+[[services]]
+  protocol = ''
+  internal_port = 3592
+  auto_stop_machines = true
+
+[[services.ports]]
+    port = 3592
+    handlers = ['tls', 'http']
+
+[[services.http_checks]]
+    interval = '5s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'get'
+    path = '/_cerbos/health'
+    protocol = 'http'
+
+[[services]]
+  protocol = ''
+  internal_port = 3593
+  auto_stop_machines = true
+
+[[services.ports]]
+    port = 3593
+    handlers = ['tls']
+
+    [services.ports.tls_options]
+      alpn = ['h2']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[metrics]
+  port = 3592
+  path = "/_cerbos/metrics"
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
+<2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+<3> Bucket name
