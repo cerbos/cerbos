@@ -130,10 +130,10 @@ func TestConfig(t *testing.T) {
 			conf: map[string]any{
 				"hub": map[string]any{
 					"credentials": map[string]any{
-						"pdpID":           "pdp-id",
-						"clientID":        "client-id",
-						"clientSecret":    "client-secret",
-						"workspaceSecret": "workspace-secret",
+						"pdpID":           "Xpdp-id",
+						"clientID":        "Xclient-id",
+						"clientSecret":    "Xclient-secret",
+						"workspaceSecret": "Xworkspace-secret",
 					},
 					"connection": map[string]any{
 						"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
@@ -157,7 +157,6 @@ func TestConfig(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
 		},
 		{
 			name: "file/duplicate-connection",
@@ -170,8 +169,8 @@ func TestConfig(t *testing.T) {
 						"workspaceSecret": "workspace-secret",
 					},
 					"connection": map[string]any{
-						"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-						"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+						"apiEndpoint":       "Xhttps://api.stg-spitfire.cerbos.tech",
+						"bootstrapEndpoint": "Xhttps://cdn.stg-spitfire.cerbos.tech",
 					},
 				},
 				"storage": map[string]any{
@@ -189,7 +188,6 @@ func TestConfig(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
 		},
 		{
 			name: "env/valid-config",
@@ -270,7 +268,7 @@ func TestConfig(t *testing.T) {
 
 	want := &bundle.Conf{
 		CacheSize: 1024,
-		Credentials: hub.CredentialsConf{
+		Credentials: &hub.CredentialsConf{
 			PDPID:           "pdp-id",
 			ClientID:        "client-id",
 			ClientSecret:    "client-secret",
@@ -280,7 +278,7 @@ func TestConfig(t *testing.T) {
 			BundleLabel: "latest",
 			TempDir:     "/tmp",
 			CacheDir:    "/tmp",
-			Connection: hub.ConnectionConf{
+			Connection: &hub.ConnectionConf{
 				APIEndpoint:       "https://api.stg-spitfire.cerbos.tech",
 				BootstrapEndpoint: "https://cdn.stg-spitfire.cerbos.tech",
 				MinRetryWait:      1 * time.Second,

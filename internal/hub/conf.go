@@ -69,6 +69,20 @@ func (conf *Conf) Key() string {
 	return confKey
 }
 
+func (conf *Conf) SetDefaults() {
+	conf.Credentials = CredentialsConf{
+		ClientID:        GetEnv(ClientIDKey),
+		ClientSecret:    GetEnv(ClientSecretKey),
+		PDPID:           GetEnv(PDPIDKey),
+		WorkspaceSecret: GetEnv(WorkspaceSecretKey),
+	}
+}
+
+func (conf *Conf) Validate() (outErr error) {
+	_ = conf.Connection.Validate()
+	return conf.Credentials.Validate()
+}
+
 // CredentialsConf holds credentials for accessing Cerbos Hub.
 type CredentialsConf struct {
 	// PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
@@ -85,10 +99,6 @@ type CredentialsConf struct {
 	SecretKey string `yaml:"secretKey" conf:",ignore"`
 }
 
-func (cc CredentialsConf) IsUnset() bool {
-	return cc == CredentialsConf{}
-}
-
 func (cc *CredentialsConf) Validate() (outErr error) {
 	// SecretKey was renamed to WorkspaceSecret in Cerbos 0.31.0
 	if cc.WorkspaceSecret == "" && cc.SecretKey != "" {
@@ -103,6 +113,24 @@ func (cc *CredentialsConf) Validate() (outErr error) {
 	// We don't do any validation here because some fields are optional depending on the use case.
 
 	return nil
+}
+
+func (cc *CredentialsConf) LoadFromEnv() {
+	if cc.ClientID == "" {
+		cc.ClientID = GetEnv(ClientIDKey)
+	}
+
+	if cc.ClientSecret == "" {
+		cc.ClientSecret = GetEnv(ClientSecretKey)
+	}
+
+	if cc.PDPID == "" {
+		cc.PDPID = GetEnv(PDPIDKey)
+	}
+
+	if cc.WorkspaceSecret == "" {
+		cc.WorkspaceSecret = GetEnv(WorkspaceSecretKey)
+	}
 }
 
 func (cc CredentialsConf) ToCredentials() (*credentials.Credentials, error) {
@@ -170,19 +198,6 @@ type TLSConf struct {
 	Authority string `yaml:"authority" conf:",example=domain.tld"`
 	// CACert is the path to the CA certificate chain to use for certificate verification.
 	CACert string `yaml:"caCert" conf:",example=/path/to/CA_certificate"`
-}
-
-func (conf *Conf) SetDefaults() {
-	conf.Credentials = CredentialsConf{
-		ClientID:        GetEnv(ClientIDKey),
-		ClientSecret:    GetEnv(ClientSecretKey),
-		PDPID:           GetEnv(PDPIDKey),
-		WorkspaceSecret: GetEnv(WorkspaceSecretKey),
-	}
-}
-
-func (conf *Conf) Validate() (outErr error) {
-	return conf.Credentials.Validate()
 }
 
 func GetConf() (*Conf, error) {

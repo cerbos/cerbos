@@ -10,10 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
+
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
-	"go.uber.org/multierr"
 )
 
 const (
@@ -21,11 +23,7 @@ const (
 	defaultCacheSize = 1024
 )
 
-var (
-	ErrDuplicateConnectionConf = errors.New("both hub.connection and storage.bundle.remote.connection are defined: please use hub.connection")
-	ErrDuplicateCredentials    = errors.New("both hub.credentials and storage.bundle.credentials are defined: please use hub.credentials")
-	ErrNoSource                = errors.New("at least one of local or remote sources must be defined")
-)
+var ErrNoSource = errors.New("at least one of local or remote sources must be defined")
 
 // Conf is required (if driver is set to 'bundle') configuration for bundle storage driver.
 // +desc=This section is required only if storage.driver is bundle.
@@ -35,7 +33,7 @@ type Conf struct {
 	// Local holds configuration for local bundle source.
 	Local *LocalSourceConf `yaml:"local"`
 	// Credentials holds bundle source credentials.
-	Credentials hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
+	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
 	// CacheSize defines the number of policies to cache in memory.
 	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
 }
@@ -50,14 +48,14 @@ type LocalSourceConf struct {
 
 // RemoteSourceConf holds configuration for remote bundle store.
 type RemoteSourceConf struct {
+	// Connection defines settings for the remote server connection.
+	Connection *hub.ConnectionConf `yaml:"connection" conf:",ignore"`
 	// BundleLabel to fetch from the server.
 	BundleLabel string `yaml:"bundleLabel" conf:"required,example=latest"`
 	// CacheDir is the directory to use for caching downloaded bundles.
 	CacheDir string `yaml:"cacheDir" conf:",example=${XDG_CACHE_DIR}"`
 	// TempDir is the directory to use for temporary files.
 	TempDir string `yaml:"tempDir" conf:",example=${TEMP}"`
-	// Connection defines settings for the remote server connection.
-	Connection hub.ConnectionConf `yaml:"connection" conf:",ignore"`
 	// DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
 	DisableAutoUpdate bool `yaml:"disableAutoUpdate"`
 }
@@ -95,20 +93,19 @@ func (conf *Conf) Validate() (outErr error) {
 }
 
 func (conf *Conf) validateCredentials() error {
+	if conf.Credentials != nil {
+		zap.L().Warn("[DEPRECATED CONFIG] storage.bundle.credentials section is deprecated and will be removed in a future release. Please use hub.credentials instead.")
+		conf.Credentials.LoadFromEnv()
+		return conf.Credentials.Validate()
+	}
+
 	hubConf, err := hub.GetConf()
 	if err != nil {
 		return fmt.Errorf("failed to read Cerbos Hub configuration: %w", err)
 	}
 
-	switch {
-	case hubConf.Credentials.IsUnset():
-		return conf.Credentials.Validate()
-	case conf.Credentials.IsUnset():
-		conf.Credentials = hubConf.Credentials
-		return conf.Credentials.Validate()
-	default:
-		return ErrDuplicateCredentials
-	}
+	conf.Credentials = &hubConf.Credentials
+	return conf.Credentials.Validate()
 }
 
 func (lc *LocalSourceConf) validate() error {
@@ -192,21 +189,17 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 		rc.CacheDir = dir
 	}
 
+	if rc.Connection != nil {
+		zap.L().Warn("[DEPRECATED CONFIG] storage.bundle.remote.connection section is deprecated and will be removed in a future release. Please use hub.connection instead.")
+		return rc.Connection.Validate()
+	}
+
 	hubConf, err := hub.GetConf()
 	if err != nil {
 		return fmt.Errorf("failed to read Cerbos Hub configuration: %w", err)
 	}
 
-	hubConnConfUnset := hubConf.Connection.IsUnset()
-	remoteConnConfUnset := rc.Connection.IsUnset()
-
-	switch {
-	case !hubConnConfUnset && !remoteConnConfUnset:
-		return ErrDuplicateConnectionConf
-	case remoteConnConfUnset:
-		rc.Connection = hubConf.Connection
-	}
-
+	rc.Connection = &hubConf.Connection
 	return rc.Connection.Validate()
 }
 

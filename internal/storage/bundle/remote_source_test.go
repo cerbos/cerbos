@@ -311,7 +311,7 @@ func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 
 	conf := &bundle.Conf{
 		CacheSize: 1024,
-		Credentials: hub.CredentialsConf{
+		Credentials: &hub.CredentialsConf{
 			ClientID:        "client-id",
 			ClientSecret:    "client-secret",
 			WorkspaceSecret: loadKey(t),
