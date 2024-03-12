@@ -30,8 +30,8 @@ const (
 )
 
 var (
-	accessLogPrefix   = []byte("aacc")
-	decisionLogPrefix = []byte("adec")
+	AccessLogPrefix   = []byte("aacc")
+	DecisionLogPrefix = []byte("adec")
 )
 
 func init() {
@@ -216,7 +216,7 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := GenKey(accessLogPrefix, callID)
+	key := GenKey(AccessLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
 }
@@ -244,7 +244,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := GenKey(decisionLogPrefix, callID)
+	key := GenKey(DecisionLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
 }
@@ -260,14 +260,14 @@ func (l *Log) Write(ctx context.Context, key, value []byte) error {
 
 func (l *Log) LastNAccessLogEntries(ctx context.Context, n uint) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	go l.listLastN(ctx, accessLogPrefix, n, c)
+	go l.listLastN(ctx, AccessLogPrefix, n, c)
 
 	return c
 }
 
 func (l *Log) LastNDecisionLogEntries(ctx context.Context, n uint) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	go l.listLastN(ctx, decisionLogPrefix, n, c)
+	go l.listLastN(ctx, DecisionLogPrefix, n, c)
 
 	return c
 }
@@ -307,14 +307,14 @@ func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector)
 
 func (l *Log) AccessLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	go l.listBetweenTimestamps(ctx, accessLogPrefix, fromTS, toTS, c)
+	go l.listBetweenTimestamps(ctx, AccessLogPrefix, fromTS, toTS, c)
 
 	return c
 }
 
 func (l *Log) DecisionLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	go l.listBetweenTimestamps(ctx, decisionLogPrefix, fromTS, toTS, c)
+	go l.listBetweenTimestamps(ctx, DecisionLogPrefix, fromTS, toTS, c)
 
 	return c
 }
@@ -364,13 +364,13 @@ func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, 
 
 func (l *Log) AccessLogEntryByID(ctx context.Context, id audit.ID) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	l.getByID(ctx, accessLogPrefix, id, c)
+	l.getByID(ctx, AccessLogPrefix, id, c)
 	return c
 }
 
 func (l *Log) DecisionLogEntryByID(ctx context.Context, id audit.ID) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	l.getByID(ctx, decisionLogPrefix, id, c)
+	l.getByID(ctx, DecisionLogPrefix, id, c)
 	return c
 }
 

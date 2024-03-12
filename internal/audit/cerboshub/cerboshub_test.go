@@ -27,36 +27,60 @@ import (
 	"github.com/cerbos/cerbos/internal/audit/cerboshub"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/test/mocks"
+	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
 const (
-	numRecords = 1000
+	numRecords = 2000
 	batchSize  = uint(32)
 )
 
 type mockSyncer struct {
 	*mocks.IngestSyncer
 	synced map[string]struct{}
+	t      *testing.T
 }
 
 func newMockSyncer(t *testing.T) *mockSyncer {
-	t.Helper()
-
 	return &mockSyncer{
 		IngestSyncer: mocks.NewIngestSyncer(t),
 		synced:       make(map[string]struct{}),
+		t:            t,
 	}
 }
 
-func (m *mockSyncer) Sync(ctx context.Context, batch [][]byte) error {
-	for _, key := range batch {
+func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
+	if err := m.IngestSyncer.Sync(ctx, batch); err != nil {
+		return err
+	}
+
+	for _, e := range batch.Entries {
+		var key []byte
+		switch e.Kind {
+		case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+			key = keyFromCallID(m.t, e.GetAccessLogEntry().CallId, cerboshub.AccessSyncPrefix)
+		case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+			key = keyFromCallID(m.t, e.GetDecisionLogEntry().CallId, cerboshub.DecisionSyncPrefix)
+		}
+
 		m.synced[string(key)] = struct{}{}
 	}
 
-	return m.IngestSyncer.Sync(ctx, batch)
+	return nil
+}
+
+func keyFromCallID(t *testing.T, callID string, prefix []byte) []byte {
+	t.Helper()
+
+	callIDbytes, err := audit.ID(callID).Repr()
+	require.NoError(t, err)
+
+	return local.GenKey(prefix, callIDbytes)
 }
 
 func (m *mockSyncer) hasKeys(keys [][]byte) bool {
+	m.t.Helper()
+
 	for _, k := range keys {
 		if _, ok := m.synced[string(k)]; !ok {
 			return false
@@ -130,14 +154,16 @@ func TestCerbosHubLog(t *testing.T) {
 		return keys
 	}
 
-	wantNumBatches := int(math.Ceil(numRecords * 2 / float64(batchSize)))
+	// We use two streams (access + decision log scans). Each independent stream ends up with a partial page, therefore
+	// we treat each batch separately (hence the /2 -> *2 below).
+	wantNumBatches := int(math.Ceil((numRecords/2)/float64(batchSize))) * 2
 
 	t.Run("insertsAndDeletesKeys", func(t *testing.T) {
 		t.Cleanup(purgeKeys)
 
 		loadedKeys := loadData(t, db, startDate)
 
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches)
 
 		db.ForceWrite()
 
@@ -148,18 +174,19 @@ func TestCerbosHubLog(t *testing.T) {
 	t.Run("partiallyDeletesBeforeError", func(t *testing.T) {
 		t.Cleanup(purgeKeys)
 
-		loadedKeys := loadData(t, db, startDate)
+		loadData(t, db, startDate)
 
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with unrecoverable error after first N pages
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(errors.New("some error")).Once()
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(errors.New("some error")).Once()
+		// the other concurrent stream exits with context cancellation
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(context.Canceled).Once()
 
 		db.ForceWrite()
 
-		require.True(t, syncer.hasKeys(loadedKeys[0:initialNBatches*int(batchSize)]), "some keys should have been synced")
-		require.Len(t, getLocalKeys(), (numRecords*2)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
+		require.Len(t, getLocalKeys(), (numRecords)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
 	})
 
 	t.Run("deletesSyncKeysAfterBackoff", func(t *testing.T) {
@@ -188,8 +215,8 @@ func loadData(t *testing.T, db *cerboshub.Log, startDate time.Time) [][]byte {
 	t.Helper()
 
 	ctx := context.Background()
-	syncKeys := make([][]byte, numRecords*2)
-	for i := 0; i < numRecords; i++ {
+	syncKeys := make([][]byte, numRecords)
+	for i := 0; i < (numRecords / 2); i++ {
 		ts := startDate.Add(time.Duration(i) * time.Second)
 		id, err := audit.NewIDForTime(ts)
 		require.NoError(t, err)
@@ -199,7 +226,7 @@ func loadData(t *testing.T, db *cerboshub.Log, startDate time.Time) [][]byte {
 		// We insert decision sync logs in the latter half as this is the same
 		// order that Badger retrieves keys from the LSM
 		syncKeys[i] = local.GenKey(cerboshub.AccessSyncPrefix, callID)
-		syncKeys[i+numRecords] = local.GenKey(cerboshub.DecisionSyncPrefix, callID)
+		syncKeys[i+(numRecords/2)] = local.GenKey(cerboshub.DecisionSyncPrefix, callID)
 
 		err = db.WriteAccessLogEntry(ctx, mkAccessLogEntry(t, id, i, ts))
 		require.NoError(t, err)

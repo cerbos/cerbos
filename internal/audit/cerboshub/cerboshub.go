@@ -14,8 +14,10 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
+	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 	badgerv4 "github.com/dgraph-io/badger/v4"
 	"github.com/dgraph-io/ristretto/z"
+	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/zap"
 )
 
@@ -24,9 +26,9 @@ const (
 )
 
 var (
-	SyncStatusPrefix   = []byte("bs") // "b" for contiguity with audit log keys in LSM, "s" because "sync"
-	AccessSyncPrefix   = []byte("bsacc")
-	DecisionSyncPrefix = []byte("bsdec")
+	SyncStatusPrefix   = []byte("bs")   // "b" for contiguity with audit log keys in LSM, "s" because "sync"
+	AccessSyncPrefix   = []byte("bsac") // these need to be len(4) to correctly reuse `local.GenKey`
+	DecisionSyncPrefix = []byte("bsde")
 )
 
 func init() {
@@ -86,8 +88,10 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 	}
 
 	key := local.GenKey(AccessSyncPrefix, callID)
+	// TODO(saml) retrieve key generated in embedded call above to avoid recalc?
+	value := local.GenKey(local.AccessLogPrefix, callID)
 
-	return l.Write(ctx, key, nil)
+	return l.Write(ctx, key, value)
 }
 
 func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLogEntryMaker) error {
@@ -108,8 +112,10 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	}
 
 	key := local.GenKey(DecisionSyncPrefix, callID)
+	// TODO(saml) retrieve key generated in embedded call above to avoid recalc?
+	value := local.GenKey(local.DecisionLogPrefix, callID)
 
-	return l.Write(ctx, key, nil)
+	return l.Write(ctx, key, value)
 }
 
 type mutexTimer struct {
@@ -131,8 +137,6 @@ func (mt *mutexTimer) set(waitDuration time.Duration) {
 	if mt.t == nil {
 		mt.t = time.AfterFunc(waitDuration, func() {
 			mt.expireCh <- struct{}{}
-			// TODO(saml) could close/recreate a new channel each time if we want more than one listener
-			// close(mt.wait)
 
 			mt.mu.Lock()
 			mt.t = nil
@@ -177,14 +181,33 @@ func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlus
 }
 
 func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration) error {
+	// We use two streams: one for access logs, and one for decision logs, as this allows us to
+	// avoid the penalty of per-key string inspection when inferring the type down the line.
+	ctx, cancelFn := context.WithTimeout(context.Background(), flushTimeout)
+	defer cancelFn()
+
+	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
+	p.Go(func(ctx context.Context) error {
+		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG)
+	})
+	p.Go(func(ctx context.Context) error {
+		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG)
+	})
+
+	return p.Wait()
+}
+
+func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, kind logsv1.IngestBatch_EntryKind) error {
 	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
 	// Subsequent writes aren't blocked.
 	stream := db.NewStream()
 	stream.NumGo = numGo
-	stream.Prefix = SyncStatusPrefix
-
-	ctx, cancelFn := context.WithTimeout(context.Background(), flushTimeout)
-	defer cancelFn()
+	switch kind {
+	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+		stream.Prefix = AccessSyncPrefix
+	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+		stream.Prefix = DecisionSyncPrefix
+	}
 
 	stream.Send = func(buf *z.Buffer) error {
 		kvList, err := badgerv4.BufferToKVList(buf)
@@ -192,9 +215,9 @@ func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, f
 			return err
 		}
 
-		keys := make([][]byte, len(kvList.Kv))
-		for i, kv := range kvList.Kv {
-			keys[i] = kv.Key
+		keys := make([][]byte, 0, len(kvList.Kv))
+		for _, kv := range kvList.Kv {
+			keys = append(keys, kv.Key)
 		}
 
 		for i := 0; i < len(keys); i += maxBatchSize {
@@ -203,7 +226,7 @@ func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, f
 				end = len(keys)
 			}
 
-			if err := syncThenDelete(ctx, db, syncer, keys[i:end]); err != nil {
+			if err := syncThenDelete(ctx, db, syncer, kind, keys[i:end]); err != nil {
 				return err
 			}
 		}
@@ -214,15 +237,88 @@ func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, f
 	return stream.Orchestrate(ctx)
 }
 
-func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, batch [][]byte) error {
-	if err := syncer.Sync(ctx, batch); err != nil {
+func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte) error {
+	entries := make([]*logsv1.IngestBatch_Entry, len(syncKeys))
+	if err := db.Update(func(txn *badgerv4.Txn) error {
+		for i, k := range syncKeys {
+			syncItem, err := txn.Get(k)
+			if err != nil {
+				return err
+			}
+
+			var logKey []byte
+			if err := syncItem.Value(func(v []byte) error {
+				logKey = v
+				return nil
+			}); err != nil {
+				return err
+			}
+
+			logItem, err := txn.Get(logKey)
+			if err != nil {
+				return err
+			}
+
+			var entry *logsv1.IngestBatch_Entry
+			if err := logItem.Value(func(v []byte) error {
+				switch kind {
+				case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+					accessLog := &auditv1.AccessLogEntry{}
+					if err := accessLog.UnmarshalVT(v); err != nil {
+						return err
+					}
+
+					entry = &logsv1.IngestBatch_Entry{
+						Kind: logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG,
+						Entry: &logsv1.IngestBatch_Entry_AccessLogEntry{
+							AccessLogEntry: accessLog,
+						},
+						Timestamp: accessLog.Timestamp,
+					}
+				case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+					decisionLog := &auditv1.DecisionLogEntry{}
+					if err := decisionLog.UnmarshalVT(v); err != nil {
+						return err
+					}
+
+					entry = &logsv1.IngestBatch_Entry{
+						Kind: logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG,
+						Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{
+							DecisionLogEntry: decisionLog,
+						},
+						Timestamp: decisionLog.Timestamp,
+					}
+				}
+
+				return nil
+			}); err != nil {
+				return err
+			}
+
+			entries[i] = entry
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	batchID, err := audit.NewID()
+	if err != nil {
+		return err
+	}
+
+	if err := syncer.Sync(ctx, &logsv1.IngestBatch{
+		Id:      string(batchID),
+		Entries: entries,
+	}); err != nil {
 		return err
 	}
 
 	wb := db.NewWriteBatch()
 	defer wb.Cancel()
 
-	for _, k := range batch {
+	for _, k := range syncKeys {
 		if err := wb.Delete(k); err != nil {
 			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
 				wb = db.NewWriteBatch()
