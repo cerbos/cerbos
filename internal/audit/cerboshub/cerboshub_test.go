@@ -16,6 +16,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -120,7 +121,7 @@ func TestCerbosHubLog(t *testing.T) {
 
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
 	syncer := newMockSyncer(t)
-	db, err := cerboshub.NewLog(conf, decisionFilter, syncer)
+	db, err := cerboshub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"))
 	require.NoError(t, err)
 	defer db.Close()
 

@@ -13,10 +13,10 @@ audit:
   includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in the audit logs.
   cerboshub:
     ingest: 
-      flushTimeout: 5s 
-      maxBatchSize: 32 
-      minFlushInterval: 10s 
-      numGoRoutines: 8
+      flushTimeout: 5s # FlushTimeout defines the max allowable timeout for each Ingest request.
+      maxBatchSize: 32 # MaxBatchSize defines the max number of log entries to send in each Ingest request.
+      minFlushInterval: 10s # MinFlushInterval is the minimal duration between Ingest requests.
+      numGoRoutines: 8 # NumGoRoutines defines the max number of goroutines used when streaming log entries from the local DB.
   file:
     additionalPaths: [stdout] # AdditionalPaths to mirror the log output. Has performance implications. Use with caution.
     logRotation: # LogRotation settings (optional).

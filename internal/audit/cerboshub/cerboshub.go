@@ -32,15 +32,20 @@ var (
 )
 
 func init() {
-	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, _ audit.DecisionLogEntryFilter) (audit.Log, error) {
+	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read cerboshub audit log configuration: %w", err)
 		}
 
-		// syncer := NewIngestSyncer()
-		// return NewLog(conf, decisionFilter, syncer)
-		return nil, errors.New("backend not available")
+		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
+
+		syncer, err := NewIngestSyncer(conf, logger)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewLog(conf, decisionFilter, syncer, logger)
 	})
 }
 
@@ -48,13 +53,11 @@ type Log struct {
 	*local.Log
 }
 
-func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer) (*Log, error) {
+func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
 	localLog, err := local.NewLog(&conf.Conf, decisionFilter)
 	if err != nil {
 		return nil, err
 	}
-
-	logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 
 	minFlushInterval := conf.Ingest.MinFlushInterval
 	maxBatchSize := int(conf.Ingest.MaxBatchSize)

@@ -10,6 +10,8 @@ import (
 
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
+	"github.com/cerbos/cerbos/internal/hub"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -30,15 +32,23 @@ var (
 )
 
 type Conf struct {
-	local.Conf
-	Ingest IngestConf `yaml:"ingest"`
+	local.Conf `yaml:"local"`
+	Ingest     IngestConf `yaml:"ingest"`
 }
 
 type IngestConf struct {
-	MaxBatchSize     uint          `yaml:"maxBatchSize" conf:",example=32"`
+	// Credentials holds bundle source credentials.
+	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
+	// Connection defines settings for the remote server connection.
+	Connection *hub.ConnectionConf `yaml:"connection" conf:",ignore"`
+	// MaxBatchSize defines the max number of log entries to send in each Ingest request.
+	MaxBatchSize uint `yaml:"maxBatchSize" conf:",example=32"`
+	// MinFlushInterval is the minimal duration between Ingest requests.
 	MinFlushInterval time.Duration `yaml:"minFlushInterval" conf:",example=10s"`
-	FlushTimeout     time.Duration `yaml:"flushTimeout" conf:",example=5s"`
-	NumGoRoutines    uint          `yaml:"numGoRoutines" conf:",example=8"`
+	// FlushTimeout defines the max allowable timeout for each Ingest request.
+	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=5s"`
+	// NumGoRoutines defines the max number of goroutines used when streaming log entries from the local DB.
+	NumGoRoutines uint `yaml:"numGoRoutines" conf:",example=8"`
 }
 
 func (c *Conf) Key() string {
@@ -54,30 +64,53 @@ func (c *Conf) SetDefaults() {
 	c.Ingest.NumGoRoutines = defaultNumGoRoutines
 }
 
-func (c *Conf) Validate() error {
+func (c *Conf) Validate() (outErr error) {
 	if err := c.Conf.Validate(); err != nil {
 		return err
 	}
 
 	if c.Ingest.MaxBatchSize < 1 {
-		return errors.New("maxBatchSize must be at least 1")
+		outErr = multierr.Append(outErr, errors.New("maxBatchSize must be at least 1"))
 	}
 
 	if c.Ingest.MinFlushInterval < minMinFlushInterval {
-		return errInvalidFlushInterval
+		outErr = multierr.Append(outErr, errInvalidFlushInterval)
 	}
 
 	if c.Ingest.FlushTimeout > maxFlushTimeout {
-		return errInvalidFlushTimeout
+		outErr = multierr.Append(outErr, errInvalidFlushTimeout)
 	}
 
 	if c.Ingest.FlushTimeout > c.Ingest.MinFlushInterval {
-		return errors.New("flushTimeout cannot be longer than flushInterval")
+		outErr = multierr.Append(outErr, errors.New("flushTimeout cannot be longer than flushInterval"))
 	}
 
-	if c.Ingest.MinFlushInterval >= c.Advanced.FlushInterval {
-		return errors.New("ingest.minFlushInterval must be less than advanced.flushInterval")
+	if c.Ingest.MinFlushInterval >= c.Conf.Advanced.FlushInterval {
+		outErr = multierr.Append(outErr, errors.New("ingest.minFlushInterval must be less than advanced.flushInterval"))
 	}
 
-	return nil
+	if err := c.loadHubConf(); err != nil {
+		outErr = multierr.Append(outErr, err)
+	}
+
+	return outErr
+}
+
+func (c *Conf) loadHubConf() (outErr error) {
+	hubConf, err := hub.GetConf()
+	if err != nil {
+		outErr = multierr.Append(outErr, fmt.Errorf("failed to read Cerbos Hub configuration: %w", err))
+	}
+
+	c.Ingest.Connection = &hubConf.Connection
+	if err := c.Ingest.Connection.Validate(); err != nil {
+		outErr = multierr.Append(outErr, err)
+	}
+
+	c.Ingest.Credentials = &hubConf.Credentials
+	if err := c.Ingest.Credentials.Validate(); err != nil {
+		outErr = multierr.Append(outErr, err)
+	}
+
+	return outErr
 }

@@ -5,7 +5,16 @@ package cerboshub
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
 	"time"
+
+	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cloud-api/base"
+	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
+	"github.com/cerbos/cloud-api/logcap"
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
 )
 
 type ErrIngestBackoff struct {
@@ -18,16 +27,58 @@ func (e ErrIngestBackoff) Error() string {
 }
 
 type IngestSyncer interface {
-	Sync(context.Context, [][]byte) error
+	Sync(context.Context, *logsv1.IngestBatch) error
 }
 
-// Impl implements the IngestSyncer interface.
-type Impl struct{}
-
-func NewIngestSyncer() *Impl {
-	return &Impl{}
+type Impl struct {
+	client *logcap.Client
+	log    *zap.Logger
 }
 
-func (i *Impl) Sync(_ context.Context, _ [][]byte) error {
+func NewIngestSyncer(conf *Conf, logger *zap.Logger) (*Impl, error) {
+	pdpID := util.PDPIdentifier(conf.Ingest.Credentials.PDPID)
+
+	logger = logger.Named("ingest").With(zap.String("instance", pdpID.Instance))
+
+	creds, err := conf.Ingest.Credentials.ToCredentials()
+	if err != nil {
+		return nil, errors.New("failed to generate credentials from config")
+	}
+
+	clientConf := logcap.ClientConf{
+		ClientConf: base.ClientConf{
+			Logger:        zapr.NewLogger(logger),
+			PDPIdentifier: pdpID,
+			TLS: &tls.Config{
+				MinVersion: tls.VersionTLS13,
+				ServerName: conf.Ingest.Connection.TLS.Authority,
+			},
+			Credentials:       creds,
+			APIEndpoint:       conf.Ingest.Connection.APIEndpoint,
+			BootstrapEndpoint: conf.Ingest.Connection.BootstrapEndpoint,
+			RetryWaitMin:      conf.Ingest.Connection.MinRetryWait,
+			RetryWaitMax:      conf.Ingest.Connection.MaxRetryWait,
+			RetryMaxAttempts:  int(conf.Ingest.Connection.NumRetries),
+			HeartbeatInterval: conf.Ingest.Connection.HeartbeatInterval,
+		},
+	}
+
+	client, err := logcap.NewClient(clientConf)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Impl{
+		client: client,
+		log:    logger,
+	}, nil
+}
+
+func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
+	if err := i.client.Ingest(ctx, batch); err != nil {
+		i.log.Error("Failed to sync batch", zap.Error(err))
+		return err
+	}
+
 	return nil
 }
