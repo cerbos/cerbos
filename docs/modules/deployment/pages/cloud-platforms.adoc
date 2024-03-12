@@ -63,9 +63,14 @@ primary_region = '<REGION>' <2>
 The example above launches a Cerbos instance with the
 xref:configuration:index.adoc#minimal-configuration[minimal configuration] using an empty
 link:https://fly.io/docs/reference/volumes/[Fly volume] mounted as the policy directory. For production use cases, we
-recommend using either xref:configuration:storage.adoc#blob-driver[blob],
-xref:configuration:storage.adoc#git-driver[git] or xref:configuration:storage.adoc[one of the database drivers] as the
-Cerbos  policy storage backend. Cerbos can be xref:configuration:index.adoc[configured entirely from the command line]
+recommend using either the xref:configuration:storage.adoc#blob-driver[blob driver] with
+link:https://fly.io/docs/reference/tigris/#create-and-manage-a-tigris-storage-bucket[Tigris],
+xref:configuration:storage.adoc#git-driver[git driver] with a Git provider,
+xref:configuration:storage.adoc#sqlite3[sqlite3 driver] locally or with
+link:https://fly.io/docs/litefs/#litefs-cloud[LiteFS],
+xref:configuration:storage.adoc#postgres[postgres driver] with
+link:https://fly.io/docs/postgres/[Fly Postgres] or link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub bundles]
+as the policy storage backend. Cerbos can be xref:configuration:index.adoc[configured entirely from the command line]
 using the `--set` flags. On the Fly.io platform, they can be set by overriding the `cmd` setting in the
 link:https://fly.io/docs/reference/configuration/#the-experimental-section[experimental section] of the `fly.toml` file.
 
@@ -186,7 +191,7 @@ NOTE: Refer to link:https://fly.io/docs/litefs/getting-started-docker/#configuri
 [source,bash]
 ----
 flyctl secrets set CERBOS_ADMIN_USER=cerbos <1>
-flyctl secrets set CERBOS_ADMIN_PASSWORD=cerbosAdmin <2>
+flyctl secrets set CERBOS_ADMIN_PASSWORD=$(echo "cerbosAdmin" | htpasswd -niBC 10 cerbos | cut -d ':' -f 2 | base64 -w0) <2>
 ----
 <1> Specify username for Admin API
 <2> Specify password for Admin API
@@ -261,10 +266,62 @@ primary_region = '<REGION>' <2>
 <2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
 <3> Destination must be equal to the one specified in the `litefs.yaml`
 
-.Add a Consul URL to manage LiteFS leases.
+.Attach to Consul to manage LiteFS leases.
 [source,bash]
 ----
 flyctl consul attach
 ----
 
-NOTE: See link:https://fly.io/docs/litefs/getting-started-fly/#lease-configuration[lease configuration] for more details.
+NOTE: See link:https://fly.io/docs/litefs/getting-started-fly/#lease-configuration[lease configuration] for more
+information about Consul leases on Fly.io.
+
+After launching Cerbos with LiteFS, it is possible to add, disable, list or update policies by using
+link:https://docs.cerbos.dev/cerbos/latest/cli/cerbosctl.html#put[`cerbosctl`].
+
+.List policies with cerbosctl
+[source,bash,linenums]
+----
+cerbosctl \
+  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
+  --username="cerbos" \
+  --password="cerbosAdmin" \
+  get derived_roles
+
+cerbosctl \
+  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
+  --username="cerbos" \
+  --password="cerbosAdmin" \
+  get export_variables
+
+cerbosctl \
+  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
+  --username="cerbos" \
+  --password="cerbosAdmin" \
+  get principal_policies
+
+cerbosctl \
+  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
+  --username="cerbos" \
+  --password="cerbosAdmin" \
+  get resource_policies
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
+
+.Put a policy or a directory consisting of multiple policies with cerbosctl
+[source,bash,linenums]
+----
+cerbosctl \
+  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
+  --username="cerbos" \
+  --password="cerbosAdmin" \
+  put policies \
+  policies/leave_request.yaml
+
+cerbosctl \
+  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
+  --username="cerbos" \
+  --password="cerbosAdmin" \
+  put policies \
+  policies
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
