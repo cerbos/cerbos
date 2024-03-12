@@ -74,6 +74,12 @@ engine:
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
   globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.
   lenientScopeSearch: false # LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
+hub:
+  credentials: # Credentials holds Cerbos Hub client credentials.
+    clientID: 92B0K05B6HOF # ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
+    clientSecret: ${CERBOS_HUB_CLIENT_SECRET} # ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
+    pdpID: crb-004 # PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
+    workspaceSecret: ${CERBOS_HUB_WORKSPACE_SECRET} # WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
 schema:
   cacheSize: 1024 # CacheSize defines the number of schemas to cache in memory.
   enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.
@@ -126,27 +132,12 @@ storage:
   bundle:
     # This section is required only if storage.driver is bundle.
     cacheSize: 1024 # CacheSize defines the number of policies to cache in memory.
-    credentials: # Credentials holds bundle source credentials.
-      clientID: 92B0K05B6HOF # ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
-      clientSecret: ${CERBOS_HUB_CLIENT_SECRET} # ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
-      pdpID: crb-004 # PDPID is the unique identifier for this Cerbos instance. Defaults to the value of the CERBOS_HUB_PDP_ID environment variable.
-      workspaceSecret: ${CERBOS_HUB_WORKSPACE_SECRET} # WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
     local: # Local holds configuration for local bundle source.
       bundlePath: /path/to/bundle.crbp # Required. BundlePath is the full path to the local bundle file.
       tempDir: ${TEMP} # TempDir is the directory to use for temporary files.
     remote: # Remote holds configuration for remote bundle source. Takes precedence over local if both are defined.
       bundleLabel: latest # Required. BundleLabel to fetch from the server.
       cacheDir: ${XDG_CACHE_DIR} # CacheDir is the directory to use for caching downloaded bundles.
-      connection: # Connection defines settings for the remote server connection.
-        apiEndpoint: https://api.cerbos.cloud # Required. APIEndpoint is the address of the API server.
-        bootstrapEndpoint: https://cdn.cerbos.cloud # Required. BootstrapEndpoint is the addresses of the server serving the bootstrap configuration.
-        heartbeatInterval: 2m # HeartbeatInterval is the interval for sending regular heartbeats.
-        maxRetryWait: 120s # MaxRetryWait is the maximum amount of time to wait between retries.
-        minRetryWait: 1s # MinRetryWait is the minimum amount of time to wait between retries.
-        numRetries: 5 # NumRetries is the number of times to retry before giving up.
-        tls: # TLS defines settings for TLS connections.
-          authority: domain.tld # Authority overrides the Cerbos PDP server authority if it is different from what is provided in the address.
-          caCert: /path/to/CA_certificate # CACert is the path to the CA certificate chain to use for certificate verification.
       disableAutoUpdate: <DEFAULT_VALUE_NOT_SET> # DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
       tempDir: ${TEMP} # TempDir is the directory to use for temporary files.
   disk:

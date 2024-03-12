@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -86,7 +87,7 @@ func TestServer(t *testing.T) {
 
 			conf := &bundle.Conf{
 				CacheSize:   1024,
-				Credentials: bundle.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))},
+				Credentials: &hub.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))},
 				Local: &bundle.LocalSourceConf{
 					BundlePath: filepath.Join(dir, "bundle.crbp"),
 					TempDir:    t.TempDir(),

@@ -12,6 +12,7 @@ import (
 
 	pdpv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/pdp/v1"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 var (
@@ -70,4 +71,8 @@ func PDPIdentifier(pdpID string) *pdpv1.Identifier {
 		Instance: pdpID,
 		Version:  AppShortVersion(),
 	}
+}
+
+func DeprecationWarning(deprecated, replacement string) {
+	zap.S().Warnf("[DEPRECATED CONFIG] %s is deprecated and will be removed in a future release. Please use %s instead.", deprecated, replacement)
 }

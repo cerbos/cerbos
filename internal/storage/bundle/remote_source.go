@@ -17,6 +17,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -61,10 +62,6 @@ type RemoteSource struct {
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
-	if err := conf.Remote.setDefaults(); err != nil {
-		return nil, err
-	}
-
 	credentials, err := conf.Credentials.ToCredentials()
 	if err != nil {
 		return nil, fmt.Errorf("invalid credentials: %w", err)
@@ -156,7 +153,7 @@ func (s *RemoteSource) InitWithClient(ctx context.Context, client CloudAPIClient
 }
 
 func shouldWorkOffline() bool {
-	v := getEnv(offlineKey)
+	v := hub.GetEnv(hub.OfflineKey)
 	offline, err := strconv.ParseBool(v)
 	if err != nil {
 		return false

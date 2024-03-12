@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/test"
@@ -308,9 +309,9 @@ func TestRemoteSource(t *testing.T) {
 func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 	t.Helper()
 
-	return &bundle.Conf{
+	conf := &bundle.Conf{
 		CacheSize: 1024,
-		Credentials: bundle.CredentialsConf{
+		Credentials: &hub.CredentialsConf{
 			ClientID:        "client-id",
 			ClientSecret:    "client-secret",
 			WorkspaceSecret: loadKey(t),
@@ -321,6 +322,9 @@ func mkConf(t *testing.T, disableAutoUpdate bool) *bundle.Conf {
 			DisableAutoUpdate: disableAutoUpdate,
 		},
 	}
+
+	require.NoError(t, conf.Validate())
+	return conf
 }
 
 func waitForCallsDone(t *testing.T, callsDone <-chan struct{}) {
