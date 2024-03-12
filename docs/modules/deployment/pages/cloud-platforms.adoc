@@ -1,0 +1,334 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Deploy Cerbos to Cloud platforms
+
+include::ROOT:partial$version-check.adoc[]
+
+== Fly.io
+
+You can deploy Cerbos on Fly.io as a link:https://fly.io/docs/apps[Fly Launch] app. The following `fly.toml` file shows
+how to deploy Cerbos with healthchecks and metrics:
+
+[source,toml,linenums,subs="attributes+"]
+----
+app = '<APPLICATION_NAME>' <1>
+primary_region = '<REGION>' <2>
+
+[build]
+  image = 'ghcr.io/cerbos/cerbos:{app-version}'
+
+[[mounts]]
+  source = 'policies'
+  destination = '/policies'
+  initial_size = '1GB'
+
+[[services]]
+  protocol = ''
+  internal_port = 3592
+
+[[services.ports]]
+    port = 3592
+    handlers = ['tls', 'http']
+
+[[services.http_checks]]
+    interval = '5s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'get'
+    path = '/_cerbos/health'
+    protocol = 'http'
+
+[[services]]
+  protocol = ''
+  internal_port = 3593
+
+[[services.ports]]
+    port = 3593
+    handlers = ['tls']
+
+    [services.ports.tls_options]
+      alpn = ['h2']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[metrics]
+  port = 3592
+  path = "/_cerbos/metrics"
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
+<2> Pick a Fly.io link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+
+The example above launches a Cerbos instance with the xref:configuration:index.adoc#minimal-configuration[minimal configuration] using an empty link:https://fly.io/docs/reference/volumes/[Fly volume] mounted as the policy directory. For production use cases, consider using one of the following methods for policy storage.
+
+- Cerbos xref:configuration:storage.adoc#git-driver[`git` driver] with a Git provider such as GitHub or GitLab
+- Cerbos xref:configuration:storage.adoc#blob-driver[`blob` driver] with link:https://fly.io/docs/reference/tigris/#create-and-manage-a-tigris-storage-bucket[Tigris]
+- Cerbos xref:configuration:storage.adoc#sqlite3[`sqlite3` driver] with a standalone SQLite database or link:https://fly.io/docs/litefs/#litefs-cloud[LiteFS]
+- Cerbos xref:configuration:storage.adoc#postgres[`postgres` driver] with link:https://fly.io/docs/postgres/[Fly Postgres]
+- link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub]
+
+
+TIP: Cerbos can be xref:configuration:index.adoc[configured entirely from the command line] using `--set` flags. On the Fly.io platform, they can be set by overriding the `cmd` setting in the link:https://fly.io/docs/reference/configuration/#the-experimental-section[`experimental` section] of the `fly.toml` file.
+
+=== Using Tigris as a policy repository
+
+Cerbos `blob` driver can be used with any S3-compatible blob storage backend such as link:https://fly.io/docs/reference/tigris[Tigris].
+
+
+Create a storage bucket on Tigris. Refer to https://fly.io/docs/reference/tigris/#create-and-manage-a-tigris-storage-bucket for more information about creating storage buckets.
+
+[source,bash,linenums]
+----
+flyctl storage create
+----
+
+Note down the credentials for accessing the bucket and save them as application secrets.
+
+[source,bash,linenums]
+----
+flyctl apps create <APPLICATION_NAME> <1>
+flyctl secrets set --app=<APPLICATION_NAME> AWS_ACCESS_KEY_ID=tid_XXXXXX <2>
+flyctl secrets set --app=<APPLICATION_NAME> AWS_SECRET_ACCESS_KEY=tsec_XXXXXX <3>
+----
+<1> Your application name on Fly.io
+<2> Tigris key ID
+<3> Tigris secret access key
+
+
+Create a `fly.toml` file.
+
+[source,toml,linenums,subs="attributes+"]
+----
+app = '<APPLICATION_NAME>' <1>
+primary_region = '<REGION>' <2>
+
+[build]
+  image = 'ghcr.io/cerbos/cerbos:{app-version}'
+
+[experimental]
+  cmd = [
+    'server',
+    '--set', 'storage.driver=blob',
+    '--set', 'storage.blob.bucket=s3://<BUCKET_NAME>?endpoint=fly.storage.tigris.dev&region=auto', <3>
+    '--set', 'storage.blob.downloadTimeout=30s',
+    '--set', 'storage.blob.prefix=policies',
+    '--set', 'storage.blob.updatePollInterval=15s',
+    '--set', 'storage.blob.workDir=/policies'
+  ]
+
+[[mounts]]
+  source = 'policies'
+  destination = '/policies'
+  initial_size = '1GB'
+
+[[services]]
+  protocol = ''
+  internal_port = 3592
+  auto_stop_machines = true
+
+[[services.ports]]
+    port = 3592
+    handlers = ['tls', 'http']
+
+[[services.http_checks]]
+    interval = '5s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'get'
+    path = '/_cerbos/health'
+    protocol = 'http'
+
+[[services]]
+  protocol = ''
+  internal_port = 3593
+  auto_stop_machines = true
+
+[[services.ports]]
+    port = 3593
+    handlers = ['tls']
+
+    [services.ports.tls_options]
+      alpn = ['h2']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[metrics]
+  port = 3592
+  path = "/_cerbos/metrics"
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
+<2> Pick a Fly.io link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+<3> Storage bucket name
+
+Deploy the app.
+
+[source,bash,linenums]
+----
+flyctl deploy
+----
+
+=== Using LiteFS as a policy repository
+
+Fly.io's distributed SQLite storage layer link:https://fly.io/docs/litefs[LiteFS] can be used for policy storage using
+Cerbos' `sqlite3` driver.
+
+Start by creating an app on Fly.io.
+
+[source,bash,linenums]
+----
+flyctl apps create <APPLICATION_NAME>
+----
+
+Create a LiteFS configuration file named `litefs.yml`.
+
+[source,yaml,linenums]
+----
+data:
+  dir: "/var/lib/litefs"
+
+exec:
+  - cmd: "/cerbos server --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=file:/litefs/db --set=server.adminAPI.enabled=true --set=server.adminAPI.adminCredentials.username=$CERBOS_ADMIN_USER --set=server.adminAPI.adminCredentials.passwordHash=$CERBOS_ADMIN_PASSWORD_HASH"
+
+exit-on-error: false
+
+fuse:
+  dir: "/litefs"
+
+lease:
+  advertise-url: "http://${FLY_ALLOC_ID}.vm.${FLY_APP_NAME}.internal:20202"
+  candidate: ${FLY_REGION == PRIMARY_REGION}
+  consul:
+    url: "${FLY_CONSUL_URL}"
+    key: "${FLY_APP_NAME}/primary"
+  promote: true
+  type: "consul"
+----
+
+TIP: Refer to link:https://fly.io/docs/litefs/getting-started-docker/#configuring-litefs[Configuring LiteFS] documentation for other available configuration parameters.
+
+
+Create a Dockerfile.
+
+[source,Dockerfile,subs="attributes+"]
+----
+FROM flyio/litefs:0.5 AS litefs
+
+FROM ghcr.io/cerbos/cerbos:{app-version} AS cerbos
+
+FROM alpine:3.16 AS base
+RUN apk add fuse3 sqlite
+ADD litefs.yml /etc/litefs.yml
+COPY --from=cerbos /cerbos /cerbos
+COPY --from=litefs /usr/local/bin/litefs /usr/local/bin/litefs
+
+ENTRYPOINT ["litefs"]
+CMD ["mount"]
+----
+
+Create a `fly.toml` file to launch Cerbos.
+
+[source,toml,linenums,subs="attributes+"]
+----
+app = '<APPLICATION_NAME>' <1>
+primary_region = '<REGION>' <2>
+
+[build]
+  dockerfile = "Dockerfile"
+
+[mounts]
+  source = "litefs"
+  destination = "/var/lib/litefs" <3>
+
+[[services]]
+  protocol = ''
+  internal_port = 3592
+
+[[services.ports]]
+    port = 3592
+    handlers = ['tls', 'http']
+
+[[services.http_checks]]
+    interval = '5s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'get'
+    path = '/_cerbos/health'
+    protocol = 'http'
+
+[[services]]
+  protocol = ''
+  internal_port = 3593
+
+[[services.ports]]
+    port = 3593
+    handlers = ['tls']
+
+    [services.ports.tls_options]
+      alpn = ['h2']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[metrics]
+  port = 3592
+  path = "/_cerbos/metrics"
+----
+<1> The name of the link:https://fly.io/docs/apps[Fly App]
+<2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+<3> Destination must be equal to the one specified in the `litefs.yaml`
+
+
+Create secrets to hold Cerbos Admin API credentials. Refer to xref:configuration:server.adoc#password-hash[password hash generation instructions] to learn how to generate the password hash.
+
+[source,bash]
+----
+flyctl secrets set CERBOS_ADMIN_USER=<ADMIN_USER_NAME>
+flyctl secrets set CERBOS_ADMIN_PASSWORD_HASH=<ADMIN_PASSWORD_HASH>
+----
+
+Attach to Consul to manage LiteFS leases.
+
+[source,bash]
+----
+flyctl consul attach
+----
+
+TIP: See link:https://fly.io/docs/litefs/getting-started-fly/#lease-configuration[lease configuration] for more information about Consul leases on Fly.io.
+
+Finally, deploy Cerbos.
+
+[source,bash]
+----
+flyctl deploy
+----
+
+You can interact with the Cerbos xref:api:admin_api.adoc[Admin API] using one of the Cerbos SDKs or the xref:cli:cerbosctl.adoc[`cerbosctl`] utility to manage the policies stored on LiteFS.
+
+.List policies with cerbosctl
+[source,bash,linenums]
+----
+cerbosctl \
+  --server=<APPLICATION_NAME>.fly.dev:3593 \
+  --username=<ADMIN_USER_NAME> \
+  --password=<ADMIN_PASSWORD> \
+  get rp
+
+----
+
+.Put a policy or a directory consisting of multiple policies with cerbosctl
+[source,bash,linenums]
+----
+cerbosctl \
+  --server=<APPLICATION_NAME>.fly.dev:3593 \
+  --username=<ADMIN_USER_NAME> \
+  --password=<ADMIN_PASSWORD> \
+  put policies -R \
+  policy_dir
+----

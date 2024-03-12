@@ -1,5 +1,6 @@
 .xref:index.adoc[Deployment patterns]
+- xref:cloud-platforms.adoc[Cloud platforms]
 - xref:k8s-service.adoc[Kubernetes service]
 - xref:k8s-sidecar.adoc[Kubernetes sidecar]
-- xref:systemd.adoc[Systemd service]
 - xref:serverless-faas.adoc[Serverless/FaaS environments]
+- xref:systemd.adoc[Systemd service]
