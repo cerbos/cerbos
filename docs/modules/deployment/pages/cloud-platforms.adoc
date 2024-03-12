@@ -275,8 +275,7 @@ flyctl consul attach
 NOTE: See link:https://fly.io/docs/litefs/getting-started-fly/#lease-configuration[lease configuration] for more
 information about Consul leases on Fly.io.
 
-After launching Cerbos with LiteFS, it is possible to add, disable, list or update policies by using
-link:https://docs.cerbos.dev/cerbos/latest/cli/cerbosctl.html#put[`cerbosctl`].
+You can interact with the Cerbos xref:api:admin_api.adoc[Admin API] using one of the Cerbos SDKs or the xref:cli:cerbosctl.adoc[`cerbosctl`] utility to manage the policies stored on LiteFS.
 
 .List policies with cerbosctl
 [source,bash,linenums]
@@ -287,23 +286,6 @@ cerbosctl \
   --password="cerbosAdmin" \
   get derived_roles
 
-cerbosctl \
-  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
-  --username="cerbos" \
-  --password="cerbosAdmin" \
-  get export_variables
-
-cerbosctl \
-  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
-  --username="cerbos" \
-  --password="cerbosAdmin" \
-  get principal_policies
-
-cerbosctl \
-  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
-  --username="cerbos" \
-  --password="cerbosAdmin" \
-  get resource_policies
 ----
 <1> The name of the link:https://fly.io/docs/apps[Fly App]
 
@@ -314,14 +296,7 @@ cerbosctl \
   --server=https://<APPLICATION_NAME>.fly.dev \ <1>
   --username="cerbos" \
   --password="cerbosAdmin" \
-  put policies \
-  policies/leave_request.yaml
-
-cerbosctl \
-  --server=https://<APPLICATION_NAME>.fly.dev \ <1>
-  --username="cerbos" \
-  --password="cerbosAdmin" \
-  put policies \
-  policies
+  put policies -R \
+  policy_dir
 ----
 <1> The name of the link:https://fly.io/docs/apps[Fly App]
