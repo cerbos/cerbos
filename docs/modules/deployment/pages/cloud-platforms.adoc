@@ -166,7 +166,7 @@ data:
   dir: "/var/lib/litefs"
 
 exec:
-  - cmd: "/cerbos server --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=file:/litefs/db --set=server.adminAPI.enabled=true --set=server.adminAPI.adminCredentials.username=$CERBOS_ADMIN_USER --set=server.adminAPI.adminCredentials.password=$CERBOS_ADMIN_PASSWORD" <1>
+  - cmd: "/cerbos server --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=file:/litefs/db --set=server.adminAPI.enabled=true --set=server.adminAPI.adminCredentials.username=$CERBOS_ADMIN_USER --set=server.adminAPI.adminCredentials.passwordHash=$CERBOS_ADMIN_PASSWORD" <1>
 
 exit-on-error: false
 
@@ -285,7 +285,6 @@ cerbosctl \
   --username="cerbos" \
   --password="cerbosAdmin" \
   get derived_roles
-
 ----
 <1> The name of the link:https://fly.io/docs/apps[Fly App]
 
