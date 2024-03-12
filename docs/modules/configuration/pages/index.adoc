@@ -16,6 +16,7 @@ The Cerbos server is configured with a YAML file, conventionally named `.cerbos.
 NOTE: Config values can reference environment variables by enclosing them between `${}`, for example `$$${HOME}$$`. Defaults can be set using `$$${VAR:default}$$`.
 
 
+[id="minimal-configuration"]
 == Minimal Configuration
 At a minimum, Cerbos requires a storage driver to be configured. If no explicit configuration is provided using the `--config` flag, Cerbos defaults to a `disk` driver configured to  look for policies in a directory named `policies` in the current working directory.
 
@@ -42,6 +43,7 @@ storage:
 ----
 
 
+[id="full-configuration"]
 == Full Configuration
 Cerbos has many configuration options that are either optional or has reasonable defaults built-in. The following section describes all user-configurable options and their defaults.
 
