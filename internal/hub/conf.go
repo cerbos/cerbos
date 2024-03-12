@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cloud-api/credentials"
 )
 
@@ -37,9 +38,12 @@ func GetEnv(key EnvVarKey) string {
 		return ""
 	}
 
-	for _, v := range varNames {
+	for i, v := range varNames {
 		val, ok := os.LookupEnv(v)
 		if ok {
+			if i > 0 {
+				util.DeprecationWarning(v, varNames[0])
+			}
 			return val
 		}
 	}
@@ -102,11 +106,13 @@ type CredentialsConf struct {
 func (cc *CredentialsConf) Validate() (outErr error) {
 	// SecretKey was renamed to WorkspaceSecret in Cerbos 0.31.0
 	if cc.WorkspaceSecret == "" && cc.SecretKey != "" {
+		util.DeprecationWarning("credentials.secretKey", "credentials.workspaceSecret")
 		cc.WorkspaceSecret = cc.SecretKey
 	}
 
 	// InstanceID was renamed to PDPID in Cerbos 0.31.0
 	if cc.PDPID == "" && cc.InstanceID != "" {
+		util.DeprecationWarning("credentials.instanceID", "credentials.pdpID")
 		cc.PDPID = cc.InstanceID
 	}
 

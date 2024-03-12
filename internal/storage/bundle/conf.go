@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -94,7 +94,7 @@ func (conf *Conf) Validate() (outErr error) {
 
 func (conf *Conf) validateCredentials() error {
 	if conf.Credentials != nil {
-		zap.L().Warn("[DEPRECATED CONFIG] storage.bundle.credentials section is deprecated and will be removed in a future release. Please use hub.credentials instead.")
+		util.DeprecationWarning("storage.bundle.credentials section", "hub.credentials")
 		conf.Credentials.LoadFromEnv()
 		return conf.Credentials.Validate()
 	}
@@ -190,7 +190,7 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 	}
 
 	if rc.Connection != nil {
-		zap.L().Warn("[DEPRECATED CONFIG] storage.bundle.remote.connection section is deprecated and will be removed in a future release. Please use hub.connection instead.")
+		util.DeprecationWarning("storage.bundle.remote.connection section", "hub.connection")
 		return rc.Connection.Validate()
 	}
 
