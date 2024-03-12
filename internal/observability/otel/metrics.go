@@ -109,17 +109,17 @@ func dropHighCardinalityLabels() sdkmetric.View {
 	attributeFilter := func(attr attribute.KeyValue) bool {
 		attrStr := string(attr.Key)
 		switch {
-		case attrStr == "http.client_ip":
+		case attrStr == "client.address":
 			return false
-		case attrStr == "http.user_agent":
+		case attrStr == "user_agent.original":
 			return false
-		case attrStr == "http.flavor":
+		case attrStr == "network.protocol.version":
 			return false
-		case attrStr == "http.scheme":
+		case attrStr == "url.scheme":
 			return false
-		case strings.HasPrefix(attrStr, "net.peer."):
+		case strings.HasPrefix(attrStr, "server."):
 			return false
-		case strings.HasPrefix(attrStr, "net.sock.peer."):
+		case strings.HasPrefix(attrStr, "network.peer."):
 			return false
 		}
 		return true
