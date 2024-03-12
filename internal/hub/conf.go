@@ -62,7 +62,7 @@ type Conf struct {
 	// Credentials holds Cerbos Hub client credentials.
 	Credentials CredentialsConf `yaml:"credentials"`
 	// Connection holds advanced connection settings for Cerbos Hub.
-	Connection ConnectionConf `yaml:"connection"`
+	Connection ConnectionConf `yaml:"connection" conf:",ignore"`
 }
 
 func (conf *Conf) Key() string {
