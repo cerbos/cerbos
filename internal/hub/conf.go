@@ -194,7 +194,7 @@ func (cc *ConnectionConf) Validate() error {
 
 // TLSConf holds TLS configuration for the remote connection.
 type TLSConf struct {
-	// Authority overrides the Cerbos PDP server authority if it is different from what is provided in the address.
+	// Authority overrides the Cerbos Hub server authority if it is different from what is provided in the API and bootstrap endpoints.
 	Authority string `yaml:"authority" conf:",example=domain.tld"`
 	// CACert is the path to the CA certificate chain to use for certificate verification.
 	CACert string `yaml:"caCert" conf:",example=/path/to/CA_certificate"`
