@@ -58,7 +58,7 @@ primary_region = '<REGION>' <2>
   path = "/_cerbos/metrics"
 ----
 <1> The name of the link:https://fly.io/docs/apps[Fly App]
-<2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+<2> Pick a Fly.io link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
 
 The example above launches a Cerbos instance with the
 xref:configuration:index.adoc#minimal-configuration[minimal configuration] using an empty
@@ -76,9 +76,12 @@ link:https://fly.io/docs/reference/tigris[Tigris]. To set the credentials for ac
 `flyctl secrets` command.
 [source,bash]
 ----
-flyctl secrets set AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID>
-flyctl secrets set AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY>
+flyctl secrets set AWS_ACCESS_KEY_ID=tid_XXXXXX <1>
+flyctl secrets set AWS_SECRET_ACCESS_KEY=tsec_XXXXXX <2>
 ----
+<1> Tigris key ID
+<2> Tigris secret access key
+
 
 [source,toml,linenums,subs="attributes+"]
 ----
@@ -143,26 +146,22 @@ primary_region = '<REGION>' <2>
   path = "/_cerbos/metrics"
 ----
 <1> The name of the link:https://fly.io/docs/apps[Fly App]
-<2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
+<2> Pick a Fly.io link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
 <3> Bucket name
 
 === Using LiteFS as a policy repository
 
-Cerbos `sqlite3` driver can be used with storage backend such as link:https://fly.io/docs/litefs[LiteFS]. There are some
-steps to take to use LiteFS with Cerbos.
+Fly.io's distributed SQLite storage layer link:https://fly.io/docs/litefs[LiteFS] can be used for policy storage using
+Cerbos' `sqlite3` driver.
 
-==== LiteFS configuration
-
-Create a LiteFS configuration file (`litefs.yml`).
-
-.litefs.yml
+.Create a LiteFS configuration file (`litefs.yml`)
 [source,yaml,linenums]
 ----
 data:
   dir: "/var/lib/litefs"
 
 exec:
-  - cmd: "/cerbos server --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=file:/litefs/db" <1>
+  - cmd: "/cerbos server --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=file:/litefs/db --set=server.adminAPI.enabled=true --set=server.adminAPI.adminCredentials.username=$CERBOS_ADMIN_USER --set=server.adminAPI.adminCredentials.password=$CERBOS_ADMIN_PASSWORD" <1>
 
 exit-on-error: false
 
@@ -181,14 +180,18 @@ lease:
 <1> LiteFS requires us to set the command in the LiteFS configuration instead of using the Dockerfile. When LiteFS is
 run it runs the command specified and waits until it exits.
 
-NOTE: link:https://fly.io/docs/litefs/getting-started-docker/#configuring-litefs[Configuring LiteFS] page shows
-additional parameters for configuration.
+NOTE: Refer to link:https://fly.io/docs/litefs/getting-started-docker/#configuring-litefs[Configuring LiteFS] documentation for other available configuration parameters.
 
-=== Dockerfile
+.Create secrets for Admin API credentials
+[source,bash]
+----
+flyctl secrets set CERBOS_ADMIN_USER=cerbos <1>
+flyctl secrets set CERBOS_ADMIN_PASSWORD=cerbosAdmin <2>
+----
+<1> Specify username for Admin API
+<2> Specify password for Admin API
 
-Create a Dockerfile (`Dockerfile`)
-
-.Dockerfile
+.Create a Dockerfile
 [source,Dockerfile,subs="attributes+"]
 ----
 FROM flyio/litefs:0.5 AS litefs
@@ -205,7 +208,7 @@ ENTRYPOINT ["litefs"]
 CMD ["mount"]
 ----
 
-=== Create a `fly.toml` to launch Cerbos
+.Create a `fly.toml` to launch Cerbos
 [source,toml,linenums,subs="attributes+"]
 ----
 app = '<APPLICATION_NAME>' <1>
@@ -258,14 +261,10 @@ primary_region = '<REGION>' <2>
 <2> Pick a link:https://fly.io/docs/reference/regions/#fly-io-regions[region]
 <3> Destination must be equal to the one specified in the `litefs.yaml`
 
-=== Lease configuration
-
-Add a Consul URL by running the following command.
-
+.Add a Consul URL to manage LiteFS leases.
 [source,bash]
 ----
 flyctl consul attach
 ----
 
-NOTE: See more details in link:https://fly.io/docs/litefs/getting-started-fly/#lease-configuration[lease configuration]
-section.
+NOTE: See link:https://fly.io/docs/litefs/getting-started-fly/#lease-configuration[lease configuration] for more details.
