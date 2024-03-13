@@ -180,7 +180,10 @@ func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlus
 	// (and therefore burdening the backend).
 	muTimer.set(minFlushInterval)
 
-	errCh <- err
+	select {
+	case errCh <- err:
+	default:
+	}
 }
 
 func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration) error {

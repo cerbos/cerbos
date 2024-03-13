@@ -45,22 +45,19 @@ func init() {
 	})
 }
 
-type triggerSignal struct {
-	responseCh chan error
-}
-
 // Log implements the decisionlog interface with Badger as the backing store.
 type Log struct {
-	logger         *zap.Logger
-	Db             *badgerv4.DB
-	buffer         chan *badgerv4.Entry
-	stopChan       chan struct{}
-	trigger        chan triggerSignal
-	callbackFn     func(chan error)
-	decisionFilter audit.DecisionLogEntryFilter
-	wg             sync.WaitGroup
-	ttl            time.Duration
-	stopOnce       sync.Once
+	logger                   *zap.Logger
+	Db                       *badgerv4.DB
+	buffer                   chan *badgerv4.Entry
+	stopChan                 chan struct{}
+	callbackFn               func(chan error)
+	decisionFilter           audit.DecisionLogEntryFilter
+	wg                       sync.WaitGroup
+	ttl                      time.Duration
+	stopOnce                 sync.Once
+	bufferSize, maxBatchSize int
+	flushInterval            time.Duration
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -82,32 +79,16 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	maxBatchSize := int(conf.Advanced.MaxBatchSize)
 	ttl := conf.RetentionPeriod
 
-	triggerCh := make(chan triggerSignal, 1)
-	stopCh := make(chan struct{})
-	ticker := time.NewTicker(flushInterval)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				select {
-				case triggerCh <- triggerSignal{}:
-				default:
-				}
-			case <-stopCh:
-				return
-			}
-		}
-	}()
-
 	l := &Log{
 		logger:         logger,
 		Db:             db,
 		buffer:         make(chan *badgerv4.Entry, bufferSize),
-		stopChan:       stopCh,
+		stopChan:       make(chan struct{}),
 		ttl:            ttl,
 		decisionFilter: decisionFilter,
-		trigger:        triggerCh,
+		bufferSize:     bufferSize,
+		maxBatchSize:   maxBatchSize,
+		flushInterval:  flushInterval,
 	}
 
 	l.wg.Add(1)
@@ -129,23 +110,40 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 	batch := newBatcher(l.Db, maxBatchSize)
 	logger := l.logger.With(zap.String("component", "batcher"))
 
+	ticker := time.NewTicker(flushInterval)
+	defer ticker.Stop()
+
+	awaitCallbackFn := func() {
+		if l.callbackFn != nil {
+			ch := make(chan error, 1)
+			go l.callbackFn(ch)
+			<-ch
+		}
+	}
+
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
 		case <-l.stopChan:
 			batch.flush()
+			awaitCallbackFn()
 			l.wg.Done()
 			return
-		case entry := <-l.buffer:
+		case entry, ok := <-l.buffer:
+			if !ok {
+				batch.flush()
+				awaitCallbackFn()
+				l.wg.Done()
+				return
+			}
+
 			if err := batch.add(entry); err != nil {
 				logger.Warn("Failed to add entry to batch", zap.Error(err))
 				continue
 			}
-		case sig := <-l.trigger:
+		case <-ticker.C:
 			batch.flush()
 			if l.callbackFn != nil {
-				go func() {
-					l.callbackFn(sig.responseCh)
-				}()
+				go l.callbackFn(make(chan error, 1))
 			}
 		}
 	}
@@ -188,16 +186,15 @@ func (l *Log) Enabled() bool {
 	return true
 }
 
-// ForceWrite forces a write operation and blocks until completion.
+// ForceWrite forces a write operation and blocks until completion. It is used only by tests.
 func (l *Log) ForceWrite() {
-	sig := triggerSignal{}
-	if l.callbackFn != nil {
-		sig.responseCh = make(chan error, 1)
-		defer func() {
-			<-sig.responseCh
-		}()
-	}
-	l.trigger <- sig
+	close(l.buffer)
+	l.wg.Wait()
+
+	// Restart the batching goroutine
+	l.buffer = make(chan *badgerv4.Entry, l.bufferSize)
+	l.wg.Add(1)
+	go l.batchWriter(l.maxBatchSize, l.flushInterval)
 }
 
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
