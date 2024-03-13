@@ -195,7 +195,6 @@ func TestCerbosHubLog(t *testing.T) {
 	})
 
 	t.Run("deletesSyncKeysAfterBackoff", func(t *testing.T) {
-		t.Skip("TODO: We need to block until retry goroutine is complete")
 		t.Cleanup(purgeKeys)
 
 		loadedKeys := loadData(t, db, startDate)
@@ -203,11 +202,11 @@ func TestCerbosHubLog(t *testing.T) {
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with backoff after first N pages
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(cerboshub.ErrIngestBackoff{
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(cerboshub.ErrIngestBackoff{
 			Backoff: 0,
-		}).Once()
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches - initialNBatches)
+		}).Twice() // two concurrent streams receive the same backoff response
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches - initialNBatches)
 
 		db.ForceWrite()
 
