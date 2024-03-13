@@ -213,6 +213,8 @@ func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, max
 		stream.Prefix = AccessSyncPrefix
 	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
 		stream.Prefix = DecisionSyncPrefix
+	case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
+		return errors.New("unspecified IngestBatch_EntryKind")
 	}
 
 	stream.Send = func(buf *z.Buffer) error {
@@ -294,6 +296,8 @@ func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, k
 						},
 						Timestamp: decisionLog.Timestamp,
 					}
+				case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
+					return errors.New("unspecified IngestBatch_EntryKind")
 				}
 
 				return nil

@@ -43,6 +43,8 @@ type mockSyncer struct {
 }
 
 func newMockSyncer(t *testing.T) *mockSyncer {
+	t.Helper()
+
 	return &mockSyncer{
 		IngestSyncer: mocks.NewIngestSyncer(t),
 		synced:       make(map[string]struct{}),
@@ -62,6 +64,8 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 			key = keyFromCallID(m.t, e.GetAccessLogEntry().CallId, cerboshub.AccessSyncPrefix)
 		case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
 			key = keyFromCallID(m.t, e.GetDecisionLogEntry().CallId, cerboshub.DecisionSyncPrefix)
+		case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
+			return errors.New("unspecified IngestBatch_EntryKind")
 		}
 
 		m.synced[string(key)] = struct{}{}
@@ -97,6 +101,12 @@ func TestCerbosHubLog(t *testing.T) {
 	}
 
 	conf := &cerboshub.Conf{
+		cerboshub.IngestConf{
+			MaxBatchSize:     batchSize,
+			MinFlushInterval: 2 * time.Second,
+			FlushTimeout:     1 * time.Second,
+			NumGoRoutines:    8,
+		},
 		local.Conf{
 			StoragePath:     t.TempDir(),
 			RetentionPeriod: 24 * time.Hour,
@@ -105,12 +115,6 @@ func TestCerbosHubLog(t *testing.T) {
 				MaxBatchSize:  32,
 				FlushInterval: 10 * time.Second,
 			},
-		},
-		cerboshub.IngestConf{
-			MaxBatchSize:     batchSize,
-			MinFlushInterval: 2 * time.Second,
-			FlushTimeout:     1 * time.Second,
-			NumGoRoutines:    8,
 		},
 	}
 
