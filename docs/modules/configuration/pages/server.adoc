@@ -129,6 +129,7 @@ server:
       passwordHash: JDJ5JDEwJE5HYnk4cTY3VTE1bFV1NlR2bmp3ME9QOXdXQXFROGtBb2lWREdEY2xXbzR6WnoxYWtSNWNDCgo=
 ----
 
+[#password-hash]
 === Generating a password hash
 
 Cerbos expects the password to be hashed with bcrypt and encoded with base64. This can be achieved using the `htpasswd` and `base64` utilities available on most operating systems.
