@@ -66,7 +66,7 @@ func (c *Conf) SetDefaults() {
 
 func (c *Conf) Validate() (outErr error) {
 	if err := c.Conf.Validate(); err != nil {
-		return err
+		outErr = multierr.Append(outErr, err)
 	}
 
 	if c.Ingest.MaxBatchSize < 1 {
