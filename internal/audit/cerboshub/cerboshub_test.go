@@ -11,6 +11,7 @@ import (
 	"errors"
 	"math"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -40,6 +41,7 @@ type mockSyncer struct {
 	*mocks.IngestSyncer
 	synced map[string]struct{}
 	t      *testing.T
+	mu     sync.RWMutex
 }
 
 func newMockSyncer(t *testing.T) *mockSyncer {
@@ -56,6 +58,9 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 	if err := m.IngestSyncer.Sync(ctx, batch); err != nil {
 		return err
 	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	for _, e := range batch.Entries {
 		var key []byte
@@ -85,6 +90,9 @@ func keyFromCallID(t *testing.T, callID string, prefix []byte) []byte {
 
 func (m *mockSyncer) hasKeys(keys [][]byte) bool {
 	m.t.Helper()
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
 	for _, k := range keys {
 		if _, ok := m.synced[string(k)]; !ok {
