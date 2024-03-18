@@ -191,21 +191,20 @@ func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlus
 func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration) error {
 	// We use two streams: one for access logs, and one for decision logs, as this allows us to
 	// avoid the penalty of per-key string inspection when inferring the type down the line.
-	ctx, cancelFn := context.WithTimeout(context.Background(), flushTimeout)
-	defer cancelFn()
+	ctx := context.Background()
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 	p.Go(func(ctx context.Context) error {
-		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG)
+		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG)
 	})
 	p.Go(func(ctx context.Context) error {
-		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG)
+		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG)
 	})
 
 	return p.Wait()
 }
 
-func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, kind logsv1.IngestBatch_EntryKind) error {
+func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration, kind logsv1.IngestBatch_EntryKind) error {
 	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
 	// Subsequent writes aren't blocked.
 	stream := db.NewStream()
@@ -236,7 +235,7 @@ func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, max
 				end = len(keys)
 			}
 
-			if err := syncThenDelete(ctx, db, syncer, kind, keys[i:end]); err != nil {
+			if err := syncThenDelete(ctx, db, syncer, kind, keys[i:end], flushTimeout); err != nil {
 				return err
 			}
 		}
@@ -247,7 +246,47 @@ func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, max
 	return stream.Orchestrate(ctx)
 }
 
-func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte) error {
+func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte, flushTimeout time.Duration) error {
+	entries, err := getIngestBatchEntries(db, syncKeys, kind)
+	if err != nil {
+		return err
+	}
+
+	batchID, err := audit.NewID()
+	if err != nil {
+		return err
+	}
+
+	{
+		ctx, cancelFn := context.WithTimeout(ctx, flushTimeout)
+		defer cancelFn()
+
+		if err := syncer.Sync(ctx, &logsv1.IngestBatch{
+			Id:      string(batchID),
+			Entries: entries,
+		}); err != nil {
+			return err
+		}
+	}
+
+	wb := db.NewWriteBatch()
+	defer wb.Cancel()
+
+	for _, k := range syncKeys {
+		if err := wb.Delete(k); err != nil {
+			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
+				wb = db.NewWriteBatch()
+				_ = wb.Delete(k)
+			} else {
+				return err
+			}
+		}
+	}
+
+	return wb.Flush()
+}
+
+func getIngestBatchEntries(db *badgerv4.DB, syncKeys [][]byte, kind logsv1.IngestBatch_EntryKind) ([]*logsv1.IngestBatch_Entry, error) {
 	entries := make([]*logsv1.IngestBatch_Entry, len(syncKeys))
 	if err := db.Update(func(txn *badgerv4.Txn) error {
 		for i, k := range syncKeys {
@@ -312,36 +351,10 @@ func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, k
 
 		return nil
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
-	batchID, err := audit.NewID()
-	if err != nil {
-		return err
-	}
-
-	if err := syncer.Sync(ctx, &logsv1.IngestBatch{
-		Id:      string(batchID),
-		Entries: entries,
-	}); err != nil {
-		return err
-	}
-
-	wb := db.NewWriteBatch()
-	defer wb.Cancel()
-
-	for _, k := range syncKeys {
-		if err := wb.Delete(k); err != nil {
-			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
-				wb = db.NewWriteBatch()
-				_ = wb.Delete(k)
-			} else {
-				return err
-			}
-		}
-	}
-
-	return wb.Flush()
+	return entries, nil
 }
 
 func (l *Log) Backend() string {
