@@ -181,12 +181,7 @@ func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlus
 	// (and therefore burdening the backend).
 	muTimer.set(minFlushInterval)
 
-	// TODO(saml) is the select necessary?
-	// https://github.com/cerbos/cerbos/pull/2056#discussion_r1528673965
-	select {
-	case waitCh <- struct{}{}:
-	default:
-	}
+	waitCh <- struct{}{}
 }
 
 func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration) error {

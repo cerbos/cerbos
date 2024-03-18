@@ -115,7 +115,7 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 
 	awaitCallbackFn := func() {
 		if l.callbackFn != nil {
-			ch := make(chan struct{}, 1)
+			ch := make(chan struct{})
 			go l.callbackFn(ch)
 			<-ch
 		}
