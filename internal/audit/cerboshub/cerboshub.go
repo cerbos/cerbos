@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package hub
+package cerboshub
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	Backend = "hub"
+	Backend = "cerboshub"
 )
 
 var (
@@ -35,7 +35,7 @@ func init() {
 	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
-			return nil, fmt.Errorf("failed to read hub audit log configuration: %w", err)
+			return nil, fmt.Errorf("failed to read cerboshub audit log configuration: %w", err)
 		}
 
 		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))

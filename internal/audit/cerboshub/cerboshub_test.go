@@ -4,7 +4,7 @@
 //go:build !race
 // +build !race
 
-package hub_test
+package cerboshub_test
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/audit/hub"
+	"github.com/cerbos/cerbos/internal/audit/cerboshub"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/test/mocks"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
@@ -61,9 +61,9 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 		var key []byte
 		switch e.Kind {
 		case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-			key = keyFromCallID(m.t, e.GetAccessLogEntry().CallId, hub.AccessSyncPrefix)
+			key = keyFromCallID(m.t, e.GetAccessLogEntry().CallId, cerboshub.AccessSyncPrefix)
 		case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-			key = keyFromCallID(m.t, e.GetDecisionLogEntry().CallId, hub.DecisionSyncPrefix)
+			key = keyFromCallID(m.t, e.GetDecisionLogEntry().CallId, cerboshub.DecisionSyncPrefix)
 		case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
 			return errors.New("unspecified IngestBatch_EntryKind")
 		}
@@ -95,13 +95,13 @@ func (m *mockSyncer) hasKeys(keys [][]byte) bool {
 	return true
 }
 
-func TestHubLog(t *testing.T) {
+func TestCerbosHubLog(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
 
-	conf := &hub.Conf{
-		hub.IngestConf{
+	conf := &cerboshub.Conf{
+		cerboshub.IngestConf{
 			MaxBatchSize:     batchSize,
 			MinFlushInterval: 2 * time.Second,
 			FlushTimeout:     1 * time.Second,
@@ -125,11 +125,11 @@ func TestHubLog(t *testing.T) {
 
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
 	syncer := newMockSyncer(t)
-	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"))
+	db, err := cerboshub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"))
 	require.NoError(t, err)
 	defer db.Close()
 
-	require.Equal(t, hub.Backend, db.Backend())
+	require.Equal(t, cerboshub.Backend, db.Backend())
 	require.True(t, db.Enabled())
 
 	purgeKeys := func() {
@@ -146,7 +146,7 @@ func TestHubLog(t *testing.T) {
 			opts.PrefetchValues = false
 			it := txn.NewIterator(opts)
 			defer it.Close()
-			for it.Seek(hub.SyncStatusPrefix); it.ValidForPrefix(hub.SyncStatusPrefix); it.Next() {
+			for it.Seek(cerboshub.SyncStatusPrefix); it.ValidForPrefix(cerboshub.SyncStatusPrefix); it.Next() {
 				item := it.Item()
 				key := make([]byte, len(item.Key()))
 				copy(key, item.Key())
@@ -203,7 +203,7 @@ func TestHubLog(t *testing.T) {
 
 		// Server responds with backoff after first N pages
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(hub.ErrIngestBackoff{
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(cerboshub.ErrIngestBackoff{
 			Backoff: 0,
 		}).Twice() // two concurrent streams receive the same backoff response
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches - initialNBatches)
@@ -215,7 +215,7 @@ func TestHubLog(t *testing.T) {
 	})
 }
 
-func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
+func loadData(t *testing.T, db *cerboshub.Log, startDate time.Time) [][]byte {
 	t.Helper()
 
 	ctx := context.Background()
@@ -229,8 +229,8 @@ func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 		require.NoError(t, err)
 		// We insert decision sync logs in the latter half as this is the same
 		// order that Badger retrieves keys from the LSM
-		syncKeys[i] = local.GenKey(hub.AccessSyncPrefix, callID)
-		syncKeys[i+(numRecords/2)] = local.GenKey(hub.DecisionSyncPrefix, callID)
+		syncKeys[i] = local.GenKey(cerboshub.AccessSyncPrefix, callID)
+		syncKeys[i+(numRecords/2)] = local.GenKey(cerboshub.DecisionSyncPrefix, callID)
 
 		err = db.WriteAccessLogEntry(ctx, mkAccessLogEntry(t, id, i, ts))
 		require.NoError(t, err)

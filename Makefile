@@ -64,7 +64,7 @@ generate-testdata-json-schemas: $(BUF)
 .PHONY: generate-mocks
 generate-mocks: $(MOCKERY)
 	@-rm -rf $(MOCK_DIR)
-	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/audit/hub --name=IngestSyncer --output=$(MOCK_DIR)
+	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/audit/cerboshub --name=IngestSyncer --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/index --name=Index --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage --name=Store --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/bundle --name=CloudAPIClient --output=$(MOCK_DIR)
