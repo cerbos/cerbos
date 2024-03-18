@@ -6,7 +6,10 @@ package cerboshub
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/cerbos/cerbos/internal/util"
@@ -45,14 +48,29 @@ func NewIngestSyncer(conf *Conf, logger *zap.Logger) (*Impl, error) {
 		return nil, errors.New("failed to generate credentials from config")
 	}
 
+	tlsConf := &tls.Config{
+		MinVersion: tls.VersionTLS13,
+		ServerName: conf.Ingest.Connection.TLS.Authority,
+	}
+
+	caCertPath := conf.Ingest.Connection.TLS.CACert
+	if caCertPath != "" {
+		caCert, err := os.ReadFile(caCertPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA cert from %q: %w", caCertPath, err)
+		}
+
+		tlsConf.RootCAs = x509.NewCertPool()
+		if !tlsConf.RootCAs.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to parse CA certs")
+		}
+	}
+
 	clientConf := logcap.ClientConf{
 		ClientConf: base.ClientConf{
-			Logger:        zapr.NewLogger(logger),
-			PDPIdentifier: pdpID,
-			TLS: &tls.Config{
-				MinVersion: tls.VersionTLS13,
-				ServerName: conf.Ingest.Connection.TLS.Authority,
-			},
+			Logger:            zapr.NewLogger(logger),
+			PDPIdentifier:     pdpID,
+			TLS:               tlsConf,
 			Credentials:       creds,
 			APIEndpoint:       conf.Ingest.Connection.APIEndpoint,
 			BootstrapEndpoint: conf.Ingest.Connection.BootstrapEndpoint,

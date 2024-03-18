@@ -59,6 +59,8 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		return nil, err
 	}
 
+	logger.Info("Extending audit log")
+
 	minFlushInterval := conf.Ingest.MinFlushInterval
 	maxBatchSize := int(conf.Ingest.MaxBatchSize)
 	flushTimeout := conf.Ingest.FlushTimeout

@@ -32,8 +32,8 @@ var (
 )
 
 type Conf struct {
-	Ingest     IngestConf `yaml:"ingest"`
-	local.Conf `yaml:"local"`
+	local.Conf
+	Ingest IngestConf `yaml:"ingest"`
 }
 
 type IngestConf struct {
