@@ -54,7 +54,7 @@ type Log struct {
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
-	localLog, err := local.NewLog(&conf.Local, decisionFilter)
+	localLog, err := local.NewLog(&conf.Conf, decisionFilter)
 	if err != nil {
 		return nil, err
 	}

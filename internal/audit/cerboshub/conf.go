@@ -32,9 +32,8 @@ var (
 )
 
 type Conf struct {
-	Ingest IngestConf `yaml:"ingest"`
-	// Local is configuration for the local Audit backend. See 'audit.local' section for documentation
-	Local local.Conf `yaml:"local" conf:",example=see audit.local section"`
+	Ingest     IngestConf `yaml:"ingest"`
+	local.Conf `yaml:",inline"`
 }
 
 type IngestConf struct {
@@ -57,7 +56,7 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
-	c.Local.SetDefaults()
+	c.Conf.SetDefaults()
 
 	c.Ingest.MaxBatchSize = defaultMaxBatchSize
 	c.Ingest.MinFlushInterval = defaultMinFlushInterval
@@ -66,7 +65,7 @@ func (c *Conf) SetDefaults() {
 }
 
 func (c *Conf) Validate() (outErr error) {
-	if err := c.Local.Validate(); err != nil {
+	if err := c.Conf.Validate(); err != nil {
 		outErr = multierr.Append(outErr, err)
 	}
 
@@ -82,7 +81,7 @@ func (c *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, errInvalidFlushTimeout)
 	}
 
-	if c.Ingest.MinFlushInterval >= c.Local.Advanced.FlushInterval {
+	if c.Ingest.MinFlushInterval >= c.Conf.Advanced.FlushInterval {
 		outErr = multierr.Append(outErr, errors.New("ingest.minFlushInterval must be less than advanced.flushInterval"))
 	}
 
