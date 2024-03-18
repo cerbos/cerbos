@@ -9,9 +9,7 @@ include::ROOT:partial$version-check.adoc[]
 
 An example application of integrating https://cerbos.dev[Cerbos] with an https://expressjs.com/[Express] server using https://okta.com/[Okta] for authentication.
 
-image:okta-video.png[role="center-img", link="https://cerbos.dev/video/using-cerbos-with-okta"]
-
-https://cerbos.dev/video/using-cerbos-with-okta[Demo Video]
+video::9qZ_XC-r33w[youtube,width=640,height=480]
 
 == Dependencies
 

@@ -9,9 +9,7 @@ include::ROOT:partial$version-check.adoc[]
 
 An example application of integrating https://cerbos.dev[Cerbos] with a https://fastapi.tiangolo.com/[FastAPI] server using https://aws.amazon.com/cognito/[AWS Cognito] for authentication.
 
-image:aws-cognito-video.png[role="center-img", link="https://cerbos.dev/video/using-cerbos-with-aws-cognito"]
-
-https://cerbos.dev/video/using-cerbos-with-aws-cognito[Demo Video]
+video::bRknI_B0hcs[youtube,width=640,height=480]
 
 == Dependencies
 
