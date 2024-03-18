@@ -12,9 +12,7 @@ An example stack of integrating https://cerbos.dev[Cerbos] with an https://expre
 
 This example is based off the https://github.com/fusionauth/fusionauth-example-node[FusionAuth/fusionauth-example-node] repo.
 
-image:fusionauth-video.png[role="center-img", link="https://cerbos.dev/video/using-cerbos-with-fusionauth"]
-
-https://cerbos.dev/video/using-cerbos-with-fusionauth[Demo Video]
+video::Uf1jmDn4YSE[youtube,width=640,height=480]
 
 == Dependencies
 
