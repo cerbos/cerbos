@@ -9,6 +9,7 @@ import (
 	context "context"
 
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
