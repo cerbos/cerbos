@@ -66,8 +66,8 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
-	localLog.RegisterCallback(func(errCh chan error) {
-		schedule(localLog.Db, newMutexTimer(), syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, errCh)
+	localLog.RegisterCallback(func(waitCh chan<- struct{}) {
+		schedule(localLog.Db, newMutexTimer(), syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, waitCh)
 	})
 
 	return &Log{
@@ -162,16 +162,15 @@ func (mt *mutexTimer) wait() {
 	<-mt.expireCh
 }
 
-func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlushInterval, flushTimeout time.Duration, maxBatchSize, numGo int, logger *zap.Logger, errCh chan error) {
+func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlushInterval, flushTimeout time.Duration, maxBatchSize, numGo int, logger *zap.Logger, waitCh chan<- struct{}) {
 	muTimer.wait()
 
-	err := streamLogs(db, syncer, maxBatchSize, numGo, flushTimeout)
-	if err != nil {
+	if err := streamLogs(db, syncer, maxBatchSize, numGo, flushTimeout); err != nil {
 		var ingestErr ErrIngestBackoff
 		if errors.As(err, &ingestErr) {
 			logger.Warn("svc-ingest issued backoff", zap.Error(err))
 			muTimer.set(ingestErr.Backoff)
-			go schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, errCh)
+			go schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, waitCh)
 			return
 		}
 		logger.Warn("Failed sync", zap.Error(err))
@@ -182,8 +181,10 @@ func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlus
 	// (and therefore burdening the backend).
 	muTimer.set(minFlushInterval)
 
+	// TODO(saml) is the select necessary?
+	// https://github.com/cerbos/cerbos/pull/2056#discussion_r1528673965
 	select {
-	case errCh <- err:
+	case waitCh <- struct{}{}:
 	default:
 	}
 }
@@ -224,9 +225,9 @@ func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, max
 			return err
 		}
 
-		keys := make([][]byte, 0, len(kvList.Kv))
-		for _, kv := range kvList.Kv {
-			keys = append(keys, kv.Key)
+		keys := make([][]byte, len(kvList.Kv))
+		for i, kv := range kvList.Kv {
+			keys[i] = kv.Key
 		}
 
 		for i := 0; i < len(keys); i += maxBatchSize {

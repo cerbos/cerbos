@@ -51,7 +51,7 @@ type Log struct {
 	Db                       *badgerv4.DB
 	buffer                   chan *badgerv4.Entry
 	stopChan                 chan struct{}
-	callbackFn               func(chan error)
+	callbackFn               func(chan<- struct{})
 	decisionFilter           audit.DecisionLogEntryFilter
 	wg                       sync.WaitGroup
 	ttl                      time.Duration
@@ -102,7 +102,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	return l, nil
 }
 
-func (l *Log) RegisterCallback(fn func(chan error)) {
+func (l *Log) RegisterCallback(fn func(chan<- struct{})) {
 	l.callbackFn = fn
 }
 
@@ -115,7 +115,7 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 
 	awaitCallbackFn := func() {
 		if l.callbackFn != nil {
-			ch := make(chan error, 1)
+			ch := make(chan struct{}, 1)
 			go l.callbackFn(ch)
 			<-ch
 		}
@@ -143,7 +143,7 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 		case <-ticker.C:
 			batch.flush()
 			if l.callbackFn != nil {
-				go l.callbackFn(make(chan error, 1))
+				go l.callbackFn(make(chan struct{}, 1))
 			}
 		}
 	}
