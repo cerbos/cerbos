@@ -196,28 +196,21 @@ func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, f
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 	p.Go(func(ctx context.Context) error {
-		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG)
+		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, AccessSyncPrefix)
 	})
 	p.Go(func(ctx context.Context) error {
-		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG)
+		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, DecisionSyncPrefix)
 	})
 
 	return p.Wait()
 }
 
-func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration, kind logsv1.IngestBatch_EntryKind) error {
+func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
 	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
 	// Subsequent writes aren't blocked.
 	stream := db.NewStream()
 	stream.NumGo = numGo
-	switch kind {
-	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-		stream.Prefix = AccessSyncPrefix
-	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-		stream.Prefix = DecisionSyncPrefix
-	case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
-		return errors.New("unspecified IngestBatch_EntryKind")
-	}
+	stream.Prefix = prefix
 
 	stream.Send = func(buf *z.Buffer) error {
 		kvList, err := badgerv4.BufferToKVList(buf)
