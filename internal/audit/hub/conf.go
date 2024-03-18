@@ -82,11 +82,6 @@ func (c *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, errInvalidFlushTimeout)
 	}
 
-	// TODO(saml) is this a stupid rule?
-	// if c.Ingest.FlushTimeout > c.Ingest.MinFlushInterval {
-	// 	outErr = multierr.Append(outErr, errors.New("ingest.flushTimeout cannot be longer than ingest.minFlushInterval"))
-	// }
-
 	if c.Ingest.MinFlushInterval >= c.Local.Advanced.FlushInterval {
 		outErr = multierr.Append(outErr, errors.New("ingest.minFlushInterval must be less than advanced.flushInterval"))
 	}
