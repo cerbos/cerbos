@@ -15,7 +15,7 @@ audit:
     ingest: 
       flushTimeout: 5s # FlushTimeout defines the max allowable timeout for each Ingest request.
       maxBatchSize: 32 # MaxBatchSize defines the max number of log entries to send in each Ingest request.
-      minFlushInterval: 10s # MinFlushInterval is the minimal duration between Ingest requests.
+      minFlushInterval: 3s # MinFlushInterval is the minimal duration between Ingest requests.
       numGoRoutines: 8 # NumGoRoutines defines the max number of goroutines used when streaming log entries from the local DB.
     local: see audit.local section # Local is configuration for the local Audit backend. See 'audit.local' section for documentation
   file:

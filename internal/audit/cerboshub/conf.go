@@ -45,7 +45,7 @@ type IngestConf struct {
 	// MaxBatchSize defines the max number of log entries to send in each Ingest request.
 	MaxBatchSize uint `yaml:"maxBatchSize" conf:",example=32"`
 	// MinFlushInterval is the minimal duration between Ingest requests.
-	MinFlushInterval time.Duration `yaml:"minFlushInterval" conf:",example=10s"`
+	MinFlushInterval time.Duration `yaml:"minFlushInterval" conf:",example=3s"`
 	// FlushTimeout defines the max allowable timeout for each Ingest request.
 	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=5s"`
 	// NumGoRoutines defines the max number of goroutines used when streaming log entries from the local DB.
