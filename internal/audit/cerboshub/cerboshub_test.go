@@ -101,6 +101,12 @@ func TestCerbosHubLog(t *testing.T) {
 	}
 
 	conf := &cerboshub.Conf{
+		cerboshub.IngestConf{
+			MaxBatchSize:     batchSize,
+			MinFlushInterval: 2 * time.Second,
+			FlushTimeout:     1 * time.Second,
+			NumGoRoutines:    8,
+		},
 		local.Conf{
 			StoragePath:     t.TempDir(),
 			RetentionPeriod: 24 * time.Hour,
@@ -109,12 +115,6 @@ func TestCerbosHubLog(t *testing.T) {
 				MaxBatchSize:  32,
 				FlushInterval: 10 * time.Second,
 			},
-		},
-		cerboshub.IngestConf{
-			MaxBatchSize:     batchSize,
-			MinFlushInterval: 2 * time.Second,
-			FlushTimeout:     1 * time.Second,
-			NumGoRoutines:    8,
 		},
 	}
 
