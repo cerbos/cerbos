@@ -11,7 +11,14 @@ audit:
   enabled: false # Enabled defines whether audit logging is enabled.
   excludeMetadataKeys: ['authorization'] # ExcludeMetadataKeys defines which gRPC request metadata keys should be excluded from the audit logs. Takes precedence over includeMetadataKeys.
   includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in the audit logs.
-  cerboshub:
+  file:
+    additionalPaths: [stdout] # AdditionalPaths to mirror the log output. Has performance implications. Use with caution.
+    logRotation: # LogRotation settings (optional).
+      maxFileAgeDays: 10 # MaxFileAgeDays sets the maximum age in days of old log files before they are deleted.
+      maxFileCount: 10 # MaxFileCount sets the maximum number of files to retain.
+      maxFileSizeMB: 100 # MaxFileSizeMB sets the maximum size of individual log files in megabytes.
+    path: /path/to/file.log # Required. Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
+  hub:
     advanced: 
       bufferSize: 256 
       flushInterval: 1s 
@@ -24,13 +31,6 @@ audit:
       numGoRoutines: 8 # NumGoRoutines defines the max number of goroutines used when streaming log entries from the local DB.
     retentionPeriod: 168h # How long to keep records for
     storagePath: /path/to/dir # Path to store the data
-  file:
-    additionalPaths: [stdout] # AdditionalPaths to mirror the log output. Has performance implications. Use with caution.
-    logRotation: # LogRotation settings (optional).
-      maxFileAgeDays: 10 # MaxFileAgeDays sets the maximum age in days of old log files before they are deleted.
-      maxFileCount: 10 # MaxFileCount sets the maximum number of files to retain.
-      maxFileSizeMB: 100 # MaxFileSizeMB sets the maximum size of individual log files in megabytes.
-    path: /path/to/file.log # Required. Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   kafka:
     ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
     authentication: # Authentication

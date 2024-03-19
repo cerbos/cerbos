@@ -55,8 +55,8 @@ import (
 	_ "github.com/cerbos/cerbos/internal/audit/file"
 	// Import to register the kafka audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/kafka"
-	// Import to register the cerboshub audit log backend.
-	_ "github.com/cerbos/cerbos/internal/audit/cerboshub"
+	// Import to register the hub audit log backend.
+	_ "github.com/cerbos/cerbos/internal/audit/hub"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"

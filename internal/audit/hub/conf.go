@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package cerboshub
+package hub
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	confKey = audit.ConfKey + ".cerboshub"
+	confKey = audit.ConfKey + ".hub"
 
 	defaultMaxBatchSize     = 16
 	defaultMinFlushInterval = 5 * time.Second
