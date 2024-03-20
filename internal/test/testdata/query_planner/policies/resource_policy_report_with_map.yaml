@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+o yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: "api.cerbos.dev/v1"
 variables:
@@ -62,6 +62,14 @@ resourcePolicy:
       condition:
         match:
           expr: P.attr.workspaceMap[R.attr.workspaceId] == "MANAGER"
+    - actions:
+        - edit_easily
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.workspaceMapRoles[R.attr.workspaceId].role == "MANAGER"
     - actions:
         - delete
       effect: EFFECT_ALLOW

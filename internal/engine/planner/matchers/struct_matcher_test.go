@@ -28,6 +28,10 @@ func TestStructMatcher(t *testing.T) {
 			expr: "P.attr.anyMap[R.attr.Id] == R.attr.value",
 		},
 		{
+			expr: `{"a1": {"role": "OWNER"}}[R.id].role == "OWNER"`,
+			res:  true,
+		},
+		{
 			expr: "P.attr.anyMap[R.attr.Id][R.attr.value]",
 		},
 		{

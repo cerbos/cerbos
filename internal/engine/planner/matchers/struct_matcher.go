@@ -16,7 +16,7 @@ type exprMatcherFunc func(e *exprpb.Expr) (bool, []*exprpb.Expr)
 
 type exprMatcher struct {
 	f  exprMatcherFunc
-	ns []*exprMatcher
+	ns []*exprMatcher // argument matchers
 }
 
 type ExpressionProcessor interface {
@@ -68,7 +68,12 @@ func getConstExprMatcher(s *structMatcher) *exprMatcher {
 func getStructIndexerExprMatcher(s *structMatcher) *exprMatcher {
 	return &exprMatcher{
 		f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-			if indexExpr := e.GetCallExpr(); indexExpr != nil && indexExpr.Function == operators.Index {
+			ex := e
+			if selExpr := ex.GetSelectExpr(); selExpr != nil {
+				s.field = selExpr.Field
+				ex = selExpr.Operand
+			}
+			if indexExpr := ex.GetCallExpr(); indexExpr != nil && indexExpr.Function == operators.Index {
 				return true, indexExpr.Args
 			}
 			return false, nil
@@ -104,6 +109,7 @@ type structMatcher struct {
 	constExpr   *exprpb.Constant
 	rootMatch   *exprMatcher
 	function    string
+	field       string // optional field. E.g. P.attr[R.id].role == "OWNER"
 }
 
 func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
@@ -127,7 +133,11 @@ func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 			return entries[i].key.String() < entries[j].key.String()
 		})
 		for _, item := range entries {
-			opts = append(opts, mkOption(s.function, item.key, item.value, s.indexerExpr, s.constExpr))
+			v := item.value
+			if s.field != "" {
+				v = internal.MkSelectExpr(item.value, s.field)
+			}
+			opts = append(opts, mkOption(s.function, item.key, v, s.indexerExpr, s.constExpr))
 		}
 		n := len(opts)
 		if n == 0 {
