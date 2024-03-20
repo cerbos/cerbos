@@ -58,10 +58,9 @@ releases:
             scriptsConfigMap: postgres-init
           persistence:
             enabled: false
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
+          extraVolumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql/data
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
@@ -97,11 +96,11 @@ releases:
           repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
           tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
       - volumes:
-        - name: cerbos-auditlog
-          emptyDir: {}
+          - name: cerbos-auditlog
+            emptyDir: {}
       - volumeMounts:
-        - name: cerbos-auditlog
-          mountPath: /audit
+          - name: cerbos-auditlog
+            mountPath: /audit
       - cerbos:
           tlsSecretName: 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
           logLevel: DEBUG
