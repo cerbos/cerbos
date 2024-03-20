@@ -58,6 +58,10 @@ releases:
             scriptsConfigMap: postgres-init
           persistence:
             enabled: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
