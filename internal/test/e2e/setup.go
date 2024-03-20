@@ -23,6 +23,10 @@ func Setup(ctx Ctx) error {
 		if err := CmdWithOutput(ctx, "kubectl", "describe", "pods", fmt.Sprintf("--namespace=%s", ctx.Namespace())); err != nil {
 			ctx.Logf("Failed to describe pods: %v", err)
 		}
+
+		if err := CmdWithOutput(ctx, "stern", ".*", fmt.Sprintf("--namespace=%s", ctx.Namespace()), "--no-follow"); err != nil {
+			ctx.Logf("Failed to grab logs: %v", err)
+		}
 		return err
 	}
 
