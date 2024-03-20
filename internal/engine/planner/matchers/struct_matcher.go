@@ -16,7 +16,7 @@ type exprMatcherFunc func(e *exprpb.Expr) (bool, []*exprpb.Expr)
 
 type exprMatcher struct {
 	f  exprMatcherFunc
-	ns []*exprMatcher
+	ns []*exprMatcher // argument matchers
 }
 
 type ExpressionProcessor interface {
@@ -68,7 +68,12 @@ func getConstExprMatcher(s *structMatcher) *exprMatcher {
 func getStructIndexerExprMatcher(s *structMatcher) *exprMatcher {
 	return &exprMatcher{
 		f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-			if indexExpr := e.GetCallExpr(); indexExpr != nil && indexExpr.Function == operators.Index {
+			ex := e
+			if selExpr := ex.GetSelectExpr(); selExpr != nil {
+				s.field = selExpr.Field
+				ex = selExpr.Operand
+			}
+			if indexExpr := ex.GetCallExpr(); indexExpr != nil && indexExpr.Function == operators.Index {
 				return true, indexExpr.Args
 			}
 			return false, nil
@@ -104,47 +109,49 @@ type structMatcher struct {
 	constExpr   *exprpb.Constant
 	rootMatch   *exprMatcher
 	function    string
+	field       string // optional field. E.g. P.attr[R.id].role == "OWNER"
 }
 
 func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 	r, err := s.rootMatch.run(e)
-	if err != nil {
+	if err != nil || !r {
 		return false, nil, err
 	}
-	if r {
-		var opts []*exprpb.Expr
-		type entry struct {
-			key   *exprpb.Constant
-			value *exprpb.Expr
-		}
-		entries := make([]entry, 0, len(s.structExpr.Entries))
-		for _, item := range s.structExpr.Entries {
-			if key := item.GetMapKey().GetConstExpr(); key != nil {
-				entries = append(entries, entry{key: key, value: item.GetValue()})
-			}
-		}
-		sort.Slice(entries, func(i, j int) bool {
-			return entries[i].key.String() < entries[j].key.String()
-		})
-		for _, item := range entries {
-			opts = append(opts, mkOption(s.function, item.key, item.value, s.indexerExpr, s.constExpr))
-		}
-		n := len(opts)
-		if n == 0 {
-			return false, e, nil
-		}
-		var output *exprpb.Expr
 
-		if n == 1 {
-			output = opts[0]
-		} else {
-			output = mkLogicalOr(opts)
-		}
-		internal.UpdateIDs(output)
-		return true, output, nil
+	type entry struct {
+		key   *exprpb.Constant
+		value *exprpb.Expr
 	}
+	entries := make([]entry, 0, len(s.structExpr.Entries))
+	for _, item := range s.structExpr.Entries {
+		if key := item.GetMapKey().GetConstExpr(); key != nil {
+			entries = append(entries, entry{key: key, value: item.GetValue()})
+		}
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].key.String() < entries[j].key.String()
+	})
+	opts := make([]*exprpb.Expr, 0, len(entries))
+	for _, item := range entries {
+		v := item.value
+		if s.field != "" {
+			v = internal.MkSelectExpr(item.value, s.field)
+		}
+		opts = append(opts, mkOption(s.function, item.key, v, s.indexerExpr, s.constExpr))
+	}
+	n := len(opts)
+	if n == 0 {
+		return false, e, nil
+	}
+	var output *exprpb.Expr
 
-	return false, nil, nil
+	if n == 1 {
+		output = opts[0]
+	} else {
+		output = mkLogicalOr(opts)
+	}
+	internal.UpdateIDs(output)
+	return true, output, nil
 }
 
 var supportedOps = map[string]struct{}{

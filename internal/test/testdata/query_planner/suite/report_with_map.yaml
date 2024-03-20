@@ -15,6 +15,10 @@ principal: {
       "A": "MANAGER",
       "B": "MEMBER",
     },
+    "workspaceMapRoles": {
+      "A": { "role": "MANAGER" },
+      "B": { "role": "MEMBER"},
+    },
     "workspaces": [
       {
         "name": "workspaceA",
@@ -103,6 +107,18 @@ tests:
     want:
       kind: KIND_ALWAYS_ALLOWED
   - action: edit
+    resource:
+      kind: report_with_map
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.workspaceId
+            - value: "A"
+  - action: edit_easily
     resource:
       kind: report_with_map
       policyVersion: default

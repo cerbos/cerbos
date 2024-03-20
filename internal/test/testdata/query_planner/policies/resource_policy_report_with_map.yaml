@@ -63,6 +63,14 @@ resourcePolicy:
         match:
           expr: P.attr.workspaceMap[R.attr.workspaceId] == "MANAGER"
     - actions:
+        - edit_easily
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.workspaceMapRoles[R.attr.workspaceId].role == "MANAGER"
+    - actions:
         - delete
       effect: EFFECT_ALLOW
       roles:
