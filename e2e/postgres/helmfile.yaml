@@ -60,7 +60,7 @@ releases:
             enabled: false
           extraVolumeMounts:
             - name: data
-              mountPath: /bitnami/postgresql/data
+              mountPath: /bitnami/postgresql
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'

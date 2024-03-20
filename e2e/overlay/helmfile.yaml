@@ -58,10 +58,9 @@ releases:
             scriptsConfigMap: postgres-init
           persistence:
             enabled: false
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
+          extraVolumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
