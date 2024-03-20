@@ -32,7 +32,7 @@ var (
 )
 
 type Conf struct {
-	Ingest     IngestConf `yaml:"ingest"`
+	Ingest     IngestConf `yaml:"ingest" conf:",ignore"`
 	local.Conf `yaml:",inline"`
 }
 

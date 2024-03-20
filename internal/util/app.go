@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 
 	pdpv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/pdp/v1"
 	"github.com/google/uuid"
@@ -60,11 +61,15 @@ func AppShortVersion() string {
 	return sb.String()
 }
 
+var getPdpID = sync.OnceValue(func() string {
+	//nolint:gosec
+	nodeID := md5.Sum(uuid.NodeID())
+	return fmt.Sprintf("%X-%d", nodeID, os.Getpid())
+})
+
 func PDPIdentifier(pdpID string) *pdpv1.Identifier {
 	if pdpID == "" {
-		//nolint:gosec
-		nodeID := md5.Sum(uuid.NodeID())
-		pdpID = fmt.Sprintf("%X-%d", nodeID, os.Getpid())
+		pdpID = getPdpID()
 	}
 
 	return &pdpv1.Identifier{

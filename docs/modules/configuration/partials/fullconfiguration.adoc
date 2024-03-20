@@ -24,11 +24,6 @@ audit:
       flushInterval: 1s 
       gcInterval: 60s 
       maxBatchSize: 32 
-    ingest: 
-      flushTimeout: 5s # FlushTimeout defines the max allowable timeout for each Ingest request.
-      maxBatchSize: 32 # MaxBatchSize defines the max number of log entries to send in each Ingest request.
-      minFlushInterval: 3s # MinFlushInterval is the minimal duration between Ingest requests.
-      numGoRoutines: 8 # NumGoRoutines defines the max number of goroutines used when streaming log entries from the local DB.
     retentionPeriod: 168h # How long to keep records for
     storagePath: /path/to/dir # Path to store the data
   kafka:
