@@ -113,8 +113,6 @@ jobs:
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.4.0
-        with:
-          cosign-release: "v2.1.1"
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v5

@@ -61,8 +61,6 @@ jobs:
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.4.0
-        with:
-          cosign-release: 'v2.1.1'
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v5
@@ -196,4 +194,4 @@ jobs:
           CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); helm push $CHART oci://${{ env.OCI_REGISTRY }}
           helm registry logout ${{ env.OCI_REGISTRY }}
         env:
-          HELM_EXPERIMENTAL_OCI: '1'
+          HELM_EXPERIMENTAL_OCI: "1"
