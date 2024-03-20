@@ -20,6 +20,9 @@ func Setup(ctx Ctx) error {
 	// `helmfile apply` requires `helm diff`. `helmfile init` checks for required plugins
 	if err := Cmd(ctx, "helmfile", "apply"); err != nil {
 		ctx.Logf("Deployment failed: %v", err)
+		if err := CmdWithOutput(ctx, "kubectl", "describe", "pods", fmt.Sprintf("--namespace=%s", ctx.Namespace())); err != nil {
+			ctx.Logf("Failed to describe pods: %v", err)
+		}
 		return err
 	}
 
