@@ -4,41 +4,44 @@
 //go:build !race
 // +build !race
 
-package cerboshub_test
+package hub_test
 
 import (
 	"context"
 	"errors"
 	"math"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
-	gocmp "github.com/google/go-cmp/cmp"
-	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/audit/cerboshub"
+	"github.com/cerbos/cerbos/internal/audit/hub"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/test/mocks"
+	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
 const (
-	numRecords = 1000
+	numRecords = 2000
 	batchSize  = uint(32)
 )
 
 type mockSyncer struct {
 	*mocks.IngestSyncer
 	synced map[string]struct{}
+	t      *testing.T
+	mu     sync.RWMutex
 }
 
 func newMockSyncer(t *testing.T) *mockSyncer {
@@ -47,18 +50,50 @@ func newMockSyncer(t *testing.T) *mockSyncer {
 	return &mockSyncer{
 		IngestSyncer: mocks.NewIngestSyncer(t),
 		synced:       make(map[string]struct{}),
+		t:            t,
 	}
 }
 
-func (m *mockSyncer) Sync(ctx context.Context, batch [][]byte) error {
-	for _, key := range batch {
+func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
+	if err := m.IngestSyncer.Sync(ctx, batch); err != nil {
+		return err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, e := range batch.Entries {
+		var key []byte
+		switch e.Kind {
+		case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+			key = keyFromCallID(m.t, e.GetAccessLogEntry().CallId, hub.AccessSyncPrefix)
+		case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+			key = keyFromCallID(m.t, e.GetDecisionLogEntry().CallId, hub.DecisionSyncPrefix)
+		case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
+			return errors.New("unspecified IngestBatch_EntryKind")
+		}
+
 		m.synced[string(key)] = struct{}{}
 	}
 
-	return m.IngestSyncer.Sync(ctx, batch)
+	return nil
+}
+
+func keyFromCallID(t *testing.T, callID string, prefix []byte) []byte {
+	t.Helper()
+
+	callIDbytes, err := audit.ID(callID).Repr()
+	require.NoError(t, err)
+
+	return local.GenKey(prefix, callIDbytes)
 }
 
 func (m *mockSyncer) hasKeys(keys [][]byte) bool {
+	m.t.Helper()
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	for _, k := range keys {
 		if _, ok := m.synced[string(k)]; !ok {
 			return false
@@ -68,12 +103,18 @@ func (m *mockSyncer) hasKeys(keys [][]byte) bool {
 	return true
 }
 
-func TestCerbosHubLog(t *testing.T) {
+func TestHubLog(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
 
-	conf := &cerboshub.Conf{
+	conf := &hub.Conf{
+		hub.IngestConf{
+			MaxBatchSize:     batchSize,
+			MinFlushInterval: 2 * time.Second,
+			FlushTimeout:     1 * time.Second,
+			NumGoRoutines:    8,
+		},
 		local.Conf{
 			StoragePath:     t.TempDir(),
 			RetentionPeriod: 24 * time.Hour,
@@ -82,12 +123,6 @@ func TestCerbosHubLog(t *testing.T) {
 				MaxBatchSize:  32,
 				FlushInterval: 10 * time.Second,
 			},
-		},
-		cerboshub.IngestConf{
-			MaxBatchSize:     batchSize,
-			MinFlushInterval: 2 * time.Second,
-			FlushTimeout:     1 * time.Second,
-			NumGoRoutines:    8,
 		},
 	}
 
@@ -98,11 +133,11 @@ func TestCerbosHubLog(t *testing.T) {
 
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
 	syncer := newMockSyncer(t)
-	db, err := cerboshub.NewLog(conf, decisionFilter, syncer)
+	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"))
 	require.NoError(t, err)
 	defer db.Close()
 
-	require.Equal(t, cerboshub.Backend, db.Backend())
+	require.Equal(t, hub.Backend, db.Backend())
 	require.True(t, db.Enabled())
 
 	purgeKeys := func() {
@@ -119,7 +154,7 @@ func TestCerbosHubLog(t *testing.T) {
 			opts.PrefetchValues = false
 			it := txn.NewIterator(opts)
 			defer it.Close()
-			for it.Seek(cerboshub.SyncStatusPrefix); it.ValidForPrefix(cerboshub.SyncStatusPrefix); it.Next() {
+			for it.Seek(hub.SyncStatusPrefix); it.ValidForPrefix(hub.SyncStatusPrefix); it.Next() {
 				item := it.Item()
 				key := make([]byte, len(item.Key()))
 				copy(key, item.Key())
@@ -132,28 +167,18 @@ func TestCerbosHubLog(t *testing.T) {
 		return keys
 	}
 
-	wantNumBatches := int(math.Ceil(numRecords * 2 / float64(batchSize)))
+	// We use two streams (access + decision log scans). Each independent stream ends up with a partial page, therefore
+	// we treat each batch separately (hence the /2 -> *2 below).
+	wantNumBatches := int(math.Ceil((numRecords/2)/float64(batchSize))) * 2
 
-	t.Run("insertsKeys", func(t *testing.T) {
-		t.Cleanup(purgeKeys)
-
-		wantKeys := loadData(t, db, startDate)
-
-		db.ForceWrite(true)
-
-		keys := getLocalKeys()
-		require.Len(t, keys, len(wantKeys), "incorrect number of keys: %d", len(keys))
-		require.Empty(t, gocmp.Diff(wantKeys, keys, protocmp.Transform()))
-	})
-
-	t.Run("deletesKeys", func(t *testing.T) {
+	t.Run("insertsAndDeletesKeys", func(t *testing.T) {
 		t.Cleanup(purgeKeys)
 
 		loadedKeys := loadData(t, db, startDate)
 
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches)
 
-		db.ForceWrite(false)
+		db.ForceWrite()
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
@@ -162,22 +187,22 @@ func TestCerbosHubLog(t *testing.T) {
 	t.Run("partiallyDeletesBeforeError", func(t *testing.T) {
 		t.Cleanup(purgeKeys)
 
-		loadedKeys := loadData(t, db, startDate)
+		loadData(t, db, startDate)
 
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with unrecoverable error after first N pages
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(errors.New("some error")).Once()
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(errors.New("some error")).Once()
+		// the other concurrent stream exits with context cancellation
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(context.Canceled).Once()
 
-		db.ForceWrite(false)
+		db.ForceWrite()
 
-		require.True(t, syncer.hasKeys(loadedKeys[0:initialNBatches*int(batchSize)]), "some keys should have been synced")
-		require.Len(t, getLocalKeys(), (numRecords*2)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
+		require.Len(t, getLocalKeys(), (numRecords)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
 	})
 
 	t.Run("deletesSyncKeysAfterBackoff", func(t *testing.T) {
-		t.Skip("TODO: We need to block until retry goroutine is complete")
 		t.Cleanup(purgeKeys)
 
 		loadedKeys := loadData(t, db, startDate)
@@ -185,28 +210,25 @@ func TestCerbosHubLog(t *testing.T) {
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with backoff after first N pages
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(cerboshub.ErrIngestBackoff{
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(hub.ErrIngestBackoff{
 			Backoff: 0,
-		}).Once()
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[][]uint8")).Return(nil).Times(wantNumBatches - initialNBatches)
+		}).Twice() // two concurrent streams receive the same backoff response
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches - initialNBatches)
 
-		db.ForceWrite(false)
-		// The second callbackFn call happens in a separate goroutine. A short sleep gives it time to complete
-		// TODO(saml) remove this sleep with some proper wait mechanism
-		time.Sleep(100 * time.Millisecond)
+		db.ForceWrite()
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
 	})
 }
 
-func loadData(t *testing.T, db *cerboshub.Log, startDate time.Time) [][]byte {
+func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 	t.Helper()
 
 	ctx := context.Background()
-	syncKeys := make([][]byte, numRecords*2)
-	for i := 0; i < numRecords; i++ {
+	syncKeys := make([][]byte, numRecords)
+	for i := 0; i < (numRecords / 2); i++ {
 		ts := startDate.Add(time.Duration(i) * time.Second)
 		id, err := audit.NewIDForTime(ts)
 		require.NoError(t, err)
@@ -215,8 +237,8 @@ func loadData(t *testing.T, db *cerboshub.Log, startDate time.Time) [][]byte {
 		require.NoError(t, err)
 		// We insert decision sync logs in the latter half as this is the same
 		// order that Badger retrieves keys from the LSM
-		syncKeys[i] = local.GenKey(cerboshub.AccessSyncPrefix, callID)
-		syncKeys[i+numRecords] = local.GenKey(cerboshub.DecisionSyncPrefix, callID)
+		syncKeys[i] = local.GenKey(hub.AccessSyncPrefix, callID)
+		syncKeys[i+(numRecords/2)] = local.GenKey(hub.DecisionSyncPrefix, callID)
 
 		err = db.WriteAccessLogEntry(ctx, mkAccessLogEntry(t, id, i, ts))
 		require.NoError(t, err)

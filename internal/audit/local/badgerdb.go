@@ -30,8 +30,8 @@ const (
 )
 
 var (
-	accessLogPrefix   = []byte("aacc")
-	decisionLogPrefix = []byte("adec")
+	AccessLogPrefix   = []byte("aacc")
+	DecisionLogPrefix = []byte("adec")
 )
 
 func init() {
@@ -45,23 +45,19 @@ func init() {
 	})
 }
 
-type TriggerSignal struct {
-	ResponseCh chan struct{}
-	bypassSync bool
-}
-
 // Log implements the decisionlog interface with Badger as the backing store.
 type Log struct {
-	logger         *zap.Logger
-	Db             *badgerv4.DB
-	buffer         chan *badgerv4.Entry
-	stopChan       chan struct{}
-	trigger        chan TriggerSignal
-	callbackFn     func()
-	decisionFilter audit.DecisionLogEntryFilter
-	wg             sync.WaitGroup
-	ttl            time.Duration
-	stopOnce       sync.Once
+	logger                   *zap.Logger
+	Db                       *badgerv4.DB
+	buffer                   chan *badgerv4.Entry
+	stopChan                 chan struct{}
+	callbackFn               func(chan<- struct{})
+	decisionFilter           audit.DecisionLogEntryFilter
+	wg                       sync.WaitGroup
+	ttl                      time.Duration
+	stopOnce                 sync.Once
+	bufferSize, maxBatchSize int
+	flushInterval            time.Duration
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -83,32 +79,16 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	maxBatchSize := int(conf.Advanced.MaxBatchSize)
 	ttl := conf.RetentionPeriod
 
-	triggerCh := make(chan TriggerSignal, 1)
-	stopCh := make(chan struct{})
-	ticker := time.NewTicker(flushInterval)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				select {
-				case triggerCh <- TriggerSignal{}:
-				default:
-				}
-			case <-stopCh:
-				return
-			}
-		}
-	}()
-
 	l := &Log{
 		logger:         logger,
 		Db:             db,
 		buffer:         make(chan *badgerv4.Entry, bufferSize),
-		stopChan:       stopCh,
+		stopChan:       make(chan struct{}),
 		ttl:            ttl,
 		decisionFilter: decisionFilter,
-		trigger:        triggerCh,
+		bufferSize:     bufferSize,
+		maxBatchSize:   maxBatchSize,
+		flushInterval:  flushInterval,
 	}
 
 	l.wg.Add(1)
@@ -122,7 +102,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	return l, nil
 }
 
-func (l *Log) RegisterCallback(fn func()) {
+func (l *Log) RegisterCallback(fn func(chan<- struct{})) {
 	l.callbackFn = fn
 }
 
@@ -130,29 +110,40 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 	batch := newBatcher(l.Db, maxBatchSize)
 	logger := l.logger.With(zap.String("component", "batcher"))
 
+	ticker := time.NewTicker(flushInterval)
+	defer ticker.Stop()
+
+	awaitCallbackFn := func() {
+		if l.callbackFn != nil {
+			ch := make(chan struct{})
+			go l.callbackFn(ch)
+			<-ch
+		}
+	}
+
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
 		case <-l.stopChan:
 			batch.flush()
+			awaitCallbackFn()
 			l.wg.Done()
 			return
-		case entry := <-l.buffer:
+		case entry, ok := <-l.buffer:
+			if !ok {
+				batch.flush()
+				awaitCallbackFn()
+				l.wg.Done()
+				return
+			}
+
 			if err := batch.add(entry); err != nil {
 				logger.Warn("Failed to add entry to batch", zap.Error(err))
 				continue
 			}
-		case sig := <-l.trigger:
+		case <-ticker.C:
 			batch.flush()
 			if l.callbackFn != nil {
-				go func() {
-					if !sig.bypassSync {
-						l.callbackFn()
-					}
-
-					if sig.ResponseCh != nil {
-						sig.ResponseCh <- struct{}{}
-					}
-				}()
+				go l.callbackFn(make(chan struct{}, 1))
 			}
 		}
 	}
@@ -195,18 +186,15 @@ func (l *Log) Enabled() bool {
 	return true
 }
 
-// ForceWrite forces a write operation and blocks until completion.
-func (l *Log) ForceWrite(bypassSync bool) {
-	sig := TriggerSignal{}
-	if l.callbackFn != nil {
-		sig.bypassSync = bypassSync
-		wait := make(chan struct{}, 1)
-		sig.ResponseCh = wait
-		defer func() {
-			<-wait
-		}()
-	}
-	l.trigger <- sig
+// ForceWrite forces a write operation and blocks until completion. It is used only by tests.
+func (l *Log) ForceWrite() {
+	close(l.buffer)
+	l.wg.Wait()
+
+	// Restart the batching goroutine
+	l.buffer = make(chan *badgerv4.Entry, l.bufferSize)
+	l.wg.Add(1)
+	go l.batchWriter(l.maxBatchSize, l.flushInterval)
 }
 
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
@@ -225,7 +213,7 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := GenKey(accessLogPrefix, callID)
+	key := GenKey(AccessLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
 }
@@ -253,7 +241,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := GenKey(decisionLogPrefix, callID)
+	key := GenKey(DecisionLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
 }
@@ -269,14 +257,14 @@ func (l *Log) Write(ctx context.Context, key, value []byte) error {
 
 func (l *Log) LastNAccessLogEntries(ctx context.Context, n uint) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	go l.listLastN(ctx, accessLogPrefix, n, c)
+	go l.listLastN(ctx, AccessLogPrefix, n, c)
 
 	return c
 }
 
 func (l *Log) LastNDecisionLogEntries(ctx context.Context, n uint) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	go l.listLastN(ctx, decisionLogPrefix, n, c)
+	go l.listLastN(ctx, DecisionLogPrefix, n, c)
 
 	return c
 }
@@ -316,14 +304,14 @@ func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector)
 
 func (l *Log) AccessLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	go l.listBetweenTimestamps(ctx, accessLogPrefix, fromTS, toTS, c)
+	go l.listBetweenTimestamps(ctx, AccessLogPrefix, fromTS, toTS, c)
 
 	return c
 }
 
 func (l *Log) DecisionLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	go l.listBetweenTimestamps(ctx, decisionLogPrefix, fromTS, toTS, c)
+	go l.listBetweenTimestamps(ctx, DecisionLogPrefix, fromTS, toTS, c)
 
 	return c
 }
@@ -373,13 +361,13 @@ func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, 
 
 func (l *Log) AccessLogEntryByID(ctx context.Context, id audit.ID) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	l.getByID(ctx, accessLogPrefix, id, c)
+	l.getByID(ctx, AccessLogPrefix, id, c)
 	return c
 }
 
 func (l *Log) DecisionLogEntryByID(ctx context.Context, id audit.ID) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	l.getByID(ctx, decisionLogPrefix, id, c)
+	l.getByID(ctx, DecisionLogPrefix, id, c)
 	return c
 }
 

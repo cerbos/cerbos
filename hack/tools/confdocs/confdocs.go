@@ -162,6 +162,13 @@ func findInterfaceDef(pkgs []*packages.Package) (*types.Interface, error) {
 func findIfaceImplementors(iface *types.Interface, pkgs []*packages.Package) []*StructInfo {
 	var impls []*StructInfo
 
+	// `traversedObjMap` is used to store fields against the object FQN as we traverse the AST.
+	// This allows us to assign fields for non-local embedded structs on the fly by constructing
+	// the FQN and retrieving the fields from the map.
+	// We don't have to wait until traversal completion as embedded structs should already be available
+	// in the map given the depth-first traversal order of the AST.
+	traversedObjMap := make(map[string][]FieldInfo)
+
 	for _, pkg := range pkgs {
 		scope := pkg.Types.Scope()
 		for _, name := range scope.Names() {
@@ -171,8 +178,10 @@ func findIfaceImplementors(iface *types.Interface, pkgs []*packages.Package) []*
 					continue
 				}
 
-				if si := inspect(pkg, obj); si != nil {
+				if si := inspect(pkg, obj, traversedObjMap); si != nil {
 					impls = append(impls, si)
+
+					traversedObjMap[pkg.ID+"."+obj.Name()] = si.Fields
 				}
 			}
 		}
@@ -199,15 +208,16 @@ func implementsIface(iface *types.Interface, obj types.Object) bool {
 	return false
 }
 
-func inspect(pkg *packages.Package, obj types.Object) *StructInfo {
+func inspect(pkg *packages.Package, obj types.Object, traversedObjMap map[string][]FieldInfo) *StructInfo {
 	ts, cg := find(pkg.Syntax, obj.Name())
 	if ts == nil {
 		logger.Fatalf("Failed to find object named %q", obj.Name())
+		return nil
 	}
 
 	doc, _ := parseDescMarker(cg)
 	si := &StructInfo{Pkg: pkg.ID, Name: ts.Name.Name, Documentation: doc}
-	si.Fields = inspectStruct(ts.Type)
+	si.Fields = inspectStruct(ts.Type, pkg.TypesInfo, traversedObjMap)
 
 	return si
 }
@@ -224,7 +234,7 @@ func find(files []*ast.File, objName string) (*ast.TypeSpec, *ast.CommentGroup) 
 	return f.typeSpec, f.commentGroup
 }
 
-func inspectStruct(node ast.Expr) []FieldInfo {
+func inspectStruct(node ast.Expr, info *types.Info, traversedObjMap map[string][]FieldInfo) []FieldInfo {
 	var fields []FieldInfo
 	switch t := node.(type) {
 	case *ast.StructType:
@@ -236,12 +246,21 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 					if ok {
 						st, ok := ts.Type.(*ast.StructType)
 						if ok {
-							fields = inspectStruct(st)
+							fields = inspectStruct(st, info, traversedObjMap)
 							continue
 						}
 					}
 				case *ast.SelectorExpr:
-					// TODO(saml) investigate how to retrieve the conf data from the non-local embedded struct
+					// Handle non-local embedded structs
+					if obj, ok := info.Uses[i.Sel]; ok {
+						if id, ok := i.X.(*ast.Ident); ok {
+							if obj.Pkg().Name() == id.Name && obj.Name() == i.Sel.Name {
+								if embeddedFields, ok := traversedObjMap[obj.Pkg().Path()+"."+obj.Name()]; ok {
+									fields = append(fields, embeddedFields...)
+								}
+							}
+						}
+					}
 					continue
 				}
 			}
@@ -255,20 +274,20 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 				fi.Array = true
 			}
 
-			fi.Fields = inspectStruct(f.Type)
+			fi.Fields = inspectStruct(f.Type, info, traversedObjMap)
 
 			fields = append(fields, fi)
 		}
 	case *ast.StarExpr:
-		return inspectStruct(t.X)
+		return inspectStruct(t.X, info, traversedObjMap)
 	case *ast.Ident:
 		if t.Obj != nil && t.Obj.Kind == ast.Typ {
 			if ts, ok := t.Obj.Decl.(*ast.TypeSpec); ok {
-				return inspectStruct(ts.Type)
+				return inspectStruct(ts.Type, info, traversedObjMap)
 			}
 		}
 	case *ast.ArrayType:
-		return inspectStruct(t.Elt)
+		return inspectStruct(t.Elt, info, traversedObjMap)
 	}
 
 	sort.Slice(fields, func(i, j int) bool {
