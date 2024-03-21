@@ -58,6 +58,9 @@ releases:
             scriptsConfigMap: postgres-init
           persistence:
             enabled: false
+          extraVolumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
@@ -93,11 +96,11 @@ releases:
           repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
           tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
       - volumes:
-        - name: cerbos-auditlog
-          emptyDir: {}
+          - name: cerbos-auditlog
+            emptyDir: {}
       - volumeMounts:
-        - name: cerbos-auditlog
-          mountPath: /audit
+          - name: cerbos-auditlog
+            mountPath: /audit
       - cerbos:
           tlsSecretName: 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
           logLevel: DEBUG
@@ -109,7 +112,7 @@ releases:
                 maxResourcesPerRequest: 5
               adminAPI:
                 enabled: true
-                adminCredentials: 
+                adminCredentials:
                   username: cerbos
                   passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
             auxData:
@@ -122,11 +125,11 @@ releases:
               accessLogsEnabled: true
               decisionLogsEnabled: true
               backend: local
-              local: 
+              local:
                 storagePath: /audit/cerbos
             storage:
               driver: "postgres"
-              postgres: 
+              postgres:
                 url: 'postgres://cerbos_user:changeme@{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
             telemetry:
               disabled: true
