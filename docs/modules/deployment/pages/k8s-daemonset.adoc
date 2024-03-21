@@ -1,0 +1,5 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Deploy Cerbos as DaemonSet
+
+You can use the xref:ROOT:installation/helm.adoc[Cerbos Helm chart] to deploy Cerbos as a daemonset inside your Kubernetes cluster. Refer to the xref:ROOT:installation/helm.adoc[Helm chart instructions] for more details. 
