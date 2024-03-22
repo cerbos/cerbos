@@ -27,7 +27,6 @@ internal class Program
 
                 ResourceEntry
                     .NewInstance("album:object", "DAFFY002")
-                    .WithPolicyVersion("20210210")
                     .WithAttribute("owner", AttributeValue.StringValue("daffy_duck"))
                     .WithAttribute("public", AttributeValue.BoolValue(true))
                     .WithAttribute("flagged", AttributeValue.BoolValue(false))
