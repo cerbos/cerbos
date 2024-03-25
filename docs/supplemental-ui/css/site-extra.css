@@ -16,7 +16,7 @@
     }
 
     .navbar-item.has-dropdown:hover .navbar-link,.navbar-end .navbar-link:hover,.navbar-end>a.navbar-item:hover {
-        background-color: #ffc11e !important;
+        background-color: #e0a100 !important;
     }
 }
 
