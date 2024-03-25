@@ -1,12 +1,6 @@
 ---
 run:
   timeout: 300s
-  skip-dirs:
-    - "^api/"
-    - "^deploy/"
-    - "^docs/"
-    - "^hack/"
-    - "^internal/test/mocks/"
   build-tags:
     - tests
 
@@ -100,6 +94,13 @@ linters:
 
 issues:
   max-same-issues: 30
+
+  exclude-dirs:
+    - "^api/"
+    - "^deploy/"
+    - "^docs/"
+    - "^hack/"
+    - "^internal/test/mocks/"
 
   exclude-rules:
     - path: _test\.go
