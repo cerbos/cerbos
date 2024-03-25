@@ -2,6 +2,24 @@
     background-color: #ffb901 !important;
 }
 
+.navbar-burger span {
+    background-color: #000000;
+}
+
+.navbar-link,.navbar-item {
+    color: #000000 !important;
+}
+
+@media screen and (min-width:1024px) {
+    .navbar-item:not(.hide-for-print):hover {
+        background-color: #f5f5f5 !important;
+    }
+
+    .navbar-item.has-dropdown:hover .navbar-link,.navbar-end .navbar-link:hover,.navbar-end>a.navbar-item:hover {
+        background-color: #ffc11e !important;
+    }
+}
+
 .footer {
     background-color: #ffb901 !important;
 }
