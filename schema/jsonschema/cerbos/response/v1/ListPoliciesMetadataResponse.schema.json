@@ -1,0 +1,28 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/ListPoliciesMetadataResponse.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.response.v1.ListPoliciesMetadataResponse.Metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.response.v1.ListPoliciesMetadataResponse.Metadata"
+      }
+    }
+  }
+}
