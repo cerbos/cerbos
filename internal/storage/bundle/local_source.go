@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -125,6 +126,17 @@ func (ls *LocalSource) loadBundle() error {
 
 func (ls *LocalSource) Driver() string {
 	return DriverName
+}
+
+func (ls *LocalSource) ListPoliciesMetadata(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
+	if ls.bundle == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
+	return ls.bundle.ListPoliciesMetadata(ctx, params)
 }
 
 func (ls *LocalSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) (ids []string, err error) {

@@ -631,6 +631,28 @@ message EnablePolicyRequest {
   ];
 }
 
+message ListPoliciesMetadataRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "List policies' metadata request"}
+  };
+  bool include_disabled = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
+  ];
+  string name_regexp = 2 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by name with regexp"}
+  ];
+  string scope_regexp = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by scope with regexp"}
+  ];
+  string version_regexp = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by version with regexp"}
+  ];
+}
+
 message AddOrUpdateSchemaRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Add/update schema request"}
