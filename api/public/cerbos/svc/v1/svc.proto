@@ -116,6 +116,19 @@ service CerbosAdminService {
     };
   }
 
+  rpc ListPoliciesMetadata(cerbos.request.v1.ListPoliciesMetadataRequest) returns (cerbos.response.v1.ListPoliciesMetadataResponse) {
+    option (google.api.http) = {get: "/admin/policies/metadata"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List metadata of the policies",
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
+        }
+      }
+    };
+  }
+
   rpc ListPolicies(cerbos.request.v1.ListPoliciesRequest) returns (cerbos.response.v1.ListPoliciesResponse) {
     option (google.api.http) = {get: "/admin/policies"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

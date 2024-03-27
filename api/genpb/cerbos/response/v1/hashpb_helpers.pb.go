@@ -1914,6 +1914,39 @@ func cerbos_response_v1_ListAuditLogEntriesResponse_hashpb_sum(m *ListAuditLogEn
 	}
 }
 
+func cerbos_response_v1_ListPoliciesMetadataResponse_Metadata_hashpb_sum(m *ListPoliciesMetadataResponse_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.ListPoliciesMetadataResponse.Metadata.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_ListPoliciesMetadataResponse_hashpb_sum(m *ListPoliciesMetadataResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.ListPoliciesMetadataResponse.metadata"]; !ok {
+		if len(m.Metadata) > 0 {
+			keys := make([]string, len(m.Metadata))
+			i := 0
+			for k := range m.Metadata {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Metadata[k] != nil {
+					cerbos_response_v1_ListPoliciesMetadataResponse_Metadata_hashpb_sum(m.Metadata[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_response_v1_ListPoliciesResponse_hashpb_sum(m *ListPoliciesResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.ListPoliciesResponse.policy_ids"]; !ok {
 		if len(m.PolicyIds) > 0 {

@@ -11,8 +11,10 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"sort"
 	"strings"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -231,6 +233,65 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	}
 
 	return rps, nil
+}
+
+func (b *Bundle) ListPoliciesMetadata(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+	policyIDs, err := b.ListPolicyIDs(ctx, listParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list policies: %w", err)
+	}
+
+	if len(policyIDs) == 0 {
+		return nil, nil
+	}
+
+	metadata := make(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata)
+	for _, policyID := range policyIDs {
+		id := namer.GenModuleIDFromFQN(policyID)
+		idHex := id.HexStr()
+		fileName := policyDir + idHex
+
+		pset, err := b.loadPolicySet(idHex, fileName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load policy %s: %w", policyID, err)
+		}
+
+		var actions []string
+		lut := make(map[string]struct{})
+		switch set := pset.PolicySet.(type) {
+		case *runtimev1.RunnablePolicySet_ResourcePolicy:
+			for _, p := range set.ResourcePolicy.Policies {
+				for _, r := range p.Rules {
+					for a := range r.Actions {
+						if _, ok := lut[a]; !ok {
+							lut[a] = struct{}{}
+							actions = append(actions, a)
+						}
+					}
+				}
+			}
+		case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+			for _, p := range set.PrincipalPolicy.Policies {
+				for _, r := range p.ResourceRules {
+					for _, ar := range r.ActionRules {
+						if _, ok := lut[ar.Action]; !ok {
+							lut[ar.Action] = struct{}{}
+							actions = append(actions, ar.Action)
+						}
+					}
+				}
+			}
+		}
+
+		if len(actions) > 0 {
+			sort.Strings(actions)
+			metadata[pset.Fqn] = &responsev1.ListPoliciesMetadataResponse_Metadata{
+				Actions: actions,
+			}
+		}
+	}
+
+	return metadata, nil
 }
 
 func (b *Bundle) ListPolicyIDs(_ context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {

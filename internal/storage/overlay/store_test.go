@@ -9,6 +9,8 @@ import (
 	"io"
 	"testing"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -251,6 +253,14 @@ type MockStore struct {
 func (ms *MockStore) Driver() string {
 	args := ms.Called()
 	return args.String(0)
+}
+
+func (ms *MockStore) ListPoliciesMetadata(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+	args := ms.Called(ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata), args.Error(0)
 }
 
 func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {

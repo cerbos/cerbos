@@ -177,6 +177,64 @@
         ]
       }
     },
+    "/admin/policies/metadata": {
+      "get": {
+        "summary": "List metadata of the policies",
+        "operationId": "CerbosAdminService_ListPoliciesMetadata",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListPoliciesMetadataResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "includeDisabled",
+            "description": "Include disabled policies",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "nameRegexp",
+            "description": "Filter policies by name with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "scopeRegexp",
+            "description": "Filter policies by scope with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "versionRegexp",
+            "description": "Filter policies by version with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/admin/policy": {
       "get": {
         "summary": "Get policy",
@@ -1707,6 +1765,33 @@
         }
       }
     },
+    "policyv1Metadata": {
+      "type": "object",
+      "properties": {
+        "sourceFile": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "hash": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "storeIdentifer": {
+          "type": "string"
+        },
+        "storeIdentifier": {
+          "type": "string"
+        },
+        "sourceAttributes": {
+          "$ref": "#/definitions/v1SourceAttributes"
+        }
+      }
+    },
     "policyv1TestResults": {
       "type": "object",
       "properties": {
@@ -2539,6 +2624,29 @@
       },
       "description": "Audit log stream."
     },
+    "v1ListPoliciesMetadataResponse": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1ListPoliciesMetadataResponseMetadata"
+          }
+        }
+      },
+      "description": "Metadata related to policies"
+    },
+    "v1ListPoliciesMetadataResponseMetadata": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "v1ListPoliciesResponse": {
       "type": "object",
       "properties": {
@@ -2588,33 +2696,6 @@
           "items": {
             "type": "string"
           }
-        }
-      }
-    },
-    "v1Metadata": {
-      "type": "object",
-      "properties": {
-        "sourceFile": {
-          "type": "string"
-        },
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "hash": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "storeIdentifer": {
-          "type": "string"
-        },
-        "storeIdentifier": {
-          "type": "string"
-        },
-        "sourceAttributes": {
-          "$ref": "#/definitions/v1SourceAttributes"
         }
       }
     },
@@ -2967,7 +3048,7 @@
           "type": "string"
         },
         "metadata": {
-          "$ref": "#/definitions/v1Metadata"
+          "$ref": "#/definitions/policyv1Metadata"
         },
         "resourcePolicy": {
           "$ref": "#/definitions/v1ResourcePolicy"

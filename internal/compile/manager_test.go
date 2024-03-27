@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -402,6 +404,14 @@ func (ms *MockStore) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper
 func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	args := ms.MethodCalled("Delete", ctx, ids)
 	return args.Error(0)
+}
+
+func (ms *MockStore) ListPoliciesMetadata(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+	args := ms.MethodCalled("ListPoliciesMetadata", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata), args.Error(0)
 }
 
 func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {

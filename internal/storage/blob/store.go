@@ -14,6 +14,8 @@ import (
 	"os"
 	"time"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"go.uber.org/zap"
@@ -317,6 +319,33 @@ func (s *Store) GetCompilationUnits(_ context.Context, ids ...namer.ModuleID) (m
 
 func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
 	return s.idx.GetDependents(ids...)
+}
+
+func (s *Store) ListPoliciesMetadata(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+	policyIDs, err := s.idx.ListPolicyIDs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list policies: %w", err)
+	}
+	if len(policyIDs) == 0 {
+		return nil, nil
+	}
+
+	policies, err := s.LoadPolicy(ctx, policyIDs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	metadata := make(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata)
+	for _, p := range policies {
+		actions := policy.Actions(p.Policy)
+		if len(actions) > 0 {
+			metadata[p.FQN] = &responsev1.ListPoliciesMetadataResponse_Metadata{
+				Actions: actions,
+			}
+		}
+	}
+
+	return metadata, nil
 }
 
 func (s *Store) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {

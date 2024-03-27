@@ -5,6 +5,7 @@ package policy
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -354,6 +355,35 @@ type Wrapper struct {
 	Scope   string
 	ID      namer.ModuleID
 	Kind    Kind
+}
+
+// Actions returns unique list of actions in a policy.
+func Actions(p *policyv1.Policy) []string {
+	var actions []string
+	lut := make(map[string]struct{})
+	switch p := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		for _, r := range p.ResourcePolicy.Rules {
+			for _, a := range r.Actions {
+				if _, ok := lut[a]; !ok {
+					lut[a] = struct{}{}
+					actions = append(actions, a)
+				}
+			}
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		for _, r := range p.PrincipalPolicy.Rules {
+			for _, a := range r.Actions {
+				if _, ok := lut[a.Action]; !ok {
+					lut[a.Action] = struct{}{}
+					actions = append(actions, a.Action)
+				}
+			}
+		}
+	}
+
+	sort.Strings(actions)
+	return actions
 }
 
 // Wrap augments a policy with useful information about itself.

@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
@@ -42,6 +44,7 @@ var (
 
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
+	sfGroup  singleflight.Group
 	store    storage.Store
 	auditLog audit.Log
 	*svcv1.UnimplementedCerbosAdminServiceServer
@@ -114,6 +117,45 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	}
 
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
+}
+
+func (cas *CerbosAdminService) ListPoliciesMetadata(ctx context.Context, req *requestv1.ListPoliciesMetadataRequest) (*responsev1.ListPoliciesMetadataResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	// Filters are not scalable for non-mutable stores.
+	if _, ok := cas.store.(storage.MutableStore); !ok && (req.NameRegexp != "" || req.ScopeRegexp != "" || req.VersionRegexp != "") {
+		return nil, status.Error(codes.Unimplemented, "Store does not support regexp filters")
+	}
+
+	meta, err, _ := cas.sfGroup.Do("list_policies_metadata", func() (any, error) {
+		filterParams := storage.ListPolicyIDsParams{
+			NameRegexp:      req.NameRegexp,
+			ScopeRegexp:     req.ScopeRegexp,
+			VersionRegexp:   req.VersionRegexp,
+			IncludeDisabled: req.IncludeDisabled,
+		}
+
+		meta, err := cas.store.ListPoliciesMetadata(ctx, filterParams)
+		if err != nil {
+			logging.ReqScopeLog(ctx).Error("Could not list policies' metadata", zap.Error(err))
+			return nil, status.Error(codes.Internal, "could not list policies' metadata")
+		}
+
+		return meta, nil
+	})
+
+	md, ok := meta.(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata)
+	if !ok {
+		return nil, fmt.Errorf("failed to type assert during list policies metadata")
+	}
+
+	return &responsev1.ListPoliciesMetadataResponse{Metadata: md}, err
 }
 
 func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {
