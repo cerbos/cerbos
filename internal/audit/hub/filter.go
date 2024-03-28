@@ -22,8 +22,7 @@ const (
 
 	checkResourcesDeprecatedPrefix = "$.entries[*].decisionLogEntry"
 	checkResourcesPrefix           = "$.entries[*].decisionLogEntry.checkResources"
-
-	planResourcesPrefix = "$.entries[*].decisionLogEntry.planResources"
+	planResourcesPrefix            = "$.entries[*].decisionLogEntry.planResources"
 )
 
 type AuditLogFilter struct {
