@@ -50,7 +50,13 @@ func init() {
 }
 
 type Log struct {
+	syncer IngestSyncer
 	*local.Log
+	logger                         *zap.Logger
+	filter                         *AuditLogFilter
+	muTimer                        *mutexTimer
+	minFlushInterval, flushTimeout time.Duration
+	maxBatchSize, numGo            int
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
@@ -66,13 +72,28 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
+	filter, err := NewAuditLogFilter(conf.Mask)
+	if err != nil {
+		return nil, err
+	}
+
+	log := &Log{
+		Log:              localLog,
+		syncer:           syncer,
+		logger:           logger,
+		filter:           filter,
+		minFlushInterval: minFlushInterval,
+		flushTimeout:     flushTimeout,
+		maxBatchSize:     maxBatchSize,
+		numGo:            numGo,
+		muTimer:          newMutexTimer(),
+	}
+
 	localLog.RegisterCallback(func(waitCh chan<- struct{}) {
-		schedule(localLog.Db, newMutexTimer(), syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, waitCh)
+		log.schedule(waitCh)
 	})
 
-	return &Log{
-		localLog,
-	}, nil
+	return log, nil
 }
 
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
@@ -162,49 +183,49 @@ func (mt *mutexTimer) wait() {
 	<-mt.expireCh
 }
 
-func schedule(db *badgerv4.DB, muTimer *mutexTimer, syncer IngestSyncer, minFlushInterval, flushTimeout time.Duration, maxBatchSize, numGo int, logger *zap.Logger, waitCh chan<- struct{}) {
-	muTimer.wait()
+func (l *Log) schedule(waitCh chan<- struct{}) {
+	l.muTimer.wait()
 
-	if err := streamLogs(db, syncer, maxBatchSize, numGo, flushTimeout); err != nil {
+	if err := l.streamLogs(); err != nil {
 		var ingestErr ErrIngestBackoff
 		if errors.As(err, &ingestErr) {
-			logger.Warn("svc-ingest issued backoff", zap.Error(err))
-			muTimer.set(ingestErr.Backoff)
-			go schedule(db, muTimer, syncer, minFlushInterval, flushTimeout, maxBatchSize, numGo, logger, waitCh)
+			l.logger.Warn("svc-ingest issued backoff", zap.Error(err))
+			l.muTimer.set(ingestErr.Backoff)
+			go l.schedule(waitCh)
 			return
 		}
-		logger.Warn("Failed sync", zap.Error(err))
+		l.logger.Warn("Failed sync", zap.Error(err))
 	}
 
 	// Set a min wait duration regardless of if events are pending.
 	// This prevents a retry completion occurring immediately before the next sync
 	// (and therefore burdening the backend).
-	muTimer.set(minFlushInterval)
+	l.muTimer.set(l.minFlushInterval)
 
 	waitCh <- struct{}{}
 }
 
-func streamLogs(db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration) error {
+func (l *Log) streamLogs() error {
 	// We use two streams: one for access logs, and one for decision logs, as this allows us to
 	// avoid the penalty of per-key string inspection when inferring the type down the line.
 	ctx := context.Background()
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 	p.Go(func(ctx context.Context) error {
-		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, AccessSyncPrefix)
+		return l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, AccessSyncPrefix)
 	})
 	p.Go(func(ctx context.Context) error {
-		return streamPrefix(ctx, db, syncer, maxBatchSize, numGo, flushTimeout, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, DecisionSyncPrefix)
+		return l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, DecisionSyncPrefix)
 	})
 
 	return p.Wait()
 }
 
-func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, maxBatchSize, numGo int, flushTimeout time.Duration, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
+func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
 	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
 	// Subsequent writes aren't blocked.
-	stream := db.NewStream()
-	stream.NumGo = numGo
+	stream := l.Db.NewStream()
+	stream.NumGo = l.numGo
 	stream.Prefix = prefix
 
 	stream.Send = func(buf *z.Buffer) error {
@@ -218,13 +239,13 @@ func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, max
 			keys[i] = kv.Key
 		}
 
-		for i := 0; i < len(keys); i += maxBatchSize {
-			end := i + maxBatchSize
+		for i := 0; i < len(keys); i += l.maxBatchSize {
+			end := i + l.maxBatchSize
 			if end > len(keys) {
 				end = len(keys)
 			}
 
-			if err := syncThenDelete(ctx, db, syncer, kind, keys[i:end], flushTimeout); err != nil {
+			if err := l.syncThenDelete(ctx, kind, keys[i:end]); err != nil {
 				return err
 			}
 		}
@@ -235,8 +256,8 @@ func streamPrefix(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, max
 	return stream.Orchestrate(ctx)
 }
 
-func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte, flushTimeout time.Duration) error {
-	entries, err := getIngestBatchEntries(db, syncKeys, kind)
+func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte) error {
+	entries, err := l.getIngestBatchEntries(syncKeys, kind)
 	if err != nil {
 		return err
 	}
@@ -247,24 +268,29 @@ func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, k
 	}
 
 	{
-		ctx, cancelFn := context.WithTimeout(ctx, flushTimeout)
+		ctx, cancelFn := context.WithTimeout(ctx, l.flushTimeout)
 		defer cancelFn()
 
-		if err := syncer.Sync(ctx, &logsv1.IngestBatch{
+		maskedIngestBatch, err := l.filter.Filter(&logsv1.IngestBatch{
 			Id:      string(batchID),
 			Entries: entries,
-		}); err != nil {
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := l.syncer.Sync(ctx, maskedIngestBatch); err != nil {
 			return err
 		}
 	}
 
-	wb := db.NewWriteBatch()
+	wb := l.Db.NewWriteBatch()
 	defer wb.Cancel()
 
 	for _, k := range syncKeys {
 		if err := wb.Delete(k); err != nil {
 			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
-				wb = db.NewWriteBatch()
+				wb = l.Db.NewWriteBatch()
 				_ = wb.Delete(k)
 			} else {
 				return err
@@ -275,9 +301,9 @@ func syncThenDelete(ctx context.Context, db *badgerv4.DB, syncer IngestSyncer, k
 	return wb.Flush()
 }
 
-func getIngestBatchEntries(db *badgerv4.DB, syncKeys [][]byte, kind logsv1.IngestBatch_EntryKind) ([]*logsv1.IngestBatch_Entry, error) {
+func (l *Log) getIngestBatchEntries(syncKeys [][]byte, kind logsv1.IngestBatch_EntryKind) ([]*logsv1.IngestBatch_Entry, error) {
 	entries := make([]*logsv1.IngestBatch_Entry, len(syncKeys))
-	if err := db.Update(func(txn *badgerv4.Txn) error {
+	if err := l.Db.Update(func(txn *badgerv4.Txn) error {
 		for i, k := range syncKeys {
 			syncItem, err := txn.Get(k)
 			if err != nil {

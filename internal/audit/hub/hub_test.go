@@ -39,9 +39,10 @@ const (
 
 type mockSyncer struct {
 	*mocks.IngestSyncer
-	synced map[string]struct{}
-	t      *testing.T
-	mu     sync.RWMutex
+	entries []*logsv1.IngestBatch_Entry
+	synced  map[string]struct{}
+	t       *testing.T
+	mu      sync.RWMutex
 }
 
 func newMockSyncer(t *testing.T) *mockSyncer {
@@ -49,6 +50,7 @@ func newMockSyncer(t *testing.T) *mockSyncer {
 
 	return &mockSyncer{
 		IngestSyncer: mocks.NewIngestSyncer(t),
+		entries:      []*logsv1.IngestBatch_Entry{},
 		synced:       make(map[string]struct{}),
 		t:            t,
 	}
@@ -61,6 +63,8 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	m.entries = append(m.entries, batch.Entries...)
 
 	for _, e := range batch.Entries {
 		var key []byte
@@ -115,6 +119,9 @@ func TestHubLog(t *testing.T) {
 			FlushTimeout:     1 * time.Second,
 			NumGoRoutines:    8,
 		},
+		hub.MaskConf{
+			Peer: []string{"address"},
+		},
 		local.Conf{
 			StoragePath:     t.TempDir(),
 			RetentionPeriod: 24 * time.Hour,
@@ -143,6 +150,9 @@ func TestHubLog(t *testing.T) {
 	purgeKeys := func() {
 		err := db.Db.DropAll()
 		require.NoError(t, err, "failed to purge keys")
+
+		syncer.entries = []*logsv1.IngestBatch_Entry{}
+		syncer.synced = make(map[string]struct{})
 	}
 
 	getLocalKeys := func() [][]byte {
@@ -171,7 +181,7 @@ func TestHubLog(t *testing.T) {
 	// we treat each batch separately (hence the /2 -> *2 below).
 	wantNumBatches := int(math.Ceil((numRecords/2)/float64(batchSize))) * 2
 
-	t.Run("insertsAndDeletesKeys", func(t *testing.T) {
+	t.Run("insertsDeletesKeys", func(t *testing.T) {
 		t.Cleanup(purgeKeys)
 
 		loadedKeys := loadData(t, db, startDate)
@@ -182,6 +192,17 @@ func TestHubLog(t *testing.T) {
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
 		require.Empty(t, getLocalKeys(), "keys should have been deleted")
+
+		t.Run("filter", func(t *testing.T) {
+			for _, e := range syncer.entries {
+				switch v := e.Entry.(type) {
+				case *logsv1.IngestBatch_Entry_AccessLogEntry:
+					require.Zero(t, v.AccessLogEntry.Peer.Address)
+				case *logsv1.IngestBatch_Entry_DecisionLogEntry:
+					require.Zero(t, v.DecisionLogEntry.Peer.Address)
+				}
+			}
+		})
 	})
 
 	t.Run("partiallyDeletesBeforeError", func(t *testing.T) {
@@ -273,6 +294,9 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 		return &auditv1.DecisionLogEntry{
 			CallId:    string(id),
 			Timestamp: timestamppb.New(ts),
+			Peer: &auditv1.Peer{
+				Address: "1.1.1.1",
+			},
 			Inputs: []*enginev1.CheckInput{
 				{
 					RequestId: strconv.Itoa(i),
