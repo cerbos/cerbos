@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -190,18 +189,16 @@ func (c *Manager) evict(modID namer.ModuleID) {
 }
 
 func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	keyBuilder := new(strings.Builder)
-	for _, modID := range candidates {
-		rps, ok := c.cache.Get(modID)
-		if ok && rps != nil {
-			return rps, nil
-		}
-
-		keyBuilder.WriteString(modID.String())
-		keyBuilder.WriteRune('|')
+	if len(candidates) == 0 {
+		return nil, errors.New("candidates list must contain at least one candidate")
 	}
 
-	key := keyBuilder.String()
+	// If the first candidate is not in the cache, we need to fallback to the store to avoid false positive cache hits when lenient scope search is enabled.
+	if rps, ok := c.cache.Get(candidates[0]); ok && rps != nil {
+		return rps, nil
+	}
+
+	key := candidates[0].String()
 	defer c.sf.Forget(key)
 
 	rpsVal, err, _ := c.sf.Do(key, func() (any, error) {

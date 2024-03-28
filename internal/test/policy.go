@@ -126,6 +126,12 @@ func GenDisabledResourcePolicy(mod NameMod) *policyv1.Policy {
 	return p
 }
 
+func GenScopedResourcePolicy(scope string, mod NameMod) *policyv1.Policy {
+	p := GenResourcePolicy(mod)
+	p.GetResourcePolicy().Scope = scope
+	return p
+}
+
 // GenResourcePolicy generates a sample resource policy with some names modified by the NameMod.
 func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
