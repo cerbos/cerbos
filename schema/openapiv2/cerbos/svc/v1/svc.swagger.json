@@ -177,15 +177,15 @@
         ]
       }
     },
-    "/admin/policies/metadata": {
+    "/admin/policies/inspect": {
       "get": {
-        "summary": "List metadata of the policies",
-        "operationId": "CerbosAdminService_ListPoliciesMetadata",
+        "summary": "Inspect policies in the store",
+        "operationId": "CerbosAdminService_InspectPolicies",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1ListPoliciesMetadataResponse"
+              "$ref": "#/definitions/v1InspectPoliciesResponse"
             }
           },
           "default": {
@@ -2603,6 +2603,29 @@
       },
       "description": "Get schema(s) response"
     },
+    "v1InspectPoliciesResponse": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1InspectPoliciesResponseMetadata"
+          }
+        }
+      },
+      "description": "Inspect policies response"
+    },
+    "v1InspectPoliciesResponseMetadata": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "v1ListAuditLogEntriesRequestKind": {
       "type": "string",
       "enum": [
@@ -2623,29 +2646,6 @@
         }
       },
       "description": "Audit log stream."
-    },
-    "v1ListPoliciesMetadataResponse": {
-      "type": "object",
-      "properties": {
-        "metadata": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1ListPoliciesMetadataResponseMetadata"
-          }
-        }
-      },
-      "description": "Metadata related to policies"
-    },
-    "v1ListPoliciesMetadataResponseMetadata": {
-      "type": "object",
-      "properties": {
-        "actions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
     },
     "v1ListPoliciesResponse": {
       "type": "object",

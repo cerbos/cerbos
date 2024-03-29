@@ -119,8 +119,8 @@ type ListPolicyIDsParams struct {
 type Store interface {
 	// Driver is the name of the storage backend implementation.
 	Driver() string
-	// ListPoliciesMetadata returns metadata for the policies
-	ListPoliciesMetadata(context.Context, ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error)
+	// InspectPolicies returns inspection results for the policies in the store
+	InspectPolicies(context.Context, ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error)
 	// ListPolicyIDs returns the policy IDs in the store
 	ListPolicyIDs(context.Context, ListPolicyIDsParams) ([]string, error)
 	// ListSchemaIDs returns the schema ids in the store

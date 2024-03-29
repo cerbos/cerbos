@@ -421,7 +421,7 @@ func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 	return s.bundle.GetFirstMatch(ctx, candidates)
 }
 
-func (s *RemoteSource) ListPoliciesMetadata(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+func (s *RemoteSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -429,7 +429,7 @@ func (s *RemoteSource) ListPoliciesMetadata(ctx context.Context, params storage.
 		return nil, ErrBundleNotLoaded
 	}
 
-	return s.bundle.ListPoliciesMetadata(ctx, params)
+	return s.bundle.InspectPolicies(ctx, params)
 }
 
 func (s *RemoteSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {

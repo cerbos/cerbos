@@ -321,7 +321,7 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 	return s.idx.GetDependents(ids...)
 }
 
-func (s *Store) ListPoliciesMetadata(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+func (s *Store) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
 	policyIDs, err := s.idx.ListPolicyIDs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
@@ -335,11 +335,11 @@ func (s *Store) ListPoliciesMetadata(ctx context.Context, _ storage.ListPolicyID
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
-	metadata := make(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata)
+	metadata := make(map[string]*responsev1.InspectPoliciesResponse_Metadata)
 	for _, p := range policies {
 		actions := policy.Actions(p.Policy)
 		if len(actions) > 0 {
-			metadata[p.FQN] = &responsev1.ListPoliciesMetadataResponse_Metadata{
+			metadata[p.FQN] = &responsev1.InspectPoliciesResponse_Metadata{
 				Actions: actions,
 			}
 		}

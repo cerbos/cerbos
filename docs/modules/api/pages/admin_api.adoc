@@ -164,14 +164,14 @@ curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml'
 ----
 
-=== List Policies Metadata
+=== Inspect Policies
 
 ----
-GET /admin/policies/metadata
+GET /admin/policies/inspect
 ----
 
-Issue a GET request to the endpoint to list the metadata of the policies available in the store. If the policy store
-supports filtering, you can optionally pass filter parameters to reduce the result set.
+Issue a GET request to the endpoint to inspect the policies in the store. If the policy store supports filtering, you
+can optionally pass filter parameters to reduce the result set.
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
 
@@ -181,13 +181,13 @@ case-insensitive regular expressions.
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policies/metadata'
+    'https://localhost:3592/admin/policies/inspect'
 ----
 
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policies/metadata?includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&versionRegexp=default'
+    'https://localhost:3592/admin/policies/inspect?includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&versionRegexp=default'
 ----
 
 === Get Policies

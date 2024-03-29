@@ -34,9 +34,9 @@ func (instrumentedSource) Driver() string {
 	return DriverName
 }
 
-func (is instrumentedSource) ListPoliciesMetadata(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
-	return measureBinaryOp(ctx, is.name, "ListPoliciesMetadata", func(ctx context.Context) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
-		return is.source.ListPoliciesMetadata(ctx, params)
+func (is instrumentedSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+	return measureBinaryOp(ctx, is.name, "InspectPolicies", func(ctx context.Context) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+		return is.source.InspectPolicies(ctx, params)
 	})
 }
 

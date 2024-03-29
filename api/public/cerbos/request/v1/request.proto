@@ -631,9 +631,9 @@ message EnablePolicyRequest {
   ];
 }
 
-message ListPoliciesMetadataRequest {
+message InspectPoliciesRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "List policies' metadata request"}
+    json_schema: {description: "Inspect policies request"}
   };
   bool include_disabled = 1 [
     (google.api.field_behavior) = OPTIONAL,

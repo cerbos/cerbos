@@ -119,7 +119,7 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
 }
 
-func (cas *CerbosAdminService) ListPoliciesMetadata(ctx context.Context, req *requestv1.ListPoliciesMetadataRequest) (*responsev1.ListPoliciesMetadataResponse, error) {
+func (cas *CerbosAdminService) InspectPolicies(ctx context.Context, req *requestv1.InspectPoliciesRequest) (*responsev1.InspectPoliciesResponse, error) {
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (cas *CerbosAdminService) ListPoliciesMetadata(ctx context.Context, req *re
 		return nil, status.Error(codes.Unimplemented, "Store does not support regexp filters")
 	}
 
-	meta, err, _ := cas.sfGroup.Do("list_policies_metadata", func() (any, error) {
+	meta, err, _ := cas.sfGroup.Do("inspect_policies", func() (any, error) {
 		filterParams := storage.ListPolicyIDsParams{
 			NameRegexp:      req.NameRegexp,
 			ScopeRegexp:     req.ScopeRegexp,
@@ -141,21 +141,21 @@ func (cas *CerbosAdminService) ListPoliciesMetadata(ctx context.Context, req *re
 			IncludeDisabled: req.IncludeDisabled,
 		}
 
-		meta, err := cas.store.ListPoliciesMetadata(ctx, filterParams)
+		meta, err := cas.store.InspectPolicies(ctx, filterParams)
 		if err != nil {
-			logging.ReqScopeLog(ctx).Error("Could not list policies' metadata", zap.Error(err))
-			return nil, status.Error(codes.Internal, "could not list policies' metadata")
+			logging.ReqScopeLog(ctx).Error("Could not inspect policies", zap.Error(err))
+			return nil, status.Error(codes.Internal, "could not inspect policies")
 		}
 
 		return meta, nil
 	})
 
-	md, ok := meta.(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata)
+	md, ok := meta.(map[string]*responsev1.InspectPoliciesResponse_Metadata)
 	if !ok {
-		return nil, fmt.Errorf("failed to type assert during list policies metadata")
+		return nil, fmt.Errorf("failed to type assert during inspect policies")
 	}
 
-	return &responsev1.ListPoliciesMetadataResponse{Metadata: md}, err
+	return &responsev1.InspectPoliciesResponse{Metadata: md}, err
 }
 
 func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {

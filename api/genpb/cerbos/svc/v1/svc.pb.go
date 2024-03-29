@@ -129,7 +129,7 @@ var file_cerbos_svc_v1_svc_proto_rawDesc = []byte{
 	0x6c, 0x61, 0x6e, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x1a, 0x21, 0x92,
 	0x41, 0x1e, 0x12, 0x1c, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x20, 0x50, 0x6f, 0x6c, 0x69, 0x63,
 	0x79, 0x20, 0x44, 0x65, 0x63, 0x69, 0x73, 0x69, 0x6f, 0x6e, 0x20, 0x50, 0x6f, 0x69, 0x6e, 0x74,
-	0x32, 0x95, 0x11, 0x0a, 0x12, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x41, 0x64, 0x6d, 0x69, 0x6e,
+	0x32, 0x85, 0x11, 0x0a, 0x12, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x41, 0x64, 0x6d, 0x69, 0x6e,
 	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0xc9, 0x01, 0x0a, 0x11, 0x41, 0x64, 0x64, 0x4f,
 	0x72, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x2b, 0x2e,
 	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76,
@@ -143,20 +143,19 @@ var file_cerbos_svc_v1_svc_proto_rawDesc = []byte{
 	0x63, 0x41, 0x75, 0x74, 0x68, 0x12, 0x00, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x26, 0x3a, 0x01, 0x2a,
 	0x5a, 0x12, 0x3a, 0x01, 0x2a, 0x1a, 0x0d, 0x2f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2f, 0x70, 0x6f,
 	0x6c, 0x69, 0x63, 0x79, 0x22, 0x0d, 0x2f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2f, 0x70, 0x6f, 0x6c,
-	0x69, 0x63, 0x79, 0x12, 0xcd, 0x01, 0x0a, 0x14, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69,
-	0x63, 0x69, 0x65, 0x73, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x2e, 0x2e, 0x63,
-	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31,
-	0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x4d, 0x65, 0x74,
-	0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e, 0x63,
-	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x76,
-	0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x4d, 0x65,
-	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x53,
-	0x92, 0x41, 0x30, 0x12, 0x1d, 0x4c, 0x69, 0x73, 0x74, 0x20, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61,
-	0x74, 0x61, 0x20, 0x6f, 0x66, 0x20, 0x74, 0x68, 0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69,
-	0x65, 0x73, 0x62, 0x0f, 0x0a, 0x0d, 0x0a, 0x09, 0x42, 0x61, 0x73, 0x69, 0x63, 0x41, 0x75, 0x74,
-	0x68, 0x12, 0x00, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1a, 0x12, 0x18, 0x2f, 0x61, 0x64, 0x6d, 0x69,
-	0x6e, 0x2f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x2f, 0x6d, 0x65, 0x74, 0x61, 0x64,
-	0x61, 0x74, 0x61, 0x12, 0x9c, 0x01, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69,
+	0x69, 0x63, 0x79, 0x12, 0xbd, 0x01, 0x0a, 0x0f, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x50,
+	0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x12, 0x29, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x49, 0x6e, 0x73, 0x70,
+	0x65, 0x63, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x2b, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x50,
+	0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x52, 0x92, 0x41, 0x30, 0x12, 0x1d, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x20, 0x70, 0x6f,
+	0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x20, 0x69, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x74,
+	0x6f, 0x72, 0x65, 0x62, 0x0f, 0x0a, 0x0d, 0x0a, 0x09, 0x42, 0x61, 0x73, 0x69, 0x63, 0x41, 0x75,
+	0x74, 0x68, 0x12, 0x00, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x19, 0x12, 0x17, 0x2f, 0x61, 0x64, 0x6d,
+	0x69, 0x6e, 0x2f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x2f, 0x69, 0x6e, 0x73, 0x70,
+	0x65, 0x63, 0x74, 0x12, 0x9c, 0x01, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69,
 	0x63, 0x69, 0x65, 0x73, 0x12, 0x26, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65,
 	0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c,
 	0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x63,
@@ -324,48 +323,48 @@ var file_cerbos_svc_v1_svc_proto_rawDesc = []byte{
 }
 
 var file_cerbos_svc_v1_svc_proto_goTypes = []interface{}{
-	(*v1.CheckResourceSetRequest)(nil),       // 0: cerbos.request.v1.CheckResourceSetRequest
-	(*v1.CheckResourceBatchRequest)(nil),     // 1: cerbos.request.v1.CheckResourceBatchRequest
-	(*v1.CheckResourcesRequest)(nil),         // 2: cerbos.request.v1.CheckResourcesRequest
-	(*v1.ServerInfoRequest)(nil),             // 3: cerbos.request.v1.ServerInfoRequest
-	(*v1.PlanResourcesRequest)(nil),          // 4: cerbos.request.v1.PlanResourcesRequest
-	(*v1.AddOrUpdatePolicyRequest)(nil),      // 5: cerbos.request.v1.AddOrUpdatePolicyRequest
-	(*v1.ListPoliciesMetadataRequest)(nil),   // 6: cerbos.request.v1.ListPoliciesMetadataRequest
-	(*v1.ListPoliciesRequest)(nil),           // 7: cerbos.request.v1.ListPoliciesRequest
-	(*v1.GetPolicyRequest)(nil),              // 8: cerbos.request.v1.GetPolicyRequest
-	(*v1.DisablePolicyRequest)(nil),          // 9: cerbos.request.v1.DisablePolicyRequest
-	(*v1.EnablePolicyRequest)(nil),           // 10: cerbos.request.v1.EnablePolicyRequest
-	(*v1.ListAuditLogEntriesRequest)(nil),    // 11: cerbos.request.v1.ListAuditLogEntriesRequest
-	(*v1.AddOrUpdateSchemaRequest)(nil),      // 12: cerbos.request.v1.AddOrUpdateSchemaRequest
-	(*v1.ListSchemasRequest)(nil),            // 13: cerbos.request.v1.ListSchemasRequest
-	(*v1.GetSchemaRequest)(nil),              // 14: cerbos.request.v1.GetSchemaRequest
-	(*v1.DeleteSchemaRequest)(nil),           // 15: cerbos.request.v1.DeleteSchemaRequest
-	(*v1.ReloadStoreRequest)(nil),            // 16: cerbos.request.v1.ReloadStoreRequest
-	(*v1.PlaygroundValidateRequest)(nil),     // 17: cerbos.request.v1.PlaygroundValidateRequest
-	(*v1.PlaygroundTestRequest)(nil),         // 18: cerbos.request.v1.PlaygroundTestRequest
-	(*v1.PlaygroundEvaluateRequest)(nil),     // 19: cerbos.request.v1.PlaygroundEvaluateRequest
-	(*v1.PlaygroundProxyRequest)(nil),        // 20: cerbos.request.v1.PlaygroundProxyRequest
-	(*v11.CheckResourceSetResponse)(nil),     // 21: cerbos.response.v1.CheckResourceSetResponse
-	(*v11.CheckResourceBatchResponse)(nil),   // 22: cerbos.response.v1.CheckResourceBatchResponse
-	(*v11.CheckResourcesResponse)(nil),       // 23: cerbos.response.v1.CheckResourcesResponse
-	(*v11.ServerInfoResponse)(nil),           // 24: cerbos.response.v1.ServerInfoResponse
-	(*v11.PlanResourcesResponse)(nil),        // 25: cerbos.response.v1.PlanResourcesResponse
-	(*v11.AddOrUpdatePolicyResponse)(nil),    // 26: cerbos.response.v1.AddOrUpdatePolicyResponse
-	(*v11.ListPoliciesMetadataResponse)(nil), // 27: cerbos.response.v1.ListPoliciesMetadataResponse
-	(*v11.ListPoliciesResponse)(nil),         // 28: cerbos.response.v1.ListPoliciesResponse
-	(*v11.GetPolicyResponse)(nil),            // 29: cerbos.response.v1.GetPolicyResponse
-	(*v11.DisablePolicyResponse)(nil),        // 30: cerbos.response.v1.DisablePolicyResponse
-	(*v11.EnablePolicyResponse)(nil),         // 31: cerbos.response.v1.EnablePolicyResponse
-	(*v11.ListAuditLogEntriesResponse)(nil),  // 32: cerbos.response.v1.ListAuditLogEntriesResponse
-	(*v11.AddOrUpdateSchemaResponse)(nil),    // 33: cerbos.response.v1.AddOrUpdateSchemaResponse
-	(*v11.ListSchemasResponse)(nil),          // 34: cerbos.response.v1.ListSchemasResponse
-	(*v11.GetSchemaResponse)(nil),            // 35: cerbos.response.v1.GetSchemaResponse
-	(*v11.DeleteSchemaResponse)(nil),         // 36: cerbos.response.v1.DeleteSchemaResponse
-	(*v11.ReloadStoreResponse)(nil),          // 37: cerbos.response.v1.ReloadStoreResponse
-	(*v11.PlaygroundValidateResponse)(nil),   // 38: cerbos.response.v1.PlaygroundValidateResponse
-	(*v11.PlaygroundTestResponse)(nil),       // 39: cerbos.response.v1.PlaygroundTestResponse
-	(*v11.PlaygroundEvaluateResponse)(nil),   // 40: cerbos.response.v1.PlaygroundEvaluateResponse
-	(*v11.PlaygroundProxyResponse)(nil),      // 41: cerbos.response.v1.PlaygroundProxyResponse
+	(*v1.CheckResourceSetRequest)(nil),      // 0: cerbos.request.v1.CheckResourceSetRequest
+	(*v1.CheckResourceBatchRequest)(nil),    // 1: cerbos.request.v1.CheckResourceBatchRequest
+	(*v1.CheckResourcesRequest)(nil),        // 2: cerbos.request.v1.CheckResourcesRequest
+	(*v1.ServerInfoRequest)(nil),            // 3: cerbos.request.v1.ServerInfoRequest
+	(*v1.PlanResourcesRequest)(nil),         // 4: cerbos.request.v1.PlanResourcesRequest
+	(*v1.AddOrUpdatePolicyRequest)(nil),     // 5: cerbos.request.v1.AddOrUpdatePolicyRequest
+	(*v1.InspectPoliciesRequest)(nil),       // 6: cerbos.request.v1.InspectPoliciesRequest
+	(*v1.ListPoliciesRequest)(nil),          // 7: cerbos.request.v1.ListPoliciesRequest
+	(*v1.GetPolicyRequest)(nil),             // 8: cerbos.request.v1.GetPolicyRequest
+	(*v1.DisablePolicyRequest)(nil),         // 9: cerbos.request.v1.DisablePolicyRequest
+	(*v1.EnablePolicyRequest)(nil),          // 10: cerbos.request.v1.EnablePolicyRequest
+	(*v1.ListAuditLogEntriesRequest)(nil),   // 11: cerbos.request.v1.ListAuditLogEntriesRequest
+	(*v1.AddOrUpdateSchemaRequest)(nil),     // 12: cerbos.request.v1.AddOrUpdateSchemaRequest
+	(*v1.ListSchemasRequest)(nil),           // 13: cerbos.request.v1.ListSchemasRequest
+	(*v1.GetSchemaRequest)(nil),             // 14: cerbos.request.v1.GetSchemaRequest
+	(*v1.DeleteSchemaRequest)(nil),          // 15: cerbos.request.v1.DeleteSchemaRequest
+	(*v1.ReloadStoreRequest)(nil),           // 16: cerbos.request.v1.ReloadStoreRequest
+	(*v1.PlaygroundValidateRequest)(nil),    // 17: cerbos.request.v1.PlaygroundValidateRequest
+	(*v1.PlaygroundTestRequest)(nil),        // 18: cerbos.request.v1.PlaygroundTestRequest
+	(*v1.PlaygroundEvaluateRequest)(nil),    // 19: cerbos.request.v1.PlaygroundEvaluateRequest
+	(*v1.PlaygroundProxyRequest)(nil),       // 20: cerbos.request.v1.PlaygroundProxyRequest
+	(*v11.CheckResourceSetResponse)(nil),    // 21: cerbos.response.v1.CheckResourceSetResponse
+	(*v11.CheckResourceBatchResponse)(nil),  // 22: cerbos.response.v1.CheckResourceBatchResponse
+	(*v11.CheckResourcesResponse)(nil),      // 23: cerbos.response.v1.CheckResourcesResponse
+	(*v11.ServerInfoResponse)(nil),          // 24: cerbos.response.v1.ServerInfoResponse
+	(*v11.PlanResourcesResponse)(nil),       // 25: cerbos.response.v1.PlanResourcesResponse
+	(*v11.AddOrUpdatePolicyResponse)(nil),   // 26: cerbos.response.v1.AddOrUpdatePolicyResponse
+	(*v11.InspectPoliciesResponse)(nil),     // 27: cerbos.response.v1.InspectPoliciesResponse
+	(*v11.ListPoliciesResponse)(nil),        // 28: cerbos.response.v1.ListPoliciesResponse
+	(*v11.GetPolicyResponse)(nil),           // 29: cerbos.response.v1.GetPolicyResponse
+	(*v11.DisablePolicyResponse)(nil),       // 30: cerbos.response.v1.DisablePolicyResponse
+	(*v11.EnablePolicyResponse)(nil),        // 31: cerbos.response.v1.EnablePolicyResponse
+	(*v11.ListAuditLogEntriesResponse)(nil), // 32: cerbos.response.v1.ListAuditLogEntriesResponse
+	(*v11.AddOrUpdateSchemaResponse)(nil),   // 33: cerbos.response.v1.AddOrUpdateSchemaResponse
+	(*v11.ListSchemasResponse)(nil),         // 34: cerbos.response.v1.ListSchemasResponse
+	(*v11.GetSchemaResponse)(nil),           // 35: cerbos.response.v1.GetSchemaResponse
+	(*v11.DeleteSchemaResponse)(nil),        // 36: cerbos.response.v1.DeleteSchemaResponse
+	(*v11.ReloadStoreResponse)(nil),         // 37: cerbos.response.v1.ReloadStoreResponse
+	(*v11.PlaygroundValidateResponse)(nil),  // 38: cerbos.response.v1.PlaygroundValidateResponse
+	(*v11.PlaygroundTestResponse)(nil),      // 39: cerbos.response.v1.PlaygroundTestResponse
+	(*v11.PlaygroundEvaluateResponse)(nil),  // 40: cerbos.response.v1.PlaygroundEvaluateResponse
+	(*v11.PlaygroundProxyResponse)(nil),     // 41: cerbos.response.v1.PlaygroundProxyResponse
 }
 var file_cerbos_svc_v1_svc_proto_depIdxs = []int32{
 	0,  // 0: cerbos.svc.v1.CerbosService.CheckResourceSet:input_type -> cerbos.request.v1.CheckResourceSetRequest
@@ -374,7 +373,7 @@ var file_cerbos_svc_v1_svc_proto_depIdxs = []int32{
 	3,  // 3: cerbos.svc.v1.CerbosService.ServerInfo:input_type -> cerbos.request.v1.ServerInfoRequest
 	4,  // 4: cerbos.svc.v1.CerbosService.PlanResources:input_type -> cerbos.request.v1.PlanResourcesRequest
 	5,  // 5: cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy:input_type -> cerbos.request.v1.AddOrUpdatePolicyRequest
-	6,  // 6: cerbos.svc.v1.CerbosAdminService.ListPoliciesMetadata:input_type -> cerbos.request.v1.ListPoliciesMetadataRequest
+	6,  // 6: cerbos.svc.v1.CerbosAdminService.InspectPolicies:input_type -> cerbos.request.v1.InspectPoliciesRequest
 	7,  // 7: cerbos.svc.v1.CerbosAdminService.ListPolicies:input_type -> cerbos.request.v1.ListPoliciesRequest
 	8,  // 8: cerbos.svc.v1.CerbosAdminService.GetPolicy:input_type -> cerbos.request.v1.GetPolicyRequest
 	9,  // 9: cerbos.svc.v1.CerbosAdminService.DisablePolicy:input_type -> cerbos.request.v1.DisablePolicyRequest
@@ -395,7 +394,7 @@ var file_cerbos_svc_v1_svc_proto_depIdxs = []int32{
 	24, // 24: cerbos.svc.v1.CerbosService.ServerInfo:output_type -> cerbos.response.v1.ServerInfoResponse
 	25, // 25: cerbos.svc.v1.CerbosService.PlanResources:output_type -> cerbos.response.v1.PlanResourcesResponse
 	26, // 26: cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy:output_type -> cerbos.response.v1.AddOrUpdatePolicyResponse
-	27, // 27: cerbos.svc.v1.CerbosAdminService.ListPoliciesMetadata:output_type -> cerbos.response.v1.ListPoliciesMetadataResponse
+	27, // 27: cerbos.svc.v1.CerbosAdminService.InspectPolicies:output_type -> cerbos.response.v1.InspectPoliciesResponse
 	28, // 28: cerbos.svc.v1.CerbosAdminService.ListPolicies:output_type -> cerbos.response.v1.ListPoliciesResponse
 	29, // 29: cerbos.svc.v1.CerbosAdminService.GetPolicy:output_type -> cerbos.response.v1.GetPolicyResponse
 	30, // 30: cerbos.svc.v1.CerbosAdminService.DisablePolicy:output_type -> cerbos.response.v1.DisablePolicyResponse

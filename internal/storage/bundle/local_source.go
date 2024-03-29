@@ -128,7 +128,7 @@ func (ls *LocalSource) Driver() string {
 	return DriverName
 }
 
-func (ls *LocalSource) ListPoliciesMetadata(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
 	ls.mu.RLock()
 	defer ls.mu.RUnlock()
 
@@ -136,7 +136,7 @@ func (ls *LocalSource) ListPoliciesMetadata(ctx context.Context, params storage.
 		return nil, ErrBundleNotLoaded
 	}
 
-	return ls.bundle.ListPoliciesMetadata(ctx, params)
+	return ls.bundle.InspectPolicies(ctx, params)
 }
 
 func (ls *LocalSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) (ids []string, err error) {

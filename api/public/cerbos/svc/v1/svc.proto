@@ -116,10 +116,10 @@ service CerbosAdminService {
     };
   }
 
-  rpc ListPoliciesMetadata(cerbos.request.v1.ListPoliciesMetadataRequest) returns (cerbos.response.v1.ListPoliciesMetadataResponse) {
-    option (google.api.http) = {get: "/admin/policies/metadata"};
+  rpc InspectPolicies(cerbos.request.v1.InspectPoliciesRequest) returns (cerbos.response.v1.InspectPoliciesResponse) {
+    option (google.api.http) = {get: "/admin/policies/inspect"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List metadata of the policies",
+      summary: "Inspect policies in the store",
       security: {
         security_requirement: {
           key: "BasicAuth";

@@ -915,6 +915,25 @@ func cerbos_request_v1_GetSchemaRequest_hashpb_sum(m *GetSchemaRequest, hasher h
 	}
 }
 
+func cerbos_request_v1_InspectPoliciesRequest_hashpb_sum(m *InspectPoliciesRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.InspectPoliciesRequest.include_disabled"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetIncludeDisabled())))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.InspectPoliciesRequest.name_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetNameRegexp()))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.InspectPoliciesRequest.scope_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScopeRegexp()))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.InspectPoliciesRequest.version_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersionRegexp()))
+
+	}
+}
+
 func cerbos_request_v1_ListAuditLogEntriesRequest_TimeRange_hashpb_sum(m *ListAuditLogEntriesRequest_TimeRange, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.start"]; !ok {
 		if m.GetStart() != nil {
@@ -956,25 +975,6 @@ func cerbos_request_v1_ListAuditLogEntriesRequest_hashpb_sum(m *ListAuditLogEntr
 
 			}
 		}
-	}
-}
-
-func cerbos_request_v1_ListPoliciesMetadataRequest_hashpb_sum(m *ListPoliciesMetadataRequest, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.request.v1.ListPoliciesMetadataRequest.include_disabled"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetIncludeDisabled())))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ListPoliciesMetadataRequest.name_regexp"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetNameRegexp()))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ListPoliciesMetadataRequest.scope_regexp"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScopeRegexp()))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ListPoliciesMetadataRequest.version_regexp"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersionRegexp()))
-
 	}
 }
 

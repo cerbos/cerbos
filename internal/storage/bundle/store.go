@@ -107,8 +107,8 @@ func (hs *HybridStore) withActiveSource() storage.BinaryStore {
 	return hs.local
 }
 
-func (hs *HybridStore) ListPoliciesMetadata(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
-	return hs.withActiveSource().ListPoliciesMetadata(ctx, params)
+func (hs *HybridStore) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+	return hs.withActiveSource().InspectPolicies(ctx, params)
 }
 
 func (hs *HybridStore) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {

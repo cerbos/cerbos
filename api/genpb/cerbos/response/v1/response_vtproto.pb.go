@@ -2166,7 +2166,7 @@ func (m *EnablePolicyResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *ListPoliciesMetadataResponse_Metadata) MarshalVT() (dAtA []byte, err error) {
+func (m *InspectPoliciesResponse_Metadata) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -2179,12 +2179,12 @@ func (m *ListPoliciesMetadataResponse_Metadata) MarshalVT() (dAtA []byte, err er
 	return dAtA[:n], nil
 }
 
-func (m *ListPoliciesMetadataResponse_Metadata) MarshalToVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesResponse_Metadata) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListPoliciesMetadataResponse_Metadata) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesResponse_Metadata) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2208,7 +2208,7 @@ func (m *ListPoliciesMetadataResponse_Metadata) MarshalToSizedBufferVT(dAtA []by
 	return len(dAtA) - i, nil
 }
 
-func (m *ListPoliciesMetadataResponse) MarshalVT() (dAtA []byte, err error) {
+func (m *InspectPoliciesResponse) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -2221,12 +2221,12 @@ func (m *ListPoliciesMetadataResponse) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ListPoliciesMetadataResponse) MarshalToVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesResponse) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListPoliciesMetadataResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -3384,7 +3384,7 @@ func (m *EnablePolicyResponse) SizeVT() (n int) {
 	return n
 }
 
-func (m *ListPoliciesMetadataResponse_Metadata) SizeVT() (n int) {
+func (m *InspectPoliciesResponse_Metadata) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3400,7 +3400,7 @@ func (m *ListPoliciesMetadataResponse_Metadata) SizeVT() (n int) {
 	return n
 }
 
-func (m *ListPoliciesMetadataResponse) SizeVT() (n int) {
+func (m *InspectPoliciesResponse) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -8592,7 +8592,7 @@ func (m *EnablePolicyResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ListPoliciesMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
+func (m *InspectPoliciesResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -8615,10 +8615,10 @@ func (m *ListPoliciesMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ListPoliciesMetadataResponse_Metadata: wiretype end group for non-group")
+			return fmt.Errorf("proto: InspectPoliciesResponse_Metadata: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ListPoliciesMetadataResponse_Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InspectPoliciesResponse_Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -8675,7 +8675,7 @@ func (m *ListPoliciesMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ListPoliciesMetadataResponse) UnmarshalVT(dAtA []byte) error {
+func (m *InspectPoliciesResponse) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -8698,10 +8698,10 @@ func (m *ListPoliciesMetadataResponse) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ListPoliciesMetadataResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: InspectPoliciesResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ListPoliciesMetadataResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InspectPoliciesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -8734,10 +8734,10 @@ func (m *ListPoliciesMetadataResponse) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Metadata == nil {
-				m.Metadata = make(map[string]*ListPoliciesMetadataResponse_Metadata)
+				m.Metadata = make(map[string]*InspectPoliciesResponse_Metadata)
 			}
 			var mapkey string
-			var mapvalue *ListPoliciesMetadataResponse_Metadata
+			var mapvalue *InspectPoliciesResponse_Metadata
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -8811,7 +8811,7 @@ func (m *ListPoliciesMetadataResponse) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &ListPoliciesMetadataResponse_Metadata{}
+					mapvalue = &InspectPoliciesResponse_Metadata{}
 					if err := mapvalue.UnmarshalVT(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}

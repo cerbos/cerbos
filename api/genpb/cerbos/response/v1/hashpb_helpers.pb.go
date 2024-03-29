@@ -1895,27 +1895,8 @@ func cerbos_response_v1_GetSchemaResponse_hashpb_sum(m *GetSchemaResponse, hashe
 	}
 }
 
-func cerbos_response_v1_ListAuditLogEntriesResponse_hashpb_sum(m *ListAuditLogEntriesResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if m.Entry != nil {
-		if _, ok := ignore["cerbos.response.v1.ListAuditLogEntriesResponse.entry"]; !ok {
-			switch t := m.Entry.(type) {
-			case *ListAuditLogEntriesResponse_AccessLogEntry:
-				if t.AccessLogEntry != nil {
-					cerbos_audit_v1_AccessLogEntry_hashpb_sum(t.AccessLogEntry, hasher, ignore)
-				}
-
-			case *ListAuditLogEntriesResponse_DecisionLogEntry:
-				if t.DecisionLogEntry != nil {
-					cerbos_audit_v1_DecisionLogEntry_hashpb_sum(t.DecisionLogEntry, hasher, ignore)
-				}
-
-			}
-		}
-	}
-}
-
-func cerbos_response_v1_ListPoliciesMetadataResponse_Metadata_hashpb_sum(m *ListPoliciesMetadataResponse_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.ListPoliciesMetadataResponse.Metadata.actions"]; !ok {
+func cerbos_response_v1_InspectPoliciesResponse_Metadata_hashpb_sum(m *InspectPoliciesResponse_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Metadata.actions"]; !ok {
 		if len(m.Actions) > 0 {
 			for _, v := range m.Actions {
 				_, _ = hasher.Write(protowire.AppendString(nil, v))
@@ -1925,8 +1906,8 @@ func cerbos_response_v1_ListPoliciesMetadataResponse_Metadata_hashpb_sum(m *List
 	}
 }
 
-func cerbos_response_v1_ListPoliciesMetadataResponse_hashpb_sum(m *ListPoliciesMetadataResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.ListPoliciesMetadataResponse.metadata"]; !ok {
+func cerbos_response_v1_InspectPoliciesResponse_hashpb_sum(m *InspectPoliciesResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.metadata"]; !ok {
 		if len(m.Metadata) > 0 {
 			keys := make([]string, len(m.Metadata))
 			i := 0
@@ -1939,7 +1920,26 @@ func cerbos_response_v1_ListPoliciesMetadataResponse_hashpb_sum(m *ListPoliciesM
 
 			for _, k := range keys {
 				if m.Metadata[k] != nil {
-					cerbos_response_v1_ListPoliciesMetadataResponse_Metadata_hashpb_sum(m.Metadata[k], hasher, ignore)
+					cerbos_response_v1_InspectPoliciesResponse_Metadata_hashpb_sum(m.Metadata[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_ListAuditLogEntriesResponse_hashpb_sum(m *ListAuditLogEntriesResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Entry != nil {
+		if _, ok := ignore["cerbos.response.v1.ListAuditLogEntriesResponse.entry"]; !ok {
+			switch t := m.Entry.(type) {
+			case *ListAuditLogEntriesResponse_AccessLogEntry:
+				if t.AccessLogEntry != nil {
+					cerbos_audit_v1_AccessLogEntry_hashpb_sum(t.AccessLogEntry, hasher, ignore)
+				}
+
+			case *ListAuditLogEntriesResponse_DecisionLogEntry:
+				if t.DecisionLogEntry != nil {
+					cerbos_audit_v1_DecisionLogEntry_hashpb_sum(t.DecisionLogEntry, hasher, ignore)
 				}
 
 			}

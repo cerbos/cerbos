@@ -74,24 +74,24 @@ func (_c *Store_Driver_Call) RunAndReturn(run func() string) *Store_Driver_Call 
 	return _c
 }
 
-// ListPoliciesMetadata provides a mock function with given fields: _a0, _a1
-func (_m *Store) ListPoliciesMetadata(_a0 context.Context, _a1 storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+// InspectPolicies provides a mock function with given fields: _a0, _a1
+func (_m *Store) InspectPolicies(_a0 context.Context, _a1 storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListPoliciesMetadata")
+		panic("no return value specified for InspectPolicies")
 	}
 
-	var r0 map[string]*responsev1.ListPoliciesMetadataResponse_Metadata
+	var r0 map[string]*responsev1.InspectPoliciesResponse_Metadata
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) map[string]*responsev1.ListPoliciesMetadataResponse_Metadata); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) map[string]*responsev1.InspectPoliciesResponse_Metadata); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata)
+			r0 = ret.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Metadata)
 		}
 	}
 
@@ -104,31 +104,31 @@ func (_m *Store) ListPoliciesMetadata(_a0 context.Context, _a1 storage.ListPolic
 	return r0, r1
 }
 
-// Store_ListPoliciesMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPoliciesMetadata'
-type Store_ListPoliciesMetadata_Call struct {
+// Store_InspectPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InspectPolicies'
+type Store_InspectPolicies_Call struct {
 	*mock.Call
 }
 
-// ListPoliciesMetadata is a helper method to define mock.On call
+// InspectPolicies is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 storage.ListPolicyIDsParams
-func (_e *Store_Expecter) ListPoliciesMetadata(_a0 interface{}, _a1 interface{}) *Store_ListPoliciesMetadata_Call {
-	return &Store_ListPoliciesMetadata_Call{Call: _e.mock.On("ListPoliciesMetadata", _a0, _a1)}
+func (_e *Store_Expecter) InspectPolicies(_a0 interface{}, _a1 interface{}) *Store_InspectPolicies_Call {
+	return &Store_InspectPolicies_Call{Call: _e.mock.On("InspectPolicies", _a0, _a1)}
 }
 
-func (_c *Store_ListPoliciesMetadata_Call) Run(run func(_a0 context.Context, _a1 storage.ListPolicyIDsParams)) *Store_ListPoliciesMetadata_Call {
+func (_c *Store_InspectPolicies_Call) Run(run func(_a0 context.Context, _a1 storage.ListPolicyIDsParams)) *Store_InspectPolicies_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(storage.ListPolicyIDsParams))
 	})
 	return _c
 }
 
-func (_c *Store_ListPoliciesMetadata_Call) Return(_a0 map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, _a1 error) *Store_ListPoliciesMetadata_Call {
+func (_c *Store_InspectPolicies_Call) Return(_a0 map[string]*responsev1.InspectPoliciesResponse_Metadata, _a1 error) *Store_InspectPolicies_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_ListPoliciesMetadata_Call) RunAndReturn(run func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error)) *Store_ListPoliciesMetadata_Call {
+func (_c *Store_InspectPolicies_Call) RunAndReturn(run func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error)) *Store_InspectPolicies_Call {
 	_c.Call.Return(run)
 	return _c
 }

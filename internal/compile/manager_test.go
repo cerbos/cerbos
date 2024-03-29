@@ -406,12 +406,12 @@ func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return args.Error(0)
 }
 
-func (ms *MockStore) ListPoliciesMetadata(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
-	args := ms.MethodCalled("ListPoliciesMetadata", ctx)
+func (ms *MockStore) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+	args := ms.MethodCalled("InspectPolicies", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}
-	return args.Get(0).(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata), args.Error(0)
+	return args.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Metadata), args.Error(0)
 }
 
 func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {

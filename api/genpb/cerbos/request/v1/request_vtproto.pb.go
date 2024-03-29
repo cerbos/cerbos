@@ -1614,7 +1614,7 @@ func (m *EnablePolicyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ListPoliciesMetadataRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *InspectPoliciesRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1627,12 +1627,12 @@ func (m *ListPoliciesMetadataRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ListPoliciesMetadataRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesRequest) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListPoliciesMetadataRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2555,7 +2555,7 @@ func (m *EnablePolicyRequest) SizeVT() (n int) {
 	return n
 }
 
-func (m *ListPoliciesMetadataRequest) SizeVT() (n int) {
+func (m *InspectPoliciesRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -6285,7 +6285,7 @@ func (m *EnablePolicyRequest) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ListPoliciesMetadataRequest) UnmarshalVT(dAtA []byte) error {
+func (m *InspectPoliciesRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6308,10 +6308,10 @@ func (m *ListPoliciesMetadataRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ListPoliciesMetadataRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: InspectPoliciesRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ListPoliciesMetadataRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InspectPoliciesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

@@ -46,7 +46,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	ListPoliciesMetadata(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error)
+	InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error)
 	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
@@ -654,7 +654,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) ListPoliciesMetadata(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.ListPoliciesMetadataResponse_Metadata, error) {
+func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
 	policyIDs, err := s.ListPolicyIDs(ctx, listParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
@@ -669,11 +669,11 @@ func (s *dbStorage) ListPoliciesMetadata(ctx context.Context, listParams storage
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
-	metadata := make(map[string]*responsev1.ListPoliciesMetadataResponse_Metadata)
+	metadata := make(map[string]*responsev1.InspectPoliciesResponse_Metadata)
 	for _, p := range policies {
 		actions := policy.Actions(p.Policy)
 		if len(actions) > 0 {
-			metadata[p.FQN] = &responsev1.ListPoliciesMetadataResponse_Metadata{
+			metadata[p.FQN] = &responsev1.InspectPoliciesResponse_Metadata{
 				Actions: actions,
 			}
 		}
