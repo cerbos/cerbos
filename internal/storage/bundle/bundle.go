@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"sort"
 	"strings"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -20,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
@@ -256,35 +256,8 @@ func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPol
 			return nil, fmt.Errorf("failed to load policy %s: %w", policyID, err)
 		}
 
-		var actions []string
-		lut := make(map[string]struct{})
-		switch set := pset.PolicySet.(type) {
-		case *runtimev1.RunnablePolicySet_ResourcePolicy:
-			for _, p := range set.ResourcePolicy.Policies {
-				for _, r := range p.Rules {
-					for a := range r.Actions {
-						if _, ok := lut[a]; !ok {
-							lut[a] = struct{}{}
-							actions = append(actions, a)
-						}
-					}
-				}
-			}
-		case *runtimev1.RunnablePolicySet_PrincipalPolicy:
-			for _, p := range set.PrincipalPolicy.Policies {
-				for _, r := range p.ResourceRules {
-					for _, ar := range r.ActionRules {
-						if _, ok := lut[ar.Action]; !ok {
-							lut[ar.Action] = struct{}{}
-							actions = append(actions, ar.Action)
-						}
-					}
-				}
-			}
-		}
-
+		actions := policy.PSActions(pset)
 		if len(actions) > 0 {
-			sort.Strings(actions)
 			metadata[pset.Fqn] = &responsev1.InspectPoliciesResponse_Metadata{
 				Actions: actions,
 			}

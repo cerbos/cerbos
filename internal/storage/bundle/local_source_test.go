@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/test"
@@ -51,6 +52,20 @@ func runTests(have *bundle.LocalSource, manifest *bundlev1.Manifest) func(*testi
 
 			for _, p := range havePolicies {
 				require.Contains(t, manifest.PolicyIndex, p, "Policy %q is not expected", p)
+			}
+		})
+
+		t.Run("inspectPolicies", func(t *testing.T) {
+			inspection, err := have.InspectPolicies(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+			require.NoError(t, err)
+
+			for fqn, h := range inspection {
+				mID := namer.GenModuleIDFromFQN(fqn)
+				ps, err := have.GetFirstMatch(context.Background(), []namer.ModuleID{mID})
+				require.NoError(t, err)
+
+				expected := policy.PSActions(ps)
+				require.ElementsMatch(t, expected, h.Actions)
 			}
 		})
 

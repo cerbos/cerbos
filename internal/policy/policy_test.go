@@ -11,6 +11,12 @@ import (
 	"strconv"
 	"testing"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/parser"
+	"github.com/cerbos/cerbos/internal/schema"
+
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -151,4 +157,85 @@ func TestRequiredAncestors(t *testing.T) {
 			require.Equal(t, tc.want, have)
 		})
 	}
+}
+
+func TestActions(t *testing.T) {
+	dr := test.GenDerivedRoles(test.NoMod())
+	ev := test.GenExportVariables(test.NoMod())
+	rp := test.NewResourcePolicyBuilder("leave_request", "default").
+		WithRules(
+			test.
+				NewResourceRule("a", "b").
+				WithRoles("user").
+				Build(),
+			test.
+				NewResourceRule("a").
+				WithRoles("admin").
+				Build(),
+		).Build()
+	pp := test.NewPrincipalPolicyBuilder("john", "default").
+		WithRules(
+			test.NewPrincipalRuleBuilder("leave_request").
+				AllowAction("a").
+				AllowAction("b").
+				DenyAction("c").
+				Build(),
+			test.NewPrincipalRuleBuilder("purchase_order").
+				AllowAction("a").
+				DenyAction("c").
+				Build(),
+		).Build()
+	testCases := []struct {
+		p               *policyv1.Policy
+		pset            *runtimev1.RunnablePolicySet
+		expectedActions []string
+	}{
+		{
+			p:               dr,
+			pset:            compilePolicy(t, dr),
+			expectedActions: []string{},
+		},
+		{
+			p:               ev,
+			pset:            compilePolicy(t, ev),
+			expectedActions: []string{},
+		},
+		{
+			p:               rp,
+			pset:            compilePolicy(t, rp),
+			expectedActions: []string{"a", "b"},
+		},
+		{
+			p:               pp,
+			pset:            compilePolicy(t, pp),
+			expectedActions: []string{"a", "b", "c"},
+		},
+	}
+
+	t.Run("Actions", func(t *testing.T) {
+		for _, testCase := range testCases {
+			haveActions := policy.Actions(testCase.p)
+			require.ElementsMatch(t, testCase.expectedActions, haveActions)
+		}
+	})
+
+	t.Run("PSActions", func(t *testing.T) {
+		for _, testCase := range testCases {
+			haveActions := policy.PSActions(testCase.pset)
+			require.ElementsMatch(t, testCase.expectedActions, haveActions)
+		}
+	})
+}
+
+func compilePolicy(t *testing.T, p *policyv1.Policy) *runtimev1.RunnablePolicySet {
+	t.Helper()
+
+	cu := &policy.CompilationUnit{}
+	mID := namer.GenModuleID(p)
+	cu.ModID = mID
+	cu.AddDefinition(mID, p, parser.NewEmptySourceCtx())
+	rps, err := compile.Compile(cu, schema.NewNopManager())
+	require.NoError(t, err)
+
+	return rps
 }

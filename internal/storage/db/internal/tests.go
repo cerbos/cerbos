@@ -62,6 +62,10 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		evDupe2 := policy.Wrap(test.GenExportVariables(test.Suffix("@@foo")))
 
 		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables, rpDupe1, ppDupe1, drDupe1, evDupe1}
+		policyMap := make(map[string]policy.Wrapper)
+		for _, p := range policyList {
+			policyMap[p.FQN] = p
+		}
 
 		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
 		const schID = "leave_request"
@@ -230,6 +234,18 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				}
 
 				require.ElementsMatch(t, want, have)
+			})
+		})
+
+		t.Run("inspect_policies", func(t *testing.T) {
+			t.Run("list of actions should match", func(t *testing.T) {
+				inspection, err := store.InspectPolicies(ctx, storage.ListPolicyIDsParams{IncludeDisabled: true})
+				require.NoError(t, err)
+
+				for fqn, have := range inspection {
+					expected := policy.Actions(policyMap[fqn].Policy)
+					require.ElementsMatch(t, expected, have.Actions)
+				}
 			})
 		})
 

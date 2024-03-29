@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -357,9 +359,50 @@ type Wrapper struct {
 	Kind    Kind
 }
 
+// PSActions returns unique list of actions in a policy set.
+func PSActions(ps *runtimev1.RunnablePolicySet) []string {
+	var actions []string
+	if ps == nil {
+		return actions
+	}
+
+	lut := make(map[string]struct{})
+	switch set := ps.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		for _, p := range set.ResourcePolicy.Policies {
+			for _, r := range p.Rules {
+				for a := range r.Actions {
+					if _, ok := lut[a]; !ok {
+						lut[a] = struct{}{}
+						actions = append(actions, a)
+					}
+				}
+			}
+		}
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		for _, p := range set.PrincipalPolicy.Policies {
+			for _, r := range p.ResourceRules {
+				for _, ar := range r.ActionRules {
+					if _, ok := lut[ar.Action]; !ok {
+						lut[ar.Action] = struct{}{}
+						actions = append(actions, ar.Action)
+					}
+				}
+			}
+		}
+	}
+
+	sort.Strings(actions)
+	return actions
+}
+
 // Actions returns unique list of actions in a policy.
 func Actions(p *policyv1.Policy) []string {
 	var actions []string
+	if p == nil {
+		return actions
+	}
+
 	lut := make(map[string]struct{})
 	switch p := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
