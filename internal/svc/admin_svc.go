@@ -133,7 +133,7 @@ func (cas *CerbosAdminService) InspectPolicies(ctx context.Context, req *request
 		return nil, status.Error(codes.Unimplemented, "Store does not support regexp filters")
 	}
 
-	meta, err, _ := cas.sfGroup.Do("inspect_policies", func() (any, error) {
+	inspection, err, _ := cas.sfGroup.Do("inspect_policies", func() (any, error) {
 		filterParams := storage.ListPolicyIDsParams{
 			NameRegexp:      req.NameRegexp,
 			ScopeRegexp:     req.ScopeRegexp,
@@ -141,21 +141,21 @@ func (cas *CerbosAdminService) InspectPolicies(ctx context.Context, req *request
 			IncludeDisabled: req.IncludeDisabled,
 		}
 
-		meta, err := cas.store.InspectPolicies(ctx, filterParams)
+		inspection, err := cas.store.InspectPolicies(ctx, filterParams)
 		if err != nil {
 			logging.ReqScopeLog(ctx).Error("Could not inspect policies", zap.Error(err))
 			return nil, status.Error(codes.Internal, "could not inspect policies")
 		}
 
-		return meta, nil
+		return inspection, nil
 	})
 
-	md, ok := meta.(map[string]*responsev1.InspectPoliciesResponse_Metadata)
+	ins, ok := inspection.(map[string]*responsev1.InspectPoliciesResponse_Inspection)
 	if !ok {
 		return nil, fmt.Errorf("failed to type assert during inspect policies")
 	}
 
-	return &responsev1.InspectPoliciesResponse{Metadata: md}, err
+	return &responsev1.InspectPoliciesResponse{Inspection: ins}, err
 }
 
 func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {

@@ -190,13 +190,13 @@ func (s *Store) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsP
 	)
 }
 
-func (s *Store) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+func (s *Store) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Inspection, error) {
 	return withCircuitBreaker(
 		s,
-		func() (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+		func() (map[string]*responsev1.InspectPoliciesResponse_Inspection, error) {
 			return s.baseStore.InspectPolicies(ctx, params)
 		},
-		func() (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+		func() (map[string]*responsev1.InspectPoliciesResponse_Inspection, error) {
 			return s.fallbackStore.InspectPolicies(ctx, params)
 		},
 	)

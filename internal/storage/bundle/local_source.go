@@ -128,7 +128,7 @@ func (ls *LocalSource) Driver() string {
 	return DriverName
 }
 
-func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Inspection, error) {
 	ls.mu.RLock()
 	defer ls.mu.RUnlock()
 

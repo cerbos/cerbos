@@ -1177,6 +1177,17 @@
         }
       }
     },
+    "InspectPoliciesResponseInspection": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
       "properties": {
@@ -1762,33 +1773,6 @@
             "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
-        }
-      }
-    },
-    "policyv1Metadata": {
-      "type": "object",
-      "properties": {
-        "sourceFile": {
-          "type": "string"
-        },
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "hash": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "storeIdentifer": {
-          "type": "string"
-        },
-        "storeIdentifier": {
-          "type": "string"
-        },
-        "sourceAttributes": {
-          "$ref": "#/definitions/v1SourceAttributes"
         }
       }
     },
@@ -2606,25 +2590,14 @@
     "v1InspectPoliciesResponse": {
       "type": "object",
       "properties": {
-        "metadata": {
+        "inspection": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/v1InspectPoliciesResponseMetadata"
+            "$ref": "#/definitions/InspectPoliciesResponseInspection"
           }
         }
       },
       "description": "Inspect policies response"
-    },
-    "v1InspectPoliciesResponseMetadata": {
-      "type": "object",
-      "properties": {
-        "actions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
     },
     "v1ListAuditLogEntriesRequestKind": {
       "type": "string",
@@ -2696,6 +2669,33 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "v1Metadata": {
+      "type": "object",
+      "properties": {
+        "sourceFile": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "hash": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "storeIdentifer": {
+          "type": "string"
+        },
+        "storeIdentifier": {
+          "type": "string"
+        },
+        "sourceAttributes": {
+          "$ref": "#/definitions/v1SourceAttributes"
         }
       }
     },
@@ -3048,7 +3048,7 @@
           "type": "string"
         },
         "metadata": {
-          "$ref": "#/definitions/policyv1Metadata"
+          "$ref": "#/definitions/v1Metadata"
         },
         "resourcePolicy": {
           "$ref": "#/definitions/v1ResourcePolicy"

@@ -1895,8 +1895,8 @@ func cerbos_response_v1_GetSchemaResponse_hashpb_sum(m *GetSchemaResponse, hashe
 	}
 }
 
-func cerbos_response_v1_InspectPoliciesResponse_Metadata_hashpb_sum(m *InspectPoliciesResponse_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Metadata.actions"]; !ok {
+func cerbos_response_v1_InspectPoliciesResponse_Inspection_hashpb_sum(m *InspectPoliciesResponse_Inspection, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Inspection.actions"]; !ok {
 		if len(m.Actions) > 0 {
 			for _, v := range m.Actions {
 				_, _ = hasher.Write(protowire.AppendString(nil, v))
@@ -1907,11 +1907,11 @@ func cerbos_response_v1_InspectPoliciesResponse_Metadata_hashpb_sum(m *InspectPo
 }
 
 func cerbos_response_v1_InspectPoliciesResponse_hashpb_sum(m *InspectPoliciesResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.metadata"]; !ok {
-		if len(m.Metadata) > 0 {
-			keys := make([]string, len(m.Metadata))
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.inspection"]; !ok {
+		if len(m.Inspection) > 0 {
+			keys := make([]string, len(m.Inspection))
 			i := 0
-			for k := range m.Metadata {
+			for k := range m.Inspection {
 				keys[i] = k
 				i++
 			}
@@ -1919,8 +1919,8 @@ func cerbos_response_v1_InspectPoliciesResponse_hashpb_sum(m *InspectPoliciesRes
 			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
 			for _, k := range keys {
-				if m.Metadata[k] != nil {
-					cerbos_response_v1_InspectPoliciesResponse_Metadata_hashpb_sum(m.Metadata[k], hasher, ignore)
+				if m.Inspection[k] != nil {
+					cerbos_response_v1_InspectPoliciesResponse_Inspection_hashpb_sum(m.Inspection[k], hasher, ignore)
 				}
 
 			}

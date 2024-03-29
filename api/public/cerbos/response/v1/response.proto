@@ -444,11 +444,11 @@ message InspectPoliciesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Inspect policies response"}
   };
-  message Metadata {
+  message Inspection {
     repeated string actions = 1;
   }
 
-  map<string, Metadata> metadata = 1;
+  map<string, Inspection> inspection = 1;
 }
 
 message AddOrUpdateSchemaResponse {

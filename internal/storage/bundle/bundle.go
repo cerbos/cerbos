@@ -235,7 +235,7 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	return rps, nil
 }
 
-func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Metadata, error) {
+func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Inspection, error) {
 	policyIDs, err := b.ListPolicyIDs(ctx, listParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
@@ -245,7 +245,7 @@ func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPol
 		return nil, nil
 	}
 
-	metadata := make(map[string]*responsev1.InspectPoliciesResponse_Metadata)
+	inspection := make(map[string]*responsev1.InspectPoliciesResponse_Inspection)
 	for _, policyID := range policyIDs {
 		id := namer.GenModuleIDFromFQN(policyID)
 		idHex := id.HexStr()
@@ -258,13 +258,13 @@ func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPol
 
 		actions := policy.PSActions(pset)
 		if len(actions) > 0 {
-			metadata[pset.Fqn] = &responsev1.InspectPoliciesResponse_Metadata{
+			inspection[pset.Fqn] = &responsev1.InspectPoliciesResponse_Inspection{
 				Actions: actions,
 			}
 		}
 	}
 
-	return metadata, nil
+	return inspection, nil
 }
 
 func (b *Bundle) ListPolicyIDs(_ context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
