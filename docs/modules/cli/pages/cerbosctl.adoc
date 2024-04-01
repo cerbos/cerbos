@@ -349,6 +349,26 @@ cerbosctl get derived_roles my_derived_roles --output=json
 cerbosctl get derived_roles my_derived_roles --output=yaml
 ----
 
+[#hub]
+== `hub`
+
+Operations related to Cerbos Hub.
+
+[#epdp]
+=== `epdp`
+
+Operations related to embedded PDPs.
+
+[#list-candidates]
+==== `list-candidates`
+
+This command lists candidates to be included in the ePDP bundle.
+
+.List candidates
+----
+cerbosctl hub epdp list-candidates ./path/to/repository
+----
+
 [#put]
 == `put`
 

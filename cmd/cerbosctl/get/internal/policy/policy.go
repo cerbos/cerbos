@@ -12,7 +12,7 @@ import (
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/printer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
