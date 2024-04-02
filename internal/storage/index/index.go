@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
@@ -51,6 +52,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
+	InspectPolicies(context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(context.Context) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
@@ -445,6 +447,33 @@ func (idx *index) Inspect() map[string]meta {
 	}
 
 	return entries
+}
+
+func (idx *index) InspectPolicies(ctx context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	policyIDs, err := idx.ListPolicyIDs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list policies: %w", err)
+	}
+	if len(policyIDs) == 0 {
+		return nil, nil
+	}
+
+	policies, err := idx.LoadPolicy(ctx, policyIDs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	results := make(map[string]*responsev1.InspectPoliciesResponse_Result)
+	for _, p := range policies {
+		actions := policy.ListActions(p.Policy)
+		if len(actions) > 0 {
+			results[p.FQN] = &responsev1.InspectPoliciesResponse_Result{
+				Actions: actions,
+			}
+		}
+	}
+
+	return results, nil
 }
 
 func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {

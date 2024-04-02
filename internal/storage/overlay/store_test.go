@@ -255,12 +255,12 @@ func (ms *MockStore) Driver() string {
 	return args.String(0)
 }
 
-func (ms *MockStore) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Inspection, error) {
+func (ms *MockStore) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	args := ms.Called(ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}
-	return args.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Inspection), args.Error(0)
+	return args.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Result), args.Error(0)
 }
 
 func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {

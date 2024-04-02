@@ -239,11 +239,11 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("inspect_policies", func(t *testing.T) {
 			t.Run("list of actions should match", func(t *testing.T) {
-				inspection, err := store.InspectPolicies(ctx, storage.ListPolicyIDsParams{IncludeDisabled: true})
+				results, err := store.InspectPolicies(ctx, storage.ListPolicyIDsParams{IncludeDisabled: true})
 				require.NoError(t, err)
 
-				for fqn, have := range inspection {
-					expected := policy.Actions(policyMap[fqn].Policy)
+				for fqn, have := range results {
+					expected := policy.ListActions(policyMap[fqn].Policy)
 					require.ElementsMatch(t, expected, have.Actions)
 				}
 			})

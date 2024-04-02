@@ -1177,17 +1177,6 @@
         }
       }
     },
-    "InspectPoliciesResponseInspection": {
-      "type": "object",
-      "properties": {
-        "actions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
       "properties": {
@@ -1398,7 +1387,7 @@
       "type": "object",
       "properties": {
         "result": {
-          "$ref": "#/definitions/TestResultsResult"
+          "$ref": "#/definitions/v1TestResultsResult"
         },
         "failure": {
           "$ref": "#/definitions/TestResultsFailure"
@@ -1449,17 +1438,6 @@
           "$ref": "#/definitions/OutputFailureMissingValue"
         }
       }
-    },
-    "TestResultsResult": {
-      "type": "string",
-      "enum": [
-        "RESULT_UNSPECIFIED",
-        "RESULT_SKIPPED",
-        "RESULT_PASSED",
-        "RESULT_FAILED",
-        "RESULT_ERRORED"
-      ],
-      "default": "RESULT_UNSPECIFIED"
     },
     "TestResultsSuccess": {
       "type": "object",
@@ -1514,7 +1492,7 @@
       "type": "object",
       "properties": {
         "overallResult": {
-          "$ref": "#/definitions/TestResultsResult"
+          "$ref": "#/definitions/v1TestResultsResult"
         },
         "testsCount": {
           "type": "integer",
@@ -1533,7 +1511,7 @@
       "type": "object",
       "properties": {
         "result": {
-          "$ref": "#/definitions/TestResultsResult"
+          "$ref": "#/definitions/v1TestResultsResult"
         },
         "count": {
           "type": "integer",
@@ -2590,14 +2568,25 @@
     "v1InspectPoliciesResponse": {
       "type": "object",
       "properties": {
-        "inspection": {
+        "results": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/InspectPoliciesResponseInspection"
+            "$ref": "#/definitions/v1InspectPoliciesResponseResult"
           }
         }
       },
       "description": "Inspect policies response"
+    },
+    "v1InspectPoliciesResponseResult": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "v1ListAuditLogEntriesRequestKind": {
       "type": "string",
@@ -3357,6 +3346,17 @@
           }
         }
       }
+    },
+    "v1TestResultsResult": {
+      "type": "string",
+      "enum": [
+        "RESULT_UNSPECIFIED",
+        "RESULT_SKIPPED",
+        "RESULT_PASSED",
+        "RESULT_FAILED",
+        "RESULT_ERRORED"
+      ],
+      "default": "RESULT_UNSPECIFIED"
     },
     "v1Trace": {
       "type": "object",

@@ -2,7 +2,7 @@
   "$id": "https://api.cerbos.dev/cerbos/response/v1/InspectPoliciesResponse.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.InspectPoliciesResponse.Inspection": {
+    "cerbos.response.v1.InspectPoliciesResponse.Result": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -18,10 +18,10 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "inspection": {
+    "results": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Inspection"
+        "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Result"
       }
     }
   }

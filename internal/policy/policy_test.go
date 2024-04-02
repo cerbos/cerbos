@@ -212,16 +212,16 @@ func TestActions(t *testing.T) {
 		},
 	}
 
-	t.Run("Actions", func(t *testing.T) {
+	t.Run("ListActions", func(t *testing.T) {
 		for _, testCase := range testCases {
-			haveActions := policy.Actions(testCase.p)
+			haveActions := policy.ListActions(testCase.p)
 			require.ElementsMatch(t, testCase.expectedActions, haveActions)
 		}
 	})
 
-	t.Run("PSActions", func(t *testing.T) {
+	t.Run("ListPolicySetActions", func(t *testing.T) {
 		for _, testCase := range testCases {
-			haveActions := policy.PSActions(testCase.pset)
+			haveActions := policy.ListPolicySetActions(testCase.pset)
 			require.ElementsMatch(t, testCase.expectedActions, haveActions)
 		}
 	})

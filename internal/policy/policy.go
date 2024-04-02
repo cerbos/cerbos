@@ -359,8 +359,8 @@ type Wrapper struct {
 	Kind    Kind
 }
 
-// PSActions returns unique list of actions in a policy set.
-func PSActions(ps *runtimev1.RunnablePolicySet) []string {
+// ListPolicySetActions returns unique list of actions in a policy set.
+func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 	var actions []string
 	if ps == nil {
 		return actions
@@ -396,8 +396,8 @@ func PSActions(ps *runtimev1.RunnablePolicySet) []string {
 	return actions
 }
 
-// Actions returns unique list of actions in a policy.
-func Actions(p *policyv1.Policy) []string {
+// ListActions returns unique list of actions in a policy.
+func ListActions(p *policyv1.Policy) []string {
 	var actions []string
 	if p == nil {
 		return actions

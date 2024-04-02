@@ -56,15 +56,15 @@ func runTests(have *bundle.LocalSource, manifest *bundlev1.Manifest) func(*testi
 		})
 
 		t.Run("inspectPolicies", func(t *testing.T) {
-			inspection, err := have.InspectPolicies(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+			results, err := have.InspectPolicies(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err)
 
-			for fqn, h := range inspection {
+			for fqn, h := range results {
 				mID := namer.GenModuleIDFromFQN(fqn)
 				ps, err := have.GetFirstMatch(context.Background(), []namer.ModuleID{mID})
 				require.NoError(t, err)
 
-				expected := policy.PSActions(ps)
+				expected := policy.ListPolicySetActions(ps)
 				require.ElementsMatch(t, expected, h.Actions)
 			}
 		})

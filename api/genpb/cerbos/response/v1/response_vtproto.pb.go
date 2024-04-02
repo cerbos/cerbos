@@ -2166,7 +2166,7 @@ func (m *EnablePolicyResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *InspectPoliciesResponse_Inspection) MarshalVT() (dAtA []byte, err error) {
+func (m *InspectPoliciesResponse_Result) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -2179,12 +2179,12 @@ func (m *InspectPoliciesResponse_Inspection) MarshalVT() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *InspectPoliciesResponse_Inspection) MarshalToVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesResponse_Result) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *InspectPoliciesResponse_Inspection) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *InspectPoliciesResponse_Result) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2238,9 +2238,9 @@ func (m *InspectPoliciesResponse) MarshalToSizedBufferVT(dAtA []byte) (int, erro
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Inspection) > 0 {
-		for k := range m.Inspection {
-			v := m.Inspection[k]
+	if len(m.Results) > 0 {
+		for k := range m.Results {
+			v := m.Results[k]
 			baseI := i
 			size, err := v.MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
@@ -3384,7 +3384,7 @@ func (m *EnablePolicyResponse) SizeVT() (n int) {
 	return n
 }
 
-func (m *InspectPoliciesResponse_Inspection) SizeVT() (n int) {
+func (m *InspectPoliciesResponse_Result) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3406,8 +3406,8 @@ func (m *InspectPoliciesResponse) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Inspection) > 0 {
-		for k, v := range m.Inspection {
+	if len(m.Results) > 0 {
+		for k, v := range m.Results {
 			_ = k
 			_ = v
 			l = 0
@@ -8592,7 +8592,7 @@ func (m *EnablePolicyResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *InspectPoliciesResponse_Inspection) UnmarshalVT(dAtA []byte) error {
+func (m *InspectPoliciesResponse_Result) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -8615,10 +8615,10 @@ func (m *InspectPoliciesResponse_Inspection) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: InspectPoliciesResponse_Inspection: wiretype end group for non-group")
+			return fmt.Errorf("proto: InspectPoliciesResponse_Result: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InspectPoliciesResponse_Inspection: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InspectPoliciesResponse_Result: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -8706,7 +8706,7 @@ func (m *InspectPoliciesResponse) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Inspection", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Results", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8733,11 +8733,11 @@ func (m *InspectPoliciesResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Inspection == nil {
-				m.Inspection = make(map[string]*InspectPoliciesResponse_Inspection)
+			if m.Results == nil {
+				m.Results = make(map[string]*InspectPoliciesResponse_Result)
 			}
 			var mapkey string
-			var mapvalue *InspectPoliciesResponse_Inspection
+			var mapvalue *InspectPoliciesResponse_Result
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -8811,7 +8811,7 @@ func (m *InspectPoliciesResponse) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &InspectPoliciesResponse_Inspection{}
+					mapvalue = &InspectPoliciesResponse_Result{}
 					if err := mapvalue.UnmarshalVT(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}
@@ -8831,7 +8831,7 @@ func (m *InspectPoliciesResponse) UnmarshalVT(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.Inspection[mapkey] = mapvalue
+			m.Results[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -75,23 +75,23 @@ func (_c *Store_Driver_Call) RunAndReturn(run func() string) *Store_Driver_Call 
 }
 
 // InspectPolicies provides a mock function with given fields: _a0, _a1
-func (_m *Store) InspectPolicies(_a0 context.Context, _a1 storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Inspection, error) {
+func (_m *Store) InspectPolicies(_a0 context.Context, _a1 storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InspectPolicies")
 	}
 
-	var r0 map[string]*responsev1.InspectPoliciesResponse_Inspection
+	var r0 map[string]*responsev1.InspectPoliciesResponse_Result
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Inspection, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) map[string]*responsev1.InspectPoliciesResponse_Inspection); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) map[string]*responsev1.InspectPoliciesResponse_Result); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Inspection)
+			r0 = ret.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Result)
 		}
 	}
 
@@ -123,12 +123,12 @@ func (_c *Store_InspectPolicies_Call) Run(run func(_a0 context.Context, _a1 stor
 	return _c
 }
 
-func (_c *Store_InspectPolicies_Call) Return(_a0 map[string]*responsev1.InspectPoliciesResponse_Inspection, _a1 error) *Store_InspectPolicies_Call {
+func (_c *Store_InspectPolicies_Call) Return(_a0 map[string]*responsev1.InspectPoliciesResponse_Result, _a1 error) *Store_InspectPolicies_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_InspectPolicies_Call) RunAndReturn(run func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Inspection, error)) *Store_InspectPolicies_Call {
+func (_c *Store_InspectPolicies_Call) RunAndReturn(run func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)) *Store_InspectPolicies_Call {
 	_c.Call.Return(run)
 	return _c
 }
