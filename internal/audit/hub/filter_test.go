@@ -44,13 +44,13 @@ func TestAuditLogFilter(t *testing.T) {
 		CheckResources: []string{
 			"inputs[0].principal.id",
 			"inputs[0].principal.attr.attr1",
-			"inputs[*].principal.attr.attr2",
+			"inputs[*]['principal']['attr']['attr2']",
 			"inputs[*].principal.attr.someMap.nestedAttr1",
 			"inputs[*].principal.attr.someList[0]",
 			"outputs",
 		},
 		PlanResources: []string{
-			"input.principal.attr.someMap.nestedAttr1",
+			"input['principal'][\"attr\"]['someMap']['nestedAttr1']",
 			"input.principal.attr.someList[0]",
 			"output.filterDebug",
 		},
