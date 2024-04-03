@@ -664,19 +664,18 @@ func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.List
 		return nil, nil
 	}
 
-	policies, err := s.LoadPolicy(ctx, policyIDs...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
-	}
-
 	results := make(map[string]*responsev1.InspectPoliciesResponse_Result)
-	for _, p := range policies {
+	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(p *policy.Wrapper) error {
 		actions := policy.ListActions(p.Policy)
 		if len(actions) > 0 {
 			results[p.FQN] = &responsev1.InspectPoliciesResponse_Result{
 				Actions: actions,
 			}
 		}
+
+		return nil
+	}, policyIDs...); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
 	return results, nil

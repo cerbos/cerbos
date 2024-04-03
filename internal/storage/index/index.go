@@ -458,19 +458,18 @@ func (idx *index) InspectPolicies(ctx context.Context) (map[string]*responsev1.I
 		return nil, nil
 	}
 
-	policies, err := idx.LoadPolicy(ctx, policyIDs...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
-	}
-
 	results := make(map[string]*responsev1.InspectPoliciesResponse_Result)
-	for _, p := range policies {
+	if err := storage.BatchLoadPolicy(ctx, 1, idx.LoadPolicy, func(p *policy.Wrapper) error {
 		actions := policy.ListActions(p.Policy)
 		if len(actions) > 0 {
 			results[p.FQN] = &responsev1.InspectPoliciesResponse_Result{
 				Actions: actions,
 			}
 		}
+
+		return nil
+	}, policyIDs...); err != nil {
+		return nil, fmt.Errorf("failed to load policy: %w", err)
 	}
 
 	return results, nil
