@@ -58,9 +58,6 @@ releases:
             scriptsConfigMap: postgres-init
           persistence:
             enabled: false
-          extraVolumeMounts:
-            - name: data
-              mountPath: /bitnami/postgresql
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
