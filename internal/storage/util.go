@@ -9,7 +9,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-const MaxPoliciesInBatch = 5
+const MaxPoliciesInBatch = 25
 
 func minInt(a, b int) int {
 	if a < b {

@@ -664,7 +664,7 @@ func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.List
 		return nil, nil
 	}
 
-	results := make(map[string]*responsev1.InspectPoliciesResponse_Result)
+	results := make(map[string]*responsev1.InspectPoliciesResponse_Result, len(policyIDs))
 	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(p *policy.Wrapper) error {
 		actions := policy.ListActions(p.Policy)
 		if len(actions) > 0 {
