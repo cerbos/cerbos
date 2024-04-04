@@ -116,6 +116,19 @@ service CerbosAdminService {
     };
   }
 
+  rpc InspectPolicies(cerbos.request.v1.InspectPoliciesRequest) returns (cerbos.response.v1.InspectPoliciesResponse) {
+    option (google.api.http) = {get: "/admin/policies/inspect"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Inspect policies in the store",
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
+        }
+      }
+    };
+  }
+
   rpc ListPolicies(cerbos.request.v1.ListPoliciesRequest) returns (cerbos.response.v1.ListPoliciesResponse) {
     option (google.api.http) = {get: "/admin/policies"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

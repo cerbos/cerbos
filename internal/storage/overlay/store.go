@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/sony/gobreaker"
+	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-
-	"github.com/sony/gobreaker"
-	"github.com/sourcegraph/conc/pool"
-
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -188,6 +187,18 @@ func (s *Store) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsP
 		s,
 		func() ([]string, error) { return s.baseStore.ListPolicyIDs(ctx, params) },
 		func() ([]string, error) { return s.fallbackStore.ListPolicyIDs(ctx, params) },
+	)
+}
+
+func (s *Store) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	return withCircuitBreaker(
+		s,
+		func() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+			return s.baseStore.InspectPolicies(ctx, params)
+		},
+		func() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+			return s.fallbackStore.InspectPolicies(ctx, params)
+		},
 	)
 }
 

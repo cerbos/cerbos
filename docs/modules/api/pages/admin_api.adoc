@@ -164,6 +164,46 @@ curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml'
 ----
 
+=== Inspect Policies
+
+----
+GET /admin/policies/inspect
+----
+
+Issue a GET request to the endpoint to list actions covered by the policies in the store. If the policy store supports
+filtering, you can optionally pass filter parameters to reduce the result set.
+
+Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
+
+Use `nameRegexp`, `scopeRegexp` and `versionRegexp` to filter using the policy name, scope or version with
+case-insensitive regular expressions.
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policies/inspect'
+----
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policies/inspect?includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&versionRegexp=default'
+----
+
+=== Get Policies
+
+----
+GET /admin/policy?id=policy_id
+----
+
+Issue a GET request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to retrieve. The list of IDs available in the store can be retrieved using the `ListPolicies` API call described above.
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml'
+----
+
 [#disable-policies]
 === Disable Policies
 

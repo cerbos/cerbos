@@ -5,8 +5,11 @@ package policy
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
+
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -354,6 +357,76 @@ type Wrapper struct {
 	Scope   string
 	ID      namer.ModuleID
 	Kind    Kind
+}
+
+// ListPolicySetActions returns unique list of actions in a policy set.
+func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
+	var actions []string
+	if ps == nil {
+		return actions
+	}
+
+	lut := make(map[string]struct{})
+	switch set := ps.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		for _, p := range set.ResourcePolicy.Policies {
+			for _, r := range p.Rules {
+				for a := range r.Actions {
+					if _, ok := lut[a]; !ok {
+						lut[a] = struct{}{}
+						actions = append(actions, a)
+					}
+				}
+			}
+		}
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		for _, p := range set.PrincipalPolicy.Policies {
+			for _, r := range p.ResourceRules {
+				for _, ar := range r.ActionRules {
+					if _, ok := lut[ar.Action]; !ok {
+						lut[ar.Action] = struct{}{}
+						actions = append(actions, ar.Action)
+					}
+				}
+			}
+		}
+	}
+
+	sort.Strings(actions)
+	return actions
+}
+
+// ListActions returns unique list of actions in a policy.
+func ListActions(p *policyv1.Policy) []string {
+	var actions []string
+	if p == nil {
+		return actions
+	}
+
+	lut := make(map[string]struct{})
+	switch p := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		for _, r := range p.ResourcePolicy.Rules {
+			for _, a := range r.Actions {
+				if _, ok := lut[a]; !ok {
+					lut[a] = struct{}{}
+					actions = append(actions, a)
+				}
+			}
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		for _, r := range p.PrincipalPolicy.Rules {
+			for _, a := range r.Actions {
+				if _, ok := lut[a.Action]; !ok {
+					lut[a.Action] = struct{}{}
+					actions = append(actions, a.Action)
+				}
+			}
+		}
+	}
+
+	sort.Strings(actions)
+	return actions
 }
 
 // Wrap augments a policy with useful information about itself.

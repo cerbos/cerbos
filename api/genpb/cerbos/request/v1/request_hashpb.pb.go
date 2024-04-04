@@ -186,6 +186,14 @@ func (m *EnablePolicyRequest) HashPB(hasher hash.Hash, ignore map[string]struct{
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *InspectPoliciesRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_request_v1_InspectPoliciesRequest_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *AddOrUpdateSchemaRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_request_v1_AddOrUpdateSchemaRequest_hashpb_sum(m, hasher, ignore)

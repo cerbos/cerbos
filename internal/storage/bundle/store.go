@@ -12,6 +12,7 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -104,6 +105,10 @@ func (hs *HybridStore) withActiveSource() storage.BinaryStore {
 
 	hs.log.Warn("Switching to local source because remote source is unhealthy")
 	return hs.local
+}
+
+func (hs *HybridStore) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	return hs.withActiveSource().InspectPolicies(ctx, params)
 }
 
 func (hs *HybridStore) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {

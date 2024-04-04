@@ -20,6 +20,7 @@ import (
 	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
@@ -45,6 +46,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
+	InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
@@ -650,6 +652,33 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 
 	s.NotifySubscribers(events...)
 	return nil
+}
+
+func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	policyIDs, err := s.ListPolicyIDs(ctx, listParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list policies: %w", err)
+	}
+
+	if len(policyIDs) == 0 {
+		return nil, nil
+	}
+
+	results := make(map[string]*responsev1.InspectPoliciesResponse_Result, len(policyIDs))
+	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(p *policy.Wrapper) error {
+		actions := policy.ListActions(p.Policy)
+		if len(actions) > 0 {
+			results[p.FQN] = &responsev1.InspectPoliciesResponse_Result{
+				Actions: actions,
+			}
+		}
+
+		return nil
+	}, policyIDs...); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	return results, nil
 }
 
 func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPolicyIDsParams) ([]string, error) {

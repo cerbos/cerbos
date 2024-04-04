@@ -10,6 +10,7 @@ import (
 	"io"
 	"sync"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -118,6 +119,8 @@ type ListPolicyIDsParams struct {
 type Store interface {
 	// Driver is the name of the storage backend implementation.
 	Driver() string
+	// InspectPolicies returns inspection results for the policies in the store
+	InspectPolicies(context.Context, ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	// ListPolicyIDs returns the policy IDs in the store
 	ListPolicyIDs(context.Context, ListPolicyIDsParams) ([]string, error)
 	// ListSchemaIDs returns the schema ids in the store

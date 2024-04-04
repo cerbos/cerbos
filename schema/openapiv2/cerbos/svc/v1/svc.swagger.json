@@ -177,6 +177,64 @@
         ]
       }
     },
+    "/admin/policies/inspect": {
+      "get": {
+        "summary": "Inspect policies in the store",
+        "operationId": "CerbosAdminService_InspectPolicies",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1InspectPoliciesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "includeDisabled",
+            "description": "Include disabled policies",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "nameRegexp",
+            "description": "Filter policies by name with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "scopeRegexp",
+            "description": "Filter policies by scope with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "versionRegexp",
+            "description": "Filter policies by version with regexp",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/admin/policy": {
       "get": {
         "summary": "Get policy",
@@ -1329,7 +1387,7 @@
       "type": "object",
       "properties": {
         "result": {
-          "$ref": "#/definitions/TestResultsResult"
+          "$ref": "#/definitions/v1TestResultsResult"
         },
         "failure": {
           "$ref": "#/definitions/TestResultsFailure"
@@ -1380,17 +1438,6 @@
           "$ref": "#/definitions/OutputFailureMissingValue"
         }
       }
-    },
-    "TestResultsResult": {
-      "type": "string",
-      "enum": [
-        "RESULT_UNSPECIFIED",
-        "RESULT_SKIPPED",
-        "RESULT_PASSED",
-        "RESULT_FAILED",
-        "RESULT_ERRORED"
-      ],
-      "default": "RESULT_UNSPECIFIED"
     },
     "TestResultsSuccess": {
       "type": "object",
@@ -1445,7 +1492,7 @@
       "type": "object",
       "properties": {
         "overallResult": {
-          "$ref": "#/definitions/TestResultsResult"
+          "$ref": "#/definitions/v1TestResultsResult"
         },
         "testsCount": {
           "type": "integer",
@@ -1464,7 +1511,7 @@
       "type": "object",
       "properties": {
         "result": {
-          "$ref": "#/definitions/TestResultsResult"
+          "$ref": "#/definitions/v1TestResultsResult"
         },
         "count": {
           "type": "integer",
@@ -2518,6 +2565,29 @@
       },
       "description": "Get schema(s) response"
     },
+    "v1InspectPoliciesResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1InspectPoliciesResponseResult"
+          }
+        }
+      },
+      "description": "Inspect policies response"
+    },
+    "v1InspectPoliciesResponseResult": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "v1ListAuditLogEntriesRequestKind": {
       "type": "string",
       "enum": [
@@ -3276,6 +3346,17 @@
           }
         }
       }
+    },
+    "v1TestResultsResult": {
+      "type": "string",
+      "enum": [
+        "RESULT_UNSPECIFIED",
+        "RESULT_SKIPPED",
+        "RESULT_PASSED",
+        "RESULT_FAILED",
+        "RESULT_ERRORED"
+      ],
+      "default": "RESULT_UNSPECIFIED"
     },
     "v1Trace": {
       "type": "object",

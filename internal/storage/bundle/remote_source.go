@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -418,6 +419,17 @@ func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 	}
 
 	return s.bundle.GetFirstMatch(ctx, candidates)
+}
+
+func (s *RemoteSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
+	return s.bundle.InspectPolicies(ctx, params)
 }
 
 func (s *RemoteSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {

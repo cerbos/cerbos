@@ -1895,6 +1895,39 @@ func cerbos_response_v1_GetSchemaResponse_hashpb_sum(m *GetSchemaResponse, hashe
 	}
 }
 
+func cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m *InspectPoliciesResponse_Result, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Result.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_InspectPoliciesResponse_hashpb_sum(m *InspectPoliciesResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.results"]; !ok {
+		if len(m.Results) > 0 {
+			keys := make([]string, len(m.Results))
+			i := 0
+			for k := range m.Results {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Results[k] != nil {
+					cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m.Results[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_response_v1_ListAuditLogEntriesResponse_hashpb_sum(m *ListAuditLogEntriesResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if m.Entry != nil {
 		if _, ok := ignore["cerbos.response.v1.ListAuditLogEntriesResponse.entry"]; !ok {

@@ -11,6 +11,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+
 	storage "github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -68,6 +70,65 @@ func (_c *Store_Driver_Call) Return(_a0 string) *Store_Driver_Call {
 }
 
 func (_c *Store_Driver_Call) RunAndReturn(run func() string) *Store_Driver_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InspectPolicies provides a mock function with given fields: _a0, _a1
+func (_m *Store) InspectPolicies(_a0 context.Context, _a1 storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InspectPolicies")
+	}
+
+	var r0 map[string]*responsev1.InspectPoliciesResponse_Result
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, storage.ListPolicyIDsParams) map[string]*responsev1.InspectPoliciesResponse_Result); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Result)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, storage.ListPolicyIDsParams) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Store_InspectPolicies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InspectPolicies'
+type Store_InspectPolicies_Call struct {
+	*mock.Call
+}
+
+// InspectPolicies is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 storage.ListPolicyIDsParams
+func (_e *Store_Expecter) InspectPolicies(_a0 interface{}, _a1 interface{}) *Store_InspectPolicies_Call {
+	return &Store_InspectPolicies_Call{Call: _e.mock.On("InspectPolicies", _a0, _a1)}
+}
+
+func (_c *Store_InspectPolicies_Call) Run(run func(_a0 context.Context, _a1 storage.ListPolicyIDsParams)) *Store_InspectPolicies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(storage.ListPolicyIDsParams))
+	})
+	return _c
+}
+
+func (_c *Store_InspectPolicies_Call) Return(_a0 map[string]*responsev1.InspectPoliciesResponse_Result, _a1 error) *Store_InspectPolicies_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Store_InspectPolicies_Call) RunAndReturn(run func(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)) *Store_InspectPolicies_Call {
 	_c.Call.Return(run)
 	return _c
 }

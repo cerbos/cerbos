@@ -11,6 +11,7 @@ import (
 
 	"go.opentelemetry.io/otel/metric"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
@@ -31,6 +32,12 @@ type instrumentedSource struct {
 
 func (instrumentedSource) Driver() string {
 	return DriverName
+}
+
+func (is instrumentedSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	return measureBinaryOp(ctx, is.name, "InspectPolicies", func(ctx context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+		return is.source.InspectPolicies(ctx, params)
+	})
 }
 
 func (is instrumentedSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
