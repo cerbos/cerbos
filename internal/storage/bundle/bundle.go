@@ -258,7 +258,7 @@ func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPol
 
 		actions := policy.ListPolicySetActions(pset)
 		if len(actions) > 0 {
-			results[pset.Fqn] = &responsev1.InspectPoliciesResponse_Result{
+			results[namer.PolicyKeyFromFQN(pset.Fqn)] = &responsev1.InspectPoliciesResponse_Result{
 				Actions: actions,
 			}
 		}
