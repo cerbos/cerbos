@@ -64,7 +64,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables, rpDupe1, ppDupe1, drDupe1, evDupe1}
 		policyMap := make(map[string]policy.Wrapper)
 		for _, p := range policyList {
-			policyMap[p.FQN] = p
+			policyMap[namer.PolicyKeyFromFQN(p.FQN)] = p
 		}
 
 		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
