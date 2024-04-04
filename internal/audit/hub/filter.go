@@ -4,13 +4,13 @@
 package hub
 
 import (
+	"errors"
 	"fmt"
+	"strings"
+	"unicode/utf8"
 
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
-	"github.com/ohler55/ojg/jp"
-	"github.com/ohler55/ojg/oj"
 	"go.uber.org/multierr"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const (
@@ -25,8 +25,21 @@ const (
 	planResourcesPrefix            = "$.entries[*].decisionLogEntry.planResources"
 )
 
+// TODO(saml) How to store/represent error?
+type ErrParse struct {
+	underlying error
+}
+
+func (e ErrParse) Error() string {
+	return e.underlying.Error()
+}
+
+type lexer struct {
+	tokens []string
+}
+
 type AuditLogFilter struct {
-	exprs []jp.Expr
+	exprs []*lexer
 }
 
 func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
@@ -40,7 +53,7 @@ func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
 	}, nil
 }
 
-func parseJSONPathExprs(conf MaskConf) (exprs []jp.Expr, outErr error) {
+func parseJSONPathExprs(conf MaskConf) (exprs []*lexer, outErr error) {
 	// len(conf.CheckResources)*2 caters for two required rules
 	// (deprecated base level inputs/outputs, and nested inside `check_resources`)
 	nExpressions := len(conf.Peer) + len(conf.Metadata) + len(conf.CheckResources)*2 + len(conf.PlanResources)
@@ -48,11 +61,11 @@ func parseJSONPathExprs(conf MaskConf) (exprs []jp.Expr, outErr error) {
 		return exprs, nil
 	}
 
-	exprs = make([]jp.Expr, nExpressions)
+	exprs = make([]*lexer, nExpressions)
 
 	i := 0
 	parse := func(rule string) error {
-		e, err := jp.ParseString(rule)
+		e, err := tokenize(rule)
 		if err != nil {
 			return err
 		}
@@ -90,7 +103,93 @@ func parseJSONPathExprs(conf MaskConf) (exprs []jp.Expr, outErr error) {
 		}
 	}
 
+	// runtime.Breakpoint()
 	return exprs, outErr
+}
+
+func tokenize(path string) (*lexer, error) {
+	var (
+		b      strings.Builder
+		curs   int
+		tokens []string
+	)
+
+	stack := newStack[rune]()
+
+	nextRune := func() (rune, bool) {
+		str := path[curs:]
+		if len(str) == 0 {
+			return -1, false
+		}
+
+		r, s := utf8.DecodeRuneInString(str)
+		curs += s
+
+		return r, true
+	}
+
+	flushToken := func() {
+		if b.Len() > 0 {
+			tokens = append(tokens, b.String())
+			b.Reset()
+		}
+	}
+
+	for {
+		r, cont := nextRune()
+		if !cont {
+			flushToken()
+			break
+		}
+
+		switch r {
+		case '.':
+			flushToken()
+		case '[':
+			if last, exists := stack.peek(); exists && last == '[' {
+				return nil, ErrParse{
+					errors.New("cannot nest `[` symbols"),
+				}
+			}
+
+			stack.push(r)
+			flushToken()
+			b.WriteRune(r)
+		case ']':
+			if last, exists := stack.pop(); !exists || last != '[' {
+				return nil, ErrParse{
+					errors.New("no matching `[`"),
+				}
+			}
+
+			b.WriteRune(r)
+			flushToken()
+		case '\'', '"':
+			// we don't support nested quotations, so assert that any pairs use consistent quotations
+			if last, exists := stack.peek(); exists && (last == '\'' || last == '"') && last != r {
+				return nil, ErrParse{
+					fmt.Errorf("non-matching quotation pair: %c and %c", last, r),
+				}
+			}
+			b.WriteRune(r)
+		default:
+			b.WriteRune(r)
+		}
+	}
+
+	// TODO(saml) validation
+	if b.Len() > 0 {
+		return nil, ErrParse{
+			errors.New("invalid path"),
+		}
+	}
+	if stack.len() > 0 {
+		return nil, ErrParse{
+			errors.New("invalid path: no closing symbol"),
+		}
+	}
+
+	return &lexer{tokens}, nil
 }
 
 func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) (*logsv1.IngestBatch, error) {
@@ -98,31 +197,5 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) (*logsv1.Ingest
 		return ingestBatch, nil
 	}
 
-	jsonBytes, err := protojson.Marshal(ingestBatch)
-	if err != nil {
-		return nil, err
-	}
-
-	obj, err := oj.Parse(jsonBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, x := range f.exprs {
-		if err := x.Del(obj); err != nil {
-			return nil, err
-		}
-	}
-
-	maskedBytes, err := oj.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	entry := &logsv1.IngestBatch{}
-	if err := protojson.Unmarshal(maskedBytes, entry); err != nil {
-		return nil, err
-	}
-
-	return entry, nil
+	return ingestBatch, nil
 }
