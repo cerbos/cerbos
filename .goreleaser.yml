@@ -293,7 +293,7 @@ brews:
         base:
           branch: main
 
-    folder: Formula
+    directory: Formula
     ids:
       - cerbos
     homepage: "https://cerbos.dev"
