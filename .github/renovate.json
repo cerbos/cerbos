@@ -1,11 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "configMigration": true,
   "extends": [
-    "config:base",
     "group:allNonMajor",
     "schedule:weekly",
     ":automergeDisabled",
     ":combinePatchMinorReleases",
+    ":dependencyDashboard",
     ":gitSignOff",
     ":renovatePrefix",
     ":semanticCommitTypeAll(chore)",
@@ -44,6 +45,25 @@
       },
       "groupName": "Docker deps",
       "groupSlug": "docker-deps"
+    },
+    {
+      "matchManagers": ["nodenv", "npm"],
+      "groupName": "Node.js deps",
+      "groupSlug": "node-deps",
+      "rangeStrategy": "pin"
+    },
+    {
+      "description": "Don't update dependencies for npm test cases (they should be kept set to 'latest' because they're pulled from the private registry)",
+      "matchFileNames": ["npm/test/cases/*/package.json"],
+      "matchDepTypes": ["dependencies"],
+      "enabled": false
+    },
+    {
+      "description": "Don't do major version updates for package managers in npm test cases (each test case targets a specific major version)",
+      "matchFileNames": ["npm/test/cases/*/package.json"],
+      "matchDepTypes": ["packageManager"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ],
   "labels": [
