@@ -1,8 +1,9 @@
 auth:
 
 log:
-  type: stdout
-  level: fatal
+  type: file
+  path: ./storage/.verdaccio.log
+  level: debug
 
 max_body_size: 100mb
 
