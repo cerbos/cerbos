@@ -362,7 +362,10 @@ Operations related to embedded PDPs.
 [#list-candidates]
 ==== `list-candidates`
 
-This command lists candidates to be included in the ePDP bundle.
+This command lists policies that are candidates for inclusion in the ePDP bundle. A policy is marked for inclusion if
+it is annotated with `hub.cerbos.cloud/embedded-pdp: "true"` in the `metadata.annotations` section of the policy. If
+a policy has the correct annotation, that policy and its ancestors (if it's a scoped policy) are included the Cerbos Hub
+embedded PDP bundle. If none of the policies in the repo are annotated, they are all included in the bundle by default.
 
 .List candidates
 ----

@@ -1,0 +1,30 @@
+-- purchase_order.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: purchase_order.yaml
+resourcePolicy:
+  version: default
+  resource: purchase_order
+
+-- regional/purchase_order.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+metadata:
+  annotations:
+    hub.cerbos.cloud/embedded-pdp: "true"
+  storeIdentifier: regional/purchase_order.yaml
+resourcePolicy:
+  version: default
+  resource: purchase_order
+  scope: regional
+
+-- regional/uk/purchase_order.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: regional/uk/purchase_order.yaml
+resourcePolicy:
+  version: default
+  resource: purchase_order
+  scope: regional.uk

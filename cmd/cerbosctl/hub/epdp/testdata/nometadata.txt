@@ -1,0 +1,22 @@
+-- purchase_order.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: purchase_order
+
+-- regional/purchase_order.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: purchase_order
+  scope: regional
+
+-- regional/uk/purchase_order.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: purchase_order
+  scope: regional.uk
