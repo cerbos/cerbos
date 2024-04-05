@@ -326,6 +326,10 @@ jobs:
           cache-dependency-path: npm/test/registry/package-lock.json
           node-version-file: .node-version
 
+      # https://github.com/actions/runner-images/issues/9626
+      - name: Don't force curl to use IPv4
+        run: rm -f ~/.curlrc
+
       - name: Test npm packages
         working-directory: npm
         run: corepack npm test
