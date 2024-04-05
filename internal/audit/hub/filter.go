@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
@@ -16,13 +17,17 @@ import (
 const (
 	// TODO(saml) profile alternative prefixes? Separate, static entries for each log type perhaps
 	// both log types.
-	unionedPathPrefix = "$.entries[*][*]"
+	// unionedPathPrefix = "$.entries[*][*]"
+	unionedPathPrefix = "entries[*][*]"
 	peerPrefix        = unionedPathPrefix + ".peer"
 	metadataPrefix    = unionedPathPrefix + ".metadata"
 
-	checkResourcesDeprecatedPrefix = "$.entries[*].decisionLogEntry"
-	checkResourcesPrefix           = "$.entries[*].decisionLogEntry.checkResources"
-	planResourcesPrefix            = "$.entries[*].decisionLogEntry.planResources"
+	// checkResourcesDeprecatedPrefix = "$.entries[*].decisionLogEntry"
+	// checkResourcesPrefix           = "$.entries[*].decisionLogEntry.checkResources"
+	// planResourcesPrefix            = "$.entries[*].decisionLogEntry.planResources"
+	checkResourcesDeprecatedPrefix = "entries[*].decisionLogEntry"
+	checkResourcesPrefix           = "entries[*].decisionLogEntry.checkResources"
+	planResourcesPrefix            = "entries[*].decisionLogEntry.planResources"
 )
 
 // TODO(saml) How to store/represent error?
@@ -107,9 +112,158 @@ func parseJSONPathExprs(conf MaskConf) (exprs []*lexer, outErr error) {
 	return exprs, outErr
 }
 
+type tokenType int8
+
+const (
+	tokenUnknown tokenType = iota
+	tokenAccessor
+	tokenIndex
+	tokenWildcard
+)
+
+type state int8
+
+const (
+	stateUnknown state = iota
+	statePlainAccessor
+	stateParenOpen
+	stateWildcard
+	stateNumberOpen
+	stateSingleQuoteOpen
+	stateDoubleQuoteOpen
+	stateStringClosed
+	stateClosed
+)
+
+type tokenBuilder struct {
+	t    tokenType
+	s    state
+	size int
+	b    strings.Builder
+}
+
+func (tb *tokenBuilder) WriteRune(r rune) error {
+	defer func() {
+		tb.size += utf8.RuneLen(r)
+	}()
+
+	switch tb.size {
+	case 0:
+		switch {
+		case unicode.IsLetter(r):
+			tb.s = statePlainAccessor
+			tb.t = tokenAccessor
+		case r == '[':
+			tb.s = stateParenOpen
+			return nil
+		default:
+			return fmt.Errorf("invalid initial rune: %c", r)
+		}
+	case 1:
+		switch tb.s {
+		case statePlainAccessor:
+		case stateParenOpen:
+			switch {
+			case unicode.IsDigit(r):
+				tb.s = stateNumberOpen
+				tb.t = tokenIndex
+			case r == '*':
+				tb.s = stateWildcard
+				tb.t = tokenWildcard
+				// TODO(saml) we can just return here, we don't need the string value of `*`
+			case r == '\'':
+				tb.s = stateSingleQuoteOpen
+				tb.t = tokenAccessor
+				return nil
+			case r == '"':
+				tb.s = stateDoubleQuoteOpen
+				tb.t = tokenAccessor
+				return nil
+			default:
+				return fmt.Errorf("invalid character following '[': %c", r)
+			}
+		default:
+			return fmt.Errorf("unexpected state: %v", tb.s)
+		}
+	default:
+		switch tb.s {
+		case statePlainAccessor:
+		case stateNumberOpen:
+			switch {
+			case unicode.IsDigit(r):
+			case r == ']':
+				tb.s = stateClosed
+				return nil
+			default:
+				return fmt.Errorf("unexpected character in number: %c", r)
+			}
+		case stateWildcard:
+			if r != ']' {
+				return fmt.Errorf("expected ']' after '*', found: %c", r)
+			}
+			tb.s = stateClosed
+			return nil
+		case stateSingleQuoteOpen:
+			switch r {
+			case '"':
+				return errors.New("unexpected character in single quote: '['")
+			case '\'':
+				tb.s = stateStringClosed
+			default:
+				// TODO(saml) extra validation?
+			}
+		case stateDoubleQuoteOpen:
+			switch r {
+			case '\'':
+				return errors.New("unexpected character in double quote: '\"'")
+			case '"':
+				tb.s = stateStringClosed
+			default:
+				// TODO(saml) extra validation?
+			}
+		case stateStringClosed:
+			if r != ']' {
+				return fmt.Errorf("expected ']' after string, found: %c", r)
+			}
+			tb.s = stateClosed
+			return nil
+		}
+	}
+
+	// TODO(saml) handle empty strings?
+	// Only allow `Flush` on statePlainAccessor or stateClosed?
+
+	_, err := tb.b.WriteRune(r)
+	if err != nil {
+		return err
+	}
+
+	// tb.size += s
+	return nil
+}
+
+func (tb *tokenBuilder) Flush() (string, error) {
+	// TODO(saml) only allow `Flush` on statePlainAccessor or stateClosed?
+	if tb.s != stateClosed && tb.s != statePlainAccessor {
+		return "", fmt.Errorf("flush called in an invalid state: %v", tb.s)
+	}
+
+	defer func() {
+		tb.b.Reset()
+		// tb.s = stateUnknown
+		tb.t = tokenUnknown
+		tb.size = 0
+	}()
+
+	if tb.size > 0 {
+		return tb.b.String(), nil
+	}
+
+	return "", nil
+}
+
 func tokenize(path string) (*lexer, error) {
 	var (
-		b      strings.Builder
 		curs   int
 		tokens []string
 	)
@@ -128,23 +282,34 @@ func tokenize(path string) (*lexer, error) {
 		return r, true
 	}
 
-	flushToken := func() {
-		if b.Len() > 0 {
-			tokens = append(tokens, b.String())
-			b.Reset()
+	b := &tokenBuilder{}
+	flushToken := func() error {
+		t, err := b.Flush()
+		if err != nil {
+			return err
 		}
+
+		if t != "" {
+			tokens = append(tokens, t)
+		}
+
+		return nil
 	}
 
 	for {
 		r, cont := nextRune()
 		if !cont {
-			flushToken()
+			if err := flushToken(); err != nil {
+				return nil, err
+			}
 			break
 		}
 
 		switch r {
 		case '.':
-			flushToken()
+			if err := flushToken(); err != nil {
+				return nil, err
+			}
 		case '[':
 			if last, exists := stack.peek(); exists && last == '[' {
 				return nil, ErrParse{
@@ -153,8 +318,12 @@ func tokenize(path string) (*lexer, error) {
 			}
 
 			stack.push(r)
-			flushToken()
-			b.WriteRune(r)
+			if err := flushToken(); err != nil {
+				return nil, err
+			}
+			if err := b.WriteRune(r); err != nil {
+				return nil, ErrParse{errors.New("failed to write rune")}
+			}
 		case ']':
 			if last, exists := stack.pop(); !exists || last != '[' {
 				return nil, ErrParse{
@@ -163,7 +332,9 @@ func tokenize(path string) (*lexer, error) {
 			}
 
 			b.WriteRune(r)
-			flushToken()
+			if err := flushToken(); err != nil {
+				return nil, err
+			}
 		case '\'', '"':
 			// we don't support nested quotations, so assert that any pairs use consistent quotations
 			if last, exists := stack.peek(); exists && (last == '\'' || last == '"') && last != r {
@@ -178,16 +349,16 @@ func tokenize(path string) (*lexer, error) {
 	}
 
 	// TODO(saml) validation
-	if b.Len() > 0 {
-		return nil, ErrParse{
-			errors.New("invalid path"),
-		}
-	}
-	if stack.len() > 0 {
-		return nil, ErrParse{
-			errors.New("invalid path: no closing symbol"),
-		}
-	}
+	// if b.Len() > 0 {
+	// 	return nil, ErrParse{
+	// 		errors.New("invalid path"),
+	// 	}
+	// }
+	// if stack.len() > 0 {
+	// 	return nil, ErrParse{
+	// 		errors.New("invalid path: no closing symbol"),
+	// 	}
+	// }
 
 	return &lexer{tokens}, nil
 }
