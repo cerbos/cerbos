@@ -6,6 +6,7 @@ package hub
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -39,8 +40,22 @@ func (e ErrParse) Error() string {
 	return e.underlying.Error()
 }
 
+type tokenType int8
+
+const (
+	tokenUnknown tokenType = iota
+	tokenAccessor
+	tokenIndex
+	tokenWildcard
+)
+
+type token struct {
+	t tokenType
+	v any
+}
+
 type lexer struct {
-	tokens []string
+	tokens []*token
 }
 
 type AuditLogFilter struct {
@@ -112,15 +127,6 @@ func parseJSONPathExprs(conf MaskConf) (exprs []*lexer, outErr error) {
 	return exprs, outErr
 }
 
-type tokenType int8
-
-const (
-	tokenUnknown tokenType = iota
-	tokenAccessor
-	tokenIndex
-	tokenWildcard
-)
-
 type state int8
 
 const (
@@ -170,7 +176,7 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 			case r == '*':
 				tb.s = stateWildcard
 				tb.t = tokenWildcard
-				// TODO(saml) we can just return here, we don't need the string value of `*`
+				return nil
 			case r == '\'':
 				tb.s = stateSingleQuoteOpen
 				tb.t = tokenAccessor
@@ -238,34 +244,45 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 		return err
 	}
 
-	// tb.size += s
 	return nil
 }
 
-func (tb *tokenBuilder) Flush() (string, error) {
-	// TODO(saml) only allow `Flush` on statePlainAccessor or stateClosed?
+func (tb *tokenBuilder) Flush() (t *token, err error) {
 	if tb.s != stateClosed && tb.s != statePlainAccessor {
-		return "", fmt.Errorf("flush called in an invalid state: %v", tb.s)
+		return t, fmt.Errorf("flush called in an invalid state: %v", tb.s)
 	}
 
 	defer func() {
 		tb.b.Reset()
-		// tb.s = stateUnknown
 		tb.t = tokenUnknown
 		tb.size = 0
 	}()
 
 	if tb.size > 0 {
-		return tb.b.String(), nil
+		var value any
+		switch tb.t {
+		case tokenAccessor:
+			value = tb.b.String()
+		case tokenIndex:
+			value, err = strconv.Atoi(tb.b.String())
+			if err != nil {
+				return t, err
+			}
+		}
+
+		return &token{
+			t: tb.t,
+			v: value,
+		}, nil
 	}
 
-	return "", nil
+	return t, nil
 }
 
 func tokenize(path string) (*lexer, error) {
 	var (
 		curs   int
-		tokens []string
+		tokens []*token
 	)
 
 	stack := newStack[rune]()
@@ -289,7 +306,7 @@ func tokenize(path string) (*lexer, error) {
 			return err
 		}
 
-		if t != "" {
+		if t != nil {
 			tokens = append(tokens, t)
 		}
 
@@ -347,18 +364,6 @@ func tokenize(path string) (*lexer, error) {
 			b.WriteRune(r)
 		}
 	}
-
-	// TODO(saml) validation
-	// if b.Len() > 0 {
-	// 	return nil, ErrParse{
-	// 		errors.New("invalid path"),
-	// 	}
-	// }
-	// if stack.len() > 0 {
-	// 	return nil, ErrParse{
-	// 		errors.New("invalid path: no closing symbol"),
-	// 	}
-	// }
 
 	return &lexer{tokens}, nil
 }
