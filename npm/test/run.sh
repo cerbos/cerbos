@@ -20,11 +20,11 @@ start_registry() {
 
   cd test/registry
   rm -rf storage
+  mkdir storage
   corepack npm install
   corepack npm --silent start &
   registry_pid=$!
   trap stop_registry EXIT
-  cd ~-
 
   log_subheading "Waiting for local registry to be ready"
 
@@ -32,6 +32,8 @@ start_registry() {
   while ! ping_registry; do
     if [[ $((attempts++)) -gt 100 ]]; then
       log_error "Timed out"
+      log_subheading "Dumping logs"
+      cat storage/.verdaccio.log
       exit 1
     fi
 
@@ -40,6 +42,7 @@ start_registry() {
   done
 
   printf "\n"
+  cd ~-
 }
 
 ping_registry() {
