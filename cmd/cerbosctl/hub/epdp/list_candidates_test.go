@@ -20,32 +20,85 @@ import (
 
 func TestListCandidates(t *testing.T) {
 	testCases := []struct {
-		testFile       string
-		files          []string
-		expectedLength int
-		expectedList   []string
+		testFile     string
+		files        []string
+		expectedList []string
 	}{
 		{
-			testFile: "descendants.txt",
+			testFile: "all_have_metadata.txt",
 			files: []string{
 				"purchase_order.yaml",
 				"regional/purchase_order.yaml",
 				"regional/uk/purchase_order.yaml",
 			},
-			expectedLength: 2,
+			expectedList: []string{
+				"resource.purchase_order.vdefault",
+				"resource.purchase_order.vdefault/regional",
+				"resource.purchase_order.vdefault/regional.uk",
+			},
+		},
+		{
+			testFile: "ancestor_not_in_repo.txt",
+			files: []string{
+				"regional/purchase_order.yaml",
+				"regional/uk/purchase_order.yaml",
+			},
+			expectedList: []string{
+				"resource.purchase_order.vdefault/regional",
+			},
+		},
+		{
+			testFile: "ancestors.txt",
+			files: []string{
+				"purchase_order.yaml",
+				"regional/purchase_order.yaml",
+				"regional/uk/purchase_order.yaml",
+			},
 			expectedList: []string{
 				"resource.purchase_order.vdefault",
 				"resource.purchase_order.vdefault/regional",
 			},
 		},
 		{
-			testFile: "nometadata.txt",
+			testFile: "ancestors_not_in_repo.txt",
+			files: []string{
+				"regional/uk/purchase_order.yaml",
+			},
+			expectedList: []string{
+				"resource.purchase_order.vdefault/regional.uk",
+			},
+		},
+		{
+			testFile: "descendant_observed_first.txt",
+			files: []string{
+				"regional/purchase_order.yaml",
+				"purchase_order.yaml",
+			},
+			expectedList: []string{
+				"resource.purchase_order.vdefault",
+				"resource.purchase_order.vdefault/regional",
+			},
+		},
+		{
+			testFile: "irrelevant_metadata.txt",
 			files: []string{
 				"purchase_order.yaml",
 				"regional/purchase_order.yaml",
 				"regional/uk/purchase_order.yaml",
 			},
-			expectedLength: 3,
+			expectedList: []string{
+				"resource.purchase_order.vdefault",
+				"resource.purchase_order.vdefault/regional",
+				"resource.purchase_order.vdefault/regional.uk",
+			},
+		},
+		{
+			testFile: "no_metadata.txt",
+			files: []string{
+				"purchase_order.yaml",
+				"regional/purchase_order.yaml",
+				"regional/uk/purchase_order.yaml",
+			},
 			expectedList: []string{
 				"resource.purchase_order.vdefault",
 				"resource.purchase_order.vdefault/regional",
@@ -62,13 +115,13 @@ func TestListCandidates(t *testing.T) {
 			candidates, err := listCandidates(context.Background(), pl.loadPolicy, testCase.files...)
 			require.NoError(t, err)
 
-			require.Len(t, candidates, testCase.expectedLength)
-			have := make([]string, len(candidates))
-			for i, c := range candidates {
-				require.NotEmpty(t, c.policyKey, "policy key must be provided by the policy test input")
-				have[i] = c.policyKey
+			have := make([]string, 0, len(candidates))
+			for policyKey := range candidates {
+				have = append(have, policyKey)
 			}
-			require.ElementsMatch(t, have, testCase.expectedList)
+
+			require.Len(t, testCase.expectedList, len(candidates))
+			require.ElementsMatch(t, testCase.expectedList, have)
 		})
 	}
 }

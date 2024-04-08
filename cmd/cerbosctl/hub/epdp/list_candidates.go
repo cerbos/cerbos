@@ -16,7 +16,10 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
-const embeddedPDPKey = "hub.cerbos.cloud/embedded-pdp"
+const (
+	embeddedPDPKey       = "hub.cerbos.cloud/embedded-pdp"
+	policyNotFoundInRepo = ""
+)
 
 type loadPolicyFn func(ctx context.Context, name string) (*policy.Wrapper, error)
 
@@ -47,49 +50,64 @@ func (c *ListCandidatesCmd) Run(k *kong.Kong) error {
 		return fmt.Errorf("failed to list candidates: %w", err)
 	}
 
-	for _, c := range candidates {
-		tw.Append([]string{namer.PolicyKeyFromFQN(c.policyKey), c.storeIdentifier})
+	for policyKey, policyID := range candidates {
+		tw.Append([]string{namer.PolicyKeyFromFQN(policyKey), policyID})
 	}
 	tw.Render()
 
 	return nil
 }
 
-func listCandidates(ctx context.Context, loadPolicyFn loadPolicyFn, policyIDs ...string) ([]candidate, error) {
-	allPolicies := make([]candidate, len(policyIDs))
-	var annotatedPolicies []candidate
-	for i, policyID := range policyIDs {
+func listCandidates(ctx context.Context, loadPolicyFn loadPolicyFn, policyIDs ...string) (map[string]string, error) {
+	allPolicies := make(map[string]string, len(policyIDs))
+	annotatedPolicies := make(map[string]string, len(policyIDs))
+	for _, policyID := range policyIDs {
 		p, err := loadPolicyFn(ctx, policyID)
 		if err != nil {
 			return nil, err
 		}
 
-		if p.Metadata == nil {
-			allPolicies[i] = candidate{
-				policyKey:       namer.PolicyKeyFromFQN(p.FQN),
-				storeIdentifier: "-",
-			}
+		policyKey := namer.PolicyKeyFromFQN(p.FQN)
+		allPolicies[policyKey] = policyID
+		if pID, ok := annotatedPolicies[policyKey]; ok && pID == policyNotFoundInRepo {
+			annotatedPolicies[policyKey] = policyID
+		}
+		if p.Metadata == nil || p.Metadata.Annotations == nil {
 			continue
 		}
 
-		allPolicies[i] = candidate{
-			policyKey:       namer.PolicyKeyFromFQN(p.FQN),
-			storeIdentifier: p.Metadata.StoreIdentifier,
-		}
-
+		//nolint:nestif
 		if value, ok := p.Metadata.Annotations[embeddedPDPKey]; ok && value == "true" {
-			annotatedPolicies = append(annotatedPolicies, candidate{
-				policyKey:       namer.PolicyKeyFromFQN(p.FQN),
-				storeIdentifier: p.Metadata.StoreIdentifier,
-			})
+			annotatedPolicies[policyKey] = policyID
+			fqns := namer.FQNTree(p.Policy)
+			if len(fqns) > 1 {
+				for _, fqn := range fqns[1:] {
+					if _, ok := annotatedPolicies[namer.PolicyKeyFromFQN(fqn)]; !ok {
+						if pID, ok := allPolicies[namer.PolicyKeyFromFQN(fqn)]; ok {
+							annotatedPolicies[namer.PolicyKeyFromFQN(fqn)] = pID
+						} else {
+							annotatedPolicies[namer.PolicyKeyFromFQN(fqn)] = policyNotFoundInRepo
+						}
+					}
+				}
+			}
 		}
 	}
 
+	var policies map[string]string
 	if len(annotatedPolicies) != 0 {
-		return annotatedPolicies, nil
+		policies = annotatedPolicies
+	} else {
+		policies = allPolicies
 	}
 
-	return allPolicies, nil
+	for policyKey, policyID := range policies {
+		if policyID == policyNotFoundInRepo {
+			delete(policies, policyKey)
+		}
+	}
+
+	return policies, nil
 }
 
 func loadPolicy(idx index.Index) loadPolicyFn {
@@ -105,9 +123,4 @@ func loadPolicy(idx index.Index) loadPolicyFn {
 
 		return policies[0], nil
 	}
-}
-
-type candidate struct {
-	policyKey       string
-	storeIdentifier string
 }
