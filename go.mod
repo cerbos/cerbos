@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos
 
-go 1.22.1
+go 1.22.2
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
@@ -10,11 +10,11 @@ require (
 	github.com/alecthomas/participle/v2 v2.1.1
 	github.com/aws/aws-sdk-go v1.51.11
 	github.com/bluele/gcache v0.0.2
-	github.com/bufbuild/protovalidate-go v0.6.0
+	github.com/bufbuild/protovalidate-go v0.6.1
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/cerbos/cerbos-sdk-go v0.2.3
+	github.com/cerbos/cerbos-sdk-go v0.2.4
 	github.com/cerbos/cerbos/api/genpb v0.34.0
-	github.com/cerbos/cloud-api v0.1.18-0.20240325070827-d106081cfbbc
+	github.com/cerbos/cloud-api v0.1.18
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/cloudflare/certinel v0.4.1
@@ -107,8 +107,8 @@ require (
 	golang.org/x/sync v0.6.0
 	golang.org/x/tools v0.19.0
 	gonum.org/v1/gonum v0.15.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240325203815-454cdb8f5daa
-	google.golang.org/grpc v1.62.1
+	google.golang.org/genproto/googleapis/api v0.0.0-20240401170217-c3f982113cda
+	google.golang.org/grpc v1.63.0
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -120,7 +120,7 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.33.0-20240221180331-f05a6f4403ce.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.33.0-20240401165935-b983156c5e99.1 // indirect
 	cloud.google.com/go v0.112.1 // indirect
 	cloud.google.com/go/compute v1.25.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -292,7 +292,7 @@ require (
 	google.golang.org/api v0.169.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
