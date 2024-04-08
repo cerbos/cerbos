@@ -5,6 +5,6 @@
     "start": "verdaccio"
   },
   "dependencies": {
-    "verdaccio": "5.30.2"
+    "verdaccio": "5.30.3"
   }
 }
