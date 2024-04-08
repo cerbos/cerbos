@@ -118,7 +118,7 @@ func mkGRPCConn(t *testing.T, addr string, opts ...grpc.DialOption) *grpc.Client
 
 	dialOpts := append(defaultGRPCDialOpts(), opts...)
 
-	grpcConn, err := grpc.Dial(addr, dialOpts...)
+	grpcConn, err := grpc.NewClient(addr, dialOpts...)
 	require.NoError(t, err, "Failed to dial gRPC server")
 
 	return grpcConn

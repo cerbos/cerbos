@@ -466,7 +466,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server) (*http.Server, error) {
 	log := zap.S().Named("http")
 
-	grpcConn, err := s.mkGRPCConn(ctx)
+	grpcConn, err := s.mkGRPCConn()
 	if err != nil {
 		return nil, err
 	}
@@ -562,7 +562,7 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 	}
 }
 
-func (s *Server) mkGRPCConn(ctx context.Context) (*grpc.ClientConn, error) {
+func (s *Server) mkGRPCConn() (*grpc.ClientConn, error) {
 	opts := defaultGRPCDialOpts()
 
 	if s.tlsConfig != nil {
@@ -573,7 +573,7 @@ func (s *Server) mkGRPCConn(ctx context.Context) (*grpc.ClientConn, error) {
 		opts = append(opts, grpc.WithTransportCredentials(local.NewCredentials()))
 	}
 
-	grpcConn, err := grpc.DialContext(ctx, s.conf.GRPCListenAddr, opts...)
+	grpcConn, err := grpc.NewClient(s.conf.GRPCListenAddr, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
 	}

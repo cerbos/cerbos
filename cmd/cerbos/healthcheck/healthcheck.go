@@ -203,7 +203,7 @@ func (gc grpcCheck) check(ctx context.Context, out io.Writer) error {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(gc.tlsConf)))
 	}
 
-	conn, err := grpc.DialContext(ctx, gc.addr, dialOpts...)
+	conn, err := grpc.NewClient(gc.addr, dialOpts...)
 	if err != nil {
 		return fmt.Errorf("failed to connect to gRPC service at %q: %w", gc.addr, err)
 	}
