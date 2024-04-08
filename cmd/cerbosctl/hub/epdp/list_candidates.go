@@ -16,6 +16,18 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
+const listCandidatesCmdHelp = `# List candidates
+
+cerbosctl hub epdp list-candidates ./path/to/repo
+
+cerbosctl hub epdp lc ./path/to/repo
+
+# List candidates, print no headers
+
+cerbosctl hub epdp list-candidates ./path/to/repo --no-headers
+
+cerbosctl hub epdp lc ./path/to/repo --no-headers`
+
 const (
 	embeddedPDPKey       = "hub.cerbos.cloud/embedded-pdp"
 	policyNotFoundInRepo = ""
@@ -56,6 +68,10 @@ func (c *ListCandidatesCmd) Run(k *kong.Kong) error {
 	tw.Render()
 
 	return nil
+}
+
+func (c *ListCandidatesCmd) Help() string {
+	return listCandidatesCmdHelp
 }
 
 func listCandidates(ctx context.Context, loadPolicyFn loadPolicyFn, policyIDs ...string) (map[string]string, error) {
