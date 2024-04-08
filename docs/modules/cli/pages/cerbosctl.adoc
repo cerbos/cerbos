@@ -372,6 +372,16 @@ embedded PDP bundle. If none of the policies in the repo are annotated, they are
 cerbosctl hub epdp list-candidates ./path/to/repository
 ----
 
+[#inspect-policies]
+== `inspect policies`
+
+This command is to inspect policies in the store. Currently, it lists actions defined in the policies.
+
+.Inspect policies
+----
+cerbosctl inspect policies
+----
+
 [#put]
 == `put`
 

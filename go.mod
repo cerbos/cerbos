@@ -12,7 +12,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.6.1
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/cerbos/cerbos-sdk-go v0.2.4
+	github.com/cerbos/cerbos-sdk-go v0.2.5-0.20240415074433-be5e6dca0cce
 	github.com/cerbos/cerbos/api/genpb v0.35.1
 	github.com/cerbos/cloud-api v0.1.18
 	github.com/cespare/xxhash v1.1.0
