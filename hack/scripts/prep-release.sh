@@ -65,7 +65,7 @@ EOF
 
 set_branch() {
 	local BRANCH="$1"
-	sed -i -E "s#branches:.*#branches: [${BRANCH}, 'v{0..9}*', '!v0.{0..29}']#g" "${DOCS_DIR}/antora-playbook.yml"
+	sed -i -E "s#branches:.*#branches: [${BRANCH}, 'v{0..9}*', '!v0.{0..31}']#g" "${DOCS_DIR}/antora-playbook.yml"
 }
 
 # Generate NOTICE.txt

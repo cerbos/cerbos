@@ -1,0 +1,86 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.35.0]
+= Cerbos v0.35.0
+
+== Highlights
+
+This is a bug-fix release to handle a cache invalidation bug with lenient scope search and a common expression that should be simplified by the query planner.
+
+This release also includes a new work-in-progress Admin API endpoint to inspect the policies in the policy repo and list their properties. Currently it supports listing the actions covered by each policy.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* P.attr.workspaces[R.id].role == "OWNER" must be simplified (link:https://github.com/cerbos/cerbos/pull/2059[#2059])
+* Skip compile cache if first candidate doesn't exist (link:https://github.com/cerbos/cerbos/pull/2074[#2074])
+
+=== Features
+
+* Add `--client` flag to `cerbosctl version` (link:https://github.com/cerbos/cerbos/pull/2013[#2013])
+* Inspect policies in the store (link:https://github.com/cerbos/cerbos/pull/2072[#2072])
+
+=== Enhancements
+
+* Update Otel HTTP semantic conventions (link:https://github.com/cerbos/cerbos/pull/2018[#2018])
+
+=== Documentation
+
+* Add fly.io deploy guide (link:https://github.com/cerbos/cerbos/pull/2039[#2039])
+* Add recipe for permission checks in the UI (link:https://github.com/cerbos/cerbos/pull/2038[#2038])
+* Change wording for prerelease caveat (link:https://github.com/cerbos/cerbos/pull/2029[#2029])
+* Embed tutorial videos (link:https://github.com/cerbos/cerbos/pull/2057[#2057])
+* Fix Go version in CONTRIBUTING.md (link:https://github.com/cerbos/cerbos/pull/2009[#2009])
+* Fix broken callout (link:https://github.com/cerbos/cerbos/pull/2014[#2014])
+* Fix leading space in include directive (link:https://github.com/cerbos/cerbos/pull/1995[#1995])
+* Remove policy version from .NET quickstart (link:https://github.com/cerbos/cerbos/pull/2065[#2065])
+
+=== Chores
+
+* Add keywords to npm packages (link:https://github.com/cerbos/cerbos/pull/2046[#2046])
+* Add redirects for image URLs (link:https://github.com/cerbos/cerbos/pull/2035[#2035])
+* Add test cases for comments inside condition blocks (link:https://github.com/cerbos/cerbos/pull/1994[#1994])
+* Allow Renovate to update npm tests (link:https://github.com/cerbos/cerbos/pull/2081[#2081])
+* Bump github.com/docker/docker from 24.0.7+incompatible to 24.0.9+incompatible (link:https://github.com/cerbos/cerbos/pull/2062[#2062])
+* Bump github.com/docker/docker from 25.0.4+incompatible to 25.0.5+incompatible in /tools (link:https://github.com/cerbos/cerbos/pull/2063[#2063])
+* Bump github.com/lestrrat-go/jwx/v2 from 2.0.20 to 2.0.21 (link:https://github.com/cerbos/cerbos/pull/2040[#2040])
+* Bump gopkg.in/go-jose/go-jose.v2 from 2.6.1 to 2.6.3 in /tools (link:https://github.com/cerbos/cerbos/pull/2036[#2036])
+* Bump helm.sh/helm/v3 from 3.14.1 to 3.14.2 (link:https://github.com/cerbos/cerbos/pull/1997[#1997])
+* Bump version to 0.35.0
+* Distribute `cerbos` and `cerbosctl` via npm (link:https://github.com/cerbos/cerbos/pull/2011[#2011])
+* Fix Postgres data volume for E2E tests (link:https://github.com/cerbos/cerbos/pull/2061[#2061])
+* Fix disk space problem in Publish Dev Containers job (link:https://github.com/cerbos/cerbos/pull/2037[#2037])
+* Fix disk space problem on E2E tests (link:https://github.com/cerbos/cerbos/pull/2006[#2006])
+* Fix duplicate volume mount for postgres in E2E tests (link:https://github.com/cerbos/cerbos/pull/2077[#2077])
+* Generate cosign bundle for binaries (link:https://github.com/cerbos/cerbos/pull/1993[#1993])
+* Improve documentation accessibility (link:https://github.com/cerbos/cerbos/pull/2069[#2069])
+* InspectPolicies returns FQN instead of policy key (link:https://github.com/cerbos/cerbos/pull/2079[#2079])
+* Move version check below title (link:https://github.com/cerbos/cerbos/pull/2030[#2030])
+* Refactor Cerbos Hub configuration (link:https://github.com/cerbos/cerbos/pull/2047[#2047])
+* Skip flakey cerboshub audit backend test (link:https://github.com/cerbos/cerbos/pull/2010[#2010])
+* Unpin cosign version (link:https://github.com/cerbos/cerbos/pull/2060[#2060])
+* Update Node.js deps (link:https://github.com/cerbos/cerbos/pull/2082[#2082])
+* Update bufbuild/buf-lint-action action to v1.1.1 (link:https://github.com/cerbos/cerbos/pull/2075[#2075])
+* Update bufbuild/buf-setup-action action to v1.30.0 (link:https://github.com/cerbos/cerbos/pull/2042[#2042])
+* Update bufbuild/buf-setup-action action to v1.30.1 (link:https://github.com/cerbos/cerbos/pull/2085[#2085])
+* Update cloud-api usage (link:https://github.com/cerbos/cerbos/pull/2045[#2045])
+* Update dependency verdaccio to v5.30.3 (link:https://github.com/cerbos/cerbos/pull/2086[#2086])
+* Update deprecated `brews.folder` setting in GoReleaser config (link:https://github.com/cerbos/cerbos/pull/2084[#2084])
+* Update dorny/paths-filter action to v3 (link:https://github.com/cerbos/cerbos/pull/2001[#2001])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2000[#2000])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2007[#2007])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2043[#2043])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2053[#2053])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2068[#2068])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2076[#2076])
+* Update go deps to v1 (major) (link:https://github.com/cerbos/cerbos/pull/2002[#2002])
+* Update go deps to v2 (major) (link:https://github.com/cerbos/cerbos/pull/2003[#2003])
+* Update go deps to v2 (major) (link:https://github.com/cerbos/cerbos/pull/2008[#2008])
+* Update go deps to v2 (major) (link:https://github.com/cerbos/cerbos/pull/2054[#2054])
+* Update golangci/golangci-lint-action action to v4 (link:https://github.com/cerbos/cerbos/pull/2055[#2055])
+* Upgrade golang.org/x/net to 0.24 (link:https://github.com/cerbos/cerbos/pull/2080[#2080])
+* Upgrade protobuf to 1.33.0 (link:https://github.com/cerbos/cerbos/pull/2012[#2012])
+* Work around Renovate bug to enable Yarn updates (link:https://github.com/cerbos/cerbos/pull/2083[#2083])
