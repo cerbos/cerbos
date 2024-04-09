@@ -1,6 +1,6 @@
 {
   "name": "@cerbos/cerbosctl-linux-arm64",
-  "version": "0.36.0-prerelease",
+  "version": "0.35.1",
   "description": "The linux-arm64 binary for cerbosctl",
   "repository": {
     "type": "git",
