@@ -1,5 +1,5 @@
 .Release Notes
-* xref:v0.35.0.adoc[v0.35.0]
+* xref:v0.35.1.adoc[v0.35.1]
 * xref:v0.34.0.adoc[v0.34.0]
 * xref:v0.33.0.adoc[v0.33.0]
 * Archives
