@@ -1,7 +1,7 @@
 include::ROOT:partial$attributes.adoc[]
 
-[#v0.35.0]
-= Cerbos v0.35.0
+[#v0.35.1]
+= Cerbos v0.35.1
 
 == Highlights
 
