@@ -143,15 +143,12 @@ jobs:
 
       - name: Generate docs
         uses: ./.github/actions/antora-docs
-        id: docs
 
       - name: Publish to Netlify
-        uses: netlify/actions/cli@master
+        uses: ./.github/actions/publish-docs
         with:
-          args: deploy --prod
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          auth_token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          site_id: ${{ secrets.NETLIFY_SITE_ID }}
 
   publishHelm:
     name: Publish Helm chart

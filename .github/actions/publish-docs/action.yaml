@@ -1,0 +1,28 @@
+name: Publish docs
+
+description: Publish docs to Netlify
+
+inputs:
+  auth_token:
+    description: Netlify authentication token
+    required: true
+
+  site_id:
+    description: Netlify site ID
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: .node-version
+
+    - name: Publish docs to Netlify
+      shell: bash
+      run: npx --package=netlify-cli -- netlify deploy --prod
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ inputs.auth_token }}
+        NETLIFY_SITE_ID: ${{ inputs.site_id }}
