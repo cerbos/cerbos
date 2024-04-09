@@ -27,6 +27,35 @@ tar xvf {app-name}.tar.gz
 chmod +x {app-name}
 ----
 
+[NOTE]
+====
+
+Cerbos binaries are signed using link:https://www.sigstore.dev[sigstore] tools during the automated build process and the verification bundle is published along with the binary as `<BUNDLE>.bundle`.
+
+The following example demonstrates how to verify the Linux X86_64 bundle archive.
+
+[source,sh,subs="attributes,macros"]
+----
+# Download the bundle archive
+curl -L \
+  -o {app-name}_{app-version}_Linux_x86_64.tar.gz \
+  "{app-github-download-page}/{app-name}_{app-version}_Linux_x86_64.tar.gz"
+
+# Download the verification bundle
+curl -L \
+  -o {app-name}_{app-version}_Linux_x86_64.tar.gz.bundle \
+  "{app-github-download-page}/{app-name}_{app-version}_Linux_x86_64.tar.gz.bundle"
+
+# Verify the signature
+cosign verify-blob \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  --certificate-identity="https://github.com/cerbos/cerbos/.github/workflows/release.yaml@refs/tags/v{app-version}" \
+  --bundle="{app-name}_{app-version}_Linux_x86_64.tar.gz.bundle" \
+  "{app-name}_{app-version}_Linux_x86_64.tar.gz"
+----
+
+====
+
 [id="linux-packages"]
 == Linux packages
 
