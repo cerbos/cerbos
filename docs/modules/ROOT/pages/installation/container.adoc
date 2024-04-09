@@ -17,7 +17,10 @@ Cerbos images can be verified using link:https://www.sigstore.dev[sigstore] tool
 
 [source,sh,subs="attributes"]
 ----
-cosign verify --certificate-oidc-issuer="https://token.actions.githubusercontent.com" --certificate-identity-regexp="github.com/cerbos/cerbos" {app-docker-img}
+cosign verify \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  --certificate-identity="https://github.com/cerbos/cerbos/.github/workflows/release.yaml@refs/tags/v{app-version}" \
+  {app-docker-img}
 ----
 
 ====
