@@ -137,7 +137,7 @@ type tokenBuilder struct {
 	t    tokenType
 	s    state
 	size int
-	b    strings.Builder
+	buf  string
 }
 
 func (tb *tokenBuilder) WriteRune(r rune) error {
@@ -230,13 +230,7 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 		}
 	}
 
-	// TODO(saml) handle empty strings?
-	// Only allow `Flush` on statePlainAccessor or stateClosed?
-
-	_, err := tb.b.WriteRune(r)
-	if err != nil {
-		return err
-	}
+	tb.buf += string(r)
 
 	return nil
 }
@@ -247,7 +241,7 @@ func (tb *tokenBuilder) Flush() (t *token, err error) {
 	}
 
 	defer func() {
-		tb.b.Reset()
+		tb.buf = ""
 		tb.t = tokenUnknown
 		tb.size = 0
 	}()
@@ -256,9 +250,9 @@ func (tb *tokenBuilder) Flush() (t *token, err error) {
 		var value string
 		switch tb.t {
 		case tokenAccessor:
-			value = tb.b.String()
+			value = tb.buf
 		case tokenIndex:
-			value = fmt.Sprintf("[%s]", tb.b.String())
+			value = "[" + tb.buf + "]"
 		case tokenWildcard:
 			value = "[*]"
 		}
