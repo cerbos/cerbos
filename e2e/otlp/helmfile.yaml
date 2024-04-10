@@ -47,7 +47,7 @@ releases:
       - provisionDataStore:
           cassandra: false
       - storage:
-          type: none
+          type: memory
       - agent:
           enabled: false
       - allInOne:
