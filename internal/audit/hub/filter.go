@@ -6,13 +6,15 @@ package hub
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
+	"github.com/iancoleman/strcase"
 	"go.uber.org/multierr"
+	"google.golang.org/protobuf/reflect/protopath"
+	"google.golang.org/protobuf/reflect/protorange"
 )
 
 const (
@@ -50,48 +52,38 @@ const (
 )
 
 type token struct {
-	t tokenType
-	v any
+	t        tokenType
+	v        string
+	children map[string]*token
 }
 
-type lexer struct {
-	tokens []*token
+func (t *token) key() string {
+	return t.v
 }
 
 type AuditLogFilter struct {
-	exprs []*lexer
+	ast *token
 }
 
 func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
-	expr, err := parseJSONPathExprs(conf)
+	root, err := parseJSONPathExprs(conf)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AuditLogFilter{
-		exprs: expr,
+		ast: root,
 	}, nil
 }
 
-func parseJSONPathExprs(conf MaskConf) (exprs []*lexer, outErr error) {
-	// len(conf.CheckResources)*2 caters for two required rules
-	// (deprecated base level inputs/outputs, and nested inside `check_resources`)
-	nExpressions := len(conf.Peer) + len(conf.Metadata) + len(conf.CheckResources)*2 + len(conf.PlanResources)
-	if nExpressions == 0 {
-		return exprs, nil
-	}
+func parseJSONPathExprs(conf MaskConf) (ast *token, outErr error) {
+	root := &token{}
 
-	exprs = make([]*lexer, nExpressions)
-
-	i := 0
 	parse := func(rule string) error {
-		e, err := tokenize(rule)
-		if err != nil {
+		if err := tokenize(root, rule); err != nil {
 			return err
 		}
 
-		exprs[i] = e
-		i++
 		return nil
 	}
 
@@ -124,7 +116,7 @@ func parseJSONPathExprs(conf MaskConf) (exprs []*lexer, outErr error) {
 	}
 
 	// runtime.Breakpoint()
-	return exprs, outErr
+	return root, outErr
 }
 
 type state int8
@@ -215,6 +207,7 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 				return errors.New("unexpected character in single quote: '['")
 			case '\'':
 				tb.s = stateStringClosed
+				return nil
 			default:
 				// TODO(saml) extra validation?
 			}
@@ -224,6 +217,7 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 				return errors.New("unexpected character in double quote: '\"'")
 			case '"':
 				tb.s = stateStringClosed
+				return nil
 			default:
 				// TODO(saml) extra validation?
 			}
@@ -259,15 +253,14 @@ func (tb *tokenBuilder) Flush() (t *token, err error) {
 	}()
 
 	if tb.size > 0 {
-		var value any
+		var value string
 		switch tb.t {
 		case tokenAccessor:
 			value = tb.b.String()
 		case tokenIndex:
-			value, err = strconv.Atoi(tb.b.String())
-			if err != nil {
-				return t, err
-			}
+			value = fmt.Sprintf("[%s]", tb.b.String())
+		case tokenWildcard:
+			value = "[*]"
 		}
 
 		return &token{
@@ -279,12 +272,13 @@ func (tb *tokenBuilder) Flush() (t *token, err error) {
 	return t, nil
 }
 
-func tokenize(path string) (*lexer, error) {
+func tokenize(root *token, path string) error {
 	var (
-		curs   int
-		tokens []*token
+		curs     int
+		curToken = root
 	)
 
+	// TODO(saml) is the stack necessary anymore?
 	stack := newStack[rune]()
 
 	nextRune := func() (rune, bool) {
@@ -307,17 +301,25 @@ func tokenize(path string) (*lexer, error) {
 		}
 
 		if t != nil {
-			tokens = append(tokens, t)
+			if curToken.children == nil {
+				curToken.children = make(map[string]*token)
+			}
+
+			if cached, ok := curToken.children[t.key()]; ok {
+				curToken = cached
+			} else {
+				curToken.children[t.key()] = t
+				curToken = t
+			}
 		}
 
 		return nil
 	}
-
 	for {
 		r, cont := nextRune()
 		if !cont {
 			if err := flushToken(); err != nil {
-				return nil, err
+				return err
 			}
 			break
 		}
@@ -325,37 +327,37 @@ func tokenize(path string) (*lexer, error) {
 		switch r {
 		case '.':
 			if err := flushToken(); err != nil {
-				return nil, err
+				return err
 			}
 		case '[':
 			if last, exists := stack.peek(); exists && last == '[' {
-				return nil, ErrParse{
+				return ErrParse{
 					errors.New("cannot nest `[` symbols"),
 				}
 			}
 
 			stack.push(r)
 			if err := flushToken(); err != nil {
-				return nil, err
+				return err
 			}
 			if err := b.WriteRune(r); err != nil {
-				return nil, ErrParse{errors.New("failed to write rune")}
+				return ErrParse{errors.New("failed to write rune")}
 			}
 		case ']':
 			if last, exists := stack.pop(); !exists || last != '[' {
-				return nil, ErrParse{
+				return ErrParse{
 					errors.New("no matching `[`"),
 				}
 			}
 
 			b.WriteRune(r)
 			if err := flushToken(); err != nil {
-				return nil, err
+				return err
 			}
 		case '\'', '"':
 			// we don't support nested quotations, so assert that any pairs use consistent quotations
 			if last, exists := stack.peek(); exists && (last == '\'' || last == '"') && last != r {
-				return nil, ErrParse{
+				return ErrParse{
 					fmt.Errorf("non-matching quotation pair: %c and %c", last, r),
 				}
 			}
@@ -365,13 +367,123 @@ func tokenize(path string) (*lexer, error) {
 		}
 	}
 
-	return &lexer{tokens}, nil
+	return nil
 }
 
-func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) (*logsv1.IngestBatch, error) {
-	if len(f.exprs) == 0 {
-		return ingestBatch, nil
+type filterCase int
+
+const (
+	filterCaseProcessing filterCase = iota // still matching but not at leaf node
+	filterCaseNoMatch                      // stop searching
+	filterCaseMatch
+)
+
+// TODO(saml) is this bad practice?
+var camelCache = make(map[string]string)
+
+func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
+	if f.ast == nil || len(f.ast.children) == 0 {
+		return nil
 	}
 
-	return ingestBatch, nil
+	cachedToLowerCamel := func(s string) string {
+		if cameled, ok := camelCache[s]; ok {
+			return cameled
+		}
+
+		camel := strcase.ToLowerCamel(s) // TODO(saml) this is hugely inefficient
+		camelCache[s] = camel
+		return camel
+	}
+
+	checkExistence := func(p protopath.Path) filterCase {
+		segments := make([]string, 0, len(p))
+		for _, step := range p {
+			// runtime.Breakpoint()
+			s := step.String()
+			if s[0] == '.' {
+				s = s[1:]
+			}
+			switch step.Kind() {
+			case protopath.FieldAccessStep:
+				googlePrefix := "google.protobuf"
+				if string(step.FieldDescriptor().FullName()[:len(googlePrefix)]) == googlePrefix {
+					continue
+				}
+				s = cachedToLowerCamel(s)
+			case protopath.MapIndexStep:
+				// TODO(saml) more bulletproof way
+				s = strings.TrimPrefix(s, "[\"")
+				s = strings.TrimSuffix(s, "\"]")
+				// TODO(saml) profile the below - reflections might be slower
+				// s = step.MapIndex().String()
+			}
+			segments = append(segments, s)
+		}
+
+		// Traverse down all valid paths
+		var visit func(*token, []string) filterCase
+		visit = func(n *token, segments []string) filterCase {
+			// Leaf node infers the rule is satisfied
+			if n.children == nil {
+				return filterCaseMatch
+			}
+
+			if len(segments) > 0 {
+				s := segments[0]
+				segments = segments[1:]
+
+				if n, ok := n.children[s]; ok {
+					if res := visit(n, segments); res == filterCaseMatch {
+						return res
+					}
+				}
+
+				if n, ok := n.children["[*]"]; ok {
+					if res := visit(n, segments); res == filterCaseMatch {
+						return res
+					}
+				}
+			}
+
+			return filterCaseProcessing
+		}
+
+		return visit(f.ast, segments)
+	}
+
+	protorange.Range(ingestBatch.ProtoReflect(), func(p protopath.Values) error {
+		if len(p.Path) == 1 {
+			return nil
+		}
+
+		switch checkExistence(p.Path[1:]) {
+		case filterCaseProcessing:
+			// runtime.Breakpoint()
+			return nil
+			// TODO need to return one level lower??
+			// return protorange.Break
+		case filterCaseMatch:
+			last := p.Index(-1)
+			beforeLast := p.Index(-2)
+			switch last.Step.Kind() {
+			case protopath.FieldAccessStep:
+				m := beforeLast.Value.Message()
+				fd := last.Step.FieldDescriptor()
+				m.Clear(fd)
+			case protopath.ListIndexStep:
+				// TODO(saml) Do we need to support this?
+				// ls := beforeLast.Value.List()
+				// i := last.Step.ListIndex()
+			case protopath.MapIndexStep:
+				ms := beforeLast.Value.Map()
+				k := last.Step.MapIndex()
+				ms.Clear(k)
+			}
+		}
+
+		return nil
+	})
+
+	return nil
 }

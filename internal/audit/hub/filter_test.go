@@ -19,6 +19,7 @@ import (
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -300,6 +301,7 @@ func TestAuditLogFilter(t *testing.T) {
 	}
 
 	masker, err := hub.NewAuditLogFilter(maskConf)
+	// TODO(saml) assert that generated ast is as expected
 	require.NoError(t, err)
 
 	wantRemoved := []string{
@@ -339,13 +341,14 @@ func TestAuditLogFilter(t *testing.T) {
 		Entries: logEntries,
 	}
 
-	maskedBatch, err := masker.Filter(ingestBatch)
+	ingestBatchCopy := proto.Clone(ingestBatch).(*logsv1.IngestBatch)
+	err = masker.Filter(ingestBatch)
 	require.NoError(t, err)
 
-	require.Len(t, maskedBatch.Entries, len(logEntries))
+	require.Len(t, ingestBatch.Entries, len(logEntries))
 
 	var r diffReporter
-	cmp.Equal(ingestBatch, maskedBatch, protocmp.Transform(), cmp.Reporter(&r))
+	cmp.Equal(ingestBatchCopy, ingestBatch, protocmp.Transform(), cmp.Reporter(&r))
 	require.Equal(t, strings.Join(wantRemoved, "\n"), r.String())
 }
 

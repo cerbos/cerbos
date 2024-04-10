@@ -271,15 +271,19 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 		ctx, cancelFn := context.WithTimeout(ctx, l.flushTimeout)
 		defer cancelFn()
 
-		maskedIngestBatch, err := l.filter.Filter(&logsv1.IngestBatch{
+		ingestBatch := &logsv1.IngestBatch{
 			Id:      string(batchID),
 			Entries: entries,
-		})
-		if err != nil {
+		}
+
+		if err := l.filter.Filter(&logsv1.IngestBatch{
+			Id:      string(batchID),
+			Entries: entries,
+		}); err != nil {
 			return err
 		}
 
-		if err := l.syncer.Sync(ctx, maskedIngestBatch); err != nil {
+		if err := l.syncer.Sync(ctx, ingestBatch); err != nil {
 			return err
 		}
 	}
