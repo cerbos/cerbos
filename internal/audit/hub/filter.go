@@ -19,14 +19,10 @@ import (
 const (
 	// TODO(saml) profile alternative prefixes? Separate, static entries for each log type perhaps
 	// both log types.
-	// unionedPathPrefix = "$.entries[*][*]"
 	unionedPathPrefix = "entries[*][*]"
 	peerPrefix        = unionedPathPrefix + ".peer"
 	metadataPrefix    = unionedPathPrefix + ".metadata"
 
-	// checkResourcesDeprecatedPrefix = "$.entries[*].decisionLogEntry"
-	// checkResourcesPrefix           = "$.entries[*].decisionLogEntry.checkResources"
-	// planResourcesPrefix            = "$.entries[*].decisionLogEntry.planResources"
 	checkResourcesDeprecatedPrefix = "entries[*].decisionLogEntry"
 	checkResourcesPrefix           = "entries[*].decisionLogEntry.checkResources"
 	planResourcesPrefix            = "entries[*].decisionLogEntry.planResources"
@@ -114,7 +110,6 @@ func parseJSONPathExprs(conf MaskConf) (ast *token, outErr error) {
 		}
 	}
 
-	// runtime.Breakpoint()
 	return root, outErr
 }
 
@@ -363,14 +358,6 @@ func tokenize(root *token, path string) error {
 	return nil
 }
 
-type filterCase int
-
-const (
-	filterCaseUnknown filterCase = iota
-	filterCaseNoMatch
-	filterCaseMatch
-)
-
 func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 	if f.ast == nil || len(f.ast.children) == 0 {
 		return nil
@@ -379,9 +366,6 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 	var visitStructpb func(*token, *structpb.Value)
 	visitStructpb = func(t *token, v *structpb.Value) {
 		switch k := v.GetKind().(type) {
-		case *structpb.Value_NumberValue:
-		case *structpb.Value_StringValue:
-		case *structpb.Value_BoolValue:
 		case *structpb.Value_StructValue:
 			for _, c := range t.children {
 				key := c.key()
@@ -398,7 +382,6 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 				key := c.key()
 				switch c.t {
 				case tokenWildcard:
-					// TODO(saml) iterate over all keys
 					if c.children == nil {
 						k.ListValue.Values = []*structpb.Value{}
 						continue
@@ -414,8 +397,6 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 					if c.children == nil {
 						// delete the key from the array
 						k.ListValue.Values[idx] = structpb.NewListValue(&structpb.ListValue{})
-						// TODO(saml) could delete the item entirely with the below?
-						// k.ListValue.Values = append(k.ListValue.Values[:idx], k.ListValue.Values[idx+1:]...)
 						continue
 					}
 					visitStructpb(c, k.ListValue.Values[idx])
