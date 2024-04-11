@@ -6,15 +6,14 @@ package hub
 import (
 	"errors"
 	"fmt"
-	"strings"
+	"strconv"
 	"unicode"
 	"unicode/utf8"
 
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
-	"github.com/iancoleman/strcase"
 	"go.uber.org/multierr"
-	"google.golang.org/protobuf/reflect/protopath"
-	"google.golang.org/protobuf/reflect/protorange"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -88,29 +87,29 @@ func parseJSONPathExprs(conf MaskConf) (ast *token, outErr error) {
 	}
 
 	for _, r := range conf.Peer {
-		if err := parse(fmt.Sprintf("%s.%s", peerPrefix, r)); err != nil {
+		if err := parse(peerPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 	}
 
 	for _, r := range conf.Metadata {
-		if err := parse(fmt.Sprintf("%s.%s", metadataPrefix, r)); err != nil {
+		if err := parse(metadataPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 	}
 
 	for _, r := range conf.CheckResources {
-		if err := parse(fmt.Sprintf("%s.%s", checkResourcesPrefix, r)); err != nil {
+		if err := parse(checkResourcesPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 
-		if err := parse(fmt.Sprintf("%s.%s", checkResourcesDeprecatedPrefix, r)); err != nil {
+		if err := parse(checkResourcesDeprecatedPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 	}
 
 	for _, r := range conf.PlanResources {
-		if err := parse(fmt.Sprintf("%s.%s", planResourcesPrefix, r)); err != nil {
+		if err := parse(planResourcesPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 	}
@@ -367,117 +366,173 @@ func tokenize(root *token, path string) error {
 type filterCase int
 
 const (
-	filterCaseProcessing filterCase = iota // still matching but not at leaf node
-	filterCaseNoMatch                      // stop searching
+	filterCaseUnknown filterCase = iota
+	filterCaseNoMatch
 	filterCaseMatch
 )
-
-// TODO(saml) is this bad practice?
-var camelCache = make(map[string]string)
 
 func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 	if f.ast == nil || len(f.ast.children) == 0 {
 		return nil
 	}
 
-	cachedToLowerCamel := func(s string) string {
-		if cameled, ok := camelCache[s]; ok {
-			return cameled
-		}
-
-		camel := strcase.ToLowerCamel(s) // TODO(saml) this is hugely inefficient
-		camelCache[s] = camel
-		return camel
-	}
-
-	checkExistence := func(p protopath.Path) filterCase {
-		segments := make([]string, 0, len(p))
-		for _, step := range p {
-			// runtime.Breakpoint()
-			s := step.String()
-			if s[0] == '.' {
-				s = s[1:]
-			}
-			switch step.Kind() {
-			case protopath.FieldAccessStep:
-				googlePrefix := "google.protobuf"
-				if string(step.FieldDescriptor().FullName()[:len(googlePrefix)]) == googlePrefix {
+	var visitStructpb func(*token, *structpb.Value)
+	visitStructpb = func(t *token, v *structpb.Value) {
+		switch k := v.GetKind().(type) {
+		case *structpb.Value_NumberValue:
+		case *structpb.Value_StringValue:
+		case *structpb.Value_BoolValue:
+		case *structpb.Value_StructValue:
+			for _, c := range t.children {
+				key := c.key()
+				if c.children == nil {
+					delete(k.StructValue.Fields, key)
 					continue
 				}
-				s = cachedToLowerCamel(s)
-			case protopath.MapIndexStep:
-				// TODO(saml) more bulletproof way
-				s = strings.TrimPrefix(s, "[\"")
-				s = strings.TrimSuffix(s, "\"]")
-				// TODO(saml) profile the below - reflections might be slower
-				// s = step.MapIndex().String()
-			}
-			segments = append(segments, s)
-		}
-
-		// Traverse down all valid paths
-		var visit func(*token, []string) filterCase
-		visit = func(n *token, segments []string) filterCase {
-			// Leaf node infers the rule is satisfied
-			if n.children == nil {
-				return filterCaseMatch
-			}
-
-			if len(segments) > 0 {
-				s := segments[0]
-				segments = segments[1:]
-
-				if n, ok := n.children[s]; ok {
-					if res := visit(n, segments); res == filterCaseMatch {
-						return res
-					}
-				}
-
-				if n, ok := n.children["[*]"]; ok {
-					if res := visit(n, segments); res == filterCaseMatch {
-						return res
-					}
+				if val, ok := k.StructValue.Fields[key]; ok {
+					visitStructpb(c, val)
 				}
 			}
-
-			return filterCaseProcessing
+		case *structpb.Value_ListValue:
+			for _, c := range t.children {
+				key := c.key()
+				switch c.t {
+				case tokenWildcard:
+					// TODO(saml) iterate over all keys
+					if c.children == nil {
+						k.ListValue.Values = []*structpb.Value{}
+						continue
+					}
+					for i := 0; i < len(k.ListValue.Values); i++ {
+						visitStructpb(c, k.ListValue.Values[i])
+					}
+				case tokenIndex:
+					idx, err := strconv.Atoi(key[1 : len(key)-1])
+					if err != nil {
+						return
+					}
+					if c.children == nil {
+						// delete the key from the array
+						k.ListValue.Values[idx] = structpb.NewListValue(&structpb.ListValue{})
+						// TODO(saml) could delete the item entirely with the below?
+						// k.ListValue.Values = append(k.ListValue.Values[:idx], k.ListValue.Values[idx+1:]...)
+						continue
+					}
+					visitStructpb(c, k.ListValue.Values[idx])
+				}
+			}
 		}
-
-		return visit(f.ast, segments)
 	}
 
-	protorange.Range(ingestBatch.ProtoReflect(), func(p protopath.Values) error {
-		if len(p.Path) == 1 {
-			return nil
-		}
+	var visit func(*token, protoreflect.Message)
+	visit = func(t *token, m protoreflect.Message) {
+		if t.t != tokenUnknown {
+			key := t.key() // TODO(saml) inline
 
-		switch checkExistence(p.Path[1:]) {
-		case filterCaseProcessing:
-			// runtime.Breakpoint()
-			return nil
-			// TODO need to return one level lower??
-			// return protorange.Break
-		case filterCaseMatch:
-			last := p.Index(-1)
-			beforeLast := p.Index(-2)
-			switch last.Step.Kind() {
-			case protopath.FieldAccessStep:
-				m := beforeLast.Value.Message()
-				fd := last.Step.FieldDescriptor()
-				m.Clear(fd)
-			case protopath.ListIndexStep:
-				// TODO(saml) Do we need to support this?
-				// ls := beforeLast.Value.List()
-				// i := last.Step.ListIndex()
-			case protopath.MapIndexStep:
-				ms := beforeLast.Value.Map()
-				k := last.Step.MapIndex()
-				ms.Clear(k)
+			if value, ok := m.Interface().(*structpb.Value); ok {
+				visitStructpb(t, value)
+				return
+			}
+
+			d := m.Descriptor()
+			var fds []protoreflect.FieldDescriptor
+			// TODO(saml) could I use m.Range() here instead of this manual fd generation?
+			if key == "[*]" {
+				l := d.Fields().Len()
+				fds = make([]protoreflect.FieldDescriptor, l)
+				for i := 0; i < l; i++ {
+					fd := d.Fields().Get(i)
+					fds[i] = fd
+				}
+			} else {
+				fd := d.Fields().ByJSONName(key)
+				if fd == nil {
+					// return early, message field does not exist
+					return
+				} else if t.children == nil {
+					// field exists and token is leaf node, therefore delete the field from the message
+					if m.Has(fd) {
+						m.Clear(fd)
+					}
+					return
+				}
+				fds = []protoreflect.FieldDescriptor{fd}
+			}
+
+			for _, fd := range fds {
+				v := m.Get(fd)
+				switch {
+				case fd.IsMap():
+					mv := v.Map()
+					for _, c := range t.children {
+						mapKey := protoreflect.ValueOfString(c.key()).MapKey()
+						mvv := mv.Get(mapKey)
+						if mvv.IsValid() {
+							if c.children == nil {
+								mv.Clear(mapKey)
+								return
+							}
+							vfd := fd.MapValue()
+							switch {
+							// case vfd.IsMap():
+							// case vfd.IsList():
+							case vfd.Message() != nil:
+								msg := mvv.Message()
+								visit(c, msg)
+							default:
+							}
+						}
+					}
+				case fd.IsList():
+					lv := v.List()
+					for _, c := range t.children {
+						handleArrayIndex := func(idx int) {
+							// For array indexes, reach ahead to the next token
+							// TODO(saml) should there only ever be one child?
+							lvv := lv.Get(idx)
+							for _, c := range c.children {
+								if fd.Message() != nil {
+									msg := lvv.Message()
+									visit(c, msg)
+								}
+							}
+						}
+
+						switch c.t {
+						case tokenWildcard:
+							for i := 0; i < lv.Len(); i++ {
+								handleArrayIndex(i)
+							}
+						case tokenIndex:
+							idx, err := strconv.Atoi(c.v[1 : len(c.v)-1])
+							if err != nil {
+								return
+							}
+							if lv.Len() <= idx {
+								return
+							}
+
+							handleArrayIndex(idx)
+						default:
+							return
+						}
+					}
+				case fd.Message() != nil:
+					msg := v.Message()
+					for _, c := range t.children {
+						visit(c, msg)
+					}
+				}
 			}
 		}
 
-		return nil
-	})
+		for _, c := range t.children {
+			visit(c, m)
+		}
+	}
+
+	m := ingestBatch.ProtoReflect()
+	visit(f.ast, m)
 
 	return nil
 }
