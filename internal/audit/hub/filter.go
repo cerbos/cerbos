@@ -47,13 +47,21 @@ const (
 )
 
 type token struct {
-	t        tokenType
-	v        string
+	typ      tokenType
+	val      any
 	children map[string]*token
 }
 
 func (t *token) key() string {
-	return t.v
+	switch t.typ {
+	case tokenAccessor:
+		return t.val.(string)
+	case tokenIndex:
+		return "[" + strconv.Itoa(t.val.(int)) + "]"
+	case tokenWildcard:
+		return "[*]"
+	}
+	return ""
 }
 
 type AuditLogFilter struct {
@@ -241,19 +249,21 @@ func (tb *tokenBuilder) Flush() (t *token, err error) {
 	}()
 
 	if tb.size > 0 {
-		var value string
+		var value any
 		switch tb.t {
 		case tokenAccessor:
 			value = tb.buf
 		case tokenIndex:
-			value = "[" + tb.buf + "]"
-		case tokenWildcard:
-			value = "[*]"
+			idx, err := strconv.Atoi(tb.buf)
+			if err != nil {
+				return nil, err
+			}
+			value = idx
 		}
 
 		return &token{
-			t: tb.t,
-			v: value,
+			typ: tb.t,
+			val: value,
 		}, nil
 	}
 
@@ -363,157 +373,127 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 		return nil
 	}
 
-	var visitStructpb func(*token, *structpb.Value)
-	visitStructpb = func(t *token, v *structpb.Value) {
-		switch k := v.GetKind().(type) {
-		case *structpb.Value_StructValue:
-			for _, c := range t.children {
-				key := c.key()
-				if c.children == nil {
-					delete(k.StructValue.Fields, key)
-					continue
-				}
-				if val, ok := k.StructValue.Fields[key]; ok {
-					visitStructpb(c, val)
-				}
-			}
-		case *structpb.Value_ListValue:
-			for _, c := range t.children {
-				key := c.key()
-				switch c.t {
-				case tokenWildcard:
-					if c.children == nil {
-						k.ListValue.Values = []*structpb.Value{}
-						continue
-					}
-					for i := 0; i < len(k.ListValue.Values); i++ {
-						visitStructpb(c, k.ListValue.Values[i])
-					}
-				case tokenIndex:
-					idx, err := strconv.Atoi(key[1 : len(key)-1])
-					if err != nil {
-						return
-					}
-					if c.children == nil {
-						// delete the key from the array
-						k.ListValue.Values[idx] = structpb.NewListValue(&structpb.ListValue{})
-						continue
-					}
-					visitStructpb(c, k.ListValue.Values[idx])
-				}
-			}
-		}
-	}
-
-	var visit func(*token, protoreflect.Message)
-	visit = func(t *token, m protoreflect.Message) {
-		if t.t != tokenUnknown {
-			key := t.key() // TODO(saml) inline
-
-			if value, ok := m.Interface().(*structpb.Value); ok {
-				visitStructpb(t, value)
-				return
-			}
-
-			d := m.Descriptor()
-			var fds []protoreflect.FieldDescriptor
-			// TODO(saml) could I use m.Range() here instead of this manual fd generation?
-			if key == "[*]" {
-				l := d.Fields().Len()
-				fds = make([]protoreflect.FieldDescriptor, l)
-				for i := 0; i < l; i++ {
-					fd := d.Fields().Get(i)
-					fds[i] = fd
-				}
-			} else {
-				fd := d.Fields().ByJSONName(key)
-				if fd == nil {
-					// return early, message field does not exist
-					return
-				} else if t.children == nil {
-					// field exists and token is leaf node, therefore delete the field from the message
-					if m.Has(fd) {
-						m.Clear(fd)
-					}
-					return
-				}
-				fds = []protoreflect.FieldDescriptor{fd}
-			}
-
-			for _, fd := range fds {
-				v := m.Get(fd)
-				switch {
-				case fd.IsMap():
-					mv := v.Map()
-					for _, c := range t.children {
-						mapKey := protoreflect.ValueOfString(c.key()).MapKey()
-						mvv := mv.Get(mapKey)
-						if mvv.IsValid() {
-							if c.children == nil {
-								mv.Clear(mapKey)
-								return
-							}
-							vfd := fd.MapValue()
-							switch {
-							// case vfd.IsMap():
-							// case vfd.IsList():
-							case vfd.Message() != nil:
-								msg := mvv.Message()
-								visit(c, msg)
-							default:
-							}
-						}
-					}
-				case fd.IsList():
-					lv := v.List()
-					for _, c := range t.children {
-						handleArrayIndex := func(idx int) {
-							// For array indexes, reach ahead to the next token
-							// TODO(saml) should there only ever be one child?
-							lvv := lv.Get(idx)
-							for _, c := range c.children {
-								if fd.Message() != nil {
-									msg := lvv.Message()
-									visit(c, msg)
-								}
-							}
-						}
-
-						switch c.t {
-						case tokenWildcard:
-							for i := 0; i < lv.Len(); i++ {
-								handleArrayIndex(i)
-							}
-						case tokenIndex:
-							idx, err := strconv.Atoi(c.v[1 : len(c.v)-1])
-							if err != nil {
-								return
-							}
-							if lv.Len() <= idx {
-								return
-							}
-
-							handleArrayIndex(idx)
-						default:
-							return
-						}
-					}
-				case fd.Message() != nil:
-					msg := v.Message()
-					for _, c := range t.children {
-						visit(c, msg)
-					}
-				}
-			}
-		}
-
-		for _, c := range t.children {
-			visit(c, m)
-		}
-	}
-
-	m := ingestBatch.ProtoReflect()
-	visit(f.ast, m)
+	visitPb(f.ast, ingestBatch.ProtoReflect())
 
 	return nil
+}
+
+func visitPb(t *token, m protoreflect.Message) {
+	if t.typ != tokenUnknown {
+		if value, ok := m.Interface().(*structpb.Value); ok {
+			visitStructpb(t, value)
+			return
+		}
+
+		processFd := func(fd protoreflect.FieldDescriptor) bool {
+			v := m.Get(fd)
+			switch {
+			case fd.IsMap():
+				mv := v.Map()
+				for _, c := range t.children {
+					mapKey := protoreflect.ValueOfString(c.key()).MapKey()
+					mvv := mv.Get(mapKey)
+					if mvv.IsValid() {
+						if c.children == nil {
+							mv.Clear(mapKey)
+							return false
+						}
+						switch {
+						case fd.MapValue().Message() != nil:
+							visitPb(c, mvv.Message())
+						default:
+						}
+					}
+				}
+			case fd.IsList():
+				lv := v.List()
+				for _, c := range t.children {
+					handleArrayIndex := func(idx int) {
+						// For array indexes, reach ahead to the next token
+						for _, c := range c.children {
+							visitPb(c, lv.Get(idx).Message())
+						}
+					}
+
+					switch c.typ {
+					case tokenWildcard:
+						for i := 0; i < lv.Len(); i++ {
+							handleArrayIndex(i)
+						}
+					case tokenIndex:
+						idx := c.val.(int)
+						if idx < lv.Len() {
+							handleArrayIndex(idx)
+						}
+					}
+				}
+			case fd.Message() != nil:
+				for _, c := range t.children {
+					visitPb(c, v.Message())
+				}
+			}
+
+			return true
+		}
+
+		switch t.typ {
+		case tokenWildcard:
+			m.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
+				shouldContinue := processFd(fd)
+				return shouldContinue
+			})
+		case tokenAccessor:
+			fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
+			if fd == nil {
+				// return early, message field does not exist
+				return
+			} else if t.children == nil {
+				// field exists and token is leaf node, therefore delete the field from the message
+				if m.Has(fd) {
+					m.Clear(fd)
+				}
+				return
+			}
+			processFd(fd)
+		}
+	}
+
+	for _, c := range t.children {
+		visitPb(c, m)
+	}
+}
+
+func visitStructpb(t *token, v *structpb.Value) {
+	for _, c := range t.children {
+		switch k := v.GetKind().(type) {
+		case *structpb.Value_StructValue:
+			val := c.val.(string)
+			if c.children == nil {
+				delete(k.StructValue.Fields, val)
+				continue
+			}
+			if fv, ok := k.StructValue.Fields[val]; ok {
+				visitStructpb(c, fv)
+			}
+		case *structpb.Value_ListValue:
+			switch c.typ {
+			case tokenWildcard:
+				if c.children == nil {
+					k.ListValue.Values = []*structpb.Value{}
+					continue
+				}
+				for i := 0; i < len(k.ListValue.Values); i++ {
+					visitStructpb(c, k.ListValue.Values[i])
+				}
+			case tokenIndex:
+				idx := c.val.(int)
+				if c.children == nil {
+					// zero the key in the array
+					k.ListValue.Values[idx] = structpb.NewListValue(&structpb.ListValue{})
+					continue
+				}
+				visitStructpb(c, k.ListValue.Values[idx])
+			}
+		}
+	}
 }
