@@ -51,7 +51,7 @@ func TestAuditLogFilter(t *testing.T) {
 			"outputs",
 		},
 		PlanResources: []string{
-			"input['principal'][\"attr\"]['someMap']['nestedAttr1']",
+			"input['principal']['attr']['someMap']['nestedAttr1']",
 			"input.principal.attr.someList[0]",
 			"output.filterDebug",
 		},

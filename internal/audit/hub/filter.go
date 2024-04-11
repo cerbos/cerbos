@@ -129,8 +129,7 @@ const (
 	stateParenOpen
 	stateWildcard
 	stateNumberOpen
-	stateSingleQuoteOpen
-	stateDoubleQuoteOpen
+	stateStringOpen
 	stateStringClosed
 	stateClosed
 )
@@ -172,11 +171,7 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 				tb.t = tokenWildcard
 				return nil
 			case r == '\'':
-				tb.s = stateSingleQuoteOpen
-				tb.t = tokenAccessor
-				return nil
-			case r == '"':
-				tb.s = stateDoubleQuoteOpen
+				tb.s = stateStringOpen
 				tb.t = tokenAccessor
 				return nil
 			default:
@@ -203,21 +198,9 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 			}
 			tb.s = stateClosed
 			return nil
-		case stateSingleQuoteOpen:
-			switch r {
-			case '"':
-				return errors.New("unexpected character in single quote: '['")
-			case '\'':
-				tb.s = stateStringClosed
-				return nil
-			default:
-				// TODO(saml) extra validation?
-			}
-		case stateDoubleQuoteOpen:
+		case stateStringOpen:
 			switch r {
 			case '\'':
-				return errors.New("unexpected character in double quote: '\"'")
-			case '"':
 				tb.s = stateStringClosed
 				return nil
 			default:
