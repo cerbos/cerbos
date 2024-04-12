@@ -153,6 +153,7 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 		case unicode.IsLetter(r):
 			tb.s = statePlainAccessor
 			tb.t = tokenAccessor
+			// TODO(saml) use consts for all relevant runes???
 		case r == '[':
 			tb.s = stateParenOpen
 			return nil
@@ -244,6 +245,7 @@ func (tb *tokenBuilder) Flush() error {
 			val: value,
 		}
 
+		// update AST
 		if tb.curToken.children == nil {
 			tb.curToken.children = make(map[string]*token)
 		}
@@ -269,16 +271,11 @@ func tokenize(root *token, path string) error {
 		curToken: root,
 	}
 
-	for {
+	for curs < len(path) {
 		r, size := utf8.DecodeRuneInString(path[curs:])
-		if size == 0 {
-			if err := b.Flush(); err != nil {
-				return err
-			}
-			break
-		}
 		curs += size
 
+		// handle token boundaries
 		switch r {
 		case '.':
 			if err := b.Flush(); err != nil {
@@ -301,6 +298,10 @@ func tokenize(root *token, path string) error {
 		default:
 			b.WriteRune(r)
 		}
+	}
+
+	if err := b.Flush(); err != nil {
+		return err
 	}
 
 	return nil
@@ -352,22 +353,20 @@ func visit(t *token, m protoreflect.Message) {
 			case fd.IsMap():
 				mapVal := v.Map() // apparently retrieving typed values each iteration causes no slow-down
 				mapKey := protoreflect.ValueOfString(c.val.(string)).MapKey()
-				mvv := mapVal.Get(mapKey)
-				if mvv.IsValid() {
+				mv := mapVal.Get(mapKey)
+				if mv.IsValid() {
 					if c.children == nil {
 						mapVal.Clear(mapKey)
 						continue
 					}
-					switch {
-					case fd.MapValue().Message() != nil:
-						visit(c, mvv.Message())
-					default:
+					if fd.MapValue().Message() != nil {
+						visit(c, mv.Message())
 					}
 				}
 			case fd.IsList():
 				listVal := v.List()
 				handleArrayIndex := func(idx int) {
-					// For array indexes, reach ahead to the next token
+					// For array indexes, reach ahead to the next token.
 					for _, nc := range c.children {
 						visit(nc, listVal.Get(idx).Message())
 					}
@@ -395,12 +394,11 @@ func visitStructpb(t *token, v *structpb.Value) {
 	for _, c := range t.children {
 		switch k := v.GetKind().(type) {
 		case *structpb.Value_StructValue:
-			val := c.val.(string)
 			if c.children == nil {
-				delete(k.StructValue.Fields, val)
+				delete(k.StructValue.Fields, c.val.(string))
 				continue
 			}
-			if fv, ok := k.StructValue.Fields[val]; ok {
+			if fv, ok := k.StructValue.Fields[c.val.(string)]; ok {
 				visitStructpb(c, fv)
 			}
 		case *structpb.Value_ListValue:
