@@ -36,6 +36,8 @@ func TestAuditLogFilter(t *testing.T) {
 	ts2 := timestamppb.New(now.Add(2 * time.Second))
 	ts3 := timestamppb.New(now.Add(3 * time.Second))
 
+	// TODO(saml) test broken filters?
+
 	maskConf := hub.MaskConf{
 		Metadata: []string{"metadata_key_2"},
 		Peer: []string{
@@ -311,14 +313,16 @@ func TestAuditLogFilter(t *testing.T) {
 
 		"entries[1].decision_log_entry.metadata", // only one key existed and was removed
 		"entries[1].decision_log_entry.peer.address",
-		"entries[1].decision_log_entry.plan_resources.input.principal.attr.someList[0]",
+		// we removed the first element by manipulating the slice, so the "changed" element is the removed, previously first one
+		"entries[1].decision_log_entry.plan_resources.input.principal.attr.someList[-1]",
 		"entries[1].decision_log_entry.plan_resources.input.principal.attr.someMap.nestedAttr1",
 		"entries[1].decision_log_entry.plan_resources.output.filter_debug",
 
 		// Old CheckResources schema
 		"entries[2].decision_log_entry.inputs[0].principal.attr.attr1",
 		"entries[2].decision_log_entry.inputs[0].principal.attr.attr2",
-		"entries[2].decision_log_entry.inputs[0].principal.attr.someList[0]",
+		// we removed the first element by manipulating the slice, so the "changed" element is the removed, previously first one
+		"entries[2].decision_log_entry.inputs[0].principal.attr.someList[-1]",
 		"entries[2].decision_log_entry.inputs[0].principal.attr.someMap.nestedAttr1",
 		"entries[2].decision_log_entry.inputs[0].principal.id",
 		"entries[2].decision_log_entry.inputs[1].principal.attr.attr2",
@@ -328,7 +332,8 @@ func TestAuditLogFilter(t *testing.T) {
 		// New CheckResources schema
 		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.attr1",
 		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.attr2",
-		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someList[0]",
+		// we removed the first element by manipulating the slice, so the "changed" element is the removed, previously first one
+		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someList[-1]",
 		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someMap.nestedAttr1",
 		"entries[3].decision_log_entry.check_resources.inputs[0].principal.id",
 		"entries[3].decision_log_entry.check_resources.inputs[1].principal.attr.attr2",

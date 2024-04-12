@@ -135,10 +135,11 @@ const (
 )
 
 type tokenBuilder struct {
-	t    tokenType
-	s    state
-	size int
-	buf  string
+	t        tokenType
+	s        state
+	size     int
+	buf      string
+	curToken *token
 }
 
 func (tb *tokenBuilder) WriteRune(r rune) error {
@@ -220,16 +221,10 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 	return nil
 }
 
-func (tb *tokenBuilder) Flush() (t *token, err error) {
+func (tb *tokenBuilder) Flush() error {
 	if tb.s != stateClosed && tb.s != statePlainAccessor {
-		return t, fmt.Errorf("flush called in an invalid state: %v", tb.s)
+		return fmt.Errorf("flush called in an invalid state: %v", tb.s)
 	}
-
-	defer func() {
-		tb.buf = ""
-		tb.t = tokenUnknown
-		tb.size = 0
-	}()
 
 	if tb.size > 0 {
 		var value any
@@ -239,110 +234,70 @@ func (tb *tokenBuilder) Flush() (t *token, err error) {
 		case tokenIndex:
 			idx, err := strconv.Atoi(tb.buf)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			value = idx
 		}
 
-		return &token{
+		t := &token{
 			typ: tb.t,
 			val: value,
-		}, nil
+		}
+
+		if tb.curToken.children == nil {
+			tb.curToken.children = make(map[string]*token)
+		}
+
+		if cached, ok := tb.curToken.children[t.key()]; ok {
+			tb.curToken = cached
+		} else {
+			tb.curToken.children[t.key()] = t
+			tb.curToken = t
+		}
 	}
 
-	return t, nil
+	tb.buf = ""
+	tb.t = tokenUnknown
+	tb.size = 0
+
+	return nil
 }
 
 func tokenize(root *token, path string) error {
-	var (
-		curs     int
-		curToken = root
-	)
-
-	// TODO(saml) is the stack necessary anymore?
-	stack := newStack[rune]()
-
-	nextRune := func() (rune, bool) {
-		str := path[curs:]
-		if len(str) == 0 {
-			return -1, false
-		}
-
-		r, s := utf8.DecodeRuneInString(str)
-		curs += s
-
-		return r, true
+	curs := 0
+	b := &tokenBuilder{
+		curToken: root,
 	}
 
-	b := &tokenBuilder{}
-	flushToken := func() error {
-		t, err := b.Flush()
-		if err != nil {
-			return err
-		}
-
-		if t != nil {
-			if curToken.children == nil {
-				curToken.children = make(map[string]*token)
-			}
-
-			if cached, ok := curToken.children[t.key()]; ok {
-				curToken = cached
-			} else {
-				curToken.children[t.key()] = t
-				curToken = t
-			}
-		}
-
-		return nil
-	}
 	for {
-		r, cont := nextRune()
-		if !cont {
-			if err := flushToken(); err != nil {
+		r, size := utf8.DecodeRuneInString(path[curs:])
+		if size == 0 {
+			if err := b.Flush(); err != nil {
 				return err
 			}
 			break
 		}
+		curs += size
 
 		switch r {
 		case '.':
-			if err := flushToken(); err != nil {
+			if err := b.Flush(); err != nil {
 				return err
 			}
 		case '[':
-			if last, exists := stack.peek(); exists && last == '[' {
-				return ErrParse{
-					errors.New("cannot nest `[` symbols"),
-				}
-			}
-
-			stack.push(r)
-			if err := flushToken(); err != nil {
+			if err := b.Flush(); err != nil {
 				return err
 			}
 			if err := b.WriteRune(r); err != nil {
 				return ErrParse{errors.New("failed to write rune")}
 			}
 		case ']':
-			if last, exists := stack.pop(); !exists || last != '[' {
-				return ErrParse{
-					errors.New("no matching `[`"),
-				}
+			if err := b.WriteRune(r); err != nil {
+				return ErrParse{errors.New("failed to write rune")}
 			}
-
-			b.WriteRune(r)
-			if err := flushToken(); err != nil {
+			if err := b.Flush(); err != nil {
 				return err
 			}
-		case '\'', '"':
-			// we don't support nested quotations, so assert that any pairs use consistent quotations
-			if last, exists := stack.peek(); exists && (last == '\'' || last == '"') && last != r {
-				return ErrParse{
-					fmt.Errorf("non-matching quotation pair: %c and %c", last, r),
-				}
-			}
-			b.WriteRune(r)
 		default:
 			b.WriteRune(r)
 		}
@@ -368,18 +323,25 @@ func visitPb(t *token, m protoreflect.Message) {
 			return
 		}
 
-		processFd := func(fd protoreflect.FieldDescriptor) bool {
+		processFd := func(fd protoreflect.FieldDescriptor) {
+			var (
+				mapVal  protoreflect.Map
+				listVal protoreflect.List
+				msgVal  protoreflect.Message
+			)
 			v := m.Get(fd)
-			switch {
-			case fd.IsMap():
-				mv := v.Map()
-				for _, c := range t.children {
-					mapKey := protoreflect.ValueOfString(c.key()).MapKey()
-					mvv := mv.Get(mapKey)
+			for _, c := range t.children {
+				switch {
+				case fd.IsMap():
+					if mapVal == nil {
+						mapVal = v.Map()
+					}
+					mapKey := protoreflect.ValueOfString(c.val.(string)).MapKey()
+					mvv := mapVal.Get(mapKey)
 					if mvv.IsValid() {
 						if c.children == nil {
-							mv.Clear(mapKey)
-							return false
+							mapVal.Clear(mapKey)
+							continue
 						}
 						switch {
 						case fd.MapValue().Message() != nil:
@@ -387,44 +349,38 @@ func visitPb(t *token, m protoreflect.Message) {
 						default:
 						}
 					}
-				}
-			case fd.IsList():
-				lv := v.List()
-				for _, c := range t.children {
+				case fd.IsList():
+					if listVal == nil {
+						listVal = v.List()
+					}
 					handleArrayIndex := func(idx int) {
 						// For array indexes, reach ahead to the next token
-						for _, c := range c.children {
-							visitPb(c, lv.Get(idx).Message())
+						for _, nc := range c.children {
+							visitPb(nc, listVal.Get(idx).Message())
 						}
 					}
 
 					switch c.typ {
 					case tokenWildcard:
-						for i := 0; i < lv.Len(); i++ {
+						for i := 0; i < listVal.Len(); i++ {
 							handleArrayIndex(i)
 						}
 					case tokenIndex:
 						idx := c.val.(int)
-						if idx < lv.Len() {
+						if idx < listVal.Len() {
 							handleArrayIndex(idx)
 						}
 					}
-				}
-			case fd.Message() != nil:
-				for _, c := range t.children {
-					visitPb(c, v.Message())
+				case fd.Message() != nil:
+					if msgVal == nil {
+						msgVal = v.Message()
+					}
+					visitPb(c, msgVal)
 				}
 			}
-
-			return true
 		}
 
 		switch t.typ {
-		case tokenWildcard:
-			m.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
-				shouldContinue := processFd(fd)
-				return shouldContinue
-			})
 		case tokenAccessor:
 			fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
 			if fd == nil {
@@ -438,6 +394,11 @@ func visitPb(t *token, m protoreflect.Message) {
 				return
 			}
 			processFd(fd)
+		case tokenWildcard:
+			m.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
+				processFd(fd)
+				return true
+			})
 		}
 	}
 
@@ -462,7 +423,7 @@ func visitStructpb(t *token, v *structpb.Value) {
 			switch c.typ {
 			case tokenWildcard:
 				if c.children == nil {
-					k.ListValue.Values = []*structpb.Value{}
+					v = nil
 					continue
 				}
 				for i := 0; i < len(k.ListValue.Values); i++ {
@@ -471,8 +432,13 @@ func visitStructpb(t *token, v *structpb.Value) {
 			case tokenIndex:
 				idx := c.val.(int)
 				if c.children == nil {
-					// zero the key in the array
-					k.ListValue.Values[idx] = structpb.NewListValue(&structpb.ListValue{})
+					if l := len(k.ListValue.Values); idx < l {
+						if l == 1 {
+							v = nil
+						} else {
+							k.ListValue.Values = append(k.ListValue.Values[:idx], k.ListValue.Values[idx+1:]...)
+						}
+					}
 					continue
 				}
 				visitStructpb(c, k.ListValue.Values[idx])
