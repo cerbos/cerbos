@@ -311,99 +311,95 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 		return nil
 	}
 
-	visitPb(f.ast, ingestBatch.ProtoReflect())
+	for _, c := range f.ast.children {
+		visitPb(c, ingestBatch.ProtoReflect())
+	}
 
 	return nil
 }
 
 func visitPb(t *token, m protoreflect.Message) {
-	if t.typ != tokenUnknown {
-		if value, ok := m.Interface().(*structpb.Value); ok {
-			visitStructpb(t, value)
-			return
-		}
+	if value, ok := m.Interface().(*structpb.Value); ok {
+		visitStructpb(t, value)
+		return
+	}
 
-		processFd := func(fd protoreflect.FieldDescriptor) {
-			var (
-				mapVal  protoreflect.Map
-				listVal protoreflect.List
-				msgVal  protoreflect.Message
-			)
-			v := m.Get(fd)
-			for _, c := range t.children {
-				switch {
-				case fd.IsMap():
-					if mapVal == nil {
-						mapVal = v.Map()
-					}
-					mapKey := protoreflect.ValueOfString(c.val.(string)).MapKey()
-					mvv := mapVal.Get(mapKey)
-					if mvv.IsValid() {
-						if c.children == nil {
-							mapVal.Clear(mapKey)
-							continue
-						}
-						switch {
-						case fd.MapValue().Message() != nil:
-							visitPb(c, mvv.Message())
-						default:
-						}
-					}
-				case fd.IsList():
-					if listVal == nil {
-						listVal = v.List()
-					}
-					handleArrayIndex := func(idx int) {
-						// For array indexes, reach ahead to the next token
-						for _, nc := range c.children {
-							visitPb(nc, listVal.Get(idx).Message())
-						}
-					}
-
-					switch c.typ {
-					case tokenWildcard:
-						for i := 0; i < listVal.Len(); i++ {
-							handleArrayIndex(i)
-						}
-					case tokenIndex:
-						idx := c.val.(int)
-						if idx < listVal.Len() {
-							handleArrayIndex(idx)
-						}
-					}
-				case fd.Message() != nil:
-					if msgVal == nil {
-						msgVal = v.Message()
-					}
-					visitPb(c, msgVal)
+	processFd := func(fd protoreflect.FieldDescriptor) {
+		var (
+			mapVal  protoreflect.Map
+			listVal protoreflect.List
+			msgVal  protoreflect.Message
+		)
+		v := m.Get(fd)
+		for _, c := range t.children {
+			switch {
+			case fd.IsMap():
+				if mapVal == nil {
+					mapVal = v.Map()
 				}
-			}
-		}
-
-		switch t.typ {
-		case tokenAccessor:
-			fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
-			if fd == nil {
-				// return early, message field does not exist
-				return
-			} else if t.children == nil {
-				// field exists and token is leaf node, therefore delete the field from the message
-				if m.Has(fd) {
-					m.Clear(fd)
+				mapKey := protoreflect.ValueOfString(c.val.(string)).MapKey()
+				mvv := mapVal.Get(mapKey)
+				if mvv.IsValid() {
+					if c.children == nil {
+						mapVal.Clear(mapKey)
+						continue
+					}
+					switch {
+					case fd.MapValue().Message() != nil:
+						visitPb(c, mvv.Message())
+					default:
+					}
 				}
-				return
+			case fd.IsList():
+				if listVal == nil {
+					listVal = v.List()
+				}
+				handleArrayIndex := func(idx int) {
+					// For array indexes, reach ahead to the next token
+					for _, nc := range c.children {
+						visitPb(nc, listVal.Get(idx).Message())
+					}
+				}
+
+				switch c.typ {
+				case tokenWildcard:
+					for i := 0; i < listVal.Len(); i++ {
+						handleArrayIndex(i)
+					}
+				case tokenIndex:
+					idx := c.val.(int)
+					if idx < listVal.Len() {
+						handleArrayIndex(idx)
+					}
+				}
+			case fd.Message() != nil:
+				if msgVal == nil {
+					msgVal = v.Message()
+				}
+				visitPb(c, msgVal)
 			}
-			processFd(fd)
-		case tokenWildcard:
-			m.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
-				processFd(fd)
-				return true
-			})
 		}
 	}
 
-	for _, c := range t.children {
-		visitPb(c, m)
+	switch t.typ {
+	case tokenAccessor:
+		fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
+		if fd == nil {
+			// return early, message field does not exist
+			return
+		} else if t.children == nil {
+			// field exists and token is leaf node, therefore delete the field from the message
+			if m.Has(fd) {
+				m.Clear(fd)
+			}
+			return
+		}
+		processFd(fd)
+	case tokenWildcard:
+		m.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
+			processFd(fd)
+			return true
+		})
 	}
 }
 
