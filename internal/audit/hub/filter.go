@@ -65,7 +65,7 @@ func (t *token) key() string {
 }
 
 type AuditLogFilter struct {
-	ast *token
+	astRoot *token
 }
 
 func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
@@ -75,7 +75,7 @@ func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
 	}
 
 	return &AuditLogFilter{
-		ast: root,
+		astRoot: root,
 	}, nil
 }
 
@@ -307,47 +307,45 @@ func tokenize(root *token, path string) error {
 }
 
 func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
-	if f.ast == nil || len(f.ast.children) == 0 {
+	if f.astRoot == nil {
 		return nil
 	}
 
-	for _, c := range f.ast.children {
-		visitPb(c, ingestBatch.ProtoReflect())
+	for _, c := range f.astRoot.children {
+		visit(c, ingestBatch.ProtoReflect())
 	}
 
 	return nil
 }
 
-func visitPb(t *token, m protoreflect.Message) {
+func visit(t *token, m protoreflect.Message) {
 	if value, ok := m.Interface().(*structpb.Value); ok {
 		visitStructpb(t, value)
 		return
 	}
 
-	var fdToProcess []protoreflect.FieldDescriptor
+	var fieldsToInspect []protoreflect.FieldDescriptor
 	switch t.typ {
 	case tokenAccessor:
 		fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
 		if fd == nil {
-			// return early, message field does not exist
 			return
 		} else if t.children == nil {
-			// field exists and token is leaf node, therefore delete the field from the message
 			if m.Has(fd) {
 				m.Clear(fd)
 			}
 			return
 		}
-		fdToProcess = []protoreflect.FieldDescriptor{fd}
+		fieldsToInspect = []protoreflect.FieldDescriptor{fd}
 	case tokenWildcard:
 		fds := m.Descriptor().Fields()
-		fdToProcess = make([]protoreflect.FieldDescriptor, fds.Len())
+		fieldsToInspect = make([]protoreflect.FieldDescriptor, fds.Len())
 		for i := 0; i < fds.Len(); i++ {
-			fdToProcess[i] = fds.Get(i)
+			fieldsToInspect[i] = fds.Get(i)
 		}
 	}
 
-	for _, fd := range fdToProcess {
+	for _, fd := range fieldsToInspect {
 		v := m.Get(fd)
 		for _, c := range t.children {
 			switch {
@@ -362,7 +360,7 @@ func visitPb(t *token, m protoreflect.Message) {
 					}
 					switch {
 					case fd.MapValue().Message() != nil:
-						visitPb(c, mvv.Message())
+						visit(c, mvv.Message())
 					default:
 					}
 				}
@@ -371,7 +369,7 @@ func visitPb(t *token, m protoreflect.Message) {
 				handleArrayIndex := func(idx int) {
 					// For array indexes, reach ahead to the next token
 					for _, nc := range c.children {
-						visitPb(nc, listVal.Get(idx).Message())
+						visit(nc, listVal.Get(idx).Message())
 					}
 				}
 
@@ -387,7 +385,7 @@ func visitPb(t *token, m protoreflect.Message) {
 					}
 				}
 			case fd.Message() != nil:
-				visitPb(c, v.Message())
+				visit(c, v.Message())
 			}
 		}
 	}
@@ -422,7 +420,8 @@ func visitStructpb(t *token, v *structpb.Value) {
 						if l == 1 {
 							v = nil
 						} else {
-							k.ListValue.Values = append(k.ListValue.Values[:idx], k.ListValue.Values[idx+1:]...)
+							copy(k.ListValue.Values[idx:], k.ListValue.Values[idx+1:])
+							k.ListValue.Values = k.ListValue.Values[:len(k.ListValue.Values)-1]
 						}
 					}
 					continue
