@@ -324,19 +324,35 @@ func visitPb(t *token, m protoreflect.Message) {
 		return
 	}
 
-	processFd := func(fd protoreflect.FieldDescriptor) {
-		var (
-			mapVal  protoreflect.Map
-			listVal protoreflect.List
-			msgVal  protoreflect.Message
-		)
+	var fdToProcess []protoreflect.FieldDescriptor
+	switch t.typ {
+	case tokenAccessor:
+		fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
+		if fd == nil {
+			// return early, message field does not exist
+			return
+		} else if t.children == nil {
+			// field exists and token is leaf node, therefore delete the field from the message
+			if m.Has(fd) {
+				m.Clear(fd)
+			}
+			return
+		}
+		fdToProcess = []protoreflect.FieldDescriptor{fd}
+	case tokenWildcard:
+		fds := m.Descriptor().Fields()
+		fdToProcess = make([]protoreflect.FieldDescriptor, fds.Len())
+		for i := 0; i < fds.Len(); i++ {
+			fdToProcess[i] = fds.Get(i)
+		}
+	}
+
+	for _, fd := range fdToProcess {
 		v := m.Get(fd)
 		for _, c := range t.children {
 			switch {
 			case fd.IsMap():
-				if mapVal == nil {
-					mapVal = v.Map()
-				}
+				mapVal := v.Map() // apparently retrieving typed values each iteration causes no slow-down
 				mapKey := protoreflect.ValueOfString(c.val.(string)).MapKey()
 				mvv := mapVal.Get(mapKey)
 				if mvv.IsValid() {
@@ -351,9 +367,7 @@ func visitPb(t *token, m protoreflect.Message) {
 					}
 				}
 			case fd.IsList():
-				if listVal == nil {
-					listVal = v.List()
-				}
+				listVal := v.List()
 				handleArrayIndex := func(idx int) {
 					// For array indexes, reach ahead to the next token
 					for _, nc := range c.children {
@@ -373,33 +387,9 @@ func visitPb(t *token, m protoreflect.Message) {
 					}
 				}
 			case fd.Message() != nil:
-				if msgVal == nil {
-					msgVal = v.Message()
-				}
-				visitPb(c, msgVal)
+				visitPb(c, v.Message())
 			}
 		}
-	}
-
-	switch t.typ {
-	case tokenAccessor:
-		fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
-		if fd == nil {
-			// return early, message field does not exist
-			return
-		} else if t.children == nil {
-			// field exists and token is leaf node, therefore delete the field from the message
-			if m.Has(fd) {
-				m.Clear(fd)
-			}
-			return
-		}
-		processFd(fd)
-	case tokenWildcard:
-		m.Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
-			processFd(fd)
-			return true
-		})
 	}
 }
 
