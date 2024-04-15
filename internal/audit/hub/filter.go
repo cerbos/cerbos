@@ -17,8 +17,6 @@ import (
 )
 
 const (
-	// TODO(saml) profile alternative prefixes? Separate, static entries for each log type perhaps
-	// both log types.
 	unionedPathPrefix = "entries[*][*]"
 	peerPrefix        = unionedPathPrefix + ".peer"
 	metadataPrefix    = unionedPathPrefix + ".metadata"
@@ -27,15 +25,6 @@ const (
 	checkResourcesPrefix           = "entries[*].decisionLogEntry.checkResources"
 	planResourcesPrefix            = "entries[*].decisionLogEntry.planResources"
 )
-
-// TODO(saml) How to store/represent error?
-type ErrParse struct {
-	underlying error
-}
-
-func (e ErrParse) Error() string {
-	return e.underlying.Error()
-}
 
 type tokenType int8
 
@@ -46,13 +35,13 @@ const (
 	tokenWildcard
 )
 
-type token struct {
+type Token struct {
 	typ      tokenType
 	val      any
-	children map[string]*token
+	children map[string]*Token
 }
 
-func (t *token) key() string {
+func (t *Token) key() string {
 	switch t.typ {
 	case tokenAccessor:
 		return t.val.(string)
@@ -65,7 +54,7 @@ func (t *token) key() string {
 }
 
 type AuditLogFilter struct {
-	astRoot *token
+	astRoot *Token
 }
 
 func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
@@ -79,11 +68,11 @@ func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
 	}, nil
 }
 
-func parseJSONPathExprs(conf MaskConf) (ast *token, outErr error) {
-	root := &token{}
+func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
+	root := &Token{}
 
 	parse := func(rule string) error {
-		if err := tokenize(root, rule); err != nil {
+		if err := Tokenize(root, rule); err != nil {
 			return err
 		}
 
@@ -139,7 +128,7 @@ type tokenBuilder struct {
 	s        state
 	size     int
 	buf      string
-	curToken *token
+	curToken *Token
 }
 
 func (tb *tokenBuilder) WriteRune(r rune) error {
@@ -153,12 +142,11 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 		case unicode.IsLetter(r):
 			tb.s = statePlainAccessor
 			tb.t = tokenAccessor
-			// TODO(saml) use consts for all relevant runes???
 		case r == '[':
 			tb.s = stateParenOpen
 			return nil
 		default:
-			return fmt.Errorf("invalid initial rune: %c", r)
+			return fmt.Errorf("invalid first character: %c", r)
 		}
 	case 1:
 		switch tb.s {
@@ -185,6 +173,9 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 	default:
 		switch tb.s {
 		case statePlainAccessor:
+			if !unicode.IsLetter(r) && !unicode.IsNumber(r) && r != '_' {
+				return fmt.Errorf("unexpected character for accessor: %c", r)
+			}
 		case stateNumberOpen:
 			switch {
 			case unicode.IsDigit(r):
@@ -205,8 +196,6 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 			case '\'':
 				tb.s = stateStringClosed
 				return nil
-			default:
-				// TODO(saml) extra validation?
 			}
 		case stateStringClosed:
 			if r != ']' {
@@ -214,6 +203,8 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 			}
 			tb.s = stateClosed
 			return nil
+		default:
+			return fmt.Errorf("unexpected state: %v", tb.s)
 		}
 	}
 
@@ -223,7 +214,11 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 }
 
 func (tb *tokenBuilder) Flush() error {
-	if tb.s != stateClosed && tb.s != statePlainAccessor {
+	switch tb.s {
+	case stateClosed, statePlainAccessor:
+	case stateStringOpen:
+		return errors.New("invalid string not closed")
+	default:
 		return fmt.Errorf("flush called in an invalid state: %v", tb.s)
 	}
 
@@ -240,14 +235,13 @@ func (tb *tokenBuilder) Flush() error {
 			value = idx
 		}
 
-		t := &token{
+		t := &Token{
 			typ: tb.t,
 			val: value,
 		}
 
-		// update AST
 		if tb.curToken.children == nil {
-			tb.curToken.children = make(map[string]*token)
+			tb.curToken.children = make(map[string]*Token)
 		}
 
 		if cached, ok := tb.curToken.children[t.key()]; ok {
@@ -265,19 +259,28 @@ func (tb *tokenBuilder) Flush() error {
 	return nil
 }
 
-func tokenize(root *token, path string) error {
+func Tokenize(root *Token, path string) error {
 	curs := 0
 	b := &tokenBuilder{
 		curToken: root,
 	}
 
+	var prev rune
 	for curs < len(path) {
 		r, size := utf8.DecodeRuneInString(path[curs:])
 		curs += size
 
-		// handle token boundaries
+		// handle and validate token boundaries
 		switch r {
 		case '.':
+			if curs == size {
+				return errors.New("invalid first character: '.'")
+			} else if curs == len(path) {
+				return errors.New("invalid final character: '.'")
+			} else if prev == '.' {
+				return errors.New("invalid empty token")
+			}
+
 			if err := b.Flush(); err != nil {
 				return err
 			}
@@ -286,18 +289,22 @@ func tokenize(root *token, path string) error {
 				return err
 			}
 			if err := b.WriteRune(r); err != nil {
-				return ErrParse{errors.New("failed to write rune")}
+				return err
 			}
 		case ']':
 			if err := b.WriteRune(r); err != nil {
-				return ErrParse{errors.New("failed to write rune")}
+				return err
 			}
 			if err := b.Flush(); err != nil {
 				return err
 			}
 		default:
-			b.WriteRune(r)
+			if err := b.WriteRune(r); err != nil {
+				return err
+			}
 		}
+
+		prev = r
 	}
 
 	if err := b.Flush(); err != nil {
@@ -319,7 +326,32 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 	return nil
 }
 
-func visit(t *token, m protoreflect.Message) {
+// We support a subset of JSONPath operations, as follows:
+//
+// - dot notation: `foo.bar.baz`
+// - or bracket-notation: `['foo']['bar']['baz]`
+// - or combinations thereof
+//
+// `bar` or `baz` above can be map keys, nested messages or structs.
+//
+// We support list indexing with Ints or wildcards:
+// - foo.bar[0]
+// - foo.bar[*]
+//
+// Wildcards can also operate on member names as a match-all. E.g `foo[*].baz`
+// will match both `baz` values in the pseudo-object below:
+//
+//	{
+//	  'foo': {
+//	    'pow': {
+//	        'baz',
+//	    },
+//	    'bosh': {
+//	        'baz',
+//	    },
+//	  }
+//	}
+func visit(t *Token, m protoreflect.Message) {
 	if value, ok := m.Interface().(*structpb.Value); ok {
 		visitStructpb(t, value)
 		return
@@ -378,8 +410,7 @@ func visit(t *token, m protoreflect.Message) {
 						handleArrayIndex(i)
 					}
 				case tokenIndex:
-					idx := c.val.(int)
-					if idx < listVal.Len() {
+					if idx := c.val.(int); idx < listVal.Len() {
 						handleArrayIndex(idx)
 					}
 				}
@@ -390,7 +421,7 @@ func visit(t *token, m protoreflect.Message) {
 	}
 }
 
-func visitStructpb(t *token, v *structpb.Value) {
+func visitStructpb(t *Token, v *structpb.Value) {
 	for _, c := range t.children {
 		switch k := v.GetKind().(type) {
 		case *structpb.Value_StructValue:
