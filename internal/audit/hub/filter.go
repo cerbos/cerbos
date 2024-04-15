@@ -36,21 +36,22 @@ const (
 )
 
 type Token struct {
-	typ      tokenType
 	val      any
 	children map[string]*Token
+	typ      tokenType
 }
 
 func (t *Token) key() string {
 	switch t.typ {
 	case tokenAccessor:
-		return t.val.(string)
+		return t.val.(string) //nolint:forcetypeassert
 	case tokenIndex:
-		return "[" + strconv.Itoa(t.val.(int)) + "]"
+		return "[" + strconv.Itoa(t.val.(int)) + "]" //nolint:forcetypeassert
 	case tokenWildcard:
 		return "[*]"
+	default:
+		return ""
 	}
-	return ""
 }
 
 type AuditLogFilter struct {
@@ -124,11 +125,11 @@ const (
 )
 
 type tokenBuilder struct {
+	curToken *Token
+	buf      string
+	size     int
 	t        tokenType
 	s        state
-	size     int
-	buf      string
-	curToken *Token
 }
 
 func (tb *tokenBuilder) WriteRune(r rune) error {
@@ -192,8 +193,7 @@ func (tb *tokenBuilder) WriteRune(r rune) error {
 			tb.s = stateClosed
 			return nil
 		case stateStringOpen:
-			switch r {
-			case '\'':
+			if r == '\'' {
 				tb.s = stateStringClosed
 				return nil
 			}
@@ -224,7 +224,7 @@ func (tb *tokenBuilder) Flush() error {
 
 	if tb.size > 0 {
 		var value any
-		switch tb.t {
+		switch tb.t { //nolint:exhaustive
 		case tokenAccessor:
 			value = tb.buf
 		case tokenIndex:
@@ -273,11 +273,12 @@ func Tokenize(root *Token, path string) error {
 		// handle and validate token boundaries
 		switch r {
 		case '.':
-			if curs == size {
+			switch {
+			case curs == size:
 				return errors.New("invalid first character: '.'")
-			} else if curs == len(path) {
+			case curs == len(path):
 				return errors.New("invalid final character: '.'")
-			} else if prev == '.' {
+			case prev == '.':
 				return errors.New("invalid empty token")
 			}
 
@@ -358,9 +359,9 @@ func visit(t *Token, m protoreflect.Message) {
 	}
 
 	var fieldsToInspect []protoreflect.FieldDescriptor
-	switch t.typ {
+	switch t.typ { //nolint:exhaustive
 	case tokenAccessor:
-		fd := m.Descriptor().Fields().ByJSONName(t.val.(string))
+		fd := m.Descriptor().Fields().ByJSONName(t.val.(string)) //nolint:forcetypeassert
 		if fd == nil {
 			return
 		} else if t.children == nil {
@@ -384,7 +385,11 @@ func visit(t *Token, m protoreflect.Message) {
 			switch {
 			case fd.IsMap():
 				mapVal := v.Map() // apparently retrieving typed values each iteration causes no slow-down
-				mapKey := protoreflect.ValueOfString(c.val.(string)).MapKey()
+				k, ok := c.val.(string)
+				if !ok {
+					continue
+				}
+				mapKey := protoreflect.ValueOfString(k).MapKey()
 				mv := mapVal.Get(mapKey)
 				if mv.IsValid() {
 					if c.children == nil {
@@ -404,13 +409,13 @@ func visit(t *Token, m protoreflect.Message) {
 					}
 				}
 
-				switch c.typ {
+				switch c.typ { //nolint:exhaustive
 				case tokenWildcard:
 					for i := 0; i < listVal.Len(); i++ {
 						handleArrayIndex(i)
 					}
 				case tokenIndex:
-					if idx := c.val.(int); idx < listVal.Len() {
+					if idx := c.val.(int); idx < listVal.Len() { //nolint:forcetypeassert
 						handleArrayIndex(idx)
 					}
 				}
@@ -425,15 +430,19 @@ func visitStructpb(t *Token, v *structpb.Value) {
 	for _, c := range t.children {
 		switch k := v.GetKind().(type) {
 		case *structpb.Value_StructValue:
-			if c.children == nil {
-				delete(k.StructValue.Fields, c.val.(string))
+			name, ok := c.val.(string)
+			if !ok {
 				continue
 			}
-			if fv, ok := k.StructValue.Fields[c.val.(string)]; ok {
+			if c.children == nil {
+				delete(k.StructValue.Fields, name)
+				continue
+			}
+			if fv, ok := k.StructValue.Fields[name]; ok {
 				visitStructpb(c, fv)
 			}
 		case *structpb.Value_ListValue:
-			switch c.typ {
+			switch c.typ { //nolint:exhaustive
 			case tokenWildcard:
 				if c.children == nil {
 					v = nil
@@ -443,7 +452,10 @@ func visitStructpb(t *Token, v *structpb.Value) {
 					visitStructpb(c, k.ListValue.Values[i])
 				}
 			case tokenIndex:
-				idx := c.val.(int)
+				idx, ok := c.val.(int)
+				if !ok {
+					continue
+				}
 				if c.children == nil {
 					if l := len(k.ListValue.Values); idx < l {
 						if l == 1 {
