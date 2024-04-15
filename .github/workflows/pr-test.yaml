@@ -333,3 +333,13 @@ jobs:
       - name: Test npm packages
         working-directory: npm
         run: corepack npm test
+
+  test-npm-results:
+    name: Check results of npm package tests
+    runs-on: ubuntu-latest
+    if: always() && needs.test-npm.result != 'skipped'
+    needs:
+      - test-npm
+    steps:
+      - name: Check test results
+        run: test "${{ needs.test-npm.result }}" = "success"
