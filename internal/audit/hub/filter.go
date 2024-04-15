@@ -419,7 +419,7 @@ func visitStructpb(t *token, v *structpb.Value) {
 							v = nil
 						} else {
 							copy(k.ListValue.Values[idx:], k.ListValue.Values[idx+1:])
-							k.ListValue.Values = k.ListValue.Values[:len(k.ListValue.Values)-1]
+							k.ListValue.Values = k.ListValue.Values[: len(k.ListValue.Values)-1 : len(k.ListValue.Values)-1] // also reduce capacity
 						}
 					}
 					continue

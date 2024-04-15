@@ -49,12 +49,13 @@ func TestAuditLogFilter(t *testing.T) {
 			"inputs[0].principal.attr.attr1",
 			"inputs[*]['principal']['attr']['attr2']",
 			"inputs[*].principal.attr.someMap.nestedAttr1",
+			"inputs[*].principal.attr.someMap.someSomeMap.nestedNestedAttr1",
 			"inputs[*].principal.attr.someList[0]",
 			"outputs",
 		},
 		PlanResources: []string{
 			"input['principal']['attr']['someMap']['nestedAttr1']",
-			"input.principal.attr.someList[0]",
+			"input.principal.attr.someList[1]",
 			"output.filterDebug",
 		},
 	}
@@ -175,6 +176,11 @@ func TestAuditLogFilter(t *testing.T) {
 										Fields: map[string]*structpb.Value{
 											"nestedAttr1": structpb.NewNumberValue(1),
 											"nestedAttr2": structpb.NewNumberValue(2),
+											"someSomeMap": structpb.NewStructValue(&structpb.Struct{
+												Fields: map[string]*structpb.Value{
+													"nestedNestedAttr1": structpb.NewNumberValue(1),
+												},
+											}),
 										},
 									}),
 									"someList": structpb.NewListValue(&structpb.ListValue{
@@ -254,6 +260,12 @@ func TestAuditLogFilter(t *testing.T) {
 												Fields: map[string]*structpb.Value{
 													"nestedAttr1": structpb.NewNumberValue(1),
 													"nestedAttr2": structpb.NewNumberValue(2),
+													"someSomeMap": structpb.NewStructValue(&structpb.Struct{
+														Fields: map[string]*structpb.Value{
+															"nestedNestedAttr1": structpb.NewNumberValue(1),
+															"nestedNestedAttr2": structpb.NewNumberValue(1),
+														},
+													}),
 												},
 											}),
 											"someList": structpb.NewListValue(&structpb.ListValue{
@@ -324,6 +336,7 @@ func TestAuditLogFilter(t *testing.T) {
 		// we removed the first element by manipulating the slice, so the "changed" element is the removed, previously first one
 		"entries[2].decision_log_entry.inputs[0].principal.attr.someList[-1]",
 		"entries[2].decision_log_entry.inputs[0].principal.attr.someMap.nestedAttr1",
+		"entries[2].decision_log_entry.inputs[0].principal.attr.someMap.someSomeMap", // sole key deletion results in entire map deletion
 		"entries[2].decision_log_entry.inputs[0].principal.id",
 		"entries[2].decision_log_entry.inputs[1].principal.attr.attr2",
 		"entries[2].decision_log_entry.outputs",
@@ -335,6 +348,7 @@ func TestAuditLogFilter(t *testing.T) {
 		// we removed the first element by manipulating the slice, so the "changed" element is the removed, previously first one
 		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someList[-1]",
 		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someMap.nestedAttr1",
+		"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someMap.someSomeMap.nestedNestedAttr1",
 		"entries[3].decision_log_entry.check_resources.inputs[0].principal.id",
 		"entries[3].decision_log_entry.check_resources.inputs[1].principal.attr.attr2",
 		"entries[3].decision_log_entry.check_resources.outputs",
@@ -345,7 +359,6 @@ func TestAuditLogFilter(t *testing.T) {
 		Id:      "1",
 		Entries: logEntries,
 	}
-
 	ingestBatchCopy := proto.Clone(ingestBatch).(*logsv1.IngestBatch)
 	err = masker.Filter(ingestBatch)
 	require.NoError(t, err)
@@ -355,6 +368,19 @@ func TestAuditLogFilter(t *testing.T) {
 	var r diffReporter
 	cmp.Equal(ingestBatchCopy, ingestBatch, protocmp.Transform(), cmp.Reporter(&r))
 	require.Equal(t, strings.Join(wantRemoved, "\n"), r.String())
+
+	// `-1` only infers that an array item is missing. check the correct item is missing for each
+	l := ingestBatch.Entries[1].GetDecisionLogEntry().GetPlanResources().Input.Principal.Attr["someList"].GetListValue().Values
+	require.Len(t, l, 1)
+	require.Equal(t, l[0].GetStringValue(), "index0") // we removed the second entry
+
+	l = ingestBatch.Entries[2].GetDecisionLogEntry().Inputs[0].Principal.Attr["someList"].GetListValue().Values
+	require.Len(t, l, 1)
+	require.Equal(t, l[0].GetStringValue(), "index1")
+
+	l = ingestBatch.Entries[3].GetDecisionLogEntry().GetCheckResources().Inputs[0].Principal.Attr["someList"].GetListValue().Values
+	require.Len(t, l, 1)
+	require.Equal(t, l[0].GetStringValue(), "index1")
 }
 
 type diffReporter struct {
