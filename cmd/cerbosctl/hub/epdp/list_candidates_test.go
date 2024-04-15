@@ -70,11 +70,11 @@ func TestListCandidates(t *testing.T) {
 			fsys := test.ExtractTxtArchiveToFS(t, filepath.Join("testdata", testCase.testFile))
 			candidates, err := listCandidates(context.Background(), fsys)
 			if testCase.expectedErr != "" {
-				require.ErrorContains(t, err, "failed to build index: failed to build index: missing imports=0, missing scopes=1, duplicate definitions=0, load failures=0")
+				require.ErrorContains(t, err, testCase.expectedErr)
 			} else {
 				require.NoError(t, err)
 			}
-			require.Len(t, testCase.expectedList, len(candidates))
+			require.Len(t, candidates, len(testCase.expectedList))
 
 			have := make([]string, 0, len(candidates))
 			for policyKey, policyID := range candidates {
