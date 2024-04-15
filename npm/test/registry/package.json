@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "npm@10.5.1",
+  "packageManager": "npm@10.5.2",
   "scripts": {
     "start": "verdaccio"
   },
