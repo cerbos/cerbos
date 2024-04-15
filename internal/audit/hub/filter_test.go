@@ -79,7 +79,6 @@ func TestAuditLogFilter(t *testing.T) {
 		}
 
 		for _, c := range tc {
-			// runtime.Breakpoint()
 			err := hub.Tokenize(&hub.Token{}, c.path)
 			if c.wantErr != nil {
 				require.Error(t, err, fmt.Sprintf("failed path: `%s`", c.path))
