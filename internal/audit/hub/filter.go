@@ -6,6 +6,7 @@ package hub
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"unicode"
 	"unicode/utf8"
@@ -320,7 +321,7 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 		return nil
 	}
 
-    ib := ingestBatch.ProtoReflect()
+	ib := ingestBatch.ProtoReflect()
 	for _, c := range f.astRoot.children {
 		visit(c, ib)
 	}
@@ -354,8 +355,8 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 //	  }
 //	}
 func visit(t *Token, m protoreflect.Message) {
-    if m.Type().Descriptor().FullName() == "google.protobuf.Value" {
-		visitStructpb(t, m.Interface().(*structpb.Value))
+	if m.Type().Descriptor().FullName() == "google.protobuf.Value" {
+		visitStructpb(t, m.Interface().(*structpb.Value)) //nolint:forcetypeassert
 		return
 	}
 
