@@ -320,8 +320,9 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 		return nil
 	}
 
+    ib := ingestBatch.ProtoReflect()
 	for _, c := range f.astRoot.children {
-		visit(c, ingestBatch.ProtoReflect())
+		visit(c, ib)
 	}
 
 	return nil
@@ -353,8 +354,8 @@ func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
 //	  }
 //	}
 func visit(t *Token, m protoreflect.Message) {
-	if value, ok := m.Interface().(*structpb.Value); ok {
-		visitStructpb(t, value)
+    if m.Type().Descriptor().FullName() == "google.protobuf.Value" {
+		visitStructpb(t, m.Interface().(*structpb.Value))
 		return
 	}
 
@@ -461,8 +462,7 @@ func visitStructpb(t *Token, v *structpb.Value) {
 						if l == 1 {
 							v = nil
 						} else {
-							copy(k.ListValue.Values[idx:], k.ListValue.Values[idx+1:])
-							k.ListValue.Values = k.ListValue.Values[: len(k.ListValue.Values)-1 : len(k.ListValue.Values)-1] // also reduce capacity
+							k.ListValue.Values = slices.Delete(k.ListValue.Values, idx, idx+1)
 						}
 					}
 					continue
