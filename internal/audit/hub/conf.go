@@ -32,7 +32,9 @@ var (
 )
 
 type Conf struct {
-	Ingest     IngestConf `yaml:"ingest" conf:",ignore"`
+	Ingest IngestConf `yaml:"ingest" conf:",ignore"`
+	// Mask defines a list of attributes to exclude from the audit logs, specified as lists of JSONPaths
+	Mask       MaskConf `yaml:"mask"`
 	local.Conf `yaml:",inline"`
 }
 
@@ -49,6 +51,13 @@ type IngestConf struct {
 	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=5s"`
 	// NumGoRoutines defines the max number of goroutines used when streaming log entries from the local DB.
 	NumGoRoutines uint `yaml:"numGoRoutines" conf:",example=8"`
+}
+
+type MaskConf struct {
+	Peer           []string `yaml:"peer" conf:",example=\n    - address\n    - forwarded_for"`
+	Metadata       []string `yaml:"metadata" conf:",example=['authorization']"`
+	CheckResources []string `yaml:"checkResources" conf:",example=\n    - inputs[*].principal.attr.foo\n    - inputs[*].auxData\n    - outputs"`
+	PlanResources  []string `yaml:"planResources" conf:",example=['input.principal.attr.nestedMap.foo']"`
 }
 
 func (c *Conf) Key() string {
