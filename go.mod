@@ -54,7 +54,6 @@ require (
 	github.com/microsoft/go-mssqldb v1.7.0
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/nlepage/go-tarfs v1.2.1
-	github.com/ohler55/ojg v1.21.4
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.10.0
