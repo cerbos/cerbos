@@ -370,3 +370,24 @@ compile-job:
   script:
     - ./cerbos compile ./policies
 ----
+
+=== Dagger
+
+The link:https://dagger.io[Dagger] Cerbos module can be installed by running `dagger install github.com/cerbos/dagger-cerbos`. This module provides a `compile` function for compiling and testing Cerbos policy repositories and a `server` service for starting a Cerbos server.
+
+[source,yaml,subs="attributes"]
+----
+# Compile and run tests on a policy repository
+dagger -m github.com/cerbos/dagger-cerbos call compile --policy-dir=./cerbos
+
+# Start a Cerbos server with the default disk driver
+dagger -m github.com/cerbos/dagger-cerbos call server --policy-dir=./cerbos up
+
+# Start a Cerbos server instance configured to use an in-memory SQLite policy repository
+dagger -m github.com/cerbos/dagger-cerbos call server --config=storage.driver=sqlite3,storage.sqlite3.dsn=:memory:,server.adminAPI.enabled=true up
+
+# View usage information
+dagger -m github.com/cerbos/dagger-cerbos call compile --help
+dagger -m github.com/cerbos/dagger-cerbos call server --help
+----
+
