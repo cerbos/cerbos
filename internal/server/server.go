@@ -573,7 +573,7 @@ func (s *Server) mkGRPCConn() (*grpc.ClientConn, error) {
 		opts = append(opts, grpc.WithTransportCredentials(local.NewCredentials()))
 	}
 
-	grpcConn, err := grpc.NewClient(s.conf.GRPCListenAddr, opts...)
+	grpcConn, err := util.EagerGRPCClient(s.conf.GRPCListenAddr, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
 	}
