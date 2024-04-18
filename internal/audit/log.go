@@ -8,11 +8,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"sync"
 	"time"
 
+	"github.com/sourcegraph/conc/pool"
+	"go.uber.org/zap"
+
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 
@@ -103,8 +108,7 @@ func NewLogFromConf(ctx context.Context, confW *config.Wrapper) (Log, error) {
 		return nil, fmt.Errorf("failed to create backend: %w", err)
 	}
 
-	lw := &logWrapper{conf: conf, backend: backend}
-
+	lw := newLogWrapper(conf, backend)
 	if q, ok := backend.(QueryableLog); ok {
 		return &queryableLogWrapper{logWrapper: lw, queryable: q}, nil
 	}
@@ -115,13 +119,24 @@ func NewLogFromConf(ctx context.Context, confW *config.Wrapper) (Log, error) {
 // NewNopLog returns an audit log that does nothing.
 func NewNopLog() Log {
 	conf := &Conf{confHolder: confHolder{Enabled: false, AccessLogsEnabled: false, DecisionLogsEnabled: false}}
-	return &logWrapper{conf: conf}
+	return newLogWrapper(conf, nil)
+}
+
+func newLogWrapper(conf *Conf, backend Log) *logWrapper {
+	lw := &logWrapper{conf: conf}
+	if backend != nil {
+		lw.backend = backend
+		lw.pool = pool.New().WithMaxGoroutines(runtime.NumCPU())
+	}
+
+	return lw
 }
 
 // logWrapper wraps the backends and enforces the config options.
 type logWrapper struct {
 	conf    *Conf
 	backend Log
+	pool    *pool.Pool
 }
 
 func (lw *logWrapper) Backend() string {
@@ -137,10 +152,12 @@ func (lw *logWrapper) WriteAccessLogEntry(ctx context.Context, entry AccessLogEn
 		return nil
 	}
 
-	if err := lw.backend.WriteAccessLogEntry(ctx, entry); err != nil {
-		metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindAccess))
-		return err
-	}
+	lw.pool.Go(func() {
+		if err := lw.backend.WriteAccessLogEntry(ctx, entry); err != nil {
+			metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindAccess))
+			logging.FromContext(ctx).Warn("Failed to write access log entry", zap.Error(err))
+		}
+	})
 
 	return nil
 }
@@ -150,16 +167,19 @@ func (lw *logWrapper) WriteDecisionLogEntry(ctx context.Context, entry DecisionL
 		return nil
 	}
 
-	if err := lw.backend.WriteDecisionLogEntry(ctx, entry); err != nil {
-		metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindDecision))
-		return err
-	}
+	lw.pool.Go(func() {
+		if err := lw.backend.WriteDecisionLogEntry(ctx, entry); err != nil {
+			metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindDecision))
+			logging.FromContext(ctx).Warn("Failed to write decision log entry", zap.Error(err))
+		}
+	})
 
 	return nil
 }
 
 func (lw *logWrapper) Close() error {
 	if lw.backend != nil {
+		lw.pool.Wait()
 		return lw.backend.Close()
 	}
 	return nil
