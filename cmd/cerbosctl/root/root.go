@@ -11,6 +11,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/enable"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/hub"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/store"
@@ -21,6 +22,7 @@ type Cli struct {
 	Get get.Cmd `cmd:"" help:"List or view policies and schemas"`
 	Hub hub.Cmd `cmd:"" help:"Cerbos Hub operations"`
 	flagset.Globals
+	Inspect   inspect.Cmd   `cmd:"" help:"Inspect policies"`
 	Store     store.Cmd     `cmd:"" help:"Store operations"`
 	Delete    del.Cmd       `cmd:"" help:"Delete schemas"`
 	Disable   disable.Cmd   `cmd:"" help:"Disable policies"`

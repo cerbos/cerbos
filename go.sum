@@ -157,6 +157,10 @@ github.com/census-instrumentation/opencensus-proto v0.4.1 h1:iKLQ0xPNFxR/2hzXZMr
 github.com/census-instrumentation/opencensus-proto v0.4.1/go.mod h1:4T9NM4+4Vw91VeyqjLS6ao50K5bOcLKN6Q42XnYaRYw=
 github.com/cerbos/cerbos-sdk-go v0.2.4 h1:OE0T6728Ry4acFd9pb8vRxizBGDJFvluwxxIHPjLQQg=
 github.com/cerbos/cerbos-sdk-go v0.2.4/go.mod h1:q+ORcpV5KLvubtRlPFB39hi5b+pvDE3lC6ZEgNks6rw=
+github.com/cerbos/cerbos-sdk-go v0.2.5-0.20240408141506-00afe19d074b h1:a2fSjB/48GDJPZA+qDIP0NHfEUrTiIlVqsGYac/qFEk=
+github.com/cerbos/cerbos-sdk-go v0.2.5-0.20240408141506-00afe19d074b/go.mod h1:E5rynfR0AHdvdz69CEk1/LbUH7apq/a3ybjjK65TXw4=
+github.com/cerbos/cerbos-sdk-go v0.2.5-0.20240415074433-be5e6dca0cce h1:Bmn1LQpcZklykycAmSE+Bv62lECPBXoLQaAUAB3BcxM=
+github.com/cerbos/cerbos-sdk-go v0.2.5-0.20240415074433-be5e6dca0cce/go.mod h1:Utzg7mpDNkJ01MG6pdlinsgwrzU/XIzuQ9MFvYQskcs=
 github.com/cerbos/cerbos/api/genpb v0.35.1 h1:IgmvEUg+FXachWUT9f2b7NQ650kogwAEoeyMpx8kQYg=
 github.com/cerbos/cerbos/api/genpb v0.35.1/go.mod h1:DcozdAIUztxXwtVs88gGgdyCITru7WCTF9vGA6j+H8k=
 github.com/cerbos/cloud-api v0.1.18 h1:psD9psLgNq/u1IEOsp8L2mwwvB4umGeA4C4YHw19G9g=
