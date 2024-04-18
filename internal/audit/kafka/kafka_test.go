@@ -79,6 +79,7 @@ func TestProduceWithTLS(t *testing.T) {
 		}, nil
 	})
 	require.NoError(t, err)
+	require.NoError(t, log.Close())
 
 	// validate we see this entries in kafka
 	records, err := fetchKafkaTopic(t, uri, defaultIntegrationTopic, true)
@@ -118,6 +119,7 @@ func TestSyncProduce(t *testing.T) {
 		}, nil
 	})
 	require.NoError(t, err)
+	require.NoError(t, log.Close())
 
 	// validate we see this entries in kafka
 	records, err := fetchKafkaTopic(t, uri, defaultIntegrationTopic, false)
@@ -156,6 +158,7 @@ func TestCompression(t *testing.T) {
 			}, nil
 		})
 		require.NoError(t, err)
+		require.NoError(t, log.Close())
 	}
 
 	// validate we see these entries in kafka
@@ -196,6 +199,7 @@ func TestAsyncProduce(t *testing.T) {
 		}, nil
 	})
 	require.NoError(t, err)
+	require.NoError(t, log.Close())
 
 	// validate we see this entries in kafka, eventually
 	require.Eventually(t, func() bool {
