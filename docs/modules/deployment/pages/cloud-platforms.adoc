@@ -63,6 +63,8 @@ primary_region = '<REGION>' <2>
 
 The example above launches a Cerbos instance with the xref:configuration:index.adoc#minimal-configuration[minimal configuration] using an empty link:https://fly.io/docs/reference/volumes/[Fly volume] mounted as the policy directory. For production use cases, consider using one of the following methods for policy storage.
 
+TIP: Your host or service for an application should be listening on the right address within the VM: Fly Proxy reaches services through a private IPv4 address on each VM, so the process should listen on `0.0.0.0:<port>` (link:https://fly.io/docs/networking/app-services/#a-note-on-ipv4-and-ipv6-wildcards[but see A note on IPv4 and IPv6 wildcards]).
+
 - Cerbos xref:configuration:storage.adoc#git-driver[`git` driver] with a Git provider such as GitHub or GitLab
 - Cerbos xref:configuration:storage.adoc#blob-driver[`blob` driver] with link:https://fly.io/docs/reference/tigris/#create-and-manage-a-tigris-storage-bucket[Tigris]
 - Cerbos xref:configuration:storage.adoc#sqlite3[`sqlite3` driver] with a standalone SQLite database or link:https://fly.io/docs/litefs/#litefs-cloud[LiteFS]
