@@ -104,7 +104,7 @@ func (tr *TestRunner) RunGRPCTests(addr string, opts ...grpc.DialOption) func(*t
 	return func(t *testing.T) {
 		grpcConn := mkGRPCConn(t, addr, opts...)
 		require.Eventually(t,
-			grpcHealthCheckPasses(grpcConn, tr.HealthPollInterval),
+			grpcHealthCheckPasses(t, grpcConn, tr.HealthPollInterval),
 			tr.Timeout, tr.HealthPollInterval, "Server did not come up on time")
 
 		for _, tc := range tr.Cases {
@@ -443,7 +443,8 @@ func cmpOutputs(a, b *enginev1.OutputEntry) bool {
 	return a.Src < b.Src
 }
 
-func grpcHealthCheckPasses(grpcConn *grpc.ClientConn, reqTimeout time.Duration) func() bool {
+func grpcHealthCheckPasses(t *testing.T, grpcConn *grpc.ClientConn, reqTimeout time.Duration) func() bool {
+	t.Helper()
 	return func() bool {
 		client := healthpb.NewHealthClient(grpcConn)
 
@@ -452,6 +453,7 @@ func grpcHealthCheckPasses(grpcConn *grpc.ClientConn, reqTimeout time.Duration) 
 
 		resp, err := client.Check(ctx, &healthpb.HealthCheckRequest{})
 		if err != nil {
+			t.Logf("gRPC health check failed: %v", err)
 			return false
 		}
 

@@ -130,7 +130,7 @@ func (c Ctx) Namespace() string {
 }
 
 func (c Ctx) GRPCAddr() string {
-	return fmt.Sprintf("dns:///%s:%d", c.CerbosHost(), GRPCPort)
+	return fmt.Sprintf("%s:%d", c.CerbosHost(), GRPCPort)
 }
 
 func (c Ctx) HTTPAddr() string {
