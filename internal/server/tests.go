@@ -452,7 +452,7 @@ func grpcHealthCheckPasses(t *testing.T, grpcConn *grpc.ClientConn, reqTimeout t
 
 		resp, err := client.Check(ctx, &healthpb.HealthCheckRequest{})
 		if err != nil {
-			t.Errorf("gRPC health check failed: %s", err.Error())
+			t.Logf("gRPC health check failed: %v", err)
 			return false
 		}
 
