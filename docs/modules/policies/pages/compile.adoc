@@ -125,7 +125,7 @@ tests: <9>
 <19> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
 <20> Key of the principal fixture under test
 <21> Key of the resource fixture under test
-<22> Expected outcomes for each action for the principal+resource pair
+<22> Expected outcomes for each action for the principal+resource pair. If an action specified in `input` is not listed, then `EFFECT_DENY` is expected for that action.
 <23> Optional list of xref:outputs.adoc[output values] to match
 <24> Name of the action that would produce the output
 <25> List of expected output values
@@ -390,4 +390,3 @@ dagger -m github.com/cerbos/dagger-cerbos call server --config=storage.driver=sq
 dagger -m github.com/cerbos/dagger-cerbos call compile --help
 dagger -m github.com/cerbos/dagger-cerbos call server --help
 ----
-

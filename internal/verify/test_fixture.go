@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -279,7 +280,12 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 		return details
 	}
 
-	if test.Expected[action] != actual[0].Actions[action].Effect {
+	expectedEffect := test.Expected[action]
+	if expectedEffect == effectv1.Effect_EFFECT_UNSPECIFIED {
+		expectedEffect = effectv1.Effect_EFFECT_DENY
+	}
+
+	if expectedEffect != actual[0].Actions[action].Effect {
 		details.Result = policyv1.TestResults_RESULT_FAILED
 		details.Outcome = &policyv1.TestResults_Details_Failure{
 			Failure: &policyv1.TestResults_Failure{

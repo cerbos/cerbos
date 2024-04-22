@@ -1,0 +1,72 @@
+{
+  "suites": [
+    {
+      "file": "example_test.yaml",
+      "name": "Example test suite",
+      "summary": {
+        "overallResult": "RESULT_FAILED",
+        "testsCount": 2,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 1
+          },
+          {
+            "result": "RESULT_FAILED",
+            "count": 1
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "Example test",
+          "principals": [
+            {
+              "name": "admin",
+              "resources": [
+                {
+                  "name": "example",
+                  "actions": [
+                    {
+                      "name": "create",
+                      "details": {
+                        "result": "RESULT_FAILED",
+                        "failure": {
+                          "expected": "EFFECT_ALLOW",
+                          "actual": "EFFECT_DENY"
+                        }
+                      }
+                    },
+                    {
+                      "name": "update",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_FAILED",
+    "testsCount": 2,
+    "resultCounts": [
+      {
+        "result": "RESULT_PASSED",
+        "count": 1
+      },
+      {
+        "result": "RESULT_FAILED",
+        "count": 1
+      }
+    ]
+  }
+}
