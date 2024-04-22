@@ -444,6 +444,7 @@ func cmpOutputs(a, b *enginev1.OutputEntry) bool {
 }
 
 func grpcHealthCheckPasses(t *testing.T, grpcConn *grpc.ClientConn, reqTimeout time.Duration) func() bool {
+	t.Helper()
 	return func() bool {
 		client := healthpb.NewHealthClient(grpcConn)
 
