@@ -152,6 +152,8 @@ func (lw *logWrapper) WriteAccessLogEntry(ctx context.Context, entry AccessLogEn
 		return nil
 	}
 
+	ctx = context.WithoutCancel(ctx)
+
 	lw.pool.Go(func() {
 		if err := lw.backend.WriteAccessLogEntry(ctx, entry); err != nil {
 			metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindAccess))
@@ -166,6 +168,8 @@ func (lw *logWrapper) WriteDecisionLogEntry(ctx context.Context, entry DecisionL
 	if !lw.conf.DecisionLogsEnabled {
 		return nil
 	}
+
+	ctx = context.WithoutCancel(ctx)
 
 	lw.pool.Go(func() {
 		if err := lw.backend.WriteDecisionLogEntry(ctx, entry); err != nil {
