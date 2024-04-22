@@ -2,7 +2,7 @@ module github.com/cerbos/cerbos/tools
 
 go 1.22
 
-toolchain go1.22.0
+toolchain go1.22.2
 
 require (
 	github.com/bufbuild/buf v1.30.1
@@ -13,10 +13,10 @@ require (
 	github.com/goreleaser/goreleaser v1.25.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/planetscale/vtprotobuf v0.6.0
-	github.com/vektra/mockery/v2 v2.42.2
+	github.com/vektra/mockery/v2 v2.42.3
 	go.elastic.co/go-licence-detector v0.6.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
-	google.golang.org/protobuf v1.33.1-0.20240408130810-98873a205002
+	google.golang.org/protobuf v1.33.1-0.20240418144938-c2a26e757ed5
 	gotest.tools/gotestsum v1.11.0
 )
 
