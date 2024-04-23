@@ -1,0 +1,29 @@
+-- example_test.yaml --
+name: Example test suite
+
+principals:
+  admin:
+    id: admin
+    roles:
+      - admin
+
+resources:
+  example:
+    kind: example
+    id: example
+
+tests:
+  - name: Example test
+    input:
+      principals:
+        - admin
+      resources:
+        - example
+      actions:
+        - create
+        - update
+    expected:
+      - principal: admin
+        resource: example
+        actions:
+          create: EFFECT_ALLOW
