@@ -289,7 +289,7 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 		details.Result = policyv1.TestResults_RESULT_FAILED
 		details.Outcome = &policyv1.TestResults_Details_Failure{
 			Failure: &policyv1.TestResults_Failure{
-				Expected: test.Expected[action],
+				Expected: expectedEffect,
 				Actual:   actual[0].Actions[action].Effect,
 			},
 		}
@@ -334,7 +334,7 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 			details.Result = policyv1.TestResults_RESULT_FAILED
 			details.Outcome = &policyv1.TestResults_Details_Failure{
 				Failure: &policyv1.TestResults_Failure{
-					Expected: test.Expected[action],
+					Expected: expectedEffect,
 					Actual:   actual[0].Actions[action].Effect,
 					Outputs:  failures,
 				},
