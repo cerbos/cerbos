@@ -6,10 +6,14 @@ principals:
     id: admin
     roles:
       - admin
+  user:
+    id: user
+    roles:
+      - user
 
 resources:
   example:
-    kind: example
+    kind: account
     id: example
 
 tests:
@@ -17,6 +21,7 @@ tests:
     input:
       principals:
         - admin
+        - user
       resources:
         - example
       actions:
@@ -27,3 +32,12 @@ tests:
         resource: example
         actions:
           create: EFFECT_ALLOW
+      - principal: user
+        resource: example
+        actions:
+          update: EFFECT_ALLOW
+        outputs:
+          - action: create
+            expected:
+              - src: resource.account.vdefault#rule
+                val: foo

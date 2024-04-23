@@ -5,15 +5,15 @@
       "name": "Example test suite",
       "summary": {
         "overallResult": "RESULT_FAILED",
-        "testsCount": 2,
+        "testsCount": 4,
         "resultCounts": [
           {
             "result": "RESULT_PASSED",
-            "count": 1
+            "count": 2
           },
           {
             "result": "RESULT_FAILED",
-            "count": 1
+            "count": 2
           }
         ]
       },
@@ -30,10 +30,47 @@
                     {
                       "name": "create",
                       "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "update",
+                      "details": {
                         "result": "RESULT_FAILED",
                         "failure": {
-                          "expected": "EFFECT_ALLOW",
-                          "actual": "EFFECT_DENY"
+                          "expected": "EFFECT_DENY",
+                          "actual": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "user",
+              "resources": [
+                {
+                  "name": "example",
+                  "actions": [
+                    {
+                      "name": "create",
+                      "details": {
+                        "result": "RESULT_FAILED",
+                        "failure": {
+                          "expected": "EFFECT_DENY",
+                          "actual": "EFFECT_DENY",
+                          "outputs": [
+                            {
+                              "src": "resource.account.vdefault#rule",
+                              "missing": {
+                                "expected": "foo"
+                              }
+                            }
+                          ]
                         }
                       }
                     },
@@ -42,7 +79,7 @@
                       "details": {
                         "result": "RESULT_PASSED",
                         "success": {
-                          "effect": "EFFECT_DENY"
+                          "effect": "EFFECT_ALLOW"
                         }
                       }
                     }
@@ -57,15 +94,15 @@
   ],
   "summary": {
     "overallResult": "RESULT_FAILED",
-    "testsCount": 2,
+    "testsCount": 4,
     "resultCounts": [
       {
         "result": "RESULT_PASSED",
-        "count": 1
+        "count": 2
       },
       {
         "result": "RESULT_FAILED",
-        "count": 1
+        "count": 2
       }
     ]
   }
