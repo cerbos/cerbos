@@ -22,9 +22,8 @@ const (
 	peerPrefix        = unionedPathPrefix + ".peer"
 	metadataPrefix    = unionedPathPrefix + ".metadata"
 
-	checkResourcesDeprecatedPrefix = "entries[*].decisionLogEntry"
-	checkResourcesPrefix           = "entries[*].decisionLogEntry.checkResources"
-	planResourcesPrefix            = "entries[*].decisionLogEntry.planResources"
+	checkResourcesPrefix = "entries[*].decisionLogEntry.checkResources"
+	planResourcesPrefix  = "entries[*].decisionLogEntry.planResources"
 )
 
 type tokenType int8
@@ -95,10 +94,6 @@ func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
 
 	for _, r := range conf.CheckResources {
 		if err := parse(checkResourcesPrefix + "." + r); err != nil {
-			outErr = multierr.Append(outErr, err)
-		}
-
-		if err := parse(checkResourcesDeprecatedPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 	}

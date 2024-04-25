@@ -40,7 +40,7 @@ func init() {
 
 		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 
-		syncer, err := NewIngestSyncer(conf, logger)
+		syncer, err := NewIngestSyncer(&conf.Ingest, logger)
 		if err != nil {
 			return nil, err
 		}

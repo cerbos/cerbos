@@ -38,22 +38,22 @@ type Impl struct {
 	log    *zap.Logger
 }
 
-func NewIngestSyncer(conf *Conf, logger *zap.Logger) (*Impl, error) {
-	pdpID := util.PDPIdentifier(conf.Ingest.Credentials.PDPID)
+func NewIngestSyncer(conf *IngestConf, logger *zap.Logger) (*Impl, error) {
+	pdpID := util.PDPIdentifier(conf.Credentials.PDPID)
 
 	logger = logger.Named("ingest").With(zap.String("instance", pdpID.Instance))
 
-	creds, err := conf.Ingest.Credentials.ToCredentials()
+	creds, err := conf.Credentials.ToCredentials()
 	if err != nil {
 		return nil, errors.New("failed to generate credentials from config")
 	}
 
 	tlsConf := &tls.Config{
 		MinVersion: tls.VersionTLS13,
-		ServerName: conf.Ingest.Connection.TLS.Authority,
+		ServerName: conf.Connection.TLS.Authority,
 	}
 
-	caCertPath := conf.Ingest.Connection.TLS.CACert
+	caCertPath := conf.Connection.TLS.CACert
 	if caCertPath != "" {
 		caCert, err := os.ReadFile(caCertPath)
 		if err != nil {
@@ -72,12 +72,12 @@ func NewIngestSyncer(conf *Conf, logger *zap.Logger) (*Impl, error) {
 			PDPIdentifier:     pdpID,
 			TLS:               tlsConf,
 			Credentials:       creds,
-			APIEndpoint:       conf.Ingest.Connection.APIEndpoint,
-			BootstrapEndpoint: conf.Ingest.Connection.BootstrapEndpoint,
-			RetryWaitMin:      conf.Ingest.Connection.MinRetryWait,
-			RetryWaitMax:      conf.Ingest.Connection.MaxRetryWait,
-			RetryMaxAttempts:  int(conf.Ingest.Connection.NumRetries),
-			HeartbeatInterval: conf.Ingest.Connection.HeartbeatInterval,
+			APIEndpoint:       conf.Connection.APIEndpoint,
+			BootstrapEndpoint: conf.Connection.BootstrapEndpoint,
+			RetryWaitMin:      conf.Connection.MinRetryWait,
+			RetryWaitMax:      conf.Connection.MaxRetryWait,
+			RetryMaxAttempts:  int(conf.Connection.NumRetries),
+			HeartbeatInterval: conf.Connection.HeartbeatInterval,
 		},
 	}
 

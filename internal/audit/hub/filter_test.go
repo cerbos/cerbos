@@ -93,8 +93,7 @@ func TestAuditLogFilter(t *testing.T) {
 		now := time.Now()
 		ts0 := timestamppb.New(now)
 		ts1 := timestamppb.New(now.Add(1 * time.Second))
-		ts2 := timestamppb.New(now.Add(2 * time.Second))
-		ts3 := timestamppb.New(now.Add(3 * time.Second))
+		ts2 := timestamppb.New(now.Add(3 * time.Second))
 
 		maskConf := hub.MaskConf{
 			Metadata: []string{"metadata_key_2"},
@@ -107,6 +106,7 @@ func TestAuditLogFilter(t *testing.T) {
 				"inputs[0].principal.attr.attr1",
 				"inputs[*]['principal']['attr']['attr2']",
 				"inputs[*].principal.attr.someMap.nestedAttr1",
+				"inputs[*].principal.attr.oneKeyMap.nestedAttr1",
 				"inputs[*].principal.attr.someMap.someSomeMap.nestedNestedAttr1",
 				"inputs[*].principal.attr.someList[0]",
 				"outputs",
@@ -200,97 +200,13 @@ func TestAuditLogFilter(t *testing.T) {
 					},
 				},
 			},
-			// Old DecisionLog CheckResources schema with deprecated fields
 			{
 				Kind:      logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG,
 				Timestamp: ts2,
 				Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{
 					DecisionLogEntry: &auditv1.DecisionLogEntry{
-						CallId:    "3",
-						Timestamp: ts2,
-						Peer: &auditv1.Peer{
-							Address:   "1.1.1.1",
-							UserAgent: "curl/7.68.0",
-						},
-						Metadata: map[string]*auditv1.MetaValues{
-							"metadata_key_1": {Values: []string{"1"}},
-						},
-						// Deprecated, but require backwards compatibility
-						Inputs: []*enginev1.CheckInput{
-							{
-								RequestId: "1",
-								Resource: &enginev1.Resource{
-									Kind: "test:kind",
-									Id:   "test",
-								},
-								Principal: &enginev1.Principal{
-									Id:    "test",
-									Roles: []string{"a", "b"},
-									Attr: map[string]*structpb.Value{
-										"attr1": structpb.NewNumberValue(1),
-										"attr2": structpb.NewNumberValue(2),
-										"attr3": structpb.NewNumberValue(3),
-										"someMap": structpb.NewStructValue(&structpb.Struct{
-											Fields: map[string]*structpb.Value{
-												"nestedAttr1": structpb.NewNumberValue(1),
-												"nestedAttr2": structpb.NewNumberValue(2),
-												"someSomeMap": structpb.NewStructValue(&structpb.Struct{
-													Fields: map[string]*structpb.Value{
-														"nestedNestedAttr1": structpb.NewNumberValue(1),
-													},
-												}),
-											},
-										}),
-										"someList": structpb.NewListValue(&structpb.ListValue{
-											Values: []*structpb.Value{
-												structpb.NewStringValue("index0"),
-												structpb.NewStringValue("index1"),
-											},
-										}),
-									},
-								},
-								Actions: []string{"a1", "a2"},
-							},
-							{
-								RequestId: "2",
-								Resource: &enginev1.Resource{
-									Kind: "test:kind",
-									Id:   "test",
-								},
-								Principal: &enginev1.Principal{
-									Id:    "test",
-									Roles: []string{"a", "b"},
-									Attr: map[string]*structpb.Value{
-										"attr1": structpb.NewNumberValue(1),
-										"attr2": structpb.NewNumberValue(2),
-										"attr3": structpb.NewNumberValue(3),
-									},
-								},
-								Actions: []string{"a1", "a2"},
-							},
-						},
-						Outputs: []*enginev1.CheckOutput{
-							{
-								RequestId:  "1",
-								ResourceId: "test",
-								Actions: map[string]*enginev1.CheckOutput_ActionEffect{
-									"a1": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
-									"a2": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
-								},
-							},
-						},
-						Error: "BOOM",
-					},
-				},
-			},
-			// New DecisionLog CheckResources schema
-			{
-				Kind:      logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG,
-				Timestamp: ts3,
-				Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{
-					DecisionLogEntry: &auditv1.DecisionLogEntry{
 						CallId:    "4",
-						Timestamp: ts3,
+						Timestamp: ts2,
 						Peer: &auditv1.Peer{
 							Address:   "1.1.1.1",
 							UserAgent: "curl/7.68.0",
@@ -324,6 +240,11 @@ func TestAuditLogFilter(t *testing.T) {
 																"nestedNestedAttr2": structpb.NewNumberValue(1),
 															},
 														}),
+													},
+												}),
+												"oneKeyMap": structpb.NewStructValue(&structpb.Struct{
+													Fields: map[string]*structpb.Value{
+														"nestedAttr1": structpb.NewNumberValue(1),
 													},
 												}),
 												"someList": structpb.NewListValue(&structpb.ListValue{
@@ -388,29 +309,17 @@ func TestAuditLogFilter(t *testing.T) {
 			"entries[1].decision_log_entry.plan_resources.input.principal.attr.someMap.nestedAttr1",
 			"entries[1].decision_log_entry.plan_resources.output.filter_debug",
 
-			// Old CheckResources schema
-			"entries[2].decision_log_entry.inputs[0].principal.attr.attr1",
-			"entries[2].decision_log_entry.inputs[0].principal.attr.attr2",
+			"entries[2].decision_log_entry.check_resources.inputs[0].principal.attr.attr1",
+			"entries[2].decision_log_entry.check_resources.inputs[0].principal.attr.attr2",
+			"entries[2].decision_log_entry.check_resources.inputs[0].principal.attr.oneKeyMap", // sole key deletion results in entire map deletion
 			// we removed the first element by manipulating the slice, so the "changed" element is the removed, previously first one
-			"entries[2].decision_log_entry.inputs[0].principal.attr.someList[-1]",
-			"entries[2].decision_log_entry.inputs[0].principal.attr.someMap.nestedAttr1",
-			"entries[2].decision_log_entry.inputs[0].principal.attr.someMap.someSomeMap", // sole key deletion results in entire map deletion
-			"entries[2].decision_log_entry.inputs[0].principal.id",
-			"entries[2].decision_log_entry.inputs[1].principal.attr.attr2",
-			"entries[2].decision_log_entry.outputs",
+			"entries[2].decision_log_entry.check_resources.inputs[0].principal.attr.someList[-1]",
+			"entries[2].decision_log_entry.check_resources.inputs[0].principal.attr.someMap.nestedAttr1",
+			"entries[2].decision_log_entry.check_resources.inputs[0].principal.attr.someMap.someSomeMap.nestedNestedAttr1",
+			"entries[2].decision_log_entry.check_resources.inputs[0].principal.id",
+			"entries[2].decision_log_entry.check_resources.inputs[1].principal.attr.attr2",
+			"entries[2].decision_log_entry.check_resources.outputs",
 			"entries[2].decision_log_entry.peer.address",
-
-			// New CheckResources schema
-			"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.attr1",
-			"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.attr2",
-			// we removed the first element by manipulating the slice, so the "changed" element is the removed, previously first one
-			"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someList[-1]",
-			"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someMap.nestedAttr1",
-			"entries[3].decision_log_entry.check_resources.inputs[0].principal.attr.someMap.someSomeMap.nestedNestedAttr1",
-			"entries[3].decision_log_entry.check_resources.inputs[0].principal.id",
-			"entries[3].decision_log_entry.check_resources.inputs[1].principal.attr.attr2",
-			"entries[3].decision_log_entry.check_resources.outputs",
-			"entries[3].decision_log_entry.peer.address",
 		}
 
 		ingestBatch := &logsv1.IngestBatch{
@@ -432,11 +341,7 @@ func TestAuditLogFilter(t *testing.T) {
 		require.Len(t, l, 1)
 		require.Equal(t, l[0].GetStringValue(), "index0") // we removed the second entry
 
-		l = ingestBatch.Entries[2].GetDecisionLogEntry().Inputs[0].Principal.Attr["someList"].GetListValue().Values
-		require.Len(t, l, 1)
-		require.Equal(t, l[0].GetStringValue(), "index1")
-
-		l = ingestBatch.Entries[3].GetDecisionLogEntry().GetCheckResources().Inputs[0].Principal.Attr["someList"].GetListValue().Values
+		l = ingestBatch.Entries[2].GetDecisionLogEntry().GetCheckResources().Inputs[0].Principal.Attr["someList"].GetListValue().Values
 		require.Len(t, l, 1)
 		require.Equal(t, l[0].GetStringValue(), "index1")
 	})
