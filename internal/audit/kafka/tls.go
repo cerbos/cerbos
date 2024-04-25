@@ -18,10 +18,6 @@ import (
 )
 
 func NewTLSConfig(ctx context.Context, reloadInterval time.Duration, insecureSkipVerify bool, caPath, certPath, keyPath string) (*tls.Config, error) {
-	if caPath == "" {
-		return nil, errors.New("CA path cannot be empty")
-	}
-
 	if certPath != "" && keyPath == "" || certPath == "" && keyPath != "" {
 		return nil, errors.New("certPath and keyPath must both be empty or both be non-empty")
 	}
