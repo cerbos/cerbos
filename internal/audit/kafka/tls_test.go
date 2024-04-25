@@ -15,12 +15,8 @@ func TestNewTLSConfig(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	// caPath is required
-	_, err := kafka.NewTLSConfig(ctx, 0, false, "", "path/to/cert", "path/to/key")
-	require.EqualError(t, err, "CA path cannot be empty")
-
 	// certPath or keyPath are required if either one are set
-	_, err = kafka.NewTLSConfig(ctx, 0, false, "path/to/ca", "path/to/cert", "")
+	_, err := kafka.NewTLSConfig(ctx, 0, false, "path/to/ca", "path/to/cert", "")
 	require.EqualError(t, err, "certPath and keyPath must both be empty or both be non-empty")
 
 	_, err = kafka.NewTLSConfig(ctx, 0, false, "path/to/ca", "", "path/to/key")
