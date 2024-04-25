@@ -152,6 +152,8 @@ install-cerbos:
 				echo "aborting install"; \
 			exit -1; \
 		fi; \
+	else \
+		go install -ldflags '$(LDFLAGS)' ./cmd/cerbos; \
 	fi; \
 
 .PHONY: install-cerbosctl
@@ -164,6 +166,8 @@ install-cerbosctl:
 				echo "aborting install"; \
 			exit -1; \
 		fi; \
+	else \
+		go install -ldflags '$(LDFLAGS)' ./cmd/cerbosctl; \
 	fi; \
 
 .PHONY: warm-cache
