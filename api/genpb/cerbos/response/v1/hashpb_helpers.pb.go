@@ -1904,6 +1904,44 @@ func cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m *InspectPoli
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Result.variables"]; !ok {
+		if len(m.Variables) > 0 {
+			for _, v := range m.Variables {
+				if v != nil {
+					cerbos_response_v1_InspectPoliciesResponse_Variable_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_InspectPoliciesResponse_Variable_Source_hashpb_sum(m *InspectPoliciesResponse_Variable_Source, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Variable.Source.type"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetType())))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Variable.Source.id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetId()))
+
+	}
+}
+
+func cerbos_response_v1_InspectPoliciesResponse_Variable_hashpb_sum(m *InspectPoliciesResponse_Variable, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Variable.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Variable.value"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetValue()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Variable.source"]; !ok {
+		if m.GetSource() != nil {
+			cerbos_response_v1_InspectPoliciesResponse_Variable_Source_hashpb_sum(m.GetSource(), hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_response_v1_InspectPoliciesResponse_hashpb_sum(m *InspectPoliciesResponse, hasher hash.Hash, ignore map[string]struct{}) {

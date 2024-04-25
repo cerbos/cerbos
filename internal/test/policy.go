@@ -76,6 +76,9 @@ type ResourcePolicyBuilder struct {
 func NewResourcePolicyBuilder(resource, version string) *ResourcePolicyBuilder {
 	return &ResourcePolicyBuilder{
 		rp: &policyv1.ResourcePolicy{
+			Variables: &policyv1.Variables{
+				Local: make(map[string]string),
+			},
 			Resource: resource,
 			Version:  version,
 		},
@@ -84,6 +87,11 @@ func NewResourcePolicyBuilder(resource, version string) *ResourcePolicyBuilder {
 
 func (rpb *ResourcePolicyBuilder) WithDerivedRolesImports(imp ...string) *ResourcePolicyBuilder {
 	rpb.rp.ImportDerivedRoles = append(rpb.rp.ImportDerivedRoles, imp...)
+	return rpb
+}
+
+func (rpb *ResourcePolicyBuilder) WithLocalVariable(name, value string) *ResourcePolicyBuilder {
+	rpb.rp.Variables.Local[name] = value
 	return rpb
 }
 
@@ -242,8 +250,16 @@ func NewPrincipalPolicyBuilder(principal, version string) *PrincipalPolicyBuilde
 		pp: &policyv1.PrincipalPolicy{
 			Principal: principal,
 			Version:   version,
+			Variables: &policyv1.Variables{
+				Local: make(map[string]string),
+			},
 		},
 	}
+}
+
+func (ppb *PrincipalPolicyBuilder) WithLocalVariable(name, value string) *PrincipalPolicyBuilder {
+	ppb.pp.Variables.Local[name] = value
+	return ppb
 }
 
 func (ppb *PrincipalPolicyBuilder) WithRules(rules ...*policyv1.PrincipalRule) *PrincipalPolicyBuilder {
@@ -352,6 +368,11 @@ func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 		PolicyType: &policyv1.Policy_DerivedRoles{
 			DerivedRoles: &policyv1.DerivedRoles{
 				Name: mod("my_derived_roles"),
+				Variables: &policyv1.Variables{
+					Local: map[string]string{
+						"geography": "request.resource.attr.geography",
+					},
+				},
 				Definitions: []*policyv1.RoleDef{
 					{
 						Name:        "admin",

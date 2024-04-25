@@ -1,22 +1,7 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/response/v1/InspectPoliciesResponse/Result.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/InspectPoliciesResponse/Variable.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.InspectPoliciesResponse.Variable": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "source": {
-          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable.Source"
-        },
-        "value": {
-          "type": "string"
-        }
-      }
-    },
     "cerbos.response.v1.InspectPoliciesResponse.Variable.Source": {
       "type": "object",
       "additionalProperties": false,
@@ -43,17 +28,14 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "actions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "name": {
+      "type": "string"
     },
-    "variables": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable"
-      }
+    "source": {
+      "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable.Source"
+    },
+    "value": {
+      "type": "string"
     }
   }
 }

@@ -444,8 +444,29 @@ message InspectPoliciesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Inspect policies response"}
   };
+
+  message Variable {
+    message Source {
+      enum Type {
+        TYPE_UNSPECIFIED = 0;
+        TYPE_EXPORTED = 1;
+        TYPE_IMPORTED = 2;
+        TYPE_LOCAL = 3;
+        TYPE_LOCAL_OR_IMPORTED = 4;
+      }
+
+      Type type = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Type of the variable source."}];
+      string id = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Source policy ID of the variable if available."}];
+    }
+
+    string name = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Variable name defined in the policy."}];
+    string value = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Raw value of the variable defined in the policy."}];
+    Source source = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Source of the variable defined in the policy."}];
+  }
+
   message Result {
-    repeated string actions = 1;
+    repeated string actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Actions defined in the policy"}];
+    repeated Variable variables = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Variables defined in the policy"}];
   }
 
   map<string, Result> results = 1;

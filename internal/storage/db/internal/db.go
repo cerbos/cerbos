@@ -22,6 +22,7 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/parser"
@@ -655,27 +656,42 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 }
 
 func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	policyIDs, err := s.ListPolicyIDs(ctx, listParams)
+	filteredIDs, err := s.ListPolicyIDs(ctx, listParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
 	}
 
-	if len(policyIDs) == 0 {
+	if len(filteredIDs) == 0 {
 		return nil, nil
 	}
 
-	results := make(map[string]*responsev1.InspectPoliciesResponse_Result, len(policyIDs))
-	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(p *policy.Wrapper) error {
-		actions := policy.ListActions(p.Policy)
-		if len(actions) > 0 {
-			results[namer.PolicyKeyFromFQN(p.FQN)] = &responsev1.InspectPoliciesResponse_Result{
-				Actions: actions,
-			}
-		}
+	policyIDs, err := s.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list policies without list parameters: %w", err)
+	}
 
+	ins := inspect.Policies()
+	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(wp *policy.Wrapper) error {
+		ins.Inspect(wp.Policy)
 		return nil
 	}, policyIDs...); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	results, err := ins.Results()
+	if err != nil {
+		return nil, err
+	}
+
+	lut := make(map[string]struct{})
+	for _, policyID := range filteredIDs {
+		lut[policyID] = struct{}{}
+	}
+
+	for policyID := range results {
+		if _, ok := lut[policyID]; !ok {
+			delete(results, policyID)
+		}
 	}
 
 	return results, nil

@@ -17,6 +17,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
@@ -454,25 +455,20 @@ func (idx *index) InspectPolicies(ctx context.Context) (map[string]*responsev1.I
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
 	}
+
 	if len(policyIDs) == 0 {
 		return nil, nil
 	}
 
-	results := make(map[string]*responsev1.InspectPoliciesResponse_Result, len(policyIDs))
-	if err := storage.BatchLoadPolicy(ctx, 1, idx.LoadPolicy, func(p *policy.Wrapper) error {
-		actions := policy.ListActions(p.Policy)
-		if len(actions) > 0 {
-			results[namer.PolicyKeyFromFQN(p.FQN)] = &responsev1.InspectPoliciesResponse_Result{
-				Actions: actions,
-			}
-		}
-
+	ins := inspect.Policies()
+	if err := storage.BatchLoadPolicy(ctx, 1, idx.LoadPolicy, func(wp *policy.Wrapper) error {
+		ins.Inspect(wp.Policy)
 		return nil
 	}, policyIDs...); err != nil {
 		return nil, fmt.Errorf("failed to load policy: %w", err)
 	}
 
-	return results, nil
+	return ins.Results()
 }
 
 func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {

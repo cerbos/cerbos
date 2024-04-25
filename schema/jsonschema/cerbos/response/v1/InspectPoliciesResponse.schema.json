@@ -11,8 +11,51 @@
           "items": {
             "type": "string"
           }
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable"
+          }
         }
       }
+    },
+    "cerbos.response.v1.InspectPoliciesResponse.Variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable.Source"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.response.v1.InspectPoliciesResponse.Variable.Source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable.Source.Type"
+        }
+      }
+    },
+    "cerbos.response.v1.InspectPoliciesResponse.Variable.Source.Type": {
+      "type": "string",
+      "enum": [
+        "TYPE_UNSPECIFIED",
+        "TYPE_EXPORTED",
+        "TYPE_IMPORTED",
+        "TYPE_LOCAL",
+        "TYPE_LOCAL_OR_IMPORTED"
+      ]
     }
   },
   "type": "object",

@@ -11,17 +11,19 @@ import (
 	"strconv"
 	"testing"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/parser"
-	"github.com/cerbos/cerbos/internal/schema"
-
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -159,7 +161,7 @@ func TestRequiredAncestors(t *testing.T) {
 	}
 }
 
-func TestActions(t *testing.T) {
+func TestInspectUtilities(t *testing.T) {
 	dr := test.GenDerivedRoles(test.NoMod())
 	ev := test.GenExportVariables(test.NoMod())
 	rp := test.NewResourcePolicyBuilder("leave_request", "default").
@@ -167,16 +169,19 @@ func TestActions(t *testing.T) {
 			test.
 				NewResourceRule("a", "b").
 				WithRoles("user").
+				WithMatchExpr("V.geography").
 				Build(),
 			test.
 				NewResourceRule("a").
 				WithRoles("admin").
 				Build(),
-		).Build()
+		).
+		WithLocalVariable("geography", "request.resource.attr.geography").
+		Build()
 	pp := test.NewPrincipalPolicyBuilder("john", "default").
 		WithRules(
 			test.NewPrincipalRuleBuilder("leave_request").
-				AllowAction("a").
+				AllowActionWhenMatch("a", "V.geography").
 				AllowAction("b").
 				DenyAction("c").
 				Build(),
@@ -184,46 +189,206 @@ func TestActions(t *testing.T) {
 				AllowAction("a").
 				DenyAction("c").
 				Build(),
-		).Build()
-	testCases := []struct {
-		p               *policyv1.Policy
-		pset            *runtimev1.RunnablePolicySet
-		expectedActions []string
-	}{
-		{
-			p:               dr,
-			pset:            compilePolicy(t, dr),
-			expectedActions: []string{},
-		},
-		{
-			p:               ev,
-			pset:            compilePolicy(t, ev),
-			expectedActions: []string{},
-		},
-		{
-			p:               rp,
-			pset:            compilePolicy(t, rp),
-			expectedActions: []string{"a", "b"},
-		},
-		{
-			p:               pp,
-			pset:            compilePolicy(t, pp),
-			expectedActions: []string{"a", "b", "c"},
-		},
-	}
+		).
+		WithLocalVariable("geography", "request.resource.attr.geography").
+		Build()
 
-	t.Run("ListActions", func(t *testing.T) {
-		for _, testCase := range testCases {
-			haveActions := policy.ListActions(testCase.p)
-			require.ElementsMatch(t, testCase.expectedActions, haveActions)
+	drSet := compilePolicy(t, dr)
+	evSet := compilePolicy(t, ev)
+	rpSet := compilePolicy(t, rp)
+	ppSet := compilePolicy(t, pp)
+
+	t.Run("Actions", func(t *testing.T) {
+		testCases := []struct {
+			p               *policyv1.Policy
+			pset            *runtimev1.RunnablePolicySet
+			expectedActions []string
+		}{
+			{
+				p:               dr,
+				pset:            drSet,
+				expectedActions: []string{},
+			},
+			{
+				p:               ev,
+				pset:            evSet,
+				expectedActions: []string{},
+			},
+			{
+				p:               rp,
+				pset:            rpSet,
+				expectedActions: []string{"a", "b"},
+			},
+			{
+				p:               pp,
+				pset:            ppSet,
+				expectedActions: []string{"a", "b", "c"},
+			},
 		}
+
+		t.Run("ListActions", func(t *testing.T) {
+			for _, testCase := range testCases {
+				haveActions := policy.ListActions(testCase.p)
+				require.ElementsMatch(t, testCase.expectedActions, haveActions)
+			}
+		})
+
+		t.Run("ListPolicySetActions", func(t *testing.T) {
+			for _, testCase := range testCases {
+				haveActions := policy.ListPolicySetActions(testCase.pset)
+				require.ElementsMatch(t, testCase.expectedActions, haveActions)
+			}
+		})
 	})
 
-	t.Run("ListPolicySetActions", func(t *testing.T) {
-		for _, testCase := range testCases {
-			haveActions := policy.ListPolicySetActions(testCase.pset)
-			require.ElementsMatch(t, testCase.expectedActions, haveActions)
-		}
+	t.Run("Variables", func(t *testing.T) {
+		t.Run("ListVariables", func(t *testing.T) {
+			testCases := []struct {
+				p                 *policyv1.Policy
+				pset              *runtimev1.RunnablePolicySet
+				expectedVariables []*responsev1.InspectPoliciesResponse_Variable
+			}{
+				{
+					p:    dr,
+					pset: compilePolicy(t, dr),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
+								Id:   "derived_roles.my_derived_roles",
+							},
+						},
+					},
+				},
+				{
+					p:    ev,
+					pset: compilePolicy(t, ev),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
+								Id:   "export_variables.my_variables",
+							},
+						},
+					},
+				},
+				{
+					p:    rp,
+					pset: compilePolicy(t, rp),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
+								Id:   "resource.leave_request.vdefault",
+							},
+						},
+					},
+				},
+				{
+					p:    pp,
+					pset: compilePolicy(t, pp),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
+								Id:   "principal.john.vdefault",
+							},
+						},
+					},
+				},
+			}
+
+			for _, testCase := range testCases {
+				t.Run(namer.PolicyKey(testCase.p), func(t *testing.T) {
+					haveVariables := policy.ListVariables(testCase.p)
+					require.Empty(t, cmp.Diff(testCase.expectedVariables, haveVariables, protocmp.Transform()))
+				})
+			}
+		})
+
+		t.Run("ListPolicySetVariables", func(t *testing.T) {
+			testCases := []struct {
+				p                 *policyv1.Policy
+				pset              *runtimev1.RunnablePolicySet
+				expectedVariables []*responsev1.InspectPoliciesResponse_Variable
+			}{
+				{
+					p:    dr,
+					pset: compilePolicy(t, dr),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
+								Id:   "",
+							},
+						},
+					},
+				},
+				{
+					p:    ev,
+					pset: compilePolicy(t, ev),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
+								Id:   "",
+							},
+						},
+					},
+				},
+				{
+					p:    rp,
+					pset: compilePolicy(t, rp),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
+								Id:   "",
+							},
+						},
+					},
+				},
+				{
+					p:    pp,
+					pset: compilePolicy(t, pp),
+					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
+						{
+							Name:  "geography",
+							Value: "request.resource.attr.geography",
+							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
+								Id:   "",
+							},
+						},
+					},
+				},
+			}
+
+			for _, testCase := range testCases {
+				if testCase.pset == nil {
+					continue
+				}
+
+				t.Run(namer.PolicyKey(testCase.p), func(t *testing.T) {
+					haveVariables := policy.ListPolicySetVariables(testCase.pset)
+					require.Empty(t, cmp.Diff(testCase.expectedVariables, haveVariables, protocmp.Transform()))
+				})
+			}
+		})
 	})
 }
 

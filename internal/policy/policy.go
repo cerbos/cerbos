@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
@@ -359,6 +359,111 @@ type Wrapper struct {
 	Kind    Kind
 }
 
+// ListActions returns unique list of actions in a policy.
+func ListActions(p *policyv1.Policy) []string {
+	var actions []string
+	if p == nil {
+		return actions
+	}
+
+	lut := make(map[string]struct{})
+	switch p := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		for _, r := range p.ResourcePolicy.Rules {
+			for _, a := range r.Actions {
+				if _, ok := lut[a]; !ok {
+					lut[a] = struct{}{}
+					actions = append(actions, a)
+				}
+			}
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		for _, r := range p.PrincipalPolicy.Rules {
+			for _, a := range r.Actions {
+				if _, ok := lut[a.Action]; !ok {
+					lut[a.Action] = struct{}{}
+					actions = append(actions, a.Action)
+				}
+			}
+		}
+	}
+
+	sort.Strings(actions)
+	return actions
+}
+
+// ListVariables returns local and exported variables (not imported ones) defined in a policy.
+func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Variable {
+	var variables []*responsev1.InspectPoliciesResponse_Variable
+	if p == nil {
+		return variables
+	}
+
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_DerivedRoles:
+		if pt.DerivedRoles.Variables == nil {
+			return variables
+		}
+
+		for name, value := range pt.DerivedRoles.Variables.Local {
+			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+				Name:  name,
+				Value: value,
+				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
+					Id:   namer.PolicyKey(p),
+				},
+			})
+		}
+	case *policyv1.Policy_ExportVariables:
+		for name, value := range pt.ExportVariables.Definitions {
+			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+				Name:  name,
+				Value: value,
+				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
+					Id:   namer.PolicyKey(p),
+				},
+			})
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		if pt.PrincipalPolicy.Variables == nil {
+			return variables
+		}
+
+		for name, value := range pt.PrincipalPolicy.Variables.Local {
+			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+				Name:  name,
+				Value: value,
+				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
+					Id:   namer.PolicyKey(p),
+				},
+			})
+		}
+	case *policyv1.Policy_ResourcePolicy:
+		if pt.ResourcePolicy.Variables == nil {
+			return variables
+		}
+
+		for name, value := range pt.ResourcePolicy.Variables.Local {
+			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+				Name:  name,
+				Value: value,
+				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
+					Id:   namer.PolicyKey(p),
+				},
+			})
+		}
+	}
+
+	sort.Slice(variables, func(i, j int) bool {
+		return sort.StringsAreSorted([]string{variables[i].Name, variables[j].Name})
+	})
+	return variables
+}
+
 // ListPolicySetActions returns unique list of actions in a policy set.
 func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 	var actions []string
@@ -396,37 +501,71 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 	return actions
 }
 
-// ListActions returns unique list of actions in a policy.
-func ListActions(p *policyv1.Policy) []string {
-	var actions []string
-	if p == nil {
-		return actions
+// ListPolicySetVariables returns local and exported variables defined in a policy set.
+func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.InspectPoliciesResponse_Variable {
+	var variables []*responsev1.InspectPoliciesResponse_Variable
+	if ps == nil {
+		return variables
 	}
 
-	lut := make(map[string]struct{})
-	switch p := p.PolicyType.(type) {
-	case *policyv1.Policy_ResourcePolicy:
-		for _, r := range p.ResourcePolicy.Rules {
-			for _, a := range r.Actions {
-				if _, ok := lut[a]; !ok {
-					lut[a] = struct{}{}
-					actions = append(actions, a)
+	switch set := ps.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		for _, p := range set.PrincipalPolicy.Policies {
+			for _, variable := range p.OrderedVariables {
+				variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+					Name:  variable.Name,
+					Value: variable.Expr.Original,
+					Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+						Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
+					},
+				})
+			}
+		}
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		for _, p := range set.ResourcePolicy.Policies {
+			for _, variable := range p.OrderedVariables {
+				variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+					Name:  variable.Name,
+					Value: variable.Expr.Original,
+					Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+						Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
+					},
+				})
+			}
+
+			for _, dr := range p.DerivedRoles {
+				for _, variable := range dr.OrderedVariables {
+					variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+						Name:  variable.Name,
+						Value: variable.Expr.Original,
+						Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+							Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
+						},
+					})
 				}
 			}
 		}
-	case *policyv1.Policy_PrincipalPolicy:
-		for _, r := range p.PrincipalPolicy.Rules {
-			for _, a := range r.Actions {
-				if _, ok := lut[a.Action]; !ok {
-					lut[a.Action] = struct{}{}
-					actions = append(actions, a.Action)
-				}
-			}
+	case *runtimev1.RunnablePolicySet_Variables:
+		if set.Variables == nil { //nolint:staticcheck
+			return variables
+		}
+
+		for name, value := range set.Variables.Variables { //nolint:staticcheck
+			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+				Name:  name,
+				Value: value.Original,
+				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
+					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
+					Id:   namer.PolicyKeyFromFQN(ps.Fqn),
+				},
+			})
 		}
 	}
 
-	sort.Strings(actions)
-	return actions
+	sort.Slice(variables, func(i, j int) bool {
+		return sort.StringsAreSorted([]string{variables[i].Name, variables[j].Name})
+	})
+	return variables
 }
 
 // Wrap augments a policy with useful information about itself.

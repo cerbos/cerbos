@@ -1166,6 +1166,19 @@
         }
       }
     },
+    "InspectPoliciesResponseVariableSource": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/VariableSourceType",
+          "description": "Type of the variable source."
+        },
+        "id": {
+          "type": "string",
+          "description": "Source policy ID of the variable if available."
+        }
+      }
+    },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
       "properties": {
@@ -1270,14 +1283,16 @@
         }
       }
     },
-    "ValidationErrorSource": {
+    "VariableSourceType": {
       "type": "string",
       "enum": [
-        "SOURCE_UNSPECIFIED",
-        "SOURCE_PRINCIPAL",
-        "SOURCE_RESOURCE"
+        "TYPE_UNSPECIFIED",
+        "TYPE_EXPORTED",
+        "TYPE_IMPORTED",
+        "TYPE_LOCAL",
+        "TYPE_LOCAL_OR_IMPORTED"
       ],
-      "default": "SOURCE_UNSPECIFIED"
+      "default": "TYPE_UNSPECIFIED"
     },
     "cerbosenginev1AuxData": {
       "type": "object",
@@ -2202,7 +2217,33 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Actions defined in the policy"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1InspectPoliciesResponseVariable"
+          },
+          "description": "Variables defined in the policy"
+        }
+      }
+    },
+    "v1InspectPoliciesResponseVariable": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable name defined in the policy."
+        },
+        "value": {
+          "type": "string",
+          "description": "Raw value of the variable defined in the policy."
+        },
+        "source": {
+          "$ref": "#/definitions/InspectPoliciesResponseVariableSource",
+          "description": "Source of the variable defined in the policy."
         }
       }
     },
@@ -2843,9 +2884,18 @@
           "type": "string"
         },
         "source": {
-          "$ref": "#/definitions/ValidationErrorSource"
+          "$ref": "#/definitions/v1ValidationErrorSource"
         }
       }
+    },
+    "v1ValidationErrorSource": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ],
+      "default": "SOURCE_UNSPECIFIED"
     },
     "v1Variables": {
       "type": "object",

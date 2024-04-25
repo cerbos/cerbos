@@ -1,0 +1,62 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request
+  importDerivedRoles:
+    - common_roles
+  variables:
+    import:
+      - common_variables
+    local:
+      markedResource: R.attr.markedResource
+      label: '"dude"'
+      teams: '["red", "blue"]'
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+    - actions: ["create"]
+      roles:
+        - user
+      condition:
+        match:
+          expr: "R.attr.approvedUser && (variables.commonMarkedResource || variables.markedResource)"
+      effect: EFFECT_ALLOW
+    - actions: ["view"]
+      roles:
+        - user
+      effect: EFFECT_ALLOW
+    - actions: ["duplicate"]
+      derivedRoles:
+        - approved_user
+      effect: EFFECT_ALLOW
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables
+  definitions:
+    commonMarkedResource: R.attr.markedResource
+    commonLabel: '"dude"'
+    commonTeams: '["red", "blue"]'
+
+-- c.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: common_roles
+  variables:
+    import:
+      - common_variables
+    local:
+      derivedRoleVariable: R.attr.isDerivedRoleVar
+  definitions:
+    - name: approved_user
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: "variables.derivedRoleVariable"
