@@ -68,7 +68,7 @@ func init() {
 type Client interface {
 	Close()
 	Flush(context.Context) error
-	Produce(context.Context, *kgo.Record, func(*kgo.Record, error))
+	TryProduce(context.Context, *kgo.Record, func(*kgo.Record, error))
 	ProduceSync(context.Context, ...*kgo.Record) kgo.ProduceResults
 }
 
@@ -199,7 +199,9 @@ func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 
 	// detach the context from the caller so the request can return
 	// without cancelling any async kafka operations
-	p.Client.Produce(context.Background(), msg, func(r *kgo.Record, err error) {
+	ctx = context.WithoutCancel(ctx)
+
+	p.Client.TryProduce(ctx, msg, func(r *kgo.Record, err error) {
 		if err == nil {
 			return
 		}

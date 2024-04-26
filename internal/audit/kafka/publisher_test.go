@@ -193,7 +193,7 @@ func (m *mockClient) Flush(_ context.Context) error {
 	return nil
 }
 
-func (m *mockClient) Produce(_ context.Context, record *kgo.Record, _ func(*kgo.Record, error)) {
+func (m *mockClient) TryProduce(_ context.Context, record *kgo.Record, _ func(*kgo.Record, error)) {
 	m.Records = append(m.Records, record)
 }
 
