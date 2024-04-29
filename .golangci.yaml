@@ -29,6 +29,10 @@ linters-settings:
       Copyright {{ YEAR-RANGE }} {{ COMPANY }}
       SPDX-License-Identifier: Apache-2.0
 
+  gomoddirectives:
+    replace-allow-list:
+      - github.com/goccy/go-yaml
+
   govet:
     enable-all: true
     disable:
@@ -96,11 +100,11 @@ issues:
   max-same-issues: 30
 
   exclude-dirs:
-    - "^api/"
-    - "^deploy/"
-    - "^docs/"
-    - "^hack/"
-    - "^internal/test/mocks/"
+    - "^api/*"
+    - "^deploy/*"
+    - "^docs/*"
+    - "^hack/*"
+    - "^internal/test/mocks/*"
 
   exclude-rules:
     - path: _test\.go

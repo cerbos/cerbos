@@ -1,0 +1,30 @@
+{
+    "description": "Fold operator truncates last character (#2019)",
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "version": "20210210",
+                    "resource": "leave_request",
+                    "rules": [
+                        {
+                            "actions": [
+                                "remind"
+                            ],
+                            "effect": "EFFECT_ALLOW",
+                            "derivedRoles": [
+                                "direct_manager"
+                            ],
+                            "condition": {
+                                "match": {
+                                    "expr": "timestamp(request.resource.attr.modifiedAt).timeSince() == duration(\"24h\")"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

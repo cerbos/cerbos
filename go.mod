@@ -300,3 +300,5 @@ require (
 	modernc.org/token v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/goccy/go-yaml => github.com/cerbos/go-yaml v0.0.0-20240429140401-260886edbbb0

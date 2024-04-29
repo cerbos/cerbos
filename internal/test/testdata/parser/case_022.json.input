@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+# This test case MUST NOT have a line feed after the last bracket.
+# Run `truncate -s -1 case_022.json.input` if you edit it because the editor will likely insert that line feed.
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "20210210"
+  resource: leave_request
+  rules:
+    - actions: ["remind"]
+      effect: EFFECT_ALLOW
+      derivedRoles: ["direct_manager"]
+      condition:
+        match:
+          expr: >
+            timestamp(request.resource.attr.modifiedAt).timeSince() == duration("24h")

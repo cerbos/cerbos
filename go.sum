@@ -161,6 +161,8 @@ github.com/cerbos/cerbos/api/genpb v0.35.1 h1:IgmvEUg+FXachWUT9f2b7NQ650kogwAEoe
 github.com/cerbos/cerbos/api/genpb v0.35.1/go.mod h1:DcozdAIUztxXwtVs88gGgdyCITru7WCTF9vGA6j+H8k=
 github.com/cerbos/cloud-api v0.1.18 h1:psD9psLgNq/u1IEOsp8L2mwwvB4umGeA4C4YHw19G9g=
 github.com/cerbos/cloud-api v0.1.18/go.mod h1:Fv9gmVBEubgJ0H68wS2hVr69X+eS1W5PuaLUIM09umQ=
+github.com/cerbos/go-yaml v0.0.0-20240429140401-260886edbbb0 h1:Wwhx45hzzYx8r1gBljgU0RcgdVQBwvSi+ORS49i+yhw=
+github.com/cerbos/go-yaml v0.0.0-20240429140401-260886edbbb0/go.mod h1:wKnAMd44+9JAAnGQpWVEgBzGt3YuTaQ4uXoHvE4m7WU=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
@@ -288,8 +290,6 @@ github.com/gobwas/glob v0.2.3 h1:A4xDbljILXROh+kObIiy5kIaPYD8e96x1tgBhUI5J+Y=
 github.com/gobwas/glob v0.2.3/go.mod h1:d3Ez4x06l9bZtSvzIay5+Yzi0fmZzPgnTbPcKjJAkT8=
 github.com/goccy/go-json v0.10.2 h1:CrxCmQqYDkv1z7lO7Wbh2HN93uovUHgrECaO5ZrCXAU=
 github.com/goccy/go-json v0.10.2/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
-github.com/goccy/go-yaml v1.11.3 h1:B3W9IdWbvrUu2OYQGwvU1nZtvMQJPBKgBUuweJjLj6I=
-github.com/goccy/go-yaml v1.11.3/go.mod h1:wKnAMd44+9JAAnGQpWVEgBzGt3YuTaQ4uXoHvE4m7WU=
 github.com/gofrs/uuid v4.0.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
