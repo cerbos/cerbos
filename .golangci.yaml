@@ -29,6 +29,10 @@ linters-settings:
       Copyright {{ YEAR-RANGE }} {{ COMPANY }}
       SPDX-License-Identifier: Apache-2.0
 
+  gomoddirectives:
+    replace-allow-list:
+      - github.com/cerbos/go-yaml
+
   govet:
     enable-all: true
     disable:
