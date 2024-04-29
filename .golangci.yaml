@@ -100,11 +100,11 @@ issues:
   max-same-issues: 30
 
   exclude-dirs:
-    - "^api/"
-    - "^deploy/"
-    - "^docs/"
-    - "^hack/"
-    - "^internal/test/mocks/"
+    - "^api/*"
+    - "^deploy/*"
+    - "^docs/*"
+    - "^hack/*"
+    - "^internal/test/mocks/*"
 
   exclude-rules:
     - path: _test\.go
