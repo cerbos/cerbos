@@ -15,6 +15,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -27,6 +28,15 @@ type Artefact struct {
 	Error      error
 	PolicySet  *runtimev1.RunnablePolicySet
 	SourceFile string
+}
+
+type PanicError struct {
+	Cause   any
+	Context []byte
+}
+
+func (pe PanicError) Error() string {
+	return fmt.Sprintf("panic: %v", pe.Cause)
 }
 
 type Errors struct {
@@ -64,6 +74,11 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 					Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
 				},
 			}
+		}
+
+		panicErr := new(parser.PanicError)
+		if errors.As(err, panicErr) {
+			return nil, nil, PanicError{Cause: panicErr.Cause, Context: panicErr.Context}
 		}
 
 		return nil, nil, fmt.Errorf("failed to build index: %w", err)
