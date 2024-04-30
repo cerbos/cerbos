@@ -7,52 +7,6 @@ include::ROOT:partial$version-check.adoc[]
 
 Cerbos supports multiple backends for storing policies. Which storage driver to use is defined by the `driver` setting.
 
-[id="disk-driver"]
-== Disk driver
-
-The disk driver is a way to serve the policies from a directory on the filesystem. Any `.yaml`, `.yml` or `.json` files in the directory tree rooted at the given path will be read and parsed as policies.
-
-
-
-.Static fileset with no change detection
-[source,yaml,linenums]
-----
-storage:
-  driver: disk
-  disk:
-    directory: /etc/cerbos/policies
-----
-
-.Dynamic fileset with change detection
-[source,yaml,linenums]
-----
-storage:
-  driver: disk
-  disk:
-    directory: /etc/cerbos/policies
-    watchForChanges: true
-----
-
-CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
-
-[id="disk-driver-archives"]
-=== Archive files
-
-Alternatively, you can opt to archive and/or compress your policies directory into a Zip (`.zip`), Tar (`.tar`) or Gzip file (`.tgz` or `.tar.gz`). The archive is assumed to be laid out like a standard policy directory. It must contain no non-policy YAML files.
-
-You specify the file in your config like so:
-
-.Archived fileset using a Zip file
-[source,yaml,linenums]
-----
-storage:
-  driver: disk
-  disk:
-    directory: /etc/cerbos/policies.zip
-----
-
-NOTE: Change detection will be disabled when using archive files.
-
 [id="blob-driver"]
 == Blob driver
 
@@ -113,6 +67,53 @@ storage:
     workDir: ${HOME}/tmp/cerbos/work
     updatePollInterval: 10s
 ----
+
+[id="disk-driver"]
+== Disk driver
+
+The disk driver is a way to serve the policies from a directory on the filesystem. Any `.yaml`, `.yml` or `.json` files in the directory tree rooted at the given path will be read and parsed as policies.
+
+
+
+.Static fileset with no change detection
+[source,yaml,linenums]
+----
+storage:
+  driver: disk
+  disk:
+    directory: /etc/cerbos/policies
+----
+
+.Dynamic fileset with change detection
+[source,yaml,linenums]
+----
+storage:
+  driver: disk
+  disk:
+    directory: /etc/cerbos/policies
+    watchForChanges: true
+----
+
+CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
+
+[id="disk-driver-archives"]
+=== Archive files
+
+Alternatively, you can opt to archive and/or compress your policies directory into a Zip (`.zip`), Tar (`.tar`) or Gzip file (`.tgz` or `.tar.gz`). The archive is assumed to be laid out like a standard policy directory. It must contain no non-policy YAML files.
+
+You specify the file in your config like so:
+
+.Archived fileset using a Zip file
+[source,yaml,linenums]
+----
+storage:
+  driver: disk
+  disk:
+    directory: /etc/cerbos/policies.zip
+----
+
+NOTE: Change detection will be disabled when using archive files.
+
 [id="git-driver"]
 == Git driver
 
@@ -176,91 +177,18 @@ storage:
       privateKeyFile: ${HOME}/.ssh/id_rsa
 ----
 
-[#sqlite3]
-== SQLite3 Driver
+[#hub]
+== Hub driver
 
-The SQLite3 storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+include::ROOT:partial$try-cerbos-hub.adoc[]
 
-include::partial$cerbosctl.adoc[]
+Connects the PDP to a Cerbos Hub xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment label]. Whenever a policy change is detected, the Cerbos Hub CI/CD pipeline compiles, tests and pushes an optimized policy bundle to the PDP.
 
-.In-memory ephemeral database
-[source,yaml,linenums]
-----
-storage:
-  driver: "sqlite3"
-  sqlite3:
-    dsn: ":memory:"
-----
-
-.On-disk persistent database
-[source,yaml,linenums]
-----
-storage:
-  driver: "sqlite3"
-  sqlite3:
-    dsn: "file:/tmp/cerbos.sqlite?mode=rwc&cache=shared&_fk=true"
-----
-
-[#postgres]
-== Postgres Driver
-
-The Postgres storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
-
-include::partial$cerbosctl.adoc[]
-
-[#postgres-db-sync]
-include::partial$db_sync.adoc[]
-
-NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos Postgres driver. This is to minimize the privileges the Cerbos instance has on the Postgres installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
-
-The driver configuration expects the connection details to be provided as connection URL. See link:https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING[Postgres connstring documentation] for more information. Use the `search_path` parameter to point to the schema containing the Cerbos tables.
-
-You can use environment variable references in the URL to avoid storing credentials as part of the Cerbos configuration file.
-
-.Using Postgres as a storage backend for Cerbos
-[source,yaml,linenums]
-----
-storage:
-  driver: "postgres"
-  postgres:
-    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
-----
-
-=== Connection pool
-
-include::partial$connpool.adoc[]
-
-[source,yaml,linenums]
-----
-storage:
-  driver: "postgres"
-  postgres:
-    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
-    connPool:
-      maxLifeTime: 5m
-      maxIdleTime: 3m
-      maxOpen: 10
-      maxIdle: 5
-----
-
-=== Connection retries
-
-include::partial$connretry.adoc[]
-
-
-[#postgres-schema]
-=== Database object definitions
-
-You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.
-
-[source,sql,linenums]
-----
-include::example$postgres_schema.sql[]
-----
+If you are new to Cerbos Hub, follow the xref:cerbos-hub:ROOT:getting-started.adoc[getting started guide]. For more information about configuring a PDP to connect to Cerbos Hub, refer to the xref:cerbos-hub:ROOT:decision-points-service.adoc[Service PDP documentation].
 
 
 [#mysql]
-== MySQL Driver
+== MySQL driver
 
 The MySQL storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
 
@@ -351,8 +279,117 @@ You can customise the script below to suit your environment. Make sure to specif
 include::example$mysql_schema.sql[]
 ----
 
+[#overlay]
+== [[redundancy]]Overlay driver
+
+You can provide redundancy by configuring an `overlay` driver, which wraps a `base` and a `fallback` driver. Under normal operation, the base driver will be targeted as usual. However, if the driver consistently errors, the PDP will start targeting the fallback driver instead. The fallback is determined by a configurable https://learn.microsoft.com/en-us/previous-versions/msp-n-p/dn589784(v=pandp.10)[circuit breaker pattern].
+
+You can configure the fallback error threshold and the fallback error window to determine how many errors can occur within a rolling window before the circuit breaker is tripped.
+
+[source,yaml,linenums]
+----
+storage:
+  driver: "overlay"
+  overlay:
+    baseDriver: postgres
+    fallbackDriver: disk
+    fallbackErrorThreshold: 5 # number of errors that occur within the fallbackErrorWindow to trigger failover
+    fallbackErrorWindow: 5s # the rolling window in which errors are aggregated
+  disk:
+    directory: policies
+    watchForChanges: true
+  postgres:
+    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
+----
+
+NOTE: The overlay driver assumes the same interface as the base driver. Any operations that are available on the base driver but not the fallback driver will error if the circuit breaker is open and the fallback driver is being targeted. Likewise, even if the fallback driver supports additional operations compared to the base driver, these will still not be available should failover occur.
+
+[#postgres]
+== Postgres driver
+
+The Postgres storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+
+include::partial$cerbosctl.adoc[]
+
+[#postgres-db-sync]
+include::partial$db_sync.adoc[]
+
+NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos Postgres driver. This is to minimize the privileges the Cerbos instance has on the Postgres installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
+
+The driver configuration expects the connection details to be provided as connection URL. See link:https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING[Postgres connstring documentation] for more information. Use the `search_path` parameter to point to the schema containing the Cerbos tables.
+
+You can use environment variable references in the URL to avoid storing credentials as part of the Cerbos configuration file.
+
+.Using Postgres as a storage backend for Cerbos
+[source,yaml,linenums]
+----
+storage:
+  driver: "postgres"
+  postgres:
+    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
+----
+
+=== Connection pool
+
+include::partial$connpool.adoc[]
+
+[source,yaml,linenums]
+----
+storage:
+  driver: "postgres"
+  postgres:
+    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
+    connPool:
+      maxLifeTime: 5m
+      maxIdleTime: 3m
+      maxOpen: 10
+      maxIdle: 5
+----
+
+=== Connection retries
+
+include::partial$connretry.adoc[]
+
+
+[#postgres-schema]
+=== Database object definitions
+
+You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.
+
+[source,sql,linenums]
+----
+include::example$postgres_schema.sql[]
+----
+
+
+[#sqlite3]
+== SQLite3 driver
+
+The SQLite3 storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+
+include::partial$cerbosctl.adoc[]
+
+.In-memory ephemeral database
+[source,yaml,linenums]
+----
+storage:
+  driver: "sqlite3"
+  sqlite3:
+    dsn: ":memory:"
+----
+
+.On-disk persistent database
+[source,yaml,linenums]
+----
+storage:
+  driver: "sqlite3"
+  sqlite3:
+    dsn: "file:/tmp/cerbos.sqlite?mode=rwc&cache=shared&_fk=true"
+----
+
+
 [#sqlserver]
-== Microsoft SQL Server Driver
+== Microsoft SQL Server driver
 
 The SQL Server storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
 
@@ -406,29 +443,3 @@ You can customise the script below to suit your environment. Make sure to specif
 ----
 include::example$sqlserver_schema.sql[]
 ----
-
-
-[#redundancy]
-== Redundancy
-
-You can provide redundancy by configuring an `overlay` driver, which wraps a `base` and a `fallback` driver. Under normal operation, the base driver will be targeted as usual. However, if the driver consistently errors, the PDP will start targeting the fallback driver instead. The fallback is determined by a configurable https://learn.microsoft.com/en-us/previous-versions/msp-n-p/dn589784(v=pandp.10)[circuit breaker pattern].
-
-You can configure the fallback error threshold and the fallback error window to determine how many errors can occur within a rolling window before the circuit breaker is tripped.
-
-[source,yaml,linenums]
-----
-storage:
-  driver: "overlay"
-  overlay:
-    baseDriver: postgres
-    fallbackDriver: disk
-    fallbackErrorThreshold: 5 # number of errors that occur within the fallbackErrorWindow to trigger failover
-    fallbackErrorWindow: 5s # the rolling window in which errors are aggregated
-  disk:
-    directory: policies
-    watchForChanges: true
-  postgres:
-    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
-----
-
-NOTE: The overlay driver assumes the same interface as the base driver. Any operations that are available on the base driver but not the fallback driver will error if the circuit breaker is open and the fallback driver is being targeted. Likewise, even if the fallback driver supports additional operations compared to the base driver, these will still not be available should failover occur.
