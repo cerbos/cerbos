@@ -40,6 +40,15 @@ const (
 
 var ErrNotFound = errors.New("not found")
 
+type PanicError struct {
+	Cause   any
+	Context []byte
+}
+
+func (pe PanicError) Error() string {
+	return fmt.Sprintf("panic: %v", pe.Cause)
+}
+
 var protoErrPrefix = regexp.MustCompile(`proto:(\x{00a0}|\x{0020})+\(line\s+\d+:\d+\):\s*`)
 
 // Find a single document from the multi-document stream.
@@ -170,6 +179,12 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 }
 
 func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			outErr = PanicError{Cause: r, Context: contents}
+		}
+	}()
+
 	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
 	if detectProblems && !util.IsJSON(contents) {
 		if errs := detectStringStartingWithQuote(t); len(errs) > 0 {
