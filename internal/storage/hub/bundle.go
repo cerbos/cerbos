@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package bundle
+package hub
 
 import (
 	"archive/zip"
@@ -58,7 +58,7 @@ type cacheEntry struct {
 }
 
 func Open(opts OpenOpts) (*Bundle, error) {
-	logger := zap.L().Named("bundle").With(zap.String("path", opts.BundlePath))
+	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
 	logger.Info("Opening bundle")
 
 	decryptedPath, size, err := decryptBundle(opts, logger)

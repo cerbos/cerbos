@@ -141,17 +141,6 @@ storage:
     requestTimeout: 10s # RequestTimeout specifies the timeout for an HTTP request.
     updatePollInterval: 15s # UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
     workDir: ${HOME}/tmp/cerbos/work # WorkDir is the local path to check out policies to.
-  bundle:
-    # This section is required only if storage.driver is bundle.
-    cacheSize: 1024 # CacheSize defines the number of policies to cache in memory.
-    local: # Local holds configuration for local bundle source.
-      bundlePath: /path/to/bundle.crbp # Required. BundlePath is the full path to the local bundle file.
-      tempDir: ${TEMP} # TempDir is the directory to use for temporary files.
-    remote: # Remote holds configuration for remote bundle source. Takes precedence over local if both are defined.
-      bundleLabel: latest # Required. BundleLabel to fetch from the server.
-      cacheDir: ${XDG_CACHE_DIR} # CacheDir is the directory to use for caching downloaded bundles.
-      disableAutoUpdate: <DEFAULT_VALUE_NOT_SET> # DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
-      tempDir: ${TEMP} # TempDir is the directory to use for temporary files.
   disk:
     # This section is required only if storage.driver is disk.
     directory: pkg/test/testdata/store # Required. Directory is the path on disk where policies are stored.
@@ -172,6 +161,17 @@ storage:
     subDir: policies # SubDir is the path under the checked-out Git repo where the policies are stored.
     url: file://${HOME}/tmp/cerbos/policies # Required. URL is the URL to the Git repo.
     updatePollInterval: 60s # UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
+  hub:
+    # This section is required only if storage.driver is hub.
+    cacheSize: 1024 # CacheSize defines the number of policies to cache in memory.
+    local: # Local holds configuration for local bundle source.
+      bundlePath: /path/to/bundle.crbp # Required. BundlePath is the full path to the local bundle file.
+      tempDir: ${TEMP} # TempDir is the directory to use for temporary files.
+    remote: # Remote holds configuration for remote bundle source. Takes precedence over local if both are defined.
+      bundleLabel: latest # Required. BundleLabel to fetch from the server.
+      cacheDir: ${XDG_CACHE_DIR} # CacheDir is the directory to use for caching downloaded bundles.
+      disableAutoUpdate: <DEFAULT_VALUE_NOT_SET> # DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
+      tempDir: ${TEMP} # TempDir is the directory to use for temporary files.
   mysql:
     # This section is required only if storage.driver is mysql.
     connPool: 

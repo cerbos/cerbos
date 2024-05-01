@@ -146,13 +146,15 @@ Merge the configurations to obtain the final configuration file
 {{- end }}
 
 {{/*
-Detect if bundle driver is used with default config
+Detect if hub driver is used with default config
 */}}
-{{- define "cerbos.defaultBundleDriverEnabled" -}}
+{{- define "cerbos.defaultHubDriverEnabled" -}}
 {{- $isBundleDriver := (eq (dig "config" "storage" "driver" "<not_defined>" .Values.cerbos) "bundle") -}}
+{{- $isHubDriver := (eq (dig "config" "storage" "driver" "<not_defined>" .Values.cerbos) "hub") -}}
+{{- $isBundleStorage := (or $isBundleDriver $isHubDriver) -}}
 {{- $isDefaultTmp := (eq (dig "config" "storage" "bundle" "remote" "tempDir" "<not_defined>" .Values.cerbos) "<not_defined>") -}}
 {{- $isDefaultCache := (eq (dig "config" "storage" "bundle" "remote" "cacheDir" "<not_defined>" .Values.cerbos) "<not_defined>") -}}
-{{- if (and $isBundleDriver $isDefaultTmp $isDefaultCache) -}}yes{{- else -}}no{{- end -}}
+{{- if (and $isBundleStorage $isDefaultTmp $isDefaultCache) -}}yes{{- else -}}no{{- end -}}
 {{- end }}
 
 {{/*

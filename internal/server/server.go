@@ -69,8 +69,8 @@ import (
 	_ "github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/cerbos/cerbos/internal/storage/overlay"
 
-	// Import bundle to register the storage driver.
-	_ "github.com/cerbos/cerbos/internal/storage/bundle"
+	// Import hub to register the storage driver.
+	_ "github.com/cerbos/cerbos/internal/storage/hub"
 	// Import mysql to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/mysql"
 	// Import postgres to register the storage driver.

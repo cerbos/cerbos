@@ -30,9 +30,9 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
+	hubstore "github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -85,15 +85,15 @@ func TestServer(t *testing.T) {
 			keyBytes, err := os.ReadFile(filepath.Join(dir, "secret_key.txt"))
 			require.NoError(t, err, "Failed to read secret key")
 
-			conf := &bundle.Conf{
+			conf := &hubstore.Conf{
 				CacheSize:   1024,
 				Credentials: &hub.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))},
-				Local: &bundle.LocalSourceConf{
+				Local: &hubstore.LocalSourceConf{
 					BundlePath: filepath.Join(dir, "bundle.crbp"),
 					TempDir:    t.TempDir(),
 				},
 			}
-			store, err := bundle.NewStore(ctx, conf)
+			store, err := hubstore.NewStore(ctx, conf)
 			require.NoError(t, err)
 
 			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))

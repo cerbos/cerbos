@@ -39,6 +39,9 @@ storage:
   bundle:
     local:
       bundlePath: internal/test/testdata/bundle/bundle.crbp
+  hub:
+    local:
+      bundlePath: internal/test/testdata/bundle/bundle.crbp
 
 schema:
   enforcement: reject

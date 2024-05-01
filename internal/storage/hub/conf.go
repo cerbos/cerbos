@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package bundle
+package hub
 
 import (
 	"errors"
@@ -25,14 +25,14 @@ const (
 
 var ErrNoSource = errors.New("at least one of local or remote sources must be defined")
 
-// Conf is required (if driver is set to 'bundle') configuration for bundle storage driver.
-// +desc=This section is required only if storage.driver is bundle.
+// Conf is required (if driver is set to 'hub') configuration for hub storage driver.
+// +desc=This section is required only if storage.driver is hub.
 type Conf struct {
 	// Remote holds configuration for remote bundle source. Takes precedence over local if both are defined.
 	Remote *RemoteSourceConf `yaml:"remote"`
 	// Local holds configuration for local bundle source.
 	Local *LocalSourceConf `yaml:"local"`
-	// Credentials holds bundle source credentials.
+	// Credentials holds Cerbos Hub credentials.
 	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
 	// CacheSize defines the number of policies to cache in memory.
 	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
@@ -204,8 +204,12 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 }
 
 func GetConf() (*Conf, error) {
+	return GetConfFromWrapper(config.Global())
+}
+
+func GetConfFromWrapper(confW *config.Wrapper) (*Conf, error) {
 	conf := &Conf{}
-	err := config.GetSection(conf)
+	err := confW.GetSection(conf)
 
 	return conf, err
 }

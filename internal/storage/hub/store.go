@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package bundle
+package hub
 
 import (
 	"context"
@@ -17,9 +17,10 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
-const DriverName = "bundle"
+const DriverName = "hub"
 
 var _ storage.BinaryStore = (*HybridStore)(nil)
 
@@ -27,8 +28,18 @@ var ErrBundleNotLoaded = errors.New("bundle not loaded yet")
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
+		conf, err := GetConfFromWrapper(confW)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read hub configuration: %w", err)
+		}
+
+		return NewStore(ctx, conf)
+	})
+
+	storage.RegisterDriver("bundle", func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
+		util.DeprecationWarning(storage.ConfKey+".bundle", confKey)
 		conf := new(Conf)
-		if err := confW.GetSection(conf); err != nil {
+		if err := confW.Get(storage.ConfKey+".bundle", conf); err != nil {
 			return nil, fmt.Errorf("failed to read bundle configuration: %w", err)
 		}
 
