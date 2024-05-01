@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package bundle
+package hub
 
 import (
 	"context"
@@ -68,7 +68,7 @@ func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
 		return nil, fmt.Errorf("invalid credentials: %w", err)
 	}
 
-	logger := zap.L().Named("bundle").With(zap.String("label", conf.Remote.BundleLabel))
+	logger := zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel))
 	scratchFS := afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir)
 	return &RemoteSource{log: logger, conf: conf, healthy: false, scratchFS: scratchFS, credentials: credentials}, nil
 }

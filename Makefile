@@ -67,7 +67,7 @@ generate-mocks: $(MOCKERY)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/audit/hub --name=IngestSyncer --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/index --name=Index --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage --name=Store --output=$(MOCK_DIR)
-	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/bundle --name=CloudAPIClient --output=$(MOCK_DIR)
+	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=./internal/storage/hub --name=CloudAPIClient --output=$(MOCK_DIR)
 	@ $(MOCKERY) $(MOCK_QUIET) --srcpkg=github.com/cerbos/cloud-api/bundle --name=WatchHandle --output=$(MOCK_DIR)
 
 .PHONY: generate-npm-packages

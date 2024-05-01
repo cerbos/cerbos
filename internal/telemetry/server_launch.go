@@ -15,9 +15,9 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/blob"
-	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/git"
+	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/util"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
@@ -118,15 +118,15 @@ func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 
 				feats.Storage.Store = &telemetryv1.ServerLaunch_Features_Storage_Blob_{Blob: b}
 			}
-		case bundle.DriverName:
-			if bundleConf, err := bundle.GetConf(); err == nil {
+		case hub.DriverName:
+			if bundleConf, err := hub.GetConf(); err == nil {
 				pdpID := util.PDPIdentifier(bundleConf.Credentials.PDPID)
 				b := &telemetryv1.ServerLaunch_Features_Storage_Bundle{
 					PdpId:    pdpID.GetInstance(),
 					ClientId: bundleConf.Credentials.ClientID,
 				}
 
-				if src, ok := store.(bundle.Source); ok {
+				if src, ok := store.(hub.Source); ok {
 					b.BundleSource = src.SourceKind()
 				}
 

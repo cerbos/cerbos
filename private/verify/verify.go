@@ -16,8 +16,8 @@ import (
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/storage/disk"
+	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
 	"github.com/cerbos/cerbos/private/compile"
@@ -69,7 +69,7 @@ type BundleParams struct {
 
 // Bundle runs tests using the given policy bundle.
 func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, error) {
-	bundleSrc, err := bundle.NewLocalSource(bundle.LocalParams{
+	bundleSrc, err := hub.NewLocalSource(hub.LocalParams{
 		BundlePath: params.BundlePath,
 		TempDir:    params.WorkDir,
 	})

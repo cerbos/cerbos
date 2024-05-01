@@ -11,8 +11,8 @@ cerbos:
   config:
     # Configure the bundle storage driver
     storage:
-      driver: "bundle"
-      bundle:
+      driver: "hub"
+      hub:
         remote:
           bundleLabel: "YOUR_LABEL" # Alternatively, add `CERBOS_HUB_BUNDLE=<YOUR_LABEL>` to the secret you created above.
 

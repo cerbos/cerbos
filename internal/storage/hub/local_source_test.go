@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package bundle_test
+package hub_test
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/bundle"
+	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ func TestLocalSource(t *testing.T) {
 	manifest := loadManifest(t)
 	key := loadKey(t)
 
-	ls, err := bundle.NewLocalSource(bundle.LocalParams{
+	ls, err := hub.NewLocalSource(hub.LocalParams{
 		BundlePath: bundlePath,
 		TempDir:    tempDir,
 		SecretKey:  key,
@@ -43,7 +43,7 @@ func TestLocalSource(t *testing.T) {
 	t.Run("reloaded", runTests(ls, manifest))
 }
 
-func runTests(have *bundle.LocalSource, manifest *bundlev1.Manifest) func(*testing.T) {
+func runTests(have *hub.LocalSource, manifest *bundlev1.Manifest) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Run("listPolicyIDs", func(t *testing.T) {
 			havePolicies, err := have.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})

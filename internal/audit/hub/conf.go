@@ -39,7 +39,7 @@ type Conf struct {
 }
 
 type IngestConf struct {
-	// Credentials holds bundle source credentials.
+	// Credentials holds Cerbos Hub credentials.
 	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
 	// Connection defines settings for the remote server connection.
 	Connection *hub.ConnectionConf `yaml:"connection" conf:",ignore"`

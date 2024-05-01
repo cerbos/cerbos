@@ -17,7 +17,7 @@ HTTP 400
 header "Content-Type" == "application/json"
 jsonpath "$.failure.errors" count == 1
 jsonpath "$.failure.errors[0].file" == "resource.yaml"
-jsonpath "$.failure.errors[0].error" == "Derived roles import 'apatr_common_roles' not found"
+jsonpath "$.failure.errors[0].error" == "cannot find derived roles 'apatr_common_roles' imported by policy resource.album_object.vdefault"
 
 
 # Playground validate request 3
@@ -28,8 +28,8 @@ HTTP 400
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.failure.errors" count == 2
-jsonpath "$.failure.errors[?(@.file == 'resource.yaml')].error" nth 0 == "Derived roles import 'apatr_common_roles' not found"
-jsonpath "$.failure.errors[?(@.file == 'common_roles.yaml')].error" nth 0 == "Failed to read: file is not valid: { /: [missing properties: 'derivedRoles' | missing properties: 'exportVariables' | missing properties: 'principalPolicy' | missing properties: 'resourcePolicy'] }"
+jsonpath "$.failure.errors[?(@.file == 'resource.yaml')].error" nth 0 == "cannot find derived roles 'apatr_common_roles' imported by policy resource.album_object.vdefault"
+jsonpath "$.failure.errors[?(@.file == 'common_roles.yaml')].error" nth 0 == "Failed to read: policyType: exactly one field is required in oneof"
 
 
 # Playground evaluate request 1
@@ -60,4 +60,4 @@ HTTP 400
 header "Content-Type" == "application/json"
 jsonpath "$.failure.errors" count == 1
 jsonpath "$.failure.errors[0].file" == "resource.yaml"
-jsonpath "$.failure.errors[0].error" == "Derived roles import 'apatr_common_roles' not found"
+jsonpath "$.failure.errors[0].error" == "cannot find derived roles 'apatr_common_roles' imported by policy resource.album_object.vdefault"

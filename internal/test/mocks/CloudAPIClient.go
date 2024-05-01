@@ -8,7 +8,7 @@ package mocks
 import (
 	context "context"
 
-	cloud_apibundle "github.com/cerbos/cloud-api/bundle"
+	bundle "github.com/cerbos/cloud-api/bundle"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -197,23 +197,23 @@ func (_c *CloudAPIClient_GetCachedBundle_Call) RunAndReturn(run func(string) (st
 }
 
 // WatchBundle provides a mock function with given fields: _a0, _a1
-func (_m *CloudAPIClient) WatchBundle(_a0 context.Context, _a1 string) (cloud_apibundle.WatchHandle, error) {
+func (_m *CloudAPIClient) WatchBundle(_a0 context.Context, _a1 string) (bundle.WatchHandle, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WatchBundle")
 	}
 
-	var r0 cloud_apibundle.WatchHandle
+	var r0 bundle.WatchHandle
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (cloud_apibundle.WatchHandle, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (bundle.WatchHandle, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) cloud_apibundle.WatchHandle); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) bundle.WatchHandle); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(cloud_apibundle.WatchHandle)
+			r0 = ret.Get(0).(bundle.WatchHandle)
 		}
 	}
 
@@ -245,12 +245,12 @@ func (_c *CloudAPIClient_WatchBundle_Call) Run(run func(_a0 context.Context, _a1
 	return _c
 }
 
-func (_c *CloudAPIClient_WatchBundle_Call) Return(_a0 cloud_apibundle.WatchHandle, _a1 error) *CloudAPIClient_WatchBundle_Call {
+func (_c *CloudAPIClient_WatchBundle_Call) Return(_a0 bundle.WatchHandle, _a1 error) *CloudAPIClient_WatchBundle_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *CloudAPIClient_WatchBundle_Call) RunAndReturn(run func(context.Context, string) (cloud_apibundle.WatchHandle, error)) *CloudAPIClient_WatchBundle_Call {
+func (_c *CloudAPIClient_WatchBundle_Call) RunAndReturn(run func(context.Context, string) (bundle.WatchHandle, error)) *CloudAPIClient_WatchBundle_Call {
 	_c.Call.Return(run)
 	return _c
 }
