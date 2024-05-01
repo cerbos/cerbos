@@ -35,10 +35,7 @@ hub:
     workspaceSecret: CERBOS-1HDHY70IHFLXD-4SPXE0NZUG25FE5RW5PD7FKGPKP5CZAG53TR6HHAAN7NPMYP0YES4RQFVS
 
 storage:
-  driver: "bundle"
-  bundle:
-    local:
-      bundlePath: internal/test/testdata/bundle/bundle.crbp
+  driver: "hub"
   hub:
     local:
       bundlePath: internal/test/testdata/bundle/bundle.crbp
