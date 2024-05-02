@@ -397,7 +397,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 				b.StopTimer()
 				bc.policy.Metadata = &policyv1.Metadata{
 					Annotations: map[string]string{"iteration": strconv.Itoa(i)},
-					Hash:        wrapperspb.UInt64(rand.Uint64()),
+					Hash:        wrapperspb.UInt64(rand.Uint64()), //nolint:gosec
 				}
 				buf := new(bytes.Buffer)
 				require.NoError(b, util.WriteYAML(buf, bc.policy))
