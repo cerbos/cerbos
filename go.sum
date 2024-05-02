@@ -161,8 +161,8 @@ github.com/cerbos/cerbos/api/genpb v0.35.1 h1:IgmvEUg+FXachWUT9f2b7NQ650kogwAEoe
 github.com/cerbos/cerbos/api/genpb v0.35.1/go.mod h1:DcozdAIUztxXwtVs88gGgdyCITru7WCTF9vGA6j+H8k=
 github.com/cerbos/cloud-api v0.1.18 h1:psD9psLgNq/u1IEOsp8L2mwwvB4umGeA4C4YHw19G9g=
 github.com/cerbos/cloud-api v0.1.18/go.mod h1:Fv9gmVBEubgJ0H68wS2hVr69X+eS1W5PuaLUIM09umQ=
-github.com/cerbos/go-yaml v0.0.0-20240429140401-260886edbbb0 h1:Wwhx45hzzYx8r1gBljgU0RcgdVQBwvSi+ORS49i+yhw=
-github.com/cerbos/go-yaml v0.0.0-20240429140401-260886edbbb0/go.mod h1:wKnAMd44+9JAAnGQpWVEgBzGt3YuTaQ4uXoHvE4m7WU=
+github.com/cerbos/go-yaml v0.0.0-20240502082720-ab3470c47ed6 h1:GR4sGAsS8QtShlU7sGm2fNr7HXsnRUEXLVlkn21yjs4=
+github.com/cerbos/go-yaml v0.0.0-20240502082720-ab3470c47ed6/go.mod h1:wKnAMd44+9JAAnGQpWVEgBzGt3YuTaQ4uXoHvE4m7WU=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
