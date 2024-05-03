@@ -1,0 +1,8 @@
+[IMPORTANT]
+====
+
+Requires a link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub] account.
+
+image::ROOT:try_cerbos_hub.png["Try Cerbos Hub",link="https://hub.cerbos.cloud"]
+
+====
