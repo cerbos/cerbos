@@ -242,7 +242,7 @@ func (h Hierarchy) Equal(other ref.Val) ref.Val {
 	return types.Bool(true)
 }
 
-// Receive implements traits.Reciever.Receive.
+// Receive implements traits.Receiver.Receive.
 func (h Hierarchy) Receive(function, _ string, args []ref.Val) ref.Val {
 	if len(args) == 1 {
 		if f, found := hierarchyOneArgOverloads[function]; found {
