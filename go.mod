@@ -67,7 +67,8 @@ require (
 	github.com/rs/cors v1.11.0
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/sony/gobreaker v0.5.0
+	github.com/sony/gobreaker v1.0.0
+	github.com/sony/gobreaker/v2 v2.0.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/afero v1.11.0
 	github.com/stoewer/go-strcase v1.3.0
