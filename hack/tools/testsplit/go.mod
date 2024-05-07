@@ -7,7 +7,7 @@ toolchain go1.22.2
 require (
 	github.com/alecthomas/kong v0.9.0
 	github.com/gobwas/glob v0.2.3
-	golang.org/x/tools v0.20.0
+	golang.org/x/tools v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
