@@ -69,13 +69,13 @@ linters:
     - gofumpt
     - goimports
     - goheader
-    - gomnd
     - gomoddirectives
     - gosec
     - govet
     - importas
     - makezero
     - misspell
+    - mnd
     - nakedret
     - nestif
     - nilerr

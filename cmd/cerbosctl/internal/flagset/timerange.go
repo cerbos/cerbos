@@ -34,7 +34,7 @@ func (t *timerange) Decode(ctx *kong.DecodeContext) error {
 		return fmt.Errorf("invalid time range [%s]", tr)
 	}
 
-	t.Values = make([]*timestamppb.Timestamp, 2) //nolint:gomnd
+	t.Values = make([]*timestamppb.Timestamp, 2) //nolint:mnd
 
 	for i := 0; i < len(parts); i++ {
 		parsedTime, err := time.Parse(time.RFC3339, parts[i])

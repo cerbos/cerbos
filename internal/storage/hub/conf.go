@@ -181,7 +181,7 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 		}
 
 		dir := filepath.Join(cacheDir, "cerbos-hub")
-		//nolint:gomnd
+		//nolint:mnd
 		if err := os.MkdirAll(dir, 0o764); err != nil {
 			return fmt.Errorf("failed to create cache dir %q: %w", dir, err)
 		}

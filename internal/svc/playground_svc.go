@@ -302,7 +302,7 @@ func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.File) (
 func buildFS(log *zap.Logger, files []*requestv1.File) (fs.FS, error) {
 	fsys := afero.NewMemMapFs()
 	for _, file := range files {
-		if err := afero.WriteFile(fsys, file.FileName, file.Contents, 0o644); err != nil { //nolint:gomnd
+		if err := afero.WriteFile(fsys, file.FileName, file.Contents, 0o644); err != nil { //nolint:mnd
 			log.Error("Failed to create in-mem file", zap.String("file", file.FileName), zap.Error(err))
 			return nil, status.Errorf(codes.Internal, "failed to create file %s", file.FileName)
 		}

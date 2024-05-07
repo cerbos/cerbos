@@ -148,7 +148,7 @@ func mkUI(entries []*auditv1.DecisionLogEntry) *decisionsUI {
 	return ui
 }
 
-//nolint:gomnd
+//nolint:mnd
 func mkBrowserPanel(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) {
 	ui.browser = &browserPanel{
 		entriesTable: tview.NewTable().
@@ -206,7 +206,7 @@ func mkBrowserPanel(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) {
 	ui.tabs.AddPage(browserKey, layout, true, true)
 }
 
-//nolint:gomnd
+//nolint:mnd
 func populateEntriesTable(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) {
 	ui.browser.entriesTable.SetCell(0, 0, tview.NewTableCell("Call ID").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
 	ui.browser.entriesTable.SetCell(0, 1, tview.NewTableCell("Timestamp").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
@@ -252,7 +252,7 @@ func populateEntriesTable(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) 
 	ui.browser.entriesTable.SetSelectedFunc(ui.entrySelectedFunc)
 }
 
-//nolint:gomnd
+//nolint:mnd
 func mkCheckDetailsPanel(ui *decisionsUI) {
 	ui.checkDetails = &checkDetailsPanel{
 		inputsList:    tview.NewList(),
@@ -331,7 +331,7 @@ func mkCheckDetailsPanel(ui *decisionsUI) {
 	ui.tabs.AddPage(checkDetailsKey, layout, true, false)
 }
 
-//nolint:gomnd
+//nolint:mnd
 func mkPlanDetailsPanel(ui *decisionsUI) {
 	ui.planDetails = &planDetailsPanel{
 		principalView: tview.NewTextView().SetDynamicColors(true),
@@ -418,7 +418,7 @@ func (d *decisionsUI) showDetailsPanel(entry *auditv1.DecisionLogEntry) {
 	}
 }
 
-//nolint:gomnd
+//nolint:mnd
 func (d *decisionsUI) showCheckDetailsPanel(entry *auditv1.DecisionLogEntry_CheckResources) {
 	d.checkDetails.inputsList.Clear()
 

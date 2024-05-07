@@ -478,7 +478,7 @@ func (u *unmarshaler[T]) resolveAlias(uctx *unmarshalCtx, n ast.Node) (ast.Node,
 				return nil, err
 			}
 			keyColumn := nn.Key.GetToken().Position.Column
-			requiredColumn := keyColumn + 2 //nolint:gomnd
+			requiredColumn := keyColumn + 2 //nolint:mnd
 			value.AddColumn(requiredColumn)
 			nn.Value = value
 		} else {
