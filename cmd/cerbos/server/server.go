@@ -94,8 +94,8 @@ func (c *Cmd) Run() error {
 
 	if c.HubBundle != "" {
 		for _, override := range []string{
-			"storage.driver=bundle",
-			fmt.Sprintf("storage.bundle.remote.bundleLabel=%s", c.HubBundle),
+			"storage.driver=hub",
+			fmt.Sprintf("storage.hub.remote.bundleLabel=%s", c.HubBundle),
 		} {
 			if err := strvals.ParseInto(override, confOverrides); err != nil {
 				return fmt.Errorf("failed to parse Cerbos Hub override [%s]: %w", override, err)
