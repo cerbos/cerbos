@@ -24,12 +24,12 @@ Embedded PDP users can use the `cerbosctl hub epdp list-candidates` command to s
 
 === Bug Fixes
 
+* Default expectation to `EFFECT_DENY` for unspecified actions in tests (link:https://github.com/cerbos/cerbos/pull/2116[#2116])
 * Eagerly establish gRPC connection to avoid initial delay (link:https://github.com/cerbos/cerbos/pull/2105[#2105])
 * Handle folded strings and indented newlines in YAML correctly (link:https://github.com/cerbos/cerbos/pull/2128[#2128])
 * Ignore context cancellation when writing audit log entries (link:https://github.com/cerbos/cerbos/pull/2113[#2113])
 * Include implicit `EFFECT_DENY` in test failure details (link:https://github.com/cerbos/cerbos/pull/2117[#2117])
 * Kafka TLS using system CA (link:https://github.com/cerbos/cerbos/pull/2120[#2120])
-* Mark tests with missing expectations as errored (link:https://github.com/cerbos/cerbos/pull/2116[#2116])
 * Stop blocking Kafka audit publishing when an outage occurs (link:https://github.com/cerbos/cerbos/pull/2122[#2122])
 
 === Features
