@@ -433,11 +433,11 @@ func genKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
 }
 
 func minScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
-	return scanKeyForTime(prefix, ts, 0x00) //nolint:gomnd
+	return scanKeyForTime(prefix, ts, 0x00) //nolint:mnd
 }
 
 func maxScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
-	return scanKeyForTime(prefix, ts, 0xFF) //nolint:gomnd
+	return scanKeyForTime(prefix, ts, 0xFF) //nolint:mnd
 }
 
 func scanKeyForTime(prefix []byte, ts time.Time, randFiller byte) ([]byte, error) {
@@ -454,7 +454,7 @@ func scanKeyForTime(prefix []byte, ts time.Time, randFiller byte) ([]byte, error
 }
 
 func maxScanKeyForPrefix(prefix []byte) []byte {
-	return scanKeyForPrefix(prefix, 0xFF) //nolint:gomnd
+	return scanKeyForPrefix(prefix, 0xFF) //nolint:mnd
 }
 
 func scanKeyForPrefix(prefix []byte, filler byte) []byte {

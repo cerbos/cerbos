@@ -69,7 +69,7 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 
 		sorted := sort(filtered, sortFlags.SortBy)
 		for _, p := range sorted {
-			row := make([]string, 2, 4) //nolint:gomnd
+			row := make([]string, 2, 4) //nolint:mnd
 			row[0] = p.Metadata.StoreIdentifier
 			row[1] = p.Name
 

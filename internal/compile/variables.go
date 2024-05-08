@@ -152,7 +152,7 @@ func (vd *variableDefinitions) reportRedefinedVariables() {
 		case 1:
 			continue
 
-		case 2: //nolint:gomnd
+		case 2: //nolint:mnd
 			definedInMsg = strings.Join(variableDefinitionPlaces(definedIn), " and ")
 
 		default:
@@ -308,7 +308,7 @@ func (vd *variableDefinitions) reportCyclicalVariables(cycles [][]graph.Node) {
 			case 0:
 
 			case len(cycle) - 1:
-				if len(cycle) > 2 { //nolint:gomnd
+				if len(cycle) > 2 { //nolint:mnd
 					desc.WriteString(",")
 				}
 				desc.WriteString(" and ")

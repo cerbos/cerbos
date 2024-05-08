@@ -43,7 +43,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.Sub
 		SubscriptionManager: sub,
 		cooldownPeriod:      cooldownPeriod,
 		eventBatch:          make(map[string]struct{}),
-		watchChan:           make(chan notify.EventInfo, 8), //nolint:gomnd
+		watchChan:           make(chan notify.EventInfo, 8), //nolint:mnd
 	}
 
 	if err := notify.Watch(filepath.Join(dir, "..."), dw.watchChan, notify.All); err != nil {

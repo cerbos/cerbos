@@ -308,5 +308,5 @@ func WriteGoldenFile(t *testing.T, path string, contents proto.Message) {
 	var b bytes.Buffer
 	require.NoError(t, json.Indent(&b, []byte(protojson.Format(contents)), "", "  "), "Failed to JSON-encode golden file contents")
 	b.WriteByte('\n')
-	require.NoError(t, os.WriteFile(path, b.Bytes(), 0o644), "Failed to write golden file") //nolint:gomnd,gosec
+	require.NoError(t, os.WriteFile(path, b.Bytes(), 0o644), "Failed to write golden file") //nolint:mnd,gosec
 }

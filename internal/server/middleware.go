@@ -42,7 +42,7 @@ func RequestMetadataUnaryServerInterceptor(ctx context.Context, req any, info *g
 	newCtx := context.WithValue(ctx, methodNameCtxKey, info.FullMethod)
 
 	reqMeta := svc.ExtractRequestFields(info.FullMethod, req)
-	xffHeaders := make(map[string]any, 2) //nolint:gomnd
+	xffHeaders := make(map[string]any, 2) //nolint:mnd
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		xfh, ok := md["x-forwarded-host"]
@@ -57,7 +57,7 @@ func RequestMetadataUnaryServerInterceptor(ctx context.Context, req any, info *g
 	}
 
 	// Fields are key-value pairs. Because we are adding "meta" and "http", the expected length is 4.
-	fields := make(logging.Fields, 0, 4) //nolint:gomnd
+	fields := make(logging.Fields, 0, 4) //nolint:mnd
 
 	if len(xffHeaders) > 0 {
 		fields = append(fields, "http", xffHeaders)
@@ -193,7 +193,7 @@ func handleUnknownServices(_ any, stream grpc.ServerStream) error {
 	}
 
 	parts := strings.Split(method, "/")
-	if len(parts) < 2 { //nolint:gomnd
+	if len(parts) < 2 { //nolint:mnd
 		return errFn(unknownSvc)
 	}
 

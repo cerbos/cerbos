@@ -57,7 +57,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 func getHistoryFile(path string) string {
 	if path == "" {
 		dir := filepath.Join(xdg.DataHome, "cerbos")
-		//nolint:gomnd
+		//nolint:mnd
 		if err := os.MkdirAll(dir, 0o744); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create directory %q (%v): history is disabled", dir, err)
 			return ""

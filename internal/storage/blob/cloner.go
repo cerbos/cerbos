@@ -125,7 +125,7 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
 	// Create the directories in the path
 	dir := filepath.Dir(file)
-	if err = c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:gomnd
+	if err = c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to make dir %q: %w", dir, err)
 	}
 

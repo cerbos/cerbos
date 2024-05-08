@@ -26,7 +26,7 @@ const (
 
 var conf = Config{}
 
-//nolint:gomnd
+//nolint:mnd
 func init() {
 	srcRoot, err := findSourceRoot()
 	if err != nil {

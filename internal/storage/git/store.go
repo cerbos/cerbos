@@ -99,7 +99,7 @@ func (s *Store) init(ctx context.Context) error {
 
 	// if the directory does not exist, create it and clone the repo
 	if errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(s.conf.CheckoutDir, 0o744); err != nil { //nolint:gomnd
+		if err := os.MkdirAll(s.conf.CheckoutDir, 0o744); err != nil { //nolint:mnd
 			return fmt.Errorf("failed to create directory %s: %w", s.conf.CheckoutDir, err)
 		}
 

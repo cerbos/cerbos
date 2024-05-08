@@ -110,7 +110,7 @@ func (rp *randPool) get() io.Reader {
 
 // https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 //
-//nolint:gomnd
+//nolint:mnd
 func nearestPowerOfTwo(v uint64) uint64 {
 	v--
 	v |= v >> 1

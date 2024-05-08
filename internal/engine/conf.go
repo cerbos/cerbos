@@ -33,7 +33,7 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.DefaultPolicyVersion = namer.DefaultVersion
-	c.NumWorkers = uint(runtime.NumCPU() + 4) //nolint:gomnd
+	c.NumWorkers = uint(runtime.NumCPU() + 4) //nolint:mnd
 }
 
 func (c *Conf) Validate() error {

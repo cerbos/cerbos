@@ -35,7 +35,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 
 	//nolint:thelper
 	return func(t *testing.T) {
-		token := generateToken(t, time.Now().Add(5*time.Minute)) //nolint:gomnd
+		token := generateToken(t, time.Now().Add(5*time.Minute)) //nolint:mnd
 		c := c.With(
 			cerbos.AuxDataJWT(token, ""),
 			cerbos.IncludeMeta(true),
@@ -355,7 +355,7 @@ func generateToken(t *testing.T, expiry time.Time) string {
 	require.NoError(t, token.Set(jwt.AudienceKey, "cerbos-jwt-tests"))
 	require.NoError(t, token.Set(jwt.ExpirationKey, expiry))
 	require.NoError(t, token.Set("customString", "foobar"))
-	require.NoError(t, token.Set("customInt", 42)) //nolint:gomnd
+	require.NoError(t, token.Set("customInt", 42)) //nolint:mnd
 	require.NoError(t, token.Set("customArray", []string{"A", "B", "C"}))
 	require.NoError(t, token.Set("customMap", map[string]any{"A": "AA", "B": "BB", "C": "CC"}))
 

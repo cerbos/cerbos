@@ -171,7 +171,7 @@ func GRPCLogFieldsToZap(fields logging.Fields) []zap.Field {
 		return nil
 	}
 
-	out := make([]zap.Field, 0, len(fields)/2) //nolint:gomnd
+	out := make([]zap.Field, 0, len(fields)/2) //nolint:mnd
 	iter := fields.Iterator()
 	for iter.Next() {
 		key, value := iter.At()

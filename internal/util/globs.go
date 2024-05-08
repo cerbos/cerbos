@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var globs = &globCache{cache: cache.New[string, glob.Glob]("glob", 1024)} //nolint:gomnd
+var globs = &globCache{cache: cache.New[string, glob.Glob]("glob", 1024)} //nolint:mnd
 
 type globCache struct {
 	cache *cache.Cache[string, glob.Glob]

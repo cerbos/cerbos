@@ -614,7 +614,7 @@ func (s *Server) parseAndOpen(listenAddr string) (net.Listener, error) {
 	return reuseport.NewReusablePortListener(network, addr)
 }
 
-//nolint:gomnd
+//nolint:mnd
 func toUDSFileMode(modeStr string) os.FileMode {
 	m, err := strconv.ParseInt(modeStr, 0, 32)
 	if err != nil || m <= 0 {

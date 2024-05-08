@@ -516,7 +516,7 @@ func (cas *CerbosAdminService) checkCredentials(ctx context.Context) error {
 	}
 
 	parts := bytes.Split(bytes.TrimSpace(decoded), authSep)
-	if len(parts) != 2 { //nolint:gomnd
+	if len(parts) != 2 { //nolint:mnd
 		return status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 

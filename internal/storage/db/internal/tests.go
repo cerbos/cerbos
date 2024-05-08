@@ -26,7 +26,7 @@ import (
 
 const timeout = 2 * time.Second
 
-//nolint:gomnd
+//nolint:mnd
 func TestSuite(store DBStorage) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {

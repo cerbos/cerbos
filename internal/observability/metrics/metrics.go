@@ -128,7 +128,7 @@ var (
 			"cerbos_dev_engine_check_batch_size",
 			metric.WithDescription("Batch size distribution of check requests"),
 			metric.WithUnit(UnitDimensionless),
-			metric.WithExplicitBucketBoundaries(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40, 45, 50), //nolint:gomnd
+			metric.WithExplicitBucketBoundaries(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40, 45, 50), //nolint:mnd
 		)
 	})
 

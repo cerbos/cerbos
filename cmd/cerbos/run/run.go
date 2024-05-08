@@ -169,7 +169,7 @@ func (c *Cmd) loadConfig() error {
 
 		policyDir := filepath.Join(wd, "policies")
 		if _, err := os.Stat(policyDir); err != nil && errors.Is(err, os.ErrNotExist) {
-			if err := os.Mkdir(policyDir, 0o744); err != nil { //nolint:gomnd
+			if err := os.Mkdir(policyDir, 0o744); err != nil { //nolint:mnd
 				return fmt.Errorf("unable to create policies directory: %w", err)
 			}
 		}

@@ -144,7 +144,7 @@ func validateOrCreateWorkDir(workDir string) error {
 			return fmt.Errorf("failed to stat workDir %q: %w", workDir, err)
 		}
 
-		if err := os.MkdirAll(workDir, 0o744); err != nil { //nolint:gomnd
+		if err := os.MkdirAll(workDir, 0o744); err != nil { //nolint:mnd
 			return fmt.Errorf("failed to create workDir %q: %w", workDir, err)
 		}
 	}

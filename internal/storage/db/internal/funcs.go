@@ -31,7 +31,7 @@ func mysqlConcatWithSep(sep string, args ...any) exp.Expression {
 	return goqu.Func("CONCAT_WS", a...)
 }
 
-//nolint:gomnd
+//nolint:mnd
 func ansiConcatWithSep(sep string, args ...any) exp.Expression {
 	n := len(args)
 	switch n {
