@@ -1,0 +1,84 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.36.0]
+= Cerbos v0.36.0
+
+== Highlights
+
+To reduce the overhead of writing large audit log entries to slow sinks (files and `stdout`, for example), Cerbos now writes audit logs in the background. If you send very large batch requests containing a lot of data to Cerbos, this should help improve the response times.
+
+A community contribution from @rcrowe makes the Kafka audit backend use system CA certificates if none are provided explicitly in configuration. It also addresses a case where asynchronous Kafka writes start blocking when the downstream brokers are down.
+
+The new xref:cli:cerbosctl.adoc#inspect-policies[`cerbosctl inspect`] command provides command-line access to the `inspect` Admin API endpoint introduced in the previous release. Currently it supports listing actions covered by each policy. More policy inspection options are planned for future releases.
+
+=== Cerbos Hub integration
+
+Early adopters of the link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub] audit log collection feature can now filter out audit log entries locally before they are sent to Hub.
+
+For consistency, the `bundle` storage driver has been renamed to `hub`. To migrate, change `storage.driver: bundle` to `storage.driver: hub` and rename any configuration values starting with `storage.bundle` to `storage.hub`.
+
+Embedded PDP users can use the `cerbosctl hub epdp list-candidates` command to scan a policy repo and list the set of policies that would be included in a Cerbos Embedded PDP bundle.
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Default expectation to `EFFECT_DENY` for unspecified actions in tests (link:https://github.com/cerbos/cerbos/pull/2116[#2116])
+* Eagerly establish gRPC connection to avoid initial delay (link:https://github.com/cerbos/cerbos/pull/2105[#2105])
+* Handle folded strings and indented newlines in YAML correctly (link:https://github.com/cerbos/cerbos/pull/2128[#2128])
+* Ignore context cancellation when writing audit log entries (link:https://github.com/cerbos/cerbos/pull/2113[#2113])
+* Include implicit `EFFECT_DENY` in test failure details (link:https://github.com/cerbos/cerbos/pull/2117[#2117])
+* Kafka TLS using system CA (link:https://github.com/cerbos/cerbos/pull/2120[#2120])
+* Stop blocking Kafka audit publishing when an outage occurs (link:https://github.com/cerbos/cerbos/pull/2122[#2122])
+
+=== Features
+
+* Add cerbosctl hub epdp list-candidates command (link:https://github.com/cerbos/cerbos/pull/2078[#2078])
+* Add cerbosctl inspect policies command (link:https://github.com/cerbos/cerbos/pull/2101[#2101])
+
+=== Enhancements
+
+* Add audit log filtering to Hub backend (link:https://github.com/cerbos/cerbos/pull/2073[#2073])
+* Apply perf patch to YAML parser (link:https://github.com/cerbos/cerbos/pull/2132[#2132])
+* Write audit logs asynchronously (link:https://github.com/cerbos/cerbos/pull/2104[#2104])
+
+=== Documentation
+
+* Add documentation for Dagger Cerbos module (link:https://github.com/cerbos/cerbos/pull/2106[#2106])
+* Document Hub features (link:https://github.com/cerbos/cerbos/pull/2133[#2133])
+* Document how to verify cosign signatures (link:https://github.com/cerbos/cerbos/pull/2094[#2094])
+
+=== Chores
+
+* Add 0.35.1 release notes (link:https://github.com/cerbos/cerbos/pull/2090[#2090])
+* Bump github.com/docker/docker from 26.0.0+incompatible to 26.0.2+incompatible in /tools (link:https://github.com/cerbos/cerbos/pull/2108[#2108])
+* Bump github.com/sigstore/cosign/v2 from 2.2.1 to 2.2.4 in /tools (link:https://github.com/cerbos/cerbos/pull/2097[#2097])
+* Bump golang.org/x/net from 0.21.0 to 0.23.0 in /api/genpb (link:https://github.com/cerbos/cerbos/pull/2110[#2110])
+* Bump version to 0.36.0
+* Check results of npm package tests (link:https://github.com/cerbos/cerbos/pull/2098[#2098])
+* Fix E2E tests combining the host address with extra colon (link:https://github.com/cerbos/cerbos/pull/2114[#2114])
+* Handle panics during parsing (link:https://github.com/cerbos/cerbos/pull/2129[#2129])
+* Remove deprecated audit log fields from filter (link:https://github.com/cerbos/cerbos/pull/2121[#2121])
+* Remove unmaintained Netlify action (link:https://github.com/cerbos/cerbos/pull/2093[#2093])
+* Remove usage of deprecated MySQL native authentication plugin (link:https://github.com/cerbos/cerbos/pull/2131[#2131])
+* Rename bundle driver to hub (link:https://github.com/cerbos/cerbos/pull/2130[#2130])
+* Test npm packages against pnpm v9 (link:https://github.com/cerbos/cerbos/pull/2102[#2102])
+* Update cloud-platforms.adoc (link:https://github.com/cerbos/cerbos/pull/2109[#2109])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2125[#2125])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2099[#2099])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2111[#2111])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2124[#2124])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2139[#2139])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2135[#2135])
+* Update go deps to v2 (major) (link:https://github.com/cerbos/cerbos/pull/2138[#2138])
+* Update golangci/golangci-lint-action action to v5 (link:https://github.com/cerbos/cerbos/pull/2127[#2127])
+* Update golangci/golangci-lint-action action to v5.3.0 (link:https://github.com/cerbos/cerbos/pull/2136[#2136])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2100[#2100])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2126[#2126])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2137[#2137])
+* Update pnpm to v9.0.5 (link:https://github.com/cerbos/cerbos/pull/2112[#2112])
+* Update storage type for Jaeger chart (link:https://github.com/cerbos/cerbos/pull/2096[#2096])
+* Update to go1.22.3 (link:https://github.com/cerbos/cerbos/pull/2143[#2143])
+* Use latest Cerbos SDK (link:https://github.com/cerbos/cerbos/pull/2140[#2140])
+* Use new hub configuration for env var override (link:https://github.com/cerbos/cerbos/pull/2142[#2142])
