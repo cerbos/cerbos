@@ -1,6 +1,6 @@
 {
   "name": "@cerbos/cerbos-linux-x64",
-  "version": "0.36.0-prerelease",
+  "version": "0.36.0",
   "description": "The linux-x64 binary for cerbos",
   "repository": {
     "type": "git",
