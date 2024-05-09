@@ -1,65 +1,27 @@
 -- a.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
-exportVariables:
-  name: common_variables
-
--- b.yaml --
----
-apiVersion: "api.cerbos.dev/v1"
-derivedRoles:
-  name: common_roles
-  definitions:
-    - name: approved_user
-      parentRoles: ["user"]
-      condition:
-        match:
-          expr: P.attr.approved
-
--- c.yaml --
----
-apiVersion: api.cerbos.dev/v1
 principalPolicy:
   version: default
   principal: john
-  variables:
-    import:
-      - common_variables
   rules:
-    - resource: leave_request
+    - resource: basicResource
       actions:
-        - name: leave_request_action_1
-          action: "*"
+        - action: "*"
+          effect: EFFECT_DENY
           condition:
             match:
-              expr: R.attr.someattr
-          effect: EFFECT_ALLOW
+              expr: request.resource.attr.someAttr
 
--- d.yaml --
+-- b.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: default
   resource: leave_request
-  importDerivedRoles:
-    - common_roles
   rules:
-    - actions: ["*"]
+    - actions:
+        - approve
       effect: EFFECT_ALLOW
-      roles:
-        - admin
-    - actions: ["create"]
       roles:
         - user
-      condition:
-        match:
-          expr: "R.attr.approvedUser && R.attr.someattr"
-      effect: EFFECT_ALLOW
-    - actions: ["view"]
-      roles:
-        - user
-      effect: EFFECT_ALLOW
-    - actions: ["duplicate"]
-      derivedRoles:
-        - approved_user
-      effect: EFFECT_ALLOW

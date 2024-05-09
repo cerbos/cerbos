@@ -13,7 +13,7 @@ derivedRoles:
       parentRoles: ["user"]
       condition:
         match:
-          expr: "variables.derivedRoleVariable"
+          expr: "variables.derivedRoleVariable && V.commonTeams"
 
 -- b.yaml --
 ---

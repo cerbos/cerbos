@@ -446,22 +446,18 @@ message InspectPoliciesResponse {
   };
 
   message Variable {
-    message Source {
-      enum Type {
-        TYPE_UNSPECIFIED = 0;
-        TYPE_EXPORTED = 1;
-        TYPE_IMPORTED = 2;
-        TYPE_LOCAL = 3;
-        TYPE_LOCAL_OR_IMPORTED = 4;
-      }
-
-      Type type = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Type of the variable source."}];
-      string id = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Source policy ID of the variable if available."}];
+    enum Kind {
+      KIND_UNSPECIFIED = 0;
+      KIND_EXPORTED = 1;
+      KIND_IMPORTED = 2;
+      KIND_LOCAL = 3;
+      KIND_UNKNOWN = 4;
     }
 
     string name = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Variable name defined in the policy."}];
     string value = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Raw value of the variable defined in the policy."}];
-    Source source = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Source of the variable defined in the policy."}];
+    Kind kind = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Kind of the variable defined in the policy."}];
+    string source = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Source of the variable defined in the policy. Only exists if the kind is imported."}];
   }
 
   message Result {

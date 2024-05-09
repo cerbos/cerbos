@@ -27,769 +27,257 @@ func TestInspect(t *testing.T) {
 		expectedForPolicySets map[string]*responsev1.InspectPoliciesResponse_Result
 	}{
 		{
-			testFile: "all_types.txt",
-			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"derived_roles.common_roles": {
-					Variables: variables(
-						variable(
-							"derivedRoleVariable",
-							"R.attr.isDerivedRoleVar",
-							source(
-								"derived_roles.common_roles",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-					),
-				},
-				"export_variables.common_variables": {
-					Variables: variables(
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-					),
-				},
-				"principal.john.vdefault": {
-					Actions: actions("*"),
-					Variables: variables(
-						variable(
-							"label",
-							"\"dude\"",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"teams",
-							"[\"red\", \"blue\"]",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-					),
-				},
-				"resource.leave_request.vdefault": {
-					Actions: actions("*", "create", "duplicate", "view"),
-					Variables: variables(
-						variable(
-							"label",
-							"\"dude\"",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"teams",
-							"[\"red\", \"blue\"]",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-					),
-				},
-			},
-			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"principal.john.vdefault": {
-					Actions: actions("*"),
-					Variables: variables(
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
-					),
-				},
-				"resource.leave_request.vdefault": {
-					Actions: actions("*", "create", "duplicate", "view"),
-					Variables: variables(
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
-						variable(
-							"derivedRoleVariable",
-							"R.attr.isDerivedRoleVar",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
-					),
-				},
-			},
+			testFile:              "empty.txt",
+			expectedForPolicies:   map[string]*responsev1.InspectPoliciesResponse_Result{},
+			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{},
 		},
 		{
-			testFile: "empty_actions.txt",
-			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"derived_roles.common_roles": {
-					Variables: variables(
-						variable(
-							"derivedRoleVariable",
-							"R.attr.isDerivedRoleVar",
-							source(
-								"derived_roles.common_roles",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-					),
-				},
-				"export_variables.common_variables": {
-					Variables: variables(
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-					),
-				},
-				"principal.john.vdefault": {
-					Variables: variables(
-						variable(
-							"label",
-							"\"dude\"",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"teams",
-							"[\"red\", \"blue\"]",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-					),
-				},
-				"resource.leave_request.vdefault": {
-					Variables: variables(
-						variable(
-							"label",
-							"\"dude\"",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"teams",
-							"[\"red\", \"blue\"]",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-					),
-				},
-			},
+			testFile:              "empty_actions.txt",
+			expectedForPolicies:   map[string]*responsev1.InspectPoliciesResponse_Result{},
 			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{},
 		},
 		{
 			testFile: "empty_variables.txt",
 			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"derived_roles.common_roles":        {},
-				"export_variables.common_variables": {},
-				"principal.john.vdefault": {
-					Actions: actions("*"),
-				},
-				"resource.leave_request.vdefault": {
-					Actions: actions("*", "create", "duplicate", "view"),
-				},
+				"principal.john.vdefault": result(
+					actions("*"),
+					nil,
+				),
+				"resource.leave_request.vdefault": result(
+					actions("approve"),
+					nil,
+				),
 			},
 			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"principal.john.vdefault": {
-					Actions: actions("*"),
-				},
-				"resource.leave_request.vdefault": {
-					Actions: actions("*", "create", "duplicate", "view"),
-				},
+				"principal.john.vdefault": result(
+					actions("*"),
+					nil,
+				),
+				"resource.leave_request.vdefault": result(
+					actions("approve"),
+					nil,
+				),
 			},
 		},
 		{
-			testFile: "resolve_later_dr.txt",
+			testFile: "multiple_refs.txt",
 			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"derived_roles.common_roles": {
-					Variables: variables(
-						variable(
-							"derivedRoleVariable",
-							"R.attr.isDerivedRoleVar",
-							source(
-								"derived_roles.common_roles",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
+				"export_variables.common_variables": result(
+					nil,
+					variables(
+						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
 					),
-				},
-				"export_variables.common_variables": {
-					Variables: variables(
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
+				),
+				"principal.john.vdefault": result(
+					actions("all", "any", "none"),
+					variables(
+						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
+						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john.vdefault"),
 					),
-				},
+				),
+				"resource.leave_request.vdefault": result(
+					actions("all", "any", "none"),
+					variables(
+						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
+						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request.vdefault"),
+					),
+				),
+			},
+			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{
+				"principal.john.vdefault": result(
+					actions("all", "any", "none"),
+					variables(
+						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+					),
+				),
+				"resource.leave_request.vdefault": result(
+					actions("all", "any", "none"),
+					variables(
+						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+					),
+				),
+			},
+		},
+		{
+			testFile: "reverse_order_dr.txt",
+			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
+				"derived_roles.common_roles": result(
+					nil,
+					variables(
+						variable("commonTeams", "[\"red\", \"blue\"]", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
+						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles"),
+					),
+				),
+				"export_variables.common_variables": result(
+					nil,
+					variables(
+						variable("commonTeams", "[\"red\", \"blue\"]", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
+					),
+				),
 			},
 			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{},
 		},
 		{
-			testFile: "resolve_later_pp.txt",
+			testFile: "reverse_order_pp.txt",
 			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"derived_roles.common_roles": {
-					Variables: variables(
-						variable(
-							"derivedRoleVariable",
-							"R.attr.isDerivedRoleVar",
-							source(
-								"derived_roles.common_roles",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
+				"derived_roles.common_roles": result(
+					nil,
+					variables(
+						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles"),
 					),
-				},
-				"export_variables.common_variables": {
-					Variables: variables(
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
+				),
+				"export_variables.common_variables": result(
+					nil,
+					variables(
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
 					),
-				},
-				"principal.john.vdefault": {
-					Actions: actions("*"),
-					Variables: variables(
-						variable(
-							"label",
-							"\"dude\"",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"teams",
-							"[\"red\", \"blue\"]",
-							source(
-								"principal.john.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
+				),
+				"principal.john.vdefault": result(
+					actions("*"),
+					variables(
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john.vdefault"),
 					),
-				},
+				),
 			},
 			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"principal.john.vdefault": {
-					Actions: actions("*"),
-					Variables: variables(
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
+				"principal.john.vdefault": result(
+					actions("*"),
+					variables(
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
 					),
-				},
+				),
 			},
 		},
 		{
-			testFile: "resolve_later_rp.txt",
+			testFile: "reverse_order_rp.txt",
 			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"derived_roles.common_roles": {
-					Variables: variables(
-						variable(
-							"derivedRoleVariable",
-							"R.attr.isDerivedRoleVar",
-							source(
-								"derived_roles.common_roles",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
+				"derived_roles.common_roles": result(
+					nil,
+					variables(
+						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles"),
 					),
-				},
-				"export_variables.common_variables": {
-					Variables: variables(
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-							),
-						),
+				),
+				"export_variables.common_variables": result(
+					nil,
+					variables(
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
 					),
-				},
-				"resource.leave_request.vdefault": {
-					Actions: actions("*", "create", "duplicate", "view"),
-					Variables: variables(
-						variable(
-							"label",
-							"\"dude\"",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"teams",
-							"[\"red\", \"blue\"]",
-							source(
-								"resource.leave_request.vdefault",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-							),
-						),
-						variable(
-							"commonLabel",
-							"\"dude\"",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"commonTeams",
-							"[\"red\", \"blue\"]",
-							source(
-								"export_variables.common_variables",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
+				),
+				"resource.leave_request.vdefault": result(
+					actions("*", "create", "duplicate", "view"),
+					variables(
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request.vdefault"),
 					),
-				},
+				),
 			},
 			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{
-				"resource.leave_request.vdefault": {
-					Actions: actions("*", "create", "duplicate", "view"),
-					Variables: variables(
-						variable(
-							"commonMarkedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
-						variable(
-							"derivedRoleVariable",
-							"R.attr.isDerivedRoleVar",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-							),
-						),
-						variable(
-							"markedResource",
-							"R.attr.markedResource",
-							source(
-								"",
-								responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-							),
-						),
+				"resource.leave_request.vdefault": result(
+					actions("*", "create", "duplicate", "view"),
+					variables(
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
 					),
-				},
+				),
+			},
+		},
+		{
+			testFile: "two_of_each_policy.txt",
+			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
+				"derived_roles.common_roles_1": result(
+					nil,
+					variables(
+						variable("derivedRoleVariable1", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles_1"),
+					),
+				),
+				"derived_roles.common_roles_2": result(
+					nil,
+					variables(
+						variable("derivedRoleVariable2", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles_2"),
+					),
+				),
+				"export_variables.common_variables_1": result(
+					nil,
+					variables(
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables_1"),
+					),
+				),
+				"export_variables.common_variables_2": result(
+					nil,
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables_2"),
+					),
+				),
+				"principal.john_1.vdefault": result(
+					actions("*"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john_1.vdefault"),
+					),
+				),
+				"principal.john_2.vdefault": result(
+					actions("*"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
+						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john_2.vdefault"),
+					),
+				),
+				"resource.leave_request_1.vdefault": result(
+					actions("*", "create", "duplicate", "view"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request_1.vdefault"),
+					),
+				),
+				"resource.leave_request_2.vdefault": result(
+					actions("*", "create", "duplicate"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
+						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request_2.vdefault"),
+					),
+				),
+			},
+			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{
+				"principal.john_1.vdefault": result(
+					actions("*"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+					),
+				),
+				"principal.john_2.vdefault": result(
+					actions("*"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+					),
+				),
+				"resource.leave_request_1.vdefault": result(
+					actions("*", "create", "duplicate", "view"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+					),
+				),
+				"resource.leave_request_2.vdefault": result(
+					actions("*", "create", "duplicate"),
+					variables(
+						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+					),
+				),
 			},
 		},
 	}
@@ -810,7 +298,8 @@ func TestInspect(t *testing.T) {
 					require.NoError(t, err)
 					require.NotEmpty(t, policies)
 
-					ins.Inspect(policies[0].Policy)
+					err = ins.Inspect(policies[0].Policy)
+					require.NoError(t, err)
 				}
 
 				have, err := ins.Results()
@@ -824,7 +313,13 @@ func TestInspect(t *testing.T) {
 				for unit := range idx.GetAllCompilationUnits(ctx) {
 					rps, err := compile.Compile(unit, mgr)
 					require.NoError(t, err)
-					ins.Inspect(rps)
+
+					if rps == nil {
+						continue
+					}
+
+					err = ins.Inspect(rps)
+					require.NoError(t, err)
 				}
 
 				have, err := ins.Results()
@@ -839,27 +334,30 @@ func actions(actions ...string) []string {
 	return actions
 }
 
-func variable(name, value string, source *responsev1.InspectPoliciesResponse_Variable_Source) *responsev1.InspectPoliciesResponse_Variable {
+func result(actions []string, variables []*responsev1.InspectPoliciesResponse_Variable) *responsev1.InspectPoliciesResponse_Result {
+	return &responsev1.InspectPoliciesResponse_Result{
+		Actions:   actions,
+		Variables: variables,
+	}
+}
+
+func variable(name, value string, kind responsev1.InspectPoliciesResponse_Variable_Kind, source string) *responsev1.InspectPoliciesResponse_Variable {
+	if source == "" {
+		return &responsev1.InspectPoliciesResponse_Variable{
+			Name:  name,
+			Value: value,
+			Kind:  kind,
+		}
+	}
+
 	return &responsev1.InspectPoliciesResponse_Variable{
 		Name:   name,
 		Value:  value,
+		Kind:   kind,
 		Source: source,
 	}
 }
 
 func variables(variables ...*responsev1.InspectPoliciesResponse_Variable) []*responsev1.InspectPoliciesResponse_Variable {
 	return variables
-}
-
-func source(policyKey string, t responsev1.InspectPoliciesResponse_Variable_Source_Type) *responsev1.InspectPoliciesResponse_Variable_Source {
-	if policyKey == "" {
-		return &responsev1.InspectPoliciesResponse_Variable_Source{
-			Type: t,
-		}
-	}
-
-	return &responsev1.InspectPoliciesResponse_Variable_Source{
-		Type: t,
-		Id:   policyKey,
-	}
 }

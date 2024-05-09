@@ -462,8 +462,7 @@ func (idx *index) InspectPolicies(ctx context.Context) (map[string]*responsev1.I
 
 	ins := inspect.Policies()
 	if err := storage.BatchLoadPolicy(ctx, 1, idx.LoadPolicy, func(wp *policy.Wrapper) error {
-		ins.Inspect(wp.Policy)
-		return nil
+		return ins.Inspect(wp.Policy)
 	}, policyIDs...); err != nil {
 		return nil, fmt.Errorf("failed to load policy: %w", err)
 	}

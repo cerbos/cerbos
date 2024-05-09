@@ -1166,18 +1166,16 @@
         }
       }
     },
-    "InspectPoliciesResponseVariableSource": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "$ref": "#/definitions/VariableSourceType",
-          "description": "Type of the variable source."
-        },
-        "id": {
-          "type": "string",
-          "description": "Source policy ID of the variable if available."
-        }
-      }
+    "InspectPoliciesResponseVariableKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED",
+        "KIND_LOCAL",
+        "KIND_UNKNOWN"
+      ],
+      "default": "KIND_UNSPECIFIED"
     },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
@@ -1283,16 +1281,14 @@
         }
       }
     },
-    "VariableSourceType": {
+    "ValidationErrorSource": {
       "type": "string",
       "enum": [
-        "TYPE_UNSPECIFIED",
-        "TYPE_EXPORTED",
-        "TYPE_IMPORTED",
-        "TYPE_LOCAL",
-        "TYPE_LOCAL_OR_IMPORTED"
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
       ],
-      "default": "TYPE_UNSPECIFIED"
+      "default": "SOURCE_UNSPECIFIED"
     },
     "cerbosenginev1AuxData": {
       "type": "object",
@@ -2241,9 +2237,13 @@
           "type": "string",
           "description": "Raw value of the variable defined in the policy."
         },
+        "kind": {
+          "$ref": "#/definitions/InspectPoliciesResponseVariableKind",
+          "description": "Kind of the variable defined in the policy."
+        },
         "source": {
-          "$ref": "#/definitions/InspectPoliciesResponseVariableSource",
-          "description": "Source of the variable defined in the policy."
+          "type": "string",
+          "description": "Source of the variable defined in the policy. Only exists if the kind is imported."
         }
       }
     },
@@ -2884,18 +2884,9 @@
           "type": "string"
         },
         "source": {
-          "$ref": "#/definitions/v1ValidationErrorSource"
+          "$ref": "#/definitions/ValidationErrorSource"
         }
       }
-    },
-    "v1ValidationErrorSource": {
-      "type": "string",
-      "enum": [
-        "SOURCE_UNSPECIFIED",
-        "SOURCE_PRINCIPAL",
-        "SOURCE_RESOURCE"
-      ],
-      "default": "SOURCE_UNSPECIFIED"
     },
     "v1Variables": {
       "type": "object",

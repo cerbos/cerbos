@@ -6,6 +6,7 @@ package inspect
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -57,7 +58,14 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 		tw.SetHeader([]string{"POLICY ID", "ACTIONS", "VARIABLES"})
 	}
 
-	for policyKey, result := range response.Results {
+	policyKeys := make([]string, 0, len(response.Results))
+	for policyKey := range response.Results {
+		policyKeys = append(policyKeys, policyKey)
+	}
+	sort.Strings(policyKeys)
+
+	for _, policyKey := range policyKeys {
+		result := response.Results[policyKey]
 		variables := make([]string, len(result.Variables))
 		for idx, variable := range result.Variables {
 			variables[idx] = variable.Name

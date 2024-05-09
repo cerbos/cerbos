@@ -262,7 +262,9 @@ func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPol
 			return nil, fmt.Errorf("failed to load policy %s: %w", fqn, err)
 		}
 
-		ins.Inspect(pset)
+		if err = ins.Inspect(pset); err != nil {
+			return nil, fmt.Errorf("failed to inspect policy %s: %w", fqn, err)
+		}
 	}
 
 	results, err := ins.Results()

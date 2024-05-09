@@ -5,7 +5,6 @@ package policy
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -388,7 +387,6 @@ func ListActions(p *policyv1.Policy) []string {
 		}
 	}
 
-	sort.Strings(actions)
 	return actions
 }
 
@@ -407,23 +405,19 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 
 		for name, value := range pt.DerivedRoles.Variables.Local {
 			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
-				Name:  name,
-				Value: value,
-				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-					Id:   namer.PolicyKey(p),
-				},
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
+				Source: namer.PolicyKey(p),
 			})
 		}
 	case *policyv1.Policy_ExportVariables:
 		for name, value := range pt.ExportVariables.Definitions {
 			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
-				Name:  name,
-				Value: value,
-				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-					Id:   namer.PolicyKey(p),
-				},
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED,
+				Source: namer.PolicyKey(p),
 			})
 		}
 	case *policyv1.Policy_PrincipalPolicy:
@@ -433,12 +427,10 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 
 		for name, value := range pt.PrincipalPolicy.Variables.Local {
 			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
-				Name:  name,
-				Value: value,
-				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-					Id:   namer.PolicyKey(p),
-				},
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
+				Source: namer.PolicyKey(p),
 			})
 		}
 	case *policyv1.Policy_ResourcePolicy:
@@ -448,19 +440,14 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 
 		for name, value := range pt.ResourcePolicy.Variables.Local {
 			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
-				Name:  name,
-				Value: value,
-				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-					Id:   namer.PolicyKey(p),
-				},
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
+				Source: namer.PolicyKey(p),
 			})
 		}
 	}
 
-	sort.Slice(variables, func(i, j int) bool {
-		return sort.StringsAreSorted([]string{variables[i].Name, variables[j].Name})
-	})
 	return variables
 }
 
@@ -497,7 +484,6 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 		}
 	}
 
-	sort.Strings(actions)
 	return actions
 }
 
@@ -515,9 +501,7 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 				variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
 					Name:  variable.Name,
 					Value: variable.Expr.Original,
-					Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-						Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-					},
+					Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
 				})
 			}
 		}
@@ -527,44 +511,12 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 				variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
 					Name:  variable.Name,
 					Value: variable.Expr.Original,
-					Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-						Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-					},
+					Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
 				})
 			}
-
-			for _, dr := range p.DerivedRoles {
-				for _, variable := range dr.OrderedVariables {
-					variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
-						Name:  variable.Name,
-						Value: variable.Expr.Original,
-						Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-							Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_IMPORTED,
-						},
-					})
-				}
-			}
-		}
-	case *runtimev1.RunnablePolicySet_Variables:
-		if set.Variables == nil { //nolint:staticcheck
-			return variables
-		}
-
-		for name, value := range set.Variables.Variables { //nolint:staticcheck
-			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
-				Name:  name,
-				Value: value.Original,
-				Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-					Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-					Id:   namer.PolicyKeyFromFQN(ps.Fqn),
-				},
-			})
 		}
 	}
 
-	sort.Slice(variables, func(i, j int) bool {
-		return sort.StringsAreSorted([]string{variables[i].Name, variables[j].Name})
-	})
 	return variables
 }
 

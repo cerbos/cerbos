@@ -13,7 +13,7 @@ import (
 
 type Inspect[T policyv1.Policy | runtimev1.RunnablePolicySet] interface {
 	Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error)
-	Inspect(*T)
+	Inspect(*T) error
 }
 
 func PolicySets() Inspect[runtimev1.RunnablePolicySet] {

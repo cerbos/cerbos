@@ -1,0 +1,175 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables_1
+  definitions:
+    commonMarkedResource: R.attr.markedResource
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables_2
+  definitions:
+    commonLabel: '"dude"'
+
+-- c.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: common_roles_1
+  variables:
+    import:
+      - common_variables_1
+      - common_variables_2
+    local:
+      derivedRoleVariable1: R.attr.isDerivedRoleVar
+  definitions:
+    - name: approved_user_1
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: "variables.derivedRoleVariable1"
+
+-- d.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: common_roles_2
+  variables:
+    import:
+      - common_variables_1
+      - common_variables_2
+    local:
+      derivedRoleVariable2: R.attr.isDerivedRoleVar
+  definitions:
+    - name: approved_user_2
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: "variables.derivedRoleVariable2"
+
+-- e.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  version: default
+  principal: john_1
+  variables:
+    import:
+      - common_variables_1
+      - common_variables_2
+    local:
+      markedResource: R.attr.markedResource
+  rules:
+    - resource: leave_request
+      actions:
+        - name: leave_request_action_1
+          action: "*"
+          condition:
+            match:
+              expr: "variables.commonLabel || variables.commonMarkedResource || variables.markedResource"
+          effect: EFFECT_ALLOW
+
+-- f.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  version: default
+  principal: john_2
+  variables:
+    import:
+      - common_variables_1
+      - common_variables_2
+    local:
+      label: '"dude"'
+  rules:
+    - resource: leave_request
+      actions:
+        - name: leave_request_action_2
+          action: "*"
+          condition:
+            match:
+              expr: "variables.commonLabel || variables.commonMarkedResource || variables.label"
+          effect: EFFECT_ALLOW
+
+-- g.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request_1
+  importDerivedRoles:
+    - common_roles_1
+    - common_roles_2
+  variables:
+    import:
+      - common_variables_1
+      - common_variables_2
+    local:
+      markedResource: R.attr.markedResource
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+    - actions: ["create"]
+      derivedRoles:
+        - approved_user_1
+        - approved_user_2
+      condition:
+        match:
+          all:
+            of:
+              - expr: V.commonMarkedResource
+              - expr: V.commonLabel
+              - expr: V.markedResource
+      effect: EFFECT_ALLOW
+    - actions: ["view"]
+      roles:
+        - user
+      effect: EFFECT_ALLOW
+    - actions: ["duplicate"]
+      derivedRoles:
+        - approved_user_1
+        - approved_user_2
+      effect: EFFECT_ALLOW
+
+-- h.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request_2
+  importDerivedRoles:
+    - common_roles_1
+    - common_roles_2
+  variables:
+    import:
+      - common_variables_1
+      - common_variables_2
+    local:
+      label: '"dude"'
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+    - actions: ["create"]
+      derivedRoles:
+        - approved_user_1
+        - approved_user_2
+      condition:
+        match:
+          any:
+            of:
+              - expr: V.commonMarkedResource
+              - expr: V.commonLabel
+              - expr: V.label
+      effect: EFFECT_ALLOW
+    - actions: ["duplicate"]
+      derivedRoles:
+        - approved_user_1
+        - approved_user_2
+      effect: EFFECT_ALLOW

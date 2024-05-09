@@ -253,12 +253,10 @@ func TestInspectUtilities(t *testing.T) {
 					pset: compilePolicy(t, dr),
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
-							Name:  "geography",
-							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-								Id:   "derived_roles.my_derived_roles",
-							},
+							Name:   "geography",
+							Value:  "request.resource.attr.geography",
+							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
+							Source: "derived_roles.my_derived_roles",
 						},
 					},
 				},
@@ -267,12 +265,10 @@ func TestInspectUtilities(t *testing.T) {
 					pset: compilePolicy(t, ev),
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
-							Name:  "geography",
-							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-								Id:   "export_variables.my_variables",
-							},
+							Name:   "geography",
+							Value:  "request.resource.attr.geography",
+							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED,
+							Source: "export_variables.my_variables",
 						},
 					},
 				},
@@ -281,12 +277,10 @@ func TestInspectUtilities(t *testing.T) {
 					pset: compilePolicy(t, rp),
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
-							Name:  "geography",
-							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-								Id:   "resource.leave_request.vdefault",
-							},
+							Name:   "geography",
+							Value:  "request.resource.attr.geography",
+							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
+							Source: "resource.leave_request.vdefault",
 						},
 					},
 				},
@@ -295,12 +289,10 @@ func TestInspectUtilities(t *testing.T) {
 					pset: compilePolicy(t, pp),
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
-							Name:  "geography",
-							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-								Id:   "principal.john.vdefault",
-							},
+							Name:   "geography",
+							Value:  "request.resource.attr.geography",
+							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
+							Source: "principal.john.vdefault",
 						},
 					},
 				},
@@ -327,10 +319,7 @@ func TestInspectUtilities(t *testing.T) {
 						{
 							Name:  "geography",
 							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL,
-								Id:   "",
-							},
+							Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
 						},
 					},
 				},
@@ -341,10 +330,7 @@ func TestInspectUtilities(t *testing.T) {
 						{
 							Name:  "geography",
 							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_EXPORTED,
-								Id:   "",
-							},
+							Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED,
 						},
 					},
 				},
@@ -355,10 +341,7 @@ func TestInspectUtilities(t *testing.T) {
 						{
 							Name:  "geography",
 							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-								Id:   "",
-							},
+							Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
 						},
 					},
 				},
@@ -369,10 +352,7 @@ func TestInspectUtilities(t *testing.T) {
 						{
 							Name:  "geography",
 							Value: "request.resource.attr.geography",
-							Source: &responsev1.InspectPoliciesResponse_Variable_Source{
-								Type: responsev1.InspectPoliciesResponse_Variable_Source_TYPE_LOCAL_OR_IMPORTED,
-								Id:   "",
-							},
+							Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
 						},
 					},
 				},

@@ -1,0 +1,92 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables
+  definitions:
+    commonVar: 'request.resource.attr.commonVar'
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request
+  variables:
+    import:
+      - common_variables
+    local:
+      var: 'request.resource.attr.var'
+  rules:
+    - actions: ["all"]
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          all:
+            of:
+              - expr: V.commonVar
+              - expr: V.var
+    - actions: ["any"]
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          any:
+            of:
+              - expr: V.commonVar
+              - expr: V.var
+    - actions: ["none"]
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          none:
+            of:
+              - expr: V.commonVar
+              - expr: V.var
+
+-- c.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  version: default
+  principal: john
+  variables:
+    import:
+      - common_variables
+    local:
+      var: 'request.resource.attr.var'
+  rules:
+    - resource: leave_request
+      actions:
+        - name: action_all
+          action: all
+          effect: EFFECT_ALLOW
+          condition:
+            match:
+              all:
+                of:
+                  - expr: V.commonVar
+                  - expr: V.var
+        - name: action_any
+          action: any
+          effect: EFFECT_ALLOW
+          condition:
+            match:
+              any:
+                of:
+                  - expr: V.commonVar
+                  - expr: V.var
+        - name: action_none
+          action: none
+          effect: EFFECT_ALLOW
+          condition:
+            match:
+              none:
+                of:
+                  - expr: V.commonVar
+                  - expr: V.var
