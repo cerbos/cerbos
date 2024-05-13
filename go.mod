@@ -301,4 +301,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/goccy/go-yaml => github.com/cerbos/go-yaml v0.0.0-20240226061121-4653a1bb5c00
+replace github.com/goccy/go-yaml => github.com/cerbos/go-yaml v0.0.0-20240502082720-ab3470c47ed6
