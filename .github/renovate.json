@@ -12,6 +12,7 @@
     ":semanticCommitTypeAll(chore)",
     ":separateMultipleMajorReleases"
   ],
+  "ignoreDeps": ["github.com/cerbos/go-yaml"],
   "packageRules": [
     {
       "matchManagers": ["helmfile"],
@@ -34,7 +35,8 @@
       "groupName": "Go deps",
       "groupSlug": "go-deps",
       "postUpdateOptions": [
-        "gomodTidy1.17"
+        "gomodTidy",
+        "gomodUpdateImportPaths"
       ]
     },
     {

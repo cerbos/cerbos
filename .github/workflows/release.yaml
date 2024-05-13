@@ -15,7 +15,7 @@ jobs:
       contents: write
       packages: write
     steps:
-      - name: Free Disk Space
+      - name: Free disk space
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
