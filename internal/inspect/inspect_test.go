@@ -32,8 +32,21 @@ func TestInspect(t *testing.T) {
 			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{},
 		},
 		{
-			testFile:              "empty_actions.txt",
-			expectedForPolicies:   map[string]*responsev1.InspectPoliciesResponse_Result{},
+			testFile: "empty_actions.txt",
+			expectedForPolicies: map[string]*responsev1.InspectPoliciesResponse_Result{
+				"principal.john.vdefault": result(
+					nil,
+					variables(
+						variable("someVar", "\"someVar\"", "principal.john.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
+					),
+				),
+				"resource.leave_request.vdefault": result(
+					nil,
+					variables(
+						variable("someVar", "\"someVar\"", "resource.leave_request.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
+					),
+				),
+			},
 			expectedForPolicySets: map[string]*responsev1.InspectPoliciesResponse_Result{},
 		},
 		{
@@ -65,21 +78,21 @@ func TestInspect(t *testing.T) {
 				"export_variables.common_variables": result(
 					nil,
 					variables(
-						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
+						variable("commonVar", "request.resource.attr.commonVar", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 					),
 				),
 				"principal.john.vdefault": result(
 					actions("all", "any", "none"),
 					variables(
-						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
-						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john.vdefault"),
+						variable("commonVar", "request.resource.attr.commonVar", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("var", "request.resource.attr.var", "principal.john.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"resource.leave_request.vdefault": result(
 					actions("all", "any", "none"),
 					variables(
-						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
-						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request.vdefault"),
+						variable("commonVar", "request.resource.attr.commonVar", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("var", "request.resource.attr.var", "resource.leave_request.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 			},
@@ -87,15 +100,15 @@ func TestInspect(t *testing.T) {
 				"principal.john.vdefault": result(
 					actions("all", "any", "none"),
 					variables(
-						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonVar", "request.resource.attr.commonVar", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("var", "request.resource.attr.var", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 				"resource.leave_request.vdefault": result(
 					actions("all", "any", "none"),
 					variables(
-						variable("commonVar", "request.resource.attr.commonVar", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("var", "request.resource.attr.var", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonVar", "request.resource.attr.commonVar", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("var", "request.resource.attr.var", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 			},
@@ -106,14 +119,16 @@ func TestInspect(t *testing.T) {
 				"derived_roles.common_roles": result(
 					nil,
 					variables(
-						variable("commonTeams", "[\"red\", \"blue\"]", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
-						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles"),
+						variable("commonTeams", "[\"red\", \"blue\"]", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", "derived_roles.common_roles", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"export_variables.common_variables": result(
 					nil,
 					variables(
-						variable("commonTeams", "[\"red\", \"blue\"]", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
+						variable("commonTeams", "[\"red\", \"blue\"]", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 					),
 				),
 			},
@@ -125,20 +140,24 @@ func TestInspect(t *testing.T) {
 				"derived_roles.common_roles": result(
 					nil,
 					variables(
-						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles"),
+						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", "derived_roles.common_roles", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"export_variables.common_variables": result(
 					nil,
 					variables(
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
+						variable("commonTeams", "[\"red\", \"blue\"]", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 					),
 				),
 				"principal.john.vdefault": result(
 					actions("*"),
 					variables(
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john.vdefault"),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("label", "\"dude\"", "principal.john.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
+						variable("markedResource", "R.attr.markedResource", "principal.john.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
+						variable("teams", "[\"red\", \"blue\"]", "principal.john.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
 					),
 				),
 			},
@@ -146,8 +165,8 @@ func TestInspect(t *testing.T) {
 				"principal.john.vdefault": result(
 					actions("*"),
 					variables(
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("markedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 			},
@@ -158,20 +177,24 @@ func TestInspect(t *testing.T) {
 				"derived_roles.common_roles": result(
 					nil,
 					variables(
-						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles"),
+						variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", "derived_roles.common_roles", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"export_variables.common_variables": result(
 					nil,
 					variables(
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
+						variable("commonTeams", "[\"red\", \"blue\"]", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 					),
 				),
 				"resource.leave_request.vdefault": result(
 					actions("*", "create", "duplicate", "view"),
 					variables(
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables"),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request.vdefault"),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("label", "\"dude\"", "resource.leave_request.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
+						variable("markedResource", "R.attr.markedResource", "resource.leave_request.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
+						variable("teams", "[\"red\", \"blue\"]", "resource.leave_request.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
 					),
 				),
 			},
@@ -179,8 +202,8 @@ func TestInspect(t *testing.T) {
 				"resource.leave_request.vdefault": result(
 					actions("*", "create", "duplicate", "view"),
 					variables(
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("markedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 			},
@@ -191,57 +214,57 @@ func TestInspect(t *testing.T) {
 				"derived_roles.common_roles_1": result(
 					nil,
 					variables(
-						variable("derivedRoleVariable1", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles_1"),
+						variable("derivedRoleVariable1", "R.attr.isDerivedRoleVar", "derived_roles.common_roles_1", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"derived_roles.common_roles_2": result(
 					nil,
 					variables(
-						variable("derivedRoleVariable2", "R.attr.isDerivedRoleVar", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "derived_roles.common_roles_2"),
+						variable("derivedRoleVariable2", "R.attr.isDerivedRoleVar", "derived_roles.common_roles_2", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"export_variables.common_variables_1": result(
 					nil,
 					variables(
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables_1"),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables_1", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 					),
 				),
 				"export_variables.common_variables_2": result(
 					nil,
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, "export_variables.common_variables_2"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 					),
 				),
 				"principal.john_1.vdefault": result(
 					actions("*"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john_1.vdefault"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables_1", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("markedResource", "R.attr.markedResource", "principal.john_1.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"principal.john_2.vdefault": result(
 					actions("*"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
-						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "principal.john_2.vdefault"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables_1", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("label", "\"dude\"", "principal.john_2.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"resource.leave_request_1.vdefault": result(
 					actions("*", "create", "duplicate", "view"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request_1.vdefault"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables_1", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("markedResource", "R.attr.markedResource", "resource.leave_request_1.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 				"resource.leave_request_2.vdefault": result(
 					actions("*", "create", "duplicate"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_2"),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, "export_variables.common_variables_1"),
-						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, "resource.leave_request_2.vdefault"),
+						variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables_1", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+						variable("label", "\"dude\"", "resource.leave_request_2.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 					),
 				),
 			},
@@ -249,33 +272,33 @@ func TestInspect(t *testing.T) {
 				"principal.john_1.vdefault": result(
 					actions("*"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("markedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 				"principal.john_2.vdefault": result(
 					actions("*"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("label", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 				"resource.leave_request_1.vdefault": result(
 					actions("*", "create", "duplicate", "view"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("markedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("markedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 				"resource.leave_request_2.vdefault": result(
 					actions("*", "create", "duplicate"),
 					variables(
-						variable("commonLabel", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("commonMarkedResource", "R.attr.markedResource", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
-						variable("label", "\"dude\"", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, ""),
+						variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
+						variable("label", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
 					),
 				),
 			},
@@ -341,20 +364,22 @@ func result(actions []string, variables []*responsev1.InspectPoliciesResponse_Va
 	}
 }
 
-func variable(name, value string, kind responsev1.InspectPoliciesResponse_Variable_Kind, source string) *responsev1.InspectPoliciesResponse_Variable {
+func variable(name, value, source string, kind responsev1.InspectPoliciesResponse_Variable_Kind, used bool) *responsev1.InspectPoliciesResponse_Variable {
 	if source == "" {
 		return &responsev1.InspectPoliciesResponse_Variable{
 			Name:  name,
 			Value: value,
 			Kind:  kind,
+			Used:  used,
 		}
 	}
 
 	return &responsev1.InspectPoliciesResponse_Variable{
 		Name:   name,
 		Value:  value,
-		Kind:   kind,
 		Source: source,
+		Kind:   kind,
+		Used:   used,
 	}
 }
 

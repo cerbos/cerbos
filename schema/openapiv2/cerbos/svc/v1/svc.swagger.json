@@ -1173,6 +1173,7 @@
         "KIND_EXPORTED",
         "KIND_IMPORTED",
         "KIND_LOCAL",
+        "KIND_UNDEFINED",
         "KIND_UNKNOWN"
       ],
       "default": "KIND_UNSPECIFIED"
@@ -2244,6 +2245,10 @@
         "source": {
           "type": "string",
           "description": "Source of the variable defined in the policy. Only exists if the kind is imported."
+        },
+        "used": {
+          "type": "boolean",
+          "description": "Whether the variable is used in a condition."
         }
       }
     },

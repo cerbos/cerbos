@@ -15,6 +15,9 @@
         "source": {
           "type": "string"
         },
+        "used": {
+          "type": "boolean"
+        },
         "value": {
           "type": "string"
         }
@@ -27,6 +30,7 @@
         "KIND_EXPORTED",
         "KIND_IMPORTED",
         "KIND_LOCAL",
+        "KIND_UNDEFINED",
         "KIND_UNKNOWN"
       ]
     }

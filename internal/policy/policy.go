@@ -396,6 +396,7 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 	if p == nil {
 		return variables
 	}
+	policyKey := namer.PolicyKey(p)
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_DerivedRoles:
@@ -408,7 +409,7 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
-				Source: namer.PolicyKey(p),
+				Source: policyKey,
 			})
 		}
 	case *policyv1.Policy_ExportVariables:
@@ -417,7 +418,7 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED,
-				Source: namer.PolicyKey(p),
+				Source: policyKey,
 			})
 		}
 	case *policyv1.Policy_PrincipalPolicy:
@@ -430,7 +431,7 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
-				Source: namer.PolicyKey(p),
+				Source: policyKey,
 			})
 		}
 	case *policyv1.Policy_ResourcePolicy:
@@ -443,7 +444,7 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
-				Source: namer.PolicyKey(p),
+				Source: policyKey,
 			})
 		}
 	}
@@ -502,6 +503,7 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 					Name:  variable.Name,
 					Value: variable.Expr.Original,
 					Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
+					Used:  true,
 				})
 			}
 		}
@@ -512,6 +514,7 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 					Name:  variable.Name,
 					Value: variable.Expr.Original,
 					Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
+					Used:  true,
 				})
 			}
 		}

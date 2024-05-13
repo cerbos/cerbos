@@ -5,8 +5,8 @@ principalPolicy:
   version: default
   principal: john
   variables:
-      local:
-        someVar: '"someVar"'
+    local:
+      someVar: '"someVar"'
 
 -- b.yaml --
 ---

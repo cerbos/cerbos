@@ -1933,6 +1933,10 @@ func cerbos_response_v1_InspectPoliciesResponse_Variable_hashpb_sum(m *InspectPo
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetSource()))
 
 	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Variable.used"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetUsed())))
+
+	}
 }
 
 func cerbos_response_v1_InspectPoliciesResponse_hashpb_sum(m *InspectPoliciesResponse, hasher hash.Hash, ignore map[string]struct{}) {

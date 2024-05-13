@@ -7,8 +7,8 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/inspect/internal/policy"
-	"github.com/cerbos/cerbos/internal/inspect/internal/policyset"
+	"github.com/cerbos/cerbos/internal/inspect/policy"
+	"github.com/cerbos/cerbos/internal/inspect/policyset"
 )
 
 type Inspect[T policyv1.Policy | runtimev1.RunnablePolicySet] interface {
