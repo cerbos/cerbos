@@ -18,6 +18,7 @@ import (
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
+	yamlerrors "github.com/goccy/go-yaml/errors"
 	"github.com/goccy/go-yaml/lexer"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/goccy/go-yaml/printer"
@@ -195,7 +196,29 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 		}
 	}
 
-	return parser.Parse(t, parser.ParseComments)
+	file, err := parser.Parse(t, parser.ParseComments)
+	if err != nil { //nolint:nestif
+		var syntaxErr yamlerrors.SyntaxError
+		if errors.As(err, &syntaxErr) {
+			srcErr := &sourcev1.Error{
+				Kind:    sourcev1.Error_KIND_PARSE_ERROR,
+				Message: syntaxErr.Msg,
+			}
+			if syntaxErr.Token != nil {
+				if syntaxErr.Token.Position != nil {
+					srcErr.Position = &sourcev1.Position{
+						Line:   uint32(syntaxErr.Token.Position.Line),
+						Column: uint32(syntaxErr.Token.Position.Column),
+					}
+				}
+				var errPrinter printer.Printer
+				srcErr.Context = errPrinter.PrintErrorToken(syntaxErr.Token, false)
+			}
+
+			return file, NewUnmarshalError(srcErr)
+		}
+	}
+	return file, err
 }
 
 func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Error) {
