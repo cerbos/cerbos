@@ -263,7 +263,7 @@ jobs:
     if: ${{ needs.changes.outputs.npm == 'true' }}
     name: Build npm packages
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Free disk space
         uses: jlumbroso/free-disk-space@main
