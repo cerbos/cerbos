@@ -8,12 +8,12 @@ require (
 	github.com/alecthomas/chroma/v2 v2.13.0
 	github.com/alecthomas/kong v0.9.0
 	github.com/alecthomas/participle/v2 v2.1.1
-	github.com/aws/aws-sdk-go v1.52.3
+	github.com/aws/aws-sdk-go v1.53.0
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.6.2
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cerbos/cerbos-sdk-go v0.2.5
-	github.com/cerbos/cerbos/api/genpb v0.35.1
+	github.com/cerbos/cerbos/api/genpb v0.36.0
 	github.com/cerbos/cloud-api v0.1.19
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.3.0
@@ -23,7 +23,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/fatih/color v1.16.0
 	github.com/fatih/structtag v1.2.0
-	github.com/fergusstrange/embedded-postgres v1.26.0
+	github.com/fergusstrange/embedded-postgres v1.27.0
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.2
@@ -59,7 +59,7 @@ require (
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.6.0
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/pterm/pterm v0.12.79
 	github.com/rivo/tview v0.0.0-20240505185119-ed116790de0f
 	github.com/rjeczalik/notify v0.9.3
@@ -107,7 +107,7 @@ require (
 	golang.org/x/sync v0.7.0
 	golang.org/x/tools v0.21.0
 	gonum.org/v1/gonum v0.15.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240506185236-b8a5c65736ae
+	google.golang.org/genproto/googleapis/api v0.0.0-20240509183442-62759503f434
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.34.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
