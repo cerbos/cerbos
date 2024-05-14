@@ -5,6 +5,10 @@ package audit
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
+	"fmt"
 	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
@@ -16,14 +20,20 @@ import (
 )
 
 const (
-	delimiter          = "|"
 	grpcGWUserAgentKey = "grpcgateway-user-agent"
 	userAgentKey       = "user-agent"
 	xffKey             = "x-forwarded-for"
 	callIDTagKey       = "call_id"
 
-	HTTPRemoteAddrKey = "x-cerbos-http-remote-addr"
+	SetByGRPCGatewayKey = "x-cerbos-set-by-grpc-gateway"
+	HTTPRemoteAddrKey   = "x-cerbos-http-remote-addr"
 )
+
+var SetByGRPCGatewayVal string
+
+func init() {
+	SetByGRPCGatewayVal = generateSetByGRPCGatewayVal()
+}
 
 type callIDCtxKeyType struct{}
 
@@ -51,21 +61,31 @@ func CallIDFromContext(ctx context.Context) (ID, bool) {
 func PeerFromContext(ctx context.Context) *auditv1.Peer {
 	p := peerFromContext(ctx)
 	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		if addr := md.Get(HTTPRemoteAddrKey); len(addr) > 0 {
-			p.Address = addr[0]
-		}
-
-		if ua, ok := md[grpcGWUserAgentKey]; ok {
-			p.UserAgent = strings.Join(ua, delimiter)
-		} else if ua, ok := md[userAgentKey]; ok {
-			p.UserAgent = strings.Join(ua, delimiter)
-		}
-
-		if xff, ok := md[xffKey]; ok {
-			p.ForwardedFor = strings.Join(xff, delimiter)
-		}
+	if !ok {
+		return p
 	}
+
+	setByGateway := checkSetByGRPCGateway(md)
+
+	var ua []string
+	xff := md[xffKey]
+	if setByGateway {
+		if addr := md[HTTPRemoteAddrKey]; len(addr) > 0 {
+			p.Address = addr[len(addr)-1]
+		}
+
+		ua = md[grpcGWUserAgentKey]
+
+		// https://github.com/grpc-ecosystem/grpc-gateway/issues/4320
+		if len(xff) > 1 {
+			xff = append(xff[:len(xff)-1], strings.TrimPrefix(xff[len(xff)-1], xff[0]+", "))
+		}
+	} else {
+		ua = md[userAgentKey]
+	}
+
+	p.UserAgent = strings.Join(ua, "|")
+	p.ForwardedFor = strings.Join(xff, ", ")
 
 	return p
 }
@@ -82,4 +102,19 @@ func peerFromContext(ctx context.Context) *auditv1.Peer {
 	}
 
 	return pp
+}
+
+func generateSetByGRPCGatewayVal() string {
+	const n = 32
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(fmt.Errorf("failed to generate %s header value: %w", SetByGRPCGatewayKey, err))
+	}
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func checkSetByGRPCGateway(md metadata.MD) bool {
+	v := md[SetByGRPCGatewayKey]
+	return len(v) > 0 && subtle.ConstantTimeCompare([]byte(v[len(v)-1]), []byte(SetByGRPCGatewayVal)) == 1
 }
