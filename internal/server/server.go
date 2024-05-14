@@ -471,20 +471,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return nil, err
 	}
 
-	gwmux := runtime.NewServeMux(
-		runtime.WithForwardResponseOption(customHTTPResponseCode),
-		runtime.WithIncomingHeaderMatcher(incomingHeaderMatcher),
-		runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
-			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
-			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
-		}),
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
-			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
-		}),
-		runtime.WithMetadata(setPeerMetadata),
-		runtime.WithRoutingErrorHandler(handleRoutingError),
-		runtime.WithHealthEndpointAt(healthpb.NewHealthClient(grpcConn), healthEndpoint),
-	)
+	gwmux := mkGatewayMux(grpcConn)
 
 	if err := svcv1.RegisterCerbosServiceHandler(ctx, gwmux, grpcConn); err != nil {
 		log.Errorw("Failed to register Cerbos HTTP service", "error", err)
@@ -551,6 +538,23 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	})
 
 	return h, nil
+}
+
+func mkGatewayMux(grpcConn grpc.ClientConnInterface) *runtime.ServeMux {
+	return runtime.NewServeMux(
+		runtime.WithForwardResponseOption(customHTTPResponseCode),
+		runtime.WithIncomingHeaderMatcher(incomingHeaderMatcher),
+		runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
+			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
+			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
+		}),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
+		}),
+		runtime.WithMetadata(setPeerMetadata),
+		runtime.WithRoutingErrorHandler(handleRoutingError),
+		runtime.WithHealthEndpointAt(healthpb.NewHealthClient(grpcConn), healthEndpoint),
+	)
 }
 
 func defaultGRPCDialOpts() []grpc.DialOption {
@@ -655,5 +659,8 @@ func incomingHeaderMatcher(key string) (string, bool) {
 }
 
 func setPeerMetadata(_ context.Context, req *http.Request) metadata.MD {
-	return metadata.Pairs(audit.HTTPRemoteAddrKey, req.RemoteAddr)
+	return metadata.Pairs(
+		audit.SetByGRPCGatewayKey, audit.SetByGRPCGatewayVal,
+		audit.HTTPRemoteAddrKey, req.RemoteAddr,
+	)
 }
