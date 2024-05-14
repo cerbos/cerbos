@@ -1,0 +1,17 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "20210210"
+  resource: leave_request
+  rules:
+    - actions: ['*']
+      condition:
+        match:
+          expr: > 
+            foo
+          bar
+      name: wildcard
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+
