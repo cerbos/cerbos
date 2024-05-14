@@ -80,6 +80,8 @@ func TestUnmarshal(t *testing.T) {
 						requireErrorsEqual(t, want.Errors, haveSrc[i].Errors)
 					}
 				}
+			} else {
+				require.Empty(t, haveMsg)
 			}
 		})
 	}

@@ -1,0 +1,14 @@
+{
+    "description": "Invalid indentation (#2146)",
+    "want": [],
+    "wantErrors": [
+        {
+            "kind": "KIND_PARSE_ERROR",
+            "position": {
+                "line": 12,
+                "column": 11
+            },
+            "message": "invalid indentation"
+        }
+    ]
+}
