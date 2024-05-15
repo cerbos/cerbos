@@ -656,18 +656,13 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 }
 
 func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	filteredIDs, err := s.ListPolicyIDs(ctx, listParams)
+	policyIDs, err := s.ListPolicyIDs(ctx, listParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
 	}
 
-	if len(filteredIDs) == 0 {
+	if len(policyIDs) == 0 {
 		return nil, nil
-	}
-
-	policyIDs, err := s.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list policies without list parameters: %w", err)
 	}
 
 	ins := inspect.Policies()
@@ -677,20 +672,15 @@ func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.List
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
+	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(wp *policy.Wrapper) error {
+		return ins.Inspect(wp.Policy)
+	}, ins.MissingImports()...); err != nil {
+		return nil, fmt.Errorf("failed to load missing policies: %w", err)
+	}
+
 	results, err := ins.Results()
 	if err != nil {
 		return nil, err
-	}
-
-	lut := make(map[string]struct{})
-	for _, policyID := range filteredIDs {
-		lut[policyID] = struct{}{}
-	}
-
-	for policyID := range results {
-		if _, ok := lut[policyID]; !ok {
-			delete(results, policyID)
-		}
 	}
 
 	return results, nil

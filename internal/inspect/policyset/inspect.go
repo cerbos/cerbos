@@ -50,6 +50,10 @@ func (i *Inspect) Inspect(pset *runtimev1.RunnablePolicySet) error {
 	return nil
 }
 
+func (i *Inspect) MissingImports() []string {
+	return nil
+}
+
 func (i *Inspect) Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	return i.results, nil
 }

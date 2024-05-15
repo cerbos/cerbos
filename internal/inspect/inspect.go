@@ -12,8 +12,12 @@ import (
 )
 
 type Inspect[T policyv1.Policy | runtimev1.RunnablePolicySet] interface {
+	// Results returns the final result after all processing is done
 	Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error)
+	// Inspect inspects the given policy and records the related information
 	Inspect(*T) error
+	// MissingImports returns the list of exportVariables not present in the inspected policy list
+	MissingImports() []string
 }
 
 func PolicySets() Inspect[runtimev1.RunnablePolicySet] {

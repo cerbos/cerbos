@@ -149,13 +149,16 @@ func (cas *CerbosAdminService) InspectPolicies(ctx context.Context, req *request
 
 		return res, nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	results, ok := res.(map[string]*responsev1.InspectPoliciesResponse_Result)
 	if !ok {
 		return nil, fmt.Errorf("failed to type assert during inspect policies")
 	}
 
-	return &responsev1.InspectPoliciesResponse{Results: results}, err
+	return &responsev1.InspectPoliciesResponse{Results: results}, nil
 }
 
 func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {

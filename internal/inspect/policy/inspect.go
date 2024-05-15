@@ -31,6 +31,7 @@ type Inspect struct {
 	results   map[string]*responsev1.InspectPoliciesResponse_Result
 }
 
+// Inspect inspects the given policy and records the related information.
 func (i *Inspect) Inspect(p *policyv1.Policy) error {
 	if p == nil {
 		return fmt.Errorf("policy is nil")
@@ -96,6 +97,7 @@ func (i *Inspect) Inspect(p *policyv1.Policy) error {
 	return nil
 }
 
+// Results returns the final result after all processing is done.
 func (i *Inspect) Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	for policyID, variables := range i.toResolve {
 		importedPolicies, ok := i.imports[policyID]
@@ -141,6 +143,25 @@ func (i *Inspect) Results() (map[string]*responsev1.InspectPoliciesResponse_Resu
 	}
 
 	return i.results, nil
+}
+
+// MissingImports returns the list of exportVariables not present in the inspected policy list.
+func (i *Inspect) MissingImports() []string {
+	m := make(map[string]struct{})
+	for _, imports := range i.imports {
+		for _, importedPolicyID := range imports {
+			if _, ok := i.results[importedPolicyID]; !ok {
+				m[importedPolicyID] = struct{}{}
+			}
+		}
+	}
+
+	missingImports := make([]string, 0, len(m))
+	for policyID := range m {
+		missingImports = append(missingImports, policyID)
+	}
+
+	return missingImports
 }
 
 // inspectImports inspects the export variables imports of the policy.
