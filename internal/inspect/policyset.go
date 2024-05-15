@@ -1,7 +1,7 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package policyset
+package inspect
 
 import (
 	"fmt"
@@ -13,17 +13,18 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func New() *Inspect {
-	return &Inspect{
+func PolicySets() *PolicySet {
+	return &PolicySet{
 		results: make(map[string]*responsev1.InspectPoliciesResponse_Result),
 	}
 }
 
-type Inspect struct {
+type PolicySet struct {
 	results map[string]*responsev1.InspectPoliciesResponse_Result
 }
 
-func (i *Inspect) Inspect(pset *runtimev1.RunnablePolicySet) error {
+// Inspect inspects the given policy set and caches the inspection related information internally.
+func (ps *PolicySet) Inspect(pset *runtimev1.RunnablePolicySet) error {
 	if pset == nil {
 		return fmt.Errorf("policy set is nil")
 	}
@@ -41,7 +42,7 @@ func (i *Inspect) Inspect(pset *runtimev1.RunnablePolicySet) error {
 	}
 
 	if len(actions) > 0 || len(variables) > 0 {
-		i.results[namer.PolicyKeyFromFQN(pset.Fqn)] = &responsev1.InspectPoliciesResponse_Result{
+		ps.results[namer.PolicyKeyFromFQN(pset.Fqn)] = &responsev1.InspectPoliciesResponse_Result{
 			Actions:   actions,
 			Variables: variables,
 		}
@@ -50,10 +51,7 @@ func (i *Inspect) Inspect(pset *runtimev1.RunnablePolicySet) error {
 	return nil
 }
 
-func (i *Inspect) MissingImports() []string {
-	return nil
-}
-
-func (i *Inspect) Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	return i.results, nil
+// Results returns the final inspection results.
+func (ps *PolicySet) Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	return ps.results, nil
 }
