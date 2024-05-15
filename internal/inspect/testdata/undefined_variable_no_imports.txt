@@ -1,0 +1,14 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request
+  rules:
+    - actions: ["approve"]
+      roles:
+        - user
+      condition:
+        match:
+          expr: variables.commonLabel
+      effect: EFFECT_ALLOW

@@ -19,14 +19,14 @@ import (
 
 func Policies() *Policy {
 	return &Policy{
-		toResolve: make(map[string]map[string]struct{}),
+		toResolve: make(map[string]map[string]bool),
 		imports:   make(map[string][]string),
 		results:   make(map[string]*responsev1.InspectPoliciesResponse_Result),
 	}
 }
 
 type Policy struct {
-	toResolve map[string]map[string]struct{}
+	toResolve map[string]map[string]bool
 	imports   map[string][]string
 	results   map[string]*responsev1.InspectPoliciesResponse_Result
 }
@@ -71,14 +71,15 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	for name := range referencedVariables {
 		if _, ok := localVariables[name]; !ok {
 			if pol.toResolve[policyID] == nil {
-				pol.toResolve[policyID] = make(map[string]struct{})
+				pol.toResolve[policyID] = make(map[string]bool)
 			}
 
 			toResolve = true
-			pol.toResolve[policyID][name] = struct{}{}
+			pol.toResolve[policyID][name] = false
 		}
 	}
 
+	// sort variables if there is nothing to resolve since we are not going to modify variables in the future.
 	if !toResolve {
 		sort.Slice(variables, func(i, j int) bool {
 			return variables[i].Name < variables[j].Name
@@ -101,8 +102,30 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 func (pol *Policy) Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	for policyID, variables := range pol.toResolve {
 		importedPolicies, ok := pol.imports[policyID]
-		if !ok {
-			for name := range variables {
+		if ok {
+			for _, importedPolicyID := range importedPolicies {
+				importedResult, ok := pol.results[importedPolicyID]
+				if !ok {
+					return nil, fmt.Errorf("failed to find imported policy %s in the inspected policies", importedPolicyID)
+				}
+
+				for _, importedVariable := range importedResult.Variables {
+					if _, ok := variables[importedVariable.Name]; ok {
+						pol.results[policyID].Variables = append(pol.results[policyID].Variables, &responsev1.InspectPoliciesResponse_Variable{
+							Name:   importedVariable.Name,
+							Value:  importedVariable.Value,
+							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED,
+							Source: importedPolicyID,
+							Used:   true,
+						})
+						variables[importedVariable.Name] = true
+					}
+				}
+			}
+		}
+
+		for name, found := range variables {
+			if !found {
 				pol.results[policyID].Variables = append(pol.results[policyID].Variables, &responsev1.InspectPoliciesResponse_Variable{
 					Name:   name,
 					Value:  "null",
@@ -111,35 +134,11 @@ func (pol *Policy) Results() (map[string]*responsev1.InspectPoliciesResponse_Res
 					Used:   true,
 				})
 			}
-			sort.Slice(pol.results[policyID].Variables, func(x, y int) bool {
-				return pol.results[policyID].Variables[x].Name < pol.results[policyID].Variables[y].Name
-			})
-
-			continue
 		}
 
-		for _, importedPolicyID := range importedPolicies {
-			importedResult, ok := pol.results[importedPolicyID]
-			if !ok {
-				return nil, fmt.Errorf("failed to find imported policy %s in the inspected policies", importedPolicyID)
-			}
-
-			for _, importedVariable := range importedResult.Variables {
-				if _, ok := variables[importedVariable.Name]; ok {
-					pol.results[policyID].Variables = append(pol.results[policyID].Variables, &responsev1.InspectPoliciesResponse_Variable{
-						Name:   importedVariable.Name,
-						Value:  importedVariable.Value,
-						Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED,
-						Source: importedPolicyID,
-						Used:   true,
-					})
-				}
-			}
-
-			sort.Slice(pol.results[policyID].Variables, func(x, y int) bool {
-				return pol.results[policyID].Variables[x].Name < pol.results[policyID].Variables[y].Name
-			})
-		}
+		sort.Slice(pol.results[policyID].Variables, func(x, y int) bool {
+			return pol.results[policyID].Variables[x].Name < pol.results[policyID].Variables[y].Name
+		})
 	}
 
 	return pol.results, nil
