@@ -165,7 +165,7 @@ func newCELCompileError(expr string, issues *cel.Issues) *CELCompileError {
 }
 
 func (cce *CELCompileError) Error() string {
-	return fmt.Sprintf("invalid expression `%s`", cce.expr)
+	return "invalid expression"
 }
 
 func (cce *CELCompileError) Unwrap() error {
