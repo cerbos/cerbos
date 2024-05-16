@@ -6,10 +6,14 @@ package inspect_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
+
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -28,7 +32,6 @@ import (
 func TestInspect(t *testing.T) {
 	type policies struct {
 		expected               map[string]*responsev1.InspectPoliciesResponse_Result
-		expectedErr            string
 		expectedMissingImports []string
 	}
 	type policySets struct {
@@ -44,10 +47,17 @@ func TestInspect(t *testing.T) {
 		{
 			testFile: "empty.txt",
 			policies: policies{
-				expected: map[string]*responsev1.InspectPoliciesResponse_Result{},
+				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
+					"derived_roles.common_roles":      result(nil, nil),
+					"principal.john.vdefault":         result(nil, nil),
+					"resource.leave_request.vdefault": result(nil, nil),
+				},
 			},
 			policySets: policySets{
-				expected: map[string]*responsev1.InspectPoliciesResponse_Result{},
+				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
+					"principal.john.vdefault":         result(nil, nil),
+					"resource.leave_request.vdefault": result(nil, nil),
+				},
 			},
 		},
 		{
@@ -69,7 +79,10 @@ func TestInspect(t *testing.T) {
 				},
 			},
 			policySets: policySets{
-				expected: map[string]*responsev1.InspectPoliciesResponse_Result{},
+				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
+					"principal.john.vdefault":         result(nil, nil),
+					"resource.leave_request.vdefault": result(nil, nil),
+				},
 			},
 		},
 		{
@@ -102,8 +115,15 @@ func TestInspect(t *testing.T) {
 		{
 			testFile: "missing_imports.txt",
 			policies: policies{
-				expected:               map[string]*responsev1.InspectPoliciesResponse_Result{},
-				expectedErr:            "failed to find imported policy export_variables.common_variables in the inspected policies",
+				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
+					"resource.leave_request.vdefault": result(
+						actions("approve"),
+						variables(
+							variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+							variable("label", "\"dude\"", "resource.leave_request.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
+						),
+					),
+				},
 				expectedMissingImports: []string{"export_variables.common_variables"},
 			},
 			policySets: policySets{
@@ -375,8 +395,8 @@ func TestInspect(t *testing.T) {
 					"resource.leave_request.vdefault": result(
 						actions("approve"),
 						variables(
-							variable("commonLabel", "null", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNDEFINED, true),
 							variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
+							variable("missingVar", "null", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNDEFINED, true),
 						),
 					),
 				},
@@ -392,7 +412,7 @@ func TestInspect(t *testing.T) {
 					"resource.leave_request.vdefault": result(
 						actions("approve"),
 						variables(
-							variable("commonLabel", "null", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNDEFINED, true),
+							variable("missingVar", "null", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNDEFINED, true),
 						),
 					),
 				},
@@ -405,10 +425,12 @@ func TestInspect(t *testing.T) {
 
 	ctx := context.Background()
 	for _, testCase := range testCases {
+		pathToTestFile := filepath.Join("testdata", "cases", testCase.testFile)
 		t.Run(testCase.testFile, func(t *testing.T) {
 			t.Run("Policies", func(t *testing.T) {
+				mi := mkMissingImports(t)
 				dir := t.TempDir()
-				test.ExtractTxtArchiveToDir(t, filepath.Join("testdata", testCase.testFile), dir)
+				test.ExtractTxtArchiveToDir(t, pathToTestFile, dir)
 				files := walkDir(t, dir)
 
 				policyIDs := make([]string, 0, len(files))
@@ -426,16 +448,10 @@ func TestInspect(t *testing.T) {
 					require.NoError(t, ins.Inspect(p))
 				}
 
-				have, err := ins.Results()
-				if testCase.policies.expectedErr != "" {
-					require.ErrorContains(t, err, testCase.policies.expectedErr)
-					if len(testCase.policies.expectedMissingImports) > 0 {
-						require.ElementsMatch(t, testCase.policies.expectedMissingImports, ins.MissingImports())
-					}
-				} else {
-					require.NoError(t, err)
-					require.Empty(t, cmp.Diff(testCase.policies.expected, have, protocmp.Transform()))
-				}
+				have, err := ins.Results(ctx, mi.LoadPolicy)
+				require.NoError(t, err)
+				require.Empty(t, cmp.Diff(testCase.policies.expected, have, protocmp.Transform()))
+				require.ElementsMatch(t, mi.loaded, testCase.policies.expectedMissingImports)
 			})
 
 			t.Run("PolicySets", func(t *testing.T) {
@@ -443,7 +459,7 @@ func TestInspect(t *testing.T) {
 					t.Skip()
 				}
 
-				idx, err := index.Build(ctx, test.ExtractTxtArchiveToFS(t, filepath.Join("testdata", testCase.testFile)))
+				idx, err := index.Build(ctx, test.ExtractTxtArchiveToFS(t, pathToTestFile))
 				if testCase.policySets.expectedIndexErr {
 					require.Error(t, err)
 					return
@@ -470,6 +486,65 @@ func TestInspect(t *testing.T) {
 			})
 		})
 	}
+}
+
+func mkMissingImports(t *testing.T) *missingImports {
+	t.Helper()
+
+	fsys := test.ExtractTxtArchiveToFS(t, filepath.Join("testdata", "missing_policies.txt"))
+	policies := make(map[string]*policyv1.Policy)
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if _, ok := util.IsSupportedFileTypeExt(d.Name()); !ok {
+			return fmt.Errorf("unsupported file type %s", d.Name())
+		}
+
+		f, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return fmt.Errorf("failed to read file %s: %w", path, err)
+		}
+
+		p, err := policy.ReadPolicy(bytes.NewReader(f))
+		if err != nil {
+			return fmt.Errorf("failed to read policy: %w", err)
+		}
+
+		policies[namer.PolicyKey(p)] = p
+		return nil
+	})
+	require.NoError(t, err)
+
+	return &missingImports{
+		policies: policies,
+	}
+}
+
+type missingImports struct {
+	policies map[string]*policyv1.Policy
+	loaded   []string
+}
+
+func (mi *missingImports) LoadPolicy(_ context.Context, policyKey ...string) ([]*policy.Wrapper, error) {
+	policies := make([]*policy.Wrapper, 0, len(policyKey))
+	for _, pk := range policyKey {
+		p, ok := mi.policies[pk]
+		if !ok {
+			return nil, fmt.Errorf("failed to find policy with key %s", pk)
+		}
+
+		wp := policy.Wrap(p)
+		policies = append(policies, &wp)
+		mi.loaded = append(mi.loaded, pk)
+	}
+
+	return policies, nil
 }
 
 func walkDir(t *testing.T, dir string) map[string][]byte {

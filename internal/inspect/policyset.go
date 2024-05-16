@@ -41,11 +41,9 @@ func (ps *PolicySet) Inspect(pset *runtimev1.RunnablePolicySet) error {
 		})
 	}
 
-	if len(actions) > 0 || len(variables) > 0 {
-		ps.results[namer.PolicyKeyFromFQN(pset.Fqn)] = &responsev1.InspectPoliciesResponse_Result{
-			Actions:   actions,
-			Variables: variables,
-		}
+	ps.results[namer.PolicyKeyFromFQN(pset.Fqn)] = &responsev1.InspectPoliciesResponse_Result{
+		Actions:   actions,
+		Variables: variables,
 	}
 
 	return nil

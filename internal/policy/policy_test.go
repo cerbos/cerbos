@@ -246,13 +246,13 @@ func TestInspectUtilities(t *testing.T) {
 			testCases := []struct {
 				p                 *policyv1.Policy
 				pset              *runtimev1.RunnablePolicySet
-				expectedVariables []*responsev1.InspectPoliciesResponse_Variable
+				expectedVariables map[string]*responsev1.InspectPoliciesResponse_Variable
 			}{
 				{
 					p:    dr,
 					pset: compilePolicy(t, dr),
-					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
-						{
+					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
+						"geography": {
 							Name:   "geography",
 							Value:  "request.resource.attr.geography",
 							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
@@ -263,8 +263,8 @@ func TestInspectUtilities(t *testing.T) {
 				{
 					p:    ev,
 					pset: compilePolicy(t, ev),
-					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
-						{
+					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
+						"geography": {
 							Name:   "geography",
 							Value:  "request.resource.attr.geography",
 							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED,
@@ -275,8 +275,8 @@ func TestInspectUtilities(t *testing.T) {
 				{
 					p:    rp,
 					pset: compilePolicy(t, rp),
-					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
-						{
+					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
+						"geography": {
 							Name:   "geography",
 							Value:  "request.resource.attr.geography",
 							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
@@ -287,8 +287,8 @@ func TestInspectUtilities(t *testing.T) {
 				{
 					p:    pp,
 					pset: compilePolicy(t, pp),
-					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
-						{
+					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
+						"geography": {
 							Name:   "geography",
 							Value:  "request.resource.attr.geography",
 							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,

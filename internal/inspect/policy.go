@@ -4,6 +4,7 @@
 package inspect
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -38,15 +39,19 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	}
 
 	policyID := namer.PolicyKey(p)
-	variables := policy.ListVariables(p)
+	localVariables := policy.ListVariables(p)
 	if _, ok := p.PolicyType.(*policyv1.Policy_ExportVariables); ok {
-		sort.Slice(variables, func(i, j int) bool {
-			return variables[i].Name < variables[j].Name
+		sortedLocalVariables := make([]*responsev1.InspectPoliciesResponse_Variable, 0, len(localVariables))
+		for _, lv := range localVariables {
+			sortedLocalVariables = append(sortedLocalVariables, lv)
+		}
+		sort.Slice(sortedLocalVariables, func(i, j int) bool {
+			return sortedLocalVariables[i].Name < sortedLocalVariables[j].Name
 		})
 
-		if len(variables) > 0 {
+		if len(localVariables) > 0 {
 			pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
-				Variables: variables,
+				Variables: sortedLocalVariables,
 			}
 		}
 
@@ -57,30 +62,27 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	if err != nil {
 		return fmt.Errorf("failed to inspect conditions of the policy %s: %w", policyID, err)
 	}
-	pol.imports[policyID] = pol.inspectImports(p)
+	pol.imports[policyID] = pol.listImports(p)
 
-	localVariables := make(map[string]struct{})
-	for _, variable := range variables {
-		localVariables[variable.Name] = struct{}{}
-		if _, ok := referencedVariables[variable.Name]; ok {
-			variable.Used = true
+	for referenced := range referencedVariables {
+		if v, ok := localVariables[referenced]; ok {
+			v.Used = true
+		} else {
+			if toResolve, exists := pol.toResolve[policyID]; !exists {
+				pol.toResolve[policyID] = map[string]bool{referenced: false}
+			} else {
+				toResolve[referenced] = false
+			}
 		}
 	}
 
-	toResolve := false
-	for name := range referencedVariables {
-		if _, ok := localVariables[name]; !ok {
-			if pol.toResolve[policyID] == nil {
-				pol.toResolve[policyID] = make(map[string]bool)
-			}
-
-			toResolve = true
-			pol.toResolve[policyID][name] = false
-		}
+	variables := make([]*responsev1.InspectPoliciesResponse_Variable, 0, len(localVariables))
+	for _, lv := range localVariables {
+		variables = append(variables, lv)
 	}
 
 	// sort variables if there is nothing to resolve since we are not going to modify variables in the future.
-	if !toResolve {
+	if len(pol.toResolve[policyID]) > 0 {
 		sort.Slice(variables, func(i, j int) bool {
 			return variables[i].Name < variables[j].Name
 		})
@@ -88,37 +90,60 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 
 	a := policy.ListActions(p)
 	sort.Strings(a)
-	if len(a) > 0 || len(variables) > 0 {
-		pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
-			Actions:   a,
-			Variables: variables,
-		}
+	pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
+		Actions:   a,
+		Variables: variables,
 	}
 
 	return nil
 }
 
+type loadPolicyFn func(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
+
 // Results returns the final inspection results.
-func (pol *Policy) Results() (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	for policyID, variables := range pol.toResolve {
 		importedPolicies, ok := pol.imports[policyID]
+		var missingPolicies []string
 		if ok {
 			for _, importedPolicyID := range importedPolicies {
-				importedResult, ok := pol.results[importedPolicyID]
-				if !ok {
-					return nil, fmt.Errorf("failed to find imported policy %s in the inspected policies", importedPolicyID)
+				if importedResult, ok := pol.results[importedPolicyID]; ok {
+					for _, importedVariable := range importedResult.Variables {
+						if _, ok := variables[importedVariable.Name]; ok {
+							pol.results[policyID].Variables = append(pol.results[policyID].Variables, &responsev1.InspectPoliciesResponse_Variable{
+								Name:   importedVariable.Name,
+								Value:  importedVariable.Value,
+								Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED,
+								Source: importedPolicyID,
+								Used:   true,
+							})
+							variables[importedVariable.Name] = true
+						}
+					}
+				} else {
+					missingPolicies = append(missingPolicies, importedPolicyID)
+				}
+			}
+		}
+
+		if loadPolicy != nil {
+			for _, importedPolicyID := range missingPolicies {
+				importedPolicy, err := loadPolicy(ctx, importedPolicyID)
+				if err != nil {
+					continue
 				}
 
-				for _, importedVariable := range importedResult.Variables {
-					if _, ok := variables[importedVariable.Name]; ok {
+				importedVariables := policy.ListVariables(importedPolicy[0].Policy)
+				for importedVarName, importedVariable := range importedVariables {
+					if _, ok := variables[importedVarName]; ok {
 						pol.results[policyID].Variables = append(pol.results[policyID].Variables, &responsev1.InspectPoliciesResponse_Variable{
-							Name:   importedVariable.Name,
+							Name:   importedVarName,
 							Value:  importedVariable.Value,
 							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED,
 							Source: importedPolicyID,
 							Used:   true,
 						})
-						variables[importedVariable.Name] = true
+						variables[importedVarName] = true
 					}
 				}
 			}
@@ -144,27 +169,8 @@ func (pol *Policy) Results() (map[string]*responsev1.InspectPoliciesResponse_Res
 	return pol.results, nil
 }
 
-// MissingImports returns the list of exportVariables not present in the inspected policy list.
-func (pol *Policy) MissingImports() []string {
-	m := make(map[string]struct{})
-	for _, imports := range pol.imports {
-		for _, importedPolicyID := range imports {
-			if _, ok := pol.results[importedPolicyID]; !ok {
-				m[importedPolicyID] = struct{}{}
-			}
-		}
-	}
-
-	missingImports := make([]string, 0, len(m))
-	for policyID := range m {
-		missingImports = append(missingImports, policyID)
-	}
-
-	return missingImports
-}
-
-// inspectImports inspects the export variables imports of the policy.
-func (pol *Policy) inspectImports(p *policyv1.Policy) []string {
+// listImports lists the export variables imported by the given policy.
+func (pol *Policy) listImports(p *policyv1.Policy) []string {
 	var imports []string
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_DerivedRoles:
@@ -203,13 +209,8 @@ func (pol *Policy) inspectConditions(p *policyv1.Policy) (map[string]struct{}, e
 				continue
 			}
 
-			referencedVariableNames, err := pol.referencedVariableNamesInCondition(def.Condition)
-			if err != nil {
+			if err := pol.referencedVariableNamesInCondition(def.Condition, referencedVariables); err != nil {
 				return nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
-			}
-
-			for name := range referencedVariableNames {
-				referencedVariables[name] = struct{}{}
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
@@ -219,13 +220,8 @@ func (pol *Policy) inspectConditions(p *policyv1.Policy) (map[string]struct{}, e
 					continue
 				}
 
-				referencedVariableNames, err := pol.referencedVariableNamesInCondition(action.Condition)
-				if err != nil {
+				if err := pol.referencedVariableNamesInCondition(action.Condition, referencedVariables); err != nil {
 					return nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
-				}
-
-				for name := range referencedVariableNames {
-					referencedVariables[name] = struct{}{}
 				}
 			}
 		}
@@ -235,13 +231,8 @@ func (pol *Policy) inspectConditions(p *policyv1.Policy) (map[string]struct{}, e
 				continue
 			}
 
-			referencedVariableNames, err := pol.referencedVariableNamesInCondition(rule.Condition)
-			if err != nil {
+			if err := pol.referencedVariableNamesInCondition(rule.Condition, referencedVariables); err != nil {
 				return nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
-			}
-
-			for name := range referencedVariableNames {
-				referencedVariables[name] = struct{}{}
 			}
 		}
 	}
@@ -249,67 +240,50 @@ func (pol *Policy) inspectConditions(p *policyv1.Policy) (map[string]struct{}, e
 	return referencedVariables, nil
 }
 
-func (pol *Policy) referencedVariableNamesInCondition(condition *policyv1.Condition) (map[string]struct{}, error) {
+func (pol *Policy) referencedVariableNamesInCondition(condition *policyv1.Condition, out map[string]struct{}) error {
 	c, err := compile.Condition(condition)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compile condition: %w", err)
+		return fmt.Errorf("failed to compile condition: %w", err)
 	}
 
-	referencedVariableNames, err := pol.referencedVariableNamesInCompiledCondition(c)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find referenced variable names in compiled condition: %w", err)
+	if err := pol.referencedVariableNamesInCompiledCondition(c, out); err != nil {
+		return fmt.Errorf("failed to find referenced variable names in compiled condition: %w", err)
 	}
 
-	return referencedVariableNames, nil
+	return nil
 }
 
-func (pol *Policy) referencedVariableNamesInCompiledCondition(condition *runtimev1.Condition) (map[string]struct{}, error) {
-	referencedVariableNames := make(map[string]struct{})
+func (pol *Policy) referencedVariableNamesInCompiledCondition(condition *runtimev1.Condition, out map[string]struct{}) error {
 	switch op := condition.Op.(type) {
 	case *runtimev1.Condition_All:
 		for _, condition := range op.All.Expr {
-			referenced, err := pol.referencedVariableNamesInCompiledCondition(condition)
-			if err != nil {
-				return nil, fmt.Errorf("failed to find referenced variable names in all condition: %w", err)
-			}
-
-			for varName := range referenced {
-				referencedVariableNames[varName] = struct{}{}
+			if err := pol.referencedVariableNamesInCompiledCondition(condition, out); err != nil {
+				return fmt.Errorf("failed to find referenced variable names in all condition: %w", err)
 			}
 		}
 	case *runtimev1.Condition_Any:
 		for _, condition := range op.Any.Expr {
-			referenced, err := pol.referencedVariableNamesInCompiledCondition(condition)
-			if err != nil {
-				return nil, fmt.Errorf("failed to find referenced variable names in any condition: %w", err)
-			}
-
-			for varName := range referenced {
-				referencedVariableNames[varName] = struct{}{}
+			if err := pol.referencedVariableNamesInCompiledCondition(condition, out); err != nil {
+				return fmt.Errorf("failed to find referenced variable names in any condition: %w", err)
 			}
 		}
 	case *runtimev1.Condition_Expr:
 		exprAST, err := ast.ToAST(op.Expr.Checked)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert checked expression %s to AST: %w", op.Expr.Checked, err)
+			return fmt.Errorf("failed to convert checked expression %s to AST: %w", op.Expr.Checked, err)
 		}
 
 		action := func(varName string) {
-			referencedVariableNames[varName] = struct{}{}
+			out[varName] = struct{}{}
 		}
 		ast.PreOrderVisit(exprAST.Expr(), compile.VariableVisitor(action))
 	case *runtimev1.Condition_None:
 		for _, condition := range op.None.Expr {
-			referenced, err := pol.referencedVariableNamesInCompiledCondition(condition)
-			if err != nil {
-				return nil, fmt.Errorf("failed to find referenced variable names in none condition: %w", err)
-			}
-
-			for varName := range referenced {
-				referencedVariableNames[varName] = struct{}{}
+			if err := pol.referencedVariableNamesInCompiledCondition(condition, out); err != nil {
+				return fmt.Errorf("failed to find referenced variable names in none condition: %w", err)
 			}
 		}
 	}
 
-	return referencedVariableNames, nil
+	return nil
 }

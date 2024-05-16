@@ -391,8 +391,8 @@ func ListActions(p *policyv1.Policy) []string {
 }
 
 // ListVariables returns local and exported variables (not imported ones) defined in a policy.
-func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Variable {
-	var variables []*responsev1.InspectPoliciesResponse_Variable
+func ListVariables(p *policyv1.Policy) map[string]*responsev1.InspectPoliciesResponse_Variable {
+	variables := make(map[string]*responsev1.InspectPoliciesResponse_Variable)
 	if p == nil {
 		return variables
 	}
@@ -405,21 +405,21 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 		}
 
 		for name, value := range pt.DerivedRoles.Variables.Local {
-			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+			variables[name] = &responsev1.InspectPoliciesResponse_Variable{
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
 				Source: policyKey,
-			})
+			}
 		}
 	case *policyv1.Policy_ExportVariables:
 		for name, value := range pt.ExportVariables.Definitions {
-			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+			variables[name] = &responsev1.InspectPoliciesResponse_Variable{
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED,
 				Source: policyKey,
-			})
+			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
 		if pt.PrincipalPolicy.Variables == nil {
@@ -427,12 +427,12 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 		}
 
 		for name, value := range pt.PrincipalPolicy.Variables.Local {
-			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+			variables[name] = &responsev1.InspectPoliciesResponse_Variable{
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
 				Source: policyKey,
-			})
+			}
 		}
 	case *policyv1.Policy_ResourcePolicy:
 		if pt.ResourcePolicy.Variables == nil {
@@ -440,12 +440,12 @@ func ListVariables(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_Var
 		}
 
 		for name, value := range pt.ResourcePolicy.Variables.Local {
-			variables = append(variables, &responsev1.InspectPoliciesResponse_Variable{
+			variables[name] = &responsev1.InspectPoliciesResponse_Variable{
 				Name:   name,
 				Value:  value,
 				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
 				Source: policyKey,
-			})
+			}
 		}
 	}
 

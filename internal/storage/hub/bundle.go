@@ -237,18 +237,9 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 }
 
 func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	filteredFQNs, err := b.ListPolicyIDs(ctx, listParams)
+	fqns, err := b.ListPolicyIDs(ctx, listParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
-	}
-
-	if len(filteredFQNs) == 0 {
-		return nil, nil
-	}
-
-	fqns, err := b.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list policies without list parameters: %w", err)
 	}
 
 	ins := inspect.PolicySets()
@@ -270,17 +261,6 @@ func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPol
 	results, err := ins.Results()
 	if err != nil {
 		return nil, err
-	}
-
-	lut := make(map[string]struct{})
-	for _, fqn := range filteredFQNs {
-		lut[namer.PolicyKeyFromFQN(fqn)] = struct{}{}
-	}
-
-	for policyID := range results {
-		if _, ok := lut[policyID]; !ok {
-			delete(results, policyID)
-		}
 	}
 
 	return results, nil
