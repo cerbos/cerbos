@@ -165,12 +165,7 @@ func newCELCompileError(expr string, issues *cel.Issues) *CELCompileError {
 }
 
 func (cce *CELCompileError) Error() string {
-	errList := make([]string, len(cce.issues.Errors()))
-	for i, ce := range cce.issues.Errors() {
-		errList[i] = ce.Message
-	}
-
-	return fmt.Sprintf("failed to compile `%s` [%s]", cce.expr, strings.Join(errList, ", "))
+	return fmt.Sprintf("invalid expression `%s`", cce.expr)
 }
 
 func (cce *CELCompileError) Unwrap() error {

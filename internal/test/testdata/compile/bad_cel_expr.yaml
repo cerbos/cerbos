@@ -3,9 +3,9 @@
 wantErrors:
   - file: principal_policies/donald_duck_20210210.yaml
     error: |-
-      failed to compile `resource.attr.dev_record ^^ true` [Syntax error: token recognition error at: '^', Syntax error: token recognition error at: '^', Syntax error: extraneous input 'true' expecting <EOF>]
+      invalid expression `resource.attr.dev_record ^^ true`
     description: |-
-      Invalid expression: `resource.attr.dev_record ^^ true`
+      Invalid expression `resource.attr.dev_record ^^ true`: [Syntax error: token recognition error at: '^', Syntax error: token recognition error at: '^', Syntax error: extraneous input 'true' expecting <EOF>]
     position:
       line: 12
       column: 15
