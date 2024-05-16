@@ -5,6 +5,7 @@ package compile
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/cel-go/cel"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -61,7 +62,11 @@ func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markRef
 func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedVariablesAsUsed bool) *exprpb.CheckedExpr {
 	celAST, issues := conditions.StdEnv.Compile(expr)
 	if issues != nil && issues.Err() != nil {
-		modCtx.addErrForProtoPath(path, newCELCompileError(expr, issues), "Invalid expression: `%s`", expr)
+		errList := make([]string, len(issues.Errors()))
+		for i, ce := range issues.Errors() {
+			errList[i] = ce.Message
+		}
+		modCtx.addErrForProtoPath(path, newCELCompileError(expr, issues), "Invalid expression `%s`: [%s]", expr, strings.Join(errList, ", "))
 		return nil
 	}
 

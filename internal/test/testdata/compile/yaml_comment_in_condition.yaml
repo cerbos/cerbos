@@ -4,11 +4,10 @@ mainDef: "resource_policies/leave_request_20210210.yaml"
 wantErrors:
   - file: resource_policies/leave_request_20210210.yaml
     error: |-
-      failed to compile `# YAML comment
-      request.resource.attr.status == "PENDING_APPROVAL"` [Syntax error: token recognition error at: '#', Syntax error: mismatched input 'comment' expecting <EOF>]
+      invalid expression
     description: |-
-      Invalid expression: `# YAML comment
-      request.resource.attr.status == "PENDING_APPROVAL"`
+      Invalid expression `# YAML comment
+      request.resource.attr.status == "PENDING_APPROVAL"`: [Syntax error: token recognition error at: '#', Syntax error: mismatched input 'comment' expecting <EOF>]
     position:
       line: 15
       column: 11
