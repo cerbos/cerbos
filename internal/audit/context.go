@@ -75,11 +75,6 @@ func PeerFromContext(ctx context.Context) *auditv1.Peer {
 		}
 
 		ua = md[grpcGWUserAgentKey]
-
-		// https://github.com/grpc-ecosystem/grpc-gateway/issues/4320
-		if len(xff) > 1 {
-			xff = append(xff[:len(xff)-1], strings.TrimPrefix(xff[len(xff)-1], xff[0]+", "))
-		}
 	} else {
 		ua = md[userAgentKey]
 	}
