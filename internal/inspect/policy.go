@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"github.com/cerbos/cerbos/internal/storage"
 
 	"github.com/google/cel-go/common/ast"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 func Policies() *Policy {
