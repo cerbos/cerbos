@@ -1,0 +1,31 @@
+-- a.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: common_roles
+  definitions:
+    - name: approved_user
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: '"dude"'
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables
+
+-- c.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  version: default
+  principal: john
+
+-- d.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request

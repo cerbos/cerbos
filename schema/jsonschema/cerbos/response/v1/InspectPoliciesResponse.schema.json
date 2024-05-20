@@ -11,8 +11,46 @@
           "items": {
             "type": "string"
           }
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable"
+          }
         }
       }
+    },
+    "cerbos.response.v1.InspectPoliciesResponse.Variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Variable.Kind"
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "used": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.response.v1.InspectPoliciesResponse.Variable.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED",
+        "KIND_LOCAL",
+        "KIND_UNDEFINED",
+        "KIND_UNKNOWN"
+      ]
     }
   },
   "type": "object",

@@ -211,11 +211,11 @@ func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) m
 		references[varName] = struct{}{}
 	}
 
-	ast.PreOrderVisit(exprAST.Expr(), variableVisitor(action))
+	ast.PreOrderVisit(exprAST.Expr(), VariableVisitor(action))
 	return references
 }
 
-func variableVisitor(action func(string)) ast.Visitor {
+func VariableVisitor(action func(string)) ast.Visitor {
 	return ast.NewExprVisitor(func(e ast.Expr) {
 		if e.Kind() != ast.SelectKind {
 			return

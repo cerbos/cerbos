@@ -1,0 +1,7 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables
+  definitions:
+    commonLabel: '"dude"'

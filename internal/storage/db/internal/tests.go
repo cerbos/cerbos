@@ -61,7 +61,9 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		evDupe1 := policy.Wrap(test.GenExportVariables(test.Suffix("@foo")))
 		evDupe2 := policy.Wrap(test.GenExportVariables(test.Suffix("@@foo")))
 
-		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables, rpDupe1, ppDupe1, drDupe1, evDupe1}
+		xevx := policy.Wrap(test.GenExportVariables(test.PrefixAndSuffix("x", "x")))
+
+		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables, rpDupe1, ppDupe1, drDupe1, evDupe1, xevx}
 		policyMap := make(map[string]policy.Wrapper)
 		for _, p := range policyList {
 			policyMap[namer.PolicyKeyFromFQN(p.FQN)] = p
@@ -94,6 +96,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppDupe1.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drDupe1.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: evDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: xevx.ID},
 			}
 			checkEvents(t, timeout, wantEvents...)
 
@@ -101,7 +104,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Equal(t, 7, stats.PolicyCount[policy.ResourceKind])
 			require.Equal(t, 4, stats.PolicyCount[policy.PrincipalKind])
 			require.Equal(t, 4, stats.PolicyCount[policy.DerivedRolesKind])
-			require.Equal(t, 2, stats.PolicyCount[policy.ExportVariablesKind])
+			require.Equal(t, 3, stats.PolicyCount[policy.ExportVariablesKind])
 		}
 
 		t.Run("add_or_update", func(t *testing.T) {

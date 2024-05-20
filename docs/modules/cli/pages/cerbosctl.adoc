@@ -375,7 +375,7 @@ cerbosctl hub epdp list-candidates ./path/to/repository
 [#inspect-policies]
 == `inspect policies`
 
-This command is to inspect policies in the store. Currently, it lists actions defined in the policies.
+This command is to inspect policies in the store. Currently, it lists actions and variables defined in the policies.
 
 .Inspect policies
 ----

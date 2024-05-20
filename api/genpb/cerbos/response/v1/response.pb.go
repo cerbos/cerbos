@@ -30,6 +30,64 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type InspectPoliciesResponse_Variable_Kind int32
+
+const (
+	InspectPoliciesResponse_Variable_KIND_UNSPECIFIED InspectPoliciesResponse_Variable_Kind = 0
+	InspectPoliciesResponse_Variable_KIND_EXPORTED    InspectPoliciesResponse_Variable_Kind = 1
+	InspectPoliciesResponse_Variable_KIND_IMPORTED    InspectPoliciesResponse_Variable_Kind = 2
+	InspectPoliciesResponse_Variable_KIND_LOCAL       InspectPoliciesResponse_Variable_Kind = 3
+	InspectPoliciesResponse_Variable_KIND_UNDEFINED   InspectPoliciesResponse_Variable_Kind = 4
+	InspectPoliciesResponse_Variable_KIND_UNKNOWN     InspectPoliciesResponse_Variable_Kind = 5
+)
+
+// Enum value maps for InspectPoliciesResponse_Variable_Kind.
+var (
+	InspectPoliciesResponse_Variable_Kind_name = map[int32]string{
+		0: "KIND_UNSPECIFIED",
+		1: "KIND_EXPORTED",
+		2: "KIND_IMPORTED",
+		3: "KIND_LOCAL",
+		4: "KIND_UNDEFINED",
+		5: "KIND_UNKNOWN",
+	}
+	InspectPoliciesResponse_Variable_Kind_value = map[string]int32{
+		"KIND_UNSPECIFIED": 0,
+		"KIND_EXPORTED":    1,
+		"KIND_IMPORTED":    2,
+		"KIND_LOCAL":       3,
+		"KIND_UNDEFINED":   4,
+		"KIND_UNKNOWN":     5,
+	}
+)
+
+func (x InspectPoliciesResponse_Variable_Kind) Enum() *InspectPoliciesResponse_Variable_Kind {
+	p := new(InspectPoliciesResponse_Variable_Kind)
+	*p = x
+	return p
+}
+
+func (x InspectPoliciesResponse_Variable_Kind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (InspectPoliciesResponse_Variable_Kind) Descriptor() protoreflect.EnumDescriptor {
+	return file_cerbos_response_v1_response_proto_enumTypes[0].Descriptor()
+}
+
+func (InspectPoliciesResponse_Variable_Kind) Type() protoreflect.EnumType {
+	return &file_cerbos_response_v1_response_proto_enumTypes[0]
+}
+
+func (x InspectPoliciesResponse_Variable_Kind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use InspectPoliciesResponse_Variable_Kind.Descriptor instead.
+func (InspectPoliciesResponse_Variable_Kind) EnumDescriptor() ([]byte, []int) {
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{16, 0, 0}
+}
+
 type PlanResourcesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2321,18 +2379,98 @@ func (x *PlaygroundEvaluateResponse_EvalResultList) GetOutputs() []*v1.OutputEnt
 	return nil
 }
 
+type InspectPoliciesResponse_Variable struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name   string                                `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Value  string                                `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Kind   InspectPoliciesResponse_Variable_Kind `protobuf:"varint,3,opt,name=kind,proto3,enum=cerbos.response.v1.InspectPoliciesResponse_Variable_Kind" json:"kind,omitempty"`
+	Source string                                `protobuf:"bytes,4,opt,name=source,proto3" json:"source,omitempty"`
+	Used   bool                                  `protobuf:"varint,5,opt,name=used,proto3" json:"used,omitempty"`
+}
+
+func (x *InspectPoliciesResponse_Variable) Reset() {
+	*x = InspectPoliciesResponse_Variable{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *InspectPoliciesResponse_Variable) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InspectPoliciesResponse_Variable) ProtoMessage() {}
+
+func (x *InspectPoliciesResponse_Variable) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InspectPoliciesResponse_Variable.ProtoReflect.Descriptor instead.
+func (*InspectPoliciesResponse_Variable) Descriptor() ([]byte, []int) {
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{16, 0}
+}
+
+func (x *InspectPoliciesResponse_Variable) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *InspectPoliciesResponse_Variable) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *InspectPoliciesResponse_Variable) GetKind() InspectPoliciesResponse_Variable_Kind {
+	if x != nil {
+		return x.Kind
+	}
+	return InspectPoliciesResponse_Variable_KIND_UNSPECIFIED
+}
+
+func (x *InspectPoliciesResponse_Variable) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *InspectPoliciesResponse_Variable) GetUsed() bool {
+	if x != nil {
+		return x.Used
+	}
+	return false
+}
+
 type InspectPoliciesResponse_Result struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Actions []string `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty"`
+	Actions   []string                            `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty"`
+	Variables []*InspectPoliciesResponse_Variable `protobuf:"bytes,2,rep,name=variables,proto3" json:"variables,omitempty"`
 }
 
 func (x *InspectPoliciesResponse_Result) Reset() {
 	*x = InspectPoliciesResponse_Result{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
+		mi := &file_cerbos_response_v1_response_proto_msgTypes[45]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2345,7 +2483,7 @@ func (x *InspectPoliciesResponse_Result) String() string {
 func (*InspectPoliciesResponse_Result) ProtoMessage() {}
 
 func (x *InspectPoliciesResponse_Result) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[45]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2358,12 +2496,19 @@ func (x *InspectPoliciesResponse_Result) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectPoliciesResponse_Result.ProtoReflect.Descriptor instead.
 func (*InspectPoliciesResponse_Result) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{16, 0}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{16, 1}
 }
 
 func (x *InspectPoliciesResponse_Result) GetActions() []string {
 	if x != nil {
 		return x.Actions
+	}
+	return nil
+}
+
+func (x *InspectPoliciesResponse_Result) GetVariables() []*InspectPoliciesResponse_Variable {
+	if x != nil {
+		return x.Variables
 	}
 	return nil
 }
@@ -3070,59 +3215,105 @@ var file_cerbos_response_v1_response_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0f, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x50, 0x6f, 0x6c,
 	0x69, 0x63, 0x69, 0x65, 0x73, 0x3a, 0x1d, 0x92, 0x41, 0x1a, 0x0a, 0x18, 0x32, 0x16, 0x45, 0x6e,
 	0x61, 0x62, 0x6c, 0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x20, 0x72, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0xa3, 0x02, 0x0a, 0x17, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x8e, 0x08, 0x0a, 0x17, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74,
 	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
 	0x12, 0x52, 0x0a, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
 	0x0b, 0x32, 0x38, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f,
 	0x6e, 0x73, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x50, 0x6f,
 	0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x52,
 	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x07, 0x72, 0x65, 0x73,
-	0x75, 0x6c, 0x74, 0x73, 0x1a, 0x22, 0x0a, 0x06, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x18,
-	0x0a, 0x07, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52,
-	0x07, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x6e, 0x0a, 0x0c, 0x52, 0x65, 0x73, 0x75,
-	0x6c, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x48, 0x0a, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x32, 0x2e, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x49,
-	0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x05, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x3a, 0x20, 0x92, 0x41, 0x1d, 0x0a, 0x1b, 0x32,
-	0x19, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65,
-	0x73, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3e, 0x0a, 0x19, 0x41, 0x64,
-	0x64, 0x4f, 0x72, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x3a, 0x21, 0x92, 0x41, 0x1e, 0x0a, 0x1c, 0x32, 0x1a,
-	0x41, 0x64, 0x64, 0x2f, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d,
-	0x61, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x55, 0x0a, 0x13, 0x4c, 0x69,
-	0x73, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x5f, 0x69, 0x64, 0x73, 0x18,
-	0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x09, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x49, 0x64, 0x73,
-	0x3a, 0x1f, 0x92, 0x41, 0x1c, 0x0a, 0x1a, 0x32, 0x18, 0x4c, 0x69, 0x73, 0x74, 0x20, 0x73, 0x63,
-	0x68, 0x65, 0x6d, 0x61, 0x20, 0x69, 0x64, 0x73, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x66, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x32, 0x0a, 0x07, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61,
-	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
-	0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63, 0x68, 0x65, 0x6d,
-	0x61, 0x52, 0x07, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x3a, 0x1d, 0x92, 0x41, 0x1a, 0x0a,
-	0x18, 0x32, 0x16, 0x47, 0x65, 0x74, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x28, 0x73, 0x29,
-	0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x61, 0x0a, 0x14, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x27, 0x0a, 0x0f, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x5f, 0x73, 0x63, 0x68,
-	0x65, 0x6d, 0x61, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0e, 0x64, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x64, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x3a, 0x20, 0x92, 0x41, 0x1d, 0x0a,
-	0x1b, 0x32, 0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61,
-	0x28, 0x73, 0x29, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x0a, 0x13,
-	0x52, 0x65, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0x32, 0x15, 0x52, 0x65, 0x6c, 0x6f,
-	0x61, 0x64, 0x20, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x42, 0x77, 0x0a, 0x1a, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
-	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x5a,
-	0x40, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65,
-	0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x76,
-	0x31, 0xaa, 0x02, 0x16, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56,
-	0x31, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x75, 0x6c, 0x74, 0x73, 0x1a, 0xc9, 0x04, 0x0a, 0x08, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c,
+	0x65, 0x12, 0x3d, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x29, 0x92, 0x41, 0x26, 0x32, 0x24, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x20, 0x6e,
+	0x61, 0x6d, 0x65, 0x20, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x20, 0x74,
+	0x68, 0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x12, 0x4b, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x35, 0x92, 0x41, 0x32, 0x32, 0x30, 0x52, 0x61, 0x77, 0x20, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x20,
+	0x6f, 0x66, 0x20, 0x74, 0x68, 0x65, 0x20, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x20,
+	0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x70,
+	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x7f, 0x0a,
+	0x04, 0x6b, 0x69, 0x6e, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x39, 0x2e, 0x63, 0x65,
+	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c,
+	0x65, 0x2e, 0x4b, 0x69, 0x6e, 0x64, 0x42, 0x30, 0x92, 0x41, 0x2d, 0x32, 0x2b, 0x4b, 0x69, 0x6e,
+	0x64, 0x20, 0x6f, 0x66, 0x20, 0x74, 0x68, 0x65, 0x20, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c,
+	0x65, 0x20, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x20, 0x74, 0x68, 0x65,
+	0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x12, 0x6f,
+	0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x57,
+	0x92, 0x41, 0x54, 0x32, 0x52, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x20, 0x6f, 0x66, 0x20, 0x74,
+	0x68, 0x65, 0x20, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x20, 0x64, 0x65, 0x66, 0x69,
+	0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x2e, 0x20, 0x4f, 0x6e, 0x6c, 0x79, 0x20, 0x65, 0x78, 0x69, 0x73, 0x74, 0x73, 0x20, 0x69,
+	0x66, 0x20, 0x74, 0x68, 0x65, 0x20, 0x6b, 0x69, 0x6e, 0x64, 0x20, 0x69, 0x73, 0x20, 0x69, 0x6d,
+	0x70, 0x6f, 0x72, 0x74, 0x65, 0x64, 0x2e, 0x52, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12,
+	0x45, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x42, 0x31, 0x92,
+	0x41, 0x2e, 0x32, 0x2c, 0x57, 0x68, 0x65, 0x74, 0x68, 0x65, 0x72, 0x20, 0x74, 0x68, 0x65, 0x20,
+	0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x20, 0x69, 0x73, 0x20, 0x75, 0x73, 0x65, 0x64,
+	0x20, 0x69, 0x6e, 0x20, 0x61, 0x20, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
+	0x52, 0x04, 0x75, 0x73, 0x65, 0x64, 0x22, 0x78, 0x0a, 0x04, 0x4b, 0x69, 0x6e, 0x64, 0x12, 0x14,
+	0x0a, 0x10, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49,
+	0x45, 0x44, 0x10, 0x00, 0x12, 0x11, 0x0a, 0x0d, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x45, 0x58, 0x50,
+	0x4f, 0x52, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x11, 0x0a, 0x0d, 0x4b, 0x49, 0x4e, 0x44, 0x5f,
+	0x49, 0x4d, 0x50, 0x4f, 0x52, 0x54, 0x45, 0x44, 0x10, 0x02, 0x12, 0x0e, 0x0a, 0x0a, 0x4b, 0x49,
+	0x4e, 0x44, 0x5f, 0x4c, 0x4f, 0x43, 0x41, 0x4c, 0x10, 0x03, 0x12, 0x12, 0x0a, 0x0e, 0x4b, 0x49,
+	0x4e, 0x44, 0x5f, 0x55, 0x4e, 0x44, 0x45, 0x46, 0x49, 0x4e, 0x45, 0x44, 0x10, 0x04, 0x12, 0x10,
+	0x0a, 0x0c, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x05,
+	0x1a, 0xc0, 0x01, 0x0a, 0x06, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x3c, 0x0a, 0x07, 0x61,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x42, 0x22, 0x92, 0x41,
+	0x1f, 0x32, 0x1d, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x20, 0x64, 0x65, 0x66, 0x69, 0x6e,
+	0x65, 0x64, 0x20, 0x69, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79,
+	0x52, 0x07, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x78, 0x0a, 0x09, 0x76, 0x61, 0x72,
+	0x69, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x34, 0x2e, 0x63,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62,
+	0x6c, 0x65, 0x42, 0x24, 0x92, 0x41, 0x21, 0x32, 0x1f, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c,
+	0x65, 0x73, 0x20, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x20, 0x74, 0x68,
+	0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x09, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62,
+	0x6c, 0x65, 0x73, 0x1a, 0x6e, 0x0a, 0x0c, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x48, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x32, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x49, 0x6e, 0x73, 0x70, 0x65, 0x63,
+	0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x2e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
+	0x02, 0x38, 0x01, 0x3a, 0x20, 0x92, 0x41, 0x1d, 0x0a, 0x1b, 0x32, 0x19, 0x49, 0x6e, 0x73, 0x70,
+	0x65, 0x63, 0x74, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x20, 0x72, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3e, 0x0a, 0x19, 0x41, 0x64, 0x64, 0x4f, 0x72, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x3a, 0x21, 0x92, 0x41, 0x1e, 0x0a, 0x1c, 0x32, 0x1a, 0x41, 0x64, 0x64, 0x2f, 0x75,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x55, 0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x63, 0x68,
+	0x65, 0x6d, 0x61, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1d, 0x0a, 0x0a,
+	0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
+	0x52, 0x09, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x49, 0x64, 0x73, 0x3a, 0x1f, 0x92, 0x41, 0x1c,
+	0x0a, 0x1a, 0x32, 0x18, 0x4c, 0x69, 0x73, 0x74, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20,
+	0x69, 0x64, 0x73, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x66, 0x0a, 0x11,
+	0x47, 0x65, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x32, 0x0a, 0x07, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x18, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x63, 0x68, 0x65,
+	0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x07, 0x73, 0x63,
+	0x68, 0x65, 0x6d, 0x61, 0x73, 0x3a, 0x1d, 0x92, 0x41, 0x1a, 0x0a, 0x18, 0x32, 0x16, 0x47, 0x65,
+	0x74, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x28, 0x73, 0x29, 0x20, 0x72, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x61, 0x0a, 0x14, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x63,
+	0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x27, 0x0a, 0x0f,
+	0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x5f, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0e, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x53, 0x63,
+	0x68, 0x65, 0x6d, 0x61, 0x73, 0x3a, 0x20, 0x92, 0x41, 0x1d, 0x0a, 0x1b, 0x32, 0x19, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x28, 0x73, 0x29, 0x20, 0x72,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x0a, 0x13, 0x52, 0x65, 0x6c, 0x6f, 0x61,
+	0x64, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x3a, 0x1c,
+	0x92, 0x41, 0x19, 0x0a, 0x17, 0x32, 0x15, 0x52, 0x65, 0x6c, 0x6f, 0x61, 0x64, 0x20, 0x73, 0x74,
+	0x6f, 0x72, 0x65, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x77, 0x0a, 0x1a,
+	0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76,
+	0x31, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x5a, 0x40, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65,
+	0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2f, 0x76,
+	0x31, 0x3b, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x76, 0x31, 0xaa, 0x02, 0x16, 0x43,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56, 0x31, 0x2e, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3137,123 +3328,128 @@ func file_cerbos_response_v1_response_proto_rawDescGZIP() []byte {
 	return file_cerbos_response_v1_response_proto_rawDescData
 }
 
-var file_cerbos_response_v1_response_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_cerbos_response_v1_response_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cerbos_response_v1_response_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
 var file_cerbos_response_v1_response_proto_goTypes = []interface{}{
-	(*PlanResourcesResponse)(nil),                    // 0: cerbos.response.v1.PlanResourcesResponse
-	(*CheckResourceSetResponse)(nil),                 // 1: cerbos.response.v1.CheckResourceSetResponse
-	(*CheckResourceBatchResponse)(nil),               // 2: cerbos.response.v1.CheckResourceBatchResponse
-	(*CheckResourcesResponse)(nil),                   // 3: cerbos.response.v1.CheckResourcesResponse
-	(*PlaygroundFailure)(nil),                        // 4: cerbos.response.v1.PlaygroundFailure
-	(*PlaygroundValidateResponse)(nil),               // 5: cerbos.response.v1.PlaygroundValidateResponse
-	(*PlaygroundTestResponse)(nil),                   // 6: cerbos.response.v1.PlaygroundTestResponse
-	(*PlaygroundEvaluateResponse)(nil),               // 7: cerbos.response.v1.PlaygroundEvaluateResponse
-	(*PlaygroundProxyResponse)(nil),                  // 8: cerbos.response.v1.PlaygroundProxyResponse
-	(*AddOrUpdatePolicyResponse)(nil),                // 9: cerbos.response.v1.AddOrUpdatePolicyResponse
-	(*ListAuditLogEntriesResponse)(nil),              // 10: cerbos.response.v1.ListAuditLogEntriesResponse
-	(*ServerInfoResponse)(nil),                       // 11: cerbos.response.v1.ServerInfoResponse
-	(*ListPoliciesResponse)(nil),                     // 12: cerbos.response.v1.ListPoliciesResponse
-	(*GetPolicyResponse)(nil),                        // 13: cerbos.response.v1.GetPolicyResponse
-	(*DisablePolicyResponse)(nil),                    // 14: cerbos.response.v1.DisablePolicyResponse
-	(*EnablePolicyResponse)(nil),                     // 15: cerbos.response.v1.EnablePolicyResponse
-	(*InspectPoliciesResponse)(nil),                  // 16: cerbos.response.v1.InspectPoliciesResponse
-	(*AddOrUpdateSchemaResponse)(nil),                // 17: cerbos.response.v1.AddOrUpdateSchemaResponse
-	(*ListSchemasResponse)(nil),                      // 18: cerbos.response.v1.ListSchemasResponse
-	(*GetSchemaResponse)(nil),                        // 19: cerbos.response.v1.GetSchemaResponse
-	(*DeleteSchemaResponse)(nil),                     // 20: cerbos.response.v1.DeleteSchemaResponse
-	(*ReloadStoreResponse)(nil),                      // 21: cerbos.response.v1.ReloadStoreResponse
-	(*PlanResourcesResponse_Meta)(nil),               // 22: cerbos.response.v1.PlanResourcesResponse.Meta
-	(*CheckResourceSetResponse_ActionEffectMap)(nil), // 23: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
-	(*CheckResourceSetResponse_Meta)(nil),            // 24: cerbos.response.v1.CheckResourceSetResponse.Meta
-	nil,                                              // 25: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
-	nil,                                              // 26: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
-	(*CheckResourceSetResponse_Meta_EffectMeta)(nil), // 27: cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
-	(*CheckResourceSetResponse_Meta_ActionMeta)(nil), // 28: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
-	nil, // 29: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
-	nil, // 30: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
-	(*CheckResourceBatchResponse_ActionEffectMap)(nil), // 31: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
-	nil, // 32: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
-	(*CheckResourcesResponse_ResultEntry)(nil),          // 33: cerbos.response.v1.CheckResourcesResponse.ResultEntry
-	(*CheckResourcesResponse_ResultEntry_Resource)(nil), // 34: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
-	(*CheckResourcesResponse_ResultEntry_Meta)(nil),     // 35: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
-	nil, // 36: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
-	(*CheckResourcesResponse_ResultEntry_Meta_EffectMeta)(nil), // 37: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
-	nil,                                    // 38: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
-	(*PlaygroundFailure_ErrorDetails)(nil), // 39: cerbos.response.v1.PlaygroundFailure.ErrorDetails
-	(*PlaygroundFailure_Error)(nil),        // 40: cerbos.response.v1.PlaygroundFailure.Error
-	(*PlaygroundTestResponse_TestResults)(nil),        // 41: cerbos.response.v1.PlaygroundTestResponse.TestResults
-	(*PlaygroundEvaluateResponse_EvalResult)(nil),     // 42: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
-	(*PlaygroundEvaluateResponse_EvalResultList)(nil), // 43: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
-	(*InspectPoliciesResponse_Result)(nil),            // 44: cerbos.response.v1.InspectPoliciesResponse.Result
-	nil,                                               // 45: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
-	(*v1.PlanResourcesFilter)(nil),                    // 46: cerbos.engine.v1.PlanResourcesFilter
-	(*v11.ValidationError)(nil),                       // 47: cerbos.schema.v1.ValidationError
-	(*emptypb.Empty)(nil),                             // 48: google.protobuf.Empty
-	(*v12.AccessLogEntry)(nil),                        // 49: cerbos.audit.v1.AccessLogEntry
-	(*v12.DecisionLogEntry)(nil),                      // 50: cerbos.audit.v1.DecisionLogEntry
-	(*v13.Policy)(nil),                                // 51: cerbos.policy.v1.Policy
-	(*v11.Schema)(nil),                                // 52: cerbos.schema.v1.Schema
-	(v14.Effect)(0),                                   // 53: cerbos.effect.v1.Effect
-	(*v1.OutputEntry)(nil),                            // 54: cerbos.engine.v1.OutputEntry
-	(*v13.TestResults)(nil),                           // 55: cerbos.policy.v1.TestResults
+	(InspectPoliciesResponse_Variable_Kind)(0),       // 0: cerbos.response.v1.InspectPoliciesResponse.Variable.Kind
+	(*PlanResourcesResponse)(nil),                    // 1: cerbos.response.v1.PlanResourcesResponse
+	(*CheckResourceSetResponse)(nil),                 // 2: cerbos.response.v1.CheckResourceSetResponse
+	(*CheckResourceBatchResponse)(nil),               // 3: cerbos.response.v1.CheckResourceBatchResponse
+	(*CheckResourcesResponse)(nil),                   // 4: cerbos.response.v1.CheckResourcesResponse
+	(*PlaygroundFailure)(nil),                        // 5: cerbos.response.v1.PlaygroundFailure
+	(*PlaygroundValidateResponse)(nil),               // 6: cerbos.response.v1.PlaygroundValidateResponse
+	(*PlaygroundTestResponse)(nil),                   // 7: cerbos.response.v1.PlaygroundTestResponse
+	(*PlaygroundEvaluateResponse)(nil),               // 8: cerbos.response.v1.PlaygroundEvaluateResponse
+	(*PlaygroundProxyResponse)(nil),                  // 9: cerbos.response.v1.PlaygroundProxyResponse
+	(*AddOrUpdatePolicyResponse)(nil),                // 10: cerbos.response.v1.AddOrUpdatePolicyResponse
+	(*ListAuditLogEntriesResponse)(nil),              // 11: cerbos.response.v1.ListAuditLogEntriesResponse
+	(*ServerInfoResponse)(nil),                       // 12: cerbos.response.v1.ServerInfoResponse
+	(*ListPoliciesResponse)(nil),                     // 13: cerbos.response.v1.ListPoliciesResponse
+	(*GetPolicyResponse)(nil),                        // 14: cerbos.response.v1.GetPolicyResponse
+	(*DisablePolicyResponse)(nil),                    // 15: cerbos.response.v1.DisablePolicyResponse
+	(*EnablePolicyResponse)(nil),                     // 16: cerbos.response.v1.EnablePolicyResponse
+	(*InspectPoliciesResponse)(nil),                  // 17: cerbos.response.v1.InspectPoliciesResponse
+	(*AddOrUpdateSchemaResponse)(nil),                // 18: cerbos.response.v1.AddOrUpdateSchemaResponse
+	(*ListSchemasResponse)(nil),                      // 19: cerbos.response.v1.ListSchemasResponse
+	(*GetSchemaResponse)(nil),                        // 20: cerbos.response.v1.GetSchemaResponse
+	(*DeleteSchemaResponse)(nil),                     // 21: cerbos.response.v1.DeleteSchemaResponse
+	(*ReloadStoreResponse)(nil),                      // 22: cerbos.response.v1.ReloadStoreResponse
+	(*PlanResourcesResponse_Meta)(nil),               // 23: cerbos.response.v1.PlanResourcesResponse.Meta
+	(*CheckResourceSetResponse_ActionEffectMap)(nil), // 24: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
+	(*CheckResourceSetResponse_Meta)(nil),            // 25: cerbos.response.v1.CheckResourceSetResponse.Meta
+	nil,                                              // 26: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
+	nil,                                              // 27: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
+	(*CheckResourceSetResponse_Meta_EffectMeta)(nil), // 28: cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
+	(*CheckResourceSetResponse_Meta_ActionMeta)(nil), // 29: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
+	nil, // 30: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
+	nil, // 31: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
+	(*CheckResourceBatchResponse_ActionEffectMap)(nil), // 32: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
+	nil, // 33: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
+	(*CheckResourcesResponse_ResultEntry)(nil),          // 34: cerbos.response.v1.CheckResourcesResponse.ResultEntry
+	(*CheckResourcesResponse_ResultEntry_Resource)(nil), // 35: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
+	(*CheckResourcesResponse_ResultEntry_Meta)(nil),     // 36: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
+	nil, // 37: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
+	(*CheckResourcesResponse_ResultEntry_Meta_EffectMeta)(nil), // 38: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
+	nil,                                    // 39: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
+	(*PlaygroundFailure_ErrorDetails)(nil), // 40: cerbos.response.v1.PlaygroundFailure.ErrorDetails
+	(*PlaygroundFailure_Error)(nil),        // 41: cerbos.response.v1.PlaygroundFailure.Error
+	(*PlaygroundTestResponse_TestResults)(nil),        // 42: cerbos.response.v1.PlaygroundTestResponse.TestResults
+	(*PlaygroundEvaluateResponse_EvalResult)(nil),     // 43: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
+	(*PlaygroundEvaluateResponse_EvalResultList)(nil), // 44: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
+	(*InspectPoliciesResponse_Variable)(nil),          // 45: cerbos.response.v1.InspectPoliciesResponse.Variable
+	(*InspectPoliciesResponse_Result)(nil),            // 46: cerbos.response.v1.InspectPoliciesResponse.Result
+	nil,                                               // 47: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
+	(*v1.PlanResourcesFilter)(nil),                    // 48: cerbos.engine.v1.PlanResourcesFilter
+	(*v11.ValidationError)(nil),                       // 49: cerbos.schema.v1.ValidationError
+	(*emptypb.Empty)(nil),                             // 50: google.protobuf.Empty
+	(*v12.AccessLogEntry)(nil),                        // 51: cerbos.audit.v1.AccessLogEntry
+	(*v12.DecisionLogEntry)(nil),                      // 52: cerbos.audit.v1.DecisionLogEntry
+	(*v13.Policy)(nil),                                // 53: cerbos.policy.v1.Policy
+	(*v11.Schema)(nil),                                // 54: cerbos.schema.v1.Schema
+	(v14.Effect)(0),                                   // 55: cerbos.effect.v1.Effect
+	(*v1.OutputEntry)(nil),                            // 56: cerbos.engine.v1.OutputEntry
+	(*v13.TestResults)(nil),                           // 57: cerbos.policy.v1.TestResults
 }
 var file_cerbos_response_v1_response_proto_depIdxs = []int32{
-	46, // 0: cerbos.response.v1.PlanResourcesResponse.filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	22, // 1: cerbos.response.v1.PlanResourcesResponse.meta:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta
-	47, // 2: cerbos.response.v1.PlanResourcesResponse.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	25, // 3: cerbos.response.v1.CheckResourceSetResponse.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
-	24, // 4: cerbos.response.v1.CheckResourceSetResponse.meta:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta
-	31, // 5: cerbos.response.v1.CheckResourceBatchResponse.results:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
-	33, // 6: cerbos.response.v1.CheckResourcesResponse.results:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry
-	40, // 7: cerbos.response.v1.PlaygroundFailure.errors:type_name -> cerbos.response.v1.PlaygroundFailure.Error
-	4,  // 8: cerbos.response.v1.PlaygroundValidateResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
-	48, // 9: cerbos.response.v1.PlaygroundValidateResponse.success:type_name -> google.protobuf.Empty
-	4,  // 10: cerbos.response.v1.PlaygroundTestResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
-	41, // 11: cerbos.response.v1.PlaygroundTestResponse.success:type_name -> cerbos.response.v1.PlaygroundTestResponse.TestResults
-	4,  // 12: cerbos.response.v1.PlaygroundEvaluateResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
-	43, // 13: cerbos.response.v1.PlaygroundEvaluateResponse.success:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
-	4,  // 14: cerbos.response.v1.PlaygroundProxyResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
-	1,  // 15: cerbos.response.v1.PlaygroundProxyResponse.check_resource_set:type_name -> cerbos.response.v1.CheckResourceSetResponse
-	2,  // 16: cerbos.response.v1.PlaygroundProxyResponse.check_resource_batch:type_name -> cerbos.response.v1.CheckResourceBatchResponse
-	0,  // 17: cerbos.response.v1.PlaygroundProxyResponse.plan_resources:type_name -> cerbos.response.v1.PlanResourcesResponse
-	3,  // 18: cerbos.response.v1.PlaygroundProxyResponse.check_resources:type_name -> cerbos.response.v1.CheckResourcesResponse
-	48, // 19: cerbos.response.v1.AddOrUpdatePolicyResponse.success:type_name -> google.protobuf.Empty
-	49, // 20: cerbos.response.v1.ListAuditLogEntriesResponse.access_log_entry:type_name -> cerbos.audit.v1.AccessLogEntry
-	50, // 21: cerbos.response.v1.ListAuditLogEntriesResponse.decision_log_entry:type_name -> cerbos.audit.v1.DecisionLogEntry
-	51, // 22: cerbos.response.v1.GetPolicyResponse.policies:type_name -> cerbos.policy.v1.Policy
-	45, // 23: cerbos.response.v1.InspectPoliciesResponse.results:type_name -> cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
-	52, // 24: cerbos.response.v1.GetSchemaResponse.schemas:type_name -> cerbos.schema.v1.Schema
-	26, // 25: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
-	47, // 26: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	29, // 27: cerbos.response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
-	23, // 28: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
-	53, // 29: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	30, // 30: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
-	28, // 31: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
-	27, // 32: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
-	32, // 33: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
-	47, // 34: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	53, // 35: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	34, // 36: cerbos.response.v1.CheckResourcesResponse.ResultEntry.resource:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
-	36, // 37: cerbos.response.v1.CheckResourcesResponse.ResultEntry.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
-	47, // 38: cerbos.response.v1.CheckResourcesResponse.ResultEntry.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	35, // 39: cerbos.response.v1.CheckResourcesResponse.ResultEntry.meta:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
-	54, // 40: cerbos.response.v1.CheckResourcesResponse.ResultEntry.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	38, // 41: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
-	53, // 42: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	37, // 43: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
-	39, // 44: cerbos.response.v1.PlaygroundFailure.Error.details:type_name -> cerbos.response.v1.PlaygroundFailure.ErrorDetails
-	55, // 45: cerbos.response.v1.PlaygroundTestResponse.TestResults.results:type_name -> cerbos.policy.v1.TestResults
-	53, // 46: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> cerbos.effect.v1.Effect
-	47, // 47: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	42, // 48: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
-	47, // 49: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	54, // 50: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	44, // 51: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
-	52, // [52:52] is the sub-list for method output_type
-	52, // [52:52] is the sub-list for method input_type
-	52, // [52:52] is the sub-list for extension type_name
-	52, // [52:52] is the sub-list for extension extendee
-	0,  // [0:52] is the sub-list for field type_name
+	48, // 0: cerbos.response.v1.PlanResourcesResponse.filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	23, // 1: cerbos.response.v1.PlanResourcesResponse.meta:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta
+	49, // 2: cerbos.response.v1.PlanResourcesResponse.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	26, // 3: cerbos.response.v1.CheckResourceSetResponse.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
+	25, // 4: cerbos.response.v1.CheckResourceSetResponse.meta:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta
+	32, // 5: cerbos.response.v1.CheckResourceBatchResponse.results:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
+	34, // 6: cerbos.response.v1.CheckResourcesResponse.results:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry
+	41, // 7: cerbos.response.v1.PlaygroundFailure.errors:type_name -> cerbos.response.v1.PlaygroundFailure.Error
+	5,  // 8: cerbos.response.v1.PlaygroundValidateResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
+	50, // 9: cerbos.response.v1.PlaygroundValidateResponse.success:type_name -> google.protobuf.Empty
+	5,  // 10: cerbos.response.v1.PlaygroundTestResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
+	42, // 11: cerbos.response.v1.PlaygroundTestResponse.success:type_name -> cerbos.response.v1.PlaygroundTestResponse.TestResults
+	5,  // 12: cerbos.response.v1.PlaygroundEvaluateResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
+	44, // 13: cerbos.response.v1.PlaygroundEvaluateResponse.success:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
+	5,  // 14: cerbos.response.v1.PlaygroundProxyResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
+	2,  // 15: cerbos.response.v1.PlaygroundProxyResponse.check_resource_set:type_name -> cerbos.response.v1.CheckResourceSetResponse
+	3,  // 16: cerbos.response.v1.PlaygroundProxyResponse.check_resource_batch:type_name -> cerbos.response.v1.CheckResourceBatchResponse
+	1,  // 17: cerbos.response.v1.PlaygroundProxyResponse.plan_resources:type_name -> cerbos.response.v1.PlanResourcesResponse
+	4,  // 18: cerbos.response.v1.PlaygroundProxyResponse.check_resources:type_name -> cerbos.response.v1.CheckResourcesResponse
+	50, // 19: cerbos.response.v1.AddOrUpdatePolicyResponse.success:type_name -> google.protobuf.Empty
+	51, // 20: cerbos.response.v1.ListAuditLogEntriesResponse.access_log_entry:type_name -> cerbos.audit.v1.AccessLogEntry
+	52, // 21: cerbos.response.v1.ListAuditLogEntriesResponse.decision_log_entry:type_name -> cerbos.audit.v1.DecisionLogEntry
+	53, // 22: cerbos.response.v1.GetPolicyResponse.policies:type_name -> cerbos.policy.v1.Policy
+	47, // 23: cerbos.response.v1.InspectPoliciesResponse.results:type_name -> cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
+	54, // 24: cerbos.response.v1.GetSchemaResponse.schemas:type_name -> cerbos.schema.v1.Schema
+	27, // 25: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
+	49, // 26: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	30, // 27: cerbos.response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
+	24, // 28: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
+	55, // 29: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	31, // 30: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
+	29, // 31: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
+	28, // 32: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
+	33, // 33: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
+	49, // 34: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	55, // 35: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	35, // 36: cerbos.response.v1.CheckResourcesResponse.ResultEntry.resource:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
+	37, // 37: cerbos.response.v1.CheckResourcesResponse.ResultEntry.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
+	49, // 38: cerbos.response.v1.CheckResourcesResponse.ResultEntry.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	36, // 39: cerbos.response.v1.CheckResourcesResponse.ResultEntry.meta:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
+	56, // 40: cerbos.response.v1.CheckResourcesResponse.ResultEntry.outputs:type_name -> cerbos.engine.v1.OutputEntry
+	39, // 41: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
+	55, // 42: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	38, // 43: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
+	40, // 44: cerbos.response.v1.PlaygroundFailure.Error.details:type_name -> cerbos.response.v1.PlaygroundFailure.ErrorDetails
+	57, // 45: cerbos.response.v1.PlaygroundTestResponse.TestResults.results:type_name -> cerbos.policy.v1.TestResults
+	55, // 46: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> cerbos.effect.v1.Effect
+	49, // 47: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	43, // 48: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
+	49, // 49: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	56, // 50: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.outputs:type_name -> cerbos.engine.v1.OutputEntry
+	0,  // 51: cerbos.response.v1.InspectPoliciesResponse.Variable.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.Variable.Kind
+	45, // 52: cerbos.response.v1.InspectPoliciesResponse.Result.variables:type_name -> cerbos.response.v1.InspectPoliciesResponse.Variable
+	46, // 53: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
+	54, // [54:54] is the sub-list for method output_type
+	54, // [54:54] is the sub-list for method input_type
+	54, // [54:54] is the sub-list for extension type_name
+	54, // [54:54] is the sub-list for extension extendee
+	0,  // [0:54] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_response_v1_response_proto_init() }
@@ -3707,6 +3903,18 @@ func file_cerbos_response_v1_response_proto_init() {
 			}
 		}
 		file_cerbos_response_v1_response_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*InspectPoliciesResponse_Variable); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_response_v1_response_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*InspectPoliciesResponse_Result); i {
 			case 0:
 				return &v.state
@@ -3747,13 +3955,14 @@ func file_cerbos_response_v1_response_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_response_v1_response_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   46,
+			NumEnums:      1,
+			NumMessages:   47,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cerbos_response_v1_response_proto_goTypes,
 		DependencyIndexes: file_cerbos_response_v1_response_proto_depIdxs,
+		EnumInfos:         file_cerbos_response_v1_response_proto_enumTypes,
 		MessageInfos:      file_cerbos_response_v1_response_proto_msgTypes,
 	}.Build()
 	File_cerbos_response_v1_response_proto = out.File

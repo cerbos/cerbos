@@ -170,8 +170,8 @@ curl -k -u cerbos:cerbosAdmin \
 GET /admin/policies/inspect
 ----
 
-Issue a GET request to the endpoint to list actions covered by the policies in the store. If the policy store supports
-filtering, you can optionally pass filter parameters to reduce the result set.
+Issue a GET request to the endpoint to list actions and variables covered by the policies in the store. If the policy
+store supports filtering, you can optionally pass filter parameters to reduce the result set.
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
 

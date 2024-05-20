@@ -1,0 +1,25 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request
+  variables:
+      import:
+        - common_variables
+  rules:
+    - actions: ["approve"]
+      roles:
+        - user
+      condition:
+        match:
+          expr: variables.missingVar || variables.commonMarkedResource
+      effect: EFFECT_ALLOW
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables
+  definitions:
+    commonMarkedResource: R.attr.markedResource

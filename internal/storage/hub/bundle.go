@@ -13,19 +13,20 @@ import (
 	"os"
 	"strings"
 
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/cache"
-	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/observability/metrics"
-	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/zipfs"
 	"go.uber.org/zap"
+
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/cache"
+	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/inspect"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 const (
@@ -236,32 +237,30 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 }
 
 func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	policyIDs, err := b.ListPolicyIDs(ctx, listParams)
+	fqns, err := b.ListPolicyIDs(ctx, listParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
 	}
 
-	if len(policyIDs) == 0 {
-		return nil, nil
-	}
-
-	results := make(map[string]*responsev1.InspectPoliciesResponse_Result)
-	for _, policyID := range policyIDs {
-		id := namer.GenModuleIDFromFQN(policyID)
+	ins := inspect.PolicySets()
+	for _, fqn := range fqns {
+		id := namer.GenModuleIDFromFQN(fqn)
 		idHex := id.HexStr()
 		fileName := policyDir + idHex
 
 		pset, err := b.loadPolicySet(idHex, fileName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load policy %s: %w", policyID, err)
+			return nil, fmt.Errorf("failed to load policy %s: %w", fqn, err)
 		}
 
-		actions := policy.ListPolicySetActions(pset)
-		if len(actions) > 0 {
-			results[namer.PolicyKeyFromFQN(pset.Fqn)] = &responsev1.InspectPoliciesResponse_Result{
-				Actions: actions,
-			}
+		if err = ins.Inspect(pset); err != nil {
+			return nil, fmt.Errorf("failed to inspect policy %s: %w", fqn, err)
 		}
+	}
+
+	results, err := ins.Results()
+	if err != nil {
+		return nil, err
 	}
 
 	return results, nil

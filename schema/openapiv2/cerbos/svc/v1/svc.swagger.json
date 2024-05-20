@@ -1166,6 +1166,18 @@
         }
       }
     },
+    "InspectPoliciesResponseVariableKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED",
+        "KIND_LOCAL",
+        "KIND_UNDEFINED",
+        "KIND_UNKNOWN"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
       "properties": {
@@ -2202,7 +2214,41 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Actions defined in the policy"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1InspectPoliciesResponseVariable"
+          },
+          "description": "Variables defined in the policy"
+        }
+      }
+    },
+    "v1InspectPoliciesResponseVariable": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable name defined in the policy."
+        },
+        "value": {
+          "type": "string",
+          "description": "Raw value of the variable defined in the policy."
+        },
+        "kind": {
+          "$ref": "#/definitions/InspectPoliciesResponseVariableKind",
+          "description": "Kind of the variable defined in the policy."
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the variable defined in the policy. Only exists if the kind is imported."
+        },
+        "used": {
+          "type": "boolean",
+          "description": "Whether the variable is used in a condition."
         }
       }
     },

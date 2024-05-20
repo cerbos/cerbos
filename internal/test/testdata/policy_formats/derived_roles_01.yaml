@@ -3,6 +3,9 @@
 apiVersion: "api.cerbos.dev/v1"
 derivedRoles:
   name: my_derived_roles
+  variables:
+    local:
+      geography: request.resource.attr.geography
   definitions:
     - name: admin
       parentRoles: ["admin"]

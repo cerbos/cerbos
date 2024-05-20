@@ -22,6 +22,7 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/parser"
@@ -664,18 +665,16 @@ func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.List
 		return nil, nil
 	}
 
-	results := make(map[string]*responsev1.InspectPoliciesResponse_Result, len(policyIDs))
-	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(p *policy.Wrapper) error {
-		actions := policy.ListActions(p.Policy)
-		if len(actions) > 0 {
-			results[namer.PolicyKeyFromFQN(p.FQN)] = &responsev1.InspectPoliciesResponse_Result{
-				Actions: actions,
-			}
-		}
-
-		return nil
+	ins := inspect.Policies()
+	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(wp *policy.Wrapper) error {
+		return ins.Inspect(wp.Policy)
 	}, policyIDs...); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	results, err := ins.Results(ctx, s.LoadPolicy)
+	if err != nil {
+		return nil, err
 	}
 
 	return results, nil

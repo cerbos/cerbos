@@ -1,0 +1,19 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  version: default
+  principal: john
+  variables:
+    local:
+      someVar: '"someVar"'
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request
+  variables:
+    local:
+      someVar: '"someVar"'

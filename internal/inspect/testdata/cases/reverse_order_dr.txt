@@ -1,0 +1,26 @@
+-- a.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: common_roles
+  variables:
+    import:
+      - common_variables
+    local:
+      derivedRoleVariable: R.attr.isDerivedRoleVar
+  definitions:
+    - name: approved_user
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: "variables.derivedRoleVariable && V.commonTeams"
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: common_variables
+  definitions:
+    commonMarkedResource: R.attr.markedResource
+    commonLabel: '"dude"'
+    commonTeams: '["red", "blue"]'

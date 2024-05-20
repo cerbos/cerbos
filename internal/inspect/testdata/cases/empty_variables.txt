@@ -1,0 +1,27 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  version: default
+  principal: john
+  rules:
+    - resource: basicResource
+      actions:
+        - action: "*"
+          effect: EFFECT_DENY
+          condition:
+            match:
+              expr: request.resource.attr.someAttr
+
+-- b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: leave_request
+  rules:
+    - actions:
+        - approve
+      effect: EFFECT_ALLOW
+      roles:
+        - user
