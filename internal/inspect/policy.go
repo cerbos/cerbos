@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"github.com/cerbos/cerbos/internal/storage"
 
 	"github.com/google/cel-go/common/ast"
 
@@ -127,25 +128,25 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 		}
 
 		if loadPolicy != nil {
-			for _, importedPolicyID := range missingPolicies {
-				importedPolicy, err := loadPolicy(ctx, importedPolicyID)
-				if err != nil {
-					continue
-				}
-
-				importedVariables := policy.ListVariables(importedPolicy[0].Policy)
+			if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, loadPolicy, func(wrapper *policy.Wrapper) error {
+				importedVariables := policy.ListVariables(wrapper.Policy)
 				for importedVarName, importedVariable := range importedVariables {
 					if _, ok := variables[importedVarName]; ok {
 						pol.results[policyID].Variables = append(pol.results[policyID].Variables, &responsev1.InspectPoliciesResponse_Variable{
 							Name:   importedVarName,
 							Value:  importedVariable.Value,
 							Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED,
-							Source: importedPolicyID,
+							Source: namer.PolicyKeyFromFQN(wrapper.FQN),
 							Used:   true,
 						})
+
 						variables[importedVarName] = true
 					}
 				}
+
+				return nil
+			}, missingPolicies...); err != nil {
+				continue
 			}
 		}
 

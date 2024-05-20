@@ -467,7 +467,7 @@ func (idx *index) InspectPolicies(ctx context.Context) (map[string]*responsev1.I
 		return nil, fmt.Errorf("failed to load policy: %w", err)
 	}
 
-	return ins.Results(ctx, nil)
+	return ins.Results(ctx, idx.LoadPolicy)
 }
 
 func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
