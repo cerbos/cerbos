@@ -932,6 +932,14 @@ func cerbos_request_v1_InspectPoliciesRequest_hashpb_sum(m *InspectPoliciesReque
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersionRegexp()))
 
 	}
+	if _, ok := ignore["cerbos.request.v1.InspectPoliciesRequest.id"]; !ok {
+		if len(m.Id) > 0 {
+			for _, v := range m.Id {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 }
 
 func cerbos_request_v1_ListAuditLogEntriesRequest_TimeRange_hashpb_sum(m *ListAuditLogEntriesRequest_TimeRange, hasher hash.Hash, ignore map[string]struct{}) {

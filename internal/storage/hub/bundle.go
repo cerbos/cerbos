@@ -236,14 +236,9 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	return rps, nil
 }
 
-func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	fqns, err := b.ListPolicyIDs(ctx, listParams)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list policies: %w", err)
-	}
-
+func (b *Bundle) InspectPolicies(_ context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	ins := inspect.PolicySets()
-	for _, fqn := range fqns {
+	for _, fqn := range params.IDs {
 		id := namer.GenModuleIDFromFQN(fqn)
 		idHex := id.HexStr()
 		fileName := policyDir + idHex
@@ -258,12 +253,7 @@ func (b *Bundle) InspectPolicies(ctx context.Context, listParams storage.ListPol
 		}
 	}
 
-	results, err := ins.Results()
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	return ins.Results()
 }
 
 func (b *Bundle) ListPolicyIDs(_ context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {

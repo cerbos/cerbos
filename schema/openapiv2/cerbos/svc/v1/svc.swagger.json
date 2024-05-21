@@ -223,6 +223,17 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "id",
+            "description": "For blob, disk, git stores use file name (\u003cfilename\u003e.yaml). For mysql, postgres, sqlite3 use id (\u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e) of the policy",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [

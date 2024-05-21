@@ -175,6 +175,8 @@ store supports filtering, you can optionally pass filter parameters to reduce th
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
 
+Use `id` query parameter to provide list of policy IDs to inspect.
+
 Use `nameRegexp`, `scopeRegexp` and `versionRegexp` to filter using the policy name, scope or version with
 case-insensitive regular expressions.
 
@@ -182,6 +184,12 @@ case-insensitive regular expressions.
 ----
 curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policies/inspect'
+----
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policies/inspect?id=x.yaml&id=y.yaml
 ----
 
 [source,shell]

@@ -47,7 +47,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
+	InspectPolicies(ctx context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
@@ -655,29 +655,41 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	policyIDs, err := s.ListPolicyIDs(ctx, listParams)
+func (s *dbStorage) InspectPolicies(ctx context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	policyIDs, err := s.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{
+		NameRegexp:      params.NameRegexp,
+		ScopeRegexp:     params.ScopeRegexp,
+		VersionRegexp:   params.VersionRegexp,
+		IncludeDisabled: params.IncludeDisabled,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list policies: %w", err)
 	}
 
-	if len(policyIDs) == 0 {
-		return nil, nil
+	var filteredPolicyIDs []string
+	if len(params.IDs) == 0 {
+		filteredPolicyIDs = policyIDs
+	} else {
+		idLUT := make(map[string]struct{}, len(params.IDs))
+		for _, pk := range params.IDs {
+			idLUT[pk] = struct{}{}
+		}
+
+		for _, policyKey := range policyIDs {
+			if _, ok := idLUT[policyKey]; ok {
+				filteredPolicyIDs = append(filteredPolicyIDs, policyKey)
+			}
+		}
 	}
 
 	ins := inspect.Policies()
 	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(wp *policy.Wrapper) error {
 		return ins.Inspect(wp.Policy)
-	}, policyIDs...); err != nil {
+	}, filteredPolicyIDs...); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
-	results, err := ins.Results(ctx, s.LoadPolicy)
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	return ins.Results(ctx, s.LoadPolicy)
 }
 
 func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPolicyIDsParams) ([]string, error) {

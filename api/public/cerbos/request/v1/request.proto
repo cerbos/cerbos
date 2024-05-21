@@ -639,6 +639,23 @@ message InspectPoliciesRequest {
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by version with regexp"}
   ];
+  repeated string id = 5 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).repeated = {
+      unique: true,
+      max_items: 25,
+      items {
+        string {
+          min_len: 1,
+          max_len: 1280
+        }
+      }
+    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
+      example: "\"principal.sarah.vdefault\""
+    }
+  ];
 }
 
 message AddOrUpdateSchemaRequest {

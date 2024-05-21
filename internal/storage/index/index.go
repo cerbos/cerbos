@@ -53,7 +53,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
-	InspectPolicies(context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
+	InspectPolicies(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(context.Context) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
@@ -450,20 +450,11 @@ func (idx *index) Inspect() map[string]meta {
 	return entries
 }
 
-func (idx *index) InspectPolicies(ctx context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	policyIDs, err := idx.ListPolicyIDs(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list policies: %w", err)
-	}
-
-	if len(policyIDs) == 0 {
-		return nil, nil
-	}
-
+func (idx *index) InspectPolicies(ctx context.Context, file ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	ins := inspect.Policies()
 	if err := storage.BatchLoadPolicy(ctx, 1, idx.LoadPolicy, func(wp *policy.Wrapper) error {
 		return ins.Inspect(wp.Policy)
-	}, policyIDs...); err != nil {
+	}, file...); err != nil {
 		return nil, fmt.Errorf("failed to load policy: %w", err)
 	}
 

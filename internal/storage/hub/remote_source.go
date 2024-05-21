@@ -421,7 +421,7 @@ func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 	return s.bundle.GetFirstMatch(ctx, candidates)
 }
 
-func (s *RemoteSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+func (s *RemoteSource) InspectPolicies(ctx context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 

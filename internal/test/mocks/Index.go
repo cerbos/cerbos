@@ -532,9 +532,16 @@ func (_c *Index_GetFirstMatch_Call) RunAndReturn(run func([]namer.ModuleID) (*po
 	return _c
 }
 
-// InspectPolicies provides a mock function with given fields: _a0
-func (_m *Index) InspectPolicies(_a0 context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	ret := _m.Called(_a0)
+// InspectPolicies provides a mock function with given fields: _a0, _a1
+func (_m *Index) InspectPolicies(_a0 context.Context, _a1 ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	_va := make([]interface{}, len(_a1))
+	for _i := range _a1 {
+		_va[_i] = _a1[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _a0)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InspectPolicies")
@@ -542,19 +549,19 @@ func (_m *Index) InspectPolicies(_a0 context.Context) (map[string]*responsev1.In
 
 	var r0 map[string]*responsev1.InspectPoliciesResponse_Result
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error)); ok {
-		return rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)); ok {
+		return rf(_a0, _a1...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) map[string]*responsev1.InspectPoliciesResponse_Result); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) map[string]*responsev1.InspectPoliciesResponse_Result); ok {
+		r0 = rf(_a0, _a1...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]*responsev1.InspectPoliciesResponse_Result)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
+		r1 = rf(_a0, _a1...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -569,13 +576,21 @@ type Index_InspectPolicies_Call struct {
 
 // InspectPolicies is a helper method to define mock.On call
 //   - _a0 context.Context
-func (_e *Index_Expecter) InspectPolicies(_a0 interface{}) *Index_InspectPolicies_Call {
-	return &Index_InspectPolicies_Call{Call: _e.mock.On("InspectPolicies", _a0)}
+//   - _a1 ...string
+func (_e *Index_Expecter) InspectPolicies(_a0 interface{}, _a1 ...interface{}) *Index_InspectPolicies_Call {
+	return &Index_InspectPolicies_Call{Call: _e.mock.On("InspectPolicies",
+		append([]interface{}{_a0}, _a1...)...)}
 }
 
-func (_c *Index_InspectPolicies_Call) Run(run func(_a0 context.Context)) *Index_InspectPolicies_Call {
+func (_c *Index_InspectPolicies_Call) Run(run func(_a0 context.Context, _a1 ...string)) *Index_InspectPolicies_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
 	})
 	return _c
 }
@@ -585,7 +600,7 @@ func (_c *Index_InspectPolicies_Call) Return(_a0 map[string]*responsev1.InspectP
 	return _c
 }
 
-func (_c *Index_InspectPolicies_Call) RunAndReturn(run func(context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error)) *Index_InspectPolicies_Call {
+func (_c *Index_InspectPolicies_Call) RunAndReturn(run func(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)) *Index_InspectPolicies_Call {
 	_c.Call.Return(run)
 	return _c
 }

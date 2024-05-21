@@ -105,8 +105,8 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 	return s.idx.GetDependents(ids...)
 }
 
-func (s *Store) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	return s.idx.InspectPolicies(ctx)
+func (s *Store) InspectPolicies(ctx context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	return s.idx.InspectPolicies(ctx, params.IDs...)
 }
 
 func (s *Store) ListPolicyIDs(ctx context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
