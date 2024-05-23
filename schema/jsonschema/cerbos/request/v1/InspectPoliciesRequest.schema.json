@@ -4,21 +4,19 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "maxLength": 1280,
-        "minLength": 1
-      },
-      "maxItems": 25,
-      "uniqueItems": true
-    },
     "includeDisabled": {
       "type": "boolean"
     },
     "nameRegexp": {
       "type": "string"
+    },
+    "policyId": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "maxItems": 25
     },
     "scopeRegexp": {
       "type": "string"

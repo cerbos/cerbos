@@ -54,7 +54,7 @@ type Index interface {
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 	InspectPolicies(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
-	ListPolicyIDs(context.Context) ([]string, error)
+	ListPolicyIDs(context.Context, ...string) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
@@ -461,13 +461,27 @@ func (idx *index) InspectPolicies(ctx context.Context, file ...string) (map[stri
 	return ins.Results(ctx, idx.LoadPolicy)
 }
 
-func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
+func (idx *index) ListPolicyIDs(_ context.Context, filteredFiles ...string) ([]string, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
+	var lut map[string]struct{}
+	if len(filteredFiles) > 0 {
+		lut = make(map[string]struct{}, len(filteredFiles))
+		for _, f := range filteredFiles {
+			lut[f] = struct{}{}
+		}
+	}
+
 	entries := make([]string, 0, len(idx.modIDToFile))
 	for _, f := range idx.modIDToFile {
-		entries = append(entries, f)
+		if len(filteredFiles) > 0 {
+			if _, ok := lut[f]; ok {
+				entries = append(entries, f)
+			}
+		} else {
+			entries = append(entries, f)
+		}
 	}
 
 	sort.Strings(entries)

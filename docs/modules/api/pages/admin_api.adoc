@@ -136,6 +136,8 @@ Issue a GET request to the endpoint to list the policies available in the store.
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
 
+Use `policyId` query parameter to provide a list of policy IDs to be included in the result.
+
 Use `nameRegexp`, `scopeRegexp` and `versionRegexp` to filter using the policy name, scope or version with case insensitive regular expressions.
 
 [source,shell]
@@ -175,7 +177,7 @@ store supports filtering, you can optionally pass filter parameters to reduce th
 
 Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
 
-Use `id` query parameter to provide list of policy IDs to inspect.
+Use `policyId` query parameter to provide a list of policy IDs to inspect.
 
 Use `nameRegexp`, `scopeRegexp` and `versionRegexp` to filter using the policy name, scope or version with
 case-insensitive regular expressions.

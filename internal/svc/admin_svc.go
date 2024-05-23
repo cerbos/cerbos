@@ -134,8 +134,8 @@ func (cas *CerbosAdminService) InspectPolicies(ctx context.Context, req *request
 	}
 
 	res, err, _ := cas.sfGroup.Do("inspect_policies", func() (any, error) {
-		filterParams := storage.InspectPoliciesParams{
-			IDs:             req.Id,
+		filterParams := storage.ListPolicyIDsParams{
+			IDs:             req.PolicyId,
 			NameRegexp:      req.NameRegexp,
 			ScopeRegexp:     req.ScopeRegexp,
 			VersionRegexp:   req.VersionRegexp,
@@ -182,6 +182,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		ScopeRegexp:     req.ScopeRegexp,
 		VersionRegexp:   req.VersionRegexp,
 		IncludeDisabled: req.IncludeDisabled,
+		IDs:             req.PolicyId,
 	}
 
 	policyIDs, err := cas.store.ListPolicyIDs(context.Background(), filterParams)

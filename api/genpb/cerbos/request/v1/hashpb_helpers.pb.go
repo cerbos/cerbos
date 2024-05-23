@@ -932,9 +932,9 @@ func cerbos_request_v1_InspectPoliciesRequest_hashpb_sum(m *InspectPoliciesReque
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersionRegexp()))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.InspectPoliciesRequest.id"]; !ok {
-		if len(m.Id) > 0 {
-			for _, v := range m.Id {
+	if _, ok := ignore["cerbos.request.v1.InspectPoliciesRequest.policy_id"]; !ok {
+		if len(m.PolicyId) > 0 {
+			for _, v := range m.PolicyId {
 				_, _ = hasher.Write(protowire.AppendString(nil, v))
 
 			}
@@ -1002,6 +1002,14 @@ func cerbos_request_v1_ListPoliciesRequest_hashpb_sum(m *ListPoliciesRequest, ha
 	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.version_regexp"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersionRegexp()))
 
+	}
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.policy_id"]; !ok {
+		if len(m.PolicyId) > 0 {
+			for _, v := range m.PolicyId {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
 	}
 }
 

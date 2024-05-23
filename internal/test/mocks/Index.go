@@ -605,9 +605,16 @@ func (_c *Index_InspectPolicies_Call) RunAndReturn(run func(context.Context, ...
 	return _c
 }
 
-// ListPolicyIDs provides a mock function with given fields: _a0
-func (_m *Index) ListPolicyIDs(_a0 context.Context) ([]string, error) {
-	ret := _m.Called(_a0)
+// ListPolicyIDs provides a mock function with given fields: _a0, _a1
+func (_m *Index) ListPolicyIDs(_a0 context.Context, _a1 ...string) ([]string, error) {
+	_va := make([]interface{}, len(_a1))
+	for _i := range _a1 {
+		_va[_i] = _a1[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _a0)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPolicyIDs")
@@ -615,19 +622,19 @@ func (_m *Index) ListPolicyIDs(_a0 context.Context) ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) ([]string, error)); ok {
+		return rf(_a0, _a1...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) []string); ok {
+		r0 = rf(_a0, _a1...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
+		r1 = rf(_a0, _a1...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -642,13 +649,21 @@ type Index_ListPolicyIDs_Call struct {
 
 // ListPolicyIDs is a helper method to define mock.On call
 //   - _a0 context.Context
-func (_e *Index_Expecter) ListPolicyIDs(_a0 interface{}) *Index_ListPolicyIDs_Call {
-	return &Index_ListPolicyIDs_Call{Call: _e.mock.On("ListPolicyIDs", _a0)}
+//   - _a1 ...string
+func (_e *Index_Expecter) ListPolicyIDs(_a0 interface{}, _a1 ...interface{}) *Index_ListPolicyIDs_Call {
+	return &Index_ListPolicyIDs_Call{Call: _e.mock.On("ListPolicyIDs",
+		append([]interface{}{_a0}, _a1...)...)}
 }
 
-func (_c *Index_ListPolicyIDs_Call) Run(run func(_a0 context.Context)) *Index_ListPolicyIDs_Call {
+func (_c *Index_ListPolicyIDs_Call) Run(run func(_a0 context.Context, _a1 ...string)) *Index_ListPolicyIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		variadicArgs := make([]string, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
 	})
 	return _c
 }
@@ -658,7 +673,7 @@ func (_c *Index_ListPolicyIDs_Call) Return(_a0 []string, _a1 error) *Index_ListP
 	return _c
 }
 
-func (_c *Index_ListPolicyIDs_Call) RunAndReturn(run func(context.Context) ([]string, error)) *Index_ListPolicyIDs_Call {
+func (_c *Index_ListPolicyIDs_Call) RunAndReturn(run func(context.Context, ...string) ([]string, error)) *Index_ListPolicyIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }

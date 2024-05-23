@@ -24,6 +24,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -262,6 +263,14 @@ func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies 
 
 	filtered := []P{}
 
+	var lut map[string]struct{}
+	if len(params.IDs) > 0 {
+		lut = make(map[string]struct{})
+		for _, id := range params.IDs {
+			lut[id] = struct{}{}
+		}
+	}
+
 	c := util.NewRegexpCache()
 	for _, p := range policies {
 		var wrapped policy.Wrapper
@@ -292,6 +301,12 @@ func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies 
 			r, err := c.GetCompiledExpr(params.VersionRegexp)
 			require.NoError(t, err)
 			if !r.MatchString(wrapped.Version) {
+				continue
+			}
+		}
+
+		if len(params.IDs) > 0 {
+			if _, ok := lut[namer.PolicyKey(wrapped.Policy)]; !ok {
 				continue
 			}
 		}

@@ -236,7 +236,7 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	return rps, nil
 }
 
-func (b *Bundle) InspectPolicies(_ context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+func (b *Bundle) InspectPolicies(_ context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	ins := inspect.PolicySets()
 	for _, fqn := range params.IDs {
 		id := namer.GenModuleIDFromFQN(fqn)
@@ -256,13 +256,24 @@ func (b *Bundle) InspectPolicies(_ context.Context, params storage.InspectPolici
 	return ins.Results()
 }
 
-func (b *Bundle) ListPolicyIDs(_ context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
-	output := make([]string, len(b.manifest.PolicyIndex))
+func (b *Bundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
+	var lut map[string]struct{}
+	if len(params.IDs) > 0 {
+		lut = make(map[string]struct{}, len(params.IDs))
+		for _, id := range params.IDs {
+			lut[id] = struct{}{}
+		}
+	}
 
-	i := 0
+	output := make([]string, 0, len(b.manifest.PolicyIndex))
 	for fqn := range b.manifest.PolicyIndex {
-		output[i] = fqn
-		i++
+		if len(params.IDs) > 0 {
+			if _, ok := lut[fqn]; ok {
+				output = append(output, fqn)
+			}
+		} else {
+			output = append(output, fqn)
+		}
 	}
 
 	return output, nil

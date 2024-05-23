@@ -47,7 +47,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	InspectPolicies(ctx context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
+	InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
@@ -655,71 +655,14 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) InspectPolicies(ctx context.Context, params storage.InspectPoliciesParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	policyIDs, err := s.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{
-		NameRegexp:      params.NameRegexp,
-		ScopeRegexp:     params.ScopeRegexp,
-		VersionRegexp:   params.VersionRegexp,
-		IncludeDisabled: params.IncludeDisabled,
-	})
+func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	whereExprs, postFilters, err := s.whereExprAndPostFilters(listParams)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list policies: %w", err)
+		return nil, err
 	}
 
-	var filteredPolicyIDs []string
-	if len(params.IDs) == 0 {
-		filteredPolicyIDs = policyIDs
-	} else {
-		idLUT := make(map[string]struct{}, len(params.IDs))
-		for _, pk := range params.IDs {
-			idLUT[pk] = struct{}{}
-		}
-
-		for _, policyKey := range policyIDs {
-			if _, ok := idLUT[policyKey]; ok {
-				filteredPolicyIDs = append(filteredPolicyIDs, policyKey)
-			}
-		}
-	}
-
-	ins := inspect.Policies()
-	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(wp *policy.Wrapper) error {
-		return ins.Inspect(wp.Policy)
-	}, filteredPolicyIDs...); err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
-	}
-
-	return ins.Results(ctx, s.LoadPolicy)
-}
-
-func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPolicyIDsParams) ([]string, error) {
 	var policyCoords []namer.PolicyCoords
-	var whereExprs []exp.Expression
-	var postFilters []postRegexpFilter
-
-	if !listParams.IncludeDisabled {
-		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
-	}
-
-	if listParams.NameRegexp != "" {
-		if err := s.updateRegexpFilters(listParams.NameRegexp, PolicyTblNameCol, &whereExprs, &postFilters); err != nil {
-			return nil, err
-		}
-	}
-
-	if listParams.ScopeRegexp != "" {
-		if err := s.updateRegexpFilters(listParams.ScopeRegexp, PolicyTblScopeCol, &whereExprs, &postFilters); err != nil {
-			return nil, err
-		}
-	}
-
-	if listParams.VersionRegexp != "" {
-		if err := s.updateRegexpFilters(listParams.VersionRegexp, PolicyTblVerCol, &whereExprs, &postFilters); err != nil {
-			return nil, err
-		}
-	}
-
-	err := s.db.From(PolicyTbl).
+	if err := s.db.From(PolicyTbl).
 		Select(
 			goqu.C(PolicyTblKindCol),
 			goqu.C(PolicyTblNameCol),
@@ -734,8 +677,50 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPo
 			goqu.C(PolicyTblScopeCol).Asc(),
 		).
 		Executor().
-		ScanStructsContext(ctx, &policyCoords)
+		ScanStructsContext(ctx, &policyCoords); err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "InspectPolicies", err)
+	}
+
+	policyIDs := make([]string, 0, len(policyCoords))
+	for _, pc := range policyCoords {
+		if checkPostFilters(pc, postFilters) {
+			policyIDs = append(policyIDs, pc.PolicyKey())
+		}
+	}
+
+	ins := inspect.Policies()
+	if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, s.LoadPolicy, func(wp *policy.Wrapper) error {
+		return ins.Inspect(wp.Policy)
+	}, policyIDs...); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	return ins.Results(ctx, s.LoadPolicy)
+}
+
+func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPolicyIDsParams) ([]string, error) {
+	whereExprs, postFilters, err := s.whereExprAndPostFilters(listParams)
 	if err != nil {
+		return nil, err
+	}
+
+	var policyCoords []namer.PolicyCoords
+	if err = s.db.From(PolicyTbl).
+		Select(
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+		).
+		Where(whereExprs...).
+		Order(
+			goqu.C(PolicyTblKindCol).Asc(),
+			goqu.C(PolicyTblNameCol).Asc(),
+			goqu.C(PolicyTblVerCol).Asc(),
+			goqu.C(PolicyTblScopeCol).Asc(),
+		).
+		Executor().
+		ScanStructsContext(ctx, &policyCoords); err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
 
@@ -752,6 +737,44 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context, listParams storage.ListPo
 type postRegexpFilter struct {
 	re  *regexp.Regexp
 	col string
+}
+
+func (s *dbStorage) whereExprAndPostFilters(listParams storage.ListPolicyIDsParams) (whereExprs []exp.Expression, postFilters []postRegexpFilter, err error) {
+	if !listParams.IncludeDisabled {
+		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
+	}
+
+	if listParams.NameRegexp != "" {
+		if err = s.updateRegexpFilters(listParams.NameRegexp, PolicyTblNameCol, &whereExprs, &postFilters); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if listParams.ScopeRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.ScopeRegexp, PolicyTblScopeCol, &whereExprs, &postFilters); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if listParams.VersionRegexp != "" {
+		if err := s.updateRegexpFilters(listParams.VersionRegexp, PolicyTblVerCol, &whereExprs, &postFilters); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if len(listParams.IDs) > 0 {
+		moduleIDs := make([]namer.ModuleID, len(listParams.IDs))
+		for i, pk := range listParams.IDs {
+			moduleIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
+		}
+
+		whereExprs = append(
+			whereExprs,
+			goqu.C(PolicyTblIDCol).In(moduleIDs),
+		)
+	}
+
+	return whereExprs, postFilters, nil
 }
 
 // updateRegexpFilters updates either `whereExprs` or `postFilters` in place, dependent on whether regexp support is enabled or not.

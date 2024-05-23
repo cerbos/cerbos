@@ -56,7 +56,7 @@ func runTests(have *hub.LocalSource, manifest *bundlev1.Manifest) func(*testing.
 		})
 
 		t.Run("inspectPolicies", func(t *testing.T) {
-			results, err := have.InspectPolicies(context.Background(), storage.InspectPoliciesParams{IncludeDisabled: true})
+			results, err := have.InspectPolicies(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err)
 
 			for policyKey, h := range results {
