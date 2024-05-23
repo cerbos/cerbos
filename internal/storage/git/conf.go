@@ -112,7 +112,7 @@ func (conf *Conf) Validate() (errs error) {
 				gitURL.Scheme = conf.Protocol
 				conf.URL = gitURL.String()
 			} else {
-				errs = multierr.Append(errs, fmt.Errorf("the URL scheme of storage.git.url (%s) should match stoage.git.protocol value (%s)", gitURL.Scheme, conf.Protocol))
+				errs = multierr.Append(errs, fmt.Errorf("the URL scheme of storage.git.url (%s) should match the storage.git.protocol value (%s)", gitURL.Scheme, conf.Protocol))
 			}
 		}
 
