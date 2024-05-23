@@ -44,7 +44,7 @@
       "items": {
         "$ref": "#/definitions/cerbos.schema.v1.Schema"
       },
-      "maxItems": 10,
+      "maxItems": 100,
       "minItems": 1
     }
   }

@@ -1493,7 +1493,7 @@
             "$ref": "#/definitions/v1Policy"
           },
           "description": "List of policies.",
-          "maxItems": 10,
+          "maxItems": 100,
           "minItems": 1
         }
       },
@@ -1522,7 +1522,7 @@
             "$ref": "#/definitions/schemav1Schema"
           },
           "description": "List of schemas.",
-          "maxItems": 10,
+          "maxItems": 100,
           "minItems": 1
         }
       },

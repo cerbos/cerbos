@@ -11,10 +11,8 @@
       "type": "array",
       "items": {
         "type": "string",
-        "maxLength": 1280,
         "minLength": 1
       },
-      "maxItems": 25,
       "minItems": 1,
       "uniqueItems": true
     }
