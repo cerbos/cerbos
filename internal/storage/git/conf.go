@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,14 +97,27 @@ func (conf *Conf) Key() string {
 }
 
 func (conf *Conf) Validate() (errs error) {
-	switch conf.Protocol {
-	case "ssh", "http", "https", "file":
-	default:
-		errs = multierr.Append(errs, fmt.Errorf("unknown git protocol: %s", conf.Protocol))
-	}
-
 	if conf.URL == "" {
 		errs = multierr.Append(errs, errors.New("git URL is required"))
+	}
+
+	switch conf.Protocol {
+	case "ssh":
+	case "http", "https", "file":
+		gitURL, err := url.Parse(conf.URL)
+		if err != nil {
+			errs = multierr.Append(errs, fmt.Errorf("invalid git URL: %w", err))
+		} else if gitURL.Scheme != conf.Protocol {
+			if gitURL.Scheme == "" {
+				gitURL.Scheme = conf.Protocol
+				conf.URL = gitURL.String()
+			} else {
+				errs = multierr.Append(errs, fmt.Errorf("the URL scheme of storage.git.url (%s) should match the storage.git.protocol value (%s)", gitURL.Scheme, conf.Protocol))
+			}
+		}
+
+	default:
+		errs = multierr.Append(errs, fmt.Errorf("unknown git protocol: %s", conf.Protocol))
 	}
 
 	if conf.CheckoutDir == "" {
