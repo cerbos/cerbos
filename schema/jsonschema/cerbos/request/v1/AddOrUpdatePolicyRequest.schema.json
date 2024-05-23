@@ -577,7 +577,7 @@
       "items": {
         "$ref": "#/definitions/cerbos.policy.v1.Policy"
       },
-      "maxItems": 10,
+      "maxItems": 100,
       "minItems": 1
     }
   }
