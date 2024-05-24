@@ -191,7 +191,7 @@ curl -k -u cerbos:cerbosAdmin \
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policies/inspect?id=x.yaml&id=y.yaml
+    'https://localhost:3592/admin/policies/inspect?policyId=x.yaml&id=y.yaml
 ----
 
 [source,shell]

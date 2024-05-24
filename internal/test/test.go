@@ -263,12 +263,9 @@ func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies 
 
 	filtered := []P{}
 
-	var lut map[string]struct{}
+	var ss util.StringSet
 	if len(params.IDs) > 0 {
-		lut = make(map[string]struct{})
-		for _, id := range params.IDs {
-			lut[id] = struct{}{}
-		}
+		ss = util.ToStringSet(params.IDs)
 	}
 
 	c := util.NewRegexpCache()
@@ -306,7 +303,7 @@ func FilterPolicies[P *policyv1.Policy | policy.Wrapper](t *testing.T, policies 
 		}
 
 		if len(params.IDs) > 0 {
-			if _, ok := lut[namer.PolicyKey(wrapped.Policy)]; !ok {
+			if !ss.Contains(namer.PolicyKey(wrapped.Policy)) {
 				continue
 			}
 		}

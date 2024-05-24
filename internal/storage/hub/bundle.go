@@ -13,6 +13,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cerbos/cerbos/internal/util"
+
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	"github.com/spf13/afero"
@@ -236,9 +238,19 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	return rps, nil
 }
 
-func (b *Bundle) InspectPolicies(_ context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+func (b *Bundle) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	var fqns []string
+	if len(params.IDs) == 0 {
+		var err error
+		if fqns, err = b.ListPolicyIDs(ctx, params); err != nil {
+			return nil, fmt.Errorf("failed to list policies: %w", err)
+		}
+	} else {
+		fqns = params.IDs
+	}
+
 	ins := inspect.PolicySets()
-	for _, fqn := range params.IDs {
+	for _, fqn := range fqns {
 		id := namer.GenModuleIDFromFQN(fqn)
 		idHex := id.HexStr()
 		fileName := policyDir + idHex
@@ -257,18 +269,17 @@ func (b *Bundle) InspectPolicies(_ context.Context, params storage.ListPolicyIDs
 }
 
 func (b *Bundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
-	var lut map[string]struct{}
+	filteredSize := len(b.manifest.PolicyIndex)
+	var ss util.StringSet
 	if len(params.IDs) > 0 {
-		lut = make(map[string]struct{}, len(params.IDs))
-		for _, id := range params.IDs {
-			lut[id] = struct{}{}
-		}
+		ss = util.ToStringSet(params.IDs)
+		filteredSize = len(ss)
 	}
 
-	output := make([]string, 0, len(b.manifest.PolicyIndex))
+	output := make([]string, 0, filteredSize)
 	for fqn := range b.manifest.PolicyIndex {
 		if len(params.IDs) > 0 {
-			if _, ok := lut[fqn]; ok {
+			if ss.Contains(fqn) {
 				output = append(output, fqn)
 			}
 		} else {

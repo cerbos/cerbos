@@ -12,6 +12,8 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/cerbos/cerbos/internal/util"
+
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -451,10 +453,20 @@ func (idx *index) Inspect() map[string]meta {
 }
 
 func (idx *index) InspectPolicies(ctx context.Context, file ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	var files []string
+	if len(file) == 0 {
+		var err error
+		if files, err = idx.ListPolicyIDs(ctx); err != nil {
+			return nil, fmt.Errorf("failed to list policies: %w", err)
+		}
+	} else {
+		files = file
+	}
+
 	ins := inspect.Policies()
 	if err := storage.BatchLoadPolicy(ctx, 1, idx.LoadPolicy, func(wp *policy.Wrapper) error {
 		return ins.Inspect(wp.Policy)
-	}, file...); err != nil {
+	}, files...); err != nil {
 		return nil, fmt.Errorf("failed to load policy: %w", err)
 	}
 
@@ -465,18 +477,17 @@ func (idx *index) ListPolicyIDs(_ context.Context, filteredFiles ...string) ([]s
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	var lut map[string]struct{}
+	filteredSize := len(filteredFiles)
+	var ss util.StringSet
 	if len(filteredFiles) > 0 {
-		lut = make(map[string]struct{}, len(filteredFiles))
-		for _, f := range filteredFiles {
-			lut[f] = struct{}{}
-		}
+		ss = util.ToStringSet(filteredFiles)
+		filteredSize = len(ss)
 	}
 
-	entries := make([]string, 0, len(idx.modIDToFile))
+	entries := make([]string, 0, filteredSize)
 	for _, f := range idx.modIDToFile {
 		if len(filteredFiles) > 0 {
-			if _, ok := lut[f]; ok {
+			if ss.Contains(f) {
 				entries = append(entries, f)
 			}
 		} else {
