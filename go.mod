@@ -15,7 +15,7 @@ require (
 	github.com/cerbos/cerbos-sdk-go v0.2.5
 	github.com/cerbos/cerbos/api/genpb v0.36.0
 	github.com/cerbos/cloud-api v0.1.19
-	github.com/cespare/xxhash v1.1.0
+	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.2.0
@@ -67,7 +67,7 @@ require (
 	github.com/rs/cors v1.11.0
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/sony/gobreaker v1.0.0
+	github.com/sony/gobreaker/v2 v2.0.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/afero v1.11.0
 	github.com/stoewer/go-strcase v1.3.0
