@@ -98,7 +98,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1.31.0
+        uses: bufbuild/buf-setup-action@v1.32.1
         with:
           github_token: ${{ github.token }}
 
