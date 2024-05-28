@@ -16,7 +16,6 @@ require (
 	github.com/cerbos/cerbos/api/genpb v0.36.0
 	github.com/cerbos/cloud-api v0.1.19
 	github.com/cespare/xxhash/v2 v2.3.0
-	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.2.0
 	github.com/dgraph-io/ristretto v0.1.1
@@ -135,7 +134,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.25.3 // indirect
