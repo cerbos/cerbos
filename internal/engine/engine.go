@@ -10,6 +10,8 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
+
 	"sync/atomic"
 	"time"
 
@@ -521,8 +523,27 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	}
 	ec.addCheck(ppCheck)
 
-	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+
+	// get the role policy check
+	rlpCheck, err := engine.getRolePolicyEvaluator(ctx, eparams, input.Principal.Roles, rpScope)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get check for [%s]: %w", rpName, err)
+	}
+	ec.addCheck(rlpCheck)
+
+	// if we matched a role policy evaluator, we need to shift the scope up one level
+	// TODO(saml) this, properly
+	if rlpCheck != nil {
+		segments := strings.Split(rpScope, ".")
+		if len(segments) > 1 {
+			rpScope = strings.Join(segments[0:len(segments)-2], ".")
+		} else {
+			rpScope = ""
+		}
+	}
+
+	// get the resource policy check
 	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, eparams, rpName, rpVersion, rpScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
@@ -588,6 +609,34 @@ func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policy
 	return rps, nil
 }
 
+func (engine *Engine) getRolePolicyEvaluator(ctx context.Context, eparams evalParams, roles []string, scope string) (Evaluator, error) {
+	rps, err := engine.getRolePolicySet(ctx, scope)
+	if err != nil {
+		return nil, err
+	}
+
+	if rps == nil {
+		return nil, nil
+	}
+
+	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
+}
+
+func (engine *Engine) getRolePolicySet(ctx context.Context, scope string) (*runtimev1.RunnablePolicySet, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.GetRolePolicies")
+	defer span.End()
+	span.SetAttributes(tracing.PolicyScope(scope))
+
+	roleModIDs := []namer.ModuleID{namer.RolePolicyModuleID(scope)}
+	rps, err := engine.policyLoader.GetFirstMatch(ctx, roleModIDs)
+	if err != nil {
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+		return nil, err
+	}
+
+	return rps, nil
+}
+
 func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, pScope string) {
 	pName = name
 	pVersion = version
@@ -601,7 +650,7 @@ func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, 
 }
 
 type evaluationCtx struct {
-	checks    [2]Evaluator
+	checks    [3]Evaluator
 	numChecks int
 }
 

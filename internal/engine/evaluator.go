@@ -14,6 +14,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	"github.com/kelindar/bitmap"
 	"go.uber.org/multierr"
 	"golang.org/x/exp/maps"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -94,6 +95,8 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, ep
 		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
+	case *runtimev1.RunnablePolicySet_RolePolicy:
+		return &rolePolicyEvaluator{policy: rp.RolePolicy}
 	default:
 		return noopEvaluator{}
 	}
@@ -103,6 +106,47 @@ type noopEvaluator struct{}
 
 func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
+}
+
+type rolePolicyEvaluator struct {
+	policy *runtimev1.RunnableRolePolicySet
+	// store  *store.RolePolicyStore
+}
+
+func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+	result := newEvalResult(input.Actions, nil)
+
+	pctx := tctx.StartPolicy(rpe.policy.Meta.Fqn)
+	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
+
+	// TODO(saml) this bit will use whatever central cache we end up with
+	rolesSet := make(map[string]struct{})
+	for _, r := range input.Principal.Roles {
+		rolesSet[r] = struct{}{}
+	}
+
+	var actionMask bitmap.Bitmap
+	for _, p := range rpe.policy.Policies {
+		if _, hasRole := rolesSet[p.Role]; !hasRole {
+			continue
+		}
+
+		for _, r := range p.ResourceBitmap {
+			if r.Resource == input.Resource.Kind {
+				actionMask.Or(r.ActionMask)
+			}
+		}
+	}
+
+	for _, a := range input.Actions {
+		// TODO(saml) handle single level case (we DENY unless the role policy is the sole scope level in which case we can ALLOW)
+		if idx, ok := rpe.policy.ActionIndexes[a]; !ok || !actionMask.Contains(idx) {
+			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+		}
+	}
+
+	result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+	return result, nil
 }
 
 type resourcePolicyEvaluator struct {

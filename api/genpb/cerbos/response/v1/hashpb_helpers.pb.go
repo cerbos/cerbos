@@ -943,6 +943,11 @@ func cerbos_policy_v1_Policy_hashpb_sum(m *v12.Policy, hasher hash.Hash, ignore 
 					cerbos_policy_v1_ExportVariables_hashpb_sum(t.ExportVariables, hasher, ignore)
 				}
 
+			case *v12.Policy_RolePolicy:
+				if t.RolePolicy != nil {
+					cerbos_policy_v1_RolePolicy_hashpb_sum(t.RolePolicy, hasher, ignore)
+				}
+
 			}
 		}
 	}
@@ -1154,6 +1159,42 @@ func cerbos_policy_v1_RoleDef_hashpb_sum(m *v12.RoleDef, hasher hash.Hash, ignor
 			cerbos_policy_v1_Condition_hashpb_sum(m.GetCondition(), hasher, ignore)
 		}
 
+	}
+}
+
+func cerbos_policy_v1_RolePolicy_hashpb_sum(m *v12.RolePolicy, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.RolePolicy.role"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRole()))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.RolePolicy.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.RolePolicy.rules"]; !ok {
+		if len(m.Rules) > 0 {
+			for _, v := range m.Rules {
+				if v != nil {
+					cerbos_policy_v1_RoleRule_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_RoleRule_hashpb_sum(m *v12.RoleRule, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.RoleRule.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResource()))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.RoleRule.allowed_actions"]; !ok {
+		if len(m.AllowedActions) > 0 {
+			for _, v := range m.AllowedActions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
 	}
 }
 

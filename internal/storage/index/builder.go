@@ -170,6 +170,11 @@ type indexBuilder struct {
 	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
 	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
 	disabled      []*runtimev1.IndexBuildErrors_Disabled
+
+	rolePolicyActionIndexes map[string]uint32
+	rolePolicyActionCount   uint32
+	scopeGroupModIDs        map[string][]namer.ModuleID
+	modIDScopeGroup         map[namer.ModuleID]string
 }
 
 func newIndexBuilder() *indexBuilder {
@@ -182,6 +187,10 @@ func newIndexBuilder() *indexBuilder {
 		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
 		missingScopes: make(map[namer.ModuleID]string),
 		stats:         newStatsCollector(),
+
+		rolePolicyActionIndexes: make(map[string]uint32),
+		scopeGroupModIDs:        make(map[string][]namer.ModuleID),
+		modIDScopeGroup:         make(map[namer.ModuleID]string),
 	}
 }
 
@@ -247,6 +256,26 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	idx.stats.add(p)
 
 	switch p.Kind {
+	case policy.RolePolicyKind:
+		// TODO(saml) mutex around maps?
+		idx.modIDScopeGroup[p.ID] = p.Scope
+
+		if _, ok := idx.scopeGroupModIDs[p.Scope]; !ok {
+			idx.scopeGroupModIDs[p.Scope] = []namer.ModuleID{}
+		}
+		idx.scopeGroupModIDs[p.Scope] = append(idx.scopeGroupModIDs[p.Scope], p.ID)
+
+		rp := p.GetRolePolicy()
+		for _, r := range rp.Rules {
+			for _, a := range r.AllowedActions {
+				if _, ok := idx.rolePolicyActionIndexes[a]; !ok {
+					idx.rolePolicyActionIndexes[a] = idx.rolePolicyActionCount
+					idx.rolePolicyActionCount++
+				}
+			}
+		}
+
+		fallthrough
 	case policy.ResourceKind, policy.PrincipalKind:
 		idx.executables[p.ID] = struct{}{}
 
@@ -349,6 +378,10 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 		buildOpts:    opts,
 		schemaLoader: NewSchemaLoader(fsys, opts.rootDir),
 		stats:        idx.stats.collate(),
+
+		rolePolicyActionIndexes: idx.rolePolicyActionIndexes,
+		scopeGroupModIDs:        idx.scopeGroupModIDs,
+		modIDScopeGroup:         idx.modIDScopeGroup,
 	}, nil
 }
 

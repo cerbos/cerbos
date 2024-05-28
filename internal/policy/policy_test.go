@@ -469,7 +469,7 @@ func compilePolicy(t *testing.T, p *policyv1.Policy, derivedRoles ...*policyv1.P
 	}
 	cu.AddDefinition(mID, p, parser.NewEmptySourceCtx())
 
-	rps, err := compile.Compile(cu, schema.NewNopManager())
+	rps, err := compile.Compile(cu, schema.NewNopManager(), nil)
 	require.NoError(t, err)
 
 	return rps

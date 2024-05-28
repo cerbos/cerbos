@@ -28,6 +28,7 @@ const (
 	PrincipalKind
 	DerivedRolesKind
 	ExportVariablesKind
+	RolePolicyKind
 )
 
 const (
@@ -35,6 +36,7 @@ const (
 	PrincipalKindStr       = "PRINCIPAL"
 	DerivedRolesKindStr    = "DERIVED_ROLES"
 	ExportVariablesKindStr = "EXPORT_VARIABLES"
+	RolePolicyKindStr      = "ROLE"
 )
 
 var IgnoreHashFields = map[string]struct{}{
@@ -54,6 +56,8 @@ func (k Kind) String() string {
 		return DerivedRolesKindStr
 	case ExportVariablesKind:
 		return ExportVariablesKindStr
+	case RolePolicyKind:
+		return RolePolicyKindStr
 	default:
 		panic(fmt.Errorf("unknown policy kind %d", k))
 	}
@@ -70,6 +74,8 @@ func GetKind(p *policyv1.Policy) Kind {
 		return DerivedRolesKind
 	case *policyv1.Policy_ExportVariables:
 		return ExportVariablesKind
+	case *policyv1.Policy_RolePolicy:
+		return RolePolicyKind
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
@@ -86,6 +92,8 @@ func KindFromFQN(fqn string) Kind {
 		return DerivedRolesKind
 	case strings.HasPrefix(fqn, namer.ExportVariablesPrefix):
 		return ExportVariablesKind
+	case strings.HasPrefix(fqn, namer.RolePoliciesPrefix):
+		return RolePolicyKind
 	default:
 		panic(fmt.Errorf("unknown policy FQN format %q", fqn))
 	}
@@ -111,7 +119,7 @@ func Dependencies(p *policyv1.Policy) ([]string, []string) {
 		importVariables = pt.DerivedRoles.Variables.GetImport()
 		importVariablesProtoPath = "derived_roles.variables.import"
 
-	case *policyv1.Policy_ExportVariables:
+	case *policyv1.Policy_RolePolicy, *policyv1.Policy_ExportVariables:
 
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
@@ -607,6 +615,13 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.Version = pt.PrincipalPolicy.Version
 		w.Scope = pt.PrincipalPolicy.Scope
 
+	case *policyv1.Policy_RolePolicy:
+		w.Kind = RolePolicyKind
+		w.FQN = namer.RolePolicyFQN(pt.RolePolicy.Scope)
+		w.ID = namer.GenModuleIDFromFQN(w.FQN)
+		w.Name = pt.RolePolicy.Role
+		w.Scope = pt.RolePolicy.Scope
+
 	case *policyv1.Policy_DerivedRoles:
 		w.Kind = DerivedRolesKind
 		w.FQN = namer.DerivedRolesFQN(pt.DerivedRoles.Name)
@@ -642,6 +657,8 @@ type CompilationUnit struct {
 	Definitions    map[namer.ModuleID]*policyv1.Policy
 	SourceContexts map[namer.ModuleID]parser.SourceCtx
 	ModID          namer.ModuleID
+
+	RolePolicyDefinitions map[namer.ModuleID]*policyv1.Policy
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy, sc parser.SourceCtx) {
@@ -657,6 +674,19 @@ func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy, 
 	cu.SourceContexts[id] = sc
 }
 
+func (cu *CompilationUnit) AddRolePolicyDefinition(id namer.ModuleID, p *policyv1.Policy, sc parser.SourceCtx) {
+	if cu.RolePolicyDefinitions == nil {
+		cu.RolePolicyDefinitions = make(map[namer.ModuleID]*policyv1.Policy)
+	}
+
+	if cu.SourceContexts == nil {
+		cu.SourceContexts = make(map[namer.ModuleID]parser.SourceCtx)
+	}
+
+	cu.RolePolicyDefinitions[id] = p
+	cu.SourceContexts[id] = sc
+}
+
 func (cu *CompilationUnit) MainSourceFile() string {
 	return GetSourceFile(cu.Definitions[cu.ModID])
 }
@@ -669,7 +699,46 @@ func (cu *CompilationUnit) Ancestors() []namer.ModuleID {
 	return Ancestors(cu.Definitions[cu.ModID])
 }
 
+func (cu *CompilationUnit) RolePolicies() []*policyv1.Policy {
+	ids := make([]*policyv1.Policy, len(cu.RolePolicyDefinitions))
+
+	var i int
+	for _, def := range cu.RolePolicyDefinitions {
+		ids[i] = def
+		i++
+	}
+
+	return ids
+}
+
 // Key returns the human readable identifier for the main module.
 func (cu *CompilationUnit) Key() string {
 	return namer.PolicyKey(cu.Definitions[cu.ModID])
+}
+
+type RolePolicyManager struct {
+	actionIndexes map[string]uint32
+}
+
+func NewRolePolicyManager(m map[string]uint32) *RolePolicyManager {
+	if m == nil {
+		m = make(map[string]uint32)
+	}
+
+	return &RolePolicyManager{
+		actionIndexes: m,
+	}
+}
+
+func (m *RolePolicyManager) GetIndex(action string) (uint32, bool) {
+	if m == nil {
+		return 0, false
+	}
+
+	idx, ok := m.actionIndexes[action]
+	return idx, ok
+}
+
+func (m *RolePolicyManager) GetMap() map[string]uint32 {
+	return m.actionIndexes
 }

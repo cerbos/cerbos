@@ -52,7 +52,7 @@ func TestCompile(t *testing.T) {
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc, archive := readTestCase(t, tcase)
 			cu := mkCompilationUnit(t, tc.MainDef, archive)
-			haveRes, haveErr := compile.Compile(cu, schemaMgr)
+			haveRes, haveErr := compile.Compile(cu, schemaMgr, nil)
 			if len(tc.WantErrors) > 0 {
 				errSet := new(compile.ErrorSet)
 				require.True(t, errors.As(haveErr, &errSet))
@@ -92,7 +92,7 @@ func updateGoldenFiles(t *testing.T, schemaMgr schema.Manager, testCases []test.
 		}
 
 		cu := mkCompilationUnit(t, tc.MainDef, archive)
-		res, err := compile.Compile(cu, schemaMgr)
+		res, err := compile.Compile(cu, schemaMgr, nil)
 		if err != nil {
 			t.Fatalf("Cannot produce golden file because compiling %q returns an error: %v", tcase.SourceFile, err)
 		}
@@ -158,7 +158,7 @@ func BenchmarkCompile(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		c := cases[i]
-		_, err := compile.Compile(c, schemaMgr)
+		_, err := compile.Compile(c, schemaMgr, nil)
 		if err != nil {
 			b.Errorf("ERROR compile error: %v", err)
 		}

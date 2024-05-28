@@ -44,6 +44,13 @@ type Store struct {
 	*storage.SubscriptionManager
 }
 
+func TempNewStoreWithIndex(ctx context.Context, idx index.Index) *Store {
+	return &Store{
+		idx:                 idx,
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+	}
+}
+
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	dir, err := filepath.Abs(conf.Directory)
 	if err != nil {

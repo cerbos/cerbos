@@ -67,6 +67,7 @@ func TestCloneResult(t *testing.T) {
 		"resource_policies/policy_12.yaml",
 		"resource_policies/policy_13.yaml",
 		"resource_policies/policy_14.yaml",
+		"resource_policies/role_policy_01.yaml",
 	}
 
 	is.Equal(want, have)

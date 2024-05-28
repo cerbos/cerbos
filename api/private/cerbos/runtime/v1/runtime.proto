@@ -20,8 +20,31 @@ message RunnablePolicySet {
     RunnablePrincipalPolicySet principal_policy = 3;
     RunnableDerivedRolesSet derived_roles = 4 [deprecated = true];
     RunnableVariablesSet variables = 5 [deprecated = true];
+    RunnableRolePolicySet role_policy = 7;
   }
   uint32 compiler_version = 6;
+}
+
+message RunnableRolePolicySet {
+  message Metadata {
+    string fqn = 1;
+    string role = 2;
+    string scope = 3;
+  }
+
+  message Policy {
+    message ResourceBitmap {
+      string resource = 1;
+      repeated uint64 action_mask = 2;
+    }
+
+    string role = 1;
+    repeated ResourceBitmap resource_bitmap = 2;
+  }
+
+  Metadata meta = 1;
+  repeated Policy policies = 2;
+  map<string, uint32> action_indexes = 3;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies

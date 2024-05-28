@@ -27,7 +27,14 @@ func (uc *unitCtx) error() error {
 }
 
 func (uc *unitCtx) moduleCtx(id namer.ModuleID) *moduleCtx {
-	def, ok := uc.unit.Definitions[id]
+	var def *policyv1.Policy
+	var ok bool
+
+	def, ok = uc.unit.RolePolicyDefinitions[id]
+	if !ok {
+		def, ok = uc.unit.Definitions[id]
+	}
+
 	if !ok {
 		return nil
 	}

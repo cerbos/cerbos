@@ -27,6 +27,7 @@ const (
 	ExportVariablesPrefix   = fqnPrefix + "export_variables"
 	PrincipalPoliciesPrefix = fqnPrefix + "principal"
 	ResourcePoliciesPrefix  = fqnPrefix + "resource"
+	RolePoliciesPrefix      = fqnPrefix + "role"
 
 	DefaultVersion = "default"
 	fqnPrefix      = "cerbos."
@@ -87,6 +88,8 @@ func FQN(p *policyv1.Policy) string {
 		return ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, pt.ResourcePolicy.Scope)
 	case *policyv1.Policy_PrincipalPolicy:
 		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
+	case *policyv1.Policy_RolePolicy:
+		return RolePolicyFQN(pt.RolePolicy.Scope)
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesFQN(pt.DerivedRoles.Name)
 	case *policyv1.Policy_ExportVariables:
@@ -113,6 +116,9 @@ func FQNTree(p *policyv1.Policy) []string {
 	case *policyv1.Policy_PrincipalPolicy:
 		fqn = PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, "")
 		scope = pt.PrincipalPolicy.Scope
+	case *policyv1.Policy_RolePolicy:
+		fqn = RolePolicyFQN(pt.RolePolicy.Scope)
+		scope = pt.RolePolicy.Scope
 	case *policyv1.Policy_DerivedRoles:
 		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
 	case *policyv1.Policy_ExportVariables:
@@ -188,6 +194,16 @@ func PrincipalPolicyFQN(principal, version, scope string) string {
 // PrincipalPolicyModuleID returns the module ID for the principal policy with given principal and version.
 func PrincipalPolicyModuleID(principal, version, scope string) ModuleID {
 	return GenModuleIDFromFQN(PrincipalPolicyFQN(principal, version, scope))
+}
+
+// RolePolicyFQN returns the fully-qualified module name for the role policies with the given scope.
+func RolePolicyFQN(scope string) string {
+	return withScope(RolePoliciesPrefix, scope)
+}
+
+// RolePolicyModuleID returns the module ID for the role policies with the given scope.
+func RolePolicyModuleID(scope string) ModuleID {
+	return GenModuleIDFromFQN(RolePolicyFQN(scope))
 }
 
 // ScopedPrincipalPolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
@@ -297,6 +313,8 @@ func (pc PolicyCoords) FQN() string {
 		return PrincipalPolicyFQN(pc.Name, pc.Version, pc.Scope)
 	case ResourcePoliciesPrefix:
 		return ResourcePolicyFQN(pc.Name, pc.Version, pc.Scope)
+	case RolePoliciesPrefix:
+		return RolePolicyFQN(pc.Scope)
 	default:
 		panic(fmt.Errorf("unknown kind %q", pc.Kind))
 	}

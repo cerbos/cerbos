@@ -532,6 +532,53 @@ func (_c *Index_GetFirstMatch_Call) RunAndReturn(run func([]namer.ModuleID) (*po
 	return _c
 }
 
+// GetRolePolicyActionIndexes provides a mock function with given fields:
+func (_m *Index) GetRolePolicyActionIndexes() map[string]uint32 {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRolePolicyActionIndexes")
+	}
+
+	var r0 map[string]uint32
+	if rf, ok := ret.Get(0).(func() map[string]uint32); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]uint32)
+		}
+	}
+
+	return r0
+}
+
+// Index_GetRolePolicyActionIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRolePolicyActionIndexes'
+type Index_GetRolePolicyActionIndexes_Call struct {
+	*mock.Call
+}
+
+// GetRolePolicyActionIndexes is a helper method to define mock.On call
+func (_e *Index_Expecter) GetRolePolicyActionIndexes() *Index_GetRolePolicyActionIndexes_Call {
+	return &Index_GetRolePolicyActionIndexes_Call{Call: _e.mock.On("GetRolePolicyActionIndexes")}
+}
+
+func (_c *Index_GetRolePolicyActionIndexes_Call) Run(run func()) *Index_GetRolePolicyActionIndexes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Index_GetRolePolicyActionIndexes_Call) Return(_a0 map[string]uint32) *Index_GetRolePolicyActionIndexes_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Index_GetRolePolicyActionIndexes_Call) RunAndReturn(run func() map[string]uint32) *Index_GetRolePolicyActionIndexes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InspectPolicies provides a mock function with given fields: _a0, _a1
 func (_m *Index) InspectPolicies(_a0 context.Context, _a1 ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	_va := make([]interface{}, len(_a1))

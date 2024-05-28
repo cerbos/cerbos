@@ -84,6 +84,8 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 		return nil, nil, fmt.Errorf("failed to build index: %w", err)
 	}
 
+	rolePolicyMgr := policy.NewRolePolicyManager(idx.GetRolePolicyActionIndexes())
+
 	outChan := make(chan Artefact, 1)
 
 	go func() {
@@ -100,7 +102,7 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 			log.Debug("Compiling unit")
 
 			artefact := Artefact{SourceFile: srcFile}
-			artefact.PolicySet, artefact.Error = internalcompile.Compile(unit, schemaMgr)
+			artefact.PolicySet, artefact.Error = internalcompile.Compile(unit, schemaMgr, rolePolicyMgr)
 
 			if artefact.Error != nil {
 				log.Error("Compilation failed", zap.Error(artefact.Error))

@@ -39,6 +39,9 @@ func Validate(p *policyv1.Policy, sc parser.SourceCtx) error {
 		return validateDerivedRoles(pt.DerivedRoles, sc)
 	case *policyv1.Policy_ExportVariables:
 		return validateExportVariables(p, sc)
+	case *policyv1.Policy_RolePolicy:
+		// TODO validate policy
+		return nil
 	default:
 		return fmt.Errorf("unknown policy type %T", pt)
 	}

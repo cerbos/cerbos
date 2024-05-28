@@ -16,6 +16,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/kelindar/bitmap"
 )
 
 type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
@@ -36,7 +37,7 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	errs := newErrorSet()
 
 	for unit := range queue {
-		if _, err := Compile(unit, schemaMgr); err != nil {
+		if _, err := Compile(unit, schemaMgr, nil); err != nil {
 			errs.Add(err)
 		}
 	}
@@ -44,7 +45,8 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	return errs.ErrOrNil()
 }
 
-func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
+// TODO(saml) figure out how to gracefully pass action indexes to Compile
+func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyMgr *policy.RolePolicyManager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
 
@@ -53,6 +55,8 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 	}
 
 	switch pt := mc.def.PolicyType.(type) {
+	case *policyv1.Policy_RolePolicy:
+		rps = compileRolePolicySet(mc, rolePolicyMgr)
 	case *policyv1.Policy_ResourcePolicy:
 		rps = compileResourcePolicySet(mc, schemaMgr)
 	case *policyv1.Policy_PrincipalPolicy:
@@ -63,6 +67,65 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 	}
 
 	return rps, uc.error()
+}
+
+func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr *policy.RolePolicyManager) *runtimev1.RunnablePolicySet {
+	// TODO(saml) is this necessary if we just globally retrieve all role policies anyway?
+	rp := modCtx.def.GetRolePolicy()
+	if rp == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not a role policy definition")
+		return nil
+	}
+
+	rolePolicyDefs := modCtx.unit.RolePolicies()
+
+	policies := make([]*runtimev1.RunnableRolePolicySet_Policy, len(rolePolicyDefs))
+
+	for i, def := range rolePolicyDefs {
+		rp := def.GetRolePolicy()
+		if rp == nil {
+			continue // TODO(saml)
+		}
+
+		rbm := []*runtimev1.RunnableRolePolicySet_Policy_ResourceBitmap{}
+
+		for _, r := range rp.Rules {
+			var mask bitmap.Bitmap
+			for _, a := range r.AllowedActions {
+				if idx, exists := rolePolicyMgr.GetIndex(a); exists {
+					mask.Set(uint32(idx))
+				}
+			}
+
+			rbm = append(rbm, &runtimev1.RunnableRolePolicySet_Policy_ResourceBitmap{
+				Resource:   r.Resource,
+				ActionMask: mask,
+			})
+		}
+
+		policies[i] = &runtimev1.RunnableRolePolicySet_Policy{
+			Role:           rp.Role,
+			ResourceBitmap: rbm,
+		}
+	}
+
+	return &runtimev1.RunnablePolicySet{
+		CompilerVersion: compilerVersion,
+		Fqn:             modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_RolePolicy{
+			RolePolicy: &runtimev1.RunnableRolePolicySet{
+				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
+					Fqn:   modCtx.fqn,
+					Role:  rp.Role,
+					Scope: rp.Scope,
+					// SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
+					// Annotations: modCtx.def.GetMetadata().GetAnnotations(),
+				},
+				Policies:      policies,
+				ActionIndexes: rolePolicyMgr.GetMap(),
+			},
+		},
+	}
 }
 
 func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runtimev1.RunnablePolicySet {
