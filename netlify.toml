@@ -1,5 +1,5 @@
 [build]
-  publish = "docs/build"
+publish = "docs/build"
 
 # Only required until Antora LFS support lands. https://gitlab.com/antora/antora/-/issues/185
 
@@ -108,4 +108,4 @@ force = true
 [[redirects]]
 from = "/cerbos/:version/*"
 to = "/cerbos/latest/:splat"
-status = 404
+status = 301
