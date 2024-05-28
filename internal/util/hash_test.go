@@ -8,9 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/cespare/xxhash"
 	xxhashv2 "github.com/cespare/xxhash/v2"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -23,15 +21,6 @@ var (
 	strPool = &sync.Pool{New: func() any { return xxhashv2.New() }}
 	pbPool  = &sync.Pool{New: func() any { return xxhashv2.New() }}
 )
-
-func TestXXHashV2(t *testing.T) {
-	for i := 0; i < 1000; i++ {
-		input := test.RandomStr(50)
-		v1 := xxhash.Sum64String(input)
-		v2 := xxhashv2.Sum64String(input)
-		require.Equal(t, v1, v2)
-	}
-}
 
 //nolint:gosec
 func BenchmarkHashString(b *testing.B) {

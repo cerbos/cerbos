@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/sony/gobreaker"
+	"github.com/sony/gobreaker/v2"
 	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -101,10 +101,10 @@ type Store struct {
 	fallbackStore        storage.Store
 	basePolicyLoader     engine.PolicyLoader
 	fallbackPolicyLoader engine.PolicyLoader
-	circuitBreaker       *gobreaker.CircuitBreaker
+	circuitBreaker       *gobreaker.CircuitBreaker[any]
 }
 
-func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
+func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker[any] {
 	breakerSettings := gobreaker.Settings{
 		Name: "Store",
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
@@ -113,7 +113,7 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker {
 		Interval: conf.FallbackErrorWindow,
 		Timeout:  0,
 	}
-	return gobreaker.NewCircuitBreaker(breakerSettings)
+	return gobreaker.NewCircuitBreaker[any](breakerSettings)
 }
 
 // GetOverlayPolicyLoader instantiates both the base and fallback policy loaders and then returns itself.
