@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"testing"
 
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -19,6 +20,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -597,7 +599,7 @@ func TestInspect(t *testing.T) {
 				mgr := schema.NewNopManager()
 				ins := inspect.PolicySets()
 				for unit := range idx.GetAllCompilationUnits(ctx) {
-					rps, err := compile.Compile(unit, mgr)
+					rps, err := compile.Compile(unit, mgr, rolepolicy.NewNopManager())
 					require.NoError(t, err)
 
 					if rps == nil {

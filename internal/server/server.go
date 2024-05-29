@@ -148,7 +148,7 @@ func Start(ctx context.Context) error {
 		policyLoader = st
 	case storage.SourceStore:
 		// create compile manager
-		compileMgr, err := compile.NewManager(ctx, st, schemaMgr, nil)
+		compileMgr, err := compile.NewManager(ctx, st, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create compile manager: %w", err)
 		}

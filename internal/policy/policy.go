@@ -715,30 +715,3 @@ func (cu *CompilationUnit) RolePolicies() []*policyv1.Policy {
 func (cu *CompilationUnit) Key() string {
 	return namer.PolicyKey(cu.Definitions[cu.ModID])
 }
-
-type RolePolicyManager struct {
-	actionIndexes map[string]uint32
-}
-
-func NewRolePolicyManager(m map[string]uint32) *RolePolicyManager {
-	if m == nil {
-		m = make(map[string]uint32)
-	}
-
-	return &RolePolicyManager{
-		actionIndexes: m,
-	}
-}
-
-func (m *RolePolicyManager) GetIndex(action string) (uint32, bool) {
-	if m == nil {
-		return 0, false
-	}
-
-	idx, ok := m.actionIndexes[action]
-	return idx, ok
-}
-
-func (m *RolePolicyManager) GetMap() map[string]uint32 {
-	return m.actionIndexes
-}

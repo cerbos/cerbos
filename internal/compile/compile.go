@@ -15,6 +15,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/kelindar/bitmap"
 )
@@ -45,8 +46,8 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	return errs.ErrOrNil()
 }
 
-// TODO(saml) figure out how to gracefully pass action indexes to Compile
-func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyMgr *policy.RolePolicyManager) (rps *runtimev1.RunnablePolicySet, err error) {
+// TODO(saml) rolePolicyMgr is only relevant for bundlegen - how to gracefully handle the boundaries better?
+func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyMgr rolepolicy.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
 
@@ -69,8 +70,7 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyM
 	return rps, uc.error()
 }
 
-func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr *policy.RolePolicyManager) *runtimev1.RunnablePolicySet {
-	// TODO(saml) is this necessary if we just globally retrieve all role policies anyway?
+func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *runtimev1.RunnablePolicySet {
 	rp := modCtx.def.GetRolePolicy()
 	if rp == nil {
 		modCtx.addErrWithDesc(errUnexpectedErr, "Not a role policy definition")
@@ -90,16 +90,16 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr *policy.RolePolicyMan
 		rbm := []*runtimev1.RunnableRolePolicySet_Policy_ResourceBitmap{}
 
 		for _, r := range rp.Rules {
-			var mask bitmap.Bitmap
+			var actionMask bitmap.Bitmap
 			for _, a := range r.AllowedActions {
 				if idx, exists := rolePolicyMgr.GetIndex(a); exists {
-					mask.Set(uint32(idx))
+					actionMask.Set(uint32(idx))
 				}
 			}
 
 			rbm = append(rbm, &runtimev1.RunnableRolePolicySet_Policy_ResourceBitmap{
 				Resource:   r.Resource,
-				ActionMask: mask,
+				ActionMask: actionMask,
 			})
 		}
 
@@ -121,8 +121,8 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr *policy.RolePolicyMan
 					// SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
 					// Annotations: modCtx.def.GetMetadata().GetAnnotations(),
 				},
-				Policies:      policies,
-				ActionIndexes: rolePolicyMgr.GetMap(),
+				Policies: policies,
+				// ActionIndexes: rolePolicyMgr.GetMap(),
 			},
 		},
 	}

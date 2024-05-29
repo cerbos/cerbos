@@ -44,7 +44,6 @@ message RunnableRolePolicySet {
 
   Metadata meta = 1;
   repeated Policy policies = 2;
-  map<string, uint32> action_indexes = 3;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies

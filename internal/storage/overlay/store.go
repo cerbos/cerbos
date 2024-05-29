@@ -121,7 +121,7 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Man
 	getPolicyLoader := func(storeInterface storage.Store, key string) (engine.PolicyLoader, error) {
 		switch st := storeInterface.(type) {
 		case storage.SourceStore:
-			pl, err := compile.NewManager(ctx, st, schemaMgr, nil)
+			pl, err := compile.NewManager(ctx, st, schemaMgr)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create %s compile manager: %w", key, err)
 			}

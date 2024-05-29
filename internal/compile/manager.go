@@ -18,6 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
@@ -36,23 +37,22 @@ type Manager struct {
 	cache         *cache.Cache[namer.ModuleID, *runtimev1.RunnablePolicySet]
 	sf            singleflight.Group
 	cacheDuration time.Duration
-	rolePolicyMgr *policy.RolePolicyManager
 }
 
-func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager, rolePolicyMgr *policy.RolePolicyManager) (*Manager, error) {
+func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) (*Manager, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
 	}
 
-	return NewManagerFromConf(ctx, conf, store, schemaMgr, rolePolicyMgr), nil
+	return NewManagerFromConf(ctx, conf, store, schemaMgr), nil
 }
 
-func NewManagerFromDefaultConf(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager, rolePolicyMgr *policy.RolePolicyManager) *Manager {
-	return NewManagerFromConf(ctx, DefaultConf(), store, schemaMgr, rolePolicyMgr)
+func NewManagerFromDefaultConf(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) *Manager {
+	return NewManagerFromConf(ctx, DefaultConf(), store, schemaMgr)
 }
 
-func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.SourceStore, schemaMgr schema.Manager, rolePolicyMgr *policy.RolePolicyManager) *Manager {
+func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.SourceStore, schemaMgr schema.Manager) *Manager {
 	c := &Manager{
 		log:           zap.S().Named("compiler"),
 		store:         store,
@@ -60,7 +60,6 @@ func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.SourceSto
 		updateQueue:   make(chan storage.Event, updateQueueSize),
 		cache:         cache.New[namer.ModuleID, *runtimev1.RunnablePolicySet]("compile", conf.CacheSize),
 		cacheDuration: conf.CacheDuration,
-		rolePolicyMgr: rolePolicyMgr,
 	}
 
 	go c.processUpdateQueue(ctx)
@@ -173,7 +172,7 @@ func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) 
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {
 	rps, err := metrics.RecordDuration2(metrics.CompileDuration(), func() (*runtimev1.RunnablePolicySet, error) {
-		return Compile(unit, c.schemaMgr, c.rolePolicyMgr)
+		return Compile(unit, c.schemaMgr, rolepolicy.NewNopManager())
 	})
 	if err == nil && rps != nil {
 		if c.cacheDuration > 0 {

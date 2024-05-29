@@ -31,6 +31,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -89,14 +90,14 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams, rolePolicyMgr rolepolicy.Manager) Evaluator {
 	switch rp := rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		return &rolePolicyEvaluator{policy: rp.RolePolicy}
+		return &rolePolicyEvaluator{policy: rp.RolePolicy, mgr: rolePolicyMgr}
 	default:
 		return noopEvaluator{}
 	}
@@ -110,6 +111,7 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 
 type rolePolicyEvaluator struct {
 	policy *runtimev1.RunnableRolePolicySet
+	mgr    rolepolicy.Manager
 	// store  *store.RolePolicyStore
 }
 
@@ -120,14 +122,14 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 
 	// TODO(saml) this bit will use whatever central cache we end up with
-	rolesSet := make(map[string]struct{})
+	roleSet := make(map[string]struct{})
 	for _, r := range input.Principal.Roles {
-		rolesSet[r] = struct{}{}
+		roleSet[r] = struct{}{}
 	}
 
 	var actionMask bitmap.Bitmap
 	for _, p := range rpe.policy.Policies {
-		if _, hasRole := rolesSet[p.Role]; !hasRole {
+		if _, hasRole := roleSet[p.Role]; !hasRole {
 			continue
 		}
 
@@ -140,7 +142,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	for _, a := range input.Actions {
 		// TODO(saml) handle single level case (we DENY unless the role policy is the sole scope level in which case we can ALLOW)
-		if idx, ok := rpe.policy.ActionIndexes[a]; !ok || !actionMask.Contains(idx) {
+		if idx, ok := rpe.mgr.GetIndex(a); !ok || !actionMask.Contains(idx) {
 			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
 		}
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -84,7 +85,7 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 		return nil, nil, fmt.Errorf("failed to build index: %w", err)
 	}
 
-	rolePolicyMgr := policy.NewRolePolicyManager(idx.GetRolePolicyActionIndexes())
+	rolePolicyMgr := rolepolicy.NewManager(idx.GetRolePolicyActionIndexes())
 
 	outChan := make(chan Artefact, 1)
 

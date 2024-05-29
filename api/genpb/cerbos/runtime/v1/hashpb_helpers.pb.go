@@ -984,23 +984,6 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.action_indexes"]; !ok {
-		if len(m.ActionIndexes) > 0 {
-			keys := make([]string, len(m.ActionIndexes))
-			i := 0
-			for k := range m.ActionIndexes {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.ActionIndexes[k])))
-
-			}
-		}
-	}
 }
 
 func cerbos_runtime_v1_RunnableVariablesSet_Metadata_hashpb_sum(m *RunnableVariablesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
