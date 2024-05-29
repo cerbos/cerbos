@@ -5,6 +5,7 @@ package internal
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -543,4 +544,122 @@ func loadConditionsFromPolicy(t *testing.T, path string) []*runtimev1.Condition 
 	}
 
 	return conds
+}
+
+func TestComplete(t *testing.T) {
+	testRulesProtos := make([]proto.Message, 3)
+
+	wd, _ := os.Getwd()
+
+	expFilesStrs := []string{
+		"testdata/complete/file.json",
+		"testdata/complete/file.yaml",
+		"testdata/complete/file.yml",
+		"testdata/complete/sub/file.json",
+		"testdata/complete/sub/file.yaml",
+		"testdata/complete/sub/file.yml",
+	}
+
+	expFileLoads := make([]string, len(expFilesStrs))
+	for i, f := range expFilesStrs {
+		expFileLoads[i] = fmt.Sprintf(":load %s", filepath.FromSlash(f))
+	}
+
+	expFileAbsLoads := make([]string, len(expFilesStrs))
+	for i, f := range expFilesStrs {
+		expFileAbsLoads[i] = fmt.Sprintf(":load %s", filepath.Join(wd, filepath.FromSlash(f)))
+	}
+
+	testCases := []struct {
+		input    string
+		expected []string
+		rules    []proto.Message
+	}{
+		{"1 ", []string{}, nil},
+		{":l", []string{":let", ":load"}, nil},
+		{":lo", []string{":load"}, nil},
+
+		{":load", []string{":load"}, nil},
+		{
+			fmt.Sprintf(":load %s", filepath.Join("testdata", "complete")),
+			expFileLoads,
+			nil,
+		},
+		{
+			fmt.Sprintf(":load %s", filepath.Join(wd, "testdata", "complete")),
+			expFileAbsLoads,
+			nil,
+		},
+
+		{
+			":let ",
+			[]string{
+				":let G",
+				":let P",
+				":let R",
+				":let V",
+				":let _",
+				":let globals",
+				":let request",
+				":let runtime",
+				":let variables",
+			},
+			nil,
+		},
+
+		{
+			":exec ",
+			[]string{
+				":exec #0",
+				":exec #1",
+				":exec #2",
+			},
+			testRulesProtos,
+		},
+		{
+			":exec #",
+			[]string{
+				":exec #0",
+				":exec #1",
+				":exec #2",
+			},
+			testRulesProtos,
+		},
+		{
+			":exec #2",
+			[]string{
+				":exec #2",
+			},
+			testRulesProtos,
+		},
+		{
+			":exec #3",
+			[]string{},
+			testRulesProtos,
+		},
+		{
+			":exec #abc",
+			[]string{},
+			testRulesProtos,
+		},
+		{
+			":exec abc",
+			[]string{},
+			testRulesProtos,
+		},
+	}
+
+	for idx, tc := range testCases {
+		t.Run(fmt.Sprintf("TestCase_%d", idx), func(t *testing.T) {
+			mockOut := &mockOutput{}
+			repl, err := NewREPL(nil, mockOut)
+			require.NoError(t, err)
+
+			if tc.rules != nil {
+				repl.policy = &policyHolder{rules: tc.rules}
+			}
+
+			require.Equal(t, tc.expected, repl.Complete(tc.input))
+		})
+	}
 }

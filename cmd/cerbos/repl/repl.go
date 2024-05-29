@@ -51,6 +51,8 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		return fmt.Errorf("failed to initialize the REPL: %w", err)
 	}
 
+	reader.SetCompleter(r.Complete)
+
 	return r.Loop()
 }
 
