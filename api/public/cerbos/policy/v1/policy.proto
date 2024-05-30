@@ -112,10 +112,6 @@ message RolePolicy {
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1}
   ];
-  // string version = 2 [
-  //   (buf.validate.field).required = true,
-  //   (buf.validate.field).string = {pattern: "^[[:word:]]+$"}
-  // ];
   string scope = 2 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   repeated RoleRule rules = 3;
 }

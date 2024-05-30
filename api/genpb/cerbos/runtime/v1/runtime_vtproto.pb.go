@@ -209,13 +209,6 @@ func (m *RunnableRolePolicySet_Metadata) MarshalToSizedBufferVT(dAtA []byte) (in
 		copy(dAtA[i:], m.Scope)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scope)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Role) > 0 {
-		i -= len(m.Role)
-		copy(dAtA[i:], m.Role)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
-		i--
 		dAtA[i] = 0x12
 	}
 	if len(m.Fqn) > 0 {
@@ -228,7 +221,7 @@ func (m *RunnableRolePolicySet_Metadata) MarshalToSizedBufferVT(dAtA []byte) (in
 	return len(dAtA) - i, nil
 }
 
-func (m *RunnableRolePolicySet_Policy_ResourceBitmap) MarshalVT() (dAtA []byte, err error) {
+func (m *RunnableRolePolicySet_Resource) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -241,12 +234,12 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) MarshalVT() (dAtA []byte, 
 	return dAtA[:n], nil
 }
 
-func (m *RunnableRolePolicySet_Policy_ResourceBitmap) MarshalToVT(dAtA []byte) (int, error) {
+func (m *RunnableRolePolicySet_Resource) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *RunnableRolePolicySet_Policy_ResourceBitmap) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *RunnableRolePolicySet_Resource) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -258,14 +251,14 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) MarshalToSizedBufferVT(dAt
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.ActionMask) > 0 {
+	if len(m.ActionBitmap) > 0 {
 		var pksize2 int
-		for _, num := range m.ActionMask {
+		for _, num := range m.ActionBitmap {
 			pksize2 += protohelpers.SizeOfVarint(uint64(num))
 		}
 		i -= pksize2
 		j1 := i
-		for _, num := range m.ActionMask {
+		for _, num := range m.ActionBitmap {
 			for num >= 1<<7 {
 				dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
@@ -282,58 +275,6 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) MarshalToSizedBufferVT(dAt
 		i -= len(m.Resource)
 		copy(dAtA[i:], m.Resource)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Resource)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *RunnableRolePolicySet_Policy) MarshalVT() (dAtA []byte, err error) {
-	if m == nil {
-		return nil, nil
-	}
-	size := m.SizeVT()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *RunnableRolePolicySet_Policy) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *RunnableRolePolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	if m == nil {
-		return 0, nil
-	}
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.unknownFields != nil {
-		i -= len(m.unknownFields)
-		copy(dAtA[i:], m.unknownFields)
-	}
-	if len(m.ResourceBitmap) > 0 {
-		for iNdEx := len(m.ResourceBitmap) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.ResourceBitmap[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.Role) > 0 {
-		i -= len(m.Role)
-		copy(dAtA[i:], m.Role)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -370,17 +311,24 @@ func (m *RunnableRolePolicySet) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Policies) > 0 {
-		for iNdEx := len(m.Policies) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.Policies[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.Resources) > 0 {
+		for iNdEx := len(m.Resources) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Resources[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
 			i -= size
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0x1a
 		}
+	}
+	if len(m.Role) > 0 {
+		i -= len(m.Role)
+		copy(dAtA[i:], m.Role)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
+		i--
+		dAtA[i] = 0x12
 	}
 	if m.Meta != nil {
 		size, err := m.Meta.MarshalToSizedBufferVT(dAtA[:i])
@@ -2668,10 +2616,6 @@ func (m *RunnableRolePolicySet_Metadata) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Role)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	l = len(m.Scope)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
@@ -2680,7 +2624,7 @@ func (m *RunnableRolePolicySet_Metadata) SizeVT() (n int) {
 	return n
 }
 
-func (m *RunnableRolePolicySet_Policy_ResourceBitmap) SizeVT() (n int) {
+func (m *RunnableRolePolicySet_Resource) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2690,32 +2634,12 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.ActionMask) > 0 {
+	if len(m.ActionBitmap) > 0 {
 		l = 0
-		for _, e := range m.ActionMask {
+		for _, e := range m.ActionBitmap {
 			l += protohelpers.SizeOfVarint(uint64(e))
 		}
 		n += 1 + protohelpers.SizeOfVarint(uint64(l)) + l
-	}
-	n += len(m.unknownFields)
-	return n
-}
-
-func (m *RunnableRolePolicySet_Policy) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Role)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	if len(m.ResourceBitmap) > 0 {
-		for _, e := range m.ResourceBitmap {
-			l = e.SizeVT()
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -2731,8 +2655,12 @@ func (m *RunnableRolePolicySet) SizeVT() (n int) {
 		l = m.Meta.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.Policies) > 0 {
-		for _, e := range m.Policies {
+	l = len(m.Role)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if len(m.Resources) > 0 {
+		for _, e := range m.Resources {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
@@ -4050,38 +3978,6 @@ func (m *RunnableRolePolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Role", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Role = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Scope", wireType)
 			}
 			var stringLen uint64
@@ -4134,7 +4030,7 @@ func (m *RunnableRolePolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *RunnableRolePolicySet_Policy_ResourceBitmap) UnmarshalVT(dAtA []byte) error {
+func (m *RunnableRolePolicySet_Resource) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4157,10 +4053,10 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) UnmarshalVT(dAtA []byte) e
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RunnableRolePolicySet_Policy_ResourceBitmap: wiretype end group for non-group")
+			return fmt.Errorf("proto: RunnableRolePolicySet_Resource: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RunnableRolePolicySet_Policy_ResourceBitmap: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: RunnableRolePolicySet_Resource: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4212,7 +4108,7 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) UnmarshalVT(dAtA []byte) e
 						break
 					}
 				}
-				m.ActionMask = append(m.ActionMask, v)
+				m.ActionBitmap = append(m.ActionBitmap, v)
 			} else if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
@@ -4247,8 +4143,8 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) UnmarshalVT(dAtA []byte) e
 					}
 				}
 				elementCount = count
-				if elementCount != 0 && len(m.ActionMask) == 0 {
-					m.ActionMask = make([]uint64, 0, elementCount)
+				if elementCount != 0 && len(m.ActionBitmap) == 0 {
+					m.ActionBitmap = make([]uint64, 0, elementCount)
 				}
 				for iNdEx < postIndex {
 					var v uint64
@@ -4266,128 +4162,11 @@ func (m *RunnableRolePolicySet_Policy_ResourceBitmap) UnmarshalVT(dAtA []byte) e
 							break
 						}
 					}
-					m.ActionMask = append(m.ActionMask, v)
+					m.ActionBitmap = append(m.ActionBitmap, v)
 				}
 			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActionMask", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ActionBitmap", wireType)
 			}
-		default:
-			iNdEx = preIndex
-			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *RunnableRolePolicySet_Policy) UnmarshalVT(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return protohelpers.ErrIntOverflow
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: RunnableRolePolicySet_Policy: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RunnableRolePolicySet_Policy: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Role", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Role = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceBitmap", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ResourceBitmap = append(m.ResourceBitmap, &RunnableRolePolicySet_Policy_ResourceBitmap{})
-			if err := m.ResourceBitmap[len(m.ResourceBitmap)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -4477,7 +4256,39 @@ func (m *RunnableRolePolicySet) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Policies", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Role", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Role = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4504,8 +4315,8 @@ func (m *RunnableRolePolicySet) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Policies = append(m.Policies, &RunnableRolePolicySet_Policy{})
-			if err := m.Policies[len(m.Policies)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.Resources = append(m.Resources, &RunnableRolePolicySet_Resource{})
+			if err := m.Resources[len(m.Resources)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

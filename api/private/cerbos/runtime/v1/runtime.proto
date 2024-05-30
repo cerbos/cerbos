@@ -28,22 +28,17 @@ message RunnablePolicySet {
 message RunnableRolePolicySet {
   message Metadata {
     string fqn = 1;
-    string role = 2;
-    string scope = 3;
+    string scope = 2;
   }
 
-  message Policy {
-    message ResourceBitmap {
-      string resource = 1;
-      repeated uint64 action_mask = 2;
-    }
-
-    string role = 1;
-    repeated ResourceBitmap resource_bitmap = 2;
+  message Resource {
+    string resource = 1;
+    repeated uint64 action_bitmap = 2;
   }
 
   Metadata meta = 1;
-  repeated Policy policies = 2;
+  string role = 2;
+  repeated Resource resources = 3;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies

@@ -588,13 +588,7 @@ type RolePolicy struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
-	// string version = 2 [
-	//
-	//	(buf.validate.field).required = true,
-	//	(buf.validate.field).string = {pattern: "^[[:word:]]+$"}
-	//
-	// ];
+	Role  string      `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
 	Scope string      `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
 	Rules []*RoleRule `protobuf:"bytes,3,rep,name=rules,proto3" json:"rules,omitempty"`
 }

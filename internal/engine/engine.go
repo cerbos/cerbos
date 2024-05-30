@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
 	"sync/atomic"
 	"time"
 
@@ -530,7 +529,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
 
 	// get the role policy check
-	rlpCheck, err := engine.getRolePolicyEvaluator(ctx, eparams, rpScope)
+	rlpCheck, err := engine.getRolePolicyEvaluator(ctx, eparams, rpScope, input.Principal.Roles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s]: %w", rpName, err)
 	}
@@ -566,8 +565,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams e
 	if rps == nil {
 		return nil, nil
 	}
-
-	return NewEvaluator(rps, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
+	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
 }
 
 func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
@@ -595,7 +593,7 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams ev
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
+	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
 }
 
 func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
@@ -613,32 +611,44 @@ func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policy
 	return rps, nil
 }
 
-func (engine *Engine) getRolePolicyEvaluator(ctx context.Context, eparams evalParams, scope string) (Evaluator, error) {
-	rps, err := engine.getRolePolicySet(ctx, scope)
+func (engine *Engine) getRolePolicyEvaluator(ctx context.Context, eparams evalParams, scope string, roles []string) (Evaluator, error) {
+	pSets, err := engine.getRolePolicySets(ctx, scope, roles)
 	if err != nil {
 		return nil, err
 	}
 
-	if rps == nil {
+	if pSets == nil || len(pSets) == 0 {
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
+	return NewEvaluator(pSets, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
 }
 
-func (engine *Engine) getRolePolicySet(ctx context.Context, scope string) (*runtimev1.RunnablePolicySet, error) {
+func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles []string) ([]*runtimev1.RunnablePolicySet, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.GetRolePolicies")
 	defer span.End()
 	span.SetAttributes(tracing.PolicyScope(scope))
 
-	roleModIDs := []namer.ModuleID{namer.RolePolicyModuleID(scope)}
-	rps, err := engine.policyLoader.GetFirstMatch(ctx, roleModIDs)
-	if err != nil {
-		tracing.MarkFailed(span, http.StatusInternalServerError, err)
-		return nil, err
+	// sets := make([]*runtimev1.RunnablePolicySet, len(roles))
+	// for i, r := range roles {
+	sets := []*runtimev1.RunnablePolicySet{}
+	for _, r := range roles {
+		roleModIDs := []namer.ModuleID{namer.RolePolicyModuleID(scope, r)}
+
+		rps, err := engine.policyLoader.GetFirstMatch(ctx, roleModIDs)
+		if err != nil {
+			tracing.MarkFailed(span, http.StatusInternalServerError, err)
+			return nil, err
+		}
+
+		// TODO(saml) temp hack to allow other tests to pass due to role policy being in main policy test store
+		// sets[i] = rps
+		if rps != nil {
+			sets = append(sets, rps)
+		}
 	}
 
-	return rps, nil
+	return sets, nil
 }
 
 func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, pScope string) {

@@ -26,7 +26,7 @@ type manager struct {
 	actionIndexes map[string]uint32
 }
 
-// TODO(saml) rename to NewManager
+// TODO(saml) rename to NewManager.
 func NewManager(m map[string]uint32) Manager {
 	if m == nil {
 		m = make(map[string]uint32)

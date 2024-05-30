@@ -617,7 +617,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 
 	case *policyv1.Policy_RolePolicy:
 		w.Kind = RolePolicyKind
-		w.FQN = namer.RolePolicyFQN(pt.RolePolicy.Scope)
+		w.FQN = namer.RolePolicyFQN(pt.RolePolicy.Scope, pt.RolePolicy.Role)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.RolePolicy.Role
 		w.Scope = pt.RolePolicy.Scope
@@ -657,8 +657,6 @@ type CompilationUnit struct {
 	Definitions    map[namer.ModuleID]*policyv1.Policy
 	SourceContexts map[namer.ModuleID]parser.SourceCtx
 	ModID          namer.ModuleID
-
-	RolePolicyDefinitions map[namer.ModuleID]*policyv1.Policy
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy, sc parser.SourceCtx) {
@@ -674,19 +672,6 @@ func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy, 
 	cu.SourceContexts[id] = sc
 }
 
-func (cu *CompilationUnit) AddRolePolicyDefinition(id namer.ModuleID, p *policyv1.Policy, sc parser.SourceCtx) {
-	if cu.RolePolicyDefinitions == nil {
-		cu.RolePolicyDefinitions = make(map[namer.ModuleID]*policyv1.Policy)
-	}
-
-	if cu.SourceContexts == nil {
-		cu.SourceContexts = make(map[namer.ModuleID]parser.SourceCtx)
-	}
-
-	cu.RolePolicyDefinitions[id] = p
-	cu.SourceContexts[id] = sc
-}
-
 func (cu *CompilationUnit) MainSourceFile() string {
 	return GetSourceFile(cu.Definitions[cu.ModID])
 }
@@ -697,18 +682,6 @@ func (cu *CompilationUnit) MainPolicy() *policyv1.Policy {
 
 func (cu *CompilationUnit) Ancestors() []namer.ModuleID {
 	return Ancestors(cu.Definitions[cu.ModID])
-}
-
-func (cu *CompilationUnit) RolePolicies() []*policyv1.Policy {
-	ids := make([]*policyv1.Policy, len(cu.RolePolicyDefinitions))
-
-	var i int
-	for _, def := range cu.RolePolicyDefinitions {
-		ids[i] = def
-		i++
-	}
-
-	return ids
 }
 
 // Key returns the human readable identifier for the main module.

@@ -38,7 +38,7 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	errs := newErrorSet()
 
 	for unit := range queue {
-		if _, err := Compile(unit, schemaMgr, nil); err != nil {
+		if _, err := Compile(unit, schemaMgr, rolepolicy.NewNopManager()); err != nil {
 			errs.Add(err)
 		}
 	}
@@ -46,7 +46,6 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	return errs.ErrOrNil()
 }
 
-// TODO(saml) rolePolicyMgr is only relevant for bundlegen - how to gracefully handle the boundaries better?
 func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyMgr rolepolicy.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
@@ -77,36 +76,20 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 		return nil
 	}
 
-	rolePolicyDefs := modCtx.unit.RolePolicies()
+	rbm := []*runtimev1.RunnableRolePolicySet_Resource{}
 
-	policies := make([]*runtimev1.RunnableRolePolicySet_Policy, len(rolePolicyDefs))
-
-	for i, def := range rolePolicyDefs {
-		rp := def.GetRolePolicy()
-		if rp == nil {
-			continue // TODO(saml)
-		}
-
-		rbm := []*runtimev1.RunnableRolePolicySet_Policy_ResourceBitmap{}
-
-		for _, r := range rp.Rules {
-			var actionMask bitmap.Bitmap
-			for _, a := range r.AllowedActions {
-				if idx, exists := rolePolicyMgr.GetIndex(a); exists {
-					actionMask.Set(uint32(idx))
-				}
+	for _, r := range rp.Rules {
+		var actionMask bitmap.Bitmap
+		for _, a := range r.AllowedActions {
+			if idx, exists := rolePolicyMgr.GetIndex(a); exists {
+				actionMask.Set(uint32(idx))
 			}
-
-			rbm = append(rbm, &runtimev1.RunnableRolePolicySet_Policy_ResourceBitmap{
-				Resource:   r.Resource,
-				ActionMask: actionMask,
-			})
 		}
 
-		policies[i] = &runtimev1.RunnableRolePolicySet_Policy{
-			Role:           rp.Role,
-			ResourceBitmap: rbm,
-		}
+		rbm = append(rbm, &runtimev1.RunnableRolePolicySet_Resource{
+			Resource:     r.Resource,
+			ActionBitmap: actionMask,
+		})
 	}
 
 	return &runtimev1.RunnablePolicySet{
@@ -116,13 +99,10 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 			RolePolicy: &runtimev1.RunnableRolePolicySet{
 				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
 					Fqn:   modCtx.fqn,
-					Role:  rp.Role,
 					Scope: rp.Scope,
-					// SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
-					// Annotations: modCtx.def.GetMetadata().GetAnnotations(),
 				},
-				Policies: policies,
-				// ActionIndexes: rolePolicyMgr.GetMap(),
+				Role:      rp.Role,
+				Resources: rbm,
 			},
 		},
 	}

@@ -78,8 +78,6 @@ type index struct {
 	mu           sync.RWMutex
 
 	rolePolicyActionIndexes map[string]uint32
-	scopeGroupModIDs        map[string][]namer.ModuleID
-	modIDScopeGroup         map[namer.ModuleID]string
 }
 
 func (idx *index) GetFiles() []string {
@@ -117,26 +115,12 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 			ModID:          id,
 			Definitions:    map[namer.ModuleID]*policyv1.Policy{id: p},
 			SourceContexts: map[namer.ModuleID]parser.SourceCtx{id: sc},
-			// RolePolicyDefinitions: make(map[namer.ModuleID]*policyv1.Policy),
 		}
 
 		// add dependencies
 		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {
 			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
 		}
-
-		// add role policies for shared scope
-		// if scope, ok := idx.modIDScopeGroup[id]; ok {
-		// 	if ids, ok := idx.scopeGroupModIDs[scope]; ok {
-		// 		for _, id := range ids {
-		// 			p, sc, err := idx.loadPolicy(id)
-		// 			if err != nil {
-		// 				return nil, fmt.Errorf("failed to load associated role policy %q of scoped policy %s: %w", id.String(), policyKey, err)
-		// 			}
-		// 			cu.AddRolePolicyDefinition(id, p, sc)
-		// 		}
-		// 	}
-		// }
 
 		// load ancestors of the policy
 		for _, ancestor := range cu.Ancestors() {
@@ -175,30 +159,20 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 		policyKey := namer.PolicyKey(p)
 
 		cu := &policy.CompilationUnit{
-			ModID:                 id,
-			Definitions:           map[namer.ModuleID]*policyv1.Policy{id: p},
-			SourceContexts:        map[namer.ModuleID]parser.SourceCtx{id: sc},
-			RolePolicyDefinitions: make(map[namer.ModuleID]*policyv1.Policy),
+			ModID:          id,
+			Definitions:    map[namer.ModuleID]*policyv1.Policy{id: p},
+			SourceContexts: map[namer.ModuleID]parser.SourceCtx{id: sc},
 		}
 
 		result[id] = cu
 
+		if _, ok := p.PolicyType.(*policyv1.Policy_RolePolicy); ok {
+			return result, nil
+		}
+
 		// add dependencies
 		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {
 			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
-		}
-
-		// add equally scoped role policies
-		if scope, ok := idx.modIDScopeGroup[id]; ok {
-			if ids, ok := idx.scopeGroupModIDs[scope]; ok {
-				for _, rp := range ids {
-					p, sc, err := idx.loadPolicy(rp)
-					if err != nil {
-						return nil, fmt.Errorf("failed to load associated role policy %q of scoped policy %s: %w", rp.String(), policyKey, err)
-					}
-					cu.AddRolePolicyDefinition(rp, p, sc)
-				}
-			}
 		}
 
 		// load ancestors of the policy

@@ -90,14 +90,24 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams, rolePolicyMgr rolepolicy.Manager) Evaluator {
-	switch rp := rps.PolicySet.(type) {
+func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams, rolePolicyMgr rolepolicy.Manager) Evaluator {
+	if len(rps) == 0 {
+		return noopEvaluator{}
+	}
+
+	switch rp := rps[0].PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		return &rolePolicyEvaluator{policy: rp.RolePolicy, mgr: rolePolicyMgr}
+		policies := make(map[string]*runtimev1.RunnableRolePolicySet)
+		for _, p := range rps {
+			if rp, ok := p.PolicySet.(*runtimev1.RunnablePolicySet_RolePolicy); ok {
+				policies[rp.RolePolicy.Role] = rp.RolePolicy
+			}
+		}
+		return &rolePolicyEvaluator{policies: policies, mgr: rolePolicyMgr}
 	default:
 		return noopEvaluator{}
 	}
@@ -110,32 +120,31 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 }
 
 type rolePolicyEvaluator struct {
-	policy *runtimev1.RunnableRolePolicySet
-	mgr    rolepolicy.Manager
-	// store  *store.RolePolicyStore
+	policies map[string]*runtimev1.RunnableRolePolicySet
+	mgr      rolepolicy.Manager
 }
 
 func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	result := newEvalResult(input.Actions, nil)
 
-	pctx := tctx.StartPolicy(rpe.policy.Meta.Fqn)
-	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
-
-	// TODO(saml) this bit will use whatever central cache we end up with
-	roleSet := make(map[string]struct{})
-	for _, r := range input.Principal.Roles {
-		roleSet[r] = struct{}{}
-	}
+	// pctx := tctx.StartPolicy(basePolicy.Meta.Fqn)
+	// policyKey := namer.PolicyKeyFromFQN(basePolicy.Meta.Fqn)
+	var pctx tracer.Context
+	var policyKey string
 
 	var actionMask bitmap.Bitmap
-	for _, p := range rpe.policy.Policies {
-		if _, hasRole := roleSet[p.Role]; !hasRole {
-			continue
+	for _, p := range rpe.policies {
+		// TODO(saml) how to generate context/policy key for a group of role policies?
+		if pctx == nil {
+			pctx = tctx.StartPolicy(p.Meta.Fqn)
+		}
+		if policyKey == "" {
+			policyKey = namer.PolicyKeyFromFQN(p.Meta.Fqn)
 		}
 
-		for _, r := range p.ResourceBitmap {
+		for _, r := range p.Resources {
 			if r.Resource == input.Resource.Kind {
-				actionMask.Or(r.ActionMask)
+				actionMask.Or(r.ActionBitmap)
 			}
 		}
 	}

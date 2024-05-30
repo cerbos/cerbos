@@ -23,6 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
@@ -469,7 +470,7 @@ func compilePolicy(t *testing.T, p *policyv1.Policy, derivedRoles ...*policyv1.P
 	}
 	cu.AddDefinition(mID, p, parser.NewEmptySourceCtx())
 
-	rps, err := compile.Compile(cu, schema.NewNopManager(), nil)
+	rps, err := compile.Compile(cu, schema.NewNopManager(), rolepolicy.NewNopManager())
 	require.NoError(t, err)
 
 	return rps

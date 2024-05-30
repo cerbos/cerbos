@@ -173,8 +173,6 @@ type indexBuilder struct {
 
 	rolePolicyActionIndexes map[string]uint32
 	rolePolicyActionCount   uint32
-	scopeGroupModIDs        map[string][]namer.ModuleID
-	modIDScopeGroup         map[namer.ModuleID]string
 }
 
 func newIndexBuilder() *indexBuilder {
@@ -189,8 +187,6 @@ func newIndexBuilder() *indexBuilder {
 		stats:         newStatsCollector(),
 
 		rolePolicyActionIndexes: make(map[string]uint32),
-		scopeGroupModIDs:        make(map[string][]namer.ModuleID),
-		modIDScopeGroup:         make(map[namer.ModuleID]string),
 	}
 }
 
@@ -257,14 +253,6 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 
 	switch p.Kind {
 	case policy.RolePolicyKind:
-		// TODO(saml) mutex around maps?
-		idx.modIDScopeGroup[p.ID] = p.Scope
-
-		if _, ok := idx.scopeGroupModIDs[p.Scope]; !ok {
-			idx.scopeGroupModIDs[p.Scope] = []namer.ModuleID{}
-		}
-		idx.scopeGroupModIDs[p.Scope] = append(idx.scopeGroupModIDs[p.Scope], p.ID)
-
 		rp := p.GetRolePolicy()
 		for _, r := range rp.Rules {
 			for _, a := range r.AllowedActions {
@@ -380,8 +368,6 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 		stats:        idx.stats.collate(),
 
 		rolePolicyActionIndexes: idx.rolePolicyActionIndexes,
-		scopeGroupModIDs:        idx.scopeGroupModIDs,
-		modIDScopeGroup:         idx.modIDScopeGroup,
 	}, nil
 }
 
