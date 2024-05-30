@@ -617,7 +617,7 @@ func (engine *Engine) getRolePolicyEvaluator(ctx context.Context, eparams evalPa
 		return nil, err
 	}
 
-	if pSets == nil || len(pSets) == 0 {
+	if len(pSets) == 0 {
 		return nil, nil
 	}
 
