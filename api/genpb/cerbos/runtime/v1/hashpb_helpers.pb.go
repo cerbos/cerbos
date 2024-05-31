@@ -920,6 +920,17 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourceP
 	}
 }
 
+func cerbos_runtime_v1_RunnableRolePolicySet_ActionBitmap_hashpb_sum(m *RunnableRolePolicySet_ActionBitmap, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.ActionBitmap.bitmap"]; !ok {
+		if len(m.Bitmap) > 0 {
+			for _, v := range m.Bitmap {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, v))
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_RunnableRolePolicySet_Metadata_hashpb_sum(m *RunnableRolePolicySet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Metadata.fqn"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetFqn()))
@@ -929,17 +940,38 @@ func cerbos_runtime_v1_RunnableRolePolicySet_Metadata_hashpb_sum(m *RunnableRole
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
 
 	}
-}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Metadata.source_attributes"]; !ok {
+		if len(m.SourceAttributes) > 0 {
+			keys := make([]string, len(m.SourceAttributes))
+			i := 0
+			for k := range m.SourceAttributes {
+				keys[i] = k
+				i++
+			}
 
-func cerbos_runtime_v1_RunnableRolePolicySet_Resource_hashpb_sum(m *RunnableRolePolicySet_Resource, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Resource.resource"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResource()))
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
+			for _, k := range keys {
+				if m.SourceAttributes[k] != nil {
+					cerbos_policy_v1_SourceAttributes_hashpb_sum(m.SourceAttributes[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Resource.action_bitmap"]; !ok {
-		if len(m.ActionBitmap) > 0 {
-			for _, v := range m.ActionBitmap {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, v))
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Metadata.annotations"]; !ok {
+		if len(m.Annotations) > 0 {
+			keys := make([]string, len(m.Annotations))
+			i := 0
+			for k := range m.Annotations {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				_, _ = hasher.Write(protowire.AppendString(nil, m.Annotations[k]))
 
 			}
 		}
@@ -959,9 +991,18 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.resources"]; !ok {
 		if len(m.Resources) > 0 {
-			for _, v := range m.Resources {
-				if v != nil {
-					cerbos_runtime_v1_RunnableRolePolicySet_Resource_hashpb_sum(v, hasher, ignore)
+			keys := make([]string, len(m.Resources))
+			i := 0
+			for k := range m.Resources {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Resources[k] != nil {
+					cerbos_runtime_v1_RunnableRolePolicySet_ActionBitmap_hashpb_sum(m.Resources[k], hasher, ignore)
 				}
 
 			}

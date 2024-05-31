@@ -76,8 +76,7 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 		return nil
 	}
 
-	rbm := []*runtimev1.RunnableRolePolicySet_Resource{}
-
+	resources := make(map[string]*runtimev1.RunnableRolePolicySet_ActionBitmap)
 	for _, r := range rp.Rules {
 		var actionMask bitmap.Bitmap
 		for _, a := range r.AllowedActions {
@@ -85,10 +84,9 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 			actionMask.Set(uint32(idx))
 		}
 
-		rbm = append(rbm, &runtimev1.RunnableRolePolicySet_Resource{
-			Resource:     r.Resource,
-			ActionBitmap: actionMask,
-		})
+		resources[r.Resource] = &runtimev1.RunnableRolePolicySet_ActionBitmap{
+			Bitmap: actionMask,
+		}
 	}
 
 	return &runtimev1.RunnablePolicySet{
@@ -101,7 +99,7 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 					Scope: rp.Scope,
 				},
 				Role:      rp.Role,
-				Resources: rbm,
+				Resources: resources,
 			},
 		},
 	}

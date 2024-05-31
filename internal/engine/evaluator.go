@@ -142,10 +142,8 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 			policyKey = namer.PolicyKeyFromFQN(p.Meta.Fqn)
 		}
 
-		for _, r := range p.Resources {
-			if r.Resource == input.Resource.Kind {
-				actionMask.Or(r.ActionBitmap)
-			}
+		if r, exists := p.Resources[input.Resource.Kind]; exists {
+			actionMask.Or(r.Bitmap)
 		}
 	}
 

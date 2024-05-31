@@ -29,16 +29,17 @@ message RunnableRolePolicySet {
   message Metadata {
     string fqn = 1;
     string scope = 2;
+    map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 3;
+    map<string, string> annotations = 4;
   }
 
-  message Resource {
-    string resource = 1;
-    repeated uint64 action_bitmap = 2;
+  message ActionBitmap {
+    repeated uint64 bitmap = 1;
   }
 
   Metadata meta = 1;
   string role = 2;
-  repeated Resource resources = 3;
+  map<string, ActionBitmap> resources = 3;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies
