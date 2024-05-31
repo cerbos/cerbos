@@ -9,11 +9,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/google/cel-go/cel"
@@ -686,6 +691,153 @@ func (r *REPL) mkEnv() (*cel.Env, error) {
 	}
 
 	return conditions.StdEnv.Extend(cel.Declarations(decls...))
+}
+
+func (r *REPL) Complete(line string) []string {
+	parts := strings.Fields(line)
+	if len(parts) == 0 {
+		parts = []string{""}
+	}
+
+	chars := []rune(line)
+
+	if len(chars) != 0 && unicode.IsSpace(chars[len(chars)-1]) {
+		parts = append(parts, "")
+	}
+
+	lastTokIndx := len(parts) - 1
+	lastTok := parts[lastTokIndx]
+
+	if lastTokIndx == 0 {
+		return r.completeCmd(lastTok)
+	}
+
+	var compls []string
+	// This isn't ideal, but the directives are baked into tags
+	// making this trickier to implement neatly
+	switch parts[0] {
+	case ":load":
+		compls = r.completeFile(lastTok)
+	case ":let":
+		compls = r.completeVar(lastTok)
+	case ":exec":
+		compls = r.completeRule(lastTok)
+	}
+
+	res := make([]string, len(compls))
+	for i, c := range compls {
+		parts[lastTokIndx] = c
+		res[i] = strings.Join(parts, " ")
+	}
+
+	return res
+}
+
+var directives = []string{
+	":help",
+	":let",
+	":load",
+	":vars",
+	":rules",
+	":exec",
+	":reset",
+	":quit",
+}
+
+func (r *REPL) completeCmd(prefix string) (c []string) {
+	var matches []string
+
+	for _, d := range directives {
+		if strings.HasPrefix(d, prefix) {
+			matches = append(matches, d)
+		}
+	}
+
+	return matches
+}
+
+var (
+	skippableDirs  = regexp.MustCompile(`^(_schemas|testdata|derived_roles)$`)
+	skippableFiles = regexp.MustCompile(`(^\.)|(_test\.(yaml|yml|json)$)`)
+	matchingFiles  = regexp.MustCompile(`\.(yaml|yml|json)$`)
+)
+
+func (r *REPL) completeFile(prefix string) (c []string) {
+	path := filepath.Dir(prefix)
+	if path == "" {
+		path = "."
+	}
+
+	// This is subtle, but the first path may be a complete directory the user explicitly
+	// passed, so should not be skipped. This is also needed for the tests to pass (since
+	// we skip testdata
+	top := true
+
+	var matches []string
+
+	// TODO(tcm): this should probably limit the depth of the search
+	_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if top {
+			defer func() { top = false }()
+		}
+
+		if err != nil {
+			return err
+		}
+		dn := d.Name()
+		if !top && d.IsDir() && skippableDirs.MatchString(dn) {
+			return fs.SkipDir
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		if strings.HasPrefix(path, prefix) && !skippableFiles.MatchString(dn) && matchingFiles.MatchString(dn) {
+			matches = append(matches, path)
+		}
+		return nil
+	})
+	return matches
+}
+
+func (r *REPL) completeVar(prefix string) (c []string) {
+	var matches []string
+
+	for k := range r.vars {
+		if strings.HasPrefix(k, prefix) {
+			matches = append(matches, k)
+		}
+	}
+	sort.Strings(matches)
+
+	return matches
+}
+
+func (r *REPL) completeRule(prefix string) (c []string) {
+	var matches []string
+
+	if len(prefix) == 0 {
+		prefix = "#"
+	}
+
+	if r.policy == nil || !strings.HasPrefix(prefix, "#") {
+		return matches
+	}
+
+	numStr := prefix[1:]
+
+	if _, err := strconv.Atoi(numStr); numStr != "" && err != nil {
+		return matches
+	}
+
+	for idx := range r.policy.rules {
+		idxStr := strconv.Itoa(idx)
+		if strings.HasPrefix(idxStr, numStr) {
+			matches = append(matches, "#"+idxStr)
+		}
+	}
+
+	return matches
 }
 
 func isTerminated(line string, stack *runeStack) (string, bool) {

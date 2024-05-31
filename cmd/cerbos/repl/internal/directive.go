@@ -57,7 +57,7 @@ type LetDirective struct {
 }
 
 type LoadDirective struct {
-	Path string `parser:"'load' @Path"`
+	Path string `parser:"'load' @(Path|Ident)"`
 }
 
 type ExecDirective struct {
