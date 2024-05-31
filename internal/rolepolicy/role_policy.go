@@ -4,7 +4,7 @@
 package rolepolicy
 
 type Manager interface {
-	GetIndex(string) (uint32, bool)
+	GetIndex(string) uint32
 	GetMap() map[string]uint32
 }
 
@@ -14,8 +14,8 @@ func NewNopManager() NopManager {
 
 type NopManager struct{}
 
-func (n NopManager) GetIndex(string) (uint32, bool) {
-	return 0, false
+func (n NopManager) GetIndex(string) uint32 {
+	return 0
 }
 
 func (n NopManager) GetMap() map[string]uint32 {
@@ -37,13 +37,8 @@ func NewManager(m map[string]uint32) Manager {
 	}
 }
 
-func (m *manager) GetIndex(action string) (uint32, bool) {
-	if m == nil {
-		return 0, false
-	}
-
-	idx, ok := m.actionIndexes[action]
-	return idx, ok
+func (m *manager) GetIndex(action string) uint32 {
+	return m.actionIndexes[action]
 }
 
 func (m *manager) GetMap() map[string]uint32 {

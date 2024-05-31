@@ -151,7 +151,8 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	for _, a := range input.Actions {
 		// TODO(saml) handle single level case (we DENY unless the role policy is the sole scope level in which case we can ALLOW)
-		if idx, ok := rpe.mgr.GetIndex(a); !ok || !actionMask.Contains(idx) {
+		idx := rpe.mgr.GetIndex(a)
+		if !actionMask.Contains(idx) {
 			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
 		}
 	}
