@@ -287,6 +287,14 @@ func TestSuite(store DBStorage) func(*testing.T) {
 						VersionRegexp:   "default$",
 					},
 				},
+				{
+					name: "policy ids",
+					params: storage.ListPolicyIDsParams{
+						IDs: []string{
+							"resource.leave_request.vdefault",
+						},
+					},
+				},
 			}
 
 			for _, tc := range testCases {

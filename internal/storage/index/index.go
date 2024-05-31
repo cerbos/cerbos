@@ -12,6 +12,8 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/cerbos/cerbos/internal/util"
+
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -53,8 +55,8 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
-	InspectPolicies(context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
-	ListPolicyIDs(context.Context) ([]string, error)
+	InspectPolicies(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
+	ListPolicyIDs(context.Context, ...string) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
@@ -450,33 +452,47 @@ func (idx *index) Inspect() map[string]meta {
 	return entries
 }
 
-func (idx *index) InspectPolicies(ctx context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	policyIDs, err := idx.ListPolicyIDs(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list policies: %w", err)
-	}
-
-	if len(policyIDs) == 0 {
-		return nil, nil
+func (idx *index) InspectPolicies(ctx context.Context, file ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	var files []string
+	if len(file) == 0 {
+		var err error
+		if files, err = idx.ListPolicyIDs(ctx); err != nil {
+			return nil, fmt.Errorf("failed to list policies: %w", err)
+		}
+	} else {
+		files = file
 	}
 
 	ins := inspect.Policies()
 	if err := storage.BatchLoadPolicy(ctx, 1, idx.LoadPolicy, func(wp *policy.Wrapper) error {
 		return ins.Inspect(wp.Policy)
-	}, policyIDs...); err != nil {
+	}, files...); err != nil {
 		return nil, fmt.Errorf("failed to load policy: %w", err)
 	}
 
 	return ins.Results(ctx, idx.LoadPolicy)
 }
 
-func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
+func (idx *index) ListPolicyIDs(_ context.Context, filteredFiles ...string) ([]string, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	entries := make([]string, 0, len(idx.modIDToFile))
+	filteredSize := len(filteredFiles)
+	var ss util.StringSet
+	if len(filteredFiles) > 0 {
+		ss = util.ToStringSet(filteredFiles)
+		filteredSize = len(ss)
+	}
+
+	entries := make([]string, 0, filteredSize)
 	for _, f := range idx.modIDToFile {
-		entries = append(entries, f)
+		if len(filteredFiles) > 0 {
+			if ss.Contains(f) {
+				entries = append(entries, f)
+			}
+		} else {
+			entries = append(entries, f)
+		}
 	}
 
 	sort.Strings(entries)

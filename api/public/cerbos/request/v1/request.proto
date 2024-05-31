@@ -554,6 +554,19 @@ message ListPoliciesRequest {
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by version with regexp"}
   ];
+  repeated string policy_id = 5 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).repeated = {
+      max_items: 25,
+      items {
+        string {min_len: 1}
+      }
+    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
+      example: "\"principal.sarah.vdefault\""
+    }
+  ];
 }
 
 message GetPolicyRequest {
@@ -638,6 +651,19 @@ message InspectPoliciesRequest {
   string version_regexp = 4 [
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter policies by version with regexp"}
+  ];
+  repeated string policy_id = 5 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).repeated = {
+      max_items: 25,
+      items {
+        string {min_len: 1}
+      }
+    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
+      example: "\"principal.sarah.vdefault\""
+    }
   ];
 }
 

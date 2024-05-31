@@ -112,6 +112,7 @@ type ListPolicyIDsParams struct {
 	NameRegexp      string
 	ScopeRegexp     string
 	VersionRegexp   string
+	IDs             []string
 	IncludeDisabled bool
 }
 
@@ -119,11 +120,11 @@ type ListPolicyIDsParams struct {
 type Store interface {
 	// Driver is the name of the storage backend implementation.
 	Driver() string
-	// InspectPolicies returns inspection results for the policies in the store
+	// InspectPolicies returns inspection results for the policies in the store.
 	InspectPolicies(context.Context, ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
-	// ListPolicyIDs returns the policy IDs in the store
+	// ListPolicyIDs returns the policy IDs in the store.
 	ListPolicyIDs(context.Context, ListPolicyIDsParams) ([]string, error)
-	// ListSchemaIDs returns the schema ids in the store
+	// ListSchemaIDs returns the schema ids in the store.
 	ListSchemaIDs(context.Context) ([]string, error)
 	// LoadSchema loads the given schema from the store.
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
