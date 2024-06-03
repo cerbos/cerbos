@@ -107,6 +107,12 @@ envFrom: []
 certManager:
   certSpec: {}
 
+# Kubernetes workload type to use. Valid values are `deployment` or `daemonset`.
+type: deployment
+
+# PriorityClassName to set on deployed pods
+priorityClassName: ""
+
 # Cerbos service settings.
 service:
   type: ClusterIP
@@ -117,6 +123,9 @@ service:
   annotations: {}
   clusterIP: null
   loadBalancerIP: null
+  # Set the internalTrafficPolicy. If this is unset, and .Values.type
+  # is set to daemonset, this will default to "Local"
+  internalTrafficPolicy: ""
 
 # Cerbos deployment settings.
 cerbos:

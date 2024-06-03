@@ -16,6 +16,11 @@ spec:
   {{- with .Values.service.loadBalancerIP }}
   loadBalancerIP: {{ . }}
   {{- end }}
+  {{- if .Values.service.internalTrafficPolicy }}
+  internalTrafficPolicy: {{ .Values.service.internalTrafficPolicy }}
+  {{- else if eq .Values.type "daemonset" }}
+  internalTrafficPolicy: Local
+  {{- end }}
   ports:
     - port: {{ .Values.service.httpPort }}
       targetPort: http
