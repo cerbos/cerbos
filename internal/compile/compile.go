@@ -79,7 +79,7 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 	resources := make(map[string]*runtimev1.RunnableRolePolicySet_ActionBitmap)
 	for _, r := range rp.Rules {
 		var actionMask bitmap.Bitmap
-		for _, a := range r.AllowedActions {
+		for _, a := range r.PermissibleActions {
 			idx := rolePolicyMgr.GetIndex(a)
 			actionMask.Set(uint32(idx))
 		}

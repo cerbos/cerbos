@@ -2921,7 +2921,7 @@
         "resource": {
           "type": "string"
         },
-        "allowedActions": {
+        "permissibleActions": {
           "type": "array",
           "items": {
             "type": "string"

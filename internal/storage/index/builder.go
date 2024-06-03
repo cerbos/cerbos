@@ -255,7 +255,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	case policy.RolePolicyKind:
 		rp := p.GetRolePolicy()
 		for _, r := range rp.Rules {
-			for _, a := range r.AllowedActions {
+			for _, a := range r.PermissibleActions {
 				if _, ok := idx.rolePolicyActionIndexes[a]; !ok {
 					idx.rolePolicyActionIndexes[a] = idx.rolePolicyActionCount
 					idx.rolePolicyActionCount++

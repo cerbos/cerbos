@@ -435,11 +435,11 @@
       "type": "object",
       "required": [
         "resource",
-        "allowedActions"
+        "permissibleActions"
       ],
       "additionalProperties": false,
       "properties": {
-        "allowedActions": {
+        "permissibleActions": {
           "type": "array",
           "items": {
             "type": "string",
