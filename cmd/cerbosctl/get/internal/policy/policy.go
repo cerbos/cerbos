@@ -33,7 +33,7 @@ func DoCmd(k *kong.Kong, ac *cerbos.GRPCAdminClient, kind policy.Kind, filters *
 }
 
 func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
-	var opts []cerbos.ListPoliciesOption
+	var opts []cerbos.FilterOption
 	if filters.IncludeDisabled {
 		opts = append(opts, cerbos.WithIncludeDisabled())
 	}

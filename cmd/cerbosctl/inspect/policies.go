@@ -41,6 +41,9 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 	if c.Filters.NameRegexp != "" {
 		opts = append(opts, cerbos.WithNameRegexp(c.Filters.NameRegexp))
 	}
+	if len(c.Filters.PolicyID) > 0 {
+		opts = append(opts, cerbos.WithPolicyID(c.Filters.PolicyID...))
+	}
 	if c.Filters.ScopeRegexp != "" {
 		opts = append(opts, cerbos.WithScopeRegexp(c.Filters.ScopeRegexp))
 	}

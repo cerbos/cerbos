@@ -58,22 +58,15 @@ func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
 }
 
 func (c *Cmd) Validate() error {
-	err := c.Filters.Validate(policy.PrincipalKind, len(c.PolicyIds) == 0)
-	if err != nil {
+	if err := c.Filters.Validate(policy.PrincipalKind, len(c.PolicyIds) == 0); err != nil {
 		return err
 	}
 
-	err = c.Format.Validate(len(c.PolicyIds) == 0)
-	if err != nil {
+	if err := c.Format.Validate(len(c.PolicyIds) == 0); err != nil {
 		return err
 	}
 
-	err = c.Sort.Validate(policy.PrincipalKind, len(c.PolicyIds) == 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.Sort.Validate(policy.PrincipalKind, len(c.PolicyIds) == 0)
 }
 
 func (c *Cmd) Help() string {

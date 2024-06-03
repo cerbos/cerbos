@@ -29,16 +29,14 @@ type Cmd struct {
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
 	if len(c.SchemaIds) == 0 {
-		err := schema.List(k, ctx.AdminClient, &c.Format)
-		if err != nil {
+		if err := schema.List(k, ctx.AdminClient, &c.Format); err != nil {
 			return fmt.Errorf("failed to list schemas: %w", err)
 		}
 
 		return nil
 	}
 
-	err := schema.Get(k, ctx.AdminClient, &c.Format, c.SchemaIds...)
-	if err != nil {
+	if err := schema.Get(k, ctx.AdminClient, &c.Format, c.SchemaIds...); err != nil {
 		return fmt.Errorf("failed to get schemas: %w", err)
 	}
 
