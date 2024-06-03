@@ -214,6 +214,36 @@ func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (
 	return nil, nil
 }
 
+// GetAll attempts to retrieve all exact policies from the passed modIDs. It will not fall back up the scope chain if a
+// specific module is missing. If any policies are missing, the call errors.
+func (b *Bundle) GetAll(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	res := make([]*runtimev1.RunnablePolicySet, len(modIDs))
+	for i, id := range modIDs {
+		cached, ok := b.cache.Get(id)
+		if ok {
+			res[i] = cached.policySet
+			continue
+		}
+
+		idHex := id.HexStr()
+		fileName := policyDir + idHex
+
+		if _, err := b.bundleFS.Stat(fileName); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
+		}
+
+		policySet, err := b.loadPolicySet(idHex, fileName)
+		b.cache.Set(id, cacheEntry{policySet: policySet, err: err})
+		res[i] = policySet
+	}
+
+	return res, nil
+}
+
 func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolicySet, error) {
 	f, err := b.bundleFS.Open(fileName)
 	if err != nil {

@@ -48,6 +48,7 @@ const (
 
 type PolicyLoader interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	GetAll(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }
 
 type CheckOptions struct {
@@ -629,23 +630,15 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 	defer span.End()
 	span.SetAttributes(tracing.PolicyScope(scope))
 
-	// sets := make([]*runtimev1.RunnablePolicySet, len(roles))
-	// for i, r := range roles {
-	sets := []*runtimev1.RunnablePolicySet{}
-	for _, r := range roles {
-		roleModIDs := []namer.ModuleID{namer.RolePolicyModuleID(scope, r)}
+	roleModIDs := make([]namer.ModuleID, len(roles))
+	for i, r := range roles {
+		roleModIDs[i] = namer.RolePolicyModuleID(scope, r)
+	}
 
-		rps, err := engine.policyLoader.GetFirstMatch(ctx, roleModIDs)
-		if err != nil {
-			tracing.MarkFailed(span, http.StatusInternalServerError, err)
-			return nil, err
-		}
-
-		// TODO(saml) temp hack to allow other tests to pass due to role policy being in main policy test store
-		// sets[i] = rps
-		if rps != nil {
-			sets = append(sets, rps)
-		}
+	sets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
+	if err != nil {
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+		return nil, err
 	}
 
 	return sets, nil

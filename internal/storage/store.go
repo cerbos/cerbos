@@ -149,6 +149,7 @@ type BinaryStore interface {
 	Store
 	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	GetAll(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }
 
 // MutableStore is a store that allows mutations.

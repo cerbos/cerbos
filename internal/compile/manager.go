@@ -231,6 +231,12 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 	return rpsVal.(*runtimev1.RunnablePolicySet), nil
 }
 
+// GetAll is only used in BinaryStores when retrieving >1 role policies. We need to implement this stub method in
+// order to satisfy the PolicyLoader interface for certain use cases (overlay storage drivers, etc)
+func (c *Manager) GetAll(_ context.Context, _ []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	return []*runtimev1.RunnablePolicySet{}, nil
+}
+
 func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	key := modID.String()
 	defer c.sf.Forget(key)
