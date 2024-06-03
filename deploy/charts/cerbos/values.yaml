@@ -107,7 +107,7 @@ envFrom: []
 certManager:
   certSpec: {}
 
-# Kubernetes to to use
+# Kubernetes workload type to use. Valid values are `deployment` or `daemonset`.
 type: deployment
 
 # PriorityClassName to set on deployed pods
