@@ -101,13 +101,7 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		policies := make(map[string]*runtimev1.RunnableRolePolicySet)
-		for _, p := range rps {
-			if rp, ok := p.PolicySet.(*runtimev1.RunnablePolicySet_RolePolicy); ok {
-				policies[rp.RolePolicy.Role] = rp.RolePolicy
-			}
-		}
-		return &rolePolicyEvaluator{policies: policies, mgr: rolePolicyMgr}
+		return newRolePolicyEvaluator(rps, rolePolicyMgr)
 	default:
 		return noopEvaluator{}
 	}
@@ -122,6 +116,17 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 type rolePolicyEvaluator struct {
 	policies map[string]*runtimev1.RunnableRolePolicySet
 	mgr      rolepolicy.Manager
+}
+
+func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet, mgr rolepolicy.Manager) *rolePolicyEvaluator {
+	policies := make(map[string]*runtimev1.RunnableRolePolicySet)
+	for _, p := range rps {
+		if rp, ok := p.PolicySet.(*runtimev1.RunnablePolicySet_RolePolicy); ok {
+			policies[rp.RolePolicy.Role] = rp.RolePolicy
+		}
+	}
+
+	return &rolePolicyEvaluator{policies: policies, mgr: mgr}
 }
 
 func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {

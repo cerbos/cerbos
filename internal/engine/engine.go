@@ -10,7 +10,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -536,15 +535,11 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	}
 	ec.addCheck(rlpCheck)
 
-	// if we matched a role policy evaluator, we need to shift the scope up one level
-	// TODO(saml) this, properly
+	// Role policies will only ever reside in leaf node scope in the hierarchy, and resource policies are not allowed to share the same
+	// scope. Therefore, if the top level scope matches a role policy set, we remove the final segment in the scope chain and use the remaining
+	// to retrieve the resource policy set as normal.
 	if rlpCheck != nil {
-		segments := strings.Split(rpScope, ".")
-		if len(segments) > 1 {
-			rpScope = strings.Join(segments[0:len(segments)-2], ".")
-		} else {
-			rpScope = ""
-		}
+		rpScope = namer.RemoveScopeLeafSegments(rpScope, 1)
 	}
 
 	// get the resource policy check

@@ -185,6 +185,26 @@ func ScopedResourcePolicyModuleIDs(resource, version, scope string, genTree bool
 	return buildFQNTree(ResourcePolicyFQN(resource, version, ""), scope, GenModuleIDFromFQN)
 }
 
+// RemoveScopeLeafSegments removes `n` dot-delimited segments from the end of the provided `scope` string. If `n` is
+// greater than the number of segments in the scope, it returns "".
+func RemoveScopeLeafSegments(scope string, n int) string {
+	if n == 0 {
+		return scope
+	}
+
+	for i := len(scope) - 1; i >= 0; i-- {
+		if scope[i] == '.' {
+			n--
+		}
+
+		if n == 0 {
+			return scope[:i]
+		}
+	}
+
+	return ""
+}
+
 // PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal, version and scope.
 func PrincipalPolicyFQN(principal, version, scope string) string {
 	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, sanitize(principal), sanitize(version))

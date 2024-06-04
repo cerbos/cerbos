@@ -214,8 +214,8 @@ func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (
 	return nil, nil
 }
 
-// GetAll attempts to retrieve all exact policies from the passed modIDs. It will not fall back up the scope chain if a
-// specific module is missing. If any policies are missing, it errors.
+// GetAll attempts to retrieve all policies from the passed modIDs. It will not fall back up the scope chain if a
+// specific module is missing. If any are missing, it errors.
 func (b *Bundle) GetAll(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	res := make([]*runtimev1.RunnablePolicySet, len(modIDs))
 	for i, id := range modIDs {
