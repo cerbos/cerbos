@@ -21,10 +21,6 @@ type Filters struct {
 }
 
 func (f Filters) Validate(kind policy.Kind, listing bool) error {
-	if !listing && f.IncludeDisabled {
-		return fmt.Errorf("--include-disabled is only available when listing")
-	}
-
 	if !listing && (len(f.Name) > 0 || len(f.Version) > 0) {
 		return fmt.Errorf("--name and --version flags are only available when listing")
 	}

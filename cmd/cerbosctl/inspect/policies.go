@@ -32,8 +32,6 @@ cerbosctl inspect policies`
 type PoliciesCmd struct {
 	flagset.Filters
 	flagset.Format
-
-	PolicyIDs []string `arg:"" name:"id" optional:"" help:"list of policy ids"`
 }
 
 func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
