@@ -15,6 +15,7 @@ type Filters struct {
 	NameRegexp      string   `help:"Filter policies by name, using regular expression"`
 	Version         []string `help:"Filter policies by version"`
 	VersionRegexp   string   `help:"Filter policies by version, using regular expression"`
+	PolicyID        []string `help:"Filter policies when listing by policy ID"`
 	ScopeRegexp     string   `help:"Filter policies by scope, using regular expression"`
 	IncludeDisabled bool     `help:"Include disabled policies"`
 }
@@ -34,6 +35,10 @@ func (f Filters) Validate(kind policy.Kind, listing bool) error {
 
 	if len(f.Name) > 0 && f.NameRegexp != "" {
 		return fmt.Errorf("--name and --name-regexp flags cannot be used together")
+	}
+
+	if !listing && len(f.PolicyID) > 0 {
+		return fmt.Errorf("--policy-id flag is only available when listing")
 	}
 
 	if len(f.Version) > 0 && f.VersionRegexp != "" {

@@ -40,6 +40,9 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 	if filters.NameRegexp != "" {
 		opts = append(opts, cerbos.WithNameRegexp(filters.NameRegexp))
 	}
+	if len(filters.PolicyID) > 0 {
+		opts = append(opts, cerbos.WithPolicyID(filters.PolicyID...))
+	}
 	if filters.ScopeRegexp != "" {
 		opts = append(opts, cerbos.WithScopeRegexp(filters.ScopeRegexp))
 	}
