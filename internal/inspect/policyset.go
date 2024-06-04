@@ -42,8 +42,9 @@ func (ps *PolicySet) Inspect(pset *runtimev1.RunnablePolicySet) error {
 	}
 
 	ps.results[namer.PolicyKeyFromFQN(pset.Fqn)] = &responsev1.InspectPoliciesResponse_Result{
-		Actions:   actions,
-		Variables: variables,
+		Actions:         actions,
+		Variables:       variables,
+		StoreIdentifier: pset.Fqn,
 	}
 
 	return nil

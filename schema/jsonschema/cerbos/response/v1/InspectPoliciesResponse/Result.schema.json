@@ -44,6 +44,9 @@
         "type": "string"
       }
     },
+    "storeIdentifier": {
+      "type": "string"
+    },
     "variables": {
       "type": "array",
       "items": {

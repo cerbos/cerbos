@@ -1,6 +1,8 @@
 -- a.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: a.yaml
 exportVariables:
   name: common_variables_1
   definitions:
@@ -9,6 +11,8 @@ exportVariables:
 -- b.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: b.yaml
 exportVariables:
   name: common_variables_2
   definitions:
@@ -17,6 +21,8 @@ exportVariables:
 -- c.yaml --
 ---
 apiVersion: "api.cerbos.dev/v1"
+metadata:
+  storeIdentifier: c.yaml
 derivedRoles:
   name: common_roles_1
   variables:
@@ -35,6 +41,8 @@ derivedRoles:
 -- d.yaml --
 ---
 apiVersion: "api.cerbos.dev/v1"
+metadata:
+  storeIdentifier: d.yaml
 derivedRoles:
   name: common_roles_2
   variables:
@@ -53,6 +61,8 @@ derivedRoles:
 -- e.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: e.yaml
 principalPolicy:
   version: default
   principal: john_1
@@ -75,6 +85,8 @@ principalPolicy:
 -- f.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: f.yaml
 principalPolicy:
   version: default
   principal: john_2
@@ -97,6 +109,8 @@ principalPolicy:
 -- g.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: g.yaml
 resourcePolicy:
   version: default
   resource: leave_request_1
@@ -139,6 +153,8 @@ resourcePolicy:
 -- h.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: h.yaml
 resourcePolicy:
   version: default
   resource: leave_request_2

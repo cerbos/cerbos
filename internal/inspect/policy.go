@@ -39,6 +39,11 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 		return fmt.Errorf("policy is nil")
 	}
 
+	storeIdentifier := ""
+	if p.Metadata != nil {
+		storeIdentifier = p.Metadata.StoreIdentifier
+	}
+
 	policyID := namer.PolicyKey(p)
 	localVariables := policy.ListVariables(p)
 	if _, ok := p.PolicyType.(*policyv1.Policy_ExportVariables); ok {
@@ -52,7 +57,8 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 
 		if len(localVariables) > 0 {
 			pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
-				Variables: sortedLocalVariables,
+				Variables:       sortedLocalVariables,
+				StoreIdentifier: storeIdentifier,
 			}
 		}
 
@@ -92,8 +98,9 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	a := policy.ListActions(p)
 	sort.Strings(a)
 	pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
-		Actions:   a,
-		Variables: variables,
+		Actions:         a,
+		Variables:       variables,
+		StoreIdentifier: storeIdentifier,
 	}
 
 	return nil
