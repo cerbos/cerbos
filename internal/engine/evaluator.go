@@ -127,21 +127,10 @@ type rolePolicyEvaluator struct {
 func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	result := newEvalResult(input.Actions, nil)
 
-	// pctx := tctx.StartPolicy(basePolicy.Meta.Fqn)
-	// policyKey := namer.PolicyKeyFromFQN(basePolicy.Meta.Fqn)
-	var pctx tracer.Context
-	var policyKey string
+	rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
 	var actionMask bitmap.Bitmap
 	for _, p := range rpe.policies {
-		// TODO(saml) how to generate context/policy key for a group of role policies?
-		if pctx == nil {
-			pctx = tctx.StartPolicy(p.Meta.Fqn)
-		}
-		if policyKey == "" {
-			policyKey = namer.PolicyKeyFromFQN(p.Meta.Fqn)
-		}
-
 		if r, exists := p.Resources[input.Resource.Kind]; exists {
 			actionMask.Or(r.Bitmap)
 		}
@@ -151,11 +140,15 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		// TODO(saml) handle single level case (we DENY unless the role policy is the sole scope level in which case we can ALLOW)
 		idx := rpe.mgr.GetIndex(a)
 		if !actionMask.Contains(idx) {
-			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+			actx := rpctx.StartAction(a)
+
+			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Resource.Scope})
+
+			actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Resource action pair not defined within role policy")
 		}
 	}
 
-	result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+	result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
 	return result, nil
 }
 
@@ -603,9 +596,10 @@ func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, variables 
 }
 
 type EffectInfo struct {
-	Policy string
-	Scope  string
-	Effect effectv1.Effect
+	Policy          string
+	Scope           string
+	RolePolicyScope string
+	Effect          effectv1.Effect
 }
 
 type PolicyEvalResult struct {

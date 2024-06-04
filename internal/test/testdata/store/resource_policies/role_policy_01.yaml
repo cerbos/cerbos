@@ -6,6 +6,6 @@ rolePolicy:
   scope: "acme"
   rules:
     - resource: leave_request
-      allowedActions:
+      permissibleActions:
         # - create
         - view

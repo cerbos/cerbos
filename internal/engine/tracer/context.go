@@ -22,6 +22,7 @@ type Context interface {
 	StartExpr(expr string) Context
 	StartNthCondition(index int) Context
 	StartPolicy(name string) Context
+	StartRolePolicyScope(scope string) Context
 	StartResource(kind string) Context
 	StartRule(name string) Context
 	StartScope(scope string) Context
@@ -98,6 +99,13 @@ func (c *context) StartPolicy(name string) Context {
 	return c.start(&enginev1.Trace_Component{
 		Kind:    enginev1.Trace_Component_KIND_POLICY,
 		Details: &enginev1.Trace_Component_Policy{Policy: name},
+	})
+}
+
+func (c *context) StartRolePolicyScope(scope string) Context {
+	return c.start(&enginev1.Trace_Component{
+		Kind:    enginev1.Trace_Component_KIND_ROLE_POLICY_SCOPE,
+		Details: &enginev1.Trace_Component_RolePolicyScope{RolePolicyScope: scope},
 	})
 }
 
@@ -254,6 +262,8 @@ func (c noopContext) StartExpr(string) Context { return c }
 func (c noopContext) StartNthCondition(int) Context { return c }
 
 func (c noopContext) StartPolicy(string) Context { return c }
+
+func (c noopContext) StartRolePolicyScope(string) Context { return c }
 
 func (c noopContext) StartResource(string) Context { return c }
 
