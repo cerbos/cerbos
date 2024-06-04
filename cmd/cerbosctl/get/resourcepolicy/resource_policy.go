@@ -41,27 +41,25 @@ cerbosctl get resource_policies resource.leave_request.default -ojson
 cerbosctl get resource_policies resource.leave_request.default -oprettyjson`
 
 type Cmd struct {
-	flagset.Filters
 	flagset.Format
 	flagset.Sort
-
-	PolicyIds []string `arg:"" name:"id" optional:"" help:"list of policy ids to retrieve"` //nolint:revive
+	flagset.Filters
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
-	return cmdpolicy.DoCmd(k, ctx.AdminClient, policy.ResourceKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIds)
+	return cmdpolicy.DoCmd(k, ctx.AdminClient, policy.ResourceKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIDs)
 }
 
 func (c *Cmd) Validate() error {
-	if err := c.Filters.Validate(policy.ResourceKind, len(c.PolicyIds) == 0); err != nil {
+	if err := c.Filters.Validate(policy.ResourceKind, len(c.PolicyIDs) == 0); err != nil {
 		return err
 	}
 
-	if err := c.Format.Validate(len(c.PolicyIds) == 0); err != nil {
+	if err := c.Format.Validate(len(c.PolicyIDs) == 0); err != nil {
 		return err
 	}
 
-	return c.Sort.Validate(policy.ResourceKind, len(c.PolicyIds) == 0)
+	return c.Sort.Validate(policy.ResourceKind, len(c.PolicyIDs) == 0)
 }
 
 func (c *Cmd) Help() string {

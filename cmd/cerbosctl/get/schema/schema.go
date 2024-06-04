@@ -24,11 +24,11 @@ cerbosctl get schemas principal.json`
 type Cmd struct {
 	flagset.Format
 
-	SchemaIds []string `arg:"" name:"id" optional:"" help:"list of schema ids to retrieve"` //nolint:revive
+	SchemaIDs []string `arg:"" name:"id" optional:"" help:"list of schema ids to retrieve"` //nolint:revive
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
-	if len(c.SchemaIds) == 0 {
+	if len(c.SchemaIDs) == 0 {
 		if err := schema.List(k, ctx.AdminClient, &c.Format); err != nil {
 			return fmt.Errorf("failed to list schemas: %w", err)
 		}
@@ -36,7 +36,7 @@ func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
 		return nil
 	}
 
-	if err := schema.Get(k, ctx.AdminClient, &c.Format, c.SchemaIds...); err != nil {
+	if err := schema.Get(k, ctx.AdminClient, &c.Format, c.SchemaIDs...); err != nil {
 		return fmt.Errorf("failed to get schemas: %w", err)
 	}
 

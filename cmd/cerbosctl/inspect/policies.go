@@ -28,21 +28,25 @@ cerbosctl inspect policies`
 	separator = ","
 )
 
+//nolint:govet
 type PoliciesCmd struct {
 	flagset.Filters
 	flagset.Format
+
+	PolicyIDs []string `arg:"" name:"id" optional:"" help:"list of policy ids"`
 }
 
 func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 	var opts []cerbos.FilterOption
+	if len(c.PolicyIDs) > 0 {
+		opts = append(opts, cerbos.WithPolicyID(c.PolicyIDs...))
+	}
+
 	if c.Filters.IncludeDisabled {
 		opts = append(opts, cerbos.WithIncludeDisabled())
 	}
 	if c.Filters.NameRegexp != "" {
 		opts = append(opts, cerbos.WithNameRegexp(c.Filters.NameRegexp))
-	}
-	if len(c.Filters.PolicyID) > 0 {
-		opts = append(opts, cerbos.WithPolicyID(c.Filters.PolicyID...))
 	}
 	if c.Filters.ScopeRegexp != "" {
 		opts = append(opts, cerbos.WithScopeRegexp(c.Filters.ScopeRegexp))

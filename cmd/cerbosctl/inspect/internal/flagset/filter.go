@@ -4,9 +4,8 @@
 package flagset
 
 type Filters struct {
-	NameRegexp      string   `help:"Filter policies by name, using regular expression"`
-	VersionRegexp   string   `help:"Filter policies by version, using regular expression"`
-	ScopeRegexp     string   `help:"Filter policies by scope, using regular expression"`
-	PolicyID        []string `help:"Filter policies by policy ids"`
-	IncludeDisabled bool     `help:"Include disabled policies"`
+	NameRegexp      string `help:"Filter policies by name, using regular expression"`
+	VersionRegexp   string `help:"Filter policies by version, using regular expression"`
+	ScopeRegexp     string `help:"Filter policies by scope, using regular expression"`
+	IncludeDisabled bool   `help:"Include disabled policies"`
 }
