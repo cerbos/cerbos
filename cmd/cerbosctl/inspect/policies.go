@@ -60,7 +60,7 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 
 	tw := printer.NewTableWriter(k.Stdout)
 	if !c.Format.NoHeaders {
-		tw.SetHeader([]string{"POLICY ID", "POLICY", "ACTIONS", "VARIABLES"})
+		tw.SetHeader([]string{"POLICY ID", "ACTIONS", "VARIABLES"})
 	}
 
 	policyKeys := make([]string, 0, len(response.Results))
@@ -78,7 +78,6 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 
 		tw.Append([]string{
 			result.StoreIdentifier,
-			policyKey,
 			strings.Join(result.Actions, separator),
 			strings.Join(variables, separator),
 		})
