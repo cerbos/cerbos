@@ -89,7 +89,7 @@ func FQN(p *policyv1.Policy) string {
 	case *policyv1.Policy_PrincipalPolicy:
 		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 	case *policyv1.Policy_RolePolicy:
-		return RolePolicyFQN(pt.RolePolicy.Scope, pt.RolePolicy.Role)
+		return RolePolicyFQN(pt.RolePolicy.Role, pt.RolePolicy.Scope)
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesFQN(pt.DerivedRoles.Name)
 	case *policyv1.Policy_ExportVariables:
@@ -117,7 +117,7 @@ func FQNTree(p *policyv1.Policy) []string {
 		fqn = PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, "")
 		scope = pt.PrincipalPolicy.Scope
 	case *policyv1.Policy_RolePolicy:
-		fqn = RolePolicyFQN(pt.RolePolicy.Scope, pt.RolePolicy.Role)
+		fqn = RolePolicyFQN(pt.RolePolicy.Role, "")
 		scope = pt.RolePolicy.Scope
 	case *policyv1.Policy_DerivedRoles:
 		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
@@ -217,14 +217,14 @@ func PrincipalPolicyModuleID(principal, version, scope string) ModuleID {
 }
 
 // RolePolicyFQN returns the fully-qualified module name for the role policies with the given scope.
-func RolePolicyFQN(scope, role string) string {
+func RolePolicyFQN(role, scope string) string {
 	fqn := fmt.Sprintf("%s.%s", RolePoliciesPrefix, sanitize(role))
 	return withScope(fqn, scope)
 }
 
 // RolePolicyModuleID returns the module ID for the role policies with the given scope.
-func RolePolicyModuleID(scope, role string) ModuleID {
-	return GenModuleIDFromFQN(RolePolicyFQN(scope, role))
+func RolePolicyModuleID(role, scope string) ModuleID {
+	return GenModuleIDFromFQN(RolePolicyFQN(role, scope))
 }
 
 // ScopedPrincipalPolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
@@ -335,7 +335,7 @@ func (pc PolicyCoords) FQN() string {
 	case ResourcePoliciesPrefix:
 		return ResourcePolicyFQN(pc.Name, pc.Version, pc.Scope)
 	case RolePoliciesPrefix:
-		return RolePolicyFQN(pc.Scope, pc.Name)
+		return RolePolicyFQN(pc.Name, pc.Scope)
 	default:
 		panic(fmt.Errorf("unknown kind %q", pc.Kind))
 	}

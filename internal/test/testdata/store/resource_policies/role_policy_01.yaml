@@ -3,7 +3,8 @@
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_employee
-  scope: "acme"
+  scope: "acme.hr.uk.custom"
+  # scope: "acme"
   rules:
     - resource: leave_request
       permissibleActions:

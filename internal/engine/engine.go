@@ -627,7 +627,7 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 
 	roleModIDs := make([]namer.ModuleID, len(roles))
 	for i, r := range roles {
-		roleModIDs[i] = namer.RolePolicyModuleID(scope, r)
+		roleModIDs[i] = namer.RolePolicyModuleID(r, scope)
 	}
 
 	sets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
