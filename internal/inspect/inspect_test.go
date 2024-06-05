@@ -54,8 +54,8 @@ func TestInspect(t *testing.T) {
 			},
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
-					"principal.john.vdefault":         result("cerbos.principal.john.vdefault", nil, nil),
-					"resource.leave_request.vdefault": result("cerbos.resource.leave_request.vdefault", nil, nil),
+					"principal.john.vdefault":         result("principal.john.vdefault", nil, nil),
+					"resource.leave_request.vdefault": result("resource.leave_request.vdefault", nil, nil),
 				},
 			},
 		},
@@ -81,8 +81,8 @@ func TestInspect(t *testing.T) {
 			},
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
-					"principal.john.vdefault":         result("cerbos.principal.john.vdefault", nil, nil),
-					"resource.leave_request.vdefault": result("cerbos.resource.leave_request.vdefault", nil, nil),
+					"principal.john.vdefault":         result("principal.john.vdefault", nil, nil),
+					"resource.leave_request.vdefault": result("resource.leave_request.vdefault", nil, nil),
 				},
 			},
 		},
@@ -105,12 +105,12 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
-						"cerbos.principal.john.vdefault",
+						"principal.john.vdefault",
 						actions("*"),
 						nil,
 					),
 					"resource.leave_request.vdefault": result(
-						"cerbos.resource.leave_request.vdefault",
+						"resource.leave_request.vdefault",
 						actions("approve"),
 						nil,
 					),
@@ -169,7 +169,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
-						"cerbos.principal.john.vdefault",
+						"principal.john.vdefault",
 						actions("all", "any", "none"),
 						variables(
 							variable("commonVar", "request.resource.attr.commonVar", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -177,7 +177,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request.vdefault": result(
-						"cerbos.resource.leave_request.vdefault",
+						"resource.leave_request.vdefault",
 						actions("all", "any", "none"),
 						variables(
 							variable("commonVar", "request.resource.attr.commonVar", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -249,7 +249,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
-						"cerbos.principal.john.vdefault",
+						"principal.john.vdefault",
 						actions("*"),
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -294,7 +294,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"resource.leave_request.vdefault": result(
-						"cerbos.resource.leave_request.vdefault",
+						"resource.leave_request.vdefault",
 						actions("*", "create", "duplicate", "view"),
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -377,7 +377,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john_1.vdefault": result(
-						"cerbos.principal.john_1.vdefault",
+						"principal.john_1.vdefault",
 						actions("*"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -386,7 +386,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"principal.john_2.vdefault": result(
-						"cerbos.principal.john_2.vdefault",
+						"principal.john_2.vdefault",
 						actions("*"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -395,7 +395,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request_1.vdefault": result(
-						"cerbos.resource.leave_request_1.vdefault",
+						"resource.leave_request_1.vdefault",
 						actions("*", "create", "duplicate", "view"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -404,7 +404,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request_2.vdefault": result(
-						"cerbos.resource.leave_request_2.vdefault",
+						"resource.leave_request_2.vdefault",
 						actions("*", "create", "duplicate"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),

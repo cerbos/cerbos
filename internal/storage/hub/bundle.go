@@ -239,29 +239,29 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 }
 
 func (b *Bundle) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	var fqns []string
+	var policyIDs []string
 	if len(params.IDs) == 0 {
 		var err error
-		if fqns, err = b.ListPolicyIDs(ctx, params); err != nil {
+		if policyIDs, err = b.ListPolicyIDs(ctx, params); err != nil {
 			return nil, fmt.Errorf("failed to list policies: %w", err)
 		}
 	} else {
-		fqns = params.IDs
+		policyIDs = params.IDs
 	}
 
 	ins := inspect.PolicySets()
-	for _, fqn := range fqns {
-		id := namer.GenModuleIDFromFQN(fqn)
+	for _, policyID := range policyIDs {
+		id := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(policyID))
 		idHex := id.HexStr()
 		fileName := policyDir + idHex
 
 		pset, err := b.loadPolicySet(idHex, fileName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load policy %s: %w", fqn, err)
+			return nil, fmt.Errorf("failed to load policy %s: %w", policyID, err)
 		}
 
-		if err = ins.Inspect(pset); err != nil {
-			return nil, fmt.Errorf("failed to inspect policy %s: %w", fqn, err)
+		if err := ins.Inspect(pset); err != nil {
+			return nil, fmt.Errorf("failed to inspect policy %s: %w", policyID, err)
 		}
 	}
 
@@ -280,10 +280,10 @@ func (b *Bundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsPa
 	for fqn := range b.manifest.PolicyIndex {
 		if len(params.IDs) > 0 {
 			if ss.Contains(fqn) {
-				output = append(output, fqn)
+				output = append(output, namer.PolicyKeyFromFQN(fqn))
 			}
 		} else {
-			output = append(output, fqn)
+			output = append(output, namer.PolicyKeyFromFQN(fqn))
 		}
 	}
 
