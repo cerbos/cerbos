@@ -7,15 +7,14 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/cerbos/cerbos-sdk-go/cerbos"
 
+	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect/internal"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/printer"
 )
 
 const (
@@ -26,7 +25,6 @@ cerbosctl inspect policies
 # Inspect policies, print no headers
 
 cerbosctl inspect policies`
-	separator = ","
 )
 
 //nolint:govet
@@ -59,11 +57,6 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 		return fmt.Errorf("error while inspecting policies: %w", err)
 	}
 
-	tw := printer.NewTableWriter(k.Stdout)
-	if !c.Format.NoHeaders {
-		tw.SetHeader([]string{"POLICY ID", "ACTIONS", "VARIABLES"})
-	}
-
 	results := make([]*responsev1.InspectPoliciesResponse_Result, 0, len(response.Results))
 	for _, result := range response.Results {
 		results = append(results, result)
@@ -73,20 +66,10 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 		return results[i].StoreIdentifier < results[j].StoreIdentifier
 	})
 
-	for _, result := range results {
-		variables := make([]string, len(result.Variables))
-		for idx, variable := range result.Variables {
-			variables[idx] = variable.Name
-		}
-
-		tw.Append([]string{
-			result.StoreIdentifier,
-			strings.Join(result.Actions, separator),
-			strings.Join(variables, separator),
-		})
+	if err := internal.Print(k.Stdout, c.Format, results); err != nil {
+		return fmt.Errorf("failed to print inspection results: %w", err)
 	}
 
-	tw.Render()
 	return nil
 }
 

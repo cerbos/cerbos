@@ -4,5 +4,15 @@
 package flagset
 
 type Format struct {
-	NoHeaders bool `help:"Do not output headers"`
+	Output    OutputFormat `short:"o" default:"" help:"Output format for inspection results; json, yaml, prettyjson formats are supported"`
+	NoHeaders bool         `help:"Do not output headers"`
 }
+
+type OutputFormat string
+
+const (
+	OutputFormatNone       OutputFormat = ""
+	OutputFormatJSON       OutputFormat = "json"
+	OutputFormatYAML       OutputFormat = "yaml"
+	OutputFormatPrettyJSON OutputFormat = "prettyjson"
+)
