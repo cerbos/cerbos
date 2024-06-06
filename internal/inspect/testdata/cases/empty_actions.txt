@@ -1,6 +1,8 @@
 -- a.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: a.yaml
 principalPolicy:
   version: default
   principal: john
@@ -11,6 +13,8 @@ principalPolicy:
 -- b.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: b.yaml
 resourcePolicy:
   version: default
   resource: leave_request

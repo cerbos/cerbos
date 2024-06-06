@@ -42,39 +42,25 @@ cerbosctl get export_variables export_variables.my_variables -ojson
 cerbosctl get export_variables export_variables.my_variables -oprettyjson`
 
 type Cmd struct {
-	flagset.Filters
 	flagset.Format
 	flagset.Sort
-
-	PolicyIds []string `arg:"" name:"id" optional:"" help:"list of policy ids to retrieve"` //nolint:revive
+	flagset.Filters
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
-	err := cmdpolicy.DoCmd(k, ctx.AdminClient, policy.ExportVariablesKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIds)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cmdpolicy.DoCmd(k, ctx.AdminClient, policy.ExportVariablesKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIDs)
 }
 
 func (c *Cmd) Validate() error {
-	err := c.Filters.Validate(policy.ExportVariablesKind, len(c.PolicyIds) == 0)
-	if err != nil {
+	if err := c.Filters.Validate(policy.ExportVariablesKind, len(c.PolicyIDs) == 0); err != nil {
 		return err
 	}
 
-	err = c.Format.Validate(len(c.PolicyIds) == 0)
-	if err != nil {
+	if err := c.Format.Validate(len(c.PolicyIDs) == 0); err != nil {
 		return err
 	}
 
-	err = c.Sort.Validate(policy.ExportVariablesKind, len(c.PolicyIds) == 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.Sort.Validate(policy.ExportVariablesKind, len(c.PolicyIDs) == 0)
 }
 
 func (c *Cmd) Help() string {

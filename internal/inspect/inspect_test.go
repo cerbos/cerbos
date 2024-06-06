@@ -12,16 +12,15 @@ import (
 	"path/filepath"
 	"testing"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/namer"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/inspect"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -48,15 +47,15 @@ func TestInspect(t *testing.T) {
 			testFile: "empty.txt",
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
-					"derived_roles.common_roles":      result(nil, nil),
-					"principal.john.vdefault":         result(nil, nil),
-					"resource.leave_request.vdefault": result(nil, nil),
+					"derived_roles.common_roles":      result("a.yaml", nil, nil),
+					"principal.john.vdefault":         result("c.yaml", nil, nil),
+					"resource.leave_request.vdefault": result("d.yaml", nil, nil),
 				},
 			},
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
-					"principal.john.vdefault":         result(nil, nil),
-					"resource.leave_request.vdefault": result(nil, nil),
+					"principal.john.vdefault":         result("principal.john.vdefault", nil, nil),
+					"resource.leave_request.vdefault": result("resource.leave_request.vdefault", nil, nil),
 				},
 			},
 		},
@@ -65,12 +64,14 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
+						"a.yaml",
 						nil,
 						variables(
 							variable("someVar", "\"someVar\"", "principal.john.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
 						),
 					),
 					"resource.leave_request.vdefault": result(
+						"b.yaml",
 						nil,
 						variables(
 							variable("someVar", "\"someVar\"", "resource.leave_request.vdefault", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, false),
@@ -80,8 +81,8 @@ func TestInspect(t *testing.T) {
 			},
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
-					"principal.john.vdefault":         result(nil, nil),
-					"resource.leave_request.vdefault": result(nil, nil),
+					"principal.john.vdefault":         result("principal.john.vdefault", nil, nil),
+					"resource.leave_request.vdefault": result("resource.leave_request.vdefault", nil, nil),
 				},
 			},
 		},
@@ -90,10 +91,12 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
+						"a.yaml",
 						actions("*"),
 						nil,
 					),
 					"resource.leave_request.vdefault": result(
+						"b.yaml",
 						actions("approve"),
 						nil,
 					),
@@ -102,10 +105,12 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
+						"principal.john.vdefault",
 						actions("*"),
 						nil,
 					),
 					"resource.leave_request.vdefault": result(
+						"resource.leave_request.vdefault",
 						actions("approve"),
 						nil,
 					),
@@ -117,6 +122,7 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"resource.leave_request.vdefault": result(
+						"a.yaml",
 						actions("approve"),
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -136,12 +142,14 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"export_variables.common_variables": result(
+						"a.yaml",
 						nil,
 						variables(
 							variable("commonVar", "request.resource.attr.commonVar", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 						),
 					),
 					"principal.john.vdefault": result(
+						"c.yaml",
 						actions("all", "any", "none"),
 						variables(
 							variable("commonVar", "request.resource.attr.commonVar", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -149,6 +157,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request.vdefault": result(
+						"b.yaml",
 						actions("all", "any", "none"),
 						variables(
 							variable("commonVar", "request.resource.attr.commonVar", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -160,6 +169,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
+						"principal.john.vdefault",
 						actions("all", "any", "none"),
 						variables(
 							variable("commonVar", "request.resource.attr.commonVar", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -167,6 +177,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request.vdefault": result(
+						"resource.leave_request.vdefault",
 						actions("all", "any", "none"),
 						variables(
 							variable("commonVar", "request.resource.attr.commonVar", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -181,6 +192,7 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"derived_roles.common_roles": result(
+						"a.yaml",
 						nil,
 						variables(
 							variable("commonTeams", "[\"red\", \"blue\"]", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -188,6 +200,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"export_variables.common_variables": result(
+						"b.yaml",
 						nil,
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
@@ -206,12 +219,14 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"derived_roles.common_roles": result(
+						"c.yaml",
 						nil,
 						variables(
 							variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", "derived_roles.common_roles", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 						),
 					),
 					"export_variables.common_variables": result(
+						"b.yaml",
 						nil,
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
@@ -220,6 +235,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"principal.john.vdefault": result(
+						"a.yaml",
 						actions("*"),
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -233,6 +249,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john.vdefault": result(
+						"principal.john.vdefault",
 						actions("*"),
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -247,12 +264,14 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"derived_roles.common_roles": result(
+						"c.yaml",
 						nil,
 						variables(
 							variable("derivedRoleVariable", "R.attr.isDerivedRoleVar", "derived_roles.common_roles", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 						),
 					),
 					"export_variables.common_variables": result(
+						"b.yaml",
 						nil,
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
@@ -261,6 +280,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request.vdefault": result(
+						"a.yaml",
 						actions("*", "create", "duplicate", "view"),
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -274,6 +294,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"resource.leave_request.vdefault": result(
+						"resource.leave_request.vdefault",
 						actions("*", "create", "duplicate", "view"),
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -288,30 +309,35 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"derived_roles.common_roles_1": result(
+						"c.yaml",
 						nil,
 						variables(
 							variable("derivedRoleVariable1", "R.attr.isDerivedRoleVar", "derived_roles.common_roles_1", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 						),
 					),
 					"derived_roles.common_roles_2": result(
+						"d.yaml",
 						nil,
 						variables(
 							variable("derivedRoleVariable2", "R.attr.isDerivedRoleVar", "derived_roles.common_roles_2", responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL, true),
 						),
 					),
 					"export_variables.common_variables_1": result(
+						"a.yaml",
 						nil,
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables_1", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 						),
 					),
 					"export_variables.common_variables_2": result(
+						"b.yaml",
 						nil,
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 						),
 					),
 					"principal.john_1.vdefault": result(
+						"e.yaml",
 						actions("*"),
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -320,6 +346,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"principal.john_2.vdefault": result(
+						"f.yaml",
 						actions("*"),
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -328,6 +355,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request_1.vdefault": result(
+						"g.yaml",
 						actions("*", "create", "duplicate", "view"),
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -336,6 +364,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request_2.vdefault": result(
+						"h.yaml",
 						actions("*", "create", "duplicate"),
 						variables(
 							variable("commonLabel", "\"dude\"", "export_variables.common_variables_2", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -348,6 +377,7 @@ func TestInspect(t *testing.T) {
 			policySets: policySets{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"principal.john_1.vdefault": result(
+						"principal.john_1.vdefault",
 						actions("*"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -356,6 +386,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"principal.john_2.vdefault": result(
+						"principal.john_2.vdefault",
 						actions("*"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -364,6 +395,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request_1.vdefault": result(
+						"resource.leave_request_1.vdefault",
 						actions("*", "create", "duplicate", "view"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -372,6 +404,7 @@ func TestInspect(t *testing.T) {
 						),
 					),
 					"resource.leave_request_2.vdefault": result(
+						"resource.leave_request_2.vdefault",
 						actions("*", "create", "duplicate"),
 						variables(
 							variable("commonLabel", "\"dude\"", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN, true),
@@ -387,12 +420,14 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"export_variables.common_variables": result(
+						"b.yaml",
 						nil,
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_EXPORTED, false),
 						),
 					),
 					"resource.leave_request.vdefault": result(
+						"a.yaml",
 						actions("approve"),
 						variables(
 							variable("commonMarkedResource", "R.attr.markedResource", "export_variables.common_variables", responsev1.InspectPoliciesResponse_Variable_KIND_IMPORTED, true),
@@ -410,6 +445,7 @@ func TestInspect(t *testing.T) {
 			policies: policies{
 				expected: map[string]*responsev1.InspectPoliciesResponse_Result{
 					"resource.leave_request.vdefault": result(
+						"a.yaml",
 						actions("approve"),
 						variables(
 							variable("missingVar", "null", "", responsev1.InspectPoliciesResponse_Variable_KIND_UNDEFINED, true),
@@ -578,10 +614,11 @@ func actions(actions ...string) []string {
 	return actions
 }
 
-func result(actions []string, variables []*responsev1.InspectPoliciesResponse_Variable) *responsev1.InspectPoliciesResponse_Result {
+func result(storeIdentifier string, actions []string, variables []*responsev1.InspectPoliciesResponse_Variable) *responsev1.InspectPoliciesResponse_Result {
 	return &responsev1.InspectPoliciesResponse_Result{
-		Actions:   actions,
-		Variables: variables,
+		Actions:         actions,
+		StoreIdentifier: storeIdentifier,
+		Variables:       variables,
 	}
 }
 

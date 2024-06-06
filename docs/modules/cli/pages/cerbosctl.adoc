@@ -255,6 +255,8 @@ Separately, you can filter the output using the `name-regexp`, `version-regexp` 
 
 You can include disabled policies in the results by adding `--include-disabled` flag.
 
+You can optionally restrict the list to a specific set of policies by supplying their IDs as trailing arguments.
+
 .List derived roles
 ----
 cerbosctl get derived_roles
@@ -288,6 +290,12 @@ cerbosctl get derived_roles --name-regexp "^(my|a)_policy\$"
 cerbosctl get dr --name-regexp "^(my|a)_policy\$"
 ----
 
+.Get derived roles policies having the ID `common_roles.yaml` and `other_roles.yaml`
+----
+cerbosctl get derived_roles common_roles.yaml other_roles.yaml
+cerbosctl get dr common_roles.yaml other_roles.yaml
+----
+
 .List principal_policies where `version` is `default` or `v1`
 ----
 cerbosctl get principal_policies --version default,v1
@@ -300,10 +308,22 @@ cerbosctl get principal_policies --version-regexp "(default|v1)"
 cerbosctl get pp --version-regexp "(default|v1)"
 ----
 
+.Get principal_policies having the ID `alex.yaml` and `john.yaml`
+----
+cerbosctl get principal_policies alex.yaml john.yaml
+cerbosctl get pp alex.yaml john.yaml
+----
+
 .List resource_policies where `scope` includes the substring `foo`, using regular expression
 ----
 cerbosctl get resource_policies --scope-regexp foo
 cerbosctl get rp --scope-regexp foo
+----
+
+.Get resource_policies having the ID `leave_request.yaml` and `purchase_order.yaml`
+----
+cerbosctl get resource_policies leave_request.yaml purchase_order.yaml
+cerbosctl get rp leave_request.yaml purchase_order.yaml
 ----
 
 .List derived_roles and sort by column `policyId` or `name`

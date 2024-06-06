@@ -1,6 +1,8 @@
 -- a.yaml --
 ---
 apiVersion: "api.cerbos.dev/v1"
+metadata:
+  storeIdentifier: a.yaml
 derivedRoles:
   name: common_roles
   definitions:
@@ -13,12 +15,16 @@ derivedRoles:
 -- b.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: b.yaml
 exportVariables:
   name: common_variables
 
 -- c.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: c.yaml
 principalPolicy:
   version: default
   principal: john
@@ -26,6 +32,8 @@ principalPolicy:
 -- d.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: d.yaml
 resourcePolicy:
   version: default
   resource: leave_request

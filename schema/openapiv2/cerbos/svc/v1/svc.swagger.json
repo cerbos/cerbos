@@ -2237,7 +2237,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Actions defined in the policy"
+          "description": "Actions defined in the policy."
         },
         "variables": {
           "type": "array",
@@ -2245,7 +2245,11 @@
             "type": "object",
             "$ref": "#/definitions/v1InspectPoliciesResponseVariable"
           },
-          "description": "Variables defined in the policy"
+          "description": "Variables defined in the policy."
+        },
+        "storeIdentifier": {
+          "type": "string",
+          "description": "Store identifier of the policy."
         }
       }
     },

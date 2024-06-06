@@ -1,6 +1,8 @@
 -- a.yaml --
 ---
 apiVersion: "api.cerbos.dev/v1"
+metadata:
+  storeIdentifier: a.yaml
 derivedRoles:
   name: common_roles
   variables:
@@ -18,6 +20,8 @@ derivedRoles:
 -- b.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: b.yaml
 exportVariables:
   name: common_variables
   definitions:

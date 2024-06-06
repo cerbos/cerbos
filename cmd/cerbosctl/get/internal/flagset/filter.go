@@ -15,15 +15,12 @@ type Filters struct {
 	NameRegexp      string   `help:"Filter policies by name, using regular expression"`
 	Version         []string `help:"Filter policies by version"`
 	VersionRegexp   string   `help:"Filter policies by version, using regular expression"`
+	PolicyIDs       []string `help:"List of policy ids" arg:"" name:"id" optional:"" `
 	ScopeRegexp     string   `help:"Filter policies by scope, using regular expression"`
 	IncludeDisabled bool     `help:"Include disabled policies"`
 }
 
 func (f Filters) Validate(kind policy.Kind, listing bool) error {
-	if !listing && f.IncludeDisabled {
-		return fmt.Errorf("--include-disabled is only available when listing")
-	}
-
 	if !listing && (len(f.Name) > 0 || len(f.Version) > 0) {
 		return fmt.Errorf("--name and --version flags are only available when listing")
 	}

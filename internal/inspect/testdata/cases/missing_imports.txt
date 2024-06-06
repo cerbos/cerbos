@@ -1,6 +1,8 @@
 -- a.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: a.yaml
 resourcePolicy:
   version: default
   resource: leave_request

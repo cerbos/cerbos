@@ -67,7 +67,7 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					{strings.Split("get derived_roles --version=abc", " "), true},
 					{strings.Split("get derived_roles a.b.c --no-headers", " "), true},
 					{strings.Split("get derived_roles a.b.c --sort-by policyId", " "), true},
-					{strings.Split("get derived_roles a.b.c --include-disabled", " "), true},
+					{strings.Split("get derived_roles a.b.c --include-disabled", " "), false},
 					{strings.Split("get derived_roles --include-disabled", " "), false},
 					{strings.Split("get derived_roles --sort-by policyId", " "), false},
 					{strings.Split("get derived_roles --sort-by version", " "), true},

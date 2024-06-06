@@ -1,6 +1,8 @@
 -- a.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: a.yaml
 resourcePolicy:
   version: default
   resource: leave_request
@@ -19,6 +21,8 @@ resourcePolicy:
 -- b.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: b.yaml
 exportVariables:
   name: common_variables
   definitions:

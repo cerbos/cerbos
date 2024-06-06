@@ -1,6 +1,8 @@
 -- a.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: a.yaml
 exportVariables:
   name: common_variables
   definitions:
@@ -9,6 +11,8 @@ exportVariables:
 -- b.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: b.yaml
 resourcePolicy:
   version: default
   resource: leave_request
@@ -52,6 +56,8 @@ resourcePolicy:
 -- c.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: c.yaml
 principalPolicy:
   version: default
   principal: john

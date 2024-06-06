@@ -51,7 +51,7 @@ func runTests(have *hub.LocalSource, manifest *bundlev1.Manifest) func(*testing.
 			require.Len(t, havePolicies, len(manifest.PolicyIndex))
 
 			for _, p := range havePolicies {
-				require.Contains(t, manifest.PolicyIndex, p, "Policy %q is not expected", p)
+				require.Contains(t, manifest.PolicyIndex, namer.FQNFromPolicyKey(p), "Policy %q is not expected", p)
 			}
 		})
 
