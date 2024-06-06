@@ -159,114 +159,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 		return nil, err
 	}
 
-	if err := ib.validateScopes(); err != nil {
-		return nil, err
-	}
-
 	return ib.build(fsys, opts)
-}
-
-type scopeTree struct {
-	root            *scopeNode
-	rolePolicyNodes map[string]*scopeNode
-}
-
-func newScopeTree() *scopeTree {
-	return &scopeTree{
-		root:            &scopeNode{},
-		rolePolicyNodes: make(map[string]*scopeNode),
-	}
-}
-
-func (st *scopeTree) addNode(p policy.Wrapper) {
-	// TODO(saml) do we have to explicitly handle default scopes?
-
-	switch p.Kind {
-	case policy.ResourceKind, policy.RolePolicyKind:
-	default:
-		return
-	}
-
-	node := st.root
-	var currentSegment string
-	for i := 0; i < len(p.Scope); i++ {
-		if p.Scope[i] != '.' {
-			currentSegment += p.Scope[i : i+1]
-			if i != len(p.Scope)-1 {
-				continue
-			}
-		}
-
-		if node.children == nil {
-			node.children = make(map[string]*scopeNode)
-		}
-
-		childNode, ok := node.children[currentSegment]
-		if !ok {
-			var s string
-			if i == len(p.Scope)-1 {
-				s = p.Scope[:i+1]
-			} else {
-				s = p.Scope[:i]
-			}
-			childNode = &scopeNode{
-				scope:  s,
-				parent: node,
-				exists: i == len(p.Scope)-1,
-			}
-
-			node.children[currentSegment] = childNode
-		}
-
-		currentSegment = ""
-
-		node = childNode
-
-		if p.Kind == policy.RolePolicyKind && i == len(p.Scope)-1 {
-			st.rolePolicyNodes[p.Scope[:i+1]] = node
-		}
-	}
-}
-
-func (st *scopeTree) validateRolePolicyScopes() error {
-	toResolve := make(map[string]*scopeNode, len(st.rolePolicyNodes))
-	for _, n := range st.rolePolicyNodes {
-		toResolve[n.scope] = n
-	}
-
-	for _, n := range st.rolePolicyNodes {
-		if len(toResolve) == 0 {
-			break
-		}
-
-		if _, ok := toResolve[n.scope]; ok {
-			// ensure all siblings are role policy nodes, and also leaf nodes
-			for _, pc := range n.parent.children {
-				// children will include `n`
-				if pc.children != nil && len(pc.children) > 0 {
-					return errRolePolicyLeafNode
-				}
-
-				if _, isRolePolicy := st.rolePolicyNodes[pc.scope]; !isRolePolicy {
-					return errors.New("role policy cannot share scopes with resource policies")
-				}
-
-				delete(toResolve, n.scope)
-			}
-
-			// traverse up the scope tree and ensure that nodes exist for each and are all resource policies
-			p := n.parent
-			for p != nil {
-				if !p.exists {
-					return fmt.Errorf("missing scope: %s", p.scope)
-				} else if _, isRolePolicy := st.rolePolicyNodes[p.scope]; isRolePolicy {
-					return errRolePolicyLeafNode
-				}
-			}
-		}
-	}
-
-	return nil
 }
 
 type scopeNode struct {
@@ -290,7 +183,6 @@ type indexBuilder struct {
 	disabled                []*runtimev1.IndexBuildErrors_Disabled
 	rolePolicyActionIndexes map[string]uint32
 	rolePolicyActionCount   uint32
-	resourceScopeTree       *scopeTree
 }
 
 func newIndexBuilder() *indexBuilder {
@@ -304,7 +196,6 @@ func newIndexBuilder() *indexBuilder {
 		missingScopes:           make(map[namer.ModuleID]string),
 		stats:                   newStatsCollector(),
 		rolePolicyActionIndexes: make(map[string]uint32),
-		resourceScopeTree:       newScopeTree(),
 	}
 }
 
@@ -382,11 +273,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		}
 
 		fallthrough
-	case policy.ResourceKind:
-		idx.resourceScopeTree.addNode(p)
-
-		fallthrough
-	case policy.PrincipalKind: // , policy.RolePolicyKind, policy.ResourceKind:
+	case policy.ResourceKind, policy.PrincipalKind:
 		idx.executables[p.ID] = struct{}{}
 
 	case policy.DerivedRolesKind, policy.ExportVariablesKind:
@@ -426,16 +313,15 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		}
 	}
 
-	ancestors := policy.RequiredAncestors(p.Policy)
-	for aID, a := range ancestors {
-		if _, ok := idx.modIDToFile[aID]; !ok {
-			idx.missingScopes[aID] = a
+	// Role policies do not require unbroken ancestral chains
+	if p.Kind != policy.RolePolicyKind {
+		ancestors := policy.RequiredAncestors(p.Policy)
+		for aID, a := range ancestors {
+			if _, ok := idx.modIDToFile[aID]; !ok {
+				idx.missingScopes[aID] = a
+			}
 		}
 	}
-}
-
-func (idx *indexBuilder) validateScopes() error {
-	return idx.resourceScopeTree.validateRolePolicyScopes()
 }
 
 func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {

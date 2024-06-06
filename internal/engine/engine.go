@@ -529,18 +529,11 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
 
 	// get the role policy check
-	rlpCheck, err := engine.getRolePolicyEvaluator(ctx, eparams, rpScope, input.Principal.Roles)
+	rlpCheck, err := engine.getRolePolicyEvaluator(ctx, eparams, ppScope, input.Principal.Roles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s]: %w", rpName, err)
 	}
 	ec.addCheck(rlpCheck)
-
-	// Role policies will only ever reside in leaf node scope in the hierarchy, and resource policies are not allowed to share the same
-	// scope. Therefore, if the top level scope matches a role policy set, we remove the final segment in the scope chain and use the remaining
-	// to retrieve the resource policy set as normal.
-	if rlpCheck != nil {
-		rpScope = namer.RemoveScopeLeafSegments(rpScope, 1)
-	}
 
 	// get the resource policy check
 	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, eparams, rpName, rpVersion, rpScope)

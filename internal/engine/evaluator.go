@@ -142,12 +142,11 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 	}
 
 	for _, a := range input.Actions {
-		// TODO(saml) handle single level case (we DENY unless the role policy is the sole scope level in which case we can ALLOW)
 		idx := rpe.mgr.GetIndex(a)
 		if !actionMask.Contains(idx) {
 			actx := rpctx.StartAction(a)
 
-			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Resource.Scope})
+			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Principal.Scope})
 
 			actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Resource action pair not defined within role policy")
 		}

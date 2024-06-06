@@ -89,7 +89,6 @@ func TestFiles(t *testing.T) {
 				Kind:          "leave_request",
 				PolicyVersion: "20210210",
 				Id:            "foo",
-				Scope:         "acme",
 				Attr: map[string]*structpb.Value{
 					"public": structpb.NewBoolValue(true),
 				},
@@ -98,7 +97,7 @@ func TestFiles(t *testing.T) {
 				Id:            "terry",
 				PolicyVersion: "default",
 				Roles:         []string{"acme_employee"},
-				Scope:         "",
+				Scope:         "acme",
 			},
 			Actions: []string{"create", "view"},
 		},
