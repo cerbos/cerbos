@@ -65,7 +65,7 @@ The full documentation for resource policies can be found xref:policies:resource
 
 == Wildcard action
 
-To simplify things further, admins to be able to do every action so a special `*` wildcard action can be used to keep things clean:
+To simplify things further, admins might need to be able to do every action. We can use a special `*` wildcard action to specify this succinctly:
 
 [source,yaml]
 ----
