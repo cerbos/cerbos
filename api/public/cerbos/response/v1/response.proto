@@ -465,7 +465,7 @@ message InspectPoliciesResponse {
   message Result {
     repeated string actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Actions defined in the policy."}];
     repeated Variable variables = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Variables defined in the policy."}];
-    string store_identifier = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Store identifier of the policy."}];
+    string policy_id = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "For blob, disk, git stores it is file name (<filename>.yaml). For mysql, postgres, sqlite3 it is (<kind>.<name>.<version>)."}];
   }
 
   map<string, Result> results = 1;

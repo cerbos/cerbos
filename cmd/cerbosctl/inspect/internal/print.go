@@ -28,7 +28,7 @@ func Print(w io.Writer, format flagset.Format, response *responsev1.InspectPolic
 	}
 
 	sort.Slice(results, func(i, j int) bool {
-		return results[i].StoreIdentifier < results[j].StoreIdentifier
+		return results[i].PolicyId < results[j].PolicyId
 	})
 
 	switch format.Output {
@@ -98,7 +98,7 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 		}
 
 		tw.Append([]string{
-			result.StoreIdentifier,
+			result.PolicyId,
 			strings.Join(result.Actions, separator),
 			strings.Join(variables, separator),
 		})

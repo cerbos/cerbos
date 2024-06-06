@@ -614,11 +614,11 @@ func actions(actions ...string) []string {
 	return actions
 }
 
-func result(storeIdentifier string, actions []string, variables []*responsev1.InspectPoliciesResponse_Variable) *responsev1.InspectPoliciesResponse_Result {
+func result(policyID string, actions []string, variables []*responsev1.InspectPoliciesResponse_Variable) *responsev1.InspectPoliciesResponse_Result {
 	return &responsev1.InspectPoliciesResponse_Result{
-		Actions:         actions,
-		StoreIdentifier: storeIdentifier,
-		Variables:       variables,
+		Actions:   actions,
+		PolicyId:  policyID,
+		Variables: variables,
 	}
 }
 

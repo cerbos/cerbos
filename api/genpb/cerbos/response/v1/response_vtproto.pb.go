@@ -2265,10 +2265,10 @@ func (m *InspectPoliciesResponse_Result) MarshalToSizedBufferVT(dAtA []byte) (in
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.StoreIdentifier) > 0 {
-		i -= len(m.StoreIdentifier)
-		copy(dAtA[i:], m.StoreIdentifier)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.StoreIdentifier)))
+	if len(m.PolicyId) > 0 {
+		i -= len(m.PolicyId)
+		copy(dAtA[i:], m.PolicyId)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.PolicyId)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -3518,7 +3518,7 @@ func (m *InspectPoliciesResponse_Result) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
-	l = len(m.StoreIdentifier)
+	l = len(m.PolicyId)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -9001,7 +9001,7 @@ func (m *InspectPoliciesResponse_Result) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StoreIdentifier", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PolicyId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -9029,7 +9029,7 @@ func (m *InspectPoliciesResponse_Result) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.StoreIdentifier = string(dAtA[iNdEx:postIndex])
+			m.PolicyId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
