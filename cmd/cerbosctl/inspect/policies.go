@@ -6,12 +6,10 @@ package inspect
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect/internal"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
@@ -57,16 +55,7 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 		return fmt.Errorf("error while inspecting policies: %w", err)
 	}
 
-	results := make([]*responsev1.InspectPoliciesResponse_Result, 0, len(response.Results))
-	for _, result := range response.Results {
-		results = append(results, result)
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].StoreIdentifier < results[j].StoreIdentifier
-	})
-
-	if err := internal.Print(k.Stdout, c.Format, results); err != nil {
+	if err := internal.Print(k.Stdout, c.Format, response); err != nil {
 		return fmt.Errorf("failed to print inspection results: %w", err)
 	}
 
