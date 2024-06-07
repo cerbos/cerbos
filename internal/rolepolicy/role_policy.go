@@ -3,9 +3,11 @@
 
 package rolepolicy
 
+import "github.com/kelindar/bitmap"
+
 type Manager interface {
 	GetIndex(string) uint32
-	GetMap() map[string]uint32
+	OnesMask() []uint64
 }
 
 func NewNopManager() NopManager {
@@ -18,22 +20,27 @@ func (n NopManager) GetIndex(string) uint32 {
 	return 0
 }
 
-func (n NopManager) GetMap() map[string]uint32 {
-	return make(map[string]uint32)
+func (n NopManager) OnesMask() []uint64 {
+	return []uint64{}
 }
 
 type manager struct {
 	actionIndexes map[string]uint32
+	onesMask      []uint64
 }
 
-// TODO(saml) rename to NewManager.
-func NewManager(m map[string]uint32) Manager {
-	if m == nil {
-		m = make(map[string]uint32)
+func NewManager(actionIndexes map[string]uint32) Manager {
+	if actionIndexes == nil {
+		actionIndexes = make(map[string]uint32)
 	}
 
+	var mask bitmap.Bitmap
+	mask.Grow(uint32(len(actionIndexes)))
+	mask.Ones()
+
 	return &manager{
-		actionIndexes: m,
+		actionIndexes: actionIndexes,
+		onesMask:      mask,
 	}
 }
 
@@ -41,6 +48,6 @@ func (m *manager) GetIndex(action string) uint32 {
 	return m.actionIndexes[action]
 }
 
-func (m *manager) GetMap() map[string]uint32 {
-	return m.actionIndexes
+func (m *manager) OnesMask() []uint64 {
+	return m.onesMask
 }

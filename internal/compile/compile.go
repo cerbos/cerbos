@@ -22,7 +22,7 @@ import (
 
 type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
 
-const AnyRoleVal = "*"
+const WildcardAny = "*"
 
 var (
 	emptyVal = &emptypb.Empty{}
@@ -55,12 +55,12 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyM
 	}
 
 	switch pt := mc.def.PolicyType.(type) {
-	case *policyv1.Policy_RolePolicy:
-		rps = compileRolePolicySet(mc, rolePolicyMgr)
 	case *policyv1.Policy_ResourcePolicy:
 		rps = compileResourcePolicySet(mc, schemaMgr)
 	case *policyv1.Policy_PrincipalPolicy:
 		rps = compilePrincipalPolicySet(mc)
+	case *policyv1.Policy_RolePolicy:
+		rps = compileRolePolicySet(mc, rolePolicyMgr)
 	case *policyv1.Policy_DerivedRoles, *policyv1.Policy_ExportVariables:
 	default:
 		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
@@ -79,7 +79,16 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 	resources := make(map[string]*runtimev1.RunnableRolePolicySet_ActionBitmap)
 	for _, r := range rp.Rules {
 		var actionMask bitmap.Bitmap
+		// TODO(saml) do we need to support anything more granular than catch all wildcards?
+		// if so, we'll need to do something like this (using actions as an example):
+		// retrieve all actions from the rolePolicyManager, match those against
+		// the wildcard glob, and set those bits, e.g:
+		// actionsToSetBitsFor := util.FilterGlob(r.Action, allActions)
 		for _, a := range r.PermissibleActions {
+			if a == WildcardAny {
+				actionMask.Or(rolePolicyMgr.OnesMask())
+				continue
+			}
 			idx := rolePolicyMgr.GetIndex(a)
 			actionMask.Set(uint32(idx))
 		}
@@ -87,6 +96,22 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 		resources[r.Resource] = &runtimev1.RunnableRolePolicySet_ActionBitmap{
 			Bitmap: actionMask,
 		}
+	}
+
+	// TODO(saml) more granular wildcards? see comment above
+	if wcActionBitmap, exists := resources[WildcardAny]; exists {
+		for _, actionBitmap := range resources {
+			if actionBitmap == wcActionBitmap {
+				continue
+			}
+
+			// Apply the wildcard actions to all resources
+			var bm bitmap.Bitmap = actionBitmap.Bitmap
+			bm.Or(wcActionBitmap.Bitmap)
+			actionBitmap.Bitmap = bm
+		}
+
+		delete(resources, WildcardAny)
 	}
 
 	return &runtimev1.RunnablePolicySet{
@@ -303,8 +328,8 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 		}
 
 		for _, pr := range def.ParentRoles {
-			if pr == AnyRoleVal {
-				rdr.ParentRoles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+			if pr == WildcardAny {
+				rdr.ParentRoles = map[string]*emptypb.Empty{WildcardAny: {}}
 				break
 			}
 			rdr.ParentRoles[pr] = emptyVal
@@ -362,8 +387,8 @@ func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.Resource
 	if len(rule.Roles) > 0 {
 		cr.Roles = make(map[string]*emptypb.Empty, len(rule.Roles))
 		for _, r := range rule.Roles {
-			if r == AnyRoleVal {
-				cr.Roles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+			if r == WildcardAny {
+				cr.Roles = map[string]*emptypb.Empty{WildcardAny: {}}
 				break
 			}
 			cr.Roles[r] = emptyVal

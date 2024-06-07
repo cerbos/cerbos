@@ -31,7 +31,7 @@ func ToSet(values []string) StringSet {
 
 func SetIntersects(s1 ProtoSet, s2 StringSet) bool {
 	for v := range s1 {
-		if v == compile.AnyRoleVal {
+		if v == compile.WildcardAny {
 			return true
 		}
 
