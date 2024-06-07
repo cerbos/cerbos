@@ -46,7 +46,7 @@ generate: clean generate-proto-code generate-json-schemas generate-testdata-json
 generate-proto-code: $(BUF)
 	@-rm -rf $(GEN_DIR)/cerbos
 	@ $(BUF) format -w
-	@ cd tools && $(BUF) generate --template=api.gen.yaml --output=.. ..
+	@ cd tools && $(BUF) generate --template=api.gen.yaml --output=..
 	@ GOWORK=off go mod tidy -C $(GEN_DIR)
 
 .PHONY: generate-json-schemas

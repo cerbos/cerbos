@@ -1,5 +1,0 @@
----
-version: v1
-directories:
-  - api/private
-  - api/public
