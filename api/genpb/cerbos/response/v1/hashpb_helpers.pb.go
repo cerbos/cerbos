@@ -1914,8 +1914,8 @@ func cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m *InspectPoli
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Result.store_identifier"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetStoreIdentifier()))
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Result.policy_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPolicyId()))
 
 	}
 }

@@ -57,8 +57,8 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 
 		if len(localVariables) > 0 {
 			pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
-				Variables:       sortedLocalVariables,
-				StoreIdentifier: storeIdentifier,
+				Variables: sortedLocalVariables,
+				PolicyId:  storeIdentifier,
 			}
 		}
 
@@ -98,9 +98,9 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	a := policy.ListActions(p)
 	sort.Strings(a)
 	pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
-		Actions:         a,
-		Variables:       variables,
-		StoreIdentifier: storeIdentifier,
+		Actions:   a,
+		Variables: variables,
+		PolicyId:  storeIdentifier,
 	}
 
 	return nil

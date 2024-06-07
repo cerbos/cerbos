@@ -2247,9 +2247,9 @@
           },
           "description": "Variables defined in the policy."
         },
-        "storeIdentifier": {
+        "policyId": {
           "type": "string",
-          "description": "Store identifier of the policy."
+          "description": "For blob, disk, and git stores policy ID is the file name. For other stores it is \u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e/\u003cscope\u003e."
         }
       }
     },
