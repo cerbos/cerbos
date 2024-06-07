@@ -1,33 +1,42 @@
----
-version: v1
+version: v2
+inputs:
+  - directory: ../api/private
+  - directory: ../api/public
 plugins:
-  - name: go
+  - local:
+      - go
+      - run
+      - google.golang.org/protobuf/cmd/protoc-gen-go
     out: api/genpb
     opt: paths=source_relative
-    path: ["go", "run", "google.golang.org/protobuf/cmd/protoc-gen-go"]
-
-  - name: go-grpc
+  - local:
+      - go
+      - run
+      - google.golang.org/grpc/cmd/protoc-gen-go-grpc
     out: api/genpb
     opt: paths=source_relative
-    path: ["go", "run", "google.golang.org/grpc/cmd/protoc-gen-go-grpc"]
-
-  - name: go-hashpb
+  - local:
+      - go
+      - run
+      - github.com/cerbos/protoc-gen-go-hashpb
     out: api/genpb
     opt: paths=source_relative
-    path: ["go", "run", "github.com/cerbos/protoc-gen-go-hashpb"]
-
-  - name: grpc-gateway
+  - local:
+      - go
+      - run
+      - github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
     out: api/genpb
     opt: paths=source_relative
-    path: ["go", "run", "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"]
-
-  - name: openapiv2
+  - local:
+      - go
+      - run
+      - github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
     out: schema/openapiv2
-    path: ["go", "run", "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"]
-
-  - name: vtproto
+  - local:
+      - go
+      - run
+      - github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
     out: api/genpb
     opt:
       - paths=source_relative
       - features=marshal+unmarshal+size
-    path: ["go", "run", "github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto"]
