@@ -66,7 +66,9 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 		srcAttrs[i] = policy.SourceAttribute{Key: a.Key, Value: a.Value}
 	}
 
-	idx, err := index.Build(ctx, fsys, index.WithSourceAttributes(srcAttrs...))
+	rolePolicyMgr := rolepolicy.NewManager()
+
+	idx, err := index.Build(ctx, fsys, index.WithSourceAttributes(srcAttrs...), index.WithRolePolicyManager(rolePolicyMgr))
 	if err != nil {
 		idxErrs := new(index.BuildError)
 		if errors.As(err, &idxErrs) {
@@ -84,8 +86,6 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 
 		return nil, nil, fmt.Errorf("failed to build index: %w", err)
 	}
-
-	rolePolicyMgr := rolepolicy.NewManager(idx.GetRolePolicyActionIndexes(), idx.GetResourceKinds())
 
 	outChan := make(chan Artefact, 1)
 

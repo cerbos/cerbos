@@ -12,6 +12,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/util"
 
 	"go.uber.org/zap"
@@ -55,8 +56,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
-	GetRolePolicyActionIndexes() map[string]uint32
-	GetResourceKinds() []string
+	GetRolePolicyManager() rolepolicy.Manager
 	InspectPolicies(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(context.Context, ...string) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
@@ -66,19 +66,18 @@ type Index interface {
 }
 
 type index struct {
-	fsys                    fs.FS
-	sfGroup                 singleflight.Group
-	fileToModID             map[string]namer.ModuleID
-	executables             ModuleIDSet
-	dependents              map[namer.ModuleID]ModuleIDSet
-	dependencies            map[namer.ModuleID]ModuleIDSet
-	modIDToFile             map[namer.ModuleID]string
-	schemaLoader            *SchemaLoader
-	stats                   storage.RepoStats
-	buildOpts               buildOptions
-	mu                      sync.RWMutex
-	rolePolicyActionIndexes map[string]uint32
-	resourceKinds           map[string]struct{}
+	fsys          fs.FS
+	sfGroup       singleflight.Group
+	fileToModID   map[string]namer.ModuleID
+	executables   ModuleIDSet
+	dependents    map[namer.ModuleID]ModuleIDSet
+	dependencies  map[namer.ModuleID]ModuleIDSet
+	modIDToFile   map[namer.ModuleID]string
+	schemaLoader  *SchemaLoader
+	stats         storage.RepoStats
+	buildOpts     buildOptions
+	mu            sync.RWMutex
+	rolePolicyMgr rolepolicy.Manager
 }
 
 func (idx *index) GetFiles() []string {
@@ -434,18 +433,8 @@ func (idx *index) Clear() error {
 	return nil
 }
 
-func (idx *index) GetRolePolicyActionIndexes() map[string]uint32 {
-	return idx.rolePolicyActionIndexes
-}
-
-func (idx *index) GetResourceKinds() []string {
-	rk := make([]string, len(idx.resourceKinds))
-	var i int
-	for k := range idx.resourceKinds {
-		rk[i] = k
-		i++
-	}
-	return rk
+func (idx *index) GetRolePolicyManager() rolepolicy.Manager {
+	return idx.rolePolicyMgr
 }
 
 type meta struct {

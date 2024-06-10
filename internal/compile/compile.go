@@ -89,7 +89,7 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 				actionMask.Or(rolePolicyMgr.OnesMask())
 				continue
 			}
-			idx := rolePolicyMgr.GetIndex(a)
+			idx := rolePolicyMgr.GetActionIndex(a)
 			actionMask.Set(uint32(idx))
 		}
 

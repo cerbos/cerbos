@@ -21,6 +21,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -49,6 +50,7 @@ type buildOptions struct {
 	rootDir              string
 	sourceAttributes     []policy.SourceAttribute
 	buildFailureLogLevel zapcore.Level
+	rolePolicyMgr        rolepolicy.Manager
 }
 
 type BuildOpt func(*buildOptions)
@@ -68,6 +70,12 @@ func WithRootDir(rootDir string) BuildOpt {
 func WithSourceAttributes(attrs ...policy.SourceAttribute) BuildOpt {
 	return func(o *buildOptions) {
 		o.sourceAttributes = attrs
+	}
+}
+
+func WithRolePolicyManager(mgr rolepolicy.Manager) BuildOpt {
+	return func(o *buildOptions) {
+		o.rolePolicyMgr = mgr
 	}
 }
 
@@ -94,7 +102,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 		return nil, err
 	}
 
-	ib := newIndexBuilder()
+	ib := newIndexBuilder(opts.rolePolicyMgr)
 
 	err := fs.WalkDir(fsys, opts.rootDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
@@ -163,34 +171,31 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 }
 
 type indexBuilder struct {
-	executables             ModuleIDSet
-	modIDToFile             map[namer.ModuleID]string
-	fileToModID             map[string]namer.ModuleID
-	dependents              map[namer.ModuleID]ModuleIDSet
-	dependencies            map[namer.ModuleID]ModuleIDSet
-	missing                 map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
-	missingScopes           map[namer.ModuleID]string
-	stats                   *statsCollector
-	duplicates              []*runtimev1.IndexBuildErrors_DuplicateDef
-	loadFailures            []*runtimev1.IndexBuildErrors_LoadFailure
-	disabled                []*runtimev1.IndexBuildErrors_Disabled
-	rolePolicyActionIndexes map[string]uint32
-	rolePolicyActionCount   uint32
-	resourceKinds           map[string]struct{}
+	executables   ModuleIDSet
+	modIDToFile   map[namer.ModuleID]string
+	fileToModID   map[string]namer.ModuleID
+	dependents    map[namer.ModuleID]ModuleIDSet
+	dependencies  map[namer.ModuleID]ModuleIDSet
+	missing       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
+	missingScopes map[namer.ModuleID]string
+	stats         *statsCollector
+	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
+	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
+	disabled      []*runtimev1.IndexBuildErrors_Disabled
+	rolePolicyMgr rolepolicy.Manager
 }
 
-func newIndexBuilder() *indexBuilder {
+func newIndexBuilder(mgr rolepolicy.Manager) *indexBuilder {
 	return &indexBuilder{
-		executables:             make(ModuleIDSet),
-		modIDToFile:             make(map[namer.ModuleID]string),
-		fileToModID:             make(map[string]namer.ModuleID),
-		dependents:              make(map[namer.ModuleID]ModuleIDSet),
-		dependencies:            make(map[namer.ModuleID]ModuleIDSet),
-		missing:                 make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
-		missingScopes:           make(map[namer.ModuleID]string),
-		stats:                   newStatsCollector(),
-		rolePolicyActionIndexes: make(map[string]uint32),
-		resourceKinds:           make(map[string]struct{}),
+		executables:   make(ModuleIDSet),
+		modIDToFile:   make(map[namer.ModuleID]string),
+		fileToModID:   make(map[string]namer.ModuleID),
+		dependents:    make(map[namer.ModuleID]ModuleIDSet),
+		dependencies:  make(map[namer.ModuleID]ModuleIDSet),
+		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
+		missingScopes: make(map[namer.ModuleID]string),
+		stats:         newStatsCollector(),
+		rolePolicyMgr: mgr,
 	}
 }
 
@@ -260,10 +265,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		rp := p.GetRolePolicy()
 		for _, r := range rp.Rules {
 			for _, a := range r.PermissibleActions {
-				if _, ok := idx.rolePolicyActionIndexes[a]; !ok {
-					idx.rolePolicyActionIndexes[a] = idx.rolePolicyActionCount
-					idx.rolePolicyActionCount++
-				}
+				idx.rolePolicyMgr.AddAction(a)
 			}
 		}
 
@@ -272,10 +274,10 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		idx.executables[p.ID] = struct{}{}
 
 		if r := p.GetResourcePolicy().GetResource(); r != "" {
-			idx.resourceKinds[p.GetResourcePolicy().GetResource()] = struct{}{}
+			idx.rolePolicyMgr.SetResource(p.GetResourcePolicy().GetResource())
 		}
 		for _, r := range p.GetPrincipalPolicy().GetRules() {
-			idx.resourceKinds[r.Resource] = struct{}{}
+			idx.rolePolicyMgr.SetResource(r.Resource)
 		}
 
 	case policy.DerivedRolesKind, policy.ExportVariablesKind:
@@ -371,17 +373,16 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	metrics.Add(context.Background(), metrics.IndexEntryCount(), int64(len(idx.modIDToFile)))
 
 	return &index{
-		fsys:                    fsys,
-		executables:             idx.executables,
-		modIDToFile:             idx.modIDToFile,
-		fileToModID:             idx.fileToModID,
-		dependents:              idx.dependents,
-		dependencies:            idx.dependencies,
-		buildOpts:               opts,
-		schemaLoader:            NewSchemaLoader(fsys, opts.rootDir),
-		stats:                   idx.stats.collate(),
-		rolePolicyActionIndexes: idx.rolePolicyActionIndexes,
-		resourceKinds:           idx.resourceKinds,
+		fsys:          fsys,
+		executables:   idx.executables,
+		modIDToFile:   idx.modIDToFile,
+		fileToModID:   idx.fileToModID,
+		dependents:    idx.dependents,
+		dependencies:  idx.dependencies,
+		buildOpts:     opts,
+		schemaLoader:  NewSchemaLoader(fsys, opts.rootDir),
+		stats:         idx.stats.collate(),
+		rolePolicyMgr: idx.rolePolicyMgr,
 	}, nil
 }
 

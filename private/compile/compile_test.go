@@ -11,7 +11,6 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
@@ -78,7 +77,7 @@ func TestFiles(t *testing.T) {
 		PolicyLoader:  bundle,
 		SchemaMgr:     schemaMgr,
 		AuditLog:      auditLog,
-		RolePolicyMgr: rolepolicy.NewManager(index.GetRolePolicyActionIndexes(), index.GetResourceKinds()),
+		RolePolicyMgr: index.GetRolePolicyManager(),
 	})
 	require.NoError(t, err)
 

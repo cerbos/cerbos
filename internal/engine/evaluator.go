@@ -157,7 +157,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 	}
 
 	for _, a := range input.Actions {
-		idx := rpe.mgr.GetIndex(a)
+		idx := rpe.mgr.GetActionIndex(a)
 		if !actionMask.Contains(idx) {
 			actx := rpctx.StartAction(a)
 
