@@ -1188,6 +1188,33 @@
         }
       }
     },
+    "InspectPoliciesResponseDerivedRole": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Derived role name defined in the policy."
+        },
+        "kind": {
+          "$ref": "#/definitions/InspectPoliciesResponseDerivedRoleKind",
+          "description": "Kind of the derived role defined in the policy."
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the derived role defined in the policy."
+        }
+      }
+    },
+    "InspectPoliciesResponseDerivedRoleKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_UNDEFINED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
     "InspectPoliciesResponseVariableKind": {
       "type": "string",
       "enum": [
@@ -2245,11 +2272,19 @@
             "type": "object",
             "$ref": "#/definitions/v1InspectPoliciesResponseVariable"
           },
-          "description": "Variables defined in the policy."
+          "description": "Variables in the policy."
         },
         "policyId": {
           "type": "string",
           "description": "For blob, disk, and git stores policy ID is the file name. For other stores it is \u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e/\u003cscope\u003e."
+        },
+        "derivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/InspectPoliciesResponseDerivedRole"
+          },
+          "description": "Derived roles in the policy."
         }
       }
     },

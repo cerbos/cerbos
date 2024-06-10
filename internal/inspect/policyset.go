@@ -34,6 +34,13 @@ func (ps *PolicySet) Inspect(pset *runtimev1.RunnablePolicySet) error {
 		sort.Strings(actions)
 	}
 
+	derivedRoles := policy.ListPolicySetDerivedRoles(pset)
+	if len(derivedRoles) > 0 {
+		sort.Slice(derivedRoles, func(i, j int) bool {
+			return derivedRoles[i].Name < derivedRoles[j].Name
+		})
+	}
+
 	variables := policy.ListPolicySetVariables(pset)
 	if len(variables) > 0 {
 		sort.Slice(variables, func(i, j int) bool {
@@ -43,9 +50,10 @@ func (ps *PolicySet) Inspect(pset *runtimev1.RunnablePolicySet) error {
 
 	policyKey := namer.PolicyKeyFromFQN(pset.Fqn)
 	ps.results[policyKey] = &responsev1.InspectPoliciesResponse_Result{
-		Actions:   actions,
-		Variables: variables,
-		PolicyId:  policyKey,
+		Actions:      actions,
+		DerivedRoles: derivedRoles,
+		Variables:    variables,
+		PolicyId:     policyKey,
 	}
 
 	return nil

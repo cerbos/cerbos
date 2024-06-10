@@ -1,0 +1,13 @@
+-- a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+metadata:
+  storeIdentifier: a.yaml
+resourcePolicy:
+  version: default
+  resource: leave_request
+  rules:
+    - actions: ["approve"]
+      derivedRoles:
+        - undefined_derived_role
+      effect: EFFECT_ALLOW
