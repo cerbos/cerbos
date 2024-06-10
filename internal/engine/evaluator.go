@@ -158,7 +158,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	for _, a := range input.Actions {
 		idx := rpe.mgr.GetActionIndex(a)
-		if !actionMask.Contains(idx) {
+		if !actionMask.Contains(uint32(idx)) {
 			actx := rpctx.StartAction(a)
 
 			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Principal.Scope})

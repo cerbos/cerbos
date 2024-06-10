@@ -3,11 +3,13 @@
 
 package rolepolicy
 
+import "github.com/kelindar/bitmap"
+
 var _ Manager = (*NopManager)(nil)
 
 type Manager interface {
 	AddAction(string)
-	GetActionIndex(string) uint32
+	GetActionIndex(string) int
 	SetResource(string)
 	GetAllResources() []string
 	OnesMask() []uint64
@@ -21,7 +23,7 @@ type NopManager struct{}
 
 func (n NopManager) AddAction(string) {}
 
-func (n NopManager) GetActionIndex(string) uint32 {
+func (n NopManager) GetActionIndex(string) int {
 	return 0
 }
 
@@ -36,15 +38,15 @@ func (n NopManager) OnesMask() []uint64 {
 }
 
 type manager struct {
-	actionCnt     uint32
-	actionIndexes map[string]uint32
-	onesMask      []uint64
+	actionCnt     int
+	actionIndexes map[string]int
+	onesMask      bitmap.Bitmap
 	resources     map[string]struct{}
 }
 
 func NewManager() Manager {
 	return &manager{
-		actionIndexes: make(map[string]uint32),
+		actionIndexes: make(map[string]int),
 		resources:     make(map[string]struct{}),
 	}
 }
@@ -56,8 +58,13 @@ func (m *manager) AddAction(action string) {
 	}
 }
 
-func (m *manager) GetActionIndex(a string) uint32 {
-	return m.actionIndexes[a]
+func (m *manager) GetActionIndex(a string) int {
+	idx, ok := m.actionIndexes[a]
+	if !ok {
+		return -1
+	}
+
+	return idx
 }
 
 func (m *manager) SetResource(name string) {
@@ -77,5 +84,12 @@ func (m *manager) GetAllResources() []string {
 }
 
 func (m *manager) OnesMask() []uint64 {
+	if m.actionCnt == m.onesMask.Count() {
+		return m.onesMask
+	}
+
+	m.onesMask.Grow(uint32(m.actionCnt))
+	m.onesMask.Ones()
+
 	return m.onesMask
 }
