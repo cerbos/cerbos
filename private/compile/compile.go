@@ -85,7 +85,7 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 		return nil, nil, fmt.Errorf("failed to build index: %w", err)
 	}
 
-	rolePolicyMgr := rolepolicy.NewManager(idx.GetRolePolicyActionIndexes())
+	rolePolicyMgr := rolepolicy.NewManager(idx.GetRolePolicyActionIndexes(), idx.GetResourceKinds())
 
 	outChan := make(chan Artefact, 1)
 

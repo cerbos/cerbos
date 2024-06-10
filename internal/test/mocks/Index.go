@@ -532,6 +532,53 @@ func (_c *Index_GetFirstMatch_Call) RunAndReturn(run func([]namer.ModuleID) (*po
 	return _c
 }
 
+// GetResourceKinds provides a mock function with given fields:
+func (_m *Index) GetResourceKinds() []string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetResourceKinds")
+	}
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func() []string); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	return r0
+}
+
+// Index_GetResourceKinds_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetResourceKinds'
+type Index_GetResourceKinds_Call struct {
+	*mock.Call
+}
+
+// GetResourceKinds is a helper method to define mock.On call
+func (_e *Index_Expecter) GetResourceKinds() *Index_GetResourceKinds_Call {
+	return &Index_GetResourceKinds_Call{Call: _e.mock.On("GetResourceKinds")}
+}
+
+func (_c *Index_GetResourceKinds_Call) Run(run func()) *Index_GetResourceKinds_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Index_GetResourceKinds_Call) Return(_a0 []string) *Index_GetResourceKinds_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Index_GetResourceKinds_Call) RunAndReturn(run func() []string) *Index_GetResourceKinds_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRolePolicyActionIndexes provides a mock function with given fields:
 func (_m *Index) GetRolePolicyActionIndexes() map[string]uint32 {
 	ret := _m.Called()

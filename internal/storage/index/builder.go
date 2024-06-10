@@ -162,13 +162,6 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 	return ib.build(fsys, opts)
 }
 
-type scopeNode struct {
-	scope    string
-	parent   *scopeNode
-	children map[string]*scopeNode
-	exists   bool
-}
-
 type indexBuilder struct {
 	executables             ModuleIDSet
 	modIDToFile             map[namer.ModuleID]string
@@ -183,6 +176,7 @@ type indexBuilder struct {
 	disabled                []*runtimev1.IndexBuildErrors_Disabled
 	rolePolicyActionIndexes map[string]uint32
 	rolePolicyActionCount   uint32
+	resourceKinds           map[string]struct{}
 }
 
 func newIndexBuilder() *indexBuilder {
@@ -196,6 +190,7 @@ func newIndexBuilder() *indexBuilder {
 		missingScopes:           make(map[namer.ModuleID]string),
 		stats:                   newStatsCollector(),
 		rolePolicyActionIndexes: make(map[string]uint32),
+		resourceKinds:           make(map[string]struct{}),
 	}
 }
 
@@ -275,6 +270,13 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		fallthrough
 	case policy.ResourceKind, policy.PrincipalKind:
 		idx.executables[p.ID] = struct{}{}
+
+		if r := p.GetResourcePolicy().GetResource(); r != "" {
+			idx.resourceKinds[p.GetResourcePolicy().GetResource()] = struct{}{}
+		}
+		for _, r := range p.GetPrincipalPolicy().GetRules() {
+			idx.resourceKinds[r.Resource] = struct{}{}
+		}
 
 	case policy.DerivedRolesKind, policy.ExportVariablesKind:
 		// not executable
@@ -369,17 +371,17 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	metrics.Add(context.Background(), metrics.IndexEntryCount(), int64(len(idx.modIDToFile)))
 
 	return &index{
-		fsys:         fsys,
-		executables:  idx.executables,
-		modIDToFile:  idx.modIDToFile,
-		fileToModID:  idx.fileToModID,
-		dependents:   idx.dependents,
-		dependencies: idx.dependencies,
-		buildOpts:    opts,
-		schemaLoader: NewSchemaLoader(fsys, opts.rootDir),
-		stats:        idx.stats.collate(),
-
+		fsys:                    fsys,
+		executables:             idx.executables,
+		modIDToFile:             idx.modIDToFile,
+		fileToModID:             idx.fileToModID,
+		dependents:              idx.dependents,
+		dependencies:            idx.dependencies,
+		buildOpts:               opts,
+		schemaLoader:            NewSchemaLoader(fsys, opts.rootDir),
+		stats:                   idx.stats.collate(),
 		rolePolicyActionIndexes: idx.rolePolicyActionIndexes,
+		resourceKinds:           idx.resourceKinds,
 	}, nil
 }
 

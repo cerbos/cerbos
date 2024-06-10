@@ -78,7 +78,7 @@ func TestFiles(t *testing.T) {
 		PolicyLoader:  bundle,
 		SchemaMgr:     schemaMgr,
 		AuditLog:      auditLog,
-		RolePolicyMgr: rolepolicy.NewManager(index.GetRolePolicyActionIndexes()),
+		RolePolicyMgr: rolepolicy.NewManager(index.GetRolePolicyActionIndexes(), index.GetResourceKinds()),
 	})
 	require.NoError(t, err)
 

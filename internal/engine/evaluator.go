@@ -130,7 +130,22 @@ func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet, mgr rolepolicy.M
 }
 
 func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
-	result := newEvalResult(input.Actions, nil)
+	_, span := tracing.StartSpan(ctx, "role_policy.Evaluate")
+	span.SetAttributes(tracing.PolicyScope(input.Principal.Scope))
+	defer span.End()
+
+	// For now, at compilation time, I'm setting source attributes to a "scope"-scoped key, so we need only
+	// retrieve attributes from the first policy.
+	// TODO(saml) do we want to know exactly which role policy within a scope-set was used for the evaluation?
+	// This would prevent us from being able to union bitmaps.
+	var sourceAttrs map[string]*policyv1.SourceAttributes
+	for _, p := range rpe.policies {
+		sourceAttrs = p.GetMeta().GetSourceAttributes()
+		break
+	}
+
+	trail := newAuditTrail(sourceAttrs)
+	result := newEvalResult(input.Actions, trail)
 
 	rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 

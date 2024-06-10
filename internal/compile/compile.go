@@ -100,9 +100,11 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 
 	// TODO(saml) more granular wildcards? see comment above
 	if wcActionBitmap, exists := resources[WildcardAny]; exists {
-		for _, actionBitmap := range resources {
-			if actionBitmap == wcActionBitmap {
-				continue
+		for _, k := range rolePolicyMgr.GetAllResources() {
+			actionBitmap, inRolePolicy := resources[k]
+			if !inRolePolicy {
+				actionBitmap = &runtimev1.RunnableRolePolicySet_ActionBitmap{}
+				resources[k] = actionBitmap
 			}
 
 			// Apply the wildcard actions to all resources
@@ -122,6 +124,10 @@ func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *
 				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
 					Fqn:   modCtx.fqn,
 					Scope: rp.Scope,
+					SourceAttributes: map[string]*policyv1.SourceAttributes{
+						namer.RolePolicyScope(rp.Scope): modCtx.def.GetMetadata().GetSourceAttributes(),
+					},
+					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
 				},
 				Role:      rp.Role,
 				Resources: resources,
