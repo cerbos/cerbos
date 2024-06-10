@@ -2,7 +2,7 @@ module github.com/cerbos/cerbos/tools
 
 go 1.22
 
-toolchain go1.22.3
+toolchain go1.22.4
 
 require (
 	github.com/bufbuild/buf v1.32.2
