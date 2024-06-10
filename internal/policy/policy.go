@@ -393,6 +393,10 @@ func ListActions(p *policyv1.Policy) []string {
 				}
 			}
 		}
+	case *policyv1.Policy_RolePolicy:
+		for _, r := range p.RolePolicy.Rules {
+			actions = append(actions, r.PermissibleActions...)
+		}
 	}
 
 	return actions
@@ -513,6 +517,7 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 				}
 			}
 		}
+		// TODO(saml) runnable role policy support, requires RolePolicyManager in order to retrieve actions from bitmap indices
 	}
 
 	return actions

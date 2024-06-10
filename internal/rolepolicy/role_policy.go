@@ -17,7 +17,6 @@ func NewNopManager() NopManager {
 	return NopManager{}
 }
 
-// TODO(saml) is this implementation required?
 type NopManager struct{}
 
 func (n NopManager) AddAction(string) {}

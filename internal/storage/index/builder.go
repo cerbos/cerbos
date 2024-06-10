@@ -262,11 +262,8 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 
 	switch p.Kind {
 	case policy.RolePolicyKind:
-		rp := p.GetRolePolicy()
-		for _, r := range rp.Rules {
-			for _, a := range r.PermissibleActions {
-				idx.rolePolicyMgr.AddAction(a)
-			}
+		for _, a := range policy.ListActions(p.Policy) {
+			idx.rolePolicyMgr.AddAction(a)
 		}
 
 		fallthrough
