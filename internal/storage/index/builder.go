@@ -263,7 +263,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	switch p.Kind {
 	case policy.RolePolicyKind:
 		for _, a := range policy.ListActions(p.Policy) {
-			idx.rolePolicyMgr.AddAction(a)
+			idx.addRolePolicyAction(a)
 		}
 
 		fallthrough
@@ -271,10 +271,10 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		idx.executables[p.ID] = struct{}{}
 
 		if r := p.GetResourcePolicy().GetResource(); r != "" {
-			idx.rolePolicyMgr.SetResource(p.GetResourcePolicy().GetResource())
+			idx.setRolePolicyResource(p.GetResourcePolicy().GetResource())
 		}
 		for _, r := range p.GetPrincipalPolicy().GetRules() {
-			idx.rolePolicyMgr.SetResource(r.Resource)
+			idx.setRolePolicyResource(r.Resource)
 		}
 
 	case policy.DerivedRolesKind, policy.ExportVariablesKind:
@@ -323,6 +323,22 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 			}
 		}
 	}
+}
+
+func (idx *indexBuilder) addRolePolicyAction(action string) {
+	if idx.rolePolicyMgr == nil {
+		return
+	}
+
+	idx.rolePolicyMgr.AddAction(action)
+}
+
+func (idx *indexBuilder) setRolePolicyResource(resource string) {
+	if idx.rolePolicyMgr == nil {
+		return
+	}
+
+	idx.rolePolicyMgr.SetResource(resource)
 }
 
 func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {

@@ -440,5 +440,5 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	return engine.NewEphemeral(cm, c.schemaMgr)
+	return engine.NewEphemeral(cm, c.schemaMgr, c.idx.GetRolePolicyManager())
 }

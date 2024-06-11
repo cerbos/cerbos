@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -133,7 +134,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		}
 
 		compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-		eng, err := engine.NewEphemeral(compiler, schemaMgr)
+		eng, err := engine.NewEphemeral(compiler, schemaMgr, rolepolicy.NewNopManager())
 		if err != nil {
 			return fmt.Errorf("failed to create engine to run tests: %w", err)
 		}

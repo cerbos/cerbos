@@ -15,6 +15,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/hub"
@@ -28,9 +29,10 @@ import (
 
 // Files runs tests using the policy files in the given file system.
 func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestResults, error) {
+	rolePolicyMgr := rolepolicy.NewManager()
 	if idx == nil {
 		var err error
-		idx, err = index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
+		idx, err = index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel), index.WithRolePolicyManager(rolePolicyMgr))
 		if err != nil {
 			idxErrs := new(index.BuildError)
 			if errors.As(err, &idxErrs) {
@@ -48,7 +50,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng, err := engine.NewEphemeral(compiler, schemaMgr)
+	eng, err := engine.NewEphemeral(compiler, schemaMgr, rolePolicyMgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create engine: %w", err)
 	}
@@ -78,7 +80,7 @@ func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, er
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
-	eng, err := engine.NewEphemeral(bundleSrc, schemaMgr)
+	eng, err := engine.NewEphemeral(bundleSrc, schemaMgr, rolepolicy.NewNopManager())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create engine: %w", err)
 	}
