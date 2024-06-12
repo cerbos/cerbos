@@ -17,12 +17,6 @@ func (p ProtoSet) Merge(o ProtoSet) {
 	}
 }
 
-// Merge adds or overrides the key/values from `o` into the original ProtoSet
-func (p ProtoSet) Has(k string) bool {
-	_, has := p[k]
-	return has
-}
-
 type StringSet map[string]struct{}
 
 func (s StringSet) Values() []string {

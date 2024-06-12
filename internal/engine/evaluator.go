@@ -148,21 +148,30 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	actionsSet := internal.ProtoSet{}
 	for _, p := range rpe.policies {
-		// TODO(saml) wildcard matching
-		if r, exists := p.Resources[input.Resource.Kind]; exists {
-			// TODO(saml) wildcard matching
-			actionsSet.Merge(r.Actions)
+		// TODO(saml) use same tree optimisation as below?
+		for r, a := range p.Resources {
+			if util.MatchesGlob(r, input.Resource.Kind) {
+				actionsSet.Merge(a.Actions)
+			}
 		}
 	}
 
+outer:
 	for _, a := range input.Actions {
-		if !actionsSet.Has(a) {
-			actx := rpctx.StartAction(a)
-
-			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Principal.Scope})
-
-			actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Resource action pair not defined within role policy")
+		// TODO(saml) optimise. We can break actions into `:` separated segments, and build a tree structure where
+		// each leaf node represents the final segment in a path to build the action. Therefore matching an action
+		// is as simple as a traversal through the tree (wildcard sections mean inspect all paths from that node, etc)
+		for pa := range actionsSet {
+			if util.MatchesGlob(pa, a) {
+				continue outer
+			}
 		}
+
+		actx := rpctx.StartAction(a)
+
+		result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Principal.Scope})
+
+		actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Resource action pair not defined within role policy")
 	}
 
 	result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
