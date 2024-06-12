@@ -7,8 +7,7 @@ rolePolicy:
   rules:
     - resource: leave_request
       permissibleActions:
-        - create
-        - view:public
+        - view:*
 
-    - resource: salary_record
-      permissibleActions: ["*"]
+    - resource: "*"
+      permissibleActions: ["create"]
