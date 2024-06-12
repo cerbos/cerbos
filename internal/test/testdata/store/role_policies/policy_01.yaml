@@ -8,6 +8,7 @@ rolePolicy:
     - resource: leave_request
       permissibleActions:
         - view:*
+        - deny
 
     - resource: salary_record
       permissibleActions:
