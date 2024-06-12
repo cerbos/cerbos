@@ -2,13 +2,8 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_admin
+  role: acme_creator
   scope: "acme.hr.uk"
   rules:
-    - resource: leave_request
-      permissibleActions:
-        - view:*
-
-    - resource: salary_record
-      permissibleActions:
-        - edit
+    - resource: "*"
+      permissibleActions: ["create"]

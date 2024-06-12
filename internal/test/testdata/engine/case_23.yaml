@@ -10,7 +10,7 @@ inputs:
         {
           "id": "john",
           "scope": "acme.hr.uk",
-          "roles": ["employee", "acme_admin"],
+          "roles": ["employee", "acme_admin", "acme_creator"],
           "attr":
             {
               "department": "marketing",
@@ -93,7 +93,7 @@ wantDecisionLogs:
                   {
                     "id": "john",
                     "scope": "acme.hr.uk",
-                    "roles": ["employee", "acme_admin"],
+                    "roles": ["employee", "acme_admin", "acme_creator"],
                     "attr":
                       {
                         "department": "marketing",
