@@ -28,7 +28,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -53,7 +52,7 @@ func TestCompile(t *testing.T) {
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc, archive := readTestCase(t, tcase)
 			cu := mkCompilationUnit(t, tc.MainDef, archive)
-			haveRes, haveErr := compile.Compile(cu, schemaMgr, rolepolicy.NewNopManager())
+			haveRes, haveErr := compile.Compile(cu, schemaMgr)
 			if len(tc.WantErrors) > 0 {
 				errSet := new(compile.ErrorSet)
 				require.True(t, errors.As(haveErr, &errSet))
@@ -93,7 +92,7 @@ func updateGoldenFiles(t *testing.T, schemaMgr schema.Manager, testCases []test.
 		}
 
 		cu := mkCompilationUnit(t, tc.MainDef, archive)
-		res, err := compile.Compile(cu, schemaMgr, rolepolicy.NewNopManager())
+		res, err := compile.Compile(cu, schemaMgr)
 		if err != nil {
 			t.Fatalf("Cannot produce golden file because compiling %q returns an error: %v", tcase.SourceFile, err)
 		}
@@ -159,7 +158,7 @@ func BenchmarkCompile(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		c := cases[i]
-		_, err := compile.Compile(c, schemaMgr, rolepolicy.NewNopManager())
+		_, err := compile.Compile(c, schemaMgr)
 		if err != nil {
 			b.Errorf("ERROR compile error: %v", err)
 		}

@@ -84,7 +84,7 @@ func Check(ctx context.Context, idx index.Index, inputs []*enginev1.CheckInput) 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng, err := engine.NewEphemeral(compiler, schemaMgr, idx.GetRolePolicyManager())
+	eng, err := engine.NewEphemeral(compiler, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -50,7 +49,6 @@ type buildOptions struct {
 	rootDir              string
 	sourceAttributes     []policy.SourceAttribute
 	buildFailureLogLevel zapcore.Level
-	rolePolicyMgr        rolepolicy.Manager
 }
 
 type BuildOpt func(*buildOptions)
@@ -70,12 +68,6 @@ func WithRootDir(rootDir string) BuildOpt {
 func WithSourceAttributes(attrs ...policy.SourceAttribute) BuildOpt {
 	return func(o *buildOptions) {
 		o.sourceAttributes = attrs
-	}
-}
-
-func WithRolePolicyManager(mgr rolepolicy.Manager) BuildOpt {
-	return func(o *buildOptions) {
-		o.rolePolicyMgr = mgr
 	}
 }
 
@@ -102,7 +94,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 		return nil, err
 	}
 
-	ib := newIndexBuilder(opts.rolePolicyMgr)
+	ib := newIndexBuilder()
 
 	err := fs.WalkDir(fsys, opts.rootDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
@@ -182,10 +174,9 @@ type indexBuilder struct {
 	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
 	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
 	disabled      []*runtimev1.IndexBuildErrors_Disabled
-	rolePolicyMgr rolepolicy.Manager
 }
 
-func newIndexBuilder(mgr rolepolicy.Manager) *indexBuilder {
+func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
 		executables:   make(ModuleIDSet),
 		modIDToFile:   make(map[namer.ModuleID]string),
@@ -195,7 +186,6 @@ func newIndexBuilder(mgr rolepolicy.Manager) *indexBuilder {
 		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
 		missingScopes: make(map[namer.ModuleID]string),
 		stats:         newStatsCollector(),
-		rolePolicyMgr: mgr,
 	}
 }
 
@@ -261,21 +251,8 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	idx.stats.add(p)
 
 	switch p.Kind {
-	case policy.RolePolicyKind:
-		for _, a := range policy.ListActions(p.Policy) {
-			idx.addRolePolicyAction(a)
-		}
-
-		fallthrough
-	case policy.ResourceKind, policy.PrincipalKind:
+	case policy.ResourceKind, policy.PrincipalKind, policy.RolePolicyKind:
 		idx.executables[p.ID] = struct{}{}
-
-		if r := p.GetResourcePolicy().GetResource(); r != "" {
-			idx.setRolePolicyResource(p.GetResourcePolicy().GetResource())
-		}
-		for _, r := range p.GetPrincipalPolicy().GetRules() {
-			idx.setRolePolicyResource(r.Resource)
-		}
 
 	case policy.DerivedRolesKind, policy.ExportVariablesKind:
 		// not executable
@@ -325,22 +302,6 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	}
 }
 
-func (idx *indexBuilder) addRolePolicyAction(action string) {
-	if idx.rolePolicyMgr == nil {
-		return
-	}
-
-	idx.rolePolicyMgr.AddAction(action)
-}
-
-func (idx *indexBuilder) setRolePolicyResource(resource string) {
-	if idx.rolePolicyMgr == nil {
-		return
-	}
-
-	idx.rolePolicyMgr.SetResource(resource)
-}
-
 func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 	// When we compile a policy, we need to load the dependencies (imported variables and derived roles).
 	if _, ok := idx.dependencies[child]; !ok {
@@ -386,16 +347,15 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	metrics.Add(context.Background(), metrics.IndexEntryCount(), int64(len(idx.modIDToFile)))
 
 	return &index{
-		fsys:          fsys,
-		executables:   idx.executables,
-		modIDToFile:   idx.modIDToFile,
-		fileToModID:   idx.fileToModID,
-		dependents:    idx.dependents,
-		dependencies:  idx.dependencies,
-		buildOpts:     opts,
-		schemaLoader:  NewSchemaLoader(fsys, opts.rootDir),
-		stats:         idx.stats.collate(),
-		rolePolicyMgr: idx.rolePolicyMgr,
+		fsys:         fsys,
+		executables:  idx.executables,
+		modIDToFile:  idx.modIDToFile,
+		fileToModID:  idx.fileToModID,
+		dependents:   idx.dependents,
+		dependencies: idx.dependencies,
+		buildOpts:    opts,
+		schemaLoader: NewSchemaLoader(fsys, opts.rootDir),
+		stats:        idx.stats.collate(),
 	}, nil
 }
 

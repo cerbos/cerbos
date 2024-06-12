@@ -15,14 +15,12 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/kelindar/bitmap"
 )
 
 type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
 
-const WildcardAny = "*"
+const AnyRoleVal = "*"
 
 var (
 	emptyVal = &emptypb.Empty{}
@@ -38,7 +36,7 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	errs := newErrorSet()
 
 	for unit := range queue {
-		if _, err := Compile(unit, schemaMgr, rolepolicy.NewNopManager()); err != nil {
+		if _, err := Compile(unit, schemaMgr); err != nil {
 			errs.Add(err)
 		}
 	}
@@ -46,7 +44,7 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	return errs.ErrOrNil()
 }
 
-func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyMgr rolepolicy.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
+func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
 
@@ -60,7 +58,7 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyM
 	case *policyv1.Policy_PrincipalPolicy:
 		rps = compilePrincipalPolicySet(mc)
 	case *policyv1.Policy_RolePolicy:
-		rps = compileRolePolicySet(mc, rolePolicyMgr)
+		rps = compileRolePolicySet(mc)
 	case *policyv1.Policy_DerivedRoles, *policyv1.Policy_ExportVariables:
 	default:
 		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
@@ -69,51 +67,26 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager, rolePolicyM
 	return rps, uc.error()
 }
 
-func compileRolePolicySet(modCtx *moduleCtx, rolePolicyMgr rolepolicy.Manager) *runtimev1.RunnablePolicySet {
+func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 	rp := modCtx.def.GetRolePolicy()
 	if rp == nil {
 		modCtx.addErrWithDesc(errUnexpectedErr, "Not a role policy definition")
 		return nil
 	}
 
-	resources := make(map[string]*runtimev1.RunnableRolePolicySet_ActionBitmap)
+	resources := make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions)
 	for _, r := range rp.Rules {
-		var actionMask bitmap.Bitmap
-		// TODO(saml) do we need to support anything more granular than catch all wildcards?
-		// if so, we'll need to do something like this (using actions as an example):
-		// retrieve all actions from the rolePolicyManager, match those against
-		// the wildcard glob, and set those bits, e.g:
-		// actionsToSetBitsFor := util.FilterGlob(r.Action, allActions)
+		actions, ok := resources[r.Resource]
+		if !ok {
+			actions = &runtimev1.RunnableRolePolicySet_PermissibleActions{
+				Actions: make(map[string]*emptypb.Empty),
+			}
+			resources[r.Resource] = actions
+		}
+
 		for _, a := range r.PermissibleActions {
-			if a == WildcardAny {
-				actionMask.Or(rolePolicyMgr.OnesMask())
-				continue
-			}
-			idx := rolePolicyMgr.GetActionIndex(a)
-			actionMask.Set(uint32(idx))
+			actions.Actions[a] = &emptypb.Empty{}
 		}
-
-		resources[r.Resource] = &runtimev1.RunnableRolePolicySet_ActionBitmap{
-			Bitmap: actionMask,
-		}
-	}
-
-	// TODO(saml) more granular wildcards? see comment above
-	if wcActionBitmap, exists := resources[WildcardAny]; exists {
-		for _, k := range rolePolicyMgr.GetAllResources() {
-			actionBitmap, inRolePolicy := resources[k]
-			if !inRolePolicy {
-				actionBitmap = &runtimev1.RunnableRolePolicySet_ActionBitmap{}
-				resources[k] = actionBitmap
-			}
-
-			// Apply the wildcard actions to all resources
-			var bm bitmap.Bitmap = actionBitmap.Bitmap
-			bm.Or(wcActionBitmap.Bitmap)
-			actionBitmap.Bitmap = bm
-		}
-
-		delete(resources, WildcardAny)
 	}
 
 	return &runtimev1.RunnablePolicySet{
@@ -334,8 +307,8 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 		}
 
 		for _, pr := range def.ParentRoles {
-			if pr == WildcardAny {
-				rdr.ParentRoles = map[string]*emptypb.Empty{WildcardAny: {}}
+			if pr == AnyRoleVal {
+				rdr.ParentRoles = map[string]*emptypb.Empty{AnyRoleVal: {}}
 				break
 			}
 			rdr.ParentRoles[pr] = emptyVal
@@ -393,8 +366,8 @@ func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.Resource
 	if len(rule.Roles) > 0 {
 		cr.Roles = make(map[string]*emptypb.Empty, len(rule.Roles))
 		for _, r := range rule.Roles {
-			if r == WildcardAny {
-				cr.Roles = map[string]*emptypb.Empty{WildcardAny: {}}
+			if r == AnyRoleVal {
+				cr.Roles = map[string]*emptypb.Empty{AnyRoleVal: {}}
 				break
 			}
 			cr.Roles[r] = emptyVal

@@ -15,11 +15,17 @@
     "role": "leave_request",
     "resources": {
       "expenses_report": {
-        "bitmap": [
-          "1"
-        ]
+        "actions": {
+          "create": {},
+          "delete": {},
+          "view": {}
+        }
       },
-      "leave_request": {}
+      "leave_request": {
+        "actions": {
+          "*": {}
+        }
+      }
     }
   },
   "compilerVersion": 1

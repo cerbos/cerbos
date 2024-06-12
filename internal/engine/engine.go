@@ -30,7 +30,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
@@ -126,7 +125,6 @@ type Engine struct {
 	schemaMgr         schema.Manager
 	auditLog          audit.Log
 	policyLoader      PolicyLoader
-	rolePolicyMgr     rolepolicy.Manager
 	conf              *Conf
 	metadataExtractor audit.MetadataExtractor
 	workerPool        []chan<- workIn
@@ -138,7 +136,6 @@ type Components struct {
 	PolicyLoader      PolicyLoader
 	SchemaMgr         schema.Manager
 	MetadataExtractor audit.MetadataExtractor
-	RolePolicyMgr     rolepolicy.Manager
 }
 
 func New(ctx context.Context, components Components) (*Engine, error) {
@@ -166,13 +163,13 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	return engine
 }
 
-func NewEphemeral(policyLoader PolicyLoader, schemaMgr schema.Manager, rolePolicyMgr rolepolicy.Manager) (*Engine, error) {
+func NewEphemeral(policyLoader PolicyLoader, schemaMgr schema.Manager) (*Engine, error) {
 	conf, err := GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
 	}
 
-	return newEngine(conf, Components{PolicyLoader: policyLoader, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog(), RolePolicyMgr: rolePolicyMgr}), nil
+	return newEngine(conf, Components{PolicyLoader: policyLoader, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()}), nil
 }
 
 func newEngine(conf *Conf, c Components) *Engine {
@@ -182,7 +179,6 @@ func newEngine(conf *Conf, c Components) *Engine {
 		schemaMgr:         c.SchemaMgr,
 		auditLog:          c.AuditLog,
 		metadataExtractor: c.MetadataExtractor,
-		rolePolicyMgr:     c.RolePolicyMgr,
 	}
 }
 
@@ -505,6 +501,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 			ae.Effect = einfo.Effect
 			ae.Policy = einfo.Policy
 			ae.Scope = einfo.Scope
+			ae.RolePolicyScope = einfo.RolePolicyScope
 		}
 	}
 
@@ -554,7 +551,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams e
 	if rps == nil {
 		return nil, nil
 	}
-	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
+	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams), nil
 }
 
 func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
@@ -582,7 +579,7 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams ev
 		return nil, nil
 	}
 
-	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
+	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams), nil
 }
 
 func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
@@ -610,7 +607,7 @@ func (engine *Engine) getRolePolicyEvaluator(ctx context.Context, eparams evalPa
 		return nil, nil
 	}
 
-	return NewEvaluator(pSets, engine.schemaMgr, eparams, engine.rolePolicyMgr), nil
+	return NewEvaluator(pSets, engine.schemaMgr, eparams), nil
 }
 
 func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles []string) ([]*runtimev1.RunnablePolicySet, error) {

@@ -25,7 +25,7 @@ import (
 func TestFiles(t *testing.T) {
 	storeFs := os.DirFS(test.PathToDir(t, "store"))
 
-	index, _, err := compile.Files(context.Background(), storeFs)
+	_, _, err := compile.Files(context.Background(), storeFs)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -74,10 +74,9 @@ func TestFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, engine.Components{
-		PolicyLoader:  bundle,
-		SchemaMgr:     schemaMgr,
-		AuditLog:      auditLog,
-		RolePolicyMgr: index.GetRolePolicyManager(),
+		PolicyLoader: bundle,
+		SchemaMgr:    schemaMgr,
+		AuditLog:     auditLog,
 	})
 	require.NoError(t, err)
 

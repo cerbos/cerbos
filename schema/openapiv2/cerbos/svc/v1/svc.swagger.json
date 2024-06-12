@@ -988,6 +988,9 @@
         },
         "scope": {
           "type": "string"
+        },
+        "rolePolicyScope": {
+          "type": "string"
         }
       }
     },

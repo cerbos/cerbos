@@ -14,7 +14,6 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/kelindar/bitmap"
 	"go.uber.org/multierr"
 	"golang.org/x/exp/maps"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -31,7 +30,6 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -90,7 +88,7 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams, rolePolicyMgr rolepolicy.Manager) Evaluator {
+func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
 	if len(rps) == 0 {
 		return noopEvaluator{}
 	}
@@ -101,7 +99,7 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		return newRolePolicyEvaluator(rps, rolePolicyMgr)
+		return newRolePolicyEvaluator(rps)
 	default:
 		return noopEvaluator{}
 	}
@@ -115,10 +113,9 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 
 type rolePolicyEvaluator struct {
 	policies map[string]*runtimev1.RunnableRolePolicySet
-	mgr      rolepolicy.Manager
 }
 
-func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet, mgr rolepolicy.Manager) *rolePolicyEvaluator {
+func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet) *rolePolicyEvaluator {
 	policies := make(map[string]*runtimev1.RunnableRolePolicySet)
 	for _, p := range rps {
 		if rp, ok := p.PolicySet.(*runtimev1.RunnablePolicySet_RolePolicy); ok {
@@ -126,7 +123,7 @@ func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet, mgr rolepolicy.M
 		}
 	}
 
-	return &rolePolicyEvaluator{policies: policies, mgr: mgr}
+	return &rolePolicyEvaluator{policies: policies}
 }
 
 func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
@@ -149,16 +146,17 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
-	var actionMask bitmap.Bitmap
+	actionsSet := internal.ProtoSet{}
 	for _, p := range rpe.policies {
+		// TODO(saml) wildcard matching
 		if r, exists := p.Resources[input.Resource.Kind]; exists {
-			actionMask.Or(r.Bitmap)
+			// TODO(saml) wildcard matching
+			actionsSet.Merge(r.Actions)
 		}
 	}
 
 	for _, a := range input.Actions {
-		idx := rpe.mgr.GetActionIndex(a)
-		if !actionMask.Contains(uint32(idx)) {
+		if !actionsSet.Has(a) {
 			actx := rpctx.StartAction(a)
 
 			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Principal.Scope})

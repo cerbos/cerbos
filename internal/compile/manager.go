@@ -18,7 +18,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
@@ -172,7 +171,7 @@ func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) 
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {
 	rps, err := metrics.RecordDuration2(metrics.CompileDuration(), func() (*runtimev1.RunnablePolicySet, error) {
-		return Compile(unit, c.schemaMgr, rolepolicy.NewNopManager())
+		return Compile(unit, c.schemaMgr)
 	})
 	if err == nil && rps != nil {
 		if c.cacheDuration > 0 {
@@ -231,10 +230,21 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 	return rpsVal.(*runtimev1.RunnablePolicySet), nil
 }
 
-// GetAll is only used in BinaryStores when retrieving >1 role policies. We need to implement this stub method in
-// order to satisfy the PolicyLoader interface for certain use cases (overlay storage drivers, etc)
-func (c *Manager) GetAll(_ context.Context, _ []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	return []*runtimev1.RunnablePolicySet{}, nil
+func (c *Manager) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	// This isn't the most efficient approach, because this interface method implementation is only used for tests.
+	// In practice `GetAll` is only used when handing role policies in the bundle stores.
+	res := []*runtimev1.RunnablePolicySet{}
+	for _, id := range modIDs {
+		rps, err := c.GetFirstMatch(ctx, []namer.ModuleID{id})
+		if err != nil {
+			return res, err
+		}
+
+		if rps != nil {
+			res = append(res, rps)
+		}
+	}
+	return res, nil
 }
 
 func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {

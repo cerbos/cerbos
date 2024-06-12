@@ -17,7 +17,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/rolepolicy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -66,9 +65,7 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 		srcAttrs[i] = policy.SourceAttribute{Key: a.Key, Value: a.Value}
 	}
 
-	rolePolicyMgr := rolepolicy.NewManager()
-
-	idx, err := index.Build(ctx, fsys, index.WithSourceAttributes(srcAttrs...), index.WithRolePolicyManager(rolePolicyMgr))
+	idx, err := index.Build(ctx, fsys, index.WithSourceAttributes(srcAttrs...))
 	if err != nil {
 		idxErrs := new(index.BuildError)
 		if errors.As(err, &idxErrs) {
@@ -103,7 +100,7 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 			log.Debug("Compiling unit")
 
 			artefact := Artefact{SourceFile: srcFile}
-			artefact.PolicySet, artefact.Error = internalcompile.Compile(unit, schemaMgr, rolePolicyMgr)
+			artefact.PolicySet, artefact.Error = internalcompile.Compile(unit, schemaMgr)
 
 			if artefact.Error != nil {
 				log.Error("Compilation failed", zap.Error(artefact.Error))

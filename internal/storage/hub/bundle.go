@@ -214,29 +214,12 @@ func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (
 	return nil, nil
 }
 
-// GetAll attempts to retrieve all policies from the passed modIDs. It will not fall back up the scope chain if a
-// specific module is missing and only returns those modules that exist.
-func (b *Bundle) GetAll(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+// GetAll attempts to retrieve all policies from the passed modIDs, unlike `GetFirstMatch` which returns the first
+// of the passed candidates, this function returns list of all available modules from the provided IDs.
+func (b *Bundle) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	res := []*runtimev1.RunnablePolicySet{}
 	for _, id := range modIDs {
-		cached, ok := b.cache.Get(id)
-		if ok {
-			res = append(res, cached.policySet)
-			continue
-		}
-
-		idHex := id.HexStr()
-		fileName := policyDir + idHex
-
-		if _, err := b.bundleFS.Stat(fileName); err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
-			}
-
-			return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
-		}
-
-		policySet, err := b.loadPolicySet(idHex, fileName)
+		policySet, err := b.GetFirstMatch(ctx, []namer.ModuleID{id})
 		if policySet != nil {
 			b.cache.Set(id, cacheEntry{policySet: policySet, err: err})
 			res = append(res, policySet)

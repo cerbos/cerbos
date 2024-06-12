@@ -33,13 +33,13 @@ message RunnableRolePolicySet {
     map<string, string> annotations = 4;
   }
 
-  message ActionBitmap {
-    repeated uint64 bitmap = 1;
+  message PermissibleActions {
+    map<string, google.protobuf.Empty> actions = 1;
   }
 
   Metadata meta = 1;
   string role = 2;
-  map<string, ActionBitmap> resources = 3;
+  map<string, PermissibleActions> resources = 3;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies

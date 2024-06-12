@@ -1,0 +1,185 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Role policy: regional custom role doesn't allow deletion"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["create", "delete", "view:public"],
+      "principal":
+        {
+          "id": "john",
+          "scope": "acme.hr.uk",
+          "roles": ["employee", "acme_admin"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "ip_address": "10.20.0.13",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "scope": "acme.hr.uk",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "scope": "acme.hr",
+            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "role_policy_scope": "acme.hr.uk",
+            },
+          "create":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "scope": "acme",
+            },
+        },
+      "effectiveDerivedRoles":
+        ["any_employee", "employee_that_owns_the_record"],
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
+      "timestamp": "2023-12-01T14:51:39.204970988Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                    "scope": "acme.hr.uk",
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "scope": "acme.hr.uk",
+                    "roles": ["employee", "acme_admin"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "ip_address": "10.20.0.13",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["create", "delete", "view:public"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "create":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "scope": "acme",
+                      },
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "role_policy_scope": "acme.hr.uk",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "scope": "acme.hr",
+                      },
+                  },
+                "effectiveDerivedRoles":
+                  ["employee_that_owns_the_record", "any_employee"],
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "cerbos.role/acme.hr.uk":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_01.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault/acme":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05_acme.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault/acme.hr":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05_acme.hr.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault/acme.hr.uk":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05_acme.hr.uk.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

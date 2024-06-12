@@ -10,6 +10,19 @@ import (
 
 type ProtoSet map[string]*emptypb.Empty
 
+// Merge merges keys from `o` into the original ProtoSet
+func (p ProtoSet) Merge(o ProtoSet) {
+	for k, v := range o {
+		p[k] = v
+	}
+}
+
+// Merge adds or overrides the key/values from `o` into the original ProtoSet
+func (p ProtoSet) Has(k string) bool {
+	_, has := p[k]
+	return has
+}
+
 type StringSet map[string]struct{}
 
 func (s StringSet) Values() []string {
@@ -31,7 +44,7 @@ func ToSet(values []string) StringSet {
 
 func SetIntersects(s1 ProtoSet, s2 StringSet) bool {
 	for v := range s1 {
-		if v == compile.WildcardAny {
+		if v == compile.AnyRoleVal {
 			return true
 		}
 

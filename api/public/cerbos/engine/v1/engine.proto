@@ -150,6 +150,7 @@ message CheckOutput {
     cerbos.effect.v1.Effect effect = 1;
     string policy = 2;
     string scope = 3;
+    string role_policy_scope = 4;
   }
 
   string request_id = 1;
