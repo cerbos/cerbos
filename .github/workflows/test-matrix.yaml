@@ -18,10 +18,10 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Build
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: build --config=.goreleaser.yml --rm-dist --snapshot --single-target
+          args: build --config=.goreleaser.yml --clean --snapshot --single-target
 
       - name: Test
         run: |

@@ -1,10 +1,12 @@
 ---
+version: 2
+
 snapshot:
-  name_template: '{{ incminor .Version }}-prerelease'
+  name_template: "{{ incminor .Version }}-prerelease"
 
 git:
   ignore_tags:
-    - 'api/genpb/*'
+    - "api/genpb/*"
 
 builds:
   - main: ./cmd/cerbos
@@ -21,7 +23,7 @@ builds:
     goarm:
       - "6"
       - "7"
-    mod_timestamp: '{{ .CommitTimestamp }}'
+    mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
@@ -50,7 +52,7 @@ builds:
     goarm:
       - "6"
       - "7"
-    mod_timestamp: '{{ .CommitTimestamp }}'
+    mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
@@ -301,10 +303,10 @@ brews:
     description: "Cerbos is the open core, language-agnostic, scalable authorization solution that makes user permissions and authorization simple to implement and manage by writing context-aware access control policies for your application resources."
     license: "Apache-2.0"
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 release:
   extra_files:
-    - glob: '**/*.bundle'
+    - glob: "**/*.bundle"
   header: |-
     Cerbos {{ .Version }}
     ---------------------
