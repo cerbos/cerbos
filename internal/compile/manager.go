@@ -232,7 +232,7 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 
 func (c *Manager) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	// This isn't the most efficient approach, because this interface method implementation is only used for tests.
-	// In practice `GetAll` is only used when handing role policies in the bundle stores.
+	// In practice, `GetAll` is only used when handling role policies in the bundle stores.
 	res := []*runtimev1.RunnablePolicySet{}
 	for _, id := range modIDs {
 		rps, err := c.GetFirstMatch(ctx, []namer.ModuleID{id})
