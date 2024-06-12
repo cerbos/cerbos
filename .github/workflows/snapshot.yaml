@@ -115,7 +115,7 @@ jobs:
         uses: sigstore/cosign-installer@v3.5.0
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --config=.goreleaser.yml --clean --snapshot --skip=publish

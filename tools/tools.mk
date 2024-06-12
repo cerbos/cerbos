@@ -44,7 +44,7 @@ $(GOLANGCI_LINT): $(TOOLS_BIN_DIR)
 	@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_BIN_DIR)
 
 $(GORELEASER): $(TOOLS_BIN_DIR)
-	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/goreleaser/goreleaser
+	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/goreleaser/goreleaser/v2
 
 $(GOTESTSUM): $(TOOLS_BIN_DIR)
 	@ GOWORK=off GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) gotest.tools/gotestsum
