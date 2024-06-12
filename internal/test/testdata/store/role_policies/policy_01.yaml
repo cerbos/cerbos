@@ -3,7 +3,7 @@
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_admin
-  scope: "acme.hr.uk"
+  scope: acme.hr.uk
   rules:
     - resource: leave_request
       permissibleActions:

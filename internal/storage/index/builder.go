@@ -291,13 +291,10 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		}
 	}
 
-	// Role policies do not require unbroken ancestral chains
-	if p.Kind != policy.RolePolicyKind {
-		ancestors := policy.RequiredAncestors(p.Policy)
-		for aID, a := range ancestors {
-			if _, ok := idx.modIDToFile[aID]; !ok {
-				idx.missingScopes[aID] = a
-			}
+	ancestors := policy.RequiredAncestors(p.Policy)
+	for aID, a := range ancestors {
+		if _, ok := idx.modIDToFile[aID]; !ok {
+			idx.missingScopes[aID] = a
 		}
 	}
 }

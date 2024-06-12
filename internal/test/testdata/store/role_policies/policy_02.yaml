@@ -3,7 +3,7 @@
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_creator
-  scope: "acme.hr.uk"
+  scope: acme.hr.uk
   rules:
     - resource: "*"
       permissibleActions: ["create"]
