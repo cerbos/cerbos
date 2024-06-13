@@ -21,17 +21,19 @@ import (
 
 func Policies() *Policy {
 	return &Policy{
+		derivedRolesImports:   make(map[string][]string),
 		derivedRolesToResolve: make(map[string]map[string]bool),
+		variableImports:       make(map[string][]string),
 		variablesToResolve:    make(map[string]map[string]bool),
-		imports:               make(map[string][]string),
 		results:               make(map[string]*responsev1.InspectPoliciesResponse_Result),
 	}
 }
 
 type Policy struct {
+	derivedRolesImports   map[string][]string
 	derivedRolesToResolve map[string]map[string]bool
+	variableImports       map[string][]string
 	variablesToResolve    map[string]map[string]bool
-	imports               map[string][]string
 	results               map[string]*responsev1.InspectPoliciesResponse_Result
 }
 
@@ -73,9 +75,9 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	}
 
 	var derivedRoles []*responsev1.InspectPoliciesResponse_DerivedRole
-	_, isDerivedRolePolicy := p.PolicyType.(*policyv1.Policy_DerivedRoles)
-	if isDerivedRolePolicy {
-		derivedRoles = policy.ListDerivedRoles(p)
+
+	if drp := p.GetDerivedRoles(); drp != nil {
+		derivedRoles = policy.ListExportedDerivedRoles(drp)
 		if len(derivedRoles) > 0 {
 			sort.Slice(derivedRoles, func(i, j int) bool {
 				return derivedRoles[i].Name < derivedRoles[j].Name
@@ -91,7 +93,7 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 		}
 	}
 
-	pol.imports[policyID] = pol.listImports(p)
+	pol.derivedRolesImports[policyID], pol.variableImports[policyID] = pol.listImports(p)
 
 	for referenced := range referencedVariables {
 		if v, ok := localVariables[referenced]; ok {
@@ -134,7 +136,7 @@ type loadPolicyFn func(ctx context.Context, policyKey ...string) ([]*policy.Wrap
 // Results returns the final inspection results.
 func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	for policyID, derivedRoles := range pol.derivedRolesToResolve {
-		importedPolicies, ok := pol.imports[policyID]
+		importedPolicies, ok := pol.derivedRolesImports[policyID]
 		var missingPolicies []string
 		if ok {
 			for _, importedPolicyID := range importedPolicies {
@@ -157,7 +159,7 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 
 		if loadPolicy != nil {
 			if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, loadPolicy, func(wrapper *policy.Wrapper) error {
-				importedDerivedRoles := policy.ListDerivedRoles(wrapper.Policy)
+				importedDerivedRoles := policy.ListExportedDerivedRoles(wrapper.Policy.GetDerivedRoles())
 				for _, importedDerivedRole := range importedDerivedRoles {
 					if _, ok := derivedRoles[importedDerivedRole.Name]; ok {
 						pol.results[policyID].DerivedRoles = append(pol.results[policyID].DerivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{
@@ -192,7 +194,7 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 	}
 
 	for policyID, variables := range pol.variablesToResolve {
-		importedPolicies, ok := pol.imports[policyID]
+		importedPolicies, ok := pol.variableImports[policyID]
 		var missingPolicies []string
 		if ok {
 			for _, importedPolicyID := range importedPolicies {
@@ -258,41 +260,40 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 	return pol.results, nil
 }
 
-// listImports lists the export variables imported by the given policy.
-func (pol *Policy) listImports(p *policyv1.Policy) []string {
-	var imports []string
+// listImports lists the derived roles and export variables imported by the given policy.
+func (pol *Policy) listImports(p *policyv1.Policy) (derivedRoleImports, variableImports []string) {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_DerivedRoles:
 		if pt.DerivedRoles.Variables != nil {
 			for _, variablesName := range pt.DerivedRoles.Variables.Import {
 				policyID := namer.PolicyKeyFromFQN(namer.ExportVariablesFQN(variablesName))
-				imports = append(imports, policyID)
+				variableImports = append(variableImports, policyID)
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
 		if pt.PrincipalPolicy.Variables != nil {
 			for _, variablesName := range pt.PrincipalPolicy.Variables.Import {
 				policyID := namer.PolicyKeyFromFQN(namer.ExportVariablesFQN(variablesName))
-				imports = append(imports, policyID)
+				variableImports = append(variableImports, policyID)
 			}
 		}
 	case *policyv1.Policy_ResourcePolicy:
 		if pt.ResourcePolicy.ImportDerivedRoles != nil {
 			for _, roleSetName := range pt.ResourcePolicy.ImportDerivedRoles {
 				policyID := namer.PolicyKeyFromFQN(namer.DerivedRolesFQN(roleSetName))
-				imports = append(imports, policyID)
+				derivedRoleImports = append(derivedRoleImports, policyID)
 			}
 		}
 
 		if pt.ResourcePolicy.Variables != nil {
 			for _, variablesName := range pt.ResourcePolicy.Variables.Import {
 				policyID := namer.PolicyKeyFromFQN(namer.ExportVariablesFQN(variablesName))
-				imports = append(imports, policyID)
+				variableImports = append(variableImports, policyID)
 			}
 		}
 	}
 
-	return imports
+	return derivedRoleImports, variableImports
 }
 
 // inspectDefinitionsAndRules inspects the definitions and rules in the given policy to find references to the derived roles and variables.

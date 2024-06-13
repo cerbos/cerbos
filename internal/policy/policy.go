@@ -390,26 +390,21 @@ func ListActions(p *policyv1.Policy) []string {
 	return actions
 }
 
-// ListDerivedRoles returns unique exported derived roles defined in a derived roles policy.
-func ListDerivedRoles(p *policyv1.Policy) []*responsev1.InspectPoliciesResponse_DerivedRole {
+// ListExportedDerivedRoles returns exported derived roles defined in the given derived roles policy.
+func ListExportedDerivedRoles(drp *policyv1.DerivedRoles) []*responsev1.InspectPoliciesResponse_DerivedRole {
 	var derivedRoles []*responsev1.InspectPoliciesResponse_DerivedRole
-	if p == nil {
-		return derivedRoles
-	}
-
-	drp, ok := p.PolicyType.(*policyv1.Policy_DerivedRoles)
-	if !ok {
+	if drp == nil {
 		return derivedRoles
 	}
 
 	ss := make(util.StringSet)
-	for _, dr := range drp.DerivedRoles.Definitions {
+	for _, dr := range drp.Definitions {
 		if !ss.Contains(dr.Name) {
 			ss[dr.Name] = struct{}{}
 			derivedRoles = append(derivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{
 				Name:   dr.Name,
 				Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_EXPORTED,
-				Source: namer.PolicyKey(p),
+				Source: namer.PolicyKeyFromFQN(namer.DerivedRolesFQN(drp.Name)),
 			})
 		}
 	}

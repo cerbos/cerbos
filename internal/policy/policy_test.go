@@ -265,7 +265,7 @@ func TestInspectUtilities(t *testing.T) {
 	})
 
 	t.Run("DerivedRoles", func(t *testing.T) {
-		t.Run("ListDerivedRoles", func(t *testing.T) {
+		t.Run("ListExportedDerivedRoles", func(t *testing.T) {
 			testCases := []struct {
 				p                    *policyv1.Policy
 				expectedDerivedRoles []*responsev1.InspectPoliciesResponse_DerivedRole
@@ -299,7 +299,7 @@ func TestInspectUtilities(t *testing.T) {
 
 			for idx, testCase := range testCases {
 				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-					require.Empty(t, cmp.Diff(testCase.expectedDerivedRoles, policy.ListDerivedRoles(testCase.p), protocmp.Transform()))
+					require.Empty(t, cmp.Diff(testCase.expectedDerivedRoles, policy.ListExportedDerivedRoles(testCase.p.GetDerivedRoles()), protocmp.Transform()))
 				})
 			}
 		})

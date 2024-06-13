@@ -2272,7 +2272,7 @@
             "type": "object",
             "$ref": "#/definitions/v1InspectPoliciesResponseVariable"
           },
-          "description": "Variables in the policy."
+          "description": "Variables referenced in the policy."
         },
         "policyId": {
           "type": "string",
@@ -2284,7 +2284,7 @@
             "type": "object",
             "$ref": "#/definitions/InspectPoliciesResponseDerivedRole"
           },
-          "description": "Derived roles in the policy."
+          "description": "Derived roles referenced in the policy."
         }
       }
     },
