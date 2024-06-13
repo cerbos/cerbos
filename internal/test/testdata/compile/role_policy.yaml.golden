@@ -14,16 +14,16 @@
     },
     "role": "leave_request",
     "resources": {
+      "acme_admin": {
+        "actions": {
+          "*": {}
+        }
+      },
       "expenses_report": {
         "actions": {
           "create": {},
           "delete": {},
           "view": {}
-        }
-      },
-      "leave_request": {
-        "actions": {
-          "*": {}
         }
       }
     }

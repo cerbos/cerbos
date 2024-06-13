@@ -517,7 +517,15 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 				}
 			}
 		}
-		// TODO(saml) runnable role policy support, requires RolePolicyManager in order to retrieve actions from bitmap indices
+	case *runtimev1.RunnablePolicySet_RolePolicy:
+		for _, r := range set.RolePolicy.Resources {
+			for a := range r.Actions {
+				if _, ok := lut[a]; !ok {
+					lut[a] = struct{}{}
+					actions = append(actions, a)
+				}
+			}
+		}
 	}
 
 	return actions

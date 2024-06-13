@@ -25,12 +25,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-var (
-	// errSchemasInWrongDir signals that schemas folder is in the wrong place.
-	errSchemasInWrongDir = fmt.Errorf("%s directory must be under the root of the storage directory", util.SchemasDirectory)
-
-	errRolePolicyLeafNode = errors.New("role policy must be a leaf node in the scope hierarchy")
-)
+// errSchemasInWrongDir signals that schemas folder is in the wrong place.
+var errSchemasInWrongDir = fmt.Errorf("%s directory must be under the root of the storage directory", util.SchemasDirectory)
 
 const maxLoggableBuildErrors = 5
 

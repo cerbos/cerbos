@@ -119,10 +119,6 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
 		}
 
-		if _, ok := p.PolicyType.(*policyv1.Policy_RolePolicy); ok {
-			return cu, nil
-		}
-
 		// load ancestors of the policy
 		for _, ancestor := range cu.Ancestors() {
 			p, sc, err := idx.loadPolicy(ancestor)
@@ -166,10 +162,6 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 		}
 
 		result[id] = cu
-
-		if _, ok := p.PolicyType.(*policyv1.Policy_RolePolicy); ok {
-			return result, nil
-		}
 
 		// add dependencies
 		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {

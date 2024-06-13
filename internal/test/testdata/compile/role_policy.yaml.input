@@ -5,7 +5,7 @@ rolePolicy:
   role: leave_request
   scope: "acme"
   rules:
-    - resource: leave_request
+    - resource: acme_admin
       permissibleActions: ['*']
     - resource: expenses_report
       permissibleActions:

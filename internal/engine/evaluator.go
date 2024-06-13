@@ -134,7 +134,6 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 	// For now, at compilation time, I'm setting source attributes to a "scope"-scoped key, so we need only
 	// retrieve attributes from the first policy.
 	// TODO(saml) do we want to know exactly which role policy within a scope-set was used for the evaluation?
-	// This would prevent us from being able to union bitmaps.
 	var sourceAttrs map[string]*policyv1.SourceAttributes
 	for _, p := range rpe.policies {
 		sourceAttrs = p.GetMeta().GetSourceAttributes()
@@ -146,22 +145,20 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
-	actionsSet := internal.ProtoSet{}
+	permissibleActions := internal.ProtoSet{}
 	for _, p := range rpe.policies {
-		// TODO(saml) use same tree optimisation as below?
+		// TODO(saml) fqn tree optimisation?
 		for r, a := range p.Resources {
 			if util.MatchesGlob(r, input.Resource.Kind) {
-				actionsSet.Merge(a.Actions)
+				permissibleActions.Merge(a.Actions)
 			}
 		}
 	}
 
 outer:
 	for _, a := range input.Actions {
-		// TODO(saml) optimise. We can break actions into `:` separated segments, and build a tree structure where
-		// each leaf node represents the final segment in a path to build the action. Therefore matching an action
-		// is as simple as a traversal through the tree (wildcard sections mean inspect all paths from that node, etc)
-		for pa := range actionsSet {
+		// TODO(saml) fqn tree optimisation?
+		for pa := range permissibleActions {
 			if util.MatchesGlob(pa, a) {
 				continue outer
 			}
