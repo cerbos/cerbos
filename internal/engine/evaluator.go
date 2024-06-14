@@ -148,21 +148,17 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	permissibleActions := internal.ProtoSet{}
 	for _, p := range rpe.policies {
-		// TODO(saml) fqn tree optimisation?
-		for r, a := range p.Resources {
-			if util.MatchesGlob(r, input.Resource.Kind) {
-				permissibleActions.Merge(a.Actions)
-			}
+		if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
+			permissibleActions.Merge(k.Actions)
 		}
 	}
 
+	actions := util.NewGlobMap(permissibleActions)
+
 outer:
 	for _, a := range input.Actions {
-		// TODO(saml) fqn tree optimisation?
-		for pa := range permissibleActions {
-			if util.MatchesGlob(pa, a) {
-				continue outer
-			}
+		if v := actions.Get(a); v != nil {
+			continue outer
 		}
 
 		actx := rpctx.StartAction(a)
