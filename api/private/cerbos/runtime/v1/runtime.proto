@@ -202,6 +202,13 @@ message IndexBuildErrors {
     string context = 7;
   }
 
+  message MissingScope {
+    string policy = 1;
+    string version = 2;
+    repeated string found_scopes = 3;
+    repeated string missing_scopes = 4;
+  }
+
   message LoadFailure {
     string file = 1;
     string error = 2 [deprecated = true];
@@ -218,7 +225,7 @@ message IndexBuildErrors {
   repeated DuplicateDef duplicate_defs = 2;
   repeated LoadFailure load_failures = 3;
   repeated MissingImport missing_imports = 4;
-  repeated string missing_scopes = 5;
+  repeated MissingScope missing_scopes = 5;
   repeated Disabled disabled_defs = 6;
 }
 

@@ -60,7 +60,7 @@
         "missingScopes": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.MissingScope"
           }
         }
       }
@@ -137,6 +137,30 @@
         },
         "position": {
           "$ref": "#/definitions/cerbos.source.v1.Position"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.MissingScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "foundScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missingScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "policy": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },

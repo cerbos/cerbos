@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/spf13/afero"
@@ -338,7 +339,7 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 
 	for _, ms := range errs.MissingScopes {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			Error: fmt.Sprintf("Missing scope '%s'", ms),
+			Error: fmt.Sprintf("Scoped policy '%s.v%s' has missing scope(s): '%s'", ms.Policy, ms.Version, strings.Join(ms.MissingScopes, "', '")),
 		})
 	}
 

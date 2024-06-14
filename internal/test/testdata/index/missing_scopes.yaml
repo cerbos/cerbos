@@ -2,8 +2,15 @@
 ---
 wantErrList:
   missingScopes:
-    - resource.leave_request.v20210210/acme
-    - resource.leave_request.v20210210/acme.hr
+    - policy: resource.leave_request
+      version: "20210210"
+      foundScopes:
+        - ""
+        - acme.hr.uk
+      missingScopes:
+        - acme
+        - acme.hr
+
 files:
   "resource.yaml": |-
     ---
