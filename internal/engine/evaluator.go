@@ -34,6 +34,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const rolePolicyNotAllowed = "<NOT_ALLOWED_BY_ROLE_POLICIES>"
+
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type evalParams struct {
@@ -166,9 +168,9 @@ outer:
 
 		actx := rpctx.StartAction(a)
 
-		result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, RolePolicyScope: input.Principal.Scope})
+		result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: rolePolicyNotAllowed, Scope: input.Principal.Scope})
 
-		actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Resource action pair not defined within role policy")
+		actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
 	}
 
 	result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
@@ -619,10 +621,9 @@ func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, variables 
 }
 
 type EffectInfo struct {
-	Policy          string
-	Scope           string
-	RolePolicyScope string
-	Effect          effectv1.Effect
+	Policy string
+	Scope  string
+	Effect effectv1.Effect
 }
 
 type PolicyEvalResult struct {

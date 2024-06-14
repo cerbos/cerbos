@@ -311,10 +311,6 @@ func cerbos_engine_v1_CheckOutput_ActionEffect_hashpb_sum(m *v1.CheckOutput_Acti
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
 
 	}
-	if _, ok := ignore["cerbos.engine.v1.CheckOutput.ActionEffect.role_policy_scope"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRolePolicyScope()))
-
-	}
 }
 
 func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v1.CheckOutput, hasher hash.Hash, ignore map[string]struct{}) {

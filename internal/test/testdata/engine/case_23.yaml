@@ -56,7 +56,8 @@ wantOutputs:
           "delete":
             {
               "effect": "EFFECT_DENY",
-              "role_policy_scope": "acme.hr.uk",
+              "policy": "<NOT_ALLOWED_BY_ROLE_POLICIES>",
+              "scope": "acme.hr.uk",
             },
           "create":
             {
@@ -131,7 +132,8 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "role_policy_scope": "acme.hr.uk",
+                        "policy": "<NOT_ALLOWED_BY_ROLE_POLICIES>",
+                        "scope": "acme.hr.uk",
                       },
                     "view:public":
                       {

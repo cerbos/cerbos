@@ -501,7 +501,6 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 			ae.Effect = einfo.Effect
 			ae.Policy = einfo.Policy
 			ae.Scope = einfo.Scope
-			ae.RolePolicyScope = einfo.RolePolicyScope
 		}
 	}
 

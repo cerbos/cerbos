@@ -99,9 +99,6 @@
         "policy": {
           "type": "string"
         },
-        "rolePolicyScope": {
-          "type": "string"
-        },
         "scope": {
           "type": "string"
         }
