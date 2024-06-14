@@ -133,13 +133,10 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 	span.SetAttributes(tracing.PolicyScope(input.Principal.Scope))
 	defer span.End()
 
-	// For now, at compilation time, I'm setting source attributes to a "scope"-scoped key, so we need only
-	// retrieve attributes from the first policy.
-	// TODO(saml) do we want to know exactly which role policy within a scope-set was used for the evaluation?
-	var sourceAttrs map[string]*policyv1.SourceAttributes
+	sourceAttrs := make(map[string]*policyv1.SourceAttributes)
 	for _, p := range rpe.policies {
-		sourceAttrs = p.GetMeta().GetSourceAttributes()
-		break
+		// merge
+		sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
 	}
 
 	trail := newAuditTrail(sourceAttrs)

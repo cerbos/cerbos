@@ -5,7 +5,7 @@
       "fqn": "cerbos.role.leave_request/acme",
       "scope": "acme",
       "sourceAttributes": {
-        "cerbos.role/acme": {
+        "role.leave_request/acme": {
           "attributes": {
             "source": "role_policies/acme_admin.yaml"
           }

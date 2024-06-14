@@ -208,11 +208,6 @@ func RolePolicyModuleID(role, scope string) ModuleID {
 	return GenModuleIDFromFQN(RolePolicyFQN(role, scope))
 }
 
-// RolePolicyScope returns the fully-qualified module name for all role policies within a given scope.
-func RolePolicyScope(scope string) string {
-	return withScope(RolePoliciesPrefix, scope)
-}
-
 // ScopedPrincipalPolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
 // For example, if the scope is `a.b.c`, the list will contain the module IDs for scopes `a.b.c`, `a.b`, `a` and `""` in that order.
 func ScopedPrincipalPolicyModuleIDs(principal, version, scope string, genTree bool) []ModuleID {

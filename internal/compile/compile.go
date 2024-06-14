@@ -98,7 +98,7 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 					Fqn:   modCtx.fqn,
 					Scope: rp.Scope,
 					SourceAttributes: map[string]*policyv1.SourceAttributes{
-						namer.RolePolicyScope(rp.Scope): modCtx.def.GetMetadata().GetSourceAttributes(),
+						namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
 					},
 					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
 				},
