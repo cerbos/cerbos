@@ -136,7 +136,9 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 	sourceAttrs := make(map[string]*policyv1.SourceAttributes)
 	for _, p := range rpe.policies {
 		// merge
-		sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
+		if p.GetMeta().GetFqn() != "" && p.GetMeta().GetSourceAttributes() != nil {
+			sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
+		}
 	}
 
 	trail := newAuditTrail(sourceAttrs)
