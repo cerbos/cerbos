@@ -259,6 +259,8 @@ func (c *Manager) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runti
 	// retrieved. However, in practice, the `modIDs` parameter passed to this method will be relatively static, as
 	// the sets represent collections of policies which are unlikely to be frequently mutated.
 	key := b.String()
+	defer c.sf.Forget(key)
+
 	compiled, err, _ := c.sf.Do(key, func() (any, error) {
 		cus, err := c.store.GetAll(ctx, toResolve)
 		if err != nil {
