@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -231,19 +232,58 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 }
 
 func (c *Manager) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	// This isn't the most efficient approach, because this interface method implementation is only used for tests.
-	// In practice, `GetAll` is only used when handling role policies in the bundle stores.
 	res := []*runtimev1.RunnablePolicySet{}
+	missed := make(map[namer.ModuleID]struct{})
 	for _, id := range modIDs {
-		rps, err := c.GetFirstMatch(ctx, []namer.ModuleID{id})
-		if err != nil {
-			return res, err
-		}
-
-		if rps != nil {
+		if rps, ok := c.cache.Get(id); ok && rps != nil {
 			res = append(res, rps)
+			continue
+		}
+		missed[id] = struct{}{}
+	}
+
+	toResolve := make([]namer.ModuleID, len(missed))
+	var b strings.Builder
+	var i int
+	for id := range missed {
+		toResolve[i] = id
+		b.WriteString(id.String())
+		i++
+		if i != len(missed) {
+			b.WriteRune('.')
 		}
 	}
+
+	// We generate a compound key for duplicate calls. This seems counter-intuitive, given any combination
+	// of IDs will generate a unique key and therefore we can have duplicate compilation units being concurrently
+	// retrieved. However, in practice, the `modIDs` parameter passed to this method will be relatively static, as
+	// the sets represent collections of policies which are unlikely to be frequently mutated.
+	key := b.String()
+	compiled, err, _ := c.sf.Do(key, func() (any, error) {
+		cus, err := c.store.GetAll(ctx, toResolve)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compilation units: %w", err)
+		}
+
+		rpsSet := make([]*runtimev1.RunnablePolicySet, len(cus))
+		for i, cu := range cus {
+			rps, err := c.compile(cu)
+			if err != nil {
+				return nil, PolicyCompilationErr{underlying: err}
+			}
+
+			rpsSet[i] = rps
+		}
+
+		return rpsSet, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	//nolint:forcetypeassert
+	res = append(res, compiled.([]*runtimev1.RunnablePolicySet)...)
+
 	return res, nil
 }
 

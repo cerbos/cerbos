@@ -136,6 +136,8 @@ type SourceStore interface {
 	Subscribable
 	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
 	GetFirstMatch(context.Context, []namer.ModuleID) (*policy.CompilationUnit, error)
+	// GetAll returns all modules that exist for the provided module IDs
+	GetAll(context.Context, []namer.ModuleID) ([]*policy.CompilationUnit, error)
 	// GetCompilationUnits gets the compilation units for the given module IDs.
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
@@ -149,6 +151,7 @@ type BinaryStore interface {
 	Store
 	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	// GetAll returns all modules that exist for the provided module IDs
 	GetAll(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }
 
