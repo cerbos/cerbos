@@ -7,6 +7,7 @@ include::ROOT:partial$version-check.adoc[]
 
 Cerbos can be deployed as a service or as a sidecar. Which mode to choose depends on your requirements.
 
+[#service]
 == Service model
 
 image:service_deployment.png[alt="Service model",role="center-img"]
@@ -16,6 +17,7 @@ image:service_deployment.png[alt="Service model",role="center-img"]
 * In a busy environment, careful capacity planning would be required to ensure that the central Cerbos endpoint does not become a bottleneck.
 
 
+[#sidecar]
 == Sidecar model
 
 image:sidecar_deployment.png[Sidecar model,role="center-img"]
@@ -24,6 +26,7 @@ image:sidecar_deployment.png[Sidecar model,role="center-img"]
 * Upgrades to Cerbos would require a rolling update to all the application instances.
 * Policy updates could take slightly longer to propagate to all the individual application instances — resulting in a period where both the old and new policies are in effect at the same time.
 
+[#daemonset]
 == DaemonSet model
 
 image:daemonset_deployment.png[DaemonSet model,role="center-img"]

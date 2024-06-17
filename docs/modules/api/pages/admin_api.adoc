@@ -191,27 +191,13 @@ curl -k -u cerbos:cerbosAdmin \
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policies/inspect?policyId=x.yaml&id=y.yaml
+    'https://localhost:3592/admin/policies/inspect?policyId=x.yaml&policyId=y.yaml
 ----
 
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policies/inspect?includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&versionRegexp=default'
-----
-
-=== Get Policies
-
-----
-GET /admin/policy?id=policy_id
-----
-
-Issue a GET request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to retrieve. The list of IDs available in the store can be retrieved using the `ListPolicies` API call described above.
-
-[source,shell]
-----
-curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml'
 ----
 
 [#disable-policies]

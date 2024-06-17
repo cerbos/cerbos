@@ -2,5 +2,6 @@
 - xref:cloud-platforms.adoc[Cloud platforms]
 - xref:k8s-service.adoc[Kubernetes service]
 - xref:k8s-sidecar.adoc[Kubernetes sidecar]
+- xref:k8s-daemonset.adoc[Kubernetes daemonset]
 - xref:serverless-faas.adoc[Serverless/FaaS environments]
 - xref:systemd.adoc[Systemd service]

@@ -2,4 +2,8 @@ include::ROOT:partial$attributes.adoc[]
 
 = Deploy Cerbos as DaemonSet
 
-You can use the xref:ROOT:installation/helm.adoc[Cerbos Helm chart] to deploy Cerbos as a daemonset inside your Kubernetes cluster. Refer to the xref:ROOT:installation/helm.adoc[Helm chart instructions] for more details. 
+include::ROOT:partial$version-check.adoc[]
+
+You can use the xref:ROOT:installation/helm.adoc[Cerbos Helm chart] to deploy Cerbos as a daemonset inside your Kubernetes cluster by setting the Helm `type` value to `daemonset`. By default, the xref:https://kubernetes.io/docs/concepts/services-networking/service-traffic-policy/[internal traffic policy] is set to `Local`. You can change this by setting `service.internalTrafficPolicy` explicitly.
+
+Refer to the xref:ROOT:installation/helm.adoc[Helm chart instructions] to learn more about using the Cerbos Helm chart.
