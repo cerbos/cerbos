@@ -445,6 +445,19 @@ message InspectPoliciesResponse {
     json_schema: {description: "Inspect policies response"}
   };
 
+  message DerivedRole {
+    enum Kind {
+      KIND_UNSPECIFIED = 0;
+      KIND_UNDEFINED = 1;
+      KIND_EXPORTED = 2;
+      KIND_IMPORTED = 3;
+    }
+
+    string name = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Derived role name defined in the policy."}];
+    Kind kind = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Kind of the derived role defined in the policy."}];
+    string source = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Source of the derived role defined in the policy."}];
+  }
+
   message Variable {
     enum Kind {
       KIND_UNSPECIFIED = 0;
@@ -464,8 +477,9 @@ message InspectPoliciesResponse {
 
   message Result {
     repeated string actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Actions defined in the policy."}];
-    repeated Variable variables = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Variables defined in the policy."}];
+    repeated Variable variables = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Variables referenced in the policy."}];
     string policy_id = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "For blob, disk, and git stores policy ID is the file name. For other stores it is <kind>.<name>.<version>/<scope>."}];
+    repeated DerivedRole derived_roles = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Derived roles referenced in the policy."}];
   }
 
   map<string, Result> results = 1;

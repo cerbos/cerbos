@@ -21,16 +21,20 @@ import (
 
 func Policies() *Policy {
 	return &Policy{
-		toResolve: make(map[string]map[string]bool),
-		imports:   make(map[string][]string),
-		results:   make(map[string]*responsev1.InspectPoliciesResponse_Result),
+		derivedRolesImports:   make(map[string][]string),
+		derivedRolesToResolve: make(map[string]map[string]bool),
+		variableImports:       make(map[string][]string),
+		variablesToResolve:    make(map[string]map[string]bool),
+		results:               make(map[string]*responsev1.InspectPoliciesResponse_Result),
 	}
 }
 
 type Policy struct {
-	toResolve map[string]map[string]bool
-	imports   map[string][]string
-	results   map[string]*responsev1.InspectPoliciesResponse_Result
+	derivedRolesImports   map[string][]string
+	derivedRolesToResolve map[string]map[string]bool
+	variableImports       map[string][]string
+	variablesToResolve    map[string]map[string]bool
+	results               map[string]*responsev1.InspectPoliciesResponse_Result
 }
 
 // Inspect inspects the given policy and caches the inspection related information internally.
@@ -65,18 +69,38 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 		return nil
 	}
 
-	referencedVariables, err := pol.inspectConditions(p)
+	referencedDerivedRoles, referencedVariables, err := pol.inspectDefinitionsAndRules(p)
 	if err != nil {
-		return fmt.Errorf("failed to inspect conditions of the policy %s: %w", policyID, err)
+		return fmt.Errorf("failed to inspect definitions and rules of the policy %s: %w", policyID, err)
 	}
-	pol.imports[policyID] = pol.listImports(p)
+
+	var derivedRoles []*responsev1.InspectPoliciesResponse_DerivedRole
+
+	if drp := p.GetDerivedRoles(); drp != nil {
+		derivedRoles = policy.ListExportedDerivedRoles(drp)
+		if len(derivedRoles) > 0 {
+			sort.Slice(derivedRoles, func(i, j int) bool {
+				return derivedRoles[i].Name < derivedRoles[j].Name
+			})
+		}
+	} else {
+		for referenced := range referencedDerivedRoles {
+			if toResolve, exists := pol.derivedRolesToResolve[policyID]; !exists {
+				pol.derivedRolesToResolve[policyID] = map[string]bool{referenced: false}
+			} else {
+				toResolve[referenced] = false
+			}
+		}
+	}
+
+	pol.derivedRolesImports[policyID], pol.variableImports[policyID] = pol.listImports(p)
 
 	for referenced := range referencedVariables {
 		if v, ok := localVariables[referenced]; ok {
 			v.Used = true
 		} else {
-			if toResolve, exists := pol.toResolve[policyID]; !exists {
-				pol.toResolve[policyID] = map[string]bool{referenced: false}
+			if toResolve, exists := pol.variablesToResolve[policyID]; !exists {
+				pol.variablesToResolve[policyID] = map[string]bool{referenced: false}
 			} else {
 				toResolve[referenced] = false
 			}
@@ -89,7 +113,7 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	}
 
 	// sort variables if there is nothing to resolve since we are not going to modify variables in the future.
-	if len(pol.toResolve[policyID]) > 0 {
+	if len(pol.variablesToResolve[policyID]) > 0 {
 		sort.Slice(variables, func(i, j int) bool {
 			return variables[i].Name < variables[j].Name
 		})
@@ -98,9 +122,10 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	a := policy.ListActions(p)
 	sort.Strings(a)
 	pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
-		Actions:   a,
-		Variables: variables,
-		PolicyId:  storeIdentifier,
+		Actions:      a,
+		DerivedRoles: derivedRoles,
+		Variables:    variables,
+		PolicyId:     storeIdentifier,
 	}
 
 	return nil
@@ -110,8 +135,66 @@ type loadPolicyFn func(ctx context.Context, policyKey ...string) ([]*policy.Wrap
 
 // Results returns the final inspection results.
 func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	for policyID, variables := range pol.toResolve {
-		importedPolicies, ok := pol.imports[policyID]
+	for policyID, derivedRoles := range pol.derivedRolesToResolve {
+		importedPolicies, ok := pol.derivedRolesImports[policyID]
+		var missingPolicies []string
+		if ok {
+			for _, importedPolicyID := range importedPolicies {
+				if importedResult, ok := pol.results[importedPolicyID]; ok {
+					for _, importedDerivedRole := range importedResult.DerivedRoles {
+						if _, ok := derivedRoles[importedDerivedRole.Name]; ok {
+							pol.results[policyID].DerivedRoles = append(pol.results[policyID].DerivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{
+								Name:   importedDerivedRole.Name,
+								Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
+								Source: importedPolicyID,
+							})
+							derivedRoles[importedDerivedRole.Name] = true
+						}
+					}
+				} else {
+					missingPolicies = append(missingPolicies, importedPolicyID)
+				}
+			}
+		}
+
+		if loadPolicy != nil {
+			if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, loadPolicy, func(wrapper *policy.Wrapper) error {
+				importedDerivedRoles := policy.ListExportedDerivedRoles(wrapper.Policy.GetDerivedRoles())
+				for _, importedDerivedRole := range importedDerivedRoles {
+					if _, ok := derivedRoles[importedDerivedRole.Name]; ok {
+						pol.results[policyID].DerivedRoles = append(pol.results[policyID].DerivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{
+							Name:   importedDerivedRole.Name,
+							Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
+							Source: namer.PolicyKeyFromFQN(wrapper.FQN),
+						})
+
+						derivedRoles[importedDerivedRole.Name] = true
+					}
+				}
+
+				return nil
+			}, missingPolicies...); err != nil {
+				continue
+			}
+		}
+
+		for name, found := range derivedRoles {
+			if !found {
+				pol.results[policyID].DerivedRoles = append(pol.results[policyID].DerivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{
+					Name:   name,
+					Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_UNDEFINED,
+					Source: "",
+				})
+			}
+		}
+
+		sort.Slice(pol.results[policyID].DerivedRoles, func(x, y int) bool {
+			return pol.results[policyID].DerivedRoles[x].Name < pol.results[policyID].DerivedRoles[y].Name
+		})
+	}
+
+	for policyID, variables := range pol.variablesToResolve {
+		importedPolicies, ok := pol.variableImports[policyID]
 		var missingPolicies []string
 		if ok {
 			for _, importedPolicyID := range importedPolicies {
@@ -177,39 +260,46 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 	return pol.results, nil
 }
 
-// listImports lists the export variables imported by the given policy.
-func (pol *Policy) listImports(p *policyv1.Policy) []string {
-	var imports []string
+// listImports lists the derived roles and export variables imported by the given policy.
+func (pol *Policy) listImports(p *policyv1.Policy) (derivedRoleImports, variableImports []string) {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_DerivedRoles:
 		if pt.DerivedRoles.Variables != nil {
 			for _, variablesName := range pt.DerivedRoles.Variables.Import {
 				policyID := namer.PolicyKeyFromFQN(namer.ExportVariablesFQN(variablesName))
-				imports = append(imports, policyID)
+				variableImports = append(variableImports, policyID)
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
 		if pt.PrincipalPolicy.Variables != nil {
 			for _, variablesName := range pt.PrincipalPolicy.Variables.Import {
 				policyID := namer.PolicyKeyFromFQN(namer.ExportVariablesFQN(variablesName))
-				imports = append(imports, policyID)
+				variableImports = append(variableImports, policyID)
 			}
 		}
 	case *policyv1.Policy_ResourcePolicy:
+		if pt.ResourcePolicy.ImportDerivedRoles != nil {
+			for _, roleSetName := range pt.ResourcePolicy.ImportDerivedRoles {
+				policyID := namer.PolicyKeyFromFQN(namer.DerivedRolesFQN(roleSetName))
+				derivedRoleImports = append(derivedRoleImports, policyID)
+			}
+		}
+
 		if pt.ResourcePolicy.Variables != nil {
 			for _, variablesName := range pt.ResourcePolicy.Variables.Import {
 				policyID := namer.PolicyKeyFromFQN(namer.ExportVariablesFQN(variablesName))
-				imports = append(imports, policyID)
+				variableImports = append(variableImports, policyID)
 			}
 		}
 	}
 
-	return imports
+	return derivedRoleImports, variableImports
 }
 
-// inspectConditions inspects the conditions in the given policy to find references to the variables.
-func (pol *Policy) inspectConditions(p *policyv1.Policy) (map[string]struct{}, error) {
-	referencedVariables := make(map[string]struct{})
+// inspectDefinitionsAndRules inspects the definitions and rules in the given policy to find references to the derived roles and variables.
+func (pol *Policy) inspectDefinitionsAndRules(p *policyv1.Policy) (referencedDerivedRoles, referencedVariables map[string]struct{}, err error) {
+	referencedDerivedRoles = make(map[string]struct{})
+	referencedVariables = make(map[string]struct{})
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_DerivedRoles:
 		for _, def := range pt.DerivedRoles.Definitions {
@@ -218,7 +308,7 @@ func (pol *Policy) inspectConditions(p *policyv1.Policy) (map[string]struct{}, e
 			}
 
 			if err := pol.referencedVariableNamesInCondition(def.Condition, referencedVariables); err != nil {
-				return nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
+				return nil, nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
@@ -229,23 +319,31 @@ func (pol *Policy) inspectConditions(p *policyv1.Policy) (map[string]struct{}, e
 				}
 
 				if err := pol.referencedVariableNamesInCondition(action.Condition, referencedVariables); err != nil {
-					return nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
+					return nil, nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
 				}
 			}
 		}
 	case *policyv1.Policy_ResourcePolicy:
 		for _, rule := range pt.ResourcePolicy.Rules {
+			pol.referencedDerivedRolesInResourceRule(rule, referencedDerivedRoles)
+
 			if rule.Condition == nil {
 				continue
 			}
 
 			if err := pol.referencedVariableNamesInCondition(rule.Condition, referencedVariables); err != nil {
-				return nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
+				return nil, nil, fmt.Errorf("failed to find referenced variable names in condition: %w", err)
 			}
 		}
 	}
 
-	return referencedVariables, nil
+	return referencedDerivedRoles, referencedVariables, nil
+}
+
+func (pol *Policy) referencedDerivedRolesInResourceRule(rule *policyv1.ResourceRule, out map[string]struct{}) {
+	for _, derivedRole := range rule.DerivedRoles {
+		out[derivedRole] = struct{}{}
+	}
 }
 
 func (pol *Policy) referencedVariableNamesInCondition(condition *policyv1.Condition, out map[string]struct{}) error {

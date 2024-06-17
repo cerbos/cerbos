@@ -1,0 +1,28 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/InspectPoliciesResponse/DerivedRole.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.response.v1.InspectPoliciesResponse.DerivedRole.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_UNDEFINED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.DerivedRole.Kind"
+    },
+    "name": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    }
+  }
+}

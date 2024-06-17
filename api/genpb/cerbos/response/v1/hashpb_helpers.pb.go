@@ -1895,6 +1895,21 @@ func cerbos_response_v1_GetSchemaResponse_hashpb_sum(m *GetSchemaResponse, hashe
 	}
 }
 
+func cerbos_response_v1_InspectPoliciesResponse_DerivedRole_hashpb_sum(m *InspectPoliciesResponse_DerivedRole, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.DerivedRole.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.DerivedRole.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetKind())))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.DerivedRole.source"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetSource()))
+
+	}
+}
+
 func cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m *InspectPoliciesResponse_Result, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Result.actions"]; !ok {
 		if len(m.Actions) > 0 {
@@ -1917,6 +1932,16 @@ func cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m *InspectPoli
 	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Result.policy_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPolicyId()))
 
+	}
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Result.derived_roles"]; !ok {
+		if len(m.DerivedRoles) > 0 {
+			for _, v := range m.DerivedRoles {
+				if v != nil {
+					cerbos_response_v1_InspectPoliciesResponse_DerivedRole_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

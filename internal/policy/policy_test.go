@@ -173,9 +173,10 @@ func TestInspectUtilities(t *testing.T) {
 				Build(),
 			test.
 				NewResourceRule("a").
-				WithRoles("admin").
+				WithDerivedRoles("admin").
 				Build(),
 		).
+		WithDerivedRolesImports("my_derived_roles").
 		WithLocalVariable("geography", "request.resource.attr.geography").
 		Build()
 	pp := test.NewPrincipalPolicyBuilder("john", "default").
@@ -195,48 +196,135 @@ func TestInspectUtilities(t *testing.T) {
 
 	drSet := compilePolicy(t, dr)
 	evSet := compilePolicy(t, ev)
-	rpSet := compilePolicy(t, rp)
+	rpSet := compilePolicy(t, rp, dr)
 	ppSet := compilePolicy(t, pp)
 
 	t.Run("Actions", func(t *testing.T) {
-		testCases := []struct {
-			p               *policyv1.Policy
-			pset            *runtimev1.RunnablePolicySet
-			expectedActions []string
-		}{
-			{
-				p:               dr,
-				pset:            drSet,
-				expectedActions: []string{},
-			},
-			{
-				p:               ev,
-				pset:            evSet,
-				expectedActions: []string{},
-			},
-			{
-				p:               rp,
-				pset:            rpSet,
-				expectedActions: []string{"a", "b"},
-			},
-			{
-				p:               pp,
-				pset:            ppSet,
-				expectedActions: []string{"a", "b", "c"},
-			},
-		}
-
 		t.Run("ListActions", func(t *testing.T) {
-			for _, testCase := range testCases {
-				haveActions := policy.ListActions(testCase.p)
-				require.ElementsMatch(t, testCase.expectedActions, haveActions)
+			testCases := []struct {
+				p               *policyv1.Policy
+				expectedActions []string
+			}{
+				{
+					p:               dr,
+					expectedActions: []string{},
+				},
+				{
+					p:               ev,
+					expectedActions: []string{},
+				},
+				{
+					p:               rp,
+					expectedActions: []string{"a", "b"},
+				},
+				{
+					p:               pp,
+					expectedActions: []string{"a", "b", "c"},
+				},
+			}
+
+			for idx, testCase := range testCases {
+				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+					haveActions := policy.ListActions(testCase.p)
+					require.ElementsMatch(t, testCase.expectedActions, haveActions)
+				})
 			}
 		})
 
 		t.Run("ListPolicySetActions", func(t *testing.T) {
-			for _, testCase := range testCases {
-				haveActions := policy.ListPolicySetActions(testCase.pset)
-				require.ElementsMatch(t, testCase.expectedActions, haveActions)
+			testCases := []struct {
+				p               *policyv1.Policy
+				pset            *runtimev1.RunnablePolicySet
+				expectedActions []string
+			}{
+				{
+					pset:            drSet,
+					expectedActions: []string{},
+				},
+				{
+					pset:            evSet,
+					expectedActions: []string{},
+				},
+				{
+					pset:            rpSet,
+					expectedActions: []string{"a", "b"},
+				},
+				{
+					pset:            ppSet,
+					expectedActions: []string{"a", "b", "c"},
+				},
+			}
+
+			for idx, testCase := range testCases {
+				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+					haveActions := policy.ListPolicySetActions(testCase.pset)
+					require.ElementsMatch(t, testCase.expectedActions, haveActions)
+				})
+			}
+		})
+	})
+
+	t.Run("DerivedRoles", func(t *testing.T) {
+		t.Run("ListExportedDerivedRoles", func(t *testing.T) {
+			testCases := []struct {
+				p                    *policyv1.Policy
+				expectedDerivedRoles []*responsev1.InspectPoliciesResponse_DerivedRole
+			}{
+				{
+					p: dr,
+					expectedDerivedRoles: []*responsev1.InspectPoliciesResponse_DerivedRole{
+						{
+							Name:   "admin",
+							Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_EXPORTED,
+							Source: "derived_roles.my_derived_roles",
+						},
+						{
+							Name:   "employee_that_owns_the_record",
+							Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_EXPORTED,
+							Source: "derived_roles.my_derived_roles",
+						},
+						{
+							Name:   "any_employee",
+							Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_EXPORTED,
+							Source: "derived_roles.my_derived_roles",
+						},
+						{
+							Name:   "direct_manager",
+							Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_EXPORTED,
+							Source: "derived_roles.my_derived_roles",
+						},
+					},
+				},
+			}
+
+			for idx, testCase := range testCases {
+				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+					require.Empty(t, cmp.Diff(testCase.expectedDerivedRoles, policy.ListExportedDerivedRoles(testCase.p.GetDerivedRoles()), protocmp.Transform()))
+				})
+			}
+		})
+
+		t.Run("ListPolicySetDerivedRoles", func(t *testing.T) {
+			testCases := []struct {
+				pset                 *runtimev1.RunnablePolicySet
+				expectedDerivedRoles []*responsev1.InspectPoliciesResponse_DerivedRole
+			}{
+				{
+					pset: rpSet,
+					expectedDerivedRoles: []*responsev1.InspectPoliciesResponse_DerivedRole{
+						{
+							Name: "admin",
+							Kind: responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
+						},
+					},
+				},
+			}
+
+			for idx, testCase := range testCases {
+				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+					haveDerivedRoles := policy.ListPolicySetDerivedRoles(testCase.pset)
+					require.Empty(t, cmp.Diff(testCase.expectedDerivedRoles, haveDerivedRoles, protocmp.Transform()))
+				})
 			}
 		})
 	})
@@ -245,12 +333,10 @@ func TestInspectUtilities(t *testing.T) {
 		t.Run("ListVariables", func(t *testing.T) {
 			testCases := []struct {
 				p                 *policyv1.Policy
-				pset              *runtimev1.RunnablePolicySet
 				expectedVariables map[string]*responsev1.InspectPoliciesResponse_Variable
 			}{
 				{
-					p:    dr,
-					pset: compilePolicy(t, dr),
+					p: dr,
 					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
 						"geography": {
 							Name:   "geography",
@@ -261,8 +347,7 @@ func TestInspectUtilities(t *testing.T) {
 					},
 				},
 				{
-					p:    ev,
-					pset: compilePolicy(t, ev),
+					p: ev,
 					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
 						"geography": {
 							Name:   "geography",
@@ -273,8 +358,7 @@ func TestInspectUtilities(t *testing.T) {
 					},
 				},
 				{
-					p:    rp,
-					pset: compilePolicy(t, rp),
+					p: rp,
 					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
 						"geography": {
 							Name:   "geography",
@@ -285,8 +369,7 @@ func TestInspectUtilities(t *testing.T) {
 					},
 				},
 				{
-					p:    pp,
-					pset: compilePolicy(t, pp),
+					p: pp,
 					expectedVariables: map[string]*responsev1.InspectPoliciesResponse_Variable{
 						"geography": {
 							Name:   "geography",
@@ -308,13 +391,11 @@ func TestInspectUtilities(t *testing.T) {
 
 		t.Run("ListPolicySetVariables", func(t *testing.T) {
 			testCases := []struct {
-				p                 *policyv1.Policy
 				pset              *runtimev1.RunnablePolicySet
 				expectedVariables []*responsev1.InspectPoliciesResponse_Variable
 			}{
 				{
-					p:    dr,
-					pset: compilePolicy(t, dr),
+					pset: drSet,
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
 							Name:  "geography",
@@ -324,8 +405,7 @@ func TestInspectUtilities(t *testing.T) {
 					},
 				},
 				{
-					p:    ev,
-					pset: compilePolicy(t, ev),
+					pset: evSet,
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
 							Name:  "geography",
@@ -335,8 +415,7 @@ func TestInspectUtilities(t *testing.T) {
 					},
 				},
 				{
-					p:    rp,
-					pset: compilePolicy(t, rp),
+					pset: rpSet,
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
 							Name:  "geography",
@@ -347,8 +426,7 @@ func TestInspectUtilities(t *testing.T) {
 					},
 				},
 				{
-					p:    pp,
-					pset: compilePolicy(t, pp),
+					pset: ppSet,
 					expectedVariables: []*responsev1.InspectPoliciesResponse_Variable{
 						{
 							Name:  "geography",
@@ -360,12 +438,12 @@ func TestInspectUtilities(t *testing.T) {
 				},
 			}
 
-			for _, testCase := range testCases {
+			for idx, testCase := range testCases {
 				if testCase.pset == nil {
 					continue
 				}
 
-				t.Run(namer.PolicyKey(testCase.p), func(t *testing.T) {
+				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
 					haveVariables := policy.ListPolicySetVariables(testCase.pset)
 					require.Empty(t, cmp.Diff(testCase.expectedVariables, haveVariables, protocmp.Transform()))
 				})
@@ -374,13 +452,23 @@ func TestInspectUtilities(t *testing.T) {
 	})
 }
 
-func compilePolicy(t *testing.T, p *policyv1.Policy) *runtimev1.RunnablePolicySet {
+func compilePolicy(t *testing.T, p *policyv1.Policy, derivedRoles ...*policyv1.Policy) *runtimev1.RunnablePolicySet {
 	t.Helper()
 
-	cu := &policy.CompilationUnit{}
 	mID := namer.GenModuleID(p)
-	cu.ModID = mID
+	cu := &policy.CompilationUnit{
+		ModID: mID,
+	}
+
+	for _, derivedRole := range derivedRoles {
+		if _, ok := derivedRole.PolicyType.(*policyv1.Policy_DerivedRoles); !ok {
+			t.Errorf("policy %s is not derived roles", namer.PolicyKey(derivedRole))
+		}
+
+		cu.AddDefinition(namer.GenModuleID(derivedRole), derivedRole, parser.NewEmptySourceCtx())
+	}
 	cu.AddDefinition(mID, p, parser.NewEmptySourceCtx())
+
 	rps, err := compile.Compile(cu, schema.NewNopManager())
 	require.NoError(t, err)
 

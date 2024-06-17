@@ -365,13 +365,13 @@ func ListActions(p *policyv1.Policy) []string {
 		return actions
 	}
 
-	lut := make(map[string]struct{})
+	ss := make(util.StringSet)
 	switch p := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		for _, r := range p.ResourcePolicy.Rules {
 			for _, a := range r.Actions {
-				if _, ok := lut[a]; !ok {
-					lut[a] = struct{}{}
+				if !ss.Contains(a) {
+					ss[a] = struct{}{}
 					actions = append(actions, a)
 				}
 			}
@@ -379,8 +379,8 @@ func ListActions(p *policyv1.Policy) []string {
 	case *policyv1.Policy_PrincipalPolicy:
 		for _, r := range p.PrincipalPolicy.Rules {
 			for _, a := range r.Actions {
-				if _, ok := lut[a.Action]; !ok {
-					lut[a.Action] = struct{}{}
+				if !ss.Contains(a.Action) {
+					ss[a.Action] = struct{}{}
 					actions = append(actions, a.Action)
 				}
 			}
@@ -388,6 +388,28 @@ func ListActions(p *policyv1.Policy) []string {
 	}
 
 	return actions
+}
+
+// ListExportedDerivedRoles returns exported derived roles defined in the given derived roles policy.
+func ListExportedDerivedRoles(drp *policyv1.DerivedRoles) []*responsev1.InspectPoliciesResponse_DerivedRole {
+	var derivedRoles []*responsev1.InspectPoliciesResponse_DerivedRole
+	if drp == nil {
+		return derivedRoles
+	}
+
+	ss := make(util.StringSet)
+	for _, dr := range drp.Definitions {
+		if !ss.Contains(dr.Name) {
+			ss[dr.Name] = struct{}{}
+			derivedRoles = append(derivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{
+				Name:   dr.Name,
+				Kind:   responsev1.InspectPoliciesResponse_DerivedRole_KIND_EXPORTED,
+				Source: namer.PolicyKeyFromFQN(namer.DerivedRolesFQN(drp.Name)),
+			})
+		}
+	}
+
+	return derivedRoles
 }
 
 // ListVariables returns local and exported variables (not imported ones) defined in a policy.
@@ -459,14 +481,14 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 		return actions
 	}
 
-	lut := make(map[string]struct{})
+	ss := make(util.StringSet)
 	switch set := ps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		for _, p := range set.ResourcePolicy.Policies {
 			for _, r := range p.Rules {
 				for a := range r.Actions {
-					if _, ok := lut[a]; !ok {
-						lut[a] = struct{}{}
+					if !ss.Contains(a) {
+						ss[a] = struct{}{}
 						actions = append(actions, a)
 					}
 				}
@@ -476,8 +498,8 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 		for _, p := range set.PrincipalPolicy.Policies {
 			for _, r := range p.ResourceRules {
 				for _, ar := range r.ActionRules {
-					if _, ok := lut[ar.Action]; !ok {
-						lut[ar.Action] = struct{}{}
+					if !ss.Contains(ar.Action) {
+						ss[ar.Action] = struct{}{}
 						actions = append(actions, ar.Action)
 					}
 				}
@@ -486,6 +508,47 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 	}
 
 	return actions
+}
+
+// ListPolicySetDerivedRoles returns imported and used derived roles defined in a policy set.
+func ListPolicySetDerivedRoles(ps *runtimev1.RunnablePolicySet) []*responsev1.InspectPoliciesResponse_DerivedRole {
+	if ps == nil {
+		return nil
+	}
+
+	var rp *runtimev1.RunnablePolicySet_ResourcePolicy
+	var ok bool
+	if rp, ok = ps.PolicySet.(*runtimev1.RunnablePolicySet_ResourcePolicy); !ok {
+		return nil
+	}
+
+	available := make(util.StringSet)
+	referenced := make(util.StringSet)
+	for _, p := range rp.ResourcePolicy.Policies {
+		for _, dr := range p.DerivedRoles {
+			if !available.Contains(dr.Name) {
+				available[dr.Name] = struct{}{}
+			}
+		}
+
+		for _, r := range p.Rules {
+			for derivedRole := range r.DerivedRoles {
+				if available.Contains(derivedRole) {
+					referenced[derivedRole] = struct{}{}
+				}
+			}
+		}
+	}
+
+	derivedRoles := make([]*responsev1.InspectPoliciesResponse_DerivedRole, 0, len(referenced))
+	for derivedRole := range referenced {
+		derivedRoles = append(derivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{
+			Name: derivedRole,
+			Kind: responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
+		})
+	}
+
+	return derivedRoles
 }
 
 // ListPolicySetVariables returns local and exported variables defined in a policy set.
