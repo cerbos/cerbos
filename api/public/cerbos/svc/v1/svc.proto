@@ -16,23 +16,23 @@ option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1;svcv1";
 option java_package = "dev.cerbos.api.v1.svc";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
-    title: "Cerbos";
-    version: "latest";
+    title: "Cerbos"
+    version: "latest"
     contact: {
-      name: "Cerbos";
-      url: "https://cerbos.dev";
-      email: "info@cerbos.dev";
-    };
-  };
-  schemes: HTTPS;
-  consumes: "application/json";
-  produces: "application/json";
+      name: "Cerbos"
+      url: "https://cerbos.dev"
+      email: "info@cerbos.dev"
+    }
+  }
+  schemes: HTTPS
+  consumes: "application/json"
+  produces: "application/json"
   security_definitions: {
     security: {
-      key: "BasicAuth";
+      key: "BasicAuth"
       value: {type: TYPE_BASIC}
     }
-  };
+  }
 };
 
 service CerbosService {
@@ -40,7 +40,7 @@ service CerbosService {
 
   rpc CheckResourceSet(cerbos.request.v1.CheckResourceSetRequest) returns (cerbos.response.v1.CheckResourceSetResponse) {
     option (google.api.http) = {
-      post: "/api/check",
+      post: "/api/check"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -52,7 +52,7 @@ service CerbosService {
 
   rpc CheckResourceBatch(cerbos.request.v1.CheckResourceBatchRequest) returns (cerbos.response.v1.CheckResourceBatchResponse) {
     option (google.api.http) = {
-      post: "/api/check_resource_batch",
+      post: "/api/check_resource_batch"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -64,7 +64,7 @@ service CerbosService {
 
   rpc CheckResources(cerbos.request.v1.CheckResourcesRequest) returns (cerbos.response.v1.CheckResourcesResponse) {
     option (google.api.http) = {
-      post: "/api/check/resources",
+      post: "/api/check/resources"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -83,7 +83,7 @@ service CerbosService {
 
   rpc PlanResources(cerbos.request.v1.PlanResourcesRequest) returns (cerbos.response.v1.PlanResourcesResponse) {
     option (google.api.http) = {
-      post: "/api/plan/resources",
+      post: "/api/plan/resources"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -98,19 +98,19 @@ service CerbosAdminService {
 
   rpc AddOrUpdatePolicy(cerbos.request.v1.AddOrUpdatePolicyRequest) returns (cerbos.response.v1.AddOrUpdatePolicyResponse) {
     option (google.api.http) = {
-      post: "/admin/policy",
-      body: "*",
+      post: "/admin/policy"
+      body: "*"
       additional_bindings: {
-        put: "/admin/policy",
+        put: "/admin/policy"
         body: "*"
       }
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Add or update policies",
+      summary: "Add or update policies"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -119,11 +119,11 @@ service CerbosAdminService {
   rpc InspectPolicies(cerbos.request.v1.InspectPoliciesRequest) returns (cerbos.response.v1.InspectPoliciesResponse) {
     option (google.api.http) = {get: "/admin/policies/inspect"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Inspect policies in the store",
+      summary: "Inspect policies in the store"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -132,11 +132,11 @@ service CerbosAdminService {
   rpc ListPolicies(cerbos.request.v1.ListPoliciesRequest) returns (cerbos.response.v1.ListPoliciesResponse) {
     option (google.api.http) = {get: "/admin/policies"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List policies",
+      summary: "List policies"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -145,11 +145,11 @@ service CerbosAdminService {
   rpc GetPolicy(cerbos.request.v1.GetPolicyRequest) returns (cerbos.response.v1.GetPolicyResponse) {
     option (google.api.http) = {get: "/admin/policy"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get policy",
+      summary: "Get policy"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -157,19 +157,19 @@ service CerbosAdminService {
 
   rpc DisablePolicy(cerbos.request.v1.DisablePolicyRequest) returns (cerbos.response.v1.DisablePolicyResponse) {
     option (google.api.http) = {
-      post: "/admin/policy/disable",
+      post: "/admin/policy/disable"
       additional_bindings: {
-        put: "/admin/policy/disable",
+        put: "/admin/policy/disable"
         body: "*"
-      },
+      }
       additional_bindings: {delete: "/admin/policy"}
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Disable policy",
+      summary: "Disable policy"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -177,18 +177,18 @@ service CerbosAdminService {
 
   rpc EnablePolicy(cerbos.request.v1.EnablePolicyRequest) returns (cerbos.response.v1.EnablePolicyResponse) {
     option (google.api.http) = {
-      post: "/admin/policy/enable",
+      post: "/admin/policy/enable"
       additional_bindings: {
-        put: "/admin/policy/enable",
+        put: "/admin/policy/enable"
         body: "*"
       }
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Enable policy",
+      summary: "Enable policy"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -197,11 +197,11 @@ service CerbosAdminService {
   rpc ListAuditLogEntries(cerbos.request.v1.ListAuditLogEntriesRequest) returns (stream cerbos.response.v1.ListAuditLogEntriesResponse) {
     option (google.api.http) = {get: "/admin/auditlog/list/{kind}"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List audit log entries",
+      summary: "List audit log entries"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -209,19 +209,19 @@ service CerbosAdminService {
 
   rpc AddOrUpdateSchema(cerbos.request.v1.AddOrUpdateSchemaRequest) returns (cerbos.response.v1.AddOrUpdateSchemaResponse) {
     option (google.api.http) = {
-      post: "/admin/schema",
-      body: "*",
+      post: "/admin/schema"
+      body: "*"
       additional_bindings: {
-        put: "/admin/schema",
+        put: "/admin/schema"
         body: "*"
       }
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Add or update schema",
+      summary: "Add or update schema"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -230,11 +230,11 @@ service CerbosAdminService {
   rpc ListSchemas(cerbos.request.v1.ListSchemasRequest) returns (cerbos.response.v1.ListSchemasResponse) {
     option (google.api.http) = {get: "/admin/schemas"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List schemas",
+      summary: "List schemas"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -243,11 +243,11 @@ service CerbosAdminService {
   rpc GetSchema(cerbos.request.v1.GetSchemaRequest) returns (cerbos.response.v1.GetSchemaResponse) {
     option (google.api.http) = {get: "/admin/schema"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get schema",
+      summary: "Get schema"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -256,11 +256,11 @@ service CerbosAdminService {
   rpc DeleteSchema(cerbos.request.v1.DeleteSchemaRequest) returns (cerbos.response.v1.DeleteSchemaResponse) {
     option (google.api.http) = {delete: "/admin/schema"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Delete schema",
+      summary: "Delete schema"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -269,11 +269,11 @@ service CerbosAdminService {
   rpc ReloadStore(cerbos.request.v1.ReloadStoreRequest) returns (cerbos.response.v1.ReloadStoreResponse) {
     option (google.api.http) = {get: "/admin/store/reload"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Reload store",
+      summary: "Reload store"
       security: {
         security_requirement: {
-          key: "BasicAuth";
-          value: {};
+          key: "BasicAuth"
+          value: {}
         }
       }
     };
@@ -285,28 +285,28 @@ service CerbosPlaygroundService {
 
   rpc PlaygroundValidate(cerbos.request.v1.PlaygroundValidateRequest) returns (cerbos.response.v1.PlaygroundValidateResponse) {
     option (google.api.http) = {
-      post: "/api/playground/validate",
+      post: "/api/playground/validate"
       body: "*"
     };
   }
 
   rpc PlaygroundTest(cerbos.request.v1.PlaygroundTestRequest) returns (cerbos.response.v1.PlaygroundTestResponse) {
     option (google.api.http) = {
-      post: "/api/playground/test",
+      post: "/api/playground/test"
       body: "*"
     };
   }
 
   rpc PlaygroundEvaluate(cerbos.request.v1.PlaygroundEvaluateRequest) returns (cerbos.response.v1.PlaygroundEvaluateResponse) {
     option (google.api.http) = {
-      post: "/api/playground/evaluate",
+      post: "/api/playground/evaluate"
       body: "*"
     };
   }
 
   rpc PlaygroundProxy(cerbos.request.v1.PlaygroundProxyRequest) returns (cerbos.response.v1.PlaygroundProxyResponse) {
     option (google.api.http) = {
-      post: "/api/playground/proxy",
+      post: "/api/playground/proxy"
       body: "*"
     };
   }

@@ -35,7 +35,7 @@ message PlanResourcesInput {
       (buf.validate.field).string = {pattern: "^[[:word:]]*$"},
       (google.api.field_behavior) = OPTIONAL,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+        description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
         pattern: "^[[:word:]]*$"
         example: "\"default\""
       }
@@ -135,9 +135,9 @@ message CheckInput {
   ];
   repeated string actions = 4 [
     (buf.validate.field).repeated = {
-      unique: true,
-      items {
-        string {min_len: 1}
+      unique: true
+      items: {
+        string: {min_len: 1}
       }
     },
     (google.api.field_behavior) = REQUIRED
@@ -177,8 +177,8 @@ message Resource {
     (buf.validate.field).string = {min_len: 1},
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Name of the resource kind being accessed.",
-      example: "\"album:photo\"",
+      description: "Name of the resource kind being accessed."
+      example: "\"album:photo\""
     }
   ];
   string policy_version = 2 [
@@ -244,10 +244,10 @@ message Principal {
   ];
   repeated string roles = 3 [
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      items {
-        string {min_len: 1}
+      unique: true
+      min_items: 1
+      items: {
+        string: {min_len: 1}
       }
     },
     (buf.validate.field).required = true,
