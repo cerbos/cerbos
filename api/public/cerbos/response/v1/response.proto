@@ -51,7 +51,7 @@ message PlanResourcesResponse {
   }];
 
   string policy_version = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The policy version.",
+    description: "The policy version."
     example: "\"default\""
   }];
 
@@ -193,8 +193,8 @@ message CheckResourcesResponse {
         example: "\"XX125\""
       }];
       string kind = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Name of the resource kind being accessed.",
-        example: "\"album:photo\"",
+        description: "Name of the resource kind being accessed."
+        example: "\"album:photo\""
       }];
       string policy_version = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description:

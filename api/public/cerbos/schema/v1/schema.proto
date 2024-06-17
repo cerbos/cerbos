@@ -30,7 +30,7 @@ message Schema {
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).required = true,
     (buf.validate.field).string = {
-      min_len: 1,
+      min_len: 1
       max_len: 255
     },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {

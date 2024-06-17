@@ -66,10 +66,10 @@ message CheckResourceSetRequest {
   }];
   repeated string actions = 2 [
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      items {
-        string {min_len: 1}
+      unique: true
+      min_items: 1
+      items: {
+        string: {min_len: 1}
       }
     },
     (buf.validate.field).required = true,
@@ -111,7 +111,7 @@ message ResourceSet {
     (buf.validate.field).string.pattern = "^[[:word:]]*$",
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+      description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
       pattern: "^[[:word:]]*$"
       example: "\"default\""
     }
@@ -121,7 +121,7 @@ message ResourceSet {
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
+      description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier."
       min_properties: 1
       example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}"
     }
@@ -153,10 +153,10 @@ message CheckResourceBatchRequest {
   message BatchEntry {
     repeated string actions = 1 [
       (buf.validate.field).repeated = {
-        unique: true,
-        min_items: 1,
-        items {
-          string {min_len: 1}
+        unique: true
+        min_items: 1
+        items: {
+          string: {min_len: 1}
         }
       },
       (buf.validate.field).required = true,
@@ -205,10 +205,10 @@ message CheckResourcesRequest {
   message ResourceEntry {
     repeated string actions = 1 [
       (buf.validate.field).repeated = {
-        unique: true,
-        min_items: 1,
-        items {
-          string {min_len: 1}
+        unique: true
+        min_items: 1
+        items: {
+          string: {min_len: 1}
         }
       },
       (buf.validate.field).required = true,
@@ -267,12 +267,12 @@ message AuxData {
         description: "JWT from the original request"
         example: "\"eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX\""
         extensions: {
-          key: "x-fill-example";
-          value {bool_value: false}
+          key: "x-fill-example"
+          value: {bool_value: false}
         }
         extensions: {
-          key: "x-example-show-value";
-          value {bool_value: false}
+          key: "x-example-show-value"
+          value: {bool_value: false}
         }
       }
     ];
@@ -280,12 +280,12 @@ message AuxData {
       description: "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
       example: "\"my-keyset\""
       extensions: {
-        key: "x-fill-example";
-        value {bool_value: false}
+        key: "x-fill-example"
+        value: {bool_value: false}
       }
       extensions: {
-        key: "x-example-show-value";
-        value {bool_value: false}
+        key: "x-example-show-value"
+        value: {bool_value: false}
       }
     }];
   }
@@ -302,7 +302,7 @@ message File {
 
   bytes contents = 2 [
     (buf.validate.field).bytes = {
-      min_len: 1,
+      min_len: 1
       max_len: 1048576
     },
     (buf.validate.field).required = true,
@@ -319,7 +319,7 @@ message PlaygroundValidateRequest {
 
   repeated File files = 2 [
     (buf.validate.field).repeated = {
-      min_items: 1,
+      min_items: 1
       max_items: 30
     },
     (buf.validate.field).required = true,
@@ -341,7 +341,7 @@ message PlaygroundTestRequest {
 
   repeated File files = 2 [
     (buf.validate.field).repeated = {
-      min_items: 1,
+      min_items: 1
       max_items: 30
     },
     (buf.validate.field).required = true,
@@ -363,7 +363,7 @@ message PlaygroundEvaluateRequest {
 
   repeated File files = 2 [
     (buf.validate.field).repeated = {
-      min_items: 1,
+      min_items: 1
       max_items: 30
     },
     (buf.validate.field).required = true,
@@ -387,11 +387,11 @@ message PlaygroundEvaluateRequest {
 
   repeated string actions = 5 [
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      max_items: 50,
-      items {
-        string {min_len: 1}
+      unique: true
+      min_items: 1
+      max_items: 50
+      items: {
+        string: {min_len: 1}
       }
     },
     (buf.validate.field).required = true,
@@ -416,7 +416,7 @@ message PlaygroundProxyRequest {
 
   repeated File files = 2 [
     (buf.validate.field).repeated = {
-      min_items: 1,
+      min_items: 1
       max_items: 30
     },
     (buf.validate.field).required = true,
@@ -444,7 +444,7 @@ message AddOrUpdatePolicyRequest {
 
   repeated cerbos.policy.v1.Policy policies = 1 [
     (buf.validate.field).repeated = {
-      min_items: 1,
+      min_items: 1
       max_items: 100
     },
     (buf.validate.field).required = true,
@@ -557,9 +557,9 @@ message ListPoliciesRequest {
   repeated string policy_id = 5 [
     (google.api.field_behavior) = OPTIONAL,
     (buf.validate.field).repeated = {
-      max_items: 25,
-      items {
-        string {min_len: 1}
+      max_items: 25
+      items: {
+        string: {min_len: 1}
       }
     },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -576,10 +576,10 @@ message GetPolicyRequest {
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      items {
-        string {min_len: 1}
+      unique: true
+      min_items: 1
+      items: {
+        string: {min_len: 1}
       }
     },
     (buf.validate.field).required = true,
@@ -597,10 +597,10 @@ message DisablePolicyRequest {
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      items {
-        string {min_len: 1}
+      unique: true
+      min_items: 1
+      items: {
+        string: {min_len: 1}
       }
     },
     (buf.validate.field).required = true,
@@ -618,10 +618,10 @@ message EnablePolicyRequest {
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      items {
-        string {min_len: 1}
+      unique: true
+      min_items: 1
+      items: {
+        string: {min_len: 1}
       }
     },
     (buf.validate.field).required = true,
@@ -655,9 +655,9 @@ message InspectPoliciesRequest {
   repeated string policy_id = 5 [
     (google.api.field_behavior) = OPTIONAL,
     (buf.validate.field).repeated = {
-      max_items: 25,
-      items {
-        string {min_len: 1}
+      max_items: 25
+      items: {
+        string: {min_len: 1}
       }
     },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -675,7 +675,7 @@ message AddOrUpdateSchemaRequest {
   repeated cerbos.schema.v1.Schema schemas = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
-      min_items: 1,
+      min_items: 1
       max_items: 100
     },
     (buf.validate.field).required = true,
@@ -700,11 +700,11 @@ message GetSchemaRequest {
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      items {
-        string {
-          min_len: 1,
+      unique: true
+      min_items: 1
+      items: {
+        string: {
+          min_len: 1
           max_len: 255
         }
       }
@@ -724,11 +724,11 @@ message DeleteSchemaRequest {
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
-      unique: true,
-      min_items: 1,
-      items {
-        string {
-          min_len: 1,
+      unique: true
+      min_items: 1
+      items: {
+        string: {
+          min_len: 1
           max_len: 255
         }
       }
