@@ -102,7 +102,7 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 					},
 					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
 				},
-				Role:      rp.Role,
+				Role:      rp.GetRole(),
 				Resources: resources,
 			},
 		},

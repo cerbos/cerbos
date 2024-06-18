@@ -699,9 +699,14 @@ func cerbos_policy_v1_RoleDef_hashpb_sum(m *RoleDef, hasher hash.Hash, ignore ma
 }
 
 func cerbos_policy_v1_RolePolicy_hashpb_sum(m *RolePolicy, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.policy.v1.RolePolicy.role"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRole()))
+	if m.PolicyType != nil {
+		if _, ok := ignore["cerbos.policy.v1.RolePolicy.policy_type"]; !ok {
+			switch t := m.PolicyType.(type) {
+			case *RolePolicy_Role:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Role))
 
+			}
+		}
 	}
 	if _, ok := ignore["cerbos.policy.v1.RolePolicy.scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))

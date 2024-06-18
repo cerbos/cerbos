@@ -302,7 +302,9 @@ type RolePolicyBuilder struct {
 func NewRolePolicyBuilder(role string) *RolePolicyBuilder {
 	return &RolePolicyBuilder{
 		rp: &policyv1.RolePolicy{
-			Role: role,
+			PolicyType: &policyv1.RolePolicy_Role{
+				Role: role,
+			},
 		},
 	}
 }

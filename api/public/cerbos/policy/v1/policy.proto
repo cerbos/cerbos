@@ -108,10 +108,10 @@ message ResourceRule {
 }
 
 message RolePolicy {
-  string role = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string = {min_len: 1}
-  ];
+  oneof policy_type {
+    option (buf.validate.oneof).required = true;
+    string role = 1 [(buf.validate.field).string = {min_len: 1}];
+  }
   string scope = 2 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   repeated RoleRule rules = 3;
 }

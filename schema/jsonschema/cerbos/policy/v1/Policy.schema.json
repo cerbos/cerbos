@@ -409,27 +409,34 @@
       }
     },
     "cerbos.policy.v1.RolePolicy": {
-      "type": "object",
-      "required": [
-        "role"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "role": {
-          "type": "string",
-          "minLength": 1
-        },
-        "rules": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.policy.v1.RoleRule"
+      "allOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "role": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/cerbos.policy.v1.RoleRule"
+              }
+            },
+            "scope": {
+              "type": "string",
+              "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+            }
           }
         },
-        "scope": {
-          "type": "string",
-          "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+        {
+          "type": "object",
+          "required": [
+            "role"
+          ]
         }
-      }
+      ]
     },
     "cerbos.policy.v1.RoleRule": {
       "type": "object",

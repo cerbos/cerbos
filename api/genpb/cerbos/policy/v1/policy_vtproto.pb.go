@@ -589,6 +589,15 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if vtmsg, ok := m.PolicyType.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
 	if len(m.Rules) > 0 {
 		for iNdEx := len(m.Rules) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Rules[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -608,16 +617,23 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Role) > 0 {
-		i -= len(m.Role)
-		copy(dAtA[i:], m.Role)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
-		i--
-		dAtA[i] = 0xa
-	}
 	return len(dAtA) - i, nil
 }
 
+func (m *RolePolicy_Role) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *RolePolicy_Role) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.Role)
+	copy(dAtA[i:], m.Role)
+	i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
 func (m *RoleRule) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -3787,9 +3803,8 @@ func (m *RolePolicy) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Role)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if vtmsg, ok := m.PolicyType.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
 	}
 	l = len(m.Scope)
 	if l > 0 {
@@ -3805,6 +3820,16 @@ func (m *RolePolicy) SizeVT() (n int) {
 	return n
 }
 
+func (m *RolePolicy_Role) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Role)
+	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	return n
+}
 func (m *RoleRule) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -6702,7 +6727,7 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Role = string(dAtA[iNdEx:postIndex])
+			m.PolicyType = &RolePolicy_Role{Role: string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

@@ -89,7 +89,7 @@ func FQN(p *policyv1.Policy) string {
 	case *policyv1.Policy_PrincipalPolicy:
 		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 	case *policyv1.Policy_RolePolicy:
-		return RolePolicyFQN(pt.RolePolicy.Role, pt.RolePolicy.Scope)
+		return RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Scope)
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesFQN(pt.DerivedRoles.Name)
 	case *policyv1.Policy_ExportVariables:
@@ -118,7 +118,7 @@ func FQNTree(p *policyv1.Policy) []string {
 		scope = pt.PrincipalPolicy.Scope
 	case *policyv1.Policy_RolePolicy:
 		// role policies don't functionally have ancestors
-		fqn = RolePolicyFQN(pt.RolePolicy.Role, pt.RolePolicy.Scope)
+		fqn = RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Scope)
 		return []string{fqn}
 	case *policyv1.Policy_DerivedRoles:
 		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
