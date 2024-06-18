@@ -339,9 +339,6 @@ func TestInspectUtilities(t *testing.T) {
 
 			for idx, testCase := range testCases {
 				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-					if _, ok := testCase.p.PolicyType.(*policyv1.Policy_RolePolicy); ok {
-						t.Skip("ListPolicySetActions not currently supported for role policies")
-					}
 					haveDerivedRoles := policy.ListPolicySetDerivedRoles(testCase.pset)
 					require.Empty(t, cmp.Diff(testCase.expectedDerivedRoles, haveDerivedRoles, protocmp.Transform()))
 				})
