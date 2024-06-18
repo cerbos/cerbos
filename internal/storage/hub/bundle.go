@@ -220,8 +220,11 @@ func (b *Bundle) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtim
 	res := []*runtimev1.RunnablePolicySet{}
 	for _, id := range modIDs {
 		policySet, err := b.GetFirstMatch(ctx, []namer.ModuleID{id})
+		if err != nil {
+			return nil, err
+		}
+
 		if policySet != nil {
-			b.cache.Set(id, cacheEntry{policySet: policySet, err: err})
 			res = append(res, policySet)
 		}
 	}
