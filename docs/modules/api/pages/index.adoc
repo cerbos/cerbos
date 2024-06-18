@@ -5,7 +5,8 @@ include::ROOT:partial$attributes.adoc[]
 include::ROOT:partial$version-check.adoc[]
 
 
-The main API endpoint for making policy decisions is the `/api/check/resources` REST endpoint (`cerbos.svc.v1.CerbosService/CheckResources` RPC in the gRPC API). You can view the latest API documentation from a running Cerbos instance by accessing the root directory of the HTTP endpoint using a browser.
+The main API endpoint for making policy decisions is the xref:#check-resources[`/api/check/resources` REST endpoint] (`cerbos.svc.v1.CerbosService/CheckResources` RPC in the gRPC API). You can browse a xref:attachment$cerbos-api.html[static version of the Cerbos OpenAPI specification on this site,window=_blank]. To interactively explore the API, launch a Cerbos instance and access the root directory of the HTTP endpoint using a browser.
+
 
 [source,sh,subs="attributes"]
 ----

@@ -119,7 +119,7 @@ service CerbosAdminService {
   rpc InspectPolicies(cerbos.request.v1.InspectPoliciesRequest) returns (cerbos.response.v1.InspectPoliciesResponse) {
     option (google.api.http) = {get: "/admin/policies/inspect"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Inspect policies in the store"
+      summary: "Inspect policies"
       security: {
         security_requirement: {
           key: "BasicAuth"
