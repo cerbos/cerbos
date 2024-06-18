@@ -1,0 +1,70 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.37.0]
+= Cerbos v0.37.0
+
+== Highlights
+
+The xref:cli:cerbos.adoc#repl[Cerbos REPL] now provides auto-completion for built-in commands and files to make it even easier to use as a development and debugging tool for Cerbos policies.
+
+In addition to variables, the `InspectPolicies` Admin API response now also includes the derived roles that are referenced in each inspected policy. It also supports restricting the results to one or more policies using their IDs. This enables users to easily target a set of known policies and obtain information about them, which is a common requirement when building custom user interfaces on top of Cerbos.
+
+Kubernetes users can now xref:deployment:index.adoc#daemonset[deploy Cerbos as a DaemonSet] using the official Helm chart. Compared to the sidecar model, a DaemonSet deployment would use fewer resources on each node while still providing node-local network connectivity.
+
+The `cerbos compile` command provides better context information about YAML syntax errors in policies and the `cerbosctl inspect` command can now produce output in machine-readable formats as well.
+
+Based on user feedback, some Admin API restrictions -- such as the limit on number of policies that can be updated in a single `AddOrUpdatePolicy` request -- have been relaxed in this release.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Detect incorrectly indented YAML (link:https://github.com/cerbos/cerbos/pull/2153[#2153])
+* Wildcard action wording (link:https://github.com/cerbos/cerbos/pull/2178[#2178])
+* Work around gRPC-Gateway bug in `X-Forwarded-For` handling (link:https://github.com/cerbos/cerbos/pull/2152[#2152])
+
+=== Features
+
+* Add filtering by policy IDs to InspectPolicies RPC (link:https://github.com/cerbos/cerbos/pull/2160[#2160])
+* Autocomplete for REPL directives, and a small fix for filenames (link:https://github.com/cerbos/cerbos/pull/2169[#2169])
+* List local and imported variables in the policy with InspectPolicies (link:https://github.com/cerbos/cerbos/pull/2141[#2141])
+
+=== Enhancements
+
+* Add policy id parameter to inspect command (link:https://github.com/cerbos/cerbos/pull/2174[#2174])
+* Allow deploying as a DaemonSet (link:https://github.com/cerbos/cerbos/pull/1658[#1658])
+* Context for YAML syntax errors (link:https://github.com/cerbos/cerbos/pull/2151[#2151])
+* Ensure git protocol matches the URL (link:https://github.com/cerbos/cerbos/pull/2163[#2163])
+* Formatting options for cerbosctl inspect command (link:https://github.com/cerbos/cerbos/pull/2179[#2179])
+* InspectPolicies lists derived roles in the policy (link:https://github.com/cerbos/cerbos/pull/2186[#2186])
+* Revise API limits (link:https://github.com/cerbos/cerbos/pull/2161[#2161])
+
+=== Chores
+
+* Bump github.com/Azure/azure-sdk-for-go/sdk/azidentity from 1.5.1 to 1.6.0 in /tools (link:https://github.com/cerbos/cerbos/pull/2185[#2185])
+* Bump github.com/goreleaser/goreleaser from 1.26.0 to 1.26.1 in /tools (link:https://github.com/cerbos/cerbos/pull/2154[#2154])
+* Bump version to 0.37.0
+* Clear disk space for npm build (link:https://github.com/cerbos/cerbos/pull/2149[#2149])
+* Clear disk space for release workflow (link:https://github.com/cerbos/cerbos/pull/2145[#2145])
+* Increase timeout for npm build stage (link:https://github.com/cerbos/cerbos/pull/2150[#2150])
+* Migrate to Buf configuration v2 (link:https://github.com/cerbos/cerbos/pull/2180[#2180])
+* Redirect old versions with correct status code (link:https://github.com/cerbos/cerbos/pull/2168[#2168])
+* Remove workaround for fixed gRPC-Gateway bug in `X-Forwarded-For` handling (link:https://github.com/cerbos/cerbos/pull/2157[#2157])
+* Update bufbuild/buf-setup-action action to v1.32.1 (link:https://github.com/cerbos/cerbos/pull/2164[#2164])
+* Update bufbuild/buf-setup-action action to v1.32.2 (link:https://github.com/cerbos/cerbos/pull/2170[#2170])
+* Update bufbuild/buf-setup-action action to v1.33.0 (link:https://github.com/cerbos/cerbos/pull/2188[#2188])
+* Update error message for invalid expression (link:https://github.com/cerbos/cerbos/pull/2156[#2156])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2147[#2147])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2165[#2165])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2171[#2171])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2181[#2181])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2187[#2187])
+* Update go deps to v2 (major) (link:https://github.com/cerbos/cerbos/pull/2167[#2167])
+* Update golangci/golangci-lint-action action to v6 (link:https://github.com/cerbos/cerbos/pull/2173[#2173])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2148[#2148])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2166[#2166])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2172[#2172])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2182[#2182])
+* Upgrade to GoReleaser v2 (link:https://github.com/cerbos/cerbos/pull/2184[#2184])
