@@ -75,6 +75,9 @@ func getHeaders(kind policy.Kind) []string {
 
 	case policy.PrincipalKind, policy.ResourceKind:
 		return []string{"POLICY ID", "NAME", "VERSION", "SCOPE"}
+
+	case policy.RolePolicyKind:
+		return []string{"POLICY ID", "NAME", "SCOPE"}
 	}
 
 	panic(fmt.Errorf("unknown policy kind %d", kind))

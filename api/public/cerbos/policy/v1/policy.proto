@@ -22,6 +22,7 @@ enum Kind {
   KIND_EXPORT_VARIABLES = 2;
   KIND_PRINCIPAL = 3;
   KIND_RESOURCE = 4;
+  KIND_ROLE_POLICY = 5;
 }
 
 message Policy {
@@ -38,6 +39,7 @@ message Policy {
     PrincipalPolicy principal_policy = 6;
     DerivedRoles derived_roles = 7;
     ExportVariables export_variables = 10;
+    RolePolicy role_policy = 11;
   }
   map<string, string> variables = 8 [deprecated = true];
   string json_schema = 9 [json_name = "$schema"];
@@ -112,6 +114,32 @@ message ResourceRule {
   ];
   string name = 6 [(buf.validate.field).string.pattern = "^([[:alpha:]][[:word:]\\@\\.\\-]*)*$"];
   Output output = 7;
+}
+
+message RolePolicy {
+  oneof policy_type {
+    option (buf.validate.oneof).required = true;
+    string role = 1 [(buf.validate.field).string = {min_len: 1}];
+  }
+  string scope = 2 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
+  repeated RoleRule rules = 3;
+}
+
+message RoleRule {
+  string resource = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {min_len: 1}
+  ];
+  repeated string permissible_actions = 2 [
+    (buf.validate.field).repeated = {
+      min_items: 1
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    },
+    (buf.validate.field).required = true
+  ];
 }
 
 message PrincipalPolicy {

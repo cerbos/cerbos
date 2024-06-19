@@ -1,0 +1,32 @@
+{
+  "fqn": "cerbos.role.leave_request/acme",
+  "rolePolicy": {
+    "meta": {
+      "fqn": "cerbos.role.leave_request/acme",
+      "scope": "acme",
+      "sourceAttributes": {
+        "role.leave_request/acme": {
+          "attributes": {
+            "source": "role_policies/acme_admin.yaml"
+          }
+        }
+      }
+    },
+    "role": "leave_request",
+    "resources": {
+      "acme_admin": {
+        "actions": {
+          "*": {}
+        }
+      },
+      "expenses_report": {
+        "actions": {
+          "create": {},
+          "delete": {},
+          "view": {}
+        }
+      }
+    }
+  },
+  "compilerVersion": 1
+}
