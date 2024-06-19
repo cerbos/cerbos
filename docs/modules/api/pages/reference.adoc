@@ -1,0 +1,19 @@
+include::ROOT:partial$attributes.adoc[]
+
+= API reference
+
+xref:attachment$cerbos-api.html[API reference,window=_blank]
+
+++++
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
+    <div id="redoc-container" style="width: 80vw;"></div>
+
+    <script>
+      Redoc.init((new URL('./_attachments/cerbos-api.json', document.location)).href, {
+        "expandResponses": "200",
+        "onlyRequiredInSamples": true,
+        "hideHostname": true,
+        "hideSecuritySection": true
+      }, document.getElementById('redoc-container'))
+    </script>
+++++

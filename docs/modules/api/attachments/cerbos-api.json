@@ -9,6 +9,15 @@
       "email": "info@cerbos.dev"
     }
   },
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "tags": [
     {
       "name": "CerbosService",
@@ -18,15 +27,6 @@
       "name": "CerbosAdminService",
       "description": "Cerbos administration service"
     }
-  ],
-  "schemes": [
-    "https"
-  ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
   ],
   "paths": {
     "/admin/auditlog/list/{kind}": {
@@ -168,7 +168,7 @@
           },
           {
             "name": "policyId",
-            "description": "For blob, disk, git stores use file name (\u003cfilename\u003e.yaml). For mysql, postgres, sqlite3 use id (\u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e) of the policy",
+            "description": "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy",
             "in": "query",
             "required": false,
             "type": "array",
@@ -237,7 +237,7 @@
           },
           {
             "name": "policyId",
-            "description": "For blob, disk, git stores use file name (\u003cfilename\u003e.yaml). For mysql, postgres, sqlite3 use id (\u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e) of the policy",
+            "description": "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy",
             "in": "query",
             "required": false,
             "type": "array",
@@ -278,7 +278,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "For blob, disk, git stores use file name (\u003cfilename\u003e.yaml). For mysql, postgres, sqlite3 use id (\u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e) of the policy",
+            "description": "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy",
             "in": "query",
             "required": true,
             "type": "array",
@@ -2276,7 +2276,7 @@
         },
         "policyId": {
           "type": "string",
-          "description": "For blob, disk, and git stores policy ID is the file name. For other stores it is \u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e/\u003cscope\u003e."
+          "description": "For blob, disk, and git stores policy ID is the file name. For other stores it is <kind>.<name>.<version>/<scope>."
         },
         "derivedRoles": {
           "type": "array",
