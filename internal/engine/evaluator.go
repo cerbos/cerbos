@@ -34,6 +34,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const rolePolicyNotAllowed = "<NOT_ALLOWED_BY_ROLE_POLICIES>"
+
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type evalParams struct {
@@ -88,12 +90,18 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	switch rp := rps.PolicySet.(type) {
+func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+	if len(rps) == 0 {
+		return noopEvaluator{}
+	}
+
+	switch rp := rps[0].PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
+	case *runtimev1.RunnablePolicySet_RolePolicy:
+		return newRolePolicyEvaluator(rps)
 	default:
 		return noopEvaluator{}
 	}
@@ -103,6 +111,65 @@ type noopEvaluator struct{}
 
 func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
+}
+
+type rolePolicyEvaluator struct {
+	policies map[string]*runtimev1.RunnableRolePolicySet
+}
+
+func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet) *rolePolicyEvaluator {
+	policies := make(map[string]*runtimev1.RunnableRolePolicySet)
+	for _, p := range rps {
+		if rp, ok := p.PolicySet.(*runtimev1.RunnablePolicySet_RolePolicy); ok {
+			policies[rp.RolePolicy.Role] = rp.RolePolicy
+		}
+	}
+
+	return &rolePolicyEvaluator{policies: policies}
+}
+
+func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+	_, span := tracing.StartSpan(ctx, "role_policy.Evaluate")
+	span.SetAttributes(tracing.PolicyScope(input.Principal.Scope))
+	defer span.End()
+
+	sourceAttrs := make(map[string]*policyv1.SourceAttributes)
+	for _, p := range rpe.policies {
+		// merge
+		if p.GetMeta().GetFqn() != "" && p.GetMeta().GetSourceAttributes() != nil {
+			sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
+		}
+	}
+
+	trail := newAuditTrail(sourceAttrs)
+	result := newEvalResult(input.Actions, trail)
+
+	rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
+
+	permissibleActions := internal.ProtoSet{}
+	for _, p := range rpe.policies {
+		if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
+			permissibleActions.Merge(k.Actions)
+		}
+	}
+
+	actions := util.NewGlobMap(permissibleActions)
+
+outer:
+	for _, a := range input.Actions {
+		if v := actions.Get(a); v != nil {
+			continue outer
+		}
+
+		actx := rpctx.StartAction(a)
+
+		result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: rolePolicyNotAllowed, Scope: input.Principal.Scope})
+
+		actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
+	}
+
+	result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+	return result, nil
 }
 
 type resourcePolicyEvaluator struct {

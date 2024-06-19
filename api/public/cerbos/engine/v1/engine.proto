@@ -306,6 +306,7 @@ message Trace {
       KIND_VARIABLE = 12;
       KIND_VARIABLES = 13;
       KIND_OUTPUT = 14;
+      KIND_ROLE_POLICY_SCOPE = 15;
     }
 
     message Variable {
@@ -325,6 +326,7 @@ message Trace {
       string scope = 9;
       Variable variable = 10;
       string output = 11;
+      string role_policy_scope = 12;
     }
   }
 

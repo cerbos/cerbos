@@ -28,6 +28,7 @@ const (
 	PrincipalKind
 	DerivedRolesKind
 	ExportVariablesKind
+	RolePolicyKind
 )
 
 const (
@@ -35,6 +36,7 @@ const (
 	PrincipalKindStr       = "PRINCIPAL"
 	DerivedRolesKindStr    = "DERIVED_ROLES"
 	ExportVariablesKindStr = "EXPORT_VARIABLES"
+	RolePolicyKindStr      = "ROLE"
 )
 
 var IgnoreHashFields = map[string]struct{}{
@@ -54,6 +56,8 @@ func (k Kind) String() string {
 		return DerivedRolesKindStr
 	case ExportVariablesKind:
 		return ExportVariablesKindStr
+	case RolePolicyKind:
+		return RolePolicyKindStr
 	default:
 		panic(fmt.Errorf("unknown policy kind %d", k))
 	}
@@ -70,6 +74,8 @@ func GetKind(p *policyv1.Policy) Kind {
 		return DerivedRolesKind
 	case *policyv1.Policy_ExportVariables:
 		return ExportVariablesKind
+	case *policyv1.Policy_RolePolicy:
+		return RolePolicyKind
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
@@ -86,6 +92,8 @@ func KindFromFQN(fqn string) Kind {
 		return DerivedRolesKind
 	case strings.HasPrefix(fqn, namer.ExportVariablesPrefix):
 		return ExportVariablesKind
+	case strings.HasPrefix(fqn, namer.RolePoliciesPrefix):
+		return RolePolicyKind
 	default:
 		panic(fmt.Errorf("unknown policy FQN format %q", fqn))
 	}
@@ -111,7 +119,7 @@ func Dependencies(p *policyv1.Policy) ([]string, []string) {
 		importVariables = pt.DerivedRoles.Variables.GetImport()
 		importVariablesProtoPath = "derived_roles.variables.import"
 
-	case *policyv1.Policy_ExportVariables:
+	case *policyv1.Policy_RolePolicy, *policyv1.Policy_ExportVariables:
 
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
@@ -385,6 +393,10 @@ func ListActions(p *policyv1.Policy) []string {
 				}
 			}
 		}
+	case *policyv1.Policy_RolePolicy:
+		for _, r := range p.RolePolicy.Rules {
+			actions = append(actions, r.PermissibleActions...)
+		}
 	}
 
 	return actions
@@ -505,6 +517,15 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 				}
 			}
 		}
+	case *runtimev1.RunnablePolicySet_RolePolicy:
+		for _, r := range set.RolePolicy.Resources {
+			for a := range r.Actions {
+				if _, ok := ss[a]; !ok {
+					ss[a] = struct{}{}
+					actions = append(actions, a)
+				}
+			}
+		}
 	}
 
 	return actions
@@ -606,6 +627,14 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.Name = pt.PrincipalPolicy.Principal
 		w.Version = pt.PrincipalPolicy.Version
 		w.Scope = pt.PrincipalPolicy.Scope
+
+	case *policyv1.Policy_RolePolicy:
+		role := pt.RolePolicy.GetRole()
+		w.Kind = RolePolicyKind
+		w.FQN = namer.RolePolicyFQN(role, pt.RolePolicy.Scope)
+		w.ID = namer.GenModuleIDFromFQN(w.FQN)
+		w.Name = role
+		w.Scope = pt.RolePolicy.Scope
 
 	case *policyv1.Policy_DerivedRoles:
 		w.Kind = DerivedRolesKind

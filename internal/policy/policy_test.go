@@ -193,11 +193,20 @@ func TestInspectUtilities(t *testing.T) {
 		).
 		WithLocalVariable("geography", "request.resource.attr.geography").
 		Build()
+	rolep := test.NewRolePolicyBuilder("custom_user").
+		WithRules(
+			test.NewRoleRule("leave_request", "a", "b").
+				Build(),
+			test.NewRoleRule("purchase_order", "c").
+				Build(),
+		).
+		Build()
 
 	drSet := compilePolicy(t, dr)
 	evSet := compilePolicy(t, ev)
 	rpSet := compilePolicy(t, rp, dr)
 	ppSet := compilePolicy(t, pp)
+	rolepSet := compilePolicy(t, rolep)
 
 	t.Run("Actions", func(t *testing.T) {
 		t.Run("ListActions", func(t *testing.T) {
@@ -219,6 +228,10 @@ func TestInspectUtilities(t *testing.T) {
 				},
 				{
 					p:               pp,
+					expectedActions: []string{"a", "b", "c"},
+				},
+				{
+					p:               rolep,
 					expectedActions: []string{"a", "b", "c"},
 				},
 			}
@@ -251,6 +264,10 @@ func TestInspectUtilities(t *testing.T) {
 				},
 				{
 					pset:            ppSet,
+					expectedActions: []string{"a", "b", "c"},
+				},
+				{
+					pset:            rolepSet,
 					expectedActions: []string{"a", "b", "c"},
 				},
 			}

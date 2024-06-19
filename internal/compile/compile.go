@@ -57,12 +57,56 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 		rps = compileResourcePolicySet(mc, schemaMgr)
 	case *policyv1.Policy_PrincipalPolicy:
 		rps = compilePrincipalPolicySet(mc)
+	case *policyv1.Policy_RolePolicy:
+		rps = compileRolePolicySet(mc)
 	case *policyv1.Policy_DerivedRoles, *policyv1.Policy_ExportVariables:
 	default:
 		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
 	}
 
 	return rps, uc.error()
+}
+
+func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
+	rp := modCtx.def.GetRolePolicy()
+	if rp == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not a role policy definition")
+		return nil
+	}
+
+	resources := make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions)
+	for _, r := range rp.Rules {
+		actions, ok := resources[r.Resource]
+		if !ok {
+			actions = &runtimev1.RunnableRolePolicySet_PermissibleActions{
+				Actions: make(map[string]*emptypb.Empty),
+			}
+			resources[r.Resource] = actions
+		}
+
+		for _, a := range r.PermissibleActions {
+			actions.Actions[a] = &emptypb.Empty{}
+		}
+	}
+
+	return &runtimev1.RunnablePolicySet{
+		CompilerVersion: compilerVersion,
+		Fqn:             modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_RolePolicy{
+			RolePolicy: &runtimev1.RunnableRolePolicySet{
+				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
+					Fqn:   modCtx.fqn,
+					Scope: rp.Scope,
+					SourceAttributes: map[string]*policyv1.SourceAttributes{
+						namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
+					},
+					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
+				},
+				Role:      rp.GetRole(),
+				Resources: resources,
+			},
+		},
+	}
 }
 
 func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runtimev1.RunnablePolicySet {

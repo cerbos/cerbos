@@ -46,6 +46,7 @@ const (
 
 type PolicyLoader interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	GetAll(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }
 
 type CheckOptions struct {
@@ -521,8 +522,16 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	}
 	ec.addCheck(ppCheck)
 
-	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+
+	// get the role policy check
+	rlpCheck, err := engine.getRolePolicyEvaluator(ctx, eparams, ppScope, input.Principal.Roles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get check for [%s]: %w", rpName, err)
+	}
+	ec.addCheck(rlpCheck)
+
+	// get the resource policy check
 	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, eparams, rpName, rpVersion, rpScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
@@ -541,8 +550,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams e
 	if rps == nil {
 		return nil, nil
 	}
-
-	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
+	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams), nil
 }
 
 func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
@@ -570,7 +578,7 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams ev
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
+	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams), nil
 }
 
 func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
@@ -588,6 +596,38 @@ func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policy
 	return rps, nil
 }
 
+func (engine *Engine) getRolePolicyEvaluator(ctx context.Context, eparams evalParams, scope string, roles []string) (Evaluator, error) {
+	pSets, err := engine.getRolePolicySets(ctx, scope, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pSets) == 0 {
+		return nil, nil
+	}
+
+	return NewEvaluator(pSets, engine.schemaMgr, eparams), nil
+}
+
+func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles []string) ([]*runtimev1.RunnablePolicySet, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.GetRolePolicies")
+	defer span.End()
+	span.SetAttributes(tracing.PolicyScope(scope))
+
+	roleModIDs := make([]namer.ModuleID, len(roles))
+	for i, r := range roles {
+		roleModIDs[i] = namer.RolePolicyModuleID(r, scope)
+	}
+
+	sets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
+	if err != nil {
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+		return nil, err
+	}
+
+	return sets, nil
+}
+
 func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, pScope string) {
 	pName = name
 	pVersion = version
@@ -601,7 +641,7 @@ func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, 
 }
 
 type evaluationCtx struct {
-	checks    [2]Evaluator
+	checks    [3]Evaluator
 	numChecks int
 }
 

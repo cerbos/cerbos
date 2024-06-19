@@ -276,6 +276,53 @@ func (ppb *PrincipalPolicyBuilder) Build() *policyv1.Policy {
 	}
 }
 
+// RoleRuleBuilder is a builder for resource rules.
+type RoleRuleBuilder struct {
+	rule *policyv1.RoleRule
+}
+
+func NewRoleRule(resource string, actions ...string) *RoleRuleBuilder {
+	return &RoleRuleBuilder{
+		rule: &policyv1.RoleRule{
+			Resource:           resource,
+			PermissibleActions: actions,
+		},
+	}
+}
+
+func (rrb *RoleRuleBuilder) Build() *policyv1.RoleRule {
+	return rrb.rule
+}
+
+// RolePolicyBuilder is a builder for role policies.
+type RolePolicyBuilder struct {
+	rp *policyv1.RolePolicy
+}
+
+func NewRolePolicyBuilder(role string) *RolePolicyBuilder {
+	return &RolePolicyBuilder{
+		rp: &policyv1.RolePolicy{
+			PolicyType: &policyv1.RolePolicy_Role{
+				Role: role,
+			},
+		},
+	}
+}
+
+func (rpb *RolePolicyBuilder) WithRules(rules ...*policyv1.RoleRule) *RolePolicyBuilder {
+	rpb.rp.Rules = append(rpb.rp.Rules, rules...)
+	return rpb
+}
+
+func (rpb *RolePolicyBuilder) Build() *policyv1.Policy {
+	return &policyv1.Policy{
+		ApiVersion: "api.cerbos.dev/v1",
+		PolicyType: &policyv1.Policy_RolePolicy{
+			RolePolicy: rpb.rp,
+		},
+	}
+}
+
 func GenDisabledPrincipalPolicy(mod NameMod) *policyv1.Policy {
 	p := GenPrincipalPolicy(mod)
 	p.Disabled = true
