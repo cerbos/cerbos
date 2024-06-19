@@ -751,3 +751,73 @@ message ReloadStoreRequest {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Wait until the reloading process finishes"}
   ];
 }
+
+message AddPolicyRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Add policy request"}
+  };
+
+  enum IfExists {
+    IF_EXISTS_UNSPECIFIED = 0;
+    IF_EXISTS_OVERWRITE = 1;
+    IF_EXISTS_CONTINUE = 2;
+    IF_EXISTS_FAIL = 3;
+  }
+
+  IfExists mode = 1 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+  repeated cerbos.policy.v1.Policy policies = 2 [
+    (buf.validate.field).repeated = {
+      min_items: 1
+      max_items: 100
+    },
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "List of policies."
+      min_items: 1
+      max_items: 100
+    }
+  ];
+}
+
+message DeletePolicyRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Delete policy request"}
+  };
+
+  repeated string policy_ids = 1 [
+    (buf.validate.field).repeated = {
+      min_items: 1
+      max_items: 100
+    },
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "List of policy identifiers."
+      min_items: 1
+      max_items: 100
+    }
+  ];
+}
+
+message PatchPolicyRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Patch an existing policy"}
+  };
+
+  repeated cerbos.policy.v1.PolicyPatch patches = 1 [
+    (buf.validate.field).repeated = {
+      min_items: 1
+      max_items: 100
+    },
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "List of patches."
+      min_items: 1
+      max_items: 100
+    }
+  ];
+}

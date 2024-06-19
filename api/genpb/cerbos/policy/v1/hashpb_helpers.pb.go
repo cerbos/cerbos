@@ -434,6 +434,39 @@ func cerbos_policy_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map[
 	}
 }
 
+func cerbos_policy_v1_PolicyPatch_hashpb_sum(m *PolicyPatch, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.PolicyPatch.operation"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetOperation())))
+
+	}
+	if m.PatchData != nil {
+		if _, ok := ignore["cerbos.policy.v1.PolicyPatch.patch_data"]; !ok {
+			switch t := m.PatchData.(type) {
+			case *PolicyPatch_ResourcePolicy:
+				if t.ResourcePolicy != nil {
+					cerbos_policy_v1_ResourcePolicy_hashpb_sum(t.ResourcePolicy, hasher, ignore)
+				}
+
+			case *PolicyPatch_PrincipalPolicy:
+				if t.PrincipalPolicy != nil {
+					cerbos_policy_v1_PrincipalPolicy_hashpb_sum(t.PrincipalPolicy, hasher, ignore)
+				}
+
+			case *PolicyPatch_DerivedRoles:
+				if t.DerivedRoles != nil {
+					cerbos_policy_v1_DerivedRoles_hashpb_sum(t.DerivedRoles, hasher, ignore)
+				}
+
+			case *PolicyPatch_ExportVariables:
+				if t.ExportVariables != nil {
+					cerbos_policy_v1_ExportVariables_hashpb_sum(t.ExportVariables, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_policy_v1_Policy_hashpb_sum(m *Policy, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.Policy.api_version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetApiVersion()))

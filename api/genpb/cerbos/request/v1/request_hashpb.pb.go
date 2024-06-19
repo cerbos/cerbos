@@ -223,3 +223,27 @@ func (m *ReloadStoreRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}
 		cerbos_request_v1_ReloadStoreRequest_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *AddPolicyRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_request_v1_AddPolicyRequest_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *DeletePolicyRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_request_v1_DeletePolicyRequest_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PatchPolicyRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_request_v1_PatchPolicyRequest_hashpb_sum(m, hasher, ignore)
+	}
+}

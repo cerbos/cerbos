@@ -48,6 +48,23 @@ message Metadata {
   SourceAttributes source_attributes = 6;
 }
 
+message PolicyPatch {
+  enum Operation {
+    OPERATION_UNSPECIFIED = 0;
+    OPERATION_MERGE = 1;
+    OPERATION_REPLACE = 2;
+  }
+
+  Operation operation = 1;
+  oneof patch_data {
+    option (buf.validate.oneof).required = true;
+    ResourcePolicy resource_policy = 2;
+    PrincipalPolicy principal_policy = 3;
+    DerivedRoles derived_roles = 4;
+    ExportVariables export_variables = 5;
+  }
+}
+
 message ResourcePolicy {
   string resource = 1 [
     (buf.validate.field).required = true,

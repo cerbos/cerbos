@@ -520,3 +520,41 @@ message ReloadStoreResponse {
     json_schema: {description: "Reload store response"}
   };
 }
+
+message AddPolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Add policy response"}
+  };
+
+  message Failure {
+    string message = 1;
+  }
+
+  oneof result {
+    google.protobuf.Empty success = 1;
+    Failure failure = 2;
+  }
+}
+
+message DeletePolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Delete policy response"}
+  };
+
+  google.protobuf.Empty success = 1;
+}
+
+message PatchPolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Patch policy response"}
+  };
+
+  message Failure {
+    string message = 1;
+  }
+
+  oneof result {
+    google.protobuf.Empty success = 1;
+    Failure failure = 2;
+  }
+}

@@ -303,6 +303,39 @@ func cerbos_policy_v1_Output_hashpb_sum(m *v11.Output, hasher hash.Hash, ignore 
 	}
 }
 
+func cerbos_policy_v1_PolicyPatch_hashpb_sum(m *v11.PolicyPatch, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.PolicyPatch.operation"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetOperation())))
+
+	}
+	if m.PatchData != nil {
+		if _, ok := ignore["cerbos.policy.v1.PolicyPatch.patch_data"]; !ok {
+			switch t := m.PatchData.(type) {
+			case *v11.PolicyPatch_ResourcePolicy:
+				if t.ResourcePolicy != nil {
+					cerbos_policy_v1_ResourcePolicy_hashpb_sum(t.ResourcePolicy, hasher, ignore)
+				}
+
+			case *v11.PolicyPatch_PrincipalPolicy:
+				if t.PrincipalPolicy != nil {
+					cerbos_policy_v1_PrincipalPolicy_hashpb_sum(t.PrincipalPolicy, hasher, ignore)
+				}
+
+			case *v11.PolicyPatch_DerivedRoles:
+				if t.DerivedRoles != nil {
+					cerbos_policy_v1_DerivedRoles_hashpb_sum(t.DerivedRoles, hasher, ignore)
+				}
+
+			case *v11.PolicyPatch_ExportVariables:
+				if t.ExportVariables != nil {
+					cerbos_policy_v1_ExportVariables_hashpb_sum(t.ExportVariables, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_policy_v1_Policy_hashpb_sum(m *v11.Policy, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.Policy.api_version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetApiVersion()))
@@ -674,6 +707,23 @@ func cerbos_request_v1_AddOrUpdateSchemaRequest_hashpb_sum(m *AddOrUpdateSchemaR
 	}
 }
 
+func cerbos_request_v1_AddPolicyRequest_hashpb_sum(m *AddPolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.AddPolicyRequest.mode"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetMode())))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.AddPolicyRequest.policies"]; !ok {
+		if len(m.Policies) > 0 {
+			for _, v := range m.Policies {
+				if v != nil {
+					cerbos_policy_v1_Policy_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_request_v1_AttributesMap_hashpb_sum(m *AttributesMap, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.AttributesMap.attr"]; !ok {
 		if len(m.Attr) > 0 {
@@ -849,6 +899,17 @@ func cerbos_request_v1_CheckResourcesRequest_hashpb_sum(m *CheckResourcesRequest
 	}
 }
 
+func cerbos_request_v1_DeletePolicyRequest_hashpb_sum(m *DeletePolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.DeletePolicyRequest.policy_ids"]; !ok {
+		if len(m.PolicyIds) > 0 {
+			for _, v := range m.PolicyIds {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
 func cerbos_request_v1_DeleteSchemaRequest_hashpb_sum(m *DeleteSchemaRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.DeleteSchemaRequest.id"]; !ok {
 		if len(m.Id) > 0 {
@@ -1014,6 +1075,19 @@ func cerbos_request_v1_ListPoliciesRequest_hashpb_sum(m *ListPoliciesRequest, ha
 }
 
 func cerbos_request_v1_ListSchemasRequest_hashpb_sum(m *ListSchemasRequest, hasher hash.Hash, ignore map[string]struct{}) {
+}
+
+func cerbos_request_v1_PatchPolicyRequest_hashpb_sum(m *PatchPolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.PatchPolicyRequest.patches"]; !ok {
+		if len(m.Patches) > 0 {
+			for _, v := range m.Patches {
+				if v != nil {
+					cerbos_policy_v1_PolicyPatch_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_request_v1_PlanResourcesRequest_hashpb_sum(m *PlanResourcesRequest, hasher hash.Hash, ignore map[string]struct{}) {

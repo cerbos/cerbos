@@ -1539,6 +1539,32 @@ func cerbos_response_v1_AddOrUpdatePolicyResponse_hashpb_sum(m *AddOrUpdatePolic
 func cerbos_response_v1_AddOrUpdateSchemaResponse_hashpb_sum(m *AddOrUpdateSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
+func cerbos_response_v1_AddPolicyResponse_Failure_hashpb_sum(m *AddPolicyResponse_Failure, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.AddPolicyResponse.Failure.message"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMessage()))
+
+	}
+}
+
+func cerbos_response_v1_AddPolicyResponse_hashpb_sum(m *AddPolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Result != nil {
+		if _, ok := ignore["cerbos.response.v1.AddPolicyResponse.result"]; !ok {
+			switch t := m.Result.(type) {
+			case *AddPolicyResponse_Success:
+				if t.Success != nil {
+					google_protobuf_Empty_hashpb_sum(t.Success, hasher, ignore)
+				}
+
+			case *AddPolicyResponse_Failure_:
+				if t.Failure != nil {
+					cerbos_response_v1_AddPolicyResponse_Failure_hashpb_sum(t.Failure, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_response_v1_CheckResourceBatchResponse_ActionEffectMap_hashpb_sum(m *CheckResourceBatchResponse_ActionEffectMap, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.resource_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResourceId()))
@@ -1848,6 +1874,15 @@ func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesRespo
 	}
 }
 
+func cerbos_response_v1_DeletePolicyResponse_hashpb_sum(m *DeletePolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DeletePolicyResponse.success"]; !ok {
+		if m.GetSuccess() != nil {
+			google_protobuf_Empty_hashpb_sum(m.GetSuccess(), hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_response_v1_DeleteSchemaResponse_hashpb_sum(m *DeleteSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.DeleteSchemaResponse.deleted_schemas"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDeletedSchemas())))
@@ -2025,6 +2060,32 @@ func cerbos_response_v1_ListSchemasResponse_hashpb_sum(m *ListSchemasResponse, h
 		if len(m.SchemaIds) > 0 {
 			for _, v := range m.SchemaIds {
 				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_PatchPolicyResponse_Failure_hashpb_sum(m *PatchPolicyResponse_Failure, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.PatchPolicyResponse.Failure.message"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMessage()))
+
+	}
+}
+
+func cerbos_response_v1_PatchPolicyResponse_hashpb_sum(m *PatchPolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Result != nil {
+		if _, ok := ignore["cerbos.response.v1.PatchPolicyResponse.result"]; !ok {
+			switch t := m.Result.(type) {
+			case *PatchPolicyResponse_Success:
+				if t.Success != nil {
+					google_protobuf_Empty_hashpb_sum(t.Success, hasher, ignore)
+				}
+
+			case *PatchPolicyResponse_Failure_:
+				if t.Failure != nil {
+					cerbos_response_v1_PatchPolicyResponse_Failure_hashpb_sum(t.Failure, hasher, ignore)
+				}
 
 			}
 		}
