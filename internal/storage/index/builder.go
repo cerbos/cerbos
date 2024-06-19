@@ -249,7 +249,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	idx.stats.add(p)
 
 	switch p.Kind {
-	case policy.ResourceKind, policy.PrincipalKind:
+	case policy.ResourceKind, policy.PrincipalKind, policy.RolePolicyKind:
 		idx.executables[p.ID] = struct{}{}
 
 	case policy.DerivedRolesKind, policy.ExportVariablesKind:

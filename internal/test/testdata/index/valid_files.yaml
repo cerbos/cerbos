@@ -225,6 +225,22 @@ files:
         roles:
           - admin
 
+  "role_policy.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    rolePolicy:
+      role: acme_admin
+      scope: "acme.hr.uk"
+      rules:
+        - resource: leave_request
+          permissibleActions:
+            - view:*
+            - deny
+
+        - resource: salary_record
+          permissibleActions:
+            - edit
+
   "empty_resource.yaml": ""
 
   "commented_resource.yaml": |-
@@ -304,3 +320,7 @@ wantCompilationUnits:
       - cerbos.resource.import_derived_roles_that_import_variables.v20210210
       - cerbos.derived_roles.import_variables
       - cerbos.export_variables.my_variables
+
+  - mainFqn: cerbos.role.acme_admin/acme.hr.uk
+    definitionFqns:
+      - cerbos.role.acme_admin/acme.hr.uk

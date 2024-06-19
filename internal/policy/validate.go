@@ -35,6 +35,8 @@ func Validate(p *policyv1.Policy, sc parser.SourceCtx) error {
 		return validateResourcePolicy(pt.ResourcePolicy, sc)
 	case *policyv1.Policy_PrincipalPolicy:
 		return validatePrincipalPolicy(pt.PrincipalPolicy, sc)
+	case *policyv1.Policy_RolePolicy:
+		return validateRolePolicy(pt.RolePolicy, sc)
 	case *policyv1.Policy_DerivedRoles:
 		return validateDerivedRoles(pt.DerivedRoles, sc)
 	case *policyv1.Policy_ExportVariables:
@@ -117,6 +119,28 @@ func validatePrincipalPolicy(rp *policyv1.PrincipalPolicy, sc parser.SourceCtx) 
 			} else {
 				ruleNames[actionRule.Name] = j + 1
 			}
+		}
+	}
+
+	return outErr
+}
+
+func validateRolePolicy(rp *policyv1.RolePolicy, sc parser.SourceCtx) (outErr error) {
+	resourceNames := make(map[string]int, len(rp.Rules))
+	for i, rule := range rp.Rules {
+		// check for resource clashes
+		if idx, exists := resourceNames[rule.Resource]; exists {
+			pos, context := sc.PositionAndContextForProtoPath(RolePolicyRuleProtoPath(i))
+			var msg string
+			if prev := sc.PositionForProtoPath(RolePolicyRuleProtoPath(idx - 1)); prev != nil {
+				msg = fmt.Sprintf("duplicate resource %q: rule #%d has the same resource as rule #%d defined at %d:%d", rule.Resource, i+1, idx, prev.GetLine(), prev.GetColumn())
+			} else {
+				msg = fmt.Sprintf("duplicate resource %q: rule #%d has the same resource as rule #%d", rule.Resource, i+1, idx)
+			}
+
+			outErr = errors.Join(outErr, newValidationError(msg, pos, context))
+		} else {
+			resourceNames[rule.Resource] = i + 1
 		}
 	}
 

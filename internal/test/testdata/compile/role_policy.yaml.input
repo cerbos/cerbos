@@ -1,0 +1,14 @@
+-- role_policies/acme_admin.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: leave_request
+  scope: "acme"
+  rules:
+    - resource: acme_admin
+      permissibleActions: ['*']
+    - resource: expenses_report
+      permissibleActions:
+        - view
+        - create
+        - delete

@@ -246,6 +246,11 @@ func (m *MockPolicyLoader) GetFirstMatch(ctx context.Context, candidates []namer
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
+func (m *MockPolicyLoader) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx, modIDs)
+	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
+}
+
 type MockStore struct {
 	mock.Mock
 }
@@ -295,6 +300,11 @@ type MockBinaryStore struct {
 func (m *MockBinaryStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx, candidates)
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
+}
+
+func (m *MockBinaryStore) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx, modIDs)
+	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
 type MockReloadable struct {

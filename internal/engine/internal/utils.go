@@ -10,6 +10,13 @@ import (
 
 type ProtoSet map[string]*emptypb.Empty
 
+// Merge merges keys from `o` into the original ProtoSet.
+func (p ProtoSet) Merge(o ProtoSet) {
+	for k, v := range o {
+		p[k] = v
+	}
+}
+
 type StringSet map[string]struct{}
 
 func (s StringSet) Values() []string {

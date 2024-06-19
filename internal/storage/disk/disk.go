@@ -97,6 +97,10 @@ func (s *Store) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*
 	return s.idx.GetFirstMatch(candidates)
 }
 
+func (s *Store) GetAll(_ context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+	return s.idx.GetAll(modIDs)
+}
+
 func (s *Store) GetCompilationUnits(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	return s.idx.GetCompilationUnits(ids...)
 }

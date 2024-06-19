@@ -40,6 +40,8 @@ func TestIndexLoadPolicy(t *testing.T) {
 		"resource_policies/policy_05_acme.hr.yaml",
 		"resource_policies/policy_05_acme.yaml",
 		"resource_policies/policy_06.yaml",
+		"role_policies/policy_01.yaml",
+		"role_policies/policy_02.yaml",
 	}
 
 	testLoadPolicy := func(t *testing.T, path string) {
@@ -189,6 +191,17 @@ func TestIndexGetFirstMatch(t *testing.T) {
 		{
 			name:   "principal_policy/lenient/non_existent",
 			modIDs: namer.ScopedPrincipalPolicyModuleIDs("donald_duck", "blah", "blah", true),
+		},
+		{
+			name:   "role_policy/strict/non_existent",
+			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_super_admin", "acme.hr.uk")},
+		},
+		{
+			name:   "role_policy/strict/existent",
+			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_admin", "acme.hr.uk")},
+			want: func() namer.ModuleID {
+				return namer.GenModuleIDFromFQN(namer.RolePolicyFQN("acme_admin", "acme.hr.uk"))
+			},
 		},
 	}
 
