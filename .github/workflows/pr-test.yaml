@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "v*"
+      - "feat/*"
 jobs:
   changes:
     runs-on: ubuntu-latest
