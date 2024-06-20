@@ -575,9 +575,9 @@
     "mode": {
       "type": "string",
       "enum": [
-        "IF_EXISTS_OVERWRITE",
-        "IF_EXISTS_CONTINUE",
-        "IF_EXISTS_FAIL"
+        "ADD_MODE_OVERWRITE",
+        "ADD_MODE_SKIP_IF_EXISTS",
+        "ADD_MODE_FAIL_IF_EXISTS"
       ]
     },
     "policies": {

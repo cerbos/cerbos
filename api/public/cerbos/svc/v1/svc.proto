@@ -108,7 +108,7 @@ service CerbosAdminService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Add or update policies"
       deprecated: true
-      description: "[Deprecated: Use AddPolicy API with mode=IF_EXISTS_OVERWRITE instead.]"
+      description: "[Deprecated: Use AddPolicy API with mode=ADD_MODE_OVERWRITE instead.]"
       security: {
         security_requirement: {
           key: "BasicAuth"
@@ -280,6 +280,28 @@ service CerbosAdminService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Add or update schema"
+      deprecated: true
+      description: "[Deprecated: Use AddSchema with mode ADD_MODE_OVERWRITE instead.]"
+      security: {
+        security_requirement: {
+          key: "BasicAuth"
+          value: {}
+        }
+      }
+    };
+  }
+
+  rpc AddSchema(cerbos.request.v1.AddSchemaRequest) returns (cerbos.response.v1.AddSchemaResponse) {
+    option (google.api.http) = {
+      post: "/admin/schema/add"
+      body: "*"
+      additional_bindings: {
+        put: "/admin/schema/add"
+        body: "*"
+      }
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Add schema"
       security: {
         security_requirement: {
           key: "BasicAuth"

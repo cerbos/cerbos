@@ -1,0 +1,59 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/request/v1/AddSchemaRequest.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.schema.v1.Schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "definition"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "definition": {
+          "type": "string",
+          "oneOf": [
+            {
+              "title": "Standard base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9+/]*$"
+            },
+            {
+              "title": "URL-safe base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9_-]*$"
+            }
+          ]
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 255,
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "type": "object",
+  "required": [
+    "schemas"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "ADD_MODE_OVERWRITE",
+        "ADD_MODE_SKIP_IF_EXISTS",
+        "ADD_MODE_FAIL_IF_EXISTS"
+      ]
+    },
+    "schemas": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.schema.v1.Schema"
+      },
+      "maxItems": 100,
+      "minItems": 1
+    }
+  }
+}

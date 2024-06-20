@@ -19,6 +19,7 @@ import (
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	"github.com/go-sql-driver/mysql"
 
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -64,7 +65,12 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("mysql", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithSourceAttributes(policy.SourceDriver(DriverName)))
+	s, err := internal.NewDBStorage(ctx,
+		goqu.New("mysql", db),
+		internal.WithUpsertPolicy(upsertPolicy),
+		internal.WithUpsertSchema(upsertSchema),
+		internal.WithSourceAttributes(policy.SourceDriver(DriverName)),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +159,7 @@ func registerServerPubKeys(conf *Conf) error {
 	return nil
 }
 
-func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
+func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, p policy.Wrapper) error {
 	pr := internal.Policy{
 		ID:          p.ID,
 		Kind:        p.Kind.String(),
@@ -187,18 +193,51 @@ func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) er
 			return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
 		}
 
-		// attempt update
-		if _, err := tx.Update(internal.PolicyTbl).
-			Prepared(true).
-			Set(pr).
-			Where(goqu.And(
-				goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
-				goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
-			)).Executor().ExecContext(ctx); err != nil {
-			return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
+		switch mode {
+		case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+			return nil
+		case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+			return storage.NewAlreadyExistsError(p.FQN)
+		case requestv1.AddMode_ADD_MODE_OVERWRITE:
+			// attempt update
+			if _, err := tx.Update(internal.PolicyTbl).
+				Prepared(true).
+				Set(pr).
+				Where(goqu.And(
+					goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
+					goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
+				)).Executor().ExecContext(ctx); err != nil {
+				return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
+			}
+		default:
+			return storage.ErrUnsupportedAddMode
 		}
 
 		return nil
+	}
+
+	return nil
+}
+
+func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, schema internal.Schema) error {
+	query := tx.Insert(internal.SchemaTbl).Rows(schema)
+	switch mode {
+	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+		query = query.OnConflict(goqu.DoNothing())
+	case requestv1.AddMode_ADD_MODE_OVERWRITE:
+		query = query.OnConflict(goqu.DoUpdate(internal.SchemaTblIDCol, schema))
+	default:
+		return storage.ErrUnsupportedAddMode
+	}
+
+	if _, err := query.Executor().ExecContext(ctx); err != nil {
+		mysqlErr := new(mysql.MySQLError)
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == constraintViolationErrCode {
+			return storage.NewAlreadyExistsError(schema.ID)
+		}
+
+		return fmt.Errorf("failed to add schema %s: %w", schema.ID, err)
 	}
 
 	return nil

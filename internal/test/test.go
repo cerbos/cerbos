@@ -23,6 +23,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -66,7 +67,7 @@ func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
 			return nil
 		}
 
-		if err := ms.AddOrUpdateSchema(context.TODO(), &schemav1.Schema{
+		if err := ms.AddOrUpdateSchema(context.TODO(), requestv1.AddMode_ADD_MODE_OVERWRITE, &schemav1.Schema{
 			Id:         path,
 			Definition: ReadSchemaFromFS(t, fsys, path),
 		}); err != nil && !errors.Is(err, &storage.InvalidSchemaError{}) {

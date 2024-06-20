@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -76,7 +77,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			t.Helper()
 
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdate(ctx, policyList...))
+			require.NoError(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, policyList...))
 
 			wantEvents := []storage.Event{
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
@@ -113,10 +114,10 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("add_id_collision", func(t *testing.T) {
-			require.ErrorIs(t, store.AddOrUpdate(ctx, rpDupe2), storage.ErrPolicyIDCollision, "rpDupe2 not detected")
-			require.ErrorIs(t, store.AddOrUpdate(ctx, ppDupe2), storage.ErrPolicyIDCollision, "ppDupe2 not detected")
-			require.ErrorIs(t, store.AddOrUpdate(ctx, drDupe2), storage.ErrPolicyIDCollision, "drDupe2 not detected")
-			require.ErrorIs(t, store.AddOrUpdate(ctx, evDupe2), storage.ErrPolicyIDCollision, "evDupe2 not detected")
+			require.ErrorIs(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, rpDupe2), storage.ErrPolicyIDCollision, "rpDupe2 not detected")
+			require.ErrorIs(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, ppDupe2), storage.ErrPolicyIDCollision, "ppDupe2 not detected")
+			require.ErrorIs(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, drDupe2), storage.ErrPolicyIDCollision, "drDupe2 not detected")
+			require.ErrorIs(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, evDupe2), storage.ErrPolicyIDCollision, "evDupe2 not detected")
 		})
 
 		t.Run("get_compilation_unit_for_resource_policy", func(t *testing.T) {
@@ -331,7 +332,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("add_schema", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdateSchema(ctx, &schemav1.Schema{Id: schID, Definition: sch}))
+			require.NoError(t, store.AddOrUpdateSchema(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, &schemav1.Schema{Id: schID, Definition: sch}))
 
 			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
 

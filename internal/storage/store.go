@@ -8,8 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
+	"strings"
 	"sync"
 
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -23,7 +26,10 @@ var (
 	drivers   = map[string]Constructor{}
 )
 
-var ErrPolicyIDCollision = errors.New("policy ID collision")
+var (
+	ErrPolicyIDCollision  = errors.New("policy ID collision")
+	ErrUnsupportedAddMode = errors.New("unsupported add mode")
+)
 
 // InvalidPolicyError is a custom error to signal that a policy is invalid.
 type InvalidPolicyError struct {
@@ -59,6 +65,29 @@ func (ise InvalidSchemaError) Unwrap() error {
 
 func NewInvalidSchemaError(err error, msg string, args ...any) InvalidSchemaError {
 	return InvalidSchemaError{Message: fmt.Sprintf(msg, args...), Err: err}
+}
+
+// AlreadyExistsError is an error to signal that an add operation failed.
+type AlreadyExistsError struct {
+	IDs []string
+}
+
+func NewAlreadyExistsError(ids ...string) AlreadyExistsError {
+	return AlreadyExistsError{IDs: ids}
+}
+
+func (aee AlreadyExistsError) Error() string {
+	return fmt.Sprintf("already exists [%s]", strings.Join(aee.IDs, ","))
+}
+
+func (aee AlreadyExistsError) Merge(errs ...AlreadyExistsError) AlreadyExistsError {
+	ids := make([][]string, len(errs)+1)
+	for i, e := range errs {
+		ids[i] = e.IDs
+	}
+	ids[len(ids)-1] = aee.IDs
+
+	return AlreadyExistsError{IDs: slices.Concat(ids...)}
 }
 
 // Constructor is a constructor function for a storage driver.
@@ -154,8 +183,8 @@ type BinaryStore interface {
 // MutableStore is a store that allows mutations.
 type MutableStore interface {
 	Store
-	AddOrUpdate(context.Context, ...policy.Wrapper) error
-	AddOrUpdateSchema(context.Context, ...*schemav1.Schema) error
+	AddOrUpdate(context.Context, requestv1.AddMode, ...policy.Wrapper) error
+	AddOrUpdateSchema(context.Context, requestv1.AddMode, ...*schemav1.Schema) error
 	Disable(context.Context, ...string) (uint32, error)
 	Enable(context.Context, ...string) (uint32, error)
 	DeleteSchema(context.Context, ...string) (uint32, error)

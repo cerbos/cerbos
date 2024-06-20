@@ -5,18 +5,22 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
 
 	// Import the postgres dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 	pgxzap "github.com/jackc/pgx-zap"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
 	"go.uber.org/zap"
 
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -65,7 +69,12 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	conf.ConnPool.Configure(db)
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("postgres", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithSourceAttributes(policy.SourceDriver(DriverName)))
+	s, err := internal.NewDBStorage(ctx,
+		goqu.New("postgres", db),
+		internal.WithUpsertPolicy(upsertPolicy),
+		internal.WithUpsertSchema(upsertSchema),
+		internal.WithSourceAttributes(policy.SourceDriver(DriverName)),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +88,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	return &Store{DBStorage: s}, nil
 }
 
-func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
+func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, p policy.Wrapper) error {
 	pr := internal.Policy{
 		ID:          p.ID,
 		Kind:        p.Kind.String(),
@@ -90,24 +99,66 @@ func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) er
 		Disabled:    p.Disabled,
 		Definition:  internal.PolicyDefWrapper{Policy: p.Policy},
 	}
-	res, err := tx.Insert(goqu.T(internal.PolicyTbl).As("p")).
+
+	query := tx.Insert(goqu.T(internal.PolicyTbl).As("p")).
 		Prepared(true).
-		Rows(pr).
-		OnConflict(
-			goqu.DoUpdate(internal.PolicyTblIDCol, pr).
-				Where(
-					goqu.L("EXCLUDED." + internal.PolicyTblNameCol).Eq(goqu.L("p." + internal.PolicyTblNameCol)),
-				),
-		).
-		Executor().ExecContext(ctx)
+		Rows(pr)
+
+	switch mode {
+	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+		query = query.OnConflict(goqu.DoNothing())
+	case requestv1.AddMode_ADD_MODE_OVERWRITE:
+		query = query.OnConflict(goqu.DoUpdate(internal.PolicyTblIDCol, pr).
+			Where(
+				goqu.L("EXCLUDED." + internal.PolicyTblNameCol).Eq(goqu.L("p." + internal.PolicyTblNameCol)),
+			),
+		)
+	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+	default:
+		return storage.ErrUnsupportedAddMode
+	}
+
+	res, err := query.Executor().ExecContext(ctx)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
+				return storage.NewAlreadyExistsError(p.FQN)
+			}
+		}
 		return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
 	}
 
 	if updated, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("failed to check status of policy %s: %w", p.FQN, err)
 	} else if updated != 1 {
-		return fmt.Errorf("failed to update policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
+		return fmt.Errorf("failed to update policy %s: %w", p.FQN, storage.ErrPolicyIDCollision)
+	}
+
+	return nil
+}
+
+func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, schema internal.Schema) error {
+	query := tx.Insert(internal.SchemaTbl).Rows(schema)
+	switch mode {
+	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+		query = query.OnConflict(goqu.DoNothing())
+	case requestv1.AddMode_ADD_MODE_OVERWRITE:
+		query = query.OnConflict(goqu.DoUpdate(internal.SchemaTblIDCol, schema))
+	default:
+		return storage.ErrUnsupportedAddMode
+	}
+
+	if _, err := query.Executor().ExecContext(ctx); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
+				return storage.NewAlreadyExistsError(schema.ID)
+			}
+		}
+
+		return fmt.Errorf("failed to add schema %s: %w", schema.ID, err)
 	}
 
 	return nil

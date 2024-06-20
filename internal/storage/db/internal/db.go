@@ -20,6 +20,7 @@ import (
 	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/inspect"
@@ -34,14 +35,17 @@ import (
 
 const tableLogKey = "table"
 
-var errUpsertPolicyRequired = errors.New("invalid driver configuration: upsertPolicy is required")
+var (
+	errUpsertPolicyRequired = errors.New("invalid driver configuration: upsertPolicy is required")
+	errUpsertSchemaRequired = errors.New("invalid driver configuration: upsertSchema is required")
+)
 
 type DBStorage interface {
 	storage.Subscribable
 	storage.Instrumented
 	storage.Reloadable
 	storage.Verifiable
-	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
+	AddOrUpdate(ctx context.Context, mode requestv1.AddMode, policies ...policy.Wrapper) error
 	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
@@ -50,7 +54,7 @@ type DBStorage interface {
 	InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
-	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
+	AddOrUpdateSchema(ctx context.Context, mode requestv1.AddMode, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
 	Enable(ctx context.Context, policyKey ...string) (uint32, error)
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
@@ -85,7 +89,11 @@ type dbStorage struct {
 	*storage.SubscriptionManager
 }
 
-func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
+func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, mode requestv1.AddMode, schemas ...*schemav1.Schema) error {
+	if s.opts.upsertSchema == nil {
+		return errUpsertSchemaRequired
+	}
+
 	events := make([]storage.Event, 0, len(schemas))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for _, sch := range schemas {
@@ -106,7 +114,7 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.
 			var err error
 
 			if s.opts.upsertSchema != nil {
-				err = s.opts.upsertSchema(ctx, tx, row)
+				err = s.opts.upsertSchema(ctx, mode, tx, row)
 			} else {
 				_, err = tx.Insert(SchemaTbl).
 					Rows(row).
@@ -219,7 +227,7 @@ func (s *dbStorage) LoadSchema(ctx context.Context, urlVar string) (io.ReadClose
 	return io.NopCloser(bytes.NewReader(def)), nil
 }
 
-func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
+func (s *dbStorage) AddOrUpdate(ctx context.Context, mode requestv1.AddMode, policies ...policy.Wrapper) error {
 	if s.opts.upsertPolicy == nil {
 		return errUpsertPolicyRequired
 	}
@@ -227,7 +235,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 	events := make([]storage.Event, len(policies))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for i, p := range policies {
-			if err := s.opts.upsertPolicy(ctx, tx, p); err != nil {
+			if err := s.opts.upsertPolicy(ctx, mode, tx, p); err != nil {
 				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
 			}
 

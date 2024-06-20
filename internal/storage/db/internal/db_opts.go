@@ -8,6 +8,7 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -16,8 +17,8 @@ import (
 type DBOpt func(*dbOpt)
 
 type (
-	upsertPolicyFunc func(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error
-	upsertSchemaFunc func(ctx context.Context, tx *goqu.TxDatabase, schema Schema) error
+	upsertPolicyFunc func(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, p policy.Wrapper) error
+	upsertSchemaFunc func(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, schema Schema) error
 )
 
 type dbOpt struct {

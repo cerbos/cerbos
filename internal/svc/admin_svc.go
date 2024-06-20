@@ -64,6 +64,38 @@ func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser st
 	return svc
 }
 
+func (cas *CerbosAdminService) AddPolicy(ctx context.Context, req *requestv1.AddPolicyRequest) (*responsev1.AddPolicyResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	policies := make([]policy.Wrapper, len(req.Policies))
+	for i, p := range req.Policies {
+		policies[i] = policy.Wrap(policy.WithSourceAttributes(p, policy.SourceUpdateTSNow()))
+	}
+
+	log := logging.ReqScopeLog(ctx)
+	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
+		log.Error("Failed to add/update policies", zap.Error(err))
+		if errors.Is(err, storage.ErrPolicyIDCollision) {
+			return nil, status.Error(codes.FailedPrecondition, "Policy ID conflict")
+		}
+
+		invalidPolicyErr := new(storage.InvalidPolicyError)
+		if errors.As(err, invalidPolicyErr) {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid policy: %v", invalidPolicyErr.Message)
+		}
+		return nil, status.Error(codes.Internal, "Failed to add/update policies")
+	}
+
+	return &responsev1.AddPolicyResponse{Success: &emptypb.Empty{}}, nil
+}
+
 func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *requestv1.AddOrUpdatePolicyRequest) (*responsev1.AddOrUpdatePolicyResponse, error) {
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err

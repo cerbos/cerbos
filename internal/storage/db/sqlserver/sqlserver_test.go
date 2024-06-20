@@ -8,11 +8,13 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
@@ -41,7 +43,23 @@ func TestSqlServer(t *testing.T) {
 	resource, err := pool.RunWithOptions(options)
 	is.NoError(err, "Could not start resource: %s", err)
 
+	logsCtx, logsCancel := context.WithCancel(context.Background())
+	go func() {
+		if err := pool.Client.Logs(docker.LogsOptions{
+			Context:      logsCtx,
+			Container:    resource.Container.ID,
+			OutputStream: os.Stdout,
+			ErrorStream:  os.Stderr,
+			Stdout:       true,
+			Stderr:       true,
+			Follow:       true,
+		}); err != nil {
+			logsCancel()
+		}
+	}()
+
 	t.Cleanup(func() {
+		logsCancel()
 		if err := pool.Purge(resource); err != nil {
 			t.Errorf("Failed to cleanup resources: %v", err)
 		}

@@ -724,6 +724,23 @@ func cerbos_request_v1_AddPolicyRequest_hashpb_sum(m *AddPolicyRequest, hasher h
 	}
 }
 
+func cerbos_request_v1_AddSchemaRequest_hashpb_sum(m *AddSchemaRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.AddSchemaRequest.mode"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetMode())))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.AddSchemaRequest.schemas"]; !ok {
+		if len(m.Schemas) > 0 {
+			for _, v := range m.Schemas {
+				if v != nil {
+					cerbos_schema_v1_Schema_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_request_v1_AttributesMap_hashpb_sum(m *AttributesMap, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.AttributesMap.attr"]; !ok {
 		if len(m.Attr) > 0 {

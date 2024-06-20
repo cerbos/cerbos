@@ -752,19 +752,19 @@ message ReloadStoreRequest {
   ];
 }
 
+enum AddMode {
+  ADD_MODE_UNSPECIFIED = 0;
+  ADD_MODE_OVERWRITE = 1;
+  ADD_MODE_SKIP_IF_EXISTS = 2;
+  ADD_MODE_FAIL_IF_EXISTS = 3;
+}
+
 message AddPolicyRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Add policy request"}
   };
 
-  enum IfExists {
-    IF_EXISTS_UNSPECIFIED = 0;
-    IF_EXISTS_OVERWRITE = 1;
-    IF_EXISTS_CONTINUE = 2;
-    IF_EXISTS_FAIL = 3;
-  }
-
-  IfExists mode = 1 [(buf.validate.field).enum = {
+  AddMode mode = 1 [(buf.validate.field).enum = {
     not_in: [0]
   }];
   repeated cerbos.policy.v1.Policy policies = 2 [
@@ -776,6 +776,29 @@ message AddPolicyRequest {
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of policies."
+      min_items: 1
+      max_items: 100
+    }
+  ];
+}
+
+message AddSchemaRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Add schema request"}
+  };
+
+  AddMode mode = 1 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+  repeated cerbos.schema.v1.Schema schemas = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated = {
+      min_items: 1
+      max_items: 100
+    },
+    (buf.validate.field).required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "List of schemas."
       min_items: 1
       max_items: 100
     }

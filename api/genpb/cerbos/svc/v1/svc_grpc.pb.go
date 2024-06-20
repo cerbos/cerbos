@@ -278,6 +278,7 @@ const (
 	CerbosAdminService_EnablePolicy_FullMethodName        = "/cerbos.svc.v1.CerbosAdminService/EnablePolicy"
 	CerbosAdminService_ListAuditLogEntries_FullMethodName = "/cerbos.svc.v1.CerbosAdminService/ListAuditLogEntries"
 	CerbosAdminService_AddOrUpdateSchema_FullMethodName   = "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema"
+	CerbosAdminService_AddSchema_FullMethodName           = "/cerbos.svc.v1.CerbosAdminService/AddSchema"
 	CerbosAdminService_ListSchemas_FullMethodName         = "/cerbos.svc.v1.CerbosAdminService/ListSchemas"
 	CerbosAdminService_GetSchema_FullMethodName           = "/cerbos.svc.v1.CerbosAdminService/GetSchema"
 	CerbosAdminService_DeleteSchema_FullMethodName        = "/cerbos.svc.v1.CerbosAdminService/DeleteSchema"
@@ -299,6 +300,7 @@ type CerbosAdminServiceClient interface {
 	EnablePolicy(ctx context.Context, in *v1.EnablePolicyRequest, opts ...grpc.CallOption) (*v11.EnablePolicyResponse, error)
 	ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error)
 	AddOrUpdateSchema(ctx context.Context, in *v1.AddOrUpdateSchemaRequest, opts ...grpc.CallOption) (*v11.AddOrUpdateSchemaResponse, error)
+	AddSchema(ctx context.Context, in *v1.AddSchemaRequest, opts ...grpc.CallOption) (*v11.AddSchemaResponse, error)
 	ListSchemas(ctx context.Context, in *v1.ListSchemasRequest, opts ...grpc.CallOption) (*v11.ListSchemasResponse, error)
 	GetSchema(ctx context.Context, in *v1.GetSchemaRequest, opts ...grpc.CallOption) (*v11.GetSchemaResponse, error)
 	DeleteSchema(ctx context.Context, in *v1.DeleteSchemaRequest, opts ...grpc.CallOption) (*v11.DeleteSchemaResponse, error)
@@ -446,6 +448,16 @@ func (c *cerbosAdminServiceClient) AddOrUpdateSchema(ctx context.Context, in *v1
 	return out, nil
 }
 
+func (c *cerbosAdminServiceClient) AddSchema(ctx context.Context, in *v1.AddSchemaRequest, opts ...grpc.CallOption) (*v11.AddSchemaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.AddSchemaResponse)
+	err := c.cc.Invoke(ctx, CerbosAdminService_AddSchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cerbosAdminServiceClient) ListSchemas(ctx context.Context, in *v1.ListSchemasRequest, opts ...grpc.CallOption) (*v11.ListSchemasResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(v11.ListSchemasResponse)
@@ -501,6 +513,7 @@ type CerbosAdminServiceServer interface {
 	EnablePolicy(context.Context, *v1.EnablePolicyRequest) (*v11.EnablePolicyResponse, error)
 	ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error
 	AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error)
+	AddSchema(context.Context, *v1.AddSchemaRequest) (*v11.AddSchemaResponse, error)
 	ListSchemas(context.Context, *v1.ListSchemasRequest) (*v11.ListSchemasResponse, error)
 	GetSchema(context.Context, *v1.GetSchemaRequest) (*v11.GetSchemaResponse, error)
 	DeleteSchema(context.Context, *v1.DeleteSchemaRequest) (*v11.DeleteSchemaResponse, error)
@@ -544,6 +557,9 @@ func (UnimplementedCerbosAdminServiceServer) ListAuditLogEntries(*v1.ListAuditLo
 }
 func (UnimplementedCerbosAdminServiceServer) AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddOrUpdateSchema not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) AddSchema(context.Context, *v1.AddSchemaRequest) (*v11.AddSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddSchema not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) ListSchemas(context.Context, *v1.ListSchemasRequest) (*v11.ListSchemasResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSchemas not implemented")
@@ -771,6 +787,24 @@ func _CerbosAdminService_AddOrUpdateSchema_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosAdminService_AddSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.AddSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).AddSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CerbosAdminService_AddSchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).AddSchema(ctx, req.(*v1.AddSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CerbosAdminService_ListSchemas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1.ListSchemasRequest)
 	if err := dec(in); err != nil {
@@ -889,6 +923,10 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddOrUpdateSchema",
 			Handler:    _CerbosAdminService_AddOrUpdateSchema_Handler,
+		},
+		{
+			MethodName: "AddSchema",
+			Handler:    _CerbosAdminService_AddSchema_Handler,
 		},
 		{
 			MethodName: "ListSchemas",
