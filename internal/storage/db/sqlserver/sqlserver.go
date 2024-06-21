@@ -117,8 +117,7 @@ END`
 	}
 
 	id, _ := p.ID.Value()
-
-	_, err = stmt.ExecContext(ctx,
+	if _, err := stmt.ExecContext(ctx,
 		sql.Named("definition", definition),
 		sql.Named("description", p.Description),
 		sql.Named("disabled", p.Disabled),
@@ -126,8 +125,8 @@ END`
 		sql.Named("name", p.Name),
 		sql.Named("version", p.Version),
 		sql.Named("scope", p.Scope),
-		sql.Named("id", int64(id.(uint64))))
-	if err != nil {
+		sql.Named("id", int64(id.(uint64))),
+	); err != nil {
 		//nolint: errorlint
 		if mssqlErr, ok := err.(interface{ SQLErrorNumber() int32 }); ok && mssqlErr.SQLErrorNumber() == constraintViolationErrCode {
 			switch mode {
@@ -150,7 +149,7 @@ func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
 		query = `INSERT INTO dbo.[attr_schema_defs] ("definition", "id") VALUES (@definition, @id)`
 	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
-		query = `INSERT INTO dbo.[attr_schema_defs] ("definition", "id") VALUES (@definition, @id)
+		query = `INSERT INTO dbo.[attr_schema_defs] ("definition", "id")
 	SELECT * FROM (values(@definition, @id)) AS v("definition", "id")
 	WHERE NOT EXISTS (SELECT 1 FROM dbo.[attr_schema_defs] s WITH (updlock) WHERE v.[id] = s.[id])`
 	case requestv1.AddMode_ADD_MODE_OVERWRITE:
@@ -173,6 +172,7 @@ END`
 	if err != nil {
 		return fmt.Errorf("failed to marshal schema JSON: %w", err)
 	}
+
 	if _, err := stmt.ExecContext(ctx, sql.Named("definition", definition), sql.Named("id", schema.ID)); err != nil {
 		//nolint: errorlint
 		if mssqlErr, ok := err.(interface{ SQLErrorNumber() int32 }); ok && mssqlErr.SQLErrorNumber() == constraintViolationErrCode {
@@ -182,7 +182,7 @@ END`
 		return fmt.Errorf("failed to add schema %s: %w", schema.ID, err)
 	}
 
-	return err
+	return nil
 }
 
 func CreateSchema(r io.Reader, db *sqlx.DB, f func() (*sqlx.DB, error)) error {

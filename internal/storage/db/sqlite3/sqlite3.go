@@ -174,40 +174,47 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 				return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
 			}
 
-			if affected, err := res.RowsAffected(); err != nil {
-				return fmt.Errorf("failed to get status of policy %s: %w", p.FQN, err)
-			} else if affected != 1 {
-				return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
+			if n, err := res.RowsAffected(); err != nil {
+				return fmt.Errorf("failed to check status of policy %s: %w", p.FQN, err)
+			} else if n != 1 && mode == requestv1.AddMode_ADD_MODE_OVERWRITE {
+				return fmt.Errorf("policy ID collision for %s: %w", p.FQN, storage.ErrPolicyIDCollision)
 			}
+
+			return nil
 		default:
 			return storage.ErrUnsupportedAddMode
 		}
-
-		return nil
 	}
 
 	return nil
 }
 
 func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, schema internal.Schema) error {
-	query := tx.Insert(internal.SchemaTbl).Rows(schema)
-	switch mode {
-	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
-	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
-		query = query.OnConflict(goqu.DoNothing())
-	case requestv1.AddMode_ADD_MODE_OVERWRITE:
-		query = query.OnConflict(goqu.DoUpdate(internal.SchemaTblIDCol, schema))
-	default:
-		return storage.ErrUnsupportedAddMode
-	}
-
-	if _, err := query.Executor().ExecContext(ctx); err != nil {
+	if _, err := tx.Insert(internal.SchemaTbl).Rows(schema).Executor().ExecContext(ctx); err != nil {
 		sqliteErr := new(gosqlite3.Error)
-		if errors.As(err, &sqliteErr) && sqliteErr.Code() == gosqlite3lib.SQLITE_CONSTRAINT_PRIMARYKEY {
-			return storage.NewAlreadyExistsError(schema.ID)
+		if !errors.As(err, &sqliteErr) || sqliteErr.Code() != gosqlite3lib.SQLITE_CONSTRAINT_PRIMARYKEY {
+			return fmt.Errorf("failed to insert schema %s: %w", schema.ID, err)
 		}
 
-		return fmt.Errorf("failed to add schema %s: %w", schema.ID, err)
+		switch mode {
+		case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+			return storage.NewAlreadyExistsError(schema.ID)
+		case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+			return nil
+		case requestv1.AddMode_ADD_MODE_OVERWRITE:
+			if _, err := tx.Update(internal.SchemaTbl).
+				Prepared(true).
+				Set(schema).
+				Where(goqu.C(internal.SchemaTblIDCol).Eq(schema.ID)).
+				Executor().
+				ExecContext(ctx); err != nil {
+				return fmt.Errorf("failed to update schema %s: %w", schema.ID, err)
+			}
+
+			return nil
+		default:
+			return storage.ErrUnsupportedAddMode
+		}
 	}
 
 	return nil

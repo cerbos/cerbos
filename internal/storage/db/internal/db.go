@@ -94,9 +94,9 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, mode requestv1.AddMod
 		return errUpsertSchemaRequired
 	}
 
-	events := make([]storage.Event, 0, len(schemas))
+	events := make([]storage.Event, len(schemas))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
-		for _, sch := range schemas {
+		for i, sch := range schemas {
 			var def json.RawMessage
 			if err := json.Unmarshal(sch.Definition, &def); err != nil {
 				return storage.NewInvalidSchemaError(err, "schema definition with ID %q is not valid", sch.Id)
@@ -111,22 +111,12 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, mode requestv1.AddMod
 				ID:         sch.Id,
 				Definition: &defJSON,
 			}
-			var err error
 
-			if s.opts.upsertSchema != nil {
-				err = s.opts.upsertSchema(ctx, mode, tx, row)
-			} else {
-				_, err = tx.Insert(SchemaTbl).
-					Rows(row).
-					OnConflict(goqu.DoUpdate(SchemaTblIDCol, row)).
-					Executor().
-					ExecContext(ctx)
-			}
-			if err != nil {
-				return fmt.Errorf("failed to upsert the schema with id %s: %w", sch.Id, err)
+			if err := s.opts.upsertSchema(ctx, mode, tx, row); err != nil {
+				return fmt.Errorf("failed to add schema %s: %w", sch.Id, err)
 			}
 
-			events = append(events, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sch.Id))
+			events[i] = storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sch.Id)
 		}
 		return nil
 	})
@@ -236,7 +226,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, mode requestv1.AddMode, pol
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for i, p := range policies {
 			if err := s.opts.upsertPolicy(ctx, mode, tx, p); err != nil {
-				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
+				return fmt.Errorf("failed to add policy %s: %w", p.FQN, err)
 			}
 
 			dependencies := p.Dependencies()

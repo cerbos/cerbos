@@ -209,35 +209,41 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 				)).Executor().ExecContext(ctx); err != nil {
 				return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
 			}
+
+			return nil
 		default:
 			return storage.ErrUnsupportedAddMode
 		}
-
-		return nil
 	}
 
 	return nil
 }
 
 func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, schema internal.Schema) error {
-	query := tx.Insert(internal.SchemaTbl).Rows(schema)
-	switch mode {
-	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
-	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
-		query = query.OnConflict(goqu.DoNothing())
-	case requestv1.AddMode_ADD_MODE_OVERWRITE:
-		query = query.OnConflict(goqu.DoUpdate(internal.SchemaTblIDCol, schema))
-	default:
-		return storage.ErrUnsupportedAddMode
-	}
-
-	if _, err := query.Executor().ExecContext(ctx); err != nil {
+	if _, err := tx.Insert(internal.SchemaTbl).Rows(schema).Executor().ExecContext(ctx); err != nil {
 		mysqlErr := new(mysql.MySQLError)
-		if errors.As(err, &mysqlErr) && mysqlErr.Number == constraintViolationErrCode {
-			return storage.NewAlreadyExistsError(schema.ID)
+		if !errors.As(err, &mysqlErr) || mysqlErr.Number != constraintViolationErrCode {
+			return fmt.Errorf("failed to insert schema %s: %w", schema.ID, err)
 		}
 
-		return fmt.Errorf("failed to add schema %s: %w", schema.ID, err)
+		switch mode {
+		case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+			return storage.NewAlreadyExistsError(schema.ID)
+		case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+			return nil
+		case requestv1.AddMode_ADD_MODE_OVERWRITE:
+			if _, err := tx.Update(internal.SchemaTbl).
+				Prepared(true).
+				Set(schema).
+				Where(goqu.C(internal.SchemaTblIDCol).Eq(schema.ID)).
+				Executor().
+				ExecContext(ctx); err != nil {
+				return fmt.Errorf("failed to update schema %s: %w", schema.ID, err)
+			}
+			return nil
+		default:
+			return storage.ErrUnsupportedAddMode
+		}
 	}
 
 	return nil

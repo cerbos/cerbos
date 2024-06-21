@@ -12,10 +12,10 @@ import (
 
 	// Import the postgres dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	pgxzap "github.com/jackc/pgx-zap"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/tracelog"
 	"go.uber.org/zap"
@@ -120,7 +120,7 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 
 	res, err := query.Executor().ExecContext(ctx)
 	if err != nil {
-		var pgErr *pgconn.PgError
+		pgErr := new(pgconn.PgError)
 		if errors.As(err, &pgErr) {
 			if pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
 				return storage.NewAlreadyExistsError(p.FQN)
@@ -129,10 +129,10 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 		return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
 	}
 
-	if updated, err := res.RowsAffected(); err != nil {
+	if n, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("failed to check status of policy %s: %w", p.FQN, err)
-	} else if updated != 1 {
-		return fmt.Errorf("failed to update policy %s: %w", p.FQN, storage.ErrPolicyIDCollision)
+	} else if n != 1 && mode == requestv1.AddMode_ADD_MODE_OVERWRITE {
+		return fmt.Errorf("policy ID collision for %s: %w", p.FQN, storage.ErrPolicyIDCollision)
 	}
 
 	return nil
@@ -141,17 +141,17 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, schema internal.Schema) error {
 	query := tx.Insert(internal.SchemaTbl).Rows(schema)
 	switch mode {
-	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
 	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
 		query = query.OnConflict(goqu.DoNothing())
 	case requestv1.AddMode_ADD_MODE_OVERWRITE:
 		query = query.OnConflict(goqu.DoUpdate(internal.SchemaTblIDCol, schema))
+	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
 	default:
 		return storage.ErrUnsupportedAddMode
 	}
 
 	if _, err := query.Executor().ExecContext(ctx); err != nil {
-		var pgErr *pgconn.PgError
+		pgErr := new(pgconn.PgError)
 		if errors.As(err, &pgErr) {
 			if pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
 				return storage.NewAlreadyExistsError(schema.ID)

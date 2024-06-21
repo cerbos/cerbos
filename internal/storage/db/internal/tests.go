@@ -9,6 +9,7 @@ package internal
 import (
 	"context"
 	"io"
+	"slices"
 	"testing"
 	"time"
 
@@ -25,7 +26,11 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-const timeout = 2 * time.Second
+const (
+	timeout               = 2 * time.Second
+	leaveRequestSchemaID  = "leave_request"
+	purchaseOrderSchemaID = "purchase_order"
+)
 
 //nolint:mnd
 func TestSuite(store DBStorage) func(*testing.T) {
@@ -40,6 +45,8 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
+		rpy := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("y", "y")))
+		dry := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("y", "y")))
 
 		rpAcme := withScope(test.GenResourcePolicy(test.NoMod()), "acme")
 		rpAcmeHR := withScope(test.GenResourcePolicy(test.NoMod()), "acme.hr")
@@ -64,20 +71,22 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		xevx := policy.Wrap(test.GenExportVariables(test.PrefixAndSuffix("x", "x")))
 
-		policyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables, rpDupe1, ppDupe1, drDupe1, evDupe1, xevx}
+		initialPolicyList := []policy.Wrapper{rp, pp, dr, ev, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR, drImportVariables, rpImportDerivedRolesThatImportVariables, rpDupe1, ppDupe1, drDupe1, evDupe1, xevx}
+		fullPolicyList := slices.Concat([]policy.Wrapper{rpy, dry}, initialPolicyList)
+
 		policyMap := make(map[string]policy.Wrapper)
-		for _, p := range policyList {
+		for _, p := range fullPolicyList {
 			policyMap[namer.PolicyKeyFromFQN(p.FQN)] = p
 		}
 
-		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
-		const schID = "leave_request"
+		leaveRequestSchema := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
+		purchaseOrderSchema := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/purchase_order.json"))
 
 		addPolicies := func(t *testing.T) {
 			t.Helper()
 
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, policyList...))
+			require.NoError(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, initialPolicyList...))
 
 			wantEvents := []storage.Event{
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
@@ -109,8 +118,65 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		}
 
 		t.Run("add_or_update", func(t *testing.T) {
-			t.Run("add", addPolicies)
-			t.Run("update", addPolicies)
+			t.Run("mode=replace/add", addPolicies)
+			t.Run("mode=replace/update", addPolicies)
+
+			t.Run("mode=skip", func(t *testing.T) {
+				checkEvents := storage.TestSubscription(store)
+				require.NoError(t, store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS, fullPolicyList...))
+
+				// There's no reliable, database-agnostic way to detect what was actually changed. So, we expect to see events for everything.
+				wantEvents := []storage.Event{
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpy.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dry.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: pp.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ev.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcme.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHR.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHRUK.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcme.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcmeHR.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drImportVariables.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpImportDerivedRolesThatImportVariables.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpDupe1.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppDupe1.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drDupe1.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: evDupe1.ID},
+					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: xevx.ID},
+				}
+				checkEvents(t, timeout, wantEvents...)
+
+				stats := store.RepoStats(ctx)
+				require.Equal(t, 8, stats.PolicyCount[policy.ResourceKind])
+				require.Equal(t, 4, stats.PolicyCount[policy.PrincipalKind])
+				require.Equal(t, 5, stats.PolicyCount[policy.DerivedRolesKind])
+				require.Equal(t, 3, stats.PolicyCount[policy.ExportVariablesKind])
+			})
+
+			t.Run("mode=fail", func(t *testing.T) {
+				stats := store.RepoStats(ctx)
+				require.Equal(t, 8, stats.PolicyCount[policy.ResourceKind])
+				require.Equal(t, 4, stats.PolicyCount[policy.PrincipalKind])
+				require.Equal(t, 5, stats.PolicyCount[policy.DerivedRolesKind])
+				require.Equal(t, 3, stats.PolicyCount[policy.ExportVariablesKind])
+
+				rpz := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("z", "z")))
+				drz := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("z", "z")))
+				policies := slices.Concat([]policy.Wrapper{rpz, drz}, initialPolicyList)
+				err := store.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS, policies...)
+				require.Error(t, err)
+				require.ErrorAs(t, err, &storage.AlreadyExistsError{})
+
+				stats = store.RepoStats(ctx)
+				require.Equal(t, 8, stats.PolicyCount[policy.ResourceKind])
+				require.Equal(t, 4, stats.PolicyCount[policy.PrincipalKind])
+				require.Equal(t, 5, stats.PolicyCount[policy.DerivedRolesKind])
+				require.Equal(t, 3, stats.PolicyCount[policy.ExportVariablesKind])
+			})
 		})
 
 		t.Run("add_id_collision", func(t *testing.T) {
@@ -171,7 +237,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("get_non_existent_compilation_unit", func(t *testing.T) {
-			p := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("y", "y")))
+			p := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("z", "z")))
 			have, err := store.GetCompilationUnits(ctx, p.ID)
 			require.NoError(t, err)
 			require.Empty(t, have)
@@ -210,7 +276,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("get_policy", func(t *testing.T) {
-			for _, want := range policyList {
+			for _, want := range initialPolicyList {
 				want := want
 				t.Run(want.FQN, func(t *testing.T) {
 					haveRes, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(want.FQN))
@@ -230,10 +296,10 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			t.Run("should be able to list policies", func(t *testing.T) {
 				have, err := store.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
 				require.NoError(t, err)
-				require.Len(t, have, len(policyList))
+				require.Len(t, have, len(fullPolicyList))
 
-				want := make([]string, len(policyList))
-				for i, p := range policyList {
+				want := make([]string, len(fullPolicyList))
+				for i, p := range fullPolicyList {
 					want[i] = namer.PolicyKeyFromFQN(p.FQN)
 				}
 
@@ -303,7 +369,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				t.Run("should be able to filter policies "+tc.name, func(t *testing.T) {
 					have, err := store.ListPolicyIDs(ctx, tc.params)
 					require.NoError(t, err)
-					filteredPolicyList := test.FilterPolicies(t, policyList, tc.params)
+					filteredPolicyList := test.FilterPolicies(t, fullPolicyList, tc.params)
 					require.Greater(t, len(filteredPolicyList), 0)
 					require.Len(t, have, len(filteredPolicyList))
 
@@ -330,40 +396,78 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			checkEvents(t, timeout, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: rpx.ID})
 		})
 
-		t.Run("add_schema", func(t *testing.T) {
+		addSchema := func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdateSchema(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, &schemav1.Schema{Id: schID, Definition: sch}))
+			require.NoError(t, store.AddOrUpdateSchema(ctx, requestv1.AddMode_ADD_MODE_OVERWRITE, &schemav1.Schema{Id: leaveRequestSchemaID, Definition: leaveRequestSchema}))
 
-			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, leaveRequestSchemaID))
 
 			stats := store.RepoStats(ctx)
 			require.Equal(t, 1, stats.SchemaCount)
+		}
+
+		t.Run("add_schema", func(t *testing.T) {
+			t.Run("mode=replace/add", addSchema)
+			t.Run("mode=replace/update", addSchema)
+
+			t.Run("mode=skip", func(t *testing.T) {
+				checkEvents := storage.TestSubscription(store)
+				require.NoError(t, store.AddOrUpdateSchema(ctx, requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS,
+					&schemav1.Schema{Id: leaveRequestSchemaID, Definition: leaveRequestSchema},
+					&schemav1.Schema{Id: purchaseOrderSchemaID, Definition: purchaseOrderSchema},
+				))
+
+				// There's no reliable, database-agnostic way to detect what was actually changed. So, we expect events for everything.
+				checkEvents(t, timeout,
+					storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, leaveRequestSchemaID),
+					storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, purchaseOrderSchemaID),
+				)
+
+				stats := store.RepoStats(ctx)
+				require.Equal(t, 2, stats.SchemaCount)
+			})
+
+			t.Run("mode=fail", func(t *testing.T) {
+				stats := store.RepoStats(ctx)
+				require.Equal(t, 2, stats.SchemaCount)
+
+				salaryRecordSchema := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/salary_record.json"))
+				err := store.AddOrUpdateSchema(ctx, requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS,
+					&schemav1.Schema{Id: leaveRequestSchemaID, Definition: leaveRequestSchema},
+					&schemav1.Schema{Id: "salary_record", Definition: salaryRecordSchema},
+				)
+				require.Error(t, err)
+				require.ErrorAs(t, err, &storage.AlreadyExistsError{})
+
+				stats = store.RepoStats(ctx)
+				require.Equal(t, 2, stats.SchemaCount)
+			})
 		})
 
 		t.Run("get_schema", func(t *testing.T) {
 			t.Run("should be able to get schema", func(t *testing.T) {
-				schema, err := store.LoadSchema(ctx, schID)
+				schema, err := store.LoadSchema(ctx, leaveRequestSchemaID)
 				require.NoError(t, err)
 				require.NotEmpty(t, schema)
 				schBytes, err := io.ReadAll(schema)
 				require.NoError(t, err)
 				require.NotEmpty(t, schBytes)
-				require.JSONEq(t, string(sch), string(schBytes))
+				require.JSONEq(t, string(leaveRequestSchema), string(schBytes))
 			})
 		})
 
 		t.Run("delete_schema", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 
-			deletedSchemas, err := store.DeleteSchema(ctx, schID)
+			deletedSchemas, err := store.DeleteSchema(ctx, leaveRequestSchemaID)
 			require.NoError(t, err)
 			require.Equal(t, uint32(1), deletedSchemas)
 
-			have, err := store.LoadSchema(ctx, schID)
+			have, err := store.LoadSchema(ctx, leaveRequestSchemaID)
 			require.Error(t, err)
 			require.Empty(t, have)
 
-			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, schID))
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, leaveRequestSchemaID))
 		})
 	}
 }
