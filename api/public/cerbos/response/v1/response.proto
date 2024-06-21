@@ -496,14 +496,7 @@ message AddSchemaResponse {
     json_schema: {description: "Add schema response"}
   };
 
-  message Failure {
-    string message = 1;
-  }
-
-  oneof result {
-    google.protobuf.Empty success = 1;
-    Failure failure = 2;
-  }
+  google.protobuf.Empty success = 1;
 }
 
 message ListSchemasResponse {
@@ -541,14 +534,7 @@ message AddPolicyResponse {
     json_schema: {description: "Add policy response"}
   };
 
-  message Failure {
-    string message = 1;
-  }
-
-  oneof result {
-    google.protobuf.Empty success = 1;
-    Failure failure = 2;
-  }
+  google.protobuf.Empty success = 1;
 }
 
 message DeletePolicyResponse {

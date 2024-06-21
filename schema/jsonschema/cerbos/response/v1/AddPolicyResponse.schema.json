@@ -2,15 +2,6 @@
   "$id": "https://api.cerbos.dev/cerbos/response/v1/AddPolicyResponse.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.AddPolicyResponse.Failure": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "google.protobuf.Empty": {
       "title": "Empty",
       "description": "A generic empty message.",
@@ -21,9 +12,6 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "failure": {
-      "$ref": "#/definitions/cerbos.response.v1.AddPolicyResponse.Failure"
-    },
     "success": {
       "$ref": "#/definitions/google.protobuf.Empty"
     }

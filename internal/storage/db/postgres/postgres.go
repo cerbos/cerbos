@@ -107,7 +107,7 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 	switch mode {
 	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
 		query = query.OnConflict(goqu.DoNothing())
-	case requestv1.AddMode_ADD_MODE_OVERWRITE:
+	case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
 		query = query.OnConflict(goqu.DoUpdate(internal.PolicyTblIDCol, pr).
 			Where(
 				goqu.L("EXCLUDED." + internal.PolicyTblNameCol).Eq(goqu.L("p." + internal.PolicyTblNameCol)),
@@ -131,7 +131,7 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 
 	if n, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("failed to check status of policy %s: %w", p.FQN, err)
-	} else if n != 1 && mode == requestv1.AddMode_ADD_MODE_OVERWRITE {
+	} else if n != 1 && mode == requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS {
 		return fmt.Errorf("policy ID collision for %s: %w", p.FQN, storage.ErrPolicyIDCollision)
 	}
 
@@ -143,7 +143,7 @@ func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 	switch mode {
 	case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
 		query = query.OnConflict(goqu.DoNothing())
-	case requestv1.AddMode_ADD_MODE_OVERWRITE:
+	case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
 		query = query.OnConflict(goqu.DoUpdate(internal.SchemaTblIDCol, schema))
 	case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
 	default:

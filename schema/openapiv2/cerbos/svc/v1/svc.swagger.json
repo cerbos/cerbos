@@ -338,7 +338,7 @@
       },
       "post": {
         "summary": "Add or update policies",
-        "description": "[Deprecated: Use AddPolicy API with mode=ADD_MODE_OVERWRITE instead.]",
+        "description": "[Deprecated: Use AddPolicy API with mode=ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdatePolicy",
         "responses": {
           "200": {
@@ -377,7 +377,7 @@
       },
       "put": {
         "summary": "Add or update policies",
-        "description": "[Deprecated: Use AddPolicy API with mode=ADD_MODE_OVERWRITE instead.]",
+        "description": "[Deprecated: Use AddPolicy API with mode=ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdatePolicy2",
         "responses": {
           "200": {
@@ -478,82 +478,6 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1AddPolicyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      }
-    },
-    "/admin/policy/delete": {
-      "post": {
-        "summary": "Delete policy",
-        "operationId": "CerbosAdminService_DeletePolicy",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1DeletePolicyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Delete policy request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1DeletePolicyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
-      "put": {
-        "summary": "Delete policy",
-        "operationId": "CerbosAdminService_DeletePolicy2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1DeletePolicyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Delete policy request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1DeletePolicyRequest"
             }
           }
         ],
@@ -723,82 +647,6 @@
         ]
       }
     },
-    "/admin/policy/patch": {
-      "post": {
-        "summary": "Patch policy",
-        "operationId": "CerbosAdminService_PatchPolicy",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PatchPolicyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Patch an existing policy",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1PatchPolicyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
-      "put": {
-        "summary": "Patch policy",
-        "operationId": "CerbosAdminService_PatchPolicy2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PatchPolicyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Patch an existing policy",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1PatchPolicyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      }
-    },
     "/admin/schema": {
       "get": {
         "summary": "Get schema",
@@ -880,7 +728,7 @@
       },
       "post": {
         "summary": "Add or update schema",
-        "description": "[Deprecated: Use AddSchema with mode ADD_MODE_OVERWRITE instead.]",
+        "description": "[Deprecated: Use AddSchema with mode ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdateSchema",
         "responses": {
           "200": {
@@ -919,7 +767,7 @@
       },
       "put": {
         "summary": "Add or update schema",
-        "description": "[Deprecated: Use AddSchema with mode ADD_MODE_OVERWRITE instead.]",
+        "description": "[Deprecated: Use AddSchema with mode ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdateSchema2",
         "responses": {
           "200": {
@@ -1848,7 +1696,7 @@
       "type": "string",
       "enum": [
         "ADD_MODE_UNSPECIFIED",
-        "ADD_MODE_OVERWRITE",
+        "ADD_MODE_REPLACE_IF_EXISTS",
         "ADD_MODE_SKIP_IF_EXISTS",
         "ADD_MODE_FAIL_IF_EXISTS"
       ],
@@ -1934,20 +1782,9 @@
         "success": {
           "type": "object",
           "properties": {}
-        },
-        "failure": {
-          "$ref": "#/definitions/v1AddPolicyResponseFailure"
         }
       },
       "description": "Add policy response"
-    },
-    "v1AddPolicyResponseFailure": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
     },
     "v1AddSchemaRequest": {
       "type": "object",
@@ -1977,20 +1814,9 @@
         "success": {
           "type": "object",
           "properties": {}
-        },
-        "failure": {
-          "$ref": "#/definitions/v1AddSchemaResponseFailure"
         }
       },
       "description": "Add schema response"
-    },
-    "v1AddSchemaResponseFailure": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
     },
     "v1AttributesMap": {
       "type": "object",
@@ -2520,34 +2346,6 @@
         }
       }
     },
-    "v1DeletePolicyRequest": {
-      "type": "object",
-      "properties": {
-        "policyIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of policy identifiers.",
-          "maxItems": 100,
-          "minItems": 1
-        }
-      },
-      "description": "Delete policy request",
-      "required": [
-        "policyIds"
-      ]
-    },
-    "v1DeletePolicyResponse": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "object",
-          "properties": {}
-        }
-      },
-      "description": "Delete policy response"
-    },
     "v1DeleteSchemaResponse": {
       "type": "object",
       "properties": {
@@ -2874,46 +2672,6 @@
         }
       }
     },
-    "v1PatchPolicyRequest": {
-      "type": "object",
-      "properties": {
-        "patches": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1PolicyPatch"
-          },
-          "description": "List of patches.",
-          "maxItems": 100,
-          "minItems": 1
-        }
-      },
-      "description": "Patch an existing policy",
-      "required": [
-        "patches"
-      ]
-    },
-    "v1PatchPolicyResponse": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "object",
-          "properties": {}
-        },
-        "failure": {
-          "$ref": "#/definitions/v1PatchPolicyResponseFailure"
-        }
-      },
-      "description": "Patch policy response"
-    },
-    "v1PatchPolicyResponseFailure": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "v1Peer": {
       "type": "object",
       "properties": {
@@ -3171,35 +2929,6 @@
           "type": "string"
         }
       }
-    },
-    "v1PolicyPatch": {
-      "type": "object",
-      "properties": {
-        "operation": {
-          "$ref": "#/definitions/v1PolicyPatchOperation"
-        },
-        "resourcePolicy": {
-          "$ref": "#/definitions/v1ResourcePolicy"
-        },
-        "principalPolicy": {
-          "$ref": "#/definitions/v1PrincipalPolicy"
-        },
-        "derivedRoles": {
-          "$ref": "#/definitions/v1DerivedRoles"
-        },
-        "exportVariables": {
-          "$ref": "#/definitions/v1ExportVariables"
-        }
-      }
-    },
-    "v1PolicyPatchOperation": {
-      "type": "string",
-      "enum": [
-        "OPERATION_UNSPECIFIED",
-        "OPERATION_MERGE",
-        "OPERATION_REPLACE"
-      ],
-      "default": "OPERATION_UNSPECIFIED"
     },
     "v1PrincipalPolicy": {
       "type": "object",

@@ -198,7 +198,7 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 			return nil
 		case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
 			return storage.NewAlreadyExistsError(p.FQN)
-		case requestv1.AddMode_ADD_MODE_OVERWRITE:
+		case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
 			// attempt update
 			if _, err := tx.Update(internal.PolicyTbl).
 				Prepared(true).
@@ -231,7 +231,7 @@ func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 			return storage.NewAlreadyExistsError(schema.ID)
 		case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
 			return nil
-		case requestv1.AddMode_ADD_MODE_OVERWRITE:
+		case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
 			if _, err := tx.Update(internal.SchemaTbl).
 				Prepared(true).
 				Set(schema).

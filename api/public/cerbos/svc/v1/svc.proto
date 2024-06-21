@@ -108,7 +108,7 @@ service CerbosAdminService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Add or update policies"
       deprecated: true
-      description: "[Deprecated: Use AddPolicy API with mode=ADD_MODE_OVERWRITE instead.]"
+      description: "[Deprecated: Use AddPolicy API with mode=ADD_MODE_REPLACE_IF_EXISTS instead.]"
       security: {
         security_requirement: {
           key: "BasicAuth"
@@ -129,46 +129,6 @@ service CerbosAdminService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Add policy"
-      security: {
-        security_requirement: {
-          key: "BasicAuth"
-          value: {}
-        }
-      }
-    };
-  }
-
-  rpc DeletePolicy(cerbos.request.v1.DeletePolicyRequest) returns (cerbos.response.v1.DeletePolicyResponse) {
-    option (google.api.http) = {
-      post: "/admin/policy/delete"
-      body: "*"
-      additional_bindings: {
-        put: "/admin/policy/delete"
-        body: "*"
-      }
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Delete policy"
-      security: {
-        security_requirement: {
-          key: "BasicAuth"
-          value: {}
-        }
-      }
-    };
-  }
-
-  rpc PatchPolicy(cerbos.request.v1.PatchPolicyRequest) returns (cerbos.response.v1.PatchPolicyResponse) {
-    option (google.api.http) = {
-      post: "/admin/policy/patch"
-      body: "*"
-      additional_bindings: {
-        put: "/admin/policy/patch"
-        body: "*"
-      }
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Patch policy"
       security: {
         security_requirement: {
           key: "BasicAuth"
@@ -281,7 +241,7 @@ service CerbosAdminService {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Add or update schema"
       deprecated: true
-      description: "[Deprecated: Use AddSchema with mode ADD_MODE_OVERWRITE instead.]"
+      description: "[Deprecated: Use AddSchema with mode ADD_MODE_REPLACE_IF_EXISTS instead.]"
       security: {
         security_requirement: {
           key: "BasicAuth"

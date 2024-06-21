@@ -95,7 +95,7 @@ func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 		query = `INSERT INTO dbo.[policy] ("definition", "description", "disabled", "kind", "name", "version", "scope", "id")
 	SELECT * FROM (values(@definition, @description, @disabled, @kind, @name, @version, @scope, @id)) AS v("definition", "description", "disabled", "kind", "name", "version", "scope", "id")
 	WHERE NOT EXISTS (SELECT 1 FROM [dbo].[policy] p WITH (updlock) WHERE v.[id] = p.[id])`
-	case requestv1.AddMode_ADD_MODE_OVERWRITE:
+	case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
 		query = `UPDATE dbo.[policy] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition, "description"=@description,"disabled"=@disabled,"kind"=@kind,"version"=@version,"scope"=@scope where [id] = @id AND [name] = @name
 IF @@ROWCOUNT = 0
 BEGIN
@@ -132,8 +132,10 @@ END`
 			switch mode {
 			case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
 				return storage.NewAlreadyExistsError(p.FQN)
-			case requestv1.AddMode_ADD_MODE_OVERWRITE:
+			case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
 				return fmt.Errorf("policy ID collision for policy %s: %w", p.FQN, storage.ErrPolicyIDCollision)
+			default:
+				return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
 			}
 		}
 
@@ -152,7 +154,7 @@ func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDataba
 		query = `INSERT INTO dbo.[attr_schema_defs] ("definition", "id")
 	SELECT * FROM (values(@definition, @id)) AS v("definition", "id")
 	WHERE NOT EXISTS (SELECT 1 FROM dbo.[attr_schema_defs] s WITH (updlock) WHERE v.[id] = s.[id])`
-	case requestv1.AddMode_ADD_MODE_OVERWRITE:
+	case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
 		query = `UPDATE dbo.[attr_schema_defs] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition WHERE [id] = @id
 IF @@ROWCOUNT = 0
 BEGIN

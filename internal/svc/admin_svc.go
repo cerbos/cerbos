@@ -80,17 +80,26 @@ func (cas *CerbosAdminService) AddPolicy(ctx context.Context, req *requestv1.Add
 	}
 
 	log := logging.ReqScopeLog(ctx)
-	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
-		log.Error("Failed to add/update policies", zap.Error(err))
+	if err := ms.AddOrUpdate(ctx, req.GetMode(), policies...); err != nil {
 		if errors.Is(err, storage.ErrPolicyIDCollision) {
+			log.Warn("Failed to add policies due to policy ID collision", zap.Error(err))
 			return nil, status.Error(codes.FailedPrecondition, "Policy ID conflict")
 		}
 
 		invalidPolicyErr := new(storage.InvalidPolicyError)
 		if errors.As(err, invalidPolicyErr) {
+			log.Warn("Failed to add policies due to invalid policy", zap.Error(err))
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid policy: %v", invalidPolicyErr.Message)
 		}
-		return nil, status.Error(codes.Internal, "Failed to add/update policies")
+
+		alreadyExistsErr := new(storage.AlreadyExistsError)
+		if errors.As(err, alreadyExistsErr) {
+			log.Warn("Failed to add policies because one or more policies already exist", zap.Error(err))
+			return nil, status.Errorf(codes.AlreadyExists, "Policy already exists: %v", alreadyExistsErr.IDs)
+		}
+
+		log.Error("Failed to add policies", zap.Error(err))
+		return nil, status.Error(codes.Internal, "Failed to add policies")
 	}
 
 	return &responsev1.AddPolicyResponse{Success: &emptypb.Empty{}}, nil
@@ -112,7 +121,7 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 	}
 
 	log := logging.ReqScopeLog(ctx)
-	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
+	if err := ms.AddOrUpdate(ctx, requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS, policies...); err != nil {
 		log.Error("Failed to add/update policies", zap.Error(err))
 		if errors.Is(err, storage.ErrPolicyIDCollision) {
 			return nil, status.Error(codes.FailedPrecondition, "Policy ID conflict")
@@ -138,7 +147,7 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	if err := ms.AddOrUpdateSchema(ctx, req.Schemas...); err != nil {
+	if err := ms.AddOrUpdateSchema(ctx, requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS, req.Schemas...); err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
 		var ise storage.InvalidSchemaError
 		if ok := errors.As(err, &ise); ok {
@@ -149,6 +158,37 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	}
 
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
+}
+
+func (cas *CerbosAdminService) AddSchema(ctx context.Context, req *requestv1.AddSchemaRequest) (*responsev1.AddSchemaResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	if err := ms.AddOrUpdateSchema(ctx, req.GetMode(), req.Schemas...); err != nil {
+		log := logging.ReqScopeLog(ctx)
+		ise := new(storage.InvalidSchemaError)
+		if ok := errors.As(err, ise); ok {
+			log.Warn("Failed to add schemas due to invalid schema", zap.Error(err))
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid schema in request: %s", ise.Message)
+		}
+
+		alreadyExistsErr := new(storage.AlreadyExistsError)
+		if errors.As(err, alreadyExistsErr) {
+			log.Warn("Failed to add schemas because one or more schemas already exist", zap.Error(err))
+			return nil, status.Errorf(codes.AlreadyExists, "Schema already exists: %v", alreadyExistsErr.IDs)
+		}
+
+		log.Error("Failed to add schemas", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Failed to add schemas")
+	}
+
+	return &responsev1.AddSchemaResponse{Success: &emptypb.Empty{}}, nil
 }
 
 func (cas *CerbosAdminService) InspectPolicies(ctx context.Context, req *requestv1.InspectPoliciesRequest) (*responsev1.InspectPoliciesResponse, error) {

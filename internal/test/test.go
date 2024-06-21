@@ -67,7 +67,7 @@ func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
 			return nil
 		}
 
-		if err := ms.AddOrUpdateSchema(context.TODO(), requestv1.AddMode_ADD_MODE_OVERWRITE, &schemav1.Schema{
+		if err := ms.AddOrUpdateSchema(context.TODO(), requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS, &schemav1.Schema{
 			Id:         path,
 			Definition: ReadSchemaFromFS(t, fsys, path),
 		}); err != nil && !errors.Is(err, &storage.InvalidSchemaError{}) {

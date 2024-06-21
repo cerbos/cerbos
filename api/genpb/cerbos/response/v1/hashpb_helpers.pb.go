@@ -1539,55 +1539,21 @@ func cerbos_response_v1_AddOrUpdatePolicyResponse_hashpb_sum(m *AddOrUpdatePolic
 func cerbos_response_v1_AddOrUpdateSchemaResponse_hashpb_sum(m *AddOrUpdateSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
-func cerbos_response_v1_AddPolicyResponse_Failure_hashpb_sum(m *AddPolicyResponse_Failure, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.AddPolicyResponse.Failure.message"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMessage()))
-
-	}
-}
-
 func cerbos_response_v1_AddPolicyResponse_hashpb_sum(m *AddPolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if m.Result != nil {
-		if _, ok := ignore["cerbos.response.v1.AddPolicyResponse.result"]; !ok {
-			switch t := m.Result.(type) {
-			case *AddPolicyResponse_Success:
-				if t.Success != nil {
-					google_protobuf_Empty_hashpb_sum(t.Success, hasher, ignore)
-				}
-
-			case *AddPolicyResponse_Failure_:
-				if t.Failure != nil {
-					cerbos_response_v1_AddPolicyResponse_Failure_hashpb_sum(t.Failure, hasher, ignore)
-				}
-
-			}
+	if _, ok := ignore["cerbos.response.v1.AddPolicyResponse.success"]; !ok {
+		if m.GetSuccess() != nil {
+			google_protobuf_Empty_hashpb_sum(m.GetSuccess(), hasher, ignore)
 		}
-	}
-}
-
-func cerbos_response_v1_AddSchemaResponse_Failure_hashpb_sum(m *AddSchemaResponse_Failure, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.AddSchemaResponse.Failure.message"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMessage()))
 
 	}
 }
 
 func cerbos_response_v1_AddSchemaResponse_hashpb_sum(m *AddSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if m.Result != nil {
-		if _, ok := ignore["cerbos.response.v1.AddSchemaResponse.result"]; !ok {
-			switch t := m.Result.(type) {
-			case *AddSchemaResponse_Success:
-				if t.Success != nil {
-					google_protobuf_Empty_hashpb_sum(t.Success, hasher, ignore)
-				}
-
-			case *AddSchemaResponse_Failure_:
-				if t.Failure != nil {
-					cerbos_response_v1_AddSchemaResponse_Failure_hashpb_sum(t.Failure, hasher, ignore)
-				}
-
-			}
+	if _, ok := ignore["cerbos.response.v1.AddSchemaResponse.success"]; !ok {
+		if m.GetSuccess() != nil {
+			google_protobuf_Empty_hashpb_sum(m.GetSuccess(), hasher, ignore)
 		}
+
 	}
 }
 

@@ -42,7 +42,7 @@
     "mode": {
       "type": "string",
       "enum": [
-        "ADD_MODE_OVERWRITE",
+        "ADD_MODE_REPLACE_IF_EXISTS",
         "ADD_MODE_SKIP_IF_EXISTS",
         "ADD_MODE_FAIL_IF_EXISTS"
       ]

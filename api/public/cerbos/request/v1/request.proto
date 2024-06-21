@@ -754,7 +754,7 @@ message ReloadStoreRequest {
 
 enum AddMode {
   ADD_MODE_UNSPECIFIED = 0;
-  ADD_MODE_OVERWRITE = 1;
+  ADD_MODE_REPLACE_IF_EXISTS = 1;
   ADD_MODE_SKIP_IF_EXISTS = 2;
   ADD_MODE_FAIL_IF_EXISTS = 3;
 }
