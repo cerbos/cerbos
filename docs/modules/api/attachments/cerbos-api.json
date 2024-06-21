@@ -338,6 +338,7 @@
       },
       "post": {
         "summary": "Add or update policies",
+        "description": "[Deprecated: Use AddPolicy API with mode=ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdatePolicy",
         "responses": {
           "200": {
@@ -367,6 +368,7 @@
         "tags": [
           "CerbosAdminService"
         ],
+        "deprecated": true,
         "security": [
           {
             "BasicAuth": []
@@ -375,6 +377,7 @@
       },
       "put": {
         "summary": "Add or update policies",
+        "description": "[Deprecated: Use AddPolicy API with mode=ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdatePolicy2",
         "responses": {
           "200": {
@@ -398,6 +401,83 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "deprecated": true,
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/policy/add": {
+      "post": {
+        "summary": "Add policy",
+        "operationId": "CerbosAdminService_AddPolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddPolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Add policy request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddPolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add policy",
+        "operationId": "CerbosAdminService_AddPolicy2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddPolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Add policy request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddPolicyRequest"
             }
           }
         ],
@@ -648,6 +728,7 @@
       },
       "post": {
         "summary": "Add or update schema",
+        "description": "[Deprecated: Use AddSchema with mode ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdateSchema",
         "responses": {
           "200": {
@@ -677,6 +758,7 @@
         "tags": [
           "CerbosAdminService"
         ],
+        "deprecated": true,
         "security": [
           {
             "BasicAuth": []
@@ -685,6 +767,7 @@
       },
       "put": {
         "summary": "Add or update schema",
+        "description": "[Deprecated: Use AddSchema with mode ADD_MODE_REPLACE_IF_EXISTS instead.]",
         "operationId": "CerbosAdminService_AddOrUpdateSchema2",
         "responses": {
           "200": {
@@ -708,6 +791,83 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1AddOrUpdateSchemaRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "deprecated": true,
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/schema/add": {
+      "post": {
+        "summary": "Add schema",
+        "operationId": "CerbosAdminService_AddSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Add schema request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddSchemaRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add schema",
+        "operationId": "CerbosAdminService_AddSchema2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Add schema request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddSchemaRequest"
             }
           }
         ],
@@ -1532,6 +1692,16 @@
         }
       }
     },
+    "v1AddMode": {
+      "type": "string",
+      "enum": [
+        "ADD_MODE_UNSPECIFIED",
+        "ADD_MODE_REPLACE_IF_EXISTS",
+        "ADD_MODE_SKIP_IF_EXISTS",
+        "ADD_MODE_FAIL_IF_EXISTS"
+      ],
+      "default": "ADD_MODE_UNSPECIFIED"
+    },
     "v1AddOrUpdatePolicyRequest": {
       "type": "object",
       "properties": {
@@ -1583,6 +1753,70 @@
     "v1AddOrUpdateSchemaResponse": {
       "type": "object",
       "description": "Add/update schema response"
+    },
+    "v1AddPolicyRequest": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/v1AddMode"
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Policy"
+          },
+          "description": "List of policies.",
+          "maxItems": 100,
+          "minItems": 1
+        }
+      },
+      "description": "Add policy request",
+      "required": [
+        "policies"
+      ]
+    },
+    "v1AddPolicyResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      "description": "Add policy response"
+    },
+    "v1AddSchemaRequest": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/v1AddMode"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/schemav1Schema"
+          },
+          "description": "List of schemas.",
+          "maxItems": 100,
+          "minItems": 1
+        }
+      },
+      "description": "Add schema request",
+      "required": [
+        "schemas"
+      ]
+    },
+    "v1AddSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      "description": "Add schema response"
     },
     "v1AttributesMap": {
       "type": "object",

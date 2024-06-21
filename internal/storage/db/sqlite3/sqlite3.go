@@ -22,6 +22,7 @@ import (
 	gosqlite3 "modernc.org/sqlite"
 	gosqlite3lib "modernc.org/sqlite/lib"
 
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -101,7 +102,13 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	s, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db), internal.WithUpsertPolicy(upsertPolicy), internal.WithRegexpCacheOverride(&nameRegexpCache), internal.WithSourceAttributes(policy.SourceDriver(DriverName)))
+	s, err := internal.NewDBStorage(ctx,
+		goqu.New("sqlite3", db),
+		internal.WithUpsertPolicy(upsertPolicy),
+		internal.WithUpsertSchema(upsertSchema),
+		internal.WithRegexpCacheOverride(&nameRegexpCache),
+		internal.WithSourceAttributes(policy.SourceDriver(DriverName)),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +139,7 @@ func runMigrations(db *sql.DB) error {
 	return nil
 }
 
-func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
+func upsertPolicy(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, p policy.Wrapper) error {
 	pr := internal.Policy{
 		ID:          p.ID,
 		Kind:        p.Kind.String(),
@@ -150,24 +157,64 @@ func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) er
 			return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
 		}
 
-		res, err := tx.Update(internal.PolicyTbl).
-			Prepared(true).
-			Set(pr).
-			Where(goqu.And(
-				goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
-				goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
-			)).Executor().ExecContext(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
+		switch mode {
+		case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+			return nil
+		case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+			return storage.NewAlreadyExistsError(p.FQN)
+		case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
+			res, err := tx.Update(internal.PolicyTbl).
+				Prepared(true).
+				Set(pr).
+				Where(goqu.And(
+					goqu.C(internal.PolicyTblIDCol).Eq(pr.ID),
+					goqu.C(internal.PolicyTblNameCol).Eq(pr.Name),
+				)).Executor().ExecContext(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to update policy %s: %w", p.FQN, err)
+			}
+
+			if n, err := res.RowsAffected(); err != nil {
+				return fmt.Errorf("failed to check status of policy %s: %w", p.FQN, err)
+			} else if n != 1 && mode == requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS {
+				return fmt.Errorf("policy ID collision for %s: %w", p.FQN, storage.ErrPolicyIDCollision)
+			}
+
+			return nil
+		default:
+			return storage.ErrUnsupportedAddMode
+		}
+	}
+
+	return nil
+}
+
+func upsertSchema(ctx context.Context, mode requestv1.AddMode, tx *goqu.TxDatabase, schema internal.Schema) error {
+	if _, err := tx.Insert(internal.SchemaTbl).Rows(schema).Executor().ExecContext(ctx); err != nil {
+		sqliteErr := new(gosqlite3.Error)
+		if !errors.As(err, &sqliteErr) || sqliteErr.Code() != gosqlite3lib.SQLITE_CONSTRAINT_PRIMARYKEY {
+			return fmt.Errorf("failed to insert schema %s: %w", schema.ID, err)
 		}
 
-		if affected, err := res.RowsAffected(); err != nil {
-			return fmt.Errorf("failed to get status of policy %s: %w", p.FQN, err)
-		} else if affected != 1 {
-			return fmt.Errorf("failed to insert policy %s.%s: %w", p.Name, p.Version, storage.ErrPolicyIDCollision)
-		}
+		switch mode {
+		case requestv1.AddMode_ADD_MODE_FAIL_IF_EXISTS:
+			return storage.NewAlreadyExistsError(schema.ID)
+		case requestv1.AddMode_ADD_MODE_SKIP_IF_EXISTS:
+			return nil
+		case requestv1.AddMode_ADD_MODE_REPLACE_IF_EXISTS:
+			if _, err := tx.Update(internal.SchemaTbl).
+				Prepared(true).
+				Set(schema).
+				Where(goqu.C(internal.SchemaTblIDCol).Eq(schema.ID)).
+				Executor().
+				ExecContext(ctx); err != nil {
+				return fmt.Errorf("failed to update schema %s: %w", schema.ID, err)
+			}
 
-		return nil
+			return nil
+		default:
+			return storage.ErrUnsupportedAddMode
+		}
 	}
 
 	return nil

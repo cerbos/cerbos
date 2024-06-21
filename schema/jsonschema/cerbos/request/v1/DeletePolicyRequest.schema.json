@@ -1,0 +1,19 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/request/v1/DeletePolicyRequest.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "policyIds"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "policyIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100,
+      "minItems": 1
+    }
+  }
+}

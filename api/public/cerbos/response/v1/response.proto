@@ -491,6 +491,14 @@ message AddOrUpdateSchemaResponse {
   };
 }
 
+message AddSchemaResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Add schema response"}
+  };
+
+  google.protobuf.Empty success = 1;
+}
+
 message ListSchemasResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "List schema ids response"}
@@ -519,4 +527,35 @@ message ReloadStoreResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Reload store response"}
   };
+}
+
+message AddPolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Add policy response"}
+  };
+
+  google.protobuf.Empty success = 1;
+}
+
+message DeletePolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Delete policy response"}
+  };
+
+  google.protobuf.Empty success = 1;
+}
+
+message PatchPolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Patch policy response"}
+  };
+
+  message Failure {
+    string message = 1;
+  }
+
+  oneof result {
+    google.protobuf.Empty success = 1;
+    Failure failure = 2;
+  }
 }
