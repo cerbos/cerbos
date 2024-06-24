@@ -43,11 +43,11 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 		p.Println()
 	}
 
-	if len(errs.MissingScopes) > 0 {
+	if len(errs.MissingScopeDetails) > 0 {
 		p.Println(colored.Header("Missing scopes"))
-		for _, ms := range errs.MissingScopes {
-			p.Printf("scoped policy %s has missing scope(s): %s\n",
-				colored.PolicyKey(fmt.Sprintf("'%s.%s'", ms.Policy, ms.Version)),
+		for _, ms := range errs.MissingScopeDetails {
+			p.Printf("scoped policy %s has missing ancestor(s): %s\n",
+				colored.PolicyKey(ms.Policy),
 				colored.ErrorMsg(fmt.Sprintf("'%s'", strings.Join(ms.MissingScopes, "', '"))),
 			)
 		}

@@ -8,13 +8,11 @@ wantErrList:
         line: 2
         column: 11
 
-  missingScopes:
-    - policy: resource.leave_request
-      version: "20210210"
+  missingScopeDetails:
+    - policy: resource.leave_request.v20210210/acme.hr.uk
       foundScopes:
         - ""
         - acme
-        - acme.hr.uk
       missingScopes:
         - acme.hr
 

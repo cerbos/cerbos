@@ -26,7 +26,7 @@ playgroundValidate:
     "playgroundId": "test",
     "failure": {
       "errors": [
-        { "error": "Scoped policy 'resource.leave_request.vdefault' has missing scope(s): '', 'acme', 'acme.hr'" },
+        { "error": "Scoped policy 'resource.leave_request.vdefault/acme.hr.uk' has missing ancestor(s): '', 'acme', 'acme.hr'" },
       ]
     }
   }

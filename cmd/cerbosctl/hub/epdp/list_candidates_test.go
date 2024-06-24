@@ -31,7 +31,7 @@ func TestListCandidates(t *testing.T) {
 		},
 		{
 			testFile:    "ancestor_not_in_repo.txt",
-			expectedErr: "failed to build index: failed to build index: missing imports=0, missing scopes=1, duplicate definitions=0, load failures=0",
+			expectedErr: "failed to build index: failed to build index: missing imports=0, missing scopes=2, duplicate definitions=0, load failures=0",
 		},
 		{
 			testFile: "ancestors.txt",

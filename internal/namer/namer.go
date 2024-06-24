@@ -144,12 +144,8 @@ func buildFQNTree[T any](fqn, scope string, elementFn func(string) T) []T {
 }
 
 func ScopeFromFQN(fqn string) string {
-	split := strings.Split(fqn, "/")
-	if len(split) == 1 {
-		return ""
-	}
-
-	return split[1]
+	_, scope, _ := strings.Cut(fqn, "/")
+	return scope
 }
 
 // PolicyKey returns a human-friendly identifier that can be used to refer to the policy in logs and other outputs.

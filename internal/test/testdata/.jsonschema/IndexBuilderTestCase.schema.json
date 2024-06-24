@@ -57,10 +57,16 @@
             "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.MissingImport"
           }
         },
-        "missingScopes": {
+        "missingScopeDetails": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.MissingScope"
+          }
+        },
+        "missingScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -157,9 +163,6 @@
           }
         },
         "policy": {
-          "type": "string"
-        },
-        "version": {
           "type": "string"
         }
       }

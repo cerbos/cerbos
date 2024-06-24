@@ -2057,7 +2057,7 @@ func (m *IndexBuildErrors_MissingScope) MarshalToSizedBufferVT(dAtA []byte) (int
 			copy(dAtA[i:], m.MissingScopes[iNdEx])
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.MissingScopes[iNdEx])))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x1a
 		}
 	}
 	if len(m.FoundScopes) > 0 {
@@ -2066,15 +2066,8 @@ func (m *IndexBuildErrors_MissingScope) MarshalToSizedBufferVT(dAtA []byte) (int
 			copy(dAtA[i:], m.FoundScopes[iNdEx])
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.FoundScopes[iNdEx])))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
-	}
-	if len(m.Version) > 0 {
-		i -= len(m.Version)
-		copy(dAtA[i:], m.Version)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Version)))
-		i--
-		dAtA[i] = 0x12
 	}
 	if len(m.Policy) > 0 {
 		i -= len(m.Policy)
@@ -2254,6 +2247,18 @@ func (m *IndexBuildErrors) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.MissingScopeDetails) > 0 {
+		for iNdEx := len(m.MissingScopeDetails) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.MissingScopeDetails[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x3a
+		}
+	}
 	if len(m.DisabledDefs) > 0 {
 		for iNdEx := len(m.DisabledDefs) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.DisabledDefs[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -2268,12 +2273,9 @@ func (m *IndexBuildErrors) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	if len(m.MissingScopes) > 0 {
 		for iNdEx := len(m.MissingScopes) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.MissingScopes[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+			i -= len(m.MissingScopes[iNdEx])
+			copy(dAtA[i:], m.MissingScopes[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.MissingScopes[iNdEx])))
 			i--
 			dAtA[i] = 0x2a
 		}
@@ -3284,10 +3286,6 @@ func (m *IndexBuildErrors_MissingScope) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Version)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	if len(m.FoundScopes) > 0 {
 		for _, s := range m.FoundScopes {
 			l = len(s)
@@ -3391,13 +3389,19 @@ func (m *IndexBuildErrors) SizeVT() (n int) {
 		}
 	}
 	if len(m.MissingScopes) > 0 {
-		for _, e := range m.MissingScopes {
-			l = e.SizeVT()
+		for _, s := range m.MissingScopes {
+			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
 	if len(m.DisabledDefs) > 0 {
 		for _, e := range m.DisabledDefs {
+			l = e.SizeVT()
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
+	if len(m.MissingScopeDetails) > 0 {
+		for _, e := range m.MissingScopeDetails {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
@@ -9437,38 +9441,6 @@ func (m *IndexBuildErrors_MissingScope) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Version = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FoundScopes", wireType)
 			}
 			var stringLen uint64
@@ -9499,7 +9471,7 @@ func (m *IndexBuildErrors_MissingScope) UnmarshalVT(dAtA []byte) error {
 			}
 			m.FoundScopes = append(m.FoundScopes, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MissingScopes", wireType)
 			}
@@ -10038,7 +10010,7 @@ func (m *IndexBuildErrors) UnmarshalVT(dAtA []byte) error {
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MissingScopes", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -10048,25 +10020,23 @@ func (m *IndexBuildErrors) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return protohelpers.ErrInvalidLength
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return protohelpers.ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MissingScopes = append(m.MissingScopes, &IndexBuildErrors_MissingScope{})
-			if err := m.MissingScopes[len(m.MissingScopes)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.MissingScopes = append(m.MissingScopes, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
@@ -10099,6 +10069,40 @@ func (m *IndexBuildErrors) UnmarshalVT(dAtA []byte) error {
 			}
 			m.DisabledDefs = append(m.DisabledDefs, &IndexBuildErrors_Disabled{})
 			if err := m.DisabledDefs[len(m.DisabledDefs)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MissingScopeDetails", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MissingScopeDetails = append(m.MissingScopeDetails, &IndexBuildErrors_MissingScope{})
+			if err := m.MissingScopeDetails[len(m.MissingScopeDetails)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
