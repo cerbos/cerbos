@@ -18,6 +18,7 @@ import (
 	"helm.sh/helm/v3/pkg/strvals"
 
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/integrations"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/otel"
 	"github.com/cerbos/cerbos/internal/server"
@@ -125,6 +126,10 @@ func (c *Cmd) Run() error {
 			log.Warnw("Trace exporter did not shutdown cleanly", "error", err)
 		}
 	}()
+
+	if err := integrations.Init(ctx); err != nil {
+		return err
+	}
 
 	if err := server.Start(ctx); err != nil {
 		log.Errorw("Failed to start server", "error", err)

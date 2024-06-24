@@ -1,6 +1,7 @@
 ---
 name: Snapshots
 on:
+  workflow_dispatch:
   push:
     paths-ignore:
       - "docs/**"
@@ -119,6 +120,17 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
+
       - name: Install Go and cache dependencies
         uses: ./.github/actions/setup-go
         with:
@@ -134,6 +146,8 @@ jobs:
           version: latest
           args: release --config=.goreleaser.yml --clean --snapshot --skip=publish
         env:
+          AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
+          AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
@@ -169,6 +183,13 @@ jobs:
           docker push docker.io/cerbos/cerbosctl:dev-arm64
           docker manifest create docker.io/cerbos/cerbosctl:dev docker.io/cerbos/cerbosctl:dev-arm64 docker.io/cerbos/cerbosctl:dev-amd64
           docker manifest push docker.io/cerbos/cerbosctl:dev
+
+      - name: Push Cerbos dev images to ECR
+        run: |
+          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
+          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64
+          docker manifest create ${{ vars.AWS_CONTAINER_REPO }}:dev ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64 ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
+          docker manifest push ${{ vars.AWS_CONTAINER_REPO }}:dev
 
   publishProtos:
     name: Publish Protobufs
