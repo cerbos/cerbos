@@ -1,6 +1,8 @@
 include tools/tools.mk
 include hack/dev/dev.mk
 
+AWS_CONTAINER_REPO ?= "aws.local/cerbos/cerbos"
+AWS_PRODUCT_CODE ?= ""
 TELEMETRY_WRITE_KEY ?= ""
 TELEMETRY_URL ?= ""
 
@@ -138,7 +140,7 @@ build: generate lint test package
 
 .PHONY: package
 package: $(GORELEASER)
-	@ TELEMETRY_WRITE_KEY=$(TELEMETRY_WRITE_KEY) TELEMETRY_URL=$(TELEMETRY_URL) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
+	@ AWS_CONTAINER_REPO=$(AWS_CONTAINER_REPO) AWS_PRODUCT_CODE=$(AWS_PRODUCT_CODE) TELEMETRY_WRITE_KEY=$(TELEMETRY_WRITE_KEY) TELEMETRY_URL=$(TELEMETRY_URL) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
 
 .PHONY: docs
 docs: confdocs
