@@ -2,7 +2,6 @@
 name: AWS
 on:
   workflow_dispatch:
-  push:
 jobs:
   publishContainers:
     name: Publish Dev Containers
