@@ -8,7 +8,6 @@ jobs:
     name: Publish Dev Containers
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: ["tests"]
     permissions:
       id-token: write
       contents: read
