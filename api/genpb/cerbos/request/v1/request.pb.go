@@ -1839,100 +1839,6 @@ func (x *AddSchemaRequest) GetSchemas() []*v12.Schema {
 	return nil
 }
 
-type DeletePolicyRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	PolicyIds []string `protobuf:"bytes,1,rep,name=policy_ids,json=policyIds,proto3" json:"policy_ids,omitempty"`
-}
-
-func (x *DeletePolicyRequest) Reset() {
-	*x = DeletePolicyRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[27]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeletePolicyRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeletePolicyRequest) ProtoMessage() {}
-
-func (x *DeletePolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[27]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeletePolicyRequest.ProtoReflect.Descriptor instead.
-func (*DeletePolicyRequest) Descriptor() ([]byte, []int) {
-	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{27}
-}
-
-func (x *DeletePolicyRequest) GetPolicyIds() []string {
-	if x != nil {
-		return x.PolicyIds
-	}
-	return nil
-}
-
-type PatchPolicyRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Patches []*v11.PolicyPatch `protobuf:"bytes,1,rep,name=patches,proto3" json:"patches,omitempty"`
-}
-
-func (x *PatchPolicyRequest) Reset() {
-	*x = PatchPolicyRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[28]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PatchPolicyRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PatchPolicyRequest) ProtoMessage() {}
-
-func (x *PatchPolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[28]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PatchPolicyRequest.ProtoReflect.Descriptor instead.
-func (*PatchPolicyRequest) Descriptor() ([]byte, []int) {
-	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{28}
-}
-
-func (x *PatchPolicyRequest) GetPatches() []*v11.PolicyPatch {
-	if x != nil {
-		return x.Patches
-	}
-	return nil
-}
-
 type CheckResourceBatchRequest_BatchEntry struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1945,7 +1851,7 @@ type CheckResourceBatchRequest_BatchEntry struct {
 func (x *CheckResourceBatchRequest_BatchEntry) Reset() {
 	*x = CheckResourceBatchRequest_BatchEntry{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[31]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1958,7 +1864,7 @@ func (x *CheckResourceBatchRequest_BatchEntry) String() string {
 func (*CheckResourceBatchRequest_BatchEntry) ProtoMessage() {}
 
 func (x *CheckResourceBatchRequest_BatchEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[31]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2000,7 +1906,7 @@ type CheckResourcesRequest_ResourceEntry struct {
 func (x *CheckResourcesRequest_ResourceEntry) Reset() {
 	*x = CheckResourcesRequest_ResourceEntry{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[32]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2013,7 +1919,7 @@ func (x *CheckResourcesRequest_ResourceEntry) String() string {
 func (*CheckResourcesRequest_ResourceEntry) ProtoMessage() {}
 
 func (x *CheckResourcesRequest_ResourceEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[32]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2055,7 +1961,7 @@ type AuxData_JWT struct {
 func (x *AuxData_JWT) Reset() {
 	*x = AuxData_JWT{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[33]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2068,7 +1974,7 @@ func (x *AuxData_JWT) String() string {
 func (*AuxData_JWT) ProtoMessage() {}
 
 func (x *AuxData_JWT) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[33]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2110,7 +2016,7 @@ type ListAuditLogEntriesRequest_TimeRange struct {
 func (x *ListAuditLogEntriesRequest_TimeRange) Reset() {
 	*x = ListAuditLogEntriesRequest_TimeRange{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[34]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2123,7 +2029,7 @@ func (x *ListAuditLogEntriesRequest_TimeRange) String() string {
 func (*ListAuditLogEntriesRequest_TimeRange) ProtoMessage() {}
 
 func (x *ListAuditLogEntriesRequest_TimeRange) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[34]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2869,41 +2775,22 @@ var file_cerbos_request_v1_request_proto_rawDesc = []byte{
 	0x41, 0x01, 0x02, 0xba, 0x48, 0x0a, 0xc8, 0x01, 0x01, 0x92, 0x01, 0x04, 0x08, 0x01, 0x10, 0x64,
 	0x52, 0x07, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x3a, 0x19, 0x92, 0x41, 0x16, 0x0a, 0x14,
 	0x32, 0x12, 0x41, 0x64, 0x64, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x22, 0x8b, 0x01, 0x0a, 0x13, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50,
-	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x56, 0x0a, 0x0a,
-	0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
-	0x42, 0x37, 0x92, 0x41, 0x23, 0x32, 0x1b, 0x4c, 0x69, 0x73, 0x74, 0x20, 0x6f, 0x66, 0x20, 0x70,
-	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x20, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72,
-	0x73, 0x2e, 0xa0, 0x01, 0x64, 0xa8, 0x01, 0x01, 0xe2, 0x41, 0x01, 0x02, 0xba, 0x48, 0x0a, 0xc8,
-	0x01, 0x01, 0x92, 0x01, 0x04, 0x08, 0x01, 0x10, 0x64, 0x52, 0x09, 0x70, 0x6f, 0x6c, 0x69, 0x63,
-	0x79, 0x49, 0x64, 0x73, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0x32, 0x15, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x22, 0x9c, 0x01, 0x0a, 0x12, 0x50, 0x61, 0x74, 0x63, 0x68, 0x50, 0x6f, 0x6c, 0x69,
-	0x63, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x65, 0x0a, 0x07, 0x70, 0x61, 0x74,
-	0x63, 0x68, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x63, 0x65, 0x72,
-	0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6f,
-	0x6c, 0x69, 0x63, 0x79, 0x50, 0x61, 0x74, 0x63, 0x68, 0x42, 0x2c, 0x92, 0x41, 0x18, 0x32, 0x10,
-	0x4c, 0x69, 0x73, 0x74, 0x20, 0x6f, 0x66, 0x20, 0x70, 0x61, 0x74, 0x63, 0x68, 0x65, 0x73, 0x2e,
-	0xa0, 0x01, 0x64, 0xa8, 0x01, 0x01, 0xe2, 0x41, 0x01, 0x02, 0xba, 0x48, 0x0a, 0xc8, 0x01, 0x01,
-	0x92, 0x01, 0x04, 0x08, 0x01, 0x10, 0x64, 0x52, 0x07, 0x70, 0x61, 0x74, 0x63, 0x68, 0x65, 0x73,
-	0x3a, 0x1f, 0x92, 0x41, 0x1c, 0x0a, 0x1a, 0x32, 0x18, 0x50, 0x61, 0x74, 0x63, 0x68, 0x20, 0x61,
-	0x6e, 0x20, 0x65, 0x78, 0x69, 0x73, 0x74, 0x69, 0x6e, 0x67, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63,
-	0x79, 0x2a, 0x7d, 0x0a, 0x07, 0x41, 0x64, 0x64, 0x4d, 0x6f, 0x64, 0x65, 0x12, 0x18, 0x0a, 0x14,
-	0x41, 0x44, 0x44, 0x5f, 0x4d, 0x4f, 0x44, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49,
-	0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1e, 0x0a, 0x1a, 0x41, 0x44, 0x44, 0x5f, 0x4d, 0x4f,
-	0x44, 0x45, 0x5f, 0x52, 0x45, 0x50, 0x4c, 0x41, 0x43, 0x45, 0x5f, 0x49, 0x46, 0x5f, 0x45, 0x58,
-	0x49, 0x53, 0x54, 0x53, 0x10, 0x01, 0x12, 0x1b, 0x0a, 0x17, 0x41, 0x44, 0x44, 0x5f, 0x4d, 0x4f,
-	0x44, 0x45, 0x5f, 0x53, 0x4b, 0x49, 0x50, 0x5f, 0x49, 0x46, 0x5f, 0x45, 0x58, 0x49, 0x53, 0x54,
-	0x53, 0x10, 0x02, 0x12, 0x1b, 0x0a, 0x17, 0x41, 0x44, 0x44, 0x5f, 0x4d, 0x4f, 0x44, 0x45, 0x5f,
-	0x46, 0x41, 0x49, 0x4c, 0x5f, 0x49, 0x46, 0x5f, 0x45, 0x58, 0x49, 0x53, 0x54, 0x53, 0x10, 0x03,
-	0x42, 0x73, 0x0a, 0x19, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5a, 0x3e, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
-	0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70,
-	0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x76, 0x31, 0xaa, 0x02, 0x15,
-	0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56, 0x31, 0x2e, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x75, 0x65, 0x73, 0x74, 0x2a, 0x7d, 0x0a, 0x07, 0x41, 0x64, 0x64, 0x4d, 0x6f, 0x64, 0x65, 0x12,
+	0x18, 0x0a, 0x14, 0x41, 0x44, 0x44, 0x5f, 0x4d, 0x4f, 0x44, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50,
+	0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1e, 0x0a, 0x1a, 0x41, 0x44, 0x44,
+	0x5f, 0x4d, 0x4f, 0x44, 0x45, 0x5f, 0x52, 0x45, 0x50, 0x4c, 0x41, 0x43, 0x45, 0x5f, 0x49, 0x46,
+	0x5f, 0x45, 0x58, 0x49, 0x53, 0x54, 0x53, 0x10, 0x01, 0x12, 0x1b, 0x0a, 0x17, 0x41, 0x44, 0x44,
+	0x5f, 0x4d, 0x4f, 0x44, 0x45, 0x5f, 0x53, 0x4b, 0x49, 0x50, 0x5f, 0x49, 0x46, 0x5f, 0x45, 0x58,
+	0x49, 0x53, 0x54, 0x53, 0x10, 0x02, 0x12, 0x1b, 0x0a, 0x17, 0x41, 0x44, 0x44, 0x5f, 0x4d, 0x4f,
+	0x44, 0x45, 0x5f, 0x46, 0x41, 0x49, 0x4c, 0x5f, 0x49, 0x46, 0x5f, 0x45, 0x58, 0x49, 0x53, 0x54,
+	0x53, 0x10, 0x03, 0x42, 0x73, 0x0a, 0x19, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
+	0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72,
+	0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67,
+	0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x76, 0x31,
+	0xaa, 0x02, 0x15, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56, 0x31,
+	0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2919,7 +2806,7 @@ func file_cerbos_request_v1_request_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_request_v1_request_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_cerbos_request_v1_request_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_cerbos_request_v1_request_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_cerbos_request_v1_request_proto_goTypes = []any{
 	(AddMode)(0),                                 // 0: cerbos.request.v1.AddMode
 	(ListAuditLogEntriesRequest_Kind)(0),         // 1: cerbos.request.v1.ListAuditLogEntriesRequest.Kind
@@ -2950,72 +2837,68 @@ var file_cerbos_request_v1_request_proto_goTypes = []any{
 	(*ReloadStoreRequest)(nil),                   // 26: cerbos.request.v1.ReloadStoreRequest
 	(*AddPolicyRequest)(nil),                     // 27: cerbos.request.v1.AddPolicyRequest
 	(*AddSchemaRequest)(nil),                     // 28: cerbos.request.v1.AddSchemaRequest
-	(*DeletePolicyRequest)(nil),                  // 29: cerbos.request.v1.DeletePolicyRequest
-	(*PatchPolicyRequest)(nil),                   // 30: cerbos.request.v1.PatchPolicyRequest
-	nil,                                          // 31: cerbos.request.v1.ResourceSet.InstancesEntry
-	nil,                                          // 32: cerbos.request.v1.AttributesMap.AttrEntry
-	(*CheckResourceBatchRequest_BatchEntry)(nil), // 33: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
-	(*CheckResourcesRequest_ResourceEntry)(nil),  // 34: cerbos.request.v1.CheckResourcesRequest.ResourceEntry
-	(*AuxData_JWT)(nil),                          // 35: cerbos.request.v1.AuxData.JWT
-	(*ListAuditLogEntriesRequest_TimeRange)(nil), // 36: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
-	(*v1.Principal)(nil),                         // 37: cerbos.engine.v1.Principal
-	(*v1.PlanResourcesInput_Resource)(nil),       // 38: cerbos.engine.v1.PlanResourcesInput.Resource
-	(*v1.Resource)(nil),                          // 39: cerbos.engine.v1.Resource
-	(*v11.Policy)(nil),                           // 40: cerbos.policy.v1.Policy
-	(*durationpb.Duration)(nil),                  // 41: google.protobuf.Duration
-	(*v12.Schema)(nil),                           // 42: cerbos.schema.v1.Schema
-	(*v11.PolicyPatch)(nil),                      // 43: cerbos.policy.v1.PolicyPatch
-	(*structpb.Value)(nil),                       // 44: google.protobuf.Value
-	(*timestamppb.Timestamp)(nil),                // 45: google.protobuf.Timestamp
+	nil,                                          // 29: cerbos.request.v1.ResourceSet.InstancesEntry
+	nil,                                          // 30: cerbos.request.v1.AttributesMap.AttrEntry
+	(*CheckResourceBatchRequest_BatchEntry)(nil), // 31: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
+	(*CheckResourcesRequest_ResourceEntry)(nil),  // 32: cerbos.request.v1.CheckResourcesRequest.ResourceEntry
+	(*AuxData_JWT)(nil),                          // 33: cerbos.request.v1.AuxData.JWT
+	(*ListAuditLogEntriesRequest_TimeRange)(nil), // 34: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
+	(*v1.Principal)(nil),                         // 35: cerbos.engine.v1.Principal
+	(*v1.PlanResourcesInput_Resource)(nil),       // 36: cerbos.engine.v1.PlanResourcesInput.Resource
+	(*v1.Resource)(nil),                          // 37: cerbos.engine.v1.Resource
+	(*v11.Policy)(nil),                           // 38: cerbos.policy.v1.Policy
+	(*durationpb.Duration)(nil),                  // 39: google.protobuf.Duration
+	(*v12.Schema)(nil),                           // 40: cerbos.schema.v1.Schema
+	(*structpb.Value)(nil),                       // 41: google.protobuf.Value
+	(*timestamppb.Timestamp)(nil),                // 42: google.protobuf.Timestamp
 }
 var file_cerbos_request_v1_request_proto_depIdxs = []int32{
-	37, // 0: cerbos.request.v1.PlanResourcesRequest.principal:type_name -> cerbos.engine.v1.Principal
-	38, // 1: cerbos.request.v1.PlanResourcesRequest.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
+	35, // 0: cerbos.request.v1.PlanResourcesRequest.principal:type_name -> cerbos.engine.v1.Principal
+	36, // 1: cerbos.request.v1.PlanResourcesRequest.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
 	8,  // 2: cerbos.request.v1.PlanResourcesRequest.aux_data:type_name -> cerbos.request.v1.AuxData
-	37, // 3: cerbos.request.v1.CheckResourceSetRequest.principal:type_name -> cerbos.engine.v1.Principal
+	35, // 3: cerbos.request.v1.CheckResourceSetRequest.principal:type_name -> cerbos.engine.v1.Principal
 	4,  // 4: cerbos.request.v1.CheckResourceSetRequest.resource:type_name -> cerbos.request.v1.ResourceSet
 	8,  // 5: cerbos.request.v1.CheckResourceSetRequest.aux_data:type_name -> cerbos.request.v1.AuxData
-	31, // 6: cerbos.request.v1.ResourceSet.instances:type_name -> cerbos.request.v1.ResourceSet.InstancesEntry
-	32, // 7: cerbos.request.v1.AttributesMap.attr:type_name -> cerbos.request.v1.AttributesMap.AttrEntry
-	37, // 8: cerbos.request.v1.CheckResourceBatchRequest.principal:type_name -> cerbos.engine.v1.Principal
-	33, // 9: cerbos.request.v1.CheckResourceBatchRequest.resources:type_name -> cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
+	29, // 6: cerbos.request.v1.ResourceSet.instances:type_name -> cerbos.request.v1.ResourceSet.InstancesEntry
+	30, // 7: cerbos.request.v1.AttributesMap.attr:type_name -> cerbos.request.v1.AttributesMap.AttrEntry
+	35, // 8: cerbos.request.v1.CheckResourceBatchRequest.principal:type_name -> cerbos.engine.v1.Principal
+	31, // 9: cerbos.request.v1.CheckResourceBatchRequest.resources:type_name -> cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
 	8,  // 10: cerbos.request.v1.CheckResourceBatchRequest.aux_data:type_name -> cerbos.request.v1.AuxData
-	37, // 11: cerbos.request.v1.CheckResourcesRequest.principal:type_name -> cerbos.engine.v1.Principal
-	34, // 12: cerbos.request.v1.CheckResourcesRequest.resources:type_name -> cerbos.request.v1.CheckResourcesRequest.ResourceEntry
+	35, // 11: cerbos.request.v1.CheckResourcesRequest.principal:type_name -> cerbos.engine.v1.Principal
+	32, // 12: cerbos.request.v1.CheckResourcesRequest.resources:type_name -> cerbos.request.v1.CheckResourcesRequest.ResourceEntry
 	8,  // 13: cerbos.request.v1.CheckResourcesRequest.aux_data:type_name -> cerbos.request.v1.AuxData
-	35, // 14: cerbos.request.v1.AuxData.jwt:type_name -> cerbos.request.v1.AuxData.JWT
+	33, // 14: cerbos.request.v1.AuxData.jwt:type_name -> cerbos.request.v1.AuxData.JWT
 	9,  // 15: cerbos.request.v1.PlaygroundValidateRequest.files:type_name -> cerbos.request.v1.File
 	9,  // 16: cerbos.request.v1.PlaygroundTestRequest.files:type_name -> cerbos.request.v1.File
 	9,  // 17: cerbos.request.v1.PlaygroundEvaluateRequest.files:type_name -> cerbos.request.v1.File
-	37, // 18: cerbos.request.v1.PlaygroundEvaluateRequest.principal:type_name -> cerbos.engine.v1.Principal
-	39, // 19: cerbos.request.v1.PlaygroundEvaluateRequest.resource:type_name -> cerbos.engine.v1.Resource
+	35, // 18: cerbos.request.v1.PlaygroundEvaluateRequest.principal:type_name -> cerbos.engine.v1.Principal
+	37, // 19: cerbos.request.v1.PlaygroundEvaluateRequest.resource:type_name -> cerbos.engine.v1.Resource
 	8,  // 20: cerbos.request.v1.PlaygroundEvaluateRequest.aux_data:type_name -> cerbos.request.v1.AuxData
 	9,  // 21: cerbos.request.v1.PlaygroundProxyRequest.files:type_name -> cerbos.request.v1.File
 	3,  // 22: cerbos.request.v1.PlaygroundProxyRequest.check_resource_set:type_name -> cerbos.request.v1.CheckResourceSetRequest
 	6,  // 23: cerbos.request.v1.PlaygroundProxyRequest.check_resource_batch:type_name -> cerbos.request.v1.CheckResourceBatchRequest
 	2,  // 24: cerbos.request.v1.PlaygroundProxyRequest.plan_resources:type_name -> cerbos.request.v1.PlanResourcesRequest
 	7,  // 25: cerbos.request.v1.PlaygroundProxyRequest.check_resources:type_name -> cerbos.request.v1.CheckResourcesRequest
-	40, // 26: cerbos.request.v1.AddOrUpdatePolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
+	38, // 26: cerbos.request.v1.AddOrUpdatePolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
 	1,  // 27: cerbos.request.v1.ListAuditLogEntriesRequest.kind:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.Kind
-	36, // 28: cerbos.request.v1.ListAuditLogEntriesRequest.between:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
-	41, // 29: cerbos.request.v1.ListAuditLogEntriesRequest.since:type_name -> google.protobuf.Duration
-	42, // 30: cerbos.request.v1.AddOrUpdateSchemaRequest.schemas:type_name -> cerbos.schema.v1.Schema
+	34, // 28: cerbos.request.v1.ListAuditLogEntriesRequest.between:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
+	39, // 29: cerbos.request.v1.ListAuditLogEntriesRequest.since:type_name -> google.protobuf.Duration
+	40, // 30: cerbos.request.v1.AddOrUpdateSchemaRequest.schemas:type_name -> cerbos.schema.v1.Schema
 	0,  // 31: cerbos.request.v1.AddPolicyRequest.mode:type_name -> cerbos.request.v1.AddMode
-	40, // 32: cerbos.request.v1.AddPolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
+	38, // 32: cerbos.request.v1.AddPolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
 	0,  // 33: cerbos.request.v1.AddSchemaRequest.mode:type_name -> cerbos.request.v1.AddMode
-	42, // 34: cerbos.request.v1.AddSchemaRequest.schemas:type_name -> cerbos.schema.v1.Schema
-	43, // 35: cerbos.request.v1.PatchPolicyRequest.patches:type_name -> cerbos.policy.v1.PolicyPatch
-	5,  // 36: cerbos.request.v1.ResourceSet.InstancesEntry.value:type_name -> cerbos.request.v1.AttributesMap
-	44, // 37: cerbos.request.v1.AttributesMap.AttrEntry.value:type_name -> google.protobuf.Value
-	39, // 38: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry.resource:type_name -> cerbos.engine.v1.Resource
-	39, // 39: cerbos.request.v1.CheckResourcesRequest.ResourceEntry.resource:type_name -> cerbos.engine.v1.Resource
-	45, // 40: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.start:type_name -> google.protobuf.Timestamp
-	45, // 41: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.end:type_name -> google.protobuf.Timestamp
-	42, // [42:42] is the sub-list for method output_type
-	42, // [42:42] is the sub-list for method input_type
-	42, // [42:42] is the sub-list for extension type_name
-	42, // [42:42] is the sub-list for extension extendee
-	0,  // [0:42] is the sub-list for field type_name
+	40, // 34: cerbos.request.v1.AddSchemaRequest.schemas:type_name -> cerbos.schema.v1.Schema
+	5,  // 35: cerbos.request.v1.ResourceSet.InstancesEntry.value:type_name -> cerbos.request.v1.AttributesMap
+	41, // 36: cerbos.request.v1.AttributesMap.AttrEntry.value:type_name -> google.protobuf.Value
+	37, // 37: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry.resource:type_name -> cerbos.engine.v1.Resource
+	37, // 38: cerbos.request.v1.CheckResourcesRequest.ResourceEntry.resource:type_name -> cerbos.engine.v1.Resource
+	42, // 39: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.start:type_name -> google.protobuf.Timestamp
+	42, // 40: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.end:type_name -> google.protobuf.Timestamp
+	41, // [41:41] is the sub-list for method output_type
+	41, // [41:41] is the sub-list for method input_type
+	41, // [41:41] is the sub-list for extension type_name
+	41, // [41:41] is the sub-list for extension extendee
+	0,  // [0:41] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_request_v1_request_proto_init() }
@@ -3348,31 +3231,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[27].Exporter = func(v any, i int) any {
-			switch v := v.(*DeletePolicyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[28].Exporter = func(v any, i int) any {
-			switch v := v.(*PatchPolicyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[31].Exporter = func(v any, i int) any {
+		file_cerbos_request_v1_request_proto_msgTypes[29].Exporter = func(v any, i int) any {
 			switch v := v.(*CheckResourceBatchRequest_BatchEntry); i {
 			case 0:
 				return &v.state
@@ -3384,7 +3243,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[32].Exporter = func(v any, i int) any {
+		file_cerbos_request_v1_request_proto_msgTypes[30].Exporter = func(v any, i int) any {
 			switch v := v.(*CheckResourcesRequest_ResourceEntry); i {
 			case 0:
 				return &v.state
@@ -3396,7 +3255,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[33].Exporter = func(v any, i int) any {
+		file_cerbos_request_v1_request_proto_msgTypes[31].Exporter = func(v any, i int) any {
 			switch v := v.(*AuxData_JWT); i {
 			case 0:
 				return &v.state
@@ -3408,7 +3267,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[34].Exporter = func(v any, i int) any {
+		file_cerbos_request_v1_request_proto_msgTypes[32].Exporter = func(v any, i int) any {
 			switch v := v.(*ListAuditLogEntriesRequest_TimeRange); i {
 			case 0:
 				return &v.state
@@ -3439,7 +3298,7 @@ func file_cerbos_request_v1_request_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_request_v1_request_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   35,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
