@@ -159,41 +159,30 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 	return ib.build(fsys, opts)
 }
 
-type missingScopeDetails struct {
-	missingScopes map[namer.ModuleID]string
-	policyKey     string
-}
-
 type indexBuilder struct {
-	executables             ModuleIDSet
-	modIDToFile             map[namer.ModuleID]string
-	fileToModID             map[string]namer.ModuleID
-	addToFoundScopes        map[namer.ModuleID][]namer.ModuleID
-	deleteFromMissingScopes map[namer.ModuleID][]namer.ModuleID
-	dependents              map[namer.ModuleID]ModuleIDSet
-	dependencies            map[namer.ModuleID]ModuleIDSet
-	foundScopes             map[namer.ModuleID]map[string]struct{}
-	missingScopes           map[namer.ModuleID]*missingScopeDetails
-	missing                 map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
-	stats                   *statsCollector
-	duplicates              []*runtimev1.IndexBuildErrors_DuplicateDef
-	loadFailures            []*runtimev1.IndexBuildErrors_LoadFailure
-	disabled                []*runtimev1.IndexBuildErrors_Disabled
+	executables   ModuleIDSet
+	modIDToFile   map[namer.ModuleID]string
+	fileToModID   map[string]namer.ModuleID
+	dependents    map[namer.ModuleID]ModuleIDSet
+	dependencies  map[namer.ModuleID]ModuleIDSet
+	missingScopes map[string]map[string]struct{}
+	missing       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
+	stats         *statsCollector
+	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
+	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
+	disabled      []*runtimev1.IndexBuildErrors_Disabled
 }
 
 func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
-		addToFoundScopes:        make(map[namer.ModuleID][]namer.ModuleID),
-		deleteFromMissingScopes: make(map[namer.ModuleID][]namer.ModuleID),
-		executables:             make(ModuleIDSet),
-		modIDToFile:             make(map[namer.ModuleID]string),
-		fileToModID:             make(map[string]namer.ModuleID),
-		dependents:              make(map[namer.ModuleID]ModuleIDSet),
-		dependencies:            make(map[namer.ModuleID]ModuleIDSet),
-		missing:                 make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
-		foundScopes:             make(map[namer.ModuleID]map[string]struct{}),
-		missingScopes:           make(map[namer.ModuleID]*missingScopeDetails),
-		stats:                   newStatsCollector(),
+		executables:   make(ModuleIDSet),
+		modIDToFile:   make(map[namer.ModuleID]string),
+		fileToModID:   make(map[string]namer.ModuleID),
+		dependents:    make(map[namer.ModuleID]ModuleIDSet),
+		dependencies:  make(map[namer.ModuleID]ModuleIDSet),
+		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
+		missingScopes: make(map[string]map[string]struct{}),
+		stats:         newStatsCollector(),
 	}
 }
 
@@ -251,27 +240,13 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		return
 	}
 
+	policyKey := namer.PolicyKey(p.Policy)
+
 	idx.fileToModID[file] = p.ID
 	idx.modIDToFile[p.ID] = file
 	delete(idx.missing, p.ID)
+	delete(idx.missingScopes, policyKey)
 	idx.stats.add(p)
-	if ids, ok := idx.deleteFromMissingScopes[p.ID]; ok {
-		for _, id := range ids {
-			delete(idx.missingScopes[id].missingScopes, p.ID)
-			if len(idx.missingScopes[id].missingScopes) == 0 {
-				delete(idx.missingScopes, id)
-			}
-		}
-	}
-	if ids, ok := idx.addToFoundScopes[p.ID]; ok {
-		for _, id := range ids {
-			if m, ok := idx.foundScopes[id]; !ok {
-				idx.foundScopes[id] = map[string]struct{}{p.Scope: {}}
-			} else {
-				m[p.Scope] = struct{}{}
-			}
-		}
-	}
 
 	switch p.Kind {
 	case policy.ResourceKind, policy.PrincipalKind:
@@ -314,28 +289,13 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		}
 	}
 
-	ancestors := policy.RequiredAncestors(p.Policy)
-	//nolint:nestif
-	if len(ancestors) > 0 {
-		missingScopes := make(map[namer.ModuleID]string)
-		for moduleID, fqn := range ancestors {
-			if _, ok := idx.modIDToFile[moduleID]; !ok {
-				missingScopes[moduleID] = namer.ScopeFromFQN(fqn)
-				idx.deleteFromMissingScopes[moduleID] = append(idx.deleteFromMissingScopes[moduleID], p.ID)
-				idx.addToFoundScopes[moduleID] = append(idx.addToFoundScopes[moduleID], p.ID)
+	for moduleID, fqn := range policy.RequiredAncestors(p.Policy) {
+		ancestorPolicyKey := namer.PolicyKeyFromFQN(fqn)
+		if _, ok := idx.modIDToFile[moduleID]; !ok {
+			if ma, ok := idx.missingScopes[ancestorPolicyKey]; !ok {
+				idx.missingScopes[ancestorPolicyKey] = map[string]struct{}{policyKey: {}}
 			} else {
-				if m, ok := idx.foundScopes[p.ID]; !ok {
-					idx.foundScopes[p.ID] = map[string]struct{}{namer.ScopeFromFQN(fqn): {}}
-				} else {
-					m[namer.ScopeFromFQN(fqn)] = struct{}{}
-				}
-			}
-		}
-
-		if len(missingScopes) > 0 {
-			idx.missingScopes[p.ID] = &missingScopeDetails{
-				missingScopes: missingScopes,
-				policyKey:     namer.PolicyKey(p.Policy),
+				ma[policyKey] = struct{}{}
 			}
 		}
 	}
@@ -373,26 +333,22 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 			err.MissingImports = append(err.MissingImports, missing...)
 		}
 
-		for moduleID, details := range idx.missingScopes {
-			var foundScopes []string
-			if fs, ok := idx.foundScopes[moduleID]; ok {
-				foundScopes = make([]string, 0, len(fs))
-				for foundScope := range fs {
-					foundScopes = append(foundScopes, foundScope)
-				}
-				sort.Strings(foundScopes)
+		for policyKey, descendants := range idx.missingScopes {
+			sortedDescendants := make([]string, 0, len(descendants))
+			for descendant := range descendants {
+				sortedDescendants = append(sortedDescendants, descendant)
 			}
-
-			missingScopes := make([]string, 0, len(details.missingScopes))
-			for _, missingScope := range details.missingScopes {
-				missingScopes = append(missingScopes, missingScope)
-			}
-			sort.Strings(missingScopes)
+			sort.Strings(sortedDescendants)
 
 			err.MissingScopeDetails = append(err.MissingScopeDetails, &runtimev1.IndexBuildErrors_MissingScope{
-				FoundScopes:   foundScopes,
-				MissingScopes: missingScopes,
-				Policy:        details.policyKey,
+				Descendants:   sortedDescendants,
+				MissingPolicy: policyKey,
+			})
+		}
+
+		if len(idx.missingScopes) > 0 {
+			sort.Slice(err.MissingScopeDetails, func(i, j int) bool {
+				return sort.StringsAreSorted([]string{err.MissingScopeDetails[i].MissingPolicy, err.MissingScopeDetails[j].MissingPolicy})
 			})
 		}
 

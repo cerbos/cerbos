@@ -150,19 +150,13 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "foundScopes": {
+        "descendants": {
           "type": "array",
           "items": {
             "type": "string"
           }
         },
-        "missingScopes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "policy": {
+        "missingPolicy": {
           "type": "string"
         }
       }

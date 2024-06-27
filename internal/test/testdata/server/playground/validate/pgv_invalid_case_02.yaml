@@ -26,7 +26,9 @@ playgroundValidate:
     "playgroundId": "test",
     "failure": {
       "errors": [
-        { "error": "Scoped policy 'resource.leave_request.vdefault/acme.hr.uk' has missing ancestor(s): '', 'acme', 'acme.hr'" },
+        { "error": "Scoped policy resource.leave_request.vdefault is not found but is required by descendant policies resource.leave_request.vdefault/acme.hr.uk" },
+        { "error": "Scoped policy resource.leave_request.vdefault/acme is not found but is required by descendant policies resource.leave_request.vdefault/acme.hr.uk" },
+        { "error": "Scoped policy resource.leave_request.vdefault/acme.hr is not found but is required by descendant policies resource.leave_request.vdefault/acme.hr.uk" },
       ]
     }
   }

@@ -4,7 +4,6 @@
 package lint
 
 import (
-	"fmt"
 	"strings"
 
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
@@ -45,10 +44,11 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 
 	if len(errs.MissingScopeDetails) > 0 {
 		p.Println(colored.Header("Missing scopes"))
-		for _, ms := range errs.MissingScopeDetails {
-			p.Printf("scoped policy %s has missing ancestor(s): %s\n",
-				colored.PolicyKey(ms.Policy),
-				colored.ErrorMsg(fmt.Sprintf("'%s'", strings.Join(ms.MissingScopes, "', '"))),
+		for _, missingScopes := range errs.MissingScopeDetails {
+			p.Printf(
+				"scoped policy %s is not found but is required by descendant policies %s\n",
+				colored.ErrorMsg(missingScopes.MissingPolicy),
+				colored.PolicyKey(strings.Join(missingScopes.Descendants, ", ")),
 			)
 		}
 		p.Println()

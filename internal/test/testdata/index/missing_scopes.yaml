@@ -2,12 +2,13 @@
 ---
 wantErrList:
   missingScopeDetails:
-    - policy: resource.leave_request.v20210210/acme.hr.uk
-      foundScopes:
-        - ""
-      missingScopes:
-        - acme
-        - acme.hr
+    - missingPolicy: resource.leave_request.v20210210/acme
+      descendants:
+        - resource.leave_request.v20210210/acme.hr.uk
+
+    - missingPolicy: resource.leave_request.v20210210/acme.hr
+      descendants:
+        - resource.leave_request.v20210210/acme.hr.uk
 
 files:
   "resource.yaml": |-

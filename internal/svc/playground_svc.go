@@ -337,9 +337,13 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		})
 	}
 
-	for _, ms := range errs.MissingScopeDetails {
+	for _, missingScopes := range errs.MissingScopeDetails {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			Error: fmt.Sprintf("Scoped policy '%s' has missing ancestor(s): '%s'", ms.Policy, strings.Join(ms.MissingScopes, "', '")),
+			Error: fmt.Sprintf(
+				"Scoped policy %s is not found but is required by descendant policies %s",
+				missingScopes.MissingPolicy,
+				strings.Join(missingScopes.Descendants, ", "),
+			),
 		})
 	}
 

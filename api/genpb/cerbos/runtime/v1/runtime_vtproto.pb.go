@@ -2051,28 +2051,19 @@ func (m *IndexBuildErrors_MissingScope) MarshalToSizedBufferVT(dAtA []byte) (int
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.MissingScopes) > 0 {
-		for iNdEx := len(m.MissingScopes) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.MissingScopes[iNdEx])
-			copy(dAtA[i:], m.MissingScopes[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.MissingScopes[iNdEx])))
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
-	if len(m.FoundScopes) > 0 {
-		for iNdEx := len(m.FoundScopes) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.FoundScopes[iNdEx])
-			copy(dAtA[i:], m.FoundScopes[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.FoundScopes[iNdEx])))
+	if len(m.Descendants) > 0 {
+		for iNdEx := len(m.Descendants) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Descendants[iNdEx])
+			copy(dAtA[i:], m.Descendants[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Descendants[iNdEx])))
 			i--
 			dAtA[i] = 0x12
 		}
 	}
-	if len(m.Policy) > 0 {
-		i -= len(m.Policy)
-		copy(dAtA[i:], m.Policy)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Policy)))
+	if len(m.MissingPolicy) > 0 {
+		i -= len(m.MissingPolicy)
+		copy(dAtA[i:], m.MissingPolicy)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.MissingPolicy)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -3282,18 +3273,12 @@ func (m *IndexBuildErrors_MissingScope) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Policy)
+	l = len(m.MissingPolicy)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.FoundScopes) > 0 {
-		for _, s := range m.FoundScopes {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
-	}
-	if len(m.MissingScopes) > 0 {
-		for _, s := range m.MissingScopes {
+	if len(m.Descendants) > 0 {
+		for _, s := range m.Descendants {
 			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
@@ -9409,7 +9394,7 @@ func (m *IndexBuildErrors_MissingScope) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Policy", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field MissingPolicy", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -9437,11 +9422,11 @@ func (m *IndexBuildErrors_MissingScope) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Policy = string(dAtA[iNdEx:postIndex])
+			m.MissingPolicy = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FoundScopes", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Descendants", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -9469,39 +9454,7 @@ func (m *IndexBuildErrors_MissingScope) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.FoundScopes = append(m.FoundScopes, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MissingScopes", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.MissingScopes = append(m.MissingScopes, string(dAtA[iNdEx:postIndex]))
+			m.Descendants = append(m.Descendants, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

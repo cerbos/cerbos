@@ -203,9 +203,8 @@ message IndexBuildErrors {
   }
 
   message MissingScope {
-    string policy = 1;
-    repeated string found_scopes = 2;
-    repeated string missing_scopes = 3;
+    string missing_policy = 1;
+    repeated string descendants = 2;
   }
 
   message LoadFailure {

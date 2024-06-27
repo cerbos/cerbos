@@ -9,12 +9,9 @@ wantErrList:
         column: 11
 
   missingScopeDetails:
-    - policy: resource.leave_request.v20210210/acme.hr.uk
-      foundScopes:
-        - ""
-        - acme
-      missingScopes:
-        - acme.hr
+    - missingPolicy: resource.leave_request.v20210210/acme.hr
+      descendants:
+        - resource.leave_request.v20210210/acme.hr.uk
 
 files:
   "resource.yaml": |-
