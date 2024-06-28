@@ -278,6 +278,21 @@ func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *IndexBuildEr
 	}
 }
 
+func cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(m *IndexBuildErrors_MissingScope, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingScope.missing_policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMissingPolicy()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingScope.descendants"]; !ok {
+		if len(m.Descendants) > 0 {
+			for _, v := range m.Descendants {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.disabled"]; !ok {
 		if len(m.Disabled) > 0 {
@@ -330,6 +345,16 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher h
 			for _, v := range m.DisabledDefs {
 				if v != nil {
 					cerbos_runtime_v1_IndexBuildErrors_Disabled_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.missing_scope_details"]; !ok {
+		if len(m.MissingScopeDetails) > 0 {
+			for _, v := range m.MissingScopeDetails {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(v, hasher, ignore)
 				}
 
 			}

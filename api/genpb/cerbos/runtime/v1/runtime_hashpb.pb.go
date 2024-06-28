@@ -218,6 +218,14 @@ func (m *IndexBuildErrors_MissingImport) HashPB(hasher hash.Hash, ignore map[str
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *IndexBuildErrors_MissingScope) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *IndexBuildErrors_LoadFailure) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m, hasher, ignore)

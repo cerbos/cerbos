@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"path"
+	"sort"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -38,7 +39,7 @@ type BuildError struct {
 
 func (ibe *BuildError) Error() string {
 	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d",
-		len(ibe.MissingImports), len(ibe.MissingScopes), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
+		len(ibe.MissingImports), len(ibe.MissingScopeDetails), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
 }
 
 type buildOptions struct {
@@ -164,8 +165,8 @@ type indexBuilder struct {
 	fileToModID   map[string]namer.ModuleID
 	dependents    map[namer.ModuleID]ModuleIDSet
 	dependencies  map[namer.ModuleID]ModuleIDSet
+	missingScopes map[string]map[string]struct{}
 	missing       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
-	missingScopes map[namer.ModuleID]string
 	stats         *statsCollector
 	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
 	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
@@ -180,7 +181,7 @@ func newIndexBuilder() *indexBuilder {
 		dependents:    make(map[namer.ModuleID]ModuleIDSet),
 		dependencies:  make(map[namer.ModuleID]ModuleIDSet),
 		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
-		missingScopes: make(map[namer.ModuleID]string),
+		missingScopes: make(map[string]map[string]struct{}),
 		stats:         newStatsCollector(),
 	}
 }
@@ -239,11 +240,12 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		return
 	}
 
+	policyKey := namer.PolicyKey(p.Policy)
+
 	idx.fileToModID[file] = p.ID
 	idx.modIDToFile[p.ID] = file
 	delete(idx.missing, p.ID)
-	delete(idx.missingScopes, p.ID)
-
+	delete(idx.missingScopes, policyKey)
 	idx.stats.add(p)
 
 	switch p.Kind {
@@ -287,10 +289,14 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		}
 	}
 
-	ancestors := policy.RequiredAncestors(p.Policy)
-	for aID, a := range ancestors {
-		if _, ok := idx.modIDToFile[aID]; !ok {
-			idx.missingScopes[aID] = a
+	for moduleID, fqn := range policy.RequiredAncestors(p.Policy) {
+		ancestorPolicyKey := namer.PolicyKeyFromFQN(fqn)
+		if _, ok := idx.modIDToFile[moduleID]; !ok {
+			if ma, ok := idx.missingScopes[ancestorPolicyKey]; !ok {
+				idx.missingScopes[ancestorPolicyKey] = map[string]struct{}{policyKey: {}}
+			} else {
+				ma[policyKey] = struct{}{}
+			}
 		}
 	}
 }
@@ -327,8 +333,23 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 			err.MissingImports = append(err.MissingImports, missing...)
 		}
 
-		for _, ms := range idx.missingScopes {
-			err.MissingScopes = append(err.MissingScopes, namer.PolicyKeyFromFQN(ms))
+		for policyKey, descendants := range idx.missingScopes {
+			sortedDescendants := make([]string, 0, len(descendants))
+			for descendant := range descendants {
+				sortedDescendants = append(sortedDescendants, descendant)
+			}
+			sort.Strings(sortedDescendants)
+
+			err.MissingScopeDetails = append(err.MissingScopeDetails, &runtimev1.IndexBuildErrors_MissingScope{
+				Descendants:   sortedDescendants,
+				MissingPolicy: policyKey,
+			})
+		}
+
+		if len(idx.missingScopes) > 0 {
+			sort.Slice(err.MissingScopeDetails, func(i, j int) bool {
+				return sort.StringsAreSorted([]string{err.MissingScopeDetails[i].MissingPolicy, err.MissingScopeDetails[j].MissingPolicy})
+			})
 		}
 
 		logBuildFailure(logger, opts.buildFailureLogLevel, err)
@@ -369,8 +390,8 @@ func logBuildFailure(logger *zap.Logger, level zapcore.Level, err *BuildError) {
 		fields = append(fields, zap.Any("missing", err.MissingImports))
 	}
 
-	if len(err.MissingScopes) > 0 {
-		fields = append(fields, zap.Any("missing_scopes", err.MissingScopes))
+	if len(err.MissingScopeDetails) > 0 {
+		fields = append(fields, zap.Any("missing_scopes", err.MissingScopeDetails))
 	}
 
 	if len(err.LoadFailures) > 0 {

@@ -4,6 +4,8 @@
 package lint
 
 import (
+	"strings"
+
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/internal/outputcolor"
@@ -40,10 +42,14 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 		p.Println()
 	}
 
-	if len(errs.MissingScopes) > 0 {
+	if len(errs.MissingScopeDetails) > 0 {
 		p.Println(colored.Header("Missing scopes"))
-		for _, mi := range errs.MissingScopes {
-			p.Printf("scoped policy %s is required but no definition found\n", colored.PolicyKey(mi))
+		for _, missingScopes := range errs.MissingScopeDetails {
+			p.Printf(
+				"scoped policy %s is not found but is required by descendant policies %s\n",
+				colored.ErrorMsg(missingScopes.MissingPolicy),
+				colored.PolicyKey(strings.Join(missingScopes.Descendants, ", ")),
+			)
 		}
 		p.Println()
 	}
