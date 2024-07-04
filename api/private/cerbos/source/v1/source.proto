@@ -5,6 +5,8 @@ syntax = "proto3";
 
 package cerbos.source.v1;
 
+import "cerbos/policy/v1/policy.proto";
+
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1;sourcev1";
 
 message Position {
@@ -36,4 +38,10 @@ message SourceContext {
   StartPosition start_position = 1;
   map<string, Position> field_positions = 2;
   repeated Error errors = 3;
+}
+
+message PolicyWrapper {
+  uint64 id = 1;
+  string key = 2;
+  cerbos.policy.v1.Policy policy = 3;
 }

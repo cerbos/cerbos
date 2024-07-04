@@ -70,6 +70,10 @@ func (m *ModuleID) HexStr() string {
 	return fmt.Sprintf("%X", m.hash)
 }
 
+func (m ModuleID) RawValue() uint64 {
+	return m.hash
+}
+
 // GenModuleID generates a short ID for the module.
 func GenModuleID(p *policyv1.Policy) ModuleID {
 	return GenModuleIDFromFQN(FQN(p))

@@ -14,6 +14,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
@@ -626,13 +627,21 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	return w
 }
 
-func (pw Wrapper) Dependencies() []namer.ModuleID {
-	fqns, _ := Dependencies(pw.Policy)
+func (w Wrapper) Dependencies() []namer.ModuleID {
+	fqns, _ := Dependencies(w.Policy)
 	modIDs := make([]namer.ModuleID, len(fqns))
 	for i, fqn := range fqns {
 		modIDs[i] = namer.GenModuleIDFromFQN(fqn)
 	}
 	return modIDs
+}
+
+func (w Wrapper) ToProto() *sourcev1.PolicyWrapper {
+	return &sourcev1.PolicyWrapper{
+		Id:     w.ID.RawValue(),
+		Key:    namer.PolicyKeyFromFQN(w.FQN),
+		Policy: w.Policy,
+	}
 }
 
 // CompilationUnit is the set of policies that need to be compiled together.
