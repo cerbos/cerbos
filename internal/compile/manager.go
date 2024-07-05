@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -232,61 +231,37 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 }
 
 func (c *Manager) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	res := []*runtimev1.RunnablePolicySet{}
-	missed := make(map[namer.ModuleID]struct{})
+	cached := []*runtimev1.RunnablePolicySet{}
+	toResolve := []namer.ModuleID{}
 	for _, id := range modIDs {
 		if rps, ok := c.cache.Get(id); ok && rps != nil {
-			res = append(res, rps)
+			cached = append(cached, rps)
 			continue
 		}
-		missed[id] = struct{}{}
+		toResolve = append(toResolve, id)
 	}
 
-	toResolve := make([]namer.ModuleID, len(missed))
-	var b strings.Builder
-	var i int
-	for id := range missed {
-		toResolve[i] = id
-		b.WriteString(id.String())
-		i++
-		if i != len(missed) {
-			b.WriteRune('.')
-		}
-	}
-
-	// We generate a compound key for duplicate calls. This seems counter-intuitive, given any combination
-	// of IDs will generate a unique key and therefore we can have duplicate compilation units being concurrently
-	// retrieved. However, in practice, the `modIDs` parameter passed to this method will be relatively static, as
-	// the sets represent collections of policies which are unlikely to be frequently mutated.
-	key := b.String()
-	defer c.sf.Forget(key)
-
-	compiled, err, _ := c.sf.Do(key, func() (any, error) {
-		cus, err := c.store.GetAll(ctx, toResolve)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get compilation units: %w", err)
-		}
-
-		rpsSet := make([]*runtimev1.RunnablePolicySet, len(cus))
-		for i, cu := range cus {
-			rps, err := c.compile(cu)
-			if err != nil {
-				return nil, PolicyCompilationErr{underlying: err}
-			}
-
-			rpsSet[i] = rps
-		}
-
-		return rpsSet, nil
-	})
+	// TODO(saml) equivalent `singleflight` implementation, catering for numerous modIDs
+	cunits, err := c.store.GetAll(ctx, toResolve)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get compilation units: %w", err)
 	}
 
-	//nolint:forcetypeassert
-	res = append(res, compiled.([]*runtimev1.RunnablePolicySet)...)
+	compiled := make([]*runtimev1.RunnablePolicySet, len(cunits)+len(cached))
+	for i, cu := range cunits {
+		rps, err := c.compile(cu)
+		if err != nil {
+			return nil, PolicyCompilationErr{underlying: err}
+		}
 
-	return res, nil
+		compiled[i] = rps
+	}
+
+	for i := 0; i < len(cached); i++ {
+		compiled[i+len(cached)] = cached[i]
+	}
+
+	return compiled, nil
 }
 
 func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
