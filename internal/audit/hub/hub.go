@@ -231,7 +231,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 	stream.Send = func(buf *z.Buffer) error {
 		kvList, err := badgerv4.BufferToKVList(buf)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to convert buffer to key-values: %w", err)
 		}
 
 		keys := make([][]byte, len(kvList.Kv))
@@ -246,20 +246,25 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			}
 
 			if err := l.syncThenDelete(ctx, kind, keys[i:end]); err != nil {
-				return err
+				return fmt.Errorf("failed to sync and delete logs: %w", err)
 			}
 		}
 
 		return nil
 	}
 
-	return stream.Orchestrate(ctx)
+	if err := stream.Orchestrate(ctx); err != nil {
+		log := l.logger.With(zap.Stringer("kind", kind))
+		log.Error("Failed to orchestrate stream", zap.Error(err))
+		return fmt.Errorf("failed to orchestrate stream: %w", err)
+	}
+	return nil
 }
 
 func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte) error {
 	entries, err := l.getIngestBatchEntries(syncKeys, kind)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get ingest batch entries: %w", err)
 	}
 
 	batchID, err := audit.NewID()
@@ -280,11 +285,11 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 			Id:      string(batchID),
 			Entries: entries,
 		}); err != nil {
-			return err
+			return fmt.Errorf("failed to filter batch: %w", err)
 		}
 
 		if err := l.syncer.Sync(ctx, ingestBatch); err != nil {
-			return err
+			return fmt.Errorf("failed to sync batch: %w", err)
 		}
 	}
 
@@ -297,7 +302,7 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 				wb = l.Db.NewWriteBatch()
 				_ = wb.Delete(k)
 			} else {
-				return err
+				return fmt.Errorf("failed to delete key: %w", err)
 			}
 		}
 	}
