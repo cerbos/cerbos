@@ -10,15 +10,17 @@ import (
 	"sync"
 	"time"
 
+	badgerv4 "github.com/dgraph-io/badger/v4"
+	"github.com/dgraph-io/ristretto/z"
+	"github.com/sourcegraph/conc/pool"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
-	badgerv4 "github.com/dgraph-io/badger/v4"
-	"github.com/dgraph-io/ristretto/z"
-	"github.com/sourcegraph/conc/pool"
-	"go.uber.org/zap"
 )
 
 const (
@@ -184,8 +186,10 @@ func (mt *mutexTimer) wait() {
 }
 
 func (l *Log) schedule(waitCh chan<- struct{}) {
+	l.logger.Log(zapcore.Level(-3), "Waiting to schedule")
 	l.muTimer.wait()
 
+	l.logger.Log(zapcore.Level(-3), "Scheduling stream")
 	if err := l.streamLogs(); err != nil {
 		var ingestErr ErrIngestBackoff
 		if errors.As(err, &ingestErr) {
@@ -194,7 +198,7 @@ func (l *Log) schedule(waitCh chan<- struct{}) {
 			go l.schedule(waitCh)
 			return
 		}
-		l.logger.Warn("Failed sync", zap.Error(err))
+		l.logger.Error("Audit log sync failed", zap.Error(err))
 	}
 
 	// Set a min wait duration regardless of if events are pending.
@@ -210,15 +214,32 @@ func (l *Log) streamLogs() error {
 	// avoid the penalty of per-key string inspection when inferring the type down the line.
 	ctx := context.Background()
 
-	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
+	p := pool.New().WithContext(ctx).WithCancelOnError()
 	p.Go(func(ctx context.Context) error {
-		return l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, AccessSyncPrefix)
-	})
-	p.Go(func(ctx context.Context) error {
-		return l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, DecisionSyncPrefix)
+		l.logger.Log(zapcore.Level(-2), "Streaming access logs")
+		if err := l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, AccessSyncPrefix); err != nil {
+			l.logger.Warn("Failed to stream access logs", zap.Error(err))
+			return fmt.Errorf("failed to stream access logs: %w", err)
+		}
+		l.logger.Log(zapcore.Level(-2), "Finished streaming access logs")
+		return nil
 	})
 
-	return p.Wait()
+	p.Go(func(ctx context.Context) error {
+		l.logger.Log(zapcore.Level(-2), "Streaming decision logs")
+		if err := l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, DecisionSyncPrefix); err != nil {
+			l.logger.Warn("Failed to stream decision logs", zap.Error(err))
+			return fmt.Errorf("failed to stream decision logs: %w", err)
+		}
+		l.logger.Log(zapcore.Level(-2), "Finished streaming decision logs")
+		return nil
+	})
+
+	if err := p.Wait(); err != nil {
+		l.logger.Warn("Failed to stream logs", zap.Error(err))
+		return fmt.Errorf("failed to stream logs: %w", err)
+	}
+	return nil
 }
 
 func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
@@ -227,8 +248,10 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 	stream := l.Db.NewStream()
 	stream.NumGo = l.numGo
 	stream.Prefix = prefix
+	logger := l.logger.With(zap.Stringer("kind", kind))
 
 	stream.Send = func(buf *z.Buffer) error {
+		logger.Log(zapcore.Level(-3), "Converting buffer to key-values")
 		kvList, err := badgerv4.BufferToKVList(buf)
 		if err != nil {
 			return fmt.Errorf("failed to convert buffer to key-values: %w", err)
@@ -245,6 +268,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 				end = len(keys)
 			}
 
+			logger.Log(zapcore.Level(-3), "Syncing and deleting batch")
 			if err := l.syncThenDelete(ctx, kind, keys[i:end]); err != nil {
 				return fmt.Errorf("failed to sync and delete logs: %w", err)
 			}
@@ -253,23 +277,26 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		return nil
 	}
 
+	logger.Log(zapcore.Level(-3), "Orchestrating stream")
 	if err := stream.Orchestrate(ctx); err != nil {
-		log := l.logger.With(zap.Stringer("kind", kind))
-		log.Error("Failed to orchestrate stream", zap.Error(err))
+		logger.Log(zapcore.Level(-3), "Failed to orchestrate stream", zap.Error(err))
 		return fmt.Errorf("failed to orchestrate stream: %w", err)
 	}
 	return nil
 }
 
 func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte) error {
+	logger := l.logger.With(zap.Stringer("kind", kind))
+	logger.Log(zapcore.Level(-3), "Getting ingest batch entries")
 	entries, err := l.getIngestBatchEntries(syncKeys, kind)
 	if err != nil {
 		return fmt.Errorf("failed to get ingest batch entries: %w", err)
 	}
 
+	logger.Log(zapcore.Level(-3), "Generating audit ID")
 	batchID, err := audit.NewID()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to generate audit ID: %w", err)
 	}
 
 	{
@@ -281,6 +308,7 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 			Entries: entries,
 		}
 
+		logger.Log(zapcore.Level(-3), "Filtering batch")
 		if err := l.filter.Filter(&logsv1.IngestBatch{
 			Id:      string(batchID),
 			Entries: entries,
@@ -288,6 +316,7 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 			return fmt.Errorf("failed to filter batch: %w", err)
 		}
 
+		logger.Log(zapcore.Level(-3), "Syncing batch")
 		if err := l.syncer.Sync(ctx, ingestBatch); err != nil {
 			return fmt.Errorf("failed to sync batch: %w", err)
 		}
@@ -296,6 +325,7 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 	wb := l.Db.NewWriteBatch()
 	defer wb.Cancel()
 
+	logger.Log(zapcore.Level(-3), "Deleting synced keys")
 	for _, k := range syncKeys {
 		if err := wb.Delete(k); err != nil {
 			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
@@ -307,6 +337,7 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 		}
 	}
 
+	logger.Log(zapcore.Level(-3), "Flushing write batch")
 	return wb.Flush()
 }
 
