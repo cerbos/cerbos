@@ -4,6 +4,7 @@ dev_dir := join(justfile_directory(), "hack", "dev")
 genmocks_dir := join(justfile_directory(), "internal", "test", "mocks")
 genpb_dir := join(justfile_directory(), "api", "genpb")
 json_schema_dir := join(justfile_directory(), "schema", "jsonschema")
+openapi_dir := join(justfile_directory(), "schema", "openapiv2")
 testdata_json_schema_dir := join(justfile_directory(), "internal", "test", "testdata", ".jsonschema")
 testsplit_dir := join(justfile_directory(), "hack", "tools", "testsplit")
 tools_mod_dir := join(justfile_directory(), "tools")
@@ -14,6 +15,9 @@ default:
     @just --list
 
 build: generate lint tests package
+
+clean:
+    @ rm -rf {{ genpb_dir }}/cerbos {{ genmocks_dir }}  {{ json_schema_dir }} {{ openapi_dir }}
 
 compile:
     @ CGO_ENABLED=0 go build ./... && CGO_ENABLED=0 go test -tags=e2e,tests,integration -run=ignore  ./... > /dev/null
@@ -30,7 +34,7 @@ cover PKG='./...' TEST='.*': _cover
 docs: generate-confdocs
     @ docs/build.sh
 
-generate: generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks generate-npm-packages generate-api-docs generate-confdocs
+generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks generate-npm-packages generate-api-docs generate-confdocs
 
 generate-api-docs:
 	@ docker run -e REDOCLY_TELEMETRY=off -v {{ justfile_directory() }}:/cerbos redocly/cli bundle /cerbos/schema/openapiv2/cerbos/svc/v1/svc.swagger.json -o /cerbos/docs/modules/api/attachments/cerbos-api --ext json
@@ -147,6 +151,34 @@ test-times TESTSPLIT_TOTAL='1': _testsplit
 
 warm-cache: compile _gotestsum _mockery _testsplit
 
+# Sanity checks
+
+check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
+    #!/usr/bin/env bash
+    set -euo pipefail
+    declare -A tests
+    tests["cerbos.svc.v1.CerbosService/CheckResourceSet"]="check_resource_set"
+    tests["cerbos.svc.v1.CerbosService/CheckResourceBatch"]="check_resource_batch"
+    tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
+    tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
+    tests["cerbos.svc.v1.CerbosService/PlanResources"]="plan_resources"
+    tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"]="playground_validate"
+    tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate"]="playground_evaluate"
+
+    for svc in "${!tests[@]}"; do
+        echo "--- $svc ---"
+        for request in {{ dev_dir }}/requests/${tests[$svc]}/*.json; do
+            echo ">>> [gRPC] $request"
+            buf curl {{ if PROTOCOL=='https' { '-k' } else { '--http2-prior-knowledge' } }} --protocol=grpc -d "@${request}" "{{ PROTOCOL }}://{{ HOST }}/$svc"
+            echo "<<< [gRPC] $request"
+        done
+    done
+
+check-http PROTOCOL='https' HOST='localhost' PORT='3592':
+	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan}.hurl
+
+# Executables
+
 _buf: (_install "buf" "github.com/bufbuild/buf" "cmd/buf")
 
 _cover: (_install "cover" "nikand.dev/go/cover@master" )
@@ -214,7 +246,6 @@ _certs CONF:
                   -keyout {{ dev_dir }}/tls.key -out {{ dev_dir }}/tls.crt
         fi
     fi
-
 
 jaeger:
     @ docker run -i -t --rm --name jaeger \
