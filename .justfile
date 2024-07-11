@@ -121,7 +121,7 @@ test PKG='./...' TEST='.*':
 tests PKG='./...' TEST='.*': _gotestsum
     @ "${TOOLS_BIN_DIR}/gotestsum" --format=dots-v2 --format-hide-empty-pkg -- -tags=tests,integration -failfast -count=1 -run='{{ TEST }}' '{{ PKG }}'
 
-test-all: test-race test-integration
+test-all TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': (test-race TESTSPLIT_INDEX TESTSPLIT_TOTAL) (test-integration TESTSPLIT_INDEX TESTSPLIT_TOTAL)
 
 test-integration TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': _gotestsum _testsplit
     @ "${TOOLS_BIN_DIR}/testsplit" split \
