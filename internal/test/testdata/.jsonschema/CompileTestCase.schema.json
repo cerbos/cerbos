@@ -83,6 +83,9 @@
     "mainDef": {
       "type": "string"
     },
+    "mainRolePolicyFqn": {
+      "type": "string"
+    },
     "wantErrors": {
       "type": "array",
       "items": {

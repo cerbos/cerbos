@@ -16,14 +16,22 @@
     "resources": {
       "acme_admin": {
         "actions": {
-          "*": {}
+          "*": {
+            "permissibleForRole": {}
+          }
         }
       },
       "expenses_report": {
         "actions": {
-          "create": {},
-          "delete": {},
-          "view": {}
+          "create": {
+            "permissibleForRole": {}
+          },
+          "delete": {
+            "permissibleForRole": {}
+          },
+          "view": {
+            "permissibleForRole": {}
+          }
         }
       }
     }

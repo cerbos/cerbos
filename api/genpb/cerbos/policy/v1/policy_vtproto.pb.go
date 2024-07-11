@@ -607,7 +607,7 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			i -= size
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x22
 		}
 	}
 	if len(m.Scope) > 0 {
@@ -615,7 +615,7 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Scope)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scope)))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x1a
 	}
 	return len(dAtA) - i, nil
 }
@@ -632,6 +632,20 @@ func (m *RolePolicy_Role) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+func (m *RolePolicy_DerivedRole) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *RolePolicy_DerivedRole) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.DerivedRole)
+	copy(dAtA[i:], m.DerivedRole)
+	i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.DerivedRole)))
+	i--
+	dAtA[i] = 0x12
 	return len(dAtA) - i, nil
 }
 func (m *RoleRule) MarshalVT() (dAtA []byte, err error) {
@@ -3830,6 +3844,16 @@ func (m *RolePolicy_Role) SizeVT() (n int) {
 	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	return n
 }
+func (m *RolePolicy_DerivedRole) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DerivedRole)
+	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	return n
+}
 func (m *RoleRule) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -6731,6 +6755,38 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DerivedRole", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PolicyType = &RolePolicy_DerivedRole{DerivedRole: string(dAtA[iNdEx:postIndex])}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Scope", wireType)
 			}
 			var stringLen uint64
@@ -6761,7 +6817,7 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Scope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Rules", wireType)
 			}

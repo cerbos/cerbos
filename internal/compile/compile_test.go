@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -30,6 +31,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
+	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -51,7 +53,7 @@ func TestCompile(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc, archive := readTestCase(t, tcase)
-			cu := mkCompilationUnit(t, tc.MainDef, archive)
+			cu := mkCompilationUnit(t, tc, archive)
 			haveRes, haveErr := compile.Compile(cu, schemaMgr)
 			if len(tc.WantErrors) > 0 {
 				errSet := new(compile.ErrorSet)
@@ -91,7 +93,7 @@ func updateGoldenFiles(t *testing.T, schemaMgr schema.Manager, testCases []test.
 			continue
 		}
 
-		cu := mkCompilationUnit(t, tc.MainDef, archive)
+		cu := mkCompilationUnit(t, tc, archive)
 		res, err := compile.Compile(cu, schemaMgr)
 		if err != nil {
 			t.Fatalf("Cannot produce golden file because compiling %q returns an error: %v", tcase.SourceFile, err)
@@ -111,18 +113,35 @@ func readTestCase(t *testing.T, testCase test.Case) (*privatev1.CompileTestCase,
 	return tc, archive
 }
 
-func mkCompilationUnit(t *testing.T, mainDef string, archive *txtar.Archive) *policy.CompilationUnit {
+func mkCompilationUnit(t *testing.T, tc *privatev1.CompileTestCase, archive *txtar.Archive) *policy.CompilationUnit {
 	t.Helper()
 
-	cu := &policy.CompilationUnit{}
+	// we need to build an index for role policies, as we require idx.rolePolicyUnits
+	// to be generated for retrieval of aggregated compilation units
+	if tc.MainRolePolicyFqn != "" {
+		dir := t.TempDir()
+		txtar.Write(archive, dir)
+		fsys := os.DirFS(dir)
 
+		idx, err := index.Build(context.Background(), fsys)
+		require.NoError(t, err)
+
+		modID := namer.GenModuleIDFromFQN(tc.MainRolePolicyFqn)
+
+		cus, err := idx.GetCompilationUnits(modID)
+		require.NoError(t, err)
+
+		return cus[modID]
+	}
+
+	cu := &policy.CompilationUnit{}
 	for _, f := range archive.Files {
 		p, sc, err := policy.ReadPolicyWithSourceContextFromReader(bytes.NewReader(f.Data))
 		require.NoError(t, err, "Unexpected error from %s", f.Name)
 
 		modID := namer.GenModuleID(p)
 
-		if f.Name == mainDef {
+		if f.Name == tc.MainDef {
 			cu.ModID = modID
 		}
 

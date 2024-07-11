@@ -13,12 +13,14 @@ import (
 	"sync"
 
 	"github.com/cerbos/cerbos/internal/util"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -65,17 +67,202 @@ type Index interface {
 }
 
 type index struct {
-	fsys         fs.FS
-	sfGroup      singleflight.Group
-	fileToModID  map[string]namer.ModuleID
-	executables  ModuleIDSet
-	dependents   map[namer.ModuleID]ModuleIDSet
-	dependencies map[namer.ModuleID]ModuleIDSet
-	modIDToFile  map[namer.ModuleID]string
-	schemaLoader *SchemaLoader
-	stats        storage.RepoStats
-	buildOpts    buildOptions
-	mu           sync.RWMutex
+	fsys            fs.FS
+	sfGroup         singleflight.Group
+	fileToModID     map[string]namer.ModuleID
+	executables     ModuleIDSet
+	rolePolicyUnits map[namer.ModuleID]*policy.CompilationUnit
+	dependents      map[namer.ModuleID]ModuleIDSet
+	dependencies    map[namer.ModuleID]ModuleIDSet
+	modIDToFile     map[namer.ModuleID]string
+	schemaLoader    *SchemaLoader
+	stats           storage.RepoStats
+	buildOpts       buildOptions
+	mu              sync.RWMutex
+}
+
+// TODO(saml) does this need to be triggered on AddOrUpdate calls?
+func (idx *index) buildRolePolicyCompilationUnits() []*runtimev1.IndexBuildErrors_MissingDef {
+	// ordering by role policies first ensures we don't override explicitly defined role policies with implicit ones.
+	// TODO(saml) we can do away with this explicit type splitting if we properly handle merging of compilation units below
+	rolePolicies := []*policyv1.Policy{}
+	derivedRolePolicies := []*policyv1.Policy{}
+
+	for modID := range idx.executables {
+		p, _, _ := idx.loadPolicy(modID)
+
+		rp := p.GetRolePolicy()
+		if rp == nil {
+			continue
+		}
+
+		switch rp.PolicyType.(type) {
+		case *policyv1.RolePolicy_Role:
+			rolePolicies = append(rolePolicies, p)
+		case *policyv1.RolePolicy_DerivedRole:
+			derivedRolePolicies = append(derivedRolePolicies, p)
+		}
+	}
+
+	// reset on each call to this method
+	idx.rolePolicyUnits = make(map[namer.ModuleID]*policy.CompilationUnit)
+
+	for _, p := range rolePolicies {
+		rp := p.GetRolePolicy()
+
+		id := namer.GenModuleID(p)
+		cu, ok := idx.rolePolicyUnits[id]
+		if !ok {
+			cu = &policy.CompilationUnit{
+				ModID:       id,
+				Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
+			}
+			idx.rolePolicyUnits[id] = cu
+		}
+
+		if cu.RolePolicyResources == nil {
+			cu.RolePolicyResources = make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions)
+		}
+
+		for _, r := range rp.GetRules() {
+			res, ok := cu.RolePolicyResources[r.Resource]
+			if !ok {
+				res = &runtimev1.RunnableRolePolicySet_PermissibleActions{}
+				cu.RolePolicyResources[r.Resource] = res
+			}
+
+			if res.Actions == nil {
+				res.Actions = make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleAction)
+			}
+
+			for _, a := range r.PermissibleActions {
+				// `permissibleForRole` overrides derived roles, as it's unconditional
+				res.Actions[a] = &runtimev1.RunnableRolePolicySet_PermissibleAction{
+					PermissibleFor: &runtimev1.RunnableRolePolicySet_PermissibleAction_PermissibleForRole{
+						PermissibleForRole: &emptypb.Empty{},
+					},
+				}
+			}
+		}
+	}
+
+	missingDefs := []*runtimev1.IndexBuildErrors_MissingDef{}
+
+	for _, p := range derivedRolePolicies {
+		rp := p.GetRolePolicy()
+		dr := rp.GetDerivedRole()
+
+		drName, defName := policy.SplitRolePolicyDerivedRole(dr)
+
+		drFQN := namer.DerivedRolesFQN(drName)
+		drModID := namer.GenModuleIDFromFQN(drFQN)
+
+		drPolicy, _, err := idx.loadPolicy(drModID)
+		if err != nil {
+			continue
+		}
+
+		var isMatched bool
+		for _, def := range drPolicy.GetDerivedRoles().GetDefinitions() {
+			if def.Name != defName {
+				continue
+			}
+
+			isMatched = true
+
+			for _, pr := range def.GetParentRoles() {
+				inferredModID := namer.GenModuleIDFromFQN(namer.RolePolicyFQN(pr, rp.Scope))
+				cu, ok := idx.rolePolicyUnits[inferredModID]
+				if !ok {
+					// build implicit role policy unit
+					p := &policyv1.Policy{
+						PolicyType: &policyv1.Policy_RolePolicy{
+							RolePolicy: &policyv1.RolePolicy{
+								PolicyType: &policyv1.RolePolicy_Role{
+									Role: pr,
+								},
+								Scope: rp.Scope,
+							},
+						},
+					}
+
+					cu = &policy.CompilationUnit{
+						ModID:       inferredModID,
+						Definitions: map[namer.ModuleID]*policyv1.Policy{inferredModID: p},
+					}
+
+					idx.rolePolicyUnits[inferredModID] = cu
+				}
+
+				cu.Definitions[drModID] = drPolicy
+
+				if cu.RolePolicyResources == nil {
+					cu.RolePolicyResources = make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions)
+				}
+
+				if cu.RolePolicyDerivedRoles == nil {
+					cu.RolePolicyDerivedRoles = make(map[string]map[string]struct{})
+				}
+
+				drs, ok := cu.RolePolicyDerivedRoles[pr]
+				if !ok {
+					drs = make(map[string]struct{})
+					cu.RolePolicyDerivedRoles[pr] = drs
+				}
+
+				drs[dr] = struct{}{}
+
+				for _, r := range rp.GetRules() {
+					res, ok := cu.RolePolicyResources[r.Resource]
+					if !ok {
+						res = &runtimev1.RunnableRolePolicySet_PermissibleActions{
+							Actions: make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleAction),
+						}
+						cu.RolePolicyResources[r.Resource] = res
+					}
+
+					for _, a := range r.PermissibleActions {
+						action, ok := res.Actions[a]
+						if ok {
+							// `permissibleForRole` overrides derived roles, as it's unconditional
+							if _, isPrincipalRole := action.PermissibleFor.(*runtimev1.RunnableRolePolicySet_PermissibleAction_PermissibleForRole); isPrincipalRole {
+								continue
+							}
+						} else {
+							action = &runtimev1.RunnableRolePolicySet_PermissibleAction{
+								PermissibleFor: &runtimev1.RunnableRolePolicySet_PermissibleAction_PermissibleForDerivedRoles{
+									PermissibleForDerivedRoles: &runtimev1.RunnableRolePolicySet_PermissibleForDerivedRoles{
+										DerivedRoles: make(map[string]*emptypb.Empty),
+									},
+								},
+							}
+							res.Actions[a] = action
+						}
+
+						action.GetPermissibleForDerivedRoles().DerivedRoles[dr] = &emptypb.Empty{}
+					}
+				}
+			}
+
+			break
+		}
+
+		if !isMatched {
+			// TODO(saml) need this position/context data
+			// pos, context := srcCtx.PositionAndContextForProtoPath(paths[i])
+			missingDefs = append(missingDefs, &runtimev1.IndexBuildErrors_MissingDef{
+				ImportingFile:   idx.modIDToFile[namer.GenModuleID(p)],
+				Desc:            fmt.Sprintf("derived role policy does not include required def: '%s'", defName),
+				ImportingPolicy: namer.PolicyKey(p),
+				ImportKind:      "derived roles",
+				ImportName:      namer.SimpleName(drFQN),
+				// Position:        &sourcev1.Position{},
+				// Context:         "",
+			})
+		}
+	}
+
+	return missingDefs
 }
 
 func (idx *index) GetFiles() []string {
@@ -161,13 +348,20 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 	defer idx.mu.RUnlock()
 
 	for _, id := range ids {
-		if _, ok := idx.modIDToFile[id]; !ok {
-			continue
-		}
+		var p *policyv1.Policy
+		var sc parser.SourceCtx
+		var err error
 
-		p, sc, err := idx.loadPolicy(id)
-		if err != nil {
-			return nil, err
+		if cu, ok := idx.rolePolicyUnits[id]; ok {
+			result[id] = cu
+			continue
+		} else if _, ok := idx.modIDToFile[id]; ok {
+			p, sc, err = idx.loadPolicy(id)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			continue
 		}
 
 		policyKey := namer.PolicyKey(p)

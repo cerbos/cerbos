@@ -1,0 +1,131 @@
+{
+  "fqn": "cerbos.role.admin",
+  "rolePolicy": {
+    "meta": {
+      "fqn": "cerbos.role.admin",
+      "sourceAttributes": {
+        "role.admin": {
+          "attributes": {
+            "source": "role_policies/c.yaml"
+          }
+        }
+      }
+    },
+    "role": "admin",
+    "derivedRoles": {
+      "p:foo": {
+        "name": "foo",
+        "parentRoles": {
+          "admin": {},
+          "user": {}
+        },
+        "condition": {
+          "expr": {
+            "original": "R.attr.foo == 42",
+            "checked": {
+              "referenceMap": {
+                "1": {
+                  "name": "R"
+                },
+                "4": {
+                  "overloadId": [
+                    "equals"
+                  ]
+                }
+              },
+              "typeMap": {
+                "1": {
+                  "messageType": "cerbos.engine.v1.Request.Resource"
+                },
+                "2": {
+                  "mapType": {
+                    "keyType": {
+                      "primitive": "STRING"
+                    },
+                    "valueType": {
+                      "dyn": {}
+                    }
+                  }
+                },
+                "3": {
+                  "dyn": {}
+                },
+                "4": {
+                  "primitive": "BOOL"
+                },
+                "5": {
+                  "primitive": "INT64"
+                }
+              },
+              "sourceInfo": {
+                "location": "<input>",
+                "lineOffsets": [
+                  17
+                ],
+                "positions": {
+                  "1": 0,
+                  "2": 1,
+                  "3": 6,
+                  "4": 11,
+                  "5": 14
+                }
+              },
+              "expr": {
+                "id": "4",
+                "callExpr": {
+                  "function": "_==_",
+                  "args": [
+                    {
+                      "id": "3",
+                      "selectExpr": {
+                        "operand": {
+                          "id": "2",
+                          "selectExpr": {
+                            "operand": {
+                              "id": "1",
+                              "identExpr": {
+                                "name": "R"
+                              }
+                            },
+                            "field": "attr"
+                          }
+                        },
+                        "field": "foo"
+                      }
+                    },
+                    {
+                      "id": "5",
+                      "constExpr": {
+                        "int64Value": "42"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "widget": {
+        "actions": {
+          "create": {
+            "permissibleForRole": {}
+          },
+          "delete": {
+            "permissibleForRole": {}
+          },
+          "read": {
+            "permissibleForDerivedRoles": {
+              "derivedRoles": {
+                "p:foo": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "compilerVersion": 1
+}

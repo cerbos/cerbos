@@ -705,6 +705,9 @@ func cerbos_policy_v1_RolePolicy_hashpb_sum(m *RolePolicy, hasher hash.Hash, ign
 			case *RolePolicy_Role:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.Role))
 
+			case *RolePolicy_DerivedRole:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.DerivedRole))
+
 			}
 		}
 	}

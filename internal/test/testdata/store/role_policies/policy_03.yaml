@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  derivedRole: apatr_common_roles:abuse_moderator
+  scope: acme.hr.uk
+  rules:
+    - resource: leave_request
+      permissibleActions: ["*"]
+
+    - resource: salary_record
+      permissibleActions: ["*"]
+
+    - resource: the_fridge
+      permissibleActions: ["take_food"]

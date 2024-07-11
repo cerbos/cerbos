@@ -31,6 +31,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "derivedRole": {
+          "type": "string",
+          "pattern": "^[\\-0-:A-Z_a-z]+$"
+        },
         "role": {
           "type": "string",
           "minLength": 1
@@ -48,9 +52,19 @@
       }
     },
     {
-      "type": "object",
-      "required": [
-        "role"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "role"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "derivedRole"
+          ]
+        }
       ]
     }
   ]

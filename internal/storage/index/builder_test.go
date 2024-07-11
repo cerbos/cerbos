@@ -45,7 +45,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 	t.Run("check_contents", func(t *testing.T) {
 		data := idxImpl.Inspect()
-		require.Len(t, data, 35)
+		require.Len(t, data, 36)
 
 		rp1 := filepath.Join("resource_policies", "policy_01.yaml")
 		rp2 := filepath.Join("resource_policies", "policy_02.yaml")
@@ -102,7 +102,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 		require.Contains(t, data, drCommon)
 		require.Empty(t, data[drCommon].Dependencies)
-		require.Len(t, data[drCommon].Dependents, 1)
+		require.Len(t, data[drCommon].Dependents, 2)
 
 		require.Contains(t, data, dr1)
 		require.Empty(t, data[dr1].Dependencies)
@@ -187,7 +187,7 @@ func TestBuildIndex(t *testing.T) {
 					cmp.Diff(tc.WantErrList, errList.IndexBuildErrors,
 						protocmp.Transform(),
 						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
-							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),
+							"disabled", "duplicate_defs", "load_failures", "missing_defs", "missing_imports", "missing_scopes"),
 						protocmp.SortRepeated(func(a, b *runtimev1.IndexBuildErrors_LoadFailure) bool {
 							if a.ErrorDetails != nil && b.ErrorDetails != nil {
 								if a.ErrorDetails.GetPosition().GetLine() == b.ErrorDetails.GetPosition().GetLine() {

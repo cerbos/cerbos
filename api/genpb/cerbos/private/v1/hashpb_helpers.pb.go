@@ -1217,6 +1217,9 @@ func cerbos_policy_v1_RolePolicy_hashpb_sum(m *v12.RolePolicy, hasher hash.Hash,
 			case *v12.RolePolicy_Role:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.Role))
 
+			case *v12.RolePolicy_DerivedRole:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.DerivedRole))
+
 			}
 		}
 	}
@@ -1995,6 +1998,10 @@ func cerbos_private_v1_CompileTestCase_hashpb_sum(m *CompileTestCase, hasher has
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.private.v1.CompileTestCase.main_role_policy_fqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMainRolePolicyFqn()))
+
 	}
 }
 
@@ -3902,6 +3909,39 @@ func cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m *v15.IndexBuild
 	}
 }
 
+func cerbos_runtime_v1_IndexBuildErrors_MissingDef_hashpb_sum(m *v15.IndexBuildErrors_MissingDef, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.importing_file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportingFile()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.desc"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetDesc()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.importing_policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportingPolicy()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.import_kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportKind()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.import_name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportName()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.position"]; !ok {
+		if m.GetPosition() != nil {
+			cerbos_source_v1_Position_hashpb_sum(m.GetPosition(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetContext()))
+
+	}
+}
+
 func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *v15.IndexBuildErrors_MissingImport, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.importing_file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportingFile()))
@@ -3987,6 +4027,16 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *v15.IndexBuildErrors, hash
 			for _, v := range m.DisabledDefs {
 				if v != nil {
 					cerbos_runtime_v1_IndexBuildErrors_Disabled_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.missing_defs"]; !ok {
+		if len(m.MissingDefs) > 0 {
+			for _, v := range m.MissingDefs {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_MissingDef_hashpb_sum(v, hasher, ignore)
 				}
 
 			}

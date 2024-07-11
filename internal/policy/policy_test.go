@@ -477,6 +477,23 @@ func compilePolicy(t *testing.T, p *policyv1.Policy, derivedRoles ...*policyv1.P
 		ModID: mID,
 	}
 
+	if rp := p.GetRolePolicy(); rp != nil {
+		cu.RolePolicyResources = make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions)
+		for _, r := range rp.Rules {
+			actions := make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleAction)
+
+			cu.RolePolicyResources[r.Resource] = &runtimev1.RunnableRolePolicySet_PermissibleActions{
+				Actions: actions,
+			}
+
+			for _, a := range r.PermissibleActions {
+				actions[a] = &runtimev1.RunnableRolePolicySet_PermissibleAction{
+					PermissibleFor: &runtimev1.RunnableRolePolicySet_PermissibleAction_PermissibleForRole{},
+				}
+			}
+		}
+	}
+
 	for _, derivedRole := range derivedRoles {
 		if _, ok := derivedRole.PolicyType.(*policyv1.Policy_DerivedRoles); !ok {
 			t.Errorf("policy %s is not derived roles", namer.PolicyKey(derivedRole))

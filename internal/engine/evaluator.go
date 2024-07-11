@@ -17,6 +17,7 @@ import (
 	"go.uber.org/multierr"
 	"golang.org/x/exp/maps"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -101,7 +102,7 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		return newRolePolicyEvaluator(rps)
+		return newRolePolicyEvaluator(rps, eparams)
 	default:
 		return noopEvaluator{}
 	}
@@ -114,10 +115,11 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 }
 
 type rolePolicyEvaluator struct {
-	policies map[string]*runtimev1.RunnableRolePolicySet
+	policies   map[string]*runtimev1.RunnableRolePolicySet
+	evalParams evalParams
 }
 
-func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet) *rolePolicyEvaluator {
+func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet, eParams evalParams) *rolePolicyEvaluator {
 	policies := make(map[string]*runtimev1.RunnableRolePolicySet)
 	for _, p := range rps {
 		if rp, ok := p.PolicySet.(*runtimev1.RunnablePolicySet_RolePolicy); ok {
@@ -125,7 +127,7 @@ func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet) *rolePolicyEvalu
 		}
 	}
 
-	return &rolePolicyEvaluator{policies: policies}
+	return &rolePolicyEvaluator{policies: policies, evalParams: eParams}
 }
 
 func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
@@ -143,13 +145,48 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 	trail := newAuditTrail(sourceAttrs)
 	result := newEvalResult(input.Actions, trail)
+	request := checkInputToRequest(input)
 
 	rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
 	permissibleActions := internal.ProtoSet{}
 	for _, p := range rpe.policies {
 		if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
-			permissibleActions.Merge(k.Actions)
+			actions := make(internal.ProtoSet)
+			for a, permissibleFor := range k.Actions {
+				if r := permissibleFor.GetPermissibleForRole(); r != nil {
+					actions[a] = &emptypb.Empty{}
+				} else if drs := permissibleFor.GetPermissibleForDerivedRoles(); drs != nil {
+					for dr := range drs.DerivedRoles {
+						if rdr, ok := p.DerivedRoles[dr]; ok {
+							dctx := rpctx.StartDerivedRole(rdr.Name)
+
+							evalCtx := newEvalContext(rpe.evalParams, request)
+
+							// evaluate variables of this derived roles set
+							drVariables, err := evalCtx.evaluateVariables(dctx.StartVariables(), rdr.OrderedVariables)
+							if err != nil {
+								dctx.Skipped(err, "Error evaluating variables")
+								continue
+							}
+
+							ok, err := evalCtx.satisfiesCondition(dctx.StartCondition(), rdr.Condition, drVariables)
+							if err != nil {
+								dctx.Skipped(err, "Error evaluating condition")
+								continue
+							}
+
+							if !ok {
+								dctx.Skipped(nil, "Condition not satisfied")
+								continue
+							}
+
+							actions[a] = &emptypb.Empty{}
+						}
+					}
+				}
+			}
+			permissibleActions.Merge(actions)
 		}
 	}
 

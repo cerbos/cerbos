@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
+---
+wantErrList:
+  missingDefs:
+    - importingFile: acme_admin.yaml
+      importingPolicy: role.p_bar/acme
+      importKind: derived roles
+      importName: p
+      desc: "derived role policy does not include required def: 'bar'"
+      # position:
+      #   line: 4
+      #   column: 3
+      #   path: $.rolePolicy.derivedRole
+files:
+  "p.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    derivedRoles:
+      name: p
+      definitions:
+        - name: foo
+          parentRoles: [user, admin]
+          condition:
+            match:
+                expr: R.attr.foo == 42
+  "acme_admin.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    rolePolicy:
+      derivedRole: p:bar
+      scope: "acme"
+      rules:
+        - resource: widget
+          permissibleActions: [read, update]

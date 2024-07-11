@@ -2685,6 +2685,9 @@
         "exportVariables": {
           "$ref": "#/definitions/v1ExportVariables"
         },
+        "rolePolicy": {
+          "$ref": "#/definitions/v1RolePolicy"
+        },
         "variables": {
           "type": "object",
           "additionalProperties": {
@@ -2891,6 +2894,42 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
+        }
+      }
+    },
+    "v1RolePolicy": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "derivedRole": {
+          "type": "string",
+          "title": "TODO(saml) figure out proper regex to validate two segment `:` delimited string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleRule"
+          }
+        }
+      }
+    },
+    "v1RoleRule": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "permissibleActions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

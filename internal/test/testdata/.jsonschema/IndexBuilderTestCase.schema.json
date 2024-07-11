@@ -51,6 +51,12 @@
             "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.LoadFailure"
           }
         },
+        "missingDefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.MissingDef"
+          }
+        },
         "missingImports": {
           "type": "array",
           "items": {
@@ -110,6 +116,33 @@
         },
         "file": {
           "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.MissingDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "type": "string"
+        },
+        "desc": {
+          "type": "string"
+        },
+        "importKind": {
+          "type": "string"
+        },
+        "importName": {
+          "type": "string"
+        },
+        "importingFile": {
+          "type": "string"
+        },
+        "importingPolicy": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/cerbos.source.v1.Position"
         }
       }
     },

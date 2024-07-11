@@ -42,6 +42,22 @@ func (m *RunnableRolePolicySet_PermissibleActions) HashPB(hasher hash.Hash, igno
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *RunnableRolePolicySet_PermissibleAction) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_RunnableRolePolicySet_PermissibleAction_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *RunnableRolePolicySet_PermissibleForDerivedRoles) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_RunnableRolePolicySet_PermissibleForDerivedRoles_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *RunnableResourcePolicySet) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m, hasher, ignore)
@@ -253,6 +269,14 @@ func (m *IndexBuildErrors_LoadFailure) HashPB(hasher hash.Hash, ignore map[strin
 func (m *IndexBuildErrors_Disabled) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_runtime_v1_IndexBuildErrors_Disabled_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *IndexBuildErrors_MissingDef) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_IndexBuildErrors_MissingDef_hashpb_sum(m, hasher, ignore)
 	}
 }
 

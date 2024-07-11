@@ -74,37 +74,33 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
-	resources := make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions)
-	for _, r := range rp.Rules {
-		actions, ok := resources[r.Resource]
-		if !ok {
-			actions = &runtimev1.RunnableRolePolicySet_PermissibleActions{
-				Actions: make(map[string]*emptypb.Empty),
-			}
-			resources[r.Resource] = actions
+	rrp := &runtimev1.RunnableRolePolicySet{
+		Meta: &runtimev1.RunnableRolePolicySet_Metadata{
+			Fqn:   modCtx.fqn,
+			Scope: rp.Scope,
+			SourceAttributes: map[string]*policyv1.SourceAttributes{
+				namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
+			},
+			Annotations: modCtx.def.GetMetadata().GetAnnotations(),
+		},
+		Role:      rp.GetRole(),
+		Resources: modCtx.unit.RolePolicyResources,
+	}
+
+	if defDrs, ok := modCtx.unit.RolePolicyDerivedRoles[rp.GetRole()]; ok {
+		drs, err := compileRequiredDerivedRolesForRolePolicies(modCtx, defDrs)
+		if err != nil {
+			return nil
 		}
 
-		for _, a := range r.PermissibleActions {
-			actions.Actions[a] = &emptypb.Empty{}
-		}
+		rrp.DerivedRoles = drs
 	}
 
 	return &runtimev1.RunnablePolicySet{
 		CompilerVersion: compilerVersion,
 		Fqn:             modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_RolePolicy{
-			RolePolicy: &runtimev1.RunnableRolePolicySet{
-				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
-					Fqn:   modCtx.fqn,
-					Scope: rp.Scope,
-					SourceAttributes: map[string]*policyv1.SourceAttributes{
-						namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
-					},
-					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
-				},
-				Role:      rp.GetRole(),
-				Resources: resources,
-			},
+			RolePolicy: rrp,
 		},
 	}
 }
@@ -287,6 +283,32 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	}
 
 	return referencedRoles, modCtx.error()
+}
+
+func compileRequiredDerivedRolesForRolePolicies(modCtx *moduleCtx, defDerivedRoles map[string]struct{}) (map[string]*runtimev1.RunnableDerivedRole, error) {
+	compiledRoles := make(map[string]*runtimev1.RunnableDerivedRole)
+	for dr := range defDerivedRoles {
+		drName, defName := policy.SplitRolePolicyDerivedRole(dr)
+		impID := namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(drName))
+
+		drModCtx := modCtx.moduleCtx(impID)
+		if drModCtx == nil {
+			path := policy.RolePolicyDerivedRoleProtoPath()
+			modCtx.addErrForProtoPath(path, errImportNotFound, "Derived roles import %q cannot be found", drName)
+			continue
+		}
+
+		compiledDefs := compileDerivedRoles(drModCtx)
+		if compiledDefs == nil {
+			continue
+		}
+
+		if rdr, ok := compiledDefs[defName]; ok {
+			compiledRoles[dr] = rdr
+		}
+	}
+
+	return compiledRoles, modCtx.error()
 }
 
 func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerivedRole {

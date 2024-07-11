@@ -131,6 +131,7 @@ message CompileTestCase {
   string main_def = 1;
   repeated cerbos.runtime.v1.CompileErrors.Err want_errors = 2;
   repeated Variables want_variables = 3;
+  string main_role_policy_fqn = 4;
 }
 
 message CelTestCase {

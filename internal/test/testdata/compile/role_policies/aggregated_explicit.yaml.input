@@ -1,0 +1,50 @@
+-- derived_roles/p.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: p
+  definitions:
+    - name: foo
+      parentRoles: [user, admin]
+      condition:
+        match:
+            expr: R.attr.foo == 42
+
+-- derived_roles/q.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: q
+  definitions:
+    - name: foo
+      parentRoles: [user]
+      condition:
+        match:
+            expr: R.attr.foo > 9000
+
+-- role_policies/a.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  derivedRole: p:foo
+  rules:
+    - resource: widget
+      permissibleActions: [create, read]
+
+-- role_policies/b.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  derivedRole: q:foo
+  rules:
+    - resource: widget
+      permissibleActions: [read, update]
+
+-- role_policies/c.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: admin
+  rules:
+    - resource: widget
+      permissibleActions: [create, delete]

@@ -37,8 +37,8 @@ type BuildError struct {
 }
 
 func (ibe *BuildError) Error() string {
-	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d",
-		len(ibe.MissingImports), len(ibe.MissingScopes), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
+	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d, missing defs=%d",
+		len(ibe.MissingImports), len(ibe.MissingScopes), len(ibe.DuplicateDefs), len(ibe.LoadFailures), len(ibe.MissingDefs))
 }
 
 type buildOptions struct {
@@ -159,29 +159,31 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 }
 
 type indexBuilder struct {
-	executables   ModuleIDSet
-	modIDToFile   map[namer.ModuleID]string
-	fileToModID   map[string]namer.ModuleID
-	dependents    map[namer.ModuleID]ModuleIDSet
-	dependencies  map[namer.ModuleID]ModuleIDSet
-	missing       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
-	missingScopes map[namer.ModuleID]string
-	stats         *statsCollector
-	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
-	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
-	disabled      []*runtimev1.IndexBuildErrors_Disabled
+	executables           ModuleIDSet
+	rolePolicyExecutables map[namer.ModuleID]*policyv1.Policy
+	modIDToFile           map[namer.ModuleID]string
+	fileToModID           map[string]namer.ModuleID
+	dependents            map[namer.ModuleID]ModuleIDSet
+	dependencies          map[namer.ModuleID]ModuleIDSet
+	missing               map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
+	missingScopes         map[namer.ModuleID]string
+	stats                 *statsCollector
+	duplicates            []*runtimev1.IndexBuildErrors_DuplicateDef
+	loadFailures          []*runtimev1.IndexBuildErrors_LoadFailure
+	disabled              []*runtimev1.IndexBuildErrors_Disabled
 }
 
 func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
-		executables:   make(ModuleIDSet),
-		modIDToFile:   make(map[namer.ModuleID]string),
-		fileToModID:   make(map[string]namer.ModuleID),
-		dependents:    make(map[namer.ModuleID]ModuleIDSet),
-		dependencies:  make(map[namer.ModuleID]ModuleIDSet),
-		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
-		missingScopes: make(map[namer.ModuleID]string),
-		stats:         newStatsCollector(),
+		executables:           make(ModuleIDSet),
+		rolePolicyExecutables: make(map[namer.ModuleID]*policyv1.Policy),
+		modIDToFile:           make(map[namer.ModuleID]string),
+		fileToModID:           make(map[string]namer.ModuleID),
+		dependents:            make(map[namer.ModuleID]ModuleIDSet),
+		dependencies:          make(map[namer.ModuleID]ModuleIDSet),
+		missing:               make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
+		missingScopes:         make(map[namer.ModuleID]string),
+		stats:                 newStatsCollector(),
 	}
 }
 
@@ -262,7 +264,6 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 
 		// the dependent may not have been loaded by the indexer yet because it's still walking the directory.
 		if _, exists := idx.modIDToFile[depID]; !exists {
-			policyKey := namer.PolicyKeyFromFQN(p.FQN)
 			kind := policy.KindFromFQN(dep)
 			var kindStr string
 			switch kind {
@@ -274,6 +275,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 				panic(fmt.Errorf("unexpected import kind %s", kind))
 			}
 
+			policyKey := namer.PolicyKeyFromFQN(p.FQN)
 			pos, context := srcCtx.PositionAndContextForProtoPath(paths[i])
 			idx.missing[depID] = append(idx.missing[depID], &runtimev1.IndexBuildErrors_MissingImport{
 				ImportingFile:   file,
@@ -309,25 +311,40 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 	idx.dependents[parent][child] = struct{}{}
 }
 
-func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
+func (ib *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	logger := zap.L().Named("index")
 
-	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes)
+	idx := &index{
+		fsys:         fsys,
+		executables:  ib.executables,
+		modIDToFile:  ib.modIDToFile,
+		fileToModID:  ib.fileToModID,
+		dependents:   ib.dependents,
+		dependencies: ib.dependencies,
+		buildOpts:    opts,
+		schemaLoader: NewSchemaLoader(fsys, opts.rootDir),
+		stats:        ib.stats.collate(),
+	}
+
+	missingDefs := idx.buildRolePolicyCompilationUnits()
+
+	nErr := len(ib.missing) + len(ib.duplicates) + len(ib.loadFailures) + len(ib.missingScopes) + len(missingDefs)
 	if nErr > 0 {
 		err := &BuildError{
 			IndexBuildErrors: &runtimev1.IndexBuildErrors{
-				DuplicateDefs: idx.duplicates,
-				LoadFailures:  idx.loadFailures,
-				DisabledDefs:  idx.disabled,
+				DuplicateDefs: ib.duplicates,
+				LoadFailures:  ib.loadFailures,
+				DisabledDefs:  ib.disabled,
+				MissingDefs:   missingDefs,
 			},
 			nErr: nErr,
 		}
 
-		for _, missing := range idx.missing {
+		for _, missing := range ib.missing {
 			err.MissingImports = append(err.MissingImports, missing...)
 		}
 
-		for _, ms := range idx.missingScopes {
+		for _, ms := range ib.missingScopes {
 			err.MissingScopes = append(err.MissingScopes, namer.PolicyKeyFromFQN(ms))
 		}
 
@@ -336,20 +353,10 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 		return nil, err
 	}
 
-	logger.Info(fmt.Sprintf("Found %d executable policies", len(idx.executables)))
-	metrics.Add(context.Background(), metrics.IndexEntryCount(), int64(len(idx.modIDToFile)))
+	logger.Info(fmt.Sprintf("Found %d executable policies", len(ib.executables)))
+	metrics.Add(context.Background(), metrics.IndexEntryCount(), int64(len(ib.modIDToFile)))
 
-	return &index{
-		fsys:         fsys,
-		executables:  idx.executables,
-		modIDToFile:  idx.modIDToFile,
-		fileToModID:  idx.fileToModID,
-		dependents:   idx.dependents,
-		dependencies: idx.dependencies,
-		buildOpts:    opts,
-		schemaLoader: NewSchemaLoader(fsys, opts.rootDir),
-		stats:        idx.stats.collate(),
-	}, nil
+	return idx, nil
 }
 
 func logBuildFailure(logger *zap.Logger, level zapcore.Level, err *BuildError) {

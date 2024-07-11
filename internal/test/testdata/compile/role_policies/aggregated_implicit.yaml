@@ -1,3 +1,3 @@
 # yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
 ---
-mainDef: "role_policies/acme_admin.yaml"
+mainRolePolicyFqn: "cerbos.role.user"

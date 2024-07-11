@@ -101,6 +101,7 @@ func KindFromFQN(fqn string) Kind {
 
 // Dependencies returns the module names of dependencies of the policy.
 func Dependencies(p *policyv1.Policy) ([]string, []string) {
+	var rolePolicyDerivedRole string
 	var importDerivedRoles []string
 	var importVariables []string
 	var importVariablesProtoPath string
@@ -119,7 +120,12 @@ func Dependencies(p *policyv1.Policy) ([]string, []string) {
 		importVariables = pt.DerivedRoles.Variables.GetImport()
 		importVariablesProtoPath = "derived_roles.variables.import"
 
-	case *policyv1.Policy_RolePolicy, *policyv1.Policy_ExportVariables:
+	case *policyv1.Policy_RolePolicy:
+		if rp, ok := pt.RolePolicy.PolicyType.(*policyv1.RolePolicy_DerivedRole); ok {
+			rolePolicyDerivedRole, _ = SplitRolePolicyDerivedRole(rp.DerivedRole)
+		}
+
+	case *policyv1.Policy_ExportVariables:
 
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
@@ -131,6 +137,11 @@ func Dependencies(p *policyv1.Policy) ([]string, []string) {
 	for i, dr := range importDerivedRoles {
 		dependencies = append(dependencies, namer.DerivedRolesFQN(dr))
 		paths = append(paths, fmt.Sprintf("resource_policy.import_derived_roles[%d]", i))
+	}
+
+	if rolePolicyDerivedRole != "" {
+		dependencies = append(dependencies, namer.DerivedRolesFQN(rolePolicyDerivedRole))
+		paths = append(paths, RolePolicyDerivedRoleProtoPath())
 	}
 
 	for i, v := range importVariables {
@@ -607,6 +618,15 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 	return variables
 }
 
+func SplitRolePolicyDerivedRole(drName string) (string, string) {
+	parts := strings.Split(drName, ":")
+	if len(parts) != 2 {
+		return "", ""
+	}
+
+	return parts[0], parts[1]
+}
+
 // Wrap augments a policy with useful information about itself.
 func Wrap(p *policyv1.Policy) Wrapper {
 	w := Wrapper{Policy: p}
@@ -629,7 +649,14 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.Scope = pt.PrincipalPolicy.Scope
 
 	case *policyv1.Policy_RolePolicy:
-		role := pt.RolePolicy.GetRole()
+		var role string
+		switch pt.RolePolicy.PolicyType.(type) {
+		case *policyv1.RolePolicy_Role:
+			role = pt.RolePolicy.GetRole()
+		case *policyv1.RolePolicy_DerivedRole:
+			role = pt.RolePolicy.GetDerivedRole()
+		}
+
 		w.Kind = RolePolicyKind
 		w.FQN = namer.RolePolicyFQN(role, pt.RolePolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
@@ -668,9 +695,11 @@ func (pw Wrapper) Dependencies() []namer.ModuleID {
 // For example, if a resource policy named R imports derived roles named D, the compilation unit will contain
 // both R and D with the ModID field pointing to R because it is the main policy.
 type CompilationUnit struct {
-	Definitions    map[namer.ModuleID]*policyv1.Policy
-	SourceContexts map[namer.ModuleID]parser.SourceCtx
-	ModID          namer.ModuleID
+	Definitions            map[namer.ModuleID]*policyv1.Policy
+	SourceContexts         map[namer.ModuleID]parser.SourceCtx
+	ModID                  namer.ModuleID
+	RolePolicyResources    map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions
+	RolePolicyDerivedRoles map[string]map[string]struct{}
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy, sc parser.SourceCtx) {

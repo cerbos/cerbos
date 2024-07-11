@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
+---
+wantErrList:
+  missingImports:
+    - importingFile: acme_admin.yaml
+      importingPolicy: role.missing_file_foo/acme
+      importKind: derived roles
+      importName: missing_file
+      desc: "cannot find derived roles 'missing_file' imported by policy role.missing_file_foo/acme"
+      position:
+        line: 4
+        column: 3
+        path: $.rolePolicy.derivedRole
+files:
+  "acme_admin.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    rolePolicy:
+      derivedRole: missing_file:foo
+      scope: "acme"
+      rules:
+        - resource: widget
+          permissibleActions: [read, update]

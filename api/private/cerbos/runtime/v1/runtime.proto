@@ -34,12 +34,25 @@ message RunnableRolePolicySet {
   }
 
   message PermissibleActions {
-    map<string, google.protobuf.Empty> actions = 1;
+    map<string, PermissibleAction> actions = 1;
+  }
+
+  message PermissibleAction {
+    oneof permissible_for {
+      google.protobuf.Empty permissible_for_role = 1;
+      PermissibleForDerivedRoles permissible_for_derived_roles = 2;
+    }
+  }
+
+  // maps are not allowed in oneofs
+  message PermissibleForDerivedRoles {
+    map<string, google.protobuf.Empty> derived_roles = 1;
   }
 
   Metadata meta = 1;
   string role = 2;
-  map<string, PermissibleActions> resources = 3;
+  map<string, RunnableDerivedRole> derived_roles = 3;
+  map<string, PermissibleActions> resources = 4;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies
@@ -232,12 +245,23 @@ message IndexBuildErrors {
     cerbos.source.v1.Position position = 3;
   }
 
+  message MissingDef {
+    string importing_file = 1;
+    string desc = 2;
+    string importing_policy = 3;
+    string import_kind = 4;
+    string import_name = 5;
+    cerbos.source.v1.Position position = 6;
+    string context = 7;
+  }
+
   repeated string disabled = 1 [deprecated = true];
   repeated DuplicateDef duplicate_defs = 2;
   repeated LoadFailure load_failures = 3;
   repeated MissingImport missing_imports = 4;
   repeated string missing_scopes = 5;
   repeated Disabled disabled_defs = 6;
+  repeated MissingDef missing_defs = 7;
 }
 
 message Errors {

@@ -245,6 +245,39 @@ func cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m *IndexBuildErro
 	}
 }
 
+func cerbos_runtime_v1_IndexBuildErrors_MissingDef_hashpb_sum(m *IndexBuildErrors_MissingDef, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.importing_file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportingFile()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.desc"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetDesc()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.importing_policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportingPolicy()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.import_kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportKind()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.import_name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportName()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.position"]; !ok {
+		if m.GetPosition() != nil {
+			cerbos_source_v1_Position_hashpb_sum(m.GetPosition(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingDef.context"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetContext()))
+
+	}
+}
+
 func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *IndexBuildErrors_MissingImport, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.importing_file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetImportingFile()))
@@ -330,6 +363,16 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher h
 			for _, v := range m.DisabledDefs {
 				if v != nil {
 					cerbos_runtime_v1_IndexBuildErrors_Disabled_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.missing_defs"]; !ok {
+		if len(m.MissingDefs) > 0 {
+			for _, v := range m.MissingDefs {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_MissingDef_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -967,6 +1010,25 @@ func cerbos_runtime_v1_RunnableRolePolicySet_Metadata_hashpb_sum(m *RunnableRole
 	}
 }
 
+func cerbos_runtime_v1_RunnableRolePolicySet_PermissibleAction_hashpb_sum(m *RunnableRolePolicySet_PermissibleAction, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.PermissibleFor != nil {
+		if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.PermissibleAction.permissible_for"]; !ok {
+			switch t := m.PermissibleFor.(type) {
+			case *RunnableRolePolicySet_PermissibleAction_PermissibleForRole:
+				if t.PermissibleForRole != nil {
+					google_protobuf_Empty_hashpb_sum(t.PermissibleForRole, hasher, ignore)
+				}
+
+			case *RunnableRolePolicySet_PermissibleAction_PermissibleForDerivedRoles:
+				if t.PermissibleForDerivedRoles != nil {
+					cerbos_runtime_v1_RunnableRolePolicySet_PermissibleForDerivedRoles_hashpb_sum(t.PermissibleForDerivedRoles, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_RunnableRolePolicySet_PermissibleActions_hashpb_sum(m *RunnableRolePolicySet_PermissibleActions, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.PermissibleActions.actions"]; !ok {
 		if len(m.Actions) > 0 {
@@ -981,7 +1043,29 @@ func cerbos_runtime_v1_RunnableRolePolicySet_PermissibleActions_hashpb_sum(m *Ru
 
 			for _, k := range keys {
 				if m.Actions[k] != nil {
-					google_protobuf_Empty_hashpb_sum(m.Actions[k], hasher, ignore)
+					cerbos_runtime_v1_RunnableRolePolicySet_PermissibleAction_hashpb_sum(m.Actions[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_RunnableRolePolicySet_PermissibleForDerivedRoles_hashpb_sum(m *RunnableRolePolicySet_PermissibleForDerivedRoles, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.PermissibleForDerivedRoles.derived_roles"]; !ok {
+		if len(m.DerivedRoles) > 0 {
+			keys := make([]string, len(m.DerivedRoles))
+			i := 0
+			for k := range m.DerivedRoles {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.DerivedRoles[k] != nil {
+					google_protobuf_Empty_hashpb_sum(m.DerivedRoles[k], hasher, ignore)
 				}
 
 			}
@@ -999,6 +1083,25 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.role"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRole()))
 
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.derived_roles"]; !ok {
+		if len(m.DerivedRoles) > 0 {
+			keys := make([]string, len(m.DerivedRoles))
+			i := 0
+			for k := range m.DerivedRoles {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.DerivedRoles[k] != nil {
+					cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m.DerivedRoles[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.resources"]; !ok {
 		if len(m.Resources) > 0 {

@@ -2903,6 +2903,10 @@
         "role": {
           "type": "string"
         },
+        "derivedRole": {
+          "type": "string",
+          "title": "TODO(saml) figure out proper regex to validate two segment `:` delimited string"
+        },
         "scope": {
           "type": "string"
         },
