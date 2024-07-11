@@ -13,6 +13,8 @@ export TOOLS_BIN_DIR := join(env_var_or_default("XDG_CACHE_HOME", join(env_var("
 default:
     @just --list
 
+build: generate lint tests package
+
 compile:
     @ CGO_ENABLED=0 go build ./... && CGO_ENABLED=0 go test -tags=e2e,tests,integration -run=ignore  ./... > /dev/null
 
@@ -101,8 +103,13 @@ lint: _golangcilint _buf
     @ "${TOOLS_BIN_DIR}/buf" lint
     @ "${TOOLS_BIN_DIR}/buf" format --diff --exit-code
 
+lint-helm:
+    @ deploy/charts/validate.sh
+
 package $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='': _goreleaser
     @ "${TOOLS_BIN_DIR}/goreleaser"  release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
+
+pre-commit: lint-helm generate lint tests
 
 test PKG='./...' TEST='.*':
     @ go test -v -tags=tests,integration -failfast -cover -count=1 -run='{{ TEST }}' '{{ PKG }}'

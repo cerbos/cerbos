@@ -43,6 +43,9 @@ jobs:
           write_deps_cache: true
           write_build_cache: true
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Warm cache
         if: ${{ steps.setup.outputs.cache_hit != 'true' }}
-        run: make warm-cache
+        run: just warm-cache

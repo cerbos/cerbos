@@ -49,8 +49,11 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Generate
-        run: make generate
+        run: just generate
 
       - name: Check repo status
         run: |-
@@ -114,13 +117,16 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Download previous test times
         uses: actions/download-artifact@v4
         with:
           name: previous-test-times
 
       - name: Test
-        run: make test-all TESTSPLIT_INDEX=${{ strategy.job-index }} TESTSPLIT_TOTAL=${{ strategy.job-total }}
+        run: just test-all ${{ strategy.job-index }} ${{ strategy.job-total }}
         env:
           GOEXPERIMENT: loopvar # https://github.com/golang/go/wiki/LoopvarExperiment
           CERBOS_LOG_LEVEL: "debug"
@@ -165,13 +171,16 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Download JUnit reports
         uses: actions/download-artifact@v4
 
       - name: Combine JUnit reports
         run: |-
           mv junit-reports-*/junit.*.xml .
-          make test-times TESTSPLIT_TOTAL=${{ needs.test.outputs.job-total }}
+          just test-times ${{ needs.test.outputs.job-total }}
 
       - name: Upload new test times
         uses: actions/upload-artifact@v4
