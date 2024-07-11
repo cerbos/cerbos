@@ -11,6 +11,7 @@ import (
 	_ "github.com/cerbos/protoc-gen-go-hashpb"
 	_ "github.com/cerbos/protoc-gen-jsonschema/cmd/protoc-gen-jsonschema"
 	_ "github.com/fullstorydev/grpcurl/cmd/grpcurl"
+	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/google/go-licenses"
 	_ "github.com/goreleaser/goreleaser/v2"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"

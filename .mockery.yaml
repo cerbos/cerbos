@@ -1,3 +1,26 @@
 boilerplate-file: hack/copyright_header.txt
+dir: internal/test/mocks
+filename: "{{.InterfaceName}}.go"
+mockname: "{{.InterfaceName}}"
+outpkg: mocks
 with-expecter: True
+packages:
+  github.com/cerbos/cerbos/internal/audit/hub:
+    interfaces:
+      IngestSyncer:
 
+  github.com/cerbos/cerbos/internal/storage:
+    interfaces:
+      Store:
+
+  github.com/cerbos/cerbos/internal/storage/hub:
+    interfaces:
+      CloudAPIClient:
+
+  github.com/cerbos/cerbos/internal/storage/index:
+    interfaces:
+      Index:
+
+  github.com/cerbos/cloud-api/bundle:
+    interfaces:
+      WatchHandle:
