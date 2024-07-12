@@ -9,7 +9,7 @@ derivedRoles:
     import:
       - common_variables
     local:
-      derivedRoleVariable: R.attr.isDerivedRoleVar
+      derivedRoleVariable: P.attr.isDerivedRoleVar
   definitions:
     - name: approved_user
       parentRoles: ["user"]

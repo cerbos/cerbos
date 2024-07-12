@@ -1188,6 +1188,28 @@
         }
       }
     },
+    "InspectPoliciesResponseAttribute": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/InspectPoliciesResponseAttributeType",
+          "description": "Type of the attribute being referenced."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the attribute being referenced."
+        }
+      }
+    },
+    "InspectPoliciesResponseAttributeType": {
+      "type": "string",
+      "enum": [
+        "TYPE_UNSPECIFIED",
+        "TYPE_PRINCIPAL_ATTRIBUTE",
+        "TYPE_RESOURCE_ATTRIBUTE"
+      ],
+      "default": "TYPE_UNSPECIFIED"
+    },
     "InspectPoliciesResponseDerivedRole": {
       "type": "object",
       "properties": {
@@ -2285,6 +2307,14 @@
             "$ref": "#/definitions/InspectPoliciesResponseDerivedRole"
           },
           "description": "Derived roles referenced in the policy."
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/InspectPoliciesResponseAttribute"
+          },
+          "description": "Attributes referenced in the policy."
         }
       }
     },

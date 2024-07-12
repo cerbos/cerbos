@@ -25,7 +25,7 @@ resourcePolicy:
         - user
       condition:
         match:
-          expr: "R.attr.approvedUser && (variables.commonMarkedResource || variables.markedResource)"
+          expr: "R.attr.approvedUser && (variables.commonMarkedResource || variables.markedResource) && P.attr.someAttr"
       effect: EFFECT_ALLOW
     - actions: ["view"]
       roles:
@@ -44,7 +44,7 @@ metadata:
 exportVariables:
   name: common_variables
   definitions:
-    commonMarkedResource: R.attr.markedResource
+    commonMarkedResource: R.attr.commonMarkedResource
     commonLabel: '"dude"'
     commonTeams: '["red", "blue"]'
 

@@ -445,6 +445,17 @@ message InspectPoliciesResponse {
     json_schema: {description: "Inspect policies response"}
   };
 
+  message Attribute {
+    enum Type {
+      TYPE_UNSPECIFIED = 0;
+      TYPE_PRINCIPAL_ATTRIBUTE = 1;
+      TYPE_RESOURCE_ATTRIBUTE = 2;
+    }
+
+    Type type = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Type of the attribute being referenced."}];
+    string name = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Name of the attribute being referenced."}];
+  }
+
   message DerivedRole {
     enum Kind {
       KIND_UNSPECIFIED = 0;
@@ -480,6 +491,7 @@ message InspectPoliciesResponse {
     repeated Variable variables = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Variables referenced in the policy."}];
     string policy_id = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "For blob, disk, and git stores policy ID is the file name. For other stores it is <kind>.<name>.<version>/<scope>."}];
     repeated DerivedRole derived_roles = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Derived roles referenced in the policy."}];
+    repeated Attribute attributes = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Attributes referenced in the policy."}];
   }
 
   map<string, Result> results = 1;

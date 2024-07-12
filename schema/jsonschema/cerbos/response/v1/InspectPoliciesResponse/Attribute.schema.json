@@ -1,0 +1,24 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/InspectPoliciesResponse/Attribute.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.response.v1.InspectPoliciesResponse.Attribute.Type": {
+      "type": "string",
+      "enum": [
+        "TYPE_UNSPECIFIED",
+        "TYPE_PRINCIPAL_ATTRIBUTE",
+        "TYPE_RESOURCE_ATTRIBUTE"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Attribute.Type"
+    }
+  }
+}
