@@ -18,6 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/test/mocks"
 	"github.com/cerbos/cloud-api/base"
 	cloudapi "github.com/cerbos/cloud-api/bundle"
+	"github.com/cerbos/cloud-api/credentials"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -29,6 +30,7 @@ const (
 
 func TestRemoteSource(t *testing.T) {
 	bundlePath := filepath.Join(test.PathToDir(t, "bundle"), "bundle.crbp")
+	credentials := mkCredentials(t)
 
 	t.Run("WithoutAutoUpdate", func(t *testing.T) {
 		conf := mkConf(t, withDisableAutoUpdate())
@@ -36,6 +38,7 @@ func TestRemoteSource(t *testing.T) {
 		t.Run("BootstrapSuccess", func(t *testing.T) {
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(bundlePath, nil).Once()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 
 			rs, err := hubstore.NewRemoteSource(conf)
 			require.NoError(t, err, "Failed to create remote source")
@@ -50,6 +53,7 @@ func TestRemoteSource(t *testing.T) {
 		t.Run("BootstrapFail", func(t *testing.T) {
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return("", cloudapi.ErrBootstrapBundleNotFound).Once()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 			mockClient.EXPECT().GetBundle(mock.Anything, "label").Return(bundlePath, nil).Once()
 
 			rs, err := hubstore.NewRemoteSource(conf)
@@ -82,6 +86,7 @@ func TestRemoteSource(t *testing.T) {
 		t.Run("Reload", func(t *testing.T) {
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(bundlePath, nil).Twice()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 
 			rs, err := hubstore.NewRemoteSource(conf)
 			require.NoError(t, err, "Failed to create remote source")
@@ -115,6 +120,7 @@ func TestRemoteSource(t *testing.T) {
 
 		mockClient := mocks.NewCloudAPIClient(t)
 		mockClient.EXPECT().GetCachedBundle("label").Return(bundlePath, nil).Once()
+		mockClient.EXPECT().HubCredentials().Return(credentials)
 
 		rs, err := hubstore.NewRemoteSource(mkConf(t))
 		require.NoError(t, err, "Failed to create remote source")
@@ -134,6 +140,7 @@ func TestRemoteSource(t *testing.T) {
 
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(bundlePath, nil).Once()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 			mockClient.EXPECT().WatchBundle(mock.Anything, "label").
 				Run(func(_ context.Context, _ string) {
 					close(callsDone)
@@ -169,6 +176,7 @@ func TestRemoteSource(t *testing.T) {
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockHandle := mocks.NewWatchHandle(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(bundlePath, nil).Once()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 			mockClient.EXPECT().WatchBundle(mock.Anything, "label").Return(mockHandle, nil).Once()
 			mockHandle.EXPECT().ServerEvents().Return(eventChan)
 			mockHandle.EXPECT().Errors().Return(errorChan)
@@ -211,6 +219,7 @@ func TestRemoteSource(t *testing.T) {
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockHandle := mocks.NewWatchHandle(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(bundlePath, nil).Once()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 			mockClient.EXPECT().WatchBundle(mock.Anything, "label").Return(mockHandle, nil).Twice()
 			mockHandle.EXPECT().ServerEvents().Return(eventChan)
 			mockHandle.EXPECT().Errors().Return(errorChan)
@@ -253,6 +262,7 @@ func TestRemoteSource(t *testing.T) {
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockHandle := mocks.NewWatchHandle(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(bundlePath, nil).Once()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 			// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
 			mockClient.EXPECT().WatchBundle(mock.Anything, "label").
 				Run(func(_ context.Context, _ string) {
@@ -299,6 +309,7 @@ func TestRemoteSource(t *testing.T) {
 
 			mockClient := mocks.NewCloudAPIClient(t)
 			mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(bundlePath, nil).Once()
+			mockClient.EXPECT().HubCredentials().Return(credentials)
 			// Returning an error should force the caller to retry
 			mockClient.EXPECT().WatchBundle(mock.Anything, "label").
 				Run(func(_ context.Context, _ string) {
@@ -347,12 +358,6 @@ func mkConf(t *testing.T, opts ...confOption) *hubstore.Conf {
 
 	conf := &hubstore.Conf{
 		CacheSize: 1024,
-		Credentials: &hub.CredentialsConf{
-			ClientID:        "client-id",
-			ClientSecret:    "client-secret",
-			WorkspaceSecret: loadKey(t),
-			PDPID:           "pdpid",
-		},
 		Remote: &hubstore.RemoteSourceConf{
 			BundleLabel: "label",
 		},
@@ -364,6 +369,22 @@ func mkConf(t *testing.T, opts ...confOption) *hubstore.Conf {
 
 	require.NoError(t, conf.Validate())
 	return conf
+}
+
+func mkCredentials(t *testing.T) *credentials.Credentials {
+	t.Helper()
+
+	conf := &hub.CredentialsConf{
+		ClientID:        "client-id",
+		ClientSecret:    "client-secret",
+		WorkspaceSecret: loadKey(t),
+		PDPID:           "pdpid",
+	}
+
+	creds, err := conf.ToCredentials()
+	require.NoError(t, err)
+
+	return creds
 }
 
 func waitForCallsDone(t *testing.T, callsDone <-chan struct{}) {

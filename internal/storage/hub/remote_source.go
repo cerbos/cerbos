@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -42,8 +41,6 @@ const (
 var (
 	_ storage.BinaryStore = (*RemoteSource)(nil)
 	_ storage.Reloadable  = (*RemoteSource)(nil)
-
-	playgroundLabelPattern = regexp.MustCompile(`^playground/[A-Z0-9]{12}$`)
 )
 
 type CloudAPIClient interface {
@@ -51,30 +48,24 @@ type CloudAPIClient interface {
 	GetBundle(context.Context, string) (string, error)
 	WatchBundle(context.Context, string) (cloudapi.WatchHandle, error)
 	GetCachedBundle(string) (string, error)
+	HubCredentials() *credentials.Credentials
 }
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	credentials *credentials.Credentials
-	log         *zap.Logger
-	conf        *Conf
-	bundle      *Bundle
-	scratchFS   afero.Fs
-	client      CloudAPIClient
-	mu          sync.RWMutex
-	healthy     bool
-	playground  bool
+	log       *zap.Logger
+	conf      *Conf
+	bundle    *Bundle
+	scratchFS afero.Fs
+	client    CloudAPIClient
+	mu        sync.RWMutex
+	healthy   bool
+        playground bool
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
-	credentials, err := conf.Credentials.ToCredentials()
-	if err != nil {
-		return nil, fmt.Errorf("invalid credentials: %w", err)
-	}
-
 	return &RemoteSource{
 		conf:        conf,
-		credentials: credentials,
 		healthy:     false,
 		playground:  playgroundLabelPattern.MatchString(conf.Remote.BundleLabel),
 		log:         zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel)),
@@ -83,45 +74,15 @@ func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
-	pdpID := util.PDPIdentifier(s.conf.Credentials.PDPID)
-	s.log = s.log.With(zap.String("instance", pdpID.Instance))
-
-	tlsConf := &tls.Config{
-		MinVersion: tls.VersionTLS13,
-		ServerName: s.conf.Remote.Connection.TLS.Authority,
+	hubInstance, err := hub.Get()
+	if err != nil {
+		return fmt.Errorf("failed to establish Cerbos Hub connection: %w", err)
 	}
 
-	caCertPath := s.conf.Remote.Connection.TLS.CACert
-	if caCertPath != "" {
-		caCert, err := os.ReadFile(caCertPath)
-		if err != nil {
-			return fmt.Errorf("failed to read CA cert from %q: %w", caCertPath, err)
-		}
-
-		tlsConf.RootCAs = x509.NewCertPool()
-		if !tlsConf.RootCAs.AppendCertsFromPEM(caCert) {
-			return fmt.Errorf("failed to parse CA certs")
-		}
-	}
-
-	clientConf := cloudapi.ClientConf{
-		ClientConf: base.ClientConf{
-			Logger:            zapr.NewLogger(s.log),
-			PDPIdentifier:     pdpID,
-			TLS:               tlsConf,
-			Credentials:       s.credentials,
-			APIEndpoint:       s.conf.Remote.Connection.APIEndpoint,
-			BootstrapEndpoint: s.conf.Remote.Connection.BootstrapEndpoint,
-			RetryWaitMin:      s.conf.Remote.Connection.MinRetryWait,
-			RetryWaitMax:      s.conf.Remote.Connection.MaxRetryWait,
-			RetryMaxAttempts:  int(s.conf.Remote.Connection.NumRetries),
-			HeartbeatInterval: s.conf.Remote.Connection.HeartbeatInterval,
-		},
+	client, err := hubInstance.BundleClient(cloudapi.ClientConf{
 		CacheDir: s.conf.Remote.CacheDir,
 		TempDir:  s.conf.Remote.TempDir,
-	}
-
-	client, err := cloudapi.NewClient(clientConf)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create API client: %w", err)
 	}
@@ -232,7 +193,7 @@ func (s *RemoteSource) swapBundle(bundlePath string) error {
 	}
 
 	if !s.playground {
-		opts.Credentials = s.credentials
+		opts.Credentials = s.client.HubCredentials()
 	}
 
 	bundle, err := Open(opts)
