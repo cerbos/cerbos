@@ -5,6 +5,7 @@ go 1.22
 toolchain go1.22.5
 
 require (
+	connectrpc.com/connect v1.16.2
 	github.com/bufbuild/buf v1.34.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.3.1
 	github.com/cerbos/protoc-gen-jsonschema v0.1.2
@@ -33,7 +34,6 @@ require (
 	cloud.google.com/go/kms v1.15.8 // indirect
 	cloud.google.com/go/storage v1.39.1 // indirect
 	code.gitea.io/sdk/gitea v0.18.0 // indirect
-	connectrpc.com/connect v1.16.2 // indirect
 	connectrpc.com/otelconnect v0.7.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/4meepo/tagalign v1.3.4 // indirect
