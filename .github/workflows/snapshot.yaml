@@ -35,8 +35,11 @@ jobs:
           cross_compiling: true
           write_build_cache: true
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Generate
-        run: make generate
+        run: just generate
 
       - name: Check repo status
         run: |-
@@ -48,7 +51,7 @@ jobs:
           fi
 
       - name: Test
-        run: make test-all
+        run: just test-all
         env:
           CERBOS_LOG_LEVEL: "debug"
 
