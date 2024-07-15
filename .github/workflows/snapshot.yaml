@@ -187,13 +187,6 @@ jobs:
           docker manifest create docker.io/cerbos/cerbosctl:dev docker.io/cerbos/cerbosctl:dev-arm64 docker.io/cerbos/cerbosctl:dev-amd64
           docker manifest push docker.io/cerbos/cerbosctl:dev
 
-      - name: Push Cerbos dev images to ECR
-        run: |
-          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
-          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64
-          docker manifest create ${{ vars.AWS_CONTAINER_REPO }}:dev ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64 ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
-          docker manifest push ${{ vars.AWS_CONTAINER_REPO }}:dev
-
   publishProtos:
     name: Publish Protobufs
     runs-on: ubuntu-latest
