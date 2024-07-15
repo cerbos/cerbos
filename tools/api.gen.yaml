@@ -18,6 +18,12 @@ plugins:
   - local:
       - go
       - run
+      - connectrpc.com/connect/cmd/protoc-gen-connect-go
+    out: api/genpb
+    opt: paths=source_relative
+  - local:
+      - go
+      - run
       - github.com/cerbos/protoc-gen-go-hashpb
     out: api/genpb
     opt: paths=source_relative
