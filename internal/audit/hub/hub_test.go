@@ -113,16 +113,16 @@ func TestHubLog(t *testing.T) {
 	}
 
 	conf := &hub.Conf{
-		hub.IngestConf{
+		Ingest: hub.IngestConf{
 			MaxBatchSize:     batchSize,
 			MinFlushInterval: 2 * time.Second,
 			FlushTimeout:     1 * time.Second,
 			NumGoRoutines:    8,
 		},
-		hub.MaskConf{
+		Mask: hub.MaskConf{
 			Peer: []string{"address"},
 		},
-		local.Conf{
+		Conf: local.Conf{
 			StoragePath:     t.TempDir(),
 			RetentionPeriod: 24 * time.Hour,
 			Advanced: local.AdvancedConf{

@@ -95,8 +95,7 @@ func (conf *Conf) Validate() (outErr error) {
 func (conf *Conf) validateCredentials() error {
 	if conf.Credentials != nil {
 		util.DeprecationWarning("storage.bundle.credentials section", "hub.credentials")
-		conf.Credentials.LoadFromEnv()
-		return conf.Credentials.Validate()
+		return errors.New("storage.bundle.credentials section is no longer supported")
 	}
 
 	hubConf, err := hub.GetConf()
@@ -191,7 +190,7 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 
 	if rc.Connection != nil {
 		util.DeprecationWarning("storage.bundle.remote.connection section", "hub.connection")
-		return rc.Connection.Validate()
+		return errors.New("storage.bundle.remote.connection configuration is no longer supported")
 	}
 
 	hubConf, err := hub.GetConf()
