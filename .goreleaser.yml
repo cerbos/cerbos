@@ -87,6 +87,9 @@ builds:
             - BINARY_VERSION={{ .Version }}
             - BINARY_PATH={{ .Path }}
 
+sboms:
+  - artifacts: archive
+
 universal_binaries:
   - id: "cerbos"
     replace: false
