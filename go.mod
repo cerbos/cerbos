@@ -4,11 +4,11 @@ go 1.22.5
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/adrg/xdg v0.4.0
+	github.com/adrg/xdg v0.5.0
 	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/alecthomas/kong v0.9.0
 	github.com/alecthomas/participle/v2 v2.1.1
-	github.com/aws/aws-sdk-go v1.54.15
+	github.com/aws/aws-sdk-go v1.54.19
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.6.3
 	github.com/cenkalti/backoff/v4 v4.3.0
@@ -106,13 +106,13 @@ require (
 	golang.org/x/sync v0.7.0
 	golang.org/x/tools v0.23.0
 	gonum.org/v1/gonum v0.15.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094
+	google.golang.org/genproto/googleapis/api v0.0.0-20240711142825-46eb208f015d
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.15.2
-	modernc.org/sqlite v1.30.1
+	helm.sh/helm/v3 v3.15.3
+	modernc.org/sqlite v1.30.2
 )
 
 require (
