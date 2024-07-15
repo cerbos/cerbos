@@ -5,12 +5,10 @@ package hub
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -22,11 +20,9 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cloud-api/base"
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
-	"github.com/go-logr/zapr"
 	"github.com/spf13/afero"
 	"go.uber.org/zap"
 )
@@ -41,6 +37,8 @@ const (
 var (
 	_ storage.BinaryStore = (*RemoteSource)(nil)
 	_ storage.Reloadable  = (*RemoteSource)(nil)
+
+	playgroundLabelPattern = regexp.MustCompile(`^playground/[A-Z0-9]{12}$`)
 )
 
 type CloudAPIClient interface {
@@ -53,23 +51,23 @@ type CloudAPIClient interface {
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	log       *zap.Logger
-	conf      *Conf
-	bundle    *Bundle
-	scratchFS afero.Fs
-	client    CloudAPIClient
-	mu        sync.RWMutex
-	healthy   bool
-        playground bool
+	log        *zap.Logger
+	conf       *Conf
+	bundle     *Bundle
+	scratchFS  afero.Fs
+	client     CloudAPIClient
+	mu         sync.RWMutex
+	healthy    bool
+	playground bool
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
 	return &RemoteSource{
-		conf:        conf,
-		healthy:     false,
-		playground:  playgroundLabelPattern.MatchString(conf.Remote.BundleLabel),
-		log:         zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel)),
-		scratchFS:   afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
+		conf:       conf,
+		healthy:    false,
+		playground: playgroundLabelPattern.MatchString(conf.Remote.BundleLabel),
+		log:        zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel)),
+		scratchFS:  afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
 	}, nil
 }
 

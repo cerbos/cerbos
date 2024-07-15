@@ -348,7 +348,6 @@ func withDisableAutoUpdate() confOption {
 
 func withPlayground() confOption {
 	return func(conf *hubstore.Conf) {
-		conf.Credentials.WorkspaceSecret = ""
 		conf.Remote.BundleLabel = playgroundLabel
 	}
 }
