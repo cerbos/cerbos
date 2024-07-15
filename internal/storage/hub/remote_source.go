@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -41,6 +42,8 @@ const (
 var (
 	_ storage.BinaryStore = (*RemoteSource)(nil)
 	_ storage.Reloadable  = (*RemoteSource)(nil)
+
+	playgroundLabelPattern = regexp.MustCompile(`^playground/[A-Z0-9]{12}$`)
 )
 
 type CloudAPIClient interface {
@@ -60,6 +63,7 @@ type RemoteSource struct {
 	client      CloudAPIClient
 	mu          sync.RWMutex
 	healthy     bool
+	playground  bool
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
@@ -68,9 +72,14 @@ func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
 		return nil, fmt.Errorf("invalid credentials: %w", err)
 	}
 
-	logger := zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel))
-	scratchFS := afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir)
-	return &RemoteSource{log: logger, conf: conf, healthy: false, scratchFS: scratchFS, credentials: credentials}, nil
+	return &RemoteSource{
+		conf:        conf,
+		credentials: credentials,
+		healthy:     false,
+		playground:  playgroundLabelPattern.MatchString(conf.Remote.BundleLabel),
+		log:         zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel)),
+		scratchFS:   afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
+	}, nil
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
@@ -164,16 +173,19 @@ func shouldWorkOffline() bool {
 }
 
 func (s *RemoteSource) fetchBundle(ctx context.Context) error {
-	s.log.Info("Fetching bundle")
-	bdlPath, err := s.client.BootstrapBundle(ctx, s.conf.Remote.BundleLabel)
-	if err == nil {
-		s.log.Debug("Using bootstrap bundle")
-		return s.swapBundle(bdlPath)
+	if !s.playground {
+		s.log.Info("Fetching bootstrap bundle")
+		bdlPath, err := s.client.BootstrapBundle(ctx, s.conf.Remote.BundleLabel)
+		if err == nil {
+			s.log.Debug("Using bootstrap bundle")
+			return s.swapBundle(bdlPath)
+		}
+
+		s.log.Warn("Failed to fetch bootstrap bundle", zap.Error(err))
 	}
 
-	s.log.Warn("Failed to fetch bootstrap bundle", zap.Error(err))
-	s.log.Info("Attempting to fetch bundle from the API")
-	bdlPath, err = s.client.GetBundle(ctx, s.conf.Remote.BundleLabel)
+	s.log.Info("Fetching bundle from the API")
+	bdlPath, err := s.client.GetBundle(ctx, s.conf.Remote.BundleLabel)
 	if err != nil {
 		s.log.Error("Failed to fetch bundle using the API", zap.Error(err))
 		metrics.Inc(ctx, metrics.BundleFetchErrorsCount())
@@ -212,13 +224,18 @@ func (s *RemoteSource) removeBundle(healthy bool) {
 func (s *RemoteSource) swapBundle(bundlePath string) error {
 	s.log.Debug("Swapping bundle", zap.String("path", bundlePath))
 
-	bundle, err := Open(OpenOpts{
-		Source:      "remote",
-		BundlePath:  bundlePath,
-		ScratchFS:   s.scratchFS,
-		Credentials: s.credentials,
-		CacheSize:   s.conf.CacheSize,
-	})
+	opts := OpenOpts{
+		Source:     "remote",
+		BundlePath: bundlePath,
+		ScratchFS:  s.scratchFS,
+		CacheSize:  s.conf.CacheSize,
+	}
+
+	if !s.playground {
+		opts.Credentials = s.credentials
+	}
+
+	bundle, err := Open(opts)
 	if err != nil {
 		s.log.Error("Failed to open bundle", zap.Error(err))
 		return fmt.Errorf("failed to open bundle: %w", err)
