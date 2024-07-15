@@ -110,7 +110,7 @@ lint: _golangcilint _buf
 lint-helm:
     @ deploy/charts/validate.sh
 
-package $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='': _goreleaser
+package $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='' $AWS_CONTAINER_REPO='aws.local/cerbos/cerbos' $AWS_PRODUCT_CODE='': _goreleaser
     @ "${TOOLS_BIN_DIR}/goreleaser"  release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
 
 pre-commit: lint-helm generate lint tests
