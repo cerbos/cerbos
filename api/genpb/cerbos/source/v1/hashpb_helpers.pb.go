@@ -566,6 +566,22 @@ func cerbos_source_v1_PolicyWrapper_hashpb_sum(m *PolicyWrapper, hasher hash.Has
 		}
 
 	}
+	if _, ok := ignore["cerbos.source.v1.PolicyWrapper.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetKind())))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.PolicyWrapper.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.PolicyWrapper.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersion()))
+
+	}
+	if _, ok := ignore["cerbos.source.v1.PolicyWrapper.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
+
+	}
 }
 
 func cerbos_source_v1_Position_hashpb_sum(m *Position, hasher hash.Hash, ignore map[string]struct{}) {

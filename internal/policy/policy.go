@@ -21,14 +21,13 @@ import (
 )
 
 // Kind defines the type of policy (resource, principal, derived_roles etc.).
-type Kind int
+type Kind policyv1.Kind
 
 const (
-	// ResourceKind points to a resource policy.
-	ResourceKind Kind = iota
-	PrincipalKind
-	DerivedRolesKind
-	ExportVariablesKind
+	DerivedRolesKind    Kind = Kind(policyv1.Kind_KIND_DERIVED_ROLES)
+	ExportVariablesKind Kind = Kind(policyv1.Kind_KIND_EXPORT_VARIABLES)
+	PrincipalKind       Kind = Kind(policyv1.Kind_KIND_PRINCIPAL)
+	ResourceKind        Kind = Kind(policyv1.Kind_KIND_RESOURCE)
 )
 
 const (
@@ -638,9 +637,13 @@ func (w Wrapper) Dependencies() []namer.ModuleID {
 
 func (w Wrapper) ToProto() *sourcev1.PolicyWrapper {
 	return &sourcev1.PolicyWrapper{
-		Id:     w.ID.RawValue(),
-		Key:    namer.PolicyKeyFromFQN(w.FQN),
-		Policy: w.Policy,
+		Id:      w.ID.RawValue(),
+		Key:     namer.PolicyKeyFromFQN(w.FQN),
+		Policy:  w.Policy,
+		Kind:    policyv1.Kind(w.Kind),
+		Name:    w.Name,
+		Version: w.Version,
+		Scope:   w.Scope,
 	}
 }
 
