@@ -44,4 +44,8 @@ message PolicyWrapper {
   uint64 id = 1;
   string key = 2;
   cerbos.policy.v1.Policy policy = 3;
+  cerbos.policy.v1.Kind kind = 4;
+  string name = 5;
+  string version = 6;
+  string scope = 7;
 }
