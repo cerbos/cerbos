@@ -290,7 +290,13 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 	logger.Log(zapcore.Level(-3), "Getting ingest batch entries")
 	entries, err := l.getIngestBatchEntries(syncKeys, kind)
 	if err != nil {
+		logger.Log(zapcore.Level(-2), "Failed to get ingest batch entries", zap.Error(err))
 		return fmt.Errorf("failed to get ingest batch entries: %w", err)
+	}
+
+	if len(entries) == 0 {
+		logger.Log(zapcore.Level(-3), "Ingest batch is empty")
+		return nil
 	}
 
 	logger.Log(zapcore.Level(-3), "Generating audit ID")
@@ -342,11 +348,14 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 }
 
 func (l *Log) getIngestBatchEntries(syncKeys [][]byte, kind logsv1.IngestBatch_EntryKind) ([]*logsv1.IngestBatch_Entry, error) {
-	entries := make([]*logsv1.IngestBatch_Entry, len(syncKeys))
+	entries := make([]*logsv1.IngestBatch_Entry, 0, len(syncKeys))
 	if err := l.Db.Update(func(txn *badgerv4.Txn) error {
-		for i, k := range syncKeys {
+		for _, k := range syncKeys {
 			syncItem, err := txn.Get(k)
 			if err != nil {
+				if errors.Is(err, badgerv4.ErrKeyNotFound) {
+					continue
+				}
 				return err
 			}
 
@@ -360,6 +369,9 @@ func (l *Log) getIngestBatchEntries(syncKeys [][]byte, kind logsv1.IngestBatch_E
 
 			logItem, err := txn.Get(logKey)
 			if err != nil {
+				if errors.Is(err, badgerv4.ErrKeyNotFound) {
+					continue
+				}
 				return err
 			}
 
@@ -401,7 +413,7 @@ func (l *Log) getIngestBatchEntries(syncKeys [][]byte, kind logsv1.IngestBatch_E
 				return err
 			}
 
-			entries[i] = entry
+			entries = append(entries, entry)
 		}
 
 		return nil

@@ -28,6 +28,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/hub"
 	"github.com/cerbos/cerbos/internal/audit/local"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/test/mocks"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
@@ -155,28 +156,6 @@ func TestHubLog(t *testing.T) {
 		syncer.synced = make(map[string]struct{})
 	}
 
-	getLocalKeys := func() [][]byte {
-		t.Helper()
-
-		keys := [][]byte{}
-		err := db.Db.View(func(txn *badgerv4.Txn) error {
-			opts := badgerv4.DefaultIteratorOptions
-			opts.PrefetchValues = false
-			it := txn.NewIterator(opts)
-			defer it.Close()
-			for it.Seek(hub.SyncStatusPrefix); it.ValidForPrefix(hub.SyncStatusPrefix); it.Next() {
-				item := it.Item()
-				key := make([]byte, len(item.Key()))
-				copy(key, item.Key())
-				keys = append(keys, key)
-			}
-			return nil
-		})
-		require.NoError(t, err)
-
-		return keys
-	}
-
 	// We use two streams (access + decision log scans). Each independent stream ends up with a partial page, therefore
 	// we treat each batch separately (hence the /2 -> *2 below).
 	wantNumBatches := int(math.Ceil((numRecords/2)/float64(batchSize))) * 2
@@ -191,7 +170,7 @@ func TestHubLog(t *testing.T) {
 		db.ForceWrite()
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
-		require.Empty(t, getLocalKeys(), "keys should have been deleted")
+		require.Empty(t, getLocalKeys(t, db), "keys should have been deleted")
 
 		t.Run("filter", func(t *testing.T) {
 			for _, e := range syncer.entries {
@@ -220,7 +199,7 @@ func TestHubLog(t *testing.T) {
 
 		db.ForceWrite()
 
-		require.Len(t, getLocalKeys(), (numRecords)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
+		require.Len(t, getLocalKeys(t, db), (numRecords)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
 	})
 
 	t.Run("deletesSyncKeysAfterBackoff", func(t *testing.T) {
@@ -240,8 +219,90 @@ func TestHubLog(t *testing.T) {
 		db.ForceWrite()
 
 		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
-		require.Empty(t, getLocalKeys(), "keys should have been deleted")
+		require.Empty(t, getLocalKeys(t, db), "keys should have been deleted")
 	})
+}
+
+func TestHubLogWithDecisionLogFilter(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	confWrapper, err := config.WrapperFromMap(map[string]any{
+		"audit": map[string]any{
+			"enabled": true,
+			"decisionLogFilters": map[string]any{
+				"checkResources": map[string]any{
+					"ignoreAllowAll": true,
+				},
+			},
+			"backend": "hub",
+			"hub": map[string]any{
+				"storagePath": t.TempDir(),
+				"advanced": map[string]any{
+					"bufferSize": 1,
+					"gcInterval": 0,
+				},
+				"ingest": map[string]any{
+					"maxBatchSize":     batchSize,
+					"minFlushInterval": "2s",
+					"flushTimeout":     "1s",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	var auditConf audit.Conf
+	require.NoError(t, confWrapper.GetSection(&auditConf))
+
+	var hubConf hub.Conf
+	require.NoError(t, confWrapper.GetSection(&hubConf))
+
+	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&auditConf)
+	syncer := newMockSyncer(t)
+	db, err := hub.NewLog(&hubConf, decisionFilter, syncer, zap.L().Named("auditlog"))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	require.Equal(t, hub.Backend, db.Backend())
+	require.True(t, db.Enabled())
+
+	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
+	require.NoError(t, err)
+
+	loadedKeys := loadData(t, db, startDate)
+
+	// There should be no decision logs to sync. Only the access logs are synced.
+	wantNumRecords := numRecords / 2
+	wantNumBatches := int(math.Ceil((numRecords / 2) / float64(batchSize)))
+
+	syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches)
+	db.ForceWrite()
+
+	require.True(t, syncer.hasKeys(loadedKeys[:wantNumRecords]), "keys should have been synced")
+}
+
+func getLocalKeys(t *testing.T, db *hub.Log) [][]byte {
+	t.Helper()
+
+	keys := [][]byte{}
+	err := db.Db.View(func(txn *badgerv4.Txn) error {
+		opts := badgerv4.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Seek(hub.SyncStatusPrefix); it.ValidForPrefix(hub.SyncStatusPrefix); it.Next() {
+			item := it.Item()
+			key := make([]byte, len(item.Key()))
+			copy(key, item.Key())
+			keys = append(keys, key)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+
+	return keys
 }
 
 func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
@@ -297,27 +358,31 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 			Peer: &auditv1.Peer{
 				Address: "1.1.1.1",
 			},
-			Inputs: []*enginev1.CheckInput{
-				{
-					RequestId: strconv.Itoa(i),
-					Resource: &enginev1.Resource{
-						Kind: "test:kind",
-						Id:   "test",
+			Method: &auditv1.DecisionLogEntry_CheckResources_{
+				CheckResources: &auditv1.DecisionLogEntry_CheckResources{
+					Inputs: []*enginev1.CheckInput{
+						{
+							RequestId: strconv.Itoa(i),
+							Resource: &enginev1.Resource{
+								Kind: "test:kind",
+								Id:   "test",
+							},
+							Principal: &enginev1.Principal{
+								Id:    "test",
+								Roles: []string{"a", "b"},
+							},
+							Actions: []string{"a1", "a2"},
+						},
 					},
-					Principal: &enginev1.Principal{
-						Id:    "test",
-						Roles: []string{"a", "b"},
-					},
-					Actions: []string{"a1", "a2"},
-				},
-			},
-			Outputs: []*enginev1.CheckOutput{
-				{
-					RequestId:  strconv.Itoa(i),
-					ResourceId: "test",
-					Actions: map[string]*enginev1.CheckOutput_ActionEffect{
-						"a1": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
-						"a2": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
+					Outputs: []*enginev1.CheckOutput{
+						{
+							RequestId:  strconv.Itoa(i),
+							ResourceId: "test",
+							Actions: map[string]*enginev1.CheckOutput_ActionEffect{
+								"a1": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
+								"a2": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
+							},
+						},
 					},
 				},
 			},
