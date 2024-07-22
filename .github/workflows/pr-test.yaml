@@ -306,12 +306,17 @@ jobs:
         with:
           cross_compiling: true
 
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: build --config=.goreleaser.yml --clean --snapshot
         env:
+          AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
+          AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
