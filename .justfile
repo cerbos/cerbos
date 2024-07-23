@@ -37,9 +37,9 @@ docs: generate-confdocs
 
 generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks generate-npm-packages generate-api-docs generate-confdocs generate-helm
 
-generate-api-docs:
-	@ docker run -e REDOCLY_TELEMETRY=off -v {{ justfile_directory() }}:/cerbos redocly/cli bundle /cerbos/schema/openapiv2/cerbos/svc/v1/svc.swagger.json -o /cerbos/docs/modules/api/attachments/cerbos-api --ext json
-	@ docker run -e REDOCLY_TELEMETRY=off -v {{ justfile_directory() }}:/cerbos redocly/cli build-docs /cerbos/schema/openapiv2/cerbos/svc/v1/svc.swagger.json -o /cerbos/docs/modules/api/attachments/cerbos-api.html
+generate-api-docs REDOCLY_VERSION='1.18.1':
+	@ docker run -e REDOCLY_TELEMETRY=off -v {{ justfile_directory() }}:/cerbos redocly/cli:{{ REDOCLY_VERSION }} bundle /cerbos/schema/openapiv2/cerbos/svc/v1/svc.swagger.json -o /cerbos/docs/modules/api/attachments/cerbos-api --ext json
+	@ docker run -e REDOCLY_TELEMETRY=off -v {{ justfile_directory() }}:/cerbos redocly/cli:{{ REDOCLY_VERSION }} build-docs /cerbos/schema/openapiv2/cerbos/svc/v1/svc.swagger.json -o /cerbos/docs/modules/api/attachments/cerbos-api.html
 
 generate-confdocs:
     #!/usr/bin/env bash
