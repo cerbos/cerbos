@@ -3,6 +3,7 @@ set dotenv-load := true
 dev_dir := join(justfile_directory(), "hack", "dev")
 genmocks_dir := join(justfile_directory(), "internal", "test", "mocks")
 genpb_dir := join(justfile_directory(), "api", "genpb")
+helm_chart_dir := join(justfile_directory(), "deploy", "charts", "cerbos")
 json_schema_dir := join(justfile_directory(), "schema", "jsonschema")
 openapi_dir := join(justfile_directory(), "schema", "openapiv2")
 testdata_json_schema_dir := join(justfile_directory(), "internal", "test", "testdata", ".jsonschema")
@@ -34,7 +35,7 @@ cover PKG='./...' TEST='.*': _cover
 docs: generate-confdocs
     @ docs/build.sh
 
-generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks generate-npm-packages generate-api-docs generate-confdocs
+generate: clean generate-proto-code generate-json-schemas generate-testdata-json-schemas generate-mocks generate-npm-packages generate-api-docs generate-confdocs generate-helm
 
 generate-api-docs:
 	@ docker run -e REDOCLY_TELEMETRY=off -v {{ justfile_directory() }}:/cerbos redocly/cli bundle /cerbos/schema/openapiv2/cerbos/svc/v1/svc.swagger.json -o /cerbos/docs/modules/api/attachments/cerbos-api --ext json
@@ -48,6 +49,11 @@ generate-confdocs:
     go run ./hack/tools/confdocs/confdocs.go > ./internal/confdocs/generated.go
     CGO_ENABLED=0 go run ./internal/confdocs/generated.go
     rm -rf ./internal/confdocs
+
+generate-helm: _helm-schema
+    #!/usr/bin/env bash
+    set -euo pipefail
+    "${TOOLS_BIN_DIR}/helm-schema" -c "{{ helm_chart_dir }}"
 
 generate-json-schemas: _buf
     #!/usr/bin/env bash
@@ -192,6 +198,8 @@ _golangcilint: (_install "golangci-lint" "github.com/golangci/golangci-lint" "cm
 _gotestsum: (_install "gotestsum" "gotest.tools/gotestsum")
 
 _goreleaser: (_install "goreleaser" "github.com/goreleaser/goreleaser/v2")
+
+_helm-schema: (_install "helm-schema" "github.com/dadav/helm-schema" "cmd/helm-schema")
 
 _mockery: (_install "mockery" "github.com/vektra/mockery/v2")
 

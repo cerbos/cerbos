@@ -2,62 +2,148 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# @schema
+# type: [string,null]
+# @schema
 nameOverride: ""
+
+# @schema
+# type: [string,null]
+# @schema
 fullnameOverride: ""
 
+# @schema
+# type: [integer]
+# default: 1
+# @schema
 # Number of Cerbos pods to run
 replicaCount: 1
 
-# Container image details
+# @schema
+# required: false
+# @schema
+# Container image details. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#image.
 image:
+  # @schema
+  # default: "ghcr.io.cerbos/cerbos"
+  # @schema
+  # Container image name without the tag.
   repository: ghcr.io/cerbos/cerbos
+  # @schema
+  # enum: [IfNotPresent, Always]
+  # default: ["IfNotPresent"]
+  # @schema
+  # Image pull policy.
   pullPolicy: IfNotPresent
+  # @schema
+  # type: [string,null]
+  # @schema
   # Image digest to use. Takes precedence over tag if specified.
   digest: ""
+  # @schema
+  # type: [string,null]
+  # @schema
   # Image tag to use. Defaults to the chart appVersion.
   tag: ""
 
+# @schema
+# type: [array,null]
+# items:
+#   type: object
+#   properties:
+#     name:
+#       type: string
+# @schema
+# Image pull secrets to use if pulling the image from a private container registry. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers.
 imagePullSecrets: []
 
+# @schema
+# type: [array, null]
+# @schema
+# Init containers to inject into the deployment. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers.
 initContainers: []
 
+# @schema
+# required: false
+# @schema
+# Service account settings
 serviceAccount:
-  # Specifies whether a service account should be created
+  # @schema
+  # default: true
+  # @schema
+  # Specifies whether a service account should be created.
   create: true
-  # Annotations to add to the service account
+  # @schema
+  # type: [object, null]
+  # additionalProperties: true
+  # @schema
+  # Annotations to add to the service account. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.
   annotations: {}
+  # @schema
+  # type: [string,null]
+  # @schema
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-# Annotations to add to the pod.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Annotations to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.
 podAnnotations: {}
 
-# Labels to add to the pod.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Labels to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.
 podLabels: {}
 
-# Common labels to add to the resources.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Common labels to add to the resources. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.
 commonLabels: {}
 
-# Annotations to add to the deployment.
+# @schema
+# required: false
+# @schema
+# Annotations to add to the deployment. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.
 deployment:
+  # @schema
+  # type: [object, null]
+  # additionalProperties: true
+  # @schema
   annotations: {}
 
-# Security context for the whole pod.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Security context for the whole pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1.
 podSecurityContext: {}
-  # fsGroup: 2000
 
-# Security context for the Cerbos container.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Security context for the Cerbos container. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1.
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
-# Resource limits for the pod.
-resources: {}
+# @schema
+# type: [object, null]
+# properties:
+#   limits:
+#     type: object
+#   requests:
+#     type: object
+# additionalProperties: true
+# @schema
+# Resource limits for the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#resources.
+resources:
+  {}
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
@@ -65,6 +151,25 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+# @schema
+# type: object
+# properties:
+#   enabled:
+#     type: boolean
+#     default: false
+#   minReplicas:
+#     type: integer
+#     default: 1
+#   maxReplicas:
+#     type: integer
+#     default: 100
+#   targetCPUUtilizationPercentage:
+#     type: [integer, null]
+#     default: 80
+#   targetMemoryUtilizationPercentage:
+#     type: [integer, null]
+# additionalProperties: true
+# @schema
 # Autoscaling configuration.
 autoscaling:
   enabled: false
@@ -73,33 +178,89 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-# Node selector for the pod.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Node selector for the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 nodeSelector: {}
 
-# Pod tolerations.
+# @schema
+# type: [array, null]
+# items:
+#   type: object
+#   additionalProperties: true
+# @schema
+# Pod tolerations.  See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 tolerations: []
 
-# Pod affinity rules.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Pod affinity rules. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 affinity: {}
 
-# Topology Spread Constraints rules.
-topologySpreadConstraints: []
+# @schema
+# type: [array, null]
+# items:
+#   type: object
+#   additionalProperties: true
+# @schema
+# Topology Spread Constraints rules. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
+topologySpreadConstraints:
+  [] # @schema type:[array,null]
   # - topologyKey: topology.kubernetes.io/zone
   #   maxSkew: 1
   #   whenUnsatisfiable: ScheduleAnyway
 
-# Volumes to add to the pod.
+# @schema
+# type: [array, null]
+# items:
+#   type: object
+#   additionalProperties: true
+# @schema
+# Volumes to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#volumes.
 volumes: []
 
-# Volume mounts to add to the Cerbos container.
+# @schema
+# type: [array, null]
+# items:
+#   type: object
+#   additionalProperties: true
+# @schema
+# Volume mounts to add to the Cerbos container. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#volumes-1.
 volumeMounts: []
 
-# Environment variables to add to the pod.
-env: []
+# @schema
+# type: [array, null]
+# items:
+#   type: object
+#   properties:
+#     name:
+#       type: string
+#     value:
+#       type: string
+#   additionalProperties: true
+# @schema
+# Environment variables to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#environment-variables.
+env: [] # @schema type[array,null]
 
-# Source environment variables from config maps or secrets.
+# @schema
+# type: [array, null]
+# items:
+#   type: object
+#   additionalProperties: true
+# @schema
+# Source environment variables from config maps or secrets. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#environment-variables.
 envFrom: []
 
+# @schema
+# type: object
+# properties:
+#   certSpec:
+#     type: [object, null]
+# @schema
 # Spec of the cert-manager certificate to create for the Cerbos deployment.
 # If certSpec is not empty, a cert-manager.io/v1/Certificate resource will be created with its spec populated with values from certSpec.
 # The certSpec value must be a valid Certificate spec. This Helm chart does not provide any defaults or inject any values into it.
@@ -107,32 +268,84 @@ envFrom: []
 certManager:
   certSpec: {}
 
+# @schema
+# enum: [deployment,daemonset]
+# default: deployment
+# @schema
 # Kubernetes workload type to use. Valid values are `deployment` or `daemonset`.
 type: deployment
 
+# @schema
+# type: [string,null]
+# @schema
 # PriorityClassName to set on deployed pods
 priorityClassName: ""
 
+# @schema
+# required: false
+# @schema
 # Cerbos service settings.
 service:
+  # @schema
+  # enum: [ClusterIP, NodePort, LoadBalancer]
+  # default: ClusterIP
+  # @schema
+  # Service type
   type: ClusterIP
+  # @schema
+  # default: 3592
+  # @schema
+  # Service HTTP port
   httpPort: 3592
+  # @schema
+  # default: 3593
+  # @schema
+  # Service gRPC port
   grpcPort: 3593
+  # @schema
+  # default: 13592
+  # @schema
+  # HTTP node port (if service type is NodePort)
   httpNodePort: 13592
+  # @schema
+  # default: 13593
+  # @schema
+  # gRPC node port (if service type is NodePort)
   grpcNodePort: 13593
+  # @schema
+  # type: [object, null]
+  # additionalProperties: true
+  # @schema
+  # Service annotations
   annotations: {}
+  # @schema
+  # type: [string, null]
+  # @schema
+  # Service Cluster IP
   clusterIP: null
+  # @schema
+  # type: [string, null]
+  # @schema
+  # LoadBalancer static IP
   loadBalancerIP: null
-  # Set the internalTrafficPolicy. If this is unset, and .Values.type
-  # is set to daemonset, this will default to "Local"
+  # @schema
+  # type: [string, null]
+  # @schema
+  # Set the internalTrafficPolicy. If this is unset and .Values.type is set to daemonset, this will default to "Local"
   internalTrafficPolicy: ""
 
+# @schema
+# required: false
+# @schema
 # Cerbos deployment settings.
 cerbos:
   # Port to expose the http service on.
   httpPort: 3592
   # Port to expose the gRPC service on.
   grpcPort: 3593
+  # @schema
+  # type: [string, null]
+  # @schema
   # Secret containing the TLS certificate.
   # Leave empty to disable TLS.
   # The secret must contain the following keys:
@@ -144,6 +357,10 @@ cerbos:
   logLevel: INFO
   # Add Prometheus service discovery annotations to the pod.
   prometheusPodAnnotationsEnabled: true
+  # @schema
+  # type: [object, null]
+  # additionalProperties: true
+  # @schema
   # Cerbos config file contents.
   # Some server settings like server.httpListenAddr, server.grpcListenAddr, server.tls will be overwritten by the chart based on values provided above.
   config: {}
