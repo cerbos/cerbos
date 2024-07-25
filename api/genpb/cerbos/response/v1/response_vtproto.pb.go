@@ -2203,8 +2203,8 @@ func (m *InspectPoliciesResponse_Attribute) MarshalToSizedBufferVT(dAtA []byte) 
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.Type != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Type))
+	if m.Kind != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Kind))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -3599,8 +3599,8 @@ func (m *InspectPoliciesResponse_Attribute) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Type != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.Type))
+	if m.Kind != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Kind))
 	}
 	l = len(m.Name)
 	if l > 0 {
@@ -8920,9 +8920,9 @@ func (m *InspectPoliciesResponse_Attribute) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Kind", wireType)
 			}
-			m.Type = 0
+			m.Kind = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -8932,7 +8932,7 @@ func (m *InspectPoliciesResponse_Attribute) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Type |= InspectPoliciesResponse_Attribute_Type(b&0x7F) << shift
+				m.Kind |= InspectPoliciesResponse_Attribute_Kind(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

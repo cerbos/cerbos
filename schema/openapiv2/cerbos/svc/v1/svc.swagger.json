@@ -1191,9 +1191,9 @@
     "InspectPoliciesResponseAttribute": {
       "type": "object",
       "properties": {
-        "type": {
-          "$ref": "#/definitions/InspectPoliciesResponseAttributeType",
-          "description": "Type of the attribute being referenced."
+        "kind": {
+          "$ref": "#/definitions/InspectPoliciesResponseAttributeKind",
+          "description": "Kind of the attribute being referenced."
         },
         "name": {
           "type": "string",
@@ -1201,14 +1201,14 @@
         }
       }
     },
-    "InspectPoliciesResponseAttributeType": {
+    "InspectPoliciesResponseAttributeKind": {
       "type": "string",
       "enum": [
-        "TYPE_UNSPECIFIED",
-        "TYPE_PRINCIPAL_ATTRIBUTE",
-        "TYPE_RESOURCE_ATTRIBUTE"
+        "KIND_UNSPECIFIED",
+        "KIND_PRINCIPAL_ATTRIBUTE",
+        "KIND_RESOURCE_ATTRIBUTE"
       ],
-      "default": "TYPE_UNSPECIFIED"
+      "default": "KIND_UNSPECIFIED"
     },
     "InspectPoliciesResponseDerivedRole": {
       "type": "object",

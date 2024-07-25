@@ -6,20 +6,20 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "kind": {
+          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Attribute.Kind"
+        },
         "name": {
           "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Attribute.Type"
         }
       }
     },
-    "cerbos.response.v1.InspectPoliciesResponse.Attribute.Type": {
+    "cerbos.response.v1.InspectPoliciesResponse.Attribute.Kind": {
       "type": "string",
       "enum": [
-        "TYPE_UNSPECIFIED",
-        "TYPE_PRINCIPAL_ATTRIBUTE",
-        "TYPE_RESOURCE_ATTRIBUTE"
+        "KIND_UNSPECIFIED",
+        "KIND_PRINCIPAL_ATTRIBUTE",
+        "KIND_RESOURCE_ATTRIBUTE"
       ]
     },
     "cerbos.response.v1.InspectPoliciesResponse.DerivedRole": {

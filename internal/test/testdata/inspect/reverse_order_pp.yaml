@@ -1,0 +1,133 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    principalPolicy:
+      version: default
+      principal: john
+      variables:
+        import:
+          - common_variables
+        local:
+          markedResource: R.attr.markedResource
+          label: '"dude"'
+          teams: '["red", "blue"]'
+      rules:
+        - resource: leave_request
+          actions:
+            - name: leave_request_action_1
+              action: "*"
+              condition:
+                match:
+                  expr: "variables.commonMarkedResource || variables.markedResource"
+              effect: EFFECT_ALLOW
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    exportVariables:
+      name: common_variables
+      definitions:
+        commonMarkedResource: R.attr.markedResource
+        commonLabel: '"dude"'
+        commonTeams: '["red", "blue"]'
+
+  - apiVersion: "api.cerbos.dev/v1"
+    metadata:
+      storeIdentifier: c.yaml
+    derivedRoles:
+      name: common_roles
+      variables:
+        import:
+          - common_variables
+        local:
+          derivedRoleVariable: R.attr.isDerivedRoleVar
+      definitions:
+        - name: approved_user
+          parentRoles: [ "user" ]
+          condition:
+            match:
+              expr: "variables.derivedRoleVariable"
+
+expected:
+  policies:
+    derived_roles.common_roles:
+      policyId: c.yaml
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
+      derivedRoles:
+        - kind: KIND_EXPORTED
+          name: approved_user
+          source: derived_roles.common_roles
+      variables:
+      - kind: KIND_LOCAL
+        name: derivedRoleVariable
+        source: derived_roles.common_roles
+        used: true
+        value: R.attr.isDerivedRoleVar
+
+    export_variables.common_variables:
+      policyId: b.yaml
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      variables:
+        - kind: KIND_EXPORTED
+          name: commonLabel
+          source: export_variables.common_variables
+          value: "\"dude\""
+        - kind: KIND_EXPORTED
+          name: commonMarkedResource
+          source: export_variables.common_variables
+          value: R.attr.markedResource
+        - kind: KIND_EXPORTED
+          name: commonTeams
+          source: export_variables.common_variables
+          value: "[\"red\", \"blue\"]"
+
+    principal.john.vdefault:
+      policyId: a.yaml
+      actions:
+        - "*"
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      variables:
+        - kind: KIND_IMPORTED
+          name: commonMarkedResource
+          source: export_variables.common_variables
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_LOCAL
+          name: label
+          source: principal.john.vdefault
+          value: "\"dude\""
+        - kind: KIND_LOCAL
+          name: markedResource
+          source: principal.john.vdefault
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_LOCAL
+          name: teams
+          source: principal.john.vdefault
+          value: "[\"red\", \"blue\"]"
+
+  policySets:
+    principal.john.vdefault:
+      policyId: principal.john.vdefault
+      actions:
+        - "*"
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: markedResource
+          used: true
+          value: R.attr.markedResource

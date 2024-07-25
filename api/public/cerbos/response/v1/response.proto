@@ -446,13 +446,13 @@ message InspectPoliciesResponse {
   };
 
   message Attribute {
-    enum Type {
-      TYPE_UNSPECIFIED = 0;
-      TYPE_PRINCIPAL_ATTRIBUTE = 1;
-      TYPE_RESOURCE_ATTRIBUTE = 2;
+    enum Kind {
+      KIND_UNSPECIFIED = 0;
+      KIND_PRINCIPAL_ATTRIBUTE = 1;
+      KIND_RESOURCE_ATTRIBUTE = 2;
     }
 
-    Type type = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Type of the attribute being referenced."}];
+    Kind kind = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Kind of the attribute being referenced."}];
     string name = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Name of the attribute being referenced."}];
   }
 

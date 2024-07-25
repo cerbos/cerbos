@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    principalPolicy:
+      version: default
+      principal: john
+      variables:
+        local:
+          someVar: '"someVar"'
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      variables:
+        local:
+          someVar: '"someVar"'
+
+expected:
+  policies:
+      principal.john.vdefault:
+        policyId: a.yaml
+        variables:
+          - name: someVar
+            value: "\"someVar\""
+            source: principal.john.vdefault
+            kind: KIND_LOCAL
+
+      resource.leave_request.vdefault:
+        policyId: b.yaml
+        variables:
+          - name: someVar
+            value: "\"someVar\""
+            source: resource.leave_request.vdefault
+            kind: KIND_LOCAL
+
+  policySets:
+      principal.john.vdefault:
+        policyId: principal.john.vdefault
+      resource.leave_request.vdefault:
+        policyId: resource.leave_request.vdefault

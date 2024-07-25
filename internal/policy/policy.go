@@ -4,7 +4,10 @@
 package policy
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -507,6 +510,10 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 		}
 	}
 
+	if len(actions) > 0 {
+		sort.Strings(actions)
+	}
+
 	return actions
 }
 
@@ -548,6 +555,12 @@ func ListPolicySetDerivedRoles(ps *runtimev1.RunnablePolicySet) []*responsev1.In
 		})
 	}
 
+	if len(derivedRoles) > 0 {
+		slices.SortFunc(derivedRoles, func(a, b *responsev1.InspectPoliciesResponse_DerivedRole) int {
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
+	}
+
 	return derivedRoles
 }
 
@@ -581,6 +594,12 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 				})
 			}
 		}
+	}
+
+	if len(variables) > 0 {
+		slices.SortFunc(variables, func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
 	}
 
 	return variables

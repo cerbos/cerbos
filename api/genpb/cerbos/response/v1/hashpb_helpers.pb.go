@@ -1896,8 +1896,8 @@ func cerbos_response_v1_GetSchemaResponse_hashpb_sum(m *GetSchemaResponse, hashe
 }
 
 func cerbos_response_v1_InspectPoliciesResponse_Attribute_hashpb_sum(m *InspectPoliciesResponse_Attribute, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Attribute.type"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetType())))
+	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Attribute.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetKind())))
 
 	}
 	if _, ok := ignore["cerbos.response.v1.InspectPoliciesResponse.Attribute.name"]; !ok {

@@ -21,6 +21,19 @@ import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1";
 
+message InspectTestCase {
+  message Expected {
+    map<string, cerbos.response.v1.InspectPoliciesResponse.Result> policies = 1;
+    map<string, cerbos.response.v1.InspectPoliciesResponse.Result> policy_sets = 2;
+    repeated string missing_policies = 3;
+  }
+
+  repeated cerbos.policy.v1.Policy inputs = 1;
+  Expected expected = 2;
+  bool skip_policies = 3;
+  bool skip_policy_sets = 4;
+}
+
 message EngineTestCase {
   string description = 1;
   repeated cerbos.engine.v1.CheckInput inputs = 2;

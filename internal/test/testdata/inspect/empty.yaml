@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: "api.cerbos.dev/v1"
+    metadata:
+      storeIdentifier: a.yaml
+    derivedRoles:
+      name: common_roles
+      definitions:
+        - name: approved_user
+          parentRoles: [ "user" ]
+          condition:
+            match:
+              expr: '"dude"'
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    exportVariables:
+      name: common_variables
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: c.yaml
+    principalPolicy:
+      version: default
+      principal: john
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: d.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+
+expected:
+  policies:
+      derived_roles.common_roles:
+        policyId: a.yaml
+        derivedRoles:
+          - name: approved_user
+            source: derived_roles.common_roles
+            kind: KIND_EXPORTED
+
+      export_variables.common_variables:
+        policyId: b.yaml
+
+      principal.john.vdefault:
+        policyId: c.yaml
+
+      resource.leave_request.vdefault:
+        policyId: d.yaml
+
+  policySets:
+      principal.john.vdefault:
+        policyId: principal.john.vdefault
+      resource.leave_request.vdefault:
+        policyId: resource.leave_request.vdefault

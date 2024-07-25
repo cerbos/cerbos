@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      variables:
+        import:
+          - common_variables
+      rules:
+        - actions: [ "approve" ]
+          roles:
+            - user
+          condition:
+            match:
+              expr: variables.missingVar || variables.commonMarkedResource
+          effect: EFFECT_ALLOW
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    exportVariables:
+      name: common_variables
+      definitions:
+        commonMarkedResource: R.attr.markedResource
+
+skipPolicySets: true
+
+expected:
+  policies:
+    export_variables.common_variables:
+      policyId: b.yaml
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      variables:
+        - name: commonMarkedResource
+          value: R.attr.markedResource
+          kind: KIND_EXPORTED
+          source: export_variables.common_variables
+
+    resource.leave_request.vdefault:
+      policyId: a.yaml
+      actions:
+        - approve
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      variables:
+        - name: commonMarkedResource
+          value: "R.attr.markedResource"
+          kind: KIND_IMPORTED
+          source: export_variables.common_variables
+          used: true
+        - name: missingVar
+          value: "null"
+          used: true
+          kind: KIND_UNDEFINED

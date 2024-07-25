@@ -4,18 +4,15 @@
 package inspect
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
-
-	"github.com/google/cel-go/common/ast"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"slices"
 )
 
 func PolicySets() *PolicySet {
@@ -34,62 +31,18 @@ func (ps *PolicySet) Inspect(pset *runtimev1.RunnablePolicySet) error {
 		return fmt.Errorf("policy set is nil")
 	}
 
-	actions := policy.ListPolicySetActions(pset)
-	if len(actions) > 0 {
-		sort.Strings(actions)
-	}
-
-	referencedAttributes, err := ps.inspectDefinitionsAndRules(pset)
+	attributes, err := ps.listReferencedAttributes(pset)
 	if err != nil {
-		return fmt.Errorf("failed to inspect definitions and rules of the policyset: %w", err)
-	}
-
-	referencedAttributesFromVariables, err := ps.inspectVariableDefinitions(pset)
-	if err != nil {
-		return fmt.Errorf("failed to inspect variable definitions of the policyset: %w", err)
-	}
-
-	for name, attr := range referencedAttributesFromVariables {
-		referencedAttributes[name] = &responsev1.InspectPoliciesResponse_Attribute{
-			Name: attr.Name,
-			Type: attr.Type,
-		}
-	}
-
-	attributes := make([]*responsev1.InspectPoliciesResponse_Attribute, 0, len(referencedAttributes))
-	for _, attr := range referencedAttributes {
-		attributes = append(attributes, &responsev1.InspectPoliciesResponse_Attribute{
-			Name: attr.Name,
-			Type: attr.Type,
-		})
-	}
-	if len(attributes) > 0 {
-		sort.Slice(attributes, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{attributes[i].Name, attributes[j].Name})
-		})
-	}
-
-	derivedRoles := policy.ListPolicySetDerivedRoles(pset)
-	if len(derivedRoles) > 0 {
-		sort.Slice(derivedRoles, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{derivedRoles[i].Name, derivedRoles[j].Name})
-		})
-	}
-
-	variables := policy.ListPolicySetVariables(pset)
-	if len(variables) > 0 {
-		sort.Slice(variables, func(i, j int) bool {
-			return sort.StringsAreSorted([]string{variables[i].Name, variables[j].Name})
-		})
+		return fmt.Errorf("failed to list referenced attributes in the policyset: %w", err)
 	}
 
 	policyKey := namer.PolicyKeyFromFQN(pset.Fqn)
 	ps.results[policyKey] = &responsev1.InspectPoliciesResponse_Result{
-		Actions:      actions,
+		Actions:      policy.ListPolicySetActions(pset),
 		Attributes:   attributes,
-		DerivedRoles: derivedRoles,
+		DerivedRoles: policy.ListPolicySetDerivedRoles(pset),
 		PolicyId:     policyKey,
-		Variables:    variables,
+		Variables:    policy.ListPolicySetVariables(pset),
 	}
 
 	return nil
@@ -101,59 +54,26 @@ func (ps *PolicySet) Results() (map[string]*responsev1.InspectPoliciesResponse_R
 }
 
 // inspectDefinitionsAndRules inspects the definitions and rules in the given policy set to find references to the attributes.
-func (ps *PolicySet) inspectDefinitionsAndRules(pset *runtimev1.RunnablePolicySet) (referencedAttributes map[string]*responsev1.InspectPoliciesResponse_Attribute, err error) {
-	referencedAttributes = make(map[string]*responsev1.InspectPoliciesResponse_Attribute)
+func (ps *PolicySet) listReferencedAttributes(pset *runtimev1.RunnablePolicySet) ([]*responsev1.InspectPoliciesResponse_Attribute, error) {
+	referencedAttributes := make(map[string]*responsev1.InspectPoliciesResponse_Attribute)
 	switch set := pset.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		for _, p := range set.PrincipalPolicy.Policies {
 			for _, rule := range p.ResourceRules {
 				for _, actionRule := range rule.ActionRules {
+					for _, variable := range p.OrderedVariables {
+						if err := ps.referencedAttributesInExpr(variable.Expr.Original, referencedAttributes); err != nil {
+							return nil, fmt.Errorf("failed to find referenced attributes in the principal policy variable: %w", err)
+						}
+					}
+
 					if actionRule.Condition == nil {
 						continue
 					}
 
-					if err := ps.referencedAttributesInCompiledCondition(actionRule.Condition, referencedAttributes); err != nil {
+					if err := referencedAttributesInCompiledCondition(actionRule.Condition, referencedAttributes); err != nil {
 						return nil, fmt.Errorf("failed to find referenced attributes in the compiled principal policy rule: %w", err)
 					}
-				}
-			}
-		}
-	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		for _, p := range set.ResourcePolicy.Policies {
-			for _, dr := range p.DerivedRoles {
-				if dr.Condition == nil {
-					continue
-				}
-
-				if err := ps.referencedAttributesInCompiledCondition(dr.Condition, referencedAttributes); err != nil {
-					return nil, fmt.Errorf("failed to find referenced attributes in the compiled derived roles definition: %w", err)
-				}
-			}
-
-			for _, rule := range p.Rules {
-				if rule.Condition == nil {
-					continue
-				}
-
-				if err := ps.referencedAttributesInCompiledCondition(rule.Condition, referencedAttributes); err != nil {
-					return nil, fmt.Errorf("failed to find referenced attributes in the compiled resource policy rule: %w", err)
-				}
-			}
-		}
-	}
-
-	return referencedAttributes, nil
-}
-
-// inspectVariableDefinitions inspects the variable values to find references to the attributes.
-func (ps *PolicySet) inspectVariableDefinitions(pset *runtimev1.RunnablePolicySet) (referencedAttributes map[string]*responsev1.InspectPoliciesResponse_Attribute, err error) {
-	referencedAttributes = make(map[string]*responsev1.InspectPoliciesResponse_Attribute)
-	switch set := pset.PolicySet.(type) {
-	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
-		for _, p := range set.PrincipalPolicy.Policies {
-			for _, variable := range p.OrderedVariables {
-				if err := ps.referencedAttributesInExpr(variable.Expr.Original, referencedAttributes); err != nil {
-					return nil, fmt.Errorf("failed to find referenced attributes in the principal policy variable: %w", err)
 				}
 			}
 		}
@@ -164,10 +84,43 @@ func (ps *PolicySet) inspectVariableDefinitions(pset *runtimev1.RunnablePolicySe
 					return nil, fmt.Errorf("failed to find referenced attributes in the resource policy variable: %w", err)
 				}
 			}
+
+			for _, dr := range p.DerivedRoles {
+				if dr.Condition == nil {
+					continue
+				}
+
+				if err := referencedAttributesInCompiledCondition(dr.Condition, referencedAttributes); err != nil {
+					return nil, fmt.Errorf("failed to find referenced attributes in the compiled derived roles definition: %w", err)
+				}
+			}
+
+			for _, rule := range p.Rules {
+				if rule.Condition == nil {
+					continue
+				}
+
+				if err := referencedAttributesInCompiledCondition(rule.Condition, referencedAttributes); err != nil {
+					return nil, fmt.Errorf("failed to find referenced attributes in the compiled resource policy rule: %w", err)
+				}
+			}
 		}
 	}
 
-	return referencedAttributes, nil
+	attributes := make([]*responsev1.InspectPoliciesResponse_Attribute, 0, len(referencedAttributes))
+	for _, attr := range referencedAttributes {
+		attributes = append(attributes, &responsev1.InspectPoliciesResponse_Attribute{
+			Name: attr.Name,
+			Kind: attr.Kind,
+		})
+	}
+	if len(attributes) > 0 {
+		slices.SortFunc(attributes, func(a, b *responsev1.InspectPoliciesResponse_Attribute) int {
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
+	}
+
+	return attributes, nil
 }
 
 func (ps *PolicySet) referencedAttributesInExpr(expr string, outAttr map[string]*responsev1.InspectPoliciesResponse_Attribute) error {
@@ -184,60 +137,8 @@ func (ps *PolicySet) referencedAttributesInExpr(expr string, outAttr map[string]
 		return fmt.Errorf("failed to compile the condition: %w", err)
 	}
 
-	if err := ps.referencedAttributesInCompiledCondition(c, outAttr); err != nil {
+	if err := referencedAttributesInCompiledCondition(c, outAttr); err != nil {
 		return fmt.Errorf("failed to find referenced attributes in the expression: %w", err)
-	}
-
-	return nil
-}
-
-func (ps *PolicySet) referencedAttributesInCompiledCondition(condition *runtimev1.Condition, outAttr map[string]*responsev1.InspectPoliciesResponse_Attribute) error {
-	switch op := condition.Op.(type) {
-	case *runtimev1.Condition_All:
-		for _, condition := range op.All.Expr {
-			if err := ps.referencedAttributesInCompiledCondition(condition, outAttr); err != nil {
-				return fmt.Errorf("failed to find referenced attributes in the 'all' expression: %w", err)
-			}
-		}
-	case *runtimev1.Condition_Any:
-		for _, condition := range op.Any.Expr {
-			if err := ps.referencedAttributesInCompiledCondition(condition, outAttr); err != nil {
-				return fmt.Errorf("failed to find referenced attributes in the 'any' expression: %w", err)
-			}
-		}
-	case *runtimev1.Condition_Expr:
-		exprAST, err := ast.ToAST(op.Expr.Checked)
-		if err != nil {
-			return fmt.Errorf("failed to convert checked expression %s to AST: %w", op.Expr.Checked, err)
-		}
-
-		setAttr := func(name string, t responsev1.InspectPoliciesResponse_Attribute_Type) {
-			if outAttr == nil {
-				return
-			}
-
-			switch t {
-			case responsev1.InspectPoliciesResponse_Attribute_TYPE_PRINCIPAL_ATTRIBUTE:
-				outAttr[fmt.Sprintf("%s|%s", conditions.CELPrincipalAbbrev, name)] = &responsev1.InspectPoliciesResponse_Attribute{
-					Name: name,
-					Type: t,
-				}
-			case responsev1.InspectPoliciesResponse_Attribute_TYPE_RESOURCE_ATTRIBUTE:
-				outAttr[fmt.Sprintf("%s|%s", conditions.CELResourceAbbrev, name)] = &responsev1.InspectPoliciesResponse_Attribute{
-					Name: name,
-					Type: t,
-				}
-			default:
-			}
-		}
-
-		ast.PreOrderVisit(exprAST.Expr(), attributeAndVariableVisitor(setAttr, nil))
-	case *runtimev1.Condition_None:
-		for _, condition := range op.None.Expr {
-			if err := ps.referencedAttributesInCompiledCondition(condition, outAttr); err != nil {
-				return fmt.Errorf("failed to find referenced attributes in the 'none' expression: %w", err)
-			}
-		}
 	}
 
 	return nil

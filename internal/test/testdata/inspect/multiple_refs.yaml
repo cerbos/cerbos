@@ -1,0 +1,198 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    exportVariables:
+      name: common_variables
+      definitions:
+        commonVar: 'request.resource.attr.commonVar'
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      variables:
+        import:
+          - common_variables
+        local:
+          var: 'request.resource.attr.var'
+      rules:
+        - actions: [ "all" ]
+          effect: EFFECT_ALLOW
+          roles:
+            - user
+          condition:
+            match:
+              all:
+                of:
+                  - expr: V.commonVar
+                  - expr: V.var
+        - actions: [ "any" ]
+          effect: EFFECT_ALLOW
+          roles:
+            - user
+          condition:
+            match:
+              any:
+                of:
+                  - expr: V.commonVar
+                  - expr: V.var
+        - actions: [ "none" ]
+          effect: EFFECT_ALLOW
+          roles:
+            - user
+          condition:
+            match:
+              none:
+                of:
+                  - expr: V.commonVar
+                  - expr: V.var
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: c.yaml
+    principalPolicy:
+      version: default
+      principal: john
+      variables:
+        import:
+          - common_variables
+        local:
+          var: 'request.resource.attr.var'
+      rules:
+        - resource: leave_request
+          actions:
+            - name: action_all
+              action: all
+              effect: EFFECT_ALLOW
+              condition:
+                match:
+                  all:
+                    of:
+                      - expr: V.commonVar
+                      - expr: V.var
+            - name: action_any
+              action: any
+              effect: EFFECT_ALLOW
+              condition:
+                match:
+                  any:
+                    of:
+                      - expr: V.commonVar
+                      - expr: V.var
+            - name: action_none
+              action: none
+              effect: EFFECT_ALLOW
+              condition:
+                match:
+                  none:
+                    of:
+                      - expr: V.commonVar
+                      - expr: V.var
+
+
+expected:
+  policies:
+    export_variables.common_variables:
+      policyId: a.yaml
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonVar
+      variables:
+        - name: commonVar
+          value: request.resource.attr.commonVar
+          kind: KIND_EXPORTED
+          source: export_variables.common_variables
+
+    principal.john.vdefault:
+      policyId: c.yaml
+      actions:
+        - all
+        - any
+        - none
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: var
+      variables:
+        - kind: KIND_IMPORTED
+          name: commonVar
+          source: export_variables.common_variables
+          used: true
+          value: request.resource.attr.commonVar
+        - kind: KIND_LOCAL
+          name: var
+          source: principal.john.vdefault
+          used: true
+          value: request.resource.attr.var
+
+    resource.leave_request.vdefault:
+      policyId: b.yaml
+      actions:
+        - all
+        - any
+        - none
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: var
+      variables:
+        - kind: KIND_IMPORTED
+          name: commonVar
+          source: export_variables.common_variables
+          used: true
+          value: request.resource.attr.commonVar
+
+        - kind: KIND_LOCAL
+          name: var
+          source: resource.leave_request.vdefault
+          used: true
+          value: request.resource.attr.var
+  policySets:
+    principal.john.vdefault:
+      policyId: principal.john.vdefault
+      actions:
+        - all
+        - any
+        - none
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: var
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonVar
+          used: true
+          value: request.resource.attr.commonVar
+        - kind: KIND_UNKNOWN
+          name: var
+          used: true
+          value: request.resource.attr.var
+
+    resource.leave_request.vdefault:
+      policyId: resource.leave_request.vdefault
+      actions:
+        - all
+        - any
+        - none
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: var
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonVar
+          used: true
+          value: request.resource.attr.commonVar
+
+        - kind: KIND_UNKNOWN
+          name: var
+          used: true
+          value: request.resource.attr.var

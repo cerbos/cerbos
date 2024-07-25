@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      rules:
+        - actions: [ "approve" ]
+          derivedRoles:
+            - undefined_derived_role
+          effect: EFFECT_ALLOW
+
+skipPolicySets: true
+
+expected:
+  policies:
+    resource.leave_request.vdefault:
+      policyId: a.yaml
+      actions:
+        - approve
+      derivedRoles:
+        - name: undefined_derived_role
+          kind: KIND_UNDEFINED

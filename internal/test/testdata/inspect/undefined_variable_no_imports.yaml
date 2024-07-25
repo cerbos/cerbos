@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      rules:
+        - actions: ["approve"]
+          roles:
+            - user
+          condition:
+            match:
+              expr: variables.missingVar
+          effect: EFFECT_ALLOW
+
+skipPolicySets: true
+
+expected:
+  policies:
+    resource.leave_request.vdefault:
+      actions:
+        - approve
+      policyId: a.yaml
+      variables:
+        - name: missingVar
+          value: "null"
+          kind: KIND_UNDEFINED
+          used: true
