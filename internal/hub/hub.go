@@ -6,7 +6,6 @@ package hub
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -31,7 +30,7 @@ func getInstance() (*hub.Hub, error) {
 
 	creds, err := conf.Credentials.ToCredentials()
 	if err != nil {
-		return nil, errors.New("failed to generate credentials from config")
+		return nil, fmt.Errorf("failed to generate credentials from config: %w", err)
 	}
 
 	tlsConf := &tls.Config{
