@@ -183,6 +183,7 @@ func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT
 		if !ok {
 			logging.FromContext(ctx).Named("auxdata").
 				Warn("Ignoring JWT key-value pair because the key is not a string", zap.Any("pair", p), zap.Error(err))
+			continue
 		}
 
 		value, err := util.ToStructPB(p.Value)
