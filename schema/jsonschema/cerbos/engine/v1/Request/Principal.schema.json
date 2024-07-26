@@ -19,11 +19,17 @@
     "id": {
       "type": "string"
     },
+    "policyVersion": {
+      "type": "string"
+    },
     "roles": {
       "type": "array",
       "items": {
         "type": "string"
       }
+    },
+    "scope": {
+      "type": "string"
     }
   }
 }

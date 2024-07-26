@@ -1,0 +1,149 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Check access to scope and policy version of request and principal objects"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["check_scope_and_version"],
+      "principal":
+        {
+          "id": "john",
+          "roles": ["employee"],
+          "scope": "acme.hr",
+          "policyVersion": "default",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "ip_address": "10.20.0.13",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "scope": "acme.hr",
+          "policyVersion": "default",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "check_scope_and_version":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr",
+              "scope": "acme.hr",
+            },
+        },
+      "effectiveDerivedRoles": ["employee_that_owns_the_record"],
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
+      "timestamp": "2023-12-01T14:51:39.204970988Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "id": "XX125",
+                    "policyVersion": "default",
+                    "scope": "acme.hr",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "policyVersion": "default",
+                    "scope": "acme.hr",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "ip_address": "10.20.0.13",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["check_scope_and_version"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "check_scope_and_version":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr",
+                        "scope": "acme.hr",
+                      },
+                  },
+                "effectiveDerivedRoles": ["employee_that_owns_the_record"],
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.leave_request.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault/acme":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05_acme.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault/acme.hr":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05_acme.hr.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

@@ -21,6 +21,12 @@
     },
     "kind": {
       "type": "string"
+    },
+    "policyVersion": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
     }
   }
 }

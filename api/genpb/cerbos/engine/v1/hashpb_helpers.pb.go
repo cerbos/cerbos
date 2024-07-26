@@ -438,6 +438,14 @@ func cerbos_engine_v1_Request_Principal_hashpb_sum(m *Request_Principal, hasher 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.Request.Principal.policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPolicyVersion()))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Request.Principal.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
+
+	}
 }
 
 func cerbos_engine_v1_Request_Resource_hashpb_sum(m *Request_Resource, hasher hash.Hash, ignore map[string]struct{}) {
@@ -467,6 +475,14 @@ func cerbos_engine_v1_Request_Resource_hashpb_sum(m *Request_Resource, hasher ha
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.Request.Resource.policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPolicyVersion()))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Request.Resource.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
+
 	}
 }
 

@@ -27,11 +27,17 @@
         "id": {
           "type": "string"
         },
+        "policyVersion": {
+          "type": "string"
+        },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
           }
+        },
+        "scope": {
+          "type": "string"
         }
       }
     },
@@ -49,6 +55,12 @@
           "type": "string"
         },
         "kind": {
+          "type": "string"
+        },
+        "policyVersion": {
+          "type": "string"
+        },
+        "scope": {
           "type": "string"
         }
       }
