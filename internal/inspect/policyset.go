@@ -6,13 +6,14 @@ package inspect
 import (
 	"cmp"
 	"fmt"
+	"slices"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"slices"
 )
 
 func PolicySets() *PolicySet {
