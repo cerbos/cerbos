@@ -808,6 +808,7 @@ func local_request_CerbosPlaygroundService_PlaygroundProxy_0(ctx context.Context
 // UnaryRPC     :call CerbosServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCerbosServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CerbosServiceServer) error {
 
 	mux.Handle("POST", pattern_CerbosService_CheckResourceSet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -942,6 +943,7 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 // UnaryRPC     :call CerbosAdminServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCerbosAdminServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CerbosAdminServiceServer) error {
 
 	mux.Handle("POST", pattern_CerbosAdminService_AddOrUpdatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1358,6 +1360,7 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 // UnaryRPC     :call CerbosPlaygroundServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCerbosPlaygroundServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CerbosPlaygroundServiceServer) error {
 
 	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1498,7 +1501,7 @@ func RegisterCerbosServiceHandler(ctx context.Context, mux *runtime.ServeMux, co
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "CerbosServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "CerbosServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "CerbosServiceClient" to call the correct interceptors.
+// "CerbosServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CerbosServiceClient) error {
 
 	mux.Handle("POST", pattern_CerbosService_CheckResourceSet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1673,7 +1676,7 @@ func RegisterCerbosAdminServiceHandler(ctx context.Context, mux *runtime.ServeMu
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "CerbosAdminServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "CerbosAdminServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "CerbosAdminServiceClient" to call the correct interceptors.
+// "CerbosAdminServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CerbosAdminServiceClient) error {
 
 	mux.Handle("POST", pattern_CerbosAdminService_AddOrUpdatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -2160,7 +2163,7 @@ func RegisterCerbosPlaygroundServiceHandler(ctx context.Context, mux *runtime.Se
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "CerbosPlaygroundServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "CerbosPlaygroundServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "CerbosPlaygroundServiceClient" to call the correct interceptors.
+// "CerbosPlaygroundServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CerbosPlaygroundServiceClient) error {
 
 	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
