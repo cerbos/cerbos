@@ -238,9 +238,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1.34.0
+        uses: bufbuild/buf-setup-action@v1.35.1
         with:
           github_token: ${{ github.token }}
 
@@ -256,11 +259,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Set latest release commit ID
+        id: latest_release_commit_id
+        run: |
+          echo "LATEST_RELEASE_COMMIT_ID=$(git rev-list -n 1 tags/${{ steps.latest-release.outputs.tag }})" >> "$GITHUB_OUTPUT"
+
       - name: Check backwards compatibility
         uses: cerbos/buf-breaking-action@since
         with:
-          against: https://github.com/cerbos/cerbos.git#tag=${{ steps.latest-release.outputs.tag }}
-          since: https://github.com/cerbos/cerbos.git#branch=main
+          against: https://github.com/cerbos/cerbos.git#ref=${{ steps.latest_release_commit_id.outputs.LATEST_RELEASE_COMMIT_ID }}
+          since: https://github.com/cerbos/cerbos.git#ref=main
 
   test-helm:
     needs: changes
