@@ -186,6 +186,11 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 
 	for policyID, variables := range pol.variablesToResolve {
 		importedPolicies, ok := pol.variableImports[policyID]
+		attrs := make(util.StringSet)
+		for _, attr := range pol.results[policyID].Attributes {
+			attrs[attr.Name] = struct{}{}
+		}
+
 		var missingPolicies []string
 		if ok { //nolint:nestif
 			for _, importedPolicyID := range importedPolicies {
@@ -207,13 +212,8 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 							}
 
 							if len(referencedAttributes) > 0 {
-								ss := make(util.StringSet)
-								for _, attr := range pol.results[policyID].Attributes {
-									ss[attr.Name] = struct{}{}
-								}
-
 								for _, attr := range referencedAttributes {
-									if !ss.Contains(attr.Name) {
+									if !attrs.Contains(attr.Name) {
 										pol.results[policyID].Attributes = append(pol.results[policyID].Attributes, attr)
 									}
 								}
@@ -246,13 +246,8 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 						}
 
 						if len(referencedAttributes) > 0 {
-							ss := make(util.StringSet)
-							for _, attr := range pol.results[policyID].Attributes {
-								ss[attr.Name] = struct{}{}
-							}
-
 							for _, attr := range referencedAttributes {
-								if !ss.Contains(attr.Name) {
+								if !attrs.Contains(attr.Name) {
 									pol.results[policyID].Attributes = append(pol.results[policyID].Attributes, attr)
 								}
 							}
