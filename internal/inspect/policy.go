@@ -22,6 +22,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+type loadPolicyFn func(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
+
 func Policies() *Policy {
 	return &Policy{
 		derivedRolesImports:   make(map[string][]string),
@@ -122,10 +124,17 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	return nil
 }
 
-type loadPolicyFn func(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
-
 // Results returns the final inspection results.
 func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	pol.resolveDerivedRoles(ctx, loadPolicy)
+	if err := pol.resolveVariables(ctx, loadPolicy); err != nil {
+		return nil, fmt.Errorf("failed to resolve variables: %w", err)
+	}
+
+	return pol.results, nil
+}
+
+func (pol *Policy) resolveDerivedRoles(ctx context.Context, loadPolicy loadPolicyFn) {
 	for policyID, derivedRoles := range pol.derivedRolesToResolve {
 		importedPolicies, ok := pol.derivedRolesImports[policyID]
 		var missingPolicies []string
@@ -183,7 +192,9 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 			return cmp.Compare(a.GetName(), b.GetName())
 		})
 	}
+}
 
+func (pol *Policy) resolveVariables(ctx context.Context, loadPolicy loadPolicyFn) error {
 	for policyID, variables := range pol.variablesToResolve {
 		importedPolicies, ok := pol.variableImports[policyID]
 		attrs := make(util.StringSet)
@@ -208,7 +219,7 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 
 							referencedAttributes := make(map[string]*responsev1.InspectPoliciesResponse_Attribute)
 							if err := pol.referencedAttributesInExpr(importedVariable.Value, referencedAttributes); err != nil {
-								return nil, fmt.Errorf("failed to find referenced attributes in imported variable: %w", err)
+								return fmt.Errorf("failed to find referenced attributes in imported variable: %w", err)
 							}
 
 							if len(referencedAttributes) > 0 {
@@ -282,7 +293,7 @@ func (pol *Policy) Results(ctx context.Context, loadPolicy loadPolicyFn) (map[st
 		})
 	}
 
-	return pol.results, nil
+	return nil
 }
 
 // listReferencedAttributes lists the attributes referenced from the conditions and variables in the given policy.
