@@ -243,7 +243,10 @@ func (l *Log) streamLogs() error {
 	return nil
 }
 
-var kvPool = &sync.Pool{New: func() any { return new(bpb.KV) }}
+var (
+	kvPool   = &sync.Pool{New: func() any { return new(bpb.KV) }}
+	keysPool = &sync.Pool{}
+)
 
 func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
 	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
@@ -268,8 +271,15 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		kv := kvPool.Get().(*bpb.KV) //nolint:forcetypeassert
 		defer kvPool.Put(kv)
 
+		var keys [][]byte
+		if keysIface := keysPool.Get(); keysIface == nil {
+			keys = make([][]byte, l.maxBatchSize)
+		} else {
+			keys = *(keysIface.(*[][]byte))
+		}
+		defer keysPool.Put(&keys)
+
 		var i int
-		keys := make([][]byte, l.maxBatchSize)
 		if err := buf.SliceIterate(func(s []byte) error {
 			kv.Reset()
 
@@ -277,7 +287,8 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 				return err
 			}
 
-			keys[i] = append([]byte(nil), kv.Key...)
+			clear(keys[i])
+			keys[i] = kv.Key
 
 			i++
 			if i == l.maxBatchSize {
