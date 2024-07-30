@@ -27,7 +27,7 @@ inputs:
         commonLabel: '"dude"'
         commonTeams: '["red", "blue"]'
 
-expected:
+policiesExpectation:
   policies:
     derived_roles.common_roles:
       policyId: a.yaml
@@ -68,4 +68,6 @@ expected:
           name: commonTeams
           source: export_variables.common_variables
           value: "[\"red\", \"blue\"]"
+
+policySetsExpectation:
   policySets: {}

@@ -63,7 +63,7 @@ inputs:
             match:
               expr: "variables.derivedRoleVariable"
 
-expected:
+policiesExpectation:
   policies:
     derived_roles.common_roles:
       policyId: c.yaml
@@ -140,6 +140,7 @@ expected:
           source: resource.leave_request.vdefault
           value: "[\"red\", \"blue\"]"
 
+policySetsExpectation:
   policySets:
     resource.leave_request.vdefault:
       policyId: resource.leave_request.vdefault

@@ -12,9 +12,7 @@ inputs:
             - undefined_derived_role
           effect: EFFECT_ALLOW
 
-skipPolicySets: true
-
-expected:
+policiesExpectation:
   policies:
     resource.leave_request.vdefault:
       policyId: a.yaml
@@ -23,3 +21,14 @@ expected:
       derivedRoles:
         - name: undefined_derived_role
           kind: KIND_UNDEFINED
+
+policySetsExpectation:
+  compileErrors:
+    compileErrors:
+      - description: Derived role "undefined_derived_role" is not defined in any imports
+        error: unknown derived role
+        file: resource.leave_request.vdefault.yaml
+        position:
+          column: 7
+          line: 10
+          path: $.resourcePolicy.rules[0].derivedRoles[0]

@@ -32,7 +32,7 @@ inputs:
       version: default
       resource: leave_request
 
-expected:
+policiesExpectation:
   policies:
       derived_roles.common_roles:
         policyId: a.yaml
@@ -50,6 +50,7 @@ expected:
       resource.leave_request.vdefault:
         policyId: d.yaml
 
+policySetsExpectation:
   policySets:
       principal.john.vdefault:
         policyId: principal.john.vdefault

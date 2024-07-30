@@ -2069,8 +2069,8 @@ func cerbos_private_v1_IndexBuilderTestCase_hashpb_sum(m *IndexBuilderTestCase, 
 	}
 }
 
-func cerbos_private_v1_InspectTestCase_Expected_hashpb_sum(m *InspectTestCase_Expected, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.private.v1.InspectTestCase.Expected.policies"]; !ok {
+func cerbos_private_v1_InspectTestCase_PoliciesExpectation_hashpb_sum(m *InspectTestCase_PoliciesExpectation, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.PoliciesExpectation.policies"]; !ok {
 		if len(m.Policies) > 0 {
 			keys := make([]string, len(m.Policies))
 			i := 0
@@ -2089,7 +2089,31 @@ func cerbos_private_v1_InspectTestCase_Expected_hashpb_sum(m *InspectTestCase_Ex
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.InspectTestCase.Expected.policy_sets"]; !ok {
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.PoliciesExpectation.missing_policies"]; !ok {
+		if len(m.MissingPolicies) > 0 {
+			for _, v := range m.MissingPolicies {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_InspectTestCase_PolicySetsExpectation_CompileErrors_hashpb_sum(m *InspectTestCase_PolicySetsExpectation_CompileErrors, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.PolicySetsExpectation.CompileErrors.compile_errors"]; !ok {
+		if len(m.CompileErrors) > 0 {
+			for _, v := range m.CompileErrors {
+				if v != nil {
+					cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_InspectTestCase_PolicySetsExpectation_hashpb_sum(m *InspectTestCase_PolicySetsExpectation, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.PolicySetsExpectation.policy_sets"]; !ok {
 		if len(m.PolicySets) > 0 {
 			keys := make([]string, len(m.PolicySets))
 			i := 0
@@ -2108,10 +2132,18 @@ func cerbos_private_v1_InspectTestCase_Expected_hashpb_sum(m *InspectTestCase_Ex
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.InspectTestCase.Expected.missing_policies"]; !ok {
-		if len(m.MissingPolicies) > 0 {
-			for _, v := range m.MissingPolicies {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
+	if m.Errors != nil {
+		if _, ok := ignore["cerbos.private.v1.InspectTestCase.PolicySetsExpectation.errors"]; !ok {
+			switch t := m.Errors.(type) {
+			case *InspectTestCase_PolicySetsExpectation_CompileErrors_:
+				if t.CompileErrors != nil {
+					cerbos_private_v1_InspectTestCase_PolicySetsExpectation_CompileErrors_hashpb_sum(t.CompileErrors, hasher, ignore)
+				}
+
+			case *InspectTestCase_PolicySetsExpectation_IndexBuildErrors:
+				if t.IndexBuildErrors != nil {
+					cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(t.IndexBuildErrors, hasher, ignore)
+				}
 
 			}
 		}
@@ -2119,6 +2151,10 @@ func cerbos_private_v1_InspectTestCase_Expected_hashpb_sum(m *InspectTestCase_Ex
 }
 
 func cerbos_private_v1_InspectTestCase_hashpb_sum(m *InspectTestCase, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetDescription()))
+
+	}
 	if _, ok := ignore["cerbos.private.v1.InspectTestCase.inputs"]; !ok {
 		if len(m.Inputs) > 0 {
 			for _, v := range m.Inputs {
@@ -2129,18 +2165,16 @@ func cerbos_private_v1_InspectTestCase_hashpb_sum(m *InspectTestCase, hasher has
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.InspectTestCase.expected"]; !ok {
-		if m.GetExpected() != nil {
-			cerbos_private_v1_InspectTestCase_Expected_hashpb_sum(m.GetExpected(), hasher, ignore)
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.policies_expectation"]; !ok {
+		if m.GetPoliciesExpectation() != nil {
+			cerbos_private_v1_InspectTestCase_PoliciesExpectation_hashpb_sum(m.GetPoliciesExpectation(), hasher, ignore)
 		}
 
 	}
-	if _, ok := ignore["cerbos.private.v1.InspectTestCase.skip_policies"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetSkipPolicies())))
-
-	}
-	if _, ok := ignore["cerbos.private.v1.InspectTestCase.skip_policy_sets"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetSkipPolicySets())))
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.policy_sets_expectation"]; !ok {
+		if m.GetPolicySetsExpectation() != nil {
+			cerbos_private_v1_InspectTestCase_PolicySetsExpectation_hashpb_sum(m.GetPolicySetsExpectation(), hasher, ignore)
+		}
 
 	}
 }

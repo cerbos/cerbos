@@ -28,7 +28,7 @@ inputs:
           roles:
             - user
 
-expected:
+policiesExpectation:
   policies:
     principal.john.vdefault:
       policyId: a.yaml
@@ -43,6 +43,7 @@ expected:
       actions:
         - approve
 
+policySetsExpectation:
   policySets:
     principal.john.vdefault:
       policyId: principal.john.vdefault

@@ -20,7 +20,7 @@ inputs:
         local:
           someVar: '"someVar"'
 
-expected:
+policiesExpectation:
   policies:
       principal.john.vdefault:
         policyId: a.yaml
@@ -38,6 +38,7 @@ expected:
             source: resource.leave_request.vdefault
             kind: KIND_LOCAL
 
+policySetsExpectation:
   policySets:
       principal.john.vdefault:
         policyId: principal.john.vdefault

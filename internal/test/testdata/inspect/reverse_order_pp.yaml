@@ -50,7 +50,7 @@ inputs:
             match:
               expr: "variables.derivedRoleVariable"
 
-expected:
+policiesExpectation:
   policies:
     derived_roles.common_roles:
       policyId: c.yaml
@@ -114,6 +114,7 @@ expected:
           source: principal.john.vdefault
           value: "[\"red\", \"blue\"]"
 
+policySetsExpectation:
   policySets:
     principal.john.vdefault:
       policyId: principal.john.vdefault

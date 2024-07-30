@@ -6,12 +6,12 @@ package privatev1
 
 import (
 	fmt "fmt"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	v16 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	v17 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
@@ -37,7 +37,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-func (m *InspectTestCase_Expected) MarshalVT() (dAtA []byte, err error) {
+func (m *InspectTestCase_PoliciesExpectation) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -50,12 +50,12 @@ func (m *InspectTestCase_Expected) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *InspectTestCase_Expected) MarshalToVT(dAtA []byte) (int, error) {
+func (m *InspectTestCase_PoliciesExpectation) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *InspectTestCase_Expected) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *InspectTestCase_PoliciesExpectation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -72,40 +72,6 @@ func (m *InspectTestCase_Expected) MarshalToSizedBufferVT(dAtA []byte) (int, err
 			i -= len(m.MissingPolicies[iNdEx])
 			copy(dAtA[i:], m.MissingPolicies[iNdEx])
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.MissingPolicies[iNdEx])))
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
-	if len(m.PolicySets) > 0 {
-		for k := range m.PolicySets {
-			v := m.PolicySets[k]
-			baseI := i
-			if vtmsg, ok := interface{}(v).(interface {
-				MarshalToSizedBufferVT([]byte) (int, error)
-			}); ok {
-				size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-			} else {
-				encoded, err := proto.Marshal(v)
-				if err != nil {
-					return 0, err
-				}
-				i -= len(encoded)
-				copy(dAtA[i:], encoded)
-				i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
-			}
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x12
 		}
@@ -147,6 +113,189 @@ func (m *InspectTestCase_Expected) MarshalToSizedBufferVT(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.CompileErrors) > 0 {
+		for iNdEx := len(m.CompileErrors) - 1; iNdEx >= 0; iNdEx-- {
+			if vtmsg, ok := interface{}(m.CompileErrors[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.CompileErrors[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *InspectTestCase_PolicySetsExpectation) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *InspectTestCase_PolicySetsExpectation) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *InspectTestCase_PolicySetsExpectation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if vtmsg, ok := m.Errors.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	if len(m.PolicySets) > 0 {
+		for k := range m.PolicySets {
+			v := m.PolicySets[k]
+			baseI := i
+			if vtmsg, ok := interface{}(v).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(v)
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors_) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.CompileErrors != nil {
+		size, err := m.CompileErrors.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+func (m *InspectTestCase_PolicySetsExpectation_IndexBuildErrors) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *InspectTestCase_PolicySetsExpectation_IndexBuildErrors) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.IndexBuildErrors != nil {
+		if vtmsg, ok := interface{}(m.IndexBuildErrors).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.IndexBuildErrors)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	return len(dAtA) - i, nil
+}
 func (m *InspectTestCase) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -177,35 +326,25 @@ func (m *InspectTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.SkipPolicySets {
-		i--
-		if m.SkipPolicySets {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x20
-	}
-	if m.SkipPolicies {
-		i--
-		if m.SkipPolicies {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x18
-	}
-	if m.Expected != nil {
-		size, err := m.Expected.MarshalToSizedBufferVT(dAtA[:i])
+	if m.PolicySetsExpectation != nil {
+		size, err := m.PolicySetsExpectation.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x22
+	}
+	if m.PoliciesExpectation != nil {
+		size, err := m.PoliciesExpectation.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
 	}
 	if len(m.Inputs) > 0 {
 		for iNdEx := len(m.Inputs) - 1; iNdEx >= 0; iNdEx-- {
@@ -228,8 +367,15 @@ func (m *InspectTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 				i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
 			}
 			i--
-			dAtA[i] = 0xa
+			dAtA[i] = 0x12
 		}
+	}
+	if len(m.Description) > 0 {
+		i -= len(m.Description)
+		copy(dAtA[i:], m.Description)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Description)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -3170,7 +3316,7 @@ func (m *WellKnownTypes) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *InspectTestCase_Expected) SizeVT() (n int) {
+func (m *InspectTestCase_PoliciesExpectation) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3178,25 +3324,6 @@ func (m *InspectTestCase_Expected) SizeVT() (n int) {
 	_ = l
 	if len(m.Policies) > 0 {
 		for k, v := range m.Policies {
-			_ = k
-			_ = v
-			l = 0
-			if v != nil {
-				if size, ok := interface{}(v).(interface {
-					SizeVT() int
-				}); ok {
-					l = size.SizeVT()
-				} else {
-					l = proto.Size(v)
-				}
-			}
-			l += 1 + protohelpers.SizeOfVarint(uint64(l))
-			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + l
-			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
-		}
-	}
-	if len(m.PolicySets) > 0 {
-		for k, v := range m.PolicySets {
 			_ = k
 			_ = v
 			l = 0
@@ -3224,12 +3351,100 @@ func (m *InspectTestCase_Expected) SizeVT() (n int) {
 	return n
 }
 
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.CompileErrors) > 0 {
+		for _, e := range m.CompileErrors {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *InspectTestCase_PolicySetsExpectation) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.PolicySets) > 0 {
+		for k, v := range m.PolicySets {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				if size, ok := interface{}(v).(interface {
+					SizeVT() int
+				}); ok {
+					l = size.SizeVT()
+				} else {
+					l = proto.Size(v)
+				}
+			}
+			l += 1 + protohelpers.SizeOfVarint(uint64(l))
+			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + l
+			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
+		}
+	}
+	if vtmsg, ok := m.Errors.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors_) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CompileErrors != nil {
+		l = m.CompileErrors.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	return n
+}
+func (m *InspectTestCase_PolicySetsExpectation_IndexBuildErrors) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.IndexBuildErrors != nil {
+		if size, ok := interface{}(m.IndexBuildErrors).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.IndexBuildErrors)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	return n
+}
 func (m *InspectTestCase) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = len(m.Description)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	if len(m.Inputs) > 0 {
 		for _, e := range m.Inputs {
 			if size, ok := interface{}(e).(interface {
@@ -3242,15 +3457,13 @@ func (m *InspectTestCase) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
-	if m.Expected != nil {
-		l = m.Expected.SizeVT()
+	if m.PoliciesExpectation != nil {
+		l = m.PoliciesExpectation.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.SkipPolicies {
-		n += 2
-	}
-	if m.SkipPolicySets {
-		n += 2
+	if m.PolicySetsExpectation != nil {
+		l = m.PolicySetsExpectation.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4487,7 +4700,7 @@ func (m *WellKnownTypes) SizeVT() (n int) {
 	return n
 }
 
-func (m *InspectTestCase_Expected) UnmarshalVT(dAtA []byte) error {
+func (m *InspectTestCase_PoliciesExpectation) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4510,10 +4723,10 @@ func (m *InspectTestCase_Expected) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: InspectTestCase_Expected: wiretype end group for non-group")
+			return fmt.Errorf("proto: InspectTestCase_PoliciesExpectation: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InspectTestCase_Expected: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InspectTestCase_PoliciesExpectation: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4655,6 +4868,182 @@ func (m *InspectTestCase_Expected) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MissingPolicies", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MissingPolicies = append(m.MissingPolicies, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: InspectTestCase_PolicySetsExpectation_CompileErrors: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: InspectTestCase_PolicySetsExpectation_CompileErrors: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CompileErrors", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CompileErrors = append(m.CompileErrors, &v11.CompileErrors_Err{})
+			if unmarshal, ok := interface{}(m.CompileErrors[len(m.CompileErrors)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.CompileErrors[len(m.CompileErrors)-1]); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *InspectTestCase_PolicySetsExpectation) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: InspectTestCase_PolicySetsExpectation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: InspectTestCase_PolicySetsExpectation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PolicySets", wireType)
 			}
 			var msglen int
@@ -4790,11 +5179,11 @@ func (m *InspectTestCase_Expected) UnmarshalVT(dAtA []byte) error {
 			}
 			m.PolicySets[mapkey] = mapvalue
 			iNdEx = postIndex
-		case 3:
+		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MissingPolicies", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CompileErrors", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -4804,23 +5193,89 @@ func (m *InspectTestCase_Expected) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return protohelpers.ErrInvalidLength
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return protohelpers.ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MissingPolicies = append(m.MissingPolicies, string(dAtA[iNdEx:postIndex]))
+			if oneof, ok := m.Errors.(*InspectTestCase_PolicySetsExpectation_CompileErrors_); ok {
+				if err := oneof.CompileErrors.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &InspectTestCase_PolicySetsExpectation_CompileErrors{}
+				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+				m.Errors = &InspectTestCase_PolicySetsExpectation_CompileErrors_{CompileErrors: v}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IndexBuildErrors", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if oneof, ok := m.Errors.(*InspectTestCase_PolicySetsExpectation_IndexBuildErrors); ok {
+				if unmarshal, ok := interface{}(oneof.IndexBuildErrors).(interface {
+					UnmarshalVT([]byte) error
+				}); ok {
+					if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+						return err
+					}
+				} else {
+					if err := proto.Unmarshal(dAtA[iNdEx:postIndex], oneof.IndexBuildErrors); err != nil {
+						return err
+					}
+				}
+			} else {
+				v := &v11.IndexBuildErrors{}
+				if unmarshal, ok := interface{}(v).(interface {
+					UnmarshalVT([]byte) error
+				}); ok {
+					if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+						return err
+					}
+				} else {
+					if err := proto.Unmarshal(dAtA[iNdEx:postIndex], v); err != nil {
+						return err
+					}
+				}
+				m.Errors = &InspectTestCase_PolicySetsExpectation_IndexBuildErrors{IndexBuildErrors: v}
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -4875,6 +5330,38 @@ func (m *InspectTestCase) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Description = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Inputs", wireType)
 			}
 			var msglen int
@@ -4902,7 +5389,7 @@ func (m *InspectTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Inputs = append(m.Inputs, &v11.Policy{})
+			m.Inputs = append(m.Inputs, &v12.Policy{})
 			if unmarshal, ok := interface{}(m.Inputs[len(m.Inputs)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -4915,9 +5402,9 @@ func (m *InspectTestCase) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Expected", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PoliciesExpectation", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4944,38 +5431,18 @@ func (m *InspectTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Expected == nil {
-				m.Expected = &InspectTestCase_Expected{}
+			if m.PoliciesExpectation == nil {
+				m.PoliciesExpectation = &InspectTestCase_PoliciesExpectation{}
 			}
-			if err := m.Expected.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.PoliciesExpectation.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SkipPolicies", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.SkipPolicies = bool(v != 0)
 		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SkipPolicySets", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PolicySetsExpectation", wireType)
 			}
-			var v int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -4985,12 +5452,28 @@ func (m *InspectTestCase) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.SkipPolicySets = bool(v != 0)
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.PolicySetsExpectation == nil {
+				m.PolicySetsExpectation = &InspectTestCase_PolicySetsExpectation{}
+			}
+			if err := m.PolicySetsExpectation.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -5103,7 +5586,7 @@ func (m *EngineTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Inputs = append(m.Inputs, &v12.CheckInput{})
+			m.Inputs = append(m.Inputs, &v13.CheckInput{})
 			if unmarshal, ok := interface{}(m.Inputs[len(m.Inputs)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -5145,7 +5628,7 @@ func (m *EngineTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantOutputs = append(m.WantOutputs, &v12.CheckOutput{})
+			m.WantOutputs = append(m.WantOutputs, &v13.CheckOutput{})
 			if unmarshal, ok := interface{}(m.WantOutputs[len(m.WantOutputs)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -5207,7 +5690,7 @@ func (m *EngineTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantDecisionLogs = append(m.WantDecisionLogs, &v13.DecisionLogEntry{})
+			m.WantDecisionLogs = append(m.WantDecisionLogs, &v14.DecisionLogEntry{})
 			if unmarshal, ok := interface{}(m.WantDecisionLogs[len(m.WantDecisionLogs)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -5301,7 +5784,7 @@ func (m *ServerTestCase_PlanResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.PlanResourcesRequest{}
+				m.Input = &v15.PlanResourcesRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -5440,7 +5923,7 @@ func (m *ServerTestCase_CheckResourceSetCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.CheckResourceSetRequest{}
+				m.Input = &v15.CheckResourceSetRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -5579,7 +6062,7 @@ func (m *ServerTestCase_CheckResourceBatchCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.CheckResourceBatchRequest{}
+				m.Input = &v15.CheckResourceBatchRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -5718,7 +6201,7 @@ func (m *ServerTestCase_CheckResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.CheckResourcesRequest{}
+				m.Input = &v15.CheckResourcesRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -5857,7 +6340,7 @@ func (m *ServerTestCase_PlaygroundValidateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.PlaygroundValidateRequest{}
+				m.Input = &v15.PlaygroundValidateRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -5996,7 +6479,7 @@ func (m *ServerTestCase_PlaygroundTestCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.PlaygroundTestRequest{}
+				m.Input = &v15.PlaygroundTestRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -6135,7 +6618,7 @@ func (m *ServerTestCase_PlaygroundEvaluateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.PlaygroundEvaluateRequest{}
+				m.Input = &v15.PlaygroundEvaluateRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -6274,7 +6757,7 @@ func (m *ServerTestCase_PlaygroundProxyCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.PlaygroundProxyRequest{}
+				m.Input = &v15.PlaygroundProxyRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -6413,7 +6896,7 @@ func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.AddOrUpdatePolicyRequest{}
+				m.Input = &v15.AddOrUpdatePolicyRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -6552,7 +7035,7 @@ func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v14.AddOrUpdateSchemaRequest{}
+				m.Input = &v15.AddOrUpdateSchemaRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -7635,7 +8118,7 @@ func (m *IndexBuilderTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantErrList == nil {
-				m.WantErrList = &v15.IndexBuildErrors{}
+				m.WantErrList = &v11.IndexBuildErrors{}
 			}
 			if unmarshal, ok := interface{}(m.WantErrList).(interface {
 				UnmarshalVT([]byte) error
@@ -8091,7 +8574,7 @@ func (m *CompileTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantErrors = append(m.WantErrors, &v15.CompileErrors_Err{})
+			m.WantErrors = append(m.WantErrors, &v11.CompileErrors_Err{})
 			if unmarshal, ok := interface{}(m.WantErrors[len(m.WantErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -8219,7 +8702,7 @@ func (m *CelTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Condition == nil {
-				m.Condition = &v11.Match{}
+				m.Condition = &v12.Match{}
 			}
 			if unmarshal, ok := interface{}(m.Condition).(interface {
 				UnmarshalVT([]byte) error
@@ -8263,7 +8746,7 @@ func (m *CelTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Request == nil {
-				m.Request = &v12.Request{}
+				m.Request = &v13.Request{}
 			}
 			if unmarshal, ok := interface{}(m.Request).(interface {
 				UnmarshalVT([]byte) error
@@ -8430,7 +8913,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.SchemaRefs == nil {
-				m.SchemaRefs = &v11.Schemas{}
+				m.SchemaRefs = &v12.Schemas{}
 			}
 			if unmarshal, ok := interface{}(m.SchemaRefs).(interface {
 				UnmarshalVT([]byte) error
@@ -8486,7 +8969,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 			} else {
-				v := &v12.CheckInput{}
+				v := &v13.CheckInput{}
 				if unmarshal, ok := interface{}(v).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {
@@ -8543,7 +9026,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 			} else {
-				v := &v12.PlanResourcesInput{}
+				v := &v13.PlanResourcesInput{}
 				if unmarshal, ok := interface{}(v).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {
@@ -9006,7 +9489,7 @@ func (m *QueryPlannerTestSuite_Test) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Want == nil {
-				m.Want = &v12.PlanResourcesFilter{}
+				m.Want = &v13.PlanResourcesFilter{}
 			}
 			if unmarshal, ok := interface{}(m.Want).(interface {
 				UnmarshalVT([]byte) error
@@ -9050,7 +9533,7 @@ func (m *QueryPlannerTestSuite_Test) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Resource == nil {
-				m.Resource = &v12.PlanResourcesInput_Resource{}
+				m.Resource = &v13.PlanResourcesInput_Resource{}
 			}
 			if unmarshal, ok := interface{}(m.Resource).(interface {
 				UnmarshalVT([]byte) error
@@ -9197,7 +9680,7 @@ func (m *QueryPlannerTestSuite) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Principal == nil {
-				m.Principal = &v12.Principal{}
+				m.Principal = &v13.Principal{}
 			}
 			if unmarshal, ok := interface{}(m.Principal).(interface {
 				UnmarshalVT([]byte) error
@@ -9326,7 +9809,7 @@ func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Table == nil {
-				m.Table = &v11.TestTable{}
+				m.Table = &v12.TestTable{}
 			}
 			if unmarshal, ok := interface{}(m.Table).(interface {
 				UnmarshalVT([]byte) error
@@ -9369,7 +9852,7 @@ func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantTests = append(m.WantTests, &v11.Test{})
+			m.WantTests = append(m.WantTests, &v12.Test{})
 			if unmarshal, ok := interface{}(m.WantTests[len(m.WantTests)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -9527,7 +10010,7 @@ func (m *QueryPlannerFilterTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v12.PlanResourcesFilter{}
+				m.Input = &v13.PlanResourcesFilter{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -9571,7 +10054,7 @@ func (m *QueryPlannerFilterTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.WantFilter == nil {
-				m.WantFilter = &v12.PlanResourcesFilter{}
+				m.WantFilter = &v13.PlanResourcesFilter{}
 			}
 			if unmarshal, ok := interface{}(m.WantFilter).(interface {
 				UnmarshalVT([]byte) error
@@ -9750,7 +10233,7 @@ func (m *VerifyTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Want == nil {
-				m.Want = &v11.TestResults{}
+				m.Want = &v12.TestResults{}
 			}
 			if unmarshal, ok := interface{}(m.Want).(interface {
 				UnmarshalVT([]byte) error
@@ -9845,7 +10328,7 @@ func (m *ProtoYamlTestCase_Want) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Message == nil {
-				m.Message = &v11.Policy{}
+				m.Message = &v12.Policy{}
 			}
 			if unmarshal, ok := interface{}(m.Message).(interface {
 				UnmarshalVT([]byte) error

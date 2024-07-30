@@ -6,6 +6,7 @@ package inspect_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,6 +18,8 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -33,61 +36,92 @@ func TestInspect(t *testing.T) {
 	for _, testMetadata := range testCases {
 		testCase := readTestCase(t, testMetadata.Input)
 		t.Run(testMetadata.Name, func(t *testing.T) {
-			require.NotNil(t, testCase.Expected)
-			t.Run("Policies", func(t *testing.T) {
-				if testCase.SkipPolicies {
-					t.Skip()
-				}
+			inputs := testCase.Inputs
+			mgr := schema.NewNopManager()
+			pl := mkPolicyLoader(t, inputs)
+			dir := t.TempDir()
+			for _, p := range inputs {
+				f, err := os.Create(filepath.Join(dir, fmt.Sprintf("%s.%s", namer.PolicyKey(p), "yaml")))
+				require.NoError(t, err)
+				require.NoError(t, policy.WritePolicy(f, p))
+			}
 
-				pl := mkPolicyLoader(t, testCase.Inputs)
+			t.Run("Policies", func(t *testing.T) {
+				expectedPolicies := testCase.PoliciesExpectation.Policies
+				expectedMissingPolicies := testCase.PoliciesExpectation.MissingPolicies
+
 				ins := inspect.Policies()
-				for _, p := range testCase.Inputs {
+				for _, p := range inputs {
 					require.NoError(t, ins.Inspect(p))
 				}
 
 				have, err := ins.Results(ctx, pl.LoadPolicy)
 				require.NoError(t, err)
-				require.NotNil(t, testCase.Expected.Policies)
-				require.Empty(t, cmp.Diff(testCase.Expected.Policies, have, protocmp.Transform()))
-				require.ElementsMatch(t, testCase.Expected.MissingPolicies, pl.missing, "expected missing policies")
+				require.Empty(t, cmp.Diff(expectedPolicies, have, protocmp.Transform()))
+				require.ElementsMatch(t, expectedMissingPolicies, pl.missing, "expected missing policies")
 			})
 
 			t.Run("PolicySets", func(t *testing.T) {
-				if testCase.SkipPolicySets {
-					t.Skip()
-				}
-
-				dir := t.TempDir()
-				for _, p := range testCase.Inputs {
-					f, err := os.Create(filepath.Join(dir, fmt.Sprintf("%s.%s", namer.PolicyKey(p), "yaml")))
-					require.NoError(t, err)
-					require.NoError(t, policy.WritePolicy(f, p))
-				}
+				expectedPolicySets := testCase.PolicySetsExpectation.PolicySets
+				expectedErrors := testCase.PolicySetsExpectation.Errors
 
 				idx, err := index.Build(ctx, os.DirFS(dir))
+				var haveIdxBuildErr *index.BuildError
+				if errors.As(err, &haveIdxBuildErr) {
+					require.Empty(t,
+						cmp.Diff(
+							expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_IndexBuildErrors).IndexBuildErrors,
+							haveIdxBuildErr.IndexBuildErrors,
+							protocmp.Transform(),
+							protocmp.IgnoreFields(&sourcev1.Error{}, "context"),
+						),
+					)
+					return
+				}
 				require.NoError(t, err)
 
-				mgr := schema.NewNopManager()
 				ins := inspect.PolicySets()
 				for unit := range idx.GetAllCompilationUnits(ctx) {
 					rps, err := compile.Compile(unit, mgr)
+					var haveCompileErrSet *compile.ErrorSet
+					if errors.As(err, &haveCompileErrSet) {
+						require.Empty(t,
+							cmp.Diff(
+								compileErrorsMap(expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_CompileErrors_).CompileErrors.CompileErrors),
+								haveCompileErrSet.CompileErrors,
+								protocmp.Transform(),
+								protocmp.IgnoreFields(&runtimev1.CompileErrors_Err{}, "context"),
+							),
+						)
+						continue
+					}
 					require.NoError(t, err)
 
 					if rps == nil {
 						continue
 					}
 
-					err = ins.Inspect(rps)
-					require.NoError(t, err)
+					require.NoError(t, ins.Inspect(rps))
 				}
 
-				have, err := ins.Results()
-				require.NoError(t, err)
-				require.NotNil(t, testCase.Expected.PolicySets)
-				require.Empty(t, cmp.Diff(testCase.Expected.PolicySets, have, protocmp.Transform()))
+				if expectedErrors == nil {
+					have, err := ins.Results()
+					require.NoError(t, err)
+					require.Empty(t, cmp.Diff(expectedPolicySets, have, protocmp.Transform()))
+				}
 			})
 		})
 	}
+}
+
+func compileErrorsMap(compileErrors []*runtimev1.CompileErrors_Err) map[uint64]*runtimev1.CompileErrors_Err {
+	m := make(map[uint64]*runtimev1.CompileErrors_Err)
+	for _, compileErr := range compileErrors {
+		key := util.HashStr(fmt.Sprintf("%s:%d:%d:%s", compileErr.GetFile(), compileErr.GetPosition().GetLine(), compileErr.GetPosition().GetColumn(), compileErr.GetDescription()))
+		m[key] = compileErr
+	}
+
+	return m
 }
 
 func mkPolicyLoader(t *testing.T, policies []*policyv1.Policy) *policyLoader {
@@ -131,6 +165,14 @@ func readTestCase(tb testing.TB, data []byte) *privatev1.InspectTestCase {
 
 	tc := &privatev1.InspectTestCase{}
 	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	if tc.PoliciesExpectation == nil {
+		tc.PoliciesExpectation = &privatev1.InspectTestCase_PoliciesExpectation{}
+	}
+
+	if tc.PolicySetsExpectation == nil {
+		tc.PolicySetsExpectation = &privatev1.InspectTestCase_PolicySetsExpectation{}
+	}
 
 	return tc
 }

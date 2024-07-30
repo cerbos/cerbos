@@ -176,7 +176,7 @@ inputs:
             - approved_user_2
           effect: EFFECT_ALLOW
 
-expected:
+policiesExpectation:
   policies:
     derived_roles.common_roles_1:
       policyId: c.yaml
@@ -344,6 +344,7 @@ expected:
           used: true
           value: "\"dude\""
 
+policySetsExpectation:
   policySets:
     principal.john_1.vdefault:
       policyId: principal.john_1.vdefault

@@ -22,16 +22,27 @@ import "google/protobuf/wrappers.proto";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1";
 
 message InspectTestCase {
-  message Expected {
+  message PoliciesExpectation {
     map<string, cerbos.response.v1.InspectPoliciesResponse.Result> policies = 1;
-    map<string, cerbos.response.v1.InspectPoliciesResponse.Result> policy_sets = 2;
-    repeated string missing_policies = 3;
+    repeated string missing_policies = 2;
   }
 
-  repeated cerbos.policy.v1.Policy inputs = 1;
-  Expected expected = 2;
-  bool skip_policies = 3;
-  bool skip_policy_sets = 4;
+  message PolicySetsExpectation {
+    message CompileErrors {
+      repeated cerbos.runtime.v1.CompileErrors.Err compile_errors = 1;
+    }
+
+    map<string, cerbos.response.v1.InspectPoliciesResponse.Result> policy_sets = 1;
+    oneof errors {
+      CompileErrors compile_errors = 2;
+      cerbos.runtime.v1.IndexBuildErrors index_build_errors = 3;
+    }
+  }
+
+  string description = 1;
+  repeated cerbos.policy.v1.Policy inputs = 2;
+  PoliciesExpectation policies_expectation = 3;
+  PolicySetsExpectation policy_sets_expectation = 4;
 }
 
 message EngineTestCase {

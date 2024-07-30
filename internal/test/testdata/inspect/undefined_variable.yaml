@@ -26,9 +26,7 @@ inputs:
       definitions:
         commonMarkedResource: R.attr.markedResource
 
-skipPolicySets: true
-
-expected:
+policiesExpectation:
   policies:
     export_variables.common_variables:
       policyId: b.yaml
@@ -58,3 +56,14 @@ expected:
           value: "null"
           used: true
           kind: KIND_UNDEFINED
+
+policySetsExpectation:
+  compileErrors:
+    compileErrors:
+      - description: Undefined variable 'missingVar'
+        error: undefined variable
+        file: resource.leave_request.vdefault.yaml
+        position:
+          column: 9
+          line: 11
+          path: $.resourcePolicy.rules[0].condition.match.expr

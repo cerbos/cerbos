@@ -94,7 +94,7 @@ inputs:
                       - expr: V.var
 
 
-expected:
+policiesExpectation:
   policies:
     export_variables.common_variables:
       policyId: a.yaml
@@ -153,6 +153,8 @@ expected:
           source: resource.leave_request.vdefault
           used: true
           value: request.resource.attr.var
+
+policySetsExpectation:
   policySets:
     principal.john.vdefault:
       policyId: principal.john.vdefault

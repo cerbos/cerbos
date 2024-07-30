@@ -15,9 +15,7 @@ inputs:
               expr: variables.missingVar
           effect: EFFECT_ALLOW
 
-skipPolicySets: true
-
-expected:
+policiesExpectation:
   policies:
     resource.leave_request.vdefault:
       actions:
@@ -28,3 +26,14 @@ expected:
           value: "null"
           kind: KIND_UNDEFINED
           used: true
+
+policySetsExpectation:
+  compileErrors:
+    compileErrors:
+      - description: Undefined variable 'missingVar'
+        error: undefined variable
+        file: resource.leave_request.vdefault.yaml
+        position:
+          column: 9
+          line: 11
+          path: $.resourcePolicy.rules[0].condition.match.expr
