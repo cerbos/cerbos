@@ -11,6 +11,7 @@ import (
 	"time"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
+	bpb "github.com/dgraph-io/badger/v4/pb"
 	"github.com/dgraph-io/ristretto/z"
 	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/zap"
@@ -252,29 +253,41 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 
 	stream.Send = func(buf *z.Buffer) error {
 		logger.Log(zapcore.Level(-3), "Converting buffer to key-values")
-		kvList, err := badgerv4.BufferToKVList(buf)
-		if err != nil {
-			return fmt.Errorf("failed to convert buffer to key-values: %w", err)
-		}
 
-		keys := make([][]byte, len(kvList.Kv))
-		for i, kv := range kvList.Kv {
-			keys[i] = kv.Key
-		}
-
-		for i := 0; i < len(keys); i += l.maxBatchSize {
-			end := i + l.maxBatchSize
-			if end > len(keys) {
-				end = len(keys)
-			}
-
+		syncKeys := func(keys [][]byte) error {
 			logger.Log(zapcore.Level(-3), "Syncing and deleting batch")
-			if err := l.syncThenDelete(ctx, kind, keys[i:end]); err != nil {
+			if err := l.syncThenDelete(ctx, kind, keys); err != nil {
 				return fmt.Errorf("failed to sync and delete logs: %w", err)
 			}
+
+			return nil
 		}
 
-		return nil
+		var i int
+		keys := make([][]byte, l.maxBatchSize)
+		if err := buf.SliceIterate(func(s []byte) error {
+			kv := new(bpb.KV)
+			if err := kv.Unmarshal(s); err != nil {
+				return err
+			}
+
+			keys[i] = kv.Key
+
+			i++
+			if i == l.maxBatchSize {
+				if err := syncKeys(keys); err != nil {
+					return err
+				}
+
+				i = 0
+			}
+
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return syncKeys(keys[:i])
 	}
 
 	logger.Log(zapcore.Level(-3), "Orchestrating stream")
