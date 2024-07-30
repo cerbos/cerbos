@@ -287,8 +287,12 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 				return err
 			}
 
-			clear(keys[i])
-			keys[i] = kv.Key
+			if keys[i] == nil {
+				keys[i] = make([]byte, len(kv.Key))
+			} else {
+				clear(keys[i])
+			}
+			copy(keys[i], kv.Key)
 
 			i++
 			if i == l.maxBatchSize {
