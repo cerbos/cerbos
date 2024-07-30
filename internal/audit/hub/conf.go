@@ -19,7 +19,7 @@ const (
 	defaultMaxBatchSize     = 16
 	defaultMinFlushInterval = 5 * time.Second
 	defaultFlushTimeout     = 5 * time.Second
-	defaultNumGoRoutines    = 8
+	defaultNumGoRoutines    = 4
 
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second

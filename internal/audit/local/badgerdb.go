@@ -66,6 +66,8 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	opts = opts.WithCompactL0OnClose(true)
 	opts = opts.WithMetricsEnabled(false)
 	opts = opts.WithLogger(newDBLogger(logger))
+	opts = opts.WithMemTableSize(32 << 20)      //nolint:mnd
+	opts = opts.WithValueLogFileSize(512 << 20) //nolint:mnd
 
 	logger.Info("Initializing audit log", zap.String("path", conf.StoragePath))
 	db, err := badgerv4.Open(opts)
