@@ -271,7 +271,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		defer keysPool.Put(&keys)
 
 		var i int
-		for it.Rewind(); it.Valid(); it.Next() {
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 
 			if keys[i] == nil {
