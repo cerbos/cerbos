@@ -11,8 +11,6 @@ import (
 	"time"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
-	bpb "github.com/dgraph-io/badger/v4/pb"
-	"github.com/dgraph-io/ristretto/z"
 	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -243,33 +241,26 @@ func (l *Log) streamLogs() error {
 	return nil
 }
 
-var (
-	kvPool   = &sync.Pool{New: func() any { return new(bpb.KV) }}
-	keysPool = &sync.Pool{}
-)
+var keysPool = &sync.Pool{}
 
 func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
-	// BadgerDB transactions work with snapshot isolation so we only take a view of the DB.
-	// Subsequent writes aren't blocked.
-	stream := l.Db.NewStream()
-	stream.NumGo = l.numGo
-	stream.Prefix = prefix
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
-	stream.Send = func(buf *z.Buffer) error {
-		logger.Log(zapcore.Level(-3), "Converting buffer to key-values")
-
-		syncKeys := func(keys [][]byte) error {
-			logger.Log(zapcore.Level(-3), "Syncing and deleting batch")
-			if err := l.syncThenDelete(ctx, kind, keys); err != nil {
-				return fmt.Errorf("failed to sync and delete logs: %w", err)
-			}
-
-			return nil
+	syncKeys := func(keys [][]byte) error {
+		logger.Log(zapcore.Level(-3), "Syncing and deleting batch")
+		if err := l.syncThenDelete(ctx, kind, keys); err != nil {
+			return fmt.Errorf("failed to sync and delete logs: %w", err)
 		}
 
-		kv := kvPool.Get().(*bpb.KV) //nolint:forcetypeassert
-		defer kvPool.Put(kv)
+		return nil
+	}
+
+	opts := badgerv4.DefaultIteratorOptions
+	opts.Prefix = prefix
+	opts.PrefetchValues = false
+	return l.Db.View(func(txn *badgerv4.Txn) error {
+		it := txn.NewIterator(opts)
+		defer it.Close()
 
 		var keys [][]byte
 		if keysIface := keysPool.Get(); keysIface == nil {
@@ -280,19 +271,15 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		defer keysPool.Put(&keys)
 
 		var i int
-		if err := buf.SliceIterate(func(s []byte) error {
-			kv.Reset()
-
-			if err := kv.Unmarshal(s); err != nil {
-				return err
-			}
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
 
 			if keys[i] == nil {
-				keys[i] = make([]byte, len(kv.Key))
+				keys[i] = make([]byte, len(item.Key()))
 			} else {
 				clear(keys[i])
 			}
-			copy(keys[i], kv.Key)
+			copy(keys[i], item.Key())
 
 			i++
 			if i == l.maxBatchSize {
@@ -302,21 +289,10 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 
 				i = 0
 			}
-
-			return nil
-		}); err != nil {
-			return err
 		}
 
 		return syncKeys(keys[:i])
-	}
-
-	logger.Log(zapcore.Level(-3), "Orchestrating stream")
-	if err := stream.Orchestrate(ctx); err != nil {
-		logger.Log(zapcore.Level(-3), "Failed to orchestrate stream", zap.Error(err))
-		return fmt.Errorf("failed to orchestrate stream: %w", err)
-	}
-	return nil
+	})
 }
 
 func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte) error {
