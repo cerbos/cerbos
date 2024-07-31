@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -29,13 +30,17 @@ import (
 	"github.com/cerbos/cerbos/internal/audit/hub"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
+
+	// Allows to set CERBOS_TEST_LOG_LEVEL environment variable.
+	_ "github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/test/mocks"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
 const (
-	numRecords = 2000
-	batchSize  = uint(32)
+	numRecords    = 2000
+	batchSize     = uint(32)
+	flushInterval = 5 * time.Millisecond
 )
 
 type mockSyncer struct {
@@ -99,6 +104,7 @@ func (m *mockSyncer) hasKeys(keys [][]byte) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	require.Len(m.t, m.synced, len(keys))
 	for _, k := range keys {
 		if _, ok := m.synced[string(k)]; !ok {
 			return false
@@ -113,64 +119,24 @@ func TestHubLog(t *testing.T) {
 		t.SkipNow()
 	}
 
-	conf := &hub.Conf{
-		Ingest: hub.IngestConf{
-			MaxBatchSize:     batchSize,
-			MinFlushInterval: 2 * time.Second,
-			FlushTimeout:     1 * time.Second,
-			NumGoRoutines:    8,
-		},
-		Mask: hub.MaskConf{
-			Peer: []string{"address"},
-		},
-		Conf: local.Conf{
-			StoragePath:     t.TempDir(),
-			RetentionPeriod: 24 * time.Hour,
-			Advanced: local.AdvancedConf{
-				BufferSize:    1,
-				MaxBatchSize:  32,
-				FlushInterval: 10 * time.Second,
-			},
-		},
-	}
-
-	require.NoError(t, conf.Validate())
-
 	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
 	require.NoError(t, err)
-
-	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
-	syncer := newMockSyncer(t)
-	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"))
-	require.NoError(t, err)
-	defer db.Close()
-
-	require.Equal(t, hub.Backend, db.Backend())
-	require.True(t, db.Enabled())
-
-	purgeKeys := func() {
-		err := db.Db.DropAll()
-		require.NoError(t, err, "failed to purge keys")
-
-		syncer.entries = []*logsv1.IngestBatch_Entry{}
-		syncer.synced = make(map[string]struct{})
-	}
 
 	// We use two streams (access + decision log scans). Each independent stream ends up with a partial page, therefore
 	// we treat each batch separately (hence the /2 -> *2 below).
 	wantNumBatches := int(math.Ceil((numRecords/2)/float64(batchSize))) * 2
 
 	t.Run("insertsDeletesKeys", func(t *testing.T) {
-		t.Cleanup(purgeKeys)
+		db, syncer := initDB(t)
+		t.Cleanup(func() { _ = db.Close() })
 
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil)
 		loadedKeys := loadData(t, db, startDate)
 
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches)
-
-		db.ForceWrite()
-
-		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
-		require.Empty(t, getLocalKeys(t, db), "keys should have been deleted")
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.True(c, syncer.hasKeys(loadedKeys), "keys should have been synced")
+			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
+		}, 1*time.Second, 50*time.Millisecond)
 
 		t.Run("filter", func(t *testing.T) {
 			for _, e := range syncer.entries {
@@ -185,28 +151,37 @@ func TestHubLog(t *testing.T) {
 	})
 
 	t.Run("partiallyDeletesBeforeError", func(t *testing.T) {
-		t.Cleanup(purgeKeys)
-
-		loadData(t, db, startDate)
-
+		db, syncer := initDB(t)
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with unrecoverable error after first N pages
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(errors.New("some error")).Once()
-		// the other concurrent stream exits with context cancellation
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(context.Canceled).Once()
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(errors.New("some error"))
 
-		db.ForceWrite()
+		loadData(t, db, startDate)
 
-		require.Len(t, getLocalKeys(t, db), (numRecords)-(initialNBatches*int(batchSize)), "some keys should have been deleted")
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			haveLocalKeys := getLocalKeys(t, db)
+			assert.Less(c, len(haveLocalKeys), numRecords)
+		}, 1*time.Second, 50*time.Millisecond)
+	})
+
+	t.Run("nonDeletedOnError", func(t *testing.T) {
+		db, syncer := initDB(t)
+
+		// Server is down
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(errors.New("some error"))
+
+		loadData(t, db, startDate)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			haveLocalKeys := getLocalKeys(t, db)
+			assert.Equal(c, len(haveLocalKeys), numRecords)
+		}, 1*time.Second, 50*time.Millisecond)
 	})
 
 	t.Run("deletesSyncKeysAfterBackoff", func(t *testing.T) {
-		t.Cleanup(purgeKeys)
-
-		loadedKeys := loadData(t, db, startDate)
-
+		db, syncer := initDB(t)
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with backoff after first N pages
@@ -214,13 +189,49 @@ func TestHubLog(t *testing.T) {
 		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(hub.ErrIngestBackoff{
 			Backoff: 0,
 		}).Twice() // two concurrent streams receive the same backoff response
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches - initialNBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil)
 
-		db.ForceWrite()
+		loadedKeys := loadData(t, db, startDate)
 
-		require.True(t, syncer.hasKeys(loadedKeys), "keys should have been synced")
-		require.Empty(t, getLocalKeys(t, db), "keys should have been deleted")
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.True(c, syncer.hasKeys(loadedKeys), "keys should have been synced")
+			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
+		}, 1*time.Second, 50*time.Millisecond)
 	})
+}
+
+func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
+	t.Helper()
+
+	conf := &hub.Conf{
+		Ingest: hub.IngestConf{
+			MaxBatchSize:     batchSize,
+			MinFlushInterval: flushInterval,
+			FlushTimeout:     1 * time.Second,
+			NumGoRoutines:    8,
+		},
+		Mask: hub.MaskConf{
+			Peer: []string{"address"},
+		},
+		Conf: local.Conf{
+			StoragePath:     t.TempDir(),
+			RetentionPeriod: 24 * time.Hour,
+			Advanced: local.AdvancedConf{
+				BufferSize:    1,
+				MaxBatchSize:  32,
+				FlushInterval: flushInterval,
+			},
+		},
+	}
+
+	syncer := newMockSyncer(t)
+	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
+	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"))
+	require.NoError(t, err)
+
+	require.Equal(t, hub.Backend, db.Backend())
+	require.True(t, db.Enabled())
+	return db, syncer
 }
 
 func TestHubLogWithDecisionLogFilter(t *testing.T) {
@@ -258,6 +269,8 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 
 	var hubConf hub.Conf
 	require.NoError(t, confWrapper.GetSection(&hubConf))
+	hubConf.Ingest.MinFlushInterval = flushInterval
+	hubConf.Advanced.FlushInterval = flushInterval
 
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&auditConf)
 	syncer := newMockSyncer(t)
@@ -271,16 +284,14 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
 	require.NoError(t, err)
 
+	syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil)
 	loadedKeys := loadData(t, db, startDate)
-
 	// There should be no decision logs to sync. Only the access logs are synced.
 	wantNumRecords := numRecords / 2
-	wantNumBatches := int(math.Ceil((numRecords / 2) / float64(batchSize)))
 
-	syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(wantNumBatches)
-	db.ForceWrite()
-
-	require.True(t, syncer.hasKeys(loadedKeys[:wantNumRecords]), "keys should have been synced")
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		assert.True(c, syncer.hasKeys(loadedKeys[:wantNumRecords]), "keys should have been synced")
+	}, 1*time.Second, 50*time.Millisecond)
 }
 
 func getLocalKeys(t *testing.T, db *hub.Log) [][]byte {
@@ -329,6 +340,7 @@ func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 		require.NoError(t, err)
 	}
 
+	time.Sleep(flushInterval * 20)
 	return syncKeys
 }
 
