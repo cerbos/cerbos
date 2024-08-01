@@ -51,9 +51,11 @@ func NewIngestSyncer(logger *zap.Logger) (*Impl, error) {
 }
 
 func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
-	if err := i.client.Ingest(ctx, batch); err != nil {
-		i.log.Error("Failed to sync batch", zap.Error(err))
-		return err
+	if len(batch.GetEntries()) > 0 {
+		if err := i.client.Ingest(ctx, batch); err != nil {
+			i.log.Error("Failed to sync batch", zap.Error(err))
+			return err
+		}
 	}
 
 	return nil

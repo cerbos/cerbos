@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -53,11 +54,14 @@ func init() {
 type Log struct {
 	syncer IngestSyncer
 	*local.Log
-	logger                         *zap.Logger
-	filter                         *AuditLogFilter
-	muTimer                        *mutexTimer
-	minFlushInterval, flushTimeout time.Duration
-	maxBatchSize, numGo            int
+	logger           *zap.Logger
+	filter           *AuditLogFilter
+	pool             *pool.ContextPool
+	cancel           context.CancelFunc
+	minFlushInterval time.Duration
+	flushTimeout     time.Duration
+	maxBatchSize     int
+	numGo            int
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
@@ -78,6 +82,8 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		return nil, err
 	}
 
+	ctx, cancelFn := context.WithCancel(context.Background())
+
 	log := &Log{
 		Log:              localLog,
 		syncer:           syncer,
@@ -87,13 +93,11 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		flushTimeout:     flushTimeout,
 		maxBatchSize:     maxBatchSize,
 		numGo:            numGo,
-		muTimer:          newMutexTimer(),
+		cancel:           cancelFn,
+		pool:             pool.New().WithContext(ctx),
 	}
 
-	localLog.RegisterCallback(func(waitCh chan<- struct{}) {
-		log.schedule(waitCh)
-	})
-
+	log.pool.Go(log.syncLoop)
 	return log, nil
 }
 
@@ -145,67 +149,35 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	return l.Write(ctx, key, value)
 }
 
-type mutexTimer struct {
-	expireCh chan struct{}
-	t        *time.Timer
-	mu       sync.RWMutex
-}
-
-func newMutexTimer() *mutexTimer {
-	return &mutexTimer{
-		expireCh: make(chan struct{}, 1),
-	}
-}
-
-func (mt *mutexTimer) set(waitDuration time.Duration) {
-	mt.mu.Lock()
-	defer mt.mu.Unlock()
-
-	if mt.t == nil {
-		mt.t = time.AfterFunc(waitDuration, func() {
-			mt.expireCh <- struct{}{}
-
-			mt.mu.Lock()
-			mt.t = nil
-			mt.mu.Unlock()
-		})
-	}
-}
-
-func (mt *mutexTimer) wait() {
-	{
-		mt.mu.RLock()
-		defer mt.mu.RUnlock()
-		if mt.t == nil {
-			return
+func (l *Log) syncLoop(ctx context.Context) error {
+	ticker := time.NewTicker(l.minFlushInterval)
+	for {
+		select {
+		case <-ticker.C:
+			ticker.Stop()
+			delay := l.schedule()
+			ticker.Reset(delay)
+		case <-ctx.Done():
+			return nil
 		}
 	}
-
-	<-mt.expireCh
 }
 
-func (l *Log) schedule(waitCh chan<- struct{}) {
-	l.logger.Log(zapcore.Level(-3), "Waiting to schedule")
-	l.muTimer.wait()
-
+func (l *Log) schedule() time.Duration {
 	l.logger.Log(zapcore.Level(-3), "Scheduling stream")
 	if err := l.streamLogs(); err != nil {
 		var ingestErr ErrIngestBackoff
 		if errors.As(err, &ingestErr) {
 			l.logger.Warn("svc-ingest issued backoff", zap.Error(err))
-			l.muTimer.set(ingestErr.Backoff)
-			go l.schedule(waitCh)
-			return
+			if ingestErr.Backoff < l.minFlushInterval {
+				return l.minFlushInterval
+			}
+			return ingestErr.Backoff
 		}
 		l.logger.Error("Audit log sync failed", zap.Error(err))
 	}
 
-	// Set a min wait duration regardless of if events are pending.
-	// This prevents a retry completion occurring immediately before the next sync
-	// (and therefore burdening the backend).
-	l.muTimer.set(l.minFlushInterval)
-
-	waitCh <- struct{}{}
+	return l.minFlushInterval
 }
 
 func (l *Log) streamLogs() error {
@@ -324,15 +296,12 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 			Entries: entries,
 		}
 
-		logger.Log(zapcore.Level(-3), "Filtering batch")
-		if err := l.filter.Filter(&logsv1.IngestBatch{
-			Id:      string(batchID),
-			Entries: entries,
-		}); err != nil {
+		logger.Log(zapcore.Level(-3), "Filtering batch of "+strconv.Itoa(len(ingestBatch.Entries)))
+		if err := l.filter.Filter(ingestBatch); err != nil {
 			return fmt.Errorf("failed to filter batch: %w", err)
 		}
 
-		logger.Log(zapcore.Level(-3), "Syncing batch")
+		logger.Log(zapcore.Level(-3), "Syncing batch of "+strconv.Itoa(len(ingestBatch.Entries)))
 		if err := l.syncer.Sync(ctx, ingestBatch); err != nil {
 			return fmt.Errorf("failed to sync batch: %w", err)
 		}
@@ -345,6 +314,7 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 	for _, k := range syncKeys {
 		if err := wb.Delete(k); err != nil {
 			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
+				wb.Cancel()
 				wb = l.Db.NewWriteBatch()
 				_ = wb.Delete(k)
 			} else {
@@ -436,4 +406,12 @@ func (l *Log) getIngestBatchEntries(syncKeys [][]byte, kind logsv1.IngestBatch_E
 
 func (l *Log) Backend() string {
 	return Backend
+}
+
+func (l *Log) Close() (outErr error) {
+	l.cancel()
+	outErr = errors.Join(outErr, l.pool.Wait())
+	outErr = errors.Join(outErr, l.Db.Sync())
+	outErr = errors.Join(outErr, l.Log.Close())
+	return outErr
 }
