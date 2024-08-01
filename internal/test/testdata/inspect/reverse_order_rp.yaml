@@ -1,0 +1,172 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      importDerivedRoles:
+        - common_roles
+      variables:
+        import:
+          - common_variables
+        local:
+          markedResource: R.attr.markedResource
+          label: '"dude"'
+          teams: '["red", "blue"]'
+      rules:
+        - actions: [ "*" ]
+          effect: EFFECT_ALLOW
+          roles:
+            - admin
+        - actions: [ "create" ]
+          roles:
+            - user
+          condition:
+            match:
+              expr: "R.attr.approvedUser && (variables.commonMarkedResource || variables.markedResource) && P.attr.someAttr"
+          effect: EFFECT_ALLOW
+        - actions: [ "view" ]
+          roles:
+            - user
+          effect: EFFECT_ALLOW
+        - actions: [ "duplicate" ]
+          derivedRoles:
+            - approved_user
+          effect: EFFECT_ALLOW
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    exportVariables:
+      name: common_variables
+      definitions:
+        commonMarkedResource: R.attr.commonMarkedResource
+        commonLabel: '"dude"'
+        commonTeams: '["red", "blue"]'
+
+  - apiVersion: "api.cerbos.dev/v1"
+    metadata:
+      storeIdentifier: c.yaml
+    derivedRoles:
+      name: common_roles
+      variables:
+        import:
+          - common_variables
+        local:
+          derivedRoleVariable: R.attr.isDerivedRoleVar
+      definitions:
+        - name: approved_user
+          parentRoles: [ "user" ]
+          condition:
+            match:
+              expr: "variables.derivedRoleVariable"
+
+policiesExpectation:
+  policies:
+    derived_roles.common_roles:
+      policyId: c.yaml
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
+      derivedRoles:
+        - kind: KIND_EXPORTED
+          name: approved_user
+          source: derived_roles.common_roles
+      variables:
+        - kind: KIND_LOCAL
+          name: derivedRoleVariable
+          source: derived_roles.common_roles
+          used: true
+          value: R.attr.isDerivedRoleVar
+
+    export_variables.common_variables:
+      policyId: b.yaml
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonMarkedResource
+      variables:
+        - kind: KIND_EXPORTED
+          name: commonLabel
+          source: export_variables.common_variables
+          value: "\"dude\""
+        - kind: KIND_EXPORTED
+          name: commonMarkedResource
+          source: export_variables.common_variables
+          value: R.attr.commonMarkedResource
+        - kind: KIND_EXPORTED
+          name: commonTeams
+          source: export_variables.common_variables
+          value: "[\"red\", \"blue\"]"
+
+    resource.leave_request.vdefault:
+      policyId: a.yaml
+      actions:
+        - "*"
+        - create
+        - duplicate
+        - view
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: approvedUser
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonMarkedResource
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+        - kind: KIND_PRINCIPAL_ATTRIBUTE
+          name: someAttr
+      derivedRoles:
+        - kind: KIND_IMPORTED
+          name: approved_user
+          source: derived_roles.common_roles
+      variables:
+        - kind: KIND_IMPORTED
+          name: commonMarkedResource
+          source: export_variables.common_variables
+          used: true
+          value: R.attr.commonMarkedResource
+        - kind: KIND_LOCAL
+          name: label
+          source: resource.leave_request.vdefault
+          value: "\"dude\""
+        - kind: KIND_LOCAL
+          name: markedResource
+          source: resource.leave_request.vdefault
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_LOCAL
+          name: teams
+          source: resource.leave_request.vdefault
+          value: "[\"red\", \"blue\"]"
+
+policySetsExpectation:
+  policySets:
+    resource.leave_request.vdefault:
+      policyId: resource.leave_request.vdefault
+      actions:
+        - "*"
+        - create
+        - duplicate
+        - view
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: approvedUser
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonMarkedResource
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+        - kind: KIND_PRINCIPAL_ATTRIBUTE
+          name: someAttr
+      derivedRoles:
+        - kind: KIND_IMPORTED
+          name: approved_user
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          used: true
+          value: R.attr.commonMarkedResource
+        - kind: KIND_UNKNOWN
+          name: markedResource
+          used: true
+          value: R.attr.markedResource

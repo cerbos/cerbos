@@ -2,6 +2,26 @@
   "$id": "https://api.cerbos.dev/cerbos/response/v1/InspectPoliciesResponse.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.response.v1.InspectPoliciesResponse.Attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Attribute.Kind"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.response.v1.InspectPoliciesResponse.Attribute.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_PRINCIPAL_ATTRIBUTE",
+        "KIND_RESOURCE_ATTRIBUTE"
+      ]
+    },
     "cerbos.response.v1.InspectPoliciesResponse.DerivedRole": {
       "type": "object",
       "additionalProperties": false,
@@ -34,6 +54,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Attribute"
           }
         },
         "derivedRoles": {

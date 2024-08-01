@@ -1,0 +1,446 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    exportVariables:
+      name: common_variables_1
+      definitions:
+        commonMarkedResource: R.attr.markedResource
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    exportVariables:
+      name: common_variables_2
+      definitions:
+        commonLabel: '"dude"'
+
+  - apiVersion: "api.cerbos.dev/v1"
+    metadata:
+      storeIdentifier: c.yaml
+    derivedRoles:
+      name: common_roles_1
+      variables:
+        import:
+          - common_variables_1
+          - common_variables_2
+        local:
+          derivedRoleVariable1: R.attr.isDerivedRoleVar
+      definitions:
+        - name: approved_user_1
+          parentRoles: [ "user" ]
+          condition:
+            match:
+              expr: "variables.derivedRoleVariable1"
+
+  - apiVersion: "api.cerbos.dev/v1"
+    metadata:
+      storeIdentifier: d.yaml
+    derivedRoles:
+      name: common_roles_2
+      variables:
+        import:
+          - common_variables_1
+          - common_variables_2
+        local:
+          derivedRoleVariable2: R.attr.isDerivedRoleVar
+      definitions:
+        - name: approved_user_2
+          parentRoles: [ "user" ]
+          condition:
+            match:
+              expr: "variables.derivedRoleVariable2"
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: e.yaml
+    principalPolicy:
+      version: default
+      principal: john_1
+      variables:
+        import:
+          - common_variables_1
+          - common_variables_2
+        local:
+          markedResource: R.attr.markedResource
+      rules:
+        - resource: leave_request
+          actions:
+            - name: leave_request_action_1
+              action: "*"
+              condition:
+                match:
+                  expr: "variables.commonLabel || variables.commonMarkedResource || variables.markedResource"
+              effect: EFFECT_ALLOW
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: f.yaml
+    principalPolicy:
+      version: default
+      principal: john_2
+      variables:
+        import:
+          - common_variables_1
+          - common_variables_2
+        local:
+          label: '"dude"'
+      rules:
+        - resource: leave_request
+          actions:
+            - name: leave_request_action_2
+              action: "*"
+              condition:
+                match:
+                  expr: "variables.commonLabel || variables.commonMarkedResource || variables.label"
+              effect: EFFECT_ALLOW
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: g.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request_1
+      importDerivedRoles:
+        - common_roles_1
+        - common_roles_2
+      variables:
+        import:
+          - common_variables_1
+          - common_variables_2
+        local:
+          markedResource: R.attr.markedResource
+      rules:
+        - actions: [ "*" ]
+          effect: EFFECT_ALLOW
+          roles:
+            - admin
+        - actions: [ "create" ]
+          derivedRoles:
+            - approved_user_1
+            - approved_user_2
+          condition:
+            match:
+              all:
+                of:
+                  - expr: V.commonMarkedResource
+                  - expr: V.commonLabel
+                  - expr: V.markedResource
+          effect: EFFECT_ALLOW
+        - actions: [ "view" ]
+          roles:
+            - user
+          effect: EFFECT_ALLOW
+        - actions: [ "duplicate" ]
+          derivedRoles:
+            - approved_user_1
+            - approved_user_2
+          effect: EFFECT_ALLOW
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: h.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request_2
+      importDerivedRoles:
+        - common_roles_1
+        - common_roles_2
+      variables:
+        import:
+          - common_variables_1
+          - common_variables_2
+        local:
+          label: '"dude"'
+      rules:
+        - actions: [ "*" ]
+          effect: EFFECT_ALLOW
+          roles:
+            - admin
+        - actions: [ "create" ]
+          derivedRoles:
+            - approved_user_1
+            - approved_user_2
+          condition:
+            match:
+              any:
+                of:
+                  - expr: V.commonMarkedResource
+                  - expr: V.commonLabel
+                  - expr: V.label
+          effect: EFFECT_ALLOW
+        - actions: [ "duplicate" ]
+          derivedRoles:
+            - approved_user_1
+            - approved_user_2
+          effect: EFFECT_ALLOW
+
+policiesExpectation:
+  policies:
+    derived_roles.common_roles_1:
+      policyId: c.yaml
+      attributes:
+        - name: isDerivedRoleVar
+          kind: KIND_RESOURCE_ATTRIBUTE
+      derivedRoles:
+        - name: approved_user_1
+          kind: KIND_EXPORTED
+          source: derived_roles.common_roles_1
+      variables:
+        - name: derivedRoleVariable1
+          value: R.attr.isDerivedRoleVar
+          kind: KIND_LOCAL
+          source: derived_roles.common_roles_1
+          used: true
+
+    derived_roles.common_roles_2:
+      policyId: d.yaml
+      attributes:
+        - name: isDerivedRoleVar
+          kind: KIND_RESOURCE_ATTRIBUTE
+      derivedRoles:
+        - name: approved_user_2
+          kind: KIND_EXPORTED
+          source: derived_roles.common_roles_2
+      variables:
+        - name: derivedRoleVariable2
+          value: R.attr.isDerivedRoleVar
+          kind: KIND_LOCAL
+          source: derived_roles.common_roles_2
+          used: true
+
+    export_variables.common_variables_1:
+      policyId: a.yaml
+      attributes:
+        - name: markedResource
+          kind: KIND_RESOURCE_ATTRIBUTE
+      variables:
+        - name: commonMarkedResource
+          value: R.attr.markedResource
+          kind: KIND_EXPORTED
+          source: export_variables.common_variables_1
+
+    export_variables.common_variables_2:
+      policyId: b.yaml
+      variables:
+        - name: commonLabel
+          value: "\"dude\""
+          kind: KIND_EXPORTED
+          source: export_variables.common_variables_2
+
+    principal.john_1.vdefault:
+      policyId: e.yaml
+      actions:
+        - "*"
+      attributes:
+        - name: markedResource
+          kind: KIND_RESOURCE_ATTRIBUTE
+      variables:
+        - name: commonLabel
+          value: "\"dude\""
+          kind: KIND_IMPORTED
+          used: true
+          source: export_variables.common_variables_2
+        - name: commonMarkedResource
+          value: R.attr.markedResource
+          kind: KIND_IMPORTED
+          used: true
+          source: export_variables.common_variables_1
+        - name: markedResource
+          value: R.attr.markedResource
+          kind: KIND_LOCAL
+          used: true
+          source: principal.john_1.vdefault
+
+    principal.john_2.vdefault:
+      policyId: f.yaml
+      actions:
+        - "*"
+      attributes:
+        - name: markedResource
+          kind: KIND_RESOURCE_ATTRIBUTE
+      variables:
+        - kind: KIND_IMPORTED
+          name: commonLabel
+          source: export_variables.common_variables_2
+          used: true
+          value: "\"dude\""
+        - kind: KIND_IMPORTED
+          name: commonMarkedResource
+          source: export_variables.common_variables_1
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_LOCAL
+          name: label
+          source: principal.john_2.vdefault
+          used: true
+          value: "\"dude\""
+
+    resource.leave_request_1.vdefault:
+      policyId: g.yaml
+      actions:
+        - "*"
+        - create
+        - duplicate
+        - view
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      derivedRoles:
+        - name: approved_user_1
+          kind: KIND_IMPORTED
+          source: derived_roles.common_roles_1
+        - name: approved_user_2
+          kind: KIND_IMPORTED
+          source: derived_roles.common_roles_2
+      variables:
+        - kind: KIND_IMPORTED
+          name: commonLabel
+          source: export_variables.common_variables_2
+          used: true
+          value: "\"dude\""
+        - kind: KIND_IMPORTED
+          name: commonMarkedResource
+          source: export_variables.common_variables_1
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_LOCAL
+          name: markedResource
+          source: resource.leave_request_1.vdefault
+          used: true
+          value: R.attr.markedResource
+
+    resource.leave_request_2.vdefault:
+      policyId: h.yaml
+      actions:
+        - "*"
+        - create
+        - duplicate
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      derivedRoles:
+        - name: approved_user_1
+          kind: KIND_IMPORTED
+          source: derived_roles.common_roles_1
+        - name: approved_user_2
+          kind: KIND_IMPORTED
+          source: derived_roles.common_roles_2
+      variables:
+        - kind: KIND_IMPORTED
+          name: commonLabel
+          source: export_variables.common_variables_2
+          used: true
+          value: "\"dude\""
+        - kind: KIND_IMPORTED
+          name: commonMarkedResource
+          source: export_variables.common_variables_1
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_LOCAL
+          name: label
+          source: resource.leave_request_2.vdefault
+          used: true
+          value: "\"dude\""
+
+policySetsExpectation:
+  policySets:
+    principal.john_1.vdefault:
+      policyId: principal.john_1.vdefault
+      actions:
+        - "*"
+      attributes:
+        - name: markedResource
+          kind: KIND_RESOURCE_ATTRIBUTE
+      variables:
+        - name: commonLabel
+          value: "\"dude\""
+          kind: KIND_UNKNOWN
+          used: true
+        - name: commonMarkedResource
+          value: R.attr.markedResource
+          kind: KIND_UNKNOWN
+          used: true
+        - name: markedResource
+          value: R.attr.markedResource
+          kind: KIND_UNKNOWN
+          used: true
+
+    principal.john_2.vdefault:
+      policyId: principal.john_2.vdefault
+      actions:
+        - "*"
+      attributes:
+        - name: markedResource
+          kind: KIND_RESOURCE_ATTRIBUTE
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonLabel
+          used: true
+          value: "\"dude\""
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: label
+          used: true
+          value: "\"dude\""
+
+    resource.leave_request_1.vdefault:
+      policyId: resource.leave_request_1.vdefault
+      actions:
+        - "*"
+        - create
+        - duplicate
+        - view
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      derivedRoles:
+        - name: approved_user_1
+          kind: KIND_IMPORTED
+        - name: approved_user_2
+          kind: KIND_IMPORTED
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonLabel
+          used: true
+          value: "\"dude\""
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: markedResource
+          used: true
+          value: R.attr.markedResource
+
+    resource.leave_request_2.vdefault:
+      policyId: resource.leave_request_2.vdefault
+      actions:
+        - "*"
+        - create
+        - duplicate
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      derivedRoles:
+        - name: approved_user_1
+          kind: KIND_IMPORTED
+        - name: approved_user_2
+          kind: KIND_IMPORTED
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonLabel
+          used: true
+          value: "\"dude\""
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          used: true
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: label
+          used: true
+          value: "\"dude\""
