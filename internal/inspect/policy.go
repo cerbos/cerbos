@@ -226,6 +226,7 @@ func (pol *Policy) resolveVariables(ctx context.Context, loadPolicy loadPolicyFn
 								for _, attr := range referencedAttributes {
 									if !attrs.Contains(attr.Name) {
 										pol.results[policyID].Attributes = append(pol.results[policyID].Attributes, attr)
+										attrs[attr.Name] = struct{}{}
 									}
 								}
 							}
@@ -260,6 +261,7 @@ func (pol *Policy) resolveVariables(ctx context.Context, loadPolicy loadPolicyFn
 							for _, attr := range referencedAttributes {
 								if !attrs.Contains(attr.Name) {
 									pol.results[policyID].Attributes = append(pol.results[policyID].Attributes, attr)
+									attrs[attr.Name] = struct{}{}
 								}
 							}
 						}
