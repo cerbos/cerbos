@@ -71,6 +71,10 @@ func (m *ModuleID) HexStr() string {
 	return fmt.Sprintf("%X", m.hash)
 }
 
+func (m ModuleID) RawValue() uint64 {
+	return m.hash
+}
+
 // GenModuleID generates a short ID for the module.
 func GenModuleID(p *policyv1.Policy) ModuleID {
 	return GenModuleIDFromFQN(FQN(p))
@@ -148,6 +152,11 @@ func buildFQNTree[T any](fqn, scope string, elementFn func(string) T) []T {
 	fqnTree = append(fqnTree, elementFn(fqn))
 
 	return fqnTree
+}
+
+func ScopeFromFQN(fqn string) string {
+	_, scope, _ := strings.Cut(fqn, "/")
+	return scope
 }
 
 // PolicyKey returns a human-friendly identifier that can be used to refer to the policy in logs and other outputs.

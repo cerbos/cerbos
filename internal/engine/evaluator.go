@@ -691,14 +691,18 @@ func (er *PolicyEvalResult) setDefaultEffect(tctx tracer.Context, effect EffectI
 func checkInputToRequest(input *enginev1.CheckInput) *enginev1.Request {
 	return &enginev1.Request{
 		Principal: &enginev1.Request_Principal{
-			Id:    input.Principal.Id,
-			Roles: input.Principal.Roles,
-			Attr:  input.Principal.Attr,
+			Id:            input.Principal.Id,
+			Roles:         input.Principal.Roles,
+			Attr:          input.Principal.Attr,
+			PolicyVersion: input.Principal.PolicyVersion,
+			Scope:         input.Principal.Scope,
 		},
 		Resource: &enginev1.Request_Resource{
-			Kind: input.Resource.Kind,
-			Id:   input.Resource.Id,
-			Attr: input.Resource.Attr,
+			Kind:          input.Resource.Kind,
+			Id:            input.Resource.Id,
+			Attr:          input.Resource.Attr,
+			PolicyVersion: input.Resource.PolicyVersion,
+			Scope:         input.Resource.Scope,
 		},
 		AuxData: input.AuxData,
 	}

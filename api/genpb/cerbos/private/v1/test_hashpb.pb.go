@@ -10,6 +10,38 @@ import (
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *InspectTestCase) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_private_v1_InspectTestCase_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *InspectTestCase_PoliciesExpectation) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_private_v1_InspectTestCase_PoliciesExpectation_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *InspectTestCase_PolicySetsExpectation) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_private_v1_InspectTestCase_PolicySetsExpectation_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *InspectTestCase_PolicySetsExpectation_CompileErrors) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_private_v1_InspectTestCase_PolicySetsExpectation_CompileErrors_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *EngineTestCase) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_private_v1_EngineTestCase_hashpb_sum(m, hasher, ignore)

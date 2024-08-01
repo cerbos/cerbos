@@ -33,7 +33,7 @@ func doTestConfig(driver string) func(*testing.T) {
 			wantErr bool
 		}{
 			{
-				name: "file/valid-config",
+				name: "file/legacy-config",
 				conf: map[string]any{
 					"storage": map[string]any{
 						driver: map[string]any{
@@ -48,55 +48,6 @@ func doTestConfig(driver string) func(*testing.T) {
 								"bundleLabel": "latest",
 								"tempDir":     "/tmp",
 								"cacheDir":    "/tmp",
-								"connection": map[string]any{
-									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
-								},
-							},
-						},
-					},
-				},
-			},
-			{
-				name: "file/valid-legacy-config",
-				conf: map[string]any{
-					"storage": map[string]any{
-						driver: map[string]any{
-							"cacheSize": 1024,
-							"credentials": map[string]any{
-								"instanceID":   "pdp-id",
-								"clientID":     "client-id",
-								"clientSecret": "client-secret",
-								"secretKey":    "workspace-secret",
-							},
-							"remote": map[string]any{
-								"bundleLabel": "latest",
-								"tempDir":     "/tmp",
-								"cacheDir":    "/tmp",
-								"connection": map[string]any{
-									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
-								},
-							},
-						},
-					},
-				},
-			},
-			{
-				name: "file/invalid-config-missing-bundle-label",
-				conf: map[string]any{
-					"storage": map[string]any{
-						driver: map[string]any{
-							"cacheSize": 1024,
-							"credentials": map[string]any{
-								"pdpID":           "pdp-id",
-								"clientID":        "client-id",
-								"clientSecret":    "client-secret",
-								"workspaceSecret": "workspace-secret",
-							},
-							"remote": map[string]any{
-								"tempDir":  "/tmp",
-								"cacheDir": "/tmp",
 								"connection": map[string]any{
 									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
 									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
@@ -135,15 +86,9 @@ func doTestConfig(driver string) func(*testing.T) {
 				},
 			},
 			{
-				name: "file/duplicate-credentials",
+				name: "env/valid-config",
 				conf: map[string]any{
 					"hub": map[string]any{
-						"credentials": map[string]any{
-							"pdpID":           "Xpdp-id",
-							"clientID":        "Xclient-id",
-							"clientSecret":    "Xclient-secret",
-							"workspaceSecret": "Xworkspace-secret",
-						},
 						"connection": map[string]any{
 							"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
 							"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
@@ -152,65 +97,9 @@ func doTestConfig(driver string) func(*testing.T) {
 					"storage": map[string]any{
 						driver: map[string]any{
 							"cacheSize": 1024,
-							"credentials": map[string]any{
-								"pdpID":           "pdp-id",
-								"clientID":        "client-id",
-								"clientSecret":    "client-secret",
-								"workspaceSecret": "workspace-secret",
-							},
-							"remote": map[string]any{
-								"bundleLabel": "latest",
-								"tempDir":     "/tmp",
-								"cacheDir":    "/tmp",
-							},
-						},
-					},
-				},
-			},
-			{
-				name: "file/duplicate-connection",
-				conf: map[string]any{
-					"hub": map[string]any{
-						"credentials": map[string]any{
-							"pdpID":           "pdp-id",
-							"clientID":        "client-id",
-							"clientSecret":    "client-secret",
-							"workspaceSecret": "workspace-secret",
-						},
-						"connection": map[string]any{
-							"apiEndpoint":       "Xhttps://api.stg-spitfire.cerbos.tech",
-							"bootstrapEndpoint": "Xhttps://cdn.stg-spitfire.cerbos.tech",
-						},
-					},
-					"storage": map[string]any{
-						driver: map[string]any{
-							"cacheSize": 1024,
-							"remote": map[string]any{
-								"bundleLabel": "latest",
-								"tempDir":     "/tmp",
-								"cacheDir":    "/tmp",
-								"connection": map[string]any{
-									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
-								},
-							},
-						},
-					},
-				},
-			},
-			{
-				name: "env/valid-config",
-				conf: map[string]any{
-					"storage": map[string]any{
-						driver: map[string]any{
-							"cacheSize": 1024,
 							"remote": map[string]any{
 								"tempDir":  "/tmp",
 								"cacheDir": "/tmp",
-								"connection": map[string]any{
-									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
-								},
 							},
 						},
 					},
@@ -226,16 +115,18 @@ func doTestConfig(driver string) func(*testing.T) {
 			{
 				name: "env/valid-legacy-config",
 				conf: map[string]any{
+					"hub": map[string]any{
+						"connection": map[string]any{
+							"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+							"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+						},
+					},
 					"storage": map[string]any{
 						driver: map[string]any{
 							"cacheSize": 1024,
 							"remote": map[string]any{
 								"tempDir":  "/tmp",
 								"cacheDir": "/tmp",
-								"connection": map[string]any{
-									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
-								},
 							},
 						},
 					},
@@ -251,16 +142,18 @@ func doTestConfig(driver string) func(*testing.T) {
 			{
 				name: "env/invalid-config-missing-bundle-label",
 				conf: map[string]any{
+					"hub": map[string]any{
+						"connection": map[string]any{
+							"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
+							"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+						},
+					},
 					"storage": map[string]any{
 						driver: map[string]any{
 							"cacheSize": 1024,
 							"remote": map[string]any{
 								"tempDir":  "/tmp",
 								"cacheDir": "/tmp",
-								"connection": map[string]any{
-									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
-								},
 							},
 						},
 					},

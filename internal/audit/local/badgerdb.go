@@ -51,7 +51,6 @@ type Log struct {
 	Db                       *badgerv4.DB
 	buffer                   chan *badgerv4.Entry
 	stopChan                 chan struct{}
-	callbackFn               func(chan<- struct{})
 	decisionFilter           audit.DecisionLogEntryFilter
 	wg                       sync.WaitGroup
 	ttl                      time.Duration
@@ -66,6 +65,8 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	opts = opts.WithCompactL0OnClose(true)
 	opts = opts.WithMetricsEnabled(false)
 	opts = opts.WithLogger(newDBLogger(logger))
+	opts = opts.WithMemTableSize(32 << 20)      //nolint:mnd
+	opts = opts.WithValueLogFileSize(512 << 20) //nolint:mnd
 
 	logger.Info("Initializing audit log", zap.String("path", conf.StoragePath))
 	db, err := badgerv4.Open(opts)
@@ -102,10 +103,6 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	return l, nil
 }
 
-func (l *Log) RegisterCallback(fn func(chan<- struct{})) {
-	l.callbackFn = fn
-}
-
 func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 	batch := newBatcher(l.Db, maxBatchSize)
 	logger := l.logger.With(zap.String("component", "batcher"))
@@ -113,25 +110,15 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 	ticker := time.NewTicker(flushInterval)
 	defer ticker.Stop()
 
-	awaitCallbackFn := func() {
-		if l.callbackFn != nil {
-			ch := make(chan struct{})
-			go l.callbackFn(ch)
-			<-ch
-		}
-	}
-
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
 		case <-l.stopChan:
 			batch.flush()
-			awaitCallbackFn()
 			l.wg.Done()
 			return
 		case entry, ok := <-l.buffer:
 			if !ok {
 				batch.flush()
-				awaitCallbackFn()
 				l.wg.Done()
 				return
 			}
@@ -142,9 +129,6 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 			}
 		case <-ticker.C:
 			batch.flush()
-			if l.callbackFn != nil {
-				go l.callbackFn(make(chan struct{}, 1))
-			}
 		}
 	}
 

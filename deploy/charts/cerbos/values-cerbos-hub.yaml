@@ -1,6 +1,6 @@
-# Illustrates how to connect to Cerbos Hub
+# Illustrates how to connect a PDP to Cerbos Hub
 # Prerequisites:
-# - Sign-up to Cerbos Hub and follow the instructions to create client credentials.
+# - Sign up to Cerbos Hub and follow the instructions to create client credentials.
 # - Create a Kubernetes secret named `cerbos-hub-credentials`:
 #      kubectl create secret generic cerbos-hub-credentials \
 #         --from-literal=CERBOS_HUB_CLIENT_ID=<YOUR_CLIENT_ID> \
@@ -9,14 +9,30 @@
 
 cerbos:
   config:
-    # Configure the bundle storage driver
+    # Configure the Hub storage driver
     storage:
       driver: "hub"
       hub:
         remote:
           bundleLabel: "YOUR_LABEL" # Alternatively, add `CERBOS_HUB_BUNDLE=<YOUR_LABEL>` to the secret you created above.
 
+    # Configure the Hub audit backend
+    audit:
+      enabled: true
+      backend: "hub"
+      hub:
+        storagePath: /audit_logs
+
 # Create environment variables from the secret.
 envFrom:
   - secretRef:
       name: cerbos-hub-credentials
+
+# Mount volume for locally buffering the audit logs. A persistent volume is recommended for production use cases.
+volumes:
+  - name: cerbos-audit-logs
+    emptyDir: {}
+
+volumeMounts:
+  - name: cerbos-audit-logs
+    mountPath: /audit_logs

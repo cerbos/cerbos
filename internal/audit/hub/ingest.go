@@ -5,19 +5,14 @@ package hub
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"errors"
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cerbos/cloud-api/base"
+	"go.uber.org/zap"
+
+	"github.com/cerbos/cerbos/internal/hub"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 	"github.com/cerbos/cloud-api/logcap"
-	"github.com/go-logr/zapr"
-	"go.uber.org/zap"
 )
 
 type ErrIngestBackoff struct {
@@ -38,50 +33,13 @@ type Impl struct {
 	log    *zap.Logger
 }
 
-func NewIngestSyncer(conf *IngestConf, logger *zap.Logger) (*Impl, error) {
-	pdpID := util.PDPIdentifier(conf.Credentials.PDPID)
-
-	logger = logger.Named("ingest").With(zap.String("instance", pdpID.Instance))
-
-	creds, err := conf.Credentials.ToCredentials()
+func NewIngestSyncer(logger *zap.Logger) (*Impl, error) {
+	hubInstance, err := hub.Get()
 	if err != nil {
-		return nil, errors.New("failed to generate credentials from config")
+		return nil, fmt.Errorf("failed to establish Cerbos Hub connection: %w", err)
 	}
 
-	tlsConf := &tls.Config{
-		MinVersion: tls.VersionTLS13,
-		ServerName: conf.Connection.TLS.Authority,
-	}
-
-	caCertPath := conf.Connection.TLS.CACert
-	if caCertPath != "" {
-		caCert, err := os.ReadFile(caCertPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read CA cert from %q: %w", caCertPath, err)
-		}
-
-		tlsConf.RootCAs = x509.NewCertPool()
-		if !tlsConf.RootCAs.AppendCertsFromPEM(caCert) {
-			return nil, fmt.Errorf("failed to parse CA certs")
-		}
-	}
-
-	clientConf := logcap.ClientConf{
-		ClientConf: base.ClientConf{
-			Logger:            zapr.NewLogger(logger),
-			PDPIdentifier:     pdpID,
-			TLS:               tlsConf,
-			Credentials:       creds,
-			APIEndpoint:       conf.Connection.APIEndpoint,
-			BootstrapEndpoint: conf.Connection.BootstrapEndpoint,
-			RetryWaitMin:      conf.Connection.MinRetryWait,
-			RetryWaitMax:      conf.Connection.MaxRetryWait,
-			RetryMaxAttempts:  int(conf.Connection.NumRetries),
-			HeartbeatInterval: conf.Connection.HeartbeatInterval,
-		},
-	}
-
-	client, err := logcap.NewClient(clientConf)
+	client, err := hubInstance.LogCapClient()
 	if err != nil {
 		return nil, err
 	}
@@ -93,9 +51,11 @@ func NewIngestSyncer(conf *IngestConf, logger *zap.Logger) (*Impl, error) {
 }
 
 func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
-	if err := i.client.Ingest(ctx, batch); err != nil {
-		i.log.Error("Failed to sync batch", zap.Error(err))
-		return err
+	if len(batch.GetEntries()) > 0 {
+		if err := i.client.Ingest(ctx, batch); err != nil {
+			i.log.Error("Failed to sync batch", zap.Error(err))
+			return err
+		}
 	}
 
 	return nil

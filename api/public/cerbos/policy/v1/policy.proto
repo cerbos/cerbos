@@ -16,6 +16,14 @@ option csharp_namespace = "Cerbos.Api.V1.Policy";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1;policyv1";
 option java_package = "dev.cerbos.api.v1.policy";
 
+enum Kind {
+  KIND_UNSPECIFIED = 0;
+  KIND_DERIVED_ROLES = 1;
+  KIND_EXPORT_VARIABLES = 2;
+  KIND_PRINCIPAL = 3;
+  KIND_RESOURCE = 4;
+}
+
 message Policy {
   string api_version = 1 [
     (buf.validate.field).required = true,
@@ -123,10 +131,10 @@ message RoleRule {
   ];
   repeated string permissible_actions = 2 [
     (buf.validate.field).repeated = {
-      min_items: 1,
-      unique: true,
-      items {
-        string {min_len: 1}
+      min_items: 1
+      unique: true
+      items: {
+        string: {min_len: 1}
       }
     },
     (buf.validate.field).required = true

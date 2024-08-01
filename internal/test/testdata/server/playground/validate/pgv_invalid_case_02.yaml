@@ -26,9 +26,9 @@ playgroundValidate:
     "playgroundId": "test",
     "failure": {
       "errors": [
-        { "error": "Missing scope 'resource.leave_request.vdefault'" },
-        { "error": "Missing scope 'resource.leave_request.vdefault/acme'" },
-        { "error": "Missing scope 'resource.leave_request.vdefault/acme.hr'" }
+        { "error": "Scoped policy resource.leave_request.vdefault is not found but is required by descendant policies resource.leave_request.vdefault/acme.hr.uk" },
+        { "error": "Scoped policy resource.leave_request.vdefault/acme is not found but is required by descendant policies resource.leave_request.vdefault/acme.hr.uk" },
+        { "error": "Scoped policy resource.leave_request.vdefault/acme.hr is not found but is required by descendant policies resource.leave_request.vdefault/acme.hr.uk" },
       ]
     }
   }

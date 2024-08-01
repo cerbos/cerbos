@@ -44,3 +44,13 @@ resourcePolicy:
             of:
               - expr: '"cerbos-jwt-tests" in request.aux_data.jwt.aud'
               - expr: '"A" in request.aux_data.jwt.customArray'
+
+    - actions: ["check_scope_and_version"]
+      effect: EFFECT_ALLOW
+      roles: ["employee"]
+      condition:
+        match:
+          all:
+            of:
+              - expr: "request.principal.scope == request.resource.scope"
+              - expr: "request.principal.policyVersion == request.resource.policyVersion"

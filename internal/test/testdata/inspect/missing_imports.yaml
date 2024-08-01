@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      variables:
+        import:
+          - common_variables
+        local:
+          label: '"dude"'
+      rules:
+        - actions: [ "approve" ]
+          condition:
+            match:
+              expr: variables.commonLabel || variables.label
+          effect: EFFECT_ALLOW
+
+policiesExpectation:
+  missingPolicies:
+    - export_variables.common_variables
+
+  policies:
+    resource.leave_request.vdefault:
+      policyId: a.yaml
+      actions:
+        - approve
+      variables:
+        - kind: KIND_UNDEFINED
+          name: commonLabel
+          used: true
+          value: "null"
+        - kind: KIND_LOCAL
+          name: label
+          source: resource.leave_request.vdefault
+          used: true
+          value: "\"dude\""
+
+policySetsExpectation:
+  indexBuildErrors:
+    loadFailures:
+      - error: "rule #1 does not specify any roles or derived roles to match"
+        errorDetails:
+          message: "rule #1 does not specify any roles or derived roles to match"
+          position:
+            column: 12
+            line: 7
+            path: $.resourcePolicy.rules[0].actions
+        file: resource.leave_request.vdefault.yaml

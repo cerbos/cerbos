@@ -4,7 +4,10 @@
 package policy
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,21 +17,21 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 // Kind defines the type of policy (resource, principal, derived_roles etc.).
-type Kind int
+type Kind policyv1.Kind
 
 const (
-	// ResourceKind points to a resource policy.
-	ResourceKind Kind = iota
-	PrincipalKind
-	DerivedRolesKind
-	ExportVariablesKind
-	RolePolicyKind
+	DerivedRolesKind    Kind = Kind(policyv1.Kind_KIND_DERIVED_ROLES)
+	ExportVariablesKind Kind = Kind(policyv1.Kind_KIND_EXPORT_VARIABLES)
+	PrincipalKind       Kind = Kind(policyv1.Kind_KIND_PRINCIPAL)
+	ResourceKind        Kind = Kind(policyv1.Kind_KIND_RESOURCE)
+	RolePolicyKind      Kind = Kind(policyv1.Kind_KIND_ROLE)
 )
 
 const (
@@ -528,6 +531,10 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 		}
 	}
 
+	if len(actions) > 0 {
+		sort.Strings(actions)
+	}
+
 	return actions
 }
 
@@ -569,6 +576,12 @@ func ListPolicySetDerivedRoles(ps *runtimev1.RunnablePolicySet) []*responsev1.In
 		})
 	}
 
+	if len(derivedRoles) > 0 {
+		slices.SortFunc(derivedRoles, func(a, b *responsev1.InspectPoliciesResponse_DerivedRole) int {
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
+	}
+
 	return derivedRoles
 }
 
@@ -602,6 +615,12 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 				})
 			}
 		}
+	}
+
+	if len(variables) > 0 {
+		slices.SortFunc(variables, func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
 	}
 
 	return variables
@@ -655,13 +674,25 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	return w
 }
 
-func (pw Wrapper) Dependencies() []namer.ModuleID {
-	fqns, _ := Dependencies(pw.Policy)
+func (w Wrapper) Dependencies() []namer.ModuleID {
+	fqns, _ := Dependencies(w.Policy)
 	modIDs := make([]namer.ModuleID, len(fqns))
 	for i, fqn := range fqns {
 		modIDs[i] = namer.GenModuleIDFromFQN(fqn)
 	}
 	return modIDs
+}
+
+func (w Wrapper) ToProto() *sourcev1.PolicyWrapper {
+	return &sourcev1.PolicyWrapper{
+		Id:      w.ID.RawValue(),
+		Key:     namer.PolicyKeyFromFQN(w.FQN),
+		Policy:  w.Policy,
+		Kind:    policyv1.Kind(w.Kind),
+		Name:    w.Name,
+		Version: w.Version,
+		Scope:   w.Scope,
+	}
 }
 
 // CompilationUnit is the set of policies that need to be compiled together.

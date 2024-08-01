@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/spf13/afero"
@@ -336,9 +337,13 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		})
 	}
 
-	for _, ms := range errs.MissingScopes {
+	for _, missingScopes := range errs.MissingScopeDetails {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			Error: fmt.Sprintf("Missing scope '%s'", ms),
+			Error: fmt.Sprintf(
+				"Scoped policy %s is not found but is required by descendant policies %s",
+				missingScopes.MissingPolicy,
+				strings.Join(missingScopes.Descendants, ", "),
+			),
 		})
 	}
 

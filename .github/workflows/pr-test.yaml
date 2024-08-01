@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "v*"
+      - "feat/*"
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -48,8 +49,11 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Generate
-        run: make generate
+        run: just generate
 
       - name: Check repo status
         run: |-
@@ -67,7 +71,7 @@ jobs:
     steps:
       - name: Download previous test times
         continue-on-error: true
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v6
         with:
           workflow: pr-test.yaml
           name: test-times
@@ -94,6 +98,17 @@ jobs:
     outputs:
       job-total: ${{ strategy.job-total }}
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -102,13 +117,16 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Download previous test times
         uses: actions/download-artifact@v4
         with:
           name: previous-test-times
 
       - name: Test
-        run: make test-all TESTSPLIT_INDEX=${{ strategy.job-index }} TESTSPLIT_TOTAL=${{ strategy.job-total }}
+        run: just test-all ${{ strategy.job-index }} ${{ strategy.job-total }}
         env:
           GOEXPERIMENT: loopvar # https://github.com/golang/go/wiki/LoopvarExperiment
           CERBOS_LOG_LEVEL: "debug"
@@ -153,13 +171,16 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Download JUnit reports
         uses: actions/download-artifact@v4
 
       - name: Combine JUnit reports
         run: |-
           mv junit-reports-*/junit.*.xml .
-          make test-times TESTSPLIT_TOTAL=${{ needs.test.outputs.job-total }}
+          just test-times ${{ needs.test.outputs.job-total }}
 
       - name: Upload new test times
         uses: actions/upload-artifact@v4
@@ -217,9 +238,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1.33.0
+        uses: bufbuild/buf-setup-action@v1.35.1
         with:
           github_token: ${{ github.token }}
 
@@ -235,11 +259,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Set latest release commit ID
+        id: latest_release_commit_id
+        run: |
+          echo "LATEST_RELEASE_COMMIT_ID=$(git rev-list -n 1 tags/${{ steps.latest-release.outputs.tag }})" >> "$GITHUB_OUTPUT"
+
       - name: Check backwards compatibility
         uses: cerbos/buf-breaking-action@since
         with:
-          against: https://github.com/cerbos/cerbos.git#tag=${{ steps.latest-release.outputs.tag }}
-          since: https://github.com/cerbos/cerbos.git#branch=main
+          against: https://github.com/cerbos/cerbos.git#ref=${{ steps.latest_release_commit_id.outputs.LATEST_RELEASE_COMMIT_ID }}
+          since: https://github.com/cerbos/cerbos.git#ref=main
 
   test-helm:
     needs: changes
@@ -285,12 +314,17 @@ jobs:
         with:
           cross_compiling: true
 
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: build --config=.goreleaser.yml --clean --snapshot
         env:
+          AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
+          AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 

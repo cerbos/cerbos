@@ -1,6 +1,5 @@
 # E2E Tests
 
-This is still a WIP.
 
 ## Requirements
 
@@ -16,7 +15,7 @@ This is still a WIP.
 # Run all tests
 ./run.sh
 
-# Run a subset of tests 
+# Run a subset of tests
 ./run.sh ./mysql/...
 
 # Pass arguments
@@ -30,7 +29,7 @@ This is still a WIP.
 If telepresence exits with `telepresence: error: connector.Connect: failed to start traffic manager: the helm operation timed out`, try increasing the timeout in `~/.config/telepresence/config.yml`.
 
 ```sh
-$ cat ~/.config/telepresence/config.yml 
+$ cat ~/.config/telepresence/config.yml
 timeouts:
   helm: 60s
 ```
@@ -42,7 +41,7 @@ timeouts:
 Set `E2E_SKIP_CLUSTER=true`
 
 ```sh
-E2E_SKIP_CLUSTER=true ./run.sh 
+E2E_SKIP_CLUSTER=true ./run.sh
 ```
 
 #### Prevent the cluster and fixtures from being destroyed
@@ -50,7 +49,7 @@ E2E_SKIP_CLUSTER=true ./run.sh
 Start the script with `E2E_NO_CLEANUP=true`
 
 ```sh
-E2E_NO_CLEANUP=true ./run.sh 
+E2E_NO_CLEANUP=true ./run.sh
 ```
 
 #### Test a Cerbos image that is not yet published
@@ -60,11 +59,11 @@ By default, the tests use the `ghcr.io/cerbos/cerbos:dev` image. If you have mad
 
 ```sh
 # Build the Cerbos image
-make build 
+just build
 
 # Load the image into Kind
-kind load docker-image ghcr.io/cerbos/cerbos:0.12.0-prerelease-amd64 --name=cerbos-e2e
+kind load docker-image ghcr.io/cerbos/cerbos:0.37.0-prerelease-amd64 --name=cerbos-e2e
 
 # Re-run the test with the new image
-E2E_SKIP_CLUSTER=true ./run.sh ./git/... -args -cerbos-img-tag=0.12.0-prerelease-amd64
+E2E_SKIP_CLUSTER=true ./run.sh ./git/... -args -cerbos-img-tag=0.37.0-prerelease-amd64
 ```

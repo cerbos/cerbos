@@ -1,6 +1,7 @@
 ---
 name: Snapshots
 on:
+  workflow_dispatch:
   push:
     paths-ignore:
       - "docs/**"
@@ -12,6 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -24,8 +36,11 @@ jobs:
           cross_compiling: true
           write_build_cache: true
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Generate
-        run: make generate
+        run: just generate
 
       - name: Check repo status
         run: |-
@@ -37,7 +52,7 @@ jobs:
           fi
 
       - name: Test
-        run: make test-all
+        run: just test-all
         env:
           CERBOS_LOG_LEVEL: "debug"
 
@@ -105,6 +120,17 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
+
       - name: Install Go and cache dependencies
         uses: ./.github/actions/setup-go
         with:
@@ -114,12 +140,17 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.5.0
 
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --config=.goreleaser.yml --clean --snapshot --skip=publish
         env:
+          AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
+          AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
@@ -165,7 +196,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1.33.0
+        uses: bufbuild/buf-setup-action@v1.35.1
         with:
           github_token: ${{ github.token }}
 

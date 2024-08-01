@@ -354,12 +354,16 @@ message Request {
     string id = 1;
     repeated string roles = 2;
     map<string, google.protobuf.Value> attr = 3;
+    string policy_version = 4;
+    string scope = 5;
   }
 
   message Resource {
     string kind = 1;
     string id = 2;
     map<string, google.protobuf.Value> attr = 3;
+    string policy_version = 4;
+    string scope = 5;
   }
 
   Principal principal = 1;

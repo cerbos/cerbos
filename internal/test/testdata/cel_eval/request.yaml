@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=../.jsonschema/CelTestCase.schema.json
+---
+condition:
+  all:
+    of:
+      - expr: |-
+          request.resource.id ==  "test"
+      - expr: |-
+          request.resource.kind ==  "leave_request"
+      - expr: |-
+          request.resource.policyVersion ==  "default"
+      - expr: |-
+          request.resource.scope ==  "a.b.c"
+      - expr: |-
+          request.principal.id ==  "john"
+      - expr: |-
+          request.principal.policyVersion ==  "default"
+      - expr: |-
+          request.principal.scope ==  "x.y.z"
+      - expr: |-
+          "employee" in request.principal.roles
+request:
+  {
+    "principal":
+      {
+        "id": "john",
+        "scope": "x.y.z",
+        "roles": ["employee"],
+        "policyVersion": "default",
+        "attr":
+          {
+            "department": "marketing",
+            "teams": ["design", "communications", "product", "commercial"],
+            "clients":
+              { "acme": { "active": true }, "bb inc": { "active": true } },
+          },
+      },
+    "resource":
+      {
+        "kind": "leave_request",
+        "policyVersion": "default",
+        "id": "test",
+        "scope": "a.b.c",
+        "attr": { "owner": "john" },
+      },
+  }
+want: true

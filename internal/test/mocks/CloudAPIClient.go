@@ -10,6 +10,8 @@ import (
 
 	bundle "github.com/cerbos/cloud-api/bundle"
 
+	credentials "github.com/cerbos/cloud-api/credentials"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -192,6 +194,53 @@ func (_c *CloudAPIClient_GetCachedBundle_Call) Return(_a0 string, _a1 error) *Cl
 }
 
 func (_c *CloudAPIClient_GetCachedBundle_Call) RunAndReturn(run func(string) (string, error)) *CloudAPIClient_GetCachedBundle_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HubCredentials provides a mock function with given fields:
+func (_m *CloudAPIClient) HubCredentials() *credentials.Credentials {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for HubCredentials")
+	}
+
+	var r0 *credentials.Credentials
+	if rf, ok := ret.Get(0).(func() *credentials.Credentials); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*credentials.Credentials)
+		}
+	}
+
+	return r0
+}
+
+// CloudAPIClient_HubCredentials_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HubCredentials'
+type CloudAPIClient_HubCredentials_Call struct {
+	*mock.Call
+}
+
+// HubCredentials is a helper method to define mock.On call
+func (_e *CloudAPIClient_Expecter) HubCredentials() *CloudAPIClient_HubCredentials_Call {
+	return &CloudAPIClient_HubCredentials_Call{Call: _e.mock.On("HubCredentials")}
+}
+
+func (_c *CloudAPIClient_HubCredentials_Call) Run(run func()) *CloudAPIClient_HubCredentials_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *CloudAPIClient_HubCredentials_Call) Return(_a0 *credentials.Credentials) *CloudAPIClient_HubCredentials_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *CloudAPIClient_HubCredentials_Call) RunAndReturn(run func() *credentials.Credentials) *CloudAPIClient_HubCredentials_Call {
 	_c.Call.Return(run)
 	return _c
 }

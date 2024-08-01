@@ -10,7 +10,6 @@ import (
 
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
-	"github.com/cerbos/cerbos/internal/hub"
 	"go.uber.org/multierr"
 )
 
@@ -20,7 +19,7 @@ const (
 	defaultMaxBatchSize     = 16
 	defaultMinFlushInterval = 5 * time.Second
 	defaultFlushTimeout     = 5 * time.Second
-	defaultNumGoRoutines    = 8
+	defaultNumGoRoutines    = 4
 
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second
@@ -32,17 +31,13 @@ var (
 )
 
 type Conf struct {
-	Ingest IngestConf `yaml:"ingest" conf:",ignore"`
 	// Mask defines a list of attributes to exclude from the audit logs, specified as lists of JSONPaths
 	Mask       MaskConf `yaml:"mask"`
 	local.Conf `yaml:",inline"`
+	Ingest     IngestConf `yaml:"ingest" conf:",ignore"`
 }
 
 type IngestConf struct {
-	// Credentials holds Cerbos Hub credentials.
-	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
-	// Connection defines settings for the remote server connection.
-	Connection *hub.ConnectionConf `yaml:"connection" conf:",ignore"`
 	// MaxBatchSize defines the max number of log entries to send in each Ingest request.
 	MaxBatchSize uint `yaml:"maxBatchSize" conf:",example=32"`
 	// MinFlushInterval is the minimal duration between Ingest requests.
@@ -92,29 +87,6 @@ func (c *Conf) Validate() (outErr error) {
 
 	if c.Ingest.MinFlushInterval >= c.Conf.Advanced.FlushInterval {
 		outErr = multierr.Append(outErr, errors.New("ingest.minFlushInterval must be less than advanced.flushInterval"))
-	}
-
-	if err := c.loadHubConf(); err != nil {
-		outErr = multierr.Append(outErr, err)
-	}
-
-	return outErr
-}
-
-func (c *Conf) loadHubConf() (outErr error) {
-	hubConf, err := hub.GetConf()
-	if err != nil {
-		outErr = multierr.Append(outErr, fmt.Errorf("failed to read Cerbos Hub configuration: %w", err))
-	}
-
-	c.Ingest.Connection = &hubConf.Connection
-	if err := c.Ingest.Connection.Validate(); err != nil {
-		outErr = multierr.Append(outErr, err)
-	}
-
-	c.Ingest.Credentials = &hubConf.Credentials
-	if err := c.Ingest.Credentials.Validate(); err != nil {
-		outErr = multierr.Append(outErr, err)
 	}
 
 	return outErr

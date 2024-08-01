@@ -38,6 +38,26 @@ builds:
             - BINARY_VERSION={{ .Version }}
             - BINARY_PATH={{ .Path }}
 
+  - main: ./cmd/cerbos
+    binary: cerbos
+    id: "cerbos-aws"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - "6"
+      - "7"
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}}-aws -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}} -X github.com/cerbos/cerbos/internal/telemetry.WriteKey={{.Env.TELEMETRY_WRITE_KEY}} -X github.com/cerbos/cerbos/internal/telemetry.DataPlaneURL={{.Env.TELEMETRY_URL}} -X github.com/cerbos/cerbos/internal/integrations.AWSProductCode={{.Env.AWS_PRODUCT_CODE}}
+
   - main: ./cmd/cerbosctl
     binary: cerbosctl
     id: "cerbosctl"
@@ -66,6 +86,9 @@ builds:
             - BINARY_ARCH={{ .Arch }}
             - BINARY_VERSION={{ .Version }}
             - BINARY_PATH={{ .Path }}
+
+sboms:
+  - artifacts: archive
 
 universal_binaries:
   - id: "cerbos"
@@ -212,6 +235,44 @@ dockers:
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--platform=linux/arm64"
 
+  - id: cerbos-aws-amd64
+    dockerfile: Dockerfile.cerbos
+    image_templates:
+      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-amd64"
+      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-amd64"
+      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-amd64"
+    ids:
+      - cerbos-aws
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
+
+  - id: cerbos-aws-arm64
+    dockerfile: Dockerfile.cerbos
+    image_templates:
+      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-arm64"
+      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-arm64"
+      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-arm64"
+    ids:
+      - cerbos-aws
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
+
 docker_manifests:
   - name_template: "ghcr.io/cerbos/cerbos:{{ .Version }}"
     image_templates:
@@ -272,6 +333,21 @@ docker_manifests:
     image_templates:
       - "docker.io/cerbos/cerbosctl:dev-amd64"
       - "docker.io/cerbos/cerbosctl:dev-arm64"
+
+  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}"
+    image_templates:
+      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-amd64"
+      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-arm64"
+
+  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:latest"
+    image_templates:
+      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-amd64"
+      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-arm64"
+
+  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:dev"
+    image_templates:
+      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-amd64"
+      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-arm64"
 
 docker_signs:
   - id: sign-images

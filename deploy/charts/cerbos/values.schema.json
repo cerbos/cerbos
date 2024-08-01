@@ -1,0 +1,498 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "affinity": {
+      "additionalProperties": true,
+      "description": "Pod affinity rules. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.",
+      "title": "affinity",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "autoscaling": {
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "maxReplicas": {
+          "default": 100,
+          "type": "integer"
+        },
+        "minReplicas": {
+          "default": 1,
+          "type": "integer"
+        },
+        "targetCPUUtilizationPercentage": {
+          "default": 80,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "targetMemoryUtilizationPercentage": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "description": "Autoscaling configuration.",
+      "title": "autoscaling",
+      "type": "object"
+    },
+    "cerbos": {
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "additionalProperties": true,
+          "description": "Cerbos config file contents.\nSome server settings like server.httpListenAddr, server.grpcListenAddr, server.tls will be overwritten by the chart based on values provided above.",
+          "title": "config",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "grpcPort": {
+          "default": 3593,
+          "description": "Port to expose the gRPC service on.",
+          "title": "grpcPort",
+          "type": "integer"
+        },
+        "httpPort": {
+          "default": 3592,
+          "description": "Port to expose the http service on.",
+          "title": "httpPort",
+          "type": "integer"
+        },
+        "logLevel": {
+          "default": "INFO",
+          "description": "Cerbos log level. Valid values are DEBUG, INFO, WARN and ERROR",
+          "title": "logLevel",
+          "type": "string"
+        },
+        "prometheusPodAnnotationsEnabled": {
+          "default": true,
+          "description": "Add Prometheus service discovery annotations to the pod.",
+          "title": "prometheusPodAnnotationsEnabled",
+          "type": "boolean"
+        },
+        "tlsSecretName": {
+          "default": "",
+          "description": "Secret containing the TLS certificate.\nLeave empty to disable TLS.\nThe secret must contain the following keys:\n - tls.crt: Required. Certificate file contents.\n - tls.key: Required. Private key for the certificate.\n - ca.crt: Optional. CA certificate to add to the trust pool.",
+          "title": "tlsSecretName",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "description": "Cerbos deployment settings.",
+      "title": "cerbos",
+      "required": [
+        "httpPort",
+        "grpcPort",
+        "logLevel",
+        "prometheusPodAnnotationsEnabled"
+      ]
+    },
+    "certManager": {
+      "additionalProperties": false,
+      "properties": {
+        "certSpec": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "description": "Spec of the cert-manager certificate to create for the Cerbos deployment.\nIf certSpec is not empty, a cert-manager.io/v1/Certificate resource will be created with its spec populated with values from certSpec.\nThe certSpec value must be a valid Certificate spec. This Helm chart does not provide any defaults or inject any values into it.\nIf cerbos.tlsSecretName is defined, it takes precedence over the generated certificate.",
+      "title": "certManager",
+      "type": "object"
+    },
+    "commonLabels": {
+      "additionalProperties": true,
+      "description": "Common labels to add to the resources. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.",
+      "title": "commonLabels",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "deployment": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": true,
+          "title": "annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "description": "Annotations to add to the deployment. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.",
+      "title": "deployment"
+    },
+    "env": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "description": "Environment variables to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#environment-variables.",
+      "title": "env",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "envFrom": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "description": "Source environment variables from config maps or secrets. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#environment-variables.",
+      "title": "envFrom",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "fullnameOverride": {
+      "default": "",
+      "title": "fullnameOverride",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "global": {
+      "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
+      "title": "global",
+      "type": "object"
+    },
+    "image": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "default": "",
+          "description": "Image digest to use. Takes precedence over tag if specified.",
+          "title": "digest",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pullPolicy": {
+          "default": [
+            "IfNotPresent"
+          ],
+          "description": "Image pull policy.",
+          "title": "pullPolicy",
+          "enum": [
+            "IfNotPresent",
+            "Always"
+          ]
+        },
+        "repository": {
+          "default": "ghcr.io.cerbos/cerbos",
+          "description": "Container image name without the tag.",
+          "title": "repository"
+        },
+        "tag": {
+          "default": "",
+          "description": "Image tag to use. Defaults to the chart appVersion.",
+          "title": "tag",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "description": "Container image details. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#image.",
+      "title": "image"
+    },
+    "imagePullSecrets": {
+      "items": {
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "description": "Image pull secrets to use if pulling the image from a private container registry. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers.",
+      "title": "imagePullSecrets",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "initContainers": {
+      "items": {},
+      "description": "Init containers to inject into the deployment. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers.",
+      "title": "initContainers",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "nameOverride": {
+      "default": "",
+      "title": "nameOverride",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nodeSelector": {
+      "additionalProperties": true,
+      "description": "Node selector for the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.",
+      "title": "nodeSelector",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "podAnnotations": {
+      "additionalProperties": true,
+      "description": "Annotations to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.",
+      "title": "podAnnotations",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "podLabels": {
+      "additionalProperties": true,
+      "description": "Labels to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.",
+      "title": "podLabels",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "podSecurityContext": {
+      "additionalProperties": true,
+      "description": "Security context for the whole pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1.",
+      "title": "podSecurityContext",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "priorityClassName": {
+      "default": "",
+      "description": "PriorityClassName to set on deployed pods",
+      "title": "priorityClassName",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "replicaCount": {
+      "default": 1,
+      "description": "Number of Cerbos pods to run",
+      "title": "replicaCount",
+      "type": "integer"
+    },
+    "resources": {
+      "additionalProperties": true,
+      "properties": {
+        "limits": {
+          "type": "object"
+        },
+        "requests": {
+          "type": "object"
+        }
+      },
+      "description": "Resource limits for the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#resources.",
+      "title": "resources",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "securityContext": {
+      "additionalProperties": true,
+      "description": "Security context for the Cerbos container. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context-1.",
+      "title": "securityContext",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": true,
+          "description": "Service annotations",
+          "title": "annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "clusterIP": {
+          "default": "null",
+          "description": "Service Cluster IP",
+          "title": "clusterIP",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "grpcNodePort": {
+          "default": 13593,
+          "description": "gRPC node port (if service type is NodePort)",
+          "title": "grpcNodePort"
+        },
+        "grpcPort": {
+          "default": 3593,
+          "description": "Service gRPC port",
+          "title": "grpcPort"
+        },
+        "httpNodePort": {
+          "default": 13592,
+          "description": "HTTP node port (if service type is NodePort)",
+          "title": "httpNodePort"
+        },
+        "httpPort": {
+          "default": 3592,
+          "description": "Service HTTP port",
+          "title": "httpPort"
+        },
+        "internalTrafficPolicy": {
+          "default": "",
+          "description": "Set the internalTrafficPolicy. If this is unset and .Values.type is set to daemonset, this will default to \"Local\"",
+          "title": "internalTrafficPolicy",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "loadBalancerIP": {
+          "default": "null",
+          "description": "LoadBalancer static IP",
+          "title": "loadBalancerIP",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "default": "ClusterIP",
+          "description": "Service type",
+          "title": "type",
+          "enum": [
+            "ClusterIP",
+            "NodePort",
+            "LoadBalancer"
+          ]
+        }
+      },
+      "description": "Cerbos service settings.",
+      "title": "service"
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "additionalProperties": true,
+          "description": "Annotations to add to the service account. See https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/#ObjectMeta.",
+          "title": "annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "create": {
+          "default": true,
+          "description": "Specifies whether a service account should be created.",
+          "title": "create"
+        },
+        "name": {
+          "default": "",
+          "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
+          "title": "name",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "description": "Service account settings",
+      "title": "serviceAccount"
+    },
+    "tolerations": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "description": "Pod tolerations.  See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.",
+      "title": "tolerations",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "topologySpreadConstraints": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "description": "Topology Spread Constraints rules. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.",
+      "title": "topologySpreadConstraints",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "type": {
+      "default": "deployment",
+      "description": "Kubernetes workload type to use. Valid values are `deployment` or `daemonset`.",
+      "title": "type",
+      "enum": [
+        "deployment",
+        "daemonset"
+      ]
+    },
+    "volumeMounts": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "description": "Volume mounts to add to the Cerbos container. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#volumes-1.",
+      "title": "volumeMounts",
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "volumes": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "description": "Volumes to add to the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#volumes.",
+      "title": "volumes",
+      "type": [
+        "array",
+        "null"
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object"
+}

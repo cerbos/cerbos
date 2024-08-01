@@ -1,9 +1,15 @@
 # yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
 ---
 wantErrList:
-  missingScopes:
-    - resource.leave_request.v20210210/acme
-    - resource.leave_request.v20210210/acme.hr
+  missingScopeDetails:
+    - missingPolicy: resource.leave_request.v20210210/acme
+      descendants:
+        - resource.leave_request.v20210210/acme.hr.uk
+
+    - missingPolicy: resource.leave_request.v20210210/acme.hr
+      descendants:
+        - resource.leave_request.v20210210/acme.hr.uk
+
 files:
   "resource.yaml": |-
     ---
@@ -63,3 +69,4 @@ files:
                 of:
                   - expr: "request.resource.attr.geography == request.principal.attr.geography"
                   - expr: "request.resource.attr.geography == request.principal.attr.managed_geographies"
+
