@@ -273,6 +273,8 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					case policy.ResourceKind:
 						ctx, err = p.Parse([]string{"get", "rp", tc.name, "-ojson"})
 						require.NoError(t, err)
+					case policy.RolePolicyKind:
+						// TODO
 					}
 
 					err = ctx.Run(clientCtx, globals)
