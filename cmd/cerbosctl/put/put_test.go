@@ -213,6 +213,8 @@ func getPolicy(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Glob
 }
 
 func policyKindToGet(kind policy.Kind) string {
+	// TODO(saml) role policies
+	//nolint:exhaustive
 	switch kind {
 	case policy.DerivedRolesKind:
 		return "dr"
