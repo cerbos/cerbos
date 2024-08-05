@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/alecthomas/kong v0.9.0
 	github.com/alecthomas/participle/v2 v2.1.1
-	github.com/aws/aws-sdk-go v1.55.3
+	github.com/aws/aws-sdk-go v1.55.5
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.23.3
 	github.com/aws/smithy-go v1.20.3
@@ -21,7 +21,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.2.0
-	github.com/dgraph-io/ristretto v0.1.1
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/fatih/color v1.17.0
 	github.com/fatih/structtag v1.2.0
@@ -35,7 +34,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/goccy/go-yaml v1.12.0
 	github.com/golang-migrate/migrate/v4 v4.17.1
-	github.com/google/cel-go v0.20.1
+	github.com/google/cel-go v0.21.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.6.0
@@ -74,11 +73,11 @@ require (
 	github.com/spf13/afero v1.11.0
 	github.com/stoewer/go-strcase v1.3.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tidwall/gjson v1.17.1
+	github.com/tidwall/gjson v1.17.3
 	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/sjson v1.2.5
-	github.com/twmb/franz-go v1.17.0
-	github.com/twmb/franz-go/pkg/kadm v1.12.0
+	github.com/twmb/franz-go v1.17.1
+	github.com/twmb/franz-go/pkg/kadm v1.13.0
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	go.elastic.co/ecszap v1.0.3
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0
@@ -106,10 +105,10 @@ require (
 	golang.org/x/crypto v0.25.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/net v0.27.0
-	golang.org/x/sync v0.7.0
+	golang.org/x/sync v0.8.0
 	golang.org/x/tools v0.23.0
 	gonum.org/v1/gonum v0.15.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240725223205-93522f1f2a9f
+	google.golang.org/genproto/googleapis/api v0.0.0-20240730163845-b1a4ccb954bf
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -165,6 +164,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.12.3 // indirect
+	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/docker/cli v25.0.2+incompatible // indirect
@@ -287,7 +287,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.169.0 // indirect
 	google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240723171418-e6d459c13d2a // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240725223205-93522f1f2a9f // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect

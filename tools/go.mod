@@ -16,9 +16,9 @@ require (
 	github.com/goreleaser/goreleaser/v2 v2.1.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0
 	github.com/planetscale/vtprotobuf v0.6.0
-	github.com/vektra/mockery/v2 v2.43.2
+	github.com/vektra/mockery/v2 v2.44.1
 	go.elastic.co/go-licence-detector v0.6.1
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.4.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
 	google.golang.org/protobuf v1.34.2
 	gotest.tools/gotestsum v1.12.0
 )
@@ -29,6 +29,7 @@ require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
 	buf.build/gen/go/bufbuild/registry/connectrpc/go v1.16.2-20240610164129-660609bc46d3.1 // indirect
 	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.34.2-20240610164129-660609bc46d3.2 // indirect
+	cel.dev/expr v0.15.0 // indirect
 	cloud.google.com/go v0.112.1 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
@@ -141,7 +142,7 @@ require (
 	github.com/ccojocar/zxcvbn-go v1.0.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
-	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/charmbracelet/bubbletea v0.26.6 // indirect
 	github.com/charmbracelet/lipgloss v0.12.0 // indirect
@@ -155,7 +156,7 @@ require (
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20230304212654-82a0ddb27589 // indirect
 	github.com/ckaznocha/intrange v0.1.2 // indirect
 	github.com/cloudflare/circl v1.3.8 // indirect
-	github.com/cncf/xds/go v0.0.0-20240318125728-8a4994d93e50 // indirect
+	github.com/cncf/xds/go v0.0.0-20240423153145-555b57ec207b // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
@@ -486,7 +487,7 @@ require (
 	google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240723171418-e6d459c13d2a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240723171418-e6d459c13d2a // indirect
-	google.golang.org/grpc v1.64.1 // indirect
+	google.golang.org/grpc v1.65.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
