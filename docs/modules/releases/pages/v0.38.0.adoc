@@ -1,0 +1,92 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.38.0]
+= Cerbos v0.38.0
+
+== Highlights
+
+The `hub` storage driver can now be configured to connect to any private playground hosted on link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub]. This allows individuals and teams to use the IDE-like functionality of the playgrounds to quickly build authorization prototypes and test them end-to-end without worrying about deploying infrastructure first.
+
+The policy version and scope of the resource and principal are now available for use in policy conditions through `request.resource.policyVersion`, `request.resource.scope`, `request.principal.policyVersion` and `request.principal.scope`.
+
+The `cerbos compile` command now produces better error messages to help track down issues with missing scope policies.
+
+In addition to signing the Cerbos release binaries and containers using link:https://www.sigstore.dev[Sigstore infrastructure], the release process now produces SBOMs to help trace the provenance of each Cerbos release.
+
+The response from the `InspectPolicies` Admin API endpoint now includes principal and resource attributes referenced by the inspected policies. Note that this currently only an API update. The SDKs and `cerbosctl` updates to interact with the API will follow soon.
+
+The official Cerbos Helm chart now includes a `values.schema.json` file to help link:https://helm.sh/docs/topics/charts/#schema-files[discover any configuration problems].
+
+The documentation now includes a xref:api:attachment$cerbos-api.html[static version of the Cerbos OpenAPI specification,window=_blank]. For the interactive version, launch a Cerbos PDP and navigate to http://localhost:3592.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Handle empty decision entries during sync (link:https://github.com/cerbos/cerbos/pull/2222[#2222])
+* Reduce memory usage in badger stream for hub audit backend (link:https://github.com/cerbos/cerbos/pull/2243[#2243])
+* Replace badger stream with prefixed key-only scan (link:https://github.com/cerbos/cerbos/pull/2247[#2247])
+
+=== Features
+
+* Allow Hub storage driver to connect to playgrounds (link:https://github.com/cerbos/cerbos/pull/2176[#2176])
+
+=== Enhancements
+
+* Access to scope and policy version from conditions (link:https://github.com/cerbos/cerbos/pull/2237[#2237])
+* Generate SBOMs for release artifacts (link:https://github.com/cerbos/cerbos/pull/2217[#2217])
+* Helm values schema (link:https://github.com/cerbos/cerbos/pull/2230[#2230])
+* List referenced attributes in InspectPolicies (link:https://github.com/cerbos/cerbos/pull/2224[#2224])
+* More details for missing scope errors (link:https://github.com/cerbos/cerbos/pull/2194[#2194])
+
+=== Documentation
+
+* Add OpenAPI documentation (link:https://github.com/cerbos/cerbos/pull/2190[#2190])
+* Helm instructions for configuring Hub (link:https://github.com/cerbos/cerbos/pull/2232[#2232])
+
+=== Chores
+
+* Add ECR to release destinations (link:https://github.com/cerbos/cerbos/pull/2199[#2199])
+* Add PolicyWrapper protobuf (link:https://github.com/cerbos/cerbos/pull/2206[#2206])
+* Add details to audit sync errors (link:https://github.com/cerbos/cerbos/pull/2211[#2211])
+* Add identity components to policy wrapper (link:https://github.com/cerbos/cerbos/pull/2221[#2221])
+* Add missing `continue` to ignore non-string keys in JWT claims (link:https://github.com/cerbos/cerbos/pull/2238[#2238])
+* Annotate deprecated fields in audit log entry (link:https://github.com/cerbos/cerbos/pull/2236[#2236])
+* Bump github.com/docker/docker from 25.0.5+incompatible to 26.1.4+incompatible (link:https://github.com/cerbos/cerbos/pull/2242[#2242])
+* Bump github.com/docker/docker from 27.0.0+incompatible to 27.1.0+incompatible in /tools (link:https://github.com/cerbos/cerbos/pull/2241[#2241])
+* Bump github.com/hashicorp/go-retryablehttp from 0.7.5 to 0.7.7 in /tools (link:https://github.com/cerbos/cerbos/pull/2198[#2198])
+* Bump google.golang.org/grpc from 1.64.0 to 1.64.1 in /tools (link:https://github.com/cerbos/cerbos/pull/2213[#2213])
+* Bump version to 0.38.0
+* Clear disk space in Snapshots workflow (link:https://github.com/cerbos/cerbos/pull/2205[#2205])
+* Clear disk space in Test workflow (link:https://github.com/cerbos/cerbos/pull/2207[#2207])
+* Enable PR check for feature branches (link:https://github.com/cerbos/cerbos/pull/2193[#2193])
+* Expose `plan.Resources` from `private` package (link:https://github.com/cerbos/cerbos/pull/2234[#2234])
+* Generate Connect RPC stubs (link:https://github.com/cerbos/cerbos/pull/2216[#2216])
+* Migrate to just (link:https://github.com/cerbos/cerbos/pull/2214[#2214])
+* Remove callback from local audit log (link:https://github.com/cerbos/cerbos/pull/2248[#2248])
+* Set image tag for redocly/cli (link:https://github.com/cerbos/cerbos/pull/2231[#2231])
+* Share Hub base client (link:https://github.com/cerbos/cerbos/pull/2215[#2215])
+* Skip publishing snapshots to ECR (link:https://github.com/cerbos/cerbos/pull/2220[#2220])
+* Trace logs for log sync (link:https://github.com/cerbos/cerbos/pull/2212[#2212])
+* Tune Badger settings (link:https://github.com/cerbos/cerbos/pull/2244[#2244])
+* Update amannn/action-semantic-pull-request action to v5.5.3 (link:https://github.com/cerbos/cerbos/pull/2200[#2200])
+* Update bufbuild/buf-setup-action action to v1.34.0 (link:https://github.com/cerbos/cerbos/pull/2197[#2197])
+* Update bufbuild/buf-setup-action action to v1.35.1 (link:https://github.com/cerbos/cerbos/pull/2239[#2239])
+* Update dawidd6/action-download-artifact action to v4 (link:https://github.com/cerbos/cerbos/pull/2203[#2203])
+* Update dawidd6/action-download-artifact action to v6 (link:https://github.com/cerbos/cerbos/pull/2228[#2228])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2196[#2196])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2201[#2201])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2209[#2209])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2219[#2219])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2225[#2225])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2240[#2240])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2251[#2251])
+* Update golangci/golangci-lint-action action to v6.1.0 (link:https://github.com/cerbos/cerbos/pull/2252[#2252])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2202[#2202])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2218[#2218])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2226[#2226])
+* Update pnpm to v9.5.0 (link:https://github.com/cerbos/cerbos/pull/2210[#2210])
+* Update to go1.22.5 (link:https://github.com/cerbos/cerbos/pull/2204[#2204])
+* Wrap credential validation error (link:https://github.com/cerbos/cerbos/pull/2235[#2235])
