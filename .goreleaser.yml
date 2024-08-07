@@ -239,8 +239,6 @@ dockers:
     dockerfile: Dockerfile.cerbos
     image_templates:
       - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-amd64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-amd64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-amd64"
     ids:
       - cerbos-aws
     goarch: amd64
@@ -258,8 +256,6 @@ dockers:
     dockerfile: Dockerfile.cerbos
     image_templates:
       - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-arm64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-arm64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-arm64"
     ids:
       - cerbos-aws
     goarch: arm64
@@ -338,16 +334,6 @@ docker_manifests:
     image_templates:
       - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-amd64"
       - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-arm64"
-
-  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:latest"
-    image_templates:
-      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-amd64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-arm64"
-
-  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:dev"
-    image_templates:
-      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-amd64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-arm64"
 
 docker_signs:
   - id: sign-images
