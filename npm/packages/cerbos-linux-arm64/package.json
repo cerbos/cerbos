@@ -1,6 +1,6 @@
 {
   "name": "@cerbos/cerbos-linux-arm64",
-  "version": "0.38.0",
+  "version": "0.38.1",
   "description": "The linux-arm64 binary for cerbos",
   "repository": {
     "type": "git",
