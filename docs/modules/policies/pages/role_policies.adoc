@@ -40,7 +40,7 @@ rolePolicy:
 
 During evaluation of a check request, a role policy is only evaluated if it has a matching principal role and scope. For the policy above, the principal would need to have the role `acme_admin` and the scope `acme.hr.uk`. If a principal has more than one role, the evaluator can return more than one role policy. The union of the `resource` lists is then taken which provides a larger potential pool of matching `resource:action` pairs.
 
-Policies are evaluated from most to least specific. If any role policies are matched according to the above rule, they are evaluated before any resource policies, but after any principal policies.
+Policies are evaluated from most to least specific. If there is a principal policy matching the principal it is evaluated first, followed by any matching role policies as described above. Finally, any applicable resource policies are evaluated to produce the final access decision.
 
 If a `resource:action` pairing is not explicitly set in any of the role policies, that pairing will immediately resolve to a `DENY`. Otherwise, that given `resource:action` pairing will fall through to any resource policies for further evaluation.
 
