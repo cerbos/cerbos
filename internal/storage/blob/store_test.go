@@ -183,11 +183,18 @@ func TestStore_updateIndex(t *testing.T) {
 	store, err := NewStore(ctx, conf, clonerFunc(func(_ context.Context) (*CloneResult, error) {
 		return &CloneResult{
 			updateOrAdd: []fileInfo{{file: policyFile, etag: []byte("policy")}, {file: schemaFile, etag: []byte("schema")}},
-			delete:      []string{policyFile, schemaFile},
+			delete: map[string]deleteInfo{
+				policyFile: {
+					file: policyFile,
+				},
+				schemaFile: {
+					file: schemaFile,
+				},
+			},
 		}, nil
 	}))
 	must.NoError(err)
-	store.fsys = storeFS{dir: policyDir}
+	store.workFS = storeFS{dir: policyDir}
 
 	var addOrUpdateCalled bool
 	var deleteCalled bool

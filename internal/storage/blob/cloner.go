@@ -4,7 +4,6 @@
 package blob
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -28,13 +27,13 @@ type clonerFS interface {
 	MkdirAll(path string, perm fs.FileMode) error
 }
 
-type infoType map[string][]byte
+type symlinkToFileType map[string]string
 
 type Cloner struct {
-	log    *zap.SugaredLogger
-	bucket *blob.Bucket
-	fsys   clonerFS
-	info   infoType // map[path]eTag
+	log           *zap.SugaredLogger
+	bucket        *blob.Bucket
+	fsys          clonerFS
+	symlinkToFile symlinkToFileType
 }
 
 // NewCloner creates an object to clone the bucket and saves
@@ -46,13 +45,18 @@ func NewCloner(bucket *blob.Bucket, fsys clonerFS) (*Cloner, error) {
 		fsys:   fsys,
 	}
 
-	info, err := c.calculateInfo()
-	c.log.Debugf("Checkout dir contains (%d) files", len(info))
+	symlinkToFile, err := c.calculateSymlinkToFile()
+	c.log.Debugf("Checkout dir contains (%d) files", len(symlinkToFile))
 	if err != nil {
 		return nil, err
 	}
-	c.info = info
+	c.symlinkToFile = symlinkToFile
 	return c, nil
+}
+
+type deleteInfo struct {
+	file    string
+	symlink string
 }
 
 type fileInfo struct {
@@ -61,8 +65,9 @@ type fileInfo struct {
 }
 
 type CloneResult struct {
+	delete        map[string]deleteInfo
+	fileToSymlink map[string]string
 	updateOrAdd   []fileInfo
-	delete        []string
 	failuresCount int
 }
 
@@ -80,8 +85,11 @@ func (cr *CloneResult) failures() int {
 
 func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 	iter := c.bucket.List(nil)
-	info := make(infoType, len(c.info))
-	cr := new(CloneResult)
+	cr := &CloneResult{
+		delete: make(map[string]deleteInfo),
+	}
+	fileToSymlink := make(map[string]string)
+	symlinkToFile := make(symlinkToFileType)
 	for {
 		obj, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
@@ -96,29 +104,37 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 		if util.FileType(file) == util.FileTypeNotIndexed {
 			continue
 		}
-		info[file] = eTag
-		if eTag != nil && bytes.Equal(eTag, c.info[file]) {
+
+		if eTag == nil {
+			return nil, fmt.Errorf("eTag for the blob object is not available: %w", err)
+		}
+
+		symlink := fmt.Sprintf("%x%s", eTag, filepath.Ext(file))
+		fileToSymlink[file] = symlink
+		symlinkToFile[symlink] = file
+		if _, ok := c.symlinkToFile[symlink]; ok {
 			continue
 		}
-		if err = c.downloadToFile(ctx, obj.Key, file); err != nil {
-			c.log.Errorw("Failed to download file", "error", err, "file", file)
+
+		if err = c.downloadToFile(ctx, obj.Key, symlink); err != nil {
+			c.log.Errorw("Failed to download file", "error", err, "key", obj.Key, "file", symlink)
 			cr.failuresCount++
 		} else {
 			cr.updateOrAdd = append(cr.updateOrAdd, fileInfo{file: file, etag: eTag})
 		}
 	}
 
-	for key := range c.info {
-		if _, ok := info[key]; !ok {
-			c.log.Debugw("Removing file", "file", key)
-			err := c.fsys.Remove(key)
-			if err != nil {
-				return nil, err
+	for symlink, file := range c.symlinkToFile {
+		if _, ok := symlinkToFile[symlink]; !ok {
+			cr.delete[file] = deleteInfo{
+				file:    file,
+				symlink: symlink,
 			}
-			cr.delete = append(cr.delete, key)
 		}
 	}
-	c.info = info
+
+	cr.fileToSymlink = fileToSymlink
+	c.symlinkToFile = symlinkToFile
 	return cr, nil
 }
 
@@ -150,8 +166,8 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 	return nil
 }
 
-func (c *Cloner) calculateInfo() (infoType, error) {
-	result := make(infoType)
+func (c *Cloner) calculateSymlinkToFile() (symlinkToFileType, error) {
+	result := make(symlinkToFileType)
 	err := fs.WalkDir(c.fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -159,7 +175,7 @@ func (c *Cloner) calculateInfo() (infoType, error) {
 		if d.IsDir() || !util.IsSupportedFileType(path) {
 			return nil
 		}
-		result[path] = nil
+		result[path] = ""
 		return nil
 	})
 	if err != nil {

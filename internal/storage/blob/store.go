@@ -12,22 +12,19 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
-
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
-	"google.golang.org/protobuf/types/known/structpb"
-
-	// Import gcsblob package to register GCS driver.
 	"gocloud.dev/blob/gcsblob"
 	"gocloud.dev/blob/s3blob"
 	"gocloud.dev/gcp"
+	"google.golang.org/protobuf/types/known/structpb"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -65,11 +62,15 @@ func init() {
 			return nil, err
 		}
 
-		if err := validateOrCreateWorkDir(conf.WorkDir); err != nil {
+		if err := removeAndCreateDir(conf.CacheDir); err != nil {
 			return nil, err
 		}
 
-		c, err := NewCloner(bucket, storeFS{dir: conf.WorkDir})
+		if err := removeAndCreateDir(conf.WorkDir); err != nil {
+			return nil, err
+		}
+
+		c, err := NewCloner(bucket, storeFS{dir: conf.CacheDir})
 		if err != nil {
 			return nil, err
 		}
@@ -137,20 +138,13 @@ func openS3Bucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bu
 	return opener.OpenBucketURL(ctx, bucketURL)
 }
 
-func validateOrCreateWorkDir(workDir string) error {
-	fileInfo, err := os.Stat(workDir)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("failed to stat workDir %q: %w", workDir, err)
-		}
-
-		if err := os.MkdirAll(workDir, 0o744); err != nil { //nolint:mnd
-			return fmt.Errorf("failed to create workDir %q: %w", workDir, err)
-		}
+func removeAndCreateDir(dir string) error {
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("failed to remove directory %q: %w", dir, err)
 	}
 
-	if fileInfo != nil && !fileInfo.IsDir() {
-		return fmt.Errorf("workDir is not a directory: %s", workDir)
+	if err := os.MkdirAll(dir, 0o744); err != nil { //nolint:mnd
+		return fmt.Errorf("failed to create dir %q: %w", dir, err)
 	}
 
 	return nil
@@ -162,11 +156,14 @@ type bucketCloner interface {
 
 type Store struct {
 	*storage.SubscriptionManager
-	log    *zap.SugaredLogger
-	conf   *Conf
-	idx    index.Index
-	cloner bucketCloner
-	fsys   fs.FS
+	log              *zap.SugaredLogger
+	conf             *Conf
+	idx              index.Index
+	cloner           bucketCloner
+	cacheFS          fs.FS
+	workFS           fs.FS
+	deleteLater      map[string]deleteInfo
+	updateOrAddLater []fileInfo
 }
 
 func (s *Store) Subscribe(sub storage.Subscriber) {
@@ -175,10 +172,11 @@ func (s *Store) Subscribe(sub storage.Subscriber) {
 
 func NewStore(ctx context.Context, conf *Conf, cloner bucketCloner) (*Store, error) {
 	s := &Store{
-		log:                 zap.S().Named(DriverName).With("bucket", conf.Bucket, "workDir", conf.WorkDir),
+		log:                 zap.S().Named(DriverName).With("bucket", conf.Bucket, "cacheDir", conf.CacheDir, "workDir", conf.WorkDir),
 		conf:                conf,
 		cloner:              cloner,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		deleteLater:         make(map[string]deleteInfo),
 	}
 
 	if err := s.init(ctx); err != nil {
@@ -191,19 +189,54 @@ func NewStore(ctx context.Context, conf *Conf, cloner bucketCloner) (*Store, err
 
 var ErrPartialFailureToDownloadOnInit = errors.New("failed to download some files from the bucket")
 
-func (s *Store) init(ctx context.Context) error {
-	s.fsys = os.DirFS(s.conf.WorkDir)
+func (s *Store) clearWorkDir() error {
+	absWorkDir, err := filepath.Abs(s.conf.WorkDir)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path of work dir: %w", err)
+	}
 
-	if cr, err := s.clone(ctx); err != nil {
+	if err := filepath.WalkDir(s.conf.WorkDir, func(path string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path == absWorkDir {
+			return nil
+		}
+
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("failed to remove at path %q: %w", path, err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to walk directory: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Store) init(ctx context.Context) error {
+	s.cacheFS = os.DirFS(s.conf.CacheDir)
+	s.workFS = os.DirFS(s.conf.WorkDir)
+	if err := s.clearWorkDir(); err != nil {
+		return fmt.Errorf("failed to clear work dir %q: %w", s.conf.WorkDir, err)
+	}
+
+	cr, err := s.clone(ctx)
+	if err != nil {
 		s.log.Errorw("Failed to clone blob store", "error", err)
-		return err
+		return fmt.Errorf("failed to clone blob store: %w", err)
 	} else if cr.failuresCount > 0 {
 		s.log.Errorf("Failed to download (%d) files from the bucket %q", cr.failuresCount, s.conf.Bucket)
 		return ErrPartialFailureToDownloadOnInit
 	}
 
-	var err error
-	s.idx, err = index.Build(ctx, s.fsys, index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
+	if err := s.createSymlinks(s.conf.WorkDir, cr.fileToSymlink); err != nil {
+		return fmt.Errorf("failed to create symbolic links for the files: %w", err)
+	}
+
+	s.idx, err = index.Build(ctx, s.workFS, index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
 	if err != nil {
 		s.log.Errorw("Failed to build index", "error", err)
 		return err
@@ -240,39 +273,87 @@ func (s *Store) updateIndex(ctx context.Context) error {
 
 	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(changes.updateOrAdd), len(changes.delete))
 
-	var p *policyv1.Policy
-	var event storage.Event
-	for _, f := range changes.updateOrAdd {
-		if schemaFile, ok := util.RelativeSchemaPath(f.file); ok {
-			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
+	tmpIndexDir, err := os.MkdirTemp("", "cerbos-blob-index-dir-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory for index: %w", err)
+	}
+	defer os.RemoveAll(tmpIndexDir)
+	s.log.Debugw("Temporary index directory is created", "indexDir", tmpIndexDir)
+
+	if err := s.createSymlinks(tmpIndexDir, changes.fileToSymlink); err != nil {
+		s.log.Errorw("Failed to create symbolic links for the files", "error", err)
+		return err
+	}
+
+	tmpIndexFS := os.DirFS(tmpIndexDir)
+	if _, err := index.Build(ctx, tmpIndexFS, index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr)); err != nil {
+		for _, delInfo := range changes.delete {
+			s.deleteLater[delInfo.file] = delInfo
+		}
+		s.updateOrAddLater = append(s.updateOrAddLater, changes.updateOrAdd...)
+		s.log.Errorw("Failed to build the temporary index from the changed files", "error", err)
+		return err
+	}
+
+	absCacheDir, err := filepath.Abs(s.conf.CacheDir)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path of the cache directory %q: %w", s.conf.CacheDir, err)
+	}
+
+	absWorkDir, err := filepath.Abs(s.conf.WorkDir)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path of the work directory: %w", err)
+	}
+
+	for _, file := range changes.updateOrAdd {
+		delete(s.deleteLater, file.file)
+		symlink, ok := changes.fileToSymlink[file.file]
+		if !ok {
+			return fmt.Errorf("failed to find symlink for file %q", file.file)
+		}
+
+		if err := s.addOrUpdate(tmpIndexFS, absCacheDir, symlink, absWorkDir, file.file, file.etag); err != nil {
+			return fmt.Errorf("failed to add or update file: %w", err)
+		}
+	}
+
+	for _, file := range s.updateOrAddLater {
+		delete(s.deleteLater, file.file)
+		if delInfo, ok := changes.delete[file.file]; ok {
+			pathToSymlink := filepath.Join(absCacheDir, delInfo.symlink)
+			s.log.Debugw("Removing symlink file removed between changes", "file", pathToSymlink)
+			if err := os.Remove(pathToSymlink); err != nil {
+				return fmt.Errorf("failed to remove symlink file removed between changes  %q: %w", pathToSymlink, err)
+			}
+			delete(changes.delete, file.file)
 			continue
 		}
 
-		p, err = policy.ReadPolicyFromFile(s.fsys, f.file)
-		if err != nil {
-			return err
-		}
-		entry := index.Entry{File: f.file, Policy: policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(f.etag)))}
-		event, err = s.idx.AddOrUpdate(entry)
-		if err != nil {
-			return err
-		}
-		s.NotifySubscribers(event)
-	}
-
-	for _, f := range changes.delete {
-		if schemaFile, ok := util.RelativeSchemaPath(f); ok {
-			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile))
-			continue
+		symlink, ok := changes.fileToSymlink[file.file]
+		if !ok {
+			return fmt.Errorf("failed to find symlink for file %q", file.file)
 		}
 
-		entry := index.Entry{File: f}
-		event, err = s.idx.Delete(entry)
-		if err != nil {
-			return err
+		if err := s.addOrUpdate(tmpIndexFS, absCacheDir, symlink, absWorkDir, file.file, file.etag); err != nil {
+			return fmt.Errorf("failed to add or update file: %w", err)
 		}
-		s.NotifySubscribers(event)
 	}
+	clear(s.updateOrAddLater)
+
+	for _, delInfo := range changes.delete {
+		symlinkPath := filepath.Join(absCacheDir, delInfo.symlink)
+		if err := s.delete(delInfo.file, absWorkDir, symlinkPath); err != nil {
+			return fmt.Errorf("failed to delete file: %w", err)
+		}
+	}
+
+	for _, delInfo := range s.deleteLater {
+		symlinkPath := filepath.Join(absCacheDir, delInfo.symlink)
+		if err := s.delete(delInfo.file, absWorkDir, symlinkPath); err != nil {
+			return fmt.Errorf("failed to delete file: %w", err)
+		}
+	}
+	clear(s.deleteLater)
 
 	s.log.Info("Index updated")
 	return nil
@@ -303,6 +384,96 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 			metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
 		}
 	}
+}
+
+func (s *Store) createSymlink(destination, source string) error {
+	if _, err := os.Lstat(source); err == nil {
+		if err := os.Remove(source); err != nil {
+			return fmt.Errorf("failed to delete left-over symlink at %q: %w", source, err)
+		}
+	}
+
+	//nolint:mnd
+	if err := os.MkdirAll(filepath.Dir(source), 0o744); err != nil {
+		return fmt.Errorf("failed to create directory %q: %w", filepath.Dir(source), err)
+	}
+
+	if err := os.Symlink(destination, source); err != nil {
+		return fmt.Errorf("failed to create symlink to destination %q from source %q: %w", destination, source, err)
+	}
+
+	return nil
+}
+
+func (s *Store) createSymlinks(dir string, fileToSymlink map[string]string) error {
+	absCacheDir, err := filepath.Abs(s.conf.CacheDir)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path of the cache directory %q: %w", s.conf.CacheDir, err)
+	}
+
+	for file, symlink := range fileToSymlink {
+		source := filepath.Join(dir, file)
+		destination := filepath.Join(absCacheDir, symlink)
+		if err := s.createSymlink(destination, source); err != nil {
+			return fmt.Errorf("failed to create symlink to destinatiın %q from source %s: %w", destination, source, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Store) addOrUpdate(fs fs.FS, destinationDir, destinationFile, sourceDir, sourceFile string, sourceETag []byte) error {
+	source := filepath.Join(sourceDir, sourceFile)
+	destination := filepath.Join(destinationDir, destinationFile)
+	if err := s.createSymlink(destination, source); err != nil {
+		return fmt.Errorf("failed to create symlink to destination %q from source %q: %w", destination, source, err)
+	}
+
+	if schemaFile, ok := util.RelativeSchemaPath(sourceFile); ok {
+		s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
+		return nil
+	}
+
+	p, err := policy.ReadPolicyFromFile(fs, sourceFile)
+	if err != nil {
+		return err
+	}
+
+	entry := index.Entry{File: sourceFile, Policy: policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(sourceETag)))}
+	event, err := s.idx.AddOrUpdate(entry)
+	if err != nil {
+		return err
+	}
+
+	s.NotifySubscribers(event)
+	return nil
+}
+
+func (s *Store) delete(file, fileDir, pathToSymlink string) error {
+	s.log.Debugw("Removing symlink file", "file", pathToSymlink)
+	if err := os.Remove(pathToSymlink); err != nil {
+		return fmt.Errorf("failed to remove symlink file %q: %w", pathToSymlink, err)
+	}
+
+	pathToFile := filepath.Join(fileDir, file)
+	s.log.Debugw("Removing file", "file", pathToFile)
+	if err := os.Remove(pathToFile); err != nil {
+		return fmt.Errorf("failed to remove file %q: %w", pathToFile, err)
+	}
+
+	if schemaFile, ok := util.RelativeSchemaPath(file); ok {
+		s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile))
+		return nil
+	}
+
+	entry := index.Entry{File: file}
+	event, err := s.idx.Delete(entry)
+	if err != nil {
+		return err
+	}
+
+	s.NotifySubscribers(event)
+	return nil
 }
 
 func (s *Store) Driver() string {
