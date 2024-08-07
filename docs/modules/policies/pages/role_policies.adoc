@@ -1,0 +1,47 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Role policies
+
+include::ROOT:partial$version-check.adoc[]
+
+
+Role policies are simple RBAC policies in which you specify a number of resources; each with a set of permissible actions that the role can carry out on the resource. You can view it as a per-role matrix of resource/action rows/columns whereby each set "cell" is an `ALLOW`. They do not support conditions.
+
+Role policies are evaluated before resource policies but do not guarantee an `ALLOW` -- see below for more details.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: "acme_admin" <1>
+  scope: "acme.hr.uk" <2>
+  rules:
+    - resource: leave_request <3>
+      permissibleActions: <4>
+        - view:* <5>
+        - deny
+
+    - resource: salary_record
+      permissibleActions:
+        - edit
+
+    - resource: "*" <6>
+      permissibleActions: ["create"]
+----
+<1> The role to which this policy applies.
+<2> Optional principal xref:scoped_policies.adoc[scope] for this policy.
+<3> The resource to which the following rule applies.
+<4> The list of permissible actions that the role can carry out on the given resource.
+<5> Wildcard actions are supported.
+<6> Wildcard resources are also supported.
+
+== Evaluation
+
+During evaluation of a check request, a role policy is only evaluated if it has a matching principal role and scope. For the policy above, the principal would need to have the role `acme_admin` and the scope `acme.hr.uk`. If a principal has more than one role, the evaluator can return more than one role policy. The union of the `resource` lists is then taken which provides a larger potential pool of matching `resource:action` pairs.
+
+Policies are evaluated from most to least specific. If there is a principal policy matching the principal it is evaluated first, followed by any matching role policies as described above. Finally, any applicable resource policies are evaluated to produce the final access decision.
+
+If a `resource:action` pairing is not explicitly set in any of the role policies, that pairing will immediately resolve to a `DENY`. Otherwise, that given `resource:action` pairing will fall through to any resource policies for further evaluation.
+
+IMPORTANT: Unlike resource policies, role policies do not guarantee an `ALLOW`; only that the request is permitted to fall through to the resource policies for further evaluation. In order for a role policy `ALLOW` to be honoured, a matching rule must exist and evaluate to `ALLOW` in the underlying resource policies, otherwise, the request will return `DENY`.
