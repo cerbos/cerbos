@@ -237,6 +237,64 @@ func (_c *Index_Delete_Call) RunAndReturn(run func(index.Entry) (storage.Event, 
 	return _c
 }
 
+// GetAll provides a mock function with given fields: _a0
+func (_m *Index) GetAll(_a0 []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 []*policy.CompilationUnit
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]namer.ModuleID) ([]*policy.CompilationUnit, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func([]namer.ModuleID) []*policy.CompilationUnit); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*policy.CompilationUnit)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]namer.ModuleID) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Index_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
+type Index_GetAll_Call struct {
+	*mock.Call
+}
+
+// GetAll is a helper method to define mock.On call
+//   - _a0 []namer.ModuleID
+func (_e *Index_Expecter) GetAll(_a0 interface{}) *Index_GetAll_Call {
+	return &Index_GetAll_Call{Call: _e.mock.On("GetAll", _a0)}
+}
+
+func (_c *Index_GetAll_Call) Run(run func(_a0 []namer.ModuleID)) *Index_GetAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]namer.ModuleID))
+	})
+	return _c
+}
+
+func (_c *Index_GetAll_Call) Return(_a0 []*policy.CompilationUnit, _a1 error) *Index_GetAll_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Index_GetAll_Call) RunAndReturn(run func([]namer.ModuleID) ([]*policy.CompilationUnit, error)) *Index_GetAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllCompilationUnits provides a mock function with given fields: _a0
 func (_m *Index) GetAllCompilationUnits(_a0 context.Context) <-chan *policy.CompilationUnit {
 	ret := _m.Called(_a0)

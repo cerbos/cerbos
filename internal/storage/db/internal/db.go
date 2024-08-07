@@ -43,6 +43,7 @@ type DBStorage interface {
 	storage.Verifiable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
+	GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error)
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
@@ -307,6 +308,22 @@ func (s *dbStorage) GetFirstMatch(ctx context.Context, candidates []namer.Module
 	}
 
 	return nil, nil
+}
+
+func (s *dbStorage) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+	cus, err := s.GetCompilationUnits(ctx, modIDs...)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*policy.CompilationUnit, len(cus))
+	var i int
+	for _, cu := range cus {
+		res[i] = cu
+		i++
+	}
+
+	return res, nil
 }
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {

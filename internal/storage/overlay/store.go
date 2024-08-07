@@ -174,6 +174,16 @@ func (s *Store) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) 
 	)
 }
 
+func (s *Store) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	return withCircuitBreaker(
+		s,
+		func() ([]*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetAll(ctx, modIDs) },
+		func() ([]*runtimev1.RunnablePolicySet, error) {
+			return s.fallbackPolicyLoader.GetAll(ctx, modIDs)
+		},
+	)
+}
+
 //
 // Store interface methods
 //

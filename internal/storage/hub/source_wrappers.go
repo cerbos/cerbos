@@ -64,6 +64,12 @@ func (is instrumentedSource) GetFirstMatch(ctx context.Context, candidates []nam
 	})
 }
 
+func (is instrumentedSource) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	return measureBinaryOp(ctx, is.name, "GetAll", func(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+		return is.source.GetAll(ctx, modIDs)
+	})
+}
+
 func (is instrumentedSource) Reload(ctx context.Context) error {
 	if r, ok := is.source.(storage.Reloadable); ok {
 		return r.Reload(ctx)

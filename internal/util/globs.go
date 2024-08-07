@@ -4,10 +4,14 @@
 package util
 
 import (
+	"strings"
+
 	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/gobwas/glob"
 	"go.uber.org/zap"
 )
+
+const wildcardAny = rune('*')
 
 var globs = &globCache{cache: cache.New[string, glob.Glob]("glob", 1024)} //nolint:mnd
 
@@ -71,4 +75,41 @@ func fixGlob(g string) string {
 	}
 
 	return g
+}
+
+type GlobMap[T any] struct {
+	literals map[string]T
+	globs    map[string]T
+}
+
+func NewGlobMap[T any](m map[string]T) *GlobMap[T] {
+	gm := &GlobMap[T]{
+		literals: make(map[string]T),
+		globs:    make(map[string]T),
+	}
+
+	for k, v := range m {
+		if strings.ContainsRune(k, wildcardAny) {
+			gm.globs[k] = v
+		} else {
+			gm.literals[k] = v
+		}
+	}
+
+	return gm
+}
+
+func (gm *GlobMap[T]) Get(k string) T {
+	if v, ok := gm.literals[k]; ok {
+		return v
+	}
+
+	for g, v := range gm.globs {
+		if MatchesGlob(g, k) {
+			return v
+		}
+	}
+
+	var zero T
+	return zero
 }

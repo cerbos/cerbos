@@ -65,6 +65,8 @@ func (s *statsCollector) add(p policy.Wrapper) {
 		ps = s.procPrincipalPolicy(p.GetPrincipalPolicy())
 	case policy.ResourceKind:
 		ps = s.procResourcePolicy(p.GetResourcePolicy())
+	case policy.RolePolicyKind:
+		ps = s.procRolePolicy(p.GetRolePolicy())
 	}
 
 	s.ruleCount[p.Kind] += ps.ruleCount
@@ -136,6 +138,23 @@ func (s *statsCollector) procResourcePolicy(rp *policyv1.ResourcePolicy) (ps pol
 		if psch := sch.GetPrincipalSchema(); psch != nil {
 			s.schemaRefs[util.HashStr(psch.Ref)] = struct{}{}
 		}
+	}
+
+	return ps
+}
+
+func (s *statsCollector) procRolePolicy(rp *policyv1.RolePolicy) (ps policyStats) {
+	if rp == nil {
+		return ps
+	}
+
+	ps.ruleCount = len(rp.Rules)
+
+	// Role policies are modeled differently to resource/principal policies.
+	// We map a set of permissible actions for a given resource, so from a stats perspective,
+	// each permissible action is treated as an individual condition.
+	for _, r := range rp.Rules {
+		ps.conditionCount += len(r.PermissibleActions)
 	}
 
 	return ps
