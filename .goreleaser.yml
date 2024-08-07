@@ -339,16 +339,6 @@ docker_manifests:
       - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-amd64"
       - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-arm64"
 
-  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:latest"
-    image_templates:
-      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-amd64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:latest-arm64"
-
-  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:dev"
-    image_templates:
-      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-amd64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:dev-arm64"
-
 docker_signs:
   - id: sign-images
     cmd: cosign
