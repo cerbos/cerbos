@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=../.jsonschema/BlobClonerTestCase.schema.json
+inputs:
+  - addOrUpdate:
+      name: common_roles.yaml
+      content: |-
+        apiVersion: api.cerbos.dev/v1
+        derivedRoles:
+          name: common_roles
+          definitions:
+            - name: admin
+              parentRoles:
+                - admin
+  - addOrUpdate:
+      name: leave_request.yaml
+      content: |-
+        apiVersion: api.cerbos.dev/v1
+        resourcePolicy:
+          resource: leave_request
+          version: default
+          importDerivedRoles:
+            - common_roles
+steps:
+  - expectation:
+      all:
+        c7fcc21b4265143bd403a1fa00b3cae7:
+          files:
+            - common_roles.yaml
+        7a5fdbca0510a02602ba1d40a3f5f55a:
+          files:
+            - leave_request.yaml
+      addedOrUpdated:
+        - file: common_roles.yaml
+          etag: c7fcc21b4265143bd403a1fa00b3cae7
+        - file: leave_request.yaml
+          etag: 7a5fdbca0510a02602ba1d40a3f5f55a
+  - differences:
+      files:
+        - delete:
+            name: leave_request.yaml
+  - expectation:
+      all:
+        c7fcc21b4265143bd403a1fa00b3cae7:
+          files:
+            - common_roles.yaml
+      deleted:
+        - file: leave_request.yaml
+          etag: 7a5fdbca0510a02602ba1d40a3f5f55a
+      danglingEtags:
+        - 7a5fdbca0510a02602ba1d40a3f5f55a

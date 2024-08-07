@@ -1,0 +1,137 @@
+{
+  "$id": "https://api.cerbos.test/cerbos/private/v1/BlobClonerTestCase.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.private.v1.BlobClonerTestCase.File": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "addOrUpdate": {
+          "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate"
+        },
+        "delete": {
+          "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.File.Delete"
+        }
+      }
+    },
+    "cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.private.v1.BlobClonerTestCase.File.Delete": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.private.v1.BlobClonerTestCase.Step": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "differences": {
+          "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.Step.Differences"
+        },
+        "expectation": {
+          "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.Step.Expectation"
+        }
+      }
+    },
+    "cerbos.private.v1.BlobClonerTestCase.Step.Differences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.File"
+          }
+        }
+      }
+    },
+    "cerbos.private.v1.BlobClonerTestCase.Step.Expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "addedOrUpdated": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info"
+          }
+        },
+        "all": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Files"
+          }
+        },
+        "danglingEtags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deleted": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info"
+          }
+        },
+        "failuresCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Files": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "etag": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.File"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.Step"
+      }
+    }
+  }
+}

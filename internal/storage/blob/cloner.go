@@ -4,13 +4,13 @@
 package blob
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"go.uber.org/multierr"
@@ -28,60 +28,45 @@ type clonerFS interface {
 	MkdirAll(path string, perm fs.FileMode) error
 }
 
-type infoType map[string][]byte
-
 type Cloner struct {
-	log    *zap.SugaredLogger
-	bucket *blob.Bucket
-	fsys   clonerFS
-	info   infoType // map[path]eTag
+	bucket        *blob.Bucket
+	fsys          clonerFS
+	log           *zap.SugaredLogger
+	state         map[string][]string
+	danglingEtags []string
 }
 
-// NewCloner creates an object to clone the bucket and saves
-// supported files in the fsys.
-func NewCloner(bucket *blob.Bucket, fsys clonerFS) (*Cloner, error) {
-	c := &Cloner{
+func NewCloner(bucket *blob.Bucket, fsys clonerFS) *Cloner {
+	return &Cloner{
 		bucket: bucket,
 		log:    zap.S().Named("blob.cloner"),
 		fsys:   fsys,
+		state:  make(map[string][]string),
 	}
-
-	info, err := c.calculateInfo()
-	c.log.Debugf("Checkout dir contains (%d) files", len(info))
-	if err != nil {
-		return nil, err
-	}
-	c.info = info
-	return c, nil
 }
 
-type fileInfo struct {
+type info struct {
+	etag string
 	file string
-	etag []byte
 }
 
 type CloneResult struct {
-	updateOrAdd   []fileInfo
-	delete        []string
-	failuresCount int
+	all            map[string][]string
+	addedOrUpdated []info
+	deleted        []info
+	failuresCount  int
 }
 
 func (cr *CloneResult) isEmpty() bool {
-	return cr == nil || (len(cr.updateOrAdd) == 0 && len(cr.delete) == 0)
-}
-
-func (cr *CloneResult) failures() int {
-	if cr == nil {
-		return 0
-	}
-
-	return cr.failuresCount
+	return cr == nil || (len(cr.addedOrUpdated) == 0 && len(cr.deleted) == 0)
 }
 
 func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 	iter := c.bucket.List(nil)
-	info := make(infoType, len(c.info))
-	cr := new(CloneResult)
+
+	all := make(map[string][]string)
+	var addedOrUpdated []info
+	var failuresCount int
 	for {
 		obj, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
@@ -91,45 +76,83 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			c.log.Errorw("Failed to get next item", "error", err)
 			return nil, fmt.Errorf("failed to get next object in the bucket: %w", err)
 		}
+
 		file := strings.TrimPrefix(obj.Key, "/")
-		eTag := obj.MD5
 		if util.FileType(file) == util.FileTypeNotIndexed {
 			continue
 		}
-		info[file] = eTag
-		if eTag != nil && bytes.Equal(eTag, c.info[file]) {
+
+		if obj.MD5 == nil {
+			return nil, fmt.Errorf("blob object doesn't have md5 specified: %w", err)
+		}
+
+		if !util.IsSupportedFileType(file) {
+			c.log.Debugw("Unsupported file is ignored", "file", file)
 			continue
 		}
-		if err = c.downloadToFile(ctx, obj.Key, file); err != nil {
-			c.log.Errorw("Failed to download file", "error", err, "file", file)
-			cr.failuresCount++
+
+		etag := fmt.Sprintf("%x", obj.MD5)
+		all[etag] = append(all[etag], file)
+
+		if existingFiles, ok := c.state[etag]; ok {
+			if !slices.Contains(existingFiles, file) {
+				addedOrUpdated = append(addedOrUpdated, info{
+					etag: etag,
+					file: file,
+				})
+			}
+
+			continue
+		}
+
+		if err = c.downloadToFile(ctx, obj.Key, etag); err != nil {
+			c.log.Errorw("Failed to download file", "error", err, "etag", etag, "file", file)
+			failuresCount++
 		} else {
-			cr.updateOrAdd = append(cr.updateOrAdd, fileInfo{file: file, etag: eTag})
+			addedOrUpdated = append(addedOrUpdated, info{
+				etag: etag,
+				file: file,
+			})
 		}
 	}
 
-	for key := range c.info {
-		if _, ok := info[key]; !ok {
-			c.log.Debugw("Removing file", "file", key)
-			err := c.fsys.Remove(key)
-			if err != nil {
-				return nil, err
+	var danglingEtags []string
+	var deleted []info
+	for etag, existingFiles := range c.state {
+		for _, existingFile := range existingFiles {
+			if files, ok := all[etag]; !ok {
+				deleted = append(deleted, info{
+					etag: etag,
+					file: existingFile,
+				})
+
+				// This etag is not referenced from any file, we should get rid of it later.
+				danglingEtags = append(danglingEtags, etag)
+			} else if !slices.Contains(files, existingFile) {
+				deleted = append(deleted, info{
+					etag: etag,
+					file: existingFile,
+				})
 			}
-			cr.delete = append(cr.delete, key)
 		}
 	}
-	c.info = info
-	return cr, nil
+
+	c.danglingEtags = danglingEtags
+	c.state = all
+	return &CloneResult{
+		all:            all,
+		addedOrUpdated: addedOrUpdated,
+		deleted:        deleted,
+		failuresCount:  failuresCount,
+	}, nil
 }
 
-func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
-	// Create the directories in the path
+func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	dir := filepath.Dir(file)
-	if err = c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
+	if err := c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to make dir %q: %w", dir, err)
 	}
 
-	// Set up the local file
 	fd, err := c.fsys.Create(file)
 	if err != nil {
 		return fmt.Errorf("failed to create a file %q: %w", file, err)
@@ -150,21 +173,15 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 	return nil
 }
 
-func (c *Cloner) calculateInfo() (infoType, error) {
-	result := make(infoType)
-	err := fs.WalkDir(c.fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+func (c *Cloner) Clean() error {
+	var errs error
+	for _, etag := range c.danglingEtags {
+		c.log.Debugw("Removing dangling etag file", "etag", etag)
+		if err := c.fsys.Remove(etag); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("failed to remove dangling etag file %s: %w", etag, err))
 		}
-		if d.IsDir() || !util.IsSupportedFileType(path) {
-			return nil
-		}
-		result[path] = nil
-		return nil
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	return result, nil
+	c.danglingEtags = nil
+	return errs
 }

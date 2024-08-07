@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 )
 
+var _ clonerFS = storeFS{}
+
 type storeFS struct {
 	dir string
 }

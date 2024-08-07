@@ -45,6 +45,55 @@ message InspectTestCase {
   PolicySetsExpectation policy_sets_expectation = 4;
 }
 
+message BlobClonerTestCase {
+  message File {
+    message AddOrUpdate {
+      string name = 1;
+      string content = 2; // Using string type as opposed to policy or schema to prevent protojson.Marshal from generating different files and breaking md5 hashes.
+    }
+
+    message Delete {
+      string name = 1;
+    }
+
+    oneof operation {
+      AddOrUpdate add_or_update = 1;
+      Delete delete = 2;
+    }
+  }
+
+  message Step {
+    message Differences {
+      repeated File files = 1;
+    }
+
+    message Expectation {
+      message Files {
+        repeated string files = 1;
+      }
+
+      message Info {
+        string etag = 1;
+        string file = 2;
+      }
+
+      map<string, Files> all = 1;
+      repeated Info added_or_updated = 2;
+      repeated Info deleted = 3;
+      uint32 failures_count = 4;
+      repeated string dangling_etags = 5;
+    }
+
+    oneof op {
+      Expectation expectation = 1;
+      Differences differences = 2;
+    }
+  }
+
+  repeated File inputs = 1;
+  repeated Step steps = 2;
+}
+
 message EngineTestCase {
   string description = 1;
   repeated cerbos.engine.v1.CheckInput inputs = 2;

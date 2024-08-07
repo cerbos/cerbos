@@ -1924,6 +1924,174 @@ func cerbos_private_v1_AttrWrapper_hashpb_sum(m *AttrWrapper, hasher hash.Hash, 
 	}
 }
 
+func cerbos_private_v1_BlobClonerTestCase_File_AddOrUpdate_hashpb_sum(m *BlobClonerTestCase_File_AddOrUpdate, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate.content"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetContent()))
+
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_File_Delete_hashpb_sum(m *BlobClonerTestCase_File_Delete, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.File.Delete.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
+
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_File_hashpb_sum(m *BlobClonerTestCase_File, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Operation != nil {
+		if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.File.operation"]; !ok {
+			switch t := m.Operation.(type) {
+			case *BlobClonerTestCase_File_AddOrUpdate_:
+				if t.AddOrUpdate != nil {
+					cerbos_private_v1_BlobClonerTestCase_File_AddOrUpdate_hashpb_sum(t.AddOrUpdate, hasher, ignore)
+				}
+
+			case *BlobClonerTestCase_File_Delete_:
+				if t.Delete != nil {
+					cerbos_private_v1_BlobClonerTestCase_File_Delete_hashpb_sum(t.Delete, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_Step_Differences_hashpb_sum(m *BlobClonerTestCase_Step_Differences, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Differences.files"]; !ok {
+		if len(m.Files) > 0 {
+			for _, v := range m.Files {
+				if v != nil {
+					cerbos_private_v1_BlobClonerTestCase_File_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_Step_Expectation_Files_hashpb_sum(m *BlobClonerTestCase_Step_Expectation_Files, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Files.files"]; !ok {
+		if len(m.Files) > 0 {
+			for _, v := range m.Files {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_Step_Expectation_Info_hashpb_sum(m *BlobClonerTestCase_Step_Expectation_Info, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info.etag"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetEtag()))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetFile()))
+
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_Step_Expectation_hashpb_sum(m *BlobClonerTestCase_Step_Expectation, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.all"]; !ok {
+		if len(m.All) > 0 {
+			keys := make([]string, len(m.All))
+			i := 0
+			for k := range m.All {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.All[k] != nil {
+					cerbos_private_v1_BlobClonerTestCase_Step_Expectation_Files_hashpb_sum(m.All[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.added_or_updated"]; !ok {
+		if len(m.AddedOrUpdated) > 0 {
+			for _, v := range m.AddedOrUpdated {
+				if v != nil {
+					cerbos_private_v1_BlobClonerTestCase_Step_Expectation_Info_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.deleted"]; !ok {
+		if len(m.Deleted) > 0 {
+			for _, v := range m.Deleted {
+				if v != nil {
+					cerbos_private_v1_BlobClonerTestCase_Step_Expectation_Info_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.failures_count"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetFailuresCount())))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.dangling_etags"]; !ok {
+		if len(m.DanglingEtags) > 0 {
+			for _, v := range m.DanglingEtags {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_Step_hashpb_sum(m *BlobClonerTestCase_Step, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Op != nil {
+		if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.op"]; !ok {
+			switch t := m.Op.(type) {
+			case *BlobClonerTestCase_Step_Expectation_:
+				if t.Expectation != nil {
+					cerbos_private_v1_BlobClonerTestCase_Step_Expectation_hashpb_sum(t.Expectation, hasher, ignore)
+				}
+
+			case *BlobClonerTestCase_Step_Differences_:
+				if t.Differences != nil {
+					cerbos_private_v1_BlobClonerTestCase_Step_Differences_hashpb_sum(t.Differences, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_BlobClonerTestCase_hashpb_sum(m *BlobClonerTestCase, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.inputs"]; !ok {
+		if len(m.Inputs) > 0 {
+			for _, v := range m.Inputs {
+				if v != nil {
+					cerbos_private_v1_BlobClonerTestCase_File_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.steps"]; !ok {
+		if len(m.Steps) > 0 {
+			for _, v := range m.Steps {
+				if v != nil {
+					cerbos_private_v1_BlobClonerTestCase_Step_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_private_v1_CelTestCase_hashpb_sum(m *CelTestCase, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.CelTestCase.condition"]; !ok {
 		if m.GetCondition() != nil {
