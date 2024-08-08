@@ -19,7 +19,6 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-// clonerFS represents file system interface that used by the Cloner.
 type clonerFS interface {
 	fs.FS
 	Remove(name string) error
@@ -27,69 +26,50 @@ type clonerFS interface {
 	MkdirAll(path string, perm fs.FileMode) error
 }
 
-type symlinkToFileType map[string]string
+type (
+	etagType      string
+	fileNameType  string
+	fileToETagMap map[fileNameType]etagType
+)
 
 type Cloner struct {
-	log           *zap.SugaredLogger
-	bucket        *blob.Bucket
-	fsys          clonerFS
-	symlinkToFile symlinkToFileType
+	bucket *blob.Bucket
+	fsys   clonerFS
+	log    *zap.SugaredLogger
+	state  fileToETagMap
 }
 
-// NewCloner creates an object to clone the bucket and saves
-// supported files in the fsys.
+type CloneResult struct {
+	all            fileToETagMap
+	addedOrUpdated fileToETagMap
+	deleted        fileToETagMap
+	failuresCount  int
+}
+
+func (cr *CloneResult) isEmpty() bool {
+	if cr == nil || (len(cr.addedOrUpdated) == 0 && len(cr.deleted) == 0) {
+		return true
+	}
+
+	return false
+}
+
 func NewCloner(bucket *blob.Bucket, fsys clonerFS) (*Cloner, error) {
 	c := &Cloner{
 		bucket: bucket,
 		log:    zap.S().Named("blob.cloner"),
 		fsys:   fsys,
+		state:  make(fileToETagMap),
 	}
 
-	symlinkToFile, err := c.calculateSymlinkToFile()
-	c.log.Debugf("Checkout dir contains (%d) files", len(symlinkToFile))
-	if err != nil {
-		return nil, err
-	}
-	c.symlinkToFile = symlinkToFile
 	return c, nil
-}
-
-type deleteInfo struct {
-	file    string
-	symlink string
-}
-
-type fileInfo struct {
-	file string
-	etag []byte
-}
-
-type CloneResult struct {
-	delete        map[string]deleteInfo
-	fileToSymlink map[string]string
-	updateOrAdd   []fileInfo
-	failuresCount int
-}
-
-func (cr *CloneResult) isEmpty() bool {
-	return cr == nil || (len(cr.updateOrAdd) == 0 && len(cr.delete) == 0)
-}
-
-func (cr *CloneResult) failures() int {
-	if cr == nil {
-		return 0
-	}
-
-	return cr.failuresCount
 }
 
 func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 	iter := c.bucket.List(nil)
-	cr := &CloneResult{
-		delete: make(map[string]deleteInfo),
-	}
-	fileToSymlink := make(map[string]string)
-	symlinkToFile := make(symlinkToFileType)
+	addedOrUpdated := make(fileToETagMap)
+	all := make(fileToETagMap)
+	var failuresCount int
 	for {
 		obj, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
@@ -99,53 +79,58 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			c.log.Errorw("Failed to get next item", "error", err)
 			return nil, fmt.Errorf("failed to get next object in the bucket: %w", err)
 		}
+
 		file := strings.TrimPrefix(obj.Key, "/")
-		eTag := obj.MD5
 		if util.FileType(file) == util.FileTypeNotIndexed {
 			continue
 		}
 
-		if eTag == nil {
-			return nil, fmt.Errorf("eTag for the blob object is not available: %w", err)
+		if obj.MD5 == nil {
+			return nil, fmt.Errorf("blob object doesn't have md5 specified: %w", err)
 		}
 
-		symlink := fmt.Sprintf("%x%s", eTag, filepath.Ext(file))
-		fileToSymlink[file] = symlink
-		symlinkToFile[symlink] = file
-		if _, ok := c.symlinkToFile[symlink]; ok {
+		if !util.IsSupportedFileType(file) {
+			c.log.Debugw("Unsupported file is ignored", "file", file)
 			continue
 		}
 
-		if err = c.downloadToFile(ctx, obj.Key, symlink); err != nil {
-			c.log.Errorw("Failed to download file", "error", err, "key", obj.Key, "file", symlink)
-			cr.failuresCount++
+		etag := etagType(fmt.Sprintf("%x", obj.MD5))
+		all[fileNameType(file)] = etag
+
+		if et, ok := c.state[fileNameType(file)]; ok && et == etag {
+			continue
+		}
+
+		if err = c.downloadToFile(ctx, obj.Key, string(etag)); err != nil {
+			c.log.Errorw("Failed to download file", "error", err, "etag", etag, "file", file)
+			failuresCount++
 		} else {
-			cr.updateOrAdd = append(cr.updateOrAdd, fileInfo{file: file, etag: eTag})
+			addedOrUpdated[fileNameType(file)] = etag
 		}
 	}
 
-	for symlink, file := range c.symlinkToFile {
-		if _, ok := symlinkToFile[symlink]; !ok {
-			cr.delete[file] = deleteInfo{
-				file:    file,
-				symlink: symlink,
-			}
+	deleted := make(fileToETagMap)
+	for file, etag := range c.state {
+		if _, ok := all[file]; !ok {
+			deleted[file] = etag
 		}
 	}
 
-	cr.fileToSymlink = fileToSymlink
-	c.symlinkToFile = symlinkToFile
-	return cr, nil
+	c.state = all
+	return &CloneResult{
+		all:            all,
+		addedOrUpdated: addedOrUpdated,
+		deleted:        deleted,
+		failuresCount:  failuresCount,
+	}, nil
 }
 
-func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
-	// Create the directories in the path
+func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	dir := filepath.Dir(file)
-	if err = c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
+	if err := c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to make dir %q: %w", dir, err)
 	}
 
-	// Set up the local file
 	fd, err := c.fsys.Create(file)
 	if err != nil {
 		return fmt.Errorf("failed to create a file %q: %w", file, err)
@@ -164,23 +149,4 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 	}
 
 	return nil
-}
-
-func (c *Cloner) calculateSymlinkToFile() (symlinkToFileType, error) {
-	result := make(symlinkToFileType)
-	err := fs.WalkDir(c.fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() || !util.IsSupportedFileType(path) {
-			return nil
-		}
-		result[path] = ""
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }

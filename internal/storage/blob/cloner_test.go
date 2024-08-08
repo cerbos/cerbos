@@ -14,18 +14,17 @@ func TestCloneResult(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	is := require.New(t)
 	ctx := context.Background()
 	dir := t.TempDir()
 	bucket := newMinioBucket(ctx, t, "policies")
 	cloner, err := NewCloner(bucket, storeFS{dir})
-	is.NoError(err)
+	require.NoError(t, err)
 	result, err := cloner.Clone(ctx)
-	is.NoError(err)
+	require.NoError(t, err)
 
-	have := make([]string, len(result.updateOrAdd))
-	for i, v := range result.updateOrAdd {
-		have[i] = v.file
+	have := make([]string, 0, len(result.addedOrUpdated))
+	for file := range result.addedOrUpdated {
+		have = append(have, string(file))
 	}
 
 	want := []string{
@@ -71,5 +70,5 @@ func TestCloneResult(t *testing.T) {
 		"role_policies/policy_02.yaml",
 	}
 
-	is.Equal(want, have)
+	require.ElementsMatch(t, want, have)
 }

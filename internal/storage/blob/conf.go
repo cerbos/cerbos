@@ -35,8 +35,6 @@ type Conf struct {
 	Bucket string `yaml:"bucket" conf:"required,example=\"s3://my-bucket-name?region=us-east-2\""`
 	// Prefix specifies a subdirectory to download.
 	Prefix string `yaml:"prefix,omitempty" conf:",example=policies"`
-	// CacheDir is the local path to keep the downloaded files.
-	CacheDir string `yaml:"cacheDir" conf:",example=${HOME}/tmp/cerbos/cache"`
 	// WorkDir is the local path to check out policies to.
 	WorkDir string `yaml:"workDir" conf:",example=${HOME}/tmp/cerbos/work"`
 	// UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
@@ -52,15 +50,6 @@ func (conf *Conf) Validate() error {
 
 	if conf.Bucket == "" {
 		errs = append(errs, errors.New("bucket is required"))
-	}
-
-	if conf.CacheDir == "" {
-		cacheDir, err := os.UserCacheDir()
-		if err != nil {
-			errs = append(errs, fmt.Errorf("cacheDir unspecified and failed to determine user cache dir: %w", err))
-		} else {
-			conf.CacheDir = filepath.Join(cacheDir, util.AppName, "cache", DriverName)
-		}
 	}
 
 	if conf.WorkDir == "" {
