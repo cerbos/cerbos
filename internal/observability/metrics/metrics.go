@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/host"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -180,10 +179,6 @@ var (
 func NewHandler() (http.Handler, error) {
 	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
 		return nil, fmt.Errorf("failed to start runtime metrics collector: %w", err)
-	}
-
-	if err := host.Start(); err != nil {
-		return nil, fmt.Errorf("failed to start host metrics collector: %w", err)
 	}
 
 	return promhttp.Handler(), nil
