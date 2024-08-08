@@ -96,7 +96,7 @@ CAUTION: If requests contain sensitive data such as authorization tokens, they w
 [#file]
 == File backend
 
-The `file` backend writes audit records as newline-delimited JSON to a file or stdout/stderr. With this backend you can use your existing log aggregation system (DataDog agent, Elastic agent, Fluentd, Graylog -- to name a few) to collect, process and archive the audit data from all Cerbos instances.
+The `file` backend writes audit records as newline-delimited JSON to a file or stdout/stderr. With this backend you can use your existing log aggregation system (Datadog agent, Elastic agent, Fluentd, Graylog -- to name a few) to collect, process and archive the audit data from all Cerbos instances.
 
 
 NOTE: This backend cannot be queried using the Admin API, `cerbosctl audit` or `cerbosctl decisions`.
