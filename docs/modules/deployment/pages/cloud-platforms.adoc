@@ -4,6 +4,247 @@ include::ROOT:partial$attributes.adoc[]
 
 include::ROOT:partial$version-check.adoc[]
 
+== AWS Marketplace
+
+Cerbos is avaliable via the link:https://aws.amazon.com/marketplace/pp/prodview-6kkahbtwv3gtq[AWS Marketplace] and can be deployed in either link:https://aws.amazon.com/eks/[Elastic Kubernetes Service (EKS)] or link:https://aws.amazon.com/ecs/[Elastic Container Service (ECS)].
+
+=== Elastic Kubernetes Service (EKS)
+
+==== Step 1: Create an IAM policy
+To deploy Cerbos from AWS Marketplace, you need to assign an IAM policy with appropriate IAM permission to a Kubernetes service account before starting the deployment. You can either use AWS managed policy `arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage` or create your own IAM policy.
+
+Here's an example IAM policy:
+
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "aws-marketplace:RegisterUsage"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+----
+
+==== Step 2: Create an IAM role for the Kubernetes service account (IRSA)
+
+Once the IAM role has been created, a Kubernetes service account needs to be created and assicated with the role. We recommend doing this via link:https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html[eksctl]. The command below automates the process to:
+
+1. Create an IAM role with AWS-managed IAM policy (or you can provide your own ARN).
+2. Create a Kubernetes service account name `cerbos-serviceaccount` in the cluster.
+3. Set up a trust relationship between the IAM role and the service account.
+4. Modify `cerbos-serviceaccount` annotation to associate it with the created IAM role
+
+Remember to replace `CLUSTER_NAME` with your actual Amazon EKS cluster name and optionally set the namespace.
+
+[source,sh]
+----
+eksctl create iamserviceaccount \
+    --name cerbos-serviceaccount \
+    --attach-policy-arn arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage \
+    --namespace default \
+    --cluster CLUSTER_NAME \
+    --approve \
+    --override-existing-serviceaccounts
+----
+
+==== Step 4: Deploy Cerbos with the service account
+
+include::ROOT:partial$try-cerbos-hub.adoc[]
+
+* Create a new Kubernetes secret to hold the Cerbos Hub credentials
++
+[source,sh]
+----
+kubectl create secret generic cerbos-hub-credentials \
+   --from-literal=CERBOS_HUB_CLIENT_ID=YOUR_CLIENT_ID \ <1>
+   --from-literal=CERBOS_HUB_CLIENT_SECRET=YOUR_CLIENT_SECRET \ <2>
+   --from-literal=CERBOS_HUB_WORKSPACE_SECRET=YOUR_WORKSPACE_SECRET <3>
+----
+<1> Client ID from the Cerbos Hub credential
+<2> Client secret from the Cerbos Hub credential
+<3> Cerbos Hub workspace secret
+
+* Create a new values file named `hub-values.yaml` with the following contents:
++
+[source,yaml,linenums,subs="attributes"]
+----
+# Use the AWS Marketplace image
+image:
+  repository: {app-aws-registry}
+
+# Assign the service account
+serviceAccount:
+  name: cerbos-serviceaccount
+
+# Set Cerbos configuration
+cerbos:
+  config:
+    # Configure the Hub storage driver
+    storage:
+      driver: "hub"
+      # Configure deployment label. Alternatively, add `CERBOS_HUB_BUNDLE=<YOUR_LABEL>` to the secret you created above.
+      hub:
+        remote:
+          bundleLabel: "YOUR_LABEL" <1>
+
+    # Configure the Hub audit backend
+    audit:
+      enabled: true <2>
+      backend: "hub"
+      hub:
+        storagePath: /audit_logs
+
+# Create environment variables from the secret.
+envFrom:
+  - secretRef:
+      name: cerbos-hub-credentials
+
+# Mount volume for locally buffering the audit logs. A persistent volume is recommended for production use cases.
+volumes:
+  - name: cerbos-audit-logs
+    emptyDir: {}
+
+volumeMounts:
+  - name: cerbos-audit-logs
+    mountPath: /audit_logs
+----
+<1> The label to watch for bundle updates. See xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment labels documentation] for details.
+<2> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
+
+* Deploy Cerbos using the Helm chart
++
+[source,sh,subs="attributes"]
+----
+helm install cerbos cerbos/cerbos --version={app-version} --values=hub-values.yaml
+----
+
+=== Elastic Container Service (ECS)
+
+==== Step 1: Create ECS Task Role policy
+To deploy Cerbos from AWS Marketplace, you need to create an ECS Task AIM Role with appropriate IAM permission before starting the deployment. You can either use AWS managed policy `arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage` or create your own IAM policy.
+
+Here's an example IAM policy required - you will need the ARN for this role when defining the task.
+
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+          "aws-marketplace:RegisterUsage"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+----
+
+==== Step 2: Create the task definition
+
+In the AWS console or the CLI, create the task using the following JSON definition, subsituting the values noted:
+
+[source,json,subs="attributes"]
+----
+{
+  "family": "cerbos",
+  "containerDefinitions": [
+    {
+      "name": "cerbos",
+      "image": "{app-aws-img}",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "name": "cerbos-3592-tcp",
+          "containerPort": 3592,
+          "hostPort": 3592,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        },
+        {
+          "name": "cerbos-3593-tcp",
+          "containerPort": 3593,
+          "hostPort": 3593,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "CERBOS_HUB_CLIENT_ID",
+          "value": "YOUR_CLIENT_ID" <1>
+        },
+        {
+          "name": "CERBOS_HUB_CLIENT_SECRET",
+          "value": "YOUR_CLIENT_SECRET" <2>
+        },
+        {
+          "name": "CERBOS_HUB_WORKSPACE_SECRET",
+          "value": "YOUR_WORKSPACE_SECRET" <3>
+        },
+        {
+          "name": "CERBOS_HUB_BUNDLE",
+          "value": "YOUR_LABEL" <4>
+        }
+      ],
+      "command": [
+        "server",
+        "--set=audit.enabled=true", <5>
+        "--set=audit.backend=hub",
+        "--set=audit.hub.storagePath=/tmp"
+      ], 
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "ulimits": [],
+      "healthCheck": {
+        "command": [
+            "CMD",
+            "/cerbos",
+            "healthcheck"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 5
+      },
+      "systemControls": []
+    }
+  ],
+  "taskRoleArn": "TASK_ROLE_ARN", <6>
+  "executionRoleArn": "TASK_EXECUTION_ROLE_ARN", <7>
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "3072",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  }
+}
+----
+<1> Client ID from the Cerbos Hub credential
+<2> Client secret from the Cerbos Hub credential
+<3> Cerbos Hub workspace secret
+<4> The label to watch for bundle updates. See xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment labels documentation] for details.
+<5> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
+<6> The ARN for the custom ECS Task Role defined in Step 1.
+<7> The ARN for the ECS Task Execution. The default is `arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole`
+
+==== Step 4: Launch a service
+
+Using the above task defintion, launch a service in your ECS Cluster. Take note to ensure the service is running attached to the security groups which your applications will be calling Cerbos from.
+
+
 == Fly.io
 
 You can deploy Cerbos on Fly.io as a link:https://fly.io/docs/apps[Fly Launch] app. The following `fly.toml` file shows
