@@ -11,4 +11,5 @@
 :cerbos-openapi-schema: /schema/swagger.json
 :cerbosctl-docker-img: {app-container-registry}/cerbos/cerbosctl:{app-version}
 :tutorial-base: {app-github-url}/tree/main/docs/modules/ROOT/examples/tutorial
-
+:app-aws-registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cerbos/cerbos
+:app-aws-img: {app-aws-registry}:{app-version}
