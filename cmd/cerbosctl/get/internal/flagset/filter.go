@@ -63,6 +63,15 @@ func (f Filters) Validate(kind policy.Kind, listing bool) error {
 		if f.VersionRegexp != "" {
 			return fmt.Errorf("--version-regexp flag is not available when listing exported variables")
 		}
+
+	case policy.RolePolicyKind:
+		if len(f.Version) > 0 {
+			return fmt.Errorf("--version flag is not available when listing role policies")
+		}
+
+		if f.VersionRegexp != "" {
+			return fmt.Errorf("--version-regexp flag is not available when listing role policies")
+		}
 	}
 
 	return nil
