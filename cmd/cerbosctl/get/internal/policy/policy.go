@@ -80,11 +80,12 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 			case policy.PrincipalKind, policy.ResourceKind:
 				row = append(row, p.Version, p.Scope)
 
+			case policy.RolePolicyKind:
+				row = append(row, p.Scope)
+
 			case policy.DerivedRolesKind, policy.ExportVariablesKind:
 				// no version or scope
 
-			case policy.RolePolicyKind:
-				// TODO
 			}
 
 			tw.Append(row)

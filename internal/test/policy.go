@@ -134,6 +134,12 @@ func GenDisabledResourcePolicy(mod NameMod) *policyv1.Policy {
 	return p
 }
 
+func GenDisabledRolePolicy(mod NameMod) *policyv1.Policy {
+	p := GenRolePolicy(mod)
+	p.Disabled = true
+	return p
+}
+
 func GenScopedResourcePolicy(scope string, mod NameMod) *policyv1.Policy {
 	p := GenResourcePolicy(mod)
 	p.GetResourcePolicy().Scope = scope
@@ -181,6 +187,28 @@ func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 									Op: &policyv1.Match_Expr{Expr: `request.resource.attr.status == "PENDING_APPROVAL"`},
 								},
 							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// GenRolePolicy generates a sample role policy with some names modified by the NameMod.
+func GenRolePolicy(mod NameMod) *policyv1.Policy {
+	return &policyv1.Policy{
+		ApiVersion: "api.cerbos.dev/v1",
+		PolicyType: &policyv1.Policy_RolePolicy{
+			RolePolicy: &policyv1.RolePolicy{
+				PolicyType: &policyv1.RolePolicy_Role{
+					Role: mod("acme_admin"),
+				},
+				Rules: []*policyv1.RoleRule{
+					{
+						Resource: mod("leave_request"),
+						PermissibleActions: []string{
+							mod("create"),
 						},
 					},
 				},
