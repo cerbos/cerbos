@@ -85,7 +85,6 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 
 			case policy.DerivedRolesKind, policy.ExportVariablesKind:
 				// no version or scope
-
 			}
 
 			tw.Append(row)

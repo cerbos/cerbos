@@ -72,7 +72,6 @@ func (f Filters) Validate(kind policy.Kind, listing bool) error {
 		if f.VersionRegexp != "" {
 			return fmt.Errorf("--version-regexp flag is not available when listing role policies")
 		}
-
 	}
 
 	return nil
