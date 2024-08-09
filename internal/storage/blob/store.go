@@ -12,22 +12,19 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
-
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
-	"google.golang.org/protobuf/types/known/structpb"
-
-	// Import gcsblob package to register GCS driver.
 	"gocloud.dev/blob/gcsblob"
 	"gocloud.dev/blob/s3blob"
 	"gocloud.dev/gcp"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -35,10 +32,12 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
-const DriverName = "blob"
+const (
+	dotcache   = ".cache"
+	DriverName = "blob"
+)
 
 var (
 	_ storage.SourceStore = (*Store)(nil)
@@ -48,10 +47,6 @@ var (
 var ErrUnsupportedBucketScheme = errors.New("currently only \"s3\" and \"gs\" bucket URL schemes are supported")
 
 var driverSourceAttr = policy.SourceDriver(DriverName)
-
-func etagSourceAttr(etag []byte) policy.SourceAttribute {
-	return policy.SourceAttribute{Key: "etag", Value: structpb.NewStringValue(string(etag))}
-}
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
@@ -65,11 +60,16 @@ func init() {
 			return nil, err
 		}
 
-		if err := validateOrCreateWorkDir(conf.WorkDir); err != nil {
-			return nil, err
+		if err := validateOrCreateDir(filepath.Join(conf.WorkDir, dotcache)); err != nil {
+			return nil, fmt.Errorf("failed to create dotcache directory: %w", err)
 		}
 
-		c, err := NewCloner(bucket, storeFS{dir: conf.WorkDir})
+		if err := validateOrCreateDir(conf.WorkDir); err != nil {
+			return nil, fmt.Errorf("failed to create work directory: %w", err)
+		}
+
+		dotCacheDir := filepath.Join(conf.WorkDir, dotcache)
+		c, err := NewCloner(bucket, storeFS{dir: dotCacheDir})
 		if err != nil {
 			return nil, err
 		}
@@ -137,20 +137,20 @@ func openS3Bucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bu
 	return opener.OpenBucketURL(ctx, bucketURL)
 }
 
-func validateOrCreateWorkDir(workDir string) error {
-	fileInfo, err := os.Stat(workDir)
+func validateOrCreateDir(dir string) error {
+	fileInfo, err := os.Stat(dir)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("failed to stat workDir %q: %w", workDir, err)
+			return fmt.Errorf("failed to stat directory %q: %w", dir, err)
 		}
 
-		if err := os.MkdirAll(workDir, 0o744); err != nil { //nolint:mnd
-			return fmt.Errorf("failed to create workDir %q: %w", workDir, err)
+		if err := os.MkdirAll(dir, 0o744); err != nil { //nolint:mnd
+			return fmt.Errorf("failed to create directory %q: %w", dir, err)
 		}
 	}
 
 	if fileInfo != nil && !fileInfo.IsDir() {
-		return fmt.Errorf("workDir is not a directory: %s", workDir)
+		return fmt.Errorf("workDir is not a directory: %s", dir)
 	}
 
 	return nil
@@ -162,11 +162,12 @@ type bucketCloner interface {
 
 type Store struct {
 	*storage.SubscriptionManager
-	log    *zap.SugaredLogger
-	conf   *Conf
-	idx    index.Index
-	cloner bucketCloner
-	fsys   fs.FS
+	log     *zap.SugaredLogger
+	conf    *Conf
+	idx     index.Index
+	cloner  bucketCloner
+	workFS  fs.FS
+	workDir string
 }
 
 func (s *Store) Subscribe(sub storage.Subscriber) {
@@ -192,18 +193,35 @@ func NewStore(ctx context.Context, conf *Conf, cloner bucketCloner) (*Store, err
 var ErrPartialFailureToDownloadOnInit = errors.New("failed to download some files from the bucket")
 
 func (s *Store) init(ctx context.Context) error {
-	s.fsys = os.DirFS(s.conf.WorkDir)
+	dotCacheDir := filepath.Join(s.conf.WorkDir, dotcache)
+	workDir := filepath.Join(s.conf.WorkDir, strconv.FormatInt(time.Now().Unix(), 10))
+	s.workDir = workDir
+	s.workFS = os.DirFS(workDir)
 
-	if cr, err := s.clone(ctx); err != nil {
+	if err := validateOrCreateDir(workDir); err != nil {
+		return fmt.Errorf("failed to create work directory %s: %w", workDir, err)
+	}
+
+	cr, err := s.clone(ctx)
+	if err != nil {
 		s.log.Errorw("Failed to clone blob store", "error", err)
-		return err
-	} else if cr.failuresCount > 0 {
+		return fmt.Errorf("failed to clone blob store: %w", err)
+	}
+
+	if cr.failuresCount > 0 {
 		s.log.Errorf("Failed to download (%d) files from the bucket %q", cr.failuresCount, s.conf.Bucket)
 		return ErrPartialFailureToDownloadOnInit
 	}
 
-	var err error
-	s.idx, err = index.Build(ctx, s.fsys, index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
+	for file, etag := range cr.all {
+		source := filepath.Join(workDir, string(file))
+		dest := filepath.Join(dotCacheDir, string(etag))
+		if err := s.createSymlink(dest, source); err != nil {
+			return fmt.Errorf("failed to create symbolic links for the cloned file: %w", err)
+		}
+	}
+
+	s.idx, err = index.Build(ctx, s.workFS, index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
 	if err != nil {
 		s.log.Errorw("Failed to build index", "error", err)
 		return err
@@ -214,68 +232,65 @@ func (s *Store) init(ctx context.Context) error {
 	return nil
 }
 
+func (s *Store) updateIndex(ctx context.Context) error {
+	s.log.Debug("Checking for updates")
+	cr, err := s.clone(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to clone blob store: %w", err)
+	}
+
+	if cr.isEmpty() {
+		s.log.Debug("No changes")
+		return nil
+	}
+
+	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(cr.addedOrUpdated), len(cr.deleted))
+	dotCacheDir := filepath.Join(s.conf.WorkDir, dotcache)
+	workDir := filepath.Join(s.conf.WorkDir, strconv.FormatInt(time.Now().Unix(), 10))
+	if err := validateOrCreateDir(workDir); err != nil {
+		return fmt.Errorf("failed to create new work directory %s: %w", workDir, err)
+	}
+
+	for file, etag := range cr.all {
+		source := filepath.Join(workDir, string(file))
+		dest := filepath.Join(dotCacheDir, string(etag))
+		if err := s.createSymlink(dest, source); err != nil {
+			return fmt.Errorf("failed to create symbolic links for the cloned file: %w", err)
+		}
+	}
+
+	idx, err := index.Build(ctx, os.DirFS(workDir), index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
+	if err != nil {
+		if rerr := os.RemoveAll(workDir); rerr != nil && !os.IsNotExist(rerr) {
+			return fmt.Errorf("failed to remove the directory %s: %w", s.workDir, errors.Join(rerr, err))
+		}
+
+		return fmt.Errorf("failed to build index at temporary work directory at %s: %w", workDir, err)
+	}
+
+	if err := os.RemoveAll(s.workDir); err != nil {
+		return fmt.Errorf("failed to remove old work directory %s: %w", s.workDir, err)
+	}
+
+	for file, etag := range cr.deleted {
+		s.log.Debugw("Removing file", "etag", etag, "file", file)
+		if err := os.Remove(filepath.Join(dotCacheDir, string(etag))); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to remove deleted file %q: %w", file, err)
+		}
+	}
+
+	s.workDir = workDir
+	s.workFS = os.DirFS(workDir)
+	s.idx = idx
+	s.log.Info("Index updated")
+	return nil
+}
+
 func (s *Store) clone(ctx context.Context) (*CloneResult, error) {
 	ctx, cancelFunc := s.conf.getCloneCtx(ctx)
 	defer cancelFunc()
 
 	return s.cloner.Clone(ctx)
-}
-
-func (s *Store) updateIndex(ctx context.Context) error {
-	s.log.Debug("Checking for updates")
-
-	changes, err := s.clone(ctx)
-	if err != nil {
-		return err
-	}
-
-	if failures := changes.failures(); failures > 0 {
-		s.log.Warnf("Failed to download (%d) files", failures)
-	}
-
-	if changes.isEmpty() {
-		s.log.Debug("No changes")
-		return nil
-	}
-
-	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(changes.updateOrAdd), len(changes.delete))
-
-	var p *policyv1.Policy
-	var event storage.Event
-	for _, f := range changes.updateOrAdd {
-		if schemaFile, ok := util.RelativeSchemaPath(f.file); ok {
-			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
-			continue
-		}
-
-		p, err = policy.ReadPolicyFromFile(s.fsys, f.file)
-		if err != nil {
-			return err
-		}
-		entry := index.Entry{File: f.file, Policy: policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(f.etag)))}
-		event, err = s.idx.AddOrUpdate(entry)
-		if err != nil {
-			return err
-		}
-		s.NotifySubscribers(event)
-	}
-
-	for _, f := range changes.delete {
-		if schemaFile, ok := util.RelativeSchemaPath(f); ok {
-			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile))
-			continue
-		}
-
-		entry := index.Entry{File: f}
-		event, err = s.idx.Delete(entry)
-		if err != nil {
-			return err
-		}
-		s.NotifySubscribers(event)
-	}
-
-	s.log.Info("Index updated")
-	return nil
 }
 
 func (s *Store) pollForUpdates(ctx context.Context) {
@@ -303,6 +318,25 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 			metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
 		}
 	}
+}
+
+func (s *Store) createSymlink(destination, source string) error {
+	if _, err := os.Lstat(source); err == nil {
+		if err := os.Remove(source); err != nil {
+			return fmt.Errorf("failed to delete left-over symlink at %q: %w", source, err)
+		}
+	}
+
+	//nolint:mnd
+	if err := os.MkdirAll(filepath.Dir(source), 0o744); err != nil {
+		return fmt.Errorf("failed to create directory %q: %w", filepath.Dir(source), err)
+	}
+
+	if err := os.Symlink(destination, source); err != nil {
+		return fmt.Errorf("failed to create symlink to destination %q from source %q: %w", destination, source, err)
+	}
+
+	return nil
 }
 
 func (s *Store) Driver() string {
@@ -350,13 +384,13 @@ func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *Store) Reload(ctx context.Context) error {
-	changes, err := s.clone(ctx)
+	cr, err := s.clone(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to clone: %w", err)
+		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	if failures := changes.failures(); failures > 0 {
-		logging.ReqScopeLog(ctx).Warn(fmt.Sprintf("Failed to download (%d) files", failures))
+	if cr.failuresCount > 0 {
+		logging.ReqScopeLog(ctx).Warn(fmt.Sprintf("Failed to download (%d) files", cr.failuresCount))
 	}
 
 	evts, err := s.idx.Reload(ctx)
@@ -365,6 +399,5 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	s.NotifySubscribers(evts...)
-
 	return nil
 }

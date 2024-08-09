@@ -4,7 +4,6 @@
 package blob
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -20,7 +19,6 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-// clonerFS represents file system interface that used by the Cloner.
 type clonerFS interface {
 	fs.FS
 	Remove(name string) error
@@ -28,60 +26,50 @@ type clonerFS interface {
 	MkdirAll(path string, perm fs.FileMode) error
 }
 
-type infoType map[string][]byte
+type (
+	etagType      string
+	fileNameType  string
+	fileToETagMap map[fileNameType]etagType
+)
 
 type Cloner struct {
-	log    *zap.SugaredLogger
 	bucket *blob.Bucket
 	fsys   clonerFS
-	info   infoType // map[path]eTag
+	log    *zap.SugaredLogger
+	state  fileToETagMap
 }
 
-// NewCloner creates an object to clone the bucket and saves
-// supported files in the fsys.
+type CloneResult struct {
+	all            fileToETagMap
+	addedOrUpdated fileToETagMap
+	deleted        fileToETagMap
+	failuresCount  int
+}
+
+func (cr *CloneResult) isEmpty() bool {
+	if cr == nil || (len(cr.addedOrUpdated) == 0 && len(cr.deleted) == 0) {
+		return true
+	}
+
+	return false
+}
+
 func NewCloner(bucket *blob.Bucket, fsys clonerFS) (*Cloner, error) {
 	c := &Cloner{
 		bucket: bucket,
 		log:    zap.S().Named("blob.cloner"),
 		fsys:   fsys,
+		state:  make(fileToETagMap),
 	}
 
-	info, err := c.calculateInfo()
-	c.log.Debugf("Checkout dir contains (%d) files", len(info))
-	if err != nil {
-		return nil, err
-	}
-	c.info = info
 	return c, nil
-}
-
-type fileInfo struct {
-	file string
-	etag []byte
-}
-
-type CloneResult struct {
-	updateOrAdd   []fileInfo
-	delete        []string
-	failuresCount int
-}
-
-func (cr *CloneResult) isEmpty() bool {
-	return cr == nil || (len(cr.updateOrAdd) == 0 && len(cr.delete) == 0)
-}
-
-func (cr *CloneResult) failures() int {
-	if cr == nil {
-		return 0
-	}
-
-	return cr.failuresCount
 }
 
 func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 	iter := c.bucket.List(nil)
-	info := make(infoType, len(c.info))
-	cr := new(CloneResult)
+	addedOrUpdated := make(fileToETagMap)
+	all := make(fileToETagMap)
+	var failuresCount int
 	for {
 		obj, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
@@ -91,45 +79,58 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			c.log.Errorw("Failed to get next item", "error", err)
 			return nil, fmt.Errorf("failed to get next object in the bucket: %w", err)
 		}
+
 		file := strings.TrimPrefix(obj.Key, "/")
-		eTag := obj.MD5
 		if util.FileType(file) == util.FileTypeNotIndexed {
 			continue
 		}
-		info[file] = eTag
-		if eTag != nil && bytes.Equal(eTag, c.info[file]) {
+
+		if obj.MD5 == nil {
+			return nil, fmt.Errorf("blob object doesn't have md5 specified: %w", err)
+		}
+
+		if !util.IsSupportedFileType(file) {
+			c.log.Debugw("Unsupported file is ignored", "file", file)
 			continue
 		}
-		if err = c.downloadToFile(ctx, obj.Key, file); err != nil {
-			c.log.Errorw("Failed to download file", "error", err, "file", file)
-			cr.failuresCount++
+
+		etag := etagType(fmt.Sprintf("%x", obj.MD5))
+		all[fileNameType(file)] = etag
+
+		if et, ok := c.state[fileNameType(file)]; ok && et == etag {
+			continue
+		}
+
+		if err = c.downloadToFile(ctx, obj.Key, string(etag)); err != nil {
+			c.log.Errorw("Failed to download file", "error", err, "etag", etag, "file", file)
+			failuresCount++
 		} else {
-			cr.updateOrAdd = append(cr.updateOrAdd, fileInfo{file: file, etag: eTag})
+			addedOrUpdated[fileNameType(file)] = etag
 		}
 	}
 
-	for key := range c.info {
-		if _, ok := info[key]; !ok {
-			c.log.Debugw("Removing file", "file", key)
-			err := c.fsys.Remove(key)
-			if err != nil {
-				return nil, err
-			}
-			cr.delete = append(cr.delete, key)
+	deleted := make(fileToETagMap)
+	for file, etag := range c.state {
+		if _, ok := all[file]; !ok {
+			deleted[file] = etag
 		}
 	}
-	c.info = info
-	return cr, nil
+
+	c.state = all
+	return &CloneResult{
+		all:            all,
+		addedOrUpdated: addedOrUpdated,
+		deleted:        deleted,
+		failuresCount:  failuresCount,
+	}, nil
 }
 
-func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
-	// Create the directories in the path
+func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	dir := filepath.Dir(file)
-	if err = c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
+	if err := c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to make dir %q: %w", dir, err)
 	}
 
-	// Set up the local file
 	fd, err := c.fsys.Create(file)
 	if err != nil {
 		return fmt.Errorf("failed to create a file %q: %w", file, err)
@@ -148,23 +149,4 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 	}
 
 	return nil
-}
-
-func (c *Cloner) calculateInfo() (infoType, error) {
-	result := make(infoType)
-	err := fs.WalkDir(c.fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() || !util.IsSupportedFileType(path) {
-			return nil
-		}
-		result[path] = nil
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
