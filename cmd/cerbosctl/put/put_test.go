@@ -53,11 +53,13 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 		dr := withMeta(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))))
 		pp := withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))))
 		rp := withMeta(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))))
+		rlp := withMeta(test.GenRolePolicy(test.Suffix(strconv.Itoa(1))))
 
 		evPath := writeToTmpFile(t, ev)
 		drPath := writeToTmpFile(t, dr)
 		ppPath := writeToTmpFile(t, pp)
 		rpPath := writeToTmpFile(t, rp)
+		rlpPath := writeToTmpFile(t, rlp)
 
 		pathToZip := filepath.Join("testdata", "store.zip")
 		t.Run("cerbosctl put", func(t *testing.T) {
@@ -72,6 +74,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/derived_roles"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/principal_policies"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/resource_policies"))
+				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/role_policies"))
 				put(t, clientCtx, globals, policyKind, "--recursive", pathToZip)
 
 				require.Equal(t, []string{
@@ -110,6 +113,8 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.purchase_order.vdefault",
 					"resource.runtime_effective_derived_roles.vdefault",
 					"resource.variables_referencing_variables.vdefault",
+					"role.acme_admin/acme.hr.uk",
+					"role.acme_creator/acme.hr.uk",
 				}, listPolicies(t, clientCtx))
 			})
 
@@ -118,11 +123,13 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				put(t, clientCtx, globals, policyKind, drPath)
 				put(t, clientCtx, globals, policyKind, ppPath)
 				put(t, clientCtx, globals, policyKind, rpPath)
+				put(t, clientCtx, globals, policyKind, rlpPath)
 
 				outEv := getPolicy(t, clientCtx, globals, policy.ExportVariablesKind, namer.PolicyKey(ev))
 				outDr := getPolicy(t, clientCtx, globals, policy.DerivedRolesKind, namer.PolicyKey(dr))
 				outPp := getPolicy(t, clientCtx, globals, policy.PrincipalKind, namer.PolicyKey(pp))
 				outRp := getPolicy(t, clientCtx, globals, policy.ResourceKind, namer.PolicyKey(rp))
+				outRlp := getPolicy(t, clientCtx, globals, policy.RolePolicyKind, namer.PolicyKey(rlp))
 
 				requirePolicyEq := func(t *testing.T, want *policyv1.Policy, haveJSON string) {
 					t.Helper()
@@ -136,6 +143,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				requirePolicyEq(t, dr, outDr)
 				requirePolicyEq(t, pp, outPp)
 				requirePolicyEq(t, rp, outRp)
+				requirePolicyEq(t, rlp, outRlp)
 			})
 
 			t.Run("put schemas recursive", func(t *testing.T) {
@@ -213,8 +221,6 @@ func getPolicy(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Glob
 }
 
 func policyKindToGet(kind policy.Kind) string {
-	// TODO(saml) role policies
-	//nolint:exhaustive
 	switch kind {
 	case policy.DerivedRolesKind:
 		return "dr"
@@ -224,6 +230,8 @@ func policyKindToGet(kind policy.Kind) string {
 		return "pp"
 	case policy.ResourceKind:
 		return "rp"
+	case policy.RolePolicyKind:
+		return "rlp"
 	}
 	panic(fmt.Errorf("unknown policy kind %d", kind))
 }
