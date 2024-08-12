@@ -2,14 +2,14 @@ module github.com/cerbos/cerbos/tools
 
 go 1.22.4
 
-toolchain go1.22.5
+toolchain go1.22.6
 
 require (
 	connectrpc.com/connect v1.16.2
-	github.com/bufbuild/buf v1.35.1
+	github.com/bufbuild/buf v1.36.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.3.1
 	github.com/cerbos/protoc-gen-jsonschema v0.1.2
-	github.com/dadav/helm-schema v0.0.0-20240721190818-fc0a4c1fdaf7
+	github.com/dadav/helm-schema v0.0.0-20240808173306-82590e886026
 	github.com/fullstorydev/grpcurl v1.9.1
 	github.com/golangci/golangci-lint v1.59.1
 	github.com/google/go-licenses v1.6.0
