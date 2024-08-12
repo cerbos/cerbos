@@ -16,7 +16,7 @@ require (
 	github.com/bufbuild/protovalidate-go v0.6.3
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cerbos/cerbos-sdk-go v0.2.9
-	github.com/cerbos/cerbos/api/genpb v0.37.1-0.20240805090153-abf7398413c4
+	github.com/cerbos/cerbos/api/genpb v0.38.1
 	github.com/cerbos/cloud-api v0.1.23
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
@@ -62,7 +62,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/pterm/pterm v0.12.79
-	github.com/rivo/tview v0.0.0-20240728114935-65571ae51e71
+	github.com/rivo/tview v0.0.0-20240807205129-e4c497cc59ed
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.12.0
 	github.com/rs/cors v1.11.0
@@ -101,19 +101,19 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
 	gocloud.dev v0.37.0
-	golang.org/x/crypto v0.25.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/net v0.27.0
+	golang.org/x/crypto v0.26.0
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
+	golang.org/x/net v0.28.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/tools v0.23.0
+	golang.org/x/tools v0.24.0
 	gonum.org/v1/gonum v0.15.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240805194559-2c9e96a0b5d4
+	google.golang.org/genproto/googleapis/api v0.0.0-20240808171019-573a1156607a
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.15.3
-	modernc.org/sqlite v1.31.1
+	modernc.org/sqlite v1.32.0
 )
 
 require (
@@ -272,11 +272,11 @@ require (
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.19.0 // indirect
+	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/term v0.23.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.178.0 // indirect
