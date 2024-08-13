@@ -80,8 +80,7 @@ message BlobClonerTestCase {
       map<string, Files> all = 1;
       repeated Info added_or_updated = 2;
       repeated Info deleted = 3;
-      uint32 failures_count = 4;
-      repeated string dangling_etags = 5;
+      repeated string dangling_etags = 4;
     }
 
     oneof op {

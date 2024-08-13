@@ -36,16 +36,6 @@ type (
 func TestNewStore(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("partial failure", func(t *testing.T) {
-		dir := t.TempDir()
-		conf := &Conf{WorkDir: dir}
-		conf.SetDefaults()
-		must := require.New(t)
-		_, err := NewStore(ctx, conf, mkMockCloner("", "", nil, func(_ context.Context) (*CloneResult, error) {
-			return &CloneResult{failuresCount: 1}, nil
-		}))
-		must.ErrorIs(err, ErrPartialFailureToDownload)
-	})
 	t.Run("clone failure makes ctor fail", func(t *testing.T) {
 		dir := t.TempDir()
 		conf := &Conf{WorkDir: dir}
@@ -152,26 +142,6 @@ func TestStore_updateIndex(t *testing.T) {
 		storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "principal.json"),
 		storage.NewSchemaEvent(storage.EventDeleteSchema, "principal.json"),
 	)
-}
-
-func TestStore_AWSS3(t *testing.T) {
-	t.Skip("Skip test with real S3 bucket")
-
-	ctx := context.Background()
-	dir := t.TempDir()
-	conf := &Conf{
-		Bucket:  "s3://test-dev.cerbos.dev?region=us-east-2",
-		Prefix:  "policies",
-		WorkDir: dir,
-	}
-	conf.SetDefaults()
-
-	must := require.New(t)
-
-	bucket, err := newBucket(ctx, conf)
-	must.NoError(err)
-	_, err = NewStore(ctx, conf, NewCloner(bucket, storeFS{filepath.Join(dir, dotcache)}))
-	must.NoError(err)
 }
 
 func mkInitFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {

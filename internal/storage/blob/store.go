@@ -28,7 +28,6 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -185,8 +184,6 @@ func NewStore(ctx context.Context, conf *Conf, cloner bucketCloner) (*Store, err
 	return s, nil
 }
 
-var ErrPartialFailureToDownload = errors.New("failed to download some files from the bucket")
-
 func (s *Store) init(ctx context.Context) error {
 	s.cacheDir = filepath.Join(s.conf.WorkDir, dotcache)
 	s.cacheFS = os.DirFS(s.cacheDir)
@@ -198,11 +195,6 @@ func (s *Store) init(ctx context.Context) error {
 	if err != nil {
 		s.log.Errorw("Failed to clone blob store", "error", err)
 		return fmt.Errorf("failed to clone blob store: %w", err)
-	}
-
-	if cr.failuresCount > 0 {
-		s.log.Errorf("Failed to download (%d) files from the bucket %q", cr.failuresCount, s.conf.Bucket)
-		return ErrPartialFailureToDownload
 	}
 
 	idx, newWorkDir, err := s.buildIndex(ctx, cr.all)
@@ -223,11 +215,6 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	cr, err := s.clone(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to clone blob store: %w", err)
-	}
-
-	if cr.failuresCount > 0 {
-		s.log.Warnf("Failed to download (%d) files", cr.failuresCount)
-		return ErrPartialFailureToDownload
 	}
 
 	if cr.isEmpty() {
@@ -264,15 +251,15 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		evts = append(evts, e)
 	}
 
-	if err := s.cloner.Clean(); err != nil {
-		return fmt.Errorf("failed to clean up the cache: %w", err)
-	}
-
 	s.NotifySubscribers(evts...)
 	s.log.Info("Index updated")
 
-	if err := os.RemoveAll(oldWorkDir); err != nil {
-		return fmt.Errorf("failed to remove old work directory %s: %w", s.workDir, err)
+	if err := s.cloner.Clean(); err != nil {
+		s.log.Warnf("Failed to clean up the cache: %v", err)
+	}
+
+	if err := os.RemoveAll(oldWorkDir); err != nil && !os.IsNotExist(err) {
+		s.log.Warnf("failed to remove old work directory %s: %v", oldWorkDir, err)
 	}
 
 	return nil
@@ -330,11 +317,12 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 			return
 		case <-ticker.C:
 			err := s.updateIndex(ctx)
-			buildErr := &indexBuildError{}
 			if err != nil {
-				s.log.Errorw("Failed to check for updates", "error", err)
-				if errors.As(err, &buildErr) {
-					s.log.Warnf("Failed to build index from the new set of files and will keep using the existing index at %s", s.workDir)
+				if errors.Is(err, &indexBuildError{}) {
+					s.log.Warnw("Remote store is in an invalid state", "error", err)
+					s.log.Warnf("Remote store is in an invalid state. Using the last good state from %s", s.workDir)
+				} else {
+					s.log.Warnw("Failed to check for updates", "error", err)
 				}
 
 				metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
@@ -372,7 +360,7 @@ func (s *Store) createSymlinks(all map[string][]string, destDir, sourceDir strin
 			source := filepath.Join(sourceDir, file)
 			dest := filepath.Join(destDir, etag)
 			if err := s.createSymlink(dest, source); err != nil {
-				return fmt.Errorf("failed to create symbolic links for the cloned file: %w", err)
+				return fmt.Errorf("failed to create symbolic link for %s: %w", source, err)
 			}
 		}
 	}
@@ -406,7 +394,7 @@ func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (index.
 	idx, err := index.Build(ctx, os.DirFS(newWorkDir), index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
 	if err != nil {
 		if rerr := os.RemoveAll(newWorkDir); rerr != nil && !os.IsNotExist(rerr) {
-			return nil, "", fmt.Errorf("failed to remove the directory %s while cleaning up new work directory: %w", newWorkDir, errors.Join(rerr, err))
+			return nil, "", errors.Join(err, fmt.Errorf("failed to remove directory %s: %w", newWorkDir, rerr))
 		}
 
 		return nil, "", &indexBuildError{workDir: newWorkDir, err: err}
@@ -465,18 +453,14 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	if cr.failuresCount > 0 {
-		logging.ReqScopeLog(ctx).Warn(fmt.Sprintf("Failed to download (%d) files", cr.failuresCount))
-	}
-
 	idx, newWorkDir, err := s.buildIndex(ctx, cr.all)
-	buildErr := &indexBuildError{}
 	if err != nil {
-		if errors.As(err, &buildErr) {
-			s.log.Warnf("Failed to build index from the new set of files and will keep using the existing index at %s", s.workDir)
+		if errors.Is(err, &indexBuildError{}) {
+			s.log.Warnw("Remote store is in an invalid state", "error", err)
+			s.log.Warnf("Remote store is in an invalid state. Using the last good state from %s", s.workDir)
 		}
 
-		return fmt.Errorf("failed to build index from the new set of files: %w", err)
+		return fmt.Errorf("failed to reload state from remote store: %w", err)
 	}
 
 	oldWorkDir := s.workDir
@@ -485,8 +469,12 @@ func (s *Store) Reload(ctx context.Context) error {
 	s.idx = idx
 	s.NotifySubscribers(storage.NewReloadEvent())
 
-	if err := os.RemoveAll(oldWorkDir); err != nil {
-		return fmt.Errorf("failed to remove old work directory %s: %w", s.workDir, err)
+	if err := s.cloner.Clean(); err != nil {
+		s.log.Warnf("Failed to clean up the cache: %v", err)
+	}
+
+	if err := os.RemoveAll(oldWorkDir); err != nil && !os.IsNotExist(err) {
+		s.log.Warnf("failed to remove old work directory %s: %v", oldWorkDir, err)
 	}
 
 	return nil

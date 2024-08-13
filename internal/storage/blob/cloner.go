@@ -5,6 +5,7 @@ package blob
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -54,7 +55,6 @@ type CloneResult struct {
 	all            map[string][]string
 	addedOrUpdated []info
 	deleted        []info
-	failuresCount  int
 }
 
 func (cr *CloneResult) isEmpty() bool {
@@ -66,7 +66,6 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 
 	all := make(map[string][]string)
 	var addedOrUpdated []info
-	var failuresCount int
 	for {
 		obj, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
@@ -91,7 +90,7 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		etag := fmt.Sprintf("%x", obj.MD5)
+		etag := hex.EncodeToString(obj.MD5)
 		all[etag] = append(all[etag], file)
 
 		if existingFiles, ok := c.state[etag]; ok {
@@ -105,15 +104,14 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		if err = c.downloadToFile(ctx, obj.Key, etag); err != nil {
-			c.log.Errorw("Failed to download file", "error", err, "etag", etag, "file", file)
-			failuresCount++
-		} else {
-			addedOrUpdated = append(addedOrUpdated, info{
-				etag: etag,
-				file: file,
-			})
+		if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
+			return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
 		}
+
+		addedOrUpdated = append(addedOrUpdated, info{
+			etag: etag,
+			file: file,
+		})
 	}
 
 	var danglingEtags []string
@@ -143,11 +141,10 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 		all:            all,
 		addedOrUpdated: addedOrUpdated,
 		deleted:        deleted,
-		failuresCount:  failuresCount,
 	}, nil
 }
 
-func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
+func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
 	dir := filepath.Dir(file)
 	if err := c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to make dir %q: %w", dir, err)

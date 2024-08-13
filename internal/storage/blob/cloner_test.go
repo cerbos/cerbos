@@ -53,7 +53,6 @@ func TestCloneResult(t *testing.T) {
 						require.Empty(t, cmp.Diff(step.Expectation.All, toExpectedAllMap(cr.all), protocmp.Transform()))
 						require.Empty(t, cmp.Diff(step.Expectation.AddedOrUpdated, toInfos(cr.addedOrUpdated), protocmp.Transform()))
 						require.Empty(t, cmp.Diff(step.Expectation.Deleted, toInfos(cr.deleted), protocmp.Transform()))
-						require.Equal(t, step.Expectation.FailuresCount, uint32(cr.failuresCount))
 						require.Equal(t, step.Expectation.DanglingEtags, cloner.danglingEtags)
 
 						require.NoError(t, cloner.Clean())

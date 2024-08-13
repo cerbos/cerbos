@@ -86,10 +86,6 @@
           "items": {
             "$ref": "#/definitions/cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info"
           }
-        },
-        "failuresCount": {
-          "type": "integer",
-          "minimum": 0
         }
       }
     },
