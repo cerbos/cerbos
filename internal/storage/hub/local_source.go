@@ -10,14 +10,15 @@ import (
 	"os"
 	"sync"
 
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 var (

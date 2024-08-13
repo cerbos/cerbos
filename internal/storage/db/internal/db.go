@@ -898,7 +898,7 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 	return stats
 }
 
-func (s *dbStorage) Reload(context.Context) error {
+func (s *dbStorage) Reload(_ context.Context) error {
 	s.NotifySubscribers(storage.NewReloadEvent())
 	return nil
 }

@@ -14,17 +14,18 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/cerbos/cloud-api/base"
+	cloudapi "github.com/cerbos/cloud-api/bundle"
+	"github.com/cerbos/cloud-api/credentials"
+	"github.com/spf13/afero"
+	"go.uber.org/zap"
+
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cloud-api/base"
-	cloudapi "github.com/cerbos/cloud-api/bundle"
-	"github.com/cerbos/cloud-api/credentials"
-	"github.com/spf13/afero"
-	"go.uber.org/zap"
 )
 
 const (

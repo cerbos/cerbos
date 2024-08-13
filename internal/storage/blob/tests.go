@@ -7,6 +7,8 @@ package blob
 
 import (
 	"context"
+	"crypto/md5" //nolint:gosec
+	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -21,8 +23,6 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
-
-	"github.com/cerbos/cerbos/internal/test"
 )
 
 const (
@@ -74,7 +74,7 @@ func CopyDirToBucket(tb testing.TB, ctx context.Context, param UploadParam) *blo
 	return bucket
 }
 
-func newMinioBucket(ctx context.Context, t *testing.T, prefix string) *blob.Bucket {
+func newMinioBucket(ctx context.Context, t *testing.T, path, prefix string) *blob.Bucket {
 	t.Helper()
 
 	deadline, ok := t.Deadline()
@@ -85,14 +85,12 @@ func newMinioBucket(ctx context.Context, t *testing.T, prefix string) *blob.Buck
 	ctx, cancelFunc := context.WithDeadline(ctx, deadline)
 	defer cancelFunc()
 
-	endpoint := StartMinio(ctx, t, bucketName)
-
 	param := UploadParam{
-		BucketURL:    MinioBucketURL(bucketName, endpoint),
+		BucketURL:    MinioBucketURL(bucketName, StartMinio(ctx, t, bucketName)),
 		BucketPrefix: prefix,
 		Username:     minioUsername,
 		Password:     minioPassword,
-		Directory:    test.PathToDir(t, "store"),
+		Directory:    path,
 	}
 
 	return CopyDirToBucket(t, ctx, param)
@@ -138,6 +136,27 @@ func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *b
 		return nil, err
 	}
 	return files, err
+}
+
+func bucketAdd(ctx context.Context, tb testing.TB, bucket *blob.Bucket, key string, data []byte) {
+	tb.Helper()
+
+	tb.Logf("[START] Adding %s", key)
+	//nolint:gosec
+	sum := md5.Sum(data)
+	tb.Logf("key: %s, etag: %s", key, hex.EncodeToString(sum[:]))
+	require.NoError(tb, bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
+		ContentMD5: sum[:],
+	}))
+	tb.Logf("[END] Adding %s", key)
+}
+
+func bucketDelete(ctx context.Context, tb testing.TB, bucket *blob.Bucket, key string) {
+	tb.Helper()
+
+	tb.Logf("[START] Deleting %s", key)
+	require.NoError(tb, bucket.Delete(ctx, key))
+	tb.Logf("[END] Deleting %s", key)
 }
 
 func StartMinio(ctx context.Context, t *testing.T, bucketName string) string {

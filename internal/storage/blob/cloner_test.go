@@ -4,72 +4,116 @@
 package blob
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob"
+	"google.golang.org/protobuf/testing/protocmp"
+
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestCloneResult(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	is := require.New(t)
+
 	ctx := context.Background()
-	dir := t.TempDir()
-	bucket := newMinioBucket(ctx, t, "policies")
-	cloner, err := NewCloner(bucket, storeFS{dir})
-	is.NoError(err)
-	result, err := cloner.Clone(ctx)
-	is.NoError(err)
+	testCases := test.LoadTestCases(t, "blob_cloner")
+	for _, testMetadata := range testCases {
+		testCase := readTestCase(t, testMetadata.Input)
+		dir := t.TempDir()
 
-	have := make([]string, len(result.updateOrAdd))
-	for i, v := range result.updateOrAdd {
-		have[i] = v.file
+		bucketDir := filepath.Join(dir, "bucket")
+		require.NoError(t, os.MkdirAll(bucketDir, 0o775))
+
+		cacheDir := filepath.Join(dir, dotcache)
+		bucket := newMinioBucket(ctx, t, bucketDir, "")
+		applyFiles(ctx, t, bucket, testCase.Inputs)
+
+		cloner := NewCloner(bucket, storeFS{cacheDir})
+		t.Run(testMetadata.Name, func(t *testing.T) {
+			for idx, s := range testCase.Steps {
+				t.Run(fmt.Sprint(idx), func(t *testing.T) {
+					switch step := s.Op.(type) {
+					case *privatev1.BlobClonerTestCase_Step_Differences_:
+						applyFiles(ctx, t, bucket, step.Differences.Files)
+					case *privatev1.BlobClonerTestCase_Step_Expectation_:
+						cr, err := cloner.Clone(ctx)
+						require.NoError(t, err)
+
+						require.Empty(t, cmp.Diff(step.Expectation.All, toExpectedAllMap(cr.all), protocmp.Transform()))
+						require.Empty(t, cmp.Diff(step.Expectation.AddedOrUpdated, toInfos(cr.addedOrUpdated), protocmp.Transform()))
+						require.Empty(t, cmp.Diff(step.Expectation.Deleted, toInfos(cr.deleted), protocmp.Transform()))
+						require.Equal(t, step.Expectation.DanglingEtags, cloner.danglingEtags)
+
+						require.NoError(t, cloner.Clean())
+					}
+				})
+			}
+		})
+	}
+}
+
+func applyFiles(ctx context.Context, t *testing.T, bucket *blob.Bucket, files []*privatev1.BlobClonerTestCase_File) {
+	t.Helper()
+
+	for _, file := range files {
+		switch f := file.Operation.(type) {
+		case *privatev1.BlobClonerTestCase_File_AddOrUpdate_:
+			bucketAdd(ctx, t, bucket, f.AddOrUpdate.Name, []byte(f.AddOrUpdate.Content))
+		case *privatev1.BlobClonerTestCase_File_Delete_:
+			bucketDelete(ctx, t, bucket, f.Delete.Name)
+		default:
+			t.Fatal("unspecified kind")
+		}
+	}
+}
+
+func toExpectedAllMap(have map[string][]string) map[string]*privatev1.BlobClonerTestCase_Step_Expectation_Files {
+	if have == nil {
+		return nil
 	}
 
-	want := []string{
-		"_schemas/principal.json",
-		"_schemas/resources/leave_request.json",
-		"_schemas/resources/purchase_order.json",
-		"_schemas/resources/salary_record.json",
-		"derived_roles/common_roles.yaml",
-		"derived_roles/derived_roles_01.yaml",
-		"derived_roles/derived_roles_02.yaml",
-		"derived_roles/derived_roles_03.yaml",
-		"derived_roles/derived_roles_04.yaml",
-		"derived_roles/derived_roles_05.yaml",
-		"export_variables/export_variables_01.yaml",
-		"principal_policies/policy_01.yaml",
-		"principal_policies/policy_02.yaml",
-		"principal_policies/policy_02_acme.hr.yaml",
-		"principal_policies/policy_02_acme.yaml",
-		"principal_policies/policy_03.yaml",
-		"principal_policies/policy_04.yaml",
-		"principal_policies/policy_05.yaml",
-		"principal_policies/policy_06.yaml",
-		"resource_policies/disabled_policy_01.yaml",
-		"resource_policies/policy_01.yaml",
-		"resource_policies/policy_02.yaml",
-		"resource_policies/policy_03.yaml",
-		"resource_policies/policy_04.yaml",
-		"resource_policies/policy_05.yaml",
-		"resource_policies/policy_05_acme.hr.uk.yaml",
-		"resource_policies/policy_05_acme.hr.yaml",
-		"resource_policies/policy_05_acme.yaml",
-		"resource_policies/policy_06.yaml",
-		"resource_policies/policy_07.yaml",
-		"resource_policies/policy_07_acme.yaml",
-		"resource_policies/policy_08.yaml",
-		"resource_policies/policy_09.yaml",
-		"resource_policies/policy_10.yaml",
-		"resource_policies/policy_11.yaml",
-		"resource_policies/policy_12.yaml",
-		"resource_policies/policy_13.yaml",
-		"resource_policies/policy_14.yaml",
-		"role_policies/policy_01.yaml",
-		"role_policies/policy_02.yaml",
+	formattedHave := make(map[string]*privatev1.BlobClonerTestCase_Step_Expectation_Files)
+	for etag, files := range have {
+		formattedHave[etag] = &privatev1.BlobClonerTestCase_Step_Expectation_Files{
+			Files: files,
+		}
 	}
 
-	is.Equal(want, have)
+	return formattedHave
+}
+
+func toInfos(have []info) []*privatev1.BlobClonerTestCase_Step_Expectation_Info {
+	if have == nil {
+		return nil
+	}
+
+	infos := make([]*privatev1.BlobClonerTestCase_Step_Expectation_Info, len(have))
+	for idx, info := range have {
+		infos[idx] = &privatev1.BlobClonerTestCase_Step_Expectation_Info{
+			Etag: info.etag,
+			File: info.file,
+		}
+	}
+
+	return infos
+}
+
+func readTestCase(tb testing.TB, data []byte) *privatev1.BlobClonerTestCase {
+	tb.Helper()
+
+	tc := &privatev1.BlobClonerTestCase{}
+	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }

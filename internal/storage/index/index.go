@@ -12,8 +12,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/cerbos/cerbos/internal/util"
-
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -26,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 var (
@@ -61,7 +60,7 @@ type Index interface {
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
-	Reload(ctx context.Context) ([]storage.Event, error)
+	Reload(context.Context) ([]storage.Event, error)
 }
 
 type index struct {

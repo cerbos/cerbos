@@ -926,9 +926,9 @@ func (_c *Index_LoadSchema_Call) RunAndReturn(run func(context.Context, string) 
 	return _c
 }
 
-// Reload provides a mock function with given fields: ctx
-func (_m *Index) Reload(ctx context.Context) ([]storage.Event, error) {
-	ret := _m.Called(ctx)
+// Reload provides a mock function with given fields: _a0
+func (_m *Index) Reload(_a0 context.Context) ([]storage.Event, error) {
+	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Reload")
@@ -937,10 +937,10 @@ func (_m *Index) Reload(ctx context.Context) ([]storage.Event, error) {
 	var r0 []storage.Event
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context) ([]storage.Event, error)); ok {
-		return rf(ctx)
+		return rf(_a0)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context) []storage.Event); ok {
-		r0 = rf(ctx)
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]storage.Event)
@@ -948,7 +948,7 @@ func (_m *Index) Reload(ctx context.Context) ([]storage.Event, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -962,12 +962,12 @@ type Index_Reload_Call struct {
 }
 
 // Reload is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Index_Expecter) Reload(ctx interface{}) *Index_Reload_Call {
-	return &Index_Reload_Call{Call: _e.mock.On("Reload", ctx)}
+//   - _a0 context.Context
+func (_e *Index_Expecter) Reload(_a0 interface{}) *Index_Reload_Call {
+	return &Index_Reload_Call{Call: _e.mock.On("Reload", _a0)}
 }
 
-func (_c *Index_Reload_Call) Run(run func(ctx context.Context)) *Index_Reload_Call {
+func (_c *Index_Reload_Call) Run(run func(_a0 context.Context)) *Index_Reload_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
