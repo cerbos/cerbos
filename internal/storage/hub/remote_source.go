@@ -214,6 +214,7 @@ func (s *RemoteSource) swapBundle(bundlePath string) error {
 	}
 
 	metrics.Inc(context.Background(), metrics.BundleStoreUpdatesCount())
+	metrics.Record(context.Background(), metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMicro(), metrics.DriverKey(DriverName))
 
 	return nil
 }

@@ -174,6 +174,13 @@ var (
 			metric.WithDescription("Number of errors encountered while syncing updates from the remote store"),
 		)
 	})
+
+	StoreLastSuccessfulRefresh = once(func() (metric.Int64Gauge, error) {
+		return Meter().Int64Gauge(
+			"cerbos_dev_store_last_successful_refresh",
+			metric.WithDescription("The last time the store was successfully refreshed manually or automatically"),
+		)
+	})
 )
 
 func NewHandler() (http.Handler, error) {
@@ -236,4 +243,12 @@ func Inc[T counter](ctx context.Context, m T, attr ...attribute.KeyValue) {
 
 func Add[T counter](ctx context.Context, m T, v int64, attr ...attribute.KeyValue) {
 	m.Add(ctx, v, metric.WithAttributes(attr...))
+}
+
+type gauge interface {
+	Record(context.Context, int64, ...metric.RecordOption)
+}
+
+func Record[T gauge](ctx context.Context, m T, v int64, attr ...attribute.KeyValue) {
+	m.Record(ctx, v, metric.WithAttributes(attr...))
 }

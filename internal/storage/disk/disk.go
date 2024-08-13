@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"time"
 
 	"go.uber.org/zap"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -67,6 +69,8 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		idx:                 idx,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
+
+	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMicro(), metrics.DriverKey(DriverName))
 	if conf.WatchForChanges && !util.IsArchiveFile(dir) {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -140,6 +144,7 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 	s.NotifySubscribers(evts...)
 
+	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMicro(), metrics.DriverKey(DriverName))
 	return nil
 }
 

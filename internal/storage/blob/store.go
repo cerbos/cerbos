@@ -323,19 +323,14 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 			s.log.Info("Stopped polling for updates")
 			return
 		case <-ticker.C:
-			err := s.updateIndex(ctx)
-			if err != nil {
+			if err := s.updateIndex(ctx); err != nil {
 				if errors.Is(err, &indexBuildError{}) {
 					s.log.Warnw("Remote store is in an invalid state", "error", err)
 					s.log.Warnf("Remote store is in an invalid state. Using the last good state from %s", s.workDir)
 				} else {
 					s.log.Warnw("Failed to check for updates", "error", err)
 				}
-
-				metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
 			}
-
-			metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
 		}
 	}
 }
@@ -404,7 +399,16 @@ func (e *indexBuildError) Error() string {
 // s.cacheDir according to the given map 'all' and tries to build a temporary index to see if there are any errors
 // with the incoming policies/schemas. If there are no errors returns the index built and the path to the new work directory.
 func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (idx index.Index, ts string, err error) {
-	ts = strconv.FormatInt(time.Now().UnixMicro(), 10)
+	tsMicro := time.Now().UnixMicro()
+	ts = strconv.FormatInt(tsMicro, 10)
+	defer func() {
+		metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
+		if err != nil {
+			metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
+		} else {
+			metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), tsMicro, metrics.DriverKey(DriverName))
+		}
+	}()
 
 	if err := s.createOrValidateDir(s.workFS, ts); err != nil {
 		return nil, "", fmt.Errorf("failed to create new work directory %s: %w", ts, err)

@@ -110,18 +110,19 @@ func (dw *dirWatch) processEvent(evtInfo notify.EventInfo) {
 
 func (dw *dirWatch) triggerUpdate() {
 	dw.mu.RLock()
-	shouldUpdate := len(dw.eventBatch) > 0 && (time.Since(dw.lastEventTime) > dw.cooldownPeriod)
+	shouldUpdate := len(dw.eventBatch) > 0 && (time.Since(dw.lastEventTime).Microseconds() > dw.cooldownPeriod.Microseconds())
 	dw.mu.RUnlock()
 
 	//nolint:nestif
 	if shouldUpdate {
 		dw.mu.Lock()
-		proceed := len(dw.eventBatch) > 0 && (time.Since(dw.lastEventTime) > dw.cooldownPeriod)
+		proceed := len(dw.eventBatch) > 0 && (time.Since(dw.lastEventTime).Microseconds() > dw.cooldownPeriod.Microseconds())
 		if !proceed {
 			dw.mu.Unlock()
 			return
 		}
 
+		ts := dw.lastEventTime
 		batch := dw.eventBatch
 		dw.eventBatch = make(map[string]struct{})
 		dw.mu.Unlock()
@@ -173,6 +174,8 @@ func (dw *dirWatch) triggerUpdate() {
 
 		if errCount > 0 {
 			metrics.Add(context.Background(), metrics.StoreSyncErrorCount(), int64(errCount), metrics.DriverKey(DriverName))
+		} else {
+			metrics.Record(context.Background(), metrics.StoreLastSuccessfulRefresh(), ts.UnixMicro(), metrics.DriverKey(DriverName))
 		}
 	}
 }
