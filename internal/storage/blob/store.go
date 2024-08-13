@@ -238,7 +238,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	for _, i := range cr.addedOrUpdated {
 		e, err := s.addOrUpdateEvent(i.etag, i.file)
 		if err != nil {
-			return fmt.Errorf("faield to create add or update event: %w", err)
+			return fmt.Errorf("failed to create add or update event: %w", err)
 		}
 		evts = append(evts, e)
 	}
@@ -246,7 +246,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	for _, i := range cr.deleted {
 		e, err := s.deleteEvent(i.etag, i.file)
 		if err != nil {
-			return fmt.Errorf("faield to create delete event: %w", err)
+			return fmt.Errorf("failed to create delete event: %w", err)
 		}
 		evts = append(evts, e)
 	}
@@ -255,11 +255,11 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	s.log.Info("Index updated")
 
 	if err := s.cloner.Clean(); err != nil {
-		s.log.Warnf("Failed to clean up the cache: %v", err)
+		s.log.Warnw("Failed to clean up the cache", "error", err)
 	}
 
 	if err := os.RemoveAll(oldWorkDir); err != nil && !os.IsNotExist(err) {
-		s.log.Warnf("failed to remove old work directory %s: %v", oldWorkDir, err)
+		s.log.Warnw(fmt.Sprintf("Failed to remove old work directory %s", oldWorkDir), "error", err)
 	}
 
 	return nil
@@ -470,11 +470,11 @@ func (s *Store) Reload(ctx context.Context) error {
 	s.NotifySubscribers(storage.NewReloadEvent())
 
 	if err := s.cloner.Clean(); err != nil {
-		s.log.Warnf("Failed to clean up the cache: %v", err)
+		s.log.Warnw("Failed to clean up the cache", "error", err)
 	}
 
 	if err := os.RemoveAll(oldWorkDir); err != nil && !os.IsNotExist(err) {
-		s.log.Warnf("failed to remove old work directory %s: %v", oldWorkDir, err)
+		s.log.Warnw(fmt.Sprintf("Failed to remove old work directory %s", oldWorkDir), "error", err)
 	}
 
 	return nil
