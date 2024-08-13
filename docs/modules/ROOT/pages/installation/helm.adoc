@@ -137,12 +137,13 @@ cerbos:
         updatePollInterval: 60s
         # Credentials used to login to the remote GitHub repo. We are using an environment variable mounted from the secret we created earlier.
         https:
-          username: ${GITHUB_TOKEN} <2>
-          password: "" <3>
+          username: "cerbos" <2>
+          password: "${GITHUB_TOKEN}" <3>
 ----
 <1> Create an environment variable from the secret we created
-<2> Use the environment variable containing the PAT as the username to login to GitHub
-<3> Password should be empty when using a PAT to authenticate to GitHub
+<2> Username should be set to a string value (can be any value if using GitHub)
+<3> Use the environment variable containing the PAT as the password to login to GitHub
+
 
 * Deploy Cerbos using the Helm chart
 +
