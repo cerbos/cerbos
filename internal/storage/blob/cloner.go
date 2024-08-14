@@ -103,8 +103,12 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
-			return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
+		if _, err := c.fsys.Open(etag); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("failed to check if file %s with etag %s exists: %w", file, etag, err)
+		} else if errors.Is(err, fs.ErrNotExist) {
+			if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
+				return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
+			}
 		}
 
 		addedOrUpdated = append(addedOrUpdated, info{
@@ -184,11 +188,7 @@ func (c *Cloner) Clean() error {
 
 		return nil
 	}); err != nil {
-		if removeErrors != nil {
-			return fmt.Errorf("failed to walk dir: %w", errors.Join(err, removeErrors))
-		}
-
-		return fmt.Errorf("failed to walk dir: %w", err)
+		return fmt.Errorf("failed to walk dir: %w", errors.Join(err, removeErrors))
 	}
 
 	return nil
