@@ -30,11 +30,10 @@ type clonerFS interface {
 }
 
 type Cloner struct {
-	bucket        *blob.Bucket
-	fsys          clonerFS
-	log           *zap.SugaredLogger
-	state         map[string][]string
-	danglingEtags []string
+	bucket *blob.Bucket
+	fsys   clonerFS
+	log    *zap.SugaredLogger
+	state  map[string][]string
 }
 
 func NewCloner(bucket *blob.Bucket, fsys clonerFS) *Cloner {
@@ -114,7 +113,6 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 		})
 	}
 
-	var danglingEtags []string
 	var deleted []info
 	for etag, existingFiles := range c.state {
 		for _, existingFile := range existingFiles {
@@ -123,9 +121,6 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 					etag: etag,
 					file: existingFile,
 				})
-
-				// This etag is not referenced from any file, we should get rid of it later.
-				danglingEtags = append(danglingEtags, etag)
 			} else if !slices.Contains(files, existingFile) {
 				deleted = append(deleted, info{
 					etag: etag,
@@ -135,7 +130,6 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 		}
 	}
 
-	c.danglingEtags = danglingEtags
 	c.state = all
 	return &CloneResult{
 		all:            all,
@@ -171,14 +165,31 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 }
 
 func (c *Cloner) Clean() error {
-	var errs error
-	for _, etag := range c.danglingEtags {
-		c.log.Debugw("Removing dangling etag file", "etag", etag)
-		if err := c.fsys.Remove(etag); err != nil {
-			errs = errors.Join(errs, fmt.Errorf("failed to remove dangling etag file %s: %w", etag, err))
+	var removeErrors error
+	if err := fs.WalkDir(c.fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if _, ok := c.state[path]; !ok {
+			c.log.Debugw("Removing dangling etag file", "etag", path)
+			if err := c.fsys.Remove(path); err != nil {
+				removeErrors = errors.Join(removeErrors, fmt.Errorf("failed to remove dangling etag file %s: %w", path, err))
+			}
+		}
+
+		return nil
+	}); err != nil {
+		if removeErrors != nil {
+			return fmt.Errorf("failed to walk dir: %w", errors.Join(err, removeErrors))
+		}
+
+		return fmt.Errorf("failed to walk dir: %w", err)
 	}
 
-	c.danglingEtags = nil
-	return errs
+	return nil
 }

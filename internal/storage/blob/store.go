@@ -207,6 +207,10 @@ func (s *Store) init(ctx context.Context) error {
 	s.idx = idx
 	go s.pollForUpdates(ctx)
 
+	if err := s.cloner.Clean(); err != nil {
+		s.log.Warnw("Failed to clean up the cache", "error", err)
+	}
+
 	return nil
 }
 
