@@ -197,7 +197,7 @@ func (s *Store) init(ctx context.Context) error {
 		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	idx, newWorkDir, err := s.buildIndex(ctx, cr.all)
+	idx, _, newWorkDir, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		return fmt.Errorf("failed to build index from the new set of files: %w", err)
 	}
@@ -228,7 +228,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 
 	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(cr.addedOrUpdated), len(cr.deleted))
 
-	idx, newWorkDir, err := s.buildIndex(ctx, cr.all)
+	idx, idxUpdateTS, newWorkDir, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		return fmt.Errorf("failed to build index from the new set of files: %w", err)
 	}
@@ -248,7 +248,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	s.idx = idx
 
 	for _, i := range cr.addedOrUpdated {
-		e, err := s.addOrUpdateEvent(i.etag, i.file)
+		e, err := s.addOrUpdateEvent(i.etag, i.file, idxUpdateTS)
 		if err != nil {
 			return fmt.Errorf("failed to create add or update event: %w", err)
 		}
@@ -269,7 +269,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	return nil
 }
 
-func (s *Store) addOrUpdateEvent(etag, file string) (storage.Event, error) {
+func (s *Store) addOrUpdateEvent(etag, file string, idxUpdateTS int64) (storage.Event, error) {
 	if schemaFile, ok := util.RelativeSchemaPath(file); ok {
 		return storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile), nil
 	}
@@ -278,7 +278,7 @@ func (s *Store) addOrUpdateEvent(etag, file string) (storage.Event, error) {
 	if err != nil {
 		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
-	wp := policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(etag)))
+	wp := policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(etag), indexBuildTSSourceAttr(idxUpdateTS)))
 
 	return storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID), nil
 }
@@ -385,26 +385,27 @@ func (e *indexBuildError) Error() string {
 // buildIndex creates a new work directory with its name set to current timestamp, creates symlinks targeted to
 // s.cacheDir according to the given map 'all' and tries to build a temporary index to see if there are any errors
 // with the incoming policies/schemas. If there are no errors returns the index built and the path to the new work directory.
-func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (index.Index, string, error) {
-	newWorkDir := filepath.Join(s.conf.WorkDir, strconv.FormatInt(time.Now().Unix(), 10))
+func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (index.Index, int64, string, error) {
+	ts := time.Now().Unix()
+	newWorkDir := filepath.Join(s.conf.WorkDir, strconv.FormatInt(ts, 10))
 	if err := validateOrCreateDir(newWorkDir); err != nil {
-		return nil, "", fmt.Errorf("failed to create new work directory %s: %w", newWorkDir, err)
+		return nil, 0, "", fmt.Errorf("failed to create new work directory %s: %w", newWorkDir, err)
 	}
 
 	if err := s.createSymlinks(all, s.cacheDir, newWorkDir); err != nil {
-		return nil, "", fmt.Errorf("failed to create symbolic links for the new work directory: %w", err)
+		return nil, 0, "", fmt.Errorf("failed to create symbolic links for the new work directory: %w", err)
 	}
 
 	idx, err := index.Build(ctx, os.DirFS(newWorkDir), index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr))
 	if err != nil {
 		if rerr := os.RemoveAll(newWorkDir); rerr != nil && !os.IsNotExist(rerr) {
-			return nil, "", errors.Join(err, fmt.Errorf("failed to remove directory %s: %w", newWorkDir, rerr))
+			return nil, 0, "", errors.Join(err, fmt.Errorf("failed to remove directory %s: %w", newWorkDir, rerr))
 		}
 
-		return nil, "", &indexBuildError{workDir: newWorkDir, err: err}
+		return nil, 0, "", &indexBuildError{workDir: newWorkDir, err: err}
 	}
 
-	return idx, newWorkDir, nil
+	return idx, ts, newWorkDir, nil
 }
 
 func (s *Store) Driver() string {
@@ -457,7 +458,7 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	idx, newWorkDir, err := s.buildIndex(ctx, cr.all)
+	idx, _, newWorkDir, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		if errors.Is(err, &indexBuildError{}) {
 			s.log.Warnw("Remote store is in an invalid state", "error", err)
@@ -482,6 +483,10 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func indexBuildTSSourceAttr(ts int64) policy.SourceAttribute {
+	return policy.SourceAttribute{Key: "index_build_ts", Value: structpb.NewNumberValue(float64(ts))}
 }
 
 func etagSourceAttr(etag string) policy.SourceAttribute {
