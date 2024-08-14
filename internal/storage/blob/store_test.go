@@ -91,56 +91,64 @@ func TestStore_updateIndex(t *testing.T) {
 	must := require.New(t)
 
 	policyDir := test.PathToDir(t, "store")
-	policyFile := filepath.Join("resource_policies", "policy_01.yaml")
+	policyFile := filepath.Join("resource_policies", "policy_02.yaml")
 	schemaFile := filepath.Join(schema.Directory, "principal.json")
+	noOfClonerCalls := 0
 	store, err := NewStore(ctx, conf,
-		mkMockCloner(filepath.Join(dir, dotcache), policyDir, func() error {
-			return nil
-		}, func(_ context.Context) (*CloneResult, error) {
-			return &CloneResult{
-				addedOrUpdated: []info{
-					{
-						etag: "policy",
-						file: policyFile,
+		mkMockCloner(filepath.Join(dir, dotcache), policyDir, nil, func(_ context.Context) (*CloneResult, error) {
+			noOfClonerCalls++
+
+			if noOfClonerCalls == 2 { // first call to updateIndex after init
+				return &CloneResult{
+					all: map[string][]string{
+						"policy": {policyFile},
+						"schema": {schemaFile},
 					},
-					{
-						etag: "schema",
-						file: schemaFile,
+					addedOrUpdated: []info{
+						{
+							etag: "policy",
+							file: policyFile,
+						},
+						{
+							etag: "schema",
+							file: schemaFile,
+						},
 					},
-				},
-				deleted: []info{
-					{
-						etag: "policy",
-						file: policyFile,
+				}, nil
+			} else if noOfClonerCalls == 3 { // second call to updateIndex after init
+				return &CloneResult{
+					deleted: []info{
+						{
+							etag: "policy",
+							file: policyFile,
+						},
+						{
+							etag: "schema",
+							file: schemaFile,
+						},
 					},
-					{
-						etag: "schema",
-						file: schemaFile,
-					},
-				},
-			}, nil
+				}, nil
+			}
+
+			return &CloneResult{}, nil
 		}),
 	)
 	must.NoError(err)
-	store.workFS = storeFS{dir: policyDir}
-
-	addOrUpdateEvent := storage.Event{
-		Kind:     storage.EventAddOrUpdatePolicy,
-		PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.v20210210"),
-	}
-	deleteEvent := storage.Event{
-		Kind:     storage.EventDeleteOrDisablePolicy,
-		PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.v20210210"),
-	}
 
 	mustBeNotified := storage.TestSubscription(store)
-	err = store.updateIndex(ctx)
-	must.NoError(err)
+	must.NoError(store.updateIndex(ctx))
+	must.NoError(store.updateIndex(ctx))
 	mustBeNotified(t, 1*time.Second,
-		addOrUpdateEvent,
-		deleteEvent,
-		storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "principal.json"),
 		storage.NewSchemaEvent(storage.EventDeleteSchema, "principal.json"),
+		storage.Event{
+			Kind:     storage.EventAddOrUpdatePolicy,
+			PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vstaging"),
+		},
+		storage.Event{
+			Kind:     storage.EventDeleteOrDisablePolicy,
+			PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vstaging"),
+		},
+		storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "principal.json"),
 	)
 }
 

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -27,6 +28,7 @@ type clonerFS interface {
 	Remove(name string) error
 	Create(name string) (io.WriteCloser, error)
 	MkdirAll(path string, perm fs.FileMode) error
+	Stat(path string) (os.FileInfo, error)
 }
 
 type Cloner struct {
@@ -103,9 +105,9 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		if _, err := c.fsys.Open(etag); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		if _, err := c.fsys.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("failed to check if file %s with etag %s exists: %w", file, etag, err)
-		} else if errors.Is(err, fs.ErrNotExist) {
+		} else if errors.Is(err, os.ErrNotExist) {
 			if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
 				return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
 			}

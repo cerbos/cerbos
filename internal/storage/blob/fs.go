@@ -31,3 +31,7 @@ func (s storeFS) Create(name string) (io.WriteCloser, error) {
 func (s storeFS) MkdirAll(path string, perm fs.FileMode) error {
 	return os.MkdirAll(filepath.Join(s.dir, path), perm)
 }
+
+func (s storeFS) Stat(path string) (os.FileInfo, error) {
+	return os.Stat(filepath.Join(s.dir, path))
+}
