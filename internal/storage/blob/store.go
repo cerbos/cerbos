@@ -229,24 +229,24 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		return fmt.Errorf("failed to build index from the new set of files: %w", err)
 	}
 
+	evts := make([]storage.Event, 0, len(cr.addedOrUpdated)+len(cr.deleted))
+	for _, i := range cr.deleted {
+		e, err := s.deleteEvent(i.file)
+		if err != nil {
+			return fmt.Errorf("failed to create delete event: %w", err)
+		}
+		evts = append(evts, e)
+	}
+
 	oldWorkDir := s.workDir
 	s.workDir = newWorkDir
 	s.workFS = os.DirFS(newWorkDir)
 	s.idx = idx
 
-	evts := make([]storage.Event, 0, len(cr.addedOrUpdated)+len(cr.deleted))
 	for _, i := range cr.addedOrUpdated {
 		e, err := s.addOrUpdateEvent(i.etag, i.file)
 		if err != nil {
 			return fmt.Errorf("failed to create add or update event: %w", err)
-		}
-		evts = append(evts, e)
-	}
-
-	for _, i := range cr.deleted {
-		e, err := s.deleteEvent(i.etag, i.file)
-		if err != nil {
-			return fmt.Errorf("failed to create delete event: %w", err)
 		}
 		evts = append(evts, e)
 	}
@@ -270,23 +270,23 @@ func (s *Store) addOrUpdateEvent(etag, file string) (storage.Event, error) {
 		return storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile), nil
 	}
 
-	p, err := policy.ReadPolicyFromFile(s.cacheFS, etag)
+	p, err := policy.ReadPolicyFromFile(s.workFS, file)
 	if err != nil {
-		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", etag, err)
+		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
 	wp := policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(etag)))
 
 	return storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID), nil
 }
 
-func (s *Store) deleteEvent(etag, file string) (storage.Event, error) {
+func (s *Store) deleteEvent(file string) (storage.Event, error) {
 	if schemaFile, ok := util.RelativeSchemaPath(file); ok {
 		return storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile), nil
 	}
 
-	p, err := policy.ReadPolicyFromFile(s.cacheFS, etag)
+	p, err := policy.ReadPolicyFromFile(s.workFS, file)
 	if err != nil {
-		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", etag, err)
+		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
 
 	return storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, namer.GenModuleID(p)), nil
