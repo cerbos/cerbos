@@ -45,5 +45,3 @@ steps:
       deleted:
         - file: leave_request.yaml
           etag: 7a5fdbca0510a02602ba1d40a3f5f55a
-      danglingEtags:
-        - 7a5fdbca0510a02602ba1d40a3f5f55a

@@ -22,29 +22,24 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-// clonerFS represents file system interface that used by the Cloner.
-type clonerFS interface {
-	fs.FS
-	Remove(name string) error
-	Create(name string) (io.WriteCloser, error)
-	MkdirAll(path string, perm fs.FileMode) error
-	Stat(path string) (os.FileInfo, error)
-}
-
 type Cloner struct {
 	bucket *blob.Bucket
-	fsys   clonerFS
+	fs     FS
 	log    *zap.SugaredLogger
 	state  map[string][]string
 }
 
-func NewCloner(bucket *blob.Bucket, fsys clonerFS) *Cloner {
+func NewCloner(bucket *blob.Bucket, dir string) (*Cloner, error) {
+	if err := createOrValidateDir(dir); err != nil {
+		return nil, fmt.Errorf("failed to create cache directory: %w", err)
+	}
+
 	return &Cloner{
 		bucket: bucket,
 		log:    zap.S().Named("blob.cloner"),
-		fsys:   fsys,
+		fs:     newBlobFS(dir),
 		state:  make(map[string][]string),
-	}
+	}, nil
 }
 
 type info struct {
@@ -105,7 +100,7 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		if _, err := c.fsys.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if _, err := c.fs.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("failed to check if file %s with etag %s exists: %w", file, etag, err)
 		} else if errors.Is(err, os.ErrNotExist) {
 			if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
@@ -146,25 +141,25 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 
 func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
 	dir := filepath.Dir(file)
-	if err := c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
-		return fmt.Errorf("failed to make dir %q: %w", dir, err)
+	if err := c.fs.MkdirAll(dir, perm775); err != nil { //nolint:mnd
+		return fmt.Errorf("failed to make dir %s: %w", dir, err)
 	}
 
-	fd, err := c.fsys.Create(file)
+	fd, err := c.fs.Create(file)
 	if err != nil {
-		return fmt.Errorf("failed to create a file %q: %w", file, err)
+		return fmt.Errorf("failed to create a file %s: %w", file, err)
 	}
 	defer multierr.AppendInvoke(&err, multierr.Close(fd))
 
 	r, err := c.bucket.NewReader(ctx, key, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create a reader for the object %q: %w", key, err)
+		return fmt.Errorf("failed to create a reader for the object %s: %w", key, err)
 	}
 	// defer multierr.AppendInvoke(&err, multierr.Close(r))
 	defer r.Close()
 
 	if _, err = io.Copy(fd, r); err != nil {
-		return fmt.Errorf("failed to read the object %q: %w", key, err)
+		return fmt.Errorf("failed to read the object %s: %w", key, err)
 	}
 
 	return nil
@@ -172,7 +167,7 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 
 func (c *Cloner) Clean() error {
 	var removeErrors error
-	if err := fs.WalkDir(c.fsys, ".", func(path string, d fs.DirEntry, err error) error {
+	if err := fs.WalkDir(c.fs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -183,7 +178,7 @@ func (c *Cloner) Clean() error {
 
 		if _, ok := c.state[path]; !ok {
 			c.log.Debugw("Removing dangling etag file", "etag", path)
-			if err := c.fsys.Remove(path); err != nil {
+			if err := c.fs.Remove(path); err != nil {
 				removeErrors = errors.Join(removeErrors, fmt.Errorf("failed to remove dangling etag file %s: %w", path, err))
 			}
 		}

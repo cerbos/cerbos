@@ -4,34 +4,79 @@
 package blob
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
 
-var _ clonerFS = storeFS{}
+const (
+	perm775 = 0o775
+)
 
-type storeFS struct {
+var _ FS = blobFS{}
+
+// FS represents file system interface that used by the Cloner and Store.
+type FS interface {
+	fs.FS
+	Remove(name string) error
+	RemoveAll(name string) error
+	Create(name string) (io.WriteCloser, error)
+	MkdirAll(path string, perm fs.FileMode) error
+	Stat(path string) (os.FileInfo, error)
+}
+
+func newBlobFS(dir string) FS {
+	return &blobFS{
+		dir: dir,
+	}
+}
+
+type blobFS struct {
 	dir string
 }
 
-func (s storeFS) Open(name string) (fs.File, error) {
+func (s blobFS) Open(name string) (fs.File, error) {
 	return os.Open(filepath.Join(s.dir, name))
 }
 
-func (s storeFS) Remove(name string) error {
+func (s blobFS) Remove(name string) error {
 	return os.Remove(filepath.Join(s.dir, name))
 }
 
-func (s storeFS) Create(name string) (io.WriteCloser, error) {
+func (s blobFS) RemoveAll(name string) error {
+	return os.RemoveAll(filepath.Join(s.dir, name))
+}
+
+func (s blobFS) Create(name string) (io.WriteCloser, error) {
 	return os.Create(filepath.Join(s.dir, name))
 }
 
-func (s storeFS) MkdirAll(path string, perm fs.FileMode) error {
+func (s blobFS) MkdirAll(path string, perm fs.FileMode) error {
 	return os.MkdirAll(filepath.Join(s.dir, path), perm)
 }
 
-func (s storeFS) Stat(path string) (os.FileInfo, error) {
+func (s blobFS) Stat(path string) (os.FileInfo, error) {
 	return os.Stat(filepath.Join(s.dir, path))
+}
+
+func createOrValidateDir(dir string) error {
+	fileInfo, err := os.Stat(dir)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("failed to stat directory %s: %w", dir, err)
+		}
+
+		if err := os.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+	}
+
+	if fileInfo != nil && !fileInfo.IsDir() {
+		return fmt.Errorf("dir is not a directory: %s", dir)
+	}
+
+	return nil
 }
