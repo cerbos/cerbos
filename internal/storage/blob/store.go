@@ -414,6 +414,7 @@ func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (idx in
 		return nil, "", fmt.Errorf("failed to create symbolic links for the new work directory: %w", err)
 	}
 
+	s.log.Debugw("Building index", "ts", ts)
 	tsPath := filepath.Join(s.workDir, ts)
 	if idx, err = index.Build(ctx, newBlobFS(tsPath), index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr)); err != nil {
 		if rerr := s.workFS.RemoveAll(ts); rerr != nil && !errors.Is(rerr, fs.ErrNotExist) {

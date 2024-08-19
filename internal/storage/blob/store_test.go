@@ -167,8 +167,6 @@ func TestStore_updateIndex(t *testing.T) {
 		storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "principal.json"),
 	)
 
-	time.Sleep(5 * time.Millisecond)
-
 	mustBeNotified = storage.TestSubscription(store)
 	must.NoError(store.updateIndex(ctx))
 	mustBeNotified(t, 1*time.Second,

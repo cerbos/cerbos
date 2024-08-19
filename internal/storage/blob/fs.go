@@ -20,34 +20,23 @@ var _ FS = blobFS{}
 
 // FS represents file system interface that used by the Cloner and Store.
 type FS interface {
-	fs.FS
+	fs.StatFS
 	Remove(name string) error
 	RemoveAll(name string) error
 	Create(name string) (io.WriteCloser, error)
 	MkdirAll(path string, perm fs.FileMode) error
-	Stat(path string) (os.FileInfo, error)
 }
 
 func newBlobFS(dir string) FS {
 	return &blobFS{
-		dir: dir,
+		dir:  dir,
+		fsys: os.DirFS(dir),
 	}
 }
 
 type blobFS struct {
-	dir string
-}
-
-func (s blobFS) Open(name string) (fs.File, error) {
-	return os.Open(filepath.Join(s.dir, name))
-}
-
-func (s blobFS) Remove(name string) error {
-	return os.Remove(filepath.Join(s.dir, name))
-}
-
-func (s blobFS) RemoveAll(name string) error {
-	return os.RemoveAll(filepath.Join(s.dir, name))
+	fsys fs.FS
+	dir  string
 }
 
 func (s blobFS) Create(name string) (io.WriteCloser, error) {
@@ -58,8 +47,20 @@ func (s blobFS) MkdirAll(path string, perm fs.FileMode) error {
 	return os.MkdirAll(filepath.Join(s.dir, path), perm)
 }
 
-func (s blobFS) Stat(path string) (os.FileInfo, error) {
-	return os.Stat(filepath.Join(s.dir, path))
+func (s blobFS) Open(name string) (fs.File, error) {
+	return s.fsys.Open(name)
+}
+
+func (s blobFS) Remove(name string) error {
+	return os.Remove(filepath.Join(s.dir, name))
+}
+
+func (s blobFS) RemoveAll(name string) error {
+	return os.RemoveAll(filepath.Join(s.dir, name))
+}
+
+func (s blobFS) Stat(name string) (fs.FileInfo, error) {
+	return fs.Stat(s.fsys, name)
 }
 
 func createOrValidateDir(dir string) error {
