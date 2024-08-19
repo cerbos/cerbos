@@ -37,15 +37,19 @@ func TestNewStore(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("clone failure makes ctor fail", func(t *testing.T) {
-		dir := t.TempDir()
-		conf := &Conf{WorkDir: dir}
+		workDir := t.TempDir()
+		conf := &Conf{WorkDir: workDir}
 		conf.SetDefaults()
 		must := require.New(t)
 		_, err := NewStore(
 			ctx,
 			conf,
+			newBlobFS(workDir),
 			mkMockCloner("", "", nil, func(_ context.Context) (*CloneResult, error) {
 				return nil, errors.New("any error")
+			}),
+			symlinkerFunc(func(_, _ string) error {
+				return errors.New("any error")
 			}),
 		)
 		must.Error(err)
@@ -54,20 +58,32 @@ func TestNewStore(t *testing.T) {
 		if testing.Short() {
 			t.Skip()
 		}
-		dir := t.TempDir()
-		conf := &Conf{WorkDir: dir}
-		conf.SetDefaults()
 
-		must := require.New(t)
+		workDir := t.TempDir()
+		conf := &Conf{WorkDir: workDir}
+		conf.SetDefaults()
+		cacheDir := filepath.Join(workDir, dotcache)
 
 		endpoint := StartMinio(ctx, t, bucketName)
 		t.Setenv("AWS_ACCESS_KEY_ID", minioUsername)
 		t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
 		conf.Bucket = MinioBucketURL(bucketName, endpoint)
 
+		must := require.New(t)
+
 		bucket, err := newBucket(ctx, conf)
 		must.NoError(err)
-		_, err = NewStore(ctx, conf, NewCloner(bucket, storeFS{filepath.Join(dir, dotcache)}))
+
+		cloner, err := NewCloner(bucket, cacheDir)
+		must.NoError(err)
+
+		_, err = NewStore(
+			ctx,
+			conf,
+			newBlobFS(workDir),
+			cloner,
+			symlinkerFunc(func(_, _ string) error { return nil }),
+		)
 		must.NoError(err)
 	})
 }
@@ -84,63 +100,81 @@ func TestReloadable(t *testing.T) {
 func TestStore_updateIndex(t *testing.T) {
 	ctx := context.Background()
 
-	dir := t.TempDir()
-	conf := &Conf{WorkDir: dir}
+	must := require.New(t)
+	workDir := t.TempDir()
+	cacheDir := filepath.Join(workDir, dotcache)
+	must.NoError(createOrValidateDir(cacheDir))
+
+	conf := &Conf{WorkDir: workDir}
 	conf.SetDefaults()
 
-	must := require.New(t)
-
 	policyDir := test.PathToDir(t, "store")
-	policyFile := filepath.Join("resource_policies", "policy_01.yaml")
+	policyFile := filepath.Join("resource_policies", "policy_02.yaml")
 	schemaFile := filepath.Join(schema.Directory, "principal.json")
-	store, err := NewStore(ctx, conf,
-		mkMockCloner(filepath.Join(dir, dotcache), policyDir, func() error {
-			return nil
-		}, func(_ context.Context) (*CloneResult, error) {
-			return &CloneResult{
-				addedOrUpdated: []info{
-					{
-						etag: "policy",
-						file: policyFile,
+	noOfClonerCalls := 0
+	store, err := NewStore(
+		ctx,
+		conf,
+		newBlobFS(workDir),
+		mkMockCloner(cacheDir, policyDir, nil, func(_ context.Context) (*CloneResult, error) {
+			noOfClonerCalls++
+
+			if noOfClonerCalls == 2 { // first call to updateIndex after init
+				return &CloneResult{
+					all: map[string][]string{
+						"policy": {policyFile},
+						"schema": {schemaFile},
 					},
-					{
-						etag: "schema",
-						file: schemaFile,
+					addedOrUpdated: []info{
+						{
+							etag: "policy",
+							file: policyFile,
+						},
+						{
+							etag: "schema",
+							file: schemaFile,
+						},
 					},
-				},
-				deleted: []info{
-					{
-						etag: "policy",
-						file: policyFile,
+				}, nil
+			} else if noOfClonerCalls == 3 { // second call to updateIndex after init
+				return &CloneResult{
+					deleted: []info{
+						{
+							etag: "policy",
+							file: policyFile,
+						},
+						{
+							etag: "schema",
+							file: schemaFile,
+						},
 					},
-					{
-						etag: "schema",
-						file: schemaFile,
-					},
-				},
-			}, nil
+				}, nil
+			}
+
+			return &CloneResult{}, nil
 		}),
+		mkSymlinker(cacheDir, workDir),
 	)
 	must.NoError(err)
-	store.workFS = storeFS{dir: policyDir}
-
-	addOrUpdateEvent := storage.Event{
-		Kind:     storage.EventAddOrUpdatePolicy,
-		PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.v20210210"),
-	}
-	deleteEvent := storage.Event{
-		Kind:     storage.EventDeleteOrDisablePolicy,
-		PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.v20210210"),
-	}
 
 	mustBeNotified := storage.TestSubscription(store)
-	err = store.updateIndex(ctx)
-	must.NoError(err)
+	must.NoError(store.updateIndex(ctx))
 	mustBeNotified(t, 1*time.Second,
-		addOrUpdateEvent,
-		deleteEvent,
+		storage.Event{
+			Kind:     storage.EventAddOrUpdatePolicy,
+			PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vstaging"),
+		},
 		storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "principal.json"),
+	)
+
+	mustBeNotified = storage.TestSubscription(store)
+	must.NoError(store.updateIndex(ctx))
+	mustBeNotified(t, 1*time.Second,
 		storage.NewSchemaEvent(storage.EventDeleteSchema, "principal.json"),
+		storage.Event{
+			Kind:     storage.EventDeleteOrDisablePolicy,
+			PolicyID: namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vstaging"),
+		},
 	)
 }
 
@@ -196,10 +230,23 @@ func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 	conf := mkConf(t, dir, bucketName, endpoint)
 	bucket, err := newBucket(context.Background(), conf)
 	require.NoError(t, err)
-	store, err := NewStore(context.Background(), conf, NewCloner(bucket, storeFS{filepath.Join(dir, dotcache)}))
+	cacheDir := filepath.Join(dir, dotcache)
+	cloner, err := NewCloner(bucket, filepath.Join(dir, dotcache))
+	require.NoError(t, err)
+
+	store, err := NewStore(context.Background(), conf, newBlobFS(dir), cloner, mkSymlinker(cacheDir, dir))
 	require.NoError(t, err)
 
 	return store, bucket
+}
+
+func mkSymlinker(cacheDir, workDir string) symlinker {
+	return symlinkerFunc(func(destination, source string) error {
+		src := filepath.Join(workDir, source)
+		dst := filepath.Join(cacheDir, destination)
+
+		return os.Symlink(dst, src)
+	})
 }
 
 func mkConf(t *testing.T, dir, bucketName, endpoint string) *Conf {
@@ -212,7 +259,7 @@ func mkConf(t *testing.T, dir, bucketName, endpoint string) *Conf {
 	return conf
 }
 
-func mkMockCloner(cacheDir, policyDir string, clean cleanFn, clone cloneFn) *mockCloner {
+func mkMockCloner(cacheDir, policyDir string, clean cleanFn, clone cloneFn) bucketCloner {
 	return &mockCloner{
 		cacheDir:  cacheDir,
 		cleanFn:   clean,

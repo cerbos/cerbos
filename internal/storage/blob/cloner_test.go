@@ -33,13 +33,15 @@ func TestCloneResult(t *testing.T) {
 		dir := t.TempDir()
 
 		bucketDir := filepath.Join(dir, "bucket")
-		require.NoError(t, os.MkdirAll(bucketDir, 0o775))
+		require.NoError(t, os.MkdirAll(bucketDir, perm775))
 
 		cacheDir := filepath.Join(dir, dotcache)
 		bucket := newMinioBucket(ctx, t, bucketDir, "")
 		applyFiles(ctx, t, bucket, testCase.Inputs)
 
-		cloner := NewCloner(bucket, storeFS{cacheDir})
+		cloner, err := NewCloner(bucket, cacheDir)
+		require.NoError(t, err)
+
 		t.Run(testMetadata.Name, func(t *testing.T) {
 			for idx, s := range testCase.Steps {
 				t.Run(fmt.Sprint(idx), func(t *testing.T) {
@@ -53,8 +55,6 @@ func TestCloneResult(t *testing.T) {
 						require.Empty(t, cmp.Diff(step.Expectation.All, toExpectedAllMap(cr.all), protocmp.Transform()))
 						require.Empty(t, cmp.Diff(step.Expectation.AddedOrUpdated, toInfos(cr.addedOrUpdated), protocmp.Transform()))
 						require.Empty(t, cmp.Diff(step.Expectation.Deleted, toInfos(cr.deleted), protocmp.Transform()))
-						require.Equal(t, step.Expectation.DanglingEtags, cloner.danglingEtags)
-
 						require.NoError(t, cloner.Clean())
 					}
 				})

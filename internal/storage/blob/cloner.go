@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -21,29 +22,24 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-// clonerFS represents file system interface that used by the Cloner.
-type clonerFS interface {
-	fs.FS
-	Remove(name string) error
-	Create(name string) (io.WriteCloser, error)
-	MkdirAll(path string, perm fs.FileMode) error
-}
-
 type Cloner struct {
-	bucket        *blob.Bucket
-	fsys          clonerFS
-	log           *zap.SugaredLogger
-	state         map[string][]string
-	danglingEtags []string
+	bucket *blob.Bucket
+	fs     FS
+	log    *zap.SugaredLogger
+	state  map[string][]string
 }
 
-func NewCloner(bucket *blob.Bucket, fsys clonerFS) *Cloner {
+func NewCloner(bucket *blob.Bucket, dir string) (*Cloner, error) {
+	if err := createOrValidateDir(dir); err != nil {
+		return nil, fmt.Errorf("failed to create cache directory: %w", err)
+	}
+
 	return &Cloner{
 		bucket: bucket,
 		log:    zap.S().Named("blob.cloner"),
-		fsys:   fsys,
+		fs:     newBlobFS(dir),
 		state:  make(map[string][]string),
-	}
+	}, nil
 }
 
 type info struct {
@@ -104,8 +100,12 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
-			return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
+		if _, err := c.fs.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("failed to check if file %s with etag %s exists: %w", file, etag, err)
+		} else if errors.Is(err, os.ErrNotExist) {
+			if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
+				return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
+			}
 		}
 
 		addedOrUpdated = append(addedOrUpdated, info{
@@ -114,7 +114,6 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 		})
 	}
 
-	var danglingEtags []string
 	var deleted []info
 	for etag, existingFiles := range c.state {
 		for _, existingFile := range existingFiles {
@@ -123,9 +122,6 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 					etag: etag,
 					file: existingFile,
 				})
-
-				// This etag is not referenced from any file, we should get rid of it later.
-				danglingEtags = append(danglingEtags, etag)
 			} else if !slices.Contains(files, existingFile) {
 				deleted = append(deleted, info{
 					etag: etag,
@@ -135,7 +131,6 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 		}
 	}
 
-	c.danglingEtags = danglingEtags
 	c.state = all
 	return &CloneResult{
 		all:            all,
@@ -146,39 +141,52 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 
 func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
 	dir := filepath.Dir(file)
-	if err := c.fsys.MkdirAll(dir, 0o775); err != nil { //nolint:mnd
-		return fmt.Errorf("failed to make dir %q: %w", dir, err)
+	if err := c.fs.MkdirAll(dir, perm775); err != nil { //nolint:mnd
+		return fmt.Errorf("failed to make dir %s: %w", dir, err)
 	}
 
-	fd, err := c.fsys.Create(file)
+	fd, err := c.fs.Create(file)
 	if err != nil {
-		return fmt.Errorf("failed to create a file %q: %w", file, err)
+		return fmt.Errorf("failed to create a file %s: %w", file, err)
 	}
 	defer multierr.AppendInvoke(&err, multierr.Close(fd))
 
 	r, err := c.bucket.NewReader(ctx, key, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create a reader for the object %q: %w", key, err)
+		return fmt.Errorf("failed to create a reader for the object %s: %w", key, err)
 	}
 	// defer multierr.AppendInvoke(&err, multierr.Close(r))
 	defer r.Close()
 
 	if _, err = io.Copy(fd, r); err != nil {
-		return fmt.Errorf("failed to read the object %q: %w", key, err)
+		return fmt.Errorf("failed to read the object %s: %w", key, err)
 	}
 
 	return nil
 }
 
 func (c *Cloner) Clean() error {
-	var errs error
-	for _, etag := range c.danglingEtags {
-		c.log.Debugw("Removing dangling etag file", "etag", etag)
-		if err := c.fsys.Remove(etag); err != nil {
-			errs = errors.Join(errs, fmt.Errorf("failed to remove dangling etag file %s: %w", etag, err))
+	var removeErrors error
+	if err := fs.WalkDir(c.fs, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if _, ok := c.state[path]; !ok {
+			c.log.Debugw("Removing dangling etag file", "etag", path)
+			if err := c.fs.Remove(path); err != nil {
+				removeErrors = errors.Join(removeErrors, fmt.Errorf("failed to remove dangling etag file %s: %w", path, err))
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to walk dir: %w", errors.Join(err, removeErrors))
 	}
 
-	c.danglingEtags = nil
-	return errs
+	return nil
 }

@@ -2036,14 +2036,6 @@ func cerbos_private_v1_BlobClonerTestCase_Step_Expectation_hashpb_sum(m *BlobClo
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.Step.Expectation.dangling_etags"]; !ok {
-		if len(m.DanglingEtags) > 0 {
-			for _, v := range m.DanglingEtags {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
-
-			}
-		}
-	}
 }
 
 func cerbos_private_v1_BlobClonerTestCase_Step_hashpb_sum(m *BlobClonerTestCase_Step, hasher hash.Hash, ignore map[string]struct{}) {
