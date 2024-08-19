@@ -2,7 +2,7 @@ module github.com/cerbos/cerbos/hack/tools/testsplit
 
 go 1.21
 
-toolchain go1.22.6
+toolchain go1.23.0
 
 require (
 	github.com/alecthomas/kong v0.9.0
