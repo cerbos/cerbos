@@ -114,19 +114,17 @@ func (m *manager) CheckSchema(ctx context.Context, url string) error {
 }
 
 func (m *manager) ValidateCheckInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.CheckInput) (*ValidationResult, error) {
-	log := logging.FromContext(ctx).With(zap.Any("input", input))
-	return m.validate(ctx, log, schemas, input.Principal.Attr, input.Resource.Attr, input.Actions, nil)
+	return m.validate(ctx, schemas, input.Principal.Attr, input.Resource.Attr, input.Actions, nil)
 }
 
 func (m *manager) ValidatePlanResourcesInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.PlanResourcesInput) (*ValidationResult, error) {
-	log := logging.FromContext(ctx).With(zap.Any("input", input))
-	return m.validate(ctx, log, schemas, input.Principal.Attr, input.Resource.Attr, []string{input.Action}, func(err *jsonschema.ValidationError) bool {
+	return m.validate(ctx, schemas, input.Principal.Attr, input.Resource.Attr, []string{input.Action}, func(err *jsonschema.ValidationError) bool {
 		// resource attributes are optional for query planning, so ignore errors from required properties
 		return !strings.HasSuffix(err.KeywordLocation, "/required")
 	})
 }
 
-func (m *manager) validate(ctx context.Context, log *zap.Logger, schemas *policyv1.Schemas, principalAttr, resourceAttr map[string]*structpb.Value, actions []string, resourceErrorFilter validationErrorFilter) (*ValidationResult, error) {
+func (m *manager) validate(ctx context.Context, schemas *policyv1.Schemas, principalAttr, resourceAttr map[string]*structpb.Value, actions []string, resourceErrorFilter validationErrorFilter) (*ValidationResult, error) {
 	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
 	if schemas == nil {
 		return result, nil
@@ -152,7 +150,7 @@ func (m *manager) validate(ctx context.Context, log *zap.Logger, schemas *policy
 	}
 
 	if len(result.Errors) > 0 {
-		log.Warn("Validation failed", zap.Strings("errors", result.Errors.ErrorMessages()))
+		logging.FromContext(ctx).Warn("Validation failed", zap.Strings("errors", result.Errors.ErrorMessages()))
 	}
 
 	return result, nil
