@@ -404,7 +404,7 @@ func (e *indexBuildError) Error() string {
 // s.cacheDir according to the given map 'all' and tries to build a temporary index to see if there are any errors
 // with the incoming policies/schemas. If there are no errors returns the index built and the path to the new work directory.
 func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (idx index.Index, ts string, err error) {
-	ts = strconv.FormatInt(time.Now().UnixMilli(), 10)
+	ts = strconv.FormatInt(time.Now().UnixMicro(), 10)
 
 	if err := s.createOrValidateDir(s.workFS, ts); err != nil {
 		return nil, "", fmt.Errorf("failed to create new work directory %s: %w", ts, err)
