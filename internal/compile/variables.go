@@ -328,10 +328,10 @@ func (vd *variableDefinitions) reportCyclicalVariables(cycles [][]graph.Node) {
 
 		desc.WriteString(" form a cycle")
 		if len(cycle) > 0 {
-			firstItem := cycle[0].(*variableNode) //nolint:forcetypeassert
-			firstItem.varCtx.addErrForProtoPath(firstItem.varCtx.path, errCyclicalVariables, desc.String())
+			firstItem := cycle[0].(*variableNode)                                                           //nolint:forcetypeassert
+			firstItem.varCtx.addErrForProtoPath(firstItem.varCtx.path, errCyclicalVariables, desc.String()) //nolint:govet
 		} else {
-			vd.modCtx.addErrWithDesc(errCyclicalVariables, desc.String())
+			vd.modCtx.addErrWithDesc(errCyclicalVariables, desc.String()) //nolint:govet
 		}
 	}
 }

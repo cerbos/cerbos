@@ -404,7 +404,7 @@ func callInStringStringOutBool(fn func(string, string) (bool, error)) functions.
 
 		retVal, err := fn(string(lhs), string(rhs))
 		if err != nil {
-			return types.NewErr(err.Error())
+			return types.NewErr(err.Error()) //nolint:govet
 		}
 
 		return types.DefaultTypeAdapter.NativeToValue(retVal)

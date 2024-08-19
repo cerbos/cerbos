@@ -1001,11 +1001,11 @@
             "comment"
           ],
           "items": {
-            "type": "string",
-            "uniqueItems": true
+            "type": "string"
           },
           "description": "List of actions being performed on the resource.",
-          "minItems": 1
+          "minItems": 1,
+          "uniqueItems": true
         },
         "resource": {
           "$ref": "#/definitions/enginev1Resource"
@@ -1026,11 +1026,11 @@
             "comment"
           ],
           "items": {
-            "type": "string",
-            "uniqueItems": true
+            "type": "string"
           },
           "description": "List of actions being performed on the resource.",
-          "minItems": 1
+          "minItems": 1,
+          "uniqueItems": true
         },
         "resource": {
           "$ref": "#/definitions/enginev1Resource"
@@ -1401,11 +1401,11 @@
             "user"
           ],
           "items": {
-            "type": "string",
-            "uniqueItems": true
+            "type": "string"
           },
           "description": "Roles assigned to this principal from your identity management system.",
-          "minItems": 1
+          "minItems": 1,
+          "uniqueItems": true
         },
         "attr": {
           "type": "object",
@@ -1726,11 +1726,11 @@
           ],
           "items": {
             "type": "object",
-            "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry",
-            "uniqueItems": true
+            "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry"
           },
           "description": "List of resources and actions.",
-          "minItems": 1
+          "minItems": 1,
+          "uniqueItems": true
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
@@ -1812,11 +1812,11 @@
             "comment"
           ],
           "items": {
-            "type": "string",
-            "uniqueItems": true
+            "type": "string"
           },
           "description": "List of actions being performed on the set of resources.",
-          "minItems": 1
+          "minItems": 1,
+          "uniqueItems": true
         },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
@@ -1986,11 +1986,11 @@
           ],
           "items": {
             "type": "object",
-            "$ref": "#/definitions/CheckResourcesRequestResourceEntry",
-            "uniqueItems": true
+            "$ref": "#/definitions/CheckResourcesRequestResourceEntry"
           },
           "description": "List of resources and actions.",
-          "minItems": 1
+          "minItems": 1,
+          "uniqueItems": true
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
