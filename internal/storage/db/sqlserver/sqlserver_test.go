@@ -8,6 +8,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -60,7 +61,7 @@ func TestSqlServer(t *testing.T) {
 		return fmt.Sprintf("sqlserver://sa:%s@127.0.0.1:%s?database=%s", password, port, dbname)
 	}
 
-	is.NoError(pool.Retry(func() error {
+	if err := pool.Retry(func() error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -73,7 +74,13 @@ func TestSqlServer(t *testing.T) {
 		return CreateSchema(bytes.NewReader(schemaSQL), db, func() (*sqlx.DB, error) {
 			return sqlx.Connect("sqlserver", getConnString("cerbos"))
 		})
-	}), "Container did not start or couldn't create schema")
+	}); err != nil {
+		if strings.Contains(err.Error(), "negative serial number") {
+			t.Skipf("Skipping due to bad container image")
+			return
+		}
+		is.NoError(err, "Container did not start or couldn't create schema")
+	}
 
 	store, err := NewStore(ctx, &Conf{
 		URL: fmt.Sprintf("sqlserver://cerbos_user:ChangeMe(1!!)@127.0.0.1:%s?database=cerbos", port),
