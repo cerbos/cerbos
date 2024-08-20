@@ -124,9 +124,11 @@ Configuration derived from values provided by the user
 */}}
 {{- define "cerbos.derivedConfig" -}}
 {{- $tlsDisabled := (eq (include "cerbos.tlsSecretName" .) "None") -}}
+{{- $defaultHTTPListenAddr := (toString .Values.cerbos.httpPort | printf ":%s") -}}
+{{- $defaultGRPCListenAddr := (toString .Values.cerbos.grpcPort | printf ":%s") -}}
 server:
-  httpListenAddr: ":{{ .Values.cerbos.httpPort }}"
-  grpcListenAddr: ":{{ .Values.cerbos.grpcPort }}"
+  httpListenAddr: "{{ dig "config" "server" "httpListenAddr" $defaultHTTPListenAddr .Values.cerbos }}"
+  grpcListenAddr: "{{ dig "config" "server" "grpcListenAddr" $defaultGRPCListenAddr .Values.cerbos }}"
   {{- if not $tlsDisabled }}
   tls:
     cert: /certs/tls.crt
