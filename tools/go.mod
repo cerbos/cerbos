@@ -1,8 +1,6 @@
 module github.com/cerbos/cerbos/tools
 
-go 1.22.5
-
-toolchain go1.23.0
+go 1.23
 
 require (
 	connectrpc.com/connect v1.16.2

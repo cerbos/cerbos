@@ -40,7 +40,6 @@ linters-settings:
 
   nolintlint:
     allow-unused: true # false would be preferable, but it's flaky (https://github.com/golangci/golangci-lint/issues/3228)
-    allow-leading-space: false
     require-specific: true
 
   tagliatelle:

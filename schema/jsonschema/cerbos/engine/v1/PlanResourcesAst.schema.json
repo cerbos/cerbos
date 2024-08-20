@@ -199,6 +199,9 @@
         "iterVar": {
           "type": "string"
         },
+        "iterVar2": {
+          "type": "string"
+        },
         "loopCondition": {
           "$ref": "#/definitions/google.api.expr.v1alpha1.Expr"
         },
@@ -318,6 +321,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "extensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/google.api.expr.v1alpha1.SourceInfo.Extension"
+          }
+        },
         "lineOffsets": {
           "type": "array",
           "items": {
@@ -341,6 +350,61 @@
         },
         "syntaxVersion": {
           "type": "string"
+        }
+      }
+    },
+    "google.api.expr.v1alpha1.SourceInfo.Extension": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "affectedComponents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/google.api.expr.v1alpha1.SourceInfo.Extension.Component"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/google.api.expr.v1alpha1.SourceInfo.Extension.Version"
+        }
+      }
+    },
+    "google.api.expr.v1alpha1.SourceInfo.Extension.Component": {
+      "type": "string",
+      "enum": [
+        "COMPONENT_UNSPECIFIED",
+        "COMPONENT_PARSER",
+        "COMPONENT_TYPE_CHECKER",
+        "COMPONENT_RUNTIME"
+      ]
+    },
+    "google.api.expr.v1alpha1.SourceInfo.Extension.Version": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "major": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string",
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+            }
+          ]
+        },
+        "minor": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string",
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+            }
+          ]
         }
       }
     },

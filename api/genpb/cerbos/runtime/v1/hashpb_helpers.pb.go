@@ -1306,6 +1306,10 @@ func google_api_expr_v1alpha1_Expr_Comprehension_hashpb_sum(m *v1alpha1.Expr_Com
 		}
 
 	}
+	if _, ok := ignore["google.api.expr.v1alpha1.Expr.Comprehension.iter_var2"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetIterVar2()))
+
+	}
 }
 
 func google_api_expr_v1alpha1_Expr_CreateList_hashpb_sum(m *v1alpha1.Expr_CreateList, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1470,6 +1474,38 @@ func google_api_expr_v1alpha1_Reference_hashpb_sum(m *v1alpha1.Reference, hasher
 	}
 }
 
+func google_api_expr_v1alpha1_SourceInfo_Extension_Version_hashpb_sum(m *v1alpha1.SourceInfo_Extension_Version, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["google.api.expr.v1alpha1.SourceInfo.Extension.Version.major"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetMajor())))
+
+	}
+	if _, ok := ignore["google.api.expr.v1alpha1.SourceInfo.Extension.Version.minor"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetMinor())))
+
+	}
+}
+
+func google_api_expr_v1alpha1_SourceInfo_Extension_hashpb_sum(m *v1alpha1.SourceInfo_Extension, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["google.api.expr.v1alpha1.SourceInfo.Extension.id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetId()))
+
+	}
+	if _, ok := ignore["google.api.expr.v1alpha1.SourceInfo.Extension.affected_components"]; !ok {
+		if len(m.AffectedComponents) > 0 {
+			for _, v := range m.AffectedComponents {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(v)))
+
+			}
+		}
+	}
+	if _, ok := ignore["google.api.expr.v1alpha1.SourceInfo.Extension.version"]; !ok {
+		if m.GetVersion() != nil {
+			google_api_expr_v1alpha1_SourceInfo_Extension_Version_hashpb_sum(m.GetVersion(), hasher, ignore)
+		}
+
+	}
+}
+
 func google_api_expr_v1alpha1_SourceInfo_hashpb_sum(m *v1alpha1.SourceInfo, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["google.api.expr.v1alpha1.SourceInfo.syntax_version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetSyntaxVersion()))
@@ -1518,6 +1554,16 @@ func google_api_expr_v1alpha1_SourceInfo_hashpb_sum(m *v1alpha1.SourceInfo, hash
 			for _, k := range keys {
 				if m.MacroCalls[k] != nil {
 					google_api_expr_v1alpha1_Expr_hashpb_sum(m.MacroCalls[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["google.api.expr.v1alpha1.SourceInfo.extensions"]; !ok {
+		if len(m.Extensions) > 0 {
+			for _, v := range m.Extensions {
+				if v != nil {
+					google_api_expr_v1alpha1_SourceInfo_Extension_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
