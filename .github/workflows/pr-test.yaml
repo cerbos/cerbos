@@ -243,7 +243,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
           check-latest: true
           cache: false
       - name: golangci-lint
@@ -303,7 +303,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22.x"
+          go-version: "1.23.x"
 
       - name: Test Helm chart
         run: ./deploy/charts/validate.sh
