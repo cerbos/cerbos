@@ -391,7 +391,7 @@ func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (idx in
 
 	dir, err := os.MkdirTemp(s.workDir, fmt.Sprintf("cerbos-%s-%d-*", DriverName, ts))
 	if err != nil {
-		return nil, "", 0, fmt.Errorf("failed to create new work directory with timestamp %d: %w", ts, err)
+		return nil, "", 0, fmt.Errorf("failed to create new temporary storage directory: %w", err)
 	}
 
 	if currDirName, err = filepath.Rel(s.workDir, dir); err != nil {
