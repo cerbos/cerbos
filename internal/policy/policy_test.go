@@ -108,7 +108,6 @@ func TestAncestors(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprintf("scope=%q", tc.scope), func(t *testing.T) {
 			p := test.GenResourcePolicy(test.NoMod())
 			p.GetResourcePolicy().Scope = tc.scope
@@ -151,7 +150,6 @@ func TestRequiredAncestors(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprintf("scope=%q", tc.scope), func(t *testing.T) {
 			p := test.GenResourcePolicy(test.NoMod())
 			p.GetResourcePolicy().Scope = tc.scope

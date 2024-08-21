@@ -125,7 +125,6 @@ func TestFQNTree(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			have := namer.FQNTree(tc.policy())
 			require.Equal(t, tc.want, have)
@@ -177,12 +176,10 @@ func TestScopedModuleIDs(t *testing.T) {
 	)
 
 	for _, fn := range fns {
-		fn := fn
 		t.Run(fn.kind, func(t *testing.T) {
 			t.Parallel()
 
 			for _, tc := range testCases {
-				tc := tc
 				t.Run(fmt.Sprintf("scope=%s/genTree=false", tc.scope), func(t *testing.T) {
 					t.Parallel()
 
@@ -271,7 +268,6 @@ func TestFQNSpecialChars(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.policyName, func(t *testing.T) {
 			haveFQN := tc.fqnFunc(tc.policyName, "default", "a.b.c")
 			require.Equal(t, tc.wantFQN, haveFQN)

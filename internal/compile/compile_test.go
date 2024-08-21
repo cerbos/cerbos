@@ -48,7 +48,6 @@ func TestCompile(t *testing.T) {
 	}
 
 	for _, tcase := range testCases {
-		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc, archive := readTestCase(t, tcase)
 			cu := mkCompilationUnit(t, tc.MainDef, archive)

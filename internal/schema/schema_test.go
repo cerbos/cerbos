@@ -72,7 +72,6 @@ func TestLoad(t *testing.T) {
 	for storeName, mgr := range mgrs {
 		t.Run(storeName, func(t *testing.T) {
 			for _, tc := range testCases {
-				tc := tc
 				t.Run(tc.name, func(t *testing.T) {
 					err := mgr.CheckSchema(context.Background(), tc.url)
 					if tc.wantErr {
@@ -90,14 +89,12 @@ func TestValidate(t *testing.T) {
 	testCases := test.LoadTestCases(t, filepath.Join("schema", "test_cases"))
 
 	for _, enforcement := range []schema.Enforcement{schema.EnforcementWarn, schema.EnforcementReject} {
-		enforcement := enforcement
 		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
 			store := mkStore(t)
 			conf := schema.NewConf(enforcement)
 			mgr := schema.NewFromConf(context.Background(), store, conf)
 
 			for _, tcase := range testCases {
-				tcase := tcase
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
 
@@ -127,7 +124,6 @@ func TestValidate(t *testing.T) {
 
 	t.Run(fmt.Sprintf("enforcement=%s", schema.EnforcementNone), func(t *testing.T) {
 		for _, tcase := range testCases {
-			tcase := tcase
 			t.Run(tcase.Name, func(t *testing.T) {
 				tc := readTestCase(t, tcase.Input)
 				store := mkStore(t)

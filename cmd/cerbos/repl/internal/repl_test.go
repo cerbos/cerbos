@@ -407,7 +407,6 @@ func TestREPL(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			mockOut := &mockOutput{}
 			repl, err := NewREPL(nil, mockOut)

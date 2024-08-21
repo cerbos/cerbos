@@ -77,10 +77,8 @@ func TestConcatWithSep(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprintf("args=%d", len(tc.args)), func(t *testing.T) {
 			for d, w := range tc.want {
-				d, w := d, w
 				t.Run(d, func(t *testing.T) {
 					concat := internal.ConcatWithSepFunc(d)
 					dialect := goqu.Dialect(d)

@@ -214,7 +214,6 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 
 func (idx *indexBuilder) addErrors(file string, errs []*sourcev1.Error) {
 	for _, e := range errs {
-		e := e
 		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: e.Message, ErrorDetails: e})
 	}
 }

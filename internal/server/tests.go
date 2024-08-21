@@ -363,10 +363,8 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 	//nolint:thelper
 	return func(t *testing.T) {
 		for _, path := range paths {
-			path := path
 			t.Run(path, func(t *testing.T) {
 				for _, method := range methods {
-					method := method
 					t.Run(method, func(t *testing.T) {
 						ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
 						defer cancelFunc()
