@@ -70,7 +70,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
 
-	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMicro(), metrics.DriverKey(DriverName))
+	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	if conf.WatchForChanges && !util.IsArchiveFile(dir) {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -144,7 +144,7 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 	s.NotifySubscribers(evts...)
 
-	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMicro(), metrics.DriverKey(DriverName))
+	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	return nil
 }
 

@@ -175,7 +175,7 @@ func (dw *dirWatch) triggerUpdate() {
 		if errCount > 0 {
 			metrics.Add(context.Background(), metrics.StoreSyncErrorCount(), int64(errCount), metrics.DriverKey(DriverName))
 		} else {
-			metrics.Record(context.Background(), metrics.StoreLastSuccessfulRefresh(), ts.UnixMicro(), metrics.DriverKey(DriverName))
+			metrics.Record(context.Background(), metrics.StoreLastSuccessfulRefresh(), ts.UnixMilli(), metrics.DriverKey(DriverName))
 		}
 	}
 }
