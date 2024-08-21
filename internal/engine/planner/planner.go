@@ -242,7 +242,6 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 		derivedRolesList := mkDerivedRolesList(nil)
 		evalCtx := rpe.evalContext()
 		for drName, dr := range p.DerivedRoles {
-			dr := dr
 			if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
 				continue
 			}

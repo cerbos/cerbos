@@ -192,7 +192,6 @@ func doTestConfig(driver string) func(*testing.T) {
 		}
 
 		for _, tc := range testCases {
-			tc := tc
 			t.Run(tc.name, func(t *testing.T) {
 				for k, v := range tc.env {
 					t.Setenv(k, v)

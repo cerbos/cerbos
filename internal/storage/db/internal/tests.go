@@ -210,7 +210,6 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("get_policy", func(t *testing.T) {
 			for _, want := range policyList {
-				want := want
 				t.Run(want.FQN, func(t *testing.T) {
 					haveRes, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(want.FQN))
 					require.NoError(t, err)
@@ -298,7 +297,6 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			}
 
 			for _, tc := range testCases {
-				tc := tc
 				t.Run("should be able to filter policies "+tc.name, func(t *testing.T) {
 					have, err := store.ListPolicyIDs(ctx, tc.params)
 					require.NoError(t, err)

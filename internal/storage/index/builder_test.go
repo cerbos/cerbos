@@ -173,7 +173,6 @@ func TestBuildIndex(t *testing.T) {
 	testCases := test.LoadTestCases(t, "index")
 
 	for _, tcase := range testCases {
-		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 			fs := toFS(t, tc)

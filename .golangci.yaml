@@ -33,6 +33,10 @@ linters-settings:
     replace-allow-list:
       - github.com/goccy/go-yaml
 
+  gosec:
+    excludes:
+      - G115 # integer overflow conversion
+
   govet:
     enable-all: true
     disable:
@@ -55,11 +59,11 @@ linters:
     - asciicheck
     - bidichk
     - bodyclose
+    - copyloopvar
     - dupl
     - durationcheck
     - errorlint
     - exhaustive
-    - exportloopref
     - forbidigo
     - forcetypeassert
     - goconst

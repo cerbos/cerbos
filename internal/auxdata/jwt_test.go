@@ -37,7 +37,6 @@ func TestKeySet(t *testing.T) {
 	t.Cleanup(ts.Close)
 
 	for _, k := range keys {
-		k := k
 		isPEM := filepath.Ext(k) == ".pem"
 
 		t.Run(fmt.Sprintf("local/file/%s", filepath.Base(k)), func(t *testing.T) {
@@ -194,7 +193,6 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		for _, keySetID := range []string{"remote", "local_file", "local_data", "remote_insecure", "local_file_insecure", "local_data_insecure"} {
 			ksID := keySetID
 			t.Run(fmt.Sprintf("%s/%s", tc.name, ksID), func(t *testing.T) {
@@ -287,7 +285,6 @@ func TestExtract_SingleKeySet(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			want := mkExpectedTokenData(t, tc.expiry)
 			input := &requestv1.AuxData_JWT{
@@ -331,7 +328,6 @@ func TestExtract_NoKeySets(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			input := &requestv1.AuxData_JWT{
 				Token: mkSignedToken(t, tc.expiry),

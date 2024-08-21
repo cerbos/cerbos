@@ -59,7 +59,6 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 
 		var jwkCache *jwk.Cache
 		for _, ks := range conf.KeySets {
-			ks := ks
 			var opts []any
 			if ks.Insecure.OptionalAlg {
 				log.Warn("[INSECURE CONFIG] Enabling optional alg field for key set", zap.String("keySetID", ks.ID))

@@ -669,7 +669,6 @@ func TestNormalizePath(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(fmt.Sprintf("subDir=%s,path=%s", tc.subDir, tc.path), func(t *testing.T) {
 			store := &Store{subDir: tc.subDir}
 

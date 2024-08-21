@@ -105,7 +105,6 @@ func TestConf(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			have, err := buildDSN(tc.conf)
 			if tc.wantErr {

@@ -29,7 +29,6 @@ func TestSatisfiesCondition(t *testing.T) {
 	eparams := evalParams{nowFunc: func() time.Time { return timeNow }}
 
 	for _, tcase := range testCases {
-		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readCELTestCase(t, tcase.Input)
 			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})

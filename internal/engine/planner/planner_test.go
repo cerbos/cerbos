@@ -442,7 +442,6 @@ func TestNormaliseFilter(t *testing.T) {
 	tcases := test.LoadTestCases(t, "query_planner_filter")
 
 	for _, tcase := range tcases {
-		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readQPFilterTestCase(t, tcase.Input)
 			haveFilter := normaliseFilter(tc.Input)

@@ -46,7 +46,6 @@ func TestCheck(t *testing.T) {
 	testCases := test.LoadTestCases(t, "engine")
 
 	for _, tcase := range testCases {
-		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 			mockAuditLog.clear()
@@ -88,7 +87,6 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 	testCases = append(testCases, test.LoadTestCases(t, "engine_lenient_scope_search")...)
 
 	for _, tcase := range testCases {
-		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 			mockAuditLog.clear()
@@ -123,7 +121,6 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 
 func TestSchemaValidation(t *testing.T) {
 	for _, enforcement := range []string{"warn", "reject"} {
-		enforcement := enforcement
 		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
 			p := param{schemaEnforcement: schema.Enforcement(enforcement)}
 
@@ -133,7 +130,6 @@ func TestSchemaValidation(t *testing.T) {
 			testCases := test.LoadTestCases(t, filepath.Join("engine_schema_enforcement", enforcement))
 
 			for _, tcase := range testCases {
-				tcase := tcase
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
 
@@ -194,7 +190,6 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 	b.Helper()
 
 	for _, tcase := range testCases {
-		tcase := tcase
 		b.Run(tcase.Name, func(b *testing.B) {
 			tc := readTestCase(b, tcase.Input)
 
