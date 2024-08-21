@@ -122,6 +122,7 @@ func (dw *dirWatch) triggerUpdate() {
 			return
 		}
 
+		ts := time.Now().UnixMilli()
 		batch := dw.eventBatch
 		dw.eventBatch = make(map[string]struct{})
 		dw.mu.Unlock()
@@ -173,6 +174,8 @@ func (dw *dirWatch) triggerUpdate() {
 
 		if errCount > 0 {
 			metrics.Add(context.Background(), metrics.StoreSyncErrorCount(), int64(errCount), metrics.DriverKey(DriverName))
+		} else {
+			metrics.Record(context.Background(), metrics.StoreLastSuccessfulRefresh(), ts, metrics.DriverKey(DriverName))
 		}
 	}
 }

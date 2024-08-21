@@ -73,6 +73,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
+	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	return s, nil
 }
 
@@ -189,6 +190,8 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	s.NotifySubscribers(evts...)
+
+	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	return nil
 }
 
@@ -550,10 +553,11 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 		case <-ticker.C:
 			if err := s.updateIndex(ctx); err != nil {
 				s.log.Errorw("Failed to check for updates", "error", err)
-				metrics.Inc(context.Background(), metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
+				metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
 			}
 
-			metrics.Inc(context.Background(), metrics.StorePollCount(), metrics.DriverKey(DriverName))
+			metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
+			metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 		}
 	}
 }

@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -159,14 +158,14 @@ func (s symlinkerFunc) Symlink(destination, source string) error {
 
 type Store struct {
 	*storage.SubscriptionManager
-	log     *zap.SugaredLogger
-	conf    *Conf
-	idx     index.Index
-	cloner  bucketCloner
-	symlink symlinker
-	workFS  FS
-	ts      string
-	workDir string
+	log         *zap.SugaredLogger
+	conf        *Conf
+	idx         index.Index
+	cloner      bucketCloner
+	symlink     symlinker
+	workFS      FS
+	currDirName string
+	workDir     string
 }
 
 func (s *Store) Subscribe(sub storage.Subscriber) {
@@ -202,12 +201,12 @@ func (s *Store) init(ctx context.Context) error {
 		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	idx, ts, err := s.buildIndex(ctx, cr.all)
+	idx, dirName, _, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		return fmt.Errorf("failed to build index from the new set of files: %w", err)
 	}
 
-	s.ts = ts
+	s.currDirName = dirName
 	s.idx = idx
 	go s.pollForUpdates(ctx)
 
@@ -232,7 +231,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 
 	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(cr.addedOrUpdated), len(cr.deleted))
 
-	idx, ts, err := s.buildIndex(ctx, cr.all)
+	idx, dirName, ts, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		return fmt.Errorf("failed to build index from the new set of files: %w", err)
 	}
@@ -246,12 +245,12 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		evts = append(evts, e)
 	}
 
-	oldTS := s.ts
-	s.ts = ts
+	oldDirName := s.currDirName
+	s.currDirName = dirName
 	s.idx = idx
 
 	for _, i := range cr.addedOrUpdated {
-		e, err := s.addOrUpdateEvent(i.etag, i.file)
+		e, err := s.addOrUpdateEvent(i.etag, i.file, ts)
 		if err != nil {
 			return fmt.Errorf("failed to create add or update event: %w", err)
 		}
@@ -265,23 +264,23 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		s.log.Warnw("Failed to clean up the cache", "error", err)
 	}
 
-	if err := s.workFS.RemoveAll(oldTS); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		s.log.Warnw(fmt.Sprintf("Failed to remove old work directory %s", oldTS), "error", err)
+	if err := s.workFS.RemoveAll(oldDirName); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		s.log.Warnw(fmt.Sprintf("Failed to remove old work directory %s", oldDirName), "error", err)
 	}
 
 	return nil
 }
 
-func (s *Store) addOrUpdateEvent(etag, file string) (storage.Event, error) {
+func (s *Store) addOrUpdateEvent(etag, file string, ts int64) (storage.Event, error) {
 	if schemaFile, ok := util.RelativeSchemaPath(file); ok {
 		return storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile), nil
 	}
 
-	p, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, s.ts)), file)
+	p, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, s.currDirName)), file)
 	if err != nil {
 		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
-	wp := policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(etag), indexBuildTSSourceAttr(s.ts)))
+	wp := policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(etag), indexBuildTSSourceAttr(ts)))
 
 	return storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID), nil
 }
@@ -291,7 +290,7 @@ func (s *Store) deleteEvent(file string) (storage.Event, error) {
 		return storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile), nil
 	}
 
-	p, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, s.ts)), file)
+	p, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, s.currDirName)), file)
 	if err != nil {
 		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
@@ -323,25 +322,20 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 			s.log.Info("Stopped polling for updates")
 			return
 		case <-ticker.C:
-			err := s.updateIndex(ctx)
-			if err != nil {
+			if err := s.updateIndex(ctx); err != nil {
 				if errors.Is(err, &indexBuildError{}) {
 					s.log.Warnw("Remote store is in an invalid state", "error", err)
 					s.log.Warnf("Remote store is in an invalid state. Using the last good state from %s", s.workDir)
 				} else {
 					s.log.Warnw("Failed to check for updates", "error", err)
 				}
-
-				metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
 			}
-
-			metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
 		}
 	}
 }
 
-func (s *Store) createSymlink(ts, destination, source string) error {
-	src := filepath.Join(ts, source)
+func (s *Store) createSymlink(tmpDir, destination, source string) error {
+	src := filepath.Join(tmpDir, source)
 	if err := s.workFS.Remove(src); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("failed to delete left-over symlink at %s: %w", src, err)
 	}
@@ -359,32 +353,13 @@ func (s *Store) createSymlink(ts, destination, source string) error {
 	return nil
 }
 
-func (s *Store) createSymlinks(all map[string][]string, ts string) error {
+func (s *Store) createSymlinks(all map[string][]string, tmpDir string) error {
 	for etag, files := range all {
 		for _, file := range files {
-			if err := s.createSymlink(ts, etag, file); err != nil {
+			if err := s.createSymlink(tmpDir, etag, file); err != nil {
 				return fmt.Errorf("failed to create symbolic link for %s: %w", file, err)
 			}
 		}
-	}
-
-	return nil
-}
-
-func (s *Store) createOrValidateDir(fsys FS, dir string) error {
-	fi, err := fsys.Stat(dir)
-	if err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			return fmt.Errorf("failed to stat directory %s: %w", dir, err)
-		}
-
-		if err := fsys.MkdirAll(dir, perm775); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dir, err)
-		}
-	}
-
-	if fi != nil && !fi.IsDir() {
-		return fmt.Errorf("dir is not a directory: %s", dir)
 	}
 
 	return nil
@@ -403,28 +378,40 @@ func (e *indexBuildError) Error() string {
 // buildIndex creates a new work directory with its name set to current timestamp, creates symlinks targeted to
 // s.cacheDir according to the given map 'all' and tries to build a temporary index to see if there are any errors
 // with the incoming policies/schemas. If there are no errors returns the index built and the path to the new work directory.
-func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (idx index.Index, ts string, err error) {
-	ts = strconv.FormatInt(time.Now().UnixMicro(), 10)
+func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (idx index.Index, currDirName string, ts int64, err error) {
+	ts = time.Now().UnixMilli()
+	defer func() {
+		metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
+		if err != nil {
+			metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
+		} else {
+			metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), ts, metrics.DriverKey(DriverName))
+		}
+	}()
 
-	if err := s.createOrValidateDir(s.workFS, ts); err != nil {
-		return nil, "", fmt.Errorf("failed to create new work directory %s: %w", ts, err)
+	dir, err := os.MkdirTemp(s.workDir, fmt.Sprintf("cerbos-%s-%d-*", DriverName, ts))
+	if err != nil {
+		return nil, "", 0, fmt.Errorf("failed to create new temporary storage directory: %w", err)
 	}
 
-	if err := s.createSymlinks(all, ts); err != nil {
-		return nil, "", fmt.Errorf("failed to create symbolic links for the new work directory: %w", err)
+	if currDirName, err = filepath.Rel(s.workDir, dir); err != nil {
+		return nil, "", 0, fmt.Errorf("failed to determine relative path of directory %s: %w", dir, err)
 	}
 
-	s.log.Debugw("Building index", "ts", ts)
-	tsPath := filepath.Join(s.workDir, ts)
-	if idx, err = index.Build(ctx, newBlobFS(tsPath), index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr)); err != nil {
-		if rerr := s.workFS.RemoveAll(ts); rerr != nil && !errors.Is(rerr, fs.ErrNotExist) {
-			return nil, "", errors.Join(err, fmt.Errorf("failed to remove directory %s: %w", tsPath, rerr))
+	if err := s.createSymlinks(all, currDirName); err != nil {
+		return nil, "", 0, fmt.Errorf("failed to create symbolic links for the new work directory: %w", err)
+	}
+
+	s.log.Debugw("Building index", "dir", dir)
+	if idx, err = index.Build(ctx, newBlobFS(dir), index.WithRootDir("."), index.WithSourceAttributes(driverSourceAttr)); err != nil {
+		if rerr := s.workFS.RemoveAll(currDirName); rerr != nil && !errors.Is(rerr, fs.ErrNotExist) {
+			return nil, "", 0, errors.Join(err, fmt.Errorf("failed to remove directory %s: %w", dir, rerr))
 		}
 
-		return nil, "", &indexBuildError{dir: tsPath, err: err}
+		return nil, "", 0, &indexBuildError{dir: dir, err: err}
 	}
 
-	return idx, ts, nil
+	return idx, currDirName, ts, nil
 }
 
 func (s *Store) Driver() string {
@@ -477,7 +464,7 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	idx, ts, err := s.buildIndex(ctx, cr.all)
+	idx, dirName, _, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		if errors.Is(err, &indexBuildError{}) {
 			s.log.Warnw("Remote store is in an invalid state", "error", err)
@@ -487,8 +474,8 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to reload state from remote store: %w", err)
 	}
 
-	oldTS := s.ts
-	s.ts = ts
+	oldDirName := s.currDirName
+	s.currDirName = dirName
 	s.idx = idx
 	s.NotifySubscribers(storage.NewReloadEvent())
 
@@ -496,15 +483,15 @@ func (s *Store) Reload(ctx context.Context) error {
 		s.log.Warnw("Failed to clean up the cache", "error", err)
 	}
 
-	if err := s.workFS.RemoveAll(oldTS); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		s.log.Warnw(fmt.Sprintf("Failed to remove old work directory %s", oldTS), "error", err)
+	if err := s.workFS.RemoveAll(oldDirName); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		s.log.Warnw(fmt.Sprintf("Failed to remove old work directory %s", oldDirName), "error", err)
 	}
 
 	return nil
 }
 
-func indexBuildTSSourceAttr(ts string) policy.SourceAttribute {
-	return policy.SourceAttribute{Key: "index_build_ts", Value: structpb.NewStringValue(ts)}
+func indexBuildTSSourceAttr(ts int64) policy.SourceAttribute {
+	return policy.SourceAttribute{Key: "index_build_ts", Value: structpb.NewNumberValue(float64(ts))}
 }
 
 func etagSourceAttr(etag string) policy.SourceAttribute {

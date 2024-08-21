@@ -14,6 +14,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
@@ -32,7 +33,10 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db"
 )
 
-const tableLogKey = "table"
+const (
+	driverName  = "db"
+	tableLogKey = "table"
+)
 
 var errUpsertPolicyRequired = errors.New("invalid driver configuration: upsertPolicy is required")
 
@@ -898,8 +902,9 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 	return stats
 }
 
-func (s *dbStorage) Reload(_ context.Context) error {
+func (s *dbStorage) Reload(ctx context.Context) error {
 	s.NotifySubscribers(storage.NewReloadEvent())
+	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(driverName))
 	return nil
 }
 
