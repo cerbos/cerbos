@@ -5,6 +5,7 @@ package blob
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -60,7 +61,7 @@ func init() {
 			return nil, err
 		}
 
-		cacheDir := filepath.Join(conf.WorkDir, dotcache)
+		cacheDir := filepath.Join(conf.WorkDir, dotcache, base64.URLEncoding.EncodeToString([]byte(conf.Bucket)))
 		workDir := conf.WorkDir
 
 		if err := createOrValidateDir(workDir); err != nil {

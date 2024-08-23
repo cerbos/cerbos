@@ -5,6 +5,7 @@ package blob
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -62,8 +63,8 @@ func TestNewStore(t *testing.T) {
 		workDir := t.TempDir()
 		conf := &Conf{WorkDir: workDir}
 		conf.SetDefaults()
-		cacheDir := filepath.Join(workDir, dotcache)
 
+		cacheDir := filepath.Join(conf.WorkDir, dotcache, base64.URLEncoding.EncodeToString([]byte(conf.Bucket)))
 		endpoint := StartMinio(ctx, t, bucketName)
 		t.Setenv("AWS_ACCESS_KEY_ID", minioUsername)
 		t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
@@ -230,8 +231,8 @@ func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 	conf := mkConf(t, dir, bucketName, endpoint)
 	bucket, err := newBucket(context.Background(), conf)
 	require.NoError(t, err)
-	cacheDir := filepath.Join(dir, dotcache)
-	cloner, err := NewCloner(bucket, filepath.Join(dir, dotcache))
+	cacheDir := filepath.Join(conf.WorkDir, dotcache, base64.URLEncoding.EncodeToString([]byte(conf.Bucket)))
+	cloner, err := NewCloner(bucket, cacheDir)
 	require.NoError(t, err)
 
 	store, err := NewStore(context.Background(), conf, newBlobFS(dir), cloner, mkSymlinker(cacheDir, dir))
