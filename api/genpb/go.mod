@@ -9,7 +9,7 @@ require (
 	connectrpc.com/connect v1.16.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/planetscale/vtprotobuf v0.6.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142
+	google.golang.org/genproto/googleapis/api v0.0.0-20240823204242-4ba0660f739c
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 )
