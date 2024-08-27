@@ -12,16 +12,9 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kong"
-	"github.com/google/gops/agent"
-	"go.uber.org/automaxprocs/maxprocs"
-	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/strvals"
 
-	"github.com/cerbos/cerbos/internal/config"
-	"github.com/cerbos/cerbos/internal/integrations"
-	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/observability/otel"
-	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/pkg/cerbos"
 )
 
 const help = `
@@ -59,33 +52,6 @@ func (c *Cmd) Run() error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
 
-	logging.InitLogging(ctx, string(c.LogLevel))
-	defer zap.L().Sync() //nolint:errcheck
-	log := zap.S().Named("server")
-
-	undo, err := maxprocs.Set(maxprocs.Logger(log.Infof))
-	defer undo()
-	if err != nil {
-		log.Warnw("Failed to adjust GOMAXPROCS", "error", err)
-	}
-
-	// initialize metrics
-	metricsDone, err := otel.InitMetrics(ctx, otel.Env(os.LookupEnv))
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := metricsDone(); err != nil {
-			log.Warnw("Metrics exporter did not shutdown cleanly", "error", err)
-		}
-	}()
-
-	if c.DebugListenAddr != "" {
-		startDebugListener(c.DebugListenAddr)
-		defer agent.Close()
-	}
-
-	// load any config overrides
 	confOverrides := map[string]any{}
 	for _, override := range c.Set {
 		if err := strvals.ParseInto(override, confOverrides); err != nil {
@@ -102,57 +68,16 @@ func (c *Cmd) Run() error {
 				return fmt.Errorf("failed to parse Cerbos Hub override [%s]: %w", override, err)
 			}
 		}
-		log.Infof("Adding configuration override to use Cerbos Hub bundle labelled %q", c.HubBundle)
 	}
 
-	// load configuration
-	if c.Config == "" {
-		log.Info("Loading default configuration")
-	} else {
-		log.Infof("Loading configuration from %s", c.Config)
-	}
-	if err := config.Load(c.Config, confOverrides); err != nil {
-		log.Errorw("Failed to load configuration", "error", err)
-		return err
-	}
-
-	// initialize tracing
-	tracingDone, err := otel.InitTraces(ctx, otel.Env(os.LookupEnv))
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := tracingDone(); err != nil {
-			log.Warnw("Trace exporter did not shutdown cleanly", "error", err)
-		}
-	}()
-
-	if err := integrations.Init(ctx); err != nil {
-		return err
-	}
-
-	if err := server.Start(ctx); err != nil {
-		log.Errorw("Failed to start server", "error", err)
-		return err
-	}
-
-	return nil
+	return cerbos.Serve(ctx,
+		cerbos.WithConfigFile(c.Config),
+		cerbos.WithConfig(confOverrides),
+		cerbos.WithDebug(c.DebugListenAddr),
+		cerbos.WithLogLevel(cerbos.LogLevel(c.LogLevel)),
+	)
 }
 
 func (c *Cmd) Help() string {
 	return help
-}
-
-func startDebugListener(listenAddr string) {
-	log := zap.S().Named("debug")
-	log.Infof("Starting debug listener at %s", listenAddr)
-
-	err := agent.Listen(agent.Options{
-		Addr:                   listenAddr,
-		ShutdownCleanup:        false,
-		ReuseSocketAddrAndPort: true,
-	})
-	if err != nil {
-		log.Errorw("Failed to start debug agent", "error", err)
-	}
 }
