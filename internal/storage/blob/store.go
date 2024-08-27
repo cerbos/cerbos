@@ -5,6 +5,7 @@ package blob
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -60,7 +61,7 @@ func init() {
 			return nil, err
 		}
 
-		cacheDir := filepath.Join(conf.WorkDir, dotcache)
+		cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
 		workDir := conf.WorkDir
 
 		if err := createOrValidateDir(workDir); err != nil {
@@ -488,6 +489,10 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func cacheDir(bucketURL, workDir string) string {
+	return filepath.Join(workDir, dotcache, base64.URLEncoding.EncodeToString([]byte(bucketURL)))
 }
 
 func indexBuildTSSourceAttr(ts int64) policy.SourceAttribute {
