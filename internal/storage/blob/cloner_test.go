@@ -6,7 +6,6 @@ package blob
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,7 +34,7 @@ func TestCloneResult(t *testing.T) {
 
 		bucketDir := filepath.Join(dir, "bucket")
 		require.NoError(t, os.MkdirAll(bucketDir, perm775))
-		cacheDir := filepath.Join(dir, dotcache, base64.URLEncoding.EncodeToString([]byte(bucketDir)))
+		cacheDir := cacheDir(bucketDir, dir)
 		bucket := newMinioBucket(ctx, t, bucketDir, "")
 		applyFiles(ctx, t, bucket, testCase.Inputs)
 
