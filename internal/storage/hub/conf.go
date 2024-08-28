@@ -57,7 +57,7 @@ type RemoteSourceConf struct {
 	// TempDir is the directory to use for temporary files.
 	TempDir string `yaml:"tempDir" conf:",example=${TEMP}"`
 	// DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
-	DisableAutoUpdate bool `yaml:"disableAutoUpdate"`
+	DisableAutoUpdate bool `yaml:"disableAutoUpdate" conf:",example=false"`
 }
 
 func (conf *Conf) Key() string {
