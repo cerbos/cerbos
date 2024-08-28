@@ -170,7 +170,7 @@ storage:
     remote: # Remote holds configuration for remote bundle source. Takes precedence over local if both are defined.
       bundleLabel: latest # Required. BundleLabel to fetch from the server.
       cacheDir: ${XDG_CACHE_DIR} # CacheDir is the directory to use for caching downloaded bundles.
-      disableAutoUpdate: <DEFAULT_VALUE_NOT_SET> # DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
+      disableAutoUpdate: false # DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
       tempDir: ${TEMP} # TempDir is the directory to use for temporary files.
   mysql:
     # This section is required only if storage.driver is mysql.

@@ -318,7 +318,7 @@ func doGenDocs(out io.Writer, si *StructInfo, indent int) error {
 func walkFields(out io.Writer, fields []FieldInfo, indent int) error {
 	for _, field := range fields {
 		name := field.Name
-		defaultValue := "<DEFAULT_VALUE_NOT_SET>"
+		defaultValue := ""
 		docs := ""
 
 		tag, err := parseTag(field.Tag)
@@ -370,6 +370,10 @@ func walkFields(out io.Writer, fields []FieldInfo, indent int) error {
 			}
 
 			continue
+		}
+
+		if defaultValue == "" {
+			return fmt.Errorf("field %q lacks a default value, specify one with `conf:\",example=...\"`", name)
 		}
 
 		if err := indentf(out, indent, "%s: %s %s\n", name, defaultValue, docs); err != nil {
