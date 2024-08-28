@@ -14,6 +14,7 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/printer"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -88,10 +89,22 @@ func printJSON(w io.Writer, results []*responsev1.InspectPoliciesResponse_Result
 func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPoliciesResponse_Result) {
 	tw := printer.NewTableWriter(w)
 	if !noHeaders {
-		tw.SetHeader([]string{"POLICY ID", "ACTIONS", "VARIABLES"})
+		tw.SetHeader([]string{"POLICY ID", "ACTIONS", "ATTRIBUTES", "VARIABLES"})
 	}
 
 	for _, result := range results {
+		attributes := make([]string, len(result.Attributes))
+		for idx, attribute := range result.Attributes {
+			switch attribute.Kind {
+			case responsev1.InspectPoliciesResponse_Attribute_KIND_PRINCIPAL_ATTRIBUTE:
+				attributes[idx] = fmt.Sprintf("%s.attr.%s", conditions.CELPrincipalAbbrev, attribute.Name)
+			case responsev1.InspectPoliciesResponse_Attribute_KIND_RESOURCE_ATTRIBUTE:
+				attributes[idx] = fmt.Sprintf("%s.attr.%s", conditions.CELResourceAbbrev, attribute.Name)
+			default:
+				attributes[idx] = attribute.Name
+			}
+		}
+
 		variables := make([]string, len(result.Variables))
 		for idx, variable := range result.Variables {
 			variables[idx] = variable.Name
@@ -100,6 +113,7 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 		tw.Append([]string{
 			result.PolicyId,
 			strings.Join(result.Actions, separator),
+			strings.Join(attributes, separator),
 			strings.Join(variables, separator),
 		})
 	}
