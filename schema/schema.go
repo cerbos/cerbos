@@ -31,7 +31,7 @@ func ServeSvcSwagger(w http.ResponseWriter, r *http.Request) {
 	defer cleanup(r)
 
 	httpScheme := "http"
-	if r.TLS != nil {
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
 		httpScheme = "https"
 	}
 
