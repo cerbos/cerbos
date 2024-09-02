@@ -83,19 +83,20 @@ releases:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
       - initContainers:
           - name: init-mssql
-            image: 'mcr.microsoft.com/azure-sql-edge:latest' 
+            image: "mcr.microsoft.com/azure-sql-edge:latest"
+            imagePullPolicy: Always
             command:
-              - '/opt/mssql-tools/bin/sqlcmd' 
-              - '-S'
+              - "/opt/mssql-tools/bin/sqlcmd"
+              - "-S"
               - '{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local'
-              - '-l'
-              - '60'
-              - '-U'
-              - 'SA'
-              - '-P'
-              - 'MyPassword1!' 
-              - '-i'
-              - '/initdb/schema.sql'
+              - "-l"
+              - "60"
+              - "-U"
+              - "SA"
+              - "-P"
+              - "MyPassword1!"
+              - "-i"
+              - "/initdb/schema.sql"
             volumeMounts:
               - name: mssql-init-script
                 mountPath: /initdb
@@ -103,14 +104,14 @@ releases:
           repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
           tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
       - volumes:
-        - name: cerbos-auditlog
-          emptyDir: {}
-        - name: mssql-init-script
-          configMap:
-            name: mssql-init
+          - name: cerbos-auditlog
+            emptyDir: {}
+          - name: mssql-init-script
+            configMap:
+              name: mssql-init
       - volumeMounts:
-        - name: cerbos-auditlog
-          mountPath: /audit
+          - name: cerbos-auditlog
+            mountPath: /audit
       - cerbos:
           tlsSecretName: 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
           logLevel: DEBUG
@@ -122,7 +123,7 @@ releases:
                 maxResourcesPerRequest: 5
               adminAPI:
                 enabled: true
-                adminCredentials: 
+                adminCredentials:
                   username: cerbos
                   passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
             auxData:
@@ -135,7 +136,7 @@ releases:
               accessLogsEnabled: true
               decisionLogsEnabled: true
               backend: local
-              local: 
+              local:
                 storagePath: /audit/cerbos
             storage:
               driver: "sqlserver"

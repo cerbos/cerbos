@@ -6,28 +6,25 @@ replicas: 1
 
 image:
   repository: mcr.microsoft.com/azure-sql-edge
-#  repository: mcr.microsoft.com/mssql/server
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-#  tag: "2019-latest"
+  pullPolicy: Always
   tag: latest
 
 ACCEPT_EULA:
-    value: "y"
+  value: "y"
 MSSQL_PID:
-    value: "Developer"
+  value: "Developer"
 MSSQL_AGENT_ENABLED:
-    value: "true"
+  value: "true"
 hostname: mssqllatest
 sa_password: "MyPassword1!"
 containers:
   ports:
-      containerPort: 1433
+    containerPort: 1433
 
 podAnnotations: {}
 
 podSecurityContext:
-   fsGroup: 10001
+  fsGroup: 10001
 
 service:
   type: ClusterIP
