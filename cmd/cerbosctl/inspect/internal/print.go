@@ -13,7 +13,6 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/printer"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -87,11 +86,6 @@ func printJSON(w io.Writer, results []*responsev1.InspectPoliciesResponse_Result
 }
 
 func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPoliciesResponse_Result) {
-	tw := printer.NewTableWriter(w)
-	if !noHeaders {
-		tw.SetHeader([]string{"POLICY ID", "ACTIONS", "ATTRIBUTES", "VARIABLES"})
-	}
-
 	for _, result := range results {
 		attributes := make([]string, len(result.Attributes))
 		for idx, attribute := range result.Attributes {
@@ -110,13 +104,25 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 			variables[idx] = variable.Name
 		}
 
-		tw.Append([]string{
-			result.PolicyId,
-			strings.Join(result.Actions, separator),
-			strings.Join(attributes, separator),
-			strings.Join(variables, separator),
-		})
-	}
+		var row string
+		if noHeaders {
+			row = fmt.Sprintf(
+				"%s\n%s\n%s\n%s",
+				result.PolicyId,
+				strings.Join(result.Actions, separator),
+				strings.Join(attributes, separator),
+				strings.Join(variables, separator),
+			)
+		} else {
+			row = fmt.Sprintf(
+				"%s\n%s\n%s\n%s",
+				fmt.Sprintf("POLICY ID : %s", result.PolicyId),
+				fmt.Sprintf("ACTIONS   : %s", strings.Join(result.Actions, separator)),
+				fmt.Sprintf("ATTRIBUTES: %s", strings.Join(attributes, separator)),
+				fmt.Sprintf("VARIABLES : %s", strings.Join(variables, separator)),
+			)
+		}
 
-	tw.Render()
+		fmt.Fprintf(w, "%s\n-------------------\n", row)
+	}
 }
