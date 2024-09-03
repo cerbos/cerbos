@@ -59,6 +59,9 @@ imagePullSecrets: []
 
 # @schema
 # type: [array, null]
+# items:
+#   type: object
+#   additionalProperties: true
 # @schema
 # Init containers to inject into the deployment. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers.
 initContainers: []
