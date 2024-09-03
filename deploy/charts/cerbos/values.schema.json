@@ -276,8 +276,9 @@
     "initContainers": {
       "description": "Init containers to inject into the deployment. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#containers.",
       "items": {
+        "additionalProperties": true,
         "required": [],
-        "type": "array"
+        "type": "object"
       },
       "required": [],
       "title": "initContainers",
