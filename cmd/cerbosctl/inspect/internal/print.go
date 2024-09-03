@@ -19,6 +19,7 @@ import (
 
 const (
 	separator = ","
+	width     = 80
 )
 
 func Print(w io.Writer, format flagset.Format, response *responsev1.InspectPoliciesResponse) error {
@@ -86,6 +87,7 @@ func printJSON(w io.Writer, results []*responsev1.InspectPoliciesResponse_Result
 }
 
 func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPoliciesResponse_Result) {
+	rowSeparator := strings.Repeat("-", width)
 	for _, result := range results {
 		attributes := make([]string, len(result.Attributes))
 		for idx, attribute := range result.Attributes {
@@ -104,25 +106,27 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 			variables[idx] = variable.Name
 		}
 
-		var row string
 		if noHeaders {
-			row = fmt.Sprintf(
-				"%s\n%s\n%s\n%s",
+			fmt.Fprintf(w,
+				"%s\n%s\n%s\n%s\n%s\n",
 				result.PolicyId,
 				strings.Join(result.Actions, separator),
 				strings.Join(attributes, separator),
 				strings.Join(variables, separator),
+				rowSeparator,
 			)
 		} else {
-			row = fmt.Sprintf(
-				"%s\n%s\n%s\n%s",
-				fmt.Sprintf("POLICY ID : %s", result.PolicyId),
-				fmt.Sprintf("ACTIONS   : %s", strings.Join(result.Actions, separator)),
-				fmt.Sprintf("ATTRIBUTES: %s", strings.Join(attributes, separator)),
-				fmt.Sprintf("VARIABLES : %s", strings.Join(variables, separator)),
-			)
+			fmt.Fprintf(w, "POLICY ID : %s\n", result.PolicyId)
+			if len(result.Actions) > 0 {
+				fmt.Fprintf(w, "ACTIONS   : %s\n", strings.Join(result.Actions, separator))
+			}
+			if len(attributes) > 0 {
+				fmt.Fprintf(w, "ATTRIBUTES: %s\n", strings.Join(attributes, separator))
+			}
+			if len(variables) > 0 {
+				fmt.Fprintf(w, "VARIABLES : %s\n", strings.Join(variables, separator))
+			}
+			fmt.Fprintf(w, "%s\n", rowSeparator)
 		}
-
-		fmt.Fprintf(w, "%s\n-------------------\n", row)
 	}
 }
