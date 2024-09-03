@@ -106,15 +106,18 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 			variables[idx] = variable.Name
 		}
 
+		//nolint:nestif
 		if noHeaders {
-			fmt.Fprintf(w,
-				"%s\n%s\n%s\n%s\n%s\n",
-				result.PolicyId,
-				strings.Join(result.Actions, separator),
-				strings.Join(attributes, separator),
-				strings.Join(variables, separator),
-				rowSeparator,
-			)
+			fmt.Fprintf(w, "%s\n", result.PolicyId)
+			if len(result.Actions) > 0 {
+				fmt.Fprintf(w, "%s\n", strings.Join(result.Actions, separator))
+			}
+			if len(attributes) > 0 {
+				fmt.Fprintf(w, "%s\n", strings.Join(attributes, separator))
+			}
+			if len(variables) > 0 {
+				fmt.Fprintf(w, "%s\n", strings.Join(variables, separator))
+			}
 		} else {
 			fmt.Fprintf(w, "POLICY ID : %s\n", result.PolicyId)
 			if len(result.Actions) > 0 {
@@ -126,7 +129,7 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 			if len(variables) > 0 {
 				fmt.Fprintf(w, "VARIABLES : %s\n", strings.Join(variables, separator))
 			}
-			fmt.Fprintf(w, "%s\n", rowSeparator)
 		}
+		fmt.Fprintf(w, "%s\n", rowSeparator)
 	}
 }
