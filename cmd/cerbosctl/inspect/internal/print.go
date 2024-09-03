@@ -13,12 +13,13 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/inspect/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/printer"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
 	separator = ","
+	width     = 80
 )
 
 func Print(w io.Writer, format flagset.Format, response *responsev1.InspectPoliciesResponse) error {
@@ -86,23 +87,49 @@ func printJSON(w io.Writer, results []*responsev1.InspectPoliciesResponse_Result
 }
 
 func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPoliciesResponse_Result) {
-	tw := printer.NewTableWriter(w)
-	if !noHeaders {
-		tw.SetHeader([]string{"POLICY ID", "ACTIONS", "VARIABLES"})
-	}
-
+	rowSeparator := strings.Repeat("-", width)
 	for _, result := range results {
+		attributes := make([]string, len(result.Attributes))
+		for idx, attribute := range result.Attributes {
+			switch attribute.Kind {
+			case responsev1.InspectPoliciesResponse_Attribute_KIND_PRINCIPAL_ATTRIBUTE:
+				attributes[idx] = fmt.Sprintf("%s.attr.%s", conditions.CELPrincipalAbbrev, attribute.Name)
+			case responsev1.InspectPoliciesResponse_Attribute_KIND_RESOURCE_ATTRIBUTE:
+				attributes[idx] = fmt.Sprintf("%s.attr.%s", conditions.CELResourceAbbrev, attribute.Name)
+			default:
+				attributes[idx] = attribute.Name
+			}
+		}
+
 		variables := make([]string, len(result.Variables))
 		for idx, variable := range result.Variables {
 			variables[idx] = variable.Name
 		}
 
-		tw.Append([]string{
-			result.PolicyId,
-			strings.Join(result.Actions, separator),
-			strings.Join(variables, separator),
-		})
+		//nolint:nestif
+		if noHeaders {
+			fmt.Fprintf(w, "%s\n", result.PolicyId)
+			if len(result.Actions) > 0 {
+				fmt.Fprintf(w, "%s\n", strings.Join(result.Actions, separator))
+			}
+			if len(attributes) > 0 {
+				fmt.Fprintf(w, "%s\n", strings.Join(attributes, separator))
+			}
+			if len(variables) > 0 {
+				fmt.Fprintf(w, "%s\n", strings.Join(variables, separator))
+			}
+		} else {
+			fmt.Fprintf(w, "POLICY ID : %s\n", result.PolicyId)
+			if len(result.Actions) > 0 {
+				fmt.Fprintf(w, "ACTIONS   : %s\n", strings.Join(result.Actions, separator))
+			}
+			if len(attributes) > 0 {
+				fmt.Fprintf(w, "ATTRIBUTES: %s\n", strings.Join(attributes, separator))
+			}
+			if len(variables) > 0 {
+				fmt.Fprintf(w, "VARIABLES : %s\n", strings.Join(variables, separator))
+			}
+		}
+		fmt.Fprintf(w, "%s\n", rowSeparator)
 	}
-
-	tw.Render()
 }
