@@ -23,10 +23,10 @@ require (
 	github.com/dgraph-io/badger/v4 v4.3.0
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/fatih/color v1.17.0
-	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.29.0
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-andiamo/splitter v1.2.5
 	github.com/go-cmd/cmd v1.4.3
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-logr/zapr v1.3.0
