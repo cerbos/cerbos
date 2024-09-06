@@ -46,7 +46,7 @@ generate-confdocs:
     set -euo pipefail
     cd {{ justfile_directory() }}
     mkdir -p ./internal/confdocs
-    go run ./hack/tools/confdocs/confdocs.go > ./internal/confdocs/generated.go
+    go run -tags confdocs ./hack/tools/confdocs/confdocs.go > ./internal/confdocs/generated.go
     CGO_ENABLED=0 go run ./internal/confdocs/generated.go
     rm -rf ./internal/confdocs
 
