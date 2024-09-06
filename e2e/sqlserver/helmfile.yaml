@@ -141,6 +141,6 @@ releases:
             storage:
               driver: "sqlserver"
               sqlserver:
-                url: 'sqlserver://cerbos_user:ChangeMe(1!!)@{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:1433?database=cerbos'
+                url: 'sqlserver://cerbos_user:ChangeMe(1!!)@{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:1433?database=cerbos&TrustServerCertificate=true'
             telemetry:
               disabled: true

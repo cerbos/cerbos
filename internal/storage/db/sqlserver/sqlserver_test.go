@@ -58,7 +58,7 @@ func TestSqlServer(t *testing.T) {
 
 	port := resource.GetPort("1433/tcp")
 	getConnString := func(dbname string) string {
-		return fmt.Sprintf("sqlserver://sa:%s@127.0.0.1:%s?database=%s", password, port, dbname)
+		return fmt.Sprintf("sqlserver://sa:%s@127.0.0.1:%s?database=%s&TrustServerCertificate=true", password, port, dbname)
 	}
 
 	if err := pool.Retry(func() error {
