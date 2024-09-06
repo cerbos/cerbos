@@ -103,3 +103,23 @@ npm install --save-dev cerbos cerbosctl
 ----
 
 Note that the npm packages rely on platform-specific optional dependencies, so make sure you don't omit these when installing dependencies (for example, don't pass the `--no-optional` flag to `npm`).
+
+[id="nix"]
+== Nix flake
+
+A link:https://nixos.wiki/wiki/Flakes[Nix flake] is available at https://github.com/cerbos/cerbos-flake.
+
+[source]
+----
+# Launch a Cerbos server
+nix run github:cerbos/cerbos-flake#cerbos -- server --set=storage.disk.directory=/path/to/policy_directory
+
+# Launch a REPL
+nix run github:cerbos/cerbos-flake#cerbos -- repl
+
+# Launch cerbosctl
+nix run github:cerbos/cerbos-flake#cerbosctl
+
+# Start a Nix shell session with cerbos and cerbosctl installed
+nix shell github:cerbos/cerbos-flake
+----
