@@ -55,7 +55,7 @@ type Conf struct {
 	// Brokers list to seed the Kafka client.
 	Brokers []string `yaml:"brokers" conf:"required,example=['localhost:9092']"`
 	// Compression sets the compression algorithm to use in order of priority. Valid values are "none", "gzip", "snappy","lz4", "zstd". Default is ["snappy", "none"].
-	Compression []string `yaml:"compression" conf:",example=['snappy']"`
+	Compression []string `yaml:"compression" conf:",example=['snappy', 'none']"`
 	// CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
 	CloseTimeout time.Duration `yaml:"closeTimeout" conf:",example=30s"`
 	// MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.

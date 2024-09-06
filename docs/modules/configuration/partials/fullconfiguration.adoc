@@ -48,7 +48,7 @@ audit:
     brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
     clientID: cerbos # ClientID reported in Kafka connections.
     closeTimeout: 30s # CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
-    compression: ['snappy'] # Compression sets the compression algorithm to use in order of priority. Valid values are "none", "gzip", "snappy","lz4", "zstd". Default is ["snappy", "none"].
+    compression: ['snappy', 'none'] # Compression sets the compression algorithm to use in order of priority. Valid values are "none", "gzip", "snappy","lz4", "zstd". Default is ["snappy", "none"].
     encoding: json # Encoding format. Valid values are "json" (default) or "protobuf".
     maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
     produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.

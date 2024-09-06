@@ -23,12 +23,13 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/fatih/structtag"
 	"github.com/mattn/go-isatty"
 	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/tools/go/packages"
+
+	"github.com/cerbos/cerbos/hack/tools/confdocs/structtag"
 )
 
 const (
