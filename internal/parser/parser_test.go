@@ -258,7 +258,7 @@ func TestUnmarshalWKT(t *testing.T) {
 			wantErrs: []*sourcev1.Error{
 				{
 					Kind:     sourcev1.Error_KIND_PARSE_ERROR,
-					Message:  "failed to parse value: invalid value for string type: {",
+					Message:  "failed to parse value: invalid value for string field value: {",
 					Position: &sourcev1.Position{Line: 3, Column: 25, Path: "$.repeatedStringWrapper[0]"},
 				},
 			},
@@ -269,7 +269,7 @@ func TestUnmarshalWKT(t *testing.T) {
 			wantErrs: []*sourcev1.Error{
 				{
 					Kind:     sourcev1.Error_KIND_PARSE_ERROR,
-					Message:  "failed to parse value: invalid value for string type: {",
+					Message:  "failed to parse value: invalid value for string field value: {",
 					Position: &sourcev1.Position{Line: 4, Column: 9, Path: "$.repeatedStringWrapper[0]"},
 				},
 			},
