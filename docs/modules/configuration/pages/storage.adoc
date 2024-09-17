@@ -375,8 +375,12 @@ include::partial$cerbosctl.adoc[]
 storage:
   driver: "sqlite3"
   sqlite3:
-    dsn: ":memory:"
+    dsn: "file::memory:?cache=shared"
 ----
+
+IMPORTANT: Cerbos uses a database connection pool which would result in unexpected behaviour when using the SQLite
+`:memory:` database. Use `file::memory:?cache=shared` instead. See https://www.sqlite.org/draft/inmemorydb.html for
+details.
 
 .On-disk persistent database
 [source,yaml,linenums]
