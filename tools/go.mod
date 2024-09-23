@@ -3,21 +3,21 @@ module github.com/cerbos/cerbos/tools
 go 1.23
 
 require (
-	connectrpc.com/connect v1.16.2
-	github.com/bufbuild/buf v1.40.1
+	connectrpc.com/connect v1.17.0
+	github.com/bufbuild/buf v1.42.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.3.1
-	github.com/cerbos/protoc-gen-jsonschema v0.1.2
-	github.com/dadav/helm-schema v0.0.0-20240909051202-7592f053e40b
+	github.com/cerbos/protoc-gen-jsonschema v0.1.3
+	github.com/dadav/helm-schema 13682905ed27
 	github.com/fullstorydev/grpcurl v1.9.1
 	github.com/golangci/golangci-lint v1.61.0
 	github.com/google/go-licenses v1.6.0
-	github.com/goreleaser/goreleaser/v2 v2.2.0
+	github.com/goreleaser/goreleaser/v2 v2.3.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
-	github.com/vektra/mockery/v2 v2.45.1
+	github.com/planetscale/vtprotobuf 6f2963f01587
+	github.com/vektra/mockery/v2 v2.46.0
 	go.elastic.co/go-licence-detector v0.6.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
-	google.golang.org/protobuf v1.34.3-0.20240816073751-94ecbc261689
+	google.golang.org/protobuf 03df6c145d96
 	gotest.tools/gotestsum v1.12.0
 )
 
