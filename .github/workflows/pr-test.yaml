@@ -265,7 +265,7 @@ jobs:
           fetch-tags: true
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1.41.0
+        uses: bufbuild/buf-setup-action@v1.42.0
         with:
           github_token: ${{ github.token }}
 
