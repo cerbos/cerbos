@@ -49,11 +49,9 @@ type InspectTestCase struct {
 
 func (x *InspectTestCase) Reset() {
 	*x = InspectTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *InspectTestCase) String() string {
@@ -64,7 +62,7 @@ func (*InspectTestCase) ProtoMessage() {}
 
 func (x *InspectTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -118,11 +116,9 @@ type BlobClonerTestCase struct {
 
 func (x *BlobClonerTestCase) Reset() {
 	*x = BlobClonerTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase) String() string {
@@ -133,7 +129,7 @@ func (*BlobClonerTestCase) ProtoMessage() {}
 
 func (x *BlobClonerTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -176,11 +172,9 @@ type EngineTestCase struct {
 
 func (x *EngineTestCase) Reset() {
 	*x = EngineTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EngineTestCase) String() string {
@@ -191,7 +185,7 @@ func (*EngineTestCase) ProtoMessage() {}
 
 func (x *EngineTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -267,11 +261,9 @@ type ServerTestCase struct {
 
 func (x *ServerTestCase) Reset() {
 	*x = ServerTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase) String() string {
@@ -282,7 +274,7 @@ func (*ServerTestCase) ProtoMessage() {}
 
 func (x *ServerTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -479,11 +471,9 @@ type IndexBuilderTestCase struct {
 
 func (x *IndexBuilderTestCase) Reset() {
 	*x = IndexBuilderTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuilderTestCase) String() string {
@@ -494,7 +484,7 @@ func (*IndexBuilderTestCase) ProtoMessage() {}
 
 func (x *IndexBuilderTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -549,11 +539,9 @@ type CompileTestCase struct {
 
 func (x *CompileTestCase) Reset() {
 	*x = CompileTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CompileTestCase) String() string {
@@ -564,7 +552,7 @@ func (*CompileTestCase) ProtoMessage() {}
 
 func (x *CompileTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -613,11 +601,9 @@ type CelTestCase struct {
 
 func (x *CelTestCase) Reset() {
 	*x = CelTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CelTestCase) String() string {
@@ -628,7 +614,7 @@ func (*CelTestCase) ProtoMessage() {}
 
 func (x *CelTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -689,11 +675,9 @@ type SchemaTestCase struct {
 
 func (x *SchemaTestCase) Reset() {
 	*x = SchemaTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SchemaTestCase) String() string {
@@ -704,7 +688,7 @@ func (*SchemaTestCase) ProtoMessage() {}
 
 func (x *SchemaTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -794,11 +778,9 @@ type ValidationErrContainer struct {
 
 func (x *ValidationErrContainer) Reset() {
 	*x = ValidationErrContainer{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ValidationErrContainer) String() string {
@@ -809,7 +791,7 @@ func (*ValidationErrContainer) ProtoMessage() {}
 
 func (x *ValidationErrContainer) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -841,11 +823,9 @@ type AttrWrapper struct {
 
 func (x *AttrWrapper) Reset() {
 	*x = AttrWrapper{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AttrWrapper) String() string {
@@ -856,7 +836,7 @@ func (*AttrWrapper) ProtoMessage() {}
 
 func (x *AttrWrapper) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -890,11 +870,9 @@ type QueryPlannerTestSuite struct {
 
 func (x *QueryPlannerTestSuite) Reset() {
 	*x = QueryPlannerTestSuite{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *QueryPlannerTestSuite) String() string {
@@ -905,7 +883,7 @@ func (*QueryPlannerTestSuite) ProtoMessage() {}
 
 func (x *QueryPlannerTestSuite) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -953,11 +931,9 @@ type VerifyTestFixtureGetTestsTestCase struct {
 
 func (x *VerifyTestFixtureGetTestsTestCase) Reset() {
 	*x = VerifyTestFixtureGetTestsTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *VerifyTestFixtureGetTestsTestCase) String() string {
@@ -968,7 +944,7 @@ func (*VerifyTestFixtureGetTestsTestCase) ProtoMessage() {}
 
 func (x *VerifyTestFixtureGetTestsTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1017,11 +993,9 @@ type QueryPlannerFilterTestCase struct {
 
 func (x *QueryPlannerFilterTestCase) Reset() {
 	*x = QueryPlannerFilterTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *QueryPlannerFilterTestCase) String() string {
@@ -1032,7 +1006,7 @@ func (*QueryPlannerFilterTestCase) ProtoMessage() {}
 
 func (x *QueryPlannerFilterTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1087,11 +1061,9 @@ type VerifyTestCase struct {
 
 func (x *VerifyTestCase) Reset() {
 	*x = VerifyTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *VerifyTestCase) String() string {
@@ -1102,7 +1074,7 @@ func (*VerifyTestCase) ProtoMessage() {}
 
 func (x *VerifyTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1150,11 +1122,9 @@ type ProtoYamlTestCase struct {
 
 func (x *ProtoYamlTestCase) Reset() {
 	*x = ProtoYamlTestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ProtoYamlTestCase) String() string {
@@ -1165,7 +1135,7 @@ func (*ProtoYamlTestCase) ProtoMessage() {}
 
 func (x *ProtoYamlTestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1243,11 +1213,9 @@ type WellKnownTypes struct {
 
 func (x *WellKnownTypes) Reset() {
 	*x = WellKnownTypes{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *WellKnownTypes) String() string {
@@ -1258,7 +1226,7 @@ func (*WellKnownTypes) ProtoMessage() {}
 
 func (x *WellKnownTypes) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1501,11 +1469,9 @@ type InspectTestCase_PoliciesExpectation struct {
 
 func (x *InspectTestCase_PoliciesExpectation) Reset() {
 	*x = InspectTestCase_PoliciesExpectation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[16]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *InspectTestCase_PoliciesExpectation) String() string {
@@ -1516,7 +1482,7 @@ func (*InspectTestCase_PoliciesExpectation) ProtoMessage() {}
 
 func (x *InspectTestCase_PoliciesExpectation) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[16]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1560,11 +1526,9 @@ type InspectTestCase_PolicySetsExpectation struct {
 
 func (x *InspectTestCase_PolicySetsExpectation) Reset() {
 	*x = InspectTestCase_PolicySetsExpectation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *InspectTestCase_PolicySetsExpectation) String() string {
@@ -1575,7 +1539,7 @@ func (*InspectTestCase_PolicySetsExpectation) ProtoMessage() {}
 
 func (x *InspectTestCase_PolicySetsExpectation) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1646,11 +1610,9 @@ type InspectTestCase_PolicySetsExpectation_CompileErrors struct {
 
 func (x *InspectTestCase_PolicySetsExpectation_CompileErrors) Reset() {
 	*x = InspectTestCase_PolicySetsExpectation_CompileErrors{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *InspectTestCase_PolicySetsExpectation_CompileErrors) String() string {
@@ -1661,7 +1623,7 @@ func (*InspectTestCase_PolicySetsExpectation_CompileErrors) ProtoMessage() {}
 
 func (x *InspectTestCase_PolicySetsExpectation_CompileErrors) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1697,11 +1659,9 @@ type BlobClonerTestCase_File struct {
 
 func (x *BlobClonerTestCase_File) Reset() {
 	*x = BlobClonerTestCase_File{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_File) String() string {
@@ -1712,7 +1672,7 @@ func (*BlobClonerTestCase_File) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_File) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1778,11 +1738,9 @@ type BlobClonerTestCase_Step struct {
 
 func (x *BlobClonerTestCase_Step) Reset() {
 	*x = BlobClonerTestCase_Step{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_Step) String() string {
@@ -1793,7 +1751,7 @@ func (*BlobClonerTestCase_Step) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1856,11 +1814,9 @@ type BlobClonerTestCase_File_AddOrUpdate struct {
 
 func (x *BlobClonerTestCase_File_AddOrUpdate) Reset() {
 	*x = BlobClonerTestCase_File_AddOrUpdate{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[23]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_File_AddOrUpdate) String() string {
@@ -1871,7 +1827,7 @@ func (*BlobClonerTestCase_File_AddOrUpdate) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_File_AddOrUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[23]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1910,11 +1866,9 @@ type BlobClonerTestCase_File_Delete struct {
 
 func (x *BlobClonerTestCase_File_Delete) Reset() {
 	*x = BlobClonerTestCase_File_Delete{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[24]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_File_Delete) String() string {
@@ -1925,7 +1879,7 @@ func (*BlobClonerTestCase_File_Delete) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_File_Delete) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[24]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1957,11 +1911,9 @@ type BlobClonerTestCase_Step_Differences struct {
 
 func (x *BlobClonerTestCase_Step_Differences) Reset() {
 	*x = BlobClonerTestCase_Step_Differences{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[25]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_Step_Differences) String() string {
@@ -1972,7 +1924,7 @@ func (*BlobClonerTestCase_Step_Differences) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Differences) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[25]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2006,11 +1958,9 @@ type BlobClonerTestCase_Step_Expectation struct {
 
 func (x *BlobClonerTestCase_Step_Expectation) Reset() {
 	*x = BlobClonerTestCase_Step_Expectation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_Step_Expectation) String() string {
@@ -2021,7 +1971,7 @@ func (*BlobClonerTestCase_Step_Expectation) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Expectation) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2067,11 +2017,9 @@ type BlobClonerTestCase_Step_Expectation_Files struct {
 
 func (x *BlobClonerTestCase_Step_Expectation_Files) Reset() {
 	*x = BlobClonerTestCase_Step_Expectation_Files{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[27]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_Step_Expectation_Files) String() string {
@@ -2082,7 +2030,7 @@ func (*BlobClonerTestCase_Step_Expectation_Files) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Expectation_Files) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[27]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2115,11 +2063,9 @@ type BlobClonerTestCase_Step_Expectation_Info struct {
 
 func (x *BlobClonerTestCase_Step_Expectation_Info) Reset() {
 	*x = BlobClonerTestCase_Step_Expectation_Info{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BlobClonerTestCase_Step_Expectation_Info) String() string {
@@ -2130,7 +2076,7 @@ func (*BlobClonerTestCase_Step_Expectation_Info) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Expectation_Info) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2170,11 +2116,9 @@ type ServerTestCase_PlanResourcesCall struct {
 
 func (x *ServerTestCase_PlanResourcesCall) Reset() {
 	*x = ServerTestCase_PlanResourcesCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[30]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_PlanResourcesCall) String() string {
@@ -2185,7 +2129,7 @@ func (*ServerTestCase_PlanResourcesCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlanResourcesCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[30]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2225,11 +2169,9 @@ type ServerTestCase_CheckResourceSetCall struct {
 
 func (x *ServerTestCase_CheckResourceSetCall) Reset() {
 	*x = ServerTestCase_CheckResourceSetCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[31]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_CheckResourceSetCall) String() string {
@@ -2240,7 +2182,7 @@ func (*ServerTestCase_CheckResourceSetCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourceSetCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[31]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2280,11 +2222,9 @@ type ServerTestCase_CheckResourceBatchCall struct {
 
 func (x *ServerTestCase_CheckResourceBatchCall) Reset() {
 	*x = ServerTestCase_CheckResourceBatchCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[32]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_CheckResourceBatchCall) String() string {
@@ -2295,7 +2235,7 @@ func (*ServerTestCase_CheckResourceBatchCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourceBatchCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[32]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2335,11 +2275,9 @@ type ServerTestCase_CheckResourcesCall struct {
 
 func (x *ServerTestCase_CheckResourcesCall) Reset() {
 	*x = ServerTestCase_CheckResourcesCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[33]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_CheckResourcesCall) String() string {
@@ -2350,7 +2288,7 @@ func (*ServerTestCase_CheckResourcesCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourcesCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[33]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2390,11 +2328,9 @@ type ServerTestCase_PlaygroundValidateCall struct {
 
 func (x *ServerTestCase_PlaygroundValidateCall) Reset() {
 	*x = ServerTestCase_PlaygroundValidateCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[34]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_PlaygroundValidateCall) String() string {
@@ -2405,7 +2341,7 @@ func (*ServerTestCase_PlaygroundValidateCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundValidateCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[34]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2445,11 +2381,9 @@ type ServerTestCase_PlaygroundTestCall struct {
 
 func (x *ServerTestCase_PlaygroundTestCall) Reset() {
 	*x = ServerTestCase_PlaygroundTestCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[35]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_PlaygroundTestCall) String() string {
@@ -2460,7 +2394,7 @@ func (*ServerTestCase_PlaygroundTestCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundTestCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[35]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2500,11 +2434,9 @@ type ServerTestCase_PlaygroundEvaluateCall struct {
 
 func (x *ServerTestCase_PlaygroundEvaluateCall) Reset() {
 	*x = ServerTestCase_PlaygroundEvaluateCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[36]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_PlaygroundEvaluateCall) String() string {
@@ -2515,7 +2447,7 @@ func (*ServerTestCase_PlaygroundEvaluateCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundEvaluateCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[36]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2555,11 +2487,9 @@ type ServerTestCase_PlaygroundProxyCall struct {
 
 func (x *ServerTestCase_PlaygroundProxyCall) Reset() {
 	*x = ServerTestCase_PlaygroundProxyCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[37]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_PlaygroundProxyCall) String() string {
@@ -2570,7 +2500,7 @@ func (*ServerTestCase_PlaygroundProxyCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundProxyCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[37]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2610,11 +2540,9 @@ type ServerTestCase_AdminAddOrUpdatePolicyCall struct {
 
 func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) Reset() {
 	*x = ServerTestCase_AdminAddOrUpdatePolicyCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[38]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) String() string {
@@ -2625,7 +2553,7 @@ func (*ServerTestCase_AdminAddOrUpdatePolicyCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[38]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2665,11 +2593,9 @@ type ServerTestCase_AdminAddOrUpdateSchemaCall struct {
 
 func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) Reset() {
 	*x = ServerTestCase_AdminAddOrUpdateSchemaCall{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[39]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) String() string {
@@ -2680,7 +2606,7 @@ func (*ServerTestCase_AdminAddOrUpdateSchemaCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[39]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2720,11 +2646,9 @@ type ServerTestCase_Status struct {
 
 func (x *ServerTestCase_Status) Reset() {
 	*x = ServerTestCase_Status{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[40]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerTestCase_Status) String() string {
@@ -2735,7 +2659,7 @@ func (*ServerTestCase_Status) ProtoMessage() {}
 
 func (x *ServerTestCase_Status) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[40]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2776,11 +2700,9 @@ type IndexBuilderTestCase_CompilationUnit struct {
 
 func (x *IndexBuilderTestCase_CompilationUnit) Reset() {
 	*x = IndexBuilderTestCase_CompilationUnit{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[41]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuilderTestCase_CompilationUnit) String() string {
@@ -2791,7 +2713,7 @@ func (*IndexBuilderTestCase_CompilationUnit) ProtoMessage() {}
 
 func (x *IndexBuilderTestCase_CompilationUnit) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[41]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2839,11 +2761,9 @@ type CompileTestCase_Variables struct {
 
 func (x *CompileTestCase_Variables) Reset() {
 	*x = CompileTestCase_Variables{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[43]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CompileTestCase_Variables) String() string {
@@ -2854,7 +2774,7 @@ func (*CompileTestCase_Variables) ProtoMessage() {}
 
 func (x *CompileTestCase_Variables) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[43]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2901,11 +2821,9 @@ type CompileTestCase_Variables_DerivedRole struct {
 
 func (x *CompileTestCase_Variables_DerivedRole) Reset() {
 	*x = CompileTestCase_Variables_DerivedRole{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[44]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CompileTestCase_Variables_DerivedRole) String() string {
@@ -2916,7 +2834,7 @@ func (*CompileTestCase_Variables_DerivedRole) ProtoMessage() {}
 
 func (x *CompileTestCase_Variables_DerivedRole) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[44]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2958,11 +2876,9 @@ type QueryPlannerTestSuite_Test struct {
 
 func (x *QueryPlannerTestSuite_Test) Reset() {
 	*x = QueryPlannerTestSuite_Test{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[46]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *QueryPlannerTestSuite_Test) String() string {
@@ -2973,7 +2889,7 @@ func (*QueryPlannerTestSuite_Test) ProtoMessage() {}
 
 func (x *QueryPlannerTestSuite_Test) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[46]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3027,11 +2943,9 @@ type ProtoYamlTestCase_Want struct {
 
 func (x *ProtoYamlTestCase_Want) Reset() {
 	*x = ProtoYamlTestCase_Want{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[47]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ProtoYamlTestCase_Want) String() string {
@@ -3042,7 +2956,7 @@ func (*ProtoYamlTestCase_Want) ProtoMessage() {}
 
 func (x *ProtoYamlTestCase_Want) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[47]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3082,11 +2996,9 @@ type WellKnownTypes_Nested struct {
 
 func (x *WellKnownTypes_Nested) Reset() {
 	*x = WellKnownTypes_Nested{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_private_v1_test_proto_msgTypes[48]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *WellKnownTypes_Nested) String() string {
@@ -3097,7 +3009,7 @@ func (*WellKnownTypes_Nested) ProtoMessage() {}
 
 func (x *WellKnownTypes_Nested) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_private_v1_test_proto_msgTypes[48]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4096,536 +4008,6 @@ func init() { file_cerbos_private_v1_test_proto_init() }
 func file_cerbos_private_v1_test_proto_init() {
 	if File_cerbos_private_v1_test_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_cerbos_private_v1_test_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*InspectTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*EngineTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuilderTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*CompileTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*CelTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*SchemaTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*ValidationErrContainer); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*AttrWrapper); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[10].Exporter = func(v any, i int) any {
-			switch v := v.(*QueryPlannerTestSuite); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[11].Exporter = func(v any, i int) any {
-			switch v := v.(*VerifyTestFixtureGetTestsTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[12].Exporter = func(v any, i int) any {
-			switch v := v.(*QueryPlannerFilterTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[13].Exporter = func(v any, i int) any {
-			switch v := v.(*VerifyTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[14].Exporter = func(v any, i int) any {
-			switch v := v.(*ProtoYamlTestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[15].Exporter = func(v any, i int) any {
-			switch v := v.(*WellKnownTypes); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[16].Exporter = func(v any, i int) any {
-			switch v := v.(*InspectTestCase_PoliciesExpectation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[17].Exporter = func(v any, i int) any {
-			switch v := v.(*InspectTestCase_PolicySetsExpectation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[19].Exporter = func(v any, i int) any {
-			switch v := v.(*InspectTestCase_PolicySetsExpectation_CompileErrors); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[21].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_File); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[22].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_Step); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[23].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_File_AddOrUpdate); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[24].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_File_Delete); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[25].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_Step_Differences); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[26].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_Step_Expectation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[27].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_Step_Expectation_Files); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[28].Exporter = func(v any, i int) any {
-			switch v := v.(*BlobClonerTestCase_Step_Expectation_Info); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[30].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_PlanResourcesCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[31].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_CheckResourceSetCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[32].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_CheckResourceBatchCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[33].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_CheckResourcesCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[34].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_PlaygroundValidateCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[35].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_PlaygroundTestCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[36].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_PlaygroundEvaluateCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[37].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_PlaygroundProxyCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[38].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_AdminAddOrUpdatePolicyCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[39].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_AdminAddOrUpdateSchemaCall); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[40].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerTestCase_Status); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[41].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuilderTestCase_CompilationUnit); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[43].Exporter = func(v any, i int) any {
-			switch v := v.(*CompileTestCase_Variables); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[44].Exporter = func(v any, i int) any {
-			switch v := v.(*CompileTestCase_Variables_DerivedRole); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[46].Exporter = func(v any, i int) any {
-			switch v := v.(*QueryPlannerTestSuite_Test); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[47].Exporter = func(v any, i int) any {
-			switch v := v.(*ProtoYamlTestCase_Want); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_private_v1_test_proto_msgTypes[48].Exporter = func(v any, i int) any {
-			switch v := v.(*WellKnownTypes_Nested); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_cerbos_private_v1_test_proto_msgTypes[3].OneofWrappers = []any{
 		(*ServerTestCase_CheckResourceSet)(nil),

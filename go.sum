@@ -27,8 +27,8 @@ cloud.google.com/go/longrunning v0.5.12 h1:5LqSIdERr71CqfUsFlJdBpOkBH8FBCFD7P1nT
 cloud.google.com/go/longrunning v0.5.12/go.mod h1:S5hMV8CDJ6r50t2ubVJSKQVv5u0rmik5//KgLO3k4lU=
 cloud.google.com/go/storage v1.43.0 h1:CcxnSohZwizt4LCzQHWvBf1/kvtHUn7gk9QERXPyXFs=
 cloud.google.com/go/storage v1.43.0/go.mod h1:ajvxEa7WmZS1PxvKRq4bq0tFT3vMd502JwstCcYv0Q0=
-connectrpc.com/connect v1.16.2 h1:ybd6y+ls7GOlb7Bh5C8+ghA6SvCBajHwxssO2CGFjqE=
-connectrpc.com/connect v1.16.2/go.mod h1:n2kgwskMHXC+lVqb18wngEpF95ldBHXjZYJussz5FRc=
+connectrpc.com/connect v1.17.0 h1:W0ZqMhtVzn9Zhn2yATuUokDLO5N+gIuBWMOnsQrfmZk=
+connectrpc.com/connect v1.17.0/go.mod h1:0292hj1rnx8oFrStN7cB4jjVBeqs+Yx5yDIC2prWDO8=
 connectrpc.com/grpcreflect v1.2.0 h1:Q6og1S7HinmtbEuBvARLNwYmTbhEGRpHDhqrPNlmK+U=
 connectrpc.com/grpcreflect v1.2.0/go.mod h1:nwSOKmE8nU5u/CidgHtPYk1PFI3U9ignz7iDMxOYkSY=
 connectrpc.com/otelconnect v0.7.1 h1:scO5pOb0i4yUE66CnNrHeK1x51yq0bE0ehPg6WvzXJY=
@@ -99,8 +99,8 @@ github.com/alecthomas/repr v0.4.0 h1:GhI2A8MACjfegCPVq9f1FLvIBS+DrQ2KQBFZP1iFzXc
 github.com/alecthomas/repr v0.4.0/go.mod h1:Fr0507jx4eOXV7AlPV6AVZLYrLIuIeSOWtW57eE/O/4=
 github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be h1:9AeTilPcZAjCFIImctFaOjnTIavg87rW78vTPkQqLI8=
 github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be/go.mod h1:ySMOLuWl6zY27l47sB3qLNK6tF2fkHG55UZxx8oIVo4=
-github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
-github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
+github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
+github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/atomicgo/cursor v0.0.1/go.mod h1:cBON2QmmrysudxNBFthvMtN32r3jxVRIvzkUiF/RuIk=
@@ -164,8 +164,8 @@ github.com/cerbos/cerbos-sdk-go v0.2.9 h1:5AP/ZvaSwasDzfQ8Nz9wx3aUDxuzMqsu/G7D4+
 github.com/cerbos/cerbos-sdk-go v0.2.9/go.mod h1:23ahFFVUoup3Qr5xAfiyTqObPTlL7Fbrw/yzjhoE400=
 github.com/cerbos/cerbos/api/genpb v0.38.1 h1:MF9C3SpV5STACcRe7h6LLAkCWjRImDx9Z1z5ubLUl54=
 github.com/cerbos/cerbos/api/genpb v0.38.1/go.mod h1:qdqpS34z1hwLVloX0Taeyjm+c42klEmB3TjqgN1B3Lo=
-github.com/cerbos/cloud-api v0.1.24 h1:flzUDPLxaP5cc7VTknd++Evb8jOlIf2POGTiwZiRm2I=
-github.com/cerbos/cloud-api v0.1.24/go.mod h1:WHmsNWGOaEj5tPjPeUfoV9QxD3u+/1OVrs66pppwAMY=
+github.com/cerbos/cloud-api v0.1.25 h1:LQIVUQZLQ7GzAcV3HaZ8wN2T757vdB9ZyH3wKDf5Fq4=
+github.com/cerbos/cloud-api v0.1.25/go.mod h1:0xakcUfawfJkQQmVvhjRB+SEH+pcUfHw369oH+KgwG8=
 github.com/cerbos/go-yaml v0.0.0-20240722083326-97316216b038 h1:JKnEhFg0i5iMbTXW+ugs1rR/YQsR3sa1ur3pwx31SRo=
 github.com/cerbos/go-yaml v0.0.0-20240722083326-97316216b038/go.mod h1:busBDrFYtzr80HNiDCqMvYftBEMX79TcxHYamRcPMog=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

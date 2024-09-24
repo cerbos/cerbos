@@ -96,11 +96,9 @@ type PlanResourcesRequest struct {
 
 func (x *PlanResourcesRequest) Reset() {
 	*x = PlanResourcesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PlanResourcesRequest) String() string {
@@ -111,7 +109,7 @@ func (*PlanResourcesRequest) ProtoMessage() {}
 
 func (x *PlanResourcesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -184,11 +182,9 @@ type CheckResourceSetRequest struct {
 
 func (x *CheckResourceSetRequest) Reset() {
 	*x = CheckResourceSetRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CheckResourceSetRequest) String() string {
@@ -199,7 +195,7 @@ func (*CheckResourceSetRequest) ProtoMessage() {}
 
 func (x *CheckResourceSetRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -269,11 +265,9 @@ type ResourceSet struct {
 
 func (x *ResourceSet) Reset() {
 	*x = ResourceSet{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ResourceSet) String() string {
@@ -284,7 +278,7 @@ func (*ResourceSet) ProtoMessage() {}
 
 func (x *ResourceSet) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -337,11 +331,9 @@ type AttributesMap struct {
 
 func (x *AttributesMap) Reset() {
 	*x = AttributesMap{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AttributesMap) String() string {
@@ -352,7 +344,7 @@ func (*AttributesMap) ProtoMessage() {}
 
 func (x *AttributesMap) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -388,11 +380,9 @@ type CheckResourceBatchRequest struct {
 
 func (x *CheckResourceBatchRequest) Reset() {
 	*x = CheckResourceBatchRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CheckResourceBatchRequest) String() string {
@@ -403,7 +393,7 @@ func (*CheckResourceBatchRequest) ProtoMessage() {}
 
 func (x *CheckResourceBatchRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -461,11 +451,9 @@ type CheckResourcesRequest struct {
 
 func (x *CheckResourcesRequest) Reset() {
 	*x = CheckResourcesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CheckResourcesRequest) String() string {
@@ -476,7 +464,7 @@ func (*CheckResourcesRequest) ProtoMessage() {}
 
 func (x *CheckResourcesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -536,11 +524,9 @@ type AuxData struct {
 
 func (x *AuxData) Reset() {
 	*x = AuxData{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AuxData) String() string {
@@ -551,7 +537,7 @@ func (*AuxData) ProtoMessage() {}
 
 func (x *AuxData) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -584,11 +570,9 @@ type File struct {
 
 func (x *File) Reset() {
 	*x = File{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *File) String() string {
@@ -599,7 +583,7 @@ func (*File) ProtoMessage() {}
 
 func (x *File) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -639,11 +623,9 @@ type PlaygroundValidateRequest struct {
 
 func (x *PlaygroundValidateRequest) Reset() {
 	*x = PlaygroundValidateRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PlaygroundValidateRequest) String() string {
@@ -654,7 +636,7 @@ func (*PlaygroundValidateRequest) ProtoMessage() {}
 
 func (x *PlaygroundValidateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -694,11 +676,9 @@ type PlaygroundTestRequest struct {
 
 func (x *PlaygroundTestRequest) Reset() {
 	*x = PlaygroundTestRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PlaygroundTestRequest) String() string {
@@ -709,7 +689,7 @@ func (*PlaygroundTestRequest) ProtoMessage() {}
 
 func (x *PlaygroundTestRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -753,11 +733,9 @@ type PlaygroundEvaluateRequest struct {
 
 func (x *PlaygroundEvaluateRequest) Reset() {
 	*x = PlaygroundEvaluateRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PlaygroundEvaluateRequest) String() string {
@@ -768,7 +746,7 @@ func (*PlaygroundEvaluateRequest) ProtoMessage() {}
 
 func (x *PlaygroundEvaluateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -843,11 +821,9 @@ type PlaygroundProxyRequest struct {
 
 func (x *PlaygroundProxyRequest) Reset() {
 	*x = PlaygroundProxyRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PlaygroundProxyRequest) String() string {
@@ -858,7 +834,7 @@ func (*PlaygroundProxyRequest) ProtoMessage() {}
 
 func (x *PlaygroundProxyRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -960,11 +936,9 @@ type AddOrUpdatePolicyRequest struct {
 
 func (x *AddOrUpdatePolicyRequest) Reset() {
 	*x = AddOrUpdatePolicyRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AddOrUpdatePolicyRequest) String() string {
@@ -975,7 +949,7 @@ func (*AddOrUpdatePolicyRequest) ProtoMessage() {}
 
 func (x *AddOrUpdatePolicyRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1014,11 +988,9 @@ type ListAuditLogEntriesRequest struct {
 
 func (x *ListAuditLogEntriesRequest) Reset() {
 	*x = ListAuditLogEntriesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListAuditLogEntriesRequest) String() string {
@@ -1029,7 +1001,7 @@ func (*ListAuditLogEntriesRequest) ProtoMessage() {}
 
 func (x *ListAuditLogEntriesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1122,11 +1094,9 @@ type ServerInfoRequest struct {
 
 func (x *ServerInfoRequest) Reset() {
 	*x = ServerInfoRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerInfoRequest) String() string {
@@ -1137,7 +1107,7 @@ func (*ServerInfoRequest) ProtoMessage() {}
 
 func (x *ServerInfoRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1166,11 +1136,9 @@ type ListPoliciesRequest struct {
 
 func (x *ListPoliciesRequest) Reset() {
 	*x = ListPoliciesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListPoliciesRequest) String() string {
@@ -1181,7 +1149,7 @@ func (*ListPoliciesRequest) ProtoMessage() {}
 
 func (x *ListPoliciesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1241,11 +1209,9 @@ type GetPolicyRequest struct {
 
 func (x *GetPolicyRequest) Reset() {
 	*x = GetPolicyRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[16]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetPolicyRequest) String() string {
@@ -1256,7 +1222,7 @@ func (*GetPolicyRequest) ProtoMessage() {}
 
 func (x *GetPolicyRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[16]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1288,11 +1254,9 @@ type DisablePolicyRequest struct {
 
 func (x *DisablePolicyRequest) Reset() {
 	*x = DisablePolicyRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[17]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DisablePolicyRequest) String() string {
@@ -1303,7 +1267,7 @@ func (*DisablePolicyRequest) ProtoMessage() {}
 
 func (x *DisablePolicyRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[17]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1335,11 +1299,9 @@ type EnablePolicyRequest struct {
 
 func (x *EnablePolicyRequest) Reset() {
 	*x = EnablePolicyRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[18]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EnablePolicyRequest) String() string {
@@ -1350,7 +1312,7 @@ func (*EnablePolicyRequest) ProtoMessage() {}
 
 func (x *EnablePolicyRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[18]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1386,11 +1348,9 @@ type InspectPoliciesRequest struct {
 
 func (x *InspectPoliciesRequest) Reset() {
 	*x = InspectPoliciesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[19]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *InspectPoliciesRequest) String() string {
@@ -1401,7 +1361,7 @@ func (*InspectPoliciesRequest) ProtoMessage() {}
 
 func (x *InspectPoliciesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[19]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1461,11 +1421,9 @@ type AddOrUpdateSchemaRequest struct {
 
 func (x *AddOrUpdateSchemaRequest) Reset() {
 	*x = AddOrUpdateSchemaRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[20]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AddOrUpdateSchemaRequest) String() string {
@@ -1476,7 +1434,7 @@ func (*AddOrUpdateSchemaRequest) ProtoMessage() {}
 
 func (x *AddOrUpdateSchemaRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[20]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1506,11 +1464,9 @@ type ListSchemasRequest struct {
 
 func (x *ListSchemasRequest) Reset() {
 	*x = ListSchemasRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListSchemasRequest) String() string {
@@ -1521,7 +1477,7 @@ func (*ListSchemasRequest) ProtoMessage() {}
 
 func (x *ListSchemasRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1546,11 +1502,9 @@ type GetSchemaRequest struct {
 
 func (x *GetSchemaRequest) Reset() {
 	*x = GetSchemaRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[22]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetSchemaRequest) String() string {
@@ -1561,7 +1515,7 @@ func (*GetSchemaRequest) ProtoMessage() {}
 
 func (x *GetSchemaRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[22]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1593,11 +1547,9 @@ type DeleteSchemaRequest struct {
 
 func (x *DeleteSchemaRequest) Reset() {
 	*x = DeleteSchemaRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[23]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteSchemaRequest) String() string {
@@ -1608,7 +1560,7 @@ func (*DeleteSchemaRequest) ProtoMessage() {}
 
 func (x *DeleteSchemaRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[23]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1640,11 +1592,9 @@ type ReloadStoreRequest struct {
 
 func (x *ReloadStoreRequest) Reset() {
 	*x = ReloadStoreRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[24]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ReloadStoreRequest) String() string {
@@ -1655,7 +1605,7 @@ func (*ReloadStoreRequest) ProtoMessage() {}
 
 func (x *ReloadStoreRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[24]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1688,11 +1638,9 @@ type CheckResourceBatchRequest_BatchEntry struct {
 
 func (x *CheckResourceBatchRequest_BatchEntry) Reset() {
 	*x = CheckResourceBatchRequest_BatchEntry{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[27]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CheckResourceBatchRequest_BatchEntry) String() string {
@@ -1703,7 +1651,7 @@ func (*CheckResourceBatchRequest_BatchEntry) ProtoMessage() {}
 
 func (x *CheckResourceBatchRequest_BatchEntry) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[27]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1743,11 +1691,9 @@ type CheckResourcesRequest_ResourceEntry struct {
 
 func (x *CheckResourcesRequest_ResourceEntry) Reset() {
 	*x = CheckResourcesRequest_ResourceEntry{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[28]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CheckResourcesRequest_ResourceEntry) String() string {
@@ -1758,7 +1704,7 @@ func (*CheckResourcesRequest_ResourceEntry) ProtoMessage() {}
 
 func (x *CheckResourcesRequest_ResourceEntry) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[28]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1798,11 +1744,9 @@ type AuxData_JWT struct {
 
 func (x *AuxData_JWT) Reset() {
 	*x = AuxData_JWT{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[29]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AuxData_JWT) String() string {
@@ -1813,7 +1757,7 @@ func (*AuxData_JWT) ProtoMessage() {}
 
 func (x *AuxData_JWT) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[29]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1853,11 +1797,9 @@ type ListAuditLogEntriesRequest_TimeRange struct {
 
 func (x *ListAuditLogEntriesRequest_TimeRange) Reset() {
 	*x = ListAuditLogEntriesRequest_TimeRange{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[30]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListAuditLogEntriesRequest_TimeRange) String() string {
@@ -1868,7 +1810,7 @@ func (*ListAuditLogEntriesRequest_TimeRange) ProtoMessage() {}
 
 func (x *ListAuditLogEntriesRequest_TimeRange) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_request_v1_request_proto_msgTypes[30]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2700,356 +2642,6 @@ func init() { file_cerbos_request_v1_request_proto_init() }
 func file_cerbos_request_v1_request_proto_init() {
 	if File_cerbos_request_v1_request_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_cerbos_request_v1_request_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*PlanResourcesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*CheckResourceSetRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*ResourceSet); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*AttributesMap); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*CheckResourceBatchRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*CheckResourcesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*AuxData); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*File); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*PlaygroundValidateRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*PlaygroundTestRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[10].Exporter = func(v any, i int) any {
-			switch v := v.(*PlaygroundEvaluateRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[11].Exporter = func(v any, i int) any {
-			switch v := v.(*PlaygroundProxyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[12].Exporter = func(v any, i int) any {
-			switch v := v.(*AddOrUpdatePolicyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[13].Exporter = func(v any, i int) any {
-			switch v := v.(*ListAuditLogEntriesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[14].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerInfoRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[15].Exporter = func(v any, i int) any {
-			switch v := v.(*ListPoliciesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[16].Exporter = func(v any, i int) any {
-			switch v := v.(*GetPolicyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[17].Exporter = func(v any, i int) any {
-			switch v := v.(*DisablePolicyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[18].Exporter = func(v any, i int) any {
-			switch v := v.(*EnablePolicyRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[19].Exporter = func(v any, i int) any {
-			switch v := v.(*InspectPoliciesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[20].Exporter = func(v any, i int) any {
-			switch v := v.(*AddOrUpdateSchemaRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[21].Exporter = func(v any, i int) any {
-			switch v := v.(*ListSchemasRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[22].Exporter = func(v any, i int) any {
-			switch v := v.(*GetSchemaRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[23].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteSchemaRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[24].Exporter = func(v any, i int) any {
-			switch v := v.(*ReloadStoreRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[27].Exporter = func(v any, i int) any {
-			switch v := v.(*CheckResourceBatchRequest_BatchEntry); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[28].Exporter = func(v any, i int) any {
-			switch v := v.(*CheckResourcesRequest_ResourceEntry); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[29].Exporter = func(v any, i int) any {
-			switch v := v.(*AuxData_JWT); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_request_v1_request_proto_msgTypes[30].Exporter = func(v any, i int) any {
-			switch v := v.(*ListAuditLogEntriesRequest_TimeRange); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_cerbos_request_v1_request_proto_msgTypes[11].OneofWrappers = []any{
 		(*PlaygroundProxyRequest_CheckResourceSet)(nil),

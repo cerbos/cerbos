@@ -85,11 +85,9 @@ type Position struct {
 
 func (x *Position) Reset() {
 	*x = Position{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_source_v1_source_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_source_v1_source_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Position) String() string {
@@ -100,7 +98,7 @@ func (*Position) ProtoMessage() {}
 
 func (x *Position) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_source_v1_source_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -149,11 +147,9 @@ type Error struct {
 
 func (x *Error) Reset() {
 	*x = Error{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_source_v1_source_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_source_v1_source_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Error) String() string {
@@ -164,7 +160,7 @@ func (*Error) ProtoMessage() {}
 
 func (x *Error) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_source_v1_source_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -219,11 +215,9 @@ type StartPosition struct {
 
 func (x *StartPosition) Reset() {
 	*x = StartPosition{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_source_v1_source_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_source_v1_source_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *StartPosition) String() string {
@@ -234,7 +228,7 @@ func (*StartPosition) ProtoMessage() {}
 
 func (x *StartPosition) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_source_v1_source_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -282,11 +276,9 @@ type SourceContext struct {
 
 func (x *SourceContext) Reset() {
 	*x = SourceContext{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_source_v1_source_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_source_v1_source_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SourceContext) String() string {
@@ -297,7 +289,7 @@ func (*SourceContext) ProtoMessage() {}
 
 func (x *SourceContext) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_source_v1_source_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -349,11 +341,9 @@ type PolicyWrapper struct {
 
 func (x *PolicyWrapper) Reset() {
 	*x = PolicyWrapper{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_source_v1_source_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_source_v1_source_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PolicyWrapper) String() string {
@@ -364,7 +354,7 @@ func (*PolicyWrapper) ProtoMessage() {}
 
 func (x *PolicyWrapper) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_source_v1_source_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -547,68 +537,6 @@ func init() { file_cerbos_source_v1_source_proto_init() }
 func file_cerbos_source_v1_source_proto_init() {
 	if File_cerbos_source_v1_source_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_cerbos_source_v1_source_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*Position); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_source_v1_source_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*Error); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_source_v1_source_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*StartPosition); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_source_v1_source_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*SourceContext); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_source_v1_source_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*PolicyWrapper); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

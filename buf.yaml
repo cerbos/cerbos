@@ -4,7 +4,7 @@ modules:
     name: buf.build/cerbos/cerbos-unstable-api
     lint:
       use:
-        - DEFAULT
+        - STANDARD
       except:
         - FIELD_NOT_REQUIRED
         - PACKAGE_NO_IMPORT_CYCLE
@@ -17,7 +17,7 @@ modules:
     name: buf.build/cerbos/cerbos-api
     lint:
       use:
-        - DEFAULT
+        - STANDARD
       except:
         - FIELD_NOT_REQUIRED
         - PACKAGE_NO_IMPORT_CYCLE

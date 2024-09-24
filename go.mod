@@ -17,7 +17,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cerbos/cerbos-sdk-go v0.2.9
 	github.com/cerbos/cerbos/api/genpb v0.38.1
-	github.com/cerbos/cloud-api v0.1.24
+	github.com/cerbos/cloud-api v0.1.25
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.3.0
@@ -127,7 +127,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	cloud.google.com/go/iam v1.1.13 // indirect
 	cloud.google.com/go/storage v1.43.0 // indirect
-	connectrpc.com/connect v1.16.2 // indirect
+	connectrpc.com/connect v1.17.0 // indirect
 	connectrpc.com/otelconnect v0.7.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/age v1.2.0 // indirect
@@ -138,7 +138,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
-	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.31.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.35 // indirect
