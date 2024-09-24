@@ -7,3 +7,7 @@ use (
 	./hack/tools/testsplit
 	./tools
 )
+
+replace github.com/cerbos/cloud-api => /home/cell/work/cloud-api
+
+replace github.com/cerbos/cerbos-sdk-go => /home/cell/work/cerbos-sdk-go
