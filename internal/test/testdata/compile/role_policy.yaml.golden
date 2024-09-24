@@ -3,7 +3,6 @@
   "rolePolicy": {
     "meta": {
       "fqn": "cerbos.role.leave_request/acme",
-      "scope": "acme",
       "sourceAttributes": {
         "role.leave_request/acme": {
           "attributes": {
@@ -13,6 +12,7 @@
       }
     },
     "role": "leave_request",
+    "scope": "acme",
     "resources": {
       "acme_admin": {
         "actions": {
