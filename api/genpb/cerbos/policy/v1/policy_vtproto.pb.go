@@ -422,6 +422,11 @@ func (m *ResourcePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.ScopeFallThrough != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+		i--
+		dAtA[i] = 0x40
+	}
 	if m.Variables != nil {
 		size, err := m.Variables.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -618,6 +623,11 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		}
 		i -= size
 	}
+	if m.ScopeFallThrough != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+		i--
+		dAtA[i] = 0x20
+	}
 	if len(m.Rules) > 0 {
 		for iNdEx := len(m.Rules) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Rules[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -732,6 +742,11 @@ func (m *PrincipalPolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.ScopeFallThrough != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+		i--
+		dAtA[i] = 0x30
 	}
 	if m.Variables != nil {
 		size, err := m.Variables.MarshalToSizedBufferVT(dAtA[:i])
@@ -3812,6 +3827,9 @@ func (m *ResourcePolicy) SizeVT() (n int) {
 		l = m.Variables.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	if m.ScopeFallThrough != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -3878,6 +3896,9 @@ func (m *RolePolicy) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
+	if m.ScopeFallThrough != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -3939,6 +3960,9 @@ func (m *PrincipalPolicy) SizeVT() (n int) {
 	if m.Variables != nil {
 		l = m.Variables.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.ScopeFallThrough != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -6454,6 +6478,25 @@ func (m *ResourcePolicy) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+			}
+			m.ScopeFallThrough = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ScopeFallThrough |= ScopeFallThrough(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -6873,6 +6916,25 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+			}
+			m.ScopeFallThrough = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ScopeFallThrough |= ScopeFallThrough(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -7205,6 +7267,25 @@ func (m *PrincipalPolicy) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+			}
+			m.ScopeFallThrough = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ScopeFallThrough |= ScopeFallThrough(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

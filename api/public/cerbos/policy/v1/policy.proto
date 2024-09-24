@@ -25,6 +25,12 @@ enum Kind {
   KIND_ROLE_POLICY = 5;
 }
 
+enum ScopeFallThrough {
+  SCOPE_FALL_THROUGH_UNSPECIFIED = 0;
+  SCOPE_FALL_THROUGH_ON_NO_MATCH = 1;
+  SCOPE_FALL_THROUGH_ON_ALLOW = 2;
+}
+
 message Policy {
   string api_version = 1 [
     (buf.validate.field).required = true,
@@ -77,6 +83,7 @@ message ResourcePolicy {
   string scope = 5 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   Schemas schemas = 6;
   Variables variables = 7;
+  ScopeFallThrough scope_fall_through = 8;
 }
 
 message ResourceRule {
@@ -123,6 +130,7 @@ message RolePolicy {
   }
   string scope = 2 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   repeated RoleRule rules = 3;
+  ScopeFallThrough scope_fall_through = 4;
 }
 
 message RoleRule {
@@ -154,6 +162,7 @@ message PrincipalPolicy {
   repeated PrincipalRule rules = 3;
   string scope = 4 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   Variables variables = 5;
+  ScopeFallThrough scope_fall_through = 6;
 }
 
 message PrincipalRule {

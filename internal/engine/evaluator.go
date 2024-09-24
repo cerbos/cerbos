@@ -18,6 +18,7 @@ import (
 	"go.uber.org/multierr"
 	"golang.org/x/exp/maps"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -35,7 +36,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const rolePolicyNotAllowed = "<NOT_ALLOWED_BY_ROLE_POLICIES>"
+const noMatchScopeFallThrough = "NO_MATCH_FOR_SCOPE_FALL_THROUGH_ON_ALLOW"
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
@@ -146,29 +147,39 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
-		permissibleActions := internal.ProtoSet{}
-		for _, p := range rpe.policies {
-			if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
-				permissibleActions.Merge(k.Actions)
+		getActions := func(sft policyv1.ScopeFallThrough) *util.GlobMap[*emptypb.Empty] {
+			permissibleActions := internal.ProtoSet{}
+			for _, p := range rpe.policies {
+				if p.ScopeFallThrough == sft {
+					if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
+						permissibleActions.Merge(k.Actions)
+					}
+				}
 			}
+
+			return util.NewGlobMap(permissibleActions)
 		}
 
-		actions := util.NewGlobMap(permissibleActions)
+		onAllowActions := getActions(policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW)
+		onNoMatchActions := getActions(policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_NO_MATCH)
 
-	outer:
 		for _, a := range input.Actions {
-			if v := actions.Get(a); v != nil {
-				continue outer
-			}
-
 			actx := rpctx.StartAction(a)
 
-			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: rolePolicyNotAllowed, Scope: input.Principal.Scope})
-
-			actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
+			// FALL_THROUGH_ON_NO_MATCH takes precedence
+			// Role policies always return `EFFECT_DENY` for nonexistent `resource:action` mappings, regardless
+			// of SCOPE_FALL_THROUGH strategy.
+			if onNoMatchActions.Get(a) != nil {
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})
+				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
+			} else if onAllowActions.Get(a) == nil {
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Principal.Scope})
+				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
+			}
 		}
 
 		result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+
 		return result, nil
 	})
 }
@@ -225,6 +236,8 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				return result, nil
 			}
 
+			fallThroughActions := make(map[string]struct{})
+
 			err := tracing.RecordSpan1(ctx, "evaluate_policy", func(ctx context.Context, span trace.Span) error {
 				span.SetAttributes(tracing.PolicyScope(p.Scope))
 				sctx := pctx.StartScope(p.Scope)
@@ -265,6 +278,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 					}
 				})
 
+				// TODO(saml) I don't think `effectiveDerivedRoles` is used below the intersection below, can we remove from `evalCtx`?
 				evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
 
 				// evaluate the variables of this policy
@@ -278,6 +292,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 				// evaluate each rule until all actions have a result
 				tracing.RecordSpan(ctx, "evaluate_rules", func(_ context.Context, _ trace.Span) {
+				outer:
 					for _, rule := range p.Rules {
 						rctx := sctx.StartRule(rule.Name)
 
@@ -312,6 +327,10 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									continue
 								}
 
+								if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+									fallThroughActions[action] = struct{}{}
+									continue outer
+								}
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 								actx.AppliedEffect(rule.Effect, "")
 								ruleActivated = true
@@ -344,6 +363,14 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			if err != nil {
 				return nil, err
 			}
+
+			if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW {
+				for _, a := range result.unresolvedActions() {
+					if _, ok := fallThroughActions[a]; !ok {
+						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Resource.Scope})
+					}
+				}
+			}
 		}
 
 		// set the default effect for actions that were not matched
@@ -374,6 +401,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				return result, nil
 			}
 
+			fallThroughActions := make(map[string]struct{})
+
 			err := tracing.RecordSpan1(ctx, "evalute_policy", func(ctx context.Context, span trace.Span) error {
 				span.SetAttributes(tracing.PolicyScope(p.Scope))
 				sctx := pctx.StartScope(p.Scope)
@@ -394,6 +423,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 							continue
 						}
 
+					outer:
 						for _, rule := range resourceRules.ActionRules {
 							matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 							ruleActivated := false
@@ -418,6 +448,11 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 										octx.ComputedOutput(output)
 									}
 									continue
+								}
+
+								if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+									fallThroughActions[action] = struct{}{}
+									continue outer
 								}
 
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
@@ -451,6 +486,14 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 			})
 			if err != nil {
 				return nil, err
+			}
+
+			if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW {
+				for _, a := range result.unresolvedActions() {
+					if _, ok := fallThroughActions[a]; !ok {
+						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Principal.Scope})
+					}
+				}
 			}
 		}
 

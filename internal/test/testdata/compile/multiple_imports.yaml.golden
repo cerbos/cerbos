@@ -560,7 +560,8 @@
             },
             "effect": "EFFECT_ALLOW"
           }
-        ]
+        ],
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       }
     ]
   },

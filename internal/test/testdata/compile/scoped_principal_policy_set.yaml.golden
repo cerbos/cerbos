@@ -41,7 +41,8 @@
               }
             ]
           }
-        }
+        },
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       },
       {
         "scope": "acme.hr",
@@ -55,7 +56,8 @@
               }
             ]
           }
-        }
+        },
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       },
       {
         "scope": "acme",
@@ -174,7 +176,8 @@
               }
             ]
           }
-        }
+        },
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       },
       {
         "resourceRules": {
@@ -187,7 +190,8 @@
               }
             ]
           }
-        }
+        },
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       }
     ]
   },

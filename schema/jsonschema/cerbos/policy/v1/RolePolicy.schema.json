@@ -24,6 +24,14 @@
           "minLength": 1
         }
       }
+    },
+    "cerbos.policy.v1.ScopeFallThrough": {
+      "type": "string",
+      "enum": [
+        "SCOPE_FALL_THROUGH_UNSPECIFIED",
+        "SCOPE_FALL_THROUGH_ON_NO_MATCH",
+        "SCOPE_FALL_THROUGH_ON_ALLOW"
+      ]
     }
   },
   "allOf": [
@@ -44,6 +52,9 @@
         "scope": {
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+        },
+        "scopeFallThrough": {
+          "$ref": "#/definitions/cerbos.policy.v1.ScopeFallThrough"
         }
       }
     },

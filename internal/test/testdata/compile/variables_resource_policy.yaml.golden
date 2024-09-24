@@ -1219,7 +1219,8 @@
               }
             }
           }
-        ]
+        ],
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       },
       {
         "derivedRoles": {
@@ -4419,7 +4420,8 @@
               }
             }
           }
-        ]
+        ],
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       }
     ]
   },

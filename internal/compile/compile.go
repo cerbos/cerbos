@@ -89,6 +89,11 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		}
 	}
 
+	scopeFallThrough := rp.ScopeFallThrough
+	if scopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_UNSPECIFIED {
+		scopeFallThrough = policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW
+	}
+
 	return &runtimev1.RunnablePolicySet{
 		CompilerVersion: compilerVersion,
 		Fqn:             modCtx.fqn,
@@ -101,9 +106,10 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 					},
 					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
 				},
-				Role:      rp.GetRole(),
-				Scope:     rp.Scope,
-				Resources: resources,
+				Role:             rp.GetRole(),
+				Scope:            rp.Scope,
+				Resources:        resources,
+				ScopeFallThrough: scopeFallThrough,
 			},
 		},
 	}
@@ -185,11 +191,17 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 
 	compilePolicyVariables(modCtx, rp.Variables)
 
+	scopeFallThrough := rp.ScopeFallThrough
+	if scopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_UNSPECIFIED {
+		scopeFallThrough = policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_NO_MATCH
+	}
+
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
-		DerivedRoles: referencedRoles,
-		Scope:        rp.Scope,
-		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
-		Schemas:      rp.Schemas,
+		DerivedRoles:     referencedRoles,
+		Scope:            rp.Scope,
+		Rules:            make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
+		Schemas:          rp.Schemas,
+		ScopeFallThrough: scopeFallThrough,
 	}
 
 	for i, rule := range rp.Rules {
@@ -467,9 +479,15 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 
 	compilePolicyVariables(modCtx, pp.Variables)
 
+	scopeFallThrough := pp.ScopeFallThrough
+	if scopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_UNSPECIFIED {
+		scopeFallThrough = policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_NO_MATCH
+	}
+
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
-		Scope:         pp.Scope,
-		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
+		Scope:            pp.Scope,
+		ResourceRules:    make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
+		ScopeFallThrough: scopeFallThrough,
 	}
 
 	for ruleNum, rule := range pp.Rules {

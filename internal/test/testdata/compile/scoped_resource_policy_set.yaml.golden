@@ -427,7 +427,8 @@
             },
             "effect": "EFFECT_ALLOW"
           }
-        ]
+        ],
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       },
       {
         "scope": "acme.hr",
@@ -443,7 +444,8 @@
             },
             "effect": "EFFECT_ALLOW"
           }
-        ]
+        ],
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       },
       {
         "scope": "acme",
@@ -990,7 +992,8 @@
           "resourceSchema": {
             "ref": "cerbos:///complex_object.json"
           }
-        }
+        },
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       },
       {
         "rules": [
@@ -1012,7 +1015,8 @@
           "resourceSchema": {
             "ref": "cerbos:///complex_object.json"
           }
-        }
+        },
+        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
       }
     ],
     "schemas": {

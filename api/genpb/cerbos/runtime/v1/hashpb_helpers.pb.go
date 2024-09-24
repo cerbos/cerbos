@@ -691,6 +691,10 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m *RunnableP
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.scope_fall_through"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopeFallThrough())))
+
+	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_hashpb_sum(m *RunnablePrincipalPolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -918,6 +922,10 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableRe
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope_fall_through"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopeFallThrough())))
+
+	}
 }
 
 func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourcePolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1043,6 +1051,10 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.scope_fall_through"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopeFallThrough())))
+
 	}
 }
 

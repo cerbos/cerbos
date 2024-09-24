@@ -2750,6 +2750,9 @@
         },
         "variables": {
           "$ref": "#/definitions/v1Variables"
+        },
+        "scopeFallThrough": {
+          "$ref": "#/definitions/v1ScopeFallThrough"
         }
       }
     },
@@ -2822,6 +2825,9 @@
         },
         "variables": {
           "$ref": "#/definitions/v1Variables"
+        },
+        "scopeFallThrough": {
+          "$ref": "#/definitions/v1ScopeFallThrough"
         }
       }
     },
@@ -2942,6 +2948,9 @@
             "type": "object",
             "$ref": "#/definitions/v1RoleRule"
           }
+        },
+        "scopeFallThrough": {
+          "$ref": "#/definitions/v1ScopeFallThrough"
         }
       }
     },
@@ -2980,6 +2989,15 @@
           "$ref": "#/definitions/SchemasIgnoreWhen"
         }
       }
+    },
+    "v1ScopeFallThrough": {
+      "type": "string",
+      "enum": [
+        "SCOPE_FALL_THROUGH_UNSPECIFIED",
+        "SCOPE_FALL_THROUGH_ON_NO_MATCH",
+        "SCOPE_FALL_THROUGH_ON_ALLOW"
+      ],
+      "default": "SCOPE_FALL_THROUGH_UNSPECIFIED"
     },
     "v1ServerInfoResponse": {
       "type": "object",

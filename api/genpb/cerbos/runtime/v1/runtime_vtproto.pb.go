@@ -372,6 +372,11 @@ func (m *RunnableRolePolicySet) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.ScopeFallThrough != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+		i--
+		dAtA[i] = 0x28
+	}
 	if len(m.Resources) > 0 {
 		for k := range m.Resources {
 			v := m.Resources[k]
@@ -698,6 +703,11 @@ func (m *RunnableResourcePolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) (
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.ScopeFallThrough != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+		i--
+		dAtA[i] = 0x38
 	}
 	if len(m.OrderedVariables) > 0 {
 		for iNdEx := len(m.OrderedVariables) - 1; iNdEx >= 0; iNdEx-- {
@@ -1493,6 +1503,11 @@ func (m *RunnablePrincipalPolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) 
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.ScopeFallThrough != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+		i--
+		dAtA[i] = 0x28
 	}
 	if len(m.OrderedVariables) > 0 {
 		for iNdEx := len(m.OrderedVariables) - 1; iNdEx >= 0; iNdEx-- {
@@ -2874,6 +2889,9 @@ func (m *RunnableRolePolicySet) SizeVT() (n int) {
 			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
 	}
+	if m.ScopeFallThrough != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -3052,6 +3070,9 @@ func (m *RunnableResourcePolicySet_Policy) SizeVT() (n int) {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.ScopeFallThrough != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3374,6 +3395,9 @@ func (m *RunnablePrincipalPolicySet_Policy) SizeVT() (n int) {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.ScopeFallThrough != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4947,6 +4971,25 @@ func (m *RunnableRolePolicySet) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Resources[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+			}
+			m.ScopeFallThrough = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ScopeFallThrough |= v1.ScopeFallThrough(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -6408,6 +6451,25 @@ func (m *RunnableResourcePolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+			}
+			m.ScopeFallThrough = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ScopeFallThrough |= v1.ScopeFallThrough(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -8949,6 +9011,25 @@ func (m *RunnablePrincipalPolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+			}
+			m.ScopeFallThrough = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ScopeFallThrough |= v1.ScopeFallThrough(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

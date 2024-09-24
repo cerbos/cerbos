@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: donald_duck
+  version: "default"
+  scope: "acme.sales"
+  scopeFallThrough: SCOPE_FALL_THROUGH_ON_ALLOW
+  rules:
+    - resource: calendar_entry
+      actions:
+      - action: "create"
+        effect: EFFECT_ALLOW
+
+      - action: "delete"
+        effect: EFFECT_ALLOW

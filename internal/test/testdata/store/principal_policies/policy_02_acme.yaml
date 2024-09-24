@@ -26,3 +26,8 @@ principalPolicy:
       actions:
         - action: "*"
           effect: EFFECT_DENY
+
+    - resource: calendar_entry
+      actions:
+        - action: "create"
+          effect: EFFECT_ALLOW

@@ -26,7 +26,8 @@
           "view": {}
         }
       }
-    }
+    },
+    "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_ALLOW"
   },
   "compilerVersion": 1
 }

@@ -2,15 +2,10 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_admin
+  role: acme_assistant
   scope: acme.hr.uk
-  scopeFallThrough: SCOPE_FALL_THROUGH_ON_ALLOW
+  scopeFallThrough: SCOPE_FALL_THROUGH_ON_NO_MATCH
   rules:
     - resource: leave_request
       permissibleActions:
-        - view:*
-        - deny
-
-    - resource: salary_record
-      permissibleActions:
-        - edit
+        - assist
