@@ -950,10 +950,6 @@ func cerbos_runtime_v1_RunnableRolePolicySet_Metadata_hashpb_sum(m *RunnableRole
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetFqn()))
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Metadata.scope"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
-
-	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Metadata.source_attributes"]; !ok {
 		if len(m.SourceAttributes) > 0 {
 			keys := make([]string, len(m.SourceAttributes))
@@ -1023,6 +1019,10 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.role"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRole()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
 
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.resources"]; !ok {

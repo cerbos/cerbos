@@ -240,7 +240,7 @@ func (m *RunnableRolePolicySet_Metadata) MarshalToSizedBufferVT(dAtA []byte) (in
 			dAtA[i] = 0xa
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x1a
 		}
 	}
 	if len(m.SourceAttributes) > 0 {
@@ -274,15 +274,8 @@ func (m *RunnableRolePolicySet_Metadata) MarshalToSizedBufferVT(dAtA []byte) (in
 			dAtA[i] = 0xa
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
-	}
-	if len(m.Scope) > 0 {
-		i -= len(m.Scope)
-		copy(dAtA[i:], m.Scope)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scope)))
-		i--
-		dAtA[i] = 0x12
 	}
 	if len(m.Fqn) > 0 {
 		i -= len(m.Fqn)
@@ -398,8 +391,15 @@ func (m *RunnableRolePolicySet) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 			dAtA[i] = 0xa
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x22
 		}
+	}
+	if len(m.Scope) > 0 {
+		i -= len(m.Scope)
+		copy(dAtA[i:], m.Scope)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scope)))
+		i--
+		dAtA[i] = 0x1a
 	}
 	if len(m.Role) > 0 {
 		i -= len(m.Role)
@@ -2789,10 +2789,6 @@ func (m *RunnableRolePolicySet_Metadata) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Scope)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	if len(m.SourceAttributes) > 0 {
 		for k, v := range m.SourceAttributes {
 			_ = k
@@ -2858,6 +2854,10 @@ func (m *RunnableRolePolicySet) SizeVT() (n int) {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	l = len(m.Role)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.Scope)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -4225,38 +4225,6 @@ func (m *RunnableRolePolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Scope", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Scope = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SourceAttributes", wireType)
 			}
 			var msglen int
@@ -4392,7 +4360,7 @@ func (m *RunnableRolePolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 			}
 			m.SourceAttributes[mapkey] = mapvalue
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Annotations", wireType)
 			}
@@ -4819,6 +4787,38 @@ func (m *RunnableRolePolicySet) UnmarshalVT(dAtA []byte) error {
 			m.Role = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Scope", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Scope = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
