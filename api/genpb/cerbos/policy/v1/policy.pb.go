@@ -166,11 +166,9 @@ type Policy struct {
 
 func (x *Policy) Reset() {
 	*x = Policy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Policy) String() string {
@@ -181,7 +179,7 @@ func (*Policy) ProtoMessage() {}
 
 func (x *Policy) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -325,11 +323,9 @@ type SourceAttributes struct {
 
 func (x *SourceAttributes) Reset() {
 	*x = SourceAttributes{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SourceAttributes) String() string {
@@ -340,7 +336,7 @@ func (*SourceAttributes) ProtoMessage() {}
 
 func (x *SourceAttributes) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -378,11 +374,9 @@ type Metadata struct {
 
 func (x *Metadata) Reset() {
 	*x = Metadata{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Metadata) String() string {
@@ -393,7 +387,7 @@ func (*Metadata) ProtoMessage() {}
 
 func (x *Metadata) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -467,11 +461,9 @@ type ResourcePolicy struct {
 
 func (x *ResourcePolicy) Reset() {
 	*x = ResourcePolicy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ResourcePolicy) String() string {
@@ -482,7 +474,7 @@ func (*ResourcePolicy) ProtoMessage() {}
 
 func (x *ResourcePolicy) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -562,11 +554,9 @@ type ResourceRule struct {
 
 func (x *ResourceRule) Reset() {
 	*x = ResourceRule{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ResourceRule) String() string {
@@ -577,7 +567,7 @@ func (*ResourceRule) ProtoMessage() {}
 
 func (x *ResourceRule) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -656,11 +646,9 @@ type RolePolicy struct {
 
 func (x *RolePolicy) Reset() {
 	*x = RolePolicy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RolePolicy) String() string {
@@ -671,7 +659,7 @@ func (*RolePolicy) ProtoMessage() {}
 
 func (x *RolePolicy) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -735,11 +723,9 @@ type RoleRule struct {
 
 func (x *RoleRule) Reset() {
 	*x = RoleRule{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RoleRule) String() string {
@@ -750,7 +736,7 @@ func (*RoleRule) ProtoMessage() {}
 
 func (x *RoleRule) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -793,11 +779,9 @@ type PrincipalPolicy struct {
 
 func (x *PrincipalPolicy) Reset() {
 	*x = PrincipalPolicy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrincipalPolicy) String() string {
@@ -808,7 +792,7 @@ func (*PrincipalPolicy) ProtoMessage() {}
 
 func (x *PrincipalPolicy) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -869,11 +853,9 @@ type PrincipalRule struct {
 
 func (x *PrincipalRule) Reset() {
 	*x = PrincipalRule{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrincipalRule) String() string {
@@ -884,7 +866,7 @@ func (*PrincipalRule) ProtoMessage() {}
 
 func (x *PrincipalRule) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -925,11 +907,9 @@ type DerivedRoles struct {
 
 func (x *DerivedRoles) Reset() {
 	*x = DerivedRoles{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DerivedRoles) String() string {
@@ -940,7 +920,7 @@ func (*DerivedRoles) ProtoMessage() {}
 
 func (x *DerivedRoles) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -988,11 +968,9 @@ type RoleDef struct {
 
 func (x *RoleDef) Reset() {
 	*x = RoleDef{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RoleDef) String() string {
@@ -1003,7 +981,7 @@ func (*RoleDef) ProtoMessage() {}
 
 func (x *RoleDef) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1050,11 +1028,9 @@ type ExportVariables struct {
 
 func (x *ExportVariables) Reset() {
 	*x = ExportVariables{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ExportVariables) String() string {
@@ -1065,7 +1041,7 @@ func (*ExportVariables) ProtoMessage() {}
 
 func (x *ExportVariables) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1105,11 +1081,9 @@ type Variables struct {
 
 func (x *Variables) Reset() {
 	*x = Variables{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Variables) String() string {
@@ -1120,7 +1094,7 @@ func (*Variables) ProtoMessage() {}
 
 func (x *Variables) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1163,11 +1137,9 @@ type Condition struct {
 
 func (x *Condition) Reset() {
 	*x = Condition{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Condition) String() string {
@@ -1178,7 +1150,7 @@ func (*Condition) ProtoMessage() {}
 
 func (x *Condition) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1246,11 +1218,9 @@ type Match struct {
 
 func (x *Match) Reset() {
 	*x = Match{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Match) String() string {
@@ -1261,7 +1231,7 @@ func (*Match) ProtoMessage() {}
 
 func (x *Match) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1351,11 +1321,9 @@ type Output struct {
 
 func (x *Output) Reset() {
 	*x = Output{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Output) String() string {
@@ -1366,7 +1334,7 @@ func (*Output) ProtoMessage() {}
 
 func (x *Output) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1407,11 +1375,9 @@ type Schemas struct {
 
 func (x *Schemas) Reset() {
 	*x = Schemas{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[16]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Schemas) String() string {
@@ -1422,7 +1388,7 @@ func (*Schemas) ProtoMessage() {}
 
 func (x *Schemas) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[16]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1459,11 +1425,9 @@ type TestFixture struct {
 
 func (x *TestFixture) Reset() {
 	*x = TestFixture{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestFixture) String() string {
@@ -1474,7 +1438,7 @@ func (*TestFixture) ProtoMessage() {}
 
 func (x *TestFixture) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1501,11 +1465,9 @@ type TestOptions struct {
 
 func (x *TestOptions) Reset() {
 	*x = TestOptions{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestOptions) String() string {
@@ -1516,7 +1478,7 @@ func (*TestOptions) ProtoMessage() {}
 
 func (x *TestOptions) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1571,11 +1533,9 @@ type TestSuite struct {
 
 func (x *TestSuite) Reset() {
 	*x = TestSuite{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestSuite) String() string {
@@ -1586,7 +1546,7 @@ func (*TestSuite) ProtoMessage() {}
 
 func (x *TestSuite) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1687,11 +1647,9 @@ type TestTable struct {
 
 func (x *TestTable) Reset() {
 	*x = TestTable{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestTable) String() string {
@@ -1702,7 +1660,7 @@ func (*TestTable) ProtoMessage() {}
 
 func (x *TestTable) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1783,11 +1741,9 @@ type Test struct {
 
 func (x *Test) Reset() {
 	*x = Test{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Test) String() string {
@@ -1798,7 +1754,7 @@ func (*Test) ProtoMessage() {}
 
 func (x *Test) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1880,11 +1836,9 @@ type TestResults struct {
 
 func (x *TestResults) Reset() {
 	*x = TestResults{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[22]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults) String() string {
@@ -1895,7 +1849,7 @@ func (*TestResults) ProtoMessage() {}
 
 func (x *TestResults) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[22]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1938,11 +1892,9 @@ type PrincipalRule_Action struct {
 
 func (x *PrincipalRule_Action) Reset() {
 	*x = PrincipalRule_Action{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[26]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrincipalRule_Action) String() string {
@@ -1953,7 +1905,7 @@ func (*PrincipalRule_Action) ProtoMessage() {}
 
 func (x *PrincipalRule_Action) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[26]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2013,11 +1965,9 @@ type Match_ExprList struct {
 
 func (x *Match_ExprList) Reset() {
 	*x = Match_ExprList{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[29]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Match_ExprList) String() string {
@@ -2028,7 +1978,7 @@ func (*Match_ExprList) ProtoMessage() {}
 
 func (x *Match_ExprList) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[29]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2061,11 +2011,9 @@ type Output_When struct {
 
 func (x *Output_When) Reset() {
 	*x = Output_When{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[30]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Output_When) String() string {
@@ -2076,7 +2024,7 @@ func (*Output_When) ProtoMessage() {}
 
 func (x *Output_When) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[30]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2115,11 +2063,9 @@ type Schemas_IgnoreWhen struct {
 
 func (x *Schemas_IgnoreWhen) Reset() {
 	*x = Schemas_IgnoreWhen{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[31]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Schemas_IgnoreWhen) String() string {
@@ -2130,7 +2076,7 @@ func (*Schemas_IgnoreWhen) ProtoMessage() {}
 
 func (x *Schemas_IgnoreWhen) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[31]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2163,11 +2109,9 @@ type Schemas_Schema struct {
 
 func (x *Schemas_Schema) Reset() {
 	*x = Schemas_Schema{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[32]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Schemas_Schema) String() string {
@@ -2178,7 +2122,7 @@ func (*Schemas_Schema) ProtoMessage() {}
 
 func (x *Schemas_Schema) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[32]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2218,11 +2162,9 @@ type TestFixture_Principals struct {
 
 func (x *TestFixture_Principals) Reset() {
 	*x = TestFixture_Principals{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[33]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestFixture_Principals) String() string {
@@ -2233,7 +2175,7 @@ func (*TestFixture_Principals) ProtoMessage() {}
 
 func (x *TestFixture_Principals) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[33]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2273,11 +2215,9 @@ type TestFixture_Resources struct {
 
 func (x *TestFixture_Resources) Reset() {
 	*x = TestFixture_Resources{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[34]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestFixture_Resources) String() string {
@@ -2288,7 +2228,7 @@ func (*TestFixture_Resources) ProtoMessage() {}
 
 func (x *TestFixture_Resources) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[34]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2328,11 +2268,9 @@ type TestFixture_AuxData struct {
 
 func (x *TestFixture_AuxData) Reset() {
 	*x = TestFixture_AuxData{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[35]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestFixture_AuxData) String() string {
@@ -2343,7 +2281,7 @@ func (*TestFixture_AuxData) ProtoMessage() {}
 
 func (x *TestFixture_AuxData) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[35]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2385,11 +2323,9 @@ type TestTable_Input struct {
 
 func (x *TestTable_Input) Reset() {
 	*x = TestTable_Input{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[43]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestTable_Input) String() string {
@@ -2400,7 +2336,7 @@ func (*TestTable_Input) ProtoMessage() {}
 
 func (x *TestTable_Input) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[43]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2454,11 +2390,9 @@ type TestTable_OutputExpectations struct {
 
 func (x *TestTable_OutputExpectations) Reset() {
 	*x = TestTable_OutputExpectations{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[44]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestTable_OutputExpectations) String() string {
@@ -2469,7 +2403,7 @@ func (*TestTable_OutputExpectations) ProtoMessage() {}
 
 func (x *TestTable_OutputExpectations) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[44]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2511,11 +2445,9 @@ type TestTable_Expectation struct {
 
 func (x *TestTable_Expectation) Reset() {
 	*x = TestTable_Expectation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[45]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestTable_Expectation) String() string {
@@ -2526,7 +2458,7 @@ func (*TestTable_Expectation) ProtoMessage() {}
 
 func (x *TestTable_Expectation) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[45]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2581,11 +2513,9 @@ type Test_TestName struct {
 
 func (x *Test_TestName) Reset() {
 	*x = Test_TestName{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[47]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Test_TestName) String() string {
@@ -2596,7 +2526,7 @@ func (*Test_TestName) ProtoMessage() {}
 
 func (x *Test_TestName) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[47]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2642,11 +2572,9 @@ type Test_OutputEntries struct {
 
 func (x *Test_OutputEntries) Reset() {
 	*x = Test_OutputEntries{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[48]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Test_OutputEntries) String() string {
@@ -2657,7 +2585,7 @@ func (*Test_OutputEntries) ProtoMessage() {}
 
 func (x *Test_OutputEntries) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[48]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2690,11 +2618,9 @@ type TestResults_Tally struct {
 
 func (x *TestResults_Tally) Reset() {
 	*x = TestResults_Tally{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[52]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Tally) String() string {
@@ -2705,7 +2631,7 @@ func (*TestResults_Tally) ProtoMessage() {}
 
 func (x *TestResults_Tally) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[52]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2746,11 +2672,9 @@ type TestResults_Summary struct {
 
 func (x *TestResults_Summary) Reset() {
 	*x = TestResults_Summary{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[53]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Summary) String() string {
@@ -2761,7 +2685,7 @@ func (*TestResults_Summary) ProtoMessage() {}
 
 func (x *TestResults_Summary) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[53]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2814,11 +2738,9 @@ type TestResults_Suite struct {
 
 func (x *TestResults_Suite) Reset() {
 	*x = TestResults_Suite{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[54]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Suite) String() string {
@@ -2829,7 +2751,7 @@ func (*TestResults_Suite) ProtoMessage() {}
 
 func (x *TestResults_Suite) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[54]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2905,11 +2827,9 @@ type TestResults_TestCase struct {
 
 func (x *TestResults_TestCase) Reset() {
 	*x = TestResults_TestCase{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[55]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_TestCase) String() string {
@@ -2920,7 +2840,7 @@ func (*TestResults_TestCase) ProtoMessage() {}
 
 func (x *TestResults_TestCase) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[55]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2960,11 +2880,9 @@ type TestResults_Principal struct {
 
 func (x *TestResults_Principal) Reset() {
 	*x = TestResults_Principal{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[56]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Principal) String() string {
@@ -2975,7 +2893,7 @@ func (*TestResults_Principal) ProtoMessage() {}
 
 func (x *TestResults_Principal) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[56]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3015,11 +2933,9 @@ type TestResults_Resource struct {
 
 func (x *TestResults_Resource) Reset() {
 	*x = TestResults_Resource{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[57]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Resource) String() string {
@@ -3030,7 +2946,7 @@ func (*TestResults_Resource) ProtoMessage() {}
 
 func (x *TestResults_Resource) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[57]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3070,11 +2986,9 @@ type TestResults_Action struct {
 
 func (x *TestResults_Action) Reset() {
 	*x = TestResults_Action{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[58]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Action) String() string {
@@ -3085,7 +2999,7 @@ func (*TestResults_Action) ProtoMessage() {}
 
 func (x *TestResults_Action) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[58]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3131,11 +3045,9 @@ type TestResults_Details struct {
 
 func (x *TestResults_Details) Reset() {
 	*x = TestResults_Details{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[59]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Details) String() string {
@@ -3146,7 +3058,7 @@ func (*TestResults_Details) ProtoMessage() {}
 
 func (x *TestResults_Details) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[59]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3240,11 +3152,9 @@ type TestResults_OutputFailure struct {
 
 func (x *TestResults_OutputFailure) Reset() {
 	*x = TestResults_OutputFailure{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[60]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_OutputFailure) String() string {
@@ -3255,7 +3165,7 @@ func (*TestResults_OutputFailure) ProtoMessage() {}
 
 func (x *TestResults_OutputFailure) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[60]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3326,11 +3236,9 @@ type TestResults_Failure struct {
 
 func (x *TestResults_Failure) Reset() {
 	*x = TestResults_Failure{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[61]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Failure) String() string {
@@ -3341,7 +3249,7 @@ func (*TestResults_Failure) ProtoMessage() {}
 
 func (x *TestResults_Failure) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[61]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3388,11 +3296,9 @@ type TestResults_Success struct {
 
 func (x *TestResults_Success) Reset() {
 	*x = TestResults_Success{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[62]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_Success) String() string {
@@ -3403,7 +3309,7 @@ func (*TestResults_Success) ProtoMessage() {}
 
 func (x *TestResults_Success) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[62]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3443,11 +3349,9 @@ type TestResults_OutputFailure_MismatchedValue struct {
 
 func (x *TestResults_OutputFailure_MismatchedValue) Reset() {
 	*x = TestResults_OutputFailure_MismatchedValue{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[63]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_OutputFailure_MismatchedValue) String() string {
@@ -3458,7 +3362,7 @@ func (*TestResults_OutputFailure_MismatchedValue) ProtoMessage() {}
 
 func (x *TestResults_OutputFailure_MismatchedValue) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[63]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3497,11 +3401,9 @@ type TestResults_OutputFailure_MissingValue struct {
 
 func (x *TestResults_OutputFailure_MissingValue) Reset() {
 	*x = TestResults_OutputFailure_MissingValue{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[64]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[64]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TestResults_OutputFailure_MissingValue) String() string {
@@ -3512,7 +3414,7 @@ func (*TestResults_OutputFailure_MissingValue) ProtoMessage() {}
 
 func (x *TestResults_OutputFailure_MissingValue) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[64]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4457,596 +4359,6 @@ func init() { file_cerbos_policy_v1_policy_proto_init() }
 func file_cerbos_policy_v1_policy_proto_init() {
 	if File_cerbos_policy_v1_policy_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_cerbos_policy_v1_policy_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*Policy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*SourceAttributes); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*Metadata); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*ResourcePolicy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*ResourceRule); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*RolePolicy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*RoleRule); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*PrincipalPolicy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*PrincipalRule); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*DerivedRoles); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[10].Exporter = func(v any, i int) any {
-			switch v := v.(*RoleDef); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[11].Exporter = func(v any, i int) any {
-			switch v := v.(*ExportVariables); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[12].Exporter = func(v any, i int) any {
-			switch v := v.(*Variables); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[13].Exporter = func(v any, i int) any {
-			switch v := v.(*Condition); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[14].Exporter = func(v any, i int) any {
-			switch v := v.(*Match); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[15].Exporter = func(v any, i int) any {
-			switch v := v.(*Output); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[16].Exporter = func(v any, i int) any {
-			switch v := v.(*Schemas); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[17].Exporter = func(v any, i int) any {
-			switch v := v.(*TestFixture); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[18].Exporter = func(v any, i int) any {
-			switch v := v.(*TestOptions); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[19].Exporter = func(v any, i int) any {
-			switch v := v.(*TestSuite); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[20].Exporter = func(v any, i int) any {
-			switch v := v.(*TestTable); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[21].Exporter = func(v any, i int) any {
-			switch v := v.(*Test); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[22].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[26].Exporter = func(v any, i int) any {
-			switch v := v.(*PrincipalRule_Action); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[29].Exporter = func(v any, i int) any {
-			switch v := v.(*Match_ExprList); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[30].Exporter = func(v any, i int) any {
-			switch v := v.(*Output_When); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[31].Exporter = func(v any, i int) any {
-			switch v := v.(*Schemas_IgnoreWhen); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[32].Exporter = func(v any, i int) any {
-			switch v := v.(*Schemas_Schema); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[33].Exporter = func(v any, i int) any {
-			switch v := v.(*TestFixture_Principals); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[34].Exporter = func(v any, i int) any {
-			switch v := v.(*TestFixture_Resources); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[35].Exporter = func(v any, i int) any {
-			switch v := v.(*TestFixture_AuxData); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[43].Exporter = func(v any, i int) any {
-			switch v := v.(*TestTable_Input); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[44].Exporter = func(v any, i int) any {
-			switch v := v.(*TestTable_OutputExpectations); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[45].Exporter = func(v any, i int) any {
-			switch v := v.(*TestTable_Expectation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[47].Exporter = func(v any, i int) any {
-			switch v := v.(*Test_TestName); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[48].Exporter = func(v any, i int) any {
-			switch v := v.(*Test_OutputEntries); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[52].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Tally); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[53].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Summary); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[54].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Suite); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[55].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_TestCase); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[56].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Principal); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[57].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Resource); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[58].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Action); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[59].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Details); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[60].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_OutputFailure); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[61].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Failure); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[62].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_Success); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[63].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_OutputFailure_MismatchedValue); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[64].Exporter = func(v any, i int) any {
-			switch v := v.(*TestResults_OutputFailure_MissingValue); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_cerbos_policy_v1_policy_proto_msgTypes[0].OneofWrappers = []any{
 		(*Policy_ResourcePolicy)(nil),

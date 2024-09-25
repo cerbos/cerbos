@@ -47,11 +47,9 @@ type RunnablePolicySet struct {
 
 func (x *RunnablePolicySet) Reset() {
 	*x = RunnablePolicySet{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnablePolicySet) String() string {
@@ -62,7 +60,7 @@ func (*RunnablePolicySet) ProtoMessage() {}
 
 func (x *RunnablePolicySet) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -184,11 +182,9 @@ type RunnableRolePolicySet struct {
 
 func (x *RunnableRolePolicySet) Reset() {
 	*x = RunnableRolePolicySet{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableRolePolicySet) String() string {
@@ -199,7 +195,7 @@ func (*RunnableRolePolicySet) ProtoMessage() {}
 
 func (x *RunnableRolePolicySet) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -268,11 +264,9 @@ type RunnableResourcePolicySet struct {
 
 func (x *RunnableResourcePolicySet) Reset() {
 	*x = RunnableResourcePolicySet{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableResourcePolicySet) String() string {
@@ -283,7 +277,7 @@ func (*RunnableResourcePolicySet) ProtoMessage() {}
 
 func (x *RunnableResourcePolicySet) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -334,11 +328,9 @@ type RunnableDerivedRole struct {
 
 func (x *RunnableDerivedRole) Reset() {
 	*x = RunnableDerivedRole{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableDerivedRole) String() string {
@@ -349,7 +341,7 @@ func (*RunnableDerivedRole) ProtoMessage() {}
 
 func (x *RunnableDerivedRole) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -412,11 +404,9 @@ type RunnableDerivedRolesSet struct {
 
 func (x *RunnableDerivedRolesSet) Reset() {
 	*x = RunnableDerivedRolesSet{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableDerivedRolesSet) String() string {
@@ -427,7 +417,7 @@ func (*RunnableDerivedRolesSet) ProtoMessage() {}
 
 func (x *RunnableDerivedRolesSet) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -468,11 +458,9 @@ type RunnableVariablesSet struct {
 
 func (x *RunnableVariablesSet) Reset() {
 	*x = RunnableVariablesSet{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableVariablesSet) String() string {
@@ -483,7 +471,7 @@ func (*RunnableVariablesSet) ProtoMessage() {}
 
 func (x *RunnableVariablesSet) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -526,11 +514,9 @@ type RunnablePrincipalPolicySet struct {
 
 func (x *RunnablePrincipalPolicySet) Reset() {
 	*x = RunnablePrincipalPolicySet{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnablePrincipalPolicySet) String() string {
@@ -541,7 +527,7 @@ func (*RunnablePrincipalPolicySet) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -581,11 +567,9 @@ type Expr struct {
 
 func (x *Expr) Reset() {
 	*x = Expr{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Expr) String() string {
@@ -596,7 +580,7 @@ func (*Expr) ProtoMessage() {}
 
 func (x *Expr) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -635,11 +619,9 @@ type Output struct {
 
 func (x *Output) Reset() {
 	*x = Output{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Output) String() string {
@@ -650,7 +632,7 @@ func (*Output) ProtoMessage() {}
 
 func (x *Output) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -683,11 +665,9 @@ type Variable struct {
 
 func (x *Variable) Reset() {
 	*x = Variable{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Variable) String() string {
@@ -698,7 +678,7 @@ func (*Variable) ProtoMessage() {}
 
 func (x *Variable) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -743,11 +723,9 @@ type Condition struct {
 
 func (x *Condition) Reset() {
 	*x = Condition{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Condition) String() string {
@@ -758,7 +736,7 @@ func (*Condition) ProtoMessage() {}
 
 func (x *Condition) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -846,11 +824,9 @@ type CompileErrors struct {
 
 func (x *CompileErrors) Reset() {
 	*x = CompileErrors{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CompileErrors) String() string {
@@ -861,7 +837,7 @@ func (*CompileErrors) ProtoMessage() {}
 
 func (x *CompileErrors) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -901,11 +877,9 @@ type IndexBuildErrors struct {
 
 func (x *IndexBuildErrors) Reset() {
 	*x = IndexBuildErrors{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuildErrors) String() string {
@@ -916,7 +890,7 @@ func (*IndexBuildErrors) ProtoMessage() {}
 
 func (x *IndexBuildErrors) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -996,11 +970,9 @@ type Errors struct {
 
 func (x *Errors) Reset() {
 	*x = Errors{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Errors) String() string {
@@ -1011,7 +983,7 @@ func (*Errors) ProtoMessage() {}
 
 func (x *Errors) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1075,11 +1047,9 @@ type RunnableRolePolicySet_Metadata struct {
 
 func (x *RunnableRolePolicySet_Metadata) Reset() {
 	*x = RunnableRolePolicySet_Metadata{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableRolePolicySet_Metadata) String() string {
@@ -1090,7 +1060,7 @@ func (*RunnableRolePolicySet_Metadata) ProtoMessage() {}
 
 func (x *RunnableRolePolicySet_Metadata) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1136,11 +1106,9 @@ type RunnableRolePolicySet_PermissibleActions struct {
 
 func (x *RunnableRolePolicySet_PermissibleActions) Reset() {
 	*x = RunnableRolePolicySet_PermissibleActions{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableRolePolicySet_PermissibleActions) String() string {
@@ -1151,7 +1119,7 @@ func (*RunnableRolePolicySet_PermissibleActions) ProtoMessage() {}
 
 func (x *RunnableRolePolicySet_PermissibleActions) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1187,11 +1155,9 @@ type RunnableResourcePolicySet_Metadata struct {
 
 func (x *RunnableResourcePolicySet_Metadata) Reset() {
 	*x = RunnableResourcePolicySet_Metadata{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[20]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableResourcePolicySet_Metadata) String() string {
@@ -1202,7 +1168,7 @@ func (*RunnableResourcePolicySet_Metadata) ProtoMessage() {}
 
 func (x *RunnableResourcePolicySet_Metadata) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[20]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1268,11 +1234,9 @@ type RunnableResourcePolicySet_Policy struct {
 
 func (x *RunnableResourcePolicySet_Policy) Reset() {
 	*x = RunnableResourcePolicySet_Policy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableResourcePolicySet_Policy) String() string {
@@ -1283,7 +1247,7 @@ func (*RunnableResourcePolicySet_Policy) ProtoMessage() {}
 
 func (x *RunnableResourcePolicySet_Policy) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1359,11 +1323,9 @@ type RunnableResourcePolicySet_Policy_Rule struct {
 
 func (x *RunnableResourcePolicySet_Policy_Rule) Reset() {
 	*x = RunnableResourcePolicySet_Policy_Rule{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[24]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableResourcePolicySet_Policy_Rule) String() string {
@@ -1374,7 +1336,7 @@ func (*RunnableResourcePolicySet_Policy_Rule) ProtoMessage() {}
 
 func (x *RunnableResourcePolicySet_Policy_Rule) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[24]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1457,11 +1419,9 @@ type RunnableDerivedRolesSet_Metadata struct {
 
 func (x *RunnableDerivedRolesSet_Metadata) Reset() {
 	*x = RunnableDerivedRolesSet_Metadata{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[32]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableDerivedRolesSet_Metadata) String() string {
@@ -1472,7 +1432,7 @@ func (*RunnableDerivedRolesSet_Metadata) ProtoMessage() {}
 
 func (x *RunnableDerivedRolesSet_Metadata) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[32]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1512,11 +1472,9 @@ type RunnableVariablesSet_Metadata struct {
 
 func (x *RunnableVariablesSet_Metadata) Reset() {
 	*x = RunnableVariablesSet_Metadata{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[35]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnableVariablesSet_Metadata) String() string {
@@ -1527,7 +1485,7 @@ func (*RunnableVariablesSet_Metadata) ProtoMessage() {}
 
 func (x *RunnableVariablesSet_Metadata) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[35]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1570,11 +1528,9 @@ type RunnablePrincipalPolicySet_Metadata struct {
 
 func (x *RunnablePrincipalPolicySet_Metadata) Reset() {
 	*x = RunnablePrincipalPolicySet_Metadata{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[38]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnablePrincipalPolicySet_Metadata) String() string {
@@ -1585,7 +1541,7 @@ func (*RunnablePrincipalPolicySet_Metadata) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Metadata) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[38]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1649,11 +1605,9 @@ type RunnablePrincipalPolicySet_Policy struct {
 
 func (x *RunnablePrincipalPolicySet_Policy) Reset() {
 	*x = RunnablePrincipalPolicySet_Policy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[39]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnablePrincipalPolicySet_Policy) String() string {
@@ -1664,7 +1618,7 @@ func (*RunnablePrincipalPolicySet_Policy) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Policy) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[39]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1724,11 +1678,9 @@ type RunnablePrincipalPolicySet_Policy_ActionRule struct {
 
 func (x *RunnablePrincipalPolicySet_Policy_ActionRule) Reset() {
 	*x = RunnablePrincipalPolicySet_Policy_ActionRule{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[42]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnablePrincipalPolicySet_Policy_ActionRule) String() string {
@@ -1739,7 +1691,7 @@ func (*RunnablePrincipalPolicySet_Policy_ActionRule) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Policy_ActionRule) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[42]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1807,11 +1759,9 @@ type RunnablePrincipalPolicySet_Policy_ResourceRules struct {
 
 func (x *RunnablePrincipalPolicySet_Policy_ResourceRules) Reset() {
 	*x = RunnablePrincipalPolicySet_Policy_ResourceRules{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[43]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RunnablePrincipalPolicySet_Policy_ResourceRules) String() string {
@@ -1822,7 +1772,7 @@ func (*RunnablePrincipalPolicySet_Policy_ResourceRules) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Policy_ResourceRules) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[43]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1855,11 +1805,9 @@ type Output_When struct {
 
 func (x *Output_When) Reset() {
 	*x = Output_When{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[46]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Output_When) String() string {
@@ -1870,7 +1818,7 @@ func (*Output_When) ProtoMessage() {}
 
 func (x *Output_When) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[46]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1909,11 +1857,9 @@ type Condition_ExprList struct {
 
 func (x *Condition_ExprList) Reset() {
 	*x = Condition_ExprList{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[47]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Condition_ExprList) String() string {
@@ -1924,7 +1870,7 @@ func (*Condition_ExprList) ProtoMessage() {}
 
 func (x *Condition_ExprList) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[47]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1960,11 +1906,9 @@ type CompileErrors_Err struct {
 
 func (x *CompileErrors_Err) Reset() {
 	*x = CompileErrors_Err{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[48]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CompileErrors_Err) String() string {
@@ -1975,7 +1919,7 @@ func (*CompileErrors_Err) ProtoMessage() {}
 
 func (x *CompileErrors_Err) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[48]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2038,11 +1982,9 @@ type IndexBuildErrors_DuplicateDef struct {
 
 func (x *IndexBuildErrors_DuplicateDef) Reset() {
 	*x = IndexBuildErrors_DuplicateDef{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[49]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuildErrors_DuplicateDef) String() string {
@@ -2053,7 +1995,7 @@ func (*IndexBuildErrors_DuplicateDef) ProtoMessage() {}
 
 func (x *IndexBuildErrors_DuplicateDef) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[49]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2112,11 +2054,9 @@ type IndexBuildErrors_MissingImport struct {
 
 func (x *IndexBuildErrors_MissingImport) Reset() {
 	*x = IndexBuildErrors_MissingImport{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[50]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuildErrors_MissingImport) String() string {
@@ -2127,7 +2067,7 @@ func (*IndexBuildErrors_MissingImport) ProtoMessage() {}
 
 func (x *IndexBuildErrors_MissingImport) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[50]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2202,11 +2142,9 @@ type IndexBuildErrors_MissingScope struct {
 
 func (x *IndexBuildErrors_MissingScope) Reset() {
 	*x = IndexBuildErrors_MissingScope{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[51]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuildErrors_MissingScope) String() string {
@@ -2217,7 +2155,7 @@ func (*IndexBuildErrors_MissingScope) ProtoMessage() {}
 
 func (x *IndexBuildErrors_MissingScope) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[51]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2259,11 +2197,9 @@ type IndexBuildErrors_LoadFailure struct {
 
 func (x *IndexBuildErrors_LoadFailure) Reset() {
 	*x = IndexBuildErrors_LoadFailure{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[52]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuildErrors_LoadFailure) String() string {
@@ -2274,7 +2210,7 @@ func (*IndexBuildErrors_LoadFailure) ProtoMessage() {}
 
 func (x *IndexBuildErrors_LoadFailure) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[52]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2323,11 +2259,9 @@ type IndexBuildErrors_Disabled struct {
 
 func (x *IndexBuildErrors_Disabled) Reset() {
 	*x = IndexBuildErrors_Disabled{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[53]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *IndexBuildErrors_Disabled) String() string {
@@ -2338,7 +2272,7 @@ func (*IndexBuildErrors_Disabled) ProtoMessage() {}
 
 func (x *IndexBuildErrors_Disabled) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[53]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3148,404 +3082,6 @@ func init() { file_cerbos_runtime_v1_runtime_proto_init() }
 func file_cerbos_runtime_v1_runtime_proto_init() {
 	if File_cerbos_runtime_v1_runtime_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnablePolicySet); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableRolePolicySet); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableResourcePolicySet); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableDerivedRole); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableDerivedRolesSet); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableVariablesSet); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnablePrincipalPolicySet); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*Expr); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*Output); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*Variable); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[10].Exporter = func(v any, i int) any {
-			switch v := v.(*Condition); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[11].Exporter = func(v any, i int) any {
-			switch v := v.(*CompileErrors); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[12].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuildErrors); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[13].Exporter = func(v any, i int) any {
-			switch v := v.(*Errors); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[14].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableRolePolicySet_Metadata); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[15].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableRolePolicySet_PermissibleActions); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[20].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableResourcePolicySet_Metadata); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[21].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableResourcePolicySet_Policy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[24].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableResourcePolicySet_Policy_Rule); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[32].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableDerivedRolesSet_Metadata); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[35].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnableVariablesSet_Metadata); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[38].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnablePrincipalPolicySet_Metadata); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[39].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnablePrincipalPolicySet_Policy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[42].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnablePrincipalPolicySet_Policy_ActionRule); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[43].Exporter = func(v any, i int) any {
-			switch v := v.(*RunnablePrincipalPolicySet_Policy_ResourceRules); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[46].Exporter = func(v any, i int) any {
-			switch v := v.(*Output_When); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[47].Exporter = func(v any, i int) any {
-			switch v := v.(*Condition_ExprList); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[48].Exporter = func(v any, i int) any {
-			switch v := v.(*CompileErrors_Err); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[49].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuildErrors_DuplicateDef); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[50].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuildErrors_MissingImport); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[51].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuildErrors_MissingScope); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[52].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuildErrors_LoadFailure); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_runtime_v1_runtime_proto_msgTypes[53].Exporter = func(v any, i int) any {
-			switch v := v.(*IndexBuildErrors_Disabled); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_cerbos_runtime_v1_runtime_proto_msgTypes[0].OneofWrappers = []any{
 		(*RunnablePolicySet_ResourcePolicy)(nil),

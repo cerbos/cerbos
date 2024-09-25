@@ -41,11 +41,9 @@ type AccessLogEntry struct {
 
 func (x *AccessLogEntry) Reset() {
 	*x = AccessLogEntry{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_audit_v1_audit_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AccessLogEntry) String() string {
@@ -56,7 +54,7 @@ func (*AccessLogEntry) ProtoMessage() {}
 
 func (x *AccessLogEntry) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -144,11 +142,9 @@ type DecisionLogEntry struct {
 
 func (x *DecisionLogEntry) Reset() {
 	*x = DecisionLogEntry{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_audit_v1_audit_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DecisionLogEntry) String() string {
@@ -159,7 +155,7 @@ func (*DecisionLogEntry) ProtoMessage() {}
 
 func (x *DecisionLogEntry) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -280,11 +276,9 @@ type MetaValues struct {
 
 func (x *MetaValues) Reset() {
 	*x = MetaValues{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_audit_v1_audit_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *MetaValues) String() string {
@@ -295,7 +289,7 @@ func (*MetaValues) ProtoMessage() {}
 
 func (x *MetaValues) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -330,11 +324,9 @@ type Peer struct {
 
 func (x *Peer) Reset() {
 	*x = Peer{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_audit_v1_audit_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Peer) String() string {
@@ -345,7 +337,7 @@ func (*Peer) ProtoMessage() {}
 
 func (x *Peer) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -398,11 +390,9 @@ type AuditTrail struct {
 
 func (x *AuditTrail) Reset() {
 	*x = AuditTrail{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_audit_v1_audit_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AuditTrail) String() string {
@@ -413,7 +403,7 @@ func (*AuditTrail) ProtoMessage() {}
 
 func (x *AuditTrail) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -447,11 +437,9 @@ type DecisionLogEntry_CheckResources struct {
 
 func (x *DecisionLogEntry_CheckResources) Reset() {
 	*x = DecisionLogEntry_CheckResources{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_audit_v1_audit_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DecisionLogEntry_CheckResources) String() string {
@@ -462,7 +450,7 @@ func (*DecisionLogEntry_CheckResources) ProtoMessage() {}
 
 func (x *DecisionLogEntry_CheckResources) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -510,11 +498,9 @@ type DecisionLogEntry_PlanResources struct {
 
 func (x *DecisionLogEntry_PlanResources) Reset() {
 	*x = DecisionLogEntry_PlanResources{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_audit_v1_audit_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DecisionLogEntry_PlanResources) String() string {
@@ -525,7 +511,7 @@ func (*DecisionLogEntry_PlanResources) ProtoMessage() {}
 
 func (x *DecisionLogEntry_PlanResources) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -756,92 +742,6 @@ func init() { file_cerbos_audit_v1_audit_proto_init() }
 func file_cerbos_audit_v1_audit_proto_init() {
 	if File_cerbos_audit_v1_audit_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_cerbos_audit_v1_audit_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*AccessLogEntry); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_audit_v1_audit_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*DecisionLogEntry); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_audit_v1_audit_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*MetaValues); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_audit_v1_audit_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*Peer); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_audit_v1_audit_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*AuditTrail); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_audit_v1_audit_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*DecisionLogEntry_CheckResources); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_audit_v1_audit_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*DecisionLogEntry_PlanResources); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_cerbos_audit_v1_audit_proto_msgTypes[1].OneofWrappers = []any{
 		(*DecisionLogEntry_CheckResources_)(nil),

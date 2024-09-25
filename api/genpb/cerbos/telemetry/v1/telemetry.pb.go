@@ -37,11 +37,9 @@ type ServerLaunch struct {
 
 func (x *ServerLaunch) Reset() {
 	*x = ServerLaunch{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch) String() string {
@@ -52,7 +50,7 @@ func (*ServerLaunch) ProtoMessage() {}
 
 func (x *ServerLaunch) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -107,11 +105,9 @@ type ServerStop struct {
 
 func (x *ServerStop) Reset() {
 	*x = ServerStop{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerStop) String() string {
@@ -122,7 +118,7 @@ func (*ServerStop) ProtoMessage() {}
 
 func (x *ServerStop) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -171,11 +167,9 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Event) String() string {
@@ -186,7 +180,7 @@ func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -239,11 +233,9 @@ type ServerLaunch_Cerbos struct {
 
 func (x *ServerLaunch_Cerbos) Reset() {
 	*x = ServerLaunch_Cerbos{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Cerbos) String() string {
@@ -254,7 +246,7 @@ func (*ServerLaunch_Cerbos) ProtoMessage() {}
 
 func (x *ServerLaunch_Cerbos) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -317,11 +309,9 @@ type ServerLaunch_Source struct {
 
 func (x *ServerLaunch_Source) Reset() {
 	*x = ServerLaunch_Source{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Source) String() string {
@@ -332,7 +322,7 @@ func (*ServerLaunch_Source) ProtoMessage() {}
 
 func (x *ServerLaunch_Source) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -388,11 +378,9 @@ type ServerLaunch_Features struct {
 
 func (x *ServerLaunch_Features) Reset() {
 	*x = ServerLaunch_Features{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features) String() string {
@@ -403,7 +391,7 @@ func (*ServerLaunch_Features) ProtoMessage() {}
 
 func (x *ServerLaunch_Features) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -457,11 +445,9 @@ type ServerLaunch_Stats struct {
 
 func (x *ServerLaunch_Stats) Reset() {
 	*x = ServerLaunch_Stats{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Stats) String() string {
@@ -472,7 +458,7 @@ func (*ServerLaunch_Stats) ProtoMessage() {}
 
 func (x *ServerLaunch_Stats) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -512,11 +498,9 @@ type ServerLaunch_Features_Audit struct {
 
 func (x *ServerLaunch_Features_Audit) Reset() {
 	*x = ServerLaunch_Features_Audit{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_Audit) String() string {
@@ -527,7 +511,7 @@ func (*ServerLaunch_Features_Audit) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_Audit) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -566,11 +550,9 @@ type ServerLaunch_Features_Schema struct {
 
 func (x *ServerLaunch_Features_Schema) Reset() {
 	*x = ServerLaunch_Features_Schema{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_Schema) String() string {
@@ -581,7 +563,7 @@ func (*ServerLaunch_Features_Schema) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_Schema) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -613,11 +595,9 @@ type ServerLaunch_Features_AdminApi struct {
 
 func (x *ServerLaunch_Features_AdminApi) Reset() {
 	*x = ServerLaunch_Features_AdminApi{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_AdminApi) String() string {
@@ -628,7 +608,7 @@ func (*ServerLaunch_Features_AdminApi) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_AdminApi) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -667,11 +647,9 @@ type ServerLaunch_Features_Storage struct {
 
 func (x *ServerLaunch_Features_Storage) Reset() {
 	*x = ServerLaunch_Features_Storage{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_Storage) String() string {
@@ -682,7 +660,7 @@ func (*ServerLaunch_Features_Storage) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_Storage) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -777,11 +755,9 @@ type ServerLaunch_Features_Storage_Disk struct {
 
 func (x *ServerLaunch_Features_Storage_Disk) Reset() {
 	*x = ServerLaunch_Features_Storage_Disk{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_Storage_Disk) String() string {
@@ -792,7 +768,7 @@ func (*ServerLaunch_Features_Storage_Disk) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_Storage_Disk) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -826,11 +802,9 @@ type ServerLaunch_Features_Storage_Git struct {
 
 func (x *ServerLaunch_Features_Storage_Git) Reset() {
 	*x = ServerLaunch_Features_Storage_Git{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_Storage_Git) String() string {
@@ -841,7 +815,7 @@ func (*ServerLaunch_Features_Storage_Git) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_Storage_Git) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -888,11 +862,9 @@ type ServerLaunch_Features_Storage_Blob struct {
 
 func (x *ServerLaunch_Features_Storage_Blob) Reset() {
 	*x = ServerLaunch_Features_Storage_Blob{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_Storage_Blob) String() string {
@@ -903,7 +875,7 @@ func (*ServerLaunch_Features_Storage_Blob) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_Storage_Blob) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -944,11 +916,9 @@ type ServerLaunch_Features_Storage_Bundle struct {
 
 func (x *ServerLaunch_Features_Storage_Bundle) Reset() {
 	*x = ServerLaunch_Features_Storage_Bundle{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Features_Storage_Bundle) String() string {
@@ -959,7 +929,7 @@ func (*ServerLaunch_Features_Storage_Bundle) ProtoMessage() {}
 
 func (x *ServerLaunch_Features_Storage_Bundle) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1007,11 +977,9 @@ type ServerLaunch_Stats_Policy struct {
 
 func (x *ServerLaunch_Stats_Policy) Reset() {
 	*x = ServerLaunch_Stats_Policy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Stats_Policy) String() string {
@@ -1022,7 +990,7 @@ func (*ServerLaunch_Stats_Policy) ProtoMessage() {}
 
 func (x *ServerLaunch_Stats_Policy) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1068,11 +1036,9 @@ type ServerLaunch_Stats_Schema struct {
 
 func (x *ServerLaunch_Stats_Schema) Reset() {
 	*x = ServerLaunch_Stats_Schema{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[16]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ServerLaunch_Stats_Schema) String() string {
@@ -1083,7 +1049,7 @@ func (*ServerLaunch_Stats_Schema) ProtoMessage() {}
 
 func (x *ServerLaunch_Stats_Schema) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[16]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1116,11 +1082,9 @@ type Event_CountStat struct {
 
 func (x *Event_CountStat) Reset() {
 	*x = Event_CountStat{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[20]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Event_CountStat) String() string {
@@ -1131,7 +1095,7 @@ func (*Event_CountStat) ProtoMessage() {}
 
 func (x *Event_CountStat) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[20]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1173,11 +1137,9 @@ type Event_ApiActivity struct {
 
 func (x *Event_ApiActivity) Reset() {
 	*x = Event_ApiActivity{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Event_ApiActivity) String() string {
@@ -1188,7 +1150,7 @@ func (*Event_ApiActivity) ProtoMessage() {}
 
 func (x *Event_ApiActivity) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1508,236 +1470,6 @@ func init() { file_cerbos_telemetry_v1_telemetry_proto_init() }
 func file_cerbos_telemetry_v1_telemetry_proto_init() {
 	if File_cerbos_telemetry_v1_telemetry_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerStop); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*Event); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Cerbos); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Source); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Stats); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_Audit); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_Schema); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_AdminApi); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_Storage); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[11].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_Storage_Disk); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[12].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_Storage_Git); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[13].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_Storage_Blob); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[14].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Features_Storage_Bundle); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[15].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Stats_Policy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[16].Exporter = func(v any, i int) any {
-			switch v := v.(*ServerLaunch_Stats_Schema); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[20].Exporter = func(v any, i int) any {
-			switch v := v.(*Event_CountStat); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[21].Exporter = func(v any, i int) any {
-			switch v := v.(*Event_ApiActivity); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2].OneofWrappers = []any{
 		(*Event_ApiActivity_)(nil),
