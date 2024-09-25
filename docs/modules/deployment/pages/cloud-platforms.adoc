@@ -6,7 +6,7 @@ include::ROOT:partial$version-check.adoc[]
 
 == AWS Marketplace
 
-Cerbos is avaliable via the link:https://aws.amazon.com/marketplace/pp/prodview-6kkahbtwv3gtq[AWS Marketplace] and can be deployed in either link:https://aws.amazon.com/eks/[Elastic Kubernetes Service (EKS)] or link:https://aws.amazon.com/ecs/[Elastic Container Service (ECS)].
+Cerbos is avaliable via the link:https://aws.amazon.com/marketplace/pp/prodview-6kkahbtwv3gtq[AWS Marketplace] and can be deployed in either link:https://aws.amazon.com/eks/[Elastic Kubernetes Service (EKS)] or link:https://aws.amazon.com/ecs/[Elastic Container Service (ECS)]. When deploying Cerbos via the Marketplace, your Cerbos Hub account is included with the purchase via AWS and no additional paid account is required.
 
 === Elastic Kubernetes Service (EKS)
 
@@ -55,9 +55,11 @@ eksctl create iamserviceaccount \
 
 ==== Step 4: Deploy Cerbos with the service account
 
+Firstly create your Cerbos Hub account and connect it to your policy store - see the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub getting started guide] for details.
+
 include::ROOT:partial$try-cerbos-hub.adoc[]
 
-* Create a new Kubernetes secret to hold the Cerbos Hub credentials
+* Create a new Kubernetes secret to hold the Cerbos Hub credentials - see the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub guide] for details.
 +
 [source,sh]
 ----
