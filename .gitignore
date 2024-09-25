@@ -31,7 +31,6 @@ npm/test/registry/storage/
 
 coverage.out
 e2e.cover
-go.work
 go.work.sum
 integration.cover
 junit.*.xml

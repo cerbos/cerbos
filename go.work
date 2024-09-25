@@ -1,0 +1,9 @@
+go 1.23.1
+
+use (
+	.
+	./api/genpb
+	./hack/tools/generate-npm-packages
+	./hack/tools/testsplit
+	./tools
+)
