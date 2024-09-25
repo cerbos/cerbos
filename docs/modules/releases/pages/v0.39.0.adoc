@@ -1,0 +1,88 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.39.0]
+= Cerbos v0.39.0
+
+== Highlights
+
+This release introduces a new, experimental policy type for defining access matrices for roles. xref:policies:role_policies.adoc[Role policies] enable policy authors to further refine the permissions by defining a set of resources and actions that a principal with a particular role is allowed to perform on them. Any action not explicitly allowed by the set of role policies that apply to a given principal are automatically denied. Everything else falls through to the familiar Cerbos policy evaluation flow to determine whether they are actually allowed or not. Please note that role policies are not fully production ready yet. More updates -- including query planner support -- will be added in upcoming Cerbos releases.
+
+The `blob` storage driver has been re-worked to handle store updates more efficiently and robustly. If a user accidentally pushes an invalid set of files to the remote storage bucket, the PDPs will continue to use the last-known good version of the policy repository until the remote storage bucket is fixed. When the `blob` driver is configured with a persistent work directory, PDPs will now only download changed policy files, reducing the overall network usage while making the PDP start faster as well. New metrics have been added to report on refresh errors and the timestamp of the last successful refresh.
+
+Thanks to a community contribution from @jinrenjie, the Cerbos API explorer now uses the correct protocol when behind a TLS-terminating proxy.
+
+Thanks to another community discovery, a performance issue affecting schema validation has been rectified. Users with schema validation enabled on their PDPs should see much improved response times after installing this update.
+
+The Cerbos server and the `cerbosctl` utility can now be installed on Nix environments using the flake available at https://github.com/cerbos/cerbos-flake.
+
+Go developers are now able to run Cerbos in-process using the new `cerbos.Serve` function. This is useful for cases where running an external process is impossible or for running tests without using the Docker helpers provided by the Cerbos Go SDK.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Allow overriding listen addresses (link:https://github.com/cerbos/cerbos/pull/2289[#2289])
+* Fix schema definition of initContainers (link:https://github.com/cerbos/cerbos/pull/2305[#2305])
+* Move runtime role policy proto scope level (link:https://github.com/cerbos/cerbos/pull/2321[#2321])
+* Support TLS with reverse proxy (link:https://github.com/cerbos/cerbos/pull/2300[#2300])
+* Update Helm doc (link:https://github.com/cerbos/cerbos/pull/2278[#2278])
+
+=== Features
+
+* Add Role policies (link:https://github.com/cerbos/cerbos/pull/2192[#2192])
+* Add public API for running a PDP in-process (link:https://github.com/cerbos/cerbos/pull/2297[#2297])
+
+=== Enhancements
+
+* Add more trace spans to engine (link:https://github.com/cerbos/cerbos/pull/2324[#2324])
+* Atomic refreshes for blob storage (link:https://github.com/cerbos/cerbos/pull/2263[#2263])
+* Change how blob storage creates work directories and add metric for the last store refresh (link:https://github.com/cerbos/cerbos/pull/2284[#2284])
+* Display attributes in the cerbosctl inspect policies command (link:https://github.com/cerbos/cerbos/pull/2301[#2301])
+* Get/put cerbosctl role policy support (link:https://github.com/cerbos/cerbos/pull/2274[#2274])
+* Improvements to atomic refreshes for blob storage (link:https://github.com/cerbos/cerbos/pull/2283[#2283])
+* Keep cached files under base64 encoded directory for blob storage (link:https://github.com/cerbos/cerbos/pull/2292[#2292])
+* Remove eager log initialisation from schema validation (link:https://github.com/cerbos/cerbos/pull/2287[#2287])
+
+=== Documentation
+
+* Add role policies sections (link:https://github.com/cerbos/cerbos/pull/2253[#2253])
+* Document the Cerbos Nix flake (link:https://github.com/cerbos/cerbos/pull/2309[#2309])
+* Fix missing default value for `storage.hub.remote.disableAutoUpdate` (link:https://github.com/cerbos/cerbos/pull/2298[#2298])
+* Spell Datadog properly (link:https://github.com/cerbos/cerbos/pull/2270[#2270])
+
+=== Chores
+
+* Add AWS Marketplace (link:https://github.com/cerbos/cerbos/pull/2267[#2267])
+* Bump github.com/docker/docker from 27.1.0+incompatible to 27.1.1+incompatible in /tools (link:https://github.com/cerbos/cerbos/pull/2277[#2277])
+* Bump github.com/opencontainers/runc from 1.1.13 to 1.1.14 (link:https://github.com/cerbos/cerbos/pull/2306[#2306])
+* Bump version to 0.39.0
+* Clear disk space for cache workflow (link:https://github.com/cerbos/cerbos/pull/2268[#2268])
+* Clear disk space for upload workflow (link:https://github.com/cerbos/cerbos/pull/2269[#2269])
+* Clear disk space for vulnerability check (link:https://github.com/cerbos/cerbos/pull/2271[#2271])
+* Clear disk space on PR run (link:https://github.com/cerbos/cerbos/pull/2266[#2266])
+* Fix confdocs not being able to parse examples consisting of an array (link:https://github.com/cerbos/cerbos/pull/2308[#2308])
+* Reference payment via AWS Marketplace (link:https://github.com/cerbos/cerbos/pull/2322[#2322])
+* Remove Otel Host metrics (link:https://github.com/cerbos/cerbos/pull/2264[#2264])
+* Remove deprecated linters and fix linter errors (link:https://github.com/cerbos/cerbos/pull/2290[#2290])
+* Set SQL Server image pull policy for E2E tests (link:https://github.com/cerbos/cerbos/pull/2304[#2304])
+* Trust SQL Server certificate (link:https://github.com/cerbos/cerbos/pull/2307[#2307])
+* Update bufbuild/buf-setup-action action to v1.37.0 (link:https://github.com/cerbos/cerbos/pull/2286[#2286])
+* Update bufbuild/buf-setup-action action to v1.38.0 (link:https://github.com/cerbos/cerbos/pull/2296[#2296])
+* Update bufbuild/buf-setup-action action to v1.39.0 (link:https://github.com/cerbos/cerbos/pull/2302[#2302])
+* Update bufbuild/buf-setup-action action to v1.41.0 (link:https://github.com/cerbos/cerbos/pull/2311[#2311])
+* Update bufbuild/buf-setup-action action to v1.42.0 (link:https://github.com/cerbos/cerbos/pull/2320[#2320])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2275[#2275])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2276[#2276])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2285[#2285])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2295[#2295])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2303[#2303])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2310[#2310])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2319[#2319])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2326[#2326])
+* Update module github.com/alecthomas/kong to v1 (link:https://github.com/cerbos/cerbos/pull/2313[#2313])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2312[#2312])
+* Update pnpm to v9.11.0 (link:https://github.com/cerbos/cerbos/pull/2327[#2327])
+* Update sqlite3 example to use proper in-memory DSN (link:https://github.com/cerbos/cerbos/pull/2317[#2317])
+* Upgrade to Go 1.23 (link:https://github.com/cerbos/cerbos/pull/2288[#2288])
