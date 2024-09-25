@@ -55,9 +55,10 @@ eksctl create iamserviceaccount \
 
 ==== Step 4: Deploy Cerbos with the service account
 
+include::ROOT:partial$try-cerbos-hub.adoc[]
+
 For the following steps, you need a Cerbos Hub account with a workspace connected to your policy repository and a set of client credentials. See the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub getting started guide] for details.
 
-include::ROOT:partial$try-cerbos-hub.adoc[]
 
 * Create a new Kubernetes secret to hold the Cerbos Hub credentials - see the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub guide] for details.
 +
