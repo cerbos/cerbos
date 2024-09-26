@@ -262,7 +262,7 @@ jaeger:
         -p 16686:16686 \
         -p 4317:4317 \
         -p 6831:6831/udp \
-        jaegertracing/all-in-one:1.51
+        jaegertracing/all-in-one:1.61.0
 
 prometheus:
     @ docker run -i -t --rm --name=prometheus \

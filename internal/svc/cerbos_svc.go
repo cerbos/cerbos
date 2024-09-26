@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,6 +21,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -251,49 +253,51 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
-	result := &responsev1.CheckResourcesResponse{
-		RequestId: req.RequestId,
-		Results:   make([]*responsev1.CheckResourcesResponse_ResultEntry, len(outputs)),
-	}
-
-	for i, out := range outputs {
-		resource := inputs[i].Resource
-		entry := &responsev1.CheckResourcesResponse_ResultEntry{
-			Resource: &responsev1.CheckResourcesResponse_ResultEntry_Resource{
-				Id:            resource.Id,
-				Kind:          resource.Kind,
-				PolicyVersion: resource.PolicyVersion,
-				Scope:         resource.Scope,
-			},
-			ValidationErrors: out.ValidationErrors,
-			Actions:          make(map[string]effectv1.Effect, len(out.Actions)),
+	return tracing.RecordSpan2(ctx, "assemble_response", func(_ context.Context, _ trace.Span) (*responsev1.CheckResourcesResponse, error) {
+		result := &responsev1.CheckResourcesResponse{
+			RequestId: req.RequestId,
+			Results:   make([]*responsev1.CheckResourcesResponse_ResultEntry, len(outputs)),
 		}
 
-		if req.IncludeMeta {
-			entry.Meta = &responsev1.CheckResourcesResponse_ResultEntry_Meta{
-				EffectiveDerivedRoles: out.EffectiveDerivedRoles,
-				Actions:               make(map[string]*responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta, len(out.Actions)),
+		for i, out := range outputs {
+			resource := inputs[i].Resource
+			entry := &responsev1.CheckResourcesResponse_ResultEntry{
+				Resource: &responsev1.CheckResourcesResponse_ResultEntry_Resource{
+					Id:            resource.Id,
+					Kind:          resource.Kind,
+					PolicyVersion: resource.PolicyVersion,
+					Scope:         resource.Scope,
+				},
+				ValidationErrors: out.ValidationErrors,
+				Actions:          make(map[string]effectv1.Effect, len(out.Actions)),
 			}
-		}
 
-		if len(out.Outputs) > 0 {
-			entry.Outputs = out.Outputs
-		}
-
-		for action, actionEffect := range out.Actions {
-			entry.Actions[action] = actionEffect.Effect
 			if req.IncludeMeta {
-				entry.Meta.Actions[action] = &responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta{
-					MatchedPolicy: actionEffect.Policy,
-					MatchedScope:  actionEffect.Scope,
+				entry.Meta = &responsev1.CheckResourcesResponse_ResultEntry_Meta{
+					EffectiveDerivedRoles: out.EffectiveDerivedRoles,
+					Actions:               make(map[string]*responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta, len(out.Actions)),
 				}
 			}
+
+			if len(out.Outputs) > 0 {
+				entry.Outputs = out.Outputs
+			}
+
+			for action, actionEffect := range out.Actions {
+				entry.Actions[action] = actionEffect.Effect
+				if req.IncludeMeta {
+					entry.Meta.Actions[action] = &responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta{
+						MatchedPolicy: actionEffect.Policy,
+						MatchedScope:  actionEffect.Scope,
+					}
+				}
+			}
+
+			result.Results[i] = entry
 		}
 
-		result.Results[i] = entry
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (cs *CerbosService) checkNumResourcesLimit(n int) error {
