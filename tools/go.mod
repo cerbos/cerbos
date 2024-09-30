@@ -14,7 +14,7 @@ require (
 	github.com/goreleaser/goreleaser/v2 v2.3.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240917153116-6f2963f01587
-	github.com/vektra/mockery/v2 v2.46.0
+	github.com/vektra/mockery/v2 v2.46.1
 	go.elastic.co/go-licence-detector v0.6.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
 	google.golang.org/protobuf v1.34.3-0.20240906163944-03df6c145d96
