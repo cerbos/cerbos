@@ -9,6 +9,7 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	otelsdk "go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/semconv/v1.13.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -28,4 +29,37 @@ func MarkFailed(span trace.Span, code int, err error) {
 
 	c, desc := httpconv.ServerStatus(code)
 	span.SetStatus(c, desc)
+}
+
+func RecordSpan(ctx context.Context, name string, fn func(context.Context, trace.Span)) {
+	spanCtx, span := StartSpan(ctx, name)
+	defer span.End()
+
+	fn(spanCtx, span)
+}
+
+func RecordSpan1(ctx context.Context, name string, fn func(context.Context, trace.Span) error) error {
+	spanCtx, span := StartSpan(ctx, name)
+	defer span.End()
+
+	err := fn(spanCtx, span)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	return err
+}
+
+func RecordSpan2[T any](ctx context.Context, name string, fn func(context.Context, trace.Span) (T, error)) (T, error) {
+	spanCtx, span := StartSpan(ctx, name)
+	defer span.End()
+
+	result, err := fn(spanCtx, span)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	return result, err
 }
