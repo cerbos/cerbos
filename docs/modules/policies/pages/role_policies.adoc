@@ -4,6 +4,7 @@ include::ROOT:partial$attributes.adoc[]
 
 include::ROOT:partial$version-check.adoc[]
 
+WARNING: Role policies are still under development and should be considered unstable for production use cases.
 
 Role policies are simple RBAC policies in which you specify a number of resources; each with a set of permissible actions that the role can carry out on the resource. You can view it as a per-role matrix of resource/action rows/columns whereby each set "cell" is an `ALLOW`. They do not support conditions.
 
