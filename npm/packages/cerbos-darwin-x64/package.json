@@ -1,6 +1,6 @@
 {
   "name": "@cerbos/cerbos-darwin-x64",
-  "version": "0.39.0",
+  "version": "0.40.0-prerelease",
   "description": "The darwin-x64 binary for cerbos",
   "repository": {
     "type": "git",
