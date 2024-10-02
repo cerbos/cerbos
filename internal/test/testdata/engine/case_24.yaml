@@ -11,12 +11,13 @@ inputs:
         "view:public", # `acme_admin` action wildcard
         "deny", # allowed in role policy, not in resource policies
         "assist", # allowed in role policy with FALL_THROUGH_ON_NO_MATCH
+        "block",
         ],
       "principal":
         {
           "id": "john",
           "scope": "acme.hr.uk",
-          "roles": ["employee", "acme_admin", "acme_creator", "acme_assistant"],
+          "roles": ["employee", "acme_admin", "acme_creator", "acme_assistant", "boss"],
           "attr":
             {
               "department": "marketing",
@@ -76,6 +77,12 @@ wantOutputs:
               "effect": "EFFECT_ALLOW",
               "scope": "acme.hr.uk"
             },
+          "block":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "scope": "acme.hr.uk",
+            },
         },
       "effectiveDerivedRoles":
         ["any_employee", "employee_that_owns_the_record"],
@@ -110,7 +117,7 @@ wantDecisionLogs:
                   {
                     "id": "john",
                     "scope": "acme.hr.uk",
-                    "roles": ["employee", "acme_admin", "acme_creator", "acme_assistant"],
+                    "roles": ["employee", "acme_admin", "acme_creator", "acme_assistant", "boss"],
                     "attr":
                       {
                         "department": "marketing",
@@ -119,7 +126,7 @@ wantDecisionLogs:
                         "team": "design",
                       },
                   },
-                "actions": ["create", "delete", "view:public", "deny", "assist"],
+                "actions": ["create", "delete", "view:public", "deny", "assist", "block"],
               },
             ],
           "outputs":
@@ -156,6 +163,12 @@ wantDecisionLogs:
                       {
                         "effect": "EFFECT_ALLOW",
                         "scope": "acme.hr.uk"
+                      },
+                    "block":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "scope": "acme.hr.uk",
                       },
                   },
                 "effectiveDerivedRoles":

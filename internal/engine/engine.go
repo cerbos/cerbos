@@ -720,7 +720,10 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 
 	for action, effect := range res.Effects {
 		// if the action doesn't already exist or if it has a no_match effect, update it.
-		if currEffect, ok := er.effects[action]; !ok || currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
+		if currEffect, ok := er.effects[action]; !ok ||
+			currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH ||
+			// we need to override an implicit role policy DENY if the resource policy issues an allow for a previously (role policy) unevaluated role.
+			(currEffect.IsImplicitDeny && !effect.ActiveRoles.IsSubSetOf(currEffect.ActiveRoles)) {
 			er.effects[action] = effect
 
 			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer

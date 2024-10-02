@@ -27,6 +27,16 @@ func (s StringSet) Values() []string {
 	return values
 }
 
+func (s StringSet) IsSubSetOf(o StringSet) bool {
+	for k := range s {
+		if _, ok := o[k]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
 func ToSet(values []string) StringSet {
 	s := make(StringSet, len(values))
 	for _, v := range values {

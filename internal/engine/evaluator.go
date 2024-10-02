@@ -135,11 +135,15 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		span.SetAttributes(tracing.PolicyScope(input.Principal.Scope))
 
 		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
-		for _, p := range rpe.policies {
+		// TODO(saml) actually only relevant for permission narrowing case, can be refactored
+		activeRoles := make(internal.StringSet)
+		for r, p := range rpe.policies {
 			// merge
 			if p.GetMeta().GetFqn() != "" && p.GetMeta().GetSourceAttributes() != nil {
 				sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
 			}
+
+			activeRoles[r] = struct{}{}
 		}
 
 		trail := newAuditTrail(sourceAttrs)
@@ -173,7 +177,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
 			} else if onAllowActions.Get(a) == nil {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Principal.Scope})
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
 			}
 		}
@@ -331,7 +335,16 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									fallThroughActions[action] = struct{}{}
 									continue outer
 								}
-								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
+
+								// get intersection
+								activeRoles := make(internal.StringSet)
+								for r := range rule.Roles {
+									if _, ok := effectiveRoles[r]; ok {
+										activeRoles[r] = struct{}{}
+									}
+								}
+
+								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope, ActiveRoles: activeRoles})
 								actx.AppliedEffect(rule.Effect, "")
 								ruleActivated = true
 							}
@@ -683,9 +696,11 @@ func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, variables 
 }
 
 type EffectInfo struct {
-	Policy string
-	Scope  string
-	Effect effectv1.Effect
+	Policy         string
+	Scope          string
+	Effect         effectv1.Effect
+	ActiveRoles    internal.StringSet
+	IsImplicitDeny bool
 }
 
 type PolicyEvalResult struct {
