@@ -685,10 +685,10 @@ func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, variables 
 }
 
 type EffectInfo struct {
+	ActiveRoles    internal.StringSet
 	Policy         string
 	Scope          string
 	Effect         effectv1.Effect
-	ActiveRoles    internal.StringSet
 	IsImplicitDeny bool
 }
 
