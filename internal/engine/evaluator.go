@@ -36,7 +36,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const noMatchScopeFallThrough = "NO_MATCH_FOR_SCOPE_FALL_THROUGH_ON_ALLOW"
+const noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
@@ -151,10 +151,10 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
-		getActions := func(sft policyv1.ScopeFallThrough) *util.GlobMap[*emptypb.Empty] {
+		getActions := func(sft policyv1.ScopePermissions) *util.GlobMap[*emptypb.Empty] {
 			permissibleActions := internal.ProtoSet{}
 			for _, p := range rpe.policies {
-				if p.ScopeFallThrough == sft {
+				if p.ScopePermissions == sft {
 					if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
 						permissibleActions.Merge(k.Actions)
 					}
@@ -164,8 +164,8 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 			return util.NewGlobMap(permissibleActions)
 		}
 
-		onAllowActions := getActions(policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW)
-		onNoMatchActions := getActions(policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_NO_MATCH)
+		onAllowActions := getActions(policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS)
+		onNoMatchActions := getActions(policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT)
 
 		for _, a := range input.Actions {
 			actx := rpctx.StartAction(a)
@@ -177,7 +177,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
 			} else if onAllowActions.Get(a) == nil {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
 			}
 		}
@@ -331,7 +331,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									continue
 								}
 
-								if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
 									fallThroughActions[action] = struct{}{}
 									continue outer
 								}
@@ -377,10 +377,10 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				return nil, err
 			}
 
-			if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW {
+			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 				for _, a := range result.unresolvedActions() {
 					if _, ok := fallThroughActions[a]; !ok {
-						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Resource.Scope})
+						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Resource.Scope})
 					}
 				}
 			}
@@ -463,7 +463,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 									continue
 								}
 
-								if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
 									fallThroughActions[action] = struct{}{}
 									continue outer
 								}
@@ -501,10 +501,10 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				return nil, err
 			}
 
-			if p.ScopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW {
+			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 				for _, a := range result.unresolvedActions() {
 					if _, ok := fallThroughActions[a]; !ok {
-						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopeFallThrough, Scope: input.Principal.Scope})
+						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope})
 					}
 				}
 			}

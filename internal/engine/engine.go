@@ -625,6 +625,8 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 		return nil, err
 	}
 
+	// TODO(saml) validate against opposing scopePermission strategies here
+
 	return sets, nil
 }
 

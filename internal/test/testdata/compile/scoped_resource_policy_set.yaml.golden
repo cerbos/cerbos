@@ -428,7 +428,7 @@
             "effect": "EFFECT_ALLOW"
           }
         ],
-        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
+        "scopePermissions": "SCOPE_PERMISSIONS_OVERRIDE_PARENT"
       },
       {
         "scope": "acme.hr",
@@ -445,7 +445,7 @@
             "effect": "EFFECT_ALLOW"
           }
         ],
-        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
+        "scopePermissions": "SCOPE_PERMISSIONS_OVERRIDE_PARENT"
       },
       {
         "scope": "acme",
@@ -993,7 +993,7 @@
             "ref": "cerbos:///complex_object.json"
           }
         },
-        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
+        "scopePermissions": "SCOPE_PERMISSIONS_OVERRIDE_PARENT"
       },
       {
         "rules": [
@@ -1016,7 +1016,7 @@
             "ref": "cerbos:///complex_object.json"
           }
         },
-        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
+        "scopePermissions": "SCOPE_PERMISSIONS_OVERRIDE_PARENT"
       }
     ],
     "schemas": {

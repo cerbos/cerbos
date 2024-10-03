@@ -5,7 +5,7 @@ principalPolicy:
   principal: donald_duck
   version: "default"
   scope: "acme.sales"
-  scopeFallThrough: SCOPE_FALL_THROUGH_ON_ALLOW
+  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
     - resource: calendar_entry
       actions:

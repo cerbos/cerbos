@@ -53,7 +53,7 @@
             "ref": "cerbos:///complex_object.json"
           }
         },
-        "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_NO_MATCH"
+        "scopePermissions": "SCOPE_PERMISSIONS_OVERRIDE_PARENT"
       }
     ],
     "schemas": {

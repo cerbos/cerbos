@@ -4,7 +4,7 @@ apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_assistant
   scope: acme.hr.uk
-  scopeFallThrough: SCOPE_FALL_THROUGH_ON_NO_MATCH
+  scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
   rules:
     - resource: leave_request
       permissibleActions:

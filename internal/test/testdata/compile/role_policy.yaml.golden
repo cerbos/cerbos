@@ -27,7 +27,7 @@
         }
       }
     },
-    "scopeFallThrough": "SCOPE_FALL_THROUGH_ON_ALLOW"
+    "scopePermissions": "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
   },
   "compilerVersion": 1
 }

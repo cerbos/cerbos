@@ -2751,8 +2751,8 @@
         "variables": {
           "$ref": "#/definitions/v1Variables"
         },
-        "scopeFallThrough": {
-          "$ref": "#/definitions/v1ScopeFallThrough"
+        "scopePermissions": {
+          "$ref": "#/definitions/v1ScopePermissions"
         }
       }
     },
@@ -2826,8 +2826,8 @@
         "variables": {
           "$ref": "#/definitions/v1Variables"
         },
-        "scopeFallThrough": {
-          "$ref": "#/definitions/v1ScopeFallThrough"
+        "scopePermissions": {
+          "$ref": "#/definitions/v1ScopePermissions"
         }
       }
     },
@@ -2949,8 +2949,8 @@
             "$ref": "#/definitions/v1RoleRule"
           }
         },
-        "scopeFallThrough": {
-          "$ref": "#/definitions/v1ScopeFallThrough"
+        "scopePermissions": {
+          "$ref": "#/definitions/v1ScopePermissions"
         }
       }
     },
@@ -2990,14 +2990,14 @@
         }
       }
     },
-    "v1ScopeFallThrough": {
+    "v1ScopePermissions": {
       "type": "string",
       "enum": [
-        "SCOPE_FALL_THROUGH_UNSPECIFIED",
-        "SCOPE_FALL_THROUGH_ON_NO_MATCH",
-        "SCOPE_FALL_THROUGH_ON_ALLOW"
+        "SCOPE_PERMISSIONS_UNSPECIFIED",
+        "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+        "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
       ],
-      "default": "SCOPE_FALL_THROUGH_UNSPECIFIED"
+      "default": "SCOPE_PERMISSIONS_UNSPECIFIED"
     },
     "v1ServerInfoResponse": {
       "type": "object",

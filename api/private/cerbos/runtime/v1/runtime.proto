@@ -40,7 +40,7 @@ message RunnableRolePolicySet {
   string role = 2;
   string scope = 3;
   map<string, PermissibleActions> resources = 4;
-  cerbos.policy.v1.ScopeFallThrough scope_fall_through = 5;
+  cerbos.policy.v1.ScopePermissions scope_permissions = 5;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies
@@ -84,7 +84,7 @@ message RunnableResourcePolicySet {
     repeated Rule rules = 4;
     cerbos.policy.v1.Schemas schemas = 5;
     repeated Variable ordered_variables = 6;
-    cerbos.policy.v1.ScopeFallThrough scope_fall_through = 7;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 7;
   }
 
   Metadata meta = 1;
@@ -154,7 +154,7 @@ message RunnablePrincipalPolicySet {
     map<string, Expr> variables = 2 [deprecated = true];
     map<string, ResourceRules> resource_rules = 3;
     repeated Variable ordered_variables = 4;
-    cerbos.policy.v1.ScopeFallThrough scope_fall_through = 5;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 5;
   }
 
   Metadata meta = 1;

@@ -607,8 +607,8 @@
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
         },
-        "scopeFallThrough": {
-          "$ref": "#/definitions/cerbos.policy.v1.ScopeFallThrough"
+        "scopePermissions": {
+          "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
         },
         "variables": {
           "$ref": "#/definitions/cerbos.policy.v1.Variables"
@@ -704,8 +704,8 @@
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
         },
-        "scopeFallThrough": {
-          "$ref": "#/definitions/cerbos.policy.v1.ScopeFallThrough"
+        "scopePermissions": {
+          "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
         },
         "variables": {
           "$ref": "#/definitions/cerbos.policy.v1.Variables"
@@ -814,8 +814,8 @@
               "type": "string",
               "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
             },
-            "scopeFallThrough": {
-              "$ref": "#/definitions/cerbos.policy.v1.ScopeFallThrough"
+            "scopePermissions": {
+              "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
             }
           }
         },
@@ -896,12 +896,12 @@
         }
       }
     },
-    "cerbos.policy.v1.ScopeFallThrough": {
+    "cerbos.policy.v1.ScopePermissions": {
       "type": "string",
       "enum": [
-        "SCOPE_FALL_THROUGH_UNSPECIFIED",
-        "SCOPE_FALL_THROUGH_ON_NO_MATCH",
-        "SCOPE_FALL_THROUGH_ON_ALLOW"
+        "SCOPE_PERMISSIONS_UNSPECIFIED",
+        "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+        "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
       ]
     },
     "cerbos.policy.v1.SourceAttributes": {

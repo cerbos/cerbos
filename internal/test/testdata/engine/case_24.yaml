@@ -58,7 +58,7 @@ wantOutputs:
           "delete":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_FALL_THROUGH_ON_ALLOW",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
               "scope": "acme.hr.uk",
             },
           "create":
@@ -145,7 +145,7 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_FALL_THROUGH_ON_ALLOW",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
                         "scope": "acme.hr.uk",
                       },
                     "view:public":

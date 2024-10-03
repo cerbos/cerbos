@@ -422,8 +422,8 @@ func (m *ResourcePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.ScopeFallThrough != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+	if m.ScopePermissions != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopePermissions))
 		i--
 		dAtA[i] = 0x40
 	}
@@ -623,8 +623,8 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		}
 		i -= size
 	}
-	if m.ScopeFallThrough != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+	if m.ScopePermissions != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopePermissions))
 		i--
 		dAtA[i] = 0x20
 	}
@@ -743,8 +743,8 @@ func (m *PrincipalPolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.ScopeFallThrough != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopeFallThrough))
+	if m.ScopePermissions != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopePermissions))
 		i--
 		dAtA[i] = 0x30
 	}
@@ -3827,8 +3827,8 @@ func (m *ResourcePolicy) SizeVT() (n int) {
 		l = m.Variables.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.ScopeFallThrough != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
+	if m.ScopePermissions != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopePermissions))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3896,8 +3896,8 @@ func (m *RolePolicy) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
-	if m.ScopeFallThrough != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
+	if m.ScopePermissions != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopePermissions))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3961,8 +3961,8 @@ func (m *PrincipalPolicy) SizeVT() (n int) {
 		l = m.Variables.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.ScopeFallThrough != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopeFallThrough))
+	if m.ScopePermissions != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopePermissions))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -6480,9 +6480,9 @@ func (m *ResourcePolicy) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 8:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopePermissions", wireType)
 			}
-			m.ScopeFallThrough = 0
+			m.ScopePermissions = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -6492,7 +6492,7 @@ func (m *ResourcePolicy) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ScopeFallThrough |= ScopeFallThrough(b&0x7F) << shift
+				m.ScopePermissions |= ScopePermissions(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -6918,9 +6918,9 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopePermissions", wireType)
 			}
-			m.ScopeFallThrough = 0
+			m.ScopePermissions = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -6930,7 +6930,7 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ScopeFallThrough |= ScopeFallThrough(b&0x7F) << shift
+				m.ScopePermissions |= ScopePermissions(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7269,9 +7269,9 @@ func (m *PrincipalPolicy) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 6:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ScopeFallThrough", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopePermissions", wireType)
 			}
-			m.ScopeFallThrough = 0
+			m.ScopePermissions = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -7281,7 +7281,7 @@ func (m *PrincipalPolicy) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ScopeFallThrough |= ScopeFallThrough(b&0x7F) << shift
+				m.ScopePermissions |= ScopePermissions(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

@@ -59,7 +59,7 @@ wantOutputs:
           "nonaction":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_FALL_THROUGH_ON_ALLOW",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
               "scope": "acme.hr.fr"
             },
         },
@@ -121,7 +121,7 @@ wantDecisionLogs:
                     "nonaction":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_FALL_THROUGH_ON_ALLOW",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
                         "scope": "acme.hr.fr"
                       },
                     "redirect":

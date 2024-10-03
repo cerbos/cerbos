@@ -89,9 +89,9 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		}
 	}
 
-	scopeFallThrough := rp.ScopeFallThrough
-	if scopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_UNSPECIFIED {
-		scopeFallThrough = policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_ALLOW
+	scopePermissions := rp.ScopePermissions
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
 	}
 
 	return &runtimev1.RunnablePolicySet{
@@ -109,7 +109,7 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 				Role:             rp.GetRole(),
 				Scope:            rp.Scope,
 				Resources:        resources,
-				ScopeFallThrough: scopeFallThrough,
+				ScopePermissions: scopePermissions,
 			},
 		},
 	}
@@ -191,9 +191,9 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 
 	compilePolicyVariables(modCtx, rp.Variables)
 
-	scopeFallThrough := rp.ScopeFallThrough
-	if scopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_UNSPECIFIED {
-		scopeFallThrough = policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_NO_MATCH
+	scopePermissions := rp.ScopePermissions
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 	}
 
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
@@ -201,7 +201,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		Scope:            rp.Scope,
 		Rules:            make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
 		Schemas:          rp.Schemas,
-		ScopeFallThrough: scopeFallThrough,
+		ScopePermissions: scopePermissions,
 	}
 
 	for i, rule := range rp.Rules {
@@ -479,15 +479,15 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 
 	compilePolicyVariables(modCtx, pp.Variables)
 
-	scopeFallThrough := pp.ScopeFallThrough
-	if scopeFallThrough == policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_UNSPECIFIED {
-		scopeFallThrough = policyv1.ScopeFallThrough_SCOPE_FALL_THROUGH_ON_NO_MATCH
+	scopePermissions := pp.ScopePermissions
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 	}
 
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
 		Scope:            pp.Scope,
 		ResourceRules:    make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
-		ScopeFallThrough: scopeFallThrough,
+		ScopePermissions: scopePermissions,
 	}
 
 	for ruleNum, rule := range pp.Rules {
