@@ -18,7 +18,6 @@ import (
 	"go.uber.org/multierr"
 	"golang.org/x/exp/maps"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -135,12 +134,20 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		span.SetAttributes(tracing.PolicyScope(input.Principal.Scope))
 
 		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
-		// TODO(saml) actually only relevant for permission narrowing case, can be refactored
+		mergedActions := make(internal.ProtoSet)
 		activeRoles := make(internal.StringSet)
+		var scopePermission policyv1.ScopePermissions // all role policies must share the same ScopePermissions
 		for r, p := range rpe.policies {
-			// merge
+			if scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+				scopePermission = p.ScopePermissions
+			}
+
 			if p.GetMeta().GetFqn() != "" && p.GetMeta().GetSourceAttributes() != nil {
 				sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
+			}
+
+			if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
+				mergedActions.Merge(k.Actions)
 			}
 
 			activeRoles[r] = struct{}{}
@@ -151,32 +158,15 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
-		getActions := func(sft policyv1.ScopePermissions) *util.GlobMap[*emptypb.Empty] {
-			permissibleActions := internal.ProtoSet{}
-			for _, p := range rpe.policies {
-				if p.ScopePermissions == sft {
-					if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
-						permissibleActions.Merge(k.Actions)
-					}
-				}
-			}
-
-			return util.NewGlobMap(permissibleActions)
-		}
-
-		onAllowActions := getActions(policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS)
-		onNoMatchActions := getActions(policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT)
-
+		actions := util.NewGlobMap(mergedActions)
 		for _, a := range input.Actions {
 			actx := rpctx.StartAction(a)
 
-			// FALL_THROUGH_ON_NO_MATCH takes precedence
-			// Role policies always return `EFFECT_DENY` for nonexistent `resource:action` mappings, regardless
-			// of SCOPE_FALL_THROUGH strategy.
-			if onNoMatchActions.Get(a) != nil {
+			mappingExists := actions.Get(a) != nil
+			if mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
-			} else if onAllowActions.Get(a) == nil {
+			} else if !mappingExists {
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
 			}
