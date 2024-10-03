@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Resource policy with scope fallthrough on allow"
+description: "Resource policy with SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
 inputs:
   [
     {

@@ -5,12 +5,14 @@ inputs:
   [
     {
       "requestId": "test",
-      "actions": ["assist"],
+      "actions": [
+        "assist", # allowed in role policy with SCOPE_PERMISSIONS_OVERRIDE_PARENT 
+        ],
       "principal":
         {
           "id": "john",
-          "roles": ["acme_assistant"],
           "scope": "acme.hr.uk",
+          "roles": ["acme_assistant"],
         },
       "resource":
         {
@@ -30,9 +32,9 @@ wantOutputs:
           "assist":
             {
               "effect": "EFFECT_ALLOW",
-              "scope": "acme.hr.uk",
+              "scope": "acme.hr.uk"
             },
-        }
+        },
     },
   ]
 wantDecisionLogs:
@@ -49,14 +51,14 @@ wantDecisionLogs:
                 "resource":
                   {
                     "kind": "leave_request",
-                    "scope": "acme.hr.uk",
                     "id": "XX125",
+                    "scope": "acme.hr.uk",
                   },
                 "principal":
                   {
                     "id": "john",
-                    "roles": ["acme_assistant"],
                     "scope": "acme.hr.uk",
+                    "roles": ["acme_assistant"],
                   },
                 "actions": ["assist"],
               },
@@ -71,7 +73,7 @@ wantDecisionLogs:
                     "assist":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "scope": "acme.hr.uk",
+                        "scope": "acme.hr.uk"
                       },
                   },
               },

@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Role policy: regional custom role doesn't allow delete or deny"
+description: "Role policy with various regional custom roles"
 inputs:
   [
     {
@@ -10,14 +10,13 @@ inputs:
         "delete", # not defined in role policies
         "view:public", # `acme_admin` action wildcard
         "deny", # allowed in role policy, not in resource policies
-        "assist", # allowed in role policy with FALL_THROUGH_ON_NO_MATCH
-        "block",
+        "block", # Not defined in any role policy, but allowed in resource policy
         ],
       "principal":
         {
           "id": "john",
           "scope": "acme.hr.uk",
-          "roles": ["employee", "acme_admin", "acme_creator", "acme_assistant", "boss"],
+          "roles": ["employee", "acme_admin", "acme_creator", "boss"],
           "attr":
             {
               "department": "marketing",
@@ -72,11 +71,6 @@ wantOutputs:
               "effect": "EFFECT_DENY",
               "policy": "resource.leave_request.vdefault/acme.hr.uk",
             },
-          "assist":
-            {
-              "effect": "EFFECT_ALLOW",
-              "scope": "acme.hr.uk"
-            },
           "block":
             {
               "effect": "EFFECT_ALLOW",
@@ -117,7 +111,7 @@ wantDecisionLogs:
                   {
                     "id": "john",
                     "scope": "acme.hr.uk",
-                    "roles": ["employee", "acme_admin", "acme_creator", "acme_assistant", "boss"],
+                    "roles": ["employee", "acme_admin", "acme_creator", "boss"],
                     "attr":
                       {
                         "department": "marketing",
@@ -126,7 +120,7 @@ wantDecisionLogs:
                         "team": "design",
                       },
                   },
-                "actions": ["create", "delete", "view:public", "deny", "assist", "block"],
+                "actions": ["create", "delete", "view:public", "deny", "block"],
               },
             ],
           "outputs":
@@ -159,11 +153,6 @@ wantDecisionLogs:
                         "effect": "EFFECT_DENY",
                         "policy": "resource.leave_request.vdefault/acme.hr.uk",
                       },
-                    "assist":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "scope": "acme.hr.uk"
-                      },
                     "block":
                       {
                         "effect": "EFFECT_ALLOW",
@@ -186,14 +175,6 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "role_policies/policy_01.yaml",
-                    },
-                },
-              "cerbos.role.acme_assistant/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_03.yaml",
                     },
                 },
               "cerbos.role.acme_creator/acme.hr.uk":
