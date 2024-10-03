@@ -272,7 +272,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 					}
 				})
 
-				// TODO(saml) I don't think `effectiveDerivedRoles` is used below the intersection below, can we remove from `evalCtx`?
 				evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
 
 				// evaluate the variables of this policy
