@@ -1,18 +1,19 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Role policy with SCOPE_PERMISSIONS_OVERRIDE_PARENT"
+description: "Role policies with conflicting ScopePermissions"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
-        "assist", # allowed in role policy with SCOPE_PERMISSIONS_OVERRIDE_PARENT 
+        "deny",
+        "assist",
         ],
       "principal":
         {
           "id": "john",
           "scope": "acme.hr.uk",
-          "roles": ["acme_assistant"],
+          "roles": ["acme_admin", "acme_assistant"],
         },
       "resource":
         {
@@ -22,21 +23,7 @@ inputs:
         },
     },
   ]
-wantOutputs:
-  [
-    {
-      "requestId": "test",
-      "resourceId": "XX125",
-      "actions":
-        {
-          "assist":
-            {
-              "effect": "EFFECT_ALLOW",
-              "scope": "acme.hr.uk"
-            },
-        },
-    },
-  ]
+wantError: true
 wantDecisionLogs:
   [
     {
@@ -58,40 +45,13 @@ wantDecisionLogs:
                   {
                     "id": "john",
                     "scope": "acme.hr.uk",
-                    "roles": ["acme_assistant"],
+                    "roles": ["acme_admin", "acme_assistant"],
                   },
-                "actions": ["assist"],
+                "actions": ["deny", "assist"],
               },
             ],
-          "outputs":
-            [
-              {
-                "requestId": "test",
-                "resourceId": "XX125",
-                "actions":
-                  {
-                    "assist":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "scope": "acme.hr.uk"
-                      },
-                  },
-              },
-            ],
-        },
-      "auditTrail":
-        {
-          "effectivePolicies":
-            {
-              "cerbos.role.acme_assistant/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_03.yaml",
-                    },
-                },
-            },
+          "error": "failed to get check for [leave_request]: invalid scope permissions: role policies cannot combine different scope permissions within the same scope", 
         },
     },
   ]
+
