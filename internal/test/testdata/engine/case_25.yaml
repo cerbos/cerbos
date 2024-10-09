@@ -8,7 +8,7 @@ inputs:
       "actions": [
         "redirect", # exists, falls through, allow
         "defer", # exists, falls through, no match
-        "nonaction", # doesn't exist, insta-deny
+        "nonaction", # doesn't exist, falls through, no match
       ],
       "principal":
         {
@@ -59,8 +59,7 @@ wantOutputs:
           "nonaction":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.fr"
+              "policy": "resource.leave_request.vdefault/acme.hr.fr",
             },
         },
         "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"],
@@ -121,8 +120,7 @@ wantDecisionLogs:
                     "nonaction":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.fr"
+                        "policy": "resource.leave_request.vdefault/acme.hr.fr",
                       },
                     "redirect":
                       {

@@ -230,8 +230,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				return result, nil
 			}
 
-			requireParentalConsent := make(map[string]struct{})
-
 			err := tracing.RecordSpan1(ctx, "evaluate_policy", func(ctx context.Context, span trace.Span) error {
 				span.SetAttributes(tracing.PolicyScope(p.Scope))
 				sctx := pctx.StartScope(p.Scope)
@@ -321,7 +319,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 								}
 
 								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									requireParentalConsent[action] = struct{}{}
 									continue outer
 								}
 
@@ -365,14 +362,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			if err != nil {
 				return nil, err
 			}
-
-			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-				for _, a := range result.unresolvedActions() {
-					if _, ok := requireParentalConsent[a]; !ok {
-						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Resource.Scope})
-					}
-				}
-			}
 		}
 
 		// set the default effect for actions that were not matched
@@ -402,8 +391,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 			if len(actionsToResolve) == 0 {
 				return result, nil
 			}
-
-			requireParentalConsent := make(map[string]struct{})
 
 			err := tracing.RecordSpan1(ctx, "evalute_policy", func(ctx context.Context, span trace.Span) error {
 				span.SetAttributes(tracing.PolicyScope(p.Scope))
@@ -453,7 +440,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 								}
 
 								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									requireParentalConsent[action] = struct{}{}
 									continue outer
 								}
 
@@ -488,14 +474,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 			})
 			if err != nil {
 				return nil, err
-			}
-
-			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-				for _, a := range result.unresolvedActions() {
-					if _, ok := requireParentalConsent[a]; !ok {
-						result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope})
-					}
-				}
 			}
 		}
 

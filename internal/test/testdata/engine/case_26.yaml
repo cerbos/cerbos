@@ -8,7 +8,7 @@ inputs:
       "actions": [
         "create", # exists, falls through, allow
         "delete", # exists, falls through, no match
-        "nonaction", # doesn't exist, insta-deny 
+        "nonaction", # doesn't exist, falls through, no match
       ],
       "principal":
         {
@@ -44,8 +44,7 @@ wantOutputs:
           "nonaction":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.sales"
+              "policy": "NO_MATCH"
             },
         }
     },
@@ -96,8 +95,7 @@ wantDecisionLogs:
                     "nonaction":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.sales"
+                        "policy": "NO_MATCH"
                       },
                   },
               },
