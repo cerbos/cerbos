@@ -3,7 +3,7 @@
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_assistant
-  scope: acme.hr.uk
+  scope: acme.hr.de
   scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
   rules:
     - resource: leave_request

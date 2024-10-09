@@ -10,7 +10,7 @@ inputs:
         {
           "id": "john",
           "roles": ["acme_assistant"],
-          "scope": "acme.hr.uk",
+          "scope": "acme.hr.de",
         },
       "resource":
         {
@@ -30,7 +30,7 @@ wantOutputs:
           "assist":
             {
               "effect": "EFFECT_ALLOW",
-              "scope": "acme.hr.uk",
+              "scope": "acme.hr.de",
             },
         }
     },
@@ -56,7 +56,7 @@ wantDecisionLogs:
                   {
                     "id": "john",
                     "roles": ["acme_assistant"],
-                    "scope": "acme.hr.uk",
+                    "scope": "acme.hr.de",
                   },
                 "actions": ["assist"],
               },
@@ -71,7 +71,7 @@ wantDecisionLogs:
                     "assist":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "scope": "acme.hr.uk",
+                        "scope": "acme.hr.de",
                       },
                   },
               },
@@ -81,7 +81,7 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_assistant/acme.hr.uk":
+              "cerbos.role.acme_assistant/acme.hr.de":
                 {
                   "attributes":
                     {

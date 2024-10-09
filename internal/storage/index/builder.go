@@ -38,8 +38,8 @@ type BuildError struct {
 }
 
 func (ibe *BuildError) Error() string {
-	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d",
-		len(ibe.MissingImports), len(ibe.MissingScopeDetails), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
+	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d, scope permission conflicts=%d",
+		len(ibe.MissingImports), len(ibe.MissingScopeDetails), len(ibe.DuplicateDefs), len(ibe.LoadFailures), len(ibe.ScopePermissionsConflicts))
 }
 
 type buildOptions struct {
@@ -160,29 +160,33 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 }
 
 type indexBuilder struct {
-	executables   ModuleIDSet
-	modIDToFile   map[namer.ModuleID]string
-	fileToModID   map[string]namer.ModuleID
-	dependents    map[namer.ModuleID]ModuleIDSet
-	dependencies  map[namer.ModuleID]ModuleIDSet
-	missingScopes map[string]map[string]struct{}
-	missing       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
-	stats         *statsCollector
-	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
-	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
-	disabled      []*runtimev1.IndexBuildErrors_Disabled
+	executables                 ModuleIDSet
+	modIDToFile                 map[namer.ModuleID]string
+	fileToModID                 map[string]namer.ModuleID
+	dependents                  map[namer.ModuleID]ModuleIDSet
+	dependencies                map[namer.ModuleID]ModuleIDSet
+	missingScopes               map[string]map[string]struct{}
+	sharedScopePermissionGroups map[string]map[policyv1.ScopePermissions]struct{}
+	conflictingScopes           map[string]struct{}
+	missing                     map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
+	stats                       *statsCollector
+	duplicates                  []*runtimev1.IndexBuildErrors_DuplicateDef
+	loadFailures                []*runtimev1.IndexBuildErrors_LoadFailure
+	disabled                    []*runtimev1.IndexBuildErrors_Disabled
 }
 
 func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
-		executables:   make(ModuleIDSet),
-		modIDToFile:   make(map[namer.ModuleID]string),
-		fileToModID:   make(map[string]namer.ModuleID),
-		dependents:    make(map[namer.ModuleID]ModuleIDSet),
-		dependencies:  make(map[namer.ModuleID]ModuleIDSet),
-		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
-		missingScopes: make(map[string]map[string]struct{}),
-		stats:         newStatsCollector(),
+		executables:                 make(ModuleIDSet),
+		modIDToFile:                 make(map[namer.ModuleID]string),
+		fileToModID:                 make(map[string]namer.ModuleID),
+		dependents:                  make(map[namer.ModuleID]ModuleIDSet),
+		dependencies:                make(map[namer.ModuleID]ModuleIDSet),
+		missing:                     make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
+		missingScopes:               make(map[string]map[string]struct{}),
+		sharedScopePermissionGroups: make(map[string]map[policyv1.ScopePermissions]struct{}),
+		conflictingScopes:           make(map[string]struct{}),
+		stats:                       newStatsCollector(),
 	}
 }
 
@@ -248,7 +252,28 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	idx.stats.add(p)
 
 	switch p.Kind {
-	case policy.ResourceKind, policy.PrincipalKind, policy.RolePolicyKind:
+	case policy.RolePolicyKind:
+		sharedScope, ok := idx.sharedScopePermissionGroups[p.Scope]
+		if !ok {
+			sharedScope = make(map[policyv1.ScopePermissions]struct{})
+			idx.sharedScopePermissionGroups[p.Scope] = sharedScope
+		} else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
+			scopePermission := p.GetRolePolicy().ScopePermissions
+			if scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+				scopePermission = policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+			}
+
+			if _, ok := sharedScope[scopePermission]; !ok {
+				sharedScope[scopePermission] = struct{}{}
+			}
+
+			if len(sharedScope) > 1 {
+				idx.conflictingScopes[p.Scope] = struct{}{}
+			}
+		}
+
+		fallthrough
+	case policy.ResourceKind, policy.PrincipalKind:
 		idx.executables[p.ID] = struct{}{}
 
 	case policy.DerivedRolesKind, policy.ExportVariablesKind:
@@ -317,7 +342,7 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	logger := zap.L().Named("index")
 
-	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes)
+	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes) + len(idx.conflictingScopes)
 	if nErr > 0 {
 		err := &BuildError{
 			IndexBuildErrors: &runtimev1.IndexBuildErrors{
@@ -348,6 +373,12 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 		if len(idx.missingScopes) > 0 {
 			sort.Slice(err.MissingScopeDetails, func(i, j int) bool {
 				return sort.StringsAreSorted([]string{err.MissingScopeDetails[i].MissingPolicy, err.MissingScopeDetails[j].MissingPolicy})
+			})
+		}
+
+		for s := range idx.conflictingScopes {
+			err.ScopePermissionsConflicts = append(err.ScopePermissionsConflicts, &runtimev1.IndexBuildErrors_ScopePermissionsConflicts{
+				Scope: s,
 			})
 		}
 
@@ -403,6 +434,10 @@ func logBuildFailure(logger *zap.Logger, level zapcore.Level, err *BuildError) {
 
 	if len(err.DisabledDefs) > 0 {
 		fields = append(fields, zap.Any("disabled", err.DisabledDefs))
+	}
+
+	if len(err.ScopePermissionsConflicts) > 0 {
+		fields = append(fields, zap.Any("scope_permissions", err.ScopePermissionsConflicts))
 	}
 
 	ce.Write(fields...)

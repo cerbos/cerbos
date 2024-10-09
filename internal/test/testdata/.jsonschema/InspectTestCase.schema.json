@@ -863,6 +863,12 @@
           "items": {
             "type": "string"
           }
+        },
+        "scopePermissionsConflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts"
+          }
         }
       }
     },
@@ -952,6 +958,15 @@
           }
         },
         "missingPolicy": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
           "type": "string"
         }
       }

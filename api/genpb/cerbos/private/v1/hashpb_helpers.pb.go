@@ -4338,6 +4338,13 @@ func cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(m *v15.IndexBuil
 	}
 }
 
+func cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_hashpb_sum(m *v15.IndexBuildErrors_ScopePermissionsConflicts, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
+
+	}
+}
+
 func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *v15.IndexBuildErrors, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.disabled"]; !ok {
 		if len(m.Disabled) > 0 {
@@ -4400,6 +4407,16 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *v15.IndexBuildErrors, hash
 			for _, v := range m.MissingScopeDetails {
 				if v != nil {
 					cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.scope_permissions_conflicts"]; !ok {
+		if len(m.ScopePermissionsConflicts) > 0 {
+			for _, v := range m.ScopePermissionsConflicts {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
