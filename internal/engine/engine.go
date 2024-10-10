@@ -1,6 +1,13 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//TODO: Add tests:
+// Principal, Role policy, Resource
+// 1. allow, deny, x => principal allow
+// 2. deny, deny, x =>  DENY
+// 3. x, allow, x => ALWAYS ALLOW
+// 4. x, deny, allow =>  ALWAYS DENY
+
 package engine
 
 import (
@@ -276,6 +283,12 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		}
 
 		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
+	}
+	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
+	if rpEvaluator != nil {
+		policyEvaluator := planner.RolePolicyEvaluator{Evaluator: rpEvaluator}
+		policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+
 	}
 
 	// get the resource policy check

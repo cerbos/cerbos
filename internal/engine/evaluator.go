@@ -158,8 +158,20 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
-		actions := util.NewGlobMap(mergedActions)
+		permissibleActions := internal.ProtoSet{}
+		for _, p := range rpe.policies {
+			if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
+				permissibleActions.Merge(k.Actions)
+			}
+		}
+
+		actions := util.NewGlobMap(permissibleActions)
+
 		for _, a := range input.Actions {
+			if v := actions.Get(a); v != nil {
+				continue
+			}
+
 			actx := rpctx.StartAction(a)
 
 			mappingExists := actions.Get(a) != nil
