@@ -18,12 +18,14 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/internal"
 	plannerutils "github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/cerbos/cerbos/internal/engine/planner/matchers"
@@ -60,6 +62,10 @@ type PrincipalPolicyEvaluator struct {
 	Policy  *runtimev1.RunnablePrincipalPolicySet
 	Globals map[string]any
 	NowFn   func() time.Time
+}
+
+type RolePolicyEvaluator struct {
+	Evaluator engine.Evaluator
 }
 
 func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *PolicyPlanResult {
@@ -147,6 +153,37 @@ func (p *PolicyPlanResult) toAST() *qpN {
 	}
 }
 
+func (rpe *RolePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
+	checkInput := enginev1.CheckInput{
+		RequestId: input.RequestId,
+		Resource: &enginev1.Resource{
+			Kind:          input.Resource.Kind,
+			PolicyVersion: input.Resource.PolicyVersion,
+			Id:            "planner set ID",
+			Attr:          map[string]*structpb.Value{},
+			Scope:         input.Resource.Scope,
+		},
+		Principal: input.Principal,
+		Actions:   []string{input.Action},
+		AuxData:   input.AuxData,
+	}
+	result, err := rpe.Evaluator.Evaluate(ctx, nil, &checkInput)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.ValidationErrors) > 0 {
+		return nil, errors.New("role policies produced validation errors")
+	}
+	planResult := &PolicyPlanResult{
+		Scope: input.Principal.Scope,
+	}
+	if eff, ok := result.Effects[input.Action]; ok && eff.Effect == effectv1.Effect_EFFECT_DENY {
+		planResult.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
+	} else {
+		planResult.Add(mkTrueNode(), effectv1.Effect_EFFECT_ALLOW)
+	}
+	return planResult, nil
+}
 func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{ppe.NowFn}
 }
