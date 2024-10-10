@@ -620,6 +620,23 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 	}
 
 	sets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
+	if err == nil {
+		// compile time check against colliding scopePermission settings in shared scope
+		var requireParentalConsent, overrideParent int
+		for _, r := range sets {
+			switch r.GetRolePolicy().ScopePermissions { //nolint:exhaustive
+			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
+				requireParentalConsent++
+			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
+				overrideParent++
+			}
+
+			if requireParentalConsent > 0 && overrideParent > 0 {
+				err = errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
+				break
+			}
+		}
+	}
 	if err != nil {
 		tracing.MarkFailed(span, http.StatusInternalServerError, err)
 		return nil, err
@@ -720,7 +737,10 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 
 	for action, effect := range res.Effects {
 		// if the action doesn't already exist or if it has a no_match effect, update it.
-		if currEffect, ok := er.effects[action]; !ok || currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
+		if currEffect, ok := er.effects[action]; !ok ||
+			currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH ||
+			// we need to override an implicit role policy DENY if the resource policy issues an allow for a previously (role policy) unevaluated role.
+			(currEffect.IsImplicitDeny && !effect.ActiveRoles.IsSubSetOf(currEffect.ActiveRoles)) {
 			er.effects[action] = effect
 
 			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer

@@ -89,6 +89,11 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		}
 	}
 
+	scopePermissions := rp.ScopePermissions
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+	}
+
 	return &runtimev1.RunnablePolicySet{
 		CompilerVersion: compilerVersion,
 		Fqn:             modCtx.fqn,
@@ -101,9 +106,10 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 					},
 					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
 				},
-				Role:      rp.GetRole(),
-				Scope:     rp.Scope,
-				Resources: resources,
+				Role:             rp.GetRole(),
+				Scope:            rp.Scope,
+				Resources:        resources,
+				ScopePermissions: scopePermissions,
 			},
 		},
 	}
@@ -185,11 +191,17 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 
 	compilePolicyVariables(modCtx, rp.Variables)
 
+	scopePermissions := rp.ScopePermissions
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+	}
+
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
-		DerivedRoles: referencedRoles,
-		Scope:        rp.Scope,
-		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
-		Schemas:      rp.Schemas,
+		DerivedRoles:     referencedRoles,
+		Scope:            rp.Scope,
+		Rules:            make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
+		Schemas:          rp.Schemas,
+		ScopePermissions: scopePermissions,
 	}
 
 	for i, rule := range rp.Rules {
@@ -467,9 +479,15 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 
 	compilePolicyVariables(modCtx, pp.Variables)
 
+	scopePermissions := pp.ScopePermissions
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+	}
+
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
-		Scope:         pp.Scope,
-		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
+		Scope:            pp.Scope,
+		ResourceRules:    make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
+		ScopePermissions: scopePermissions,
 	}
 
 	for ruleNum, rule := range pp.Rules {

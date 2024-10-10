@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Principal policy with SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": [
+        "create", # exists, falls through, allow
+        "delete", # exists, falls through, no match
+        "nonaction", # doesn't exist, falls through, no match
+      ],
+      "principal":
+        {
+          "id": "donald_duck",
+          "roles": ["employee"],
+          "scope": "acme.sales",
+        },
+      "resource":
+        {
+          "kind": "calendar_entry",
+          "id": "XX125",
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "create":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.vdefault/acme.sales",
+              "scope": "acme"
+            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH"
+            },
+          "nonaction":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH"
+            },
+        }
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
+      "timestamp": "2023-12-01T14:51:39.204970988Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "calendar_entry",
+                    "id": "XX125",
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "roles": ["employee"],
+                    "scope": "acme.sales",
+                  },
+                "actions": ["create", "delete", "nonaction"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "create":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.vdefault/acme.sales",
+                        "scope": "acme"
+                      },
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH",
+                      },
+                    "nonaction":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH"
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "principal.donald_duck.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02.yaml",
+                    },
+                },
+              "principal.donald_duck.vdefault/acme":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02_acme.yaml",
+                    },
+                },
+              "principal.donald_duck.vdefault/acme.sales":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02_acme.sales.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: acme_assistant
+  scope: acme.hr.de
+  scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
+  rules:
+    - resource: leave_request
+      permissibleActions:
+        - assist

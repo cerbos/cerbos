@@ -26,7 +26,8 @@
           "view": {}
         }
       }
-    }
+    },
+    "scopePermissions": "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
   },
   "compilerVersion": 1
 }

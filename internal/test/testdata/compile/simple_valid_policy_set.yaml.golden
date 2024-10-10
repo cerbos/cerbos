@@ -1022,7 +1022,8 @@
           "resourceSchema": {
             "ref": "cerbos:///complex_object.json"
           }
-        }
+        },
+        "scopePermissions": "SCOPE_PERMISSIONS_OVERRIDE_PARENT"
       }
     ],
     "schemas": {

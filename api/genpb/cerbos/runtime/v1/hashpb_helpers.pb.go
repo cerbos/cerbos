@@ -293,6 +293,13 @@ func cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(m *IndexBuildErr
 	}
 }
 
+func cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_hashpb_sum(m *IndexBuildErrors_ScopePermissionsConflicts, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
+
+	}
+}
+
 func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.disabled"]; !ok {
 		if len(m.Disabled) > 0 {
@@ -355,6 +362,16 @@ func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher h
 			for _, v := range m.MissingScopeDetails {
 				if v != nil {
 					cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.scope_permissions_conflicts"]; !ok {
+		if len(m.ScopePermissionsConflicts) > 0 {
+			for _, v := range m.ScopePermissionsConflicts {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -691,6 +708,10 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m *RunnableP
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
+	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_hashpb_sum(m *RunnablePrincipalPolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -918,6 +939,10 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableRe
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
+	}
 }
 
 func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourcePolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1043,6 +1068,10 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
 	}
 }
 

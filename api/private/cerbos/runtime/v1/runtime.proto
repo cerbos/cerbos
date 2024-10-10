@@ -40,6 +40,7 @@ message RunnableRolePolicySet {
   string role = 2;
   string scope = 3;
   map<string, PermissibleActions> resources = 4;
+  cerbos.policy.v1.ScopePermissions scope_permissions = 5;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies
@@ -83,6 +84,7 @@ message RunnableResourcePolicySet {
     repeated Rule rules = 4;
     cerbos.policy.v1.Schemas schemas = 5;
     repeated Variable ordered_variables = 6;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 7;
   }
 
   Metadata meta = 1;
@@ -152,6 +154,7 @@ message RunnablePrincipalPolicySet {
     map<string, Expr> variables = 2 [deprecated = true];
     map<string, ResourceRules> resource_rules = 3;
     repeated Variable ordered_variables = 4;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 5;
   }
 
   Metadata meta = 1;
@@ -225,6 +228,10 @@ message IndexBuildErrors {
     repeated string descendants = 2;
   }
 
+  message ScopePermissionsConflicts {
+    string scope = 1;
+  }
+
   message LoadFailure {
     string file = 1;
     string error = 2 [deprecated = true];
@@ -244,6 +251,7 @@ message IndexBuildErrors {
   repeated string missing_scopes = 5 [deprecated = true];
   repeated Disabled disabled_defs = 6;
   repeated MissingScope missing_scope_details = 7;
+  repeated ScopePermissionsConflicts scope_permissions_conflicts = 8;
 }
 
 message Errors {

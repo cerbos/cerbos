@@ -90,5 +90,13 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 		p.Println()
 	}
 
+	if len(errs.ScopePermissionsConflicts) > 0 {
+		p.Println(colored.Header("Scope permission conflicts"))
+		for _, spc := range errs.ScopePermissionsConflicts {
+			p.Printf("policies sharing scope %s have conflicting scopePermissions\n", spc.Scope)
+		}
+		p.Println()
+	}
+
 	return compileerrors.ErrFailed
 }

@@ -270,7 +270,8 @@
               }
             ]
           }
-        }
+        },
+        "scopePermissions": "SCOPE_PERMISSIONS_OVERRIDE_PARENT"
       }
     ]
   },

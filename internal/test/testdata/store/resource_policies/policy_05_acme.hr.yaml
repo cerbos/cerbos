@@ -45,6 +45,10 @@ resourcePolicy:
               - expr: '"cerbos-jwt-tests" in request.aux_data.jwt.aud'
               - expr: '"A" in request.aux_data.jwt.customArray'
 
+    - actions: ["redirect"]
+      effect: EFFECT_ALLOW
+      roles: ["employee"]
+
     - actions: ["check_scope_and_version"]
       effect: EFFECT_ALLOW
       roles: ["employee"]

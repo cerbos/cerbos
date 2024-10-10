@@ -311,6 +311,9 @@
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
         },
+        "scopePermissions": {
+          "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
+        },
         "variables": {
           "$ref": "#/definitions/cerbos.policy.v1.Variables"
         },
@@ -404,6 +407,9 @@
         "scope": {
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+        },
+        "scopePermissions": {
+          "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
         },
         "variables": {
           "$ref": "#/definitions/cerbos.policy.v1.Variables"
@@ -511,6 +517,9 @@
             "scope": {
               "type": "string",
               "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+            },
+            "scopePermissions": {
+              "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
             }
           }
         },
@@ -590,6 +599,14 @@
           "minLength": 1
         }
       }
+    },
+    "cerbos.policy.v1.ScopePermissions": {
+      "type": "string",
+      "enum": [
+        "SCOPE_PERMISSIONS_UNSPECIFIED",
+        "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+        "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+      ]
     },
     "cerbos.policy.v1.SourceAttributes": {
       "type": "object",
@@ -846,6 +863,12 @@
           "items": {
             "type": "string"
           }
+        },
+        "scopePermissionsConflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts"
+          }
         }
       }
     },
@@ -935,6 +958,15 @@
           }
         },
         "missingPolicy": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
           "type": "string"
         }
       }

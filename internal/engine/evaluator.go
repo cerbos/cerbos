@@ -35,7 +35,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const rolePolicyNotAllowed = "<NOT_ALLOWED_BY_ROLE_POLICIES>"
+const noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
@@ -134,11 +134,23 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		span.SetAttributes(tracing.PolicyScope(input.Principal.Scope))
 
 		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
-		for _, p := range rpe.policies {
-			// merge
+		mergedActions := make(internal.ProtoSet)
+		activeRoles := make(internal.StringSet)
+		var scopePermission policyv1.ScopePermissions // all role policies must share the same ScopePermissions
+		for r, p := range rpe.policies {
+			if scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+				scopePermission = p.ScopePermissions
+			}
+
 			if p.GetMeta().GetFqn() != "" && p.GetMeta().GetSourceAttributes() != nil {
 				sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
 			}
+
+			if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
+				mergedActions.Merge(k.Actions)
+			}
+
+			activeRoles[r] = struct{}{}
 		}
 
 		trail := newAuditTrail(sourceAttrs)
@@ -146,29 +158,22 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
-		permissibleActions := internal.ProtoSet{}
-		for _, p := range rpe.policies {
-			if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
-				permissibleActions.Merge(k.Actions)
-			}
-		}
-
-		actions := util.NewGlobMap(permissibleActions)
-
-	outer:
+		actions := util.NewGlobMap(mergedActions)
 		for _, a := range input.Actions {
-			if v := actions.Get(a); v != nil {
-				continue outer
-			}
-
 			actx := rpctx.StartAction(a)
 
-			result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: rolePolicyNotAllowed, Scope: input.Principal.Scope})
-
-			actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
+			mappingExists := actions.Get(a) != nil
+			if mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})
+				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
+			} else if !mappingExists {
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
+				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
+			}
 		}
 
 		result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+
 		return result, nil
 	})
 }
@@ -278,6 +283,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 				// evaluate each rule until all actions have a result
 				tracing.RecordSpan(ctx, "evaluate_rules", func(_ context.Context, _ trace.Span) {
+				outer:
 					for _, rule := range p.Rules {
 						rctx := sctx.StartRule(rule.Name)
 
@@ -312,7 +318,19 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									continue
 								}
 
-								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
+								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+									continue outer
+								}
+
+								// get intersection
+								activeRoles := make(internal.StringSet)
+								for r := range rule.Roles {
+									if _, ok := effectiveRoles[r]; ok {
+										activeRoles[r] = struct{}{}
+									}
+								}
+
+								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope, ActiveRoles: activeRoles})
 								actx.AppliedEffect(rule.Effect, "")
 								ruleActivated = true
 							}
@@ -394,6 +412,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 							continue
 						}
 
+					outer:
 						for _, rule := range resourceRules.ActionRules {
 							matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 							ruleActivated := false
@@ -418,6 +437,10 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 										octx.ComputedOutput(output)
 									}
 									continue
+								}
+
+								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+									continue outer
 								}
 
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
@@ -640,9 +663,11 @@ func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, variables 
 }
 
 type EffectInfo struct {
-	Policy string
-	Scope  string
-	Effect effectv1.Effect
+	ActiveRoles    internal.StringSet
+	Policy         string
+	Scope          string
+	Effect         effectv1.Effect
+	IsImplicitDeny bool
 }
 
 type PolicyEvalResult struct {

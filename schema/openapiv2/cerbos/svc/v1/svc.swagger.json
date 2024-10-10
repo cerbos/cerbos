@@ -2750,6 +2750,9 @@
         },
         "variables": {
           "$ref": "#/definitions/v1Variables"
+        },
+        "scopePermissions": {
+          "$ref": "#/definitions/v1ScopePermissions"
         }
       }
     },
@@ -2822,6 +2825,9 @@
         },
         "variables": {
           "$ref": "#/definitions/v1Variables"
+        },
+        "scopePermissions": {
+          "$ref": "#/definitions/v1ScopePermissions"
         }
       }
     },
@@ -2942,6 +2948,9 @@
             "type": "object",
             "$ref": "#/definitions/v1RoleRule"
           }
+        },
+        "scopePermissions": {
+          "$ref": "#/definitions/v1ScopePermissions"
         }
       }
     },
@@ -2980,6 +2989,15 @@
           "$ref": "#/definitions/SchemasIgnoreWhen"
         }
       }
+    },
+    "v1ScopePermissions": {
+      "type": "string",
+      "enum": [
+        "SCOPE_PERMISSIONS_UNSPECIFIED",
+        "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+        "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+      ],
+      "default": "SCOPE_PERMISSIONS_UNSPECIFIED"
     },
     "v1ServerInfoResponse": {
       "type": "object",

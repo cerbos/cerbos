@@ -405,6 +405,10 @@ func cerbos_policy_v1_PrincipalPolicy_hashpb_sum(m *v11.PrincipalPolicy, hasher 
 		}
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.PrincipalPolicy.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
+	}
 }
 
 func cerbos_policy_v1_PrincipalRule_Action_hashpb_sum(m *v11.PrincipalRule_Action, hasher hash.Hash, ignore map[string]struct{}) {
@@ -492,6 +496,10 @@ func cerbos_policy_v1_ResourcePolicy_hashpb_sum(m *v11.ResourcePolicy, hasher ha
 		if m.GetVariables() != nil {
 			cerbos_policy_v1_Variables_hashpb_sum(m.GetVariables(), hasher, ignore)
 		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.ResourcePolicy.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
 
 	}
 }
@@ -587,6 +595,10 @@ func cerbos_policy_v1_RolePolicy_hashpb_sum(m *v11.RolePolicy, hasher hash.Hash,
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.RolePolicy.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
 	}
 }
 

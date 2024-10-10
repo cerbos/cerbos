@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  scope: "acme.hr.fr"
+  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+  resource: leave_request
+  rules:
+    - actions: ["defer"]
+      effect: EFFECT_ALLOW
+      roles: ["employee"]
+
+    - actions: ["redirect"]
+      effect: EFFECT_ALLOW
+      roles: ["employee"]

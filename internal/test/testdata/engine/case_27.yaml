@@ -1,0 +1,95 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Role policy with SCOPE_PERMISSIONS_OVERRIDE_PARENT"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["assist"],
+      "principal":
+        {
+          "id": "john",
+          "roles": ["acme_assistant"],
+          "scope": "acme.hr.de",
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "scope": "acme.hr.uk",
+          "id": "XX125",
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "assist":
+            {
+              "effect": "EFFECT_ALLOW",
+              "scope": "acme.hr.de",
+            },
+        }
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
+      "timestamp": "2023-12-01T14:51:39.204970988Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "scope": "acme.hr.uk",
+                    "id": "XX125",
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "roles": ["acme_assistant"],
+                    "scope": "acme.hr.de",
+                  },
+                "actions": ["assist"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "assist":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "scope": "acme.hr.de",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "cerbos.role.acme_assistant/acme.hr.de":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_03.yaml",
+                    },
+                },
+            },
+        },
+    },
+  ]

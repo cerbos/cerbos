@@ -92,6 +92,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"principal.donald_duck.vdefault",
 					"principal.donald_duck.vdefault/acme",
 					"principal.donald_duck.vdefault/acme.hr",
+					"principal.donald_duck.vdefault/acme.sales",
 					"principal.scrooge_mcduck.vdefault",
 					"principal.terry_tibbs.vdefault",
 					"resource.account.vdefault",
@@ -106,6 +107,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vdefault",
 					"resource.leave_request.vdefault/acme",
 					"resource.leave_request.vdefault/acme.hr",
+					"resource.leave_request.vdefault/acme.hr.fr",
 					"resource.leave_request.vdefault/acme.hr.uk",
 					"resource.leave_request.vstaging",
 					"resource.missing_attr.vdefault",
@@ -114,6 +116,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.runtime_effective_derived_roles.vdefault",
 					"resource.variables_referencing_variables.vdefault",
 					"role.acme_admin/acme.hr.uk",
+					"role.acme_assistant/acme.hr.de",
 					"role.acme_creator/acme.hr.uk",
 				}, listPolicies(t, clientCtx))
 			})
