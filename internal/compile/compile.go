@@ -89,11 +89,6 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		}
 	}
 
-	scopePermissions := rp.ScopePermissions
-	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
-	}
-
 	return &runtimev1.RunnablePolicySet{
 		CompilerVersion: compilerVersion,
 		Fqn:             modCtx.fqn,
@@ -109,7 +104,7 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 				Role:             rp.GetRole(),
 				Scope:            rp.Scope,
 				Resources:        resources,
-				ScopePermissions: scopePermissions,
+				ScopePermissions: rp.ScopePermissions,
 			},
 		},
 	}

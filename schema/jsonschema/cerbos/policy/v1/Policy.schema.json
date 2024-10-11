@@ -418,6 +418,9 @@
       "allOf": [
         {
           "type": "object",
+          "required": [
+            "scopePermissions"
+          ],
           "additionalProperties": false,
           "properties": {
             "role": {
