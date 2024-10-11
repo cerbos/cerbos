@@ -287,7 +287,10 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
 	if rpEvaluator != nil {
 		policyEvaluator := planner.RolePolicyEvaluator{Evaluator: rpEvaluator}
-		policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+		result, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+		if err != nil {
+			return nil, nil, err
+		}
 
 	}
 
