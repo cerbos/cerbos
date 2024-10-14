@@ -407,14 +407,8 @@ message TestTable {
   }
 
   message Expectation {
-    string principal = 1 [
-      (buf.validate.field).required = true,
-      (buf.validate.field).string.min_len = 1
-    ];
-    string resource = 2 [
-      (buf.validate.field).required = true,
-      (buf.validate.field).string.min_len = 1
-    ];
+    string principal = 1;
+    string resource = 2;
     map<string, cerbos.effect.v1.Effect> actions = 3 [
       (buf.validate.field).map = {
         min_pairs: 1
@@ -433,6 +427,42 @@ message TestTable {
       (buf.validate.field).required = true
     ];
     repeated OutputExpectations outputs = 4;
+    repeated string principals = 5 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
+    repeated string resources = 6 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
+
+    option (buf.validate.message).cel = {
+      id: "expectation.principal_or_principals"
+      message: "either principal or principals must be present"
+      expression: "this.principal != '' || size(this.principals) > 0"
+    };
+
+    option (buf.validate.message).cel = {
+      id: "expectation.principal_nand_principals"
+      message: "principal and principals may not both be present"
+      expression: "!(this.principal != '' && size(this.principals) > 0)"
+    };
+
+    option (buf.validate.message).cel = {
+      id: "expectation.resource_or_resources"
+      message: "either resource or resources must be present"
+      expression: "this.resource != '' || size(this.resources) > 0"
+    };
+
+    option (buf.validate.message).cel = {
+      id: "expectation.resource_nand_resources"
+      message: "resource and resources may not both be present"
+      expression: "!(this.resource != '' && size(this.resources) > 0)"
+    };
   }
 
   string name = 1 [

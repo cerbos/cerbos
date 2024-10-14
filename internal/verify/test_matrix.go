@@ -67,35 +67,49 @@ func buildExpectationLookup(table *policyv1.TestTable) (map[testMatrixKey]testMa
 
 	lookup := make(map[testMatrixKey]testMatrixExpectations, len(table.Expected))
 	for _, expectation := range table.Expected {
-		key := testMatrixKey{Principal: expectation.Principal, Resource: expectation.Resource}
-		if _, ok := lookup[key]; ok {
-			return nil, fmt.Errorf("found multiple expectations for principal %q and resource %q", key.Principal, key.Resource)
+		principals := expectation.Principals
+		if expectation.Principal != "" {
+			principals = []string{expectation.Principal}
 		}
 
-		var extraExpectations []string
-		for a := range expectation.Actions {
-			if _, ok := inputActionsMap[a]; !ok {
-				extraExpectations = append(extraExpectations, a)
-			}
-		}
-		if len(extraExpectations) > 0 {
-			sort.Strings(extraExpectations)
-			return nil, fmt.Errorf("found expectations for actions that do not exist in the input actions list: [%s]", strings.Join(extraExpectations, ","))
+		resources := expectation.Resources
+		if expectation.Resource != "" {
+			resources = []string{expectation.Resource}
 		}
 
-		tmExpectation := testMatrixExpectations{actions: expectation.Actions}
-		if n := len(expectation.Outputs); n > 0 {
-			tmExpectation.outputs = make(map[string]*policyv1.Test_OutputEntries, n)
-			for _, oe := range expectation.Outputs {
-				entries := make(map[string]*structpb.Value, len(oe.Expected))
-				for _, entry := range oe.Expected {
-					entries[entry.Src] = entry.Val
+		for _, principal := range principals {
+			for _, resource := range resources {
+				key := testMatrixKey{Principal: principal, Resource: resource}
+				if _, ok := lookup[key]; ok {
+					return nil, fmt.Errorf("found multiple expectations for principal %q and resource %q", key.Principal, key.Resource)
 				}
-				tmExpectation.outputs[oe.Action] = &policyv1.Test_OutputEntries{Entries: entries}
+
+				var extraExpectations []string
+				for a := range expectation.Actions {
+					if _, ok := inputActionsMap[a]; !ok {
+						extraExpectations = append(extraExpectations, a)
+					}
+				}
+				if len(extraExpectations) > 0 {
+					sort.Strings(extraExpectations)
+					return nil, fmt.Errorf("found expectations for actions that do not exist in the input actions list: [%s]", strings.Join(extraExpectations, ","))
+				}
+
+				tmExpectation := testMatrixExpectations{actions: expectation.Actions}
+				if n := len(expectation.Outputs); n > 0 {
+					tmExpectation.outputs = make(map[string]*policyv1.Test_OutputEntries, n)
+					for _, oe := range expectation.Outputs {
+						entries := make(map[string]*structpb.Value, len(oe.Expected))
+						for _, entry := range oe.Expected {
+							entries[entry.Src] = entry.Val
+						}
+						tmExpectation.outputs[oe.Action] = &policyv1.Test_OutputEntries{Entries: entries}
+					}
+				}
+
+				lookup[key] = tmExpectation
 			}
 		}
-
-		lookup[key] = tmExpectation
 	}
 
 	return lookup, nil

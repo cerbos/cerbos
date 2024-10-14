@@ -1260,6 +1260,22 @@ func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *TestTable_Expectation,
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.principals"]; !ok {
+		if len(m.Principals) > 0 {
+			for _, v := range m.Principals {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.resources"]; !ok {
+		if len(m.Resources) > 0 {
+			for _, v := range m.Resources {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *TestTable_Input, hasher hash.Hash, ignore map[string]struct{}) {

@@ -1,0 +1,306 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 20,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 20
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "Multiple principals",
+          "principals": [
+            {
+              "name": "bev",
+              "resources": [
+                {
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "barb",
+              "resources": [
+                {
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Multiple resources",
+          "principals": [
+            {
+              "name": "bob",
+              "resources": [
+                {
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Multiple principals and resources",
+          "principals": [
+            {
+              "name": "bev",
+              "resources": [
+                {
+                  "name": "stale_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "barb",
+              "resources": [
+                {
+                  "name": "stale_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "bob",
+              "resources": [
+                {
+                  "name": "stale_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 20,
+    "resultCounts": [
+      {
+        "result": "RESULT_PASSED",
+        "count": 20
+      }
+    ]
+  }
+}
