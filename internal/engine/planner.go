@@ -6,15 +6,11 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/engine/planner"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-type RolePolicyEvaluator struct {
-	Evaluator Evaluator
-}
-
-func (rpe *RolePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*planner.PolicyPlanResult, error) {
+func PlannerEvaluateRolePolicy(ctx context.Context, evaluator Evaluator, input *enginev1.PlanResourcesInput) (effectv1.Effect, error) {
+	defaultEffect := effectv1.Effect_EFFECT_DENY
 	checkInput := enginev1.CheckInput{
 		RequestId: input.RequestId,
 		Resource: &enginev1.Resource{
@@ -28,15 +24,16 @@ func (rpe *RolePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, 
 		Actions:   []string{input.Action},
 		AuxData:   input.AuxData,
 	}
-	result, err := rpe.Evaluator.Evaluate(ctx, nil, &checkInput)
+	result, err := evaluator.Evaluate(ctx, nil, &checkInput)
 	if err != nil {
-		return nil, err
+		return defaultEffect, err
 	}
 	if len(result.ValidationErrors) > 0 {
-		return nil, errors.New("role policies produced validation errors") // this shouldn't happen as role policies doesn't evaluate result.
+		return defaultEffect, errors.New("role policies produced validation errors") // this shouldn't happen as role policies doesn't evaluate result.
 	}
-	if eff, ok := result.Effects[input.Action]; ok && eff.Effect == effectv1.Effect_EFFECT_DENY {
-		return planner.NewAlwaysDenied(input.Principal.Scope), nil
+	eff, ok := result.Effects[input.Action]
+	if !ok {
+		return defaultEffect, errors.New("role policy evaluator unexpected result")
 	}
-	return planner.NewAlwaysAllowed(input.Principal.Scope), nil
+	return eff.Effect, nil
 }
