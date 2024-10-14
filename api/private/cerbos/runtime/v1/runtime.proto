@@ -39,7 +39,7 @@ message RunnableRolePolicySet {
   Metadata meta = 1;
   string role = 2;
   string scope = 3;
-  map<string, AllowActions> resources = 6;
+  map<string, AllowActions> resources = 4;
   cerbos.policy.v1.ScopePermissions scope_permissions = 5;
 }
 
