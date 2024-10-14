@@ -1050,6 +1050,10 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
+	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.resources"]; !ok {
 		if len(m.Resources) > 0 {
 			keys := make([]string, len(m.Resources))
@@ -1068,10 +1072,6 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 
 			}
 		}
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.scope_permissions"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
-
 	}
 }
 
