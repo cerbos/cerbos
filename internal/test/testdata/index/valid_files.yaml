@@ -234,12 +234,12 @@ files:
       scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
       rules:
         - resource: leave_request
-          permissibleActions:
+          allowActions:
             - view:*
             - deny
 
         - resource: salary_record
-          permissibleActions:
+          allowActions:
             - edit
 
   "empty_resource.yaml": ""

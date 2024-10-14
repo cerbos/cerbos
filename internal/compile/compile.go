@@ -74,17 +74,17 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
-	resources := make(map[string]*runtimev1.RunnableRolePolicySet_PermissibleActions)
+	resources := make(map[string]*runtimev1.RunnableRolePolicySet_AllowActions)
 	for _, r := range rp.Rules {
 		actions, ok := resources[r.Resource]
 		if !ok {
-			actions = &runtimev1.RunnableRolePolicySet_PermissibleActions{
+			actions = &runtimev1.RunnableRolePolicySet_AllowActions{
 				Actions: make(map[string]*emptypb.Empty),
 			}
 			resources[r.Resource] = actions
 		}
 
-		for _, a := range r.PermissibleActions {
+		for _, a := range r.AllowActions {
 			actions.Actions[a] = &emptypb.Empty{}
 		}
 	}

@@ -7,5 +7,5 @@ rolePolicy:
   scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
   rules:
     - resource: leave_request
-      permissibleActions:
+      allowActions:
         - assist

@@ -7,4 +7,4 @@ rolePolicy:
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
     - resource: "*"
-      permissibleActions: ["create"]
+      allowActions: ["create"]

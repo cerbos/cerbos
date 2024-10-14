@@ -6,11 +6,11 @@
       "type": "object",
       "required": [
         "resource",
-        "permissibleActions"
+        "allowActions"
       ],
       "additionalProperties": false,
       "properties": {
-        "permissibleActions": {
+        "allowActions": {
           "type": "array",
           "items": {
             "type": "string",

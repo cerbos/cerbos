@@ -694,11 +694,11 @@ func (m *RoleRule) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.PermissibleActions) > 0 {
-		for iNdEx := len(m.PermissibleActions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.PermissibleActions[iNdEx])
-			copy(dAtA[i:], m.PermissibleActions[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.PermissibleActions[iNdEx])))
+	if len(m.AllowActions) > 0 {
+		for iNdEx := len(m.AllowActions) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.AllowActions[iNdEx])
+			copy(dAtA[i:], m.AllowActions[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.AllowActions[iNdEx])))
 			i--
 			dAtA[i] = 0x12
 		}
@@ -3923,8 +3923,8 @@ func (m *RoleRule) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.PermissibleActions) > 0 {
-		for _, s := range m.PermissibleActions {
+	if len(m.AllowActions) > 0 {
+		for _, s := range m.AllowActions {
 			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
@@ -7020,7 +7020,7 @@ func (m *RoleRule) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PermissibleActions", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowActions", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7048,7 +7048,7 @@ func (m *RoleRule) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PermissibleActions = append(m.PermissibleActions, string(dAtA[iNdEx:postIndex]))
+			m.AllowActions = append(m.AllowActions, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

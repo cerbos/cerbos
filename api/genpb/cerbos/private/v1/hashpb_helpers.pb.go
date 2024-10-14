@@ -1269,9 +1269,9 @@ func cerbos_policy_v1_RoleRule_hashpb_sum(m *v12.RoleRule, hasher hash.Hash, ign
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResource()))
 
 	}
-	if _, ok := ignore["cerbos.policy.v1.RoleRule.permissible_actions"]; !ok {
-		if len(m.PermissibleActions) > 0 {
-			for _, v := range m.PermissibleActions {
+	if _, ok := ignore["cerbos.policy.v1.RoleRule.allow_actions"]; !ok {
+		if len(m.AllowActions) > 0 {
+			for _, v := range m.AllowActions {
 				_, _ = hasher.Write(protowire.AppendString(nil, v))
 
 			}

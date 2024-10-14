@@ -287,7 +287,7 @@ func (m *RunnableRolePolicySet_Metadata) MarshalToSizedBufferVT(dAtA []byte) (in
 	return len(dAtA) - i, nil
 }
 
-func (m *RunnableRolePolicySet_PermissibleActions) MarshalVT() (dAtA []byte, err error) {
+func (m *RunnableRolePolicySet_AllowActions) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -300,12 +300,12 @@ func (m *RunnableRolePolicySet_PermissibleActions) MarshalVT() (dAtA []byte, err
 	return dAtA[:n], nil
 }
 
-func (m *RunnableRolePolicySet_PermissibleActions) MarshalToVT(dAtA []byte) (int, error) {
+func (m *RunnableRolePolicySet_AllowActions) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *RunnableRolePolicySet_PermissibleActions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *RunnableRolePolicySet_AllowActions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2887,7 +2887,7 @@ func (m *RunnableRolePolicySet_Metadata) SizeVT() (n int) {
 	return n
 }
 
-func (m *RunnableRolePolicySet_PermissibleActions) SizeVT() (n int) {
+func (m *RunnableRolePolicySet_AllowActions) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4605,7 +4605,7 @@ func (m *RunnableRolePolicySet_Metadata) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *RunnableRolePolicySet_PermissibleActions) UnmarshalVT(dAtA []byte) error {
+func (m *RunnableRolePolicySet_AllowActions) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4628,10 +4628,10 @@ func (m *RunnableRolePolicySet_PermissibleActions) UnmarshalVT(dAtA []byte) erro
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RunnableRolePolicySet_PermissibleActions: wiretype end group for non-group")
+			return fmt.Errorf("proto: RunnableRolePolicySet_AllowActions: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RunnableRolePolicySet_PermissibleActions: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: RunnableRolePolicySet_AllowActions: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4944,10 +4944,10 @@ func (m *RunnableRolePolicySet) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Resources == nil {
-				m.Resources = make(map[string]*RunnableRolePolicySet_PermissibleActions)
+				m.Resources = make(map[string]*RunnableRolePolicySet_AllowActions)
 			}
 			var mapkey string
-			var mapvalue *RunnableRolePolicySet_PermissibleActions
+			var mapvalue *RunnableRolePolicySet_AllowActions
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -5021,7 +5021,7 @@ func (m *RunnableRolePolicySet) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &RunnableRolePolicySet_PermissibleActions{}
+					mapvalue = &RunnableRolePolicySet_AllowActions{}
 					if err := mapvalue.UnmarshalVT(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}

@@ -32,14 +32,14 @@ message RunnableRolePolicySet {
     map<string, string> annotations = 3;
   }
 
-  message PermissibleActions {
+  message AllowActions {
     map<string, google.protobuf.Empty> actions = 1;
   }
 
   Metadata meta = 1;
   string role = 2;
   string scope = 3;
-  map<string, PermissibleActions> resources = 4;
+  map<string, AllowActions> resources = 4;
   cerbos.policy.v1.ScopePermissions scope_permissions = 5;
 }
 

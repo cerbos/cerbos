@@ -398,7 +398,7 @@ func ListActions(p *policyv1.Policy) []string {
 		}
 	case *policyv1.Policy_RolePolicy:
 		for _, r := range p.RolePolicy.Rules {
-			actions = append(actions, r.PermissibleActions...)
+			actions = append(actions, r.AllowActions...)
 		}
 	}
 

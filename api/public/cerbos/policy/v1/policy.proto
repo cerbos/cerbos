@@ -146,7 +146,7 @@ message RoleRule {
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1}
   ];
-  repeated string permissible_actions = 2 [
+  repeated string allow_actions = 2 [
     (buf.validate.field).repeated = {
       min_items: 1
       unique: true
