@@ -51,7 +51,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- if .Values.priorityClassName }}
-      priorityClassName: {{- .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
