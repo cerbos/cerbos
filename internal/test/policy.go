@@ -312,7 +312,7 @@ type RoleRuleBuilder struct {
 func NewRoleRule(resource string, actions ...string) *RoleRuleBuilder {
 	return &RoleRuleBuilder{
 		rule: &policyv1.RoleRule{
-			Resource:           resource,
+			Resource:     resource,
 			AllowActions: actions,
 		},
 	}
