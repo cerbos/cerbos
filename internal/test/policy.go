@@ -207,7 +207,7 @@ func GenRolePolicy(mod NameMod) *policyv1.Policy {
 				Rules: []*policyv1.RoleRule{
 					{
 						Resource: mod("leave_request"),
-						PermissibleActions: []string{
+						AllowActions: []string{
 							mod("create"),
 						},
 					},
@@ -312,8 +312,8 @@ type RoleRuleBuilder struct {
 func NewRoleRule(resource string, actions ...string) *RoleRuleBuilder {
 	return &RoleRuleBuilder{
 		rule: &policyv1.RoleRule{
-			Resource:           resource,
-			PermissibleActions: actions,
+			Resource:     resource,
+			AllowActions: actions,
 		},
 	}
 }

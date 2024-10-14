@@ -2960,7 +2960,7 @@
         "resource": {
           "type": "string"
         },
-        "permissibleActions": {
+        "allowActions": {
           "type": "array",
           "items": {
             "type": "string"

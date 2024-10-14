@@ -151,10 +151,10 @@ func (s *statsCollector) procRolePolicy(rp *policyv1.RolePolicy) (ps policyStats
 	ps.ruleCount = len(rp.Rules)
 
 	// Role policies are modeled differently to resource/principal policies.
-	// We map a set of permissible actions for a given resource, so from a stats perspective,
-	// each permissible action is treated as an individual condition.
+	// We map a set of allowable actions for a given resource, so from a stats perspective,
+	// each allowable action is treated as an individual condition.
 	for _, r := range rp.Rules {
-		ps.conditionCount += len(r.PermissibleActions)
+		ps.conditionCount += len(r.AllowActions)
 	}
 
 	return ps

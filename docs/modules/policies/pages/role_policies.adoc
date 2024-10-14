@@ -6,7 +6,7 @@ include::ROOT:partial$version-check.adoc[]
 
 WARNING: Role policies are still under development and should be considered unstable for production use cases.
 
-Role policies are simple RBAC policies in which you specify a number of resources; each with a set of permissible actions that the role can carry out on the resource. You can view it as a per-role matrix of resource/action rows/columns whereby each set "cell" is an `ALLOW`. They do not support conditions.
+Role policies are simple RBAC policies in which you specify a number of resources; each with a set of allowable actions that the role can carry out on the resource. You can view it as a per-role matrix of resource/action rows/columns whereby each set "cell" is an `ALLOW`. They do not support conditions.
 
 Role policies are evaluated before resource policies but do not guarantee an `ALLOW` -- see below for more details.
 
@@ -19,21 +19,21 @@ rolePolicy:
   scope: "acme.hr.uk" <2>
   rules:
     - resource: leave_request <3>
-      permissibleActions: <4>
+      allowActions: <4>
         - view:* <5>
         - deny
 
     - resource: salary_record
-      permissibleActions:
+      allowActions:
         - edit
 
     - resource: "*" <6>
-      permissibleActions: ["create"]
+      allowActions: ["create"]
 ----
 <1> The role to which this policy applies.
 <2> Optional principal xref:scoped_policies.adoc[scope] for this policy.
 <3> The resource to which the following rule applies.
-<4> The list of permissible actions that the role can carry out on the given resource.
+<4> The list of allowable actions that the role can carry out on the given resource.
 <5> Wildcard actions are supported.
 <6> Wildcard resources are also supported.
 

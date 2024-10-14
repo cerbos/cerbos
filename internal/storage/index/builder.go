@@ -259,10 +259,6 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 			idx.sharedScopePermissionGroups[p.Scope] = sharedScope
 		} else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
 			scopePermission := p.GetRolePolicy().ScopePermissions
-			if scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-				scopePermission = policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
-			}
-
 			if _, ok := sharedScope[scopePermission]; !ok {
 				sharedScope[scopePermission] = struct{}{}
 			}

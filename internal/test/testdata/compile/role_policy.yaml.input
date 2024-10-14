@@ -4,11 +4,12 @@ apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: leave_request
   scope: "acme"
+  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
     - resource: acme_admin
-      permissibleActions: ['*']
+      allowActions: ['*']
     - resource: expenses_report
-      permissibleActions:
+      allowActions:
         - view
         - create
         - delete
