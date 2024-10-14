@@ -130,7 +130,15 @@ message RolePolicy {
   }
   string scope = 2 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   repeated RoleRule rules = 3;
-  ScopePermissions scope_permissions = 4 [(buf.validate.field).required = true];
+  ScopePermissions scope_permissions = 4 [
+    (buf.validate.field).enum = {
+      in: [
+        1,
+        2
+      ]
+    },
+    (buf.validate.field).required = true
+  ];
 }
 
 message RoleRule {

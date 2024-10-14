@@ -24,14 +24,6 @@
           "minLength": 1
         }
       }
-    },
-    "cerbos.policy.v1.ScopePermissions": {
-      "type": "string",
-      "enum": [
-        "SCOPE_PERMISSIONS_UNSPECIFIED",
-        "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
-        "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
-      ]
     }
   },
   "allOf": [
@@ -57,7 +49,11 @@
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
         },
         "scopePermissions": {
-          "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
+          "type": "string",
+          "enum": [
+            "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+            "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+          ]
         }
       }
     },
