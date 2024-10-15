@@ -2,14 +2,8 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_admin
-  scope: acme.hr.uk
+  role: accountant
   rules:
-    - resource: leave_request
+    - resource: tax_return
       permissibleActions:
-        - view:*
-        - deny
-
-    - resource: salary_record
-      permissibleActions:
-        - edit
+        - comment

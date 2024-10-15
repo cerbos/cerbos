@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: tax_return
+  rules:
+    - actions:
+        - view
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
