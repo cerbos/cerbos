@@ -287,14 +287,15 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	skipResourcePolicies := false
 	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
 	if rpEvaluator != nil {
-		effect, err := PlannerEvaluateRolePolicy(ctx, rpEvaluator, input)
+		tctx := tracer.Start(opts.tracerSink)
+		effect, at, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
 		if err != nil {
 			return nil, nil, err
 		}
 		if effect != effectv1.Effect_EFFECT_ALLOW {
 			skipResourcePolicies = true
 		}
-		// TODO: audit trail
+		maps.Copy(auditTrail.EffectivePolicies, at.EffectivePolicies)
 	}
 
 	if !skipResourcePolicies {
