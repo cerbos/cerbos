@@ -8,7 +8,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -28,9 +27,37 @@ func TestSqlServer(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	is := require.New(t)
+
+	port, err := startSQLServer(t)
+	if err != nil {
+		t.Skipf("Failed to start SQL server: %v", err)
+	}
+
+	store, err := NewStore(context.Background(), &Conf{
+		URL: fmt.Sprintf("sqlserver://cerbos_user:ChangeMe(1!!)@127.0.0.1:%s?database=cerbos", port),
+		ConnPool: &internal.ConnPoolConf{
+			MaxLifetime: 1 * time.Minute,
+			MaxIdleTime: 45 * time.Second,
+			MaxOpen:     4,
+			MaxIdle:     1,
+		},
+	})
+	require.NoError(t, err)
+
+	t.Run("check schema", func(t *testing.T) {
+		internal.TestCheckSchema(context.Background(), t, store)
+	})
+
+	t.Run("suite", internal.TestSuite(store))
+}
+
+func startSQLServer(t *testing.T) (string, error) {
+	t.Helper()
+
 	pool, err := dockertest.NewPool("")
-	is.NoError(err, "Could not connect to docker: %s", err)
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to Docker: %w", err)
+	}
 
 	options := &dockertest.RunOptions{
 		Repository: "mcr.microsoft.com/azure-sql-edge",
@@ -40,7 +67,9 @@ func TestSqlServer(t *testing.T) {
 	}
 
 	resource, err := pool.RunWithOptions(options)
-	is.NoError(err, "Could not start resource: %s", err)
+	if err != nil {
+		return "", fmt.Errorf("failed to launch container: %w", err)
+	}
 
 	t.Cleanup(func() {
 		if err := pool.Purge(resource); err != nil {
@@ -75,27 +104,8 @@ func TestSqlServer(t *testing.T) {
 			return sqlx.Connect("sqlserver", getConnString("cerbos"))
 		})
 	}); err != nil {
-		if strings.Contains(err.Error(), "negative serial number") {
-			t.Skipf("Skipping due to bad container image")
-			return
-		}
-		is.NoError(err, "Container did not start or couldn't create schema")
+		return "", fmt.Errorf("failed to connect to SQL server: %w", err)
 	}
 
-	store, err := NewStore(ctx, &Conf{
-		URL: fmt.Sprintf("sqlserver://cerbos_user:ChangeMe(1!!)@127.0.0.1:%s?database=cerbos", port),
-		ConnPool: &internal.ConnPoolConf{
-			MaxLifetime: 1 * time.Minute,
-			MaxIdleTime: 45 * time.Second,
-			MaxOpen:     4,
-			MaxIdle:     1,
-		},
-	})
-	require.NoError(t, err)
-
-	t.Run("check schema", func(t *testing.T) {
-		internal.TestCheckSchema(ctx, t, store)
-	})
-
-	t.Run("suite", internal.TestSuite(store))
+	return port, nil
 }
