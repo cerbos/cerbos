@@ -276,8 +276,6 @@
     "cerbos.policy.v1.TestTable.Expectation": {
       "type": "object",
       "required": [
-        "principal",
-        "resource",
         "actions"
       ],
       "additionalProperties": false,
@@ -304,12 +302,26 @@
           }
         },
         "principal": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
         },
         "resource": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
         }
       }
     },

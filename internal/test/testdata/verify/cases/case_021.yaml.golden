@@ -1,0 +1,15 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.yaml",
+      "name": "Unknown",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
+      },
+      "error": "failed to load test suite: validation error:\n - tests[0].expected[0]: either principal or principals must be present [expectation.principal_or_principals]\n - tests[1].expected[0]: principal and principals may not both be present [expectation.principal_nand_principals]\n - tests[2].expected[0]: either resource or resources must be present [expectation.resource_or_resources]\n - tests[3].expected[0]: resource and resources may not both be present [expectation.resource_nand_resources]"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
+  }
+}
