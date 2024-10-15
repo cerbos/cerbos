@@ -3,10 +3,10 @@
 
 //TODO: Add tests:
 // Principal, Role policy, Resource
-// 1. allow, deny, x => principal allow
-// 2. deny, deny, x =>  DENY
-// 3. x, allow, x => ALWAYS ALLOW
-// 4. x, deny, allow =>  ALWAYS DENY
+// 1. allow, deny, x => principal allow (emma accountant files tax return)
+// 2. deny, deny, x =>  DENY (emma accountant deletes tax return)
+// 3. x, allow, x => ALWAYS ALLOW (x001 accountant comment on tax return)
+// 4. x, deny, allow =>  ALWAYS DENY (x001 accountant view tax return)
 
 package engine
 
