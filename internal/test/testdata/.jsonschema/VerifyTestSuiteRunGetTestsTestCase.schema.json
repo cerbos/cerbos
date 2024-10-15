@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.test/cerbos/private/v1/VerifyTestFixtureGetTestsTestCase.schema.json",
+  "$id": "https://api.cerbos.test/cerbos/private/v1/VerifyTestSuiteRunGetTestsTestCase.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "cerbos.engine.v1.AuxData": {
@@ -304,6 +304,14 @@
         "principal": {
           "type": "string"
         },
+        "principalGroups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
         "principals": {
           "type": "array",
           "items": {
@@ -314,6 +322,14 @@
         },
         "resource": {
           "type": "string"
+        },
+        "resourceGroups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
         },
         "resources": {
           "type": "array",
@@ -328,8 +344,6 @@
     "cerbos.policy.v1.TestTable.Input": {
       "type": "object",
       "required": [
-        "principals",
-        "resources",
         "actions"
       ],
       "additionalProperties": false,
@@ -346,13 +360,28 @@
         "auxData": {
           "type": "string"
         },
+        "principalGroups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
         "principals": {
           "type": "array",
           "items": {
             "type": "string",
             "minLength": 1
           },
-          "minItems": 1,
+          "uniqueItems": true
+        },
+        "resourceGroups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
           "uniqueItems": true
         },
         "resources": {
@@ -361,7 +390,6 @@
             "type": "string",
             "minLength": 1
           },
-          "minItems": 1,
           "uniqueItems": true
         }
       }

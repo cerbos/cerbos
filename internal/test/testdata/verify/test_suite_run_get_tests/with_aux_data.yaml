@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../.jsonschema/VerifyTestFixtureGetTestsTestCase.schema.json
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestSuiteRunGetTestsTestCase.schema.json
 ---
 table:
   name: With auxData

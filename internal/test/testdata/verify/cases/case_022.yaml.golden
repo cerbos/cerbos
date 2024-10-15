@@ -1,0 +1,351 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 25,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 25
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "Using groups",
+          "principals": [
+            {
+              "name": "bev",
+              "resources": [
+                {
+                  "name": "john_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "barb",
+              "resources": [
+                {
+                  "name": "john_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "bob",
+              "resources": [
+                {
+                  "name": "john_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "stale_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Groups defined in the suite override those defined in fixtures",
+          "principals": [
+            {
+              "name": "bev",
+              "resources": [
+                {
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 25,
+    "resultCounts": [
+      {
+        "result": "RESULT_PASSED",
+        "count": 25
+      }
+    ]
+  }
+}

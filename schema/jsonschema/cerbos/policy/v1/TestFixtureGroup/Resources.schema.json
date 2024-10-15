@@ -1,0 +1,20 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestFixtureGroup/Resources.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "resources"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  }
+}

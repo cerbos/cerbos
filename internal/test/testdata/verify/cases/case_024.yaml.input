@@ -1,0 +1,160 @@
+-- testdata/principals.yaml --
+---
+principals:
+  bev: &bev
+    id: bev
+    policyVersion: '20210210'
+    roles:
+      - employee
+      - manager
+    attr:
+      department: marketing
+      geography: GB
+      managed_geographies: GB
+      ip_address: 10.20.1.2
+      team: design
+  barb:
+    <<: *bev
+    id: barb
+  bob:
+    <<: *bev
+    id: bob
+
+principalGroups:
+  bev_and_barb:
+    principals:
+      - unknown
+      - barb
+
+  barb_and_bob:
+    principals:
+      - barb
+      - bob
+
+  overridden_in_suite:
+    principals:
+      - bev
+      - barb
+      - bob
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
+    attr: &attr
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+  pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
+    attr:
+      <<: *attr
+      status: PENDING_APPROVAL
+  stale_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      <<: *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+  stale_pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      <<: *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+      status: PENDING_APPROVAL
+
+resourceGroups:
+  pending_leave_requests:
+    resources:
+      - pending_leave_request
+      - stale_pending_leave_request
+
+  stale_leave_requests:
+    resources:
+      - stale_leave_request
+      - stale_pending_leave_request
+
+  overridden_in_suite:
+    resources:
+      - pending_leave_request
+      - stale_leave_request
+      - stale_pending_leave_request
+
+-- testdata/auxdata.yaml --
+---
+auxData:
+  myJWT:
+    jwt:
+      iss: cerbos-test-suite
+      aud: [cerbos-jwt-tests]
+      customArray: [A, B]
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+options:
+  now: "2022-08-02T15:00:00Z"
+principalGroups:
+  overridden_in_suite:
+    principals:
+      - bev
+resourceGroups:
+  overridden_in_suite:
+    resources:
+      - pending_leave_request
+tests:
+  - name: Using groups
+    input:
+      principals:
+        - bev
+      principalGroups:
+        - bev_and_barb
+        - barb_and_bob
+      resources:
+        - john_leave_request
+        - pending_leave_request
+      resourceGroups:
+        - pending_leave_requests
+        - stale_leave_requests
+      actions:
+        - view:public
+        - delete
+      auxData: myJWT
+    expected:
+      - principal: bev
+        principalGroups:
+          - bev_and_barb
+          - barb_and_bob
+        resource: john_leave_request
+        resourceGroups:
+          - pending_leave_requests
+          - stale_leave_requests
+        actions:
+          view:public: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+
+  - name: Groups defined in the suite override those defined in fixtures
+    input:
+      principalGroups:
+        - overridden_in_suite
+      resourceGroups:
+        - overridden_in_suite
+      actions:
+        - view:public
+      auxData: myJWT
+    expected:
+      - principal: bev
+        resource: pending_leave_request
+        actions:
+          view:public: EFFECT_ALLOW

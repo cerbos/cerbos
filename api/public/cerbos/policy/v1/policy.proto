@@ -322,16 +322,46 @@ message TestFixture {
   message Principals {
     map<string, cerbos.engine.v1.Principal> principals = 1;
     string json_schema = 2 [json_name = "$schema"];
+    map<string, TestFixtureGroup.Principals> principal_groups = 3;
   }
 
   message Resources {
     map<string, cerbos.engine.v1.Resource> resources = 1;
     string json_schema = 2 [json_name = "$schema"];
+    map<string, TestFixtureGroup.Resources> resource_groups = 3;
   }
 
   message AuxData {
     map<string, cerbos.engine.v1.AuxData> aux_data = 1;
     string json_schema = 2 [json_name = "$schema"];
+  }
+}
+
+message TestFixtureGroup {
+  message Principals {
+    repeated string principals = 1 [
+      (buf.validate.field).repeated = {
+        min_items: 1
+        unique: true
+        items: {
+          string: {min_len: 1}
+        }
+      },
+      (buf.validate.field).required = true
+    ];
+  }
+
+  message Resources {
+    repeated string resources = 1 [
+      (buf.validate.field).repeated = {
+        min_items: 1
+        unique: true
+        items: {
+          string: {min_len: 1}
+        }
+      },
+      (buf.validate.field).required = true
+    ];
   }
 }
 
@@ -358,30 +388,24 @@ message TestSuite {
   map<string, cerbos.engine.v1.AuxData> aux_data = 8;
   TestOptions options = 9;
   string json_schema = 10 [json_name = "$schema"];
+  map<string, TestFixtureGroup.Principals> principal_groups = 11;
+  map<string, TestFixtureGroup.Resources> resource_groups = 12;
 }
 
 message TestTable {
   message Input {
-    repeated string principals = 1 [
-      (buf.validate.field).repeated = {
-        min_items: 1
-        unique: true
-        items: {
-          string: {min_len: 1}
-        }
-      },
-      (buf.validate.field).required = true
-    ];
-    repeated string resources = 2 [
-      (buf.validate.field).repeated = {
-        min_items: 1
-        unique: true
-        items: {
-          string: {min_len: 1}
-        }
-      },
-      (buf.validate.field).required = true
-    ];
+    repeated string principals = 1 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
+    repeated string resources = 2 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
     repeated string actions = 3 [
       (buf.validate.field).repeated = {
         min_items: 1
@@ -393,6 +417,30 @@ message TestTable {
       (buf.validate.field).required = true
     ];
     string aux_data = 4;
+    repeated string principal_groups = 5 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
+    repeated string resource_groups = 6 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
+
+    option (buf.validate.message).cel = {
+      id: "input.principals"
+      message: "principals or principalGroups must be present"
+      expression: "size(this.principals) > 0 || size(this.principal_groups) > 0"
+    };
+
+    option (buf.validate.message).cel = {
+      id: "input.resources"
+      message: "resources or resourceGroups must be present"
+      expression: "size(this.resources) > 0 || size(this.resource_groups) > 0"
+    };
   }
 
   message OutputExpectations {
@@ -439,11 +487,23 @@ message TestTable {
         string: {min_len: 1}
       }
     }];
+    repeated string principal_groups = 7 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
+    repeated string resource_groups = 8 [(buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+    }];
 
     option (buf.validate.message).cel = {
-      id: "expectation.principal_or_principals"
-      message: "either principal or principals must be present"
-      expression: "this.principal != '' || size(this.principals) > 0"
+      id: "expectation.principals"
+      message: "principal, principals, or principalGroups must be present"
+      expression: "this.principal != '' || size(this.principals) > 0 || size(this.principal_groups) > 0"
     };
 
     option (buf.validate.message).cel = {
@@ -453,9 +513,9 @@ message TestTable {
     };
 
     option (buf.validate.message).cel = {
-      id: "expectation.resource_or_resources"
-      message: "either resource or resources must be present"
-      expression: "this.resource != '' || size(this.resources) > 0"
+      id: "expectation.resources"
+      message: "resource, resources, or resourceGroups must be present"
+      expression: "this.resource != '' || size(this.resources) > 0 || size(this.resource_groups) > 0"
     };
 
     option (buf.validate.message).cel = {

@@ -1,0 +1,75 @@
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestSuiteRunGetTestsTestCase.schema.json
+---
+table:
+  name: Repeated expectation
+  description: You can have multiple expectations for a principal+resource pair if those expectations are consistent.
+  input:
+    principals:
+      - employee
+    resources:
+      - employee_leave_request
+    actions:
+      - view
+      - approve
+  expected:
+    - principal: employee
+      resource: employee_leave_request
+      actions:
+        approve: EFFECT_DENY
+      outputs:
+        - action: view
+          expected:
+            - src: resource.leave_request.v20210210#question
+              val: 42
+            - src: resource.leave_request.v20210210#power
+              val:
+                over: 9000
+
+    - principal: employee
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+      outputs:
+        - action: view
+          expected:
+            - src: resource.leave_request.v20210210#question
+              val: 42
+            - src: resource.leave_request.v20210210#base-owners
+              val:
+                - us
+        - action: approve
+          expected:
+            - src: resource.leave_request.v20210210#question
+              val: 42
+
+wantTests:
+  - name:
+      testTableName: Repeated expectation
+      principalKey: employee
+      resourceKey: employee_leave_request
+    description: You can have multiple expectations for a principal+resource pair if those expectations are consistent.
+    input:
+      principal:
+        id: employee
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: employee
+      actions:
+        - view
+        - approve
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_DENY
+    expectedOutputs:
+      view:
+        entries:
+          resource.leave_request.v20210210#question: 42
+          resource.leave_request.v20210210#power:
+            over: 9000
+          resource.leave_request.v20210210#base-owners:
+            - us
+      approve:
+        entries:
+          resource.leave_request.v20210210#question: 42

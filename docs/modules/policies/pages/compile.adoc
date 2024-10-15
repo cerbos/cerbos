@@ -33,16 +33,25 @@ options:
   lenientScopeSearch: true <4>
   globals: <5>
     my_global_var: foo
+
 principals: <6>
   alicia:
     id: aliciaID
     roles:
       - user
+
   bradley:
     id: bradleyID
     roles:
       - user
-resources: <7>
+
+principalGroups: <7>
+  everyone:
+    principals:
+      - alicia
+      - bradley
+
+resources: <8>
   alicia_album:
     id: XX125
     kind: album:object
@@ -51,6 +60,7 @@ resources: <7>
       owner: aliciaID
       public: false
       flagged: false
+
   bradley_album:
     id: XX250
     kind: album:object
@@ -59,50 +69,78 @@ resources: <7>
       owner: bradleyID
       public: false
       flagged: false
-auxData: <8>
+
+resourceGroups: <9>
+  all_albums:
+    resources:
+      - alicia_album
+      - bradley_album
+
+auxData: <10>
   validJWT:
     jwt:
       iss: my.domain
       aud: ["x", "y"]
       myField: value
-tests: <9>
-  - name: Accessing an album <10>
+
+tests: <11>
+  - name: Accessing an album <12>
     options:
-      now: "2022-08-03T15:00:00Z" <11>
-      lenientScopeSearch: false <12>
-      globals: <13>
+      now: "2022-08-03T15:00:00Z" <13>
+      lenientScopeSearch: false <14>
+      globals: <15>
         my_global_var: bar
-    input: <14>
-      principals: <15>
+
+    input: <16>
+      principals: <17>
         - alicia
         - bradley
-      resources: <16>
+      resources: <18>
         - alicia_album
         - bradley_album
-      actions: <17>
+      actions: <19>
         - view
         - delete
-      auxData: validJWT <18>
-    expected: <19>
-      - principal: alicia <20>
-        resource: alicia_album <21>
-        actions: <22>
+      auxData: validJWT <20>
+
+    expected: <21>
+      - principal: alicia <22>
+        resource: alicia_album <23>
+        actions: <24>
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
-        outputs: <23>
-          - action: view <24>
-            expected: <25>
+        outputs: <25>
+          - action: view <26>
+            expected: <27>
               - src: resource.album.vdefault#view-rule
                 val:
                   key1: value1
                   key2: ["value2", "value3"]
               - src: resource.album.vdefault#token-lifetime
                 val: 1h
+
       - principal: bradley
         resource: bradley_album
         actions:
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
+
+  - name: Using groups
+    input:
+      principalGroups: <28>
+        - everyone
+      resourceGroups: <29>
+        - all_albums
+      actions:
+        - download
+
+    expected:
+      - principalGroups: <30>
+          - everyone
+        resourceGroups: <31>
+          - all_albums
+        actions:
+          download: EFFECT_DENY
 ----
 <1> Name of the test suite
 <2> Description of the test suite
@@ -110,25 +148,31 @@ tests: <9>
 <4> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test suite
 <5> Optionally set xref:configuration:engine.adoc#globals[globals] for this test suite
 <6> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
-<7> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
-<8> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
-<9> List of tests in this suite
-<10> Name of the test
-<11> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to this test only and takes precedence over the global suite option.
-<12> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test. Applies to just this test and takes precedence over the global suite option.
-<13> Optionally set xref:configuration:engine.adoc#globals[globals] for this test. Applies to just this test and takes precedence over the global suite option.
-<14> Input to the policy engine
-<15> List of keys of principal fixtures to test
-<16> List of keys of resource fixtures to test
-<17> List of actions to test
-<18> Key of auxiliary data fixture to test (optional)
-<19> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
-<20> Key of the principal fixture under test. Use `principals` instead of `principal` if you want to specify identical expectations for multiple principals.
-<21> Key of the resource fixture under test. Use `resources` instead of `resource` if you want to specify identical expectations for multiple resources.
-<22> Expected outcomes for each action for each principal+resource pair. If an action specified in `input` is not listed, then `EFFECT_DENY` is expected for that action.
-<23> Optional list of xref:outputs.adoc[output values] to match
-<24> Name of the action that would produce the output
-<25> List of expected output values
+<7> Map of principal groups. The key is a string that can be used to refer to the associated group of principal fixtures.
+<8> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
+<9> Map of resource groups. The key is a string that can be used to refer to the associated group of resource fixtures.
+<10> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
+<11> List of tests in this suite
+<12> Name of the test
+<13> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to this test only and takes precedence over the global suite option.
+<14> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test. Applies to just this test and takes precedence over the global suite option.
+<15> Optionally set xref:configuration:engine.adoc#globals[globals] for this test. Applies to just this test and takes precedence over the global suite option.
+<16> Input to the policy engine
+<17> List of keys of principal fixtures to test
+<18> List of keys of resource fixtures to test
+<19> List of actions to test
+<20> Key of auxiliary data fixture to test (optional)
+<21> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
+<22> Key of the principal fixture under test. Use `principals` instead of `principal` if you want to specify identical expectations for multiple principals.
+<23> Key of the resource fixture under test. Use `resources` instead of `resource` if you want to specify identical expectations for multiple resources.
+<24> Expected outcomes for each action for each principal+resource pair. If an action specified in `input` is not listed, then `EFFECT_DENY` is expected for that action.
+<25> Optional list of xref:outputs.adoc[output values] to match
+<26> Name of the action that would produce the output
+<27> List of expected output values
+<28> List of keys of principal groups to test. You can provide this instead of, or as well as, `principals`.
+<29> List of keys of resource groups to test. You can provide this instead of, or as well as, `resources`.
+<30> Key of the principal group under test. You can provide this instead of, or as well as, `principal` or `principals`.
+<31> Key of the resource group under test. You can provide this instead of, or as well as, `resource` or `resources`.
 
 [#fixtures]
 === Sharing test fixtures
@@ -150,20 +194,24 @@ tests
 [source,yaml]
 ----
 ---
-principals:
+principals: # required
   john:
     id: johnID
     roles:
       - user
       - moderator
 
+principalGroups: # optional
+  moderators:
+    principals:
+      - john
 ----
 
 .An example of `testdata/resources.yml`
 [source,yaml]
 ----
 ---
-resources:
+resources: # required
   alicia_album:
     id: XX125
     kind: "album:object"
@@ -171,13 +219,18 @@ resources:
       owner: aliciaID
       public: false
       flagged: false
+
+resourceGroups: # optional
+  all_albums:
+    resources:
+      - alicia_album
 ----
 
 .An example of `testdata/auxdata.yml`
 [source,yaml]
 ----
 ---
-auxData:
+auxData: # required
   validJWT:
     jwt:
       iss: my.domain

@@ -3051,7 +3051,7 @@ func (m *QueryPlannerTestSuite) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *VerifyTestFixtureGetTestsTestCase) MarshalVT() (dAtA []byte, err error) {
+func (m *VerifyTestSuiteRunGetTestsTestCase) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -3064,12 +3064,12 @@ func (m *VerifyTestFixtureGetTestsTestCase) MarshalVT() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *VerifyTestFixtureGetTestsTestCase) MarshalToVT(dAtA []byte) (int, error) {
+func (m *VerifyTestSuiteRunGetTestsTestCase) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *VerifyTestFixtureGetTestsTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *VerifyTestSuiteRunGetTestsTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -5192,7 +5192,7 @@ func (m *QueryPlannerTestSuite) SizeVT() (n int) {
 	return n
 }
 
-func (m *VerifyTestFixtureGetTestsTestCase) SizeVT() (n int) {
+func (m *VerifyTestSuiteRunGetTestsTestCase) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -11702,7 +11702,7 @@ func (m *QueryPlannerTestSuite) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
+func (m *VerifyTestSuiteRunGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -11725,10 +11725,10 @@ func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: VerifyTestFixtureGetTestsTestCase: wiretype end group for non-group")
+			return fmt.Errorf("proto: VerifyTestSuiteRunGetTestsTestCase: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: VerifyTestFixtureGetTestsTestCase: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: VerifyTestSuiteRunGetTestsTestCase: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

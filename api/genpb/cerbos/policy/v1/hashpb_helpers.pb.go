@@ -812,6 +812,31 @@ func cerbos_policy_v1_SourceAttributes_hashpb_sum(m *SourceAttributes, hasher ha
 	}
 }
 
+func cerbos_policy_v1_TestFixtureGroup_Principals_hashpb_sum(m *TestFixtureGroup_Principals, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestFixtureGroup.Principals.principals"]; !ok {
+		if len(m.Principals) > 0 {
+			for _, v := range m.Principals {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestFixtureGroup_Resources_hashpb_sum(m *TestFixtureGroup_Resources, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestFixtureGroup.Resources.resources"]; !ok {
+		if len(m.Resources) > 0 {
+			for _, v := range m.Resources {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestFixtureGroup_hashpb_sum(m *TestFixtureGroup, hasher hash.Hash, ignore map[string]struct{}) {
+}
+
 func cerbos_policy_v1_TestFixture_hashpb_sum(m *TestFixture, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
@@ -1222,6 +1247,44 @@ func cerbos_policy_v1_TestSuite_hashpb_sum(m *TestSuite, hasher hash.Hash, ignor
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetJsonSchema()))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestSuite.principal_groups"]; !ok {
+		if len(m.PrincipalGroups) > 0 {
+			keys := make([]string, len(m.PrincipalGroups))
+			i := 0
+			for k := range m.PrincipalGroups {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.PrincipalGroups[k] != nil {
+					cerbos_policy_v1_TestFixtureGroup_Principals_hashpb_sum(m.PrincipalGroups[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestSuite.resource_groups"]; !ok {
+		if len(m.ResourceGroups) > 0 {
+			keys := make([]string, len(m.ResourceGroups))
+			i := 0
+			for k := range m.ResourceGroups {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.ResourceGroups[k] != nil {
+					cerbos_policy_v1_TestFixtureGroup_Resources_hashpb_sum(m.ResourceGroups[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *TestTable_Expectation, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1276,6 +1339,22 @@ func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *TestTable_Expectation,
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.principal_groups"]; !ok {
+		if len(m.PrincipalGroups) > 0 {
+			for _, v := range m.PrincipalGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.resource_groups"]; !ok {
+		if len(m.ResourceGroups) > 0 {
+			for _, v := range m.ResourceGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *TestTable_Input, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1306,6 +1385,22 @@ func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *TestTable_Input, hasher hash
 	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.aux_data"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetAuxData()))
 
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principal_groups"]; !ok {
+		if len(m.PrincipalGroups) > 0 {
+			for _, v := range m.PrincipalGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resource_groups"]; !ok {
+		if len(m.ResourceGroups) > 0 {
+			for _, v := range m.ResourceGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
 	}
 }
 

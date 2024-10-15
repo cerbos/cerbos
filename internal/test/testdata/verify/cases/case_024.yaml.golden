@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "failed to load test fixtures from testdata: failed to load aux data: file is not valid: { /auxData/myJWT: [additionalProperties 'jort' not allowed] }",
+      "error": "failed to load test fixtures from testdata: failed to load principals: missing fixture \"unknown\" referenced in group \"bev_and_barb\"",
       "description": "Tests for verifying something"
     }
   ],

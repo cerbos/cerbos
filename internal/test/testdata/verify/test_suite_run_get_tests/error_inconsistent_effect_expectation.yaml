@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestSuiteRunGetTestsTestCase.schema.json
+---
+table:
+  name: Inconsistent effect expectation
+  description: You can't have multiple expectations for a principal+resource pair if those expectations are inconsistent.
+  input:
+    principals:
+      - employee
+      - manager
+    resources:
+      - employee_leave_request
+      - manager_leave_request
+    actions:
+      - view
+      - approve
+  expected:
+    - principal: manager
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+
+    - principal: manager
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_DENY
+        approve: EFFECT_ALLOW
+
+wantErr: |-
+  invalid test "Inconsistent effect expectation": found inconsistent expectations for principal "manager" performing action "view" on resource "employee_leave_request"

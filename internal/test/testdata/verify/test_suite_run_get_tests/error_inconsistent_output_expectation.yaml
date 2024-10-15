@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestSuiteRunGetTestsTestCase.schema.json
+---
+table:
+  name: Inconsistent output expectation
+  description: You can't have multiple expectations for a principal+resource pair if those expectations are inconsistent.
+  input:
+    principals:
+      - employee
+      - manager
+    resources:
+      - employee_leave_request
+      - manager_leave_request
+    actions:
+      - view
+      - approve
+  expected:
+    - principal: employee
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+      outputs:
+        - action: view
+          expected:
+            - src: resource.leave_request.v20210210#question
+              val: 42
+            - src: resource.leave_request.v20210210#power
+              val:
+                over: 9000
+
+    - principal: employee
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+      outputs:
+        - action: view
+          expected:
+            - src: resource.leave_request.v20210210#question
+              val: 42
+            - src: resource.leave_request.v20210210#power
+              val: false
+
+wantErr: |-
+  invalid test "Inconsistent output expectation": found inconsistent expectations for output "resource.leave_request.v20210210#power" from principal "employee" performing action "view" on resource "employee_leave_request"

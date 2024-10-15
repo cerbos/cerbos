@@ -1,0 +1,184 @@
+# yaml-language-server: $schema=../../.jsonschema/VerifyTestSuiteRunGetTestsTestCase.schema.json
+---
+table:
+  name: Groups
+  description: A test for multiple principals and resources, using groups.
+  input:
+    principals:
+      - employee
+    principalGroups:
+      - management
+    resources:
+      - employee_leave_request
+    resourceGroups:
+      - management_leave_requests
+    actions:
+      - view
+  expected:
+    - principal: employee
+      principalGroups:
+        - management
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+    - principalGroups:
+        - management
+      resourceGroups:
+        - management_leave_requests
+      actions:
+        view: EFFECT_ALLOW
+
+wantTests:
+  - name:
+      testTableName: Groups
+      principalKey: employee
+      resourceKey: employee_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: employee
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: employee
+      actions:
+        - view
+    expected:
+      view: EFFECT_ALLOW
+  - name:
+      testTableName: Groups
+      principalKey: employee
+      resourceKey: manager_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: employee
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: manager
+      actions:
+        - view
+    expected:
+      view: EFFECT_DENY
+  - name:
+      testTableName: Groups
+      principalKey: employee
+      resourceKey: department_head_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: employee
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: department_head
+      actions:
+        - view
+    expected:
+      view: EFFECT_DENY
+  - name:
+      testTableName: Groups
+      principalKey: manager
+      resourceKey: employee_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: manager
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: employee
+      actions:
+        - view
+    expected:
+      view: EFFECT_ALLOW
+  - name:
+      testTableName: Groups
+      principalKey: manager
+      resourceKey: manager_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: manager
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: manager
+      actions:
+        - view
+    expected:
+      view: EFFECT_ALLOW
+  - name:
+      testTableName: Groups
+      principalKey: manager
+      resourceKey: department_head_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: manager
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: department_head
+      actions:
+        - view
+    expected:
+      view: EFFECT_ALLOW
+  - name:
+      testTableName: Groups
+      principalKey: department_head
+      resourceKey: employee_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: department_head
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: employee
+      actions:
+        - view
+    expected:
+      view: EFFECT_ALLOW
+  - name:
+      testTableName: Groups
+      principalKey: department_head
+      resourceKey: manager_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: department_head
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: manager
+      actions:
+        - view
+    expected:
+      view: EFFECT_ALLOW
+  - name:
+      testTableName: Groups
+      principalKey: department_head
+      resourceKey: department_head_leave_request
+    description: A test for multiple principals and resources, using groups.
+    input:
+      principal:
+        id: department_head
+        roles:
+          - user
+      resource:
+        kind: leave_request
+        id: department_head
+      actions:
+        - view
+    expected:
+      view: EFFECT_ALLOW

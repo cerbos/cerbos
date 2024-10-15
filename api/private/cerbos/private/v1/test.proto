@@ -242,7 +242,7 @@ message QueryPlannerTestSuite {
   repeated Test tests = 3;
 }
 
-message VerifyTestFixtureGetTestsTestCase {
+message VerifyTestSuiteRunGetTestsTestCase {
   cerbos.policy.v1.TestTable table = 1;
   repeated cerbos.policy.v1.Test want_tests = 2;
   string want_err = 3;

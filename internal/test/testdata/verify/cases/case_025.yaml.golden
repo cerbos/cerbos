@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "failed to load test fixtures from testdata: file is not valid: { /principals/john/policyVersion: [expected string, but got number] }",
+      "error": "failed to load test fixtures from testdata: failed to load principals: file is not valid: { /principals/john/policyVersion: [expected string, but got number] }",
       "description": "Tests for verifying something"
     }
   ],
