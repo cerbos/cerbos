@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "Failed to load the test suite: invalid test \"John and his leave request\": principal \"john\" not found",
+      "error": "failed to load test fixtures from testdata: validation error:\n - resources[\"john_leave_request\"].kind: value is required [required]",
       "description": "Tests for verifying something"
     }
   ],

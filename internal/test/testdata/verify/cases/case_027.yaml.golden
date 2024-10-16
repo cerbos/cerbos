@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "Failed to load the test suite: invalid test \"John and his leave request\": principal \"john\" not found",
+      "error": "failed to load test fixtures from testdata: failed to unmarshal JSON: proto: (line 1:22): unknown field \"jort\"",
       "description": "Tests for verifying something"
     }
   ],

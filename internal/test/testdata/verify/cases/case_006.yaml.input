@@ -1,7 +1,3 @@
--- testdata/principals.yaml --
-principals:
-  invalid: {}
-
 -- suite_test.yaml --
 ---
 name: TestSuite
