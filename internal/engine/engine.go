@@ -1,13 +1,6 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//TODO: Add tests:
-// Principal, Role policy, Resource
-// 1. allow, deny, x => principal allow (emma accountant files tax return)
-// 2. deny, deny, x =>  DENY (emma accountant deletes tax return)
-// 3. x, allow, x => ALWAYS ALLOW (x001 accountant comment on tax return)
-// 4. x, deny, allow =>  ALWAYS DENY (x001 accountant view tax return)
-
 package engine
 
 import (
