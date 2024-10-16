@@ -7,5 +7,5 @@ rolePolicy:
   scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
   rules:
     - resource: tax_return
-      permissibleActions:
+      allowActions:
         - comment

@@ -297,7 +297,6 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			return nil, nil, errors.New("role policy evaluator unexpected result")
 		}
 		effect := effInfo.Effect
-		fmt.Printf("role policies evaluated to %+v", evalResult)
 		if effect == effectv1.Effect_EFFECT_ALLOW {
 			if result.Empty() {
 				result = planner.NewAlwaysAllowed(effInfo.Scope)
