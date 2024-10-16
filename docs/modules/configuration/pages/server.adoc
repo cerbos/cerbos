@@ -81,7 +81,7 @@ NOTE: For production use cases that require automatic certificate reloading, wor
 
 == CORS
 
-By default, link:https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS[CORS] is enabled on the HTTP service with all origins allowed. You can disable CORS by setting `server.cors.disabled` to `true`. You can also restrict the list of allowed origins and headers by setting `server.cors.allowedOrigins` and `server.cors.allowedHeaders` respectively.
+By default, link:https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS[CORS] is enabled on the HTTP service with all origins allowed. The default allowed headers are `accept`, `content-type`, `user-agent` and `x-requested-with`. You can disable CORS by setting `server.cors.disabled` to `true`. You can also restrict the list of allowed origins and headers by setting `server.cors.allowedOrigins` and `server.cors.allowedHeaders` respectively.
 
 [source,yaml,linenums]
 ----
@@ -91,7 +91,11 @@ server:
       - example.com
       - example.org
     allowedHeaders:
-      - X-CUSTOM
+      - accept
+      - content-type
+      - user-agent
+      - x-custom-header
+      - x-requested-with
 ----
 
 [#request-limits]
