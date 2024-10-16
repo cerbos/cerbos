@@ -288,14 +288,28 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
 	if rpEvaluator != nil {
 		tctx := tracer.Start(opts.tracerSink)
-		effect, at, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
+		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
 		if err != nil {
 			return nil, nil, err
 		}
-		if effect != effectv1.Effect_EFFECT_ALLOW {
-			skipResourcePolicies = true
+		effInfo, ok := evalResult.Effects[input.Action]
+		if !ok {
+			return nil, nil, errors.New("role policy evaluator unexpected result")
 		}
-		maps.Copy(auditTrail.EffectivePolicies, at.EffectivePolicies)
+		effect := effInfo.Effect
+		fmt.Printf("role policies evaluated to %+v", evalResult)
+		if effect == effectv1.Effect_EFFECT_ALLOW {
+			if result.Empty() {
+				result = planner.NewAlwaysAllowed(effInfo.Scope)
+			}
+		} else {
+			skipResourcePolicies = true
+			if result.Empty() {
+				result = planner.NewAlwaysDenied(effInfo.Scope)
+			}
+
+		}
+		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
 	}
 
 	if !skipResourcePolicies {
