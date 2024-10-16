@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "failed to load test fixtures from testdata: failed to unmarshal JSON: proto: (line 1:22): unknown field \"jort\"",
+      "error": "failed to load test fixtures from testdata: file is not valid: { /auxData/myJWT: [additionalProperties 'jort' not allowed] }",
       "description": "Tests for verifying something"
     }
   ],

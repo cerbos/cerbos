@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "failed to load test fixtures from testdata: validation error:\n - resources[\"john_leave_request\"].kind: value is required [required]",
+      "error": "failed to load test fixtures from testdata: file is not valid: { /resources/john_leave_request: [missing properties: 'kind'] }",
       "description": "Tests for verifying something"
     }
   ],

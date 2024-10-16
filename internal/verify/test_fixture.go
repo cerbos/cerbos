@@ -22,6 +22,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/jsonschema"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/validator"
 )
@@ -91,7 +92,7 @@ func loadResources(fsys fs.FS, path string) (*Resources, error) {
 	}
 
 	pb := &policyv1.TestFixture_Resources{}
-	if err := loadFixtureElement(fsys, fp, pb); err != nil {
+	if err := loadFixtureElement(fsys, fp, pb, jsonschema.ValidateResourceFixtures); err != nil {
 		resources.LoadError = err
 		return resources, err
 	}
@@ -114,7 +115,7 @@ func loadPrincipals(fsys fs.FS, path string) (*Principals, error) {
 	}
 
 	pb := &policyv1.TestFixture_Principals{}
-	if err := loadFixtureElement(fsys, fp, pb); err != nil {
+	if err := loadFixtureElement(fsys, fp, pb, jsonschema.ValidatePrincipalFixtures); err != nil {
 		principals.LoadError = err
 		return principals, err
 	}
@@ -138,7 +139,7 @@ func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
 		}
 
 		pb := &policyv1.TestFixture_AuxData{}
-		if err := loadFixtureElement(fsys, fp, pb); err != nil {
+		if err := loadFixtureElement(fsys, fp, pb, jsonschema.ValidateAuxDataFixtures); err != nil {
 			auxData.LoadError = err
 			return auxData, err
 		}
@@ -150,14 +151,13 @@ func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
 	return nil, nil
 }
 
-func loadFixtureElement(fsys fs.FS, path string, pb proto.Message) error {
-	file, err := fsys.Open(path)
+func loadFixtureElement(fsys fs.FS, path string, pb proto.Message, validate func(fs.FS, string) error) error {
+	err := validate(fsys, path)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 
-	err = util.ReadJSONOrYAML(file, pb)
+	err = util.LoadFromJSONOrYAML(fsys, path, pb)
 	if err != nil {
 		return err
 	}

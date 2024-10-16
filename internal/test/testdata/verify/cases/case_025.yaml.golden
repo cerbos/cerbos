@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "failed to load test fixtures from testdata: failed to unmarshal JSON: proto: (line 1:119): invalid value for string field policyVersion: 20210210",
+      "error": "failed to load test fixtures from testdata: file is not valid: { /principals/john/policyVersion: [expected string, but got number] }",
       "description": "Tests for verifying something"
     }
   ],

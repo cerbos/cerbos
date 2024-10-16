@@ -21,11 +21,17 @@ var svcSwaggerRaw []byte
 //go:embed assets/ui.html
 var rapidocHTML []byte
 
-//go:embed jsonschema/cerbos/policy/v1/Policy.schema.json
-var PolicyJSONSchema string
-
 //go:embed jsonschema/cerbos/policy/v1/TestSuite.schema.json
 var TestSuiteJSONSchema string
+
+//go:embed jsonschema/cerbos/policy/v1/TestFixture/Principals.schema.json
+var PrincipalFixturesJSONSchema string
+
+//go:embed jsonschema/cerbos/policy/v1/TestFixture/Resources.schema.json
+var ResourceFixturesJSONSchema string
+
+//go:embed jsonschema/cerbos/policy/v1/TestFixture/AuxData.schema.json
+var AuxDataFixturesJSONSchema string
 
 func ServeSvcSwagger(w http.ResponseWriter, r *http.Request) {
 	defer cleanup(r)

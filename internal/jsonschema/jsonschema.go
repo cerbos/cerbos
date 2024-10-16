@@ -22,29 +22,50 @@ import (
 var (
 	ErrEmptyFile = errors.New("empty file")
 
-	policySchema *jsonschema.Schema
-	testSchema   *jsonschema.Schema
+	testSchema              *jsonschema.Schema
+	principalFixturesSchema *jsonschema.Schema
+	resourceFixturesSchema  *jsonschema.Schema
+	auxDataFixturesSchema   *jsonschema.Schema
 )
 
 func init() {
 	var err error
-	if policySchema, err = jsonschema.CompileString("Policy.schema.json", schema.PolicyJSONSchema); err != nil {
-		log.Fatalf("failed to compile policy schema: %v", err)
-	}
 
 	if testSchema, err = jsonschema.CompileString("TestSuite.schema.json", schema.TestSuiteJSONSchema); err != nil {
 		log.Fatalf("failed to compile test schema: %v", err)
 	}
-}
 
-// ValidatePolicy validates the policy in the fsys with the JSON schema.
-func ValidatePolicy(fsys fs.FS, path string) error {
-	return validate(policySchema, fsys, path)
+	if principalFixturesSchema, err = jsonschema.CompileString("Principals.schema.json", schema.PrincipalFixturesJSONSchema); err != nil {
+		log.Fatalf("failed to compile principal fixtures schema: %v", err)
+	}
+
+	if resourceFixturesSchema, err = jsonschema.CompileString("Resources.schema.json", schema.ResourceFixturesJSONSchema); err != nil {
+		log.Fatalf("failed to compile resource fixtures schema: %v", err)
+	}
+
+	if auxDataFixturesSchema, err = jsonschema.CompileString("AuxData.schema.json", schema.AuxDataFixturesJSONSchema); err != nil {
+		log.Fatalf("failed to compile aux data fixtures schema: %v", err)
+	}
 }
 
 // ValidateTest validates the test in the fsys with the JSON schema.
 func ValidateTest(fsys fs.FS, path string) error {
 	return validate(testSchema, fsys, path)
+}
+
+// ValidatePrincipalFixtures validates the principal fixtures file in the fsys with the JSON schema.
+func ValidatePrincipalFixtures(fsys fs.FS, path string) error {
+	return validate(principalFixturesSchema, fsys, path)
+}
+
+// ValidateResourceFixtures validates the resource fixtures file in the fsys with the JSON schema.
+func ValidateResourceFixtures(fsys fs.FS, path string) error {
+	return validate(resourceFixturesSchema, fsys, path)
+}
+
+// ValidatePrincipalFixtures validates the aux data fixtures file in the fsys with the JSON schema.
+func ValidateAuxDataFixtures(fsys fs.FS, path string) error {
+	return validate(auxDataFixturesSchema, fsys, path)
 }
 
 func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
