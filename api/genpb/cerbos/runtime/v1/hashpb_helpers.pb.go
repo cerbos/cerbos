@@ -1073,6 +1073,14 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.parent_roles"]; !ok {
+		if len(m.ParentRoles) > 0 {
+			for _, v := range m.ParentRoles {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnableVariablesSet_Metadata_hashpb_sum(m *RunnableVariablesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {

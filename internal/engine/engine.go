@@ -750,6 +750,20 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 			return nil, fmt.Errorf("failed to execute policy: %w", err)
 		}
 
+		// The principal assumes the IdP roles from any matched role policy's parent roles
+		if len(result.AssumedRoles) > 0 {
+			roleMap := make(map[string]struct{})
+			for _, r := range input.Principal.Roles {
+				roleMap[r] = struct{}{}
+			}
+
+			for _, r := range result.AssumedRoles {
+				if _, ok := roleMap[r]; !ok {
+					input.Principal.Roles = append(input.Principal.Roles, r)
+				}
+			}
+		}
+
 		incomplete := resp.merge(result)
 		if !incomplete {
 			return resp, nil
