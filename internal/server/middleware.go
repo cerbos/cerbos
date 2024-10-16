@@ -152,9 +152,15 @@ func withCORS(conf *Conf, handler http.Handler) http.Handler {
 		return handler
 	}
 
+	allowedHeaders := conf.CORS.AllowedHeaders
+	if len(allowedHeaders) == 0 {
+		// The cors library's defaults don't include user-agent so we explicitly add it here.
+		allowedHeaders = []string{"accept", "content-type", "user-agent", "x-requested-with"}
+	}
+
 	opts := cors.Options{
 		AllowedOrigins: conf.CORS.AllowedOrigins,
-		AllowedHeaders: conf.CORS.AllowedHeaders,
+		AllowedHeaders: allowedHeaders,
 		AllowedMethods: []string{
 			http.MethodHead,
 			http.MethodGet,
