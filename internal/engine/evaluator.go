@@ -102,6 +102,7 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
+		fmt.Printf("New RolePolicyEvaluator: %+v\n", rps)
 		return newRolePolicyEvaluator(rps)
 	default:
 		return noopEvaluator{}
@@ -152,7 +153,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 			activeRoles[r] = struct{}{}
 		}
-
+		fmt.Printf("Active roles: %v\n", activeRoles)
 		trail := newAuditTrail(sourceAttrs)
 		result := newEvalResult(input.Actions, trail)
 
@@ -166,14 +167,15 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		}
 
 		actions := util.NewGlobMap(permissibleActions)
-
+		fmt.Printf("actions: %v\n", actions)
+	outer:
 		for _, a := range input.Actions {
 			if v := actions.Get(a); v != nil {
-				continue
+				continue outer
 			}
 
 			actx := rpctx.StartAction(a)
-
+			fmt.Printf("action: %s\n", a)
 			mappingExists := actions.Get(a) != nil
 			if mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})

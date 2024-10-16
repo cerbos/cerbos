@@ -4,8 +4,10 @@ description: Role policies tax return tests for emma
 principal:
     id: x001
     policyVersion: default
+    scope: acme
     roles:
         - accountant
+        - employee
 tests:
     - action: comment
       resource:
