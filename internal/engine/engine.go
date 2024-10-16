@@ -279,6 +279,9 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 	skipResourcePolicies := false
 	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get role policy evaluator: %w", err)
+	}
 	if rpEvaluator != nil {
 		tctx := tracer.Start(opts.tracerSink)
 		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
@@ -290,16 +293,11 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			return nil, nil, errors.New("role policy evaluator unexpected result")
 		}
 		effect := effInfo.Effect
-		if effect == effectv1.Effect_EFFECT_ALLOW {
-			if result.Empty() {
-				result = planner.NewAlwaysAllowed(effInfo.Scope)
-			}
-		} else {
+		if effect != effectv1.Effect_EFFECT_ALLOW {
 			skipResourcePolicies = true
-			if result.Empty() {
-				result = planner.NewAlwaysDenied(effInfo.Scope)
-			}
-
+		}
+		if result.Empty() {
+			result = mkUnconditionalPolicyPlanResult(effInfo.Scope, effect)
 		}
 		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
 	}
@@ -350,6 +348,13 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	return output, auditTrail, nil
+}
+
+func mkUnconditionalPolicyPlanResult(scope string, effect effectv1.Effect) *planner.PolicyPlanResult {
+	if effect == effectv1.Effect_EFFECT_ALLOW {
+		return planner.NewAlwaysAllowed(scope)
+	}
+	return planner.NewAlwaysDenied(scope)
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {
