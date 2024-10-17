@@ -1313,6 +1313,9 @@ func cerbos_policy_v1_TestResults_Details_hashpb_sum(m *v12.TestResults_Details,
 					cerbos_policy_v1_TestResults_Success_hashpb_sum(t.Success, hasher, ignore)
 				}
 
+			case *v12.TestResults_Details_SkipReason:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.SkipReason))
+
 			}
 		}
 	}
@@ -1488,6 +1491,10 @@ func cerbos_policy_v1_TestResults_Suite_hashpb_sum(m *v12.TestResults_Suite, has
 	}
 	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.description"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetDescription()))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.skip_reason"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetSkipReason()))
 
 	}
 }

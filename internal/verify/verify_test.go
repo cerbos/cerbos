@@ -27,7 +27,6 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -57,7 +56,7 @@ func TestVerify(t *testing.T) {
 	for _, tcase := range testCases {
 		tc := readVerifyTestCase(t, tcase)
 		t.Run(tcase.Name, func(t *testing.T) {
-			have, err := runPolicyTests(t, eng, tc.archive)
+			have, err := runPolicyTests(t, eng, tc)
 			t.Log(protojson.Format(have))
 			if tc.WantErr {
 				require.Error(t, err, "Expected error")
@@ -78,47 +77,6 @@ func TestVerify(t *testing.T) {
 	}
 }
 
-func TestVerifyWithTestFilter(t *testing.T) {
-	testCases := test.LoadTestCases(t, filepath.Join("verify", "cases"))
-
-	eng := mkEngine(t)
-	resource := "leave_request"
-	conf := Config{
-		RunResources: map[string]struct{}{
-			namer.ResourcePolicyFQN(resource, "20210210", ""): {},
-		},
-		RunPrincipals: map[string]struct{}{
-			namer.PrincipalPolicyFQN("no-such-principal", "20210210", ""): {},
-		},
-	}
-	for _, tcase := range testCases {
-		tc := readVerifyTestCase(t, tcase)
-		t.Run(tcase.Name, func(t *testing.T) {
-			have, err := runPolicyTestsWithConf(t, eng, tc.archive, conf)
-			t.Log(protojson.Format(have))
-			if tc.WantErr {
-				require.Error(t, err, "Expected error")
-				return
-			}
-
-			for _, suite := range have.Suites {
-				for _, trTestCase := range suite.TestCases {
-					for _, trPrincipal := range trTestCase.Principals {
-						for _, trResource := range trPrincipal.Resources {
-							for _, trAction := range trResource.Actions {
-								if trAction.Details.Result != policyv1.TestResults_RESULT_SKIPPED {
-									require.True(t, strings.HasSuffix(trResource.Name, resource),
-										"not skipped test resource name %q expected to have suffix %q", trResource.Name, resource)
-								}
-							}
-						}
-					}
-				}
-			}
-		})
-	}
-}
-
 func updateGoldenFiles(t *testing.T, eng *engine.Engine, testCases []test.Case) {
 	t.Helper()
 
@@ -128,7 +86,7 @@ func updateGoldenFiles(t *testing.T, eng *engine.Engine, testCases []test.Case) 
 			continue
 		}
 
-		result, err := runPolicyTests(t, eng, tc.archive)
+		result, err := runPolicyTests(t, eng, tc)
 		require.NoError(t, err, "Failed to produce golden file for %q due to error from test run: %v", tcase.SourceFile, err)
 
 		test.WriteGoldenFile(t, tcase.SourceFile+".golden", result)
@@ -153,19 +111,19 @@ func readVerifyTestCase(t *testing.T, tcase test.Case) *TestCase {
 	return outTC
 }
 
-func runPolicyTests(t *testing.T, eng *engine.Engine, archive *txtar.Archive) (*policyv1.TestResults, error) {
-	t.Helper()
-
-	return runPolicyTestsWithConf(t, eng, archive, Config{})
-}
-
-func runPolicyTestsWithConf(t *testing.T, eng *engine.Engine, archive *txtar.Archive, conf Config) (*policyv1.TestResults, error) {
+func runPolicyTests(t *testing.T, eng *engine.Engine, tc *TestCase) (*policyv1.TestResults, error) {
 	t.Helper()
 
 	dir := t.TempDir()
-	require.NoError(t, txtar.Write(archive, dir), "Failed to expand archive")
+	require.NoError(t, txtar.Write(tc.archive, dir), "Failed to expand archive")
 
-	return Verify(context.Background(), os.DirFS(dir), eng, conf)
+	config := tc.GetConfig()
+
+	return Verify(context.Background(), os.DirFS(dir), eng, Config{
+		ExcludedResourcePolicyFQNs:  util.ToStringSet(config.GetExcludedResourcePolicyFqns()),
+		ExcludedPrincipalPolicyFQNs: util.ToStringSet(config.GetExcludedPrincipalPolicyFqns()),
+		IncludedTestNamesRegexp:     config.GetIncludedTestNamesRegexp(),
+	})
 }
 
 const (

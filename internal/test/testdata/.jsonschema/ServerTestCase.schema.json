@@ -969,6 +969,9 @@
         "result": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
         },
+        "skipReason": {
+          "type": "string"
+        },
         "success": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Success"
         }
@@ -1104,6 +1107,9 @@
           "items": {
             "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
           }
+        },
+        "skipReason": {
+          "type": "string"
         },
         "summary": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"

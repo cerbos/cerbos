@@ -1,0 +1,4 @@
+description: Principals filtered
+config:
+  excludedPrincipalPolicyFqns:
+    - cerbos.principal.john.v20210210

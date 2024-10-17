@@ -1,0 +1,16 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_SKIPPED"
+      },
+      "description": "Tests for verifying something",
+      "skipReason": "Not feeling it today"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_SKIPPED"
+  }
+}

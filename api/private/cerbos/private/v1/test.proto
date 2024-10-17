@@ -256,9 +256,15 @@ message QueryPlannerFilterTestCase {
 }
 
 message VerifyTestCase {
+  message Config {
+    repeated string excluded_resource_policy_fqns = 1;
+    repeated string excluded_principal_policy_fqns = 2;
+    string included_test_names_regexp = 3;
+  }
+
   string description = 1;
   bool want_err = 2;
-  cerbos.policy.v1.TestResults want = 3;
+  Config config = 3;
 }
 
 message ProtoYamlTestCase {

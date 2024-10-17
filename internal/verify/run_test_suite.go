@@ -50,6 +50,7 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 
 	if suite.Skip {
 		summary.OverallResult = policyv1.TestResults_RESULT_SKIPPED
+		results.SkipReason = suite.SkipReason
 		return results
 	}
 
@@ -71,19 +72,16 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 			return results
 		}
 
-		if !filter.ShouldRunResource(test.Input.Resource) &&
-			!filter.ShouldRunPrincipal(test.Input.Principal) {
-			testResult := &policyv1.TestResults_Details{
-				Result: policyv1.TestResults_RESULT_SKIPPED,
-			}
+		if skipped := filter.Apply(test, suite); skipped != nil {
 			for _, action := range test.Input.Actions {
-				addResult(results, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
+				addResult(results, test.Name, action, skipped)
 			}
+
 			continue
 		}
+
 		for _, action := range test.Input.Actions {
-			result := runTest(ctx, eng, test, action, filter, suite, trace)
-			addResult(results, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, result)
+			addResult(results, test.Name, action, runTest(ctx, eng, test, action, suite, trace))
 		}
 	}
 
@@ -251,13 +249,8 @@ func (r *testSuiteRun) lookupAuxData(name string) (*enginev1.AuxData, error) {
 	return nil, fmt.Errorf("auxData %q not found", name)
 }
 
-func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, filter *testFilter, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
+func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
 	details := &policyv1.TestResults_Details{}
-
-	if test.Skip || !filter.ShouldRun(fmt.Sprintf("%s/%s", suite.Name, test.Name.String())) {
-		details.Result = policyv1.TestResults_RESULT_SKIPPED
-		return details
-	}
 
 	inputs := []*enginev1.CheckInput{{
 		RequestId: test.Input.RequestId,

@@ -55,7 +55,7 @@ type Cmd struct { //nolint:govet // Kong prints fields in order, so we don't wan
 	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
 	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
 	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
-	RunRegex      string                            `help:"Run only tests that match this regex" name:"run"`
+	RunRegexp     string                            `help:"Run only tests that match this regex" name:"run"`
 	SkipTests     bool                              `help:"Skip tests"`
 	Output        flagset.OutputFormat              `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
 	TestOutput    *flagset.VerificationOutputFormat `help:"Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)"`
@@ -128,8 +128,8 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	if !c.SkipTests {
 		verifyConf := verify.Config{
-			Run:   c.RunRegex,
-			Trace: c.Verbose,
+			IncludedTestNamesRegexp: c.RunRegexp,
+			Trace:                   c.Verbose,
 		}
 
 		compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
