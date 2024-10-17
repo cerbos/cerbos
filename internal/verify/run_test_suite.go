@@ -81,7 +81,7 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 		}
 
 		for _, action := range test.Input.Actions {
-			addResult(results, test.Name, action, runTest(ctx, eng, test, action, suite, trace))
+			addResult(results, test.Name, action, runTest(ctx, eng, test, action, trace))
 		}
 	}
 
@@ -249,7 +249,7 @@ func (r *testSuiteRun) lookupAuxData(name string) (*enginev1.AuxData, error) {
 	return nil, fmt.Errorf("auxData %q not found", name)
 }
 
-func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
+func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, trace bool) *policyv1.TestResults_Details {
 	details := &policyv1.TestResults_Details{}
 
 	inputs := []*enginev1.CheckInput{{

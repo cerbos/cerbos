@@ -20,6 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
+	"github.com/cerbos/cerbos/internal/verify"
 	"github.com/cerbos/cerbos/internal/verify/junit"
 )
 
@@ -163,10 +164,6 @@ func (o *testOutput) addTestCase(suite *policyv1.TestResults_Suite, testCase *po
 }
 
 func (o *testOutput) shouldAddTestCase(testCase *policyv1.TestResults_TestCase) bool {
-	if o.verbose {
-		return true
-	}
-
 	for _, principal := range testCase.Principals {
 		if o.shouldAddPrincipal(principal) {
 			return true
@@ -189,10 +186,6 @@ func (o *testOutput) addPrincipal(suite *policyv1.TestResults_Suite, principal *
 }
 
 func (o *testOutput) shouldAddPrincipal(principal *policyv1.TestResults_Principal) bool {
-	if o.verbose {
-		return true
-	}
-
 	for _, resource := range principal.Resources {
 		if o.shouldAddResource(resource) {
 			return true
@@ -215,10 +208,6 @@ func (o *testOutput) addResource(suite *policyv1.TestResults_Suite, principal *p
 }
 
 func (o *testOutput) shouldAddResource(resource *policyv1.TestResults_Resource) bool {
-	if o.verbose {
-		return true
-	}
-
 	for _, action := range resource.Actions {
 		if o.shouldAddAction(action) {
 			return true
@@ -282,7 +271,16 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 }
 
 func (o *testOutput) shouldAddAction(action *policyv1.TestResults_Action) bool {
-	return o.verbose || action.Details.Result != policyv1.TestResults_RESULT_PASSED
+	switch action.Details.Result {
+	case policyv1.TestResults_RESULT_PASSED:
+		return o.verbose
+
+	case policyv1.TestResults_RESULT_SKIPPED:
+		return action.Details.GetSkipReason() != verify.SkipReasonName
+
+	default:
+		return true
+	}
 }
 
 func (o *testOutput) appendNode(level int, text string) {
