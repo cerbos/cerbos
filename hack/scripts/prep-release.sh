@@ -70,6 +70,10 @@ set_branch() {
 
 # Generate NOTICE.txt
 just generate-notice
+# Because of go.work, the build works correctly by ignoring the version of the API module from go.mod.
+# However, when we create the tag, we should ensure that the go.mod version reflects what's actually
+# being used for the build. This also helps workspace-unaware tools such as Nix to build from a tag.
+go get -u github.com/cerbos/cerbos/api/genpb@main && go mod tidy
 # Set release version and tag
 update_version $VERSION
 # Create netlify redirects
