@@ -2939,6 +2939,12 @@
         "role": {
           "type": "string"
         },
+        "parentRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "scope": {
           "type": "string"
         },
