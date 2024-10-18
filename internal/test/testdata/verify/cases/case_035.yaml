@@ -1,0 +1,4 @@
+description: Resources filtered with default policy version configured
+config:
+  excludedResourcePolicyFqns:
+    - cerbos.resource.leave_request.v20210210

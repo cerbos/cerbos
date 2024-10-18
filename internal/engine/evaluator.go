@@ -40,16 +40,18 @@ const noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type evalParams struct {
-	globals            map[string]any
-	nowFunc            func() time.Time
-	lenientScopeSearch bool
+	globals              map[string]any
+	nowFunc              func() time.Time
+	defaultPolicyVersion string
+	lenientScopeSearch   bool
 }
 
 func defaultEvalParams(conf *Conf) evalParams {
 	return evalParams{
-		globals:            conf.Globals,
-		nowFunc:            time.Now,
-		lenientScopeSearch: conf.LenientScopeSearch,
+		globals:              conf.Globals,
+		nowFunc:              time.Now,
+		defaultPolicyVersion: conf.DefaultPolicyVersion,
+		lenientScopeSearch:   conf.LenientScopeSearch,
 	}
 }
 

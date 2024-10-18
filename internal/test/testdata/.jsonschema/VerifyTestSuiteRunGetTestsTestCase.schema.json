@@ -222,6 +222,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "defaultPolicyVersion": {
+          "type": "string"
+        },
         "globals": {
           "type": "object",
           "additionalProperties": {

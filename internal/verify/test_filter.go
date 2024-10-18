@@ -50,13 +50,13 @@ func (f *testFilter) Apply(test *policyv1.Test, suite *policyv1.TestSuite) *poli
 			Outcome: &policyv1.TestResults_Details_SkipReason{SkipReason: SkipReasonName},
 		}
 
-	case !f.shouldRunTestForResource(test.Input.Resource):
+	case !f.shouldRunTestForResource(test.Input.Resource, test.Options):
 		return &policyv1.TestResults_Details{
 			Result:  policyv1.TestResults_RESULT_SKIPPED,
 			Outcome: &policyv1.TestResults_Details_SkipReason{SkipReason: SkipReasonResource},
 		}
 
-	case !f.shouldRunTestForPrincipal(test.Input.Principal):
+	case !f.shouldRunTestForPrincipal(test.Input.Principal, test.Options):
 		return &policyv1.TestResults_Details{
 			Result:  policyv1.TestResults_RESULT_SKIPPED,
 			Outcome: &policyv1.TestResults_Details_SkipReason{SkipReason: SkipReasonPrincipal},
@@ -81,30 +81,32 @@ func (f *testFilter) shouldRunTestNamed(name string) bool {
 	return f.includedTestNamesRegexp.MatchString(name)
 }
 
-func (f *testFilter) shouldRunTestForResource(resource *enginev1.Resource) bool {
+func (f *testFilter) shouldRunTestForResource(resource *enginev1.Resource, options *policyv1.TestOptions) bool {
 	if len(f.excludedResourcePolicyFQNs) == 0 {
 		return true
 	}
 
-	version := resource.PolicyVersion
-	if version == "" {
-		version = namer.DefaultVersion
-	}
-
-	_, excluded := f.excludedResourcePolicyFQNs[namer.ResourcePolicyFQN(resource.Kind, version, resource.Scope)]
+	_, excluded := f.excludedResourcePolicyFQNs[namer.ResourcePolicyFQN(resource.Kind, policyVersion(resource, options), resource.Scope)]
 	return !excluded
 }
 
-func (f *testFilter) shouldRunTestForPrincipal(principal *enginev1.Principal) bool {
+func (f *testFilter) shouldRunTestForPrincipal(principal *enginev1.Principal, options *policyv1.TestOptions) bool {
 	if len(f.excludedPrincipalPolicyFQNs) == 0 {
 		return true
 	}
 
-	version := principal.PolicyVersion
-	if version == "" {
-		version = namer.DefaultVersion
+	_, excluded := f.excludedPrincipalPolicyFQNs[namer.PrincipalPolicyFQN(principal.Id, policyVersion(principal, options), principal.Scope)]
+	return !excluded
+}
+
+func policyVersion(fixture interface{ GetPolicyVersion() string }, options *policyv1.TestOptions) string {
+	if version := fixture.GetPolicyVersion(); version != "" {
+		return version
 	}
 
-	_, excluded := f.excludedPrincipalPolicyFQNs[namer.PrincipalPolicyFQN(principal.Id, version, principal.Scope)]
-	return !excluded
+	if defaultVersion := options.GetDefaultPolicyVersion(); defaultVersion != "" {
+		return defaultVersion
+	}
+
+	return namer.DefaultVersion
 }

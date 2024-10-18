@@ -58,6 +58,10 @@ func (co *CheckOptions) NowFunc() func() time.Time {
 	return co.evalParams.nowFunc
 }
 
+func (co *CheckOptions) DefaultPolicyVersion() string {
+	return co.evalParams.defaultPolicyVersion
+}
+
 func (co *CheckOptions) LenientScopeSearch() bool {
 	return co.evalParams.lenientScopeSearch
 }
@@ -118,6 +122,13 @@ func WithLenientScopeSearch() CheckOpt {
 func WithGlobals(globals map[string]any) CheckOpt {
 	return func(co *CheckOptions) {
 		co.evalParams.globals = globals
+	}
+}
+
+// WithDefaultPolicyVersion sets the default policy version for the engine.
+func WithDefaultPolicyVersion(defaultPolicyVersion string) CheckOpt {
+	return func(co *CheckOptions) {
+		co.evalParams.defaultPolicyVersion = defaultPolicyVersion
 	}
 }
 
@@ -243,7 +254,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	// get the principal policy check
-	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
+	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, opts.evalParams)
 	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope, opts.LenientScopeSearch())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
@@ -264,7 +275,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	// get the resource policy check
-	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
 	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
@@ -515,14 +526,14 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	ec := &evaluationCtx{}
 
 	// get the principal policy check
-	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
+	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, eparams)
 	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, eparams, ppName, ppVersion, ppScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 	ec.addCheck(ppCheck)
 
-	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, eparams)
 
 	// get the role policy check
 	rlpCheck, err := engine.getRolePolicyEvaluator(ctx, eparams, ppScope, input.Principal.Roles)
@@ -645,13 +656,13 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 	return sets, nil
 }
 
-func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, pScope string) {
+func (engine *Engine) policyAttr(name, version, scope string, params evalParams) (pName, pVersion, pScope string) {
 	pName = name
 	pVersion = version
 	pScope = scope
 
 	if version == "" {
-		pVersion = engine.conf.DefaultPolicyVersion
+		pVersion = params.defaultPolicyVersion
 	}
 
 	return pName, pVersion, pScope
