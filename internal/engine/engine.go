@@ -262,24 +262,50 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
 	}
-
-	// get the resource policy check
-	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
+	skipResourcePolicies := false
+	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+		return nil, nil, fmt.Errorf("failed to get role policy evaluator: %w", err)
 	}
-
-	if policy := policySet.GetResourcePolicy(); policy != nil {
-		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: nowFn}
-		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+	if rpEvaluator != nil {
+		tctx := tracer.Start(opts.tracerSink)
+		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
 		if err != nil {
 			return nil, nil, err
 		}
-
-		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
-		result = planner.CombinePlans(result, plan)
+		effInfo, ok := evalResult.Effects[input.Action]
+		if !ok {
+			return nil, nil, errors.New("role policy evaluator unexpected result")
+		}
+		effect := effInfo.Effect
+		if effect != effectv1.Effect_EFFECT_ALLOW {
+			skipResourcePolicies = true
+		}
+		if result.Empty() {
+			result = mkUnconditionalPolicyPlanResult(effInfo.Scope, effect)
+		}
+		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
 	}
+
+	if !skipResourcePolicies {
+		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+		policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+		}
+
+		if policy := policySet.GetResourcePolicy(); policy != nil {
+			policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: nowFn}
+			plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
+			result = planner.CombinePlans(result, plan)
+		}
+	}
+	// get the resource policy check
 
 	output, err := result.ToPlanResourcesOutput(input)
 	if err != nil {
@@ -291,6 +317,13 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	return output, auditTrail, nil
+}
+
+func mkUnconditionalPolicyPlanResult(scope string, effect effectv1.Effect) *planner.PolicyPlanResult {
+	if effect == effectv1.Effect_EFFECT_ALLOW {
+		return planner.NewAlwaysAllowed(scope)
+	}
+	return planner.NewAlwaysDenied(scope)
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {

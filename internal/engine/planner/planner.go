@@ -79,6 +79,20 @@ func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *Po
 	}
 }
 
+func NewAlwaysAllowed(scope string) *PolicyPlanResult {
+	return &PolicyPlanResult{
+		Scope:       scope,
+		AllowFilter: []*qpN{mkTrueNode()},
+	}
+}
+
+func NewAlwaysDenied(scope string) *PolicyPlanResult {
+	return &PolicyPlanResult{
+		Scope:      scope,
+		DenyFilter: []*qpN{mkFalseNode()},
+	}
+}
+
 func (p *PolicyPlanResult) Add(filter *qpN, effect effectv1.Effect) {
 	if effect == effectv1.Effect_EFFECT_ALLOW {
 		p.AllowFilter = append(p.AllowFilter, filter)
