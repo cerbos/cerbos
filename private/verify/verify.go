@@ -94,6 +94,7 @@ func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, er
 type CheckOptions interface {
 	Globals() map[string]any
 	NowFunc() func() time.Time
+	DefaultPolicyVersion() string
 	LenientScopeSearch() bool
 }
 
