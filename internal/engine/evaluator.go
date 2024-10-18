@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"time"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -41,7 +40,7 @@ var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type evalParams struct {
 	globals              map[string]any
-	nowFunc              func() time.Time
+	nowFunc              conditions.NowFunc
 	defaultPolicyVersion string
 	lenientScopeSearch   bool
 }
@@ -49,7 +48,6 @@ type evalParams struct {
 func defaultEvalParams(conf *Conf) evalParams {
 	return evalParams{
 		globals:              conf.Globals,
-		nowFunc:              time.Now,
 		defaultPolicyVersion: conf.DefaultPolicyVersion,
 		lenientScopeSearch:   conf.LenientScopeSearch,
 	}

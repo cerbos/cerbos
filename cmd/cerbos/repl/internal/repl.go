@@ -17,7 +17,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/alecthomas/participle/v2"
@@ -411,7 +410,7 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 		return nil, nil, errSilent
 	}
 
-	val, _, err := conditions.Eval(env, ast, r.vars, time.Now)
+	val, _, err := conditions.Eval(env, ast, r.vars, conditions.Now())
 	if err != nil {
 		return nil, nil, err
 	}

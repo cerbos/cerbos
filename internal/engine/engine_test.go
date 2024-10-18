@@ -76,6 +76,47 @@ func TestCheck(t *testing.T) {
 			))
 		})
 	}
+
+	t.Run("deterministic_now", func(t *testing.T) {
+		roles := []string{"user"}
+		actions := []string{"a", "b", "c"}
+
+		inputs := []*enginev1.CheckInput{
+			{
+				Principal: &enginev1.Principal{Id: "1", Roles: roles},
+				Resource:  &enginev1.Resource{Kind: "output_now", Id: "1"},
+				Actions:   actions,
+			},
+			{
+				Principal: &enginev1.Principal{Id: "2", Roles: roles},
+				Resource:  &enginev1.Resource{Kind: "output_now", Id: "1"},
+				Actions:   actions,
+			},
+			{
+				Principal: &enginev1.Principal{Id: "1", Roles: roles},
+				Resource:  &enginev1.Resource{Kind: "output_now", Id: "2"},
+				Actions:   actions,
+			},
+			{
+				Principal: &enginev1.Principal{Id: "2", Roles: roles},
+				Resource:  &enginev1.Resource{Kind: "output_now", Id: "2"},
+				Actions:   actions,
+			},
+		}
+
+		outputs, err := eng.Check(context.Background(), inputs)
+		require.NoError(t, err)
+		require.Len(t, outputs, len(inputs))
+
+		uniqueNows := make(map[string]struct{})
+		for _, output := range outputs {
+			require.Len(t, output.Outputs, 3)
+			for _, entry := range output.Outputs {
+				uniqueNows[entry.Val.GetStringValue()] = struct{}{}
+			}
+		}
+		require.Len(t, uniqueNows, 1)
+	})
 }
 
 func TestCheckWithLenientScopeSearch(t *testing.T) {
@@ -306,19 +347,13 @@ func TestQueryPlan(t *testing.T) {
 						IncludeMeta: true,
 						AuxData:     auxData,
 					}
-					nowFnCallsCounter := 0
-					nowFn := func() time.Time {
-						nowFnCallsCounter++
-						return timestamp
-					}
-					response, err := eng.PlanResources(context.Background(), request, WithNowFunc(nowFn))
+					response, err := eng.PlanResources(context.Background(), request, WithNowFunc(func() time.Time { return timestamp }))
 					if tt.WantErr {
 						is.Error(err)
 					} else {
 						is.NoError(err)
 						is.NotNil(response)
 						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s\n%s\n", response.FilterDebug, protojson.Format(response.Filter))
-						is.Equal(1, nowFnCallsCounter, "time function should be called once")
 					}
 				})
 			}

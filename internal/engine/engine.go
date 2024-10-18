@@ -24,6 +24,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -87,6 +88,10 @@ func newCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *CheckOp
 		opt(co)
 	}
 
+	if co.evalParams.nowFunc == nil {
+		co.evalParams.nowFunc = conditions.Now()
+	}
+
 	return co
 }
 
@@ -105,6 +110,7 @@ func WithZapTraceSink(log *zap.Logger) CheckOpt {
 }
 
 // WithNowFunc sets the function for determining `now` during condition evaluation.
+// The function should return the same timestamp every time it is invoked.
 func WithNowFunc(nowFunc func() time.Time) CheckOpt {
 	return func(co *CheckOptions) {
 		co.evalParams.nowFunc = nowFunc
@@ -262,10 +268,8 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	result := new(planner.PolicyPlanResult)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes, 2)} //nolint:mnd
-	now := opts.NowFunc()()
-	nowFn := func() time.Time { return now }
 	if policy := policySet.GetPrincipalPolicy(); policy != nil {
-		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: opts.Globals(), NowFn: nowFn}
+		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: opts.Globals(), NowFn: opts.NowFunc()}
 		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, nil, err
@@ -282,7 +286,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	if policy := policySet.GetResourcePolicy(); policy != nil {
-		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: nowFn}
+		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: opts.NowFunc()}
 		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, nil, err

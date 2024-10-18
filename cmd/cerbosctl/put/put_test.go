@@ -111,6 +111,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vdefault/acme.hr.uk",
 					"resource.leave_request.vstaging",
 					"resource.missing_attr.vdefault",
+					"resource.output_now.vdefault",
 					"resource.products.vdefault",
 					"resource.purchase_order.vdefault",
 					"resource.runtime_effective_derived_roles.vdefault",
