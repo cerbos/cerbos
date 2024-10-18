@@ -13,6 +13,8 @@ modules:
       except:
         - EXTENSION_NO_DELETE
         - FIELD_SAME_DEFAULT
+      ignore:
+        - api/private/cerbos/private
   - path: api/public
     name: buf.build/cerbos/cerbos-api
     lint:

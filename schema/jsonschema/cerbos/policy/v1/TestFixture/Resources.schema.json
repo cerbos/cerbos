@@ -38,6 +38,24 @@
         }
       }
     },
+    "cerbos.policy.v1.TestFixtureGroup.Resources": {
+      "type": "object",
+      "required": [
+        "resources"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -48,6 +66,12 @@
   "properties": {
     "$schema": {
       "type": "string"
+    },
+    "resourceGroups": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.policy.v1.TestFixtureGroup.Resources"
+      }
     },
     "resources": {
       "type": "object",

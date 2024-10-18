@@ -1705,6 +1705,22 @@ func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *v12.TestTable_Expectat
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.principal_groups"]; !ok {
+		if len(m.PrincipalGroups) > 0 {
+			for _, v := range m.PrincipalGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.resource_groups"]; !ok {
+		if len(m.ResourceGroups) > 0 {
+			for _, v := range m.ResourceGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 }
 
 func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *v12.TestTable_Input, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1735,6 +1751,22 @@ func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *v12.TestTable_Input, hasher 
 	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.aux_data"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetAuxData()))
 
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principal_groups"]; !ok {
+		if len(m.PrincipalGroups) > 0 {
+			for _, v := range m.PrincipalGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resource_groups"]; !ok {
+		if len(m.ResourceGroups) > 0 {
+			for _, v := range m.ResourceGroups {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
 	}
 }
 
@@ -2838,14 +2870,14 @@ func cerbos_private_v1_VerifyTestCase_hashpb_sum(m *VerifyTestCase, hasher hash.
 	}
 }
 
-func cerbos_private_v1_VerifyTestFixtureGetTestsTestCase_hashpb_sum(m *VerifyTestFixtureGetTestsTestCase, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.table"]; !ok {
+func cerbos_private_v1_VerifyTestSuiteRunGetTestsTestCase_hashpb_sum(m *VerifyTestSuiteRunGetTestsTestCase, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.VerifyTestSuiteRunGetTestsTestCase.table"]; !ok {
 		if m.GetTable() != nil {
 			cerbos_policy_v1_TestTable_hashpb_sum(m.GetTable(), hasher, ignore)
 		}
 
 	}
-	if _, ok := ignore["cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_tests"]; !ok {
+	if _, ok := ignore["cerbos.private.v1.VerifyTestSuiteRunGetTestsTestCase.want_tests"]; !ok {
 		if len(m.WantTests) > 0 {
 			for _, v := range m.WantTests {
 				if v != nil {
@@ -2855,7 +2887,7 @@ func cerbos_private_v1_VerifyTestFixtureGetTestsTestCase_hashpb_sum(m *VerifyTes
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_err"]; !ok {
+	if _, ok := ignore["cerbos.private.v1.VerifyTestSuiteRunGetTestsTestCase.want_err"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetWantErr()))
 
 	}

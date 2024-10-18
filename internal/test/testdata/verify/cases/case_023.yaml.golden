@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "failed to load test fixtures from testdata: failed to load aux data: file is not valid: { /auxData/myJWT: [additionalProperties 'jort' not allowed] }",
+      "error": "Failed to load the test suite: invalid test \"Missing group\": principal group \"unknown\" not found",
       "description": "Tests for verifying something"
     }
   ],

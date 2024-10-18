@@ -183,7 +183,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 			}
 		}
 
-		return fixture.runTestSuite(ctx, eng, testFilter, file, suite, conf.Trace)
+		return runTestSuite(ctx, eng, testFilter, file, suite, fixture, conf.Trace)
 	}
 
 	results := &policyv1.TestResults{
