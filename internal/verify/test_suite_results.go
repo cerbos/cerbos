@@ -5,8 +5,8 @@ package verify
 
 import policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 
-func addResult(suite *policyv1.TestResults_Suite, principal, resource, action, testName string, details *policyv1.TestResults_Details) {
-	addAction(addResource(addPrincipal(addTestCase(suite, testName), principal), resource), action).Details = details
+func addResult(suite *policyv1.TestResults_Suite, name *policyv1.Test_TestName, action string, details *policyv1.TestResults_Details) {
+	addAction(addResource(addPrincipal(addTestCase(suite, name.TestTableName), name.PrincipalKey), name.ResourceKey), action).Details = details
 	suite.Summary.TestsCount++
 	incrementTally(suite.Summary, details.Result, 1)
 

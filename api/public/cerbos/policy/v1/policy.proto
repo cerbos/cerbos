@@ -614,6 +614,7 @@ message TestResults {
     string error = 5;
     repeated TestCase test_cases = 6;
     string description = 7;
+    string skip_reason = 8;
   }
 
   message TestCase {
@@ -642,6 +643,7 @@ message TestResults {
       Failure failure = 2;
       string error = 3;
       Success success = 5;
+      string skip_reason = 6;
     }
     repeated cerbos.engine.v1.Trace engine_trace = 4;
   }

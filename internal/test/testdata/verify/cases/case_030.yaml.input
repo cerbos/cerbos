@@ -1,0 +1,89 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    id: john
+    policyVersion: '20210210'
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
+    attr:
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+
+  shoes_purchase_order:
+    kind: purchase_order
+    policyVersion: default
+    id: X111
+    attr:
+      ownerOrgId: foo
+      tags:
+        brand: brand
+        class: Footwear
+        region: EMEA
+
+-- testdata/auxdata.yaml --
+---
+auxData:
+  myJWT:
+    jwt:
+      iss: cerbos-test-suite
+      aud: [cerbos-jwt-tests]
+      customArray: [A, B]
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+options:
+  now: "2022-08-02T15:00:00Z"
+tests:
+  - name: John and his leave request
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+        - approve
+        - defer
+      auxData: myJWT
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          defer: EFFECT_ALLOW
+
+  - name: John and a purchase order
+    skip: true
+    skipReason: Never mind
+    input:
+      principals:
+        - john
+      resources:
+        - shoes_purchase_order
+      actions:
+        - view
+      auxData: myJWT
+    expected:
+      - principal: john
+        resource: shoes_purchase_order
+        actions:
+          view: EFFECT_DENY

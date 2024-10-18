@@ -1,0 +1,135 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    id: john
+    policyVersion: '20210210'
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+  bev: &bev
+    id: bev
+    policyVersion: '20210210'
+    roles:
+      - employee
+      - manager
+    attr: &bev_attr
+      department: marketing
+      geography: GB
+      managed_geographies: GB
+      ip_address: 10.20.1.2
+      team: design
+  matt:
+    << : *bev
+    id: matt
+    attr:
+      << : *bev_attr
+      ip_address: 10.10.1.2
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
+    attr: &attr
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+  pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
+    attr:
+      << : *attr
+      status: PENDING_APPROVAL
+  stale_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      << : *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+  stale_pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      << : *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+      status: PENDING_APPROVAL
+
+-- testdata/auxdata.yaml --
+---
+auxData:
+  myJWT:
+    jwt:
+      iss: cerbos-test-suite
+      aud: [cerbos-jwt-tests]
+      customArray: [A, B]
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+options:
+  now: "2022-08-02T15:00:00Z"
+tests:
+  - name: John and his leave request
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+        - approve
+        - defer
+      auxData: myJWT
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          defer: EFFECT_ALLOW
+
+  - name: With global now
+    skip: true
+    skipReason: Never mind
+    input:
+      principals:
+        - bev
+      resources:
+        - stale_leave_request
+      actions:
+        - remind
+      auxData: myJWT
+    expected:
+      - principal: bev
+        resource: stale_leave_request
+        actions:
+          remind: EFFECT_ALLOW
+
+  - name: With local now
+    options:
+      now: "2022-08-03T15:00:00Z"
+    input:
+      principals:
+        - bev
+      resources:
+        - stale_pending_leave_request
+      actions:
+        - remind
+      auxData: myJWT
+    expected:
+      - principal: bev
+        resource: stale_pending_leave_request
+        actions:
+          remind: EFFECT_DENY

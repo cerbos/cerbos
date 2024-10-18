@@ -8,10 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"regexp"
 	"sort"
-
-	"github.com/cerbos/cerbos/internal/namer"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -22,61 +19,10 @@ import (
 )
 
 type Config struct {
-	RunResources  map[string]struct{}
-	RunPrincipals map[string]struct{}
-	Run           string
-	Trace         bool
-}
-
-type testFilter struct {
-	runRegex      *regexp.Regexp
-	runResources  map[string]struct{}
-	runPrincipals map[string]struct{}
-}
-
-func newTestFilter(conf *Config) (*testFilter, error) {
-	f := new(testFilter)
-	if conf.Run != "" {
-		runRegex, err := regexp.Compile(conf.Run)
-		if err != nil {
-			return nil, fmt.Errorf("invalid run specification: %w", err)
-		}
-		f.runRegex = runRegex
-	}
-	f.runPrincipals = conf.RunPrincipals
-	f.runResources = conf.RunResources
-	return f, nil
-}
-
-func (f *testFilter) ShouldRun(name string) bool {
-	if f.runRegex == nil {
-		return true
-	}
-	return f.runRegex.MatchString(name)
-}
-
-func (f *testFilter) ShouldRunResource(r *enginev1.Resource) bool {
-	if len(f.runResources) == 0 {
-		return true
-	}
-	v := r.PolicyVersion
-	if v == "" {
-		v = namer.DefaultVersion
-	}
-	_, ok := f.runResources[namer.ResourcePolicyFQN(r.Kind, v, r.Scope)]
-	return ok
-}
-
-func (f *testFilter) ShouldRunPrincipal(p *enginev1.Principal) bool {
-	if len(f.runPrincipals) == 0 {
-		return true
-	}
-	v := p.PolicyVersion
-	if v == "" {
-		v = namer.DefaultVersion
-	}
-	_, ok := f.runPrincipals[namer.PrincipalPolicyFQN(p.Id, v, p.Scope)]
-	return ok
+	ExcludedResourcePolicyFQNs  map[string]struct{}
+	ExcludedPrincipalPolicyFQNs map[string]struct{}
+	IncludedTestNamesRegexp     string
+	Trace                       bool
 }
 
 type Checker interface {

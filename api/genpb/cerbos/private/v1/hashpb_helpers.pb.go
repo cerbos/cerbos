@@ -1406,6 +1406,9 @@ func cerbos_policy_v1_TestResults_Details_hashpb_sum(m *v12.TestResults_Details,
 					cerbos_policy_v1_TestResults_Success_hashpb_sum(t.Success, hasher, ignore)
 				}
 
+			case *v12.TestResults_Details_SkipReason:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.SkipReason))
+
 			}
 		}
 	}
@@ -1581,6 +1584,10 @@ func cerbos_policy_v1_TestResults_Suite_hashpb_sum(m *v12.TestResults_Suite, has
 	}
 	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.description"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetDescription()))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.skip_reason"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetSkipReason()))
 
 	}
 }
@@ -2853,6 +2860,29 @@ func cerbos_private_v1_ValidationErrContainer_hashpb_sum(m *ValidationErrContain
 	}
 }
 
+func cerbos_private_v1_VerifyTestCase_Config_hashpb_sum(m *VerifyTestCase_Config, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.Config.excluded_resource_policy_fqns"]; !ok {
+		if len(m.ExcludedResourcePolicyFqns) > 0 {
+			for _, v := range m.ExcludedResourcePolicyFqns {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.Config.excluded_principal_policy_fqns"]; !ok {
+		if len(m.ExcludedPrincipalPolicyFqns) > 0 {
+			for _, v := range m.ExcludedPrincipalPolicyFqns {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.Config.included_test_names_regexp"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetIncludedTestNamesRegexp()))
+
+	}
+}
+
 func cerbos_private_v1_VerifyTestCase_hashpb_sum(m *VerifyTestCase, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.description"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetDescription()))
@@ -2862,9 +2892,9 @@ func cerbos_private_v1_VerifyTestCase_hashpb_sum(m *VerifyTestCase, hasher hash.
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetWantErr())))
 
 	}
-	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.want"]; !ok {
-		if m.GetWant() != nil {
-			cerbos_policy_v1_TestResults_hashpb_sum(m.GetWant(), hasher, ignore)
+	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.config"]; !ok {
+		if m.GetConfig() != nil {
+			cerbos_private_v1_VerifyTestCase_Config_hashpb_sum(m.GetConfig(), hasher, ignore)
 		}
 
 	}

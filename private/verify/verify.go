@@ -103,26 +103,26 @@ type Checker interface {
 
 type Opt func(config *verify.Config)
 
-func WithResourceTestFilter(names ...string) Opt {
+func WithExcludedResourcePolicyFQNs(fqns ...string) Opt {
 	return func(config *verify.Config) {
-		if config.RunResources == nil {
-			config.RunResources = make(map[string]struct{}, len(names))
+		if config.ExcludedResourcePolicyFQNs == nil {
+			config.ExcludedResourcePolicyFQNs = make(map[string]struct{}, len(fqns))
 		}
 
-		for _, n := range names {
-			config.RunResources[n] = struct{}{}
+		for _, fqn := range fqns {
+			config.ExcludedResourcePolicyFQNs[fqn] = struct{}{}
 		}
 	}
 }
 
-func WithPrincipalTestFilter(names ...string) Opt {
+func WithExcludedPrincipalPolicyFQNs(fqns ...string) Opt {
 	return func(config *verify.Config) {
-		if config.RunPrincipals == nil {
-			config.RunPrincipals = make(map[string]struct{}, len(names))
+		if config.ExcludedPrincipalPolicyFQNs == nil {
+			config.ExcludedPrincipalPolicyFQNs = make(map[string]struct{}, len(fqns))
 		}
 
-		for _, n := range names {
-			config.RunPrincipals[n] = struct{}{}
+		for _, fqn := range fqns {
+			config.ExcludedPrincipalPolicyFQNs[fqn] = struct{}{}
 		}
 	}
 }
