@@ -870,6 +870,10 @@ func cerbos_policy_v1_TestOptions_hashpb_sum(m *TestOptions, hasher hash.Hash, i
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestOptions.default_policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetDefaultPolicyVersion()))
+
+	}
 }
 
 func cerbos_policy_v1_TestResults_Action_hashpb_sum(m *TestResults_Action, hasher hash.Hash, ignore map[string]struct{}) {

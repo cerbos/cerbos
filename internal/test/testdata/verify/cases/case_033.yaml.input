@@ -1,0 +1,59 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    id: john
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_leave_request:
+    kind: leave_request
+    id: XX125
+    attr:
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+
+-- testdata/auxdata.yaml --
+---
+auxData:
+  myJWT:
+    jwt:
+      iss: cerbos-test-suite
+      aud: [cerbos-jwt-tests]
+      customArray: [A, B]
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+options:
+  defaultPolicyVersion: '20210210'
+tests:
+  - name: John and his leave request
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+        - approve
+        - defer
+      auxData: myJWT
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          defer: EFFECT_ALLOW

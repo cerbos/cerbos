@@ -1,0 +1,99 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 4,
+        "resultCounts": [
+          {
+            "result": "RESULT_SKIPPED",
+            "count": 3
+          },
+          {
+            "result": "RESULT_PASSED",
+            "count": 1
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "John and his leave request",
+          "principals": [
+            {
+              "name": "john",
+              "resources": [
+                {
+                  "name": "john_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_SKIPPED",
+                        "skipReason": "Resource matched a policy that was excluded from the bundle"
+                      }
+                    },
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_SKIPPED",
+                        "skipReason": "Resource matched a policy that was excluded from the bundle"
+                      }
+                    },
+                    {
+                      "name": "defer",
+                      "details": {
+                        "result": "RESULT_SKIPPED",
+                        "skipReason": "Resource matched a policy that was excluded from the bundle"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "John and a purchase order",
+          "principals": [
+            {
+              "name": "john",
+              "resources": [
+                {
+                  "name": "shoes_purchase_order",
+                  "actions": [
+                    {
+                      "name": "view",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 4,
+    "resultCounts": [
+      {
+        "result": "RESULT_SKIPPED",
+        "count": 3
+      },
+      {
+        "result": "RESULT_PASSED",
+        "count": 1
+      }
+    ]
+  }
+}
