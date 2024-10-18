@@ -127,11 +127,21 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 	return nil
 }
 
+type NowFunc = func() time.Time
+
+// Now returns a NowFunc that always returns the time at which Now was called.
+func Now() NowFunc {
+	now := time.Now()
+	return func() time.Time { return now }
+}
+
 // Eval returns the result of an evaluation of the ast and environment against the input vars,
 // providing time-based functions with a static definition of the current time.
 //
+// The given nowFunc must return the same timestamp each time it is called.
+//
 // See https://pkg.go.dev/github.com/google/cel-go/cel#Program.Eval.
-func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc func() time.Time, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
+func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator(nowFunc))}, opts...)
 	prg, err := env.Program(ast, programOpts...)
 	if err != nil {
@@ -141,13 +151,13 @@ func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc func() time.Time, opts .
 	return prg.Eval(vars)
 }
 
-func newTimeDecorator(nowFunc func() time.Time) interpreter.InterpretableDecorator {
-	td := timeDecorator{now: nowFunc()}
+func newTimeDecorator(nowFunc NowFunc) interpreter.InterpretableDecorator {
+	td := timeDecorator{nowFunc: nowFunc}
 	return td.decorate
 }
 
 type timeDecorator struct {
-	now time.Time
+	nowFunc NowFunc
 }
 
 func (t *timeDecorator) decorate(in interpreter.Interpretable) (interpreter.Interpretable, error) {
@@ -159,7 +169,7 @@ func (t *timeDecorator) decorate(in interpreter.Interpretable) (interpreter.Inte
 	funcName := call.Function()
 	switch funcName {
 	case nowFn:
-		return interpreter.NewConstValue(call.ID(), types.DefaultTypeAdapter.NativeToValue(t.now)), nil
+		return interpreter.NewConstValue(call.ID(), types.DefaultTypeAdapter.NativeToValue(t.nowFunc())), nil
 	case timeSinceFn:
 		return interpreter.NewCall(call.ID(), funcName, call.OverloadID(), call.Args(), func(values ...ref.Val) ref.Val {
 			if len(values) != 1 {
@@ -172,7 +182,7 @@ func (t *timeDecorator) decorate(in interpreter.Interpretable) (interpreter.Inte
 				return types.NoSuchOverloadErr()
 			}
 
-			return types.DefaultTypeAdapter.NativeToValue(t.now.Sub(ts))
+			return types.DefaultTypeAdapter.NativeToValue(t.nowFunc().Sub(ts))
 		}), nil
 	default:
 		return in, nil

@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: output_now
+  rules:
+    - name: a
+      actions:
+        - a
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output:
+        when:
+          ruleActivated: now()
+
+    - name: b
+      actions:
+        - b
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output:
+        when:
+          ruleActivated: now()
+
+    - name: c
+      actions:
+        - c
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output:
+        when:
+          ruleActivated: now()

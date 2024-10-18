@@ -106,7 +106,7 @@ func TestCerbosLib(t *testing.T) {
 			ast, issues := env.Compile(tc.expr)
 			is.NoError(issues.Err())
 
-			have, _, err := conditions.Eval(env, ast, cel.NoVars(), time.Now)
+			have, _, err := conditions.Eval(env, ast, cel.NoVars(), conditions.Now())
 			if tc.wantErr {
 				is.Error(err)
 			} else {
