@@ -1,0 +1,60 @@
+-- testdata/principals.yaml --
+---
+principals:
+  bev:
+    id: bev
+    policyVersion: '20210210'
+    roles:
+      - employee
+      - manager
+    attr:
+      department: marketing
+      geography: GB
+      managed_geographies: GB
+      ip_address: 10.20.1.2
+      team: design
+
+-- testdata/resources.yaml --
+---
+resources:
+  stale_pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+      modifiedAt: "2022-08-01T15:00:00Z"
+      status: PENDING_APPROVAL
+
+-- testdata/auxdata.yaml --
+---
+auxData:
+  myJWT:
+    jwt:
+      iss: cerbos-test-suite
+      aud: [cerbos-jwt-tests]
+      customArray: [A, B]
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+tests:
+  - name: Without now
+    input:
+      principals:
+        - bev
+      resources:
+        - stale_pending_leave_request
+      actions:
+        - remind
+      auxData: myJWT
+    expected:
+      - principal: bev
+        resource: stale_pending_leave_request
+        actions:
+          remind: EFFECT_ALLOW

@@ -5,7 +5,9 @@ package verify
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -17,6 +19,8 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+var errUsedDefaultNow = errors.New("a policy used a time-based condition, but `now` was not provided in the test options")
 
 func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file string, suite *policyv1.TestSuite, fixture *TestFixture, trace bool) *policyv1.TestResults_Suite {
 	summary := &policyv1.TestResults_Summary{}
@@ -347,11 +351,17 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 	return details
 }
 
-func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, options *policyv1.TestOptions, trace bool) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
+func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, options *policyv1.TestOptions, trace bool) (_ []*enginev1.CheckOutput, traces []*enginev1.Trace, _ error) {
 	var checkOpts []engine.CheckOpt
 
+	usedDefaultNow := false
 	if now := options.GetNow(); now != nil {
 		checkOpts = append(checkOpts, engine.WithNowFunc(now.AsTime))
+	} else {
+		checkOpts = append(checkOpts, engine.WithNowFunc(func() time.Time {
+			usedDefaultNow = true
+			return time.Time{}
+		}))
 	}
 
 	if options.GetLenientScopeSearch() {
@@ -366,13 +376,15 @@ func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInpu
 		checkOpts = append(checkOpts, engine.WithDefaultPolicyVersion(defaultPolicyVersion))
 	}
 
-	if !trace {
-		output, err := eng.Check(ctx, inputs, checkOpts...)
-		return output, nil, err
+	if trace {
+		traceCollector := tracer.NewCollector()
+		checkOpts = append(checkOpts, engine.WithTraceSink(traceCollector))
+		defer func() { traces = traceCollector.Traces() }()
 	}
 
-	traceCollector := tracer.NewCollector()
-	checkOpts = append(checkOpts, engine.WithTraceSink(traceCollector))
 	output, err := eng.Check(ctx, inputs, checkOpts...)
-	return output, traceCollector.Traces(), err
+	if err == nil && usedDefaultNow {
+		err = errUsedDefaultNow
+	}
+	return output, traces, err
 }
