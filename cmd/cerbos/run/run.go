@@ -75,6 +75,13 @@ type Cmd struct {
 }
 
 func (c *Cmd) Run(k *kong.Kong) error {
+	if c.Command[0] == "--" {
+		if len(c.Command) == 1 {
+			return errors.New("a command to run must be provided")
+		}
+		c.Command = c.Command[1:]
+	}
+
 	notifyCtx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
 
@@ -117,7 +124,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		return err
 	case status := <-statusChan:
 		if status.Error != nil {
-			log.Errorw("Command execution error", "error", err)
+			log.Errorw("Command execution error", "command", c.Command, "error", err)
 			cleanup()
 
 			return err
