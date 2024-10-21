@@ -1,0 +1,53 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_ERRORED",
+        "testsCount": 1,
+        "resultCounts": [
+          {
+            "result": "RESULT_ERRORED",
+            "count": 1
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "Without now",
+          "principals": [
+            {
+              "name": "bev",
+              "resources": [
+                {
+                  "name": "stale_pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_ERRORED",
+                        "error": "a policy used a time-based condition, but `now` was not provided in the test options"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_ERRORED",
+    "testsCount": 1,
+    "resultCounts": [
+      {
+        "result": "RESULT_ERRORED",
+        "count": 1
+      }
+    ]
+  }
+}
