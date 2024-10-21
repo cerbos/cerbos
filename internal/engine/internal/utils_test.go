@@ -57,5 +57,4 @@ func TestSetIntersects(t *testing.T) {
 
 func TestSubstractSets(t *testing.T) {
 	t.Parallel()
-
 }
