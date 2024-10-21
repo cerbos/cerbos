@@ -59,3 +59,11 @@ func SetIntersects(s1 ProtoSet, s2 StringSet) bool {
 
 	return false
 }
+
+func SubstractSets(s1, s2 StringSet) {
+	for k, _ := range s2 {
+		if _, ok := s1[k]; ok {
+			delete(s1, k)
+		}
+	}
+}

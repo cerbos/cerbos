@@ -215,6 +215,11 @@ func (rpe *ResourcePolicyEvaluator) evalContext() *evalContext {
 }
 
 func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
+	effectiveRoles := internal.ToSet(input.Principal.Roles)
+	return rpe.EvaluateWithEffectiveRoles(ctx, input, effectiveRoles)
+}
+
+func (rpe *ResourcePolicyEvaluator) EvaluateWithEffectiveRoles(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
 	defer span.End()
@@ -235,8 +240,6 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 			return result, nil
 		}
 	}
-
-	effectiveRoles := internal.ToSet(input.Principal.Roles)
 
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop

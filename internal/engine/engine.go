@@ -25,6 +25,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/conditions"
+	engineinternal "github.com/cerbos/cerbos/internal/engine/internal"
 	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -277,14 +278,14 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
 	}
-	skipResourcePolicies := false
 	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get role policy evaluator: %w", err)
 	}
+	effectiveRoles := engineinternal.ToSet(input.Principal.Roles)
 	if rpEvaluator != nil {
 		tctx := tracer.Start(opts.tracerSink)
-		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
+		evalResult, roles, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -294,7 +295,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		}
 		effect := effInfo.Effect
 		if effect != effectv1.Effect_EFFECT_ALLOW {
-			skipResourcePolicies = true
+			engineinternal.SubstractSets(effectiveRoles, roles)
 		}
 		if result.Empty() {
 			result = mkUnconditionalPolicyPlanResult(effInfo.Scope, effect)
@@ -302,7 +303,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
 	}
 
-	if !skipResourcePolicies {
+	if len(effectiveRoles) > 0 {
 		// get the resource policy check
 		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
 		policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
@@ -312,7 +313,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 		if policy := policySet.GetResourcePolicy(); policy != nil {
 			policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: opts.NowFunc()}
-			plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+			plan, err := policyEvaluator.EvaluateWithEffectiveRoles(ctx, input, effectiveRoles)
 			if err != nil {
 				return nil, nil, err
 			}
