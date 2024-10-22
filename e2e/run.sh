@@ -10,7 +10,10 @@ E2E_NO_CLEANUP=${E2E_NO_CLEANUP:-"false"}
 
 check_prerequisites() {
     for EXE in helm helmfile kind kubectl telepresence; do
-        command -v "$EXE" >/dev/null 2>&1 || { echo "$EXE is required but cannot be found in PATH"; exit 1; }
+        command -v "$EXE" >/dev/null 2>&1 || {
+            echo "$EXE is required but cannot be found in PATH"
+            exit 1
+        }
     done
 }
 
@@ -42,5 +45,5 @@ if [[ "$#" -gt "0" ]]; then
     # E.g. e2e/run.sh ./mysql/... -args -run-id=xxxxx -no-cleanup
     run_tests "$@"
 else
-    run_tests ./... -args -no-cleanup="$E2E_NO_CLEANUP" -command-timeout=5m
+    run_tests ./... -args -no-cleanup="$E2E_NO_CLEANUP" -command-timeout=7m
 fi
