@@ -282,7 +282,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get role policy evaluator: %w", err)
 	}
-	effectiveRoles := engineinternal.ToSet(input.Principal.Roles)
+	unresolvedRoles := engineinternal.ToSet(input.Principal.Roles)
 	if rpEvaluator != nil {
 		tctx := tracer.Start(opts.tracerSink)
 		evalResult, roles, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
@@ -293,17 +293,21 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		if !ok {
 			return nil, nil, errors.New("role policy evaluator unexpected result")
 		}
-		effect := effInfo.Effect
-		if effect != effectv1.Effect_EFFECT_ALLOW {
-			engineinternal.SubstractSets(effectiveRoles, roles)
-		}
-		if result.Empty() {
+		switch effect := effInfo.Effect; effect {
+		case effectv1.Effect_EFFECT_ALLOW:
+			// resource:action pair exists and scopePermissions is set to SCOPE_PERMISSIONS_OVERRIDE_PARENT
+			// can exit evaluation
+			unresolvedRoles = nil
 			result = mkUnconditionalPolicyPlanResult(effInfo.Scope, effect)
+		case effectv1.Effect_EFFECT_DENY:
+			// resource:action pair does not exist
+			// remove used roles from unresolved roles list
+			engineinternal.SubstractSets(unresolvedRoles, roles)
 		}
 		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
 	}
 
-	if len(effectiveRoles) > 0 {
+	if len(unresolvedRoles) > 0 {
 		// get the resource policy check
 		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
 		policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
@@ -313,7 +317,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 		if policy := policySet.GetResourcePolicy(); policy != nil {
 			policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: opts.NowFunc()}
-			plan, err := policyEvaluator.EvaluateWithEffectiveRoles(ctx, input, effectiveRoles)
+			plan, err := policyEvaluator.EvaluateWithRolesToResolve(ctx, input, unresolvedRoles)
 			if err != nil {
 				return nil, nil, err
 			}
