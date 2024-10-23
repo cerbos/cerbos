@@ -2,7 +2,7 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role:  bookeeper
+  role:  bookkeeper
   scope: acme
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
