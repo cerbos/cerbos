@@ -7,7 +7,6 @@
 package internal
 
 import (
-	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -56,7 +55,7 @@ func TestSetIntersects(t *testing.T) {
 	}
 }
 
-func TestSubstractSets(t *testing.T) {
+func TestSubtractSets(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
 		name   string
@@ -77,7 +76,7 @@ func TestSubstractSets(t *testing.T) {
 			s2:   StringSet{"foo": {}, "bar": {}, "baz": {}},
 		},
 		{
-			name: "subctract itself",
+			name: "subtract itself",
 			s1:   StringSet{"foo": {}, "bar": {}, "baz": {}},
 			s2:   StringSet{"foo": {}, "bar": {}, "baz": {}},
 		},
@@ -93,9 +92,8 @@ func TestSubstractSets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s1 := maps.Clone(tc.s1)
-			SubtractSets(s1, tc.s2)
-			require.ElementsMatch(t, s1.Values(), tc.result.Values())
+			SubtractSets(tc.s1, tc.s2)
+			require.ElementsMatch(t, tc.s1.Values(), tc.result.Values())
 		})
 	}
 }
