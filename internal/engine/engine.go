@@ -302,7 +302,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		case effectv1.Effect_EFFECT_DENY:
 			// resource:action pair does not exist
 			// remove used roles from unresolved roles list
-			engineinternal.SubstractSets(unresolvedRoles, roles)
+			engineinternal.SubtractSets(unresolvedRoles, roles)
 		}
 		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
 	}

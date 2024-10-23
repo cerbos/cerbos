@@ -68,21 +68,21 @@ func TestSubstractSets(t *testing.T) {
 			name: "empty",
 		},
 		{
-			name:   "substract empty",
+			name:   "subtract empty",
 			s1:     StringSet{"foo": {}, "bar": {}, "baz": {}},
 			result: StringSet{"foo": {}, "bar": {}, "baz": {}},
 		},
 		{
-			name: "substract from empty",
+			name: "subtract from empty",
 			s2:   StringSet{"foo": {}, "bar": {}, "baz": {}},
 		},
 		{
-			name: "subsctract itself",
+			name: "subctract itself",
 			s1:   StringSet{"foo": {}, "bar": {}, "baz": {}},
 			s2:   StringSet{"foo": {}, "bar": {}, "baz": {}},
 		},
 		{
-			name:   "substract subset",
+			name:   "subtract subset",
 			s1:     StringSet{"foo": {}, "bar": {}, "baz": {}},
 			s2:     StringSet{"foo": {}, "bar": {}},
 			result: StringSet{"baz": {}},
@@ -94,7 +94,7 @@ func TestSubstractSets(t *testing.T) {
 			t.Parallel()
 
 			s1 := maps.Clone(tc.s1)
-			SubstractSets(s1, tc.s2)
+			SubtractSets(s1, tc.s2)
 			require.ElementsMatch(t, s1.Values(), tc.result.Values())
 		})
 	}

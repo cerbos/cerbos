@@ -60,7 +60,7 @@ func SetIntersects(s1 ProtoSet, s2 StringSet) bool {
 	return false
 }
 
-func SubstractSets(s1, s2 StringSet) {
+func SubtractSets(s1, s2 StringSet) {
 	for k := range s2 {
 		delete(s1, k)
 	}
