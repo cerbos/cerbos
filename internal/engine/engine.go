@@ -303,6 +303,11 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			// resource:action pair does not exist
 			// remove used roles from unresolved roles list
 			engineinternal.SubtractSets(unresolvedRoles, roles)
+		case effectv1.Effect_EFFECT_NO_MATCH:
+			// resource:action pair exists and scopePermissions is set to SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+			// fall through to the resource policy
+		case effectv1.Effect_EFFECT_UNSPECIFIED:
+			return nil, nil, errors.New("unexpected evaluation result")
 		}
 		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
 	}
