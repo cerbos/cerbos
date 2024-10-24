@@ -672,17 +672,40 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 	defer span.End()
 	span.SetAttributes(tracing.PolicyScope(scope))
 
-	roleModIDs := make([]namer.ModuleID, len(roles))
-	for i, r := range roles {
-		roleModIDs[i] = namer.RolePolicyModuleID(r, scope)
-	}
+	var requireParentalConsent, overrideParent int
+	processedRoles := make(map[string]struct{})
+	sets := []*runtimev1.RunnablePolicySet{}
 
-	sets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
-	if err == nil {
-		// compile time check against colliding scopePermission settings in shared scope
-		var requireParentalConsent, overrideParent int
-		for _, r := range sets {
-			switch r.GetRolePolicy().ScopePermissions { //nolint:exhaustive
+	// we recursively retrieve all role policies defined within parent roles
+	// (parent roles can be base level or role policy roles)
+	var getPolicies func([]string, map[string]struct{}) error
+
+	getPolicies = func(roles []string, processedRoles map[string]struct{}) error {
+		roleModIDs := make([]namer.ModuleID, 0, len(roles))
+		for _, r := range roles {
+			if _, ok := processedRoles[r]; !ok {
+				roleModIDs = append(roleModIDs, namer.RolePolicyModuleID(r, scope))
+				processedRoles[r] = struct{}{}
+			}
+		}
+
+		currSets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
+		if err != nil {
+			tracing.MarkFailed(span, http.StatusInternalServerError, err)
+			return err
+		}
+
+		sets = append(sets, currSets...)
+
+		for _, r := range currSets {
+			rp := r.GetRolePolicy()
+
+			err := getPolicies(rp.GetParentRoles(), processedRoles)
+			if err != nil {
+				return err
+			}
+
+			switch rp.ScopePermissions { //nolint:exhaustive
 			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 				requireParentalConsent++
 			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
@@ -690,13 +713,13 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 			}
 
 			if requireParentalConsent > 0 && overrideParent > 0 {
-				err = errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
-				break
+				return errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
 			}
 		}
+		return nil
 	}
-	if err != nil {
-		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+
+	if err := getPolicies(roles, processedRoles); err != nil {
 		return nil, err
 	}
 
