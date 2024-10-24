@@ -10,3 +10,8 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       roles:
         - employee
+    - actions:
+        - reference
+      effect: EFFECT_ALLOW
+      roles:
+        - bookkeeper
