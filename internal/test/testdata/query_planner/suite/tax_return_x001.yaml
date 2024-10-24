@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Role policies tax return tests for emma
+principal:
+    id: x001
+    policyVersion: default
+    scope: acme
+    roles:
+        - accountant
+        - employee
+tests:
+    - action: comment
+      resource:
+        kind: tax_return
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_ALLOWED
+    - action: view
+      resource:
+        kind: tax_return
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_ALLOWED

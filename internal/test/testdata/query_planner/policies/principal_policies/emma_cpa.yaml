@@ -1,0 +1,14 @@
+
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: emma_cpa
+  version: default
+  rules:
+    - resource: tax_return
+      actions:
+        - action: file
+          effect: EFFECT_ALLOW
+        - action: delete
+          effect: EFFECT_DENY

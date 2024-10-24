@@ -25,6 +25,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/conditions"
+	engineinternal "github.com/cerbos/cerbos/internal/engine/internal"
 	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -277,23 +278,58 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
 	}
-
-	// get the resource policy check
-	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
-	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
+	rpEvaluator, err := engine.getRolePolicyEvaluator(ctx, opts.evalParams, ppScope, input.Principal.Roles)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+		return nil, nil, fmt.Errorf("failed to get role policy evaluator: %w", err)
 	}
-
-	if policy := policySet.GetResourcePolicy(); policy != nil {
-		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: opts.NowFunc()}
-		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+	unresolvedRoles := engineinternal.ToSet(input.Principal.Roles)
+	if rpEvaluator != nil {
+		tctx := tracer.Start(opts.tracerSink)
+		evalResult, roles, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
 		if err != nil {
 			return nil, nil, err
 		}
+		effInfo, ok := evalResult.Effects[input.Action]
+		if !ok {
+			return nil, nil, errors.New("role policy evaluator unexpected result")
+		}
+		switch effect := effInfo.Effect; effect {
+		case effectv1.Effect_EFFECT_ALLOW:
+			// resource:action pair exists and scopePermissions is set to SCOPE_PERMISSIONS_OVERRIDE_PARENT
+			// can exit evaluation
+			unresolvedRoles = nil
+			result = mkUnconditionalPolicyPlanResult(effInfo.Scope, effect)
+		case effectv1.Effect_EFFECT_DENY:
+			// resource:action pair does not exist
+			// remove used roles from unresolved roles list
+			engineinternal.SubtractSets(unresolvedRoles, roles)
+		case effectv1.Effect_EFFECT_NO_MATCH:
+			// resource:action pair exists and scopePermissions is set to SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+			// fall through to the resource policy
+		case effectv1.Effect_EFFECT_UNSPECIFIED:
+			return nil, nil, errors.New("unexpected evaluation result")
+		}
+		maps.Copy(auditTrail.EffectivePolicies, evalResult.AuditTrail.EffectivePolicies)
+	}
 
-		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
-		result = planner.CombinePlans(result, plan)
+	if len(unresolvedRoles) > 0 {
+		// get the resource policy check
+		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
+		policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+		}
+
+		if policy := policySet.GetResourcePolicy(); policy != nil {
+			policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, Globals: opts.Globals(), SchemaMgr: engine.schemaMgr, NowFn: opts.NowFunc()}
+			plan, err := policyEvaluator.EvaluateWithRolesToResolve(ctx, input, unresolvedRoles)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
+			result = planner.CombinePlans(result, plan)
+		}
 	}
 
 	output, err := result.ToPlanResourcesOutput(input)
@@ -306,6 +342,13 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	return output, auditTrail, nil
+}
+
+func mkUnconditionalPolicyPlanResult(scope string, effect effectv1.Effect) *planner.PolicyPlanResult {
+	if effect == effectv1.Effect_EFFECT_ALLOW {
+		return planner.NewAlwaysAllowed(scope)
+	}
+	return planner.NewAlwaysDenied(scope)
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {
