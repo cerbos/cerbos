@@ -21,6 +21,7 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -240,13 +241,14 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 			return result, nil
 		}
 	}
-
+	// scopePermission of the child policy respective to the current one (designated by p)
+	scopePermission := policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
-		if !result.Empty() {
+		if !result.Empty() && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 			break
 		}
-
+		scopePermission = p.ScopePermissions // analysed on the next iteration of the loop
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
