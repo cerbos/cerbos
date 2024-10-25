@@ -15,3 +15,8 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       roles:
         - bookkeeper
+    - actions:
+        - create
+      effect: EFFECT_ALLOW
+      roles:
+        - manager

@@ -5,8 +5,11 @@ rolePolicy:
   role:  bookkeeper
   scope: acme
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+  parentRoles:
+    - manager
   rules:
     - resource: tax_return
       allowActions:
         - comment
         - view
+        - create

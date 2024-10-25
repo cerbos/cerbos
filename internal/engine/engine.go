@@ -285,7 +285,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	unresolvedRoles := engineinternal.ToSet(input.Principal.Roles)
 	if rpEvaluator != nil {
 		tctx := tracer.Start(opts.tracerSink)
-		evalResult, roles, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
+		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -301,11 +301,15 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			result = mkUnconditionalPolicyPlanResult(effInfo.Scope, effect)
 		case effectv1.Effect_EFFECT_DENY:
 			// resource:action pair does not exist
-			// remove used roles from unresolved roles list
-			engineinternal.SubtractSets(unresolvedRoles, roles)
+			// We find the XOR because:
+			// - `unresolvedRoles` might have unmatched base roles (e.g. named role policies don't exist) left over
+			// - `effInfo.ActiveRoles` might have non-role policy parentRoles that were collected during role
+			//   policy evaluation that require further evaluation
+			unresolvedRoles = engineinternal.GetSymmetricDifference(effInfo.ActiveRoles, unresolvedRoles)
 		case effectv1.Effect_EFFECT_NO_MATCH:
 			// resource:action pair exists and scopePermissions is set to SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
-			// fall through to the resource policy
+			// extend with any retrieved parent roles and fall through to the resource policy
+			unresolvedRoles.UnionWith(effInfo.ActiveRoles)
 		case effectv1.Effect_EFFECT_UNSPECIFIED:
 			return nil, nil, errors.New("unexpected evaluation result")
 		}

@@ -177,7 +177,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 			mappingExists := actions.Get(a) != nil
 			if mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope, ActiveRoles: activeRoles})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
 			} else if !mappingExists {
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
@@ -185,7 +185,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 			}
 		}
 
-		result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+		result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH, ActiveRoles: activeRoles})
 
 		return result, nil
 	})
