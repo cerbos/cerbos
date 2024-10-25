@@ -243,7 +243,11 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 	}
 	// scopePermission of the child policy respective to the current one (designated by p)
 	scopePermission := policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
+	resource := rpe.Policy.Meta.Resource
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
+		if resource == "x" {
+			fmt.Printf("analyzing resource=%q, scope=%q\n", resource, p.Scope)
+		}
 		// if previous iteration has found a matching policy, then quit the loop
 		if !result.Empty() && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 			break
