@@ -22,7 +22,7 @@ require (
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.3.1
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/fatih/color v1.17.0
+	github.com/fatih/color v1.18.0
 	github.com/fergusstrange/embedded-postgres v1.29.0
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/ghodss/yaml v1.0.0
@@ -50,10 +50,10 @@ require (
 	github.com/jwalton/go-supportscolor v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lestrrat-go/httprc/v2 v2.0.0
-	github.com/lestrrat-go/jwx/v2 v2.1.1
+	github.com/lestrrat-go/jwx/v2 v2.1.2
 	github.com/mattn/go-isatty v0.0.20
 	github.com/microsoft/go-mssqldb v1.7.2
-	github.com/minio/minio-go/v7 v7.0.78
+	github.com/minio/minio-go/v7 v7.0.79
 	github.com/nlepage/go-tarfs v1.2.1
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -107,7 +107,7 @@ require (
 	golang.org/x/sync v0.8.0
 	golang.org/x/tools v0.26.0
 	gonum.org/v1/gonum v0.15.1
-	google.golang.org/genproto/googleapis/api v0.0.0-20241015192408-796eee8c2d53
+	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -277,7 +277,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
 	google.golang.org/api v0.191.0 // indirect
 	google.golang.org/genproto v0.0.0-20240812133136-8ffd90a71988 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
