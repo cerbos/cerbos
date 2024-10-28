@@ -4,7 +4,7 @@ apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_manager
   scope: acme.hr.uk
-  parentRoles: ["manager"]
+  parentRoles: ["manager", "acme_creator"]
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
     - resource: leave_request

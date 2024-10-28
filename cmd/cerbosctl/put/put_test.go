@@ -121,6 +121,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"role.acme_jr_admin/acme.hr.uk",
 					"role.acme_manager/acme.hr.uk",
 					"role.acme_sr_admin/acme.hr.uk",
+					"role.acme_travel_agent/acme.hr.de",
 				}, listPolicies(t, clientCtx))
 			})
 

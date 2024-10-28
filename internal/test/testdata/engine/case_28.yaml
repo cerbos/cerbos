@@ -1,14 +1,15 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Role policy with parent role"
+description: "Role policy with parent role (require parental consent for allows)"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
         "view:public", # allowed in role policy and resource policy for "manager"
-        "delete", # not allowed in role policy, but it in resource policy for "manager" (which role policy reduces permissions of)
+        "delete", # not allowed in role policy, but is in resource policy for "manager" (which role policy reduces permissions of)
         "redirect", # not allowed in role policy, but allowed in resource policy for "employee" (which role policy does NOT reduce permissions of)
+        "create", # inherited from `acme_creator` parent role
         ],
       "principal":
         {
@@ -37,7 +38,7 @@ inputs:
               "department": "marketing",
               "geography": "GB",
               "id": "XX125",
-              "owner": "sally",
+              "owner": "john",
               "team": "design",
             },
         },
@@ -68,9 +69,15 @@ wantOutputs:
               "policy": "resource.leave_request.vdefault/acme.hr.uk",
               "scope": "acme.hr",
             },
+          "create":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "scope": "acme",
+            },
         },
       "effectiveDerivedRoles":
-        ["direct_manager"],
+        ["any_employee", "direct_manager", "employee_that_owns_the_record"],
     },
   ]
 wantDecisionLogs:
@@ -93,7 +100,7 @@ wantDecisionLogs:
                         "department": "marketing",
                         "geography": "GB",
                         "id": "XX125",
-                        "owner": "sally",
+                        "owner": "john",
                         "team": "design",
                       },
                     "scope": "acme.hr.uk",
@@ -102,7 +109,7 @@ wantDecisionLogs:
                   {
                     "id": "john",
                     "scope": "acme.hr.uk",
-                    "roles": ["acme_manager", "employee", "manager"], # includes implicitly assumed `manager`
+                    "roles": ["acme_manager", "employee", "manager", "acme_creator"],
                     "attr":
                       {
                         "department": "marketing",
@@ -112,7 +119,7 @@ wantDecisionLogs:
                         "managed_geographies": "GB",
                       },
                   },
-                "actions": ["view:public", "delete", "redirect"],
+                "actions": ["view:public", "delete", "redirect", "create"],
               },
             ],
           "outputs":
@@ -140,9 +147,15 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.vdefault/acme.hr.uk",
                         "scope": "acme.hr",
                       },
+                    "create":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "scope": "acme",
+                      },
                   },
                 "effectiveDerivedRoles":
-                  ["direct_manager"],
+                  ["any_employee", "direct_manager", "employee_that_owns_the_record"],
               },
             ],
         },
@@ -150,6 +163,14 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
+              "cerbos.role.acme_creator/acme.hr.uk":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_02.yaml",
+                    },
+                },
               "cerbos.role.acme_manager/acme.hr.uk":
                 {
                   "attributes":
