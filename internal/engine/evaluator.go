@@ -136,6 +136,9 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
 		mergedActions := make(internal.ProtoSet)
 		activeRoles := make(internal.StringSet)
+		// we use a dynamically growing slice here so we have a deterministic ordering of roles down the line.
+		// this is relevant in the CheckOutput (specifically in tests). A minor penalty for cleaner tests :shrug:
+		assumedRoles := []string{}
 		var scopePermission policyv1.ScopePermissions // all role policies must share the same ScopePermissions
 		for r, p := range rpe.policies {
 			if scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
@@ -150,20 +153,22 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 				mergedActions.Merge(k.Actions)
 			}
 
-			activeRoles[r] = struct{}{}
+			if _, ok := activeRoles[r]; !ok {
+				activeRoles[r] = struct{}{}
+				assumedRoles = append(assumedRoles, r)
+			}
 			// The role policy implicitly assumes all parent roles
 			for _, pr := range p.ParentRoles {
-				activeRoles[pr] = struct{}{}
+				if _, ok := activeRoles[pr]; !ok {
+					activeRoles[pr] = struct{}{}
+					assumedRoles = append(assumedRoles, pr)
+				}
 			}
 		}
 
 		trail := newAuditTrail(sourceAttrs)
 		result := newEvalResult(input.Actions, trail)
 
-		assumedRoles := make([]string, 0, len(activeRoles))
-		for ar := range activeRoles {
-			assumedRoles = append(assumedRoles, ar)
-		}
 		result.AssumedRoles = assumedRoles
 
 		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
