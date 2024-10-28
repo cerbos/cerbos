@@ -682,6 +682,10 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 
 	// we recursively retrieve all role policies defined within parent roles
 	// (parent roles can be base level or role policy roles)
+	//
+	// TODO: to avoid repeat unconstrained (and potentially expensive) recursions,
+	// we could cache the result here and invalidate if the index changes. This might
+	// not be relevant if we rethink how the index is implemented down the line
 	var getPolicies func([]string, map[string]struct{}) error
 
 	getPolicies = func(roles []string, processedRoles map[string]struct{}) error {
