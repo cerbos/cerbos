@@ -11,3 +11,8 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       roles:
         - USER
+    - actions:
+        - debug
+      effect: EFFECT_ALLOW
+      roles:
+        - USER

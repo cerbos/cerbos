@@ -42,3 +42,10 @@ tests:
             operands:
               - variable: request.resource.attr.status
               - value: PENDING_STATUS 
+    - action: debug
+      resource:
+        kind: x
+        scope: acme.hr
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_DENIED

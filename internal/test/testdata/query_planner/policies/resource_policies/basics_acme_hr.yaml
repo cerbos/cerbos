@@ -16,3 +16,8 @@ resourcePolicy:
         match:
           expr: |-
             R.attr.status == "PENDING_STATUS"
+    - actions:
+        - debug
+      effect: EFFECT_DENY
+      roles:
+        - USER
