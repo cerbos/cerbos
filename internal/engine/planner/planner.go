@@ -80,6 +80,22 @@ func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *Po
 	}
 }
 
+func mergePlans(parent, child *PolicyPlanResult) *PolicyPlanResult {
+	if parent == nil {
+		return child
+	}
+	if child == nil {
+		return parent
+	}
+	if child.denyOnly() {
+		return child
+	}
+	return &PolicyPlanResult{
+		Scope:       parent.Scope + ";" + child.Scope, // TODO: revisit
+		AllowFilter: append(parent.AllowFilter, parent.AllowFilter...),
+		DenyFilter:  append(parent.DenyFilter, parent.DenyFilter...),
+	}
+}
 func NewAlwaysAllowed(scope string) *PolicyPlanResult {
 	return &PolicyPlanResult{
 		Scope:       scope,
@@ -100,6 +116,10 @@ func (p *PolicyPlanResult) Add(filter *qpN, effect effectv1.Effect) {
 	} else {
 		p.DenyFilter = append(p.DenyFilter, invertNodeBooleanValue(filter))
 	}
+}
+
+func (p *PolicyPlanResult) denyOnly() bool {
+	return len(p.AllowFilter) == 0 && len(p.DenyFilter) != 0
 }
 
 func (p *PolicyPlanResult) Empty() bool {
@@ -162,6 +182,14 @@ func (p *PolicyPlanResult) toAST() *qpN {
 	}
 }
 
+func (p *PolicyPlanResult) Merge(a *PolicyPlanResult) {
+	if a != nil {
+		p.AllowFilter = append(p.AllowFilter, a.AllowFilter...)
+		p.DenyFilter = append(p.DenyFilter, a.DenyFilter...)
+		//TODO: merge scopes
+	}
+}
+
 func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{ppe.NowFn}
 }
@@ -220,39 +248,43 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	return rpe.EvaluateWithRolesToResolve(ctx, input, effectiveRoles)
 }
 
-func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (*PolicyPlanResult, error) {
+func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (result *PolicyPlanResult, _ error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
 	defer span.End()
 
 	request := planResourcesInputToRequest(input)
-	result := &PolicyPlanResult{}
 
 	vr, err := rpe.SchemaMgr.ValidatePlanResourcesInput(ctx, rpe.Policy.Schemas, input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate input: %w", err)
 	}
-
+	var validationErrors []*schemav1.ValidationError
 	if len(vr.Errors) > 0 {
-		result.ValidationErrors = vr.Errors.SchemaErrors()
+		validationErrors = vr.Errors.SchemaErrors()
 
 		if vr.Reject {
+			result = new(PolicyPlanResult)
+			result.ValidationErrors = validationErrors
 			result.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
 			return result, nil
 		}
 	}
 	// scopePermission of the child policy respective to the current one (designated by p)
-	scopePermission := policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
-	resource := rpe.Policy.Meta.Resource
+	//TODO: find better names. Parent here is a policy enforcing the rule
+	parentResult, childResult := new(PolicyPlanResult), new(PolicyPlanResult)
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
-		if resource == "x" {
-			fmt.Printf("analyzing resource=%q, scope=%q\n", resource, p.Scope)
-		}
-		// if previous iteration has found a matching policy, then quit the loop
-		if !result.Empty() && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+		if !parentResult.Empty() {
 			break
 		}
-		scopePermission = p.ScopePermissions // analysed on the next iteration of the loop
+		if childResult.denyOnly() {
+			break
+		}
+		if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+			result = parentResult
+		} else {
+			result = childResult
+		}
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
@@ -345,7 +377,8 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 			}
 		}
 	}
-
+	mergePlans(parentResult, childResult)
+	result.ValidationErrors = validationErrors
 	return result, nil
 }
 
