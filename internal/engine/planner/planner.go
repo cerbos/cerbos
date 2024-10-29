@@ -106,6 +106,7 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 		DenyFilter:       append(acc.DenyFilter, current.DenyFilter...),
 	}
 }
+
 func NewPolicyPlanResult(scope string, scopePermissions policyv1.ScopePermissions) *PolicyPlanResult {
 	return &PolicyPlanResult{
 		Scope:            scope,
@@ -220,7 +221,7 @@ func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{ppe.NowFn}
 }
 
-func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (acc *PolicyPlanResult, error) {
+func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (acc *PolicyPlanResult, _ error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
 	defer span.End()
@@ -240,7 +241,6 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 			return nil, err
 		}
 
-		acc.Scope = p.Scope
 		evalCtx := ppe.evalContext()
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {

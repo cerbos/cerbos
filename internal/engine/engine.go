@@ -314,9 +314,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	if len(unresolvedRoles) > 0 {
 		// get the resource policy check
-		fmt.Printf("resource scope is %q\n", input.Resource.Scope)
 		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
-		fmt.Printf("rpName, rpVersion, rpScope = %s, %s, %s\n", rpName, rpVersion, rpScope)
 		policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope, opts.LenientScopeSearch())
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
