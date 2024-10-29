@@ -29,3 +29,16 @@ tests:
         policyVersion: default
       want:
         kind: KIND_ALWAYS_ALLOWED
+    - action: edit
+      resource:
+        kind: x
+        scope: acme.hr
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: PENDING_STATUS 
+              - variable: request.resource.attr.status

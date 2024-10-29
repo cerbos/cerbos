@@ -47,6 +47,7 @@ type (
 		AllowFilter      []*qpN
 		DenyFilter       []*qpN
 		ValidationErrors []*schemav1.ValidationError
+		ScopePermissions policyv1.ScopePermissions
 	}
 )
 
@@ -81,21 +82,38 @@ func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *Po
 }
 
 func mergePlans(parent, child *PolicyPlanResult) *PolicyPlanResult {
-	if parent == nil {
+	if parent == nil || child.Complete() {
 		return child
 	}
-	if child == nil {
-		return parent
+	scopePermissions := parent.ScopePermissions
+	allowFilter := parent.AllowFilter
+	if parent.AllowEmpty() {
+		scopePermissions = child.ScopePermissions
+		allowFilter = child.AllowFilter
+	} else if !child.AllowEmpty() {
+		n := len(parent.AllowFilter) * len(child.AllowFilter)
+		allowFilter = make([]*qpN, 0, n)
+		for _, p := range parent.AllowFilter {
+			for _, c := range child.AllowFilter {
+				allowFilter = append(allowFilter, mkNodeFromLO(mkAndLogicalOperation([]*qpN{p, c})))
+			}
+		}
 	}
-	if child.denyOnly() {
-		return child
+	result := &PolicyPlanResult{
+		Scope:            parent.Scope + ";" + child.Scope, // TODO: revisit
+		ScopePermissions: scopePermissions,
+		AllowFilter:      allowFilter,
+		DenyFilter:       append(parent.DenyFilter, child.DenyFilter...),
 	}
+	return result
+}
+func NewPolicyPlanResult(scope string, scopePermissions policyv1.ScopePermissions) *PolicyPlanResult {
 	return &PolicyPlanResult{
-		Scope:       parent.Scope + ";" + child.Scope, // TODO: revisit
-		AllowFilter: append(parent.AllowFilter, parent.AllowFilter...),
-		DenyFilter:  append(parent.DenyFilter, parent.DenyFilter...),
+		Scope:            scope,
+		ScopePermissions: scopePermissions,
 	}
 }
+
 func NewAlwaysAllowed(scope string) *PolicyPlanResult {
 	return &PolicyPlanResult{
 		Scope:       scope,
@@ -118,8 +136,12 @@ func (p *PolicyPlanResult) Add(filter *qpN, effect effectv1.Effect) {
 	}
 }
 
-func (p *PolicyPlanResult) denyOnly() bool {
-	return len(p.AllowFilter) == 0 && len(p.DenyFilter) != 0
+func (p *PolicyPlanResult) DenyEmpty() bool {
+	return len(p.DenyFilter) == 0
+}
+
+func (p *PolicyPlanResult) AllowEmpty() bool {
+	return len(p.AllowFilter) == 0
 }
 
 func (p *PolicyPlanResult) Empty() bool {
@@ -182,12 +204,17 @@ func (p *PolicyPlanResult) toAST() *qpN {
 	}
 }
 
-func (p *PolicyPlanResult) Merge(a *PolicyPlanResult) {
-	if a != nil {
-		p.AllowFilter = append(p.AllowFilter, a.AllowFilter...)
-		p.DenyFilter = append(p.DenyFilter, a.DenyFilter...)
-		//TODO: merge scopes
+func (p *PolicyPlanResult) Complete() bool {
+	if p == nil {
+		return false
 	}
+	if p.AllowEmpty() && !p.DenyEmpty() {
+		return true
+	}
+	if !p.Empty() && p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+		return true
+	}
+	return false
 }
 
 func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
@@ -272,25 +299,15 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 	}
 	// scopePermission of the child policy respective to the current one (designated by p)
 	//TODO: find better names. Parent here is a policy enforcing the rule
-	parentResult, childResult := new(PolicyPlanResult), new(PolicyPlanResult)
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
-		if !parentResult.Empty() {
+		if result.Complete() {
 			break
 		}
-		if childResult.denyOnly() {
-			break
-		}
-		if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-			result = parentResult
-		} else {
-			result = childResult
-		}
+		currentResult := NewPolicyPlanResult(p.Scope, p.ScopePermissions)
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
 		}
-
-		result.Scope = p.Scope
 
 		var derivedRoles []rN
 
@@ -373,11 +390,12 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 					filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
 				}
 
-				result.Add(filter, rule.Effect)
+				currentResult.Add(filter, rule.Effect)
+				break
 			}
 		}
+		result = mergePlans(result, currentResult)
 	}
-	mergePlans(parentResult, childResult)
 	result.ValidationErrors = validationErrors
 	return result, nil
 }
