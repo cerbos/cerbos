@@ -100,7 +100,7 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 		}
 	}
 	return &PolicyPlanResult{
-		Scope:            acc.Scope + ";" + current.Scope, // TODO: revisit
+		Scope:            current.Scope, // TODO: revisit
 		ScopePermissions: scopePermissions,
 		AllowFilter:      allowFilter,
 		DenyFilter:       append(acc.DenyFilter, current.DenyFilter...),
@@ -389,7 +389,6 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 				}
 
 				currentResult.Add(filter, rule.Effect)
-				break
 			}
 		}
 		acc = mergePlans(acc, currentResult)
