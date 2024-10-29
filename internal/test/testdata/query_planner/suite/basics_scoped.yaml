@@ -40,5 +40,5 @@ tests:
           expression:
             operator: eq
             operands:
-              - value: PENDING_STATUS 
               - variable: request.resource.attr.status
+              - value: PENDING_STATUS 

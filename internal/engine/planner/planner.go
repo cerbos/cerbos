@@ -81,31 +81,30 @@ func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *Po
 	}
 }
 
-func mergePlans(parent, child *PolicyPlanResult) *PolicyPlanResult {
-	if parent == nil || child.Complete() {
-		return child
+func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
+	if acc == nil {
+		return current
 	}
-	scopePermissions := parent.ScopePermissions
-	allowFilter := parent.AllowFilter
-	if parent.AllowEmpty() {
-		scopePermissions = child.ScopePermissions
-		allowFilter = child.AllowFilter
-	} else if !child.AllowEmpty() {
-		n := len(parent.AllowFilter) * len(child.AllowFilter)
+	scopePermissions := current.ScopePermissions
+	allowFilter := current.AllowFilter
+	if current.AllowEmpty() {
+		scopePermissions = acc.ScopePermissions
+		allowFilter = acc.AllowFilter
+	} else if !acc.AllowEmpty() {
+		n := len(acc.AllowFilter) * len(current.AllowFilter)
 		allowFilter = make([]*qpN, 0, n)
-		for _, p := range parent.AllowFilter {
-			for _, c := range child.AllowFilter {
+		for _, p := range acc.AllowFilter {
+			for _, c := range current.AllowFilter {
 				allowFilter = append(allowFilter, mkNodeFromLO(mkAndLogicalOperation([]*qpN{p, c})))
 			}
 		}
 	}
-	result := &PolicyPlanResult{
-		Scope:            parent.Scope + ";" + child.Scope, // TODO: revisit
+	return &PolicyPlanResult{
+		Scope:            acc.Scope + ";" + current.Scope, // TODO: revisit
 		ScopePermissions: scopePermissions,
 		AllowFilter:      allowFilter,
-		DenyFilter:       append(parent.DenyFilter, child.DenyFilter...),
+		DenyFilter:       append(acc.DenyFilter, current.DenyFilter...),
 	}
-	return result
 }
 func NewPolicyPlanResult(scope string, scopePermissions policyv1.ScopePermissions) *PolicyPlanResult {
 	return &PolicyPlanResult{
@@ -221,7 +220,7 @@ func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{ppe.NowFn}
 }
 
-func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
+func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (acc *PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
 	defer span.End()
@@ -229,19 +228,19 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	derivedRolesList := mkDerivedRolesList(nil)
 
 	request := planResourcesInputToRequest(input)
-	result := &PolicyPlanResult{}
 	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
-		if !result.Empty() {
+		if !acc.Empty() {
 			break
 		}
+		currentResult := NewPolicyPlanResult(p.Scope, p.ScopePermissions)
 
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
 		}
 
-		result.Scope = p.Scope
+		acc.Scope = p.Scope
 		evalCtx := ppe.evalContext()
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
@@ -258,12 +257,14 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					return nil, err
 				}
 
-				result.Add(filter, rule.Effect)
+				currentResult.Add(filter, rule.Effect)
+				break
 			}
 		}
+		acc = mergePlans(acc, currentResult)
 	}
 
-	return result, nil
+	return acc, nil
 }
 
 func (rpe *ResourcePolicyEvaluator) evalContext() *evalContext {
@@ -275,7 +276,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	return rpe.EvaluateWithRolesToResolve(ctx, input, effectiveRoles)
 }
 
-func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (result *PolicyPlanResult, _ error) {
+func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (acc *PolicyPlanResult, _ error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
 	defer span.End()
@@ -291,16 +292,14 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 		validationErrors = vr.Errors.SchemaErrors()
 
 		if vr.Reject {
-			result = new(PolicyPlanResult)
-			result.ValidationErrors = validationErrors
-			result.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
-			return result, nil
+			acc = new(PolicyPlanResult)
+			acc.ValidationErrors = validationErrors
+			acc.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
+			return acc, nil
 		}
 	}
-	// scopePermission of the child policy respective to the current one (designated by p)
-	//TODO: find better names. Parent here is a policy enforcing the rule
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
-		if result.Complete() {
+		if acc.Complete() {
 			break
 		}
 		currentResult := NewPolicyPlanResult(p.Scope, p.ScopePermissions)
@@ -394,10 +393,10 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 				break
 			}
 		}
-		result = mergePlans(result, currentResult)
+		acc = mergePlans(acc, currentResult)
 	}
-	result.ValidationErrors = validationErrors
-	return result, nil
+	acc.ValidationErrors = validationErrors
+	return acc, nil
 }
 
 func matchesActionGlob(actionGlob, action string) bool {
