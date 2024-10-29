@@ -93,9 +93,9 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 	} else if !acc.AllowEmpty() {
 		n := len(acc.AllowFilter) * len(current.AllowFilter)
 		allowFilter = make([]*qpN, 0, n)
-		for _, p := range acc.AllowFilter {
+		for _, a := range acc.AllowFilter {
 			for _, c := range current.AllowFilter {
-				allowFilter = append(allowFilter, mkNodeFromLO(mkAndLogicalOperation([]*qpN{p, c})))
+				allowFilter = append(allowFilter, mkNodeFromLO(mkAndLogicalOperation([]*qpN{a, c})))
 			}
 		}
 	}
@@ -231,7 +231,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	request := planResourcesInputToRequest(input)
 	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
-		if !acc.Empty() {
+		if acc.Complete() {
 			break
 		}
 		currentResult := NewPolicyPlanResult(p.Scope, p.ScopePermissions)
@@ -258,7 +258,6 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 				}
 
 				currentResult.Add(filter, rule.Effect)
-				break
 			}
 		}
 		acc = mergePlans(acc, currentResult)
