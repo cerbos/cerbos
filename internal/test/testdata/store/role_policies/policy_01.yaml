@@ -2,7 +2,7 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_admin
+  role: acme_jr_admin
   scope: acme.hr.uk
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:

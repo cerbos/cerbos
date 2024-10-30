@@ -136,6 +136,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
 		mergedActions := make(internal.ProtoSet)
 		activeRoles := make(internal.StringSet)
+		assumedRoles := []string{}
 		var scopePermission policyv1.ScopePermissions // all role policies must share the same ScopePermissions
 		for r, p := range rpe.policies {
 			if scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
@@ -150,11 +151,23 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 				mergedActions.Merge(k.Actions)
 			}
 
-			activeRoles[r] = struct{}{}
+			if _, ok := activeRoles[r]; !ok {
+				activeRoles[r] = struct{}{}
+				assumedRoles = append(assumedRoles, r)
+			}
+			// The role policy implicitly assumes all parent roles
+			for _, pr := range p.ParentRoles {
+				if _, ok := activeRoles[pr]; !ok {
+					activeRoles[pr] = struct{}{}
+					assumedRoles = append(assumedRoles, pr)
+				}
+			}
 		}
 
 		trail := newAuditTrail(sourceAttrs)
 		result := newEvalResult(input.Actions, trail)
+
+		result.AssumedRoles = assumedRoles
 
 		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
 
@@ -164,15 +177,15 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 			mappingExists := actions.Get(a) != nil
 			if mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope})
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope, ActiveRoles: activeRoles})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
-			} else if !mappingExists {
+			} else if !mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
 			}
 		}
 
-		result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+		result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH, ActiveRoles: activeRoles})
 
 		return result, nil
 	})
@@ -677,6 +690,7 @@ type PolicyEvalResult struct {
 	AuditTrail            *auditv1.AuditTrail
 	ValidationErrors      []*schemav1.ValidationError
 	Outputs               []*enginev1.OutputEntry
+	AssumedRoles          []string
 }
 
 func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEvalResult {

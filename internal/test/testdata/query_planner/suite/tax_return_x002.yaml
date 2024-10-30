@@ -20,3 +20,9 @@ tests:
         policyVersion: default
       want:
         kind: KIND_ALWAYS_DENIED
+    - action: create
+      resource:
+        kind: tax_return
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_ALLOWED

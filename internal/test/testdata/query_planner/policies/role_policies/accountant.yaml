@@ -1,10 +1,12 @@
-# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: accountant
   scope: acme
   scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
+  parentRoles:
+    - manager
   rules:
     - resource: tax_return
       allowActions:

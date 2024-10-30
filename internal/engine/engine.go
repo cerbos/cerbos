@@ -285,7 +285,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	unresolvedRoles := engineinternal.ToSet(input.Principal.Roles)
 	if rpEvaluator != nil {
 		tctx := tracer.Start(opts.tracerSink)
-		evalResult, roles, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
+		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator.(*rolePolicyEvaluator), input)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -301,11 +301,15 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			result = mkUnconditionalPolicyPlanResult(effInfo.Scope, effect)
 		case effectv1.Effect_EFFECT_DENY:
 			// resource:action pair does not exist
-			// remove used roles from unresolved roles list
-			engineinternal.SubtractSets(unresolvedRoles, roles)
+			// We find the XOR because:
+			// - `unresolvedRoles` might have unmatched base roles (e.g. named role policies don't exist) left over
+			// - `effInfo.ActiveRoles` might have non-role policy parentRoles that were collected during role
+			//   policy evaluation that require further evaluation
+			unresolvedRoles = engineinternal.GetSymmetricDifference(effInfo.ActiveRoles, unresolvedRoles)
 		case effectv1.Effect_EFFECT_NO_MATCH:
 			// resource:action pair exists and scopePermissions is set to SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
-			// fall through to the resource policy
+			// extend with any retrieved parent roles and fall through to the resource policy
+			unresolvedRoles.UnionWith(effInfo.ActiveRoles)
 		case effectv1.Effect_EFFECT_UNSPECIFIED:
 			return nil, nil, errors.New("unexpected evaluation result")
 		}
@@ -672,17 +676,44 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 	defer span.End()
 	span.SetAttributes(tracing.PolicyScope(scope))
 
-	roleModIDs := make([]namer.ModuleID, len(roles))
-	for i, r := range roles {
-		roleModIDs[i] = namer.RolePolicyModuleID(r, scope)
-	}
+	var requireParentalConsent, overrideParent int
+	processedRoles := make(map[string]struct{})
+	sets := []*runtimev1.RunnablePolicySet{}
 
-	sets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
-	if err == nil {
-		// compile time check against colliding scopePermission settings in shared scope
-		var requireParentalConsent, overrideParent int
-		for _, r := range sets {
-			switch r.GetRolePolicy().ScopePermissions { //nolint:exhaustive
+	// we recursively retrieve all role policies defined within parent roles
+	// (parent roles can be base level or role policy roles)
+	//
+	// TODO: to avoid repeat unconstrained (and potentially expensive) recursions,
+	// we could cache the result here and invalidate if the index changes. This might
+	// not be relevant if we rethink how the index is implemented down the line
+	var getPolicies func([]string, map[string]struct{}) error
+
+	getPolicies = func(roles []string, processedRoles map[string]struct{}) error {
+		roleModIDs := make([]namer.ModuleID, 0, len(roles))
+		for _, r := range roles {
+			if _, ok := processedRoles[r]; !ok {
+				roleModIDs = append(roleModIDs, namer.RolePolicyModuleID(r, scope))
+				processedRoles[r] = struct{}{}
+			}
+		}
+
+		currSets, err := engine.policyLoader.GetAll(ctx, roleModIDs)
+		if err != nil {
+			tracing.MarkFailed(span, http.StatusInternalServerError, err)
+			return err
+		}
+
+		sets = append(sets, currSets...)
+
+		for _, r := range currSets {
+			rp := r.GetRolePolicy()
+
+			err := getPolicies(rp.GetParentRoles(), processedRoles)
+			if err != nil {
+				return err
+			}
+
+			switch rp.ScopePermissions { //nolint:exhaustive
 			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 				requireParentalConsent++
 			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
@@ -690,13 +721,13 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 			}
 
 			if requireParentalConsent > 0 && overrideParent > 0 {
-				err = errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
-				break
+				return errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
 			}
 		}
+		return nil
 	}
-	if err != nil {
-		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+
+	if err := getPolicies(roles, processedRoles); err != nil {
 		return nil, err
 	}
 
@@ -748,6 +779,20 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 			tracing.MarkFailed(span, http.StatusInternalServerError, err)
 
 			return nil, fmt.Errorf("failed to execute policy: %w", err)
+		}
+
+		// The principal assumes the IdP roles from any matched role policy's parent roles
+		if len(result.AssumedRoles) > 0 {
+			roleMap := make(map[string]struct{})
+			for _, r := range input.Principal.Roles {
+				roleMap[r] = struct{}{}
+			}
+
+			for _, r := range result.AssumedRoles {
+				if _, ok := roleMap[r]; !ok {
+					input.Principal.Roles = append(input.Principal.Roles, r)
+				}
+			}
 		}
 
 		incomplete := resp.merge(result)
