@@ -100,7 +100,7 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 		}
 	}
 	return &PolicyPlanResult{
-		Scope:            current.Scope, // TODO: revisit
+		Scope:            acc.Scope,
 		ScopePermissions: scopePermissions,
 		AllowFilter:      allowFilter,
 		DenyFilter:       append(acc.DenyFilter, current.DenyFilter...),
@@ -145,7 +145,7 @@ func (p *PolicyPlanResult) AllowEmpty() bool {
 }
 
 func (p *PolicyPlanResult) Empty() bool {
-	return len(p.AllowFilter) == 0 && len(p.DenyFilter) == 0
+	return p.AllowEmpty() && p.DenyEmpty()
 }
 
 func (p *PolicyPlanResult) ToPlanResourcesOutput(input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
