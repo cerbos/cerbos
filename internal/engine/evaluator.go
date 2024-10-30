@@ -136,8 +136,6 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
 		mergedActions := make(internal.ProtoSet)
 		activeRoles := make(internal.StringSet)
-		// we use a dynamically growing slice here so we have a deterministic ordering of roles down the line.
-		// this is relevant in the CheckOutput (specifically in tests). A minor penalty for cleaner tests :shrug:
 		assumedRoles := []string{}
 		var scopePermission policyv1.ScopePermissions // all role policies must share the same ScopePermissions
 		for r, p := range rpe.policies {
