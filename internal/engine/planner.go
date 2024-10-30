@@ -6,14 +6,13 @@ package engine
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func PlannerEvaluateRolePolicy(ctx context.Context, tctx tracer.Context, evaluator Evaluator, input *enginev1.PlanResourcesInput) (*PolicyEvalResult, error) {
+func PlannerEvaluateRolePolicy(ctx context.Context, tctx tracer.Context, evaluator *rolePolicyEvaluator, input *enginev1.PlanResourcesInput) (*PolicyEvalResult, error) {
 	checkInput := enginev1.CheckInput{
 		RequestId: input.RequestId,
 		Resource: &enginev1.Resource{
@@ -34,9 +33,6 @@ func PlannerEvaluateRolePolicy(ctx context.Context, tctx tracer.Context, evaluat
 	if len(result.ValidationErrors) > 0 {
 		return nil, errors.New("role policies produced validation errors") // this shouldn't happen as role policies doesn't evaluate result.
 	}
-	if _, ok := evaluator.(*rolePolicyEvaluator); ok {
-		return result, nil
-	}
 
-	return nil, fmt.Errorf("expected role policy evaluator type, got: %T", evaluator)
+	return result, nil
 }

@@ -285,7 +285,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	unresolvedRoles := engineinternal.ToSet(input.Principal.Roles)
 	if rpEvaluator != nil {
 		tctx := tracer.Start(opts.tracerSink)
-		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator, input)
+		evalResult, err := PlannerEvaluateRolePolicy(ctx, tctx, rpEvaluator.(*rolePolicyEvaluator), input)
 		if err != nil {
 			return nil, nil, err
 		}
