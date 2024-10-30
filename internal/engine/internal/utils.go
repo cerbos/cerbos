@@ -37,6 +37,12 @@ func (s StringSet) IsSubSetOf(o StringSet) bool {
 	return true
 }
 
+func (s StringSet) UnionWith(o StringSet) {
+	for k := range o {
+		s[k] = struct{}{}
+	}
+}
+
 func ToSet(values []string) StringSet {
 	s := make(StringSet, len(values))
 	for _, v := range values {
@@ -64,4 +70,19 @@ func SubtractSets(s1, s2 StringSet) {
 	for k := range s2 {
 		delete(s1, k)
 	}
+}
+
+func GetSymmetricDifference(s1, s2 StringSet) StringSet {
+	out := make(StringSet)
+	for k := range s1 {
+		if _, ok := s2[k]; !ok {
+			out[k] = struct{}{}
+		}
+	}
+	for k := range s2 {
+		if _, ok := s1[k]; !ok {
+			out[k] = struct{}{}
+		}
+	}
+	return out
 }

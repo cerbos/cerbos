@@ -198,9 +198,9 @@ func TestIndexGetFirstMatch(t *testing.T) {
 		},
 		{
 			name:   "role_policy/strict/existent",
-			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_admin", "acme.hr.uk")},
+			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_jr_admin", "acme.hr.uk")},
 			want: func() namer.ModuleID {
-				return namer.GenModuleIDFromFQN(namer.RolePolicyFQN("acme_admin", "acme.hr.uk"))
+				return namer.GenModuleIDFromFQN(namer.RolePolicyFQN("acme_jr_admin", "acme.hr.uk"))
 			},
 		},
 	}

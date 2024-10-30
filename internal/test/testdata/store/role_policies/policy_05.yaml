@@ -2,12 +2,11 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_assistant
-  scope: acme.hr.de
-  scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
-  parentRoles:
-    - "acme_travel_agent"
+  role: acme_sr_admin
+  scope: acme.hr.uk
+  parentRoles: ["acme_jr_admin"]
+  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
     - resource: leave_request
       allowActions:
-        - assist
+        - delete
