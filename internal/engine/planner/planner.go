@@ -100,7 +100,7 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 		}
 	}
 	return &PolicyPlanResult{
-		Scope:            acc.Scope,
+		Scope:            current.Scope,
 		ScopePermissions: scopePermissions,
 		AllowFilter:      allowFilter,
 		DenyFilter:       append(acc.DenyFilter, current.DenyFilter...),
@@ -108,6 +108,10 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 }
 
 func NewPolicyPlanResult(scope string, scopePermissions policyv1.ScopePermissions) *PolicyPlanResult {
+	// for backward compatibility with precompiled bundles need to set default here despite it being set during compilation.
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+	}
 	return &PolicyPlanResult{
 		Scope:            scope,
 		ScopePermissions: scopePermissions,
@@ -262,7 +266,6 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		}
 		acc = mergePlans(acc, currentResult)
 	}
-
 	return acc, nil
 }
 
