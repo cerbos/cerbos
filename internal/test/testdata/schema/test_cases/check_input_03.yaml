@@ -7,11 +7,11 @@ schemaRefs:
   resourceSchema:
     ref: cerbos:///blah.json
 checkInput:
-  actions: [ "view:public" ]
+  actions: ["view:public"]
   principal:
     id: "john"
     policyVersion: "20210210"
-    roles: [ "employee" ]
+    roles: ["employee"]
     attr: &myAttr
       stringField: hello
   resource:
@@ -20,8 +20,9 @@ checkInput:
     id: "XX125"
     attr: *myAttr
 wantValidationErrors:
-  - message: "Failed to load schema \"cerbos:///blah.json\""
+  - message: 'Failed to load schema "cerbos:///blah.json"'
     source: SOURCE_RESOURCE
 
-  - message: "missing properties: 'intField'"
+  - path: /
+    message: "missing properties: 'intField'"
     source: SOURCE_PRINCIPAL
