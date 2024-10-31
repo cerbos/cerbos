@@ -108,10 +108,6 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 }
 
 func NewPolicyPlanResult(scope string, scopePermissions policyv1.ScopePermissions) *PolicyPlanResult {
-	// for backward compatibility with precompiled bundles need to set default here despite it being set during compilation.
-	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
-	}
 	return &PolicyPlanResult{
 		Scope:            scope,
 		ScopePermissions: scopePermissions,
@@ -238,7 +234,12 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		if acc.Complete() {
 			break
 		}
-		currentResult := NewPolicyPlanResult(p.Scope, p.ScopePermissions)
+		scopePermissions := p.ScopePermissions
+		// for backward compatibility with precompiled bundles need to set default here despite it being set during compilation.
+		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+		}
+		currentResult := NewPolicyPlanResult(p.Scope, scopePermissions)
 
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
@@ -304,7 +305,12 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 		if acc.Complete() {
 			break
 		}
-		currentResult := NewPolicyPlanResult(p.Scope, p.ScopePermissions)
+		scopePermissions := p.ScopePermissions
+		// for backward compatibility with precompiled bundles need to set default here despite it being set during compilation.
+		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+		}
+		currentResult := NewPolicyPlanResult(p.Scope, scopePermissions)
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
