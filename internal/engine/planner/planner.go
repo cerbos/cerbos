@@ -87,10 +87,10 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 	}
 	scopePermissions := current.ScopePermissions
 	allowFilter := current.AllowFilter
-	if current.AllowEmpty() {
+	if current.AllowIsEmpty() {
 		scopePermissions = acc.ScopePermissions
 		allowFilter = acc.AllowFilter
-	} else if !acc.AllowEmpty() {
+	} else if !acc.AllowIsEmpty() {
 		n := len(acc.AllowFilter) * len(current.AllowFilter)
 		allowFilter = make([]*qpN, 0, n)
 		for _, a := range acc.AllowFilter {
@@ -136,16 +136,16 @@ func (p *PolicyPlanResult) Add(filter *qpN, effect effectv1.Effect) {
 	}
 }
 
-func (p *PolicyPlanResult) DenyEmpty() bool {
+func (p *PolicyPlanResult) DenyIsEmpty() bool {
 	return len(p.DenyFilter) == 0
 }
 
-func (p *PolicyPlanResult) AllowEmpty() bool {
+func (p *PolicyPlanResult) AllowIsEmpty() bool {
 	return len(p.AllowFilter) == 0
 }
 
 func (p *PolicyPlanResult) Empty() bool {
-	return p.AllowEmpty() && p.DenyEmpty()
+	return p.AllowIsEmpty() && p.DenyIsEmpty()
 }
 
 func (p *PolicyPlanResult) ToPlanResourcesOutput(input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
@@ -208,7 +208,7 @@ func (p *PolicyPlanResult) Complete() bool {
 	if p == nil {
 		return false
 	}
-	if p.AllowEmpty() && !p.DenyEmpty() {
+	if p.AllowIsEmpty() && !p.DenyIsEmpty() {
 		return true
 	}
 	if !p.Empty() && p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
