@@ -305,7 +305,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 	var currentResult *PolicyPlanResult
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		if currentResult.Complete() {
-			fmt.Printf("exiting loop on scope: %q", currentResult.Scope)
+			// fmt.Printf("exiting loop on scope: %q", currentResult.Scope)
 			break
 		}
 		scopePermissions := p.ScopePermissions
