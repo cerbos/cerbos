@@ -1210,6 +1210,18 @@
       ],
       "default": "KIND_UNSPECIFIED"
     },
+    "InspectPoliciesResponseConstantKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED",
+        "KIND_LOCAL",
+        "KIND_UNDEFINED",
+        "KIND_UNKNOWN"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
     "InspectPoliciesResponseDerivedRole": {
       "type": "object",
       "properties": {
@@ -2048,6 +2060,21 @@
         }
       }
     },
+    "v1Constants": {
+      "type": "object",
+      "properties": {
+        "import": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      }
+    },
     "v1DecisionLogEntry": {
       "type": "object",
       "properties": {
@@ -2159,6 +2186,9 @@
         },
         "variables": {
           "$ref": "#/definitions/v1Variables"
+        },
+        "constants": {
+          "$ref": "#/definitions/v1Constants"
         }
       }
     },
@@ -2226,6 +2256,18 @@
       },
       "description": "Enable policy response"
     },
+    "v1ExportConstants": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "definitions": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      }
+    },
     "v1ExportVariables": {
       "type": "object",
       "properties": {
@@ -2278,6 +2320,30 @@
       },
       "description": "Inspect policies response"
     },
+    "v1InspectPoliciesResponseConstant": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Constant name defined in the policy."
+        },
+        "value": {
+          "description": "Raw value of the constant defined in the policy."
+        },
+        "kind": {
+          "$ref": "#/definitions/InspectPoliciesResponseConstantKind",
+          "description": "Kind of the constant defined in the policy."
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the constant defined in the policy. Only exists if the kind is imported."
+        },
+        "used": {
+          "type": "boolean",
+          "description": "Whether the constant is used in a condition."
+        }
+      }
+    },
     "v1InspectPoliciesResponseResult": {
       "type": "object",
       "properties": {
@@ -2315,6 +2381,14 @@
             "$ref": "#/definitions/InspectPoliciesResponseAttribute"
           },
           "description": "Attributes referenced in the policy."
+        },
+        "constants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1InspectPoliciesResponseConstant"
+          },
+          "description": "Constants referenced in the policy."
         }
       }
     },
@@ -2718,6 +2792,9 @@
         "rolePolicy": {
           "$ref": "#/definitions/v1RolePolicy"
         },
+        "exportConstants": {
+          "$ref": "#/definitions/v1ExportConstants"
+        },
         "variables": {
           "type": "object",
           "additionalProperties": {
@@ -2753,6 +2830,9 @@
         },
         "scopePermissions": {
           "$ref": "#/definitions/v1ScopePermissions"
+        },
+        "constants": {
+          "$ref": "#/definitions/v1Constants"
         }
       }
     },
@@ -2828,6 +2908,9 @@
         },
         "scopePermissions": {
           "$ref": "#/definitions/v1ScopePermissions"
+        },
+        "constants": {
+          "$ref": "#/definitions/v1Constants"
         }
       }
     },

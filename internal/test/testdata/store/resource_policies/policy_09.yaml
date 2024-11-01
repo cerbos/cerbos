@@ -4,6 +4,9 @@ apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: default
   resource: import_variables
+  constants:
+    import:
+      - bazqux
   variables:
     import:
       - foobar

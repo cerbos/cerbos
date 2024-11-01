@@ -24,6 +24,8 @@ const (
 	CELPrincipalAbbrev   = "P"
 	CELPrincipalField    = "principal"
 	CELRuntimeIdent      = "runtime"
+	CELConstantsIdent    = "constants"
+	CELConstantsAbbrev   = "C"
 	CELVariablesIdent    = "variables"
 	CELVariablesAbbrev   = "V"
 	CELGlobalsIdent      = "globals"
@@ -42,6 +44,8 @@ var (
 		decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Principal")),
 		decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Resource")),
 		decls.NewVar(CELRuntimeIdent, decls.NewObjectType("cerbos.engine.v1.Runtime")),
+		decls.NewVar(CELConstantsIdent, decls.NewMapType(decls.String, decls.Dyn)),
+		decls.NewVar(CELConstantsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 		decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
 		decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 		decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
@@ -129,6 +133,8 @@ func ExpandAbbrev(s string) string {
 		expanded = Fqn(CELPrincipalField)
 	case CELResourceAbbrev:
 		expanded = Fqn(CELResourceField)
+	case CELConstantsAbbrev:
+		expanded = CELConstantsIdent
 	case CELVariablesAbbrev:
 		expanded = CELVariablesIdent
 	case CELGlobalsAbbrev:

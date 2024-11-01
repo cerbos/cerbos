@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+wantErrors:
+  - file: resource_policies/example.yaml
+    error: constant redefined
+    description: |-
+      Constant 'foo' has multiple definitions in import 'example' (export_constants/example.yaml:6:10) and policy local constants (resource_policies/example.yaml:10:12)
+mainDef: resource_policies/example.yaml

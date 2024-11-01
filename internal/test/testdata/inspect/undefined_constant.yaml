@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      constants:
+        import:
+          - common_constants
+      rules:
+        - actions:
+            - approve
+          roles:
+            - user
+          condition:
+            match:
+              expr: constants.missingConst == constants.answer
+          effect: EFFECT_ALLOW
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    exportConstants:
+      name: common_constants
+      definitions:
+        answer: 42
+
+policiesExpectation:
+  policies:
+    export_constants.common_constants:
+      policyId: b.yaml
+      constants:
+        - name: answer
+          value: 42
+          kind: KIND_EXPORTED
+          source: export_constants.common_constants
+
+    resource.leave_request.vdefault:
+      policyId: a.yaml
+      actions:
+        - approve
+      constants:
+        - name: answer
+          value: 42
+          kind: KIND_IMPORTED
+          source: export_constants.common_constants
+          used: true
+        - name: missingConst
+          used: true
+          kind: KIND_UNDEFINED
+
+policySetsExpectation:
+  compileErrors:
+    compileErrors:
+      - file: resource.leave_request.vdefault.yaml
+        error: undefined constant
+        description: Undefined constant 'missingConst'
+        position:
+          line: 14
+          column: 9
+          path: $.resourcePolicy.rules[0].condition.match.expr

@@ -70,7 +70,7 @@ func printPolicyYAML(w io.Writer, policies []policy.Wrapper) error {
 
 func getHeaders(kind policy.Kind) []string {
 	switch kind {
-	case policy.DerivedRolesKind, policy.ExportVariablesKind:
+	case policy.DerivedRolesKind, policy.ExportConstantsKind, policy.ExportVariablesKind:
 		return []string{"POLICY ID", "NAME"}
 
 	case policy.PrincipalKind, policy.ResourceKind:

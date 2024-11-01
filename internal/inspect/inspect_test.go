@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -85,6 +86,9 @@ func TestInspect(t *testing.T) {
 					rps, err := compile.Compile(unit, mgr)
 					var haveCompileErrSet *compile.ErrorSet
 					if errors.As(err, &haveCompileErrSet) {
+						for _, err := range haveCompileErrSet.CompileErrors {
+							t.Log(protojson.Format(err))
+						}
 						require.Empty(t,
 							cmp.Diff(
 								compileErrorsMap(expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_CompileErrors_).CompileErrors.CompileErrors),

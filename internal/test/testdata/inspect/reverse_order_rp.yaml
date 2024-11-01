@@ -150,14 +150,16 @@ policySetsExpectation:
         - duplicate
         - view
       attributes:
+        - kind: KIND_PRINCIPAL_ATTRIBUTE
+          name: someAttr
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: approvedUser
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: commonMarkedResource
         - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
           name: markedResource
-        - kind: KIND_PRINCIPAL_ATTRIBUTE
-          name: someAttr
       derivedRoles:
         - kind: KIND_IMPORTED
           name: approved_user

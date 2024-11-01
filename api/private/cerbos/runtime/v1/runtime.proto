@@ -10,6 +10,7 @@ import "cerbos/policy/v1/policy.proto";
 import "cerbos/source/v1/source.proto";
 import "google/api/expr/v1alpha1/checked.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1;runtimev1";
 
@@ -86,6 +87,7 @@ message RunnableResourcePolicySet {
     cerbos.policy.v1.Schemas schemas = 5;
     repeated Variable ordered_variables = 6;
     cerbos.policy.v1.ScopePermissions scope_permissions = 7;
+    map<string, google.protobuf.Value> constants = 8;
   }
 
   Metadata meta = 1;
@@ -99,6 +101,7 @@ message RunnableDerivedRole {
   map<string, Expr> variables = 3 [deprecated = true];
   Condition condition = 4;
   repeated Variable ordered_variables = 5;
+  map<string, google.protobuf.Value> constants = 6;
 }
 
 message RunnableDerivedRolesSet {
@@ -156,6 +159,7 @@ message RunnablePrincipalPolicySet {
     map<string, ResourceRules> resource_rules = 3;
     repeated Variable ordered_variables = 4;
     cerbos.policy.v1.ScopePermissions scope_permissions = 5;
+    map<string, google.protobuf.Value> constants = 6;
   }
 
   Metadata meta = 1;

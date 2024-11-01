@@ -1,15 +1,19 @@
 # yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: api.cerbos.dev/v1
-variables:
-  is_owner: V.resource_owner == variables.principal_id
-  principal_id: request.principal.id
-  resource_owner: R.attr.owner
 resourcePolicy:
   version: "default"
   resource: "leave_request"
   importDerivedRoles:
     - beta
+  constants:
+    local:
+      one: 1
+  variables:
+    local:
+      is_owner: V.resource_owner == variables.principal_id
+      principal_id: request.principal.id
+      resource_owner: R.attr.owner
   rules:
     - actions: ["*"]
       roles: ["admin"]
@@ -92,12 +96,12 @@ resourcePolicy:
         match:
           all:
             of:
-              - expr: 1 == 1
+              - expr: 1 == C.one
               - expr: R.attr.status == "PENDING_APPROVAL"
               - expr: R.attr.owner != request.principal.id
               - any:
                   of:
-                    - expr: 1 != 1
+                    - expr: 1 != C.one
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
     - actions: ["approve:refer-derived-role"]
@@ -135,12 +139,12 @@ resourcePolicy:
         match:
           all:
             of:
-              - expr: 1 == 1
+              - expr: 1 == constants.one
               - expr: R.attr.status == "PENDING_APPROVAL"
               - expr: R.attr.owner != request.principal.id
               - any:
                   of:
-                    - expr: 1 == 1
+                    - expr: 1 == constants.one
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
     - actions: ["approve:false-in-and-condition"]
@@ -150,12 +154,12 @@ resourcePolicy:
         match:
           all:
             of:
-              - expr: 1 != 1
+              - expr: 1 != C.one
               - expr: R.attr.status == "PENDING_APPROVAL"
               - expr: R.attr.owner != request.principal.id
               - any:
                   of:
-                    - expr: 1 == 1
+                    - expr: 1 == C.one
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
     - actions: ["enlist:none-condition"]

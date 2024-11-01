@@ -49,6 +49,18 @@ func DerivedRoleRuleProtoPath(idx int) string {
 	return fmt.Sprintf("derived_roles.definitions[%d]", idx)
 }
 
+func ExportConstantsConstantProtoPath() string {
+	return "export_constants.definitions"
+}
+
+func ConstantsImportProtoPath(p *policyv1.Policy, idx int) string {
+	return fmt.Sprintf("%s.constants.import[%d]", policyKind(p), idx)
+}
+
+func ConstantsLocalProtoPath(p *policyv1.Policy) string {
+	return fmt.Sprintf("%s.constants.local", policyKind(p))
+}
+
 func ExportVariablesVariableProtoPath() string {
 	return "export_variables.definitions"
 }
@@ -69,6 +81,8 @@ func policyKind(p *policyv1.Policy) string {
 		return "principal_policy"
 	case *policyv1.Policy_DerivedRoles:
 		return "derived_roles"
+	case *policyv1.Policy_ExportConstants:
+		return "export_constants"
 	case *policyv1.Policy_ExportVariables:
 		return "export_variables"
 	default:

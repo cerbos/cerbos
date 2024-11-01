@@ -1,0 +1,132 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: variables_referencing_variables
+      constants:
+        import:
+          - common_constants
+        local:
+          xMin: 1
+      variables:
+        import:
+          - common_variables
+        local:
+          a: V.b
+          b: V.c > C.xMin && V.c < C.xMax
+      rules:
+        - actions:
+            - test
+          effect: EFFECT_ALLOW
+          roles:
+            - "*"
+          condition:
+            match:
+              expr: V.a
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    exportConstants:
+      name: common_constants
+      definitions:
+        xMax: 9000
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: c.yaml
+    exportVariables:
+      name: common_variables
+      definitions:
+        c: R.attr.x
+
+policiesExpectation:
+  policies:
+    resource.variables_referencing_variables.vdefault:
+      policyId: a.yaml
+      actions:
+        - test
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: x
+      constants:
+        - kind: KIND_IMPORTED
+          name: xMax
+          value: 9000
+          source: export_constants.common_constants
+          used: true
+        - kind: KIND_LOCAL
+          name: xMin
+          value: 1
+          source: resource.variables_referencing_variables.vdefault
+          used: true
+      variables:
+        - kind: KIND_LOCAL
+          name: a
+          value: V.b
+          source: resource.variables_referencing_variables.vdefault
+          used: true
+        - kind: KIND_LOCAL
+          name: b
+          value: V.c > C.xMin && V.c < C.xMax
+          source: resource.variables_referencing_variables.vdefault
+          used: true
+        - kind: KIND_IMPORTED
+          name: c
+          value: R.attr.x
+          source: export_variables.common_variables
+          used: true
+
+    export_constants.common_constants:
+      policyId: b.yaml
+      constants:
+        - kind: KIND_EXPORTED
+          name: xMax
+          value: 9000
+          source: export_constants.common_constants
+
+    export_variables.common_variables:
+      policyId: c.yaml
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: x
+      variables:
+        - kind: KIND_EXPORTED
+          name: c
+          value: R.attr.x
+          source: export_variables.common_variables
+
+policySetsExpectation:
+  policySets:
+    resource.variables_referencing_variables.vdefault:
+      policyId: resource.variables_referencing_variables.vdefault
+      actions:
+        - test
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: x
+      constants:
+        - kind: KIND_UNKNOWN
+          name: xMax
+          value: 9000
+          used: true
+        - kind: KIND_UNKNOWN
+          name: xMin
+          value: 1
+          used: true
+      variables:
+        - kind: KIND_UNKNOWN
+          name: a
+          value: V.b
+          used: true
+        - kind: KIND_UNKNOWN
+          name: b
+          value: V.c > C.xMin && V.c < C.xMax
+          used: true
+        - kind: KIND_UNKNOWN
+          name: c
+          value: R.attr.x
+          used: true

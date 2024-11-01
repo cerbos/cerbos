@@ -32,6 +32,7 @@ import (
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -81,15 +82,17 @@ type policyHolder struct {
 }
 
 type REPL struct {
-	output     Output
-	vars       variables
-	decls      map[string]*exprpb.Decl
-	reader     *liner.State
-	parser     *participle.Parser[REPLDirective]
-	toRefVal   func(any) ref.Val
-	policy     *policyHolder
-	varV       map[string]any
-	varExports map[string]map[string]string
+	output       Output
+	vars         variables
+	decls        map[string]*exprpb.Decl
+	reader       *liner.State
+	parser       *participle.Parser[REPLDirective]
+	toRefVal     func(any) ref.Val
+	policy       *policyHolder
+	varC         map[string]any
+	varV         map[string]any
+	constExports map[string]map[string]*structpb.Value
+	varExports   map[string]map[string]string
 }
 
 func NewREPL(reader *liner.State, output Output) (*REPL, error) {
@@ -229,6 +232,7 @@ func (r *REPL) reset() error {
 	r.vars, r.decls = resetVarsAndDecls()
 	r.policy = nil
 	r.varV = nil
+	r.constExports = make(map[string]map[string]*structpb.Value)
 	r.varExports = make(map[string]map[string]string)
 	r.output.Println()
 
@@ -337,6 +341,16 @@ func (r *REPL) setSpecialVar(name, value string) error {
 
 		r.evalPolicyVariables()
 
+	case conditions.CELConstantsIdent, conditions.CELConstantsAbbrev:
+		var c map[string]any
+		if err := json.Unmarshal([]byte(value), &c); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON as %q: %w", name, err)
+		}
+
+		r.addToVarC(c)
+		r.evalPolicyVariables()
+		r.output.PrintResult(name, r.vars[conditions.CELConstantsIdent])
+
 	case conditions.CELVariablesIdent, conditions.CELVariablesAbbrev:
 		var v map[string]any
 		if err := json.Unmarshal([]byte(value), &v); err != nil {
@@ -364,6 +378,20 @@ func (r *REPL) setSpecialVar(name, value string) error {
 	}
 
 	return nil
+}
+
+func (r *REPL) addToVarC(c map[string]any) {
+	if r.varC == nil {
+		r.varC = make(map[string]any, len(c))
+	}
+
+	for name, val := range c {
+		r.varC[name] = val
+	}
+
+	varsVal := r.toRefVal(r.varC)
+	r.vars[conditions.CELConstantsIdent] = varsVal
+	r.vars[conditions.CELConstantsAbbrev] = varsVal
 }
 
 func (r *REPL) addToVarV(v map[string]any) {
@@ -443,9 +471,16 @@ func (r *REPL) loadPolicy(path string) error {
 
 	ph := &policyHolder{key: namer.PolicyKey(p)}
 	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ExportConstants:
+		r.constExports[pt.ExportConstants.Name] = pt.ExportConstants.Definitions
 	case *policyv1.Policy_ExportVariables:
 		r.varExports[pt.ExportVariables.Name] = pt.ExportVariables.Definitions
 	case *policyv1.Policy_ResourcePolicy:
+		err := r.mergeConstantDefinitions(ph.key, pt.ResourcePolicy.Constants)
+		if err != nil {
+			return err
+		}
+
 		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.ResourcePolicy.Variables, p.Variables) //nolint:staticcheck
 		if err != nil {
 			return err
@@ -457,6 +492,11 @@ func (r *REPL) loadPolicy(path string) error {
 			}
 		}
 	case *policyv1.Policy_DerivedRoles:
+		err := r.mergeConstantDefinitions(ph.key, pt.DerivedRoles.Constants)
+		if err != nil {
+			return err
+		}
+
 		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.DerivedRoles.Variables, p.Variables) //nolint:staticcheck
 		if err != nil {
 			return err
@@ -468,6 +508,11 @@ func (r *REPL) loadPolicy(path string) error {
 			}
 		}
 	case *policyv1.Policy_PrincipalPolicy:
+		err := r.mergeConstantDefinitions(ph.key, pt.PrincipalPolicy.Constants)
+		if err != nil {
+			return err
+		}
+
 		ph.variables, err = r.mergeVariableDefinitions(ph.key, pt.PrincipalPolicy.Variables, p.Variables) //nolint:staticcheck
 		if err != nil {
 			return err
@@ -522,6 +567,73 @@ func (r *REPL) printLoadError(err error) {
 		r.output.Println(colored.REPLError(fmt.Sprintf("%+v", unmarshalErr)))
 	} else {
 		r.output.PrintErr("Error:", err)
+	}
+}
+
+func (r *REPL) mergeConstantDefinitions(policyKey string, policyConstants *policyv1.Constants) error {
+	merged := make(map[string]any)
+	sources := make(map[string][]string)
+	missingImports := make([]string, 0, len(policyConstants.GetImport()))
+
+	for _, name := range policyConstants.GetImport() {
+		imported, ok := r.constExports[name]
+		if !ok {
+			missingImports = append(missingImports, name)
+			continue
+		}
+
+		mergeConstantDefinitions(merged, sources, imported, fmt.Sprintf("import %q", name))
+	}
+
+	if len(missingImports) > 0 {
+		var plural string
+		if len(missingImports) > 1 {
+			plural = "s"
+		}
+
+		r.output.PrintErr(fmt.Sprintf("Missing constants import%s", plural), nil)
+		r.output.Print("%s imports the following constant definitions:", policyKey)
+
+		for _, name := range missingImports {
+			r.output.Print("  - %s", colored.REPLPolicyName(name))
+		}
+
+		r.output.Println()
+		r.output.Print("Load the file%s containing the constant definitions, then try again", plural)
+		r.output.Println()
+
+		return errSilent
+	}
+
+	mergeConstantDefinitions(merged, sources, policyConstants.GetLocal(), "policy local constants")
+
+	for name, definedIn := range sources {
+		if len(definedIn) == 1 {
+			delete(sources, name)
+		}
+	}
+
+	if len(sources) > 0 {
+		var plural string
+		if len(sources) > 1 {
+			plural = "s"
+		}
+
+		r.output.PrintErr(fmt.Sprintf("Duplicate constant definition%s", plural), nil)
+		for name, definedIn := range sources {
+			r.output.Print("- %s is defined in %s", colored.REPLVar(name), strings.Join(definedIn, " and "))
+		}
+	}
+
+	r.addToVarC(merged)
+
+	return nil
+}
+
+func mergeConstantDefinitions(merged map[string]any, sources map[string][]string, values map[string]*structpb.Value, source string) {
+	for name, value := range values {
+		merged[name] = value.AsInterface()
+		sources[name] = append(sources[name], source)
 	}
 }
 

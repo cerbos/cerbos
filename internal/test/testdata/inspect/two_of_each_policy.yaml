@@ -397,6 +397,8 @@ policySetsExpectation:
         - view
       attributes:
         - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
           name: markedResource
       derivedRoles:
         - name: approved_user_1
@@ -424,6 +426,8 @@ policySetsExpectation:
         - create
         - duplicate
       attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: markedResource
       derivedRoles:

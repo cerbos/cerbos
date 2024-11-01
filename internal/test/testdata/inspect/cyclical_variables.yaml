@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    resourcePolicy:
+      version: default
+      resource: cyclical_variables
+      variables:
+        local:
+          a: V.b
+          b: V.a
+      rules:
+        - actions:
+            - test
+          effect: EFFECT_ALLOW
+          roles:
+            - "*"
+          condition:
+            match:
+              expr: V.a
+
+policiesExpectation:
+  policies:
+    resource.cyclical_variables.vdefault:
+      policyId: a.yaml
+      actions:
+        - test
+      variables:
+        - kind: KIND_LOCAL
+          name: a
+          value: V.b
+          source: resource.cyclical_variables.vdefault
+          used: true
+        - kind: KIND_LOCAL
+          name: b
+          value: V.a
+          source: resource.cyclical_variables.vdefault
+          used: true
+
+policySetsExpectation:
+  compileErrors:
+    compileErrors:
+      - file: resource.cyclical_variables.vdefault.yaml
+        error: cyclical variable definitions
+        description: Variables 'a' (resource.cyclical_variables.vdefault.yaml:17:10) and 'b' (resource.cyclical_variables.vdefault.yaml:18:10) form a cycle
+        position:
+          line: 17
+          column: 10
+          path: $.resourcePolicy.variables.local.a

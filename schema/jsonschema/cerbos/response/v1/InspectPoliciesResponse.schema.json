@@ -22,6 +22,38 @@
         "KIND_RESOURCE_ATTRIBUTE"
       ]
     },
+    "cerbos.response.v1.InspectPoliciesResponse.Constant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Constant.Kind"
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "used": {
+          "type": "boolean"
+        },
+        "value": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
+    "cerbos.response.v1.InspectPoliciesResponse.Constant.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED",
+        "KIND_LOCAL",
+        "KIND_UNDEFINED",
+        "KIND_UNKNOWN"
+      ]
+    },
     "cerbos.response.v1.InspectPoliciesResponse.DerivedRole": {
       "type": "object",
       "additionalProperties": false,
@@ -60,6 +92,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Attribute"
+          }
+        },
+        "constants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Constant"
           }
         },
         "derivedRoles": {
@@ -110,6 +148,10 @@
         "KIND_UNDEFINED",
         "KIND_UNKNOWN"
       ]
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "type": "object",

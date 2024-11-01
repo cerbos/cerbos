@@ -1,13 +1,17 @@
 # yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: "api.cerbos.dev/v1"
-variables:
-  workspaces: P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name)
 resourcePolicy:
   version: "default"
   importDerivedRoles:
     - workspace
   resource: "report_with_map"
+  constants:
+    local:
+      managerRole: MANAGER
+  variables:
+    local:
+      workspaces: P.attr.workspaces.filter(w, w.role==C.managerRole).map(w, w.name)
   rules:
     - actions:
         - write
@@ -53,7 +57,7 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: P.attr.workspaces.filter(w, w.role=="MANAGER").all(w, w.name.startsWith("workspace"))
+          expr: P.attr.workspaces.filter(w, w.role==C.managerRole).all(w, w.name.startsWith("workspace"))
     - actions:
         - edit
       effect: EFFECT_ALLOW
@@ -61,7 +65,7 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: P.attr.workspaceMap[R.attr.workspaceId] == "MANAGER"
+          expr: P.attr.workspaceMap[R.attr.workspaceId] == C.managerRole
     - actions:
         - edit_easily
       effect: EFFECT_ALLOW
@@ -69,7 +73,7 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: P.attr.workspaceMapRoles[R.attr.workspaceId].role == "MANAGER"
+          expr: P.attr.workspaceMapRoles[R.attr.workspaceId].role == C.managerRole
     - actions:
         - delete
       effect: EFFECT_ALLOW

@@ -3,6 +3,14 @@ inputs:
   - apiVersion: api.cerbos.dev/v1
     metadata:
       storeIdentifier: a.yaml
+    exportConstants:
+      name: common_constants
+      definitions:
+        commonConst: 42
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
     exportVariables:
       name: common_variables
       definitions:
@@ -10,10 +18,15 @@ inputs:
 
   - apiVersion: api.cerbos.dev/v1
     metadata:
-      storeIdentifier: b.yaml
+      storeIdentifier: c.yaml
     resourcePolicy:
       version: default
       resource: leave_request
+      constants:
+        import:
+          - common_constants
+        local:
+          const: 9000
       variables:
         import:
           - common_variables
@@ -28,6 +41,8 @@ inputs:
             match:
               all:
                 of:
+                  - expr: C.commonConst
+                  - expr: C.const
                   - expr: V.commonVar
                   - expr: V.var
         - actions: [ "any" ]
@@ -38,6 +53,8 @@ inputs:
             match:
               any:
                 of:
+                  - expr: C.commonConst
+                  - expr: C.const
                   - expr: V.commonVar
                   - expr: V.var
         - actions: [ "none" ]
@@ -48,15 +65,22 @@ inputs:
             match:
               none:
                 of:
+                  - expr: C.commonConst
+                  - expr: C.const
                   - expr: V.commonVar
                   - expr: V.var
 
   - apiVersion: api.cerbos.dev/v1
     metadata:
-      storeIdentifier: c.yaml
+      storeIdentifier: d.yaml
     principalPolicy:
       version: default
       principal: john
+      constants:
+        import:
+          - common_constants
+        local:
+          const: 9000
       variables:
         import:
           - common_variables
@@ -72,6 +96,8 @@ inputs:
                 match:
                   all:
                     of:
+                      - expr: C.commonConst
+                      - expr: C.const
                       - expr: V.commonVar
                       - expr: V.var
             - name: action_any
@@ -81,6 +107,8 @@ inputs:
                 match:
                   any:
                     of:
+                      - expr: C.commonConst
+                      - expr: C.const
                       - expr: V.commonVar
                       - expr: V.var
             - name: action_none
@@ -90,14 +118,24 @@ inputs:
                 match:
                   none:
                     of:
+                      - expr: C.commonConst
+                      - expr: C.const
                       - expr: V.commonVar
                       - expr: V.var
 
 
 policiesExpectation:
   policies:
-    export_variables.common_variables:
+    export_constants.common_constants:
       policyId: a.yaml
+      constants:
+        - name: commonConst
+          value: 42
+          kind: KIND_EXPORTED
+          source: export_constants.common_constants
+
+    export_variables.common_variables:
+      policyId: b.yaml
       attributes:
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: commonVar
@@ -108,7 +146,7 @@ policiesExpectation:
           source: export_variables.common_variables
 
     principal.john.vdefault:
-      policyId: c.yaml
+      policyId: d.yaml
       actions:
         - all
         - any
@@ -118,6 +156,17 @@ policiesExpectation:
           name: commonVar
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: var
+      constants:
+        - kind: KIND_IMPORTED
+          name: commonConst
+          source: export_constants.common_constants
+          used: true
+          value: 42
+        - kind: KIND_LOCAL
+          name: const
+          source: principal.john.vdefault
+          used: true
+          value: 9000
       variables:
         - kind: KIND_IMPORTED
           name: commonVar
@@ -131,7 +180,7 @@ policiesExpectation:
           value: request.resource.attr.var
 
     resource.leave_request.vdefault:
-      policyId: b.yaml
+      policyId: c.yaml
       actions:
         - all
         - any
@@ -141,13 +190,23 @@ policiesExpectation:
           name: commonVar
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: var
+      constants:
+        - kind: KIND_IMPORTED
+          name: commonConst
+          source: export_constants.common_constants
+          used: true
+          value: 42
+        - kind: KIND_LOCAL
+          name: const
+          source: resource.leave_request.vdefault
+          used: true
+          value: 9000
       variables:
         - kind: KIND_IMPORTED
           name: commonVar
           source: export_variables.common_variables
           used: true
           value: request.resource.attr.commonVar
-
         - kind: KIND_LOCAL
           name: var
           source: resource.leave_request.vdefault
@@ -167,6 +226,15 @@ policySetsExpectation:
           name: commonVar
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: var
+      constants:
+        - kind: KIND_UNKNOWN
+          name: commonConst
+          used: true
+          value: 42
+        - kind: KIND_UNKNOWN
+          name: const
+          used: true
+          value: 9000
       variables:
         - kind: KIND_UNKNOWN
           name: commonVar
@@ -188,6 +256,15 @@ policySetsExpectation:
           name: commonVar
         - kind: KIND_RESOURCE_ATTRIBUTE
           name: var
+      constants:
+        - kind: KIND_UNKNOWN
+          name: commonConst
+          used: true
+          value: 42
+        - kind: KIND_UNKNOWN
+          name: const
+          used: true
+          value: 9000
       variables:
         - kind: KIND_UNKNOWN
           name: commonVar

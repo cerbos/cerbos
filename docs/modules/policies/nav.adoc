@@ -6,7 +6,7 @@
 * xref:role_policies.adoc[Role policies]
 * xref:scoped_policies.adoc[Scoped policies]
 * xref:conditions.adoc[Conditions]
-* xref:variables.adoc[Variables]
+* xref:variables.adoc[Variables and constants]
 * xref:outputs.adoc[Outputs]
 * xref:schemas.adoc[Schemas]
 * xref:compile.adoc[Validating and testing]

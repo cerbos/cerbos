@@ -38,6 +38,10 @@ func TestReadPolicy(t *testing.T) {
 			want:  test.GenDerivedRoles(test.NoMod()),
 		},
 		{
+			input: "export_constants_01",
+			want:  test.GenExportConstants(test.NoMod()),
+		},
+		{
 			input: "export_variables_01",
 			want:  test.GenExportVariables(test.NoMod()),
 		},
@@ -71,7 +75,7 @@ func TestReadPolicy(t *testing.T) {
 }
 
 func TestHash(t *testing.T) {
-	inputs := []string{"resource_policy_01", "principal_policy_01", "derived_roles_01", "export_variables_01"}
+	inputs := []string{"resource_policy_01", "principal_policy_01", "derived_roles_01", "export_constants_01", "export_variables_01"}
 	fs := os.DirFS(test.PathToDir(t, "policy_formats"))
 
 	for _, input := range inputs {

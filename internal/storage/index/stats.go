@@ -59,6 +59,8 @@ func (s *statsCollector) add(p policy.Wrapper) {
 	switch p.Kind {
 	case policy.DerivedRolesKind:
 		ps = s.procDerivedRoles(p.GetDerivedRoles())
+	case policy.ExportConstantsKind:
+		ps = s.procExportConstants(p.GetExportConstants())
 	case policy.ExportVariablesKind:
 		ps = s.procExportVariables(p.GetExportVariables())
 	case policy.PrincipalKind:
@@ -85,6 +87,16 @@ func (s *statsCollector) procDerivedRoles(dr *policyv1.DerivedRoles) (ps policyS
 			ps.conditionCount++
 		}
 	}
+
+	return ps
+}
+
+func (s *statsCollector) procExportConstants(ev *policyv1.ExportConstants) (ps policyStats) {
+	if ev == nil {
+		return ps
+	}
+
+	ps.ruleCount = len(ev.Definitions)
 
 	return ps
 }

@@ -45,6 +45,7 @@ type moduleCtx struct {
 	*unitCtx
 	def        *policyv1.Policy
 	srcCtx     parser.SourceCtx
+	constants  *constantDefinitions
 	variables  *variableDefinitions
 	fqn        string
 	sourceFile string
@@ -69,6 +70,20 @@ func (mc *moduleCtx) addErrForProtoPath(path string, err error, description stri
 			Context:     context,
 		},
 	})
+}
+
+func (mc *moduleCtx) constantCtx(source, path string) *constantCtx {
+	return &constantCtx{moduleCtx: mc, path: path, source: source}
+}
+
+type constantCtx struct {
+	*moduleCtx
+	path   string
+	source string
+}
+
+func (cc *constantCtx) withSource(source string) *constantCtx {
+	return &constantCtx{moduleCtx: cc.moduleCtx, path: cc.path, source: source}
 }
 
 func (mc *moduleCtx) variableCtx(source, path string) *variableCtx {

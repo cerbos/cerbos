@@ -1,0 +1,19 @@
+-- resource_policies/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  constants:
+    import:
+      - example
+    local:
+      foo: 2
+
+-- export_constants/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: example
+  definitions:
+    foo: 1

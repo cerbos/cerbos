@@ -2,7 +2,9 @@
 ---
 wantVariables:
   - scope: ""
+    constants: [a, b, c, e, f, h, z]
     variables: [a, b, c, e, f, h, ab, abc, abce]
   - scope: alpha
+    constants: [a, b, j, z]
     variables: [a, b, ab, j]
 mainDef: example.alpha.yaml

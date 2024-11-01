@@ -21,37 +21,37 @@ func Condition(cond *policyv1.Condition) (*runtimev1.Condition, error) {
 	return cc, mc.error()
 }
 
-func compileCondition(modCtx *moduleCtx, path string, cond *policyv1.Condition, markReferencedVariablesAsUsed bool) *runtimev1.Condition {
+func compileCondition(modCtx *moduleCtx, path string, cond *policyv1.Condition, markReferencedConstantsAndVariablesAsUsed bool) *runtimev1.Condition {
 	if cond == nil {
 		return nil
 	}
 
 	switch c := cond.Condition.(type) {
 	case *policyv1.Condition_Match:
-		return compileMatch(modCtx, path+".match", c.Match, markReferencedVariablesAsUsed)
+		return compileMatch(modCtx, path+".match", c.Match, markReferencedConstantsAndVariablesAsUsed)
 	default:
 		modCtx.addErrForProtoPath(path, errScriptsUnsupported, "Unsupported feature")
 		return nil
 	}
 }
 
-func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markReferencedVariablesAsUsed bool) *runtimev1.Condition {
+func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markReferencedConstantsAndVariablesAsUsed bool) *runtimev1.Condition {
 	if match == nil {
 		return nil
 	}
 
 	switch t := match.Op.(type) {
 	case *policyv1.Match_Expr:
-		expr := &runtimev1.Expr{Original: t.Expr, Checked: compileCELExpr(modCtx, path+".expr", t.Expr, markReferencedVariablesAsUsed)}
+		expr := &runtimev1.Expr{Original: t.Expr, Checked: compileCELExpr(modCtx, path+".expr", t.Expr, markReferencedConstantsAndVariablesAsUsed)}
 		return &runtimev1.Condition{Op: &runtimev1.Condition_Expr{Expr: expr}}
 	case *policyv1.Match_All:
-		exprList := compileMatchList(modCtx, path+".all.of", t.All.Of, markReferencedVariablesAsUsed)
+		exprList := compileMatchList(modCtx, path+".all.of", t.All.Of, markReferencedConstantsAndVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
 	case *policyv1.Match_Any:
-		exprList := compileMatchList(modCtx, path+".any.of", t.Any.Of, markReferencedVariablesAsUsed)
+		exprList := compileMatchList(modCtx, path+".any.of", t.Any.Of, markReferencedConstantsAndVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
 	case *policyv1.Match_None:
-		exprList := compileMatchList(modCtx, path+".none.of", t.None.Of, markReferencedVariablesAsUsed)
+		exprList := compileMatchList(modCtx, path+".none.of", t.None.Of, markReferencedConstantsAndVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_None{None: exprList}}
 	default:
 		modCtx.addErrForProtoPath(path, errUnexpectedErr, "Unknown match operation: %T", t)
@@ -59,7 +59,7 @@ func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markRef
 	}
 }
 
-func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedVariablesAsUsed bool) *exprpb.CheckedExpr {
+func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstantsAndVariablesAsUsed bool) *exprpb.CheckedExpr {
 	celAST, issues := conditions.StdEnv.Compile(expr)
 	if issues != nil && issues.Err() != nil {
 		errList := make([]string, len(issues.Errors()))
@@ -76,7 +76,8 @@ func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedVariable
 		return nil
 	}
 
-	if markReferencedVariablesAsUsed {
+	if markReferencedConstantsAndVariablesAsUsed {
+		modCtx.constants.Use(path, checkedExpr)
 		modCtx.variables.Use(path, checkedExpr)
 	}
 

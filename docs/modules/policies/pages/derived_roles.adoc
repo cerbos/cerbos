@@ -17,15 +17,20 @@ description: |-
   Common dynamic roles used within the Apatr app
 derivedRoles:
   name: apatr_common_roles <1>
-  variables:
+  constants:
     import: <2>
-      - apatr_common_variables
+      - apatr_common_constants
     local: <3>
+      corporate_network_ip_range: 10.20.0.0/16
+  variables:
+    import: <4>
+      - apatr_common_variables
+    local: <5>
       flagged_resource: request.resource.attr.flagged
   definitions:
-    - name: owner <4>
-      parentRoles: ["user"] <5>
-      condition: <6>
+    - name: owner <6>
+      parentRoles: ["user"] <7>
+      condition: <8>
         match:
           expr: request.resource.attr.owner == request.principal.id
 
@@ -33,14 +38,22 @@ derivedRoles:
       parentRoles: ["moderator"]
       condition:
         match:
-          expr: V.flagged_resource == true
+          expr: variables.flagged_resource
+
+    - name: corporate_user
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: request.principal.attr.ip_address.inIPAddrRange(constants.corporate_network_ip_range)
 ----
 <1> Name to use when importing this set of derived roles.
-<2> xref:variables.adoc[Variable definitions] to import (optional).
-<3> Local xref:variables.adoc[variable definitions] (optional).
-<4> Descriptive name for this derived role.
-<5> The static roles (from the identity provider) to which this derived role applies to. The special value ``*`` can be used to match any role.
-<6> An (optional) set of expressions that should evaluate to true for this role to activate.
+<2> xref:variables.adoc#export-constants[Constant definitions] to import (optional).
+<3> xref:variables.adoc#local-constants[Local constant definitions] (optional).
+<4> xref:variables.adoc#export[Variable definitions] to import (optional).
+<5> xref:variables.adoc#local[Local variable definitions] (optional).
+<6> Descriptive name for this derived role.
+<7> The static roles (from the identity provider) to which this derived role applies to. The special value ``*`` can be used to match any role.
+<8> An (optional) set of expressions that should evaluate to true for this role to activate.
 
 
 

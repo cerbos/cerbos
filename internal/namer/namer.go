@@ -24,6 +24,7 @@ var (
 
 const (
 	DerivedRolesPrefix      = fqnPrefix + "derived_roles"
+	ExportConstantsPrefix   = fqnPrefix + "export_constants"
 	ExportVariablesPrefix   = fqnPrefix + "export_variables"
 	PrincipalPoliciesPrefix = fqnPrefix + "principal"
 	ResourcePoliciesPrefix  = fqnPrefix + "resource"
@@ -96,6 +97,8 @@ func FQN(p *policyv1.Policy) string {
 		return RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Scope)
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesFQN(pt.DerivedRoles.Name)
+	case *policyv1.Policy_ExportConstants:
+		return ExportConstantsFQN(pt.ExportConstants.Name)
 	case *policyv1.Policy_ExportVariables:
 		return ExportVariablesFQN(pt.ExportVariables.Name)
 	default:
@@ -126,6 +129,8 @@ func FQNTree(p *policyv1.Policy) []string {
 		return []string{fqn}
 	case *policyv1.Policy_DerivedRoles:
 		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
+	case *policyv1.Policy_ExportConstants:
+		fqn = ExportConstantsFQN(pt.ExportConstants.Name)
 	case *policyv1.Policy_ExportVariables:
 		fqn = ExportVariablesFQN(pt.ExportVariables.Name)
 	default:
@@ -237,6 +242,16 @@ func DerivedRolesModuleID(roleSetName string) ModuleID {
 	return GenModuleIDFromFQN(DerivedRolesFQN(roleSetName))
 }
 
+// ExportConstantsFQN returns the fully-qualified module name for the given exported constant definitions.
+func ExportConstantsFQN(constantsName string) string {
+	return fmt.Sprintf("%s.%s", ExportConstantsPrefix, sanitize(constantsName))
+}
+
+// ExportConstantsModuleID returns the module ID for the given exported constant definitions.
+func ExportConstantsModuleID(constantsName string) ModuleID {
+	return GenModuleIDFromFQN(ExportConstantsFQN(constantsName))
+}
+
 // ExportVariablesFQN returns the fully-qualified module name for the given exported variable definitions.
 func ExportVariablesFQN(variablesName string) string {
 	return fmt.Sprintf("%s.%s", ExportVariablesPrefix, sanitize(variablesName))
@@ -247,9 +262,9 @@ func ExportVariablesModuleID(variablesName string) ModuleID {
 	return GenModuleIDFromFQN(ExportVariablesFQN(variablesName))
 }
 
-// SimpleName extracts the simple name from a derived roles or exported variables FQN.
+// SimpleName extracts the simple name from a derived roles, exported constants, or exported variables FQN.
 func SimpleName(fqn string) string {
-	return strings.TrimPrefix(strings.TrimPrefix(fqn, ExportVariablesPrefix+"."), DerivedRolesPrefix+".")
+	return strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(fqn, ExportVariablesPrefix+"."), ExportConstantsPrefix+"."), DerivedRolesPrefix+".")
 }
 
 func withScope(fqn, scope string) string {
@@ -318,6 +333,8 @@ func (pc PolicyCoords) FQN() string {
 	switch prefix {
 	case DerivedRolesPrefix:
 		return DerivedRolesFQN(pc.Name)
+	case ExportConstantsPrefix:
+		return ExportConstantsFQN(pc.Name)
 	case ExportVariablesPrefix:
 		return ExportVariablesFQN(pc.Name)
 	case PrincipalPoliciesPrefix:

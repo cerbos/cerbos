@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: bazqux
+  definitions:
+    baz: 42
+    qux:
+      hello:
+        - world

@@ -19,58 +19,65 @@ resourcePolicy:
   scope: "acme.corp" <3>
   importDerivedRoles:
     - apatr_common_roles <4>
-  variables:
+  constants:
     import: <5>
-      - apatr_common_variables
+      - apatr_common_constants
     local: <6>
+      corporate_network_ip_range: 10.20.0.0/16
+  variables:
+    import: <7>
+      - apatr_common_variables
+    local: <8>
       is_corporate_network: |-
-        P.attr.ip_address.inIPAddrRange("10.20.0.0/16")
+        request.principal.attr.ip_address.inIPAddrRange(constants.corporate_network_ip_range)
   rules:
-    - actions: ['*'] <7>
+    - actions: ['*'] <9>
       effect: EFFECT_ALLOW
       derivedRoles:
-        - owner <8>
+        - owner <10>
 
     - actions: ['view']
       effect: EFFECT_ALLOW
       roles:
-        - user <9>
+        - user <11>
       condition:
         match:
           expr: request.resource.attr.public == true
-      output: <10>
+      output: <12>
         when:
           ruleActivated: |-
             "view_allowed:%s".format([request.principal.id])
           conditionNotMet: |-
             "view_not_allowed:%s".format([request.principal.id])
 
-    - name: moderator_rule <11>
+    - name: moderator_rule <13>
       actions: ['view', 'delete']
       effect: EFFECT_ALLOW
       condition:
         match:
-          expr: V.is_corporate_network
+          expr: variables.is_corporate_network
       derivedRoles:
         - abuse_moderator
-  schemas: <12>
+  schemas: <14>
     principalSchema:
-      ref: cerbos:///principal.json <13>
+      ref: cerbos:///principal.json <15>
     resourceSchema:
-      ref: cerbos:///album/object.json <14>
+      ref: cerbos:///album/object.json <16>
 ----
 <1> Kind of resource to which this policy applies.
 <2> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
 <3> Optional xref:scoped_policies.adoc[scope] for this policy.
 <4> Import a set of xref:derived_roles.adoc[derived roles] (optional).
-<5> xref:variables.adoc[Variable definitions] to import (optional).
-<6> Local xref:variables.adoc[variable definitions] (optional).
-<7> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
-<8> This rule applies to a derived role.
-<9> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
-<10> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on
+<5> xref:variables.adoc#export-constants[Constant definitions] to import (optional).
+<6> xref:variables.adoc#local-constants[Local constant definitions] (optional).
+<7> xref:variables.adoc#export[Variable definitions] to import (optional).
+<8> xref:variables.adoc#local[Local variable definitions] (optional).
+<9> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
+<10> This rule applies to a derived role.
+<11> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
+<12> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on
 whether the rule is activated or not activated because of a condition failure.
-<11> Optional name for the rule.
-<12> Optional section for defining schemas that apply to this resource kind.
-<13> Optional schema for validating the principal attributes.
-<14> Optional schema for validating the resource attributes.
+<13> Optional name for the rule.
+<14> Optional section for defining schemas that apply to this resource kind.
+<15> Optional schema for validating the principal attributes.
+<16> Optional schema for validating the resource attributes.

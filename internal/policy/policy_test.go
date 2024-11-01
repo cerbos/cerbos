@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -161,6 +162,7 @@ func TestRequiredAncestors(t *testing.T) {
 
 func TestInspectUtilities(t *testing.T) {
 	dr := test.GenDerivedRoles(test.NoMod())
+	ec := test.GenExportConstants(test.NoMod())
 	ev := test.GenExportVariables(test.NoMod())
 	rp := test.NewResourcePolicyBuilder("leave_request", "default").
 		WithRules(
@@ -175,6 +177,7 @@ func TestInspectUtilities(t *testing.T) {
 				Build(),
 		).
 		WithDerivedRolesImports("my_derived_roles").
+		WithLocalConstant("answer", structpb.NewNumberValue(42)).
 		WithLocalVariable("geography", "request.resource.attr.geography").
 		Build()
 	pp := test.NewPrincipalPolicyBuilder("john", "default").
@@ -189,6 +192,7 @@ func TestInspectUtilities(t *testing.T) {
 				DenyAction("c").
 				Build(),
 		).
+		WithLocalConstant("answer", structpb.NewNumberValue(42)).
 		WithLocalVariable("geography", "request.resource.attr.geography").
 		Build()
 	rolep := test.NewRolePolicyBuilder("custom_user").
@@ -201,6 +205,7 @@ func TestInspectUtilities(t *testing.T) {
 		Build()
 
 	drSet := compilePolicy(t, dr)
+	ecSet := compilePolicy(t, ec)
 	evSet := compilePolicy(t, ev)
 	rpSet := compilePolicy(t, rp, dr)
 	ppSet := compilePolicy(t, pp)
@@ -214,6 +219,10 @@ func TestInspectUtilities(t *testing.T) {
 			}{
 				{
 					p:               dr,
+					expectedActions: []string{},
+				},
+				{
+					p:               ec,
 					expectedActions: []string{},
 				},
 				{
@@ -250,6 +259,10 @@ func TestInspectUtilities(t *testing.T) {
 			}{
 				{
 					pset:            drSet,
+					expectedActions: []string{},
+				},
+				{
+					pset:            ecSet,
 					expectedActions: []string{},
 				},
 				{
@@ -339,6 +352,67 @@ func TestInspectUtilities(t *testing.T) {
 				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
 					haveDerivedRoles := policy.ListPolicySetDerivedRoles(testCase.pset)
 					require.Empty(t, cmp.Diff(testCase.expectedDerivedRoles, haveDerivedRoles, protocmp.Transform()))
+				})
+			}
+		})
+	})
+
+	t.Run("Constants", func(t *testing.T) {
+		t.Run("ListConstants", func(t *testing.T) {
+			testCases := []struct {
+				p                 *policyv1.Policy
+				expectedConstants map[string]*responsev1.InspectPoliciesResponse_Constant
+			}{
+				{
+					p: dr,
+					expectedConstants: map[string]*responsev1.InspectPoliciesResponse_Constant{
+						"answer": {
+							Name:   "answer",
+							Value:  structpb.NewNumberValue(42),
+							Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_LOCAL,
+							Source: "derived_roles.my_derived_roles",
+						},
+					},
+				},
+				{
+					p: ec,
+					expectedConstants: map[string]*responsev1.InspectPoliciesResponse_Constant{
+						"answer": {
+							Name:   "answer",
+							Value:  structpb.NewNumberValue(42),
+							Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_EXPORTED,
+							Source: "export_constants.my_constants",
+						},
+					},
+				},
+				{
+					p: rp,
+					expectedConstants: map[string]*responsev1.InspectPoliciesResponse_Constant{
+						"answer": {
+							Name:   "answer",
+							Value:  structpb.NewNumberValue(42),
+							Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_LOCAL,
+							Source: "resource.leave_request.vdefault",
+						},
+					},
+				},
+				{
+					p: pp,
+					expectedConstants: map[string]*responsev1.InspectPoliciesResponse_Constant{
+						"answer": {
+							Name:   "answer",
+							Value:  structpb.NewNumberValue(42),
+							Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_LOCAL,
+							Source: "principal.john.vdefault",
+						},
+					},
+				},
+			}
+
+			for _, testCase := range testCases {
+				t.Run(namer.PolicyKey(testCase.p), func(t *testing.T) {
+					haveConstants := policy.ListConstants(testCase.p)
+					require.Empty(t, cmp.Diff(testCase.expectedConstants, haveConstants, protocmp.Transform()))
 				})
 			}
 		})

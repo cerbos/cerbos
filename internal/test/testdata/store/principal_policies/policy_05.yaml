@@ -4,6 +4,9 @@ apiVersion: api.cerbos.dev/v1
 principalPolicy:
   principal: scrooge_mcduck
   version: default
+  constants:
+    import:
+      - bazqux
   variables:
     import:
       - foobar

@@ -16,18 +16,24 @@ inputs:
     metadata:
       storeIdentifier: b.yaml
     exportVariables:
-      name: common_variables
+      name: common_constants
 
   - apiVersion: api.cerbos.dev/v1
     metadata:
       storeIdentifier: c.yaml
+    exportVariables:
+      name: common_variables
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: d.yaml
     principalPolicy:
       version: default
       principal: john
 
   - apiVersion: api.cerbos.dev/v1
     metadata:
-      storeIdentifier: d.yaml
+      storeIdentifier: e.yaml
     resourcePolicy:
       version: default
       resource: leave_request
@@ -41,14 +47,17 @@ policiesExpectation:
             source: derived_roles.common_roles
             kind: KIND_EXPORTED
 
-      export_variables.common_variables:
+      export_variables.common_constants:
         policyId: b.yaml
 
-      principal.john.vdefault:
+      export_variables.common_variables:
         policyId: c.yaml
 
-      resource.leave_request.vdefault:
+      principal.john.vdefault:
         policyId: d.yaml
+
+      resource.leave_request.vdefault:
+        policyId: e.yaml
 
 policySetsExpectation:
   policySets:

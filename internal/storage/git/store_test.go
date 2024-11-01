@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -877,6 +878,7 @@ func genPolicySet(i int) policySet {
 		test.GenResourcePolicy(test.PrefixAndSuffix(namePrefix, suffix)),
 		test.GenPrincipalPolicy(test.PrefixAndSuffix(namePrefix, suffix)),
 		test.GenDerivedRoles(test.PrefixAndSuffix(namePrefix, suffix)),
+		test.GenExportConstants(test.PrefixAndSuffix(namePrefix, suffix)),
 		test.GenExportVariables(test.PrefixAndSuffix(namePrefix, suffix)),
 	}
 
@@ -917,6 +919,8 @@ func mkFileName(p *policyv1.Policy) string {
 		return fmt.Sprintf("%s.%s.yaml", pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
 	case *policyv1.Policy_DerivedRoles:
 		return fmt.Sprintf("%s.yaml", pt.DerivedRoles.Name)
+	case *policyv1.Policy_ExportConstants:
+		return fmt.Sprintf("%s.yaml", pt.ExportConstants.Name)
 	case *policyv1.Policy_ExportVariables:
 		return fmt.Sprintf("%s.yaml", pt.ExportVariables.Name)
 	default:
@@ -1022,6 +1026,9 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 			ParentRoles: []string{"some_role", "another_role"},
 		})
 
+	case *policyv1.Policy_ExportConstants:
+		pt.ExportConstants.Definitions["some_constant"] = structpb.NewStringValue("some_value")
+
 	case *policyv1.Policy_ExportVariables:
 		pt.ExportVariables.Definitions["some_variable"] = "some_expression"
 	}
@@ -1037,6 +1044,8 @@ func modifyPolicyVersion(p *policyv1.Policy) *policyv1.Policy {
 		pt.PrincipalPolicy.Version = "changed"
 	case *policyv1.Policy_DerivedRoles:
 		pt.DerivedRoles.Name = "changed"
+	case *policyv1.Policy_ExportConstants:
+		pt.ExportConstants.Name = "changed"
 	case *policyv1.Policy_ExportVariables:
 		pt.ExportVariables.Name = "changed"
 	}

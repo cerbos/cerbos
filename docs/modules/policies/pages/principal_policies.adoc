@@ -15,21 +15,27 @@ principalPolicy:
   principal: daffy_duck <1>
   version: "dev" <2>
   scope: "acme.corp" <3>
-  variables:
+  constants:
     import: <4>
-      - apatr_common_variables
+      - apatr_common_constants
     local: <5>
-      is_dev_record: request.resource.attr.dev_record == true
+      test_department_id: 12345
+  variables:
+    import: <6>
+      - apatr_common_variables
+    local: <7>
+      is_dev_record: |-
+        request.resource.attr.dev_record == true || request.resource.attr.department_id == constants.test_department_id
   rules:
-    - resource: leave_request <6>
+    - resource: leave_request <8>
       actions:
-        - name: dev_record_wildcard <7>
-          action: "*" <8>
-          condition: <9>
+        - name: dev_record_wildcard <9>
+          action: "*" <10>
+          condition: <11>
             match:
               expr: variables.is_dev_record
           effect: EFFECT_ALLOW
-          output: <10>
+          output: <12>
             when:
               ruleActivated: |-
                 "wildcard_override:%s".format([request.principal.id])
@@ -44,9 +50,10 @@ principalPolicy:
             match:
               all:
                 of:
-                  - expr: V.is_dev_record
+                  - expr: variables.is_dev_record
                   - expr: request.resource.attr.public == true
           effect: EFFECT_ALLOW
+
     - resource: salary_record
       actions:
         - action: "*"
@@ -55,11 +62,13 @@ principalPolicy:
 <1> Principal to whom this policy applies.
 <2> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
 <3> Optional xref:scoped_policies.adoc[scope] for this policy.
-<4> xref:variables.adoc[Variable definitions] to import (optional).
-<5> Local xref:variables.adoc[variable definitions] (optional).
-<6> Resource to which this override applies. Wildcards are supported here.
-<7> Optional name for the rule.
-<8> Actions that can be performed on the resource. Wildcards are supported here.
-<9> Optional conditions required to match this rule.
-<10> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on
+<4> xref:variables.adoc#export-constants[Constant definitions] to import (optional).
+<5> xref:variables.adoc#local-constants[Local constant definitions] (optional).
+<6> xref:variables.adoc#export[Variable definitions] to import (optional).
+<7> xref:variables.adoc#local[Local variable definitions] (optional).
+<8> Resource to which this override applies. Wildcards are supported here.
+<9> Optional name for the rule.
+<10> Actions that can be performed on the resource. Wildcards are supported here.
+<11> Optional conditions required to match this rule.
+<12> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on
 whether the rule is activated or not activated because of a condition failure.

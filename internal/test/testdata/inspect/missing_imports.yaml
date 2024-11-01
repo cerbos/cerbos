@@ -6,6 +6,11 @@ inputs:
     resourcePolicy:
       version: default
       resource: leave_request
+      constants:
+        import:
+          - common_constants
+        local:
+          label: dude
       variables:
         import:
           - common_variables
@@ -15,11 +20,12 @@ inputs:
         - actions: [ "approve" ]
           condition:
             match:
-              expr: variables.commonLabel || variables.label
+              expr: variables.commonLabel == constants.commonLabel || variables.label == constants.label
           effect: EFFECT_ALLOW
 
 policiesExpectation:
   missingPolicies:
+    - export_constants.common_constants
     - export_variables.common_variables
 
   policies:
@@ -27,6 +33,15 @@ policiesExpectation:
       policyId: a.yaml
       actions:
         - approve
+      constants:
+        - kind: KIND_UNDEFINED
+          name: commonLabel
+          used: true
+        - kind: KIND_LOCAL
+          name: label
+          source: resource.leave_request.vdefault
+          used: true
+          value: dude
       variables:
         - kind: KIND_UNDEFINED
           name: commonLabel
@@ -46,6 +61,6 @@ policySetsExpectation:
           message: "rule #1 does not specify any roles or derived roles to match"
           position:
             column: 12
-            line: 7
+            line: 12
             path: $.resourcePolicy.rules[0].actions
         file: resource.leave_request.vdefault.yaml

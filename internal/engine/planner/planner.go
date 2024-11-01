@@ -18,6 +18,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -242,6 +243,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		}
 		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
 
+		constants := constantValues(p.Constants)
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
@@ -258,7 +260,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					continue
 				}
 
-				filter, err := evalCtx.evaluateCondition(rule.Condition, request, ppe.Globals, variables, derivedRolesList)
+				filter, err := evalCtx.evaluateCondition(rule.Condition, request, ppe.Globals, constants, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -313,6 +315,8 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 		}
 		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
+
+		constants := constantValues(p.Constants)
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
@@ -327,6 +331,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 				continue
 			}
 
+			drConstants := constantValues(p.Constants)
 			drVariables, err := variableExprs(dr.OrderedVariables)
 			if err != nil {
 				return nil, err
@@ -338,7 +343,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 					if dr.Condition == nil {
 						return mkTrueNode(), nil
 					}
-					node, err := evalCtx.evaluateCondition(dr.Condition, request, rpe.Globals, drVariables, derivedRolesList)
+					node, err := evalCtx.evaluateCondition(dr.Condition, request, rpe.Globals, drConstants, drVariables, derivedRolesList)
 					if err != nil {
 						return nil, err
 					}
@@ -387,7 +392,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 					continue
 				}
 
-				node, err := evalCtx.evaluateCondition(rule.Condition, request, rpe.Globals, variables, derivedRolesList)
+				node, err := evalCtx.evaluateCondition(rule.Condition, request, rpe.Globals, constants, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -480,7 +485,7 @@ type evalContext struct {
 	timeFn func() time.Time
 }
 
-func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
+func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -490,7 +495,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	case *runtimev1.Condition_Any:
 		nodes := make([]*qpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -514,7 +519,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -537,7 +542,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -564,7 +569,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evalCtx.evaluateConditionExpression(t.Expr.Checked, request, globals, variables, derivedRolesList)
+		residual, err := evalCtx.evaluateConditionExpression(t.Expr.Checked, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -575,8 +580,8 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	return res, nil
 }
 
-func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
-	p, err := evalCtx.newEvaluator(request, globals)
+func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
 	}
@@ -662,12 +667,14 @@ func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn
 	return &partialEvaluator{env, vars, nowFn}
 }
 
-func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals map[string]any) (p *partialEvaluator, err error) {
+func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, constants map[string]any) (p *partialEvaluator, err error) {
 	knownVars := make(map[string]any)
 	knownVars[conditions.CELRequestIdent] = request
 	knownVars[conditions.CELPrincipalAbbrev] = request.Principal
 	knownVars[conditions.CELGlobalsIdent] = globals
 	knownVars[conditions.CELGlobalsAbbrev] = globals
+	knownVars[conditions.CELConstantsIdent] = constants
+	knownVars[conditions.CELConstantsAbbrev] = constants
 
 	env := conditions.StdEnv
 
@@ -779,6 +786,10 @@ func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
 	ast := a.NativeRep()
 	prunedAST := interpreter.PruneAst(ast.Expr(), ast.SourceInfo().MacroCalls(), details.State())
 	return celast.ExprToProto(prunedAST.Expr())
+}
+
+func constantValues(constants map[string]*structpb.Value) map[string]any {
+	return (&structpb.Struct{Fields: constants}).AsMap()
 }
 
 func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {

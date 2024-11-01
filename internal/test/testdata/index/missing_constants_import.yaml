@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
+---
+wantErrList:
+  missingImports:
+    - importingFile: resource.yaml
+      importingPolicy: resource.leave_request.v20210210
+      importKind: constants
+      importName: my_constants
+      desc: "cannot find constants 'my_constants' imported by policy resource.leave_request.v20210210"
+      position:
+        line: 7
+        column: 9
+        path: $.resourcePolicy.constants.import[0]
+files:
+  "test.txt": |-
+    this is some text
+  "resource.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: leave_request
+      constants:
+        import:
+          - my_constants
+      rules:
+      - actions: ['*']
+        effect: EFFECT_ALLOW
+        roles:
+        - admin
+      - actions: ["create"]
+        derivedRoles:
+        - employee_that_owns_the_record
+        effect: EFFECT_ALLOW
+      - actions: ["view:*"]
+        derivedRoles:
+        - employee_that_owns_the_record
+        - direct_manager
+        effect: EFFECT_ALLOW
+      - actions: ["view:public"]
+        derivedRoles:
+        - any_employee
+        effect: EFFECT_ALLOW
+      - actions: ["approve"]
+        condition:
+          match:
+            expr: request.resource.attr.status == "PENDING_APPROVAL"
+        derivedRoles:
+        - direct_manager
+        effect: EFFECT_ALLOW
+      version: "20210210"
+
+  "principal.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              condition:
+                match:
+                  expr: "request.resource.attr.dev_record == true"
+              effect: EFFECT_ALLOW
+
+        - resource: salary_record
+          actions:
+            - action: "*"
+              effect: EFFECT_DENY

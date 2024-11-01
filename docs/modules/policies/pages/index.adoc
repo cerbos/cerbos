@@ -5,13 +5,14 @@ include::ROOT:partial$attributes.adoc[]
 include::ROOT:partial$version-check.adoc[]
 
 
-There are five kinds of Cerbos policies:
+There are six kinds of Cerbos policies:
 
 xref:derived_roles.adoc[Derived roles]:: Traditional RBAC roles are usually broad groupings with no context awareness. Derived roles are a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch.
 xref:resource_policies.adoc[Resource policies]:: Defines rules for actions that can be performed on a given resource. A resource is an application-specific concept that applies to anything that requires access rules. For example, in an HR application, a resource can be as coarse-grained as a full employee record or as fine-grained as a single field in the record.
 xref:principal_policies.adoc[Principal policies]:: Defines overrides for a specific user.
-xref:role_policies.adoc[Role policies]:: Define rules specific to a given role. Rules are defined as a list of allowable actions that apply to a particular resource. Role policies are evaluated before resource policies but don't guarantee an `ALLOW` in the case of a matching rule -- resource policies must also resolve to an `ALLOW` for the same request. See the dedicated xref:role_policies.adoc[role policy documentation] for more details.
+xref:role_policies.adoc[Role policies]:: Define rules specific to a given role. Rules are defined as a list of allowable actions that apply to a particular resource.
 xref:variables.adoc#export[Exported variables]:: Defines variables to be reused in condition expressions in other policies.
+xref:variables.adoc#export-constants[Exported constants]:: Defines constants to be reused in condition expressions in other policies.
 
 
 Policies are evaluated based on the metadata passed in the request to the Cerbos PDP. See xref:api:index.adoc[Cerbos API] for more information.
