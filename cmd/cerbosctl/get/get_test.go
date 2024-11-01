@@ -95,13 +95,15 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					{strings.Split("get role_policies --scope=a --scope-regexp=a", " "), true},
 				}
 				for _, tc := range testCases {
-					p := mustNew(t, &root.Cli{})
-					_, err := p.Parse(tc.args)
-					if tc.wantErr {
-						require.Error(t, err)
-					} else {
-						require.NoError(t, err)
-					}
+					t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+						p := mustNew(t, &root.Cli{})
+						_, err := p.Parse(tc.args)
+						if tc.wantErr {
+							require.Error(t, err)
+						} else {
+							require.NoError(t, err)
+						}
+					})
 				}
 			})
 			t.Run("possible arguments after get command", func(t *testing.T) {
@@ -145,14 +147,16 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 
 				for _, tc := range testCases {
 					for _, arg := range tc.args {
-						cli := root.Cli{}
-						p := mustNew(t, &cli)
-						_, err := p.Parse([]string{"get", arg})
-						if tc.wantErr {
-							require.Error(t, err)
-						} else {
-							require.NoError(t, err)
-						}
+						t.Run(arg, func(t *testing.T) {
+							cli := root.Cli{}
+							p := mustNew(t, &cli)
+							_, err := p.Parse([]string{"get", arg})
+							if tc.wantErr {
+								require.Error(t, err)
+							} else {
+								require.NoError(t, err)
+							}
+						})
 					}
 				}
 			})
@@ -210,31 +214,39 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 
 				for _, tc := range testCases {
 					for _, arg := range tc.args {
-						p := mustNew(t, &root.Cli{})
+						t.Run(arg, func(t *testing.T) {
+							p := mustNew(t, &root.Cli{})
 
-						out := bytes.NewBufferString("")
-						p.Stdout = out
-						ctx, err := p.Parse([]string{"get", arg, "--no-headers"})
-						require.NoError(t, err)
-						err = ctx.Run(clientCtx, globals)
-						require.NoError(t, err)
-						require.Equal(t, tc.wantCount, noOfPoliciesInCmdOutput(t, out.String()))
+							t.Run("default args", func(t *testing.T) {
+								out := bytes.NewBufferString("")
+								p.Stdout = out
+								ctx, err := p.Parse([]string{"get", arg, "--no-headers"})
+								require.NoError(t, err)
+								err = ctx.Run(clientCtx, globals)
+								require.NoError(t, err)
+								require.Equal(t, tc.wantCount, noOfPoliciesInCmdOutput(t, out.String()))
+							})
 
-						out = bytes.NewBufferString("")
-						p.Stdout = out
-						ctx, err = p.Parse([]string{"get", arg, "--include-disabled", "--no-headers"})
-						require.NoError(t, err)
-						err = ctx.Run(clientCtx, globals)
-						require.NoError(t, err)
-						require.Equal(t, tc.wantCountWithDisabled, noOfPoliciesInCmdOutput(t, out.String()))
+							t.Run("include disabled", func(t *testing.T) {
+								out := bytes.NewBufferString("")
+								p.Stdout = out
+								ctx, err := p.Parse([]string{"get", arg, "--include-disabled", "--no-headers"})
+								require.NoError(t, err)
+								err = ctx.Run(clientCtx, globals)
+								require.NoError(t, err)
+								require.Equal(t, tc.wantCountWithDisabled, noOfPoliciesInCmdOutput(t, out.String()))
+							})
 
-						out = bytes.NewBufferString("")
-						p.Stdout = out
-						ctx, err = p.Parse([]string{"get", arg, "--include-disabled", tc.regexpArg, "--no-headers"})
-						require.NoError(t, err)
-						err = ctx.Run(clientCtx, globals)
-						require.NoError(t, err)
-						require.Equal(t, tc.wantCountWithRegexpFilter, noOfPoliciesInCmdOutput(t, out.String()))
+							t.Run("include disabled and filter by regexp", func(t *testing.T) {
+								out := bytes.NewBufferString("")
+								p.Stdout = out
+								ctx, err := p.Parse([]string{"get", arg, "--include-disabled", tc.regexpArg, "--no-headers"})
+								require.NoError(t, err)
+								err = ctx.Run(clientCtx, globals)
+								require.NoError(t, err)
+								require.Equal(t, tc.wantCountWithRegexpFilter, noOfPoliciesInCmdOutput(t, out.String()))
+							})
+						})
 					}
 				}
 			})
@@ -295,37 +307,39 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					},
 				}
 				for _, tc := range testCases {
-					p := mustNew(t, &root.Cli{})
-					out := bytes.NewBufferString("")
-					p.Stdout = out
+					t.Run(tc.name, func(t *testing.T) {
+						p := mustNew(t, &root.Cli{})
+						out := bytes.NewBufferString("")
+						p.Stdout = out
 
-					var ctx *kong.Context
-					var err error
-					switch tc.kind {
-					case policy.DerivedRolesKind:
-						ctx, err = p.Parse([]string{"get", "dr", tc.name, "-ojson"})
-						require.NoError(t, err)
-					case policy.ExportConstantsKind:
-						ctx, err = p.Parse([]string{"get", "ec", tc.name, "-ojson"})
-						require.NoError(t, err)
-					case policy.ExportVariablesKind:
-						ctx, err = p.Parse([]string{"get", "ev", tc.name, "-ojson"})
-						require.NoError(t, err)
-					case policy.PrincipalKind:
-						ctx, err = p.Parse([]string{"get", "pp", tc.name, "-ojson"})
-						require.NoError(t, err)
-					case policy.ResourceKind:
-						ctx, err = p.Parse([]string{"get", "rp", tc.name, "-ojson"})
-						require.NoError(t, err)
-					case policy.RolePolicyKind:
-						ctx, err = p.Parse([]string{"get", "rlp", tc.name, "-ojson"})
-						require.NoError(t, err)
-					}
+						var ctx *kong.Context
+						var err error
+						switch tc.kind {
+						case policy.DerivedRolesKind:
+							ctx, err = p.Parse([]string{"get", "dr", tc.name, "-ojson"})
+							require.NoError(t, err)
+						case policy.ExportConstantsKind:
+							ctx, err = p.Parse([]string{"get", "ec", tc.name, "-ojson"})
+							require.NoError(t, err)
+						case policy.ExportVariablesKind:
+							ctx, err = p.Parse([]string{"get", "ev", tc.name, "-ojson"})
+							require.NoError(t, err)
+						case policy.PrincipalKind:
+							ctx, err = p.Parse([]string{"get", "pp", tc.name, "-ojson"})
+							require.NoError(t, err)
+						case policy.ResourceKind:
+							ctx, err = p.Parse([]string{"get", "rp", tc.name, "-ojson"})
+							require.NoError(t, err)
+						case policy.RolePolicyKind:
+							ctx, err = p.Parse([]string{"get", "rlp", tc.name, "-ojson"})
+							require.NoError(t, err)
+						}
 
-					err = ctx.Run(clientCtx, globals)
-					require.NoError(t, err)
+						err = ctx.Run(clientCtx, globals)
+						require.NoError(t, err)
 
-					requirePolicyEq(t, tc.policy, out.Bytes())
+						requirePolicyEq(t, tc.policy, out.Bytes())
+					})
 				}
 			})
 
@@ -366,14 +380,16 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				}
 
 				for _, tc := range testCases {
-					p := mustNew(t, &root.Cli{})
-					out := bytes.NewBufferString("")
-					p.Stdout = out
+					t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+						p := mustNew(t, &root.Cli{})
+						out := bytes.NewBufferString("")
+						p.Stdout = out
 
-					ctx, err := p.Parse(tc.args)
-					require.NoError(t, err)
-					err = ctx.Run(clientCtx, globals)
-					require.Error(t, err)
+						ctx, err := p.Parse(tc.args)
+						require.NoError(t, err)
+						err = ctx.Run(clientCtx, globals)
+						require.Error(t, err)
+					})
 				}
 			})
 		})
