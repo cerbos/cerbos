@@ -56,48 +56,48 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 			t.Run("wrong flags in wrong commands", func(t *testing.T) {
 				testCases := []struct {
-					args    []string
+					args    string
 					wantErr bool
 				}{
-					{strings.Split("get schema --no-headers", " "), false},
-					{strings.Split("get derived_roles --name=a", " "), false},
-					{strings.Split("get export_constants --name=a", " "), false},
-					{strings.Split("get export_variables --name=a", " "), false},
-					{strings.Split("get principal_policies --name=a --version=default", " "), false},
-					{strings.Split("get resource_policies --name=a --version=default", " "), false},
-					{strings.Split("get role_policies --name=a", " "), false},
-					{strings.Split("get role_policies --name=a --version=default", " "), true},
-					{strings.Split("get derived_roles --version=abc", " "), true},
-					{strings.Split("get derived_roles a.b.c --no-headers", " "), true},
-					{strings.Split("get derived_roles a.b.c --sort-by policyId", " "), true},
-					{strings.Split("get derived_roles a.b.c --include-disabled", " "), false},
-					{strings.Split("get derived_roles --include-disabled", " "), false},
-					{strings.Split("get derived_roles --sort-by policyId", " "), false},
-					{strings.Split("get derived_roles --sort-by version", " "), true},
+					{"get schema --no-headers", false},
+					{"get derived_roles --name=a", false},
+					{"get export_constants --name=a", false},
+					{"get export_variables --name=a", false},
+					{"get principal_policies --name=a --version=default", false},
+					{"get resource_policies --name=a --version=default", false},
+					{"get role_policies --name=a", false},
+					{"get role_policies --name=a --version=default", true},
+					{"get derived_roles --version=abc", true},
+					{"get derived_roles a.b.c --no-headers", true},
+					{"get derived_roles a.b.c --sort-by policyId", true},
+					{"get derived_roles a.b.c --include-disabled", false},
+					{"get derived_roles --include-disabled", false},
+					{"get derived_roles --sort-by policyId", false},
+					{"get derived_roles --sort-by version", true},
 					// regexp filtering
-					{strings.Split("get derived_roles --name-regexp=a --scope-regexp=a", " "), true},
-					{strings.Split("get derived_roles --name-regexp=a --scope-regexp=a --version-regexp=a", " "), true},
-					{strings.Split("get derived_roles --name=a --name-regexp=a", " "), true},
-					{strings.Split("get export_constants --name-regexp=a --scope-regexp=a", " "), true},
-					{strings.Split("get export_constants --name-regexp=a --scope-regexp=a --version-regexp=a", " "), true},
-					{strings.Split("get export_constants --name=a --name-regexp=a", " "), true},
-					{strings.Split("get export_variables --name-regexp=a --scope-regexp=a", " "), true},
-					{strings.Split("get export_variables --name-regexp=a --scope-regexp=a --version-regexp=a", " "), true},
-					{strings.Split("get export_variables --name=a --name-regexp=a", " "), true},
-					{strings.Split("get resource_policies --name-regexp=a --scope-regexp=a --version-regexp=a", " "), false},
-					{strings.Split("get resource_policies --name=a --name-regexp=a", " "), true},
-					{strings.Split("get resource_policies --version=a --version-regexp=a", " "), true},
-					{strings.Split("get principal_policies --name-regexp=a --scope-regexp=a --version-regexp=a", " "), false},
-					{strings.Split("get principal_policies --name=a --name-regexp=a", " "), true},
-					{strings.Split("get principal_policies --version=a --version-regexp=a", " "), true},
-					{strings.Split("get role_policies --name-regexp=a --scope-regexp=a --version-regexp=a", " "), true},
-					{strings.Split("get role_policies --name=a --name-regexp=a", " "), true},
-					{strings.Split("get role_policies --scope=a --scope-regexp=a", " "), true},
+					{"get derived_roles --name-regexp=a --scope-regexp=a", true},
+					{"get derived_roles --name-regexp=a --scope-regexp=a --version-regexp=a", true},
+					{"get derived_roles --name=a --name-regexp=a", true},
+					{"get export_constants --name-regexp=a --scope-regexp=a", true},
+					{"get export_constants --name-regexp=a --scope-regexp=a --version-regexp=a", true},
+					{"get export_constants --name=a --name-regexp=a", true},
+					{"get export_variables --name-regexp=a --scope-regexp=a", true},
+					{"get export_variables --name-regexp=a --scope-regexp=a --version-regexp=a", true},
+					{"get export_variables --name=a --name-regexp=a", true},
+					{"get resource_policies --name-regexp=a --scope-regexp=a --version-regexp=a", false},
+					{"get resource_policies --name=a --name-regexp=a", true},
+					{"get resource_policies --version=a --version-regexp=a", true},
+					{"get principal_policies --name-regexp=a --scope-regexp=a --version-regexp=a", false},
+					{"get principal_policies --name=a --name-regexp=a", true},
+					{"get principal_policies --version=a --version-regexp=a", true},
+					{"get role_policies --name-regexp=a --scope-regexp=a --version-regexp=a", true},
+					{"get role_policies --name=a --name-regexp=a", true},
+					{"get role_policies --scope=a --scope-regexp=a", true},
 				}
 				for _, tc := range testCases {
-					t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+					t.Run(tc.args, func(t *testing.T) {
 						p := mustNew(t, &root.Cli{})
-						_, err := p.Parse(tc.args)
+						_, err := p.Parse(strings.Split(tc.args, " "))
 						if tc.wantErr {
 							require.Error(t, err)
 						} else {
@@ -344,48 +344,46 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 
 			t.Run("invalid policy key type for commands", func(t *testing.T) {
-				testCases := []struct {
-					args []string
-				}{
-					{strings.Split("get derived_roles export_constants.my_constants_1", " ")},
-					{strings.Split("get derived_roles export_variables.my_variables_1", " ")},
-					{strings.Split("get derived_roles principal.donald_duck_1.default", " ")},
-					{strings.Split("get derived_roles resource.leave_request_1.default", " ")},
-					{strings.Split("get derived_roles role.acme_admin_1", " ")},
-					{strings.Split("get export_constants derived_roles.my_derived_roles_1", " ")},
-					{strings.Split("get export_constants export_variables.my_variables_1", " ")},
-					{strings.Split("get export_constants principal.donald_duck_1.default", " ")},
-					{strings.Split("get export_constants resource.leave_request_1.default", " ")},
-					{strings.Split("get export_constants role.acme_admin_1", " ")},
-					{strings.Split("get export_variables derived_roles.my_derived_roles_1", " ")},
-					{strings.Split("get export_variables export_constants.my_constants_1", " ")},
-					{strings.Split("get export_variables principal.donald_duck_1.default", " ")},
-					{strings.Split("get export_variables resource.leave_request_1.default", " ")},
-					{strings.Split("get export_variables role.acme_admin_1", " ")},
-					{strings.Split("get principal_policies derived_roles.my_derived_roles_1", " ")},
-					{strings.Split("get principal_policies export_constants.my_constants_1", " ")},
-					{strings.Split("get principal_policies export_variables.my_variables_1", " ")},
-					{strings.Split("get principal_policies resource.leave_request_1.default", " ")},
-					{strings.Split("get principal_policies role.acme_admin_1", " ")},
-					{strings.Split("get resource_policies derived_roles.my_derived_roles_1", " ")},
-					{strings.Split("get resource_policies export_constants.my_constants_1", " ")},
-					{strings.Split("get resource_policies export_variables.my_variables_1", " ")},
-					{strings.Split("get resource_policies principal.donald_duck_1.default", " ")},
-					{strings.Split("get resource_policies role.acme_admin_1", " ")},
-					{strings.Split("get role_policies derived_roles.my_derived_roles_1", " ")},
-					{strings.Split("get role_policies export_constants.my_constants_1", " ")},
-					{strings.Split("get role_policies export_variables.my_variables_1", " ")},
-					{strings.Split("get role_policies principal.donald_duck_1.default", " ")},
-					{strings.Split("get role_policies resource.leave_request_1.default", " ")},
+				testCases := []string{
+					"get derived_roles export_constants.my_constants_1",
+					"get derived_roles export_variables.my_variables_1",
+					"get derived_roles principal.donald_duck_1.default",
+					"get derived_roles resource.leave_request_1.default",
+					"get derived_roles role.acme_admin_1",
+					"get export_constants derived_roles.my_derived_roles_1",
+					"get export_constants export_variables.my_variables_1",
+					"get export_constants principal.donald_duck_1.default",
+					"get export_constants resource.leave_request_1.default",
+					"get export_constants role.acme_admin_1",
+					"get export_variables derived_roles.my_derived_roles_1",
+					"get export_variables export_constants.my_constants_1",
+					"get export_variables principal.donald_duck_1.default",
+					"get export_variables resource.leave_request_1.default",
+					"get export_variables role.acme_admin_1",
+					"get principal_policies derived_roles.my_derived_roles_1",
+					"get principal_policies export_constants.my_constants_1",
+					"get principal_policies export_variables.my_variables_1",
+					"get principal_policies resource.leave_request_1.default",
+					"get principal_policies role.acme_admin_1",
+					"get resource_policies derived_roles.my_derived_roles_1",
+					"get resource_policies export_constants.my_constants_1",
+					"get resource_policies export_variables.my_variables_1",
+					"get resource_policies principal.donald_duck_1.default",
+					"get resource_policies role.acme_admin_1",
+					"get role_policies derived_roles.my_derived_roles_1",
+					"get role_policies export_constants.my_constants_1",
+					"get role_policies export_variables.my_variables_1",
+					"get role_policies principal.donald_duck_1.default",
+					"get role_policies resource.leave_request_1.default",
 				}
 
 				for _, tc := range testCases {
-					t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+					t.Run(tc, func(t *testing.T) {
 						p := mustNew(t, &root.Cli{})
 						out := bytes.NewBufferString("")
 						p.Stdout = out
 
-						ctx, err := p.Parse(tc.args)
+						ctx, err := p.Parse(strings.Split(tc, " "))
 						require.NoError(t, err)
 						err = ctx.Run(clientCtx, globals)
 						require.Error(t, err)
