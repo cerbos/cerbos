@@ -34,7 +34,7 @@ tests:
             operator: eq
             operands:
               - variable: request.resource.attr.status
-              - value: PENDING_STATUS 
+              - value: APPROVED
     - action: edit
       resource:
         kind: x
@@ -44,10 +44,18 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: eq
+            operator: and
             operands:
-              - variable: request.resource.attr.status
-              - value: PENDING_STATUS 
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_STATUS 
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: APPROVED 
     - action: debug
       resource:
         kind: x

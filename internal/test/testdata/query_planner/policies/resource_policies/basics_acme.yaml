@@ -14,7 +14,7 @@ resourcePolicy:
       condition:
         match:
           expr: |-
-            R.attr.status == "PENDING_STATUS"
+            R.attr.status == "APPROVED"
     - actions:
         - debug
       effect: EFFECT_ALLOW
