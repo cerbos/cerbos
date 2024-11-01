@@ -77,6 +77,8 @@ Flags:
 Commands:
   get derived_roles (derived_role,dr) [<id> ...]
 
+  get export_constants (ec) [<id> ...]
+
   get export_variables (ev) [<id> ...]
 
   get principal_policies (principal_policy,pp) [<id> ...]

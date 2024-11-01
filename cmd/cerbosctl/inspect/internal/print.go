@@ -101,6 +101,11 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 			}
 		}
 
+		constants := make([]string, len(result.Constants))
+		for idx, constant := range result.Constants {
+			constants[idx] = constant.Name
+		}
+
 		variables := make([]string, len(result.Variables))
 		for idx, variable := range result.Variables {
 			variables[idx] = variable.Name
@@ -115,6 +120,9 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 			if len(attributes) > 0 {
 				fmt.Fprintf(w, "%s\n", strings.Join(attributes, separator))
 			}
+			if len(constants) > 0 {
+				fmt.Fprintf(w, "%s\n", strings.Join(constants, separator))
+			}
 			if len(variables) > 0 {
 				fmt.Fprintf(w, "%s\n", strings.Join(variables, separator))
 			}
@@ -125,6 +133,9 @@ func printTable(w io.Writer, noHeaders bool, results []*responsev1.InspectPolici
 			}
 			if len(attributes) > 0 {
 				fmt.Fprintf(w, "ATTRIBUTES: %s\n", strings.Join(attributes, separator))
+			}
+			if len(constants) > 0 {
+				fmt.Fprintf(w, "CONSTANTS : %s\n", strings.Join(constants, separator))
 			}
 			if len(variables) > 0 {
 				fmt.Fprintf(w, "VARIABLES : %s\n", strings.Join(variables, separator))

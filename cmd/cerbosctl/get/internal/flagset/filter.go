@@ -51,6 +51,19 @@ func (f Filters) Validate(kind policy.Kind, listing bool) error {
 			return fmt.Errorf("--version-regexp flag is not available when listing derived roles")
 		}
 
+	case policy.ExportConstantsKind:
+		if f.ScopeRegexp != "" {
+			return fmt.Errorf("--scope-regexp flag is not available when listing exported constants")
+		}
+
+		if len(f.Version) > 0 {
+			return fmt.Errorf("--version flag is not available when listing exported constants")
+		}
+
+		if f.VersionRegexp != "" {
+			return fmt.Errorf("--version-regexp flag is not available when listing exported constants")
+		}
+
 	case policy.ExportVariablesKind:
 		if f.ScopeRegexp != "" {
 			return fmt.Errorf("--scope-regexp flag is not available when listing exported variables")

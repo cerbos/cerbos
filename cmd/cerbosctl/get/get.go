@@ -5,6 +5,7 @@ package get
 
 import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/derivedroles"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/exportconstants"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/exportvariables"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/principalpolicy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/resourcepolicy"
@@ -14,6 +15,7 @@ import (
 
 type Cmd struct {
 	DerivedRoles    derivedroles.Cmd    `cmd:"" name:"derived_roles" aliases:"derived_role,dr"`
+	ExportConstants exportconstants.Cmd `cmd:"" name:"export_constants" aliases:"ec"`
 	ExportVariables exportvariables.Cmd `cmd:"" name:"export_variables" aliases:"ev"`
 	PrincipalPolicy principalpolicy.Cmd `cmd:"" name:"principal_policies" aliases:"principal_policy,pp"`
 	ResourcePolicy  resourcepolicy.Cmd  `cmd:"" name:"resource_policies" aliases:"resource_policy,rp"`

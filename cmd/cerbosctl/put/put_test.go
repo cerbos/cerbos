@@ -49,12 +49,14 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 		pathToSchema := test.PathToDir(t, filepath.Join("store", "_schemas", schemaFileName))
 		sch := string(test.ReadSchemaFromFile(t, pathToSchema))
 
+		ec := withMeta(test.GenExportConstants(test.Suffix(strconv.Itoa(1))))
 		ev := withMeta(test.GenExportVariables(test.Suffix(strconv.Itoa(1))))
 		dr := withMeta(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))))
 		pp := withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))))
 		rp := withMeta(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))))
 		rlp := withMeta(test.GenRolePolicy(test.Suffix(strconv.Itoa(1))))
 
+		ecPath := writeToTmpFile(t, ec)
 		evPath := writeToTmpFile(t, ev)
 		drPath := writeToTmpFile(t, dr)
 		ppPath := writeToTmpFile(t, pp)
@@ -70,6 +72,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 
 			t.Run("put policies recursive", func(t *testing.T) {
+				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/export_constants"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/export_variables"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/derived_roles"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/principal_policies"))
@@ -85,6 +88,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"derived_roles.import_variables",
 					"derived_roles.package_roles",
 					"derived_roles.runtime_effective_derived_roles",
+					"export_constants.bazqux",
 					"export_variables.foobar",
 					"principal.arn:aws:iam::123456789012:user/johndoe.vdefault",
 					"principal.daisy_duck.vdefault",
@@ -126,12 +130,14 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 
 			t.Run("put policies", func(t *testing.T) {
+				put(t, clientCtx, globals, policyKind, ecPath)
 				put(t, clientCtx, globals, policyKind, evPath)
 				put(t, clientCtx, globals, policyKind, drPath)
 				put(t, clientCtx, globals, policyKind, ppPath)
 				put(t, clientCtx, globals, policyKind, rpPath)
 				put(t, clientCtx, globals, policyKind, rlpPath)
 
+				outEc := getPolicy(t, clientCtx, globals, policy.ExportConstantsKind, namer.PolicyKey(ec))
 				outEv := getPolicy(t, clientCtx, globals, policy.ExportVariablesKind, namer.PolicyKey(ev))
 				outDr := getPolicy(t, clientCtx, globals, policy.DerivedRolesKind, namer.PolicyKey(dr))
 				outPp := getPolicy(t, clientCtx, globals, policy.PrincipalKind, namer.PolicyKey(pp))
@@ -146,6 +152,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					require.Empty(t, cmp.Diff(want, &have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Metadata{}, "source_attributes")))
 				}
 
+				requirePolicyEq(t, ec, outEc)
 				requirePolicyEq(t, ev, outEv)
 				requirePolicyEq(t, dr, outDr)
 				requirePolicyEq(t, pp, outPp)
