@@ -211,7 +211,7 @@ func (p *PolicyPlanResult) Complete() bool {
 	if p.AllowIsEmpty() && !p.DenyIsEmpty() {
 		return true
 	}
-	if !p.Empty() && p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+	if !p.Empty() && (p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT || p.Scope == "") { // root scope permissions value is effectively "OVERRIDE_PARENT"
 		return true
 	}
 	return false
@@ -229,9 +229,10 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	derivedRolesList := mkDerivedRolesList(nil)
 
 	request := planResourcesInputToRequest(input)
+	var currentResult *PolicyPlanResult
 	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
-		if acc.Complete() {
+		if currentResult.Complete() {
 			break
 		}
 		scopePermissions := p.ScopePermissions
@@ -239,7 +240,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
 			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 		}
-		currentResult := NewPolicyPlanResult(p.Scope, scopePermissions)
+		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
 
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
@@ -301,8 +302,10 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 			return acc, nil
 		}
 	}
+	var currentResult *PolicyPlanResult
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
-		if acc.Complete() {
+		if currentResult.Complete() {
+			fmt.Printf("exiting loop on scope: %q", currentResult.Scope)
 			break
 		}
 		scopePermissions := p.ScopePermissions
@@ -310,7 +313,7 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
 			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 		}
-		currentResult := NewPolicyPlanResult(p.Scope, scopePermissions)
+		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err

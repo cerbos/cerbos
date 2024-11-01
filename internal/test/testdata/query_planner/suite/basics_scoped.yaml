@@ -28,7 +28,13 @@ tests:
         scope: acme
         policyVersion: default
       want:
-        kind: KIND_ALWAYS_ALLOWED
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.status
+              - value: PENDING_STATUS 
     - action: edit
       resource:
         kind: x
