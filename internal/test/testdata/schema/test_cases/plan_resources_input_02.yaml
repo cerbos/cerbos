@@ -11,7 +11,7 @@ planResourcesInput:
   principal:
     id: "john"
     policyVersion: "20210210"
-    roles: [ "employee" ]
+    roles: ["employee"]
     attr: &customer
       billing_address:
         street_address: 20 W 34th St
@@ -21,7 +21,8 @@ planResourcesInput:
     policyVersion: "20210210"
     attr: *customer
 wantValidationErrors:
-  - message: "missing properties: 'first_name', 'last_name', 'shipping_address'"
+  - path: /
+    message: "missing properties: 'first_name', 'last_name', 'shipping_address'"
     source: SOURCE_PRINCIPAL
 
   - path: /billing_address

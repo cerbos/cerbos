@@ -11,11 +11,11 @@ schemaRefs:
     ignoreWhen:
       actions: ["view:public"]
 checkInput:
-  actions: [ "view:public", "defer"]
+  actions: ["view:public", "defer"]
   principal:
     id: "john"
     policyVersion: "20210210"
-    roles: [ "employee" ]
+    roles: ["employee"]
     attr: &myAttr
       stringField: 1
   resource:
@@ -28,12 +28,14 @@ wantValidationErrors:
     message: "expected string, but got number"
     source: SOURCE_PRINCIPAL
 
-  - message: "missing properties: 'intField'"
+  - path: "/"
+    message: "missing properties: 'intField'"
     source: SOURCE_PRINCIPAL
 
   - path: "/stringField"
     message: "expected string, but got number"
     source: SOURCE_RESOURCE
 
-  - message: "missing properties: 'intField'"
+  - path: "/"
+    message: "missing properties: 'intField'"
     source: SOURCE_RESOURCE

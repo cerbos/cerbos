@@ -1,115 +1,118 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "required": [
-    "stringField",
-    "intField"
-  ],
-  "properties": {
-    "stringField": {
-      "type": "string",
-      "minLength": 5
-    },
-    "intField": {
-      "type": "integer",
-      "minimum": 20
-    },
-    "floatField": {
-      "type": "number",
-      "maximum": 400
-    },
-    "boolField": {
-      "type": "boolean"
-    },
-    "dateField": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "stringList": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "intList": {
-      "type": "array",
-      "items": {
-        "type": "integer"
-      }
-    },
-    "floatList": {
-      "type": "array",
-      "items": {
-        "type": "number"
-      }
-    },
-    "boolList": {
-      "type": "array",
-      "items": {
-        "type": "boolean"
-      }
-    },
-    "nestedList": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "stringField": {
-            "type": "string"
-          },
-          "floatField": {
-            "type": "number"
-          },
-          "intListField": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            }
-          }
-        }
-      }
-    },
-    "simpleObject": {
-      "type": "object",
-      "properties": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": [
+        "stringField",
+        "intField"
+    ],
+    "properties": {
         "stringField": {
-          "type": "string"
+            "type": "string",
+            "minLength": 5
+        },
+        "intField": {
+            "type": "integer",
+            "minimum": 20
         },
         "floatField": {
-          "type": "number"
-        }
-      }
-    },
-    "nestedObject": {
-      "type": "object",
-      "properties": {
-        "key1": {
-          "type": "object",
-          "properties": {
-            "stringField": {
-              "type": "string"
-            },
-            "floatField": {
-              "type": "number"
-            },
-            "intListField": {
-              "type": "array",
-              "items": {
-                "type": "integer"
-              }
+            "type": "number",
+            "maximum": 400
+        },
+        "boolField": {
+            "type": "boolean"
+        },
+        "dateField": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "stringList": {
+            "type": "array",
+            "items": {
+                "type": "string"
             }
-          }
         },
-        "key2": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "intList": {
+            "type": "array",
+            "items": {
+                "type": "integer"
+            }
         },
-        "key3": {
-          "type": "boolean"
+        "floatList": {
+            "type": "array",
+            "items": {
+                "type": "number"
+            }
+        },
+        "boolList": {
+            "type": "array",
+            "items": {
+                "type": "boolean"
+            }
+        },
+        "nestedList": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "stringField": {
+                        "type": "string"
+                    },
+                    "floatField": {
+                        "type": "number"
+                    },
+                    "intListField": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "simpleObject": {
+            "type": "object",
+            "properties": {
+                "stringField": {
+                    "type": "string"
+                },
+                "floatField": {
+                    "type": "number"
+                }
+            }
+        },
+        "nestedObject": {
+            "type": "object",
+            "properties": {
+                "key1": {
+                    "type": "object",
+                    "required": [
+                        "stringField"
+                    ],
+                    "properties": {
+                        "stringField": {
+                            "type": "string"
+                        },
+                        "floatField": {
+                            "type": "number"
+                        },
+                        "intListField": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "key2": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "key3": {
+                    "type": "boolean"
+                }
+            }
         }
-      }
     }
-  }
 }

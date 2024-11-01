@@ -31,8 +31,13 @@ func (e ErrSource) toProto() schemav1.ValidationError_Source {
 }
 
 func newValidationError(err *jsonschema.ValidationError, source ErrSource) ValidationError {
+	path := "/"
+	if err.InstanceLocation != "" {
+		path = err.InstanceLocation
+	}
+
 	return ValidationError{
-		Path:    err.InstanceLocation,
+		Path:    path,
 		Message: err.Message,
 		Source:  source,
 	}
