@@ -5,19 +5,9 @@ resourcePolicy:
   version: default
   resource: x
   scope: acme.hr
-  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
     - actions:
-        - edit
+        - update_profile
       effect: EFFECT_ALLOW
-      roles:
-        - USER
-      condition:
-        match:
-          expr: |-
-            R.attr.status == "PENDING_STATUS"
-    - actions:
-        - debug
-      effect: EFFECT_DENY
       roles:
         - USER

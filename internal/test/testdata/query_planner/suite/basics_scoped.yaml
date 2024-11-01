@@ -32,7 +32,7 @@ tests:
     - action: edit
       resource:
         kind: x
-        scope: acme.hr
+        scope: acme.hr.uk
         policyVersion: default
       want:
         kind: KIND_CONDITIONAL
@@ -45,7 +45,7 @@ tests:
     - action: debug
       resource:
         kind: x
-        scope: acme.hr
+        scope: acme.hr.uk
         policyVersion: default
       want:
         kind: KIND_ALWAYS_DENIED
