@@ -345,6 +345,7 @@ func TestQueryPlan(t *testing.T) {
 							Kind:          tt.Resource.Kind,
 							Attr:          tt.Resource.Attr,
 							PolicyVersion: tt.Resource.PolicyVersion,
+							Scope:         tt.Resource.Scope,
 						},
 						IncludeMeta: true,
 						AuxData:     auxData,

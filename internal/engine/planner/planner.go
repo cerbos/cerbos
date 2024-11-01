@@ -21,6 +21,7 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -46,6 +47,7 @@ type (
 		AllowFilter      []*qpN
 		DenyFilter       []*qpN
 		ValidationErrors []*schemav1.ValidationError
+		ScopePermissions policyv1.ScopePermissions
 	}
 )
 
@@ -79,6 +81,39 @@ func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *Po
 	}
 }
 
+func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
+	if acc == nil {
+		return current
+	}
+	scopePermissions := current.ScopePermissions
+	allowFilter := current.AllowFilter
+	if current.AllowIsEmpty() {
+		scopePermissions = acc.ScopePermissions
+		allowFilter = acc.AllowFilter
+	} else if !acc.AllowIsEmpty() {
+		n := len(acc.AllowFilter) * len(current.AllowFilter)
+		allowFilter = make([]*qpN, 0, n)
+		for _, a := range acc.AllowFilter {
+			for _, c := range current.AllowFilter {
+				allowFilter = append(allowFilter, mkNodeFromLO(mkAndLogicalOperation([]*qpN{a, c})))
+			}
+		}
+	}
+	return &PolicyPlanResult{
+		Scope:            current.Scope,
+		ScopePermissions: scopePermissions,
+		AllowFilter:      allowFilter,
+		DenyFilter:       append(acc.DenyFilter, current.DenyFilter...),
+	}
+}
+
+func NewPolicyPlanResult(scope string, scopePermissions policyv1.ScopePermissions) *PolicyPlanResult {
+	return &PolicyPlanResult{
+		Scope:            scope,
+		ScopePermissions: scopePermissions,
+	}
+}
+
 func NewAlwaysAllowed(scope string) *PolicyPlanResult {
 	return &PolicyPlanResult{
 		Scope:       scope,
@@ -101,8 +136,16 @@ func (p *PolicyPlanResult) Add(filter *qpN, effect effectv1.Effect) {
 	}
 }
 
+func (p *PolicyPlanResult) DenyIsEmpty() bool {
+	return len(p.DenyFilter) == 0
+}
+
+func (p *PolicyPlanResult) AllowIsEmpty() bool {
+	return len(p.AllowFilter) == 0
+}
+
 func (p *PolicyPlanResult) Empty() bool {
-	return len(p.AllowFilter) == 0 && len(p.DenyFilter) == 0
+	return p.AllowIsEmpty() && p.DenyIsEmpty()
 }
 
 func (p *PolicyPlanResult) ToPlanResourcesOutput(input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
@@ -161,11 +204,24 @@ func (p *PolicyPlanResult) toAST() *qpN {
 	}
 }
 
+func (p *PolicyPlanResult) Complete() bool {
+	if p == nil {
+		return false
+	}
+	if p.AllowIsEmpty() && !p.DenyIsEmpty() {
+		return true
+	}
+	if !p.Empty() && (p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT || p.Scope == "") { // root scope permissions value is effectively "OVERRIDE_PARENT"
+		return true
+	}
+	return false
+}
+
 func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{ppe.NowFn}
 }
 
-func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
+func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (acc *PolicyPlanResult, _ error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
 	defer span.End()
@@ -173,19 +229,24 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	derivedRolesList := mkDerivedRolesList(nil)
 
 	request := planResourcesInputToRequest(input)
-	result := &PolicyPlanResult{}
+	var currentResult *PolicyPlanResult
 	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
-		if !result.Empty() {
+		if currentResult.Complete() {
 			break
 		}
+		scopePermissions := p.ScopePermissions
+		// for backward compatibility with precompiled bundles need to set default here despite it being set during compilation.
+		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+		}
+		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
 
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
 		}
 
-		result.Scope = p.Scope
 		evalCtx := ppe.evalContext()
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
@@ -202,12 +263,12 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					return nil, err
 				}
 
-				result.Add(filter, rule.Effect)
+				currentResult.Add(filter, rule.Effect)
 			}
 		}
+		acc = mergePlans(acc, currentResult)
 	}
-
-	return result, nil
+	return acc, nil
 }
 
 func (rpe *ResourcePolicyEvaluator) evalContext() *evalContext {
@@ -219,40 +280,43 @@ func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	return rpe.EvaluateWithRolesToResolve(ctx, input, effectiveRoles)
 }
 
-func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (*PolicyPlanResult, error) {
+func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (acc *PolicyPlanResult, _ error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
 	defer span.End()
 
 	request := planResourcesInputToRequest(input)
-	result := &PolicyPlanResult{}
 
 	vr, err := rpe.SchemaMgr.ValidatePlanResourcesInput(ctx, rpe.Policy.Schemas, input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate input: %w", err)
 	}
-
+	var validationErrors []*schemav1.ValidationError
 	if len(vr.Errors) > 0 {
-		result.ValidationErrors = vr.Errors.SchemaErrors()
+		validationErrors = vr.Errors.SchemaErrors()
 
 		if vr.Reject {
-			result.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
-			return result, nil
+			acc = new(PolicyPlanResult)
+			acc.ValidationErrors = validationErrors
+			acc.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
+			return acc, nil
 		}
 	}
-
+	var currentResult *PolicyPlanResult
 	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
-		// if previous iteration has found a matching policy, then quit the loop
-		if !result.Empty() {
+		if currentResult.Complete() {
 			break
 		}
-
+		scopePermissions := p.ScopePermissions
+		// for backward compatibility with precompiled bundles need to set default here despite it being set during compilation.
+		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+		}
+		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
 		variables, err := variableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
 		}
-
-		result.Scope = p.Scope
 
 		var derivedRoles []rN
 
@@ -335,12 +399,13 @@ func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Conte
 					filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
 				}
 
-				result.Add(filter, rule.Effect)
+				currentResult.Add(filter, rule.Effect)
 			}
 		}
+		acc = mergePlans(acc, currentResult)
 	}
-
-	return result, nil
+	acc.ValidationErrors = validationErrors
+	return acc, nil
 }
 
 func matchesActionGlob(actionGlob, action string) bool {

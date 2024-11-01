@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Basics tests with a scope, should fall through to the parent policy 
+principal:
+    id: user123
+    policyVersion: default
+    roles:
+        - USER
+    attr:
+      userQid: z0
+tests:
+    - action: write
+      resource:
+        kind: x
+        scope: acme
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id
+    - action: edit
+      resource:
+        kind: x
+        scope: acme
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.status
+              - value: APPROVED
+    - action: edit
+      resource:
+        kind: x
+        scope: acme.hr.uk
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_STATUS 
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: APPROVED 
+    - action: debug
+      resource:
+        kind: x
+        scope: acme.hr.uk
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_DENIED
