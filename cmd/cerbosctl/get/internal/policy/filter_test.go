@@ -19,10 +19,12 @@ import (
 
 const (
 	derivedRolesNameFmt      = "my_derived_roles_%d"
+	exportConstantsNameFmt   = "my_constants_%d"
 	exportVariablesNameFmt   = "my_variables_%d"
 	principalPoliciesNameFmt = "donald_duck_%d"
 	resourcePoliciesNameFmt  = "leave_request_%d"
 	derivedRolesFmt          = "derived_roles.my_derived_roles_%d"
+	exportConstantsFmt       = "export_constants.my_constants_%d"
 	exportVariablesFmt       = "export_variables.my_variables_%d"
 	principalPoliciesFmt     = "principal.donald_duck_%d.version"
 	resourcePoliciesFmt      = "resource.leave_request_%d.default"
@@ -32,24 +34,34 @@ const (
 func TestFilter(t *testing.T) {
 	noOfPolicies := 2
 	derivedRoles := mkDerivedRolesForFilter(t, noOfPolicies)
+	exportConstants := mkExportConstantsForFilter(t, noOfPolicies)
 	exportVariables := mkExportVariablesForFilter(t, noOfPolicies)
 	principalPolicies := mkPrincipalPoliciesForFilter(t, noOfPolicies)
 	resourcePolicies := mkResourcePoliciesForFilter(t, noOfPolicies)
 
 	t.Run("should fail when filtering wrong kind of policies", func(t *testing.T) {
+		require.Empty(t, filter(derivedRoles, nil, nil, policy.ExportConstantsKind))
 		require.Empty(t, filter(derivedRoles, nil, nil, policy.ExportVariablesKind))
 		require.Empty(t, filter(derivedRoles, nil, nil, policy.PrincipalKind))
 		require.Empty(t, filter(derivedRoles, nil, nil, policy.ResourceKind))
 
+		require.Empty(t, filter(exportConstants, nil, nil, policy.DerivedRolesKind))
+		require.Empty(t, filter(exportConstants, nil, nil, policy.ExportVariablesKind))
+		require.Empty(t, filter(exportConstants, nil, nil, policy.PrincipalKind))
+		require.Empty(t, filter(exportConstants, nil, nil, policy.ResourceKind))
+
 		require.Empty(t, filter(exportVariables, nil, nil, policy.DerivedRolesKind))
+		require.Empty(t, filter(exportVariables, nil, nil, policy.ExportConstantsKind))
 		require.Empty(t, filter(exportVariables, nil, nil, policy.PrincipalKind))
 		require.Empty(t, filter(exportVariables, nil, nil, policy.ResourceKind))
 
 		require.Empty(t, filter(principalPolicies, nil, nil, policy.DerivedRolesKind))
+		require.Empty(t, filter(principalPolicies, nil, nil, policy.ExportConstantsKind))
 		require.Empty(t, filter(principalPolicies, nil, nil, policy.ExportVariablesKind))
 		require.Empty(t, filter(principalPolicies, nil, nil, policy.ResourceKind))
 
 		require.Empty(t, filter(resourcePolicies, nil, nil, policy.DerivedRolesKind))
+		require.Empty(t, filter(resourcePolicies, nil, nil, policy.ExportConstantsKind))
 		require.Empty(t, filter(resourcePolicies, nil, nil, policy.ExportVariablesKind))
 		require.Empty(t, filter(resourcePolicies, nil, nil, policy.PrincipalKind))
 	})
@@ -64,6 +76,18 @@ func TestFilter(t *testing.T) {
 		filtered := filter(derivedRoles, []string{fmt.Sprintf(derivedRolesNameFmt, 1)}, nil, policy.DerivedRolesKind)
 		require.Len(t, filtered, 1)
 		require.Equal(t, fmt.Sprintf(derivedRolesNameFmt, 1), filtered[0].Name)
+	})
+
+	// Export Constants
+	t.Run("should filter export_constants by kind", func(t *testing.T) {
+		filtered := filter(exportConstants, nil, nil, policy.ExportConstantsKind)
+		require.Len(t, filtered, noOfPolicies)
+	})
+
+	t.Run("should filter export_constants by name", func(t *testing.T) {
+		filtered := filter(exportConstants, []string{fmt.Sprintf(exportConstantsNameFmt, 1)}, nil, policy.ExportConstantsKind)
+		require.Len(t, filtered, 1)
+		require.Equal(t, fmt.Sprintf(exportConstantsNameFmt, 1), filtered[0].Name)
 	})
 
 	// Export Variables
@@ -132,6 +156,16 @@ func mkDerivedRolesForFilter(t *testing.T, noOfPolicies int) []policy.Wrapper {
 	policies := make([]policy.Wrapper, noOfPolicies)
 	for i := noOfPolicies - 1; i >= 0; i-- {
 		policies[i] = policy.Wrap(policy.WithStoreIdentifier(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i))), fmt.Sprintf(derivedRolesFmt, i)))
+	}
+	return policies
+}
+
+func mkExportConstantsForFilter(t *testing.T, noOfPolicies int) []policy.Wrapper {
+	t.Helper()
+
+	policies := make([]policy.Wrapper, noOfPolicies)
+	for i := noOfPolicies - 1; i >= 0; i-- {
+		policies[i] = policy.Wrap(policy.WithStoreIdentifier(test.GenExportConstants(test.Suffix(strconv.Itoa(i))), fmt.Sprintf(exportConstantsFmt, i)))
 	}
 	return policies
 }

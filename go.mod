@@ -15,8 +15,8 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.7.2
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/cerbos/cerbos-sdk-go v0.2.10
-	github.com/cerbos/cerbos/api/genpb v0.39.0
+	github.com/cerbos/cerbos-sdk-go v0.2.11-0.20241104122215-04d64f1910f1
+	github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241104095130-b7e5c7703d82
 	github.com/cerbos/cloud-api v0.1.26
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
@@ -120,7 +120,7 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240920164238-5a7b106cbb87.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.1-20240920164238-5a7b106cbb87.1 // indirect
 	cloud.google.com/go v0.115.0 // indirect
 	cloud.google.com/go/auth v0.8.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
