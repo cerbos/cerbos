@@ -336,7 +336,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		}
 	}
 
-	if result.AllowIsEmpty() {
+	if result.AllowIsEmpty() && !result.DenyIsEmpty() { // reset an conditional DENY to an unconditional one
 		result = planner.NewAlwaysDenied(result.Scope)
 	}
 
