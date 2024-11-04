@@ -73,6 +73,10 @@ func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *Po
 		return principalPolicyPlan
 	}
 
+	if resourcePolicyPlan.AllowIsEmpty() && principalPolicyPlan.AllowIsEmpty() {
+		return resourcePolicyPlan // short-circuiting
+	}
+
 	return &PolicyPlanResult{
 		Scope:            fmt.Sprintf("principal: %q; resource: %q", principalPolicyPlan.Scope, resourcePolicyPlan.Scope),
 		AllowFilter:      append(principalPolicyPlan.AllowFilter, resourcePolicyPlan.toAST()),

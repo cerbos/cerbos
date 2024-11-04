@@ -336,6 +336,10 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		}
 	}
 
+	if result.AllowIsEmpty() {
+		result = planner.NewAlwaysDenied(result.Scope)
+	}
+
 	output, err := result.ToPlanResourcesOutput(input)
 	if err != nil {
 		return nil, nil, err
