@@ -2,9 +2,11 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_creator
-  scope: acme.hr.uk
+  role: acme_manager
+  scope: acme.hr.uk.brighton
+  parentRoles: ["manager", "acme_creator_brighton"]
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
-    - resource: "*"
-      allowActions: ["create"]
+    - resource: leave_request
+      allowActions:
+        - view:*

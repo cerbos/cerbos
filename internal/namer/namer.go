@@ -190,7 +190,7 @@ func ResourcePolicyModuleID(resource, version, scope string) ModuleID {
 	return GenModuleIDFromFQN(ResourcePolicyFQN(resource, version, scope))
 }
 
-// ScopedResourcePolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
+// ScopedResourcePolicyModuleIDs returns a list of module IDs for each scope segment if `genTree` is true.
 // For example, if the scope is `a.b.c`, the list will contain the module IDs for scopes `a.b.c`, `a.b`, `a` and `""` in that order.
 func ScopedResourcePolicyModuleIDs(resource, version, scope string, genTree bool) []ModuleID {
 	if !genTree || scope == "" {

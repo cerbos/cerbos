@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: acme_jr_admin
+  scope: acme.hr.uk.custom
+  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+  rules:
+    - resource: leave_request
+      allowActions:
+        - view:*
+        - deny
+
+    - resource: salary_record
+      allowActions:
+        - edit
