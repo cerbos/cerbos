@@ -51,3 +51,9 @@ tests:
         policyVersion: default
       want:
         kind: KIND_ALWAYS_ALLOWED
+    - action: lecture
+      resource:
+        kind: x
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_DENIED

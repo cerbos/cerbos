@@ -114,19 +114,25 @@ resourcePolicy:
             of:
               - expr: R.attr.status == "PENDING_APPROVAL"
               - expr: R.attr.owner != request.principal.id
-    - actions: ["report:deny-deny"]
+    - actions: ["report:allow-deny-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+    - actions: ["report:allow-deny-deny"]
       roles: ["manager"]
       effect: EFFECT_DENY
       condition:
         match:
           expr: R.attr.deleted
-    - actions: ["report:deny-deny"]
+    - actions: ["report:allow-deny-deny"]
       roles: ["manager"]
       effect: EFFECT_DENY
       condition:
         match:
           expr: R.attr.hidden
-    - actions: ["report:deny"]
+    - actions: ["report:allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+    - actions: ["report:allow-deny"]
       roles: ["manager"]
       effect: EFFECT_DENY
       condition:
