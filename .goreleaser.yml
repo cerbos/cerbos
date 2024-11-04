@@ -2,7 +2,7 @@
 version: 2
 
 snapshot:
-  name_template: "{{ incminor .Version }}-prerelease"
+  version_template: "{{ incminor .Version }}-prerelease"
 
 git:
   ignore_tags:
