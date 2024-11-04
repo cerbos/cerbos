@@ -93,45 +93,17 @@ func (idx *index) GetFiles() []string {
 }
 
 func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
-	idx.mu.RLock()
-	defer idx.mu.RUnlock()
-
-	for _, id := range candidates {
-		if _, ok := idx.modIDToFile[id]; !ok {
-			continue
-		}
-
-		p, sc, err := idx.loadPolicy(id)
+	for _, modID := range candidates {
+		res, err := idx.GetCompilationUnits(modID)
 		if err != nil {
 			return nil, err
 		}
 
-		policyKey := namer.PolicyKey(p)
-
-		cu := &policy.CompilationUnit{
-			ModID:          id,
-			Definitions:    map[namer.ModuleID]*policyv1.Policy{id: p},
-			SourceContexts: map[namer.ModuleID]parser.SourceCtx{id: sc},
-		}
-
-		// add dependencies
-		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {
-			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
-		}
-
-		// load ancestors of the policy
-		for _, ancestor := range cu.Ancestors() {
-			p, sc, err := idx.loadPolicy(ancestor)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
-			}
-			cu.AddDefinition(ancestor, p, sc)
-			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
-				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
+		if len(res) > 0 {
+			for _, cu := range res {
+				return cu, nil
 			}
 		}
-
-		return cu, nil
 	}
 
 	return nil, nil
@@ -154,6 +126,7 @@ func (idx *index) GetAll(modIDs []namer.ModuleID) ([]*policy.CompilationUnit, er
 }
 
 func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
+	// TODO(saml) update here
 	result := make(map[namer.ModuleID]*policy.CompilationUnit, len(ids))
 
 	idx.mu.RLock()
@@ -184,15 +157,18 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
 		}
 
-		// load ancestors of the policy
-		for _, ancestor := range cu.Ancestors() {
-			p, sc, err := idx.loadPolicy(ancestor)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
-			}
-			cu.AddDefinition(ancestor, p, sc)
-			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
-				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
+		// TODO(saml) tidy
+		// load ancestors of the policy only for principal policies
+		if _, ok := p.PolicyType.(*policyv1.Policy_PrincipalPolicy); ok {
+			for _, ancestor := range cu.Ancestors() {
+				p, sc, err := idx.loadPolicy(ancestor)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
+				}
+				cu.AddDefinition(ancestor, p, sc)
+				if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
+					return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
+				}
 			}
 		}
 	}

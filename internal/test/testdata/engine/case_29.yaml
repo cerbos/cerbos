@@ -169,30 +169,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_jr_admin/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_01.yaml",
-                    },
-                },
-              "cerbos.role.acme_sr_admin/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_05.yaml",
-                    },
-                },
-              "cerbos.role.acme_creator/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_02.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":
