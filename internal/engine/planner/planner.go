@@ -221,6 +221,10 @@ func (p *PolicyPlanResult) Complete() bool {
 	return false
 }
 
+func (p *PolicyPlanResult) ResetToUnconditionalDeny() {
+	p.DenyFilter = []*qpN{mkFalseNode()}
+}
+
 func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
 	return &evalContext{ppe.NowFn}
 }
