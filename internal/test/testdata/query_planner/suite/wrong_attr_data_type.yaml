@@ -18,18 +18,15 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: not
+            operator: or
             operands:
               - expression:
-                  operator: or
+                  operator: eq
                   operands:
-                    - expression:
-                        operator: eq
-                        operands:
-                          - variable: request.resource.attr.custAnal
-                          - value: VALUE1
-                    - expression:
-                        operator: eq
-                        operands:
-                          - variable: request.resource.attr.salhAnal
-                          - value: VALUE2
+                    - variable: request.resource.attr.custAnal
+                    - value: VALUE1
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.salhAnal
+                    - value: VALUE2

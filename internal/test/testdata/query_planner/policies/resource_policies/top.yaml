@@ -15,4 +15,4 @@ resourcePolicy:
             of:
               - expr: R.attr.custAnal in P.attr.custAllowedValues
               - expr: R.attr.salhAnal in P.attr.salhAllowedValues
-      effect: EFFECT_DENY
+      effect: EFFECT_ALLOW
