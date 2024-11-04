@@ -14,7 +14,6 @@ inputs:
         {
           "id": "john",
           "roles": ["acme_assistant"],
-          "scope": "acme.hr.de",
         },
       "resource":
         {
@@ -34,12 +33,14 @@ wantOutputs:
           "assist":
             {
               "effect": "EFFECT_ALLOW",
-              "scope": "acme.hr.de",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "scope": "acme.hr.uk",
             },
           "suggest":
             {
               "effect": "EFFECT_ALLOW",
-              "scope": "acme.hr.de",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "scope": "acme.hr.uk",
             },
           "redirect":
             {
@@ -73,7 +74,6 @@ wantDecisionLogs:
                   {
                     "id": "john",
                     "roles": ["acme_assistant", "acme_travel_agent", "employee"],
-                    "scope": "acme.hr.de",
                   },
                 "actions": ["assist", "suggest", "redirect"],
               },
@@ -88,12 +88,14 @@ wantDecisionLogs:
                     "assist":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "scope": "acme.hr.de",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "scope": "acme.hr.uk",
                       },
                     "suggest":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "scope": "acme.hr.de",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "scope": "acme.hr.uk",
                       },
                     "redirect":
                       {
@@ -110,22 +112,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_assistant/acme.hr.de":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_03.yaml",
-                    },
-                },
-              "cerbos.role.acme_travel_agent/acme.hr.de":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_06.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":

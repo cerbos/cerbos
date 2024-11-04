@@ -15,7 +15,6 @@ inputs:
       "principal":
         {
           "id": "john",
-          "scope": "acme.hr.uk",
           "roles": ["employee", "acme_jr_admin", "acme_creator", "boss"],
           "attr":
             {
@@ -28,7 +27,7 @@ inputs:
       "resource":
         {
           "kind": "leave_request",
-          "scope": "acme.hr.uk",
+          "scope": "acme.hr.uk.custom",
           "id": "XX125",
           "attr":
             {
@@ -51,30 +50,30 @@ wantOutputs:
           "view:public":
             {
               "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
               "scope": "acme.hr",
             },
           "delete":
             {
               "effect": "EFFECT_DENY",
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk",
+              "scope": "acme.hr.uk.custom",
             },
           "create":
             {
               "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
               "scope": "acme",
             },
           "deny":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
             },
           "block":
             {
               "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
               "scope": "acme.hr.uk",
             },
         },
@@ -105,12 +104,11 @@ wantDecisionLogs:
                         "owner": "john",
                         "team": "design",
                       },
-                    "scope": "acme.hr.uk",
+                    "scope": "acme.hr.uk.custom",
                   },
                 "principal":
                   {
                     "id": "john",
-                    "scope": "acme.hr.uk",
                     "roles": ["employee", "acme_jr_admin", "acme_creator", "boss"],
                     "attr":
                       {
@@ -133,30 +131,30 @@ wantDecisionLogs:
                     "create":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
                         "scope": "acme",
                       },
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk",
+                        "scope": "acme.hr.uk.custom",
                       },
                     "view:public":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
                         "scope": "acme.hr",
                       },
                     "deny":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
                       },
                     "block":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
                         "scope": "acme.hr.uk",
                       },
                   },
@@ -169,20 +167,20 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_jr_admin/acme.hr.uk":
+              "cerbos.role.acme_jr_admin/acme.hr.uk.custom":
                 {
                   "attributes":
                     {
                       "driver": "disk",
-                      "source": "role_policies/policy_01.yaml",
+                      "source": "role_policies/policy_01_acme.hr.uk.custom.yaml",
                     },
                 },
-              "cerbos.role.acme_creator/acme.hr.uk":
+              "cerbos.role.acme_creator/acme.hr.uk.custom":
                 {
                   "attributes":
                     {
                       "driver": "disk",
-                      "source": "role_policies/policy_02.yaml",
+                      "source": "role_policies/policy_02_acme.hr.uk.custom.yaml",
                     },
                 },
               "resource.leave_request.vdefault":

@@ -91,14 +91,14 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams, basePolicyKey string) Evaluator {
 	if len(rps) == 0 {
 		return noopEvaluator{}
 	}
 
 	switch rp := rps[0].PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
+		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams, basePolicyKey: basePolicyKey}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
@@ -112,6 +112,16 @@ type noopEvaluator struct{}
 
 func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
+}
+
+type defaultEvaluator struct {
+	targetPolicyKey string
+}
+
+func (de *defaultEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+	result := newEvalResult(input.Actions, nil)
+	result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: de.targetPolicyKey})
+	return result, nil
 }
 
 type rolePolicyEvaluator struct {
@@ -131,7 +141,7 @@ func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet) *rolePolicyEvalu
 
 func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return tracing.RecordSpan2(ctx, "role_policy.Evaluate", func(_ context.Context, span trace.Span) (*PolicyEvalResult, error) {
-		span.SetAttributes(tracing.PolicyScope(input.Principal.Scope))
+		span.SetAttributes(tracing.PolicyScope(input.Resource.Scope))
 
 		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
 		mergedActions := make(internal.ProtoSet)
@@ -177,10 +187,10 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 
 			mappingExists := actions.Get(a) != nil
 			if mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Principal.Scope, ActiveRoles: activeRoles})
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Resource.Scope, ActiveRoles: activeRoles})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
 			} else if !mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Principal.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Resource.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
 			}
 		}
@@ -192,16 +202,17 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 }
 
 type resourcePolicyEvaluator struct {
-	policy     *runtimev1.RunnableResourcePolicySet
-	schemaMgr  schema.Manager
-	evalParams evalParams
+	policy        *runtimev1.RunnableResourcePolicySet
+	schemaMgr     schema.Manager
+	evalParams    evalParams
+	basePolicyKey string
 }
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return tracing.RecordSpan2(ctx, "resource_policy.Evaluate", func(ctx context.Context, span trace.Span) (*PolicyEvalResult, error) {
 		span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 
-		policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
+		// policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 		request := checkInputToRequest(input)
 		trail := newAuditTrail(rpe.policy.GetMeta().GetSourceAttributes())
 		result := newEvalResult(input.Actions, trail)
@@ -226,7 +237,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				for _, action := range input.Actions {
 					actx := pctx.StartAction(action)
 
-					result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+					result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: rpe.basePolicyKey})
 
 					actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Rejected due to validation failures")
 				}
@@ -347,7 +358,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									}
 								}
 
-								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope, ActiveRoles: activeRoles})
+								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: rpe.basePolicyKey, Scope: p.Scope, ActiveRoles: activeRoles})
 								actx.AppliedEffect(rule.Effect, "")
 								ruleActivated = true
 							}
@@ -382,7 +393,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		}
 
 		// set the default effect for actions that were not matched
-		result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+		// result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH, Policy: policyKey})
 
 		return result, nil
 	})
@@ -497,7 +508,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 			}
 		}
 
-		result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
+		// result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
 		return result, nil
 	})
 }

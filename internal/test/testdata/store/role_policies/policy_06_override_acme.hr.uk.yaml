@@ -2,12 +2,12 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_assistant
-  scope: acme.hr.de
+  role: acme_travel_agent # (saml): sorry I'm running out of role ideas
+  scope: acme.hr.uk
   scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
   parentRoles:
-    - "acme_travel_agent"
+    - employee
   rules:
     - resource: leave_request
       allowActions:
-        - assist
+        - suggest

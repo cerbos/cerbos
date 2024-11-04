@@ -257,15 +257,16 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		if !ok {
 			sharedScope = make(map[policyv1.ScopePermissions]struct{})
 			idx.sharedScopePermissionGroups[p.Scope] = sharedScope
-		} else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
-			scopePermission := p.GetRolePolicy().ScopePermissions
-			if _, ok := sharedScope[scopePermission]; !ok {
-				sharedScope[scopePermission] = struct{}{}
-			}
-
-			if len(sharedScope) > 1 {
-				idx.conflictingScopes[p.Scope] = struct{}{}
-			}
+			// TODO(saml) reintroduce scope permission collision checks somewhere. Maybe at runtime because specific role policies can still be retrieved?
+			// } else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
+			// 	scopePermission := p.GetRolePolicy().ScopePermissions
+			// 	if _, ok := sharedScope[scopePermission]; !ok {
+			// 		sharedScope[scopePermission] = struct{}{}
+			// 	}
+			//
+			// 	if len(sharedScope) > 1 {
+			// 		idx.conflictingScopes[p.Scope] = struct{}{}
+			// 	}
 		}
 
 		fallthrough

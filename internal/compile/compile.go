@@ -118,17 +118,23 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 		return nil
 	}
 
-	ancestors := modCtx.unit.Ancestors()
+	// ancestors := modCtx.unit.Ancestors()
+
+	// TODO(saml) get role policies here (similar to above) and merge in to the runnable resource policy set.
+	// recursion handles the same action on ancestors.
+	// rolePolicies := modCtx.unit.RolePolicies()
 
 	rrps := &runtimev1.RunnableResourcePolicySet{
 		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
-			Fqn:              modCtx.fqn,
-			Resource:         rp.Resource,
-			Version:          rp.Version,
-			SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
+			Fqn:      modCtx.fqn,
+			Resource: rp.Resource,
+			Version:  rp.Version,
+			// SourceAttributes: make(map[string]*policyv1.SourceAttributes, len(ancestors)+1),
+			SourceAttributes: make(map[string]*policyv1.SourceAttributes, 1),
 			Annotations:      modCtx.def.GetMetadata().GetAnnotations(),
 		},
-		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(ancestors)+1),
+		// Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(ancestors)+1),
+		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, 1),
 	}
 
 	compiled, srcAttr := compileResourcePolicy(modCtx, schemaMgr)
@@ -139,20 +145,20 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 	rrps.Policies[0] = compiled
 	rrps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(modCtx.fqn)] = srcAttr
 
-	for i, ancestor := range ancestors {
-		ancModCtx := modCtx.moduleCtx(ancestor)
-		if ancModCtx == nil {
-			reportMissingAncestors(modCtx)
-			return nil
-		}
-
-		compiled, srcAttr := compileResourcePolicy(ancModCtx, schemaMgr)
-		if compiled == nil {
-			return nil
-		}
-		rrps.Policies[i+1] = compiled
-		rrps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(ancModCtx.fqn)] = srcAttr
-	}
+	// for i, ancestor := range ancestors {
+	// 	ancModCtx := modCtx.moduleCtx(ancestor)
+	// 	if ancModCtx == nil {
+	// 		reportMissingAncestors(modCtx)
+	// 		return nil
+	// 	}
+	//
+	// 	compiled, srcAttr := compileResourcePolicy(ancModCtx, schemaMgr)
+	// 	if compiled == nil {
+	// 		return nil
+	// 	}
+	// 	rrps.Policies[i+1] = compiled
+	// 	rrps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(ancModCtx.fqn)] = srcAttr
+	// }
 
 	// Only schema in effect is the schema defined by the "root" policy.
 	rrps.Schemas = rrps.Policies[len(rrps.Policies)-1].Schemas

@@ -2,15 +2,9 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_jr_admin
-  scope: acme.hr.uk
+  role: acme_creator_brighton
+  scope: acme.hr.uk.brighton
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   rules:
-    - resource: leave_request
-      allowActions:
-        - view:*
-        - deny
-
-    - resource: salary_record
-      allowActions:
-        - edit
+    - resource: "*"
+      allowActions: ["create"]
