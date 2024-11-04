@@ -2343,6 +2343,15 @@ func (m *CompileTestCase_Variables_DerivedRole) MarshalToSizedBufferVT(dAtA []by
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Constants) > 0 {
+		for iNdEx := len(m.Constants) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Constants[iNdEx])
+			copy(dAtA[i:], m.Constants[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Constants[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
 	if len(m.Variables) > 0 {
 		for iNdEx := len(m.Variables) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.Variables[iNdEx])
@@ -2391,6 +2400,15 @@ func (m *CompileTestCase_Variables) MarshalToSizedBufferVT(dAtA []byte) (int, er
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.Constants) > 0 {
+		for iNdEx := len(m.Constants) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Constants[iNdEx])
+			copy(dAtA[i:], m.Constants[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Constants[iNdEx])))
+			i--
+			dAtA[i] = 0x22
+		}
 	}
 	if len(m.DerivedRoles) > 0 {
 		for iNdEx := len(m.DerivedRoles) - 1; iNdEx >= 0; iNdEx-- {
@@ -4946,6 +4964,12 @@ func (m *CompileTestCase_Variables_DerivedRole) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
+	if len(m.Constants) > 0 {
+		for _, s := range m.Constants {
+			l = len(s)
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -4969,6 +4993,12 @@ func (m *CompileTestCase_Variables) SizeVT() (n int) {
 	if len(m.DerivedRoles) > 0 {
 		for _, e := range m.DerivedRoles {
 			l = e.SizeVT()
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
+	if len(m.Constants) > 0 {
+		for _, s := range m.Constants {
+			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
@@ -10331,6 +10361,38 @@ func (m *CompileTestCase_Variables_DerivedRole) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Variables = append(m.Variables, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Constants", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Constants = append(m.Constants, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -10479,6 +10541,38 @@ func (m *CompileTestCase_Variables) UnmarshalVT(dAtA []byte) error {
 			if err := m.DerivedRoles[len(m.DerivedRoles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Constants", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Constants = append(m.Constants, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -6,11 +6,11 @@ package compile_test
 import (
 	"bytes"
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"sort"
 	"testing"
 
@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
@@ -54,7 +55,7 @@ func TestCompile(t *testing.T) {
 			haveRes, haveErr := compile.Compile(cu, schemaMgr)
 			if len(tc.WantErrors) > 0 {
 				errSet := new(compile.ErrorSet)
-				require.True(t, errors.As(haveErr, &errSet))
+				require.ErrorAs(t, haveErr, &errSet)
 				haveErrors := errSet.Errors()
 				t.Cleanup(func() {
 					if t.Failed() {
@@ -257,6 +258,7 @@ func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables,
 		for _, policy := range set.PrincipalPolicy.Policies {
 			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
 				Scope:     policy.Scope,
+				Constants: constantNames(policy.Constants),
 				Variables: variableNames(policy.OrderedVariables),
 			})
 		}
@@ -267,12 +269,14 @@ func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables,
 			for name, derivedRole := range policy.DerivedRoles {
 				derivedRoles = append(derivedRoles, &privatev1.CompileTestCase_Variables_DerivedRole{
 					Name:      name,
+					Constants: constantNames(derivedRole.Constants),
 					Variables: variableNames(derivedRole.OrderedVariables),
 				})
 			}
 
 			haveVariables = append(haveVariables, &privatev1.CompileTestCase_Variables{
 				Scope:        policy.Scope,
+				Constants:    constantNames(policy.Constants),
 				Variables:    variableNames(policy.OrderedVariables),
 				DerivedRoles: derivedRoles,
 			})
@@ -284,6 +288,15 @@ func requireVariables(t *testing.T, want []*privatev1.CompileTestCase_Variables,
 		protocmp.SortRepeated(func(a, b *privatev1.CompileTestCase_Variables_DerivedRole) bool { return a.Name < b.Name }),
 		protocmp.SortRepeated(func(a, b string) bool { return a < b }),
 	))
+}
+
+func constantNames(constants map[string]*structpb.Value) []string {
+	names := make([]string, 0, len(constants))
+	for name := range constants {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	return names
 }
 
 func variableNames(variables []*runtimev1.Variable) []string {

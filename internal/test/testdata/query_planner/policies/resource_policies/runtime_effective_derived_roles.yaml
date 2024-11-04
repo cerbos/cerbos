@@ -6,12 +6,17 @@ resourcePolicy:
   version: default
   importDerivedRoles:
     - runtime_effective_derived_roles
+  constants:
+    local:
+      expected:
+        - one
+        - three
+        - two
   variables:
     local:
       derivedRoles: runtime.effectiveDerivedRoles
       derived_roles: runtime.effective_derived_roles
-      expected: >
-        ["one", "three", "two"]
+      expected: C.expected
       oneTwoThree: V.derivedRoles == V.expected
       one_two_three: V.derived_roles == V.expected
   rules:

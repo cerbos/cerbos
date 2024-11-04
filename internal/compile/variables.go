@@ -181,15 +181,23 @@ func variableDefinitionPlaces(contexts []*variableCtx) []string {
 func (vd *variableDefinitions) resolveReferences() {
 	for referrerName, referrerID := range vd.ids {
 		referrer := vd.graph.Node(referrerID).(*variableNode) //nolint:forcetypeassert
-		for referencedName := range vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.Checked) {
-			if referencedName == referrerName {
-				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errCyclicalVariables, "Variable '%s' references itself", referencedName)
+		constants, variables := vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.Checked)
+
+		for referencedConstName := range constants {
+			if !vd.modCtx.constants.IsDefined(referencedConstName) {
+				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errUndefinedConstant, "Undefined constant '%s' referenced in variable '%s'", referencedConstName, referrerName)
+			}
+		}
+
+		for referencedVarName := range variables {
+			if referencedVarName == referrerName {
+				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errCyclicalVariables, "Variable '%s' references itself", referencedVarName)
 				continue
 			}
 
-			referencedID, ok := vd.ids[referencedName]
+			referencedID, ok := vd.ids[referencedVarName]
 			if !ok {
-				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedName, referrerName)
+				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedVarName, referrerName)
 				continue
 			}
 
@@ -199,24 +207,17 @@ func (vd *variableDefinitions) resolveReferences() {
 	}
 }
 
-func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) map[string]struct{} {
+func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) (constants, variables map[string]struct{}) {
 	exprAST, err := ast.ToAST(expr)
 	if err != nil {
 		vd.modCtx.addErrForProtoPath(path, err, "Failed to convert expression to AST")
-		return nil
+		return nil, nil
 	}
 
-	references := make(map[string]struct{})
-	action := func(varName string) {
-		references[varName] = struct{}{}
-	}
+	constants = make(map[string]struct{})
+	variables = make(map[string]struct{})
 
-	ast.PreOrderVisit(exprAST.Expr(), VariableVisitor(action))
-	return references
-}
-
-func VariableVisitor(action func(string)) ast.Visitor {
-	return ast.NewExprVisitor(func(e ast.Expr) {
+	ast.PreOrderVisit(exprAST.Expr(), ast.NewExprVisitor(func(e ast.Expr) {
 		if e.Kind() != ast.SelectKind {
 			return
 		}
@@ -225,11 +226,16 @@ func VariableVisitor(action func(string)) ast.Visitor {
 		operandNode := selectNode.Operand()
 		if operandNode.Kind() == ast.IdentKind {
 			ident := operandNode.AsIdent()
-			if ident == conditions.CELVariablesIdent || ident == conditions.CELVariablesAbbrev {
-				action(selectNode.FieldName())
+			switch ident {
+			case conditions.CELConstantsIdent, conditions.CELConstantsAbbrev:
+				constants[selectNode.FieldName()] = struct{}{}
+			case conditions.CELVariablesIdent, conditions.CELVariablesAbbrev:
+				variables[selectNode.FieldName()] = struct{}{}
 			}
 		}
-	})
+	}))
+
+	return constants, variables
 }
 
 func (vd *variableDefinitions) ResetUsage() {
@@ -237,7 +243,8 @@ func (vd *variableDefinitions) ResetUsage() {
 }
 
 func (vd *variableDefinitions) Use(path string, expr *expr.CheckedExpr) {
-	for name := range vd.references(path, expr) {
+	_, variables := vd.references(path, expr)
+	for name := range variables {
 		id, defined := vd.ids[name]
 		if defined {
 			vd.use(id, name)
@@ -254,6 +261,9 @@ func (vd *variableDefinitions) use(id int64, name string) {
 	}
 
 	vd.used[name] = struct{}{}
+
+	node := vd.graph.Node(id).(*variableNode) //nolint:forcetypeassert
+	vd.modCtx.constants.Use(node.varCtx.path, node.Expr.Checked)
 
 	references := vd.graph.To(id)
 	for references.Next() {

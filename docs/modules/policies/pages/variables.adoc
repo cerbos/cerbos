@@ -1,13 +1,16 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Variables
+= Variables and constants
 
 include::ROOT:partial$version-check.adoc[]
 
+[#variables]
+== Variables
 
 You can use variables to reduce duplication in xref:conditions.adoc[policy condition expressions]. Variables may either be defined locally within a policy, or in a standalone `exportVariables` policy file that can be imported by other policies.
 
-== Defining local variables
+[#local]
+=== Defining local variables
 
 Local variables are only accessible from the policy they are defined. In particular, local variables defined for derived roles can't be used in resource policies that import the derived roles.
 
@@ -20,13 +23,14 @@ resourcePolicy:
     local: <1>
       flagged_resource: request.resource.attr.flagged
       label: '"latest"' # assigning a string literal
-      teams: '["red", "blue"]' # assigning an array
+      teams: '["red", "blue"]' # assigning an array literal
+      lookup: '{"red": 9001, "blue": 0}' # assigning a map literal
   # ...
 ----
 <1> Map of variable name to expression.
 
 [#export]
-== Defining and importing exported variables
+=== Defining and importing exported variables
 
 To reuse variables between policies, they can be exported from a separate file.
 
@@ -40,7 +44,8 @@ exportVariables:
   definitions: <2>
     flagged_resource: request.resource.attr.flagged
     label: '"latest"' # assigning a string literal
-    teams: '["red", "blue"]' # assigning an array
+    teams: '["red", "blue"]' # assigning an array literal
+    lookup: '{"red": 9001, "blue": 0}' # assigning a map literal
 ----
 <1> Name to use when importing this set of variables.
 <2> Map of variable name to expression.
@@ -59,7 +64,7 @@ resourcePolicy:
 ----
 <1> List of names of variable sets to import.
 
-== Using variables in policy conditions
+=== Using variables in policy conditions
 
 Variables can be referenced via the `variables` (aliased to `V`) special variable in policy condition expressions.
 
@@ -73,6 +78,88 @@ condition:
 
 Local and imported variable definitions are merged, and each variable is evaluated before any rule condition. If a variable is defined in more than one location, the policy will fail to compile.
 
-== Top-level variables field
+=== Top-level variables field
 
 In earlier versions of Cerbos, local variables were defined in a top-level `variables` field in the policy file. This field is deprecated in favour of the `variables.local` section within the policy body. For backwards compatibility, the deprecated top-level field is merged with the `variables.local` section in derived roles, resource, and principal policies.
+
+[#constants]
+== Constants
+
+Variables are expressions that are evaluated at runtime. That makes them slightly awkward to use with literal values, because you have to quote the value to make it a valid link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)] expression.
+
+Constants are an alternative to defining variables with literal values, which allow the values to be written using standard YAML or JSON syntax.
+
+[#local-constants]
+=== Defining local constants
+
+Local constants are only accessible from the policy they are defined. In particular, local constants defined for derived roles can't be used in resource policies that import the derived roles.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  constants:
+    local: <1>
+      label: latest
+      teams:
+        - red
+        - blue
+      lookup:
+        red: 9001
+        blue: 0
+  # ...
+----
+<1> Map of constant name to value.
+
+[#export-constants]
+=== Defining and importing exported constants
+
+To reuse constants between policies, they can be exported from a separate file.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+description: Common constants used within the Apatr app
+exportConstants:
+  name: apatr_common_constants <1>
+  definitions: <2>
+    label: latest
+    teams:
+      - red
+      - blue
+    lookup:
+      red: 9001
+      blue: 0
+----
+<1> Name to use when importing this set of constants.
+<2> Map of constant name to value.
+
+Other policies can then import the constants by name.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  constants:
+    import: <1>
+      - apatr_common_constants
+  # ...
+----
+<1> List of names of constant sets to import.
+
+=== Using constants in policy conditions
+
+Constants can be referenced via the `constants` (aliased to `C`) special variable in policy condition expressions.
+
+[source,yaml,linenums]
+----
+---
+condition:
+  match:
+    expr: constants.lookup[request.principal.attr.team] > 9000
+----
+
+Local and imported constant definitions are merged. If a constant is defined in more than one location, the policy will fail to compile.

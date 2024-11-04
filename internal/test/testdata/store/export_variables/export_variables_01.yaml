@@ -4,5 +4,5 @@ apiVersion: api.cerbos.dev/v1
 exportVariables:
   name: foobar
   definitions:
-    foo: "42"
+    foo: C.baz
     bar: R.attr.foo == V.foo

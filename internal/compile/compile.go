@@ -59,7 +59,7 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 		rps = compilePrincipalPolicySet(mc)
 	case *policyv1.Policy_RolePolicy:
 		rps = compileRolePolicySet(mc)
-	case *policyv1.Policy_DerivedRoles, *policyv1.Policy_ExportVariables:
+	case *policyv1.Policy_DerivedRoles, *policyv1.Policy_ExportConstants, *policyv1.Policy_ExportVariables:
 	default:
 		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
 	}
@@ -185,6 +185,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		return nil, nil
 	}
 
+	compilePolicyConstants(modCtx, rp.Constants)
 	compilePolicyVariables(modCtx, rp.Variables)
 
 	scopePermissions := rp.ScopePermissions
@@ -210,6 +211,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		rrp.Rules[i] = cr
 	}
 
+	rrp.Constants = modCtx.constants.Used()
 	rrp.OrderedVariables, rrp.Variables = modCtx.variables.Used() //nolint:staticcheck
 
 	return rrp, modCtx.def.GetMetadata().GetSourceAttributes()
@@ -304,6 +306,7 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 		return nil
 	}
 
+	compilePolicyConstants(modCtx, dr.Constants)
 	compilePolicyVariables(modCtx, dr.Variables)
 
 	// TODO(cell) Because derived roles can be imported many times, cache the result to avoid repeating the work
@@ -322,10 +325,12 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 			rdr.ParentRoles[pr] = emptyVal
 		}
 
+		modCtx.constants.ResetUsage()
 		modCtx.variables.ResetUsage()
 		if def.Condition != nil {
 			rdr.Condition = compileCondition(modCtx, policy.DerivedRoleConditionProtoPath(i), def.Condition, true)
 		}
+		rdr.Constants = modCtx.constants.Used()
 		rdr.OrderedVariables, rdr.Variables = modCtx.variables.Used() //nolint:staticcheck
 		compiled[def.Name] = rdr
 	}
@@ -473,6 +478,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 		return nil, nil
 	}
 
+	compilePolicyConstants(modCtx, pp.Constants)
 	compilePolicyVariables(modCtx, pp.Variables)
 
 	scopePermissions := pp.ScopePermissions
@@ -536,6 +542,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 		rpp.ResourceRules[rule.Resource] = rr
 	}
 
+	rpp.Constants = modCtx.constants.Used()
 	rpp.OrderedVariables, rpp.Variables = modCtx.variables.Used() //nolint:staticcheck
 
 	return rpp, modCtx.def.GetMetadata().GetSourceAttributes()

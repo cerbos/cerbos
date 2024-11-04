@@ -20,6 +20,7 @@ import (
 
 var (
 	errAmbiguousDerivedRole   = errors.New("ambiguous derived role")
+	errConstantRedefined      = errors.New("constant redefined")
 	errCyclicalVariables      = errors.New("cyclical variable definitions")
 	errImportNotFound         = errors.New("import not found")
 	errInvalidCompilationUnit = errors.New("invalid compilation unit")
@@ -27,6 +28,7 @@ var (
 	errInvalidSchema          = errors.New("invalid schema")
 	errMissingDefinition      = errors.New("missing policy definition")
 	errScriptsUnsupported     = errors.New("scripts in conditions are no longer supported")
+	errUndefinedConstant      = errors.New("undefined constant")
 	errUndefinedVariable      = errors.New("undefined variable")
 	errUnexpectedErr          = errors.New("unexpected error")
 	errUnknownDerivedRole     = errors.New("unknown derived role")

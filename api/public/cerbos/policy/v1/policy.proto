@@ -23,6 +23,7 @@ enum Kind {
   KIND_PRINCIPAL = 3;
   KIND_RESOURCE = 4;
   KIND_ROLE_POLICY = 5;
+  KIND_EXPORT_CONSTANTS = 6;
 }
 
 enum ScopePermissions {
@@ -46,6 +47,7 @@ message Policy {
     DerivedRoles derived_roles = 7;
     ExportVariables export_variables = 10;
     RolePolicy role_policy = 11;
+    ExportConstants export_constants = 12;
   }
   map<string, string> variables = 8 [deprecated = true];
   string json_schema = 9 [json_name = "$schema"];
@@ -84,6 +86,7 @@ message ResourcePolicy {
   Schemas schemas = 6;
   Variables variables = 7;
   ScopePermissions scope_permissions = 8;
+  Constants constants = 9;
 }
 
 message ResourceRule {
@@ -177,6 +180,7 @@ message PrincipalPolicy {
   string scope = 4 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   Variables variables = 5;
   ScopePermissions scope_permissions = 6;
+  Constants constants = 7;
 }
 
 message PrincipalRule {
@@ -222,6 +226,7 @@ message DerivedRoles {
     (buf.validate.field).required = true
   ];
   Variables variables = 3;
+  Constants constants = 4;
 }
 
 message RoleDef {
@@ -240,6 +245,27 @@ message RoleDef {
     (buf.validate.field).required = true
   ];
   Condition condition = 3;
+}
+
+message ExportConstants {
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      pattern: "^[[:word:]\\-\\.]+$"
+      min_len: 1
+    }
+  ];
+  map<string, google.protobuf.Value> definitions = 2;
+}
+
+message Constants {
+  repeated string import = 1 [(buf.validate.field).repeated = {
+    unique: true
+    items: {
+      string: {pattern: "^[[:word:]\\-\\.]+$"}
+    }
+  }];
+  map<string, google.protobuf.Value> local = 2;
 }
 
 message ExportVariables {

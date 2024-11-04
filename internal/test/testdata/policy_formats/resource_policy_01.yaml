@@ -5,6 +5,9 @@ apiVersion: "api.cerbos.dev/v1"
 resourcePolicy:
   resource: leave_request
   version: "default"
+  constants:
+    import:
+      - my_constants
   variables:
     import:
       - my_variables

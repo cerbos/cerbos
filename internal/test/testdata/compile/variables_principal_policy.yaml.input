@@ -1,12 +1,31 @@
+-- constants_one.yaml --
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: one
+  definitions:
+    a: 1
+    b: 2
+    c: 3
+    d: 4
+
+-- constants_two.yaml --
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: two
+  definitions:
+    e: 5
+    f: 6
+    g: 7
+
 -- variables_one.yaml --
 apiVersion: api.cerbos.dev/v1
 exportVariables:
   name: one
   definitions:
-    a: "1"
-    b: "2"
-    c: "3"
-    d: "4"
+    a: constants.a
+    b: C.b
+    c: constants.c
+    d: C.d
     ab: V.a + V.b
     abc: variables.ab + variables.c
     abcd: V.abc + V.d
@@ -16,9 +35,9 @@ apiVersion: api.cerbos.dev/v1
 exportVariables:
   name: two
   definitions:
-    e: "5"
-    f: "6"
-    g: "7"
+    e: constants.e
+    f: C.f
+    g: constants.g
 
 -- example.yaml --
 ---
@@ -26,13 +45,21 @@ apiVersion: api.cerbos.dev/v1
 principalPolicy:
   principal: example
   version: default
+  constants:
+    import:
+      - one
+      - two
+    local:
+      h: 8
+      i: 9
+      z: 0
   variables:
     import:
       - one
       - two
     local:
-      h: "8"
-      i: "9"
+      h: C.h
+      i: constants.i
       abce: variables.abc + variables.e
   rules:
     - resource: one
@@ -41,7 +68,7 @@ principalPolicy:
           action: "*"
           condition:
             match:
-              expr: V.abce > 0
+              expr: V.abce > C.z
           output:
             when:
               ruleActivated: |-
@@ -53,7 +80,7 @@ principalPolicy:
           action: "*"
           condition:
             match:
-              expr: variables.h > 0
+              expr: variables.h > constants.z
 
 -- example.alpha.yaml --
 ---
@@ -62,12 +89,19 @@ principalPolicy:
   principal: example
   version: default
   scope: alpha
+  constants:
+    import:
+      - one
+    local:
+      j: 10
+      k: 11
+      z: 0
   variables:
     import:
       - one
     local:
-      j: "10"
-      k: "11"
+      j: constants.j
+      k: C.k
   rules:
     - resource: one
       actions:
@@ -75,4 +109,4 @@ principalPolicy:
           action: "*"
           condition:
             match:
-              expr: V.ab < V.j
+              expr: V.ab < V.j && V.ab > C.z

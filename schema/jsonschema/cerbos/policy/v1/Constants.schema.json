@@ -1,0 +1,28 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/Constants.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "import": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
+      },
+      "uniqueItems": true
+    },
+    "local": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/google.protobuf.Value"
+      }
+    }
+  }
+}

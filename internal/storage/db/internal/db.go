@@ -332,7 +332,7 @@ func (s *dbStorage) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*pol
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	// Rather than writing a proper recursive query (which is pretty much impossible to do in a database-agnostic way), we're
-	// exploiting the fact that we have a maximum of two levels of dependency (resourcePolicy -> derivedRoles -> exportVariables).
+	// exploiting the fact that we have a maximum of two levels of dependency (resourcePolicy -> derivedRoles -> exportConstants/Variables).
 
 	policiesQuery := s.newGetCompilationUnitsQueryBuilder(ids)
 	directDepsQuery := policiesQuery.JoinDependencies()
@@ -885,12 +885,16 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 		switch r.Kind {
 		case policy.DerivedRolesKindStr:
 			stats.PolicyCount[policy.DerivedRolesKind] = r.Count
+		case policy.ExportConstantsKindStr:
+			stats.PolicyCount[policy.ExportConstantsKind] = r.Count
 		case policy.ExportVariablesKindStr:
 			stats.PolicyCount[policy.ExportVariablesKind] = r.Count
 		case policy.PrincipalKindStr:
 			stats.PolicyCount[policy.PrincipalKind] = r.Count
 		case policy.ResourceKindStr:
 			stats.PolicyCount[policy.ResourceKind] = r.Count
+		case policy.RolePolicyKindStr:
+			stats.PolicyCount[policy.RolePolicyKind] = r.Count
 		}
 	}
 

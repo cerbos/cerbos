@@ -4,6 +4,9 @@ apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: default
   resource: variables_referencing_variables
+  constants:
+    local:
+      ok: true
   variables:
     local:
       a: V.b
@@ -31,7 +34,7 @@ resourcePolicy:
       w: V.x
       x: V.y
       "y": V.z
-      z: "true"
+      z: C.ok
   rules:
     - actions:
         - test

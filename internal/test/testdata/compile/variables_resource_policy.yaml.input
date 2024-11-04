@@ -1,13 +1,31 @@
+-- constants_one.yaml --
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: one
+  definitions:
+    a: 1
+    b: 2
+    c: 3
+    d: 4
+
+-- constants_two.yaml --
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: two
+  definitions:
+    e: 5
+    f: 6
+
 -- variables_one.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
 exportVariables:
   name: one
   definitions:
-    a: "1"
-    b: "2"
-    c: "3"
-    d: "4"
+    a: constants.a
+    b: C.b
+    c: constants.c
+    d: C.d
     ab: V.a + V.b
     abc: variables.ab + variables.c
     abcd: V.abc + V.d
@@ -18,22 +36,31 @@ apiVersion: api.cerbos.dev/v1
 exportVariables:
   name: two
   definitions:
-    e: "5"
-    f: "6"
+    e: constants.e
+    f: C.f
 
 -- derived_roles_one.yaml --
 ---
 apiVersion: api.cerbos.dev/v1
 derivedRoles:
   name: one
+  constants:
+    import:
+      - one
+      - two
+    local:
+      g: 7
+      h: 8
+      i: 9
+      z: 0
   variables:
     import:
       - one
       - two
     local:
-      g: "7"
-      h: "8"
-      i: "9"
+      g: C.g
+      h: constants.h
+      i: C.i
       abg: variables.ab + variables.g
       hi: V.h + V.i
   definitions:
@@ -48,7 +75,7 @@ derivedRoles:
               - any:
                   of:
                     - expr: variables.c < variables.h
-                    - expr: V.e > 0
+                    - expr: V.e > C.z
     - name: B
       parentRoles:
         - user
@@ -64,13 +91,20 @@ derivedRoles:
 apiVersion: api.cerbos.dev/v1
 derivedRoles:
   name: two
+  constants:
+    import:
+      - one
+      - two
+    local:
+      j: 10
+      k: 11
   variables:
     import:
       - one
       - two
     local:
-      j: "10"
-      k: "11"
+      j: constants.j
+      k: C.k
   definitions:
     - name: C
       parentRoles:
@@ -88,12 +122,19 @@ resourcePolicy:
   importDerivedRoles:
     - one
     - two
+  constants:
+    import:
+      - one
+    local:
+      l: 12
+      m: 13
+      z: 0
   variables:
     import:
       - one
     local:
-      l: "12"
-      m: "13"
+      l: constants.l
+      m: C.m
       abcl: variables.abc + variables.l
   rules:
     - effect: EFFECT_ALLOW
@@ -103,7 +144,7 @@ resourcePolicy:
         - "*"
       condition:
         match:
-          expr: variables.m > 0
+          expr: variables.m > constants.z
       output:
         when:
           ruleActivated: V.abcl
@@ -126,13 +167,20 @@ resourcePolicy:
   importDerivedRoles:
     - one
     - two
+  constants:
+    import:
+      - one
+      - two
+    local:
+      "n": 14
+      o: 15
   variables:
     import:
       - one
       - two
     local:
-      "n": "14"
-      o: "15"
+      "n": constants.n
+      o: C.o
   rules:
     - effect: EFFECT_ALLOW
       actions:

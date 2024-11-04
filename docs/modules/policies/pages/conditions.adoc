@@ -31,7 +31,8 @@ Within a condition expression, you have access to several top-level identifiers:
 
 `request`:: Data provided in the check or plan request (principal, resource, and auxiliary data).
 `runtime`:: Additional data computed while evaluating the policy.
-`variables`:: Variables declared in the xref:variables.adoc[`variables` section of the policy].
+`variables`:: Variables declared in the xref:variables.adoc#variables[`variables` section of the policy].
+`constants`:: Variables declared in the xref:variables.adoc#constants[`constants` section of the policy].
 `globals`:: Global variables declared in the xref:configuration:engine.adoc#globals[policy engine configuration].
 
 There are also single-letter aliases available to allow you to write terser expressions:
@@ -39,6 +40,7 @@ There are also single-letter aliases available to allow you to write terser expr
 `P`:: `request.principal`
 `R`:: `request.resource`
 `V`:: `variables`
+`C`:: `constants`
 `G`:: `globals`
 
 .The `request` object
@@ -185,7 +187,7 @@ expr: ("GB" in R.attr.geographies)
 
 == Policy variables
 
-To avoid duplication in condition expressions, you can define xref:variables.adoc[variables in policies].
+To avoid duplication in condition expressions, you can define xref:variables.adoc[variables and constants in policies].
 
 
 [id="auxdata"]

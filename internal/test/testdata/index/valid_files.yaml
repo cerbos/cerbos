@@ -158,6 +158,14 @@ files:
             - action: "*"
               effect: EFFECT_ALLOW
 
+  "constants.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    exportConstants:
+      name: my_constants
+      definitions:
+        answer: 42
+
   "variables.yaml": |-
     ---
     apiVersion: api.cerbos.dev/v1
@@ -172,6 +180,9 @@ files:
     resourcePolicy:
       resource: import_variables
       version: "20210210"
+      constants:
+        import:
+          - my_constants
       variables:
         import:
           - my_variables
@@ -188,6 +199,9 @@ files:
     principalPolicy:
       principal: import_variables
       version: "20210210"
+      constants:
+        import:
+          - my_constants
       variables:
         import:
           - my_variables
@@ -202,6 +216,9 @@ files:
     apiVersion: api.cerbos.dev/v1
     derivedRoles:
       name: import_variables
+      constants:
+        import:
+          - my_constants
       variables:
         import:
           - my_variables
@@ -309,17 +326,20 @@ wantCompilationUnits:
   - mainFqn: cerbos.resource.import_variables.v20210210
     definitionFqns:
       - cerbos.resource.import_variables.v20210210
+      - cerbos.export_constants.my_constants
       - cerbos.export_variables.my_variables
 
   - mainFqn: cerbos.principal.import_variables.v20210210
     definitionFqns:
       - cerbos.principal.import_variables.v20210210
+      - cerbos.export_constants.my_constants
       - cerbos.export_variables.my_variables
 
   - mainFqn: cerbos.resource.import_derived_roles_that_import_variables.v20210210
     definitionFqns:
       - cerbos.resource.import_derived_roles_that_import_variables.v20210210
       - cerbos.derived_roles.import_variables
+      - cerbos.export_constants.my_constants
       - cerbos.export_variables.my_variables
 
   - mainFqn: cerbos.role.acme_admin/acme.hr.uk

@@ -462,6 +462,25 @@ func cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m *RunnableDerivedRole, ha
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableDerivedRole.constants"]; !ok {
+		if len(m.Constants) > 0 {
+			keys := make([]string, len(m.Constants))
+			i := 0
+			for k := range m.Constants {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Constants[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnableDerivedRolesSet_Metadata_hashpb_sum(m *RunnableDerivedRolesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
@@ -712,6 +731,25 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m *RunnableP
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.constants"]; !ok {
+		if len(m.Constants) > 0 {
+			keys := make([]string, len(m.Constants))
+			i := 0
+			for k := range m.Constants {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Constants[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_hashpb_sum(m *RunnablePrincipalPolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -942,6 +980,25 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableRe
 	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope_permissions"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
 
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.constants"]; !ok {
+		if len(m.Constants) > 0 {
+			keys := make([]string, len(m.Constants))
+			i := 0
+			for k := range m.Constants {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Constants[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

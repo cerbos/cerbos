@@ -37,6 +37,7 @@ func TestREPL(t *testing.T) {
 	rpPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_01.yaml")
 	ppPath := filepath.Join(test.PathToDir(t, "store"), "principal_policies", "policy_01.yaml")
 	rpImportVariablesPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_09.yaml")
+	ecPath := filepath.Join(test.PathToDir(t, "store"), "export_constants", "export_constants_01.yaml")
 	evPath := filepath.Join(test.PathToDir(t, "store"), "export_variables", "export_variables_01.yaml")
 	drConds := loadConditionsFromPolicy(t, drPath)
 	rpConds := loadConditionsFromPolicy(t, rpPath)
@@ -253,6 +254,29 @@ func TestREPL(t *testing.T) {
 			},
 		},
 		{
+			name: "set_constants_variable",
+			directives: []DirectiveTest{
+				{
+					Directive: `:let C = {"foo":42}`,
+					Check: func(t *testing.T, m *mockOutput) {
+						t.Helper()
+						require.Equal(t, "C", m.resultName)
+
+						want := map[string]any{"foo": float64(42)}
+						require.Equal(t, want, m.resultVal.Value())
+					},
+				},
+				{
+					Directive: `constants.foo`,
+					Check: func(t *testing.T, m *mockOutput) {
+						t.Helper()
+						require.Equal(t, lastResultVar, m.resultName)
+						require.Equal(t, float64(42), m.resultVal.Value())
+					},
+				},
+			},
+		},
+		{
 			name: "set_variables_variable",
 			directives: []DirectiveTest{
 				{
@@ -389,6 +413,9 @@ func TestREPL(t *testing.T) {
 					WantErr:   true,
 				},
 				{
+					Directive: fmt.Sprintf(":load %s", ecPath),
+				},
+				{
 					Directive: fmt.Sprintf(":load %s", evPath),
 				},
 				{
@@ -399,7 +426,7 @@ func TestREPL(t *testing.T) {
 					Check: func(t *testing.T, output *mockOutput) {
 						t.Helper()
 						require.Equal(t, lastResultVar, output.resultName)
-						require.Equal(t, toRefVal(42), output.resultVal)
+						require.Equal(t, toRefVal(float64(42)), output.resultVal)
 					},
 				},
 			},
@@ -593,11 +620,13 @@ func TestComplete(t *testing.T) {
 		{
 			":let ",
 			[]string{
+				":let C",
 				":let G",
 				":let P",
 				":let R",
 				":let V",
 				":let _",
+				":let constants",
 				":let globals",
 				":let request",
 				":let runtime",

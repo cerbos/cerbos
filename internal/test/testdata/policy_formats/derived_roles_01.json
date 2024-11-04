@@ -3,6 +3,11 @@
   "apiVersion": "api.cerbos.dev/v1",
   "derivedRoles": {
     "name": "my_derived_roles",
+    "constants": {
+      "local": {
+        "answer": 42
+      }
+    },
     "variables": {
       "local": {
         "geography": "request.resource.attr.geography"

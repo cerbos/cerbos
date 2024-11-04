@@ -6,6 +6,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "constants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "derivedRoles": {
           "type": "array",
           "items": {
@@ -27,6 +33,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "constants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "name": {
           "type": "string"
         },

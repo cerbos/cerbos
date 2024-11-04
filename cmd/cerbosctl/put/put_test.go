@@ -231,6 +231,8 @@ func policyKindToGet(kind policy.Kind) string {
 	switch kind {
 	case policy.DerivedRolesKind:
 		return "dr"
+	case policy.ExportConstantsKind:
+		return "ec"
 	case policy.ExportVariablesKind:
 		return "ev"
 	case policy.PrincipalKind:

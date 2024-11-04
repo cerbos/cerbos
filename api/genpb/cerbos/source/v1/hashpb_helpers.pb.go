@@ -30,6 +30,36 @@ func cerbos_policy_v1_Condition_hashpb_sum(m *v1.Condition, hasher hash.Hash, ig
 	}
 }
 
+func cerbos_policy_v1_Constants_hashpb_sum(m *v1.Constants, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Constants.import"]; !ok {
+		if len(m.Import) > 0 {
+			for _, v := range m.Import {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.Constants.local"]; !ok {
+		if len(m.Local) > 0 {
+			keys := make([]string, len(m.Local))
+			i := 0
+			for k := range m.Local {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Local[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Local[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_policy_v1_DerivedRoles_hashpb_sum(m *v1.DerivedRoles, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.DerivedRoles.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
@@ -50,6 +80,38 @@ func cerbos_policy_v1_DerivedRoles_hashpb_sum(m *v1.DerivedRoles, hasher hash.Ha
 			cerbos_policy_v1_Variables_hashpb_sum(m.GetVariables(), hasher, ignore)
 		}
 
+	}
+	if _, ok := ignore["cerbos.policy.v1.DerivedRoles.constants"]; !ok {
+		if m.GetConstants() != nil {
+			cerbos_policy_v1_Constants_hashpb_sum(m.GetConstants(), hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_ExportConstants_hashpb_sum(m *v1.ExportConstants, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.ExportConstants.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.ExportConstants.definitions"]; !ok {
+		if len(m.Definitions) > 0 {
+			keys := make([]string, len(m.Definitions))
+			i := 0
+			for k := range m.Definitions {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Definitions[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Definitions[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
@@ -232,6 +294,11 @@ func cerbos_policy_v1_Policy_hashpb_sum(m *v1.Policy, hasher hash.Hash, ignore m
 					cerbos_policy_v1_RolePolicy_hashpb_sum(t.RolePolicy, hasher, ignore)
 				}
 
+			case *v1.Policy_ExportConstants:
+				if t.ExportConstants != nil {
+					cerbos_policy_v1_ExportConstants_hashpb_sum(t.ExportConstants, hasher, ignore)
+				}
+
 			}
 		}
 	}
@@ -289,6 +356,12 @@ func cerbos_policy_v1_PrincipalPolicy_hashpb_sum(m *v1.PrincipalPolicy, hasher h
 	}
 	if _, ok := ignore["cerbos.policy.v1.PrincipalPolicy.scope_permissions"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.PrincipalPolicy.constants"]; !ok {
+		if m.GetConstants() != nil {
+			cerbos_policy_v1_Constants_hashpb_sum(m.GetConstants(), hasher, ignore)
+		}
 
 	}
 }
@@ -382,6 +455,12 @@ func cerbos_policy_v1_ResourcePolicy_hashpb_sum(m *v1.ResourcePolicy, hasher has
 	}
 	if _, ok := ignore["cerbos.policy.v1.ResourcePolicy.scope_permissions"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.ResourcePolicy.constants"]; !ok {
+		if m.GetConstants() != nil {
+			cerbos_policy_v1_Constants_hashpb_sum(m.GetConstants(), hasher, ignore)
+		}
 
 	}
 }

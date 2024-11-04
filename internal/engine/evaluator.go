@@ -258,14 +258,16 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 							continue
 						}
 
+						drConstants := constantValues(dr.Constants)
+
 						// evaluate variables of this derived roles set
-						drVariables, err := evalCtx.evaluateVariables(dctx.StartVariables(), dr.OrderedVariables)
+						drVariables, err := evalCtx.evaluateVariables(dctx.StartVariables(), drConstants, dr.OrderedVariables)
 						if err != nil {
 							dctx.Skipped(err, "Error evaluating variables")
 							continue
 						}
 
-						ok, err := evalCtx.satisfiesCondition(dctx.StartCondition(), dr.Condition, drVariables)
+						ok, err := evalCtx.satisfiesCondition(dctx.StartCondition(), dr.Condition, drConstants, drVariables)
 						if err != nil {
 							dctx.Skipped(err, "Error evaluating condition")
 							continue
@@ -285,9 +287,11 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 				evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
 
+				constants := constantValues(p.Constants)
+
 				// evaluate the variables of this policy
 				variables, err := tracing.RecordSpan2(ctx, "evaluate_variables", func(_ context.Context, _ trace.Span) (map[string]any, error) {
-					return evalCtx.evaluateVariables(sctx.StartVariables(), p.OrderedVariables)
+					return evalCtx.evaluateVariables(sctx.StartVariables(), constants, p.OrderedVariables)
 				})
 				if err != nil {
 					sctx.Failed(err, "Failed to evaluate variables")
@@ -311,7 +315,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 							//nolint:dupl
 							for _, action := range matchedActions {
 								actx := rctx.StartAction(action)
-								ok, err := evalCtx.satisfiesCondition(actx.StartCondition(), rule.Condition, variables)
+								ok, err := evalCtx.satisfiesCondition(actx.StartCondition(), rule.Condition, constants, variables)
 								if err != nil {
 									actx.Skipped(err, "Error evaluating condition")
 									continue
@@ -323,7 +327,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 										octx := rctx.StartOutput(rule.Name)
 										output := &enginev1.OutputEntry{
 											Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-											Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.ConditionNotMet.Checked, variables),
+											Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
 										}
 										result.Outputs = append(result.Outputs, output)
 										octx.ComputedOutput(output)
@@ -362,7 +366,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 								octx := rctx.StartOutput(rule.Name)
 								output := &enginev1.OutputEntry{
 									Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-									Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, variables),
+									Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
 								}
 								result.Outputs = append(result.Outputs, output)
 								octx.ComputedOutput(output)
@@ -408,9 +412,12 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 			err := tracing.RecordSpan1(ctx, "evalute_policy", func(ctx context.Context, span trace.Span) error {
 				span.SetAttributes(tracing.PolicyScope(p.Scope))
 				sctx := pctx.StartScope(p.Scope)
+
+				constants := constantValues(p.Constants)
+
 				// evaluate the variables of this policy
 				variables, err := tracing.RecordSpan2(ctx, "evaluate_variables", func(_ context.Context, _ trace.Span) (map[string]any, error) {
-					return evalCtx.evaluateVariables(sctx.StartVariables(), p.OrderedVariables)
+					return evalCtx.evaluateVariables(sctx.StartVariables(), constants, p.OrderedVariables)
 				})
 				if err != nil {
 					sctx.Failed(err, "Failed to evaluate variables")
@@ -432,7 +439,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 							//nolint:dupl
 							for _, action := range matchedActions {
 								actx := rctx.StartAction(action)
-								ok, err := evalCtx.satisfiesCondition(actx.StartCondition(), rule.Condition, variables)
+								ok, err := evalCtx.satisfiesCondition(actx.StartCondition(), rule.Condition, constants, variables)
 								if err != nil {
 									actx.Skipped(err, "Error evaluating condition")
 									continue
@@ -444,7 +451,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 										octx := rctx.StartOutput(rule.Name)
 										output := &enginev1.OutputEntry{
 											Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-											Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.ConditionNotMet.Checked, variables),
+											Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
 										}
 										result.Outputs = append(result.Outputs, output)
 										octx.ComputedOutput(output)
@@ -475,7 +482,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 									octx := rctx.StartOutput(rule.Name)
 									result.Outputs = append(result.Outputs, &enginev1.OutputEntry{
 										Src: namer.RuleFQN(ppe.policy.Meta, p.Scope, rule.Name),
-										Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, variables),
+										Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
 									})
 									octx.ComputedOutput(output)
 								}
@@ -495,12 +502,12 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 	})
 }
 
-func (ec *evalContext) evaluateVariables(tctx tracer.Context, variables []*runtimev1.Variable) (map[string]any, error) {
+func (ec *evalContext) evaluateVariables(tctx tracer.Context, constants map[string]any, variables []*runtimev1.Variable) (map[string]any, error) {
 	var errs error
 	evalVars := make(map[string]any, len(variables))
 	for _, variable := range variables {
 		vctx := tctx.StartVariable(variable.Name, variable.Expr.Original)
-		val, err := ec.evaluateCELExprToRaw(variable.Expr.Checked, evalVars)
+		val, err := ec.evaluateCELExprToRaw(variable.Expr.Checked, constants, evalVars)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err))
@@ -514,7 +521,7 @@ func (ec *evalContext) evaluateVariables(tctx tracer.Context, variables []*runti
 	return evalVars, errs
 }
 
-func (ec *evalContext) satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variables map[string]any) (bool, error) {
+func (ec *evalContext) satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, constants, variables map[string]any) (bool, error) {
 	if cond == nil {
 		tctx.ComputedBoolResult(true, nil, "")
 		return true, nil
@@ -523,7 +530,7 @@ func (ec *evalContext) satisfiesCondition(tctx tracer.Context, cond *runtimev1.C
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
 		ectx := tctx.StartExpr(t.Expr.Original)
-		val, err := ec.evaluateBoolCELExpr(t.Expr.Checked, variables)
+		val, err := ec.evaluateBoolCELExpr(t.Expr.Checked, constants, variables)
 		if err != nil {
 			ectx.ComputedBoolResult(false, err, "Failed to evaluate expression")
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
@@ -535,7 +542,7 @@ func (ec *evalContext) satisfiesCondition(tctx tracer.Context, cond *runtimev1.C
 	case *runtimev1.Condition_All:
 		actx := tctx.StartConditionAll()
 		for i, expr := range t.All.Expr {
-			val, err := ec.satisfiesCondition(actx.StartNthCondition(i), expr, variables)
+			val, err := ec.satisfiesCondition(actx.StartNthCondition(i), expr, constants, variables)
 			if err != nil {
 				actx.ComputedBoolResult(false, err, "Short-circuited")
 				return false, err
@@ -553,7 +560,7 @@ func (ec *evalContext) satisfiesCondition(tctx tracer.Context, cond *runtimev1.C
 	case *runtimev1.Condition_Any:
 		actx := tctx.StartConditionAny()
 		for i, expr := range t.Any.Expr {
-			val, err := ec.satisfiesCondition(actx.StartNthCondition(i), expr, variables)
+			val, err := ec.satisfiesCondition(actx.StartNthCondition(i), expr, constants, variables)
 			if err != nil {
 				actx.ComputedBoolResult(false, err, "Short-circuited")
 				return false, err
@@ -571,7 +578,7 @@ func (ec *evalContext) satisfiesCondition(tctx tracer.Context, cond *runtimev1.C
 	case *runtimev1.Condition_None:
 		actx := tctx.StartConditionNone()
 		for i, expr := range t.None.Expr {
-			val, err := ec.satisfiesCondition(actx.StartNthCondition(i), expr, variables)
+			val, err := ec.satisfiesCondition(actx.StartNthCondition(i), expr, constants, variables)
 			if err != nil {
 				actx.ComputedBoolResult(false, err, "Short-circuited")
 				return false, err
@@ -593,8 +600,8 @@ func (ec *evalContext) satisfiesCondition(tctx tracer.Context, cond *runtimev1.C
 	}
 }
 
-func (ec *evalContext) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]any) (bool, error) {
-	val, err := ec.evaluateCELExprToRaw(expr, variables)
+func (ec *evalContext) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, constants, variables map[string]any) (bool, error) {
+	val, err := ec.evaluateCELExprToRaw(expr, constants, variables)
 	if err != nil {
 		return false, err
 	}
@@ -611,8 +618,8 @@ func (ec *evalContext) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables m
 	return boolVal, nil
 }
 
-func (ec *evalContext) evaluateProtobufValueCELExpr(expr *exprpb.CheckedExpr, variables map[string]any) *structpb.Value {
-	result, err := ec.evaluateCELExpr(expr, variables)
+func (ec *evalContext) evaluateProtobufValueCELExpr(expr *exprpb.CheckedExpr, constants, variables map[string]any) *structpb.Value {
+	result, err := ec.evaluateCELExpr(expr, constants, variables)
 	if err != nil {
 		return structpb.NewStringValue("<failed to evaluate expression>")
 	}
@@ -635,7 +642,7 @@ func (ec *evalContext) evaluateProtobufValueCELExpr(expr *exprpb.CheckedExpr, va
 	return pbVal
 }
 
-func (ec *evalContext) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any) (ref.Val, error) {
+func (ec *evalContext) evaluateCELExpr(expr *exprpb.CheckedExpr, constants, variables map[string]any) (ref.Val, error) {
 	if expr == nil {
 		return nil, nil
 	}
@@ -645,6 +652,8 @@ func (ec *evalContext) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[s
 		conditions.CELResourceAbbrev:  ec.request.Resource,
 		conditions.CELPrincipalAbbrev: ec.request.Principal,
 		conditions.CELRuntimeIdent:    ec.lazyRuntime,
+		conditions.CELConstantsIdent:  constants,
+		conditions.CELConstantsAbbrev: constants,
 		conditions.CELVariablesIdent:  variables,
 		conditions.CELVariablesAbbrev: variables,
 		conditions.CELGlobalsIdent:    ec.globals,
@@ -662,8 +671,8 @@ func (ec *evalContext) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[s
 	return result, nil
 }
 
-func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, variables map[string]any) (any, error) {
-	result, err := ec.evaluateCELExpr(expr, variables)
+func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, constants, variables map[string]any) (any, error) {
+	result, err := ec.evaluateCELExpr(expr, constants, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -773,4 +782,8 @@ func checkInputToRequest(input *enginev1.CheckInput) *enginev1.Request {
 
 func newAuditTrail(srcAttr map[string]*policyv1.SourceAttributes) *auditv1.AuditTrail {
 	return &auditv1.AuditTrail{EffectivePolicies: maps.Clone(srcAttr)}
+}
+
+func constantValues(constants map[string]*structpb.Value) map[string]any {
+	return (&structpb.Struct{Fields: constants}).AsMap()
 }

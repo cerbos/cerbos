@@ -26,6 +26,11 @@ func TestFQN(t *testing.T) {
 			want:   "cerbos.derived_roles.my_derived_roles",
 		},
 		{
+			name:   "export constants",
+			policy: func() *policyv1.Policy { return test.GenExportConstants(test.NoMod()) },
+			want:   "cerbos.export_constants.my_constants",
+		},
+		{
 			name:   "export variables",
 			policy: func() *policyv1.Policy { return test.GenExportVariables(test.NoMod()) },
 			want:   "cerbos.export_variables.my_variables",
@@ -78,6 +83,11 @@ func TestFQNTree(t *testing.T) {
 			name:   "derived roles",
 			policy: func() *policyv1.Policy { return test.GenDerivedRoles(test.NoMod()) },
 			want:   []string{"cerbos.derived_roles.my_derived_roles"},
+		},
+		{
+			name:   "export constants",
+			policy: func() *policyv1.Policy { return test.GenExportConstants(test.NoMod()) },
+			want:   []string{"cerbos.export_constants.my_constants"},
 		},
 		{
 			name:   "export variables",

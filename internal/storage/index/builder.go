@@ -272,7 +272,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	case policy.ResourceKind, policy.PrincipalKind:
 		idx.executables[p.ID] = struct{}{}
 
-	case policy.DerivedRolesKind, policy.ExportVariablesKind:
+	case policy.DerivedRolesKind, policy.ExportConstantsKind, policy.ExportVariablesKind:
 		// not executable
 	}
 
@@ -290,6 +290,8 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 			switch kind {
 			case policy.DerivedRolesKind:
 				kindStr = "derived roles"
+			case policy.ExportConstantsKind:
+				kindStr = "constants"
 			case policy.ExportVariablesKind:
 				kindStr = "variables"
 			default:

@@ -2,17 +2,23 @@
 ---
 wantVariables:
   - scope: ""
+    constants: [a, b, c, l, m, z]
     variables: [a, b, c, l, m, ab, abc, abcl]
     derivedRoles:
       - name: A
+        constants: [a, b, c, e, g, h, z]
         variables: [a, b, c, e, h, g, ab, abg]
       - name: B
+        constants: [b, c, f, h, i]
         variables: [b, c, f, h, i, hi]
       - name: C
+        constants: [a, d, e, j]
         variables: [a, d, e, j]
   - scope: alpha
+    constants: [a, b, "n"]
     variables: [a, b, "n", ab]
     derivedRoles:
       - name: B
+        constants: [b, c, f, h, i]
         variables: [b, c, f, h, i, hi]
 mainDef: example.alpha.yaml

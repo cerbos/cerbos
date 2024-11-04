@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
+---
+wantErrList:
+  loadFailures:
+    - error: export constants policies do not support the deprecated top-level variables field
+      file: export_constants.yaml
+      errorDetails:
+        message: export constants policies do not support the deprecated top-level variables field
+        position:
+          line: 2
+          column: 1
+          path: $.variables
+
+files:
+  export_constants.yaml: |-
+    apiVersion: api.cerbos.dev/v1
+    variables:
+      foo: "42"
+    exportConstants:
+      name: example
+      definitions:
+        why: would you even do this

@@ -285,6 +285,9 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					case policy.DerivedRolesKind:
 						ctx, err = p.Parse([]string{"get", "dr", tc.name, "-ojson"})
 						require.NoError(t, err)
+					case policy.ExportConstantsKind:
+						ctx, err = p.Parse([]string{"get", "ec", tc.name, "-ojson"})
+						require.NoError(t, err)
 					case policy.ExportVariablesKind:
 						ctx, err = p.Parse([]string{"get", "ev", tc.name, "-ojson"})
 						require.NoError(t, err)

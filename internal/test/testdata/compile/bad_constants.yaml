@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+wantErrors:
+  - file: resource_policies/example.yaml
+    error: undefined constant
+    description: |-
+      Undefined constant 'z'
+    position:
+      line: 18
+      column: 11
+      path: "$.resourcePolicy.rules[0].condition.match.expr"
+  - file: resource_policies/example.yaml
+    error: undefined constant
+    description: |-
+      Undefined constant 'y' referenced in variable 'a'
+    position:
+      line: 8
+      column: 10
+      path: "$.resourcePolicy.variables.local.a"
+  - file: resource_policies/example.yaml
+    error: undefined constant
+    description: |-
+      Undefined constant 'x' referenced in variable 'a'
+    position:
+      line: 8
+      column: 10
+      path: "$.resourcePolicy.variables.local.a"
+mainDef: resource_policies/example.yaml

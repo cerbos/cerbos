@@ -83,7 +83,7 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 			case policy.RolePolicyKind:
 				row = append(row, p.Scope)
 
-			case policy.DerivedRolesKind, policy.ExportVariablesKind:
+			case policy.DerivedRolesKind, policy.ExportConstantsKind, policy.ExportVariablesKind:
 				// no version or scope
 			}
 

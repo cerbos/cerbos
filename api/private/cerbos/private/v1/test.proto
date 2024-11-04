@@ -192,11 +192,13 @@ message CompileTestCase {
     message DerivedRole {
       string name = 1;
       repeated string variables = 2;
+      repeated string constants = 3;
     }
 
     string scope = 1;
     repeated string variables = 2;
     repeated DerivedRole derived_roles = 3;
+    repeated string constants = 4;
   }
 
   string main_def = 1;

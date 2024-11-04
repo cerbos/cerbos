@@ -1,0 +1,40 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/InspectPoliciesResponse/Constant.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.response.v1.InspectPoliciesResponse.Constant.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_EXPORTED",
+        "KIND_IMPORTED",
+        "KIND_LOCAL",
+        "KIND_UNDEFINED",
+        "KIND_UNKNOWN"
+      ]
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Constant.Kind"
+    },
+    "name": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "used": {
+      "type": "boolean"
+    },
+    "value": {
+      "$ref": "#/definitions/google.protobuf.Value"
+    }
+  }
+}

@@ -4,6 +4,9 @@
   "principalPolicy": {
     "principal": "donald_duck",
     "version": "default",
+    "constants": {
+      "import": ["my_constants"]
+    },
     "variables": {
       "import": ["my_variables"]
     },

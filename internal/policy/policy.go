@@ -28,6 +28,7 @@ type Kind policyv1.Kind
 
 const (
 	DerivedRolesKind    Kind = Kind(policyv1.Kind_KIND_DERIVED_ROLES)
+	ExportConstantsKind Kind = Kind(policyv1.Kind_KIND_EXPORT_CONSTANTS)
 	ExportVariablesKind Kind = Kind(policyv1.Kind_KIND_EXPORT_VARIABLES)
 	PrincipalKind       Kind = Kind(policyv1.Kind_KIND_PRINCIPAL)
 	ResourceKind        Kind = Kind(policyv1.Kind_KIND_RESOURCE)
@@ -38,6 +39,7 @@ const (
 	ResourceKindStr        = "RESOURCE"
 	PrincipalKindStr       = "PRINCIPAL"
 	DerivedRolesKindStr    = "DERIVED_ROLES"
+	ExportConstantsKindStr = "EXPORT_CONSTANTS"
 	ExportVariablesKindStr = "EXPORT_VARIABLES"
 	RolePolicyKindStr      = "ROLE"
 )
@@ -57,6 +59,8 @@ func (k Kind) String() string {
 		return PrincipalKindStr
 	case DerivedRolesKind:
 		return DerivedRolesKindStr
+	case ExportConstantsKind:
+		return ExportConstantsKindStr
 	case ExportVariablesKind:
 		return ExportVariablesKindStr
 	case RolePolicyKind:
@@ -75,6 +79,8 @@ func GetKind(p *policyv1.Policy) Kind {
 		return PrincipalKind
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesKind
+	case *policyv1.Policy_ExportConstants:
+		return ExportConstantsKind
 	case *policyv1.Policy_ExportVariables:
 		return ExportVariablesKind
 	case *policyv1.Policy_RolePolicy:
@@ -93,6 +99,8 @@ func KindFromFQN(fqn string) Kind {
 		return PrincipalKind
 	case strings.HasPrefix(fqn, namer.DerivedRolesPrefix):
 		return DerivedRolesKind
+	case strings.HasPrefix(fqn, namer.ExportConstantsPrefix):
+		return ExportConstantsKind
 	case strings.HasPrefix(fqn, namer.ExportVariablesPrefix):
 		return ExportVariablesKind
 	case strings.HasPrefix(fqn, namer.RolePoliciesPrefix):
@@ -105,35 +113,48 @@ func KindFromFQN(fqn string) Kind {
 // Dependencies returns the module names of dependencies of the policy.
 func Dependencies(p *policyv1.Policy) ([]string, []string) {
 	var importDerivedRoles []string
+	var importConstants []string
+	var importConstantsProtoPath string
 	var importVariables []string
 	var importVariablesProtoPath string
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		importDerivedRoles = pt.ResourcePolicy.ImportDerivedRoles
+		importConstants = pt.ResourcePolicy.Constants.GetImport()
+		importConstantsProtoPath = "resource_policy.constants.import"
 		importVariables = pt.ResourcePolicy.Variables.GetImport()
 		importVariablesProtoPath = "resource_policy.variables.import"
 
 	case *policyv1.Policy_PrincipalPolicy:
+		importConstants = pt.PrincipalPolicy.Constants.GetImport()
+		importConstantsProtoPath = "principal_policy.constants.import"
 		importVariables = pt.PrincipalPolicy.Variables.GetImport()
 		importVariablesProtoPath = "principal_policy.variables.import"
 
 	case *policyv1.Policy_DerivedRoles:
+		importConstants = pt.DerivedRoles.Constants.GetImport()
+		importConstantsProtoPath = "derived_roles.constants.import"
 		importVariables = pt.DerivedRoles.Variables.GetImport()
 		importVariablesProtoPath = "derived_roles.variables.import"
 
-	case *policyv1.Policy_RolePolicy, *policyv1.Policy_ExportVariables:
+	case *policyv1.Policy_RolePolicy, *policyv1.Policy_ExportConstants, *policyv1.Policy_ExportVariables:
 
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
 
-	dependencies := make([]string, 0, len(importDerivedRoles)+len(importVariables))
+	dependencies := make([]string, 0, len(importDerivedRoles)+len(importConstants)+len(importVariables))
 	paths := make([]string, 0, len(dependencies))
 
 	for i, dr := range importDerivedRoles {
 		dependencies = append(dependencies, namer.DerivedRolesFQN(dr))
 		paths = append(paths, fmt.Sprintf("resource_policy.import_derived_roles[%d]", i))
+	}
+
+	for i, c := range importConstants {
+		dependencies = append(dependencies, namer.ExportConstantsFQN(c))
+		paths = append(paths, fmt.Sprintf("%s[%d]", importConstantsProtoPath, i))
 	}
 
 	for i, v := range importVariables {
@@ -427,8 +448,70 @@ func ListExportedDerivedRoles(drp *policyv1.DerivedRoles) []*responsev1.InspectP
 	return derivedRoles
 }
 
+// ListConstants returns local and exported constants (not imported ones) defined in a policy.
+func ListConstants(p *policyv1.Policy) map[string]*responsev1.InspectPoliciesResponse_Constant { //nolint:dupl
+	constants := make(map[string]*responsev1.InspectPoliciesResponse_Constant)
+	if p == nil {
+		return constants
+	}
+	policyKey := namer.PolicyKey(p)
+
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_DerivedRoles:
+		if pt.DerivedRoles.Constants == nil {
+			return constants
+		}
+
+		for name, value := range pt.DerivedRoles.Constants.Local {
+			constants[name] = &responsev1.InspectPoliciesResponse_Constant{
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_LOCAL,
+				Source: policyKey,
+			}
+		}
+	case *policyv1.Policy_ExportConstants:
+		for name, value := range pt.ExportConstants.Definitions {
+			constants[name] = &responsev1.InspectPoliciesResponse_Constant{
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_EXPORTED,
+				Source: policyKey,
+			}
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		if pt.PrincipalPolicy.Constants == nil {
+			return constants
+		}
+
+		for name, value := range pt.PrincipalPolicy.Constants.Local {
+			constants[name] = &responsev1.InspectPoliciesResponse_Constant{
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_LOCAL,
+				Source: policyKey,
+			}
+		}
+	case *policyv1.Policy_ResourcePolicy:
+		if pt.ResourcePolicy.Constants == nil {
+			return constants
+		}
+
+		for name, value := range pt.ResourcePolicy.Constants.Local {
+			constants[name] = &responsev1.InspectPoliciesResponse_Constant{
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_LOCAL,
+				Source: policyKey,
+			}
+		}
+	}
+
+	return constants
+}
+
 // ListVariables returns local and exported variables (not imported ones) defined in a policy.
-func ListVariables(p *policyv1.Policy) map[string]*responsev1.InspectPoliciesResponse_Variable {
+func ListVariables(p *policyv1.Policy) map[string]*responsev1.InspectPoliciesResponse_Variable { //nolint:dupl
 	variables := make(map[string]*responsev1.InspectPoliciesResponse_Variable)
 	if p == nil {
 		return variables
@@ -585,6 +668,47 @@ func ListPolicySetDerivedRoles(ps *runtimev1.RunnablePolicySet) []*responsev1.In
 	return derivedRoles
 }
 
+// ListPolicySetConstants returns local and exported variables defined in a policy set.
+func ListPolicySetConstants(ps *runtimev1.RunnablePolicySet) []*responsev1.InspectPoliciesResponse_Constant {
+	var constants []*responsev1.InspectPoliciesResponse_Constant
+	if ps == nil {
+		return constants
+	}
+
+	switch set := ps.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		for _, p := range set.PrincipalPolicy.Policies {
+			for name, value := range p.Constants {
+				constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
+					Name:  name,
+					Value: value,
+					Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+					Used:  true,
+				})
+			}
+		}
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		for _, p := range set.ResourcePolicy.Policies {
+			for name, value := range p.Constants {
+				constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
+					Name:  name,
+					Value: value,
+					Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+					Used:  true,
+				})
+			}
+		}
+	}
+
+	if len(constants) > 0 {
+		slices.SortFunc(constants, func(a, b *responsev1.InspectPoliciesResponse_Constant) int {
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
+	}
+
+	return constants
+}
+
 // ListPolicySetVariables returns local and exported variables defined in a policy set.
 func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.InspectPoliciesResponse_Variable {
 	var variables []*responsev1.InspectPoliciesResponse_Variable
@@ -660,6 +784,12 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.FQN = namer.DerivedRolesFQN(pt.DerivedRoles.Name)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.DerivedRoles.Name
+
+	case *policyv1.Policy_ExportConstants:
+		w.Kind = ExportConstantsKind
+		w.FQN = namer.ExportConstantsFQN(pt.ExportConstants.Name)
+		w.ID = namer.GenModuleIDFromFQN(w.FQN)
+		w.Name = pt.ExportConstants.Name
 
 	case *policyv1.Policy_ExportVariables:
 		w.Kind = ExportVariablesKind

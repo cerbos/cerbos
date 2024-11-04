@@ -3,6 +3,9 @@
 apiVersion: api.cerbos.dev/v1
 derivedRoles:
   name: import_variables
+  constants:
+    import:
+      - bazqux
   variables:
     import:
       - foobar

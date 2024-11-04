@@ -341,7 +341,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 }
 
 func (idx *index) addDep(child, parent namer.ModuleID) {
-	// When we compile a policy, we need to load the dependencies (imported variables and derived roles).
+	// When we compile a policy, we need to load the dependencies (imported constants, variables, and derived roles).
 	if _, ok := idx.dependencies[child]; !ok {
 		idx.dependencies[child] = make(map[namer.ModuleID]struct{})
 	}

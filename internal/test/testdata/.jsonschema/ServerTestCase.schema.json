@@ -330,6 +330,26 @@
         }
       ]
     },
+    "cerbos.policy.v1.Constants": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "import": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
+          },
+          "uniqueItems": true
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "cerbos.policy.v1.DerivedRoles": {
       "type": "object",
       "required": [
@@ -338,6 +358,9 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "constants": {
+          "$ref": "#/definitions/cerbos.policy.v1.Constants"
+        },
         "definitions": {
           "type": "array",
           "items": {
@@ -352,6 +375,26 @@
         },
         "variables": {
           "$ref": "#/definitions/cerbos.policy.v1.Variables"
+        }
+      }
+    },
+    "cerbos.policy.v1.ExportConstants": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "definitions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
         }
       }
     },
@@ -526,6 +569,9 @@
             "disabled": {
               "type": "boolean"
             },
+            "exportConstants": {
+              "$ref": "#/definitions/cerbos.policy.v1.ExportConstants"
+            },
             "exportVariables": {
               "$ref": "#/definitions/cerbos.policy.v1.ExportVariables"
             },
@@ -580,6 +626,12 @@
               "required": [
                 "rolePolicy"
               ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "exportConstants"
+              ]
             }
           ]
         }
@@ -593,6 +645,9 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "constants": {
+          "$ref": "#/definitions/cerbos.policy.v1.Constants"
+        },
         "principal": {
           "type": "string",
           "minLength": 1
@@ -679,6 +734,9 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "constants": {
+          "$ref": "#/definitions/cerbos.policy.v1.Constants"
+        },
         "importDerivedRoles": {
           "type": "array",
           "items": {

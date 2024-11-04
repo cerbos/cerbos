@@ -32,6 +32,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
 		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
@@ -44,6 +45,7 @@ func TestManager(t *testing.T) {
 					Definitions: map[namer.ModuleID]*policyv1.Policy{
 						rp.ID: rp.Policy,
 						dr.ID: dr.Policy,
+						ec.ID: ec.Policy,
 						ev.ID: ev.Policy,
 					},
 				},
@@ -114,6 +116,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
 		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
@@ -126,6 +129,7 @@ func TestManager(t *testing.T) {
 					Definitions: map[namer.ModuleID]*policyv1.Policy{
 						rp.ID: rp.Policy,
 						dr.ID: dr.Policy,
+						ec.ID: ec.Policy,
 						ev.ID: ev.Policy,
 					},
 				},
@@ -140,6 +144,7 @@ func TestManager(t *testing.T) {
 					Definitions: map[namer.ModuleID]*policyv1.Policy{
 						rp.ID: rp.Policy,
 						dr.ID: dr.Policy,
+						ec.ID: ec.Policy,
 						ev.ID: ev.Policy,
 					},
 				},
@@ -147,6 +152,7 @@ func TestManager(t *testing.T) {
 					ModID: dr.ID,
 					Definitions: map[namer.ModuleID]*policyv1.Policy{
 						dr.ID: dr.Policy,
+						ec.ID: ec.Policy,
 						ev.ID: ev.Policy,
 					},
 				},
@@ -180,6 +186,7 @@ func TestManager(t *testing.T) {
 		mgr, mockStore, cancel := mkManager()
 		defer cancel()
 
+		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
 		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
@@ -195,6 +202,7 @@ func TestManager(t *testing.T) {
 						Definitions: map[namer.ModuleID]*policyv1.Policy{
 							rp.ID: rp.Policy,
 							dr.ID: dr.Policy,
+							ec.ID: ec.Policy,
 							ev.ID: ev.Policy,
 						},
 					},
@@ -205,6 +213,7 @@ func TestManager(t *testing.T) {
 						ModID: rp.ID,
 						Definitions: map[namer.ModuleID]*policyv1.Policy{
 							rp.ID: rp.Policy,
+							ec.ID: ec.Policy,
 							ev.ID: ev.Policy,
 						},
 					},
@@ -249,6 +258,7 @@ func TestGetFirstMatch(t *testing.T) {
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		rpFoo := policy.Wrap(test.GenScopedResourcePolicy("foo", test.NoMod()))
 		rpFooBar := policy.Wrap(test.GenScopedResourcePolicy("foo.bar", test.NoMod()))
+		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
 		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -261,6 +271,7 @@ func TestGetFirstMatch(t *testing.T) {
 					rpFoo.ID:    rpFoo.Policy,
 					rp.ID:       rp.Policy,
 					dr.ID:       dr.Policy,
+					ec.ID:       ec.Policy,
 					ev.ID:       ev.Policy,
 				},
 			}, nil).
@@ -286,6 +297,7 @@ func TestGetFirstMatch(t *testing.T) {
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		rpFoo := policy.Wrap(test.GenScopedResourcePolicy("foo", test.NoMod()))
 		rpFooBar := policy.Wrap(test.GenScopedResourcePolicy("foo.bar", test.NoMod()))
+		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
 		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
@@ -298,6 +310,7 @@ func TestGetFirstMatch(t *testing.T) {
 					rpFoo.ID: rpFoo.Policy,
 					rp.ID:    rp.Policy,
 					dr.ID:    dr.Policy,
+					ec.ID:    ec.Policy,
 					ev.ID:    ev.Policy,
 				},
 			}, nil).

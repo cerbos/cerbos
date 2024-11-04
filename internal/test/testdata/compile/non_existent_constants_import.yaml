@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+wantErrors:
+  - file: resource_policies/example.yaml
+    error: import not found
+    description: |-
+      Constants import 'example' cannot be found
+    position:
+      line: 8
+      column: 9
+      path: "$.resourcePolicy.constants.import[0]"
+mainDef: resource_policies/example.yaml
