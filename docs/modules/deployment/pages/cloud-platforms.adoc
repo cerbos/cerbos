@@ -77,10 +77,6 @@ kubectl create secret generic cerbos-hub-credentials \
 +
 [source,yaml,linenums,subs="attributes"]
 ----
-# Use the AWS Marketplace image
-image:
-  repository: {app-aws-registry}
-
 # Assign the service account
 serviceAccount:
   name: cerbos-serviceaccount
@@ -120,11 +116,16 @@ volumeMounts:
 <1> The label to watch for bundle updates. See xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment labels documentation] for details.
 <2> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
 
-* Deploy Cerbos using the Helm chart
+* Deploy Cerbos using the AWS Helm chart
 +
 [source,sh,subs="attributes"]
 ----
-helm install cerbos cerbos/cerbos --version={app-version} --values=hub-values.yaml
+aws ecr get-login-password \
+     --region us-west-1 | helm registry login \
+     --username AWS \
+     --password-stdin 709825985650.dkr.ecr.us-west-1.amazonaws.com
+  
+helm install cerbos oci://709825985650.dkr.ecr.us-east-1.amazonaws.com/cerbos/cerbos-aws-helm  --values=hub-values.yaml
 ----
 
 === Elastic Container Service (ECS)
