@@ -595,8 +595,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, eparams)
 
-	var pChecks []Evaluator
-	pChecks, input.Principal.Roles, err = engine.getScopedPolicyEvaluators(ctx, eparams, rpName, rpVersion, rpScope, input.Principal.Roles)
+	pChecks, err := engine.getScopedPolicyEvaluators(ctx, eparams, rpName, rpVersion, rpScope, input.Principal.Roles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -607,8 +606,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	return ec, nil
 }
 
-func (engine *Engine) getScopedPolicyEvaluators(ctx context.Context, eparams evalParams, resource, policyVer, scope string, roles []string) ([]Evaluator, []string, error) {
-	// TODO(saml) handle lenientScopeSearch another way
+func (engine *Engine) getScopedPolicyEvaluators(ctx context.Context, eparams evalParams, resource, policyVer, scope string, roles []string) ([]Evaluator, error) {
 	// TODO(saml) runtime(?) validation against different scopePermissions settings
 	policyKey := namer.PolicyKeyFromFQN(namer.ResourcePolicyFQN(resource, policyVer, scope))
 	evaluators := []Evaluator{}
@@ -638,8 +636,10 @@ func (engine *Engine) getScopedPolicyEvaluators(ctx context.Context, eparams eva
 
 		// there'll only be a single policy in the set
 		rrps := rps.GetResourcePolicy()
-		if len(rlps) > 0 {
-			for _, rrpsp := range rrps.GetPolicies() {
+
+		// merge any derived role rules
+		for _, rrpsp := range rrps.GetPolicies() {
+			if len(rlps) > 0 {
 				actionSet := make(map[string]*emptypb.Empty)
 				for _, rlp := range rlps {
 					rrlps := rlp.GetRolePolicy()
@@ -658,55 +658,85 @@ func (engine *Engine) getScopedPolicyEvaluators(ctx context.Context, eparams eva
 					}
 				}
 
-				// Principals can assume parent roles from role policies. Therefore, check each resource policy rule
-				// and if any of the roles match the resolved roles from the role policies, add one of the principal
-				// roles (arbitrarily) to ensure a role match during evaluation.
-				// for _, rule := range rrpsp.Rules {
-				// 	for ruleRole := range rule.Roles {
-				// 		if _, ok := roleSet[ruleRole]; ok {
-				// 			rule.Roles[roles[0]] = &emptypb.Empty{}
-				// 			break
-				// 		}
-				// 	}
-				// }
-
 				// apply the gathered roles and actions to the resource policy by appending as an additional rule
 				rrpsp.Rules = append(rrpsp.Rules, &runtimev1.RunnableResourcePolicySet_Policy_Rule{
 					Actions: actionSet,
 					Roles:   roleSet,
 					Effect:  effectv1.Effect_EFFECT_ALLOW,
-					// Output:       &runtimev1.Expr{},
-					// EmitOutput:   &runtimev1.Output{},
 				})
+			}
+
+			// Principals can assume parent roles from role policies. Therefore, check each resource policy rule
+			// and if any of the roles match the resolved roles from the role policies, add one of the principal
+			// roles (arbitrarily) to ensure a role match during evaluation.
+			// We also check any derived roles at this point, as role policies may refer to parent roles
+			// that are only defined within.
+			for _, rule := range rrpsp.Rules {
+				// add an arbitrary base role to ensure the rule is matched in later evaluation
+				for rr := range rule.Roles {
+					if _, ok := roleSet[rr]; ok {
+						rule.Roles[roles[0]] = &emptypb.Empty{}
+						break
+					}
+				}
+
+				// do the same for any derived roles that reference a parent role that the principal has assumed.
+				// this requires inlining the derived role conditions.
+				// TODO(saml) could we just inline here anyway and take derived roles out of the resource policy evaluation?
+				// would require inlining variables also.
+				for dr := range rule.DerivedRoles {
+					if rdr, ok := rrpsp.DerivedRoles[dr]; ok {
+						for pr := range rdr.ParentRoles {
+							if _, ok := roleSet[pr]; ok {
+								if rule.Roles == nil {
+									rule.Roles = make(map[string]*emptypb.Empty)
+								}
+								rule.Roles[roles[0]] = &emptypb.Empty{}
+								if rule.Condition == nil {
+									rule.Condition = rdr.Condition
+								} else {
+									rule.Condition = &runtimev1.Condition{
+										Op: &runtimev1.Condition_All{
+											All: &runtimev1.Condition_ExprList{
+												Expr: []*runtimev1.Condition{rule.Condition, rdr.Condition},
+											},
+										},
+									}
+								}
+								break
+							}
+						}
+					}
+				}
 			}
 		}
 
 		return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams, policyKey), nil
 	}
 
-	var mustUpdateBasePolicy bool
+	var mustUpdateBasePolicyKey bool
 	pCheck, err := getEvaluator(ctx, eparams, resource, policyVer, scope, roles)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", resource, policyVer, err)
+		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", resource, policyVer, err)
 	}
 	if pCheck != nil {
 		evaluators = append(evaluators, pCheck)
 	} else {
-		mustUpdateBasePolicy = true
+		mustUpdateBasePolicyKey = true
 	}
 
 	for i := len(scope) - 1; i >= 0; i-- {
 		if scope[i] == '.' || i == 0 {
-			if mustUpdateBasePolicy {
+			if mustUpdateBasePolicyKey {
 				policyKey = namer.PolicyKeyFromFQN(namer.ResourcePolicyFQN(resource, policyVer, scope[:i]))
 			}
 			pCheck, err := getEvaluator(ctx, eparams, resource, policyVer, scope[:i], roles)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", resource, policyVer, err)
+				return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", resource, policyVer, err)
 			}
 			if pCheck != nil {
 				evaluators = append(evaluators, pCheck)
-				mustUpdateBasePolicy = false
+				mustUpdateBasePolicyKey = false
 			} else if !eparams.lenientScopeSearch {
 				break
 			}
@@ -719,21 +749,7 @@ func (engine *Engine) getScopedPolicyEvaluators(ctx context.Context, eparams eva
 		evaluators = append(evaluators, &defaultEvaluator{policyKey})
 	}
 
-	// TODO(saml) this could be a lot tidier if it becomes permanent
-	existingRoleMap := make(map[string]struct{})
-	for _, r := range roles {
-		existingRoleMap[r] = struct{}{}
-	}
-	newRoles := make([]string, len(roles), len(roles)+len(roleSet))
-	copy(newRoles, roles)
-	for r := range roleSet {
-		if _, ok := existingRoleMap[r]; !ok {
-			newRoles = append(newRoles, r)
-		}
-	}
-
-	// TODO(saml) if derived roles weren't a thing, we could just apply a role to the rules as per the comment above
-	return evaluators, newRoles, nil
+	return evaluators, nil
 }
 
 func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {
