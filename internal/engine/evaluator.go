@@ -91,14 +91,14 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams, basePolicyKey string) Evaluator {
+func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
 	if len(rps) == 0 {
 		return noopEvaluator{}
 	}
 
 	switch rp := rps[0].PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams, basePolicyKey: basePolicyKey}
+		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
@@ -112,16 +112,6 @@ type noopEvaluator struct{}
 
 func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
-}
-
-type defaultEvaluator struct {
-	targetPolicyKey string
-}
-
-func (de *defaultEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
-	result := newEvalResult(input.Actions, nil)
-	result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: de.targetPolicyKey})
-	return result, nil
 }
 
 type rolePolicyEvaluator struct {
@@ -202,17 +192,16 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 }
 
 type resourcePolicyEvaluator struct {
-	policy        *runtimev1.RunnableResourcePolicySet
-	schemaMgr     schema.Manager
-	evalParams    evalParams
-	basePolicyKey string
+	policy     *runtimev1.RunnableResourcePolicySet
+	schemaMgr  schema.Manager
+	evalParams evalParams
 }
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return tracing.RecordSpan2(ctx, "resource_policy.Evaluate", func(ctx context.Context, span trace.Span) (*PolicyEvalResult, error) {
 		span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 
-		// policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
+		policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 		request := checkInputToRequest(input)
 		trail := newAuditTrail(rpe.policy.GetMeta().GetSourceAttributes())
 		result := newEvalResult(input.Actions, trail)
@@ -237,7 +226,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				for _, action := range input.Actions {
 					actx := pctx.StartAction(action)
 
-					result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: rpe.basePolicyKey})
+					result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
 
 					actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Rejected due to validation failures")
 				}
@@ -253,6 +242,9 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			if len(actionsToResolve) == 0 {
 				return result, nil
 			}
+
+			allowActions := make(map[string]struct{})
+			assumedRoles := make(internal.StringSet)
 
 			err := tracing.RecordSpan1(ctx, "evaluate_policy", func(ctx context.Context, span trace.Span) error {
 				span.SetAttributes(tracing.PolicyScope(p.Scope))
@@ -311,7 +303,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 				// evaluate each rule until all actions have a result
 				tracing.RecordSpan(ctx, "evaluate_rules", func(_ context.Context, _ trace.Span) {
-				outer:
 					for _, rule := range p.Rules {
 						rctx := sctx.StartRule(rule.Name)
 
@@ -319,6 +310,11 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 							rctx.Skipped(nil, "No matching roles or derived roles")
 							continue
 						}
+
+						for r := range rule.Roles {
+							assumedRoles[r] = struct{}{}
+						}
+						// TODO(saml) add parent roles from derived roles (maybe when resolving derived roles in loop above?)
 
 						ruleActivated := false
 						for actionGlob := range rule.Actions {
@@ -346,19 +342,21 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									continue
 								}
 
-								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									continue outer
+								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT && rule.FromRolePolicy {
+									for r := range rule.Roles {
+										effectiveRoles[r] = struct{}{}
+									}
 								}
+								// TODO(saml) add parent roles from derived roles (maybe when resolving derived roles in loop above?)
 
-								// get intersection
-								activeRoles := make(internal.StringSet)
-								for r := range rule.Roles {
-									if _, ok := effectiveRoles[r]; ok {
-										activeRoles[r] = struct{}{}
+								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+									if rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+										allowActions[action] = struct{}{}
+										continue
 									}
 								}
 
-								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: rpe.basePolicyKey, Scope: p.Scope, ActiveRoles: activeRoles})
+								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 								actx.AppliedEffect(rule.Effect, "")
 								ruleActivated = true
 							}
@@ -390,10 +388,27 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			if err != nil {
 				return nil, err
 			}
+
+			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+				for a := range result.toResolve {
+					_, allow := allowActions[a]
+					if !allow {
+						if !effectiveRoles.IsSubSetOf(assumedRoles) {
+							continue
+						}
+						result.setEffect(a, EffectInfo{
+							Effect:      effectv1.Effect_EFFECT_DENY,
+							Policy:      noMatchScopePermissions,
+							Scope:       p.Scope,
+							ActiveRoles: assumedRoles,
+						})
+					}
+				}
+			}
 		}
 
 		// set the default effect for actions that were not matched
-		// result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH, Policy: policyKey})
+		result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
 
 		return result, nil
 	})

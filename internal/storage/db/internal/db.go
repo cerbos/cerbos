@@ -338,16 +338,16 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	policiesQuery := s.newGetCompilationUnitsQueryBuilder(ids)
 	directDepsQuery := policiesQuery.JoinDependencies()
 	transitiveDepsQuery := directDepsQuery.JoinDependencies()
-	// ancestorsQuery := policiesQuery.JoinAncestors()
-	// ancestorsDirectDepsQuery := ancestorsQuery.JoinDependencies()
-	// ancestorsTransitiveDepsQuery := ancestorsDirectDepsQuery.JoinDependencies()
+	ancestorsQuery := policiesQuery.JoinAncestors()
+	ancestorsDirectDepsQuery := ancestorsQuery.JoinDependencies()
+	ancestorsTransitiveDepsQuery := ancestorsDirectDepsQuery.JoinDependencies()
 
 	query := policiesQuery.Select().
 		Union(directDepsQuery.Select()).
-		Union(transitiveDepsQuery.Select())
-		// Union(ancestorsQuery.Select()).
-		// Union(ancestorsDirectDepsQuery.Select()).
-		// Union(ancestorsTransitiveDepsQuery.Select())
+		Union(transitiveDepsQuery.Select()).
+		Union(ancestorsQuery.Select()).
+		Union(ancestorsDirectDepsQuery.Select()).
+		Union(ancestorsTransitiveDepsQuery.Select())
 
 	results, err := query.Executor().ScannerContext(ctx)
 	if err != nil {

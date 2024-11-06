@@ -78,6 +78,7 @@ message RunnableResourcePolicySet {
       cerbos.effect.v1.Effect effect = 6;
       Expr output = 7 [deprecated = true];
       Output emit_output = 8;
+      bool from_role_policy = 9;
     }
 
     string scope = 1;

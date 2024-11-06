@@ -7,7 +7,7 @@ inputs:
       "requestId": "test",
       "actions": [
         "view:public", # allowed in role policy and resource policy for "manager"
-        "delete", # not allowed in role policy, but is in resource policy for "manager" (which role policy reduces permissions of)
+        "block", # not allowed in role policy, but is in resource policy for "boss" (which role policy reduces permissions of)
         "redirect", # not allowed in role policy, but allowed in resource policy for "employee" (which role policy does NOT reduce permissions of)
         "create", # inherited from `acme_creator_brighton` parent role
         ],
@@ -15,7 +15,7 @@ inputs:
         {
           "id": "john",
           "roles": [
-            "acme_manager", # implicitly assumes `manager` role also
+            "acme_manager", # implicitly assumes `boss` role also
             "employee", # does not match a role policy, evaluated independently
           ],
           "attr":
@@ -56,11 +56,10 @@ wantOutputs:
               "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
               "scope": "acme.hr",
             },
-          "delete":
+          "block":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
             },
           "redirect":
             {
@@ -76,7 +75,7 @@ wantOutputs:
             },
         },
       "effectiveDerivedRoles":
-        ["any_employee", "direct_manager", "employee_that_owns_the_record"],
+        ["any_employee", "employee_that_owns_the_record"],
     },
   ]
 wantDecisionLogs:
@@ -107,7 +106,7 @@ wantDecisionLogs:
                 "principal":
                   {
                     "id": "john",
-                    "roles": ["acme_manager", "employee", "manager", "acme_creator_brighton"],
+                    "roles": ["acme_manager", "employee"],
                     "attr":
                       {
                         "department": "marketing",
@@ -117,7 +116,7 @@ wantDecisionLogs:
                         "managed_geographies": "GB",
                       },
                   },
-                "actions": ["view:public", "delete", "redirect", "create"],
+                "actions": ["view:public", "block", "redirect", "create"],
               },
             ],
           "outputs":
@@ -133,11 +132,10 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
                         "scope": "acme.hr",
                       },
-                    "delete":
+                    "block":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.brighton",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
                       },
                     "redirect":
                       {
@@ -153,7 +151,7 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles":
-                  ["any_employee", "direct_manager", "employee_that_owns_the_record"],
+                  ["any_employee", "employee_that_owns_the_record"],
               },
             ],
         },
@@ -161,22 +159,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_creator_brighton/acme.hr.uk.brighton":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_07_acme.hr.uk.brighton.yaml",
-                    },
-                },
-              "cerbos.role.acme_manager/acme.hr.uk.brighton":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_04_acme.hr.uk.brighton.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":

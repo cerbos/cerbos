@@ -59,7 +59,8 @@ wantOutputs:
           "nonaction":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.fr",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.fr"
             },
         },
         "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"],
@@ -120,7 +121,8 @@ wantDecisionLogs:
                     "nonaction":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.fr",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.fr"
                       },
                     "redirect":
                       {
