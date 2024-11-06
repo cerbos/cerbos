@@ -7,7 +7,7 @@ inputs:
       "requestId": "test",
       "actions": [
         "create", # `acme_creator` wildcard resource
-        "delete", # not defined in role policies
+        "delete", # not defined in role policies and doesn't match resource policies
         "view:public", # `acme_jr_admin` action wildcard
         "deny", # allowed in role policy, not in resource policies
         "block", # Not defined in any role policy, but allowed in resource policy
@@ -21,7 +21,7 @@ inputs:
               "department": "marketing",
               "geography": "GB",
               "team": "design",
-              "ip_address": "10.20.0.13",
+              "ip_address": "10.21.0.13",
             },
         },
       "resource":
@@ -56,8 +56,7 @@ wantOutputs:
           "delete":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.custom",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
             },
           "create":
             {
@@ -114,7 +113,7 @@ wantDecisionLogs:
                       {
                         "department": "marketing",
                         "geography": "GB",
-                        "ip_address": "10.20.0.13",
+                        "ip_address": "10.21.0.13",
                         "team": "design",
                       },
                   },
@@ -137,8 +136,7 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.custom",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.custom",
                       },
                     "view:public":
                       {
@@ -167,22 +165,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_jr_admin/acme.hr.uk.custom":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_01_acme.hr.uk.custom.yaml",
-                    },
-                },
-              "cerbos.role.acme_creator/acme.hr.uk.custom":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_02_acme.hr.uk.custom.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":

@@ -56,6 +56,7 @@ wantOutputs:
               "scope": "acme",
             },
         },
+      "effectiveDerivedRoles": ["any_employee"]
     },
   ]
 wantDecisionLogs:
@@ -114,7 +115,8 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.vdefault/acme.hr.uk",
                         "scope": "acme",
                       },
-                  }
+                  },
+                "effectiveDerivedRoles": ["any_employee"]
               },
             ],
         },

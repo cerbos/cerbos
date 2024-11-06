@@ -159,16 +159,14 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 
 		// TODO(saml) tidy
 		// load ancestors of the policy only for principal policies
-		if _, ok := p.PolicyType.(*policyv1.Policy_PrincipalPolicy); ok {
-			for _, ancestor := range cu.Ancestors() {
-				p, sc, err := idx.loadPolicy(ancestor)
-				if err != nil {
-					return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
-				}
-				cu.AddDefinition(ancestor, p, sc)
-				if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
-					return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
-				}
+		for _, ancestor := range cu.Ancestors() {
+			p, sc, err := idx.loadPolicy(ancestor)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
+			}
+			cu.AddDefinition(ancestor, p, sc)
+			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
+				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
 			}
 		}
 	}
