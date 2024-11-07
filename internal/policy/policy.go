@@ -859,19 +859,6 @@ func (cu *CompilationUnit) Ancestors() []namer.ModuleID {
 	return Ancestors(cu.Definitions[cu.ModID])
 }
 
-func (cu *CompilationUnit) RolePolicies() []namer.ModuleID {
-	res := []namer.ModuleID{}
-
-	// TODO(saml) could we add an additional field to CompilationUnit to store role policy modIDs to negate the need for this traversal?
-	for id, p := range cu.Definitions {
-		if p.GetRolePolicy() != nil {
-			res = append(res, id)
-		}
-	}
-
-	return res
-}
-
 // Key returns the human readable identifier for the main module.
 func (cu *CompilationUnit) Key() string {
 	return namer.PolicyKey(cu.Definitions[cu.ModID])
