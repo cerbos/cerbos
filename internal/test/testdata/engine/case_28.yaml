@@ -159,6 +159,22 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
+              "cerbos.role.acme_creator_brighton/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_07_acme.hr.uk.brighton.yaml",
+                    },
+                },
+              "cerbos.role.acme_manager/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_04_acme.hr.uk.brighton.yaml",
+                    },
+                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":

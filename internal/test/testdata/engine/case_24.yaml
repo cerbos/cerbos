@@ -165,6 +165,22 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
+              "cerbos.role.acme_jr_admin/acme.hr.uk.custom":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_01_acme.hr.uk.custom.yaml",
+                    },
+                },
+              "cerbos.role.acme_creator/acme.hr.uk.custom":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_02_acme.hr.uk.custom.yaml",
+                    },
+                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":
