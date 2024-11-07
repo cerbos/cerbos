@@ -1027,7 +1027,6 @@ type evaluationResult struct {
 // merge the results by only updating the actions that have a no_match effect.
 func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	er.auditTrail = mergeTrails(er.auditTrail, res.AuditTrail)
-	// hasNoMatches := false
 
 	if er.effects == nil {
 		er.effects = make(map[string]EffectInfo, len(res.Effects))
@@ -1035,7 +1034,6 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 
 	if len(res.EffectiveDerivedRoles) > 0 {
 		for edr := range res.EffectiveDerivedRoles {
-			// er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, edr)
 			er.effectiveDerivedRoles[edr] = struct{}{}
 		}
 	}
@@ -1051,15 +1049,8 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	for action, effect := range res.Effects {
 		// if the action doesn't already exist or if it has a no_match effect, update it.
 		if currEffect, ok := er.effects[action]; !ok ||
-			currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH ||
-			// we need to override an implicit role policy DENY if the resource policy issues an allow for a previously (role policy) unevaluated role.
-			(currEffect.IsImplicitDeny && !effect.ActiveRoles.IsSubSetOf(currEffect.ActiveRoles)) {
+			currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 			er.effects[action] = effect
-
-			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer
-			// if effect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
-			// 	hasNoMatches = true
-			// }
 		}
 	}
 
@@ -1067,7 +1058,6 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 		er.toResolve[a] = struct{}{}
 	}
 
-	// return hasNoMatches
 	return len(res.toResolve) > 0
 }
 
