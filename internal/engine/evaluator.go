@@ -180,7 +180,7 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Resource.Scope, ActiveRoles: activeRoles})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
 			} else if !mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Resource.Scope, ActiveRoles: activeRoles, IsImplicitDeny: true})
+				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Resource.Scope, ActiveRoles: activeRoles})
 				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
 			}
 		}
@@ -711,11 +711,10 @@ func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, constants,
 }
 
 type EffectInfo struct {
-	ActiveRoles    internal.StringSet
-	Policy         string
-	Scope          string
-	Effect         effectv1.Effect
-	IsImplicitDeny bool
+	ActiveRoles internal.StringSet // TODO(saml) this can likely go after the query planner is updated
+	Policy      string
+	Scope       string
+	Effect      effectv1.Effect
 }
 
 type PolicyEvalResult struct {
