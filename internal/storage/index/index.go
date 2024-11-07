@@ -126,7 +126,6 @@ func (idx *index) GetAll(modIDs []namer.ModuleID) ([]*policy.CompilationUnit, er
 }
 
 func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	// TODO(saml) update here
 	result := make(map[namer.ModuleID]*policy.CompilationUnit, len(ids))
 
 	idx.mu.RLock()
@@ -157,8 +156,6 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
 		}
 
-		// TODO(saml) tidy
-		// load ancestors of the policy only for principal policies
 		for _, ancestor := range cu.Ancestors() {
 			p, sc, err := idx.loadPolicy(ancestor)
 			if err != nil {

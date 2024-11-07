@@ -120,9 +120,6 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 
 	ancestors := modCtx.unit.Ancestors()
 
-	// TODO(saml) get role policies here (similar to above) and merge in to the runnable resource policy set.
-	// recursion handles the same action on ancestors.
-
 	rrps := &runtimev1.RunnableResourcePolicySet{
 		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
 			Fqn:              modCtx.fqn,
