@@ -331,7 +331,6 @@ func (s *dbStorage) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*pol
 }
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	// TODO(saml) update here
 	// Rather than writing a proper recursive query (which is pretty much impossible to do in a database-agnostic way), we're
 	// exploiting the fact that we have a maximum of two levels of dependency (resourcePolicy -> derivedRoles -> exportConstants/Variables).
 
