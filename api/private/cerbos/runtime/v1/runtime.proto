@@ -33,16 +33,22 @@ message RunnableRolePolicySet {
     map<string, string> annotations = 3;
   }
 
-  message AllowActions {
-    map<string, google.protobuf.Empty> actions = 1;
+  message Rule {
+    string resource = 1;
+    map<string, google.protobuf.Empty> actions = 2;
+    Condition condition = 3;
+  }
+
+  message RuleList {
+    repeated Rule rules = 1;
   }
 
   Metadata meta = 1;
   string role = 2;
-  repeated string parent_roles = 6;
   string scope = 3;
-  map<string, AllowActions> resources = 4;
   cerbos.policy.v1.ScopePermissions scope_permissions = 5;
+  repeated string parent_roles = 6;
+  map<string, RuleList> resources = 7;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies
