@@ -34,9 +34,17 @@ func (m *RunnableRolePolicySet_Metadata) HashPB(hasher hash.Hash, ignore map[str
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *RunnableRolePolicySet_AllowActions) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *RunnableRolePolicySet_Rule) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_runtime_v1_RunnableRolePolicySet_AllowActions_hashpb_sum(m, hasher, ignore)
+		cerbos_runtime_v1_RunnableRolePolicySet_Rule_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *RunnableRolePolicySet_RuleList) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_RunnableRolePolicySet_RuleList_hashpb_sum(m, hasher, ignore)
 	}
 }
 

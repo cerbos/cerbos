@@ -1031,28 +1031,6 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourceP
 	}
 }
 
-func cerbos_runtime_v1_RunnableRolePolicySet_AllowActions_hashpb_sum(m *RunnableRolePolicySet_AllowActions, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.AllowActions.actions"]; !ok {
-		if len(m.Actions) > 0 {
-			keys := make([]string, len(m.Actions))
-			i := 0
-			for k := range m.Actions {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.Actions[k] != nil {
-					google_protobuf_Empty_hashpb_sum(m.Actions[k], hasher, ignore)
-				}
-
-			}
-		}
-	}
-}
-
 func cerbos_runtime_v1_RunnableRolePolicySet_Metadata_hashpb_sum(m *RunnableRolePolicySet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Metadata.fqn"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetFqn()))
@@ -1096,6 +1074,51 @@ func cerbos_runtime_v1_RunnableRolePolicySet_Metadata_hashpb_sum(m *RunnableRole
 	}
 }
 
+func cerbos_runtime_v1_RunnableRolePolicySet_RuleList_hashpb_sum(m *RunnableRolePolicySet_RuleList, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.RuleList.rules"]; !ok {
+		if len(m.Rules) > 0 {
+			for _, v := range m.Rules {
+				if v != nil {
+					cerbos_runtime_v1_RunnableRolePolicySet_Rule_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_RunnableRolePolicySet_Rule_hashpb_sum(m *RunnableRolePolicySet_Rule, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Rule.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResource()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Rule.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			keys := make([]string, len(m.Actions))
+			i := 0
+			for k := range m.Actions {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Actions[k] != nil {
+					google_protobuf_Empty_hashpb_sum(m.Actions[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Rule.condition"]; !ok {
+		if m.GetCondition() != nil {
+			cerbos_runtime_v1_Condition_hashpb_sum(m.GetCondition(), hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.meta"]; !ok {
 		if m.GetMeta() != nil {
@@ -1111,6 +1134,18 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.parent_roles"]; !ok {
+		if len(m.ParentRoles) > 0 {
+			for _, v := range m.ParentRoles {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.resources"]; !ok {
 		if len(m.Resources) > 0 {
 			keys := make([]string, len(m.Resources))
@@ -1124,20 +1159,8 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 
 			for _, k := range keys {
 				if m.Resources[k] != nil {
-					cerbos_runtime_v1_RunnableRolePolicySet_AllowActions_hashpb_sum(m.Resources[k], hasher, ignore)
+					cerbos_runtime_v1_RunnableRolePolicySet_RuleList_hashpb_sum(m.Resources[k], hasher, ignore)
 				}
-
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.scope_permissions"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
-
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.parent_roles"]; !ok {
-		if len(m.ParentRoles) > 0 {
-			for _, v := range m.ParentRoles {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
 
 			}
 		}

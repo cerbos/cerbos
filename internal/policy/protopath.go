@@ -41,6 +41,10 @@ func RolePolicyRuleProtoPath(idx int) string {
 	return fmt.Sprintf("role_policy.rules[%d]", idx)
 }
 
+func RolePolicyConditionProtoPath(idx int) string {
+	return fmt.Sprintf("%s.condition", RolePolicyRuleProtoPath(idx))
+}
+
 func DerivedRoleConditionProtoPath(idx int) string {
 	return fmt.Sprintf("%s.condition", DerivedRoleRuleProtoPath(idx))
 }

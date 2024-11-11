@@ -836,6 +836,12 @@ func cerbos_policy_v1_RoleRule_hashpb_sum(m *RoleRule, hasher hash.Hash, ignore 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.RoleRule.condition"]; !ok {
+		if m.GetCondition() != nil {
+			cerbos_policy_v1_Condition_hashpb_sum(m.GetCondition(), hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_policy_v1_Schemas_IgnoreWhen_hashpb_sum(m *Schemas_IgnoreWhen, hasher hash.Hash, ignore map[string]struct{}) {
