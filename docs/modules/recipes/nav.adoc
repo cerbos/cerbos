@@ -15,3 +15,5 @@
 ** xref:orm/prisma/index.adoc[Prisma]
 ** xref:orm/sqlalchemy/index.adoc[SQLAlchemy]
 * xref:ui.adoc[Checking permissions in your UI]
+* AI integration
+** xref:ai/rag-authorization/index.adoc[RAG authorization]
