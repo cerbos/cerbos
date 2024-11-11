@@ -701,6 +701,57 @@ func (engine *Engine) getScopedPolicyEvaluator(ctx context.Context, eparams eval
 }
 
 func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string, accumulatedRoles map[string]*emptypb.Empty, rrpsp *runtimev1.RunnableResourcePolicySet_Policy) (*runtimev1.RunnableResourcePolicySet_Policy, map[string]*policyv1.SourceAttributes, error) {
+	if rrpsp == nil {
+		rrpsp = &runtimev1.RunnableResourcePolicySet_Policy{
+			Scope: scope,
+			Rules: make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, 0, 1),
+		}
+	}
+
+	// Principals can assume parent roles from role policies. Therefore, check each resource policy rule
+	// and if any of the roles match the resolved roles from the role policies, add one of the principal
+	// roles (arbitrarily) to ensure a role match during evaluation.
+	// We also check any derived roles at this point, as role policies may refer to parent roles
+	// that are only defined within.
+	// for _, rule := range rrpsp.Rules {
+	// 	// add an arbitrary assumed role to ensure the rule is matched in later evaluation
+	// 	for rr := range rule.Roles {
+	// 		if _, ok := accumulatedRoles[rr]; ok {
+	// 			rule.Roles[inputRoles[0]] = &emptypb.Empty{}
+	// 			break
+	// 		}
+	// 	}
+	//
+	// 	// do the same for any derived roles that reference a parent role that the principal has assumed.
+	// 	// this requires inlining the derived role conditions.
+	// 	// TODO(saml) could we just inline here anyway and take derived roles out of the resource policy evaluation?
+	// 	// would require inlining variables also.
+	// 	for dr := range rule.DerivedRoles {
+	// 		if rdr, ok := rrpsp.DerivedRoles[dr]; ok {
+	// 			for pr := range rdr.ParentRoles {
+	// 				if _, ok := accumulatedRoles[pr]; ok {
+	// 					if rule.Roles == nil {
+	// 						rule.Roles = make(map[string]*emptypb.Empty)
+	// 					}
+	// 					rule.Roles[inputRoles[0]] = &emptypb.Empty{}
+	// 					if rule.Condition == nil {
+	// 						rule.Condition = rdr.Condition
+	// 					} else {
+	// 						rule.Condition = &runtimev1.Condition{
+	// 							Op: &runtimev1.Condition_All{
+	// 								All: &runtimev1.Condition_ExprList{
+	// 									Expr: []*runtimev1.Condition{rule.Condition, rdr.Condition},
+	// 								},
+	// 							},
+	// 						}
+	// 					}
+	// 					break
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
 	rlps, err := engine.getRolePolicySets(ctx, scope, inputRoles)
 	if err != nil {
 		return nil, nil, err
@@ -710,15 +761,9 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 		return rrpsp, nil, nil
 	}
 
-	if rrpsp == nil {
-		rrpsp = &runtimev1.RunnableResourcePolicySet_Policy{
-			Scope: scope,
-			Rules: make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, 0, 1),
-		}
-	}
-
 	rolePolicySourceAttrs := make(map[string]*policyv1.SourceAttributes)
-	actionSet := make(map[string]*emptypb.Empty)
+	rolePolicyOriginRules := []*runtimev1.RunnableResourcePolicySet_Policy_Rule{}
+	previouslyAccumulatedRoles := maps.Clone(accumulatedRoles)
 	for _, rlp := range rlps {
 		rrlps := rlp.GetRolePolicy()
 		if rrpsp.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
@@ -729,72 +774,36 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 			rolePolicySourceAttrs[rrlps.Meta.Fqn] = rrlps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(rrlps.Meta.Fqn)]
 		}
 
-		for ruleResource, allowActions := range rrlps.GetResources() {
+		ruleRoles := maps.Clone(previouslyAccumulatedRoles)
+		for ruleResource, rules := range rrlps.GetResources() {
 			if util.MatchesGlob(ruleResource, resource) {
 				accumulatedRoles[rrlps.Role] = &emptypb.Empty{}
 				for _, pr := range rrlps.ParentRoles {
 					accumulatedRoles[pr] = &emptypb.Empty{}
 				}
 
-				for a := range allowActions.Actions {
-					actionSet[a] = &emptypb.Empty{}
+				// we don't want to inherit the roles from rules from other role policies
+				// as they may be conditional
+				ruleRoles[rrlps.Role] = &emptypb.Empty{}
+				for _, pr := range rrlps.ParentRoles {
+					ruleRoles[pr] = &emptypb.Empty{}
 				}
-				break
-			}
-		}
-	}
 
-	// Principals can assume parent roles from role policies. Therefore, check each resource policy rule
-	// and if any of the roles match the resolved roles from the role policies, add one of the principal
-	// roles (arbitrarily) to ensure a role match during evaluation.
-	// We also check any derived roles at this point, as role policies may refer to parent roles
-	// that are only defined within.
-	for _, rule := range rrpsp.Rules {
-		// add an arbitrary assumed role to ensure the rule is matched in later evaluation
-		for rr := range rule.Roles {
-			if _, ok := accumulatedRoles[rr]; ok {
-				rule.Roles[inputRoles[0]] = &emptypb.Empty{}
-				break
-			}
-		}
-
-		// do the same for any derived roles that reference a parent role that the principal has assumed.
-		// this requires inlining the derived role conditions.
-		// TODO(saml) could we just inline here anyway and take derived roles out of the resource policy evaluation?
-		// would require inlining variables also.
-		for dr := range rule.DerivedRoles {
-			if rdr, ok := rrpsp.DerivedRoles[dr]; ok {
-				for pr := range rdr.ParentRoles {
-					if _, ok := accumulatedRoles[pr]; ok {
-						if rule.Roles == nil {
-							rule.Roles = make(map[string]*emptypb.Empty)
-						}
-						rule.Roles[inputRoles[0]] = &emptypb.Empty{}
-						if rule.Condition == nil {
-							rule.Condition = rdr.Condition
-						} else {
-							rule.Condition = &runtimev1.Condition{
-								Op: &runtimev1.Condition_All{
-									All: &runtimev1.Condition_ExprList{
-										Expr: []*runtimev1.Condition{rule.Condition, rdr.Condition},
-									},
-								},
-							}
-						}
-						break
-					}
+				for _, r := range rules.Rules {
+					rolePolicyOriginRules = append(rolePolicyOriginRules, &runtimev1.RunnableResourcePolicySet_Policy_Rule{
+						Actions:        r.Actions,
+						Roles:          ruleRoles,
+						Condition:      r.Condition,
+						Effect:         effectv1.Effect_EFFECT_ALLOW,
+						FromRolePolicy: true,
+					})
 				}
 			}
 		}
 	}
 
-	// apply the gathered roles and actions to the resource policy by appending as an additional rule
-	rrpsp.Rules = append(rrpsp.Rules, &runtimev1.RunnableResourcePolicySet_Policy_Rule{
-		Actions:        actionSet,
-		Roles:          accumulatedRoles,
-		Effect:         effectv1.Effect_EFFECT_ALLOW,
-		FromRolePolicy: true,
-	})
+	// append any generated role policy rules
+	rrpsp.Rules = append(rrpsp.Rules, rolePolicyOriginRules...)
 
 	return rrpsp, rolePolicySourceAttrs, nil
 }
@@ -979,19 +988,20 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 			return nil, fmt.Errorf("failed to execute policy: %w", err)
 		}
 
+		// TODO(saml) remove `AssumedRoles`??
 		// The principal assumes the IdP roles from any matched role policy's parent roles
-		if len(result.AssumedRoles) > 0 {
-			roleMap := make(map[string]struct{})
-			for _, r := range input.Principal.Roles {
-				roleMap[r] = struct{}{}
-			}
-
-			for _, r := range result.AssumedRoles {
-				if _, ok := roleMap[r]; !ok {
-					input.Principal.Roles = append(input.Principal.Roles, r)
-				}
-			}
-		}
+		// if len(result.AssumedRoles) > 0 {
+		// 	roleMap := make(map[string]struct{})
+		// 	for _, r := range input.Principal.Roles {
+		// 		roleMap[r] = struct{}{}
+		// 	}
+		//
+		// 	for _, r := range result.AssumedRoles {
+		// 		if _, ok := roleMap[r]; !ok {
+		// 			input.Principal.Roles = append(input.Principal.Roles, r)
+		// 		}
+		// 	}
+		// }
 
 		incomplete := resp.merge(result)
 		if !incomplete {

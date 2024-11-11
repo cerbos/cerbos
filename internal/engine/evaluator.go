@@ -148,7 +148,10 @@ func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Contex
 			}
 
 			if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
-				mergedActions.Merge(k.Actions)
+				// TODO(saml) THIS IS WRONG but I'm going to remove this evaluator soon anyway. It's only still here so I can compile
+				for _, r := range k.Rules {
+					mergedActions.Merge(r.Actions)
+				}
 			}
 
 			if _, ok := activeRoles[r]; !ok {
@@ -234,6 +237,8 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			}
 		}
 
+		actionImplicitlyDeniedForRoles := make(map[string]internal.StringSet) // map[{action}]map[{roles}]
+
 		// evaluate policies in the set
 		for _, p := range rpe.policy.Policies {
 			// Get the actions that are yet to be resolved. This is to implement first-match-wins semantics.
@@ -244,7 +249,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			}
 
 			allowActions := make(map[string]struct{})
-			assumedRoles := make(internal.StringSet)
+			activeAccumulatedRoles := make(internal.StringSet)
 
 			err := tracing.RecordSpan1(ctx, "evaluate_policy", func(ctx context.Context, span trace.Span) error {
 				span.SetAttributes(tracing.PolicyScope(p.Scope))
@@ -306,15 +311,17 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 					for _, rule := range p.Rules {
 						rctx := sctx.StartRule(rule.Name)
 
+						if rule.FromRolePolicy {
+							for r := range rule.Roles {
+								activeAccumulatedRoles[r] = struct{}{}
+								effectiveRoles[r] = struct{}{}
+							}
+						}
+
 						if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, evalCtx.effectiveDerivedRoles) {
 							rctx.Skipped(nil, "No matching roles or derived roles")
 							continue
 						}
-
-						for r := range rule.Roles {
-							assumedRoles[r] = struct{}{}
-						}
-						// TODO(saml) add parent roles from derived roles (maybe when resolving derived roles in loop above?)
 
 						ruleActivated := false
 						for actionGlob := range rule.Actions {
@@ -322,6 +329,26 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 							//nolint:dupl
 							for _, action := range matchedActions {
 								actx := rctx.StartAction(action)
+
+								if roles, ok := actionImplicitlyDeniedForRoles[action]; ok {
+									effectiveMatchedRoles := make(internal.StringSet)
+									for rr := range rule.Roles {
+										if _, ok := effectiveRoles[rr]; ok {
+											effectiveMatchedRoles[rr] = struct{}{}
+										}
+									}
+									for dr := range rule.DerivedRoles {
+										if _, ok := evalCtx.effectiveDerivedRoles[dr]; ok {
+											effectiveMatchedRoles[dr] = struct{}{}
+										}
+									}
+									if effectiveMatchedRoles.IsSubSetOf(roles) {
+										continue
+									} else {
+										delete(actionImplicitlyDeniedForRoles, action)
+									}
+								}
+
 								ok, err := evalCtx.satisfiesCondition(actx.StartCondition(), rule.Condition, constants, variables)
 								if err != nil {
 									actx.Skipped(err, "Error evaluating condition")
@@ -342,15 +369,9 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									continue
 								}
 
-								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT && rule.FromRolePolicy {
-									for r := range rule.Roles {
-										effectiveRoles[r] = struct{}{}
-									}
-								}
-								// TODO(saml) add parent roles from derived roles (maybe when resolving derived roles in loop above?)
-
 								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 									if rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+										// TODO(saml) could explicitly set NO_MATCH but with `activeRoles` rather than relying on `allowActions`?
 										allowActions[action] = struct{}{}
 										continue
 									}
@@ -389,26 +410,49 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				return nil, err
 			}
 
+			// runtime.Breakpoint()
 			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 				for a := range result.toResolve {
-					_, allow := allowActions[a]
-					if !allow {
-						if !effectiveRoles.IsSubSetOf(assumedRoles) {
-							continue
+					if _, allow := allowActions[a]; !allow {
+						roles, ok := actionImplicitlyDeniedForRoles[a]
+						if !ok {
+							roles = make(map[string]struct{})
+							actionImplicitlyDeniedForRoles[a] = roles
 						}
-						result.setEffect(a, EffectInfo{
-							Effect:      effectv1.Effect_EFFECT_DENY,
-							Policy:      noMatchScopePermissions,
-							Scope:       p.Scope,
-							ActiveRoles: assumedRoles,
-						})
+
+						for er := range activeAccumulatedRoles {
+							roles[er] = struct{}{}
+						}
+
+						// TODO(saml) tidy
+						// add effect without removing from `toResolve`
+						result.Effects[a] = EffectInfo{
+							Effect: effectv1.Effect_EFFECT_NO_MATCH,
+							Policy: noMatchScopePermissions,
+							Scope:  p.Scope,
+						}
 					}
 				}
 			}
 		}
 
 		// set the default effect for actions that were not matched
-		result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+		// result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+		// TODO(saml) fit into `setDefaultEffect`?
+		for a := range result.toResolve {
+			if _, ok := actionImplicitlyDeniedForRoles[a]; ok {
+				if r, ok := result.Effects[a]; ok {
+					// TODO(saml) rework this nasty workaround. I only set to `Effect_EFFECT_NO_MATCH` when adding above to avoid
+					// the check in setEffect which skips any effects set to DENY
+					r.Effect = effectv1.Effect_EFFECT_DENY
+					result.Effects[a] = r
+				}
+				continue
+			}
+			effect := EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey}
+			result.Effects[a] = effect
+			tctx.StartAction(a).AppliedEffect(effect.Effect, "Default effect")
+		}
 
 		return result, nil
 	})
