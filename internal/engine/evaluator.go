@@ -768,7 +768,7 @@ type PolicyEvalResult struct {
 	AuditTrail            *auditv1.AuditTrail
 	ValidationErrors      []*schemav1.ValidationError
 	Outputs               []*enginev1.OutputEntry
-	AssumedRoles          []string
+	AssumedRoles          []string // TODO(saml) remove once the query planner is updated
 }
 
 func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEvalResult {
