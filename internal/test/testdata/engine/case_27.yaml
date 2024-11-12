@@ -121,7 +121,7 @@ wantDecisionLogs:
                   "attributes":
                     {
                       "driver": "disk",
-                      "source": "role_policies/policy_06_acme.hr.uk.london.yaml",
+                      "source": "role_policies/policy_05_acme.hr.uk.london.yaml",
                     },
                 },
               "resource.leave_request.vdefault":
