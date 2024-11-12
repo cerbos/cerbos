@@ -7,7 +7,7 @@ inputs:
       "requestId": "test",
       "actions": [
         "create", # matches `acme_creator` wildcard resource and parent scope rule with `admin` role
-        "delete", # not defined in leaf scope and doesn't match condition in parent scopes
+        "delete", # not defined in leaf scope and doesn't match condition in parent scopes for condition which is narrowed (derived role with `employee` parent role)
         "view:public", # matches `acme_jr_admin` action wildcard and `employee_that_owns_the_record` in parent scope
         "deny", # allowed in target scope, no matching actions in parent scopes
         "redirect", # not allowed in target scope, but is in parent scope for "employee" which role policy recursively assumes
@@ -21,8 +21,9 @@ inputs:
         {
           "id": "john",
           "roles": [
-            "employee",
-            "acme_creator", # implicitly assumes `acme_jr_admin` as parent role, which itself has "admin" as a parent role
+            "employee", # even though this is nested parent role of a referenced role policy, passing it explicitly means we can
+                        # evaluate it with more authority in the parent scopes. TODO(saml) this behaviour requires some thought
+            "acme_creator", # implicitly assumes `acme_jr_admin` as parent role, which itself has `employee` as a parent role
             "boss",
           ],
           "attr":
@@ -65,7 +66,8 @@ wantOutputs:
           "delete":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.brighton"
             },
           "create":
             {
@@ -162,7 +164,8 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "view:public":
                       {
