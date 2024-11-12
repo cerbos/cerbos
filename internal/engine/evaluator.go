@@ -329,7 +329,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 							//nolint:dupl
 							for _, action := range matchedActions {
 								actx := rctx.StartAction(action)
-
 								if roles, ok := actionImplicitlyDeniedForRoles[action]; ok {
 									effectiveMatchedRoles := make(internal.StringSet)
 									for rr := range rule.Roles {
@@ -339,7 +338,11 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 									}
 									for dr := range rule.DerivedRoles {
 										if _, ok := evalCtx.effectiveDerivedRoles[dr]; ok {
-											effectiveMatchedRoles[dr] = struct{}{}
+											if rdr, ok := p.DerivedRoles[dr]; ok {
+												for pr := range rdr.ParentRoles {
+													effectiveMatchedRoles[pr] = struct{}{}
+												}
+											}
 										}
 									}
 									if effectiveMatchedRoles.IsSubSetOf(roles) {
@@ -410,7 +413,6 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				return nil, err
 			}
 
-			// runtime.Breakpoint()
 			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 				for a := range result.toResolve {
 					if _, allow := allowActions[a]; !allow {
