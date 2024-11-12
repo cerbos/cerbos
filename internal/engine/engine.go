@@ -606,8 +606,6 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 }
 
 func (engine *Engine) getScopedPolicyEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
-	// TODO(saml) runtime(?) validation against different scopePermissions settings
-
 	// A matching scope must have at least one resource or role policy or a mixture of both.
 	// To begin, we attempt to retrieve the full scope hierarchy of resource policies.
 	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, true)
@@ -623,13 +621,11 @@ func (engine *Engine) getScopedPolicyEvaluator(ctx context.Context, eparams eval
 	resourcePolicies := rrps.GetPolicies()
 	retrievedScope := resourcePolicies[0].Scope
 
-	// TODO(saml) build time validation to ensure complete scope chains with at least one policy type at each level
-	// if the retrieved scope doesn't match the target scope, attempt to fill in each missing scope
-	// level with role policies.
+	// if the retrieved scope doesn't match the target scope, attempt to fill in each missing scope level with role policies.
 	if retrievedScope != scope {
 		newPolicies := []*runtimev1.RunnableResourcePolicySet_Policy{}
 		mergeFn := func(mergeScope string) (*runtimev1.RunnableResourcePolicySet_Policy, error) {
-			merged, sourceAttrs, err := engine.mergeRolePoliciesIntoResourcePolicy(ctx, eparams, resource, policyVer, mergeScope, inputRoles, accumulatedRoles, nil)
+			merged, err := engine.mergeRolePoliciesIntoResourcePolicy(ctx, eparams, resource, policyVer, mergeScope, inputRoles, accumulatedRoles, rrps, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -637,12 +633,6 @@ func (engine *Engine) getScopedPolicyEvaluator(ctx context.Context, eparams eval
 			if len(merged.Rules) == 0 {
 				return nil, nil
 			}
-
-			// merge role policy source attributes
-			if rrps.Meta.SourceAttributes == nil {
-				rrps.Meta.SourceAttributes = make(map[string]*policyv1.SourceAttributes, len(sourceAttrs))
-			}
-			maps.Copy(rrps.Meta.SourceAttributes, sourceAttrs)
 
 			newPolicies = append(newPolicies, merged)
 			return merged, nil
@@ -686,21 +676,16 @@ func (engine *Engine) getScopedPolicyEvaluator(ctx context.Context, eparams eval
 	// at this point, we've inferred that a full scope chain is present, so traverse through the rest of
 	// the policies and merge in any role policies.
 	for _, rrpsp := range resourcePolicies {
-		_, sourceAttrs, err := engine.mergeRolePoliciesIntoResourcePolicy(ctx, eparams, resource, policyVer, rrpsp.Scope, inputRoles, accumulatedRoles, rrpsp)
+		_, err := engine.mergeRolePoliciesIntoResourcePolicy(ctx, eparams, resource, policyVer, rrpsp.Scope, inputRoles, accumulatedRoles, rrps, rrpsp)
 		if err != nil {
 			return nil, err
 		}
-		// TODO(saml) dedup this merge op from above
-		if rrps.Meta.SourceAttributes == nil {
-			rrps.Meta.SourceAttributes = make(map[string]*policyv1.SourceAttributes, len(sourceAttrs))
-		}
-		maps.Copy(rrps.Meta.SourceAttributes, sourceAttrs)
 	}
 
 	return NewEvaluator([]*runtimev1.RunnablePolicySet{rps}, engine.schemaMgr, eparams), nil
 }
 
-func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string, accumulatedRoles map[string]*emptypb.Empty, rrpsp *runtimev1.RunnableResourcePolicySet_Policy) (*runtimev1.RunnableResourcePolicySet_Policy, map[string]*policyv1.SourceAttributes, error) {
+func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string, accumulatedRoles map[string]*emptypb.Empty, rrps *runtimev1.RunnableResourcePolicySet, rrpsp *runtimev1.RunnableResourcePolicySet_Policy) (*runtimev1.RunnableResourcePolicySet_Policy, error) {
 	if rrpsp == nil {
 		rrpsp = &runtimev1.RunnableResourcePolicySet_Policy{
 			Scope: scope,
@@ -710,11 +695,16 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 
 	rlps, err := engine.getRolePolicySets(ctx, scope, inputRoles)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if len(rlps) == 0 {
-		return rrpsp, nil, nil
+		return rrpsp, nil
+	}
+
+	scopePermissionSets := make(map[policyv1.ScopePermissions]int)
+	if rrpsp.ScopePermissions != policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissionSets[rrpsp.ScopePermissions]++
 	}
 
 	rolePolicySourceAttrs := make(map[string]*policyv1.SourceAttributes)
@@ -724,6 +714,11 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 		rrlps := rlp.GetRolePolicy()
 		if rrpsp.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
 			rrpsp.ScopePermissions = rrlps.ScopePermissions
+		}
+
+		scopePermissionSets[rrlps.ScopePermissions]++
+		if len(scopePermissionSets) > 1 {
+			return nil, errors.New("scope permissions conflict: all policies in shared scope must have a common scopePermissions setting")
 		}
 
 		if rrlps.GetMeta().GetFqn() != "" && rrlps.GetMeta().GetSourceAttributes() != nil {
@@ -761,7 +756,13 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 	// append any generated role policy rules
 	rrpsp.Rules = append(rrpsp.Rules, rolePolicyOriginRules...)
 
-	return rrpsp, rolePolicySourceAttrs, nil
+	// merge role policy source attributes
+	if rrps.Meta.SourceAttributes == nil {
+		rrps.Meta.SourceAttributes = make(map[string]*policyv1.SourceAttributes, len(rolePolicySourceAttrs))
+	}
+	maps.Copy(rrps.Meta.SourceAttributes, rolePolicySourceAttrs)
+
+	return rrpsp, nil
 }
 
 func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {

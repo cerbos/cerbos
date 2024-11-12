@@ -137,7 +137,7 @@ wantDecisionLogs:
                   "attributes":
                     {
                       "driver": "disk",
-                      "source": "role_policies/policy_05_override_acme.hr.uk.yaml",
+                      "source": "role_policies/policy_04_override_acme.hr.uk.yaml",
                     },
                 },
               "resource.leave_request.vdefault":

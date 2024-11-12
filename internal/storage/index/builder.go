@@ -251,30 +251,37 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	delete(idx.missingScopes, policyKey)
 	idx.stats.add(p)
 
+	var scopePermission policyv1.ScopePermissions
 	switch p.Kind {
-	case policy.RolePolicyKind:
-		sharedScope, ok := idx.sharedScopePermissionGroups[p.Scope]
-		if !ok {
-			sharedScope = make(map[policyv1.ScopePermissions]struct{})
-			idx.sharedScopePermissionGroups[p.Scope] = sharedScope
-			// TODO(saml) reintroduce scope permission collision checks somewhere. Maybe at runtime because specific role policies can still be retrieved?
-			// } else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
-			// 	scopePermission := p.GetRolePolicy().ScopePermissions
-			// 	if _, ok := sharedScope[scopePermission]; !ok {
-			// 		sharedScope[scopePermission] = struct{}{}
-			// 	}
-			//
-			// 	if len(sharedScope) > 1 {
-			// 		idx.conflictingScopes[p.Scope] = struct{}{}
-			// 	}
-		}
+	case policy.ResourceKind:
+		rp := p.GetResourcePolicy()
+		scopePermission = rp.ScopePermissions
+		idx.executables[p.ID] = struct{}{}
 
-		fallthrough
-	case policy.ResourceKind, policy.PrincipalKind:
+	case policy.PrincipalKind:
+		scopePermission = p.GetPrincipalPolicy().ScopePermissions
+		idx.executables[p.ID] = struct{}{}
+
+	case policy.RolePolicyKind:
+		scopePermission = p.GetRolePolicy().ScopePermissions
 		idx.executables[p.ID] = struct{}{}
 
 	case policy.DerivedRolesKind, policy.ExportConstantsKind, policy.ExportVariablesKind:
 		// not executable
+	}
+
+	sharedScope, ok := idx.sharedScopePermissionGroups[p.Scope]
+	if !ok {
+		sharedScope = make(map[policyv1.ScopePermissions]struct{})
+		idx.sharedScopePermissionGroups[p.Scope] = sharedScope
+	} else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
+		if _, ok := sharedScope[scopePermission]; !ok {
+			sharedScope[scopePermission] = struct{}{}
+		}
+
+		if len(sharedScope) > 1 {
+			idx.conflictingScopes[p.Scope] = struct{}{}
+		}
 	}
 
 	deps, paths := policy.Dependencies(p.Policy)
@@ -312,6 +319,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		}
 	}
 
+	// TODO(saml) account for role policies when determining whether or not a scope has a missing policy
 	for moduleID, fqn := range policy.RequiredAncestors(p.Policy) {
 		ancestorPolicyKey := namer.PolicyKeyFromFQN(fqn)
 		if _, ok := idx.modIDToFile[moduleID]; !ok {
