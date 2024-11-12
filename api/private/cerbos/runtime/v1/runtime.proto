@@ -236,7 +236,8 @@ message IndexBuildErrors {
   }
 
   message MissingScope {
-    string missing_policy = 1;
+    string missing_policy = 1 [deprecated = true];
+    string missing_scope = 3;
     repeated string descendants = 2;
   }
 

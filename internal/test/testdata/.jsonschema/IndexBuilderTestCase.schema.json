@@ -164,6 +164,9 @@
         },
         "missingPolicy": {
           "type": "string"
+        },
+        "missingScope": {
+          "type": "string"
         }
       }
     },

@@ -4562,6 +4562,10 @@ func cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(m *v15.IndexBuil
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingScope.missing_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMissingScope()))
+
+	}
 }
 
 func cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_hashpb_sum(m *v15.IndexBuildErrors_ScopePermissionsConflicts, hasher hash.Hash, ignore map[string]struct{}) {
