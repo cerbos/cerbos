@@ -4,7 +4,7 @@ description: Role policies tax return tests for x003
 principal:
     id: x003
     policyVersion: default
-    scope: acme
+    scope: acme.finance
     roles:
         - employee
         - bookkeeper
