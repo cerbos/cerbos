@@ -707,6 +707,18 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 		scopePermissionSets[rrpsp.ScopePermissions]++
 	}
 
+	resourceRuleRoleActionMap := make(map[string]map[string]*runtimev1.RunnableResourcePolicySet_Policy_Rule) // map[{role}]map[{action}]{rule}
+	for _, rule := range rrpsp.Rules {
+		for action := range rule.Actions {
+			for role := range rule.Roles {
+				if _, ok := resourceRuleRoleActionMap[role]; !ok {
+					resourceRuleRoleActionMap[role] = make(map[string]*runtimev1.RunnableResourcePolicySet_Policy_Rule)
+				}
+				resourceRuleRoleActionMap[role][action] = rule
+			}
+		}
+	}
+
 	rolePolicySourceAttrs := make(map[string]*policyv1.SourceAttributes)
 	rolePolicyOriginRules := []*runtimev1.RunnableResourcePolicySet_Policy_Rule{}
 	previouslyAccumulatedRoles := maps.Clone(accumulatedRoles)
@@ -725,8 +737,11 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 			rolePolicySourceAttrs[rrlps.Meta.Fqn] = rrlps.Meta.SourceAttributes[namer.PolicyKeyFromFQN(rrlps.Meta.Fqn)]
 		}
 
+		// To merge, we iterate over role policy rules and for each, look for resource policy rules with matching roles and actions.
+		// If we have a "match", e.g. at least one intersection role (named|parent roles) and actions, we add the condition as an `AND`.
+		// If there are no matches, we create a new, independent rule.
 		ruleRoles := maps.Clone(previouslyAccumulatedRoles)
-		for ruleResource, rules := range rrlps.GetResources() {
+		for ruleResource, ruleList := range rrlps.GetResources() {
 			if util.MatchesGlob(ruleResource, resource) {
 				accumulatedRoles[rrlps.Role] = &emptypb.Empty{}
 				for _, pr := range rrlps.ParentRoles {
@@ -740,7 +755,27 @@ func (engine *Engine) mergeRolePoliciesIntoResourcePolicy(ctx context.Context, e
 					ruleRoles[pr] = &emptypb.Empty{}
 				}
 
-				for _, r := range rules.Rules {
+			roleRules:
+				for _, r := range ruleList.Rules {
+					for action := range r.Actions {
+						for role, resourceRuleActionMap := range resourceRuleRoleActionMap {
+							if util.MatchesGlob(role, rrlps.Role) {
+								for resourceAction, resourceRule := range resourceRuleActionMap {
+									if util.MatchesGlob(resourceAction, action) || util.MatchesGlob(action, resourceAction) {
+										resourceRule.Condition = &runtimev1.Condition{
+											Op: &runtimev1.Condition_All{
+												All: &runtimev1.Condition_ExprList{
+													Expr: []*runtimev1.Condition{resourceRule.Condition, r.Condition},
+												},
+											},
+										}
+										continue roleRules
+									}
+								}
+							}
+						}
+					}
+
 					rolePolicyOriginRules = append(rolePolicyOriginRules, &runtimev1.RunnableResourcePolicySet_Policy_Rule{
 						Actions:        r.Actions,
 						Roles:          ruleRoles,
