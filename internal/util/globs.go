@@ -20,6 +20,7 @@ type globCache struct {
 }
 
 func (gc *globCache) matches(globExpr, val string) bool {
+	globExpr = fixGlob(globExpr)
 	cachedGlob, ok := gc.cache.Get(globExpr)
 	if ok {
 		return cachedGlob.Match(val)
