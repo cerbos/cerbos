@@ -309,16 +309,16 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 					for _, rule := range p.Rules {
 						rctx := sctx.StartRule(rule.Name)
 
+						if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, evalCtx.effectiveDerivedRoles) {
+							rctx.Skipped(nil, "No matching roles or derived roles")
+							continue
+						}
+
 						if rule.FromRolePolicy {
 							for r := range rule.Roles {
 								accumulatedRolePolicyRoles[r] = struct{}{}
 								effectiveRoles[r] = struct{}{}
 							}
-						}
-
-						if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, evalCtx.effectiveDerivedRoles) {
-							rctx.Skipped(nil, "No matching roles or derived roles")
-							continue
 						}
 
 						ruleActivated := false
