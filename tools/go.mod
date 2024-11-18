@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	connectrpc.com/connect v1.17.0
-	github.com/bufbuild/buf v1.47.2
+	github.com/bufbuild/buf v1.46.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.3.1
 	github.com/cerbos/protoc-gen-jsonschema v0.1.4
 	github.com/dadav/helm-schema v0.0.0-20240923180621-13682905ed27
@@ -260,7 +260,7 @@ require (
 	github.com/golangci/plugin-module-register v0.1.1 // indirect
 	github.com/golangci/revgrep v0.5.3 // indirect
 	github.com/golangci/unconvert v0.0.0-20240309020433-c5143eacb3ed // indirect
-	github.com/google/cel-go v0.22.0 // indirect
+	github.com/google/cel-go v0.21.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-containerregistry v0.20.2 // indirect
 	github.com/google/go-github/v66 v66.0.0 // indirect
