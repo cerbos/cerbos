@@ -5,10 +5,9 @@
             "kind": "KIND_PARSE_ERROR",
             "position": {
                 "line": 1,
-                "column": 1,
-                "path": "$"
+                "column": 1
             },
-            "message": "invalid document: contents are not valid YAML or JSON"
+            "message": "could not find end character of double-quoted text"
         }
     ]
 }

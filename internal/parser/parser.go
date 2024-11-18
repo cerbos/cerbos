@@ -18,7 +18,6 @@ import (
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
-	yamlerrors "github.com/goccy/go-yaml/errors"
 	"github.com/goccy/go-yaml/lexer"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/goccy/go-yaml/printer"
@@ -198,11 +197,11 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 
 	file, err := parser.Parse(t, parser.ParseComments)
 	if err != nil { //nolint:nestif
-		var syntaxErr yamlerrors.SyntaxError
+		syntaxErr := new(yaml.SyntaxError)
 		if errors.As(err, &syntaxErr) {
 			srcErr := &sourcev1.Error{
 				Kind:    sourcev1.Error_KIND_PARSE_ERROR,
-				Message: syntaxErr.Msg,
+				Message: syntaxErr.Message,
 			}
 			if syntaxErr.Token != nil {
 				if syntaxErr.Token.Position != nil {

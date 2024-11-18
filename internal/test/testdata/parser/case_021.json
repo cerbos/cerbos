@@ -4,29 +4,10 @@
         {
             "kind": "KIND_PARSE_ERROR",
             "position": {
-                "line": 4,
-                "column": 11,
-                "path": "$.variables"
+                "line": 5,
+                "column": 3
             },
-            "message": "expected map got Null"
-        }
-    ],
-    "want": [
-        {
-            "message": {
-                "apiVersion": "api.cerbos.dev/v1"
-            },
-            "errors": [
-                {
-                    "kind": "KIND_PARSE_ERROR",
-                    "position": {
-                        "line": 4,
-                        "column": 11,
-                        "path": "$.variables"
-                    },
-                    "message": "expected map got Null"
-                }
-            ]
+            "message": "could not find end character of double-quoted text"
         }
     ]
 }
