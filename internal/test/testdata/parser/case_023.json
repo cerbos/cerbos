@@ -4,10 +4,10 @@
         {
             "kind": "KIND_PARSE_ERROR",
             "position": {
-                "line": 9,
+                "line": 10,
                 "column": 7
             },
-            "message": "unexpected key name"
+            "message": "required ':' and map value"
         }
     ]
 }
