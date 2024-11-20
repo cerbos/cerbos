@@ -7,9 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/cerbos/cloud-api/credentials"
+
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cerbos/cloud-api/credentials"
 )
 
 type EnvVarKey int
@@ -21,6 +22,7 @@ const (
 	OfflineKey
 	PDPIDKey
 	WorkspaceSecretKey
+	BundleVersion
 )
 
 var envVars = map[EnvVarKey][]string{
@@ -30,6 +32,7 @@ var envVars = map[EnvVarKey][]string{
 	OfflineKey:         {"CERBOS_HUB_OFFLINE", "CERBOS_CLOUD_OFFLINE"},
 	PDPIDKey:           {"CERBOS_HUB_PDP_ID", "CERBOS_PDP_ID"},
 	WorkspaceSecretKey: {"CERBOS_HUB_WORKSPACE_SECRET", "CERBOS_CLOUD_SECRET_KEY"},
+	BundleVersion:      {"CERBOS_HUB_BUNDLE_VERSION"},
 }
 
 func GetEnv(key EnvVarKey) string {
