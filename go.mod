@@ -284,3 +284,5 @@ require (
 	modernc.org/token v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/cerbos/cloud-api => /Users/oguzhan/github/oguzhand95/cloud-api
