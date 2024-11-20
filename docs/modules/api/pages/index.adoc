@@ -553,7 +553,7 @@ docker run --rm -v $(pwd):/oas openapitools/openapi-generator-cli generate -i /o
 
 **Any language**
 
-You can access the Cerbos protobuf definitions from the link:https://github.com/cerbos/cerbos/tree/main/api/cerbos[Cerbos source tree]. However, the easiest way to generate client code for your preferred language is to use the link:https://docs.buf.build[Buf build tool] to obtain the published API definitions from the link:https://buf.build/cerbos/cerbos-api[Buf schema registry (BSR)].
+You can access the Cerbos protobuf definitions from the link:https://github.com/cerbos/cerbos/tree/main/api[Cerbos source tree]. However, the easiest way to generate client code for your preferred language is to use the link:https://docs.buf.build[Buf build tool] to obtain the published API definitions from the link:https://buf.build/cerbos/cerbos-api[Buf schema registry (BSR)].
 
 * Run `buf export buf.build/cerbos/cerbos-api -o proto` to download the API definitions with dependencies to the `proto` directory.
 
@@ -572,7 +572,7 @@ The link:https://pkg.go.dev/github.com/cerbos/cerbos/client[Cerbos Go SDK] uses 
 go get github.com/cerbos/cerbos/api
 ----
 
-You can also make use of the link:https://docs.buf.build/tour/use-remote-generation[remote generation feature of Buf schema registry] to pull down the Cerbos gRPC API as a Go module:
+You can also make use of the link:https://docs.buf.build/generate/remote-plugins[remote plugins feature of Buf schema registry] or the link:https://buf.build/cerbos[generated SDKs] to pull down the Cerbos gRPC API as a Go module:
 
 [source,sh]
 ----
