@@ -5,11 +5,13 @@ package hub
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"sync"
 
+	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
@@ -39,19 +41,36 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 		return nil, err
 	}
 
-	return NewLocalSource(LocalParams{
-		BundlePath: conf.Local.BundlePath,
-		SecretKey:  conf.Credentials.WorkspaceSecret,
-		TempDir:    conf.Local.TempDir,
-		CacheSize:  conf.CacheSize,
-	})
+	lp := LocalParams{
+		BundlePath:    conf.Local.BundlePath,
+		TempDir:       conf.Local.TempDir,
+		CacheSize:     conf.CacheSize,
+		BundleVersion: conf.BundleVersion,
+	}
+
+	if conf.Credentials != nil {
+		lp.SecretKey = conf.Credentials.WorkspaceSecret
+	}
+
+	if conf.Local != nil && conf.Local.EncryptionKey != "" {
+		encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode encryption key: %w", err)
+		}
+
+		lp.EncryptionKey = encryptionKey
+	}
+
+	return NewLocalSource(lp)
 }
 
 type LocalParams struct {
-	BundlePath string
-	TempDir    string
-	SecretKey  string
-	CacheSize  uint
+	BundlePath    string
+	TempDir       string
+	SecretKey     string
+	EncryptionKey []byte
+	CacheSize     uint
+	BundleVersion cloudapi.Version
 }
 
 func NewLocalSource(params LocalParams) (*LocalSource, error) {
@@ -73,33 +92,48 @@ func (ls *LocalSource) loadBundle() error {
 		return fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 
-	var creds *credentials.Credentials
-	if ls.params.SecretKey != "" {
-		creds, err = credentials.New("unknown", "unknown", ls.params.SecretKey)
-		if err != nil {
-			return fmt.Errorf("failed to create credentials: %w", err)
-		}
-	}
-
 	bundlePath := ls.params.BundlePath
 	opts := OpenOpts{
-		Source:      "local",
-		BundlePath:  bundlePath,
-		ScratchFS:   afero.NewBasePathFs(afero.NewOsFs(), workDir),
-		Credentials: creds,
-		CacheSize:   ls.params.CacheSize,
+		Source:     "local",
+		BundlePath: bundlePath,
+		ScratchFS:  afero.NewBasePathFs(afero.NewOsFs(), workDir),
+		CacheSize:  ls.params.CacheSize,
 	}
 
-	bundle, err := Open(opts)
-	if err != nil {
-		if err := os.RemoveAll(workDir); err != nil {
-			zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
+	var b *Bundle
+	switch ls.params.BundleVersion {
+	case cloudapi.Version1:
+		var creds *credentials.Credentials
+		if ls.params.SecretKey != "" {
+			creds, err = credentials.New("unknown", "unknown", ls.params.SecretKey)
+			if err != nil {
+				return fmt.Errorf("failed to create credentials: %w", err)
+			}
 		}
-		return fmt.Errorf("failed to open bundle %q: %w", bundlePath, err)
+
+		opts.Credentials = creds
+		if b, err = Open(opts); err != nil {
+			if err := os.RemoveAll(workDir); err != nil {
+				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
+			}
+
+			return fmt.Errorf("failed to open bundle: %w", err)
+		}
+	case cloudapi.Version2:
+		opts.EncryptionKey = ls.params.EncryptionKey
+		if b, err = OpenV2(opts); err != nil {
+			if err := os.RemoveAll(workDir); err != nil {
+				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
+			}
+
+			return fmt.Errorf("failed to open bundle v2: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported bundle version: %d", ls.params.BundleVersion)
 	}
 
 	cleanupFn := func() (outErr error) {
-		if err := bundle.Release(); err != nil {
+		if err := b.Release(); err != nil {
 			outErr = multierr.Append(outErr, fmt.Errorf("failed to release bundle %q: %w", bundlePath, err))
 		}
 
@@ -113,7 +147,7 @@ func (ls *LocalSource) loadBundle() error {
 	ls.mu.Lock()
 	prevCleanupFn := ls.cleanup
 	ls.cleanup = cleanupFn
-	ls.bundle = bundle
+	ls.bundle = b
 	ls.mu.Unlock()
 
 	if prevCleanupFn != nil {
