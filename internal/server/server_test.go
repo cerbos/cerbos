@@ -34,6 +34,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	hubstore "github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cloud-api/bundle"
 )
 
 // NOTE(saml) this is the max allowable path length on macOS, which appears to be the shortest of common platforms (at 104).
@@ -86,8 +87,9 @@ func TestServer(t *testing.T) {
 			require.NoError(t, err, "Failed to read secret key")
 
 			conf := &hubstore.Conf{
-				CacheSize:   1024,
-				Credentials: &hub.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))},
+				BundleVersion: bundle.Version1,
+				CacheSize:     1024,
+				Credentials:   &hub.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))},
 				Local: &hubstore.LocalSourceConf{
 					BundlePath: filepath.Join(dir, "bundle.crbp"),
 					TempDir:    t.TempDir(),
