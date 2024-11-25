@@ -553,14 +553,13 @@ docker run --rm -v $(pwd):/oas openapitools/openapi-generator-cli generate -i /o
 
 **Any language**
 
-You can access the Cerbos protobuf definitions from the link:https://github.com/cerbos/cerbos/tree/main/api/cerbos[Cerbos source tree]. However, the easiest way to generate client code for your preferred language is to use the link:https://docs.buf.build[Buf build tool] to obtain the published API definitions from the link:https://buf.build/cerbos/cerbos-api[Buf schema registry (BSR)].
+You can access the Cerbos protobuf definitions from the link:https://github.com/cerbos/cerbos/tree/main/api[Cerbos source tree]. However, the easiest way to generate client code for your preferred language is to use the link:https://docs.buf.build[Buf build tool] to obtain the published API definitions from the link:https://buf.build/cerbos/cerbos-api[Buf schema registry (BSR)].
 
 * Run `buf export buf.build/cerbos/cerbos-api -o proto` to download the API definitions with dependencies to the `proto` directory.
 
 * You can now use link:https://docs.buf.build/generate-usage[`buf generate`] or `protoc` to generate code using the protobufs available in the `proto` directory.
 
-* If you don't want to download protobufs and then to generate code using `buf` or `protoc`, you can use the link:https://github.com/cerbos/grpc-tools[Cerbos grpc-tools container] to generate code for languages like Java, NodeJS, Python, C# etc.
-
+NOTE: link:https://buf.build/cerbos/cerbos-api/sdks[BSR generated SDKs] feature can be used to download pre-packaged, generated code for supported languages.
 
 
 **Go**
@@ -569,12 +568,11 @@ The link:https://pkg.go.dev/github.com/cerbos/cerbos/client[Cerbos Go SDK] uses 
 
 [source,sh]
 ----
-go get github.com/cerbos/cerbos/api
+go get github.com/cerbos/cerbos/api/genpb
 ----
-
-You can also make use of the link:https://docs.buf.build/tour/use-remote-generation[remote generation feature of Buf schema registry] to pull down the Cerbos gRPC API as a Go module:
+You can also make use link:https://buf.build/cerbos/cerbos-api[Buf generated SDKs] to pull down the Cerbos gRPC API as a Go module:
 
 [source,sh]
 ----
-go get go.buf.build/cerbos/gen-go/cerbos/cerbos-api
+go get buf.build/gen/go/cerbos/cerbos-api/grpc/go@latest
 ----
