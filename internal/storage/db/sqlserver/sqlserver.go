@@ -54,6 +54,7 @@ func init() {
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	log := logging.FromContext(ctx).Named("sqlserver")
+	log.Warn("[DEPRECATED] SQL Server storage is deprecated and will not be available in the next Cerbos release")
 	log.Info("Initialising SQL Server storage")
 
 	db, err := internal.ConnectWithRetries(DriverName, conf.URL, conf.ConnRetry)
