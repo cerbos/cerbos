@@ -1,0 +1,196 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.40.0]
+= Cerbos v0.40.0
+
+== Highlights
+
+xref:policies:variables.adoc#constants[Constants] are a new way of defining structured, constant values that can be referenced in policy conditions. They differ from xref:policies:variables.adoc#variables[Variables] in two ways:
+
+- They must be static constant values. Dynamic values calculated using CEL expressions are not allowed.
+- They can be defined with YAML primitives such as lists, maps, numbers, strings etc. Variables, on the other hand, always have to be defined as strings -- which make them awkward for defining lists or maps.
+
+This release includes several enhancements to the policy testing framework to help reduce repetition, increase readability and increase reliability.
+
+Multiple principals and/or resources can be referenced in a test expectation instead of just a single principal and a resource. This helps get rid of repetition and reduces the verbosity of test cases.
+
+
+[options="header",cols="a,a"]
+|===
+| Before
+| After
+|
+[source,yaml]
+----
+  - name: Multiple principals and resources
+    input:
+      principals:
+        - bev
+        - barb
+      resources:
+        - leave_request
+        - cancelled_leave_request
+      actions:
+        - edit
+        - view
+      auxData: myJWT
+    expected:
+      - principal: bev
+        resource:  leave_request
+        actions:
+          edit: EFFECT_ALLOW
+          view: EFFECT_ALLOW
+
+      - principal: bev
+        resource:  cancelled_leave_request
+        actions:
+          edit: EFFECT_ALLOW
+          view: EFFECT_ALLOW
+
+      - principal: barb
+        resource:  leave_request
+        actions:
+          edit: EFFECT_ALLOW
+          view: EFFECT_ALLOW
+
+      - principal: barb
+        resource:  cancelled_leave_request
+        actions:
+          edit: EFFECT_ALLOW
+          view: EFFECT_ALLOW
+
+----
+|
+[source,yaml]
+----
+  - name: Multiple principals and resources
+    input:
+      principals:
+        - bev
+        - barb
+      resources:
+        - leave_request
+        - cancelled_leave_request
+      actions:
+        - edit
+        - view
+    expected:
+      - principals:
+          - bev
+          - barb
+        resources:
+          - leave_request
+          - cancelled_leave_request
+        actions:
+          edit: EFFECT_ALLOW
+          view: EFFECT_ALLOW
+----
+|===
+
+
+Test fixtures now allow creating groups of principals or resources. These grouped principals or resources can be referenced by their group name in the test cases to further avoid duplication and make tests more readable.
+
+[source,yaml]
+----
+principalGroups:
+  managers:
+    - bev
+    - barb
+
+resourceGroups:
+  all_leave_requests:
+    - leave_request
+    - cancelled_leave_request
+
+tests:
+  - name: Grouped principals and resources
+    input:
+      principalGroups:
+        - managers
+      resourceGroups:
+        - all_leave_requests
+      actions:
+        - edit
+        - view
+    expected:
+      - principalGroups:
+          - managers
+        resources:
+          - all_leave_requests
+        actions:
+          edit: EFFECT_ALLOW
+          view: EFFECT_ALLOW
+----
+
+Tests that exercise policies with time-based conditions must define the value of `now` at the test suite level or at individual test case level. This ensures that tests are not flaky depending on the time of day the tests are run.
+
+This is the last Cerbos release with support for SQL Server as a policy storage backend. It will be removed in the next release of Cerbos. This is due to low uptake and the lack of resources and expertise to maintain and support it going forward.
+
+This release also includes several updates related to the experimental role policy feature. That feature is still at alpha level and is not recommended for production use.
+
+== Changelog
+
+
+=== Bug Fixes
+
+* A policy with only conditional DENY rule must produce `ALWAYS_DENIED` (link:https://github.com/cerbos/cerbos/pull/2369[#2369])
+* Command execution fails with `cerbos run` since v0.39  (link:https://github.com/cerbos/cerbos/pull/2358[#2358])
+* Populate path field of validation errors (link:https://github.com/cerbos/cerbos/pull/2363[#2363])
+* Remove whitespace chomp for priorityClassName so valid yaml is rendered (link:https://github.com/cerbos/cerbos/pull/2337[#2337])
+
+=== Features
+
+* Allow default policy version to be configured in tests (link:https://github.com/cerbos/cerbos/pull/2352[#2352])
+* Define constants for use in condition expressions (link:https://github.com/cerbos/cerbos/pull/2364[#2364])
+* Multiple principals and/or resources in a test case (link:https://github.com/cerbos/cerbos/pull/2338[#2338])
+* Support constants in `cerbosctl` (link:https://github.com/cerbos/cerbos/pull/2365[#2365])
+* Use groups of principals and/or resources in test cases (link:https://github.com/cerbos/cerbos/pull/2340[#2340])
+
+=== Enhancements
+
+* Add user-agent to default allowed headers for CORS (link:https://github.com/cerbos/cerbos/pull/2345[#2345])
+* Introduce policy scope FALL_THROUGH_ON_ALLOW strategy (link:https://github.com/cerbos/cerbos/pull/2325[#2325])
+* Make `--verbose` less noisy in combination with `--run` (link:https://github.com/cerbos/cerbos/pull/2351[#2351])
+* Make `now` fully deterministic (link:https://github.com/cerbos/cerbos/pull/2353[#2353])
+* Make scopePermissions a required field on role policies (link:https://github.com/cerbos/cerbos/pull/2333[#2333])
+* Query plan scope permissions support for resource and principal policies (link:https://github.com/cerbos/cerbos/pull/2361[#2361])
+* #**BREAKING**# Report an error if a test exercised time-based policy conditions without specifying `now` (link:https://github.com/cerbos/cerbos/pull/2354[#2354])
+* Role policies parent roles field (link:https://github.com/cerbos/cerbos/pull/2349[#2349])
+* Validate fixtures files with JSON schemas to improve error messages (link:https://github.com/cerbos/cerbos/pull/2346[#2346])
+
+=== Documentation
+
+* Remove extraneous space that breaks rendering (link:https://github.com/cerbos/cerbos/pull/2347[#2347])
+* Update gRPC API section (link:https://github.com/cerbos/cerbos/pull/2387[#2387])
+
+=== Chores
+
+* Add RAG use case (link:https://github.com/cerbos/cerbos/pull/2374[#2374])
+* Add SQL Server deprecation notice (link:https://github.com/cerbos/cerbos/pull/2390[#2390])
+* Bump github.com/golang-jwt/jwt/v4 from 4.5.0 to 4.5.1 in /tools (link:https://github.com/cerbos/cerbos/pull/2378[#2378])
+* Bump version to 0.40.0
+* Increase E2E test timeout (link:https://github.com/cerbos/cerbos/pull/2359[#2359])
+* Replace deprecated `snapshot.name_template` field in GoReleaser config (link:https://github.com/cerbos/cerbos/pull/2370[#2370])
+* Revert to upstream go-yaml (link:https://github.com/cerbos/cerbos/pull/2383[#2383])
+* Skip SQL Server tests when container fails (link:https://github.com/cerbos/cerbos/pull/2339[#2339])
+* Update AWS Helm docs (link:https://github.com/cerbos/cerbos/pull/2372[#2372])
+* Update bufbuild/buf-setup-action action to v1.45.0 (link:https://github.com/cerbos/cerbos/pull/2334[#2334])
+* Update bufbuild/buf-setup-action action to v1.47.2 (link:https://github.com/cerbos/cerbos/pull/2382[#2382])
+* Update dependency node to v22 (link:https://github.com/cerbos/cerbos/pull/2377[#2377])
+* Update dependency verdaccio to v6 (link:https://github.com/cerbos/cerbos/pull/2357[#2357])
+* Update generated API module version before tagging (link:https://github.com/cerbos/cerbos/pull/2350[#2350])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2332[#2332])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2375[#2375])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2331[#2331])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2335[#2335])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2355[#2355])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2360[#2360])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2367[#2367])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2376[#2376])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2381[#2381])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2385[#2385])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2356[#2356])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2386[#2386])
+* Update pnpm to v9.12.3 (link:https://github.com/cerbos/cerbos/pull/2368[#2368])
+* Update required Go version (link:https://github.com/cerbos/cerbos/pull/2371[#2371])
+* Use latest cloud-api and protobufs (link:https://github.com/cerbos/cerbos/pull/2388[#2388])
