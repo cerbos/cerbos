@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.25.6
 	github.com/aws/smithy-go v1.22.1
 	github.com/bluele/gcache v0.0.2
-	github.com/bufbuild/protovalidate-go v0.7.3
+	github.com/bufbuild/protovalidate-go v0.7.2
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cerbos/cerbos-sdk-go v0.2.11
 	github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241118123540-0a49f4206b21
@@ -34,7 +34,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/goccy/go-yaml v1.14.3
 	github.com/golang-migrate/migrate/v4 v4.18.1
-	github.com/google/cel-go v0.22.1
+	github.com/google/cel-go v0.21.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.6.0
