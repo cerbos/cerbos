@@ -215,7 +215,7 @@ storage:
     # This section is required only if storage.driver is sqlite3.
     dsn: ":memory:?_fk=true" # Required. Data source name
   sqlserver:
-    # This section is required only if storage.driver is sqlserver.
+    # Deprecated. SQL Server will no longer be supported in future Cerbos releases.
     connPool: 
       maxLifeTime: 60m
       maxIdleTime: 45s

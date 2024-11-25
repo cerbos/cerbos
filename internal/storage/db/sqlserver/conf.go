@@ -11,7 +11,7 @@ import (
 const confKey = storage.ConfKey + ".sqlserver"
 
 // Conf is required (if driver is set to 'sqlserver') configuration for mssql driver.
-// +desc=This section is required only if storage.driver is sqlserver.
+// +desc=Deprecated. SQL Server will no longer be supported in future Cerbos releases.
 type Conf struct {
 	ConnPool  *internal.ConnPoolConf  `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
 	ConnRetry *internal.ConnRetryConf `yaml:"connRetry" conf:",example=\n  maxAttempts: 3\n  initialInterval: 0.5s\n  maxInterval: 60s"`
