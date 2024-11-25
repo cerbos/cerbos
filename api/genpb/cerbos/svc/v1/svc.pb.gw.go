@@ -10,6 +10,7 @@ package svcv1
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 
@@ -25,490 +26,442 @@ import (
 )
 
 // Suppress "imported and not used" errors
-var _ codes.Code
-var _ io.Reader
-var _ status.Status
-var _ = runtime.String
-var _ = utilities.NewDoubleArray
-var _ = metadata.Join
+var (
+	_ codes.Code
+	_ io.Reader
+	_ status.Status
+	_ = errors.New
+	_ = runtime.String
+	_ = utilities.NewDoubleArray
+	_ = metadata.Join
+)
 
 func request_CerbosService_CheckResourceSet_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.CheckResourceSetRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.CheckResourceSetRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.CheckResourceSet(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosService_CheckResourceSet_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.CheckResourceSetRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.CheckResourceSetRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.CheckResourceSet(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosService_CheckResourceBatch_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.CheckResourceBatchRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.CheckResourceBatchRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.CheckResourceBatch(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosService_CheckResourceBatch_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.CheckResourceBatchRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.CheckResourceBatchRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.CheckResourceBatch(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosService_CheckResources_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.CheckResourcesRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.CheckResourcesRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.CheckResources(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosService_CheckResources_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.CheckResourcesRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.CheckResourcesRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.CheckResources(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosService_ServerInfo_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ServerInfoRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ServerInfoRequest
+		metadata runtime.ServerMetadata
+	)
 	msg, err := client.ServerInfo(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosService_ServerInfo_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ServerInfoRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ServerInfoRequest
+		metadata runtime.ServerMetadata
+	)
 	msg, err := server.ServerInfo(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosService_PlanResources_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlanResourcesRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlanResourcesRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.PlanResources(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosService_PlanResources_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlanResourcesRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlanResourcesRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.PlanResources(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosAdminService_AddOrUpdatePolicy_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdatePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdatePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.AddOrUpdatePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_AddOrUpdatePolicy_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdatePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdatePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.AddOrUpdatePolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosAdminService_AddOrUpdatePolicy_1(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdatePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdatePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.AddOrUpdatePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_AddOrUpdatePolicy_1(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdatePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdatePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.AddOrUpdatePolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_InspectPolicies_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_InspectPolicies_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_InspectPolicies_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.InspectPoliciesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.InspectPoliciesRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_InspectPolicies_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.InspectPolicies(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_InspectPolicies_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.InspectPoliciesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.InspectPoliciesRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_InspectPolicies_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.InspectPolicies(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_ListPolicies_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_ListPolicies_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_ListPolicies_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ListPoliciesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ListPoliciesRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_ListPolicies_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.ListPolicies(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_ListPolicies_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ListPoliciesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ListPoliciesRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_ListPolicies_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.ListPolicies(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_GetPolicy_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_GetPolicy_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_GetPolicy_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.GetPolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.GetPolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_GetPolicy_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetPolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_GetPolicy_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.GetPolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.GetPolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_GetPolicy_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetPolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_DisablePolicy_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_DisablePolicy_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_DisablePolicy_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DisablePolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.DisablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DisablePolicy_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.DisablePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_DisablePolicy_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DisablePolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.DisablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DisablePolicy_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.DisablePolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosAdminService_DisablePolicy_1(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DisablePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.DisablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.DisablePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_DisablePolicy_1(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DisablePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.DisablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.DisablePolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_DisablePolicy_2 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_DisablePolicy_2 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_DisablePolicy_2(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DisablePolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.DisablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DisablePolicy_2); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.DisablePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_DisablePolicy_2(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DisablePolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.DisablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DisablePolicy_2); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.DisablePolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_EnablePolicy_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_EnablePolicy_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_EnablePolicy_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.EnablePolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.EnablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_EnablePolicy_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.EnablePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_EnablePolicy_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.EnablePolicyRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.EnablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_EnablePolicy_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.EnablePolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosAdminService_EnablePolicy_1(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.EnablePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.EnablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.EnablePolicy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_EnablePolicy_1(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.EnablePolicyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.EnablePolicyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.EnablePolicy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_ListAuditLogEntries_0 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
+var filter_CerbosAdminService_ListAuditLogEntries_0 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_CerbosAdminService_ListAuditLogEntries_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (CerbosAdminService_ListAuditLogEntriesClient, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ListAuditLogEntriesRequest
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		e   int32
-		ok  bool
-		err error
-		_   = err
+		protoReq requestv1.ListAuditLogEntriesRequest
+		metadata runtime.ServerMetadata
+		e        int32
+		err      error
 	)
-
-	val, ok = pathParams["kind"]
+	val, ok := pathParams["kind"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
 	}
-
 	e, err = runtime.Enum(val, requestv1.ListAuditLogEntriesRequest_Kind_value)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
 	}
-
 	protoReq.Kind = requestv1.ListAuditLogEntriesRequest_Kind(e)
-
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_ListAuditLogEntries_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	stream, err := client.ListAuditLogEntries(ctx, &protoReq)
 	if err != nil {
 		return nil, metadata, err
@@ -519,289 +472,264 @@ func request_CerbosAdminService_ListAuditLogEntries_0(ctx context.Context, marsh
 	}
 	metadata.HeaderMD = header
 	return stream, metadata, nil
-
 }
 
 func request_CerbosAdminService_AddOrUpdateSchema_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdateSchemaRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdateSchemaRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.AddOrUpdateSchema(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_AddOrUpdateSchema_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdateSchemaRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdateSchemaRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.AddOrUpdateSchema(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosAdminService_AddOrUpdateSchema_1(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdateSchemaRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdateSchemaRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.AddOrUpdateSchema(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_AddOrUpdateSchema_1(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.AddOrUpdateSchemaRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.AddOrUpdateSchemaRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.AddOrUpdateSchema(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosAdminService_ListSchemas_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ListSchemasRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ListSchemasRequest
+		metadata runtime.ServerMetadata
+	)
 	msg, err := client.ListSchemas(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_ListSchemas_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ListSchemasRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ListSchemasRequest
+		metadata runtime.ServerMetadata
+	)
 	msg, err := server.ListSchemas(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_GetSchema_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_GetSchema_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_GetSchema_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.GetSchemaRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.GetSchemaRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_GetSchema_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetSchema(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_GetSchema_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.GetSchemaRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.GetSchemaRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_GetSchema_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetSchema(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_DeleteSchema_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_DeleteSchema_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_DeleteSchema_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DeleteSchemaRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.DeleteSchemaRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DeleteSchema_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.DeleteSchema(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_DeleteSchema_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.DeleteSchemaRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.DeleteSchemaRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DeleteSchema_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.DeleteSchema(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_CerbosAdminService_ReloadStore_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_CerbosAdminService_ReloadStore_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_CerbosAdminService_ReloadStore_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ReloadStoreRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ReloadStoreRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_ReloadStore_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.ReloadStore(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosAdminService_ReloadStore_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.ReloadStoreRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq requestv1.ReloadStoreRequest
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_ReloadStore_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.ReloadStore(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosPlaygroundService_PlaygroundValidate_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundValidateRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundValidateRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.PlaygroundValidate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosPlaygroundService_PlaygroundValidate_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosPlaygroundServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundValidateRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundValidateRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.PlaygroundValidate(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosPlaygroundService_PlaygroundTest_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundTestRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundTestRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.PlaygroundTest(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosPlaygroundService_PlaygroundTest_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosPlaygroundServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundTestRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundTestRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.PlaygroundTest(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosPlaygroundService_PlaygroundEvaluate_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundEvaluateRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundEvaluateRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.PlaygroundEvaluate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosPlaygroundService_PlaygroundEvaluate_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosPlaygroundServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundEvaluateRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundEvaluateRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.PlaygroundEvaluate(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_CerbosPlaygroundService_PlaygroundProxy_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundProxyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundProxyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.PlaygroundProxy(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_CerbosPlaygroundService_PlaygroundProxy_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosPlaygroundServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundProxyRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq requestv1.PlaygroundProxyRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.PlaygroundProxy(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 // RegisterCerbosServiceHandlerServer registers the http handlers for service CerbosService to "mux".
@@ -810,16 +738,13 @@ func local_request_CerbosPlaygroundService_PlaygroundProxy_0(ctx context.Context
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCerbosServiceHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CerbosServiceServer) error {
-
-	mux.Handle("POST", pattern_CerbosService_CheckResourceSet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_CheckResourceSet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceSet", runtime.WithHTTPPathPattern("/api/check"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceSet", runtime.WithHTTPPathPattern("/api/check"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -831,20 +756,15 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_CheckResourceSet_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosService_CheckResourceBatch_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_CheckResourceBatch_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceBatch", runtime.WithHTTPPathPattern("/api/check_resource_batch"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceBatch", runtime.WithHTTPPathPattern("/api/check_resource_batch"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -856,20 +776,15 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_CheckResourceBatch_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosService_CheckResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_CheckResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResources", runtime.WithHTTPPathPattern("/api/check/resources"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResources", runtime.WithHTTPPathPattern("/api/check/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -881,20 +796,15 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_CheckResources_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosService_ServerInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosService_ServerInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ServerInfo", runtime.WithHTTPPathPattern("/api/server_info"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ServerInfo", runtime.WithHTTPPathPattern("/api/server_info"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -906,20 +816,15 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_ServerInfo_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosService_PlanResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_PlanResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/PlanResources", runtime.WithHTTPPathPattern("/api/plan/resources"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/PlanResources", runtime.WithHTTPPathPattern("/api/plan/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -931,9 +836,7 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_PlanResources_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil
@@ -945,16 +848,13 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCerbosAdminServiceHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CerbosAdminServiceServer) error {
-
-	mux.Handle("POST", pattern_CerbosAdminService_AddOrUpdatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_AddOrUpdatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -966,20 +866,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdatePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_AddOrUpdatePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_AddOrUpdatePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -991,20 +886,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdatePolicy_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_InspectPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_InspectPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/InspectPolicies", runtime.WithHTTPPathPattern("/admin/policies/inspect"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/InspectPolicies", runtime.WithHTTPPathPattern("/admin/policies/inspect"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1016,20 +906,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_InspectPolicies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_ListPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ListPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListPolicies", runtime.WithHTTPPathPattern("/admin/policies"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListPolicies", runtime.WithHTTPPathPattern("/admin/policies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1041,20 +926,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_ListPolicies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetPolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetPolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1066,20 +946,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_GetPolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosAdminService_DisablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_DisablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1091,20 +966,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DisablePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_DisablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_DisablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1116,20 +986,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DisablePolicy_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("DELETE", pattern_CerbosAdminService_DisablePolicy_2, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_CerbosAdminService_DisablePolicy_2, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1141,20 +1006,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DisablePolicy_2(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosAdminService_EnablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_EnablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1166,20 +1026,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_EnablePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_EnablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_EnablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1191,27 +1046,22 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_EnablePolicy_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
-	mux.Handle("GET", pattern_CerbosAdminService_ListAuditLogEntries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ListAuditLogEntries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 		return
 	})
-
-	mux.Handle("POST", pattern_CerbosAdminService_AddOrUpdateSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_AddOrUpdateSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1223,20 +1073,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdateSchema_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_AddOrUpdateSchema_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_AddOrUpdateSchema_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1248,20 +1093,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdateSchema_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_ListSchemas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ListSchemas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListSchemas", runtime.WithHTTPPathPattern("/admin/schemas"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListSchemas", runtime.WithHTTPPathPattern("/admin/schemas"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1273,20 +1113,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_ListSchemas_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_GetSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_GetSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1298,20 +1133,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_GetSchema_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("DELETE", pattern_CerbosAdminService_DeleteSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_CerbosAdminService_DeleteSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DeleteSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DeleteSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1323,20 +1153,15 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DeleteSchema_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_ReloadStore_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ReloadStore_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ReloadStore", runtime.WithHTTPPathPattern("/admin/store/reload"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ReloadStore", runtime.WithHTTPPathPattern("/admin/store/reload"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1348,9 +1173,7 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_ReloadStore_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil
@@ -1362,16 +1185,13 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCerbosPlaygroundServiceHandlerFromEndpoint instead.
 // GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CerbosPlaygroundServiceServer) error {
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate", runtime.WithHTTPPathPattern("/api/playground/validate"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate", runtime.WithHTTPPathPattern("/api/playground/validate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1383,20 +1203,15 @@ func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundValidate_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundTest_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundTest_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundTest", runtime.WithHTTPPathPattern("/api/playground/test"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundTest", runtime.WithHTTPPathPattern("/api/playground/test"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1408,20 +1223,15 @@ func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundTest_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundEvaluate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundEvaluate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate", runtime.WithHTTPPathPattern("/api/playground/evaluate"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate", runtime.WithHTTPPathPattern("/api/playground/evaluate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1433,20 +1243,15 @@ func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundEvaluate_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundProxy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundProxy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundProxy", runtime.WithHTTPPathPattern("/api/playground/proxy"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundProxy", runtime.WithHTTPPathPattern("/api/playground/proxy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1458,9 +1263,7 @@ func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundProxy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil
@@ -1487,7 +1290,6 @@ func RegisterCerbosServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.
 			}
 		}()
 	}()
-
 	return RegisterCerbosServiceHandler(ctx, mux, conn)
 }
 
@@ -1503,14 +1305,11 @@ func RegisterCerbosServiceHandler(ctx context.Context, mux *runtime.ServeMux, co
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "CerbosServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CerbosServiceClient) error {
-
-	mux.Handle("POST", pattern_CerbosService_CheckResourceSet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_CheckResourceSet_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceSet", runtime.WithHTTPPathPattern("/api/check"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceSet", runtime.WithHTTPPathPattern("/api/check"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1521,18 +1320,13 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_CheckResourceSet_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosService_CheckResourceBatch_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_CheckResourceBatch_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceBatch", runtime.WithHTTPPathPattern("/api/check_resource_batch"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResourceBatch", runtime.WithHTTPPathPattern("/api/check_resource_batch"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1543,18 +1337,13 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_CheckResourceBatch_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosService_CheckResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_CheckResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResources", runtime.WithHTTPPathPattern("/api/check/resources"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CheckResources", runtime.WithHTTPPathPattern("/api/check/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1565,18 +1354,13 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_CheckResources_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosService_ServerInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosService_ServerInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ServerInfo", runtime.WithHTTPPathPattern("/api/server_info"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ServerInfo", runtime.WithHTTPPathPattern("/api/server_info"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1587,18 +1371,13 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_ServerInfo_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosService_PlanResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosService_PlanResources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/PlanResources", runtime.WithHTTPPathPattern("/api/plan/resources"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/PlanResources", runtime.WithHTTPPathPattern("/api/plan/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1609,36 +1388,25 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosService_PlanResources_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
 	return nil
 }
 
 var (
-	pattern_CerbosService_CheckResourceSet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "check"}, ""))
-
+	pattern_CerbosService_CheckResourceSet_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "check"}, ""))
 	pattern_CerbosService_CheckResourceBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "check_resource_batch"}, ""))
-
-	pattern_CerbosService_CheckResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "check", "resources"}, ""))
-
-	pattern_CerbosService_ServerInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "server_info"}, ""))
-
-	pattern_CerbosService_PlanResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "plan", "resources"}, ""))
+	pattern_CerbosService_CheckResources_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "check", "resources"}, ""))
+	pattern_CerbosService_ServerInfo_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "server_info"}, ""))
+	pattern_CerbosService_PlanResources_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "plan", "resources"}, ""))
 )
 
 var (
-	forward_CerbosService_CheckResourceSet_0 = runtime.ForwardResponseMessage
-
+	forward_CerbosService_CheckResourceSet_0   = runtime.ForwardResponseMessage
 	forward_CerbosService_CheckResourceBatch_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosService_CheckResources_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosService_ServerInfo_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosService_PlanResources_0 = runtime.ForwardResponseMessage
+	forward_CerbosService_CheckResources_0     = runtime.ForwardResponseMessage
+	forward_CerbosService_ServerInfo_0         = runtime.ForwardResponseMessage
+	forward_CerbosService_PlanResources_0      = runtime.ForwardResponseMessage
 )
 
 // RegisterCerbosAdminServiceHandlerFromEndpoint is same as RegisterCerbosAdminServiceHandler but
@@ -1662,7 +1430,6 @@ func RegisterCerbosAdminServiceHandlerFromEndpoint(ctx context.Context, mux *run
 			}
 		}()
 	}()
-
 	return RegisterCerbosAdminServiceHandler(ctx, mux, conn)
 }
 
@@ -1678,14 +1445,11 @@ func RegisterCerbosAdminServiceHandler(ctx context.Context, mux *runtime.ServeMu
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "CerbosAdminServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CerbosAdminServiceClient) error {
-
-	mux.Handle("POST", pattern_CerbosAdminService_AddOrUpdatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_AddOrUpdatePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1696,18 +1460,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdatePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_AddOrUpdatePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_AddOrUpdatePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1718,18 +1477,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdatePolicy_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_InspectPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_InspectPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/InspectPolicies", runtime.WithHTTPPathPattern("/admin/policies/inspect"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/InspectPolicies", runtime.WithHTTPPathPattern("/admin/policies/inspect"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1740,18 +1494,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_InspectPolicies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_ListPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ListPolicies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListPolicies", runtime.WithHTTPPathPattern("/admin/policies"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListPolicies", runtime.WithHTTPPathPattern("/admin/policies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1762,18 +1511,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_ListPolicies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_GetPolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetPolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetPolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1784,18 +1528,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_GetPolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosAdminService_DisablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_DisablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1806,18 +1545,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DisablePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_DisablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_DisablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy/disable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1828,18 +1562,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DisablePolicy_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("DELETE", pattern_CerbosAdminService_DisablePolicy_2, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_CerbosAdminService_DisablePolicy_2, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DisablePolicy", runtime.WithHTTPPathPattern("/admin/policy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1850,18 +1579,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DisablePolicy_2(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosAdminService_EnablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_EnablePolicy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1872,18 +1596,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_EnablePolicy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_EnablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_EnablePolicy_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/EnablePolicy", runtime.WithHTTPPathPattern("/admin/policy/enable"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1894,18 +1613,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_EnablePolicy_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_ListAuditLogEntries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ListAuditLogEntries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListAuditLogEntries", runtime.WithHTTPPathPattern("/admin/auditlog/list/{kind}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListAuditLogEntries", runtime.WithHTTPPathPattern("/admin/auditlog/list/{kind}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1916,18 +1630,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_ListAuditLogEntries_0(annotatedContext, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosAdminService_AddOrUpdateSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosAdminService_AddOrUpdateSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1938,18 +1647,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdateSchema_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("PUT", pattern_CerbosAdminService_AddOrUpdateSchema_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPut, pattern_CerbosAdminService_AddOrUpdateSchema_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1960,18 +1664,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_AddOrUpdateSchema_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_ListSchemas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ListSchemas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListSchemas", runtime.WithHTTPPathPattern("/admin/schemas"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ListSchemas", runtime.WithHTTPPathPattern("/admin/schemas"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1982,18 +1681,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_ListSchemas_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_GetSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_GetSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/GetSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2004,18 +1698,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_GetSchema_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("DELETE", pattern_CerbosAdminService_DeleteSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodDelete, pattern_CerbosAdminService_DeleteSchema_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DeleteSchema", runtime.WithHTTPPathPattern("/admin/schema"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/DeleteSchema", runtime.WithHTTPPathPattern("/admin/schema"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2026,18 +1715,13 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_DeleteSchema_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_CerbosAdminService_ReloadStore_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_CerbosAdminService_ReloadStore_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ReloadStore", runtime.WithHTTPPathPattern("/admin/store/reload"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosAdminService/ReloadStore", runtime.WithHTTPPathPattern("/admin/store/reload"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2048,84 +1732,49 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosAdminService_ReloadStore_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
 	return nil
 }
 
 var (
-	pattern_CerbosAdminService_AddOrUpdatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
-
-	pattern_CerbosAdminService_AddOrUpdatePolicy_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
-
-	pattern_CerbosAdminService_InspectPolicies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policies", "inspect"}, ""))
-
-	pattern_CerbosAdminService_ListPolicies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policies"}, ""))
-
-	pattern_CerbosAdminService_GetPolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
-
-	pattern_CerbosAdminService_DisablePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "disable"}, ""))
-
-	pattern_CerbosAdminService_DisablePolicy_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "disable"}, ""))
-
-	pattern_CerbosAdminService_DisablePolicy_2 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
-
-	pattern_CerbosAdminService_EnablePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "enable"}, ""))
-
-	pattern_CerbosAdminService_EnablePolicy_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "enable"}, ""))
-
+	pattern_CerbosAdminService_AddOrUpdatePolicy_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
+	pattern_CerbosAdminService_AddOrUpdatePolicy_1   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
+	pattern_CerbosAdminService_InspectPolicies_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policies", "inspect"}, ""))
+	pattern_CerbosAdminService_ListPolicies_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policies"}, ""))
+	pattern_CerbosAdminService_GetPolicy_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
+	pattern_CerbosAdminService_DisablePolicy_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "disable"}, ""))
+	pattern_CerbosAdminService_DisablePolicy_1       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "disable"}, ""))
+	pattern_CerbosAdminService_DisablePolicy_2       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
+	pattern_CerbosAdminService_EnablePolicy_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "enable"}, ""))
+	pattern_CerbosAdminService_EnablePolicy_1        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "policy", "enable"}, ""))
 	pattern_CerbosAdminService_ListAuditLogEntries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"admin", "auditlog", "list", "kind"}, ""))
-
-	pattern_CerbosAdminService_AddOrUpdateSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
-
-	pattern_CerbosAdminService_AddOrUpdateSchema_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
-
-	pattern_CerbosAdminService_ListSchemas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schemas"}, ""))
-
-	pattern_CerbosAdminService_GetSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
-
-	pattern_CerbosAdminService_DeleteSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
-
-	pattern_CerbosAdminService_ReloadStore_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "store", "reload"}, ""))
+	pattern_CerbosAdminService_AddOrUpdateSchema_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
+	pattern_CerbosAdminService_AddOrUpdateSchema_1   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
+	pattern_CerbosAdminService_ListSchemas_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schemas"}, ""))
+	pattern_CerbosAdminService_GetSchema_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
+	pattern_CerbosAdminService_DeleteSchema_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "schema"}, ""))
+	pattern_CerbosAdminService_ReloadStore_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"admin", "store", "reload"}, ""))
 )
 
 var (
-	forward_CerbosAdminService_AddOrUpdatePolicy_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_AddOrUpdatePolicy_1 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_InspectPolicies_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_ListPolicies_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_GetPolicy_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_DisablePolicy_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_DisablePolicy_1 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_DisablePolicy_2 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_EnablePolicy_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_EnablePolicy_1 = runtime.ForwardResponseMessage
-
+	forward_CerbosAdminService_AddOrUpdatePolicy_0   = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_AddOrUpdatePolicy_1   = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_InspectPolicies_0     = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_ListPolicies_0        = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_GetPolicy_0           = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_DisablePolicy_0       = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_DisablePolicy_1       = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_DisablePolicy_2       = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_EnablePolicy_0        = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_EnablePolicy_1        = runtime.ForwardResponseMessage
 	forward_CerbosAdminService_ListAuditLogEntries_0 = runtime.ForwardResponseStream
-
-	forward_CerbosAdminService_AddOrUpdateSchema_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_AddOrUpdateSchema_1 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_ListSchemas_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_GetSchema_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_DeleteSchema_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosAdminService_ReloadStore_0 = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_AddOrUpdateSchema_0   = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_AddOrUpdateSchema_1   = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_ListSchemas_0         = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_GetSchema_0           = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_DeleteSchema_0        = runtime.ForwardResponseMessage
+	forward_CerbosAdminService_ReloadStore_0         = runtime.ForwardResponseMessage
 )
 
 // RegisterCerbosPlaygroundServiceHandlerFromEndpoint is same as RegisterCerbosPlaygroundServiceHandler but
@@ -2149,7 +1798,6 @@ func RegisterCerbosPlaygroundServiceHandlerFromEndpoint(ctx context.Context, mux
 			}
 		}()
 	}()
-
 	return RegisterCerbosPlaygroundServiceHandler(ctx, mux, conn)
 }
 
@@ -2165,14 +1813,11 @@ func RegisterCerbosPlaygroundServiceHandler(ctx context.Context, mux *runtime.Se
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "CerbosPlaygroundServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CerbosPlaygroundServiceClient) error {
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate", runtime.WithHTTPPathPattern("/api/playground/validate"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate", runtime.WithHTTPPathPattern("/api/playground/validate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2183,18 +1828,13 @@ func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundValidate_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundTest_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundTest_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundTest", runtime.WithHTTPPathPattern("/api/playground/test"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundTest", runtime.WithHTTPPathPattern("/api/playground/test"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2205,18 +1845,13 @@ func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundTest_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundEvaluate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundEvaluate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate", runtime.WithHTTPPathPattern("/api/playground/evaluate"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate", runtime.WithHTTPPathPattern("/api/playground/evaluate"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2227,18 +1862,13 @@ func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundEvaluate_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundProxy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_CerbosPlaygroundService_PlaygroundProxy_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundProxy", runtime.WithHTTPPathPattern("/api/playground/proxy"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundProxy", runtime.WithHTTPPathPattern("/api/playground/proxy"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -2249,30 +1879,21 @@ func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runt
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_CerbosPlaygroundService_PlaygroundProxy_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
 	return nil
 }
 
 var (
 	pattern_CerbosPlaygroundService_PlaygroundValidate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "validate"}, ""))
-
-	pattern_CerbosPlaygroundService_PlaygroundTest_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "test"}, ""))
-
+	pattern_CerbosPlaygroundService_PlaygroundTest_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "test"}, ""))
 	pattern_CerbosPlaygroundService_PlaygroundEvaluate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "evaluate"}, ""))
-
-	pattern_CerbosPlaygroundService_PlaygroundProxy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "proxy"}, ""))
+	pattern_CerbosPlaygroundService_PlaygroundProxy_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "proxy"}, ""))
 )
 
 var (
 	forward_CerbosPlaygroundService_PlaygroundValidate_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosPlaygroundService_PlaygroundTest_0 = runtime.ForwardResponseMessage
-
+	forward_CerbosPlaygroundService_PlaygroundTest_0     = runtime.ForwardResponseMessage
 	forward_CerbosPlaygroundService_PlaygroundEvaluate_0 = runtime.ForwardResponseMessage
-
-	forward_CerbosPlaygroundService_PlaygroundProxy_0 = runtime.ForwardResponseMessage
+	forward_CerbosPlaygroundService_PlaygroundProxy_0    = runtime.ForwardResponseMessage
 )
