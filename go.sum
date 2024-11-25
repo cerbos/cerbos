@@ -162,10 +162,10 @@ github.com/census-instrumentation/opencensus-proto v0.4.1 h1:iKLQ0xPNFxR/2hzXZMr
 github.com/census-instrumentation/opencensus-proto v0.4.1/go.mod h1:4T9NM4+4Vw91VeyqjLS6ao50K5bOcLKN6Q42XnYaRYw=
 github.com/cerbos/cerbos-sdk-go v0.2.11 h1:dY9le6woEq6n4LyuWIlfvfcT8gWIkhDUj/nkrJwljNA=
 github.com/cerbos/cerbos-sdk-go v0.2.11/go.mod h1:i+t8VwRlSXWVqnaSUBG3BUKuQOZOatWBIsL/+9f/Ob0=
-github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241118123540-0a49f4206b21 h1:m5DFl7KzsviURWA5OaiZYVAJDEEgdiZMPekJLoCuJAM=
-github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241118123540-0a49f4206b21/go.mod h1:79aclUYAo7kEvQTUd9E7Q4Sh+7TuSqCqixrEmGkW0ps=
-github.com/cerbos/cloud-api v0.1.27 h1:IwjSQ0/PtZQ/67nU2h/JPObLps90zpssFo9wocIGcfU=
-github.com/cerbos/cloud-api v0.1.27/go.mod h1:tf5wJO0brIc2H9bz6c7+RGtNvl8Tn+rXYVqJoguugSE=
+github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241125093155-e862e9ada202 h1:kQ51y/mKlz6wY6VCf/Ep586/L6iKM32b/oFf2IAGEbs=
+github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241125093155-e862e9ada202/go.mod h1:OuWT4RJkmIxqLos3+c6y3NLDjoggOlTAXb04vQaMQIY=
+github.com/cerbos/cloud-api v0.1.28 h1:EidHumssMhHlMJ6yqKUQ8w0BBOJEG9hg/WTwZ3qvL7o=
+github.com/cerbos/cloud-api v0.1.28/go.mod h1:X0C3U9+aCefcmZcpAQRLqwEjYdyhf614sKWPhcllNaY=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
