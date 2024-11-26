@@ -7,7 +7,7 @@ inputs:
       "requestId": "test",
       "actions": [
         "create", # matches `acme_creator` wildcard resource and parent scope rule with `admin` role
-        "delete", # not defined in leaf scope and doesn't match condition in parent scopes for condition which is narrowed (derived role with `employee` parent role)
+        "delete", # not defined in leaf scope, is in parent scope for matching (narrowed) derived role
         "view:public", # matches `acme_jr_admin` action wildcard and `employee_that_owns_the_record` in parent scope
         "deny", # allowed in target scope, no matching actions in parent scopes
         "redirect", # not allowed in target scope, but is in parent scope for "employee" which role policy recursively assumes
@@ -21,7 +21,7 @@ inputs:
         {
           "id": "john",
           "roles": [
-            "employee", # even though this is nested parent role of a referenced role policy, passing it explicitly means we can
+            # "employee", # even though this is nested parent role of a referenced role policy, passing it explicitly means we can
                         # evaluate it with more authority in the parent scopes. TODO(saml) this behaviour requires some thought
             "acme_creator", # implicitly assumes `acme_jr_admin` as parent role, which itself has `employee` as a parent role
             "boss",
@@ -105,7 +105,7 @@ wantOutputs:
             },
         },
       "effectiveDerivedRoles":
-        ["any_employee", "employee_that_owns_the_record"],
+        ["employee_that_owns_the_record"],
     },
   ]
 wantDecisionLogs:
@@ -136,7 +136,8 @@ wantDecisionLogs:
                 "principal":
                   {
                     "id": "john",
-                    "roles": ["employee", "acme_creator", "boss"],
+                    # "roles": ["employee", "acme_creator", "boss"],
+                    "roles": ["acme_creator", "boss"],
                     "attr":
                       {
                         "department": "marketing",
@@ -203,7 +204,7 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles":
-                  ["employee_that_owns_the_record", "any_employee"],
+                  ["employee_that_owns_the_record"],
               },
             ],
         },

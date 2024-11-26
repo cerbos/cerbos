@@ -22,8 +22,43 @@ message RunnablePolicySet {
     RunnableDerivedRolesSet derived_roles = 4 [deprecated = true];
     RunnableVariablesSet variables = 5 [deprecated = true];
     RunnableRolePolicySet role_policy = 7;
+    RuleTable rule_table = 8;
   }
   uint32 compiler_version = 6;
+}
+
+message RuleTable {
+  message Metadata {
+    string fqn = 1;
+    string resource = 2;
+    string version = 3;
+    map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 4;
+    map<string, string> annotations = 5;
+  }
+
+  message RuleRow {
+    string resource = 1;
+    string role = 2;
+    string action = 3;
+    Condition condition = 4;
+    cerbos.effect.v1.Effect effect = 5;
+    string scope = 6;
+    cerbos.policy.v1.ScopePermissions scopePermissions = 7;
+    string version = 8;
+    string originDerivedRole = 9;
+    repeated Variable ordered_variables = 10;
+    map<string, google.protobuf.Value> constants = 11;
+    Output emit_output = 12;
+    string name = 13;
+  }
+
+  message ParentRoleAncestors {
+    repeated string parent_roles = 1;
+  }
+
+  Metadata meta = 1;
+  repeated RuleRow Rules = 2;
+  map<string, ParentRoleAncestors> parent_role_ancestors = 3;
 }
 
 message RunnableRolePolicySet {
