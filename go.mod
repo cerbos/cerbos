@@ -16,7 +16,7 @@ require (
 	github.com/bufbuild/protovalidate-go v0.7.2
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cerbos/cerbos-sdk-go v0.2.11
-	github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241125093155-e862e9ada202
+	github.com/cerbos/cerbos/api/genpb v0.39.1-0.20241126135634-944bc2aa8048
 	github.com/cerbos/cloud-api v0.1.29
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
