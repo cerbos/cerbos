@@ -135,6 +135,7 @@ This release also includes several updates related to the experimental role poli
 
 * A policy with only conditional DENY rule must produce `ALWAYS_DENIED` (link:https://github.com/cerbos/cerbos/pull/2369[#2369])
 * Command execution fails with `cerbos run` since v0.39  (link:https://github.com/cerbos/cerbos/pull/2358[#2358])
+* Inspect policy output expressions (link:https://github.com/cerbos/cerbos/pull/2392[#2392])
 * Populate path field of validation errors (link:https://github.com/cerbos/cerbos/pull/2363[#2363])
 * Remove whitespace chomp for priorityClassName so valid yaml is rendered (link:https://github.com/cerbos/cerbos/pull/2337[#2337])
 
