@@ -103,6 +103,8 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		return newRolePolicyEvaluator(rps)
+	case *runtimev1.RunnablePolicySet_RuleTable:
+		return &ruleTableEvaluator{policy: rp.RuleTable, evalParams: eparams}
 	default:
 		return noopEvaluator{}
 	}
@@ -116,6 +118,312 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 
 type rolePolicyEvaluator struct {
 	policies map[string]*runtimev1.RunnableRolePolicySet
+}
+
+type ruleTableEvaluator struct {
+	policy     *runtimev1.RuleTable
+	evalParams evalParams
+}
+
+func (rte *ruleTableEvaluator) scanRows(version, resource string, scopes, roles, actions []string) *ruleRowSet {
+	res := &ruleRowSet{
+		scopeIndex:            make(map[string]map[string][]*runtimev1.RuleTable_RuleRow),
+		roleIndex:             make(map[string]map[string][]*runtimev1.RuleTable_RuleRow),
+		actionIndex:           make(map[string]map[string][]*runtimev1.RuleTable_RuleRow),
+		scopeScopePermissions: make(map[string]policyv1.ScopePermissions),
+	}
+
+	roleSet := make([]string, 0, len(roles))
+	for _, role := range roles {
+		roleSet = append(roleSet, role)
+		if prs, ok := rte.policy.ParentRoleAncestors[role]; ok {
+			roleSet = append(roleSet, prs.ParentRoles...)
+		}
+	}
+
+	scopeSet := make(map[string]struct{}, len(scopes))
+	for _, s := range scopes {
+		scopeSet[s] = struct{}{}
+	}
+
+	for _, row := range rte.policy.Rules {
+		if version != row.Version {
+			continue
+		}
+
+		if _, ok := scopeSet[row.Scope]; !ok {
+			continue
+		}
+
+		if !util.MatchesGlob(row.Resource, resource) {
+			continue
+		}
+
+		if len(util.FilterGlob(row.Action, actions)) == 0 || len(util.FilterGlob(row.Role, roleSet)) == 0 {
+			continue
+		}
+
+		res.rows = append(res.rows, row)
+
+		k := rowResultKey(row.Action, row.Role, resource)
+
+		if _, ok := res.scopeIndex[row.Scope]; !ok {
+			res.scopeIndex[row.Scope] = make(map[string][]*runtimev1.RuleTable_RuleRow)
+		}
+		res.scopeIndex[row.Scope][k] = append(res.scopeIndex[row.Scope][k], row)
+
+		if _, ok := res.scopeScopePermissions[row.Scope]; !ok {
+			res.scopeScopePermissions[row.Scope] = row.ScopePermissions
+		}
+
+		if _, ok := res.roleIndex[row.Role]; !ok {
+			res.roleIndex[row.Role] = make(map[string][]*runtimev1.RuleTable_RuleRow)
+		}
+		res.roleIndex[row.Role][k] = append(res.roleIndex[row.Role][k], row)
+
+		// TODO(saml) we don't actually use the rows stored for actions, could this be a struct{} value?
+		if _, ok := res.actionIndex[row.Action]; !ok {
+			res.actionIndex[row.Action] = make(map[string][]*runtimev1.RuleTable_RuleRow)
+		}
+		res.actionIndex[row.Action][k] = append(res.actionIndex[row.Action][k], row)
+	}
+
+	return res
+}
+
+type ruleRowSet struct {
+	rows                  []*runtimev1.RuleTable_RuleRow
+	scopeIndex            map[string]map[string][]*runtimev1.RuleTable_RuleRow
+	roleIndex             map[string]map[string][]*runtimev1.RuleTable_RuleRow
+	actionIndex           map[string]map[string][]*runtimev1.RuleTable_RuleRow
+	scopeScopePermissions map[string]policyv1.ScopePermissions
+}
+
+func (rrs *ruleRowSet) get(scopes, roles, actions []string) *ruleRowSet {
+	res := &ruleRowSet{
+		scopeIndex:            make(map[string]map[string][]*runtimev1.RuleTable_RuleRow),
+		roleIndex:             make(map[string]map[string][]*runtimev1.RuleTable_RuleRow),
+		actionIndex:           make(map[string]map[string][]*runtimev1.RuleTable_RuleRow),
+		scopeScopePermissions: make(map[string]policyv1.ScopePermissions),
+	}
+
+	for _, s := range scopes {
+		if sMap, ok := rrs.scopeIndex[s]; ok {
+			for _, r := range roles {
+				for rGlob, rMap := range rrs.roleIndex {
+					if util.MatchesGlob(rGlob, r) {
+						for _, a := range actions {
+							for aGlob, aMap := range rrs.actionIndex {
+								if util.MatchesGlob(aGlob, a) {
+									for k, sRows := range sMap {
+										_, aOk := aMap[k]
+										_, rOk := rMap[k]
+										if aOk && rOk {
+											res.rows = append(res.rows, sRows...)
+											for _, row := range sRows {
+												if _, ok := res.scopeIndex[row.Scope]; !ok {
+													res.scopeIndex[row.Scope] = make(map[string][]*runtimev1.RuleTable_RuleRow)
+												}
+												res.scopeIndex[row.Scope][k] = append(res.scopeIndex[row.Scope][k], row)
+
+												if _, ok := res.scopeScopePermissions[row.Scope]; !ok {
+													res.scopeScopePermissions[row.Scope] = row.ScopePermissions
+												}
+
+												if _, ok := res.roleIndex[row.Role]; !ok {
+													res.roleIndex[row.Role] = make(map[string][]*runtimev1.RuleTable_RuleRow)
+												}
+												res.roleIndex[row.Role][k] = append(res.roleIndex[row.Role][k], row)
+
+												// TODO(saml) we don't actually use the rows stored for actions, could this be a struct{} value?
+												if _, ok := res.actionIndex[row.Action]; !ok {
+													res.actionIndex[row.Action] = make(map[string][]*runtimev1.RuleTable_RuleRow)
+												}
+												res.actionIndex[row.Action][k] = append(res.actionIndex[row.Action][k], row)
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return res
+}
+
+type rowResult struct {
+	effectSet      map[effectv1.Effect]struct{}
+	resolvedEffect effectv1.Effect
+	resolvedPolicy string
+	resolvedScope  string
+}
+
+func rowResultKey(action, role, resource string) string {
+	return fmt.Sprintf("%s:%s:%s", action, role, resource)
+}
+
+func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+	policyKey := namer.PolicyKeyFromFQN(rte.policy.Meta.Fqn)
+	request := checkInputToRequest(input)
+	trail := newAuditTrail(rte.policy.GetMeta().GetSourceAttributes())
+	result := newEvalResult(input.Actions, trail)
+
+	// pctx := tctx.StartPolicy(rte.policy.Meta.Fqn)
+	evalCtx := newEvalContext(rte.evalParams, request)
+
+	version := input.Resource.PolicyVersion
+	if version == "" {
+		version = "default"
+	}
+
+	scope := input.Resource.Scope
+	scopes := []string{scope}
+
+	for i := len(scope) - 1; i >= 0; i-- {
+		if scope[i] == '.' || i == 0 {
+			scopes = append(scopes, scope[:i])
+		}
+	}
+
+	actionsToResolve := result.unresolvedActions()
+	if len(actionsToResolve) == 0 {
+		return result, nil
+	}
+
+	scanResult := rte.scanRows(version, input.Resource.Kind, scopes, input.Principal.Roles, actionsToResolve)
+
+	for _, action := range actionsToResolve {
+		var finalResSet *rowResult
+		for _, role := range input.Principal.Roles {
+			resSet := &rowResult{
+				effectSet:      make(map[effectv1.Effect]struct{}),
+				resolvedEffect: effectv1.Effect_EFFECT_NO_MATCH,
+			}
+
+			// TODO(saml) should be moved into `get` method
+			var roles []string
+			if _, ok := rte.policy.ParentRoleAncestors[role]; ok {
+				roles = make([]string, len(rte.policy.ParentRoleAncestors[role].ParentRoles)+1)
+				roles[0] = role
+				for i, pr := range rte.policy.ParentRoleAncestors[role].ParentRoles {
+					roles[i+1] = pr
+				}
+			} else {
+				roles = []string{role}
+			}
+
+			for _, scope := range scopes {
+				if resSet.resolvedEffect != effectv1.Effect_EFFECT_NO_MATCH {
+					break
+				}
+
+				scopedScanResult := scanResult.get([]string{scope}, roles, actionsToResolve)
+				if len(scopedScanResult.rows) == 0 {
+					// the role doesn't exist in this scope for any actions, so continue.
+					// this prevents an implicit DENY from incorrectly narrowing an independent role
+					continue
+				}
+
+				for _, row := range scopedScanResult.get([]string{scope}, roles, []string{action}).rows {
+					// TODO(saml) these are largely the same within rows, introduce caching/pre-processing or something
+					constants := constantValues(row.Constants)
+					variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.OrderedVariables)
+					if err != nil {
+						return nil, err
+					}
+
+					ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
+					if err != nil {
+						continue
+					}
+
+					if ok {
+						resSet.effectSet[row.Effect] = struct{}{}
+
+						// TODO(saml) behaviour has changed such that we only add an effective derived role if the derived role was activated
+						// in a matched rule. I think this makes sense, but perhaps backwards compatibility is necessary here?
+						if row.OriginDerivedRole != "" {
+							result.EffectiveDerivedRoles[row.OriginDerivedRole] = struct{}{}
+						}
+
+						var outputExpr *exprpb.CheckedExpr
+						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
+							outputExpr = row.EmitOutput.When.RuleActivated.Checked
+						}
+
+						if outputExpr != nil {
+							// TODO(saml) ordering of outputs is now not deterministic so some tests now fail (TestCheck/case_21 does sporadically)
+							output := &enginev1.OutputEntry{
+								Src: namer.RuleFQN(rte.policy.Meta, row.Scope, row.Name),
+								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
+							}
+							result.Outputs = append(result.Outputs, output)
+						}
+					} else {
+						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
+							output := &enginev1.OutputEntry{
+								Src: namer.RuleFQN(rte.policy.Meta, row.Scope, row.Name),
+								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
+							}
+							result.Outputs = append(result.Outputs, output)
+						}
+					}
+				}
+
+				switch scanResult.scopeScopePermissions[scope] {
+				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
+					if len(resSet.effectSet) == 0 {
+						resSet.resolvedEffect = effectv1.Effect_EFFECT_DENY
+						resSet.resolvedPolicy = noMatchScopePermissions
+						resSet.resolvedScope = scope
+					}
+
+					if _, ok := resSet.effectSet[effectv1.Effect_EFFECT_ALLOW]; ok {
+						delete(resSet.effectSet, effectv1.Effect_EFFECT_ALLOW)
+					}
+				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
+					if len(resSet.effectSet) > 0 {
+						resSet.resolvedScope = scope
+
+						if _, ok := resSet.effectSet[effectv1.Effect_EFFECT_DENY]; ok {
+							resSet.resolvedEffect = effectv1.Effect_EFFECT_DENY
+						} else {
+							resSet.resolvedEffect = effectv1.Effect_EFFECT_ALLOW
+						}
+
+						// explicit ALLOW or DENY for this role, so we can exit the loop
+						break
+					}
+				}
+			}
+
+			if finalResSet == nil {
+				finalResSet = resSet
+			}
+
+			if resSet.resolvedEffect == effectv1.Effect_EFFECT_ALLOW {
+				finalResSet = resSet
+				break
+			}
+		}
+
+		if finalResSet.resolvedEffect != effectv1.Effect_EFFECT_NO_MATCH {
+			p := policyKey
+			// TODO(saml) could store EffectInfo in `resolvedEffect` so don't need multiple fields?
+			if finalResSet.resolvedPolicy != "" {
+				p = finalResSet.resolvedPolicy
+			}
+			result.setEffect(action, EffectInfo{Effect: finalResSet.resolvedEffect, Policy: p, Scope: finalResSet.resolvedScope})
+		} else {
+			result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+		}
+	}
+
+	return result, nil
 }
 
 func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet) *rolePolicyEvaluator {

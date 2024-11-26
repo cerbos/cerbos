@@ -595,14 +595,199 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	ec.addCheck(ppCheck)
 
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, eparams)
-
-	pCheck, err := engine.getScopedPolicyEvaluator(ctx, eparams, rpName, rpVersion, rpScope, input.Principal.Roles)
+	pCheck, err := engine.getRuleTableEvaluator(ctx, eparams, rpName, rpVersion, rpScope, input.Principal.Roles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
 	ec.addCheck(pCheck)
 
 	return ec, nil
+}
+
+func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
+	// A matching scope must have at least one resource or role policy or a mixture of both.
+	// To begin, we attempt to retrieve the full scope hierarchy of resource policies.
+	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, true)
+	if err != nil {
+		return nil, err
+	}
+	if rps == nil {
+		return nil, nil
+	}
+
+	// add rules for resource policy
+	rrps := rps.GetResourcePolicy()
+
+	ruleTable := &runtimev1.RuleTable{
+		Meta: &runtimev1.RuleTable_Metadata{
+			Fqn:              rrps.Meta.Fqn,
+			Resource:         rrps.Meta.Resource,
+			Version:          rrps.Meta.Version,
+			SourceAttributes: rrps.Meta.SourceAttributes,
+			Annotations:      rrps.Meta.Annotations,
+		},
+		ParentRoleAncestors: make(map[string]*runtimev1.RuleTable_ParentRoleAncestors),
+	}
+
+	for _, p := range rrps.GetPolicies() {
+		for _, rule := range p.Rules {
+			emitOutput := rule.EmitOutput
+			if emitOutput == nil && rule.Output != nil {
+				emitOutput = &runtimev1.Output{
+					When: &runtimev1.Output_When{
+						RuleActivated: rule.Output,
+					},
+				}
+			}
+			for a := range rule.Actions {
+				for r := range rule.Roles {
+					ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
+						Resource:         rrps.Meta.Resource,
+						Role:             r,
+						Action:           a,
+						Condition:        rule.Condition,
+						Effect:           rule.Effect,
+						Scope:            p.Scope,
+						ScopePermissions: p.ScopePermissions,
+						Version:          policyVer,
+						OrderedVariables: p.OrderedVariables,
+						Constants:        p.Constants,
+						EmitOutput:       emitOutput,
+						Name:             rule.Name,
+					})
+				}
+
+				// merge derived roles as roles with added conditions
+				for dr := range rule.DerivedRoles {
+					if rdr, ok := p.DerivedRoles[dr]; ok {
+						// TODO(saml) I think there needs to be a separate cache for constants and variables to avoid lots of duplicated work
+						mergedVariables := make([]*runtimev1.Variable, len(p.OrderedVariables)+len(rdr.OrderedVariables))
+						copy(mergedVariables, p.OrderedVariables)
+						copy(mergedVariables[len(p.OrderedVariables):], rdr.OrderedVariables)
+
+						mergedConstants := maps.Clone(p.Constants)
+						for k, c := range rdr.Constants {
+							mergedConstants[k] = c
+						}
+
+						cond := rule.Condition
+						if rdr.Condition != nil {
+							if cond == nil {
+								cond = rdr.Condition
+							} else {
+								cond = &runtimev1.Condition{
+									Op: &runtimev1.Condition_All{
+										All: &runtimev1.Condition_ExprList{
+											Expr: []*runtimev1.Condition{cond, rdr.Condition},
+										},
+									},
+								}
+							}
+						}
+
+						for pr := range rdr.ParentRoles {
+							ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
+								Resource:          rrps.Meta.Resource,
+								Role:              pr,
+								Action:            a,
+								Condition:         cond,
+								Effect:            rule.Effect,
+								Scope:             p.Scope,
+								ScopePermissions:  p.ScopePermissions,
+								Version:           policyVer,
+								OriginDerivedRole: dr,
+								OrderedVariables:  mergedVariables,
+								Constants:         mergedConstants,
+								EmitOutput:        emitOutput,
+								Name:              rule.Name,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// add rules for role policies at all scope levels
+	// we duplicate rows for all parent roles recursively
+	addRolePolicyRules := func(scope string) error {
+		rlps, err := engine.getRolePolicySets(ctx, scope, inputRoles)
+		if err != nil {
+			return err
+		}
+
+		rolePolicies := make(map[string]*runtimev1.RunnableRolePolicySet)
+		for _, p := range rlps {
+			rrp := p.GetRolePolicy()
+			rolePolicies[rrp.Role] = rrp
+		}
+
+		// TODO(saml) can this be efficiently implemented elsewhere, not as a closure?
+		var traverseParentRoles func(string, string)
+		traverseParentRoles = func(baseRole, traversedRole string) {
+			if _, ok := ruleTable.ParentRoleAncestors[baseRole]; !ok {
+				ruleTable.ParentRoleAncestors[baseRole] = &runtimev1.RuleTable_ParentRoleAncestors{}
+			}
+			ruleTable.ParentRoleAncestors[baseRole].ParentRoles = append(ruleTable.ParentRoleAncestors[baseRole].ParentRoles, traversedRole)
+			if rp, ok := rolePolicies[traversedRole]; ok {
+				for _, pr := range rp.ParentRoles {
+					traverseParentRoles(baseRole, pr)
+				}
+			}
+		}
+
+		rolePolicySourceAttrs := make(map[string]*policyv1.SourceAttributes)
+		for role, p := range rolePolicies {
+			for resource, rl := range p.Resources {
+				for _, rule := range rl.Rules {
+					for a := range rule.Actions {
+						ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
+							Role:             role,
+							Resource:         resource,
+							Action:           a,
+							Condition:        rule.Condition,
+							Effect:           effectv1.Effect_EFFECT_ALLOW,
+							Scope:            p.Scope,
+							ScopePermissions: p.ScopePermissions,
+							Version:          policyVer,
+						})
+					}
+				}
+			}
+
+			if p.GetMeta().GetFqn() != "" && p.GetMeta().GetSourceAttributes() != nil {
+				rolePolicySourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
+			}
+
+			for _, pr := range p.ParentRoles {
+				traverseParentRoles(role, pr)
+			}
+		}
+
+		if rrps.Meta.SourceAttributes == nil {
+			rrps.Meta.SourceAttributes = make(map[string]*policyv1.SourceAttributes, len(rolePolicySourceAttrs))
+		}
+		maps.Copy(rrps.Meta.SourceAttributes, rolePolicySourceAttrs)
+
+		return nil
+	}
+
+	if err := addRolePolicyRules(scope); err != nil {
+		return nil, err
+	}
+
+	for i := len(scope) - 1; i >= 0; i-- {
+		if scope[i] == '.' || i == 0 {
+			partialScope := scope[:i]
+			if err := addRolePolicyRules(partialScope); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return NewEvaluator([]*runtimev1.RunnablePolicySet{{PolicySet: &runtimev1.RunnablePolicySet_RuleTable{
+		RuleTable: ruleTable,
+	}}}, engine.schemaMgr, eparams), nil
 }
 
 func (engine *Engine) getScopedPolicyEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
