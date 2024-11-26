@@ -214,19 +214,6 @@ storage:
   sqlite3:
     # This section is required only if storage.driver is sqlite3.
     dsn: ":memory:?_fk=true" # Required. Data source name
-  sqlserver:
-    # Deprecated. SQL Server will no longer be supported in future Cerbos releases.
-    connPool: 
-      maxLifeTime: 60m
-      maxIdleTime: 45s
-      maxOpen: 4
-      maxIdle: 1 
-    connRetry: 
-      maxAttempts: 3
-      initialInterval: 0.5s
-      maxInterval: 60s 
-    skipSchemaCheck: false # SkipSchemaCheck skips checking for required database tables on startup.
-    url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/microsoft/go-mssqldb#connection-parameters-and-dsn.
 telemetry:
   disabled: false # Disabled sets whether telemetry collection is disabled or not.
   reportInterval: 1h # ReportInterval is the interval between telemetry pings.
