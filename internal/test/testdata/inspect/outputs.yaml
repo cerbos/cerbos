@@ -1,0 +1,152 @@
+# yaml-language-server: $schema=../.jsonschema/InspectTestCase.schema.json
+inputs:
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: a.yaml
+    principalPolicy:
+      version: default
+      principal: john
+      constants:
+        local:
+          x: 1
+      variables:
+        local:
+          x: "1"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: x
+              effect: EFFECT_ALLOW
+              output:
+                expr: C.x + V.x + P.attr.x
+
+  - apiVersion: api.cerbos.dev/v1
+    metadata:
+      storeIdentifier: b.yaml
+    resourcePolicy:
+      version: default
+      resource: leave_request
+      constants:
+        local:
+          "y": 2
+          z: 3
+      variables:
+        local:
+          "y": "2"
+          z: "3"
+      rules:
+        - actions:
+            - "y"
+            - z
+          roles:
+            - foo
+          effect: EFFECT_ALLOW
+          output:
+            when:
+              ruleActivated: C.y + V.y + R.attr.y
+              conditionNotMet: C.z + V.z + R.attr.z
+
+
+policiesExpectation:
+  policies:
+      principal.john.vdefault:
+        policyId: a.yaml
+        actions:
+          - x
+        attributes:
+          - kind: KIND_PRINCIPAL_ATTRIBUTE
+            name: x
+        constants:
+          - kind: KIND_LOCAL
+            name: x
+            value: 1
+            source: principal.john.vdefault
+            used: true
+        variables:
+          - kind: KIND_LOCAL
+            name: x
+            value: "1"
+            source: principal.john.vdefault
+            used: true
+
+      resource.leave_request.vdefault:
+        policyId: b.yaml
+        actions:
+          - "y"
+          - z
+        attributes:
+          - kind: KIND_RESOURCE_ATTRIBUTE
+            name: "y"
+          - kind: KIND_RESOURCE_ATTRIBUTE
+            name: z
+        constants:
+          - kind: KIND_LOCAL
+            name: "y"
+            value: 2
+            source: resource.leave_request.vdefault
+            used: true
+          - kind: KIND_LOCAL
+            name: z
+            value: 3
+            source: resource.leave_request.vdefault
+            used: true
+        variables:
+          - kind: KIND_LOCAL
+            name: "y"
+            value: "2"
+            source: resource.leave_request.vdefault
+            used: true
+          - kind: KIND_LOCAL
+            name: z
+            value: "3"
+            source: resource.leave_request.vdefault
+            used: true
+
+policySetsExpectation:
+  policySets:
+      principal.john.vdefault:
+        policyId: principal.john.vdefault
+        actions:
+          - x
+        attributes:
+          - kind: KIND_PRINCIPAL_ATTRIBUTE
+            name: x
+        constants:
+          - kind: KIND_UNKNOWN
+            name: x
+            value: 1
+            used: true
+        variables:
+          - kind: KIND_UNKNOWN
+            name: x
+            value: "1"
+            used: true
+
+      resource.leave_request.vdefault:
+        policyId: resource.leave_request.vdefault
+        actions:
+          - "y"
+          - z
+        attributes:
+          - kind: KIND_RESOURCE_ATTRIBUTE
+            name: "y"
+          - kind: KIND_RESOURCE_ATTRIBUTE
+            name: z
+        constants:
+          - kind: KIND_UNKNOWN
+            name: "y"
+            value: 2
+            used: true
+          - kind: KIND_UNKNOWN
+            name: z
+            value: 3
+            used: true
+        variables:
+          - kind: KIND_UNKNOWN
+            name: "y"
+            value: "2"
+            used: true
+          - kind: KIND_UNKNOWN
+            name: z
+            value: "3"
+            used: true

@@ -51,7 +51,7 @@ func (ps *PolicySet) Results() (map[string]*responsev1.InspectPoliciesResponse_R
 	return ps.results, nil
 }
 
-// inspectDefinitionsAndRules inspects the definitions and rules in the given policy set to find references to the attributes.
+// listReferencedAttributes inspects the definitions and rules in the given policy set to find references to the attributes.
 func (ps *PolicySet) listReferencedAttributes(pset *runtimev1.RunnablePolicySet) ([]*responsev1.InspectPoliciesResponse_Attribute, error) {
 	attrs := make(map[string]*responsev1.InspectPoliciesResponse_Attribute)
 	if err := visitCompiledPolicySet(pset, attributeVisitor(attrs)); err != nil {

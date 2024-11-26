@@ -27,6 +27,10 @@ func visitCompiledPolicySet(policySet *runtimev1.RunnablePolicySet, visitor ast.
 					if err := visitCompiledCondition(actionRule.Condition, visitor); err != nil {
 						return fmt.Errorf("failed in the compiled principal policy rule: %w", err)
 					}
+
+					if err := visitCompiledOutput(actionRule.EmitOutput, visitor); err != nil {
+						return fmt.Errorf("failed in the compiled principal policy rule: %w", err)
+					}
 				}
 			}
 		}
@@ -55,6 +59,10 @@ func visitCompiledPolicySet(policySet *runtimev1.RunnablePolicySet, visitor ast.
 
 			for _, rule := range policy.Rules {
 				if err := visitCompiledCondition(rule.Condition, visitor); err != nil {
+					return fmt.Errorf("failed in the compiled resource policy rule: %w", err)
+				}
+
+				if err := visitCompiledOutput(rule.EmitOutput, visitor); err != nil {
 					return fmt.Errorf("failed in the compiled resource policy rule: %w", err)
 				}
 			}
@@ -107,6 +115,10 @@ func visitPolicy(policy *policyv1.Policy, visitor ast.Visitor) error {
 				if err := visitCondition(action.Condition, visitor); err != nil {
 					return fmt.Errorf("failed in principal policy rule: %w", err)
 				}
+
+				if err := visitOutput(action.Output, visitor); err != nil {
+					return fmt.Errorf("failed in principal policy rule: %w", err)
+				}
 			}
 		}
 
@@ -119,6 +131,10 @@ func visitPolicy(policy *policyv1.Policy, visitor ast.Visitor) error {
 
 		for _, rule := range pt.ResourcePolicy.Rules {
 			if err := visitCondition(rule.Condition, visitor); err != nil {
+				return fmt.Errorf("failed in resource policy rule: %w", err)
+			}
+
+			if err := visitOutput(rule.Output, visitor); err != nil {
 				return fmt.Errorf("failed in resource policy rule: %w", err)
 			}
 		}
@@ -144,6 +160,10 @@ func visitVariables(variables map[string]string, visitor ast.Visitor) error {
 }
 
 func visitExpr(expr string, visitor ast.Visitor) error {
+	if expr == "" {
+		return nil
+	}
+
 	condition := &policyv1.Condition{
 		Condition: &policyv1.Condition_Match{
 			Match: &policyv1.Match{
@@ -208,11 +228,43 @@ func visitCompiledConditionExprList(exprList *runtimev1.Condition_ExprList, visi
 }
 
 func visitCompiledExpr(expr *runtimev1.Expr, visitor ast.Visitor) error {
+	if expr == nil {
+		return nil
+	}
+
 	exprAST, err := ast.ToAST(expr.Checked)
 	if err != nil {
 		return fmt.Errorf("failed to convert checked expression %q to AST: %w", expr.Original, err)
 	}
 
 	ast.PreOrderVisit(exprAST.Expr(), visitor)
+	return nil
+}
+
+func visitOutput(output *policyv1.Output, visitor ast.Visitor) error {
+	if err := visitExpr(output.GetExpr(), visitor); err != nil { //nolint:staticcheck
+		return fmt.Errorf("failed in output: %w", err)
+	}
+
+	if err := visitExpr(output.GetWhen().GetRuleActivated(), visitor); err != nil {
+		return fmt.Errorf("failed in output: %w", err)
+	}
+
+	if err := visitExpr(output.GetWhen().GetConditionNotMet(), visitor); err != nil {
+		return fmt.Errorf("failed in output: %w", err)
+	}
+
+	return nil
+}
+
+func visitCompiledOutput(output *runtimev1.Output, visitor ast.Visitor) error {
+	if err := visitCompiledExpr(output.GetWhen().GetRuleActivated(), visitor); err != nil {
+		return fmt.Errorf("failed in compiled output: %w", err)
+	}
+
+	if err := visitCompiledExpr(output.GetWhen().GetConditionNotMet(), visitor); err != nil {
+		return fmt.Errorf("failed in compiled output: %w", err)
+	}
+
 	return nil
 }
