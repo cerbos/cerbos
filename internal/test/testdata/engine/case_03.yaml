@@ -81,7 +81,6 @@ wantOutputs:
               "policy": "resource.leave_request.v20210210",
             },
         },
-      "effectiveDerivedRoles": ["any_employee"],
     },
     {
       "requestId": "test2",
@@ -94,7 +93,6 @@ wantOutputs:
               "policy": "resource.leave_request.v20210210",
             },
         },
-      "effectiveDerivedRoles": ["any_employee"],
     },
   ]
 wantDecisionLogs:
@@ -184,7 +182,6 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.v20210210",
                       },
                   },
-                "effectiveDerivedRoles": ["any_employee"],
               },
               {
                 "requestId": "test2",
@@ -197,7 +194,6 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.v20210210",
                       },
                   },
-                "effectiveDerivedRoles": ["any_employee"],
               },
             ],
         },
