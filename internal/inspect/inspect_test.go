@@ -69,9 +69,15 @@ func TestInspect(t *testing.T) {
 				idx, err := index.Build(ctx, os.DirFS(dir))
 				var haveIdxBuildErr *index.BuildError
 				if errors.As(err, &haveIdxBuildErr) {
+					var wantIdxBuildErrs *runtimev1.IndexBuildErrors
+					expectedIdxBuildErrs, ok := expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_IndexBuildErrors)
+					if ok {
+						wantIdxBuildErrs = expectedIdxBuildErrs.IndexBuildErrors
+					}
+
 					require.Empty(t,
 						cmp.Diff(
-							expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_IndexBuildErrors).IndexBuildErrors,
+							wantIdxBuildErrs,
 							haveIdxBuildErr.IndexBuildErrors,
 							protocmp.Transform(),
 							protocmp.IgnoreFields(&sourcev1.Error{}, "context"),
@@ -86,12 +92,19 @@ func TestInspect(t *testing.T) {
 					rps, err := compile.Compile(unit, mgr)
 					var haveCompileErrSet *compile.ErrorSet
 					if errors.As(err, &haveCompileErrSet) {
+						var wantCompileErrs []*runtimev1.CompileErrors_Err
+						expectedCompileErrs, ok := expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_CompileErrors_)
+						if ok {
+							wantCompileErrs = expectedCompileErrs.CompileErrors.CompileErrors
+						}
+
 						for _, err := range haveCompileErrSet.CompileErrors {
 							t.Log(protojson.Format(err))
 						}
+
 						require.Empty(t,
 							cmp.Diff(
-								compileErrorsMap(expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_CompileErrors_).CompileErrors.CompileErrors),
+								compileErrorsMap(wantCompileErrs),
 								haveCompileErrSet.CompileErrors,
 								protocmp.Transform(),
 								protocmp.IgnoreFields(&runtimev1.CompileErrors_Err{}, "context"),
