@@ -820,8 +820,7 @@ func (s *dbStorage) updateRegexpFilters(namePattern, col string, whereExprs *[]e
 }
 
 func (s *dbStorage) regexpEnabled() bool {
-	// TODO(saml) link this to the `dialect` arg passed to `goqu` in the sqlserver package, or rethink how to indicate regexp support
-	return s.db.Dialect() != "sqlserver"
+	return true
 }
 
 func checkPostFilters(pc namer.PolicyCoords, postFilters []postRegexpFilter) bool {

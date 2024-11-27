@@ -77,8 +77,6 @@ import (
 	_ "github.com/cerbos/cerbos/internal/storage/db/postgres"
 	// Import sqlite3 to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/sqlite3"
-	// Import sqlserver to register the storage driver.
-	_ "github.com/cerbos/cerbos/internal/storage/db/sqlserver"
 	// Import disk to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/disk"
 	// Import git to register the storage driver.
