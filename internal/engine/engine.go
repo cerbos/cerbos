@@ -630,6 +630,12 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 	}
 
 	for _, p := range rrps.GetPolicies() {
+		policyParameters := &runtimev1.RuleTable_Parameters{
+			Origin:           namer.ResourcePolicyFQN(rrps.Meta.Resource, rrps.Meta.Version, p.Scope),
+			OrderedVariables: p.OrderedVariables,
+			Constants:        p.Constants,
+		}
+
 		for _, rule := range p.Rules {
 			emitOutput := rule.EmitOutput
 			if emitOutput == nil && rule.Output != nil {
@@ -650,10 +656,9 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 						Scope:            p.Scope,
 						ScopePermissions: p.ScopePermissions,
 						Version:          policyVer,
-						OrderedVariables: p.OrderedVariables,
-						Constants:        p.Constants,
 						EmitOutput:       emitOutput,
 						Name:             rule.Name,
+						Parameters:       policyParameters,
 					})
 				}
 
@@ -668,6 +673,12 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 						mergedConstants := maps.Clone(p.Constants)
 						for k, c := range rdr.Constants {
 							mergedConstants[k] = c
+						}
+
+						mergedParameters := &runtimev1.RuleTable_Parameters{
+							Origin:           fmt.Sprintf("%s:%s", policyParameters.Origin, namer.DerivedRolesFQN(rdr.Name)),
+							OrderedVariables: mergedVariables,
+							Constants:        mergedConstants,
 						}
 
 						cond := rule.Condition
@@ -696,10 +707,9 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 								ScopePermissions:  p.ScopePermissions,
 								Version:           policyVer,
 								OriginDerivedRole: dr,
-								OrderedVariables:  mergedVariables,
-								Constants:         mergedConstants,
 								EmitOutput:        emitOutput,
 								Name:              rule.Name,
+								Parameters:        mergedParameters,
 							})
 						}
 					}
