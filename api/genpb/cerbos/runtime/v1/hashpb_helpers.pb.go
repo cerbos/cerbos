@@ -454,6 +454,42 @@ func cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m *RuleTable_Metadata, hash
 	}
 }
 
+func cerbos_runtime_v1_RuleTable_Parameters_hashpb_sum(m *RuleTable_Parameters, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Parameters.origin"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetOrigin()))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Parameters.ordered_variables"]; !ok {
+		if len(m.OrderedVariables) > 0 {
+			for _, v := range m.OrderedVariables {
+				if v != nil {
+					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Parameters.constants"]; !ok {
+		if len(m.Constants) > 0 {
+			keys := make([]string, len(m.Constants))
+			i := 0
+			for k := range m.Constants {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Constants[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_RuleTable_ParentRoleAncestors_hashpb_sum(m *RuleTable_ParentRoleAncestors, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.ParentRoleAncestors.parent_roles"]; !ok {
 		if len(m.ParentRoles) > 0 {
@@ -504,34 +540,11 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetOriginDerivedRole()))
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.ordered_variables"]; !ok {
-		if len(m.OrderedVariables) > 0 {
-			for _, v := range m.OrderedVariables {
-				if v != nil {
-					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
-				}
-
-			}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.parameters"]; !ok {
+		if m.GetParameters() != nil {
+			cerbos_runtime_v1_RuleTable_Parameters_hashpb_sum(m.GetParameters(), hasher, ignore)
 		}
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.constants"]; !ok {
-		if len(m.Constants) > 0 {
-			keys := make([]string, len(m.Constants))
-			i := 0
-			for k := range m.Constants {
-				keys[i] = k
-				i++
-			}
 
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.Constants[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore)
-				}
-
-			}
-		}
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.emit_output"]; !ok {
 		if m.GetEmitOutput() != nil {
