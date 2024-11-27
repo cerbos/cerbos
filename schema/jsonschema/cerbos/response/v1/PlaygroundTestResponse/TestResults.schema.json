@@ -67,6 +67,9 @@
         "resource": {
           "type": "string"
         },
+        "role": {
+          "type": "string"
+        },
         "rolePolicyScope": {
           "type": "string"
         },
@@ -99,7 +102,8 @@
         "KIND_VARIABLE",
         "KIND_VARIABLES",
         "KIND_OUTPUT",
-        "KIND_ROLE_POLICY_SCOPE"
+        "KIND_ROLE_POLICY_SCOPE",
+        "KIND_ROLE"
       ]
     },
     "cerbos.engine.v1.Trace.Component.Variable": {

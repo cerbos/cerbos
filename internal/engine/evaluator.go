@@ -104,7 +104,7 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		return newRolePolicyEvaluator(rps)
 	case *runtimev1.RunnablePolicySet_RuleTable:
-		return &ruleTableEvaluator{policy: rp.RuleTable, evalParams: eparams}
+		return &ruleTableEvaluator{policy: rp.RuleTable, schemaMgr: schemaMgr, evalParams: eparams}
 	default:
 		return noopEvaluator{}
 	}
@@ -122,6 +122,7 @@ type rolePolicyEvaluator struct {
 
 type ruleTableEvaluator struct {
 	policy     *runtimev1.RuleTable
+	schemaMgr  schema.Manager
 	evalParams evalParams
 }
 
@@ -226,8 +227,33 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	trail := newAuditTrail(rte.policy.GetMeta().GetSourceAttributes())
 	result := newEvalResult(input.Actions, trail)
 
-	// pctx := tctx.StartPolicy(rte.policy.Meta.Fqn)
+	pctx := tctx.StartPolicy(rte.policy.Meta.Fqn)
 	evalCtx := newEvalContext(rte.evalParams, request)
+
+	// validate the input
+	vr, err := rte.schemaMgr.ValidateCheckInput(ctx, rte.policy.Schemas, input)
+	if err != nil {
+		pctx.Failed(err, "Error during validation")
+
+		return nil, fmt.Errorf("failed to validate input: %w", err)
+	}
+
+	if len(vr.Errors) > 0 {
+		result.ValidationErrors = vr.Errors.SchemaErrors()
+
+		pctx.Failed(vr.Errors, "Validation errors")
+
+		if vr.Reject {
+			for _, action := range input.Actions {
+				actx := pctx.StartAction(action)
+
+				result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+
+				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Rejected due to validation failures")
+			}
+			return result, nil
+		}
+	}
 
 	version := input.Resource.PolicyVersion
 	if version == "" {
@@ -247,13 +273,17 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		return result, nil
 	}
 
-	scanResult := rte.scanRows(version, input.Resource.Kind, scopes, input.Principal.Roles, actionsToResolve)
+	scanResult := rte.scanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, actionsToResolve)
 
 	parameterCache := make(map[string]cachedParameters)
 
 	for _, action := range actionsToResolve {
+		actx := pctx.StartAction(action)
+
 		var actionEffectInfo EffectInfo
 		for _, role := range input.Principal.Roles {
+			roctx := actx.StartRole(role)
+
 			roleEffectSet := make(map[effectv1.Effect]struct{})
 			roleEffectInfo := EffectInfo{
 				Effect: effectv1.Effect_EFFECT_NO_MATCH,
@@ -262,19 +292,24 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 			roles := []string{role}
 			for _, scope := range scopes {
+				sctx := roctx.StartScope(scope)
+
 				if roleEffectInfo.Effect != effectv1.Effect_EFFECT_NO_MATCH {
 					break
 				}
 
+				// TODO(saml) introduce "return 1" functionality to prevent full scans
 				scopedScanResult := scanResult.filter([]string{scope}, roles, actionsToResolve)
 				if len(scopedScanResult.rows) == 0 {
 					// the role doesn't exist in this scope for any actions, so continue.
 					// this prevents an implicit DENY from incorrectly narrowing an independent role
+					sctx.Skipped(nil, "No matching rules")
 					continue
 				}
 
 				for _, row := range scopedScanResult.filter([]string{scope}, roles, []string{action}).rows {
-					// TODO(saml) these are largely the same within rows, introduce caching/pre-processing or something
+					rctx := sctx.StartRule(row.Name)
+
 					var constants, variables map[string]any
 					if row.Parameters != nil {
 						if c, ok := parameterCache[row.Parameters.Origin]; ok {
@@ -285,6 +320,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							var err error
 							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.Parameters.OrderedVariables)
 							if err != nil {
+								rctx.Skipped(err, "Error evaluating variables")
 								return nil, err
 							}
 							parameterCache[row.Parameters.Origin] = cachedParameters{constants, variables}
@@ -293,6 +329,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 					ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
 					if err != nil {
+						rctx.Skipped(err, "Error evaluating condition")
 						continue
 					}
 
@@ -311,21 +348,26 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 
 						if outputExpr != nil {
+							octx := rctx.StartOutput(row.Name)
 							// TODO(saml) ordering of outputs is now not deterministic so some tests now fail (TestCheck/case_21 does sporadically)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(rte.policy.Meta, row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
+							octx.ComputedOutput(output)
 						}
 					} else {
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
+							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(rte.policy.Meta, row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
+							octx.ComputedOutput(output)
 						}
+						rctx.Skipped(nil, "Condition not satisfied")
 					}
 				}
 
@@ -370,11 +412,12 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 			}
 		}
 
-		if actionEffectInfo.Effect != effectv1.Effect_EFFECT_NO_MATCH {
-			result.setEffect(action, actionEffectInfo)
-		} else {
-			result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
+		if actionEffectInfo.Effect == effectv1.Effect_EFFECT_NO_MATCH {
+			actionEffectInfo = EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey}
 		}
+
+		result.setEffect(action, actionEffectInfo)
+		actx.AppliedEffect(actionEffectInfo.Effect, "")
 	}
 
 	return result, nil
