@@ -179,6 +179,10 @@ func FQNFromPolicyKey(s string) string {
 	return fqnPrefix + s
 }
 
+func SanitizedResource(resource string) string {
+	return sanitize(resource)
+}
+
 // ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource, version and scope.
 func ResourcePolicyFQN(resource, version, scope string) string {
 	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, sanitize(resource), sanitize(version))

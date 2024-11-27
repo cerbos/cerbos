@@ -604,10 +604,10 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	return ec, nil
 }
 
-func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
+func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, sanitizedResource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
 	// A matching scope must have at least one resource or role policy or a mixture of both.
 	// To begin, we attempt to retrieve the full scope hierarchy of resource policies.
-	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, true)
+	rps, err := engine.getResourcePolicySet(ctx, sanitizedResource, policyVer, scope, true)
 	if err != nil {
 		return nil, err
 	}
@@ -618,22 +618,30 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 	// add rules for resource policy
 	rrps := rps.GetResourcePolicy()
 
+	sanitizedResource = namer.SanitizedResource(rrps.Meta.Resource)
+
 	ruleTable := &runtimev1.RuleTable{
 		Meta: &runtimev1.RuleTable_Metadata{
 			Fqn:              rrps.Meta.Fqn,
-			Resource:         rrps.Meta.Resource,
+			Resource:         sanitizedResource,
 			Version:          rrps.Meta.Version,
 			SourceAttributes: rrps.Meta.SourceAttributes,
 			Annotations:      rrps.Meta.Annotations,
 		},
 		ParentRoleAncestors: make(map[string]*runtimev1.RuleTable_ParentRoleAncestors),
+		Schemas:             rrps.Schemas,
 	}
 
 	for _, p := range rrps.GetPolicies() {
 		policyParameters := &runtimev1.RuleTable_Parameters{
-			Origin:           namer.ResourcePolicyFQN(rrps.Meta.Resource, rrps.Meta.Version, p.Scope),
+			Origin:           namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope),
 			OrderedVariables: p.OrderedVariables,
 			Constants:        p.Constants,
+		}
+
+		scopePermissions := p.ScopePermissions
+		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 		}
 
 		for _, rule := range p.Rules {
@@ -648,13 +656,13 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 			for a := range rule.Actions {
 				for r := range rule.Roles {
 					ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-						Resource:         rrps.Meta.Resource,
+						Resource:         sanitizedResource,
 						Role:             r,
 						Action:           a,
 						Condition:        rule.Condition,
 						Effect:           rule.Effect,
 						Scope:            p.Scope,
-						ScopePermissions: p.ScopePermissions,
+						ScopePermissions: scopePermissions,
 						Version:          policyVer,
 						EmitOutput:       emitOutput,
 						Name:             rule.Name,
@@ -698,13 +706,13 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 
 						for pr := range rdr.ParentRoles {
 							ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-								Resource:          rrps.Meta.Resource,
+								Resource:          sanitizedResource,
 								Role:              pr,
 								Action:            a,
 								Condition:         cond,
 								Effect:            rule.Effect,
 								Scope:             p.Scope,
-								ScopePermissions:  p.ScopePermissions,
+								ScopePermissions:  scopePermissions,
 								Version:           policyVer,
 								OriginDerivedRole: dr,
 								EmitOutput:        emitOutput,

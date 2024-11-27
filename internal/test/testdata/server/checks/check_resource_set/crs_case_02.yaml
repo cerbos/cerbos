@@ -74,7 +74,7 @@ checkResourceSet:
               "matchedPolicy": "resource.leave_request.v20210210"
             }
           },
-          "effectiveDerivedRoles": ["any_employee", "direct_manager"]
+          "effectiveDerivedRoles": ["direct_manager"]
         },
         "XX150": {
           "actions": {
@@ -82,7 +82,6 @@ checkResourceSet:
               "matchedPolicy": "resource.leave_request.v20210210"
             }
           },
-          "effectiveDerivedRoles": ["any_employee", "direct_manager"]
         }
       }
     }
