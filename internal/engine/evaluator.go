@@ -215,6 +215,11 @@ func (rrs *ruleRowSet) filter(scopes, roles, actions []string) *ruleRowSet {
 	return res
 }
 
+type cachedParameters struct {
+	constants map[string]any
+	variables map[string]any
+}
+
 func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	policyKey := namer.PolicyKeyFromFQN(rte.policy.Meta.Fqn)
 	request := checkInputToRequest(input)
@@ -244,6 +249,8 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 	scanResult := rte.scanRows(version, input.Resource.Kind, scopes, input.Principal.Roles, actionsToResolve)
 
+	parameterCache := make(map[string]cachedParameters)
+
 	for _, action := range actionsToResolve {
 		var actionEffectInfo EffectInfo
 		for _, role := range input.Principal.Roles {
@@ -268,10 +275,20 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 				for _, row := range scopedScanResult.filter([]string{scope}, roles, []string{action}).rows {
 					// TODO(saml) these are largely the same within rows, introduce caching/pre-processing or something
-					constants := constantValues(row.Constants)
-					variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.OrderedVariables)
-					if err != nil {
-						return nil, err
+					var constants, variables map[string]any
+					if row.Parameters != nil {
+						if c, ok := parameterCache[row.Parameters.Origin]; ok {
+							constants = c.constants
+							variables = c.variables
+						} else {
+							constants = constantValues(row.Parameters.Constants)
+							var err error
+							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.Parameters.OrderedVariables)
+							if err != nil {
+								return nil, err
+							}
+							parameterCache[row.Parameters.Origin] = cachedParameters{constants, variables}
+						}
 					}
 
 					ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
