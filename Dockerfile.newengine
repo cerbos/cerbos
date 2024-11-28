@@ -1,0 +1,18 @@
+FROM golang:1.23-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+ENV CGO_ENABLED=0
+RUN go build -trimpath -ldflags "-s -w" -o cerbos ./cmd/cerbos
+
+FROM scratch
+EXPOSE 3592 3593
+ENV CERBOS_CONFIG="__default__"
+VOLUME ["/policies", "/tmp", "/.cache"]
+ENTRYPOINT ["/cerbos"]
+CMD ["server"]
+HEALTHCHECK --interval=10s --timeout=2s --retries=2 CMD ["/cerbos", "healthcheck"]
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /app/cerbos /cerbos
+
