@@ -270,3 +270,9 @@ prometheus:
         bitnami/prometheus:latest \
         --config.file=/opt/bitnami/prometheus/conf/prometheus.yml \
         --enable-feature=otlp-write-receiver
+
+# TODO(saml) remove
+build-newengine:
+    @ docker build --no-cache \
+        -f Dockerfile.newengine \
+        -t cerbos:dev-newengine .
