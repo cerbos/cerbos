@@ -72,10 +72,7 @@ func TestCheck(t *testing.T) {
 				haveDecisionLogs,
 				protocmp.Transform(),
 				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-				// TODO(saml) this doesn't do what I want it to. I need to sort OutputEntry based on it's field `src`
-				// protocmp.SortRepeated(func(a, b *enginev1.OutputEntry) bool {
-				// 	return a.Src < b.Src
-				// }),
+				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "outputs"),
 				protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
 				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
 			))
