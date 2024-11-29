@@ -319,7 +319,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					break
 				}
 
-				// TODO(saml) introduce "return 1" functionality to prevent full scans
 				scopedScanResult := scanResult.filter([]string{scope}, roles, actionsToResolve)
 				if len(scopedScanResult.rows) == 0 {
 					// the role doesn't exist in this scope for any actions, so continue.
@@ -350,6 +349,8 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 					}
 
+					// TODO(saml) is caching a worthwhile optimisation given the need for per row string
+					// concatenation?
 					conditionKey := fmt.Sprintf("%s:%s", paramKey, row.Fqn)
 					var satisfiesCondition bool
 					if c, ok := conditionCache[conditionKey]; ok {
@@ -365,6 +366,11 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 
 					if satisfiesCondition {
+						// If we're just overriding an existing ALLOW, we can skip.
+						if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow && row.Effect == effectv1.Effect_EFFECT_ALLOW {
+							continue
+						}
+
 						roleEffectSet[row.Effect] = struct{}{}
 
 						// TODO(saml) behaviour has changed such that we only add an effective derived role if the derived role was activated
