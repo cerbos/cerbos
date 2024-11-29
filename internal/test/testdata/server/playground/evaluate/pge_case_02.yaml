@@ -70,7 +70,7 @@ playgroundEvaluate:
           "policy": "resource.leave_request.v20210210"
         }
       ],
-      "effectiveDerivedRoles": ["any_employee", "employee_that_owns_the_record"],
+      "effectiveDerivedRoles": ["employee_that_owns_the_record"],
       "validationErrors": [
         {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_PRINCIPAL"},
         {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_RESOURCE"}
