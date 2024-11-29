@@ -381,7 +381,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 						if outputExpr != nil {
 							octx := rctx.StartOutput(row.Name)
-							// TODO(saml) ordering of outputs is now not deterministic so some tests now fail (TestCheck/case_21 does sporadically)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(rte.meta, row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
