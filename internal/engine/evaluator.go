@@ -331,9 +331,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					rctx := sctx.StartRule(row.Name)
 
 					var constants, variables map[string]any
-					var paramKey string
 					if row.Parameters != nil {
-						paramKey = row.Parameters.Origin
 						if c, ok := parameterCache[row.Parameters.Origin]; ok {
 							constants = c.constants
 							variables = c.variables
@@ -349,11 +347,8 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 					}
 
-					// TODO(saml) is caching a worthwhile optimisation given the need for per row string
-					// concatenation?
-					conditionKey := fmt.Sprintf("%s:%s", paramKey, row.Fqn)
 					var satisfiesCondition bool
-					if c, ok := conditionCache[conditionKey]; ok {
+					if c, ok := conditionCache[row.EvaluationKey]; ok {
 						satisfiesCondition = c
 					} else {
 						ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
@@ -361,7 +356,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							rctx.Skipped(err, "Error evaluating condition")
 							continue
 						}
-						conditionCache[conditionKey] = ok
+						conditionCache[row.EvaluationKey] = ok
 						satisfiesCondition = ok
 					}
 

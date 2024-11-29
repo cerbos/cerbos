@@ -106,7 +106,7 @@ playgroundProxy:
                 "matchedPolicy": "resource.leave_request.v20210210"
               }
             },
-            "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"]
+            "effectiveDerivedRoles": ["employee_that_owns_the_record"]
           }
         }
       }
