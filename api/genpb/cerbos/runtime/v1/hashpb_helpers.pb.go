@@ -502,6 +502,10 @@ func cerbos_runtime_v1_RuleTable_ParentRoleAncestors_hashpb_sum(m *RuleTable_Par
 }
 
 func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.fqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetFqn()))
+
+	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.resource"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResource()))
 
@@ -560,10 +564,23 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 
 func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.meta"]; !ok {
-		if m.GetMeta() != nil {
-			cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m.GetMeta(), hasher, ignore)
-		}
+		if len(m.Meta) > 0 {
+			keys := make([]string, len(m.Meta))
+			i := 0
+			for k := range m.Meta {
+				keys[i] = k
+				i++
+			}
 
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Meta[k] != nil {
+					cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m.Meta[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Rules"]; !ok {
 		if len(m.Rules) > 0 {
@@ -595,10 +612,23 @@ func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, igno
 		}
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.schemas"]; !ok {
-		if m.GetSchemas() != nil {
-			cerbos_policy_v1_Schemas_hashpb_sum(m.GetSchemas(), hasher, ignore)
-		}
+		if len(m.Schemas) > 0 {
+			keys := make([]string, len(m.Schemas))
+			i := 0
+			for k := range m.Schemas {
+				keys[i] = k
+				i++
+			}
 
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Schemas[k] != nil {
+					cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas[k], hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 
