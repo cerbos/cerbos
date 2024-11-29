@@ -122,7 +122,7 @@ package $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='' $AWS_CONTAINER_REPO='aws.local
 pre-commit: lint-helm generate lint tests
 
 test PKG='./...' TEST='.*':
-    @ go test -tags=tests,integration -failfast -cover -count=1 -run='{{ TEST }}' '{{ PKG }}'
+    @ go test -v -tags=tests,integration -failfast -cover -count=1 -run='{{ TEST }}' '{{ PKG }}'
 
 tests PKG='./...' TEST='.*': _gotestsum
     @ "${TOOLS_BIN_DIR}/gotestsum" --format=dots-v2 --format-hide-empty-pkg -- -tags=tests,integration -failfast -count=1 -run='{{ TEST }}' '{{ PKG }}'
