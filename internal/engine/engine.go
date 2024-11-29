@@ -604,10 +604,10 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	return ec, nil
 }
 
-func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, sanitizedResource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
+func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
 	// A matching scope must have at least one resource or role policy or a mixture of both.
 	// To begin, we attempt to retrieve the full scope hierarchy of resource policies.
-	rps, err := engine.getResourcePolicySet(ctx, sanitizedResource, policyVer, scope, true)
+	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, true)
 	if err != nil {
 		return nil, err
 	}
@@ -618,18 +618,22 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 	// add rules for resource policy
 	rrps := rps.GetResourcePolicy()
 
-	sanitizedResource = namer.SanitizedResource(rrps.Meta.Resource)
+	sanitizedResource := namer.SanitizedResource(rrps.Meta.Resource)
 
 	ruleTable := &runtimev1.RuleTable{
-		Meta: &runtimev1.RuleTable_Metadata{
-			Fqn:              rrps.Meta.Fqn,
-			Resource:         sanitizedResource,
-			Version:          rrps.Meta.Version,
-			SourceAttributes: rrps.Meta.SourceAttributes,
-			Annotations:      rrps.Meta.Annotations,
+		Meta: map[string]*runtimev1.RuleTable_Metadata{
+			rrps.Meta.Fqn: {
+				Fqn:              rrps.Meta.Fqn,
+				Resource:         sanitizedResource,
+				Version:          rrps.Meta.Version,
+				SourceAttributes: rrps.Meta.SourceAttributes,
+				Annotations:      rrps.Meta.Annotations,
+			},
 		},
 		ParentRoleAncestors: make(map[string]*runtimev1.RuleTable_ParentRoleAncestors),
-		Schemas:             rrps.Schemas,
+		Schemas: map[string]*policyv1.Schemas{
+			rrps.Meta.Fqn: rrps.Schemas,
+		},
 	}
 
 	for _, p := range rrps.GetPolicies() {
@@ -656,6 +660,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 			for a := range rule.Actions {
 				for r := range rule.Roles {
 					ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
+						Fqn:              rrps.Meta.Fqn,
 						Resource:         sanitizedResource,
 						Role:             r,
 						Action:           a,
@@ -706,6 +711,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 
 						for pr := range rdr.ParentRoles {
 							ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
+								Fqn:               rrps.Meta.Fqn,
 								Resource:          sanitizedResource,
 								Role:              pr,
 								Action:            a,
@@ -740,7 +746,6 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 			rolePolicies[rrp.Role] = rrp
 		}
 
-		// TODO(saml) can this be efficiently implemented elsewhere, not as a closure?
 		var traverseParentRoles func(string, string)
 		traverseParentRoles = func(baseRole, traversedRole string) {
 			if _, ok := ruleTable.ParentRoleAncestors[baseRole]; !ok {
@@ -760,6 +765,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 				for _, rule := range rl.Rules {
 					for a := range rule.Actions {
 						ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
+							Fqn:              rrps.Meta.Fqn,
 							Role:             role,
 							Resource:         resource,
 							Action:           a,
