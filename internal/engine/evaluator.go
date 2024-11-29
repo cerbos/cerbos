@@ -312,6 +312,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 			}
 
 			roles := []string{role}
+		scopesLoop:
 			for _, scope := range scopes {
 				sctx := roctx.StartScope(scope)
 
@@ -412,9 +413,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 					}
 
-					if _, ok := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; ok {
-						delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
-					}
+					delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
 				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
 					if len(roleEffectSet) > 0 {
 						roleEffectInfo.Scope = scope
@@ -426,7 +425,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 
 						// explicit ALLOW or DENY for this role, so we can exit the loop
-						break
+						break scopesLoop
 					}
 				}
 			}
