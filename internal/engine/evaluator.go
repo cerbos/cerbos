@@ -108,7 +108,10 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 			return noopEvaluator{}
 		}
 
-		resourceFqn := rp.RuleTable.Rules[0].Fqn
+		rule := rp.RuleTable.Rules[0]
+		// Rules are added from leaf scopes up the ancestor chain, so the first row will
+		// have the relevant scope for the FQN
+		resourceFqn := namer.ResourcePolicyFQN(rule.Resource, rule.Version, rule.Scope)
 		return &ruleTableEvaluator{
 			rules:               rp.RuleTable.Rules,
 			parentRoleAncestors: rp.RuleTable.ParentRoleAncestors,
@@ -291,6 +294,9 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	scanResult := rte.scanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, actionsToResolve)
 
 	parameterCache := make(map[string]cachedParameters)
+	// We can cache evaluated conditions for combinations of parameters and conditions.
+	// We use a compound key comprising the parameter origin and the rule FQN.
+	conditionCache := make(map[string]bool)
 
 	for _, action := range actionsToResolve {
 		actx := pctx.StartAction(action)
@@ -326,7 +332,9 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					rctx := sctx.StartRule(row.Name)
 
 					var constants, variables map[string]any
+					var paramKey string
 					if row.Parameters != nil {
+						paramKey = row.Parameters.Origin
 						if c, ok := parameterCache[row.Parameters.Origin]; ok {
 							constants = c.constants
 							variables = c.variables
@@ -342,13 +350,21 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 					}
 
-					ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
-					if err != nil {
-						rctx.Skipped(err, "Error evaluating condition")
-						continue
+					conditionKey := fmt.Sprintf("%s:%s", paramKey, row.Fqn)
+					var satisfiesCondition bool
+					if c, ok := conditionCache[conditionKey]; ok {
+						satisfiesCondition = c
+					} else {
+						ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
+						if err != nil {
+							rctx.Skipped(err, "Error evaluating condition")
+							continue
+						}
+						conditionCache[conditionKey] = ok
+						satisfiesCondition = ok
 					}
 
-					if ok {
+					if satisfiesCondition {
 						roleEffectSet[row.Effect] = struct{}{}
 
 						// TODO(saml) behaviour has changed such that we only add an effective derived role if the derived role was activated

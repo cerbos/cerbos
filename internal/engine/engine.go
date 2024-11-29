@@ -657,10 +657,11 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 					},
 				}
 			}
+			ruleFqn := namer.RuleFQN(ruleTable.Meta[rrps.Meta.Fqn], p.Scope, rule.Name)
 			for a := range rule.Actions {
 				for r := range rule.Roles {
 					ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-						Fqn:              rrps.Meta.Fqn,
+						Fqn:              ruleFqn,
 						Resource:         sanitizedResource,
 						Role:             r,
 						Action:           a,
@@ -678,7 +679,6 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 				// merge derived roles as roles with added conditions
 				for dr := range rule.DerivedRoles {
 					if rdr, ok := p.DerivedRoles[dr]; ok {
-						// TODO(saml) I think there needs to be a separate cache for constants and variables to avoid lots of duplicated work
 						mergedVariables := make([]*runtimev1.Variable, len(p.OrderedVariables)+len(rdr.OrderedVariables))
 						copy(mergedVariables, p.OrderedVariables)
 						copy(mergedVariables[len(p.OrderedVariables):], rdr.OrderedVariables)
@@ -711,7 +711,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 
 						for pr := range rdr.ParentRoles {
 							ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-								Fqn:               rrps.Meta.Fqn,
+								Fqn:               ruleFqn,
 								Resource:          sanitizedResource,
 								Role:              pr,
 								Action:            a,
@@ -762,10 +762,11 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 		rolePolicySourceAttrs := make(map[string]*policyv1.SourceAttributes)
 		for role, p := range rolePolicies {
 			for resource, rl := range p.Resources {
-				for _, rule := range rl.Rules {
+				for idx, rule := range rl.Rules {
+					ruleFqn := namer.RuleFQN(ruleTable.Meta[rrps.Meta.Fqn], p.Scope, fmt.Sprintf("%s_rule-%03d", resource, idx))
 					for a := range rule.Actions {
 						ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-							Fqn:              rrps.Meta.Fqn,
+							Fqn:              ruleFqn,
 							Role:             role,
 							Resource:         resource,
 							Action:           a,
