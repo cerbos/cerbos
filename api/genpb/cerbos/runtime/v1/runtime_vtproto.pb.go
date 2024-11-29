@@ -430,12 +430,19 @@ func (m *RuleTable_RuleRow) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.EvaluationKey) > 0 {
+		i -= len(m.EvaluationKey)
+		copy(dAtA[i:], m.EvaluationKey)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.EvaluationKey)))
+		i--
+		dAtA[i] = 0x7a
+	}
 	if len(m.Name) > 0 {
 		i -= len(m.Name)
 		copy(dAtA[i:], m.Name)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
 		i--
-		dAtA[i] = 0x6a
+		dAtA[i] = 0x72
 	}
 	if m.EmitOutput != nil {
 		size, err := m.EmitOutput.MarshalToSizedBufferVT(dAtA[:i])
@@ -445,7 +452,7 @@ func (m *RuleTable_RuleRow) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x62
+		dAtA[i] = 0x5a
 	}
 	if m.Parameters != nil {
 		size, err := m.Parameters.MarshalToSizedBufferVT(dAtA[:i])
@@ -455,38 +462,38 @@ func (m *RuleTable_RuleRow) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x5a
+		dAtA[i] = 0x52
 	}
 	if len(m.OriginDerivedRole) > 0 {
 		i -= len(m.OriginDerivedRole)
 		copy(dAtA[i:], m.OriginDerivedRole)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.OriginDerivedRole)))
 		i--
-		dAtA[i] = 0x52
+		dAtA[i] = 0x4a
 	}
 	if len(m.Version) > 0 {
 		i -= len(m.Version)
 		copy(dAtA[i:], m.Version)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Version)))
 		i--
-		dAtA[i] = 0x4a
+		dAtA[i] = 0x42
 	}
 	if m.ScopePermissions != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopePermissions))
 		i--
-		dAtA[i] = 0x40
+		dAtA[i] = 0x38
 	}
 	if len(m.Scope) > 0 {
 		i -= len(m.Scope)
 		copy(dAtA[i:], m.Scope)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scope)))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x32
 	}
 	if m.Effect != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Effect))
 		i--
-		dAtA[i] = 0x30
+		dAtA[i] = 0x28
 	}
 	if m.Condition != nil {
 		size, err := m.Condition.MarshalToSizedBufferVT(dAtA[:i])
@@ -496,33 +503,26 @@ func (m *RuleTable_RuleRow) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x22
 	}
 	if len(m.Action) > 0 {
 		i -= len(m.Action)
 		copy(dAtA[i:], m.Action)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Action)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.Role) > 0 {
 		i -= len(m.Role)
 		copy(dAtA[i:], m.Role)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x12
 	}
 	if len(m.Resource) > 0 {
 		i -= len(m.Resource)
 		copy(dAtA[i:], m.Resource)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Resource)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Fqn) > 0 {
-		i -= len(m.Fqn)
-		copy(dAtA[i:], m.Fqn)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Fqn)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -3595,10 +3595,6 @@ func (m *RuleTable_RuleRow) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Fqn)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	l = len(m.Resource)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
@@ -3642,6 +3638,10 @@ func (m *RuleTable_RuleRow) SizeVT() (n int) {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.EvaluationKey)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -5939,38 +5939,6 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Fqn", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Fqn = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Resource", wireType)
 			}
 			var stringLen uint64
@@ -6001,7 +5969,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Resource = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Role", wireType)
 			}
@@ -6033,7 +6001,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Role = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
 			}
@@ -6065,7 +6033,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Action = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Condition", wireType)
 			}
@@ -6101,7 +6069,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Effect", wireType)
 			}
@@ -6120,7 +6088,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-		case 7:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Scope", wireType)
 			}
@@ -6152,7 +6120,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Scope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 8:
+		case 7:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ScopePermissions", wireType)
 			}
@@ -6171,7 +6139,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-		case 9:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
 			}
@@ -6203,7 +6171,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Version = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 10:
+		case 9:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field OriginDerivedRole", wireType)
 			}
@@ -6235,7 +6203,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.OriginDerivedRole = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 11:
+		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Parameters", wireType)
 			}
@@ -6271,7 +6239,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 12:
+		case 11:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EmitOutput", wireType)
 			}
@@ -6307,7 +6275,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 13:
+		case 14:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
@@ -6338,6 +6306,38 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 15:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EvaluationKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EvaluationKey = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

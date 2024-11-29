@@ -657,11 +657,12 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 					},
 				}
 			}
+
 			ruleFqn := namer.RuleFQN(ruleTable.Meta[rrps.Meta.Fqn], p.Scope, rule.Name)
+			evaluationKey := fmt.Sprintf("%s:%s", policyParameters.Origin, ruleFqn)
 			for a := range rule.Actions {
 				for r := range rule.Roles {
 					ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-						Fqn:              ruleFqn,
 						Resource:         sanitizedResource,
 						Role:             r,
 						Action:           a,
@@ -673,6 +674,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 						EmitOutput:       emitOutput,
 						Name:             rule.Name,
 						Parameters:       policyParameters,
+						EvaluationKey:    evaluationKey,
 					})
 				}
 
@@ -709,9 +711,9 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 							}
 						}
 
+						evaluationKey := fmt.Sprintf("%s:%s", mergedParameters.Origin, ruleFqn)
 						for pr := range rdr.ParentRoles {
 							ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-								Fqn:               ruleFqn,
 								Resource:          sanitizedResource,
 								Role:              pr,
 								Action:            a,
@@ -724,6 +726,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 								EmitOutput:        emitOutput,
 								Name:              rule.Name,
 								Parameters:        mergedParameters,
+								EvaluationKey:     evaluationKey,
 							})
 						}
 					}
@@ -763,10 +766,9 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 		for role, p := range rolePolicies {
 			for resource, rl := range p.Resources {
 				for idx, rule := range rl.Rules {
-					ruleFqn := namer.RuleFQN(ruleTable.Meta[rrps.Meta.Fqn], p.Scope, fmt.Sprintf("%s_rule-%03d", resource, idx))
+					evaluationKey := namer.RuleFQN(ruleTable.Meta[rrps.Meta.Fqn], p.Scope, fmt.Sprintf("%s_rule-%03d", resource, idx))
 					for a := range rule.Actions {
 						ruleTable.Rules = append(ruleTable.Rules, &runtimev1.RuleTable_RuleRow{
-							Fqn:              ruleFqn,
 							Role:             role,
 							Resource:         resource,
 							Action:           a,
@@ -775,6 +777,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 							Scope:            p.Scope,
 							ScopePermissions: p.ScopePermissions,
 							Version:          policyVer,
+							EvaluationKey:    evaluationKey,
 						})
 					}
 				}

@@ -50,7 +50,6 @@ wantOutputs: [
     },
     "effectiveDerivedRoles": [
       "employee_that_owns_the_record",
-      "any_employee"
     ]
   }
 ]
