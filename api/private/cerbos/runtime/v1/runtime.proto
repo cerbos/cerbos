@@ -43,28 +43,29 @@ message RuleTable {
   }
 
   message RuleRow {
-    string resource = 1;
-    string role = 2;
-    string action = 3;
-    Condition condition = 4;
-    cerbos.effect.v1.Effect effect = 5;
-    string scope = 6;
-    cerbos.policy.v1.ScopePermissions scopePermissions = 7;
-    string version = 8;
-    string originDerivedRole = 9;
-    Parameters parameters = 10;
-    Output emit_output = 11;
-    string name = 12;
+    string fqn = 1;
+    string resource = 2;
+    string role = 3;
+    string action = 4;
+    Condition condition = 5;
+    cerbos.effect.v1.Effect effect = 6;
+    string scope = 7;
+    cerbos.policy.v1.ScopePermissions scopePermissions = 8;
+    string version = 9;
+    string originDerivedRole = 10;
+    Parameters parameters = 11;
+    Output emit_output = 12;
+    string name = 13;
   }
 
   message ParentRoleAncestors {
     repeated string parent_roles = 1;
   }
 
-  Metadata meta = 1;
+  map<string, Metadata> meta = 1;
   repeated RuleRow Rules = 2;
   map<string, ParentRoleAncestors> parent_role_ancestors = 3;
-  cerbos.policy.v1.Schemas schemas = 4;
+  map<string, cerbos.policy.v1.Schemas> schemas = 4;
 }
 
 message RunnableRolePolicySet {

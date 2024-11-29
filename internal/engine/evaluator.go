@@ -104,7 +104,19 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		return newRolePolicyEvaluator(rps)
 	case *runtimev1.RunnablePolicySet_RuleTable:
-		return &ruleTableEvaluator{policy: rp.RuleTable, schemaMgr: schemaMgr, evalParams: eparams}
+		if len(rp.RuleTable.Rules) == 0 {
+			return noopEvaluator{}
+		}
+
+		resourceFqn := rp.RuleTable.Rules[0].Fqn
+		return &ruleTableEvaluator{
+			rules:               rp.RuleTable.Rules,
+			parentRoleAncestors: rp.RuleTable.ParentRoleAncestors,
+			meta:                rp.RuleTable.Meta[resourceFqn],
+			schemas:             rp.RuleTable.Schemas[resourceFqn],
+			schemaMgr:           schemaMgr,
+			evalParams:          eparams,
+		}
 	default:
 		return noopEvaluator{}
 	}
@@ -121,9 +133,12 @@ type rolePolicyEvaluator struct {
 }
 
 type ruleTableEvaluator struct {
-	policy     *runtimev1.RuleTable
-	schemaMgr  schema.Manager
-	evalParams evalParams
+	rules               []*runtimev1.RuleTable_RuleRow
+	parentRoleAncestors map[string]*runtimev1.RuleTable_ParentRoleAncestors
+	meta                *runtimev1.RuleTable_Metadata
+	schemas             *policyv1.Schemas
+	schemaMgr           schema.Manager
+	evalParams          evalParams
 }
 
 func (rte *ruleTableEvaluator) scanRows(version, resource string, scopes, roles, actions []string) *ruleRowSet {
@@ -135,7 +150,7 @@ func (rte *ruleTableEvaluator) scanRows(version, resource string, scopes, roles,
 	parentRoleSet := make([]string, 0, len(roles))
 	parentRoleMapping := make(map[string]string)
 	for _, role := range roles {
-		if prs, ok := rte.policy.ParentRoleAncestors[role]; ok {
+		if prs, ok := rte.parentRoleAncestors[role]; ok {
 			parentRoleSet = append(parentRoleSet, prs.ParentRoles...)
 			for _, pr := range prs.ParentRoles {
 				parentRoleMapping[pr] = role
@@ -148,7 +163,7 @@ func (rte *ruleTableEvaluator) scanRows(version, resource string, scopes, roles,
 		scopeSet[s] = struct{}{}
 	}
 
-	for _, row := range rte.policy.Rules {
+	for _, row := range rte.rules {
 		if version != row.Version {
 			continue
 		}
@@ -222,16 +237,16 @@ type cachedParameters struct {
 }
 
 func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
-	policyKey := namer.PolicyKeyFromFQN(rte.policy.Meta.Fqn)
+	policyKey := namer.PolicyKeyFromFQN(rte.meta.Fqn)
 	request := checkInputToRequest(input)
-	trail := newAuditTrail(rte.policy.GetMeta().GetSourceAttributes())
+	trail := newAuditTrail(rte.meta.GetSourceAttributes())
 	result := newEvalResult(input.Actions, trail)
 
-	pctx := tctx.StartPolicy(rte.policy.Meta.Fqn)
+	pctx := tctx.StartPolicy(rte.meta.Fqn)
 	evalCtx := newEvalContext(rte.evalParams, request)
 
 	// validate the input
-	vr, err := rte.schemaMgr.ValidateCheckInput(ctx, rte.policy.Schemas, input)
+	vr, err := rte.schemaMgr.ValidateCheckInput(ctx, rte.schemas, input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 
@@ -351,7 +366,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							octx := rctx.StartOutput(row.Name)
 							// TODO(saml) ordering of outputs is now not deterministic so some tests now fail (TestCheck/case_21 does sporadically)
 							output := &enginev1.OutputEntry{
-								Src: namer.RuleFQN(rte.policy.Meta, row.Scope, row.Name),
+								Src: namer.RuleFQN(rte.meta, row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
@@ -361,7 +376,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
-								Src: namer.RuleFQN(rte.policy.Meta, row.Scope, row.Name),
+								Src: namer.RuleFQN(rte.meta, row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
