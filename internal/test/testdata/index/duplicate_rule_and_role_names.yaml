@@ -11,7 +11,7 @@ wantErrList:
         position:
           line: 9
           column: 11
-          path: $.derivedRoles.definitions[1].name
+          path: $.derivedRoles.definitions[1]
     - error: |-
         duplicate action rule name "myrule": action rule #2 for resource "leave_request" has the same name as action rule #1 defined at 9:17
       file: principal.yaml
@@ -21,7 +21,7 @@ wantErrList:
         position:
           line: 16
           column: 17
-          path: $.principalPolicy.rules[0].actions[1].action
+          path: $.principalPolicy.rules[0].actions[1]
     - error: |-
         duplicate rule name "myrule": rule #2 has the same name as rule #1 defined at 8:12
       file: resource.yaml
@@ -31,7 +31,7 @@ wantErrList:
         position:
           line: 13
           column: 12
-          path: $.resourcePolicy.rules[1].actions
+          path: $.resourcePolicy.rules[1]
     - error: |-
         duplicate rule name "myrule": rule #3 has the same name as rule #1 defined at 8:12
       file: resource.yaml
@@ -41,7 +41,7 @@ wantErrList:
         position:
           line: 18
           column: 12
-          path: $.resourcePolicy.rules[2].actions
+          path: $.resourcePolicy.rules[2]
 files:
   "test.txt": |-
     this is some text

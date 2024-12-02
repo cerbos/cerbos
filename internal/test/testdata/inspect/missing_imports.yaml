@@ -17,7 +17,7 @@ inputs:
         local:
           label: '"dude"'
       rules:
-        - actions: [ "approve" ]
+        - actions: ["approve"]
           condition:
             match:
               expr: variables.commonLabel == constants.commonLabel || variables.label == constants.label
@@ -51,7 +51,7 @@ policiesExpectation:
           name: label
           source: resource.leave_request.vdefault
           used: true
-          value: "\"dude\""
+          value: '"dude"'
 
 policySetsExpectation:
   indexBuildErrors:
@@ -62,5 +62,5 @@ policySetsExpectation:
           position:
             column: 12
             line: 12
-            path: $.resourcePolicy.rules[0].actions
+            path: $.resourcePolicy.rules[0]
         file: resource.leave_request.vdefault.yaml

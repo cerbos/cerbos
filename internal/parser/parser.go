@@ -115,13 +115,18 @@ func Unmarshal[T proto.Message](r io.Reader, factory func() T, opts ...Unmarshal
 }
 
 func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...UnmarshalOpt) (_ []T, _ []SourceCtx, outErr error) {
+	contentLen := len(bytes.TrimSpace(contents))
+	if contentLen == 0 {
+		return nil, nil, nil
+	}
+
 	f, err := parse(contents, true)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if len(f.Docs) == 0 {
-		if len(bytes.TrimSpace(contents)) > 0 {
+		if contentLen > 0 {
 			// Special case for unterminated strings. See test case 20.
 			return nil, nil, NewUnmarshalError(&sourcev1.Error{
 				Kind:     sourcev1.Error_KIND_PARSE_ERROR,
