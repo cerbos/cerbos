@@ -153,51 +153,6 @@ resourcePolicy:
 
 In the above, we blanket-allow all actions and roles, but specifically rely on the `aud` key parsed from the JWT to determine access.
 
-== Map of relations
-
-Avoiding complex query planner outputs with sub-expressions:
-
-.Before
-[source,yaml,linenums]
-----
-apiVersion: api.cerbos.dev/v1
-resourcePolicy:
-  resource: example_resource
-  version: default
-  rules:
-    - actions:
-        - "*"
-      effect: EFFECT_ALLOW
-      roles:
-        - USER
-      condition:
-        match:
-          expr: P.attr.relations[R.id] == "owner"
-----
-
-Notice how, in the above match condition, we reference both the Principal and the Resource within a single struct indexing expression: `P.attr.relations[R.id]`. This is correct both syntactically and logically. However, when using the `PlanResources` API to produce a query plan, the generated plan can sometimes be quite complicated due to how these expressions are represented internally.
-
-
-To improve this, we can apply a little bit of mechanical-sympathy and rewrite the expression in a way where the known values (principal attributes) are separated from unknown values (resource attributes) as follows:
-
-.After
-[source,yaml,linenums]
-----
-apiVersion: api.cerbos.dev/v1
-resourcePolicy:
-  resource: example_resource
-  version: default
-  rules:
-    - actions:
-        - "*"
-      effect: EFFECT_ALLOW
-      roles:
-        - USER
-      condition:
-        match:
-          expr: R.id in P.attr.relations.filter(x, P.attr.relations[x] == "owner")
-----
-
 == Adding self-service custom roles
 
 Imagine this scenario: you're an admin in a multi-tenant system, and you want a method by which you can copy an existing role, and then select which permissions/actions to enable or disable for each.
