@@ -4,10 +4,10 @@
         {
             "kind": "KIND_PARSE_ERROR",
             "position": {
-                "line": 10,
+                "line": 9,
                 "column": 7
             },
-            "message": "required ':' and map value"
+            "message": "non-map value is specified"
         }
     ]
 }

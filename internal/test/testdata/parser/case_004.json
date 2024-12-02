@@ -1,14 +1,14 @@
 {
-    "description": "Invalid type for policyVersion field",
+    "description": "Invalid type for resource field",
     "wantErrors": [
         {
             "kind": "KIND_PARSE_ERROR",
             "position": {
                 "line": 7,
                 "column": 9,
-                "path": "$.resourcePolicy.resource.kind"
+                "path": "$.resourcePolicy.resource"
             },
-            "message": "expected string value got MappingValue"
+            "message": "expected string value got Mapping"
         }
     ],
     "want": [
@@ -22,9 +22,9 @@
                     "position": {
                         "line": 7,
                         "column": 9,
-                        "path": "$.resourcePolicy.resource.kind"
+                        "path": "$.resourcePolicy.resource"
                     },
-                    "message": "expected string value got MappingValue"
+                    "message": "expected string value got Mapping"
                 }
             ]
         }

@@ -8,5 +8,5 @@ wantErrors:
     position:
       line: 14
       column: 14
-      path: "$.resourcePolicy.rules[2].actions"
+      path: "$.resourcePolicy.rules[2]"
 mainDef: "resource_policies/leave_request_20210210.yaml"
