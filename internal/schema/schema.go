@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"strings"
 
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"

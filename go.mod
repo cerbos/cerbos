@@ -66,7 +66,7 @@ require (
 	github.com/rogpeppe/go-internal v1.13.1
 	github.com/rs/cors v1.11.1
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/sony/gobreaker/v2 v2.0.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/afero v1.11.0
