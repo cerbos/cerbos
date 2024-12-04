@@ -124,22 +124,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_assistant/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_03_override_acme.hr.uk.yaml",
-                    },
-                },
-              "cerbos.role.acme_travel_agent/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_04_override_acme.hr.uk.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":
@@ -170,6 +154,22 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "resource_policies/policy_05_acme.hr.uk.yaml",
+                    },
+                },
+              "role.acme_assistant/acme.hr.uk":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_03_override_acme.hr.uk.yaml",
+                    },
+                },
+              "role.acme_travel_agent/acme.hr.uk":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_04_override_acme.hr.uk.yaml",
                     },
                 },
             },
