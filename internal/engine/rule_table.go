@@ -25,20 +25,21 @@ const (
 
 type RuleTable struct {
 	*runtimev1.RuleTable
-	policyLoader        PolicyLoader
-	scopeMap            map[string]struct{}
-	parentRoleAncestors map[string][]string
-	mu                  sync.RWMutex
+	policyLoader             PolicyLoader
+	schemas                  map[string]*policyv1.Schemas
+	scopeMap                 map[string]struct{}
+	parentRoles              map[string][]string
+	parentRoleAncestorsCache map[string][]string
+	mu                       sync.RWMutex
 }
 
 func NewRuleTable() *RuleTable {
 	return &RuleTable{
-		RuleTable: &runtimev1.RuleTable{
-			ParentRoles: make(map[string]*runtimev1.RuleTable_ParentRoles),
-			Schemas:     make(map[string]*policyv1.Schemas),
-		},
-		scopeMap:            make(map[string]struct{}),
-		parentRoleAncestors: make(map[string][]string),
+		RuleTable:                &runtimev1.RuleTable{},
+		schemas:                  make(map[string]*policyv1.Schemas),
+		scopeMap:                 make(map[string]struct{}),
+		parentRoles:              make(map[string][]string),
+		parentRoleAncestorsCache: make(map[string][]string),
 	}
 }
 
@@ -76,7 +77,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		Annotations:      rrps.Meta.Annotations,
 	}
 
-	rt.Schemas[rrps.Meta.Fqn] = rrps.Schemas
+	rt.schemas[rrps.Meta.Fqn] = rrps.Schemas
 
 	for _, p := range rrps.GetPolicies() {
 		rt.scopeMap[p.Scope] = struct{}{}
@@ -216,9 +217,7 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 		}
 	}
 
-	rt.ParentRoles[p.Role] = &runtimev1.RuleTable_ParentRoles{
-		ParentRoles: p.ParentRoles,
-	}
+	rt.parentRoles[p.Role] = p.ParentRoles
 }
 
 func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
@@ -240,7 +239,7 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 	}
 	rt.Rules = newRules
 
-	delete(rt.Schemas, fqn)
+	delete(rt.schemas, fqn)
 
 	var scope string
 	switch rps.PolicySet.(type) {
@@ -251,8 +250,8 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 		rlp := rps.GetRolePolicy()
 		scope = rlp.Scope
 
-		delete(rt.ParentRoles, rlp.Role)
-		delete(rt.parentRoleAncestors, rlp.Role)
+		delete(rt.parentRoles, rlp.Role)
+		delete(rt.parentRoleAncestorsCache, rlp.Role)
 	}
 
 	if _, ok := scopeSet[scope]; !ok {
@@ -265,11 +264,11 @@ func (rt *RuleTable) purge() {
 	defer rt.mu.Unlock()
 
 	rt.Rules = []*runtimev1.RuleTable_RuleRow{}
-	rt.ParentRoles = make(map[string]*runtimev1.RuleTable_ParentRoles)
-	rt.Schemas = make(map[string]*policyv1.Schemas)
+	rt.parentRoles = make(map[string][]string)
+	rt.schemas = make(map[string]*policyv1.Schemas)
 
 	rt.scopeMap = make(map[string]struct{})
-	rt.parentRoleAncestors = make(map[string][]string)
+	rt.parentRoleAncestorsCache = make(map[string][]string)
 }
 
 func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions []string) *RuleSet {
@@ -331,12 +330,12 @@ func (rt *RuleTable) getParentRoles(roles []string) []string {
 	parentRoles := []string{}
 	for _, role := range roles {
 		var roleParents []string
-		if c, ok := rt.parentRoleAncestors[role]; ok {
+		if c, ok := rt.parentRoleAncestorsCache[role]; ok {
 			roleParents = c
 		} else {
 			visited := make(map[string]struct{})
 			roleParents = rt.collectParentRoles(role, roleParents, visited)
-			rt.parentRoleAncestors[role] = roleParents
+			rt.parentRoleAncestorsCache[role] = roleParents
 		}
 		parentRoles = append(parentRoles, roleParents...)
 	}
@@ -349,8 +348,8 @@ func (rt *RuleTable) collectParentRoles(role string, parentRoleSet []string, vis
 	}
 	visited[role] = struct{}{}
 
-	if prs, ok := rt.ParentRoles[role]; ok {
-		for _, pr := range prs.ParentRoles {
+	if prs, ok := rt.parentRoles[role]; ok {
+		for _, pr := range prs {
 			parentRoleSet = append(parentRoleSet, pr)
 			parentRoleSet = append(parentRoleSet, rt.collectParentRoles(pr, parentRoleSet, visited)...)
 		}
@@ -370,7 +369,7 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	if s, ok := rt.Schemas[fqn]; ok {
+	if s, ok := rt.schemas[fqn]; ok {
 		return s
 	}
 
