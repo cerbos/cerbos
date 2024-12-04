@@ -63,13 +63,7 @@ message RuleTable {
     Metadata meta = 15;
   }
 
-  message ParentRoles {
-    repeated string parent_roles = 1;
-  }
-
   repeated RuleRow Rules = 1;
-  map<string, ParentRoles> parent_roles = 2;
-  map<string, cerbos.policy.v1.Schemas> schemas = 3;
 }
 
 message RunnableRolePolicySet {
