@@ -319,7 +319,12 @@ func RuleFQN(rpsMeta any, scope, ruleName string) string {
 	case *runtimev1.RunnablePrincipalPolicySet_Metadata:
 		policyFqn = PrincipalPolicyFQN(m.Principal, m.Version, scope)
 	case *runtimev1.RuleTable_Metadata:
-		policyFqn = ResourcePolicyFQN(m.Resource, m.Version, scope)
+		switch t := m.Name.(type) {
+		case *runtimev1.RuleTable_Metadata_Resource:
+			policyFqn = ResourcePolicyFQN(t.Resource, m.Version, scope)
+		case *runtimev1.RuleTable_Metadata_Role:
+			policyFqn = RolePolicyFQN(t.Role, scope)
+		}
 	default:
 		panic(fmt.Errorf("unknown runnable policy set meta type %T", m))
 	}

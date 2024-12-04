@@ -386,8 +386,16 @@ func (ms *MockStore) GetFirstMatch(ctx context.Context, candidates []namer.Modul
 	}
 }
 
-func (ms *MockStore) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
-	args := ms.MethodCalled("GetAll", ctx, modIDs)
+func (ms *MockStore) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
+	args := ms.MethodCalled("GetAll", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).([]*policy.CompilationUnit), args.Error(1)
+}
+
+func (ms *MockStore) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+	args := ms.MethodCalled("GetAllMatching", ctx, modIDs)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}

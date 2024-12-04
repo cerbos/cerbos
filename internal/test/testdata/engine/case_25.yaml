@@ -212,22 +212,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_jr_admin/acme.hr.uk.brighton":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_01_acme.hr.uk.brighton.yaml",
-                    },
-                },
-              "cerbos.role.acme_creator/acme.hr.uk.brighton":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_02_acme.hr.uk.brighton.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":
@@ -266,6 +250,22 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "resource_policies/policy_05_acme.hr.uk.brighton.yaml",
+                    },
+                },
+              "role.acme_jr_admin/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_01_acme.hr.uk.brighton.yaml",
+                    },
+                },
+              "role.acme_creator/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_02_acme.hr.uk.brighton.yaml",
                     },
                 },
             },

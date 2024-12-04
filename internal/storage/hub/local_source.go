@@ -168,9 +168,16 @@ func (ls *LocalSource) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 	return ps, err
 }
 
-func (ls *LocalSource) GetAll(ctx context.Context, modIDs []namer.ModuleID) (pss []*runtimev1.RunnablePolicySet, err error) {
+func (ls *LocalSource) GetAll(ctx context.Context) (pss []*runtimev1.RunnablePolicySet, err error) {
 	ls.mu.RLock()
-	pss, err = ls.bundle.GetAll(ctx, modIDs)
+	pss, err = ls.bundle.GetAll(ctx)
+	ls.mu.RUnlock()
+	return pss, err
+}
+
+func (ls *LocalSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) (pss []*runtimev1.RunnablePolicySet, err error) {
+	ls.mu.RLock()
+	pss, err = ls.bundle.GetAllMatching(ctx, modIDs)
 	ls.mu.RUnlock()
 	return pss, err
 }
