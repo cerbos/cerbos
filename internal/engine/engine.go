@@ -33,7 +33,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage/ruletable"
 )
 
 var errNoPoliciesMatched = errors.New("no matching policies")
@@ -145,7 +144,7 @@ type Engine struct {
 	schemaMgr         schema.Manager
 	auditLog          audit.Log
 	policyLoader      PolicyLoader
-	ruleTable         *ruletable.RuleTable
+	ruleTable         *RuleTable
 	conf              *Conf
 	metadataExtractor audit.MetadataExtractor
 	workerPool        []chan<- workIn
@@ -155,7 +154,7 @@ type Engine struct {
 type Components struct {
 	AuditLog          audit.Log
 	PolicyLoader      PolicyLoader
-	RuleTable         *ruletable.RuleTable
+	RuleTable         *RuleTable
 	SchemaMgr         schema.Manager
 	MetadataExtractor audit.MetadataExtractor
 }
@@ -608,7 +607,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 }
 
 func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
-	var ruleTable *ruletable.RuleTable
+	var ruleTable *RuleTable
 
 	if engine.ruleTable != nil {
 		// ruletable was built at startup
@@ -624,7 +623,7 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 			return nil, nil
 		}
 
-		ruleTable = ruletable.NewRuleTable()
+		ruleTable = NewRuleTable()
 
 		// add rules for resource policy
 		ruleTable.LoadPolicies([]*runtimev1.RunnablePolicySet{rps})

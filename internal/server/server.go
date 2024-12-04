@@ -68,7 +68,6 @@ import (
 	// Import blob to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/cerbos/cerbos/internal/storage/overlay"
-	"github.com/cerbos/cerbos/internal/storage/ruletable"
 
 	// Import hub to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/hub"
@@ -157,7 +156,7 @@ func Start(ctx context.Context) error {
 		return ErrInvalidStore
 	}
 
-	rt := ruletable.NewRuleTable()
+	rt := engine.NewRuleTable().WithPolicyLoader(policyLoader)
 
 	// TODO(saml) for now, we're only enabling the ruletable engine for non-mutable stores
 	// populate rule table for non-mutable stores
@@ -168,6 +167,10 @@ func Start(ctx context.Context) error {
 		}
 
 		rt.LoadPolicies(rps)
+
+		if ss, ok := store.(storage.Subscribable); ok {
+			ss.Subscribe(rt)
+		}
 	}
 
 	// create engine

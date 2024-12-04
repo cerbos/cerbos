@@ -31,7 +31,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage/ruletable"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -109,7 +108,7 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 	}
 }
 
-func NewRuleTableEvaluator(rt *ruletable.RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+func NewRuleTableEvaluator(rt *RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
 	if len(rt.Rules) == 0 {
 		return noopEvaluator{}
 	}
@@ -132,7 +131,7 @@ type rolePolicyEvaluator struct {
 }
 
 type ruleTableEvaluator struct {
-	*ruletable.RuleTable
+	*RuleTable
 	schemaMgr  schema.Manager
 	evalParams evalParams
 }

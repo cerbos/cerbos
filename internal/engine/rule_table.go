@@ -1,22 +1,31 @@
 // Copyright 2021-2024 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package ruletable
+package engine
 
 import (
+	"context"
 	"fmt"
 	"maps"
 	"sync"
+	"time"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
+)
+
+const (
+	storeReloadTimeout = 5 * time.Second
+	storeFetchTimeout  = 2 * time.Second
 )
 
 type RuleTable struct {
 	*runtimev1.RuleTable
+	policyLoader        PolicyLoader
 	scopeMap            map[string]struct{}
 	parentRoleAncestors map[string][]string
 	mu                  sync.RWMutex
@@ -31,6 +40,11 @@ func NewRuleTable() *RuleTable {
 		scopeMap:            make(map[string]struct{}),
 		parentRoleAncestors: make(map[string][]string),
 	}
+}
+
+func (rt *RuleTable) WithPolicyLoader(policyLoader PolicyLoader) *RuleTable {
+	rt.policyLoader = policyLoader
+	return rt
 }
 
 func (rt *RuleTable) LoadPolicies(rps []*runtimev1.RunnablePolicySet) {
@@ -93,6 +107,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			for a := range rule.Actions {
 				for r := range rule.Roles {
 					rt.Rules = append(rt.Rules, &runtimev1.RuleTable_RuleRow{
+						OriginFqn:        rrps.Meta.Fqn,
 						Resource:         sanitizedResource,
 						Role:             r,
 						Action:           a,
@@ -145,6 +160,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 						evaluationKey := fmt.Sprintf("%s#%s", mergedParameters.Origin, ruleFqn)
 						for pr := range rdr.ParentRoles {
 							rt.Rules = append(rt.Rules, &runtimev1.RuleTable_RuleRow{
+								OriginFqn:         rrps.Meta.Fqn,
 								Resource:          sanitizedResource,
 								Role:              pr,
 								Action:            a,
@@ -173,17 +189,18 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 
 	version := "default"
 	meta := &runtimev1.RuleTable_Metadata{
-		Fqn:              p.GetMeta().Fqn,
+		Fqn:              p.Meta.Fqn,
 		Name:             &runtimev1.RuleTable_Metadata_Role{Role: p.Role},
 		Version:          version,
-		SourceAttributes: p.GetMeta().SourceAttributes,
-		Annotations:      p.GetMeta().Annotations,
+		SourceAttributes: p.Meta.SourceAttributes,
+		Annotations:      p.Meta.Annotations,
 	}
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
 			evaluationKey := fmt.Sprintf("%s#%s", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), fmt.Sprintf("%s_rule-%03d", p.Role, idx))
 			for a := range rule.Actions {
 				rt.Rules = append(rt.Rules, &runtimev1.RuleTable_RuleRow{
+					OriginFqn:        p.Meta.Fqn,
 					Role:             p.Role,
 					Resource:         resource,
 					Action:           a,
@@ -202,6 +219,57 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	rt.ParentRoles[p.Role] = &runtimev1.RuleTable_ParentRoles{
 		ParentRoles: p.ParentRoles,
 	}
+}
+
+func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
+	// TODO(saml) rebuilding/reassigning the whole row slice on each delete is hugely inefficient.
+	// Perhaps we could mark as `deleted` and periodically purge the deleted rows.
+	// (side note: a SQLite rule table would solve this for free)
+	fqn := rps.Fqn
+	scopeSet := make(map[string]struct{})
+
+	newRules := []*runtimev1.RuleTable_RuleRow{}
+	for _, r := range rt.Rules {
+		if r.OriginFqn != fqn {
+			newRules = append(newRules, r)
+			scopeSet[r.Scope] = struct{}{}
+		}
+	}
+	rt.Rules = newRules
+
+	delete(rt.Schemas, fqn)
+
+	var scope string
+	switch rps.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		rp := rps.GetResourcePolicy()
+		scope = rp.Policies[0].Scope
+	case *runtimev1.RunnablePolicySet_RolePolicy:
+		rlp := rps.GetRolePolicy()
+		scope = rlp.Scope
+
+		delete(rt.ParentRoles, rlp.Role)
+		delete(rt.parentRoleAncestors, rlp.Role)
+	}
+
+	if _, ok := scopeSet[scope]; !ok {
+		delete(rt.scopeMap, scope)
+	}
+}
+
+func (rt *RuleTable) purge() {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
+	rt.Rules = []*runtimev1.RuleTable_RuleRow{}
+	rt.ParentRoles = make(map[string]*runtimev1.RuleTable_ParentRoles)
+	rt.Schemas = make(map[string]*policyv1.Schemas)
+
+	rt.scopeMap = make(map[string]struct{})
+	rt.parentRoleAncestors = make(map[string][]string)
 }
 
 func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions []string) *RuleSet {
@@ -334,6 +402,54 @@ func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *Rule
 	}
 
 	return res
+}
+
+func (rt *RuleTable) SubscriberID() string {
+	return "engine.RuleTable"
+}
+
+func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
+	for _, ev := range events {
+		switch ev.Kind {
+		case storage.EventReload:
+			rt.triggerReload()
+		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
+			rt.processPolicyEvent(ev) // TODO(saml) handle error
+		}
+	}
+}
+
+func (rt *RuleTable) triggerReload() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), storeReloadTimeout)
+	defer cancelFunc()
+
+	rpss, err := rt.policyLoader.GetAll(ctx)
+	if err != nil {
+		return err
+	}
+
+	rt.purge()
+	rt.LoadPolicies(rpss)
+
+	return nil
+}
+
+func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), storeFetchTimeout)
+	defer cancelFunc()
+
+	rps, err := rt.policyLoader.GetFirstMatch(ctx, []namer.ModuleID{ev.PolicyID})
+	if err != nil {
+		return err
+	}
+
+	rt.deletePolicy(rps)
+
+	if ev.Kind == storage.EventAddOrUpdatePolicy {
+		rt.addPolicy(rps)
+	}
+
+	return nil
 }
 
 type RuleSet struct {

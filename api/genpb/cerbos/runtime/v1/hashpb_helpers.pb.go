@@ -510,6 +510,10 @@ func cerbos_runtime_v1_RuleTable_ParentRoles_hashpb_sum(m *RuleTable_ParentRoles
 }
 
 func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.originFqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetOriginFqn()))
+
+	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.resource"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResource()))
 
