@@ -46,20 +46,21 @@ message RuleTable {
   }
 
   message RuleRow {
-    string resource = 1;
-    string role = 2;
-    string action = 3;
-    Condition condition = 4;
-    cerbos.effect.v1.Effect effect = 5;
-    string scope = 6;
-    cerbos.policy.v1.ScopePermissions scopePermissions = 7;
-    string version = 8;
-    string originDerivedRole = 9;
-    Parameters parameters = 10;
-    Output emit_output = 11;
-    string name = 14;
-    string evaluation_key = 15;
-    Metadata meta = 16;
+    string originFqn = 1;
+    string resource = 2;
+    string role = 3;
+    string action = 4;
+    Condition condition = 5;
+    cerbos.effect.v1.Effect effect = 6;
+    string scope = 7;
+    cerbos.policy.v1.ScopePermissions scopePermissions = 8;
+    string version = 9;
+    string originDerivedRole = 10;
+    Parameters parameters = 11;
+    Output emit_output = 12;
+    string name = 13;
+    string evaluation_key = 14;
+    Metadata meta = 15;
   }
 
   message ParentRoles {
