@@ -173,12 +173,12 @@ func (s *Store) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) 
 	)
 }
 
-func (s *Store) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+func (s *Store) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	return withCircuitBreaker(
 		s,
-		func() ([]*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetAll(ctx, modIDs) },
+		func() ([]*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetAllMatching(ctx, modIDs) },
 		func() ([]*runtimev1.RunnablePolicySet, error) {
-			return s.fallbackPolicyLoader.GetAll(ctx, modIDs)
+			return s.fallbackPolicyLoader.GetAllMatching(ctx, modIDs)
 		},
 	)
 }
@@ -189,6 +189,16 @@ func (s *Store) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtime
 
 func (s *Store) Driver() string {
 	return DriverName
+}
+
+func (s *Store) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+	return withCircuitBreaker(
+		s,
+		func() ([]*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetAll(ctx) },
+		func() ([]*runtimev1.RunnablePolicySet, error) {
+			return s.fallbackPolicyLoader.GetAll(ctx)
+		},
+	)
 }
 
 func (s *Store) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {

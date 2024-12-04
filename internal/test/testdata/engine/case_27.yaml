@@ -116,14 +116,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_london_employee/acme.hr.uk.london":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_05_acme.hr.uk.london.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":
@@ -162,6 +154,14 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "resource_policies/policy_05_acme.hr.uk.london.yaml",
+                    },
+                },
+              "role.acme_london_employee/acme.hr.uk.london":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_05_acme.hr.uk.london.yaml",
                     },
                 },
             },

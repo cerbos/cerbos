@@ -30,10 +30,13 @@ message RunnablePolicySet {
 message RuleTable {
   message Metadata {
     string fqn = 1;
-    string resource = 2;
-    string version = 3;
-    map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 4;
-    map<string, string> annotations = 5;
+    oneof name {
+      string resource = 2;
+      string role = 3;
+    }
+    string version = 4;
+    map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 5;
+    map<string, string> annotations = 6;
   }
 
   message Parameters {
@@ -56,16 +59,16 @@ message RuleTable {
     Output emit_output = 11;
     string name = 14;
     string evaluation_key = 15;
+    Metadata meta = 16;
   }
 
-  message ParentRoleAncestors {
+  message ParentRoles {
     repeated string parent_roles = 1;
   }
 
-  map<string, Metadata> meta = 1;
-  repeated RuleRow Rules = 2;
-  map<string, ParentRoleAncestors> parent_role_ancestors = 3;
-  map<string, cerbos.policy.v1.Schemas> schemas = 4;
+  repeated RuleRow Rules = 1;
+  map<string, ParentRoles> parent_roles = 2;
+  map<string, cerbos.policy.v1.Schemas> schemas = 3;
 }
 
 message RunnableRolePolicySet {

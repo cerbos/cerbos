@@ -231,7 +231,27 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 	return rpsVal.(*runtimev1.RunnablePolicySet), nil
 }
 
-func (c *Manager) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+	// TODO(saml) caching etc as per GetAllMatching below
+	cus, err := c.store.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get compilation units: %w", err)
+	}
+
+	rpsSet := make([]*runtimev1.RunnablePolicySet, len(cus))
+	for i, cu := range cus {
+		rps, err := c.compile(cu)
+		if err != nil {
+			return nil, PolicyCompilationErr{underlying: err}
+		}
+
+		rpsSet[i] = rps
+	}
+
+	return rpsSet, nil
+}
+
+func (c *Manager) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	res := []*runtimev1.RunnablePolicySet{}
 	missed := make(map[namer.ModuleID]struct{})
 	for _, id := range modIDs {
@@ -262,7 +282,7 @@ func (c *Manager) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runti
 	defer c.sf.Forget(key)
 
 	compiled, err, _ := c.sf.Do(key, func() (any, error) {
-		cus, err := c.store.GetAll(ctx, toResolve)
+		cus, err := c.store.GetAllMatching(ctx, toResolve)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get compilation units: %w", err)
 		}

@@ -237,9 +237,9 @@ func (_c *Index_Delete_Call) RunAndReturn(run func(index.Entry) (storage.Event, 
 	return _c
 }
 
-// GetAll provides a mock function with given fields: _a0
-func (_m *Index) GetAll(_a0 []namer.ModuleID) ([]*policy.CompilationUnit, error) {
-	ret := _m.Called(_a0)
+// GetAll provides a mock function with no fields
+func (_m *Index) GetAll() ([]*policy.CompilationUnit, error) {
+	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
@@ -247,19 +247,19 @@ func (_m *Index) GetAll(_a0 []namer.ModuleID) ([]*policy.CompilationUnit, error)
 
 	var r0 []*policy.CompilationUnit
 	var r1 error
-	if rf, ok := ret.Get(0).(func([]namer.ModuleID) ([]*policy.CompilationUnit, error)); ok {
-		return rf(_a0)
+	if rf, ok := ret.Get(0).(func() ([]*policy.CompilationUnit, error)); ok {
+		return rf()
 	}
-	if rf, ok := ret.Get(0).(func([]namer.ModuleID) []*policy.CompilationUnit); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func() []*policy.CompilationUnit); ok {
+		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*policy.CompilationUnit)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func([]namer.ModuleID) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -273,14 +273,13 @@ type Index_GetAll_Call struct {
 }
 
 // GetAll is a helper method to define mock.On call
-//   - _a0 []namer.ModuleID
-func (_e *Index_Expecter) GetAll(_a0 interface{}) *Index_GetAll_Call {
-	return &Index_GetAll_Call{Call: _e.mock.On("GetAll", _a0)}
+func (_e *Index_Expecter) GetAll() *Index_GetAll_Call {
+	return &Index_GetAll_Call{Call: _e.mock.On("GetAll")}
 }
 
-func (_c *Index_GetAll_Call) Run(run func(_a0 []namer.ModuleID)) *Index_GetAll_Call {
+func (_c *Index_GetAll_Call) Run(run func()) *Index_GetAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]namer.ModuleID))
+		run()
 	})
 	return _c
 }
@@ -290,7 +289,7 @@ func (_c *Index_GetAll_Call) Return(_a0 []*policy.CompilationUnit, _a1 error) *I
 	return _c
 }
 
-func (_c *Index_GetAll_Call) RunAndReturn(run func([]namer.ModuleID) ([]*policy.CompilationUnit, error)) *Index_GetAll_Call {
+func (_c *Index_GetAll_Call) RunAndReturn(run func() ([]*policy.CompilationUnit, error)) *Index_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -339,6 +338,64 @@ func (_c *Index_GetAllCompilationUnits_Call) Return(_a0 <-chan *policy.Compilati
 }
 
 func (_c *Index_GetAllCompilationUnits_Call) RunAndReturn(run func(context.Context) <-chan *policy.CompilationUnit) *Index_GetAllCompilationUnits_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAllMatching provides a mock function with given fields: _a0
+func (_m *Index) GetAllMatching(_a0 []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllMatching")
+	}
+
+	var r0 []*policy.CompilationUnit
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]namer.ModuleID) ([]*policy.CompilationUnit, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func([]namer.ModuleID) []*policy.CompilationUnit); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*policy.CompilationUnit)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]namer.ModuleID) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Index_GetAllMatching_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllMatching'
+type Index_GetAllMatching_Call struct {
+	*mock.Call
+}
+
+// GetAllMatching is a helper method to define mock.On call
+//   - _a0 []namer.ModuleID
+func (_e *Index_Expecter) GetAllMatching(_a0 interface{}) *Index_GetAllMatching_Call {
+	return &Index_GetAllMatching_Call{Call: _e.mock.On("GetAllMatching", _a0)}
+}
+
+func (_c *Index_GetAllMatching_Call) Run(run func(_a0 []namer.ModuleID)) *Index_GetAllMatching_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]namer.ModuleID))
+	})
+	return _c
+}
+
+func (_c *Index_GetAllMatching_Call) Return(_a0 []*policy.CompilationUnit, _a1 error) *Index_GetAllMatching_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Index_GetAllMatching_Call) RunAndReturn(run func([]namer.ModuleID) ([]*policy.CompilationUnit, error)) *Index_GetAllMatching_Call {
 	_c.Call.Return(run)
 	return _c
 }

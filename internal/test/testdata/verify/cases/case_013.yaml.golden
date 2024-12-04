@@ -4,16 +4,12 @@
       "file": "suite_test.yaml",
       "name": "TestSuite",
       "summary": {
-        "overallResult": "RESULT_FAILED",
+        "overallResult": "RESULT_PASSED",
         "testsCount": 24,
         "resultCounts": [
           {
             "result": "RESULT_PASSED",
-            "count": 20
-          },
-          {
-            "result": "RESULT_FAILED",
-            "count": 4
+            "count": 24
           }
         ]
       },
@@ -446,10 +442,9 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_FAILED",
-                        "failure": {
-                          "expected": "EFFECT_DENY",
-                          "actual": "EFFECT_ALLOW"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
                         }
                       }
                     },
@@ -465,10 +460,9 @@
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_FAILED",
-                        "failure": {
-                          "expected": "EFFECT_DENY",
-                          "actual": "EFFECT_ALLOW"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
                         }
                       }
                     }
@@ -480,10 +474,9 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_FAILED",
-                        "failure": {
-                          "expected": "EFFECT_DENY",
-                          "actual": "EFFECT_ALLOW"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
                         }
                       }
                     },
@@ -499,10 +492,9 @@
                     {
                       "name": "create",
                       "details": {
-                        "result": "RESULT_FAILED",
-                        "failure": {
-                          "expected": "EFFECT_DENY",
-                          "actual": "EFFECT_ALLOW"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
                         }
                       }
                     }
@@ -517,16 +509,12 @@
     }
   ],
   "summary": {
-    "overallResult": "RESULT_FAILED",
+    "overallResult": "RESULT_PASSED",
     "testsCount": 24,
     "resultCounts": [
       {
         "result": "RESULT_PASSED",
-        "count": 20
-      },
-      {
-        "result": "RESULT_FAILED",
-        "count": 4
+        "count": 24
       }
     ]
   }

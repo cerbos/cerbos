@@ -31,6 +31,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage/ruletable"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -103,25 +104,20 @@ func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, 
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		return newRolePolicyEvaluator(rps)
-	case *runtimev1.RunnablePolicySet_RuleTable:
-		if len(rp.RuleTable.Rules) == 0 {
-			return noopEvaluator{}
-		}
-
-		rule := rp.RuleTable.Rules[0]
-		// Rules are added from leaf scopes up the ancestor chain, so the first row will
-		// have the relevant scope for the FQN
-		resourceFqn := namer.ResourcePolicyFQN(rule.Resource, rule.Version, rule.Scope)
-		return &ruleTableEvaluator{
-			rules:               rp.RuleTable.Rules,
-			parentRoleAncestors: rp.RuleTable.ParentRoleAncestors,
-			meta:                rp.RuleTable.Meta[resourceFqn],
-			schemas:             rp.RuleTable.Schemas[resourceFqn],
-			schemaMgr:           schemaMgr,
-			evalParams:          eparams,
-		}
 	default:
 		return noopEvaluator{}
+	}
+}
+
+func NewRuleTableEvaluator(rt *ruletable.RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+	if len(rt.Rules) == 0 {
+		return noopEvaluator{}
+	}
+
+	return &ruleTableEvaluator{
+		RuleTable:  rt,
+		schemaMgr:  schemaMgr,
+		evalParams: eparams,
 	}
 }
 
@@ -136,102 +132,9 @@ type rolePolicyEvaluator struct {
 }
 
 type ruleTableEvaluator struct {
-	rules               []*runtimev1.RuleTable_RuleRow
-	parentRoleAncestors map[string]*runtimev1.RuleTable_ParentRoleAncestors
-	meta                *runtimev1.RuleTable_Metadata
-	schemas             *policyv1.Schemas
-	schemaMgr           schema.Manager
-	evalParams          evalParams
-}
-
-func (rte *ruleTableEvaluator) scanRows(version, resource string, scopes, roles, actions []string) *ruleRowSet {
-	res := &ruleRowSet{
-		scopeIndex:            make(map[string][]*runtimev1.RuleTable_RuleRow),
-		scopeScopePermissions: make(map[string]policyv1.ScopePermissions),
-	}
-
-	parentRoleSet := make([]string, 0, len(roles))
-	parentRoleMapping := make(map[string]string)
-	for _, role := range roles {
-		if prs, ok := rte.parentRoleAncestors[role]; ok {
-			parentRoleSet = append(parentRoleSet, prs.ParentRoles...)
-			for _, pr := range prs.ParentRoles {
-				parentRoleMapping[pr] = role
-			}
-		}
-	}
-
-	scopeSet := make(map[string]struct{}, len(scopes))
-	for _, s := range scopes {
-		scopeSet[s] = struct{}{}
-	}
-
-	for _, row := range rte.rules {
-		if version != row.Version {
-			continue
-		}
-
-		if _, ok := scopeSet[row.Scope]; !ok {
-			continue
-		}
-
-		if !util.MatchesGlob(row.Resource, resource) {
-			continue
-		}
-
-		if len(util.FilterGlob(row.Action, actions)) == 0 {
-			continue
-		}
-
-		if len(util.FilterGlob(row.Role, roles)) == 0 {
-			// if the row matched on an assumed parent role, update the role in the row to an arbitrary base role
-			// so that we don't need to retrieve parent roles each time we query on the same set of data.
-			if len(util.FilterGlob(row.Role, parentRoleSet)) > 0 {
-				row.Role = roles[0]
-			} else {
-				continue
-			}
-		}
-
-		res.addMatchingRow(row)
-	}
-
-	return res
-}
-
-func (rrs *ruleRowSet) addMatchingRow(row *runtimev1.RuleTable_RuleRow) {
-	rrs.rows = append(rrs.rows, row)
-
-	rrs.scopeIndex[row.Scope] = append(rrs.scopeIndex[row.Scope], row)
-
-	if _, ok := rrs.scopeScopePermissions[row.Scope]; !ok {
-		rrs.scopeScopePermissions[row.Scope] = row.ScopePermissions
-	}
-}
-
-type ruleRowSet struct {
-	rows                  []*runtimev1.RuleTable_RuleRow
-	scopeIndex            map[string][]*runtimev1.RuleTable_RuleRow
-	scopeScopePermissions map[string]policyv1.ScopePermissions
-}
-
-func (rrs *ruleRowSet) filter(scopes, roles, actions []string) *ruleRowSet {
-	res := &ruleRowSet{
-		scopeIndex:            make(map[string][]*runtimev1.RuleTable_RuleRow),
-		scopeScopePermissions: make(map[string]policyv1.ScopePermissions),
-	}
-
-	for _, s := range scopes {
-		if sMap, ok := rrs.scopeIndex[s]; ok {
-			for _, row := range sMap {
-				if len(util.FilterGlob(row.Action, actions)) > 0 && len(util.FilterGlob(row.Role, roles)) > 0 {
-					res.addMatchingRow(row)
-				}
-			}
-		}
-	}
-
-	return res
+	*ruletable.RuleTable
+	schemaMgr  schema.Manager
+	evalParams evalParams
 }
 
 type cachedParameters struct {
@@ -240,16 +143,48 @@ type cachedParameters struct {
 }
 
 func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
-	policyKey := namer.PolicyKeyFromFQN(rte.meta.Fqn)
+	version := input.Resource.PolicyVersion
+	if version == "" {
+		version = "default"
+	}
+
 	request := checkInputToRequest(input)
-	trail := newAuditTrail(rte.meta.GetSourceAttributes())
+	sourceAttrs := make(map[string]*policyv1.SourceAttributes)
+	trail := newAuditTrail(sourceAttrs)
 	result := newEvalResult(input.Actions, trail)
 
-	pctx := tctx.StartPolicy(rte.meta.Fqn)
+	if !rte.ScopeExists(input.Resource.Scope) && !rte.evalParams.lenientScopeSearch {
+		return result, nil
+	}
+
+	var fqn, policyKey string
+	scope := input.Resource.Scope
+
+	var scopes []string
+	if rte.ScopeExists(scope) {
+		fqn = namer.ResourcePolicyFQN(input.Resource.Kind, version, input.Resource.Scope)
+		policyKey = namer.PolicyKeyFromFQN(fqn)
+		scopes = append(scopes, scope)
+	}
+
+	for i := len(scope) - 1; i >= 0; i-- {
+		if scope[i] == '.' || i == 0 {
+			partialScope := scope[:i]
+			if rte.ScopeExists(partialScope) {
+				scopes = append(scopes, partialScope)
+				if policyKey == "" {
+					fqn = namer.ResourcePolicyFQN(input.Resource.Kind, version, partialScope)
+					policyKey = namer.PolicyKeyFromFQN(fqn)
+				}
+			}
+		}
+	}
+
+	pctx := tctx.StartPolicy(fqn)
 	evalCtx := newEvalContext(rte.evalParams, request)
 
 	// validate the input
-	vr, err := rte.schemaMgr.ValidateCheckInput(ctx, rte.schemas, input)
+	vr, err := rte.schemaMgr.ValidateCheckInput(ctx, rte.GetSchema(fqn), input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 
@@ -273,25 +208,19 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		}
 	}
 
-	version := input.Resource.PolicyVersion
-	if version == "" {
-		version = "default"
-	}
-
-	scope := input.Resource.Scope
-	scopes := []string{scope}
-	for i := len(scope) - 1; i >= 0; i-- {
-		if scope[i] == '.' || i == 0 {
-			scopes = append(scopes, scope[:i])
-		}
-	}
-
 	actionsToResolve := result.unresolvedActions()
 	if len(actionsToResolve) == 0 {
 		return result, nil
 	}
 
-	scanResult := rte.scanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, actionsToResolve)
+	// Return early if no scoped resource policy exists at all
+	scanResult := rte.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, []string{}, []string{})
+	if len(scanResult.GetRows()) == 0 {
+		return result, nil
+	}
+
+	// Filter down to matching roles and actions
+	scanResult = rte.Filter(scanResult, scopes, input.Principal.Roles, actionsToResolve)
 
 	parameterCache := make(map[string]cachedParameters)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
@@ -320,16 +249,20 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					break
 				}
 
-				scopedScanResult := scanResult.filter([]string{scope}, roles, actionsToResolve)
-				if len(scopedScanResult.rows) == 0 {
+				scopedScanResult := rte.Filter(scanResult, []string{scope}, roles, actionsToResolve)
+				if len(scopedScanResult.GetRows()) == 0 {
 					// the role doesn't exist in this scope for any actions, so continue.
 					// this prevents an implicit DENY from incorrectly narrowing an independent role
 					sctx.Skipped(nil, "No matching rules")
 					continue
 				}
 
-				for _, row := range scopedScanResult.filter([]string{scope}, roles, []string{action}).rows {
+				for _, row := range rte.Filter(scopedScanResult, []string{scope}, roles, []string{action}).GetRows() {
 					rctx := sctx.StartRule(row.Name)
+
+					if m := row.GetMeta(); m != nil && m.GetSourceAttributes() != nil {
+						maps.Copy(sourceAttrs, row.GetMeta().GetSourceAttributes())
+					}
 
 					var constants, variables map[string]any
 					if row.Parameters != nil {
@@ -383,7 +316,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						if outputExpr != nil {
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
-								Src: namer.RuleFQN(rte.meta, row.Scope, row.Name),
+								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
@@ -393,7 +326,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
-								Src: namer.RuleFQN(rte.meta, row.Scope, row.Name),
+								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
@@ -403,7 +336,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 				}
 
-				switch scanResult.scopeScopePermissions[scope] {
+				switch scanResult.GetScopeScopePermissions(scope) {
 				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 					if len(roleEffectSet) == 0 {
 						roleEffectInfo = EffectInfo{
@@ -445,6 +378,8 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		if actionEffectInfo.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 			actionEffectInfo = EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey}
 		}
+
+		result.AuditTrail.EffectivePolicies = sourceAttrs // TODO(saml) use helper method
 
 		result.setEffect(action, actionEffectInfo)
 		actx.AppliedEffect(actionEffectInfo.Effect, "")

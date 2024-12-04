@@ -47,7 +47,8 @@ type Index interface {
 	io.Closer
 	storage.Instrumented
 	GetFirstMatch([]namer.ModuleID) (*policy.CompilationUnit, error)
-	GetAll([]namer.ModuleID) ([]*policy.CompilationUnit, error)
+	GetAll() ([]*policy.CompilationUnit, error)
+	GetAllMatching([]namer.ModuleID) ([]*policy.CompilationUnit, error)
 	GetCompilationUnits(...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	AddOrUpdate(Entry) (storage.Event, error)
@@ -109,7 +110,18 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 	return nil, nil
 }
 
-func (idx *index) GetAll(modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+func (idx *index) GetAll() ([]*policy.CompilationUnit, error) {
+	res := []*policy.CompilationUnit{}
+
+	// TODO(saml) provide context from caller
+	for cu := range idx.GetAllCompilationUnits(context.Background()) {
+		res = append(res, cu)
+	}
+
+	return res, nil
+}
+
+func (idx *index) GetAllMatching(modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
 	cus, err := idx.GetCompilationUnits(modIDs...)
 	if err != nil {
 		return nil, err
