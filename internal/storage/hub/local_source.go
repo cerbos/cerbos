@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
@@ -40,18 +41,20 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 	}
 
 	return NewLocalSource(LocalParams{
-		BundlePath: conf.Local.BundlePath,
-		SecretKey:  conf.Credentials.WorkspaceSecret,
-		TempDir:    conf.Local.TempDir,
-		CacheSize:  conf.CacheSize,
+		BundlePath:    conf.Local.BundlePath,
+		SecretKey:     conf.Credentials.WorkspaceSecret,
+		TempDir:       conf.Local.TempDir,
+		CacheSize:     conf.CacheSize,
+		BundleVersion: conf.BundleVersion,
 	})
 }
 
 type LocalParams struct {
-	BundlePath string
-	TempDir    string
-	SecretKey  string
-	CacheSize  uint
+	BundlePath    string
+	TempDir       string
+	SecretKey     string
+	CacheSize     uint
+	BundleVersion cloudapi.Version
 }
 
 func NewLocalSource(params LocalParams) (*LocalSource, error) {
@@ -75,7 +78,7 @@ func (ls *LocalSource) loadBundle() error {
 
 	var creds *credentials.Credentials
 	if ls.params.SecretKey != "" {
-		creds, err = credentials.New("unknown", "unknown", ls.params.SecretKey)
+		creds, err = credentials.New("unknown", "unknown", ls.params.SecretKey, cloudapi.MaxBootstrapSize)
 		if err != nil {
 			return fmt.Errorf("failed to create credentials: %w", err)
 		}
@@ -90,16 +93,30 @@ func (ls *LocalSource) loadBundle() error {
 		CacheSize:   ls.params.CacheSize,
 	}
 
-	bundle, err := Open(opts)
-	if err != nil {
-		if err := os.RemoveAll(workDir); err != nil {
-			zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
+	var b *Bundle
+	switch ls.params.BundleVersion {
+	case cloudapi.Version1:
+		if b, err = Open(opts); err != nil {
+			if err := os.RemoveAll(workDir); err != nil {
+				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
+			}
+
+			return fmt.Errorf("failed to open bundle: %w", err)
 		}
-		return fmt.Errorf("failed to open bundle %q: %w", bundlePath, err)
+	case cloudapi.Version2:
+		if b, err = OpenV2(opts); err != nil {
+			if err := os.RemoveAll(workDir); err != nil {
+				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
+			}
+
+			return fmt.Errorf("failed to open bundle v2: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported bundle version: %d", ls.params.BundleVersion)
 	}
 
 	cleanupFn := func() (outErr error) {
-		if err := bundle.Release(); err != nil {
+		if err := b.Release(); err != nil {
 			outErr = multierr.Append(outErr, fmt.Errorf("failed to release bundle %q: %w", bundlePath, err))
 		}
 
@@ -113,7 +130,7 @@ func (ls *LocalSource) loadBundle() error {
 	ls.mu.Lock()
 	prevCleanupFn := ls.cleanup
 	ls.cleanup = cleanupFn
-	ls.bundle = bundle
+	ls.bundle = b
 	ls.mu.Unlock()
 
 	if prevCleanupFn != nil {
