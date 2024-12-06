@@ -84,6 +84,23 @@ playgroundTest:
                                                           },
                                                           {
                                                             "kind": "KIND_EXPR",
+                                                            "expr": "request.resource.attr.owner == request.principal.id",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_ACTIVATED",
+                                                          "result": false,
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_CONDITION",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_EXPR",
                                                             "expr": "request.resource.attr.public == true",
                                                           },
                                                         ],

@@ -98,6 +98,8 @@ wantOutputs:
       assign:
         effect: EFFECT_DENY
         policy: resource.equipment_request.vdefault
+    effectiveDerivedRoles:
+      - any_employee
     outputs:
       - src: resource.equipment_request.vdefault#output-assign
         val: assign_condition_not_met
@@ -117,6 +119,8 @@ wantOutputs:
       cancel:
         effect: EFFECT_DENY
         policy: resource.equipment_request.vdefault
+    effectiveDerivedRoles:
+      - any_employee
     outputs:
       - src: resource.equipment_request.vdefault#output-cancel
         val: cancel_condition_not_met
@@ -246,6 +250,8 @@ wantDecisionLogs:
             assign:
               effect: EFFECT_DENY
               policy: resource.equipment_request.vdefault
+          effectiveDerivedRoles:
+            - any_employee
           outputs:
             - src: resource.equipment_request.vdefault#output-assign
               val: assign_condition_not_met
@@ -265,6 +271,8 @@ wantDecisionLogs:
             cancel:
               effect: EFFECT_DENY
               policy: resource.equipment_request.vdefault
+          effectiveDerivedRoles:
+            - any_employee
           outputs:
             - src: resource.equipment_request.vdefault#output-cancel
               val: cancel_condition_not_met

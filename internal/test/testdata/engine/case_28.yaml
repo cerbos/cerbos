@@ -47,7 +47,7 @@ wantOutputs:
             },
         },
       "effectiveDerivedRoles":
-        ["employee_that_owns_the_record"],
+        ["any_employee", "employee_that_owns_the_record"],
     },
   ]
 wantDecisionLogs:
@@ -100,7 +100,7 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles":
-                  ["employee_that_owns_the_record"],
+                  ["any_employee", "employee_that_owns_the_record"],
               },
             ],
         },

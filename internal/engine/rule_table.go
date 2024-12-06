@@ -27,6 +27,7 @@ type RuleTable struct {
 	*runtimev1.RuleTable
 	policyLoader             PolicyLoader
 	schemas                  map[string]*policyv1.Schemas
+	policyDerivedRoles       map[string]map[string]*runtimev1.RunnableDerivedRole
 	scopeMap                 map[string]struct{}
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoles              map[string][]string
@@ -38,6 +39,7 @@ func NewRuleTable() *RuleTable {
 	return &RuleTable{
 		RuleTable:                &runtimev1.RuleTable{},
 		schemas:                  make(map[string]*policyv1.Schemas),
+		policyDerivedRoles:       make(map[string]map[string]*runtimev1.RunnableDerivedRole),
 		scopeMap:                 make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
 		parentRoles:              make(map[string][]string),
@@ -82,6 +84,9 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 	rt.schemas[rrps.Meta.Fqn] = rrps.Schemas
 
 	for _, p := range rrps.GetPolicies() {
+		scopeFqn := namer.ResourcePolicyFQN(rrps.Meta.Resource, rrps.Meta.Version, p.Scope)
+		rt.policyDerivedRoles[scopeFqn] = p.DerivedRoles
+
 		rt.scopeMap[p.Scope] = struct{}{}
 
 		policyParameters := &runtimev1.RuleTable_Parameters{
