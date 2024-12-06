@@ -60,6 +60,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 		for _, scope := range scopes {
 			var scopeAllowNode, scopeDenyNode *planner.QpN
 
+			// TODO(saml) figure out a more efficient series of filters so we don't have to full scan twice
 			scopedScanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), []string{scope}, roles, []string{})
 			if len(scopedScanResult.GetRows()) == 0 {
 				// the role doesn't exist in this scope for any actions, so continue.
