@@ -24,19 +24,6 @@ tests:
               operator: and
               operands:
                   - expression:
-                        operator: or
-                        operands:
-                            - expression: &geography_is_US
-                                  operator: eq
-                                  operands:
-                                      - variable: request.resource.attr.geography
-                                      - value: "US"
-                            - expression:
-                                  operator: in
-                                  operands:
-                                      - variable: request.resource.attr.geography
-                                      - value: ["US", "CA"]
-                  - expression:
                         operator: and
                         operands:
                             - expression: &pending_approval_status
@@ -49,6 +36,19 @@ tests:
                                   operands:
                                       - variable: request.resource.attr.owner
                                       - value: "maggie"
+                  - expression:
+                        operator: or
+                        operands:
+                            - expression: &geography_is_US
+                                  operator: eq
+                                  operands:
+                                      - variable: request.resource.attr.geography
+                                      - value: "US"
+                            - expression:
+                                  operator: in
+                                  operands:
+                                      - variable: request.resource.attr.geography
+                                      - value: ["US", "CA"]
 
     - action: "report:allow-deny-deny"
       resource:
@@ -58,15 +58,12 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: and
+            operator: not
             operands:
               - expression:
-                  operator: not
+                  operator: or
                   operands:
                     - variable: request.resource.attr.deleted
-              - expression:
-                  operator: not
-                  operands:
                     - variable: request.resource.attr.hidden
 
     - action: "report:allow-deny"

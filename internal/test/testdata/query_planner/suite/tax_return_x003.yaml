@@ -4,7 +4,6 @@ description: Role policies tax return tests for x003
 principal:
     id: x003
     policyVersion: default
-    scope: acme.finance
     roles:
         - employee
         - bookkeeper
@@ -12,24 +11,28 @@ tests:
     - action: reference
       resource:
         kind: tax_return
+        scope: acme.finance
         policyVersion: default
       want:
         kind: KIND_ALWAYS_DENIED
     - action: comment
       resource:
         kind: tax_return
+        scope: acme.finance
         policyVersion: default
       want:
         kind: KIND_ALWAYS_DENIED
     - action: view
       resource:
         kind: tax_return
+        scope: acme.finance
         policyVersion: default
       want:
         kind: KIND_ALWAYS_ALLOWED
     - action: create
       resource:
         kind: tax_return
+        scope: acme.finance
         policyVersion: default
       want:
         kind: KIND_ALWAYS_ALLOWED
