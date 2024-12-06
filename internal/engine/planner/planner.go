@@ -36,8 +36,8 @@ type (
 	QpNLO = enginev1.PlanResourcesAst_Node_LogicalOperation
 	QpNE  = enginev1.PlanResourcesAst_Node_Expression
 	RN    = struct {
-		node func() (*QpN, error)
-		role string
+		Node func() (*QpN, error)
+		Role string
 	}
 
 	PolicyPlanResult struct {
@@ -225,7 +225,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
 	defer span.End()
 
-	derivedRolesList := mkDerivedRolesList(nil)
+	derivedRolesList := MkDerivedRolesList(nil)
 
 	request := PlanResourcesInputToRequest(input)
 	var currentResult *PolicyPlanResult
@@ -691,7 +691,7 @@ func isRuntimeEffectiveDerivedRoles(expr *exprpb.Expr_Select) bool {
 		(expr.Field == "effective_derived_roles" || expr.Field == "effectiveDerivedRoles")
 }
 
-func mkDerivedRolesList(derivedRoles []RN) func() (*exprpb.Expr, error) {
+func MkDerivedRolesList(derivedRoles []RN) func() (*exprpb.Expr, error) {
 	return memoize(func() (_ *exprpb.Expr, err error) {
 		switch len(derivedRoles) {
 		case 0:
@@ -724,7 +724,7 @@ func mkBinaryOperatorExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
 }
 
 func derivedRoleListElement(derivedRole RN) (*exprpb.Expr, error) {
-	conditionNode, err := derivedRole.node()
+	conditionNode, err := derivedRole.Node()
 	if err != nil {
 		return nil, err
 	}
@@ -737,7 +737,7 @@ func derivedRoleListElement(derivedRole RN) (*exprpb.Expr, error) {
 	return plannerutils.MkCallExpr(
 		operators.Conditional,
 		conditionExpr,
-		MkListExpr([]*exprpb.Expr{MkConstStringExpr(derivedRole.role)}),
+		MkListExpr([]*exprpb.Expr{MkConstStringExpr(derivedRole.Role)}),
 		MkListExpr(nil),
 	), nil
 }
