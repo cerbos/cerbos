@@ -184,7 +184,7 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.v20210210",
                       },
                   },
-                "effectiveDerivedRoles": ["any_employee", "direct_manager"],
+                "effectiveDerivedRoles": ["direct_manager", "any_employee"],
               },
               {
                 "requestId": "test2",
