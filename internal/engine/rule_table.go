@@ -417,6 +417,9 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 }
 
 func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *RuleSet {
+	// TODO(saml) to avoid repeatedly creating and returning new (reduced) slices, we could instead mark a per role bool
+	// to infer whether or not it's in a result set?? Idea requires refining, but in essence, we'd use a single array
+	// under the hood which would be much more efficient.
 	res := &RuleSet{
 		scopeIndex: make(map[string][]*runtimev1.RuleTable_RuleRow),
 	}

@@ -6,11 +6,13 @@ package engine
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/engine/internal"
 	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -68,6 +70,51 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 				continue
 			}
 
+			// TODO(saml) make this BETTER. Caching/reuse, whatever
+			scopeFqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)
+			derivedRolesList := planner.MkDerivedRolesList(nil)
+			var derivedRoles []planner.RN
+			allRoles := make(map[string]struct{})
+			for _, r := range input.Principal.Roles {
+				allRoles[r] = struct{}{}
+			}
+			for _, r := range ruleTable.getParentRoles(input.Principal.Roles) {
+				allRoles[r] = struct{}{}
+			}
+			if drs, ok := ruleTable.policyDerivedRoles[scopeFqn]; ok {
+				for name, dr := range drs {
+					if !internal.SetIntersects(dr.ParentRoles, allRoles) {
+						continue
+					}
+
+					constants := planner.ConstantValues(dr.Constants)
+					var err error
+					variables, err := planner.VariableExprs(dr.OrderedVariables)
+					if err != nil {
+						return nil, err
+					}
+
+					node, err := evalCtx.EvaluateCondition(dr.Condition, request, opts.Globals(), constants, variables, derivedRolesList)
+					if err != nil {
+						return nil, err
+					}
+
+					derivedRoles = append(derivedRoles, planner.RN{
+						// TODO(saml) this function was previously memoized. Optimise or refactor out completely
+						Node: func() (*enginev1.PlanResourcesAst_Node, error) {
+							return node, nil
+						},
+						Role: name,
+					})
+				}
+			}
+
+			sort.Slice(derivedRoles, func(i, j int) bool {
+				return derivedRoles[i].Role < derivedRoles[j].Role
+			})
+
+			derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+
 			for _, row := range ruleTable.Filter(scanResult, []string{scope}, roles, []string{input.Action}).GetRows() {
 				var constants map[string]any
 				var variables map[string]*exprpb.Expr
@@ -80,7 +127,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 					}
 				}
 
-				derivedRolesList := func() (*exprpb.Expr, error) { return nil, nil }
 				node, err := evalCtx.EvaluateCondition(row.Condition, request, opts.Globals(), constants, variables, derivedRolesList)
 				if err != nil {
 					return nil, err

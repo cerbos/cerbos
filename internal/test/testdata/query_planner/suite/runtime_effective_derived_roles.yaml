@@ -7,137 +7,136 @@ principal:
   roles:
       - user
 tests:
-    # TODO(saml) this requires unevaluated effectiveDerivedRoles behaviour
-    # - action: camelCase
-    #   resource:
-    #     kind: runtime_effective_derived_roles
-    #     policyVersion: default
-    #     attr:
-    #       one: true
-    #       two: true
-    #       three: true
-    #       trois: false
-    #       tres: false
-    #   want:
-    #     kind: KIND_ALWAYS_ALLOWED
-    #
-    # - action: camelCase
-    #   resource:
-    #     kind: runtime_effective_derived_roles
-    #     policyVersion: default
-    #     attr:
-    #       one: true
-    #       two: true
-    #       three: false
-    #   want:
-    #     kind: KIND_ALWAYS_DENIED
-    #
-    # - action: camelCase
-    #   resource:
-    #     kind: runtime_effective_derived_roles
-    #     policyVersion: default
-    #     attr:
-    #       one: true
-    #       two: true
-    #   want:
-    #     kind: KIND_CONDITIONAL
-    #     condition:
-    #       expression:
-    #         operator: eq
-    #         operands:
-    #           - expression:
-    #               operator: add
-    #               operands:
-    #                 - value: ["one"]
-    #                 - expression:
-    #                     operator: add
-    #                     operands:
-    #                       - expression:
-    #                           operator: if
-    #                           operands:
-    #                             - expression:
-    #                                 operator: and
-    #                                 operands:
-    #                                   - variable: request.resource.attr.three
-    #                                   - expression:
-    #                                       operator: and
-    #                                       operands:
-    #                                         - expression:
-    #                                             operator: not
-    #                                             operands:
-    #                                               - variable: request.resource.attr.trois
-    #                                         - expression:
-    #                                             operator: not
-    #                                             operands:
-    #                                               - variable: request.resource.attr.tres
-    #                             - value: ["three"]
-    #                             - value: []
-    #                       - value: ["two"]
-    #           - value: ["one", "three", "two"]
-    #
-    # - action: snake_case
-    #   resource:
-    #     kind: runtime_effective_derived_roles
-    #     policyVersion: default
-    #     attr:
-    #       one: true
-    #       two: true
-    #       three: true
-    #       trois: false
-    #       tres: false
-    #   want:
-    #     kind: KIND_ALWAYS_ALLOWED
-    #
-    # - action: snake_case
-    #   resource:
-    #     kind: runtime_effective_derived_roles
-    #     policyVersion: default
-    #     attr:
-    #       one: true
-    #       two: true
-    #       three: false
-    #   want:
-    #     kind: KIND_ALWAYS_DENIED
-    #
-    # - action: snake_case
-    #   resource:
-    #     kind: runtime_effective_derived_roles
-    #     policyVersion: default
-    #     attr:
-    #       one: true
-    #       two: true
-    #   want:
-    #     kind: KIND_CONDITIONAL
-    #     condition:
-    #       expression:
-    #         operator: eq
-    #         operands:
-    #           - expression:
-    #               operator: add
-    #               operands:
-    #                 - value: ["one"]
-    #                 - expression:
-    #                     operator: add
-    #                     operands:
-    #                       - expression:
-    #                           operator: if
-    #                           operands:
-    #                             - expression:
-    #                                 operator: and
-    #                                 operands:
-    #                                   - variable: request.resource.attr.three
-    #                                   - expression:
-    #                                       operator: and
-    #                                       operands:
-    #                                         - expression:
-    #                                             operator: not
-    #                                             operands:
-    #                                               - variable: request.resource.attr.trois
-    #                                         - expression:
-    #                                             operator: not
-    #                                             operands:
-    #                                               - variable: request.resource.attr.tres
-    #                             - value: ["three"]
-    #                             - value: []
-    #                       - value: ["two"]
-    #           - value: ["one", "three", "two"]
+    - action: camelCase
+      resource:
+        kind: runtime_effective_derived_roles
+        policyVersion: default
+        attr:
+          one: true
+          two: true
+          three: true
+          trois: false
+          tres: false
+      want:
+        kind: KIND_ALWAYS_ALLOWED
+
+    - action: camelCase
+      resource:
+        kind: runtime_effective_derived_roles
+        policyVersion: default
+        attr:
+          one: true
+          two: true
+          three: false
+      want:
+        kind: KIND_ALWAYS_DENIED
+
+    - action: camelCase
+      resource:
+        kind: runtime_effective_derived_roles
+        policyVersion: default
+        attr:
+          one: true
+          two: true
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - expression:
+                  operator: add
+                  operands:
+                    - value: ["one"]
+                    - expression:
+                        operator: add
+                        operands:
+                          - expression:
+                              operator: if
+                              operands:
+                                - expression:
+                                    operator: and
+                                    operands:
+                                      - variable: request.resource.attr.three
+                                      - expression:
+                                          operator: and
+                                          operands:
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.trois
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.tres
+                                - value: ["three"]
+                                - value: []
+                          - value: ["two"]
+              - value: ["one", "three", "two"]
+
+    - action: snake_case
+      resource:
+        kind: runtime_effective_derived_roles
+        policyVersion: default
+        attr:
+          one: true
+          two: true
+          three: true
+          trois: false
+          tres: false
+      want:
+        kind: KIND_ALWAYS_ALLOWED
+
+    - action: snake_case
+      resource:
+        kind: runtime_effective_derived_roles
+        policyVersion: default
+        attr:
+          one: true
+          two: true
+          three: false
+      want:
+        kind: KIND_ALWAYS_DENIED
+
+    - action: snake_case
+      resource:
+        kind: runtime_effective_derived_roles
+        policyVersion: default
+        attr:
+          one: true
+          two: true
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - expression:
+                  operator: add
+                  operands:
+                    - value: ["one"]
+                    - expression:
+                        operator: add
+                        operands:
+                          - expression:
+                              operator: if
+                              operands:
+                                - expression:
+                                    operator: and
+                                    operands:
+                                      - variable: request.resource.attr.three
+                                      - expression:
+                                          operator: and
+                                          operands:
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.trois
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.tres
+                                - value: ["three"]
+                                - value: []
+                          - value: ["two"]
+              - value: ["one", "three", "two"]
