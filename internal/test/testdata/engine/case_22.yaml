@@ -94,12 +94,12 @@ wantOutputs:
 
   - requestId: both-expr-and-when-defined-cond-not-met
     resourceId: equipment_request_2
+    effectiveDerivedRoles:
+      - any_employee
     actions:
       assign:
         effect: EFFECT_DENY
         policy: resource.equipment_request.vdefault
-    effectiveDerivedRoles:
-      - any_employee
     outputs:
       - src: resource.equipment_request.vdefault#output-assign
         val: assign_condition_not_met
@@ -115,12 +115,12 @@ wantOutputs:
 
   - requestId: only-cond-not-met-defined-cond-not-met
     resourceId: equipment_request_4
+    effectiveDerivedRoles:
+      - any_employee
     actions:
       cancel:
         effect: EFFECT_DENY
         policy: resource.equipment_request.vdefault
-    effectiveDerivedRoles:
-      - any_employee
     outputs:
       - src: resource.equipment_request.vdefault#output-cancel
         val: cancel_condition_not_met

@@ -21,6 +21,7 @@ wantOutputs:
     {
       "requestId": "test",
       "resourceId": "XX125",
+      "effectiveDerivedRoles": ["any_employee"],
       "actions":
         {
           "view":
@@ -29,7 +30,6 @@ wantOutputs:
               "policy": "resource.leave_request.v20210210",
             },
         },
-      "effectiveDerivedRoles": ["any_employee"],
     },
   ]
 wantDecisionLogs:

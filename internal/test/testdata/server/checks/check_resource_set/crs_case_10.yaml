@@ -68,7 +68,7 @@ checkResourceSet:
               "matchedPolicy": "resource.leave_request.vdefault/acme.hr.uk",
             }
           },
-          "effectiveDerivedRoles": ["any_employee", "employee_that_owns_the_record"]
+          "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"]
         }
       }
     }

@@ -22,7 +22,7 @@ wantOutputs:
     {
       "requestId": "test",
       "resourceId": "XX125",
-      "effectiveDerivedRoles": ["any_employee", "reader"],
+      "effective_derived_roles": ["reader", "any_employee"],
       "actions":
         {
           "view":
@@ -72,7 +72,7 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.v20210210",
                       },
                   },
-                "effectiveDerivedRoles": ["any_employee", "reader"],
+                "effectiveDerivedRoles": ["reader", "any_employee"],
               },
             ],
         },
