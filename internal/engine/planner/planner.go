@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -26,38 +25,29 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/engine/internal"
 	plannerutils "github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/cerbos/cerbos/internal/engine/planner/matchers"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 type (
-	qpN   = enginev1.PlanResourcesAst_Node
-	qpNLO = enginev1.PlanResourcesAst_Node_LogicalOperation
-	qpNE  = enginev1.PlanResourcesAst_Node_Expression
-	rN    = struct {
-		node func() (*qpN, error)
+	QpN   = enginev1.PlanResourcesAst_Node
+	QpNLO = enginev1.PlanResourcesAst_Node_LogicalOperation
+	QpNE  = enginev1.PlanResourcesAst_Node_Expression
+	RN    = struct {
+		node func() (*QpN, error)
 		role string
 	}
 
 	PolicyPlanResult struct {
 		Scope            string
-		AllowFilter      []*qpN
-		DenyFilter       []*qpN
+		AllowFilter      []*QpN
+		DenyFilter       []*QpN
 		ValidationErrors []*schemav1.ValidationError
 		ScopePermissions policyv1.ScopePermissions
 	}
 )
-
-type ResourcePolicyEvaluator struct {
-	Policy    *runtimev1.RunnableResourcePolicySet
-	Globals   map[string]any
-	SchemaMgr schema.Manager
-	NowFn     func() time.Time
-}
 
 type PrincipalPolicyEvaluator struct {
 	Policy  *runtimev1.RunnablePrincipalPolicySet
@@ -97,10 +87,10 @@ func mergePlans(acc, current *PolicyPlanResult) *PolicyPlanResult {
 		allowFilter = acc.AllowFilter
 	} else if !acc.AllowIsEmpty() {
 		n := len(acc.AllowFilter) * len(current.AllowFilter)
-		allowFilter = make([]*qpN, 0, n)
+		allowFilter = make([]*QpN, 0, n)
 		for _, a := range acc.AllowFilter {
 			for _, c := range current.AllowFilter {
-				allowFilter = append(allowFilter, mkNodeFromLO(mkAndLogicalOperation([]*qpN{a, c})))
+				allowFilter = append(allowFilter, MkNodeFromLO(MkAndLogicalOperation([]*QpN{a, c})))
 			}
 		}
 	}
@@ -122,18 +112,18 @@ func NewPolicyPlanResult(scope string, scopePermissions policyv1.ScopePermission
 func NewAlwaysAllowed(scope string) *PolicyPlanResult {
 	return &PolicyPlanResult{
 		Scope:       scope,
-		AllowFilter: []*qpN{mkTrueNode()},
+		AllowFilter: []*QpN{MkTrueNode()},
 	}
 }
 
 func NewAlwaysDenied(scope string) *PolicyPlanResult {
 	return &PolicyPlanResult{
 		Scope:      scope,
-		DenyFilter: []*qpN{mkFalseNode()},
+		DenyFilter: []*QpN{mkFalseNode()},
 	}
 }
 
-func (p *PolicyPlanResult) Add(filter *qpN, effect effectv1.Effect) {
+func (p *PolicyPlanResult) Add(filter *QpN, effect effectv1.Effect) {
 	if effect == effectv1.Effect_EFFECT_ALLOW {
 		p.AllowFilter = append(p.AllowFilter, filter)
 	} else {
@@ -176,7 +166,7 @@ func (p *PolicyPlanResult) ToPlanResourcesOutput(input *enginev1.PlanResourcesIn
 	return result, nil
 }
 
-func (p *PolicyPlanResult) toAST() *qpN {
+func (p *PolicyPlanResult) toAST() *QpN {
 	a := len(p.AllowFilter)
 	d := len(p.DenyFilter)
 
@@ -188,7 +178,7 @@ func (p *PolicyPlanResult) toAST() *qpN {
 		case 1:
 			return p.DenyFilter[0]
 		default:
-			return mkNodeFromLO(mkAndLogicalOperation(p.DenyFilter))
+			return MkNodeFromLO(MkAndLogicalOperation(p.DenyFilter))
 		}
 
 	case 1:
@@ -196,16 +186,16 @@ func (p *PolicyPlanResult) toAST() *qpN {
 			return p.AllowFilter[0]
 		}
 
-		return mkNodeFromLO(mkAndLogicalOperation(append(p.DenyFilter, p.AllowFilter[0])))
+		return MkNodeFromLO(MkAndLogicalOperation(append(p.DenyFilter, p.AllowFilter[0])))
 
 	default:
-		allowFilter := mkNodeFromLO(mkOrLogicalOperation(p.AllowFilter))
+		allowFilter := MkNodeFromLO(MkOrLogicalOperation(p.AllowFilter))
 
 		if d == 0 {
 			return allowFilter
 		}
 
-		return mkNodeFromLO(mkAndLogicalOperation(append(p.DenyFilter, allowFilter)))
+		return MkNodeFromLO(MkAndLogicalOperation(append(p.DenyFilter, allowFilter)))
 	}
 }
 
@@ -223,11 +213,11 @@ func (p *PolicyPlanResult) Complete() bool {
 }
 
 func (p *PolicyPlanResult) ResetToUnconditionalDeny() {
-	p.DenyFilter = []*qpN{mkFalseNode()}
+	p.DenyFilter = []*QpN{mkFalseNode()}
 }
 
-func (ppe *PrincipalPolicyEvaluator) evalContext() *evalContext {
-	return &evalContext{ppe.NowFn}
+func (ppe *PrincipalPolicyEvaluator) evalContext() *EvalContext {
+	return &EvalContext{ppe.NowFn}
 }
 
 func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (acc *PolicyPlanResult, _ error) {
@@ -237,7 +227,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 
 	derivedRolesList := mkDerivedRolesList(nil)
 
-	request := planResourcesInputToRequest(input)
+	request := PlanResourcesInputToRequest(input)
 	var currentResult *PolicyPlanResult
 	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
@@ -251,8 +241,8 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		}
 		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
 
-		constants := constantValues(p.Constants)
-		variables, err := variableExprs(p.OrderedVariables)
+		constants := ConstantValues(p.Constants)
+		variables, err := VariableExprs(p.OrderedVariables)
 		if err != nil {
 			return nil, err
 		}
@@ -268,7 +258,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					continue
 				}
 
-				filter, err := evalCtx.evaluateCondition(rule.Condition, request, ppe.Globals, constants, variables, derivedRolesList)
+				filter, err := evalCtx.EvaluateCondition(rule.Condition, request, ppe.Globals, constants, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -278,168 +268,12 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		}
 		acc = mergePlans(acc, currentResult)
 	}
-	return acc, nil
-}
-
-func (rpe *ResourcePolicyEvaluator) evalContext() *evalContext {
-	return &evalContext{rpe.NowFn}
-}
-
-func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
-	effectiveRoles := internal.ToSet(input.Principal.Roles)
-	return rpe.EvaluateWithRolesToResolve(ctx, input, effectiveRoles)
-}
-
-func (rpe *ResourcePolicyEvaluator) EvaluateWithRolesToResolve(ctx context.Context, input *enginev1.PlanResourcesInput, effectiveRoles internal.StringSet) (acc *PolicyPlanResult, _ error) {
-	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
-	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
-	defer span.End()
-
-	request := planResourcesInputToRequest(input)
-
-	vr, err := rpe.SchemaMgr.ValidatePlanResourcesInput(ctx, rpe.Policy.Schemas, input)
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate input: %w", err)
-	}
-	var validationErrors []*schemav1.ValidationError
-	if len(vr.Errors) > 0 {
-		validationErrors = vr.Errors.SchemaErrors()
-
-		if vr.Reject {
-			acc = new(PolicyPlanResult)
-			acc.ValidationErrors = validationErrors
-			acc.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
-			return acc, nil
-		}
-	}
-	var currentResult *PolicyPlanResult
-	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
-		if currentResult.Complete() {
-			break
-		}
-		scopePermissions := p.ScopePermissions
-		// for backward compatibility with precompiled bundles need to set default here despite it being set during compilation.
-		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
-		}
-		currentResult = NewPolicyPlanResult(p.Scope, scopePermissions)
-
-		constants := constantValues(p.Constants)
-		variables, err := variableExprs(p.OrderedVariables)
-		if err != nil {
-			return nil, err
-		}
-
-		var derivedRoles []rN
-
-		derivedRolesList := mkDerivedRolesList(nil)
-		evalCtx := rpe.evalContext()
-		for drName, dr := range p.DerivedRoles {
-			if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
-				continue
-			}
-
-			drConstants := constantValues(p.Constants)
-			drVariables, err := variableExprs(dr.OrderedVariables)
-			if err != nil {
-				return nil, err
-			}
-
-			derivedRoles = append(derivedRoles, rN{
-				role: drName,
-				node: memoize(func() (*qpN, error) {
-					if dr.Condition == nil {
-						return mkTrueNode(), nil
-					}
-					node, err := evalCtx.evaluateCondition(dr.Condition, request, rpe.Globals, drConstants, drVariables, derivedRolesList)
-					if err != nil {
-						return nil, err
-					}
-					return node, nil
-				}),
-			})
-		}
-
-		sort.Slice(derivedRoles, func(i, j int) bool {
-			return derivedRoles[i].role < derivedRoles[j].role
-		})
-
-		derivedRolesList = mkDerivedRolesList(derivedRoles)
-
-		for _, rule := range p.Rules {
-			var drNode *qpN
-			if !internal.SetIntersects(rule.Roles, effectiveRoles) {
-				nodes, err := getDerivedRoleConditions(derivedRoles, rule)
-				if err != nil {
-					return nil, err
-				}
-
-				f := false
-				for _, node := range nodes {
-					if v, ok := isNodeConstBool(node); ok && v {
-						f = true
-						break
-					}
-				}
-
-				if !f {
-					switch len(nodes) {
-					case 0:
-						continue
-					case 1:
-						drNode = nodes[0]
-					default:
-						// combine restrictions (with OR) imposed by derived roles
-						drNode = mkNodeFromLO(mkOrLogicalOperation(nodes))
-					}
-				}
-			}
-
-			for actionGlob := range rule.Actions {
-				if !matchesActionGlob(actionGlob, input.Action) {
-					continue
-				}
-
-				node, err := evalCtx.evaluateCondition(rule.Condition, request, rpe.Globals, constants, variables, derivedRolesList)
-				if err != nil {
-					return nil, err
-				}
-
-				var filter *qpN
-				if drNode == nil {
-					filter = node
-				} else {
-					filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
-				}
-
-				currentResult.Add(filter, rule.Effect)
-			}
-		}
-		acc = mergePlans(acc, currentResult)
-	}
-	acc.ValidationErrors = validationErrors
 	return acc, nil
 }
 
 func matchesActionGlob(actionGlob, action string) bool {
 	// need to use FilterGlob here so that "*" matches anything
 	return len(util.FilterGlob(actionGlob, []string{action})) > 0
-}
-
-func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourcePolicySet_Policy_Rule) ([]*qpN, error) {
-	var nodes []*qpN
-	for _, n := range derivedRoles {
-		if _, ok := rule.DerivedRoles[n.role]; ok {
-			node, err := n.node()
-			if err != nil {
-				return nil, err
-			}
-			if node != nil {
-				nodes = append(nodes, node)
-			}
-		}
-	}
-	return nodes, nil
 }
 
 func isNodeConstBool(node *enginev1.PlanResourcesAst_Node) (bool, bool) {
@@ -454,19 +288,19 @@ func isNodeConstBool(node *enginev1.PlanResourcesAst_Node) (bool, bool) {
 	return false, false
 }
 
-func mkNodeFromLO(lo *enginev1.PlanResourcesAst_LogicalOperation) *enginev1.PlanResourcesAst_Node {
+func MkNodeFromLO(lo *enginev1.PlanResourcesAst_LogicalOperation) *enginev1.PlanResourcesAst_Node {
 	// node AND drNode
-	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
+	return &QpN{Node: &QpNLO{LogicalOperation: lo}}
 }
 
-func mkOrLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
+func MkOrLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
 	return &enginev1.PlanResourcesAst_LogicalOperation{
 		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_OR,
 		Nodes:    nodes,
 	}
 }
 
-func mkAndLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
+func MkAndLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
 	return &enginev1.PlanResourcesAst_LogicalOperation{
 		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND,
 		Nodes:    nodes,
@@ -474,11 +308,11 @@ func mkAndLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.Pl
 }
 
 func mkFalseNode() *enginev1.PlanResourcesAst_Node {
-	return &qpN{Node: &qpNE{Expression: conditions.FalseExpr}}
+	return &QpN{Node: &QpNE{Expression: conditions.FalseExpr}}
 }
 
-func mkTrueNode() *enginev1.PlanResourcesAst_Node {
-	return &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
+func MkTrueNode() *enginev1.PlanResourcesAst_Node {
+	return &QpN{Node: &QpNE{Expression: conditions.TrueExpr}}
 }
 
 func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
@@ -486,31 +320,31 @@ func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT,
 		Nodes:    []*enginev1.PlanResourcesAst_Node{node},
 	}
-	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
+	return &QpN{Node: &QpNLO{LogicalOperation: lo}}
 }
 
-type evalContext struct {
-	timeFn func() time.Time
+type EvalContext struct {
+	TimeFn func() time.Time
 }
 
-func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
+func (evalCtx *EvalContext) EvaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
-		return mkTrueNode(), nil
+		return MkTrueNode(), nil
 	}
 
-	res := new(qpN)
+	res := new(QpN)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
-		nodes := make([]*qpN, 0, len(t.Any.Expr))
+		nodes := make([]*QpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
+			node, err := evalCtx.EvaluateCondition(c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
 
 			if b, ok := isNodeConstBool(node); ok {
 				if b {
-					return mkTrueNode(), nil
+					return MkTrueNode(), nil
 				}
 			} else {
 				nodes = append(nodes, node)
@@ -518,16 +352,16 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 		}
 		switch len(nodes) {
 		case 0:
-			res.Node = &qpNE{Expression: conditions.FalseExpr}
+			res.Node = &QpNE{Expression: conditions.FalseExpr}
 		case 1:
 			res.Node = nodes[0].Node
 		default:
-			res.Node = &qpNLO{LogicalOperation: mkOrLogicalOperation(nodes)}
+			res.Node = &QpNLO{LogicalOperation: MkOrLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_All:
-		nodes := make([]*qpN, 0, len(t.All.Expr))
+		nodes := make([]*QpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
+			node, err := evalCtx.EvaluateCondition(c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -541,16 +375,16 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 		}
 		switch len(nodes) {
 		case 0:
-			res.Node = &qpNE{Expression: conditions.TrueExpr}
+			res.Node = &QpNE{Expression: conditions.TrueExpr}
 		case 1:
 			res.Node = nodes[0].Node
 		default:
-			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
+			res.Node = &QpNLO{LogicalOperation: MkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_None:
-		nodes := make([]*qpN, 0, len(t.None.Expr))
+		nodes := make([]*QpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
+			node, err := evalCtx.EvaluateCondition(c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -558,7 +392,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 
 			if b, ok := isNodeConstBool(node); ok {
 				if b {
-					res.Node = &qpNE{Expression: conditions.FalseExpr}
+					res.Node = &QpNE{Expression: conditions.FalseExpr}
 					return res, nil
 				}
 				add = false
@@ -570,25 +404,25 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 		}
 		switch len(nodes) {
 		case 0:
-			res.Node = &qpNE{Expression: conditions.TrueExpr}
+			res.Node = &QpNE{Expression: conditions.TrueExpr}
 		case 1:
 			res.Node = nodes[0].Node
 		default:
-			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
+			res.Node = &QpNLO{LogicalOperation: MkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
 		residual, err := evalCtx.evaluateConditionExpression(t.Expr.Checked, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
-		res.Node = &qpNE{Expression: residual}
+		res.Node = &QpNE{Expression: residual}
 	default:
 		return nil, fmt.Errorf("unsupported condition type %T", t)
 	}
 	return res, nil
 }
 
-func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+func (evalCtx *EvalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
 	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
@@ -675,7 +509,7 @@ func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn
 	return &partialEvaluator{env, vars, nowFn}
 }
 
-func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, constants map[string]any) (p *partialEvaluator, err error) {
+func (evalCtx *EvalContext) newEvaluator(request *enginev1.Request, globals, constants map[string]any) (p *partialEvaluator, err error) {
 	knownVars := make(map[string]any)
 	knownVars[conditions.CELRequestIdent] = request
 	knownVars[conditions.CELPrincipalAbbrev] = request.Principal
@@ -712,7 +546,7 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 		return nil, err
 	}
 
-	return newPartialEvaluator(env, vars, evalCtx.timeFn), nil
+	return newPartialEvaluator(env, vars, evalCtx.TimeFn), nil
 }
 
 func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {
@@ -796,11 +630,11 @@ func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
 	return celast.ExprToProto(prunedAST.Expr())
 }
 
-func constantValues(constants map[string]*structpb.Value) map[string]any {
+func ConstantValues(constants map[string]*structpb.Value) map[string]any {
 	return (&structpb.Struct{Fields: constants}).AsMap()
 }
 
-func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {
+func VariableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {
 	if len(variables) == 0 {
 		return nil, nil
 	}
@@ -818,7 +652,7 @@ func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, er
 	return exprs, nil
 }
 
-func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.Request {
+func PlanResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.Request {
 	return &enginev1.Request{
 		Principal: &enginev1.Request_Principal{
 			Id:    input.Principal.Id,
@@ -857,11 +691,11 @@ func isRuntimeEffectiveDerivedRoles(expr *exprpb.Expr_Select) bool {
 		(expr.Field == "effective_derived_roles" || expr.Field == "effectiveDerivedRoles")
 }
 
-func mkDerivedRolesList(derivedRoles []rN) func() (*exprpb.Expr, error) {
+func mkDerivedRolesList(derivedRoles []RN) func() (*exprpb.Expr, error) {
 	return memoize(func() (_ *exprpb.Expr, err error) {
 		switch len(derivedRoles) {
 		case 0:
-			return mkListExpr(nil), nil
+			return MkListExpr(nil), nil
 
 		case 1:
 			return derivedRoleListElement(derivedRoles[0])
@@ -889,7 +723,7 @@ func mkBinaryOperatorExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
 	return plannerutils.MkCallExpr(op, args[0], mkBinaryOperatorExpr(op, args[1:]...))
 }
 
-func derivedRoleListElement(derivedRole rN) (*exprpb.Expr, error) {
+func derivedRoleListElement(derivedRole RN) (*exprpb.Expr, error) {
 	conditionNode, err := derivedRole.node()
 	if err != nil {
 		return nil, err
@@ -903,12 +737,12 @@ func derivedRoleListElement(derivedRole rN) (*exprpb.Expr, error) {
 	return plannerutils.MkCallExpr(
 		operators.Conditional,
 		conditionExpr,
-		mkListExpr([]*exprpb.Expr{mkConstStringExpr(derivedRole.role)}),
-		mkListExpr(nil),
+		MkListExpr([]*exprpb.Expr{MkConstStringExpr(derivedRole.role)}),
+		MkListExpr(nil),
 	), nil
 }
 
-func qpNToExpr(node *qpN) (*exprpb.Expr, error) {
+func qpNToExpr(node *QpN) (*exprpb.Expr, error) {
 	switch n := node.Node.(type) {
 	case *enginev1.PlanResourcesAst_Node_Expression:
 		return n.Expression.Expr, nil

@@ -28,6 +28,7 @@ type RuleTable struct {
 	policyLoader             PolicyLoader
 	schemas                  map[string]*policyv1.Schemas
 	scopeMap                 map[string]struct{}
+	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoles              map[string][]string
 	parentRoleAncestorsCache map[string][]string
 	mu                       sync.RWMutex
@@ -38,6 +39,7 @@ func NewRuleTable() *RuleTable {
 		RuleTable:                &runtimev1.RuleTable{},
 		schemas:                  make(map[string]*policyv1.Schemas),
 		scopeMap:                 make(map[string]struct{}),
+		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
 		parentRoles:              make(map[string][]string),
 		parentRoleAncestorsCache: make(map[string][]string),
 	}
@@ -92,6 +94,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
 			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 		}
+		rt.scopeScopePermissions[p.Scope] = scopePermissions
 
 		for _, rule := range p.Rules {
 			emitOutput := rule.EmitOutput
@@ -187,6 +190,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 
 func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	rt.scopeMap[p.Scope] = struct{}{}
+	rt.scopeScopePermissions[p.Scope] = p.ScopePermissions
 
 	version := "default"
 	meta := &runtimev1.RuleTable_Metadata{
@@ -227,19 +231,19 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 	// TODO(saml) rebuilding/reassigning the whole row slice on each delete is hugely inefficient.
 	// Perhaps we could mark as `deleted` and periodically purge the deleted rows.
 	// (side note: a SQLite rule table would solve this for free)
-	fqn := rps.Fqn
+	deletedFqn := rps.Fqn
 	scopeSet := make(map[string]struct{})
 
 	newRules := []*runtimev1.RuleTable_RuleRow{}
 	for _, r := range rt.Rules {
-		if r.OriginFqn != fqn {
+		if r.OriginFqn != deletedFqn {
 			newRules = append(newRules, r)
 			scopeSet[r.Scope] = struct{}{}
 		}
 	}
 	rt.Rules = newRules
 
-	delete(rt.schemas, fqn)
+	delete(rt.schemas, deletedFqn)
 
 	var scope string
 	switch rps.PolicySet.(type) {
@@ -256,6 +260,7 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 
 	if _, ok := scopeSet[scope]; !ok {
 		delete(rt.scopeMap, scope)
+		delete(rt.scopeScopePermissions, scope)
 	}
 }
 
@@ -271,13 +276,37 @@ func (rt *RuleTable) purge() {
 	rt.parentRoleAncestorsCache = make(map[string][]string)
 }
 
+func (rt *RuleTable) GetAllScopes(scope, resource, version string) ([]string, string, string) {
+	var firstPolicyKey, firstFqn string
+	var scopes []string
+	if rt.ScopeExists(scope) {
+		firstFqn = namer.ResourcePolicyFQN(resource, version, scope)
+		firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
+		scopes = append(scopes, scope)
+	}
+
+	for i := len(scope) - 1; i >= 0; i-- {
+		if scope[i] == '.' || i == 0 {
+			partialScope := scope[:i]
+			if rt.ScopeExists(partialScope) {
+				scopes = append(scopes, partialScope)
+				if firstPolicyKey == "" {
+					firstFqn = namer.ResourcePolicyFQN(resource, version, partialScope)
+					firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
+				}
+			}
+		}
+	}
+
+	return scopes, firstPolicyKey, firstFqn
+}
+
 func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions []string) *RuleSet {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
 	res := &RuleSet{
-		scopeIndex:            make(map[string][]*runtimev1.RuleTable_RuleRow),
-		scopeScopePermissions: make(map[string]policyv1.ScopePermissions),
+		scopeIndex: make(map[string][]*runtimev1.RuleTable_RuleRow),
 	}
 
 	scopeSet := make(map[string]struct{}, len(scopes))
@@ -334,7 +363,12 @@ func (rt *RuleTable) getParentRoles(roles []string) []string {
 			roleParents = c
 		} else {
 			visited := make(map[string]struct{})
-			roleParents = rt.collectParentRoles(role, roleParents, visited)
+			roleParentsSet := make(map[string]struct{})
+			rt.collectParentRoles(role, roleParentsSet, visited)
+			roleParents = make([]string, 0, len(roleParentsSet))
+			for r := range roleParentsSet {
+				roleParents = append(roleParents, r)
+			}
 			rt.parentRoleAncestorsCache[role] = roleParents
 		}
 		parentRoles = append(parentRoles, roleParents...)
@@ -342,19 +376,18 @@ func (rt *RuleTable) getParentRoles(roles []string) []string {
 	return parentRoles
 }
 
-func (rt *RuleTable) collectParentRoles(role string, parentRoleSet []string, visited map[string]struct{}) []string {
+func (rt *RuleTable) collectParentRoles(role string, parentRoleSet map[string]struct{}, visited map[string]struct{}) {
 	if _, seen := visited[role]; seen {
-		return parentRoleSet
+		return
 	}
 	visited[role] = struct{}{}
 
 	if prs, ok := rt.parentRoles[role]; ok {
 		for _, pr := range prs {
-			parentRoleSet = append(parentRoleSet, pr)
-			parentRoleSet = append(parentRoleSet, rt.collectParentRoles(pr, parentRoleSet, visited)...)
+			parentRoleSet[pr] = struct{}{}
+			rt.collectParentRoles(pr, parentRoleSet, visited)
 		}
 	}
-	return parentRoleSet
 }
 
 func (rt *RuleTable) ScopeExists(scope string) bool {
@@ -363,6 +396,10 @@ func (rt *RuleTable) ScopeExists(scope string) bool {
 
 	_, ok := rt.scopeMap[scope]
 	return ok
+}
+
+func (rt *RuleTable) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
+	return rt.scopeScopePermissions[scope]
 }
 
 func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
@@ -377,9 +414,9 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 }
 
 func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *RuleSet {
+	// TODO(saml) refactor so empty lists are a "match all"
 	res := &RuleSet{
-		scopeIndex:            make(map[string][]*runtimev1.RuleTable_RuleRow),
-		scopeScopePermissions: make(map[string]policyv1.ScopePermissions),
+		scopeIndex: make(map[string][]*runtimev1.RuleTable_RuleRow),
 	}
 
 	parentRoles := rt.getParentRoles(roles)
@@ -387,8 +424,8 @@ func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *Rule
 	for _, s := range scopes {
 		if sMap, ok := rrs.scopeIndex[s]; ok {
 			for _, row := range sMap {
-				if len(util.FilterGlob(row.Action, actions)) > 0 {
-					if len(util.FilterGlob(row.Role, roles)) > 0 {
+				if len(actions) == 0 || len(util.FilterGlob(row.Action, actions)) > 0 {
+					if len(roles) == 0 || len(util.FilterGlob(row.Role, roles)) > 0 {
 						res.addMatchingRow(row)
 					} else if len(util.FilterGlob(row.Role, parentRoles)) > 0 {
 						// TODO(saml) dedup from Scan method
@@ -451,24 +488,15 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
 	return nil
 }
 
+// TODO(saml) could have a better name
 type RuleSet struct {
-	rows                  []*runtimev1.RuleTable_RuleRow
-	scopeIndex            map[string][]*runtimev1.RuleTable_RuleRow
-	scopeScopePermissions map[string]policyv1.ScopePermissions
+	rows       []*runtimev1.RuleTable_RuleRow
+	scopeIndex map[string][]*runtimev1.RuleTable_RuleRow
 }
 
 func (rrs *RuleSet) addMatchingRow(row *runtimev1.RuleTable_RuleRow) {
 	rrs.rows = append(rrs.rows, row)
-
 	rrs.scopeIndex[row.Scope] = append(rrs.scopeIndex[row.Scope], row)
-
-	if _, ok := rrs.scopeScopePermissions[row.Scope]; !ok {
-		rrs.scopeScopePermissions[row.Scope] = row.ScopePermissions
-	}
-}
-
-func (rrs *RuleSet) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
-	return rrs.scopeScopePermissions[scope]
 }
 
 func (rrs *RuleSet) GetRows() []*runtimev1.RuleTable_RuleRow {

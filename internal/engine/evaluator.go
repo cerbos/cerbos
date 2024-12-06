@@ -91,18 +91,15 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
+// TODO(saml) can probably have a dedicated GetPrincipalPolicyEvaluator function
 func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
 	if len(rps) == 0 {
 		return noopEvaluator{}
 	}
 
 	switch rp := rps[0].PolicySet.(type) {
-	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
-	case *runtimev1.RunnablePolicySet_RolePolicy:
-		return newRolePolicyEvaluator(rps)
 	default:
 		return noopEvaluator{}
 	}
@@ -124,10 +121,6 @@ type noopEvaluator struct{}
 
 func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
-}
-
-type rolePolicyEvaluator struct {
-	policies map[string]*runtimev1.RunnableRolePolicySet
 }
 
 type ruleTableEvaluator struct {
@@ -156,28 +149,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		return result, nil
 	}
 
-	var fqn, policyKey string
-	scope := input.Resource.Scope
-
-	var scopes []string
-	if rte.ScopeExists(scope) {
-		fqn = namer.ResourcePolicyFQN(input.Resource.Kind, version, input.Resource.Scope)
-		policyKey = namer.PolicyKeyFromFQN(fqn)
-		scopes = append(scopes, scope)
-	}
-
-	for i := len(scope) - 1; i >= 0; i-- {
-		if scope[i] == '.' || i == 0 {
-			partialScope := scope[:i]
-			if rte.ScopeExists(partialScope) {
-				scopes = append(scopes, partialScope)
-				if policyKey == "" {
-					fqn = namer.ResourcePolicyFQN(input.Resource.Kind, version, partialScope)
-					policyKey = namer.PolicyKeyFromFQN(fqn)
-				}
-			}
-		}
-	}
+	scopes, policyKey, fqn := rte.GetAllScopes(input.Resource.Scope, input.Resource.Kind, version)
 
 	pctx := tctx.StartPolicy(fqn)
 	evalCtx := newEvalContext(rte.evalParams, request)
@@ -269,6 +241,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							constants = c.constants
 							variables = c.variables
 						} else {
+							// TODO(saml) can probably just compile constants at least at table build time
 							constants = constantValues(row.Parameters.Constants)
 							var err error
 							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.Parameters.OrderedVariables)
@@ -335,7 +308,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 				}
 
-				switch scanResult.GetScopeScopePermissions(scope) {
+				switch rte.GetScopeScopePermissions(scope) {
 				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 					if len(roleEffectSet) == 0 {
 						roleEffectInfo = EffectInfo{
@@ -385,329 +358,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	}
 
 	return result, nil
-}
-
-func newRolePolicyEvaluator(rps []*runtimev1.RunnablePolicySet) *rolePolicyEvaluator {
-	policies := make(map[string]*runtimev1.RunnableRolePolicySet)
-	for _, p := range rps {
-		if rp, ok := p.PolicySet.(*runtimev1.RunnablePolicySet_RolePolicy); ok {
-			policies[rp.RolePolicy.Role] = rp.RolePolicy
-		}
-	}
-
-	return &rolePolicyEvaluator{policies: policies}
-}
-
-func (rpe *rolePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
-	return tracing.RecordSpan2(ctx, "role_policy.Evaluate", func(_ context.Context, span trace.Span) (*PolicyEvalResult, error) {
-		span.SetAttributes(tracing.PolicyScope(input.Resource.Scope))
-
-		sourceAttrs := make(map[string]*policyv1.SourceAttributes)
-		mergedActions := make(internal.ProtoSet)
-		activeRoles := make(internal.StringSet)
-		assumedRoles := []string{}
-		var scopePermission policyv1.ScopePermissions // all role policies must share the same ScopePermissions
-		for r, p := range rpe.policies {
-			if scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-				scopePermission = p.ScopePermissions
-			}
-
-			if p.GetMeta().GetFqn() != "" && p.GetMeta().GetSourceAttributes() != nil {
-				sourceAttrs[p.Meta.Fqn] = p.Meta.SourceAttributes[namer.PolicyKeyFromFQN(p.Meta.Fqn)]
-			}
-
-			if k := util.NewGlobMap(p.Resources).Get(input.Resource.Kind); k != nil {
-				// TODO(saml) THIS IS WRONG but I'm going to remove this evaluator soon anyway. It's only still here so I can compile
-				for _, r := range k.Rules {
-					mergedActions.Merge(r.Actions)
-				}
-			}
-
-			if _, ok := activeRoles[r]; !ok {
-				activeRoles[r] = struct{}{}
-				assumedRoles = append(assumedRoles, r)
-			}
-			// The role policy implicitly assumes all parent roles
-			for _, pr := range p.ParentRoles {
-				if _, ok := activeRoles[pr]; !ok {
-					activeRoles[pr] = struct{}{}
-					assumedRoles = append(assumedRoles, pr)
-				}
-			}
-		}
-
-		trail := newAuditTrail(sourceAttrs)
-		result := newEvalResult(input.Actions, trail)
-
-		result.AssumedRoles = assumedRoles
-
-		rpctx := tctx.StartRolePolicyScope(input.Resource.Scope)
-
-		actions := util.NewGlobMap(mergedActions)
-		for _, a := range input.Actions {
-			actx := rpctx.StartAction(a)
-
-			mappingExists := actions.Get(a) != nil
-			if mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_ALLOW, Scope: input.Resource.Scope, ActiveRoles: activeRoles})
-				actx.AppliedEffect(effectv1.Effect_EFFECT_ALLOW, "")
-			} else if !mappingExists && scopePermission == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-				result.setEffect(a, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: noMatchScopePermissions, Scope: input.Resource.Scope, ActiveRoles: activeRoles})
-				actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, fmt.Sprintf("Resource action pair not defined within role policy for resource %s and action %s", input.Resource.Kind, a))
-			}
-		}
-
-		result.setDefaultEffect(rpctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH, ActiveRoles: activeRoles})
-
-		return result, nil
-	})
-}
-
-type resourcePolicyEvaluator struct {
-	policy     *runtimev1.RunnableResourcePolicySet
-	schemaMgr  schema.Manager
-	evalParams evalParams
-}
-
-func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
-	return tracing.RecordSpan2(ctx, "resource_policy.Evaluate", func(ctx context.Context, span trace.Span) (*PolicyEvalResult, error) {
-		span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
-
-		policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
-		request := checkInputToRequest(input)
-		trail := newAuditTrail(rpe.policy.GetMeta().GetSourceAttributes())
-		result := newEvalResult(input.Actions, trail)
-		effectiveRoles := internal.ToSet(input.Principal.Roles)
-
-		pctx := tctx.StartPolicy(rpe.policy.Meta.Fqn)
-
-		// validate the input
-		vr, err := rpe.schemaMgr.ValidateCheckInput(ctx, rpe.policy.Schemas, input)
-		if err != nil {
-			pctx.Failed(err, "Error during validation")
-
-			return nil, fmt.Errorf("failed to validate input: %w", err)
-		}
-
-		if len(vr.Errors) > 0 {
-			result.ValidationErrors = vr.Errors.SchemaErrors()
-
-			pctx.Failed(vr.Errors, "Validation errors")
-
-			if vr.Reject {
-				for _, action := range input.Actions {
-					actx := pctx.StartAction(action)
-
-					result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
-
-					actx.AppliedEffect(effectv1.Effect_EFFECT_DENY, "Rejected due to validation failures")
-				}
-				return result, nil
-			}
-		}
-
-		// evaluate policies in the set
-		for _, p := range rpe.policy.Policies {
-			// Get the actions that are yet to be resolved. This is to implement first-match-wins semantics.
-			// Within the context of a single policy, later rules can potentially override the result for an action (unless it was DENY).
-			actionsToResolve := result.unresolvedActions()
-			if len(actionsToResolve) == 0 {
-				return result, nil
-			}
-
-			actionsRequiringParentalConsent := make(internal.StringSet)
-			accumulatedRolePolicyRoles := make(internal.StringSet)
-
-			err := tracing.RecordSpan1(ctx, "evaluate_policy", func(ctx context.Context, span trace.Span) error {
-				span.SetAttributes(tracing.PolicyScope(p.Scope))
-				sctx := pctx.StartScope(p.Scope)
-				evalCtx := newEvalContext(rpe.evalParams, request)
-
-				// calculate the set of effective derived roles
-				effectiveDerivedRoles := make(internal.StringSet, len(p.DerivedRoles))
-				tracing.RecordSpan(ctx, "compute_derived_roles", func(_ context.Context, _ trace.Span) {
-					for drName, dr := range p.DerivedRoles {
-						dctx := sctx.StartDerivedRole(drName)
-						if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
-							dctx.Skipped(nil, "No matching roles")
-							continue
-						}
-
-						drConstants := constantValues(dr.Constants)
-
-						// evaluate variables of this derived roles set
-						drVariables, err := evalCtx.evaluateVariables(dctx.StartVariables(), drConstants, dr.OrderedVariables)
-						if err != nil {
-							dctx.Skipped(err, "Error evaluating variables")
-							continue
-						}
-
-						ok, err := evalCtx.satisfiesCondition(dctx.StartCondition(), dr.Condition, drConstants, drVariables)
-						if err != nil {
-							dctx.Skipped(err, "Error evaluating condition")
-							continue
-						}
-
-						if !ok {
-							dctx.Skipped(nil, "Condition not satisfied")
-							continue
-						}
-
-						effectiveDerivedRoles[drName] = struct{}{}
-						result.EffectiveDerivedRoles[drName] = struct{}{}
-
-						dctx.Activated()
-					}
-				})
-
-				evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
-
-				constants := constantValues(p.Constants)
-
-				// evaluate the variables of this policy
-				variables, err := tracing.RecordSpan2(ctx, "evaluate_variables", func(_ context.Context, _ trace.Span) (map[string]any, error) {
-					return evalCtx.evaluateVariables(sctx.StartVariables(), constants, p.OrderedVariables)
-				})
-				if err != nil {
-					sctx.Failed(err, "Failed to evaluate variables")
-					return fmt.Errorf("failed to evaluate variables: %w", err)
-				}
-
-				// evaluate each rule until all actions have a result
-				tracing.RecordSpan(ctx, "evaluate_rules", func(_ context.Context, _ trace.Span) {
-					for _, rule := range p.Rules {
-						rctx := sctx.StartRule(rule.Name)
-
-						if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, evalCtx.effectiveDerivedRoles) {
-							rctx.Skipped(nil, "No matching roles or derived roles")
-							continue
-						}
-
-						if rule.FromRolePolicy {
-							for r := range rule.Roles {
-								accumulatedRolePolicyRoles[r] = struct{}{}
-								effectiveRoles[r] = struct{}{}
-							}
-						}
-
-						ruleActivated := false
-						for actionGlob := range rule.Actions {
-							matchedActions := util.FilterGlob(actionGlob, actionsToResolve)
-							//nolint:dupl
-							for _, action := range matchedActions {
-								actx := rctx.StartAction(action)
-
-								// determine whether or not an independent (non-narrowed) role can override
-								// an implicit deny for an action.
-								if deniedRoles, ok := result.actionImplicitlyDeniedForRoles[action]; ok {
-									effectiveMatchedRoles := make(internal.StringSet)
-									for rr := range rule.Roles {
-										if _, ok := effectiveRoles[rr]; ok {
-											effectiveMatchedRoles[rr] = struct{}{}
-										}
-									}
-									for dr := range rule.DerivedRoles {
-										if _, ok := evalCtx.effectiveDerivedRoles[dr]; ok {
-											if rdr, ok := p.DerivedRoles[dr]; ok {
-												for pr := range rdr.ParentRoles {
-													effectiveMatchedRoles[pr] = struct{}{}
-												}
-											}
-										}
-									}
-									if effectiveMatchedRoles.IsSubSetOf(deniedRoles) {
-										// all matched roles have been implicitly denied, so skip this action
-										continue
-									}
-								}
-
-								ok, err := evalCtx.satisfiesCondition(actx.StartCondition(), rule.Condition, constants, variables)
-								if err != nil {
-									actx.Skipped(err, "Error evaluating condition")
-									continue
-								}
-
-								if !ok {
-									actx.Skipped(nil, "Condition not satisfied")
-									if rule.EmitOutput != nil && rule.EmitOutput.When != nil && rule.EmitOutput.When.ConditionNotMet != nil {
-										octx := rctx.StartOutput(rule.Name)
-										output := &enginev1.OutputEntry{
-											Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-											Val: evalCtx.evaluateProtobufValueCELExpr(rule.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
-										}
-										result.Outputs = append(result.Outputs, output)
-										octx.ComputedOutput(output)
-									}
-									continue
-								}
-
-								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									actionsRequiringParentalConsent[action] = struct{}{}
-									continue
-								}
-
-								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
-								actx.AppliedEffect(rule.Effect, "")
-								ruleActivated = true
-							}
-						}
-
-						if ruleActivated {
-							var outputExpr *exprpb.CheckedExpr
-							switch {
-							case rule.Output != nil: //nolint:staticcheck
-								outputExpr = rule.Output.Checked //nolint:staticcheck
-							case rule.EmitOutput != nil && rule.EmitOutput.When != nil && rule.EmitOutput.When.RuleActivated != nil:
-								outputExpr = rule.EmitOutput.When.RuleActivated.Checked
-							}
-
-							if outputExpr != nil {
-								octx := rctx.StartOutput(rule.Name)
-								output := &enginev1.OutputEntry{
-									Src: namer.RuleFQN(rpe.policy.Meta, p.Scope, rule.Name),
-									Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
-								}
-								result.Outputs = append(result.Outputs, output)
-								octx.ComputedOutput(output)
-							}
-						}
-					}
-				})
-				return nil
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-				for a := range result.toResolve {
-					if _, ok := actionsRequiringParentalConsent[a]; !ok {
-						deniedRoles, ok := result.actionImplicitlyDeniedForRoles[a]
-						if !ok {
-							deniedRoles = make(map[string]struct{})
-							result.actionImplicitlyDeniedForRoles[a] = deniedRoles
-						}
-
-						for er := range accumulatedRolePolicyRoles {
-							deniedRoles[er] = struct{}{}
-						}
-
-						result.setEffect(a, EffectInfo{
-							Effect:    effectv1.Effect_EFFECT_DENY,
-							Policy:    noMatchScopePermissions,
-							Scope:     p.Scope,
-							isPending: true,
-						})
-					}
-				}
-			}
-		}
-
-		// set the default effect for actions that were not matched
-		result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
-
-		return result, nil
-	})
 }
 
 type principalPolicyEvaluator struct {
@@ -1007,11 +657,9 @@ func (ec *evalContext) evaluateCELExprToRaw(expr *exprpb.CheckedExpr, constants,
 }
 
 type EffectInfo struct {
-	ActiveRoles internal.StringSet // TODO(saml) this can likely go after the query planner is updated
-	Policy      string
-	Scope       string
-	Effect      effectv1.Effect
-	isPending   bool // TODO(saml) remove post query planner update
+	Policy string
+	Scope  string
+	Effect effectv1.Effect
 }
 
 type PolicyEvalResult struct {
@@ -1059,9 +707,7 @@ func (er *PolicyEvalResult) unresolvedActions() []string {
 
 // setEffect sets the effect for an action. DENY always takes precedence.
 func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
-	if !effect.isPending {
 		delete(er.toResolve, action)
-	}
 
 	if effect.Effect == effectv1.Effect_EFFECT_DENY {
 		er.Effects[action] = effect
@@ -1074,7 +720,7 @@ func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
 		return
 	}
 
-	if current.Effect != effectv1.Effect_EFFECT_DENY || current.isPending {
+	if current.Effect != effectv1.Effect_EFFECT_DENY {
 		er.Effects[action] = effect
 	}
 }

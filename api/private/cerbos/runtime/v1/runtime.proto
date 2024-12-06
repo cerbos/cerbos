@@ -22,7 +22,6 @@ message RunnablePolicySet {
     RunnableDerivedRolesSet derived_roles = 4 [deprecated = true];
     RunnableVariablesSet variables = 5 [deprecated = true];
     RunnableRolePolicySet role_policy = 7;
-    RuleTable rule_table = 8;
   }
   uint32 compiler_version = 6;
 }

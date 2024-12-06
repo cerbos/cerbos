@@ -747,11 +747,6 @@ func cerbos_runtime_v1_RunnablePolicySet_hashpb_sum(m *RunnablePolicySet, hasher
 					cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(t.RolePolicy, hasher, ignore)
 				}
 
-			case *RunnablePolicySet_RuleTable:
-				if t.RuleTable != nil {
-					cerbos_runtime_v1_RuleTable_hashpb_sum(t.RuleTable, hasher, ignore)
-				}
-
 			}
 		}
 	}
