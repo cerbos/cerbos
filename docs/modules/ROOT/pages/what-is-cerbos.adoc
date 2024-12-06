@@ -7,7 +7,7 @@ include::partial$version-check.adoc[]
 
 == Authorization-as-a-Service
 
-One of the key tenants that allows many successful systems to scale is the adoption of a microservices architecture where each component can be scaled to meet the exact demands of the system. 
+One of the key tenets that allows many successful systems to scale is the adoption of a microservices architecture where each component can be scaled to meet the exact demands of the system. 
 
 Cerbos has been built as a standalone service which gives it several characteristics that are desirable for such an architecture
 
