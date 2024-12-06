@@ -152,7 +152,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	scopes, policyKey, fqn := rte.GetAllScopes(input.Resource.Scope, input.Resource.Kind, version)
 
 	pctx := tctx.StartPolicy(fqn)
-	evalCtx := newEvalContext(rte.evalParams, request)
 
 	// validate the input
 	vr, err := rte.schemaMgr.ValidateCheckInput(ctx, rte.GetSchema(fqn), input)
@@ -178,6 +177,52 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 			return result, nil
 		}
 	}
+
+	evalCtx := newEvalContext(rte.evalParams, request)
+
+	effectiveDerivedRoles := make(internal.StringSet)
+	// This is a bit of a bolt-on evaluation in order to support the existing requirement of evaluating all derived roles
+	// defined within a resource policy (regardless of if they're effective or not). This is primarily for the
+	// runtime.EffectiveDerivedRoles usage
+	// TODO(saml) cache?
+	// TODO(saml) `GetAllScopes` filters out scopes without any rows. Is that problematic when gathering "effectiveDerivedRoles"?
+	for _, scope := range scopes {
+		scopeFqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)
+
+		allRoles := make(map[string]struct{})
+		for _, r := range input.Principal.Roles {
+			allRoles[r] = struct{}{}
+		}
+		for _, r := range rte.getParentRoles(input.Principal.Roles) {
+			allRoles[r] = struct{}{}
+		}
+		if drs, ok := rte.policyDerivedRoles[scopeFqn]; ok {
+			for name, dr := range drs {
+				if !internal.SetIntersects(dr.ParentRoles, allRoles) {
+					continue
+				}
+
+				effectiveDerivedRoles[name] = struct{}{}
+
+				constants := constantValues(dr.Constants)
+				variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), constants, dr.OrderedVariables)
+				if err != nil {
+					return nil, err
+				}
+
+				ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, constants, variables)
+				if err != nil {
+					continue
+				}
+
+				if ok {
+					result.EffectiveDerivedRoles[name] = struct{}{}
+				}
+			}
+		}
+	}
+
+	evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
 
 	actionsToResolve := result.unresolvedActions()
 	if len(actionsToResolve) == 0 {
@@ -273,12 +318,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 
 						roleEffectSet[row.Effect] = struct{}{}
-
-						// TODO(saml) behaviour has changed such that we only add an effective derived role if the derived role was activated
-						// in a matched rule. I think this makes sense, but perhaps backwards compatibility is necessary here?
-						if row.OriginDerivedRole != "" {
-							result.EffectiveDerivedRoles[row.OriginDerivedRole] = struct{}{}
-						}
 
 						var outputExpr *exprpb.CheckedExpr
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
@@ -707,7 +746,7 @@ func (er *PolicyEvalResult) unresolvedActions() []string {
 
 // setEffect sets the effect for an action. DENY always takes precedence.
 func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
-		delete(er.toResolve, action)
+	delete(er.toResolve, action)
 
 	if effect.Effect == effectv1.Effect_EFFECT_DENY {
 		er.Effects[action] = effect

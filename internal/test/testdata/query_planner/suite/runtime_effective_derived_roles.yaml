@@ -6,7 +6,7 @@ principal:
   policyVersion: default
   roles:
       - user
-tests: []
+tests:
     # TODO(saml) this requires unevaluated effectiveDerivedRoles behaviour
     # - action: camelCase
     #   resource:

@@ -16,9 +16,9 @@ inputs:
 wantOutputs:
   - requestId: test
     resourceId: test
-    # effectiveDerivedRoles:
-    #   - one
-    #   - two
+    effectiveDerivedRoles:
+      - one
+      - two
     actions:
       camelCase:
         effect: EFFECT_ALLOW
@@ -28,13 +28,13 @@ wantOutputs:
         policy: resource.runtime_effective_derived_roles.vdefault
     outputs:
       - src: resource.runtime_effective_derived_roles.vdefault#camelCase
-        val: []
-        #   - one
-        #   - two
+        val:
+          - one
+          - two
       - src: resource.runtime_effective_derived_roles.vdefault#snake_case
-        val: []
-        #   - one
-        #   - two
+        val:
+          - one
+          - two
 wantDecisionLogs:
   [
     {
@@ -70,18 +70,16 @@ wantDecisionLogs:
                         "policy": "resource.runtime_effective_derived_roles.vdefault",
                       },
                   },
-                # "effectiveDerivedRoles": ["one", "two"],
+                "effectiveDerivedRoles": ["one", "two"],
                 "outputs":
                   [
                     {
                       "src": "resource.runtime_effective_derived_roles.vdefault#camelCase",
-                      # "val": ["one", "two"],
-                      "val": [],
+                      "val": ["one", "two"],
                     },
                     {
                       "src": "resource.runtime_effective_derived_roles.vdefault#snake_case",
-                      # "val": ["one", "two"],
-                      "val": [],
+                      "val": ["one", "two"],
                     },
                   ],
               },
