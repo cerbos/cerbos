@@ -81,7 +81,7 @@ wantOutputs:
               "policy": "resource.leave_request.v20210210",
             },
         },
-      "effectiveDerivedRoles": ["direct_manager"],
+      "effectiveDerivedRoles": ["any_employee", "direct_manager"],
     },
     {
       "requestId": "test2",
@@ -94,6 +94,7 @@ wantOutputs:
               "policy": "resource.leave_request.v20210210",
             },
         },
+      "effectiveDerivedRoles": ["any_employee", "direct_manager"],
     },
   ]
 wantDecisionLogs:
@@ -183,7 +184,7 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.v20210210",
                       },
                   },
-                "effectiveDerivedRoles": ["direct_manager"],
+                "effectiveDerivedRoles": ["any_employee", "direct_manager"],
               },
               {
                 "requestId": "test2",
@@ -196,6 +197,7 @@ wantDecisionLogs:
                         "policy": "resource.leave_request.v20210210",
                       },
                   },
+                "effectiveDerivedRoles": ["direct_manager", "any_employee"],
               },
             ],
         },
