@@ -5,23 +5,50 @@ package engine
 
 import (
 	"context"
+	"fmt"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/schema"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
-func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input *enginev1.PlanResourcesInput, opts *CheckOptions) (*planner.PolicyPlanResult, error) {
-	scopes, _, _ := ruleTable.GetAllScopes(input.Resource.Scope, input.Resource.Kind, input.Resource.PolicyVersion)
+func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input *enginev1.PlanResourcesInput, schemaMgr schema.Manager, opts *CheckOptions) (*planner.PolicyPlanResult, error) {
+	version := input.Resource.PolicyVersion
+	if version == "" {
+		version = "default"
+	}
+
+	scopes, _, _ := ruleTable.GetAllScopes(input.Resource.Scope, input.Resource.Kind, version)
 
 	request := planner.PlanResourcesInputToRequest(input)
 	evalCtx := &planner.EvalContext{TimeFn: opts.NowFunc()}
 
+	result := new(planner.PolicyPlanResult)
+
+	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, input.Resource.Scope)
+
+	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, ruleTable.GetSchema(fqn), input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate input: %w", err)
+	}
+	var validationErrors []*schemav1.ValidationError
+	if len(vr.Errors) > 0 {
+		validationErrors = vr.Errors.SchemaErrors()
+
+		if vr.Reject {
+			result.ValidationErrors = validationErrors
+			result.Add(planner.MkTrueNode(), effectv1.Effect_EFFECT_DENY)
+			return result, nil
+		}
+	}
+
 	// Filter down to matching roles and actions
-	scanResult := ruleTable.ScanRows(input.Resource.PolicyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, []string{input.Action})
+	scanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, []string{input.Action})
 
 	var allowNode, denyNode *planner.QpN
 	for _, role := range input.Principal.Roles {
@@ -33,7 +60,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 		for _, scope := range scopes {
 			var scopeAllowNode, scopeDenyNode *planner.QpN
 
-			scopedScanResult := ruleTable.ScanRows(input.Resource.PolicyVersion, namer.SanitizedResource(input.Resource.Kind), []string{scope}, roles, []string{})
+			scopedScanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), []string{scope}, roles, []string{})
 			if len(scopedScanResult.GetRows()) == 0 {
 				// the role doesn't exist in this scope for any actions, so continue.
 				// this prevents an implicit DENY from incorrectly narrowing an independent role
@@ -107,6 +134,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 				}
 			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
 				if scopeAllowNode != nil || scopeDenyNode != nil {
+					result.Scope = scope
 					break scopesLoop
 				}
 			}
@@ -134,13 +162,13 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 	if allowNode == nil && denyNode == nil {
 		denyNode = planner.MkTrueNode()
 	}
-	ruleTableResult := new(planner.PolicyPlanResult)
+
 	if allowNode != nil {
-		ruleTableResult.Add(allowNode, effectv1.Effect_EFFECT_ALLOW)
+		result.Add(allowNode, effectv1.Effect_EFFECT_ALLOW)
 	}
 	if denyNode != nil {
-		ruleTableResult.Add(denyNode, effectv1.Effect_EFFECT_DENY)
+		result.Add(denyNode, effectv1.Effect_EFFECT_DENY)
 	}
 
-	return ruleTableResult, nil
+	return result, nil
 }

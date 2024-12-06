@@ -285,14 +285,18 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	ruleTable := engine.ruleTable
 	if ruleTable == nil {
 		var err error
-		ruleTable, err = engine.getPartialRuleTable(ctx, input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, input.Principal.Roles)
+		version := input.Resource.PolicyVersion
+		if version == "" {
+			version = "default"
+		}
+		ruleTable, err = engine.getPartialRuleTable(ctx, input.Resource.Kind, version, input.Resource.Scope, input.Principal.Roles)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if ruleTable != nil {
-		ruleTableResult, err := EvaluateRuleTableQueryPlan(ctx, ruleTable, input, opts)
+		ruleTableResult, err := EvaluateRuleTableQueryPlan(ctx, ruleTable, input, engine.schemaMgr, opts)
 		if err != nil {
 			return nil, nil, err
 		}
