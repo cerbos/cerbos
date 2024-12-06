@@ -317,33 +317,31 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 	parentRoles := rt.getParentRoles(roles)
 
 	for _, row := range rt.Rules {
-		if version != row.Version {
+		if version != "" && version != row.Version {
 			continue
 		}
 
-		if _, ok := scopeSet[row.Scope]; !ok {
-			continue
-		}
-
-		if !util.MatchesGlob(row.Resource, resource) {
-			continue
-		}
-
-		if len(actions) > 0 {
-			if len(util.FilterGlob(row.Action, actions)) == 0 {
+		if len(scopes) > 0 {
+			if _, ok := scopeSet[row.Scope]; !ok {
 				continue
 			}
 		}
 
-		if len(roles) > 0 {
-			if len(util.FilterGlob(row.Role, roles)) == 0 {
-				// if the row matched on an assumed parent role, update the role in the row to an arbitrary base role
-				// so that we don't need to retrieve parent roles each time we query on the same set of data.
-				if len(util.FilterGlob(row.Role, parentRoles)) > 0 {
-					row.Role = roles[0]
-				} else {
-					continue
-				}
+		if resource != "" && !util.MatchesGlob(row.Resource, resource) {
+			continue
+		}
+
+		if len(actions) > 0 && len(util.FilterGlob(row.Action, actions)) == 0 {
+			continue
+		}
+
+		if len(roles) > 0 && len(util.FilterGlob(row.Role, roles)) == 0 {
+			// if the row matched on an assumed parent role, update the role in the row to an arbitrary base role
+			// so that we don't need to retrieve parent roles each time we query on the same set of data.
+			if len(util.FilterGlob(row.Role, parentRoles)) > 0 {
+				row.Role = roles[0]
+			} else {
+				continue
 			}
 		}
 
@@ -414,12 +412,18 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 }
 
 func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *RuleSet {
-	// TODO(saml) refactor so empty lists are a "match all"
 	res := &RuleSet{
 		scopeIndex: make(map[string][]*runtimev1.RuleTable_RuleRow),
 	}
 
 	parentRoles := rt.getParentRoles(roles)
+
+	if len(scopes) == 0 {
+		scopes = make([]string, 0, len(rrs.scopeIndex))
+		for s := range rrs.scopeIndex {
+			scopes = append(scopes, s)
+		}
+	}
 
 	for _, s := range scopes {
 		if sMap, ok := rrs.scopeIndex[s]; ok {
