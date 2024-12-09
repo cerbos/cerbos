@@ -51,7 +51,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 	}
 
 	// Filter down to matching roles and actions
-	scanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, []string{input.Action})
+	scanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, []string{})
 
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range ruleTable.getParentRoles(input.Principal.Roles) {
@@ -65,13 +65,11 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 		var roleAllowNode, roleDenyNode *planner.QpN
 		var scopePermissionsBoundaryOpen bool
 
-		roles := []string{role}
 	scopesLoop:
 		for _, scope := range scopes {
 			var scopeAllowNode, scopeDenyNode *planner.QpN
 
-			// TODO(saml) figure out a more efficient series of filters so we don't have to full scan twice
-			scopedScanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), []string{scope}, roles, []string{})
+			scopedScanResult := ruleTable.Filter(scanResult, []string{scope}, []string{role}, []string{})
 			if len(scopedScanResult.GetRows()) == 0 {
 				// the role doesn't exist in this scope for any actions, so continue.
 				// this prevents an implicit DENY from incorrectly narrowing an independent role
@@ -118,7 +116,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 				scopedDerivedRolesList[scope] = derivedRolesList
 			}
 
-			for _, row := range ruleTable.Filter(scanResult, []string{scope}, roles, []string{input.Action}).GetRows() {
+			for _, row := range ruleTable.Filter(scanResult, []string{scope}, []string{role}, []string{input.Action}).GetRows() {
 				var constants map[string]any
 				var variables map[string]*exprpb.Expr
 				if row.params != nil {

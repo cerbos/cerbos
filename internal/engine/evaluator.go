@@ -239,7 +239,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				Policy: policyKey,
 			}
 
-			roles := []string{role}
 		scopesLoop:
 			for _, scope := range scopes {
 				sctx := roctx.StartScope(scope)
@@ -248,7 +247,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					break
 				}
 
-				scopedScanResult := rte.Filter(scanResult, []string{scope}, roles, actionsToResolve)
+				scopedScanResult := rte.Filter(scanResult, []string{scope}, []string{role}, actionsToResolve)
 				if len(scopedScanResult.GetRows()) == 0 {
 					// the role doesn't exist in this scope for any actions, so continue.
 					// this prevents an implicit DENY from incorrectly narrowing an independent role
@@ -256,7 +255,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					continue
 				}
 
-				for _, row := range rte.Filter(scopedScanResult, []string{scope}, roles, []string{action}).GetRows() {
+				for _, row := range rte.Filter(scopedScanResult, []string{scope}, []string{role}, []string{action}).GetRows() {
 					rctx := sctx.StartRule(row.Name)
 
 					if m := row.GetMeta(); m != nil && m.GetSourceAttributes() != nil {
@@ -372,7 +371,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 			actionEffectInfo = EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey}
 		}
 
-		result.AuditTrail.EffectivePolicies = sourceAttrs // TODO(saml) use helper method
+		result.AuditTrail.EffectivePolicies = sourceAttrs
 
 		result.setEffect(action, actionEffectInfo)
 		actx.AppliedEffect(actionEffectInfo.Effect, "")
@@ -684,24 +683,21 @@ type EffectInfo struct {
 }
 
 type PolicyEvalResult struct {
-	Effects                        map[string]EffectInfo
-	EffectiveDerivedRoles          map[string]struct{}
-	toResolve                      map[string]struct{}
-	actionImplicitlyDeniedForRoles map[string]internal.StringSet // map[{action}]map[{roles}]
-	AuditTrail                     *auditv1.AuditTrail
-	ValidationErrors               []*schemav1.ValidationError
-	Outputs                        []*enginev1.OutputEntry
-	AssumedRoles                   []string // TODO(saml) remove once the query planner is updated
+	Effects               map[string]EffectInfo
+	EffectiveDerivedRoles map[string]struct{}
+	toResolve             map[string]struct{}
+	AuditTrail            *auditv1.AuditTrail
+	ValidationErrors      []*schemav1.ValidationError
+	Outputs               []*enginev1.OutputEntry
 }
 
 func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEvalResult {
 	per := &PolicyEvalResult{
-		Effects:                        make(map[string]EffectInfo, len(actions)),
-		EffectiveDerivedRoles:          make(map[string]struct{}),
-		toResolve:                      make(map[string]struct{}, len(actions)),
-		actionImplicitlyDeniedForRoles: make(map[string]internal.StringSet),
-		Outputs:                        []*enginev1.OutputEntry{},
-		AuditTrail:                     auditTrail,
+		Effects:               make(map[string]EffectInfo, len(actions)),
+		EffectiveDerivedRoles: make(map[string]struct{}),
+		toResolve:             make(map[string]struct{}, len(actions)),
+		Outputs:               []*enginev1.OutputEntry{},
+		AuditTrail:            auditTrail,
 	}
 
 	for _, a := range actions {
@@ -748,9 +744,6 @@ func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
 
 func (er *PolicyEvalResult) setDefaultEffect(tctx tracer.Context, effect EffectInfo) {
 	for a := range er.toResolve {
-		if _, ok := er.actionImplicitlyDeniedForRoles[a]; ok {
-			continue
-		}
 		er.Effects[a] = effect
 		tctx.StartAction(a).AppliedEffect(effect.Effect, "Default effect")
 	}

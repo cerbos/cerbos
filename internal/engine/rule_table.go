@@ -16,6 +16,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -25,6 +26,7 @@ const (
 )
 
 type RuleTable struct {
+	log                      *zap.SugaredLogger
 	rules                    []*RuleTableRow
 	policyLoader             PolicyLoader
 	schemas                  map[string]*policyv1.Schemas
@@ -55,6 +57,7 @@ type RuleTableRowParams struct {
 
 func NewRuleTable() *RuleTable {
 	return &RuleTable{
+		log:                      zap.S().Named("ruletable"),
 		schemas:                  make(map[string]*policyv1.Schemas),
 		policyDerivedRoles:       make(map[string]map[string]*wrappedRunnableDerivedRole),
 		scopeMap:                 make(map[string]struct{}),
@@ -260,12 +263,13 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 }
 
 func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
+	// TODO(saml) rebuilding/reassigning the whole row slice on each delete is hugely inefficient.
+	// Perhaps we could mark as `deleted` and periodically purge the deleted rows.
+	// However, it's unlikely this bespoke table implementation will be around long enough to worry about this.
+
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	// TODO(saml) rebuilding/reassigning the whole row slice on each delete is hugely inefficient.
-	// Perhaps we could mark as `deleted` and periodically purge the deleted rows.
-	// (side note: a SQLite rule table would solve this for free)
 	deletedFqn := rps.Fqn
 	scopeSet := make(map[string]struct{})
 
@@ -448,9 +452,9 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 }
 
 func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *RuleSet {
-	// TODO(saml) to avoid repeatedly creating and returning new (reduced) slices, we could instead mark a per role bool
-	// to infer whether or not it's in a result set?? Idea requires refining, but in essence, we'd use a single array
-	// under the hood which would be much more efficient.
+	// TODO(saml) avoid repeatedly creating and returning new (reduced) slices, via a per-row boolean or perhaps a linked list
+	// to infer whether or not it's in a result set? Idea requires refining, but in essence, we'd use a single array under the
+	// hood which would be much more efficient.
 	res := &RuleSet{
 		scopeIndex: make(map[string][]*RuleTableRow),
 	}
@@ -471,7 +475,6 @@ func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *Rule
 					if len(roles) == 0 || len(util.FilterGlob(row.Role, roles)) > 0 {
 						res.addMatchingRow(row)
 					} else if len(util.FilterGlob(row.Role, parentRoles)) > 0 {
-						// TODO(saml) dedup from Scan method
 						row.Role = roles[0]
 						res.addMatchingRow(row)
 					}
@@ -488,12 +491,18 @@ func (rt *RuleTable) SubscriberID() string {
 }
 
 func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
-	for _, ev := range events {
-		switch ev.Kind {
+	for _, evt := range events {
+		switch evt.Kind {
 		case storage.EventReload:
+			rt.log.Info("Reloading ruletable")
 			rt.triggerReload()
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
-			rt.processPolicyEvent(ev) // TODO(saml) handle error
+			rt.log.Debugw("Processing storage event", "event", evt)
+			if err := rt.processPolicyEvent(evt); err != nil {
+				rt.log.Warnw("Error while processing storage event", "event", evt, "error", err)
+			}
+		default:
+			rt.log.Debugw("Ignoring storage event", "event", evt)
 		}
 	}
 }
@@ -531,7 +540,6 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
 	return nil
 }
 
-// TODO(saml) could have a better name
 type RuleSet struct {
 	rows       []*RuleTableRow
 	scopeIndex map[string][]*RuleTableRow

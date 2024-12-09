@@ -290,7 +290,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 
 		rp := p.GetRolePolicy()
 		for _, rule := range rp.GetRules() {
-			version := "default" // TODO(saml) update
+			version := "default" // TODO(saml) add `version` to role policies
 			var resource string
 			var scopes map[string]map[string]struct{}
 			for resource, scopes = range idx.missingResourceScopes {
