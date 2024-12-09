@@ -15,16 +15,22 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/internal"
 	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input *enginev1.PlanResourcesInput, schemaMgr schema.Manager, opts *CheckOptions) (*planner.PolicyPlanResult, error) {
-	// TODO(saml) reintroduce tracing
 	version := input.Resource.PolicyVersion
 	if version == "" {
 		version = "default"
 	}
+
+	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, input.Resource.Scope)
+
+	_, span := tracing.StartSpan(ctx, "rule_table.EvaluateRuleTableQueryPlan")
+	span.SetAttributes(tracing.PolicyFQN(fqn))
+	defer span.End()
 
 	scopes, _, _ := ruleTable.GetAllScopes(input.Resource.Scope, input.Resource.Kind, version)
 
@@ -32,8 +38,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 	evalCtx := &planner.EvalContext{TimeFn: opts.NowFunc()}
 
 	result := new(planner.PolicyPlanResult)
-
-	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, input.Resource.Scope)
 
 	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, ruleTable.GetSchema(fqn), input)
 	if err != nil {
