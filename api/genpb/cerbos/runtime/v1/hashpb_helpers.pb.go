@@ -1039,10 +1039,6 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Rule_hashpb_sum(m *Runna
 		}
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.from_role_policy"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetFromRolePolicy())))
-
-	}
 }
 
 func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableResourcePolicySet_Policy, hasher hash.Hash, ignore map[string]struct{}) {

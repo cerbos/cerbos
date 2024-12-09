@@ -805,9 +805,9 @@ type evaluationResult struct {
 	effects               map[string]EffectInfo
 	auditTrail            *auditv1.AuditTrail
 	effectiveDerivedRoles map[string]struct{}
+	toResolve             map[string]struct{}
 	validationErrors      []*schemav1.ValidationError
 	outputs               []*enginev1.OutputEntry
-	toResolve             map[string]struct{}
 }
 
 // merge the results by only updating the actions that have a no_match effect.
