@@ -232,7 +232,6 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 }
 
 func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
-	// TODO(saml) caching etc as per GetAllMatching below
 	cus, err := c.store.GetAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get compilation units: %w", err)
