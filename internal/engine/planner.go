@@ -53,6 +53,13 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 	// Filter down to matching roles and actions
 	scanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, []string{input.Action})
 
+	includingParentRoles := make(map[string]struct{})
+	for _, r := range ruleTable.getParentRoles(input.Principal.Roles) {
+		includingParentRoles[r] = struct{}{}
+	}
+
+	scopedDerivedRolesList := make(map[string]func() (*exprpb.Expr, error))
+
 	var allowNode, denyNode *planner.QpN
 	for _, role := range input.Principal.Roles {
 		var roleAllowNode, roleDenyNode *planner.QpN
@@ -71,50 +78,45 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 				continue
 			}
 
-			// TODO(saml) make this BETTER. Caching/reuse, whatever
-			scopeFqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)
 			derivedRolesList := planner.MkDerivedRolesList(nil)
-			var derivedRoles []planner.RN
-			allRoles := make(map[string]struct{})
-			for _, r := range input.Principal.Roles {
-				allRoles[r] = struct{}{}
-			}
-			for _, r := range ruleTable.getParentRoles(input.Principal.Roles) {
-				allRoles[r] = struct{}{}
-			}
-			if drs, ok := ruleTable.policyDerivedRoles[scopeFqn]; ok {
-				for name, dr := range drs {
-					if !internal.SetIntersects(dr.ParentRoles, allRoles) {
-						continue
-					}
+			if c, ok := scopedDerivedRolesList[scope]; ok {
+				derivedRolesList = c
+			} else {
+				var derivedRoles []planner.RN
+				if drs, ok := ruleTable.policyDerivedRoles[namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)]; ok {
+					for name, dr := range drs {
+						if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
+							continue
+						}
 
-					constants := planner.ConstantValues(dr.Constants)
-					var err error
-					variables, err := planner.VariableExprs(dr.OrderedVariables)
-					if err != nil {
-						return nil, err
-					}
+						var err error
+						variables, err := planner.VariableExprs(dr.OrderedVariables)
+						if err != nil {
+							return nil, err
+						}
 
-					node, err := evalCtx.EvaluateCondition(dr.Condition, request, opts.Globals(), constants, variables, derivedRolesList)
-					if err != nil {
-						return nil, err
-					}
+						node, err := evalCtx.EvaluateCondition(dr.Condition, request, opts.Globals(), dr.constants, variables, derivedRolesList)
+						if err != nil {
+							return nil, err
+						}
 
-					derivedRoles = append(derivedRoles, planner.RN{
-						// TODO(saml) this function was previously memoized. Optimise or refactor out completely
-						Node: func() (*enginev1.PlanResourcesAst_Node, error) {
-							return node, nil
-						},
-						Role: name,
-					})
+						derivedRoles = append(derivedRoles, planner.RN{
+							Node: func() (*enginev1.PlanResourcesAst_Node, error) {
+								return node, nil
+							},
+							Role: name,
+						})
+					}
 				}
+
+				sort.Slice(derivedRoles, func(i, j int) bool {
+					return derivedRoles[i].Role < derivedRoles[j].Role
+				})
+
+				derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+
+				scopedDerivedRolesList[scope] = derivedRolesList
 			}
-
-			sort.Slice(derivedRoles, func(i, j int) bool {
-				return derivedRoles[i].Role < derivedRoles[j].Role
-			})
-
-			derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
 
 			for _, row := range ruleTable.Filter(scanResult, []string{scope}, roles, []string{input.Action}).GetRows() {
 				var constants map[string]any

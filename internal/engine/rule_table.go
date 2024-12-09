@@ -28,12 +28,17 @@ type RuleTable struct {
 	rules                    []*RuleTableRow
 	policyLoader             PolicyLoader
 	schemas                  map[string]*policyv1.Schemas
-	policyDerivedRoles       map[string]map[string]*runtimev1.RunnableDerivedRole
+	policyDerivedRoles       map[string]map[string]*wrappedRunnableDerivedRole
 	scopeMap                 map[string]struct{}
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoles              map[string][]string
 	parentRoleAncestorsCache map[string][]string
 	mu                       sync.RWMutex
+}
+
+type wrappedRunnableDerivedRole struct {
+	*runtimev1.RunnableDerivedRole
+	constants map[string]any
 }
 
 type RuleTableRow struct {
@@ -51,7 +56,7 @@ type RuleTableRowParams struct {
 func NewRuleTable() *RuleTable {
 	return &RuleTable{
 		schemas:                  make(map[string]*policyv1.Schemas),
-		policyDerivedRoles:       make(map[string]map[string]*runtimev1.RunnableDerivedRole),
+		policyDerivedRoles:       make(map[string]map[string]*wrappedRunnableDerivedRole),
 		scopeMap:                 make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
 		parentRoles:              make(map[string][]string),
@@ -97,7 +102,14 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 
 	for _, p := range rrps.GetPolicies() {
 		scopeFqn := namer.ResourcePolicyFQN(rrps.Meta.Resource, rrps.Meta.Version, p.Scope)
-		rt.policyDerivedRoles[scopeFqn] = p.DerivedRoles
+		wrapped := make(map[string]*wrappedRunnableDerivedRole)
+		for n, dr := range p.DerivedRoles {
+			wrapped[n] = &wrappedRunnableDerivedRole{
+				RunnableDerivedRole: dr,
+				constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
+			}
+		}
+		rt.policyDerivedRoles[scopeFqn] = wrapped
 
 		rt.scopeMap[p.Scope] = struct{}{}
 
@@ -377,7 +389,8 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 func (rt *RuleTable) getParentRoles(roles []string) []string {
 	// recursively collect all parent roles, caching the flat list on the very first traversal for
 	// each role within the ruletable
-	parentRoles := []string{}
+	parentRoles := make([]string, len(roles))
+	copy(parentRoles, roles)
 	for _, role := range roles {
 		var roleParents []string
 		if c, ok := rt.parentRoleAncestorsCache[role]; ok {
