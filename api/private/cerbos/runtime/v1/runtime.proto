@@ -38,12 +38,6 @@ message RuleTable {
     map<string, string> annotations = 6;
   }
 
-  message Parameters {
-    string origin = 1;
-    repeated Variable ordered_variables = 2;
-    map<string, google.protobuf.Value> constants = 3;
-  }
-
   message RuleRow {
     string originFqn = 1;
     string resource = 2;
@@ -55,11 +49,9 @@ message RuleTable {
     cerbos.policy.v1.ScopePermissions scopePermissions = 8;
     string version = 9;
     string originDerivedRole = 10;
-    Parameters parameters = 11;
-    Output emit_output = 12;
-    string name = 13;
-    string evaluation_key = 14;
-    Metadata meta = 15;
+    Output emit_output = 11;
+    string name = 12;
+    Metadata meta = 13;
   }
 
   repeated RuleRow Rules = 1;
