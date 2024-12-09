@@ -171,35 +171,28 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 	effectiveDerivedRoles := make(internal.StringSet)
 	// This is a bit of a bolt-on evaluation in order to support the existing requirement of evaluating all derived roles
-	// defined within a resource policy (regardless of if they're effective or not). This is primarily for the
+	// defined within a resource policy (regardless of if they're used or not). This is primarily for the
 	// runtime.EffectiveDerivedRoles usage
-	// TODO(saml) cache?
-	// TODO(saml) `GetAllScopes` filters out scopes without any rows. Is that problematic when gathering "effectiveDerivedRoles"?
+	includingParentRoles := make(map[string]struct{})
+	for _, r := range rte.getParentRoles(input.Principal.Roles) {
+		includingParentRoles[r] = struct{}{}
+	}
 	for _, scope := range scopes {
 		scopeFqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)
-
-		allRoles := make(map[string]struct{})
-		for _, r := range input.Principal.Roles {
-			allRoles[r] = struct{}{}
-		}
-		for _, r := range rte.getParentRoles(input.Principal.Roles) {
-			allRoles[r] = struct{}{}
-		}
 		if drs, ok := rte.policyDerivedRoles[scopeFqn]; ok {
 			for name, dr := range drs {
-				if !internal.SetIntersects(dr.ParentRoles, allRoles) {
+				if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
 					continue
 				}
 
 				effectiveDerivedRoles[name] = struct{}{}
 
-				constants := constantValues(dr.Constants)
-				variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), constants, dr.OrderedVariables)
+				variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), dr.constants, dr.OrderedVariables)
 				if err != nil {
 					return nil, err
 				}
 
-				ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, constants, variables)
+				ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, dr.constants, variables)
 				if err != nil {
 					continue
 				}
@@ -211,6 +204,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		}
 	}
 
+	// for runtime.EffectiveDerivedRoles support
 	evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
 
 	actionsToResolve := result.unresolvedActions()
