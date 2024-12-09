@@ -119,10 +119,10 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 			for _, row := range ruleTable.Filter(scanResult, []string{scope}, roles, []string{input.Action}).GetRows() {
 				var constants map[string]any
 				var variables map[string]*exprpb.Expr
-				if row.Parameters != nil {
-					constants = planner.ConstantValues(row.Parameters.Constants)
+				if row.params != nil {
+					constants = row.params.constants
 					var err error
-					variables, err = planner.VariableExprs(row.Parameters.OrderedVariables)
+					variables, err = planner.VariableExprs(row.params.variables)
 					if err != nil {
 						return nil, err
 					}

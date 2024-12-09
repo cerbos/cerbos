@@ -16,6 +16,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 )
 
 type RuleTable struct {
-	*runtimev1.RuleTable
+	rules                    []*RuleTableRow
 	policyLoader             PolicyLoader
 	schemas                  map[string]*policyv1.Schemas
 	policyDerivedRoles       map[string]map[string]*runtimev1.RunnableDerivedRole
@@ -35,9 +36,20 @@ type RuleTable struct {
 	mu                       sync.RWMutex
 }
 
+type RuleTableRow struct {
+	*runtimev1.RuleTable_RuleRow
+	params        *RuleTableRowParams
+	evaluationKey string
+}
+
+type RuleTableRowParams struct {
+	key       string
+	constants map[string]any // conditions can be converted to Go native types at build time
+	variables []*runtimev1.Variable
+}
+
 func NewRuleTable() *RuleTable {
 	return &RuleTable{
-		RuleTable:                &runtimev1.RuleTable{},
 		schemas:                  make(map[string]*policyv1.Schemas),
 		policyDerivedRoles:       make(map[string]map[string]*runtimev1.RunnableDerivedRole),
 		scopeMap:                 make(map[string]struct{}),
@@ -89,10 +101,10 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 
 		rt.scopeMap[p.Scope] = struct{}{}
 
-		policyParameters := &runtimev1.RuleTable_Parameters{
-			Origin:           namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope),
-			OrderedVariables: p.OrderedVariables,
-			Constants:        p.Constants,
+		policyParameters := &RuleTableRowParams{
+			key:       namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope),
+			variables: p.OrderedVariables,
+			constants: (&structpb.Struct{Fields: p.Constants}).AsMap(),
 		}
 
 		scopePermissions := p.ScopePermissions
@@ -112,24 +124,26 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			}
 
 			ruleFqn := namer.RuleFQN(meta, p.Scope, rule.Name)
-			evaluationKey := fmt.Sprintf("%s#%s", policyParameters.Origin, ruleFqn)
+			evaluationKey := fmt.Sprintf("%s#%s", policyParameters.key, ruleFqn)
 			for a := range rule.Actions {
 				for r := range rule.Roles {
-					rt.Rules = append(rt.Rules, &runtimev1.RuleTable_RuleRow{
-						OriginFqn:        rrps.Meta.Fqn,
-						Resource:         sanitizedResource,
-						Role:             r,
-						Action:           a,
-						Condition:        rule.Condition,
-						Effect:           rule.Effect,
-						Scope:            p.Scope,
-						ScopePermissions: scopePermissions,
-						Version:          rrps.Meta.Version,
-						EmitOutput:       emitOutput,
-						Name:             rule.Name,
-						Parameters:       policyParameters,
-						EvaluationKey:    evaluationKey,
-						Meta:             meta,
+					rt.rules = append(rt.rules, &RuleTableRow{
+						RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+							OriginFqn:        rrps.Meta.Fqn,
+							Resource:         sanitizedResource,
+							Role:             r,
+							Action:           a,
+							Condition:        rule.Condition,
+							Effect:           rule.Effect,
+							Scope:            p.Scope,
+							ScopePermissions: scopePermissions,
+							Version:          rrps.Meta.Version,
+							EmitOutput:       emitOutput,
+							Name:             rule.Name,
+							Meta:             meta,
+						},
+						params:        policyParameters,
+						evaluationKey: evaluationKey,
 					})
 				}
 
@@ -145,10 +159,10 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 							mergedConstants[k] = c
 						}
 
-						mergedParameters := &runtimev1.RuleTable_Parameters{
-							Origin:           fmt.Sprintf("%s:%s", policyParameters.Origin, namer.DerivedRolesFQN(rdr.Name)),
-							OrderedVariables: mergedVariables,
-							Constants:        mergedConstants,
+						mergedParameters := &RuleTableRowParams{
+							key:       fmt.Sprintf("%s:%s", policyParameters.key, namer.DerivedRolesFQN(rdr.Name)),
+							variables: mergedVariables,
+							constants: (&structpb.Struct{Fields: mergedConstants}).AsMap(),
 						}
 
 						cond := rule.Condition
@@ -166,24 +180,26 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 							}
 						}
 
-						evaluationKey := fmt.Sprintf("%s#%s", mergedParameters.Origin, ruleFqn)
+						evaluationKey := fmt.Sprintf("%s#%s", mergedParameters.key, ruleFqn)
 						for pr := range rdr.ParentRoles {
-							rt.Rules = append(rt.Rules, &runtimev1.RuleTable_RuleRow{
-								OriginFqn:         rrps.Meta.Fqn,
-								Resource:          sanitizedResource,
-								Role:              pr,
-								Action:            a,
-								Condition:         cond,
-								Effect:            rule.Effect,
-								Scope:             p.Scope,
-								ScopePermissions:  scopePermissions,
-								Version:           rrps.Meta.Version,
-								OriginDerivedRole: dr,
-								EmitOutput:        emitOutput,
-								Name:              rule.Name,
-								Parameters:        mergedParameters,
-								EvaluationKey:     evaluationKey,
-								Meta:              meta,
+							rt.rules = append(rt.rules, &RuleTableRow{
+								RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+									OriginFqn:         rrps.Meta.Fqn,
+									Resource:          sanitizedResource,
+									Role:              pr,
+									Action:            a,
+									Condition:         cond,
+									Effect:            rule.Effect,
+									Scope:             p.Scope,
+									ScopePermissions:  scopePermissions,
+									Version:           rrps.Meta.Version,
+									OriginDerivedRole: dr,
+									EmitOutput:        emitOutput,
+									Name:              rule.Name,
+									Meta:              meta,
+								},
+								params:        mergedParameters,
+								evaluationKey: evaluationKey,
 							})
 						}
 					}
@@ -207,20 +223,22 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	}
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
-			evaluationKey := fmt.Sprintf("%s#%s", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), fmt.Sprintf("%s_rule-%03d", p.Role, idx))
+			evaluationKey := fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx)
 			for a := range rule.Actions {
-				rt.Rules = append(rt.Rules, &runtimev1.RuleTable_RuleRow{
-					OriginFqn:        p.Meta.Fqn,
-					Role:             p.Role,
-					Resource:         resource,
-					Action:           a,
-					Condition:        rule.Condition,
-					Effect:           effectv1.Effect_EFFECT_ALLOW,
-					Scope:            p.Scope,
-					ScopePermissions: p.ScopePermissions,
-					Version:          version,
-					EvaluationKey:    evaluationKey,
-					Meta:             meta,
+				rt.rules = append(rt.rules, &RuleTableRow{
+					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+						OriginFqn:        p.Meta.Fqn,
+						Role:             p.Role,
+						Resource:         resource,
+						Action:           a,
+						Condition:        rule.Condition,
+						Effect:           effectv1.Effect_EFFECT_ALLOW,
+						Scope:            p.Scope,
+						ScopePermissions: p.ScopePermissions,
+						Version:          version,
+						Meta:             meta,
+					},
+					evaluationKey: evaluationKey,
 				})
 			}
 		}
@@ -239,14 +257,14 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 	deletedFqn := rps.Fqn
 	scopeSet := make(map[string]struct{})
 
-	newRules := []*runtimev1.RuleTable_RuleRow{}
-	for _, r := range rt.Rules {
+	newRules := []*RuleTableRow{}
+	for _, r := range rt.rules {
 		if r.OriginFqn != deletedFqn {
 			newRules = append(newRules, r)
 			scopeSet[r.Scope] = struct{}{}
 		}
 	}
-	rt.Rules = newRules
+	rt.rules = newRules
 
 	delete(rt.schemas, deletedFqn)
 
@@ -273,7 +291,7 @@ func (rt *RuleTable) purge() {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	rt.Rules = []*runtimev1.RuleTable_RuleRow{}
+	rt.rules = []*RuleTableRow{}
 	rt.parentRoles = make(map[string][]string)
 	rt.schemas = make(map[string]*policyv1.Schemas)
 
@@ -311,7 +329,7 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 	defer rt.mu.RUnlock()
 
 	res := &RuleSet{
-		scopeIndex: make(map[string][]*runtimev1.RuleTable_RuleRow),
+		scopeIndex: make(map[string][]*RuleTableRow),
 	}
 
 	scopeSet := make(map[string]struct{}, len(scopes))
@@ -321,7 +339,7 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 
 	parentRoles := rt.getParentRoles(roles)
 
-	for _, row := range rt.Rules {
+	for _, row := range rt.rules {
 		if version != "" && version != row.Version {
 			continue
 		}
@@ -421,7 +439,7 @@ func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *Rule
 	// to infer whether or not it's in a result set?? Idea requires refining, but in essence, we'd use a single array
 	// under the hood which would be much more efficient.
 	res := &RuleSet{
-		scopeIndex: make(map[string][]*runtimev1.RuleTable_RuleRow),
+		scopeIndex: make(map[string][]*RuleTableRow),
 	}
 
 	parentRoles := rt.getParentRoles(roles)
@@ -502,15 +520,15 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
 
 // TODO(saml) could have a better name
 type RuleSet struct {
-	rows       []*runtimev1.RuleTable_RuleRow
-	scopeIndex map[string][]*runtimev1.RuleTable_RuleRow
+	rows       []*RuleTableRow
+	scopeIndex map[string][]*RuleTableRow
 }
 
-func (rrs *RuleSet) addMatchingRow(row *runtimev1.RuleTable_RuleRow) {
+func (rrs *RuleSet) addMatchingRow(row *RuleTableRow) {
 	rrs.rows = append(rrs.rows, row)
 	rrs.scopeIndex[row.Scope] = append(rrs.scopeIndex[row.Scope], row)
 }
 
-func (rrs *RuleSet) GetRows() []*runtimev1.RuleTable_RuleRow {
+func (rrs *RuleSet) GetRows() []*RuleTableRow {
 	return rrs.rows
 }
