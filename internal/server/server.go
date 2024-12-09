@@ -158,8 +158,8 @@ func Start(ctx context.Context) error {
 
 	rt := engine.NewRuleTable().WithPolicyLoader(policyLoader)
 
-	// TODO(saml) for now, we're only enabling the ruletable engine for non-mutable stores
-	// populate rule table for non-mutable stores
+	// For now, we're only enabling the ruletable engine for non-mutable stores populate rule table
+	// for non-mutable stores
 	if _, ok := store.(storage.MutableStore); !ok {
 		rps, err := policyLoader.GetAll(ctx)
 		if err != nil {
