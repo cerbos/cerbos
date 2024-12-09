@@ -20,6 +20,7 @@ import (
 )
 
 func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input *enginev1.PlanResourcesInput, schemaMgr schema.Manager, opts *CheckOptions) (*planner.PolicyPlanResult, error) {
+	// TODO(saml) reintroduce tracing
 	version := input.Resource.PolicyVersion
 	if version == "" {
 		version = "default"

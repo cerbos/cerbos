@@ -91,18 +91,12 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-// TODO(saml) can probably have a dedicated GetPrincipalPolicyEvaluator function
-func NewEvaluator(rps []*runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	if len(rps) == 0 {
+func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+	if pps == nil || len(pps.Policies) == 0 {
 		return noopEvaluator{}
 	}
 
-	switch rp := rps[0].PolicySet.(type) {
-	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
-		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
-	default:
-		return noopEvaluator{}
-	}
+	return &principalPolicyEvaluator{policy: pps, evalParams: eparams}
 }
 
 func NewRuleTableEvaluator(rt *RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
@@ -286,7 +280,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							constants = c.constants
 							variables = c.variables
 						} else {
-							// TODO(saml) can probably just compile constants at least at table build time
+							// TODO(saml) can probably compile constants and vars at least at table build time
 							constants = constantValues(row.Parameters.Constants)
 							var err error
 							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.Parameters.OrderedVariables)
