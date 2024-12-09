@@ -100,7 +100,7 @@ func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, sche
 }
 
 func NewRuleTableEvaluator(rt *RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	if len(rt.Rules) == 0 {
+	if len(rt.rules) == 0 {
 		return noopEvaluator{}
 	}
 
@@ -121,11 +121,6 @@ type ruleTableEvaluator struct {
 	*RuleTable
 	schemaMgr  schema.Manager
 	evalParams evalParams
-}
-
-type cachedParameters struct {
-	constants map[string]any
-	variables map[string]any
 }
 
 func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
@@ -232,7 +227,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	// Filter down to matching roles and actions
 	scanResult = rte.Filter(scanResult, scopes, input.Principal.Roles, actionsToResolve)
 
-	parameterCache := make(map[string]cachedParameters)
+	varCache := make(map[string]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
 	// We use a compound key comprising the parameter origin and the rule FQN.
 	conditionCache := make(map[string]bool)
@@ -274,26 +269,25 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						maps.Copy(sourceAttrs, row.GetMeta().GetSourceAttributes())
 					}
 
-					var constants, variables map[string]any
-					if row.Parameters != nil {
-						if c, ok := parameterCache[row.Parameters.Origin]; ok {
-							constants = c.constants
-							variables = c.variables
+					var constants map[string]any
+					var variables map[string]any
+					if row.params != nil {
+						constants = row.params.constants
+						if c, ok := varCache[row.params.key]; ok {
+							variables = c
 						} else {
-							// TODO(saml) can probably compile constants and vars at least at table build time
-							constants = constantValues(row.Parameters.Constants)
 							var err error
-							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.Parameters.OrderedVariables)
+							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.params.variables)
 							if err != nil {
 								rctx.Skipped(err, "Error evaluating variables")
 								return nil, err
 							}
-							parameterCache[row.Parameters.Origin] = cachedParameters{constants, variables}
+							varCache[row.params.key] = variables
 						}
 					}
 
 					var satisfiesCondition bool
-					if c, ok := conditionCache[row.EvaluationKey]; ok {
+					if c, ok := conditionCache[row.evaluationKey]; ok {
 						satisfiesCondition = c
 					} else {
 						ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
@@ -301,7 +295,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							rctx.Skipped(err, "Error evaluating condition")
 							continue
 						}
-						conditionCache[row.EvaluationKey] = ok
+						conditionCache[row.evaluationKey] = ok
 						satisfiesCondition = ok
 					}
 
@@ -322,7 +316,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
-								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, constants, variables),
+								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, row.params.constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
 							octx.ComputedOutput(output)
@@ -332,7 +326,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
-								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
+								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, row.params.constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
 							octx.ComputedOutput(output)
