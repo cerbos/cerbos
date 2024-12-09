@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Principal policy with SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+description: "Principal policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
 inputs:
   [
     {

@@ -60,6 +60,17 @@ func TestCheck(t *testing.T) {
 			}
 
 			for i, have := range haveOutputs {
+				// TODO(saml) I can't, for the life of me, figure out out to order this via a transformation
+				// function in `cmp.Diff` below, so this'll have to do for now
+				slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
+					if a.Src < b.Src {
+						return -1
+					} else if a.Src > b.Src {
+						return 1
+					}
+					return 0
+				})
+
 				require.Empty(t, cmp.Diff(tc.WantOutputs[i],
 					have,
 					protocmp.Transform(),
@@ -68,6 +79,7 @@ func TestCheck(t *testing.T) {
 			}
 
 			haveDecisionLogs := mockAuditLog.getDecisionLogs()
+
 			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
 				haveDecisionLogs,
 				protocmp.Transform(),
