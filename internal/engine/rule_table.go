@@ -26,15 +26,15 @@ const (
 )
 
 type RuleTable struct {
-	log                      *zap.SugaredLogger
-	rules                    []*RuleTableRow
 	policyLoader             PolicyLoader
+	log                      *zap.SugaredLogger
 	schemas                  map[string]*policyv1.Schemas
 	policyDerivedRoles       map[string]map[string]*wrappedRunnableDerivedRole
 	scopeMap                 map[string]struct{}
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoles              map[string][]string
 	parentRoleAncestorsCache map[string][]string
+	rules                    []*RuleTableRow
 	mu                       sync.RWMutex
 }
 
@@ -414,7 +414,7 @@ func (rt *RuleTable) getParentRoles(roles []string) []string {
 	return parentRoles
 }
 
-func (rt *RuleTable) collectParentRoles(role string, parentRoleSet map[string]struct{}, visited map[string]struct{}) {
+func (rt *RuleTable) collectParentRoles(role string, parentRoleSet, visited map[string]struct{}) {
 	if _, seen := visited[role]; seen {
 		return
 	}
@@ -541,8 +541,8 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
 }
 
 type RuleSet struct {
-	rows       []*RuleTableRow
 	scopeIndex map[string][]*RuleTableRow
+	rows       []*RuleTableRow
 }
 
 func (rrs *RuleSet) addMatchingRow(row *RuleTableRow) {
