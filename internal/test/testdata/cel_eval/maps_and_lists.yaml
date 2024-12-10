@@ -60,8 +60,8 @@ condition:
           {'greeting': 'hello', 'farewell': 'goodbye'}.transformList(k, _, k) == ['greeting', 'farewell'] &&
           {'greeting': 'hello', 'farewell': 'goodbye'}.transformList(_, v, v) == ['hello', 'goodbye']
       - expr: |-
-          P.attr["1-2-3"].transformMap(indexVar, valueVar, (indexVar * valueVar) + valueVar) == {0: 1, 1: 4, 2: 9} &&
-          P.attr["1-2-3"].transformMap(indexVar, valueVar, indexVar % 2 == 0, (indexVar * valueVar) + valueVar) == {0: 1, 2: 9} &&
+          [1, 2, 3].transformMap(indexVar, valueVar, (indexVar * valueVar) + valueVar) == {0: 1, 1: 4, 2: 9} &&
+          [1, 2, 3].transformMap(indexVar, valueVar, indexVar % 2 == 0, (indexVar * valueVar) + valueVar) == {0: 1, 2: 9} &&
           {'greeting': 'hello'}.transformMap(k, v, v + '!') == {'greeting': 'hello!'}
       - expr: |-
           {'greeting': 'hello'}.transformMapEntry(keyVar, valueVar, {valueVar: keyVar}) == {'hello': 'greeting'} &&
@@ -75,6 +75,7 @@ request: {
       "teams": ["design", "communications", "product", "commercial"],
       "abc": ["a", "bb", "ccc"],
       "1-2-3": [1, 2, 3],
+      "123-2": [1, 2, 3],
       "clients": {
         "acme": {"active": true},
         "bb inc": {"active": true}
