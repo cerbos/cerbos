@@ -239,7 +239,7 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
 			evaluationKey := fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx)
-			for a := range rule.Actions {
+			for a := range rule.AllowActions {
 				rt.rules = append(rt.rules, &RuleTableRow{
 					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 						OriginFqn:        p.Meta.Fqn,

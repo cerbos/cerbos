@@ -606,7 +606,7 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		for _, rl := range set.RolePolicy.Resources {
 			for _, r := range rl.Rules {
-				for a := range r.Actions {
+				for a := range r.AllowActions {
 					if _, ok := ss[a]; !ok {
 						ss[a] = struct{}{}
 						actions = append(actions, a)

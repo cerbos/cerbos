@@ -1221,11 +1221,11 @@ func cerbos_runtime_v1_RunnableRolePolicySet_Rule_hashpb_sum(m *RunnableRolePoli
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResource()))
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Rule.actions"]; !ok {
-		if len(m.Actions) > 0 {
-			keys := make([]string, len(m.Actions))
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Rule.allow_actions"]; !ok {
+		if len(m.AllowActions) > 0 {
+			keys := make([]string, len(m.AllowActions))
 			i := 0
-			for k := range m.Actions {
+			for k := range m.AllowActions {
 				keys[i] = k
 				i++
 			}
@@ -1233,8 +1233,8 @@ func cerbos_runtime_v1_RunnableRolePolicySet_Rule_hashpb_sum(m *RunnableRolePoli
 			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
 			for _, k := range keys {
-				if m.Actions[k] != nil {
-					google_protobuf_Empty_hashpb_sum(m.Actions[k], hasher, ignore)
+				if m.AllowActions[k] != nil {
+					google_protobuf_Empty_hashpb_sum(m.AllowActions[k], hasher, ignore)
 				}
 
 			}

@@ -66,7 +66,7 @@ message RunnableRolePolicySet {
 
   message Rule {
     string resource = 1;
-    map<string, google.protobuf.Empty> actions = 2;
+    map<string, google.protobuf.Empty> allow_actions = 2;
     Condition condition = 3;
   }
 

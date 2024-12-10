@@ -640,9 +640,9 @@ func (m *RunnableRolePolicySet_Rule) MarshalToSizedBufferVT(dAtA []byte) (int, e
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.Actions) > 0 {
-		for k := range m.Actions {
-			v := m.Actions[k]
+	if len(m.AllowActions) > 0 {
+		for k := range m.AllowActions {
+			v := m.AllowActions[k]
 			baseI := i
 			size, err := (*emptypb.Empty)(v).MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
@@ -3491,8 +3491,8 @@ func (m *RunnableRolePolicySet_Rule) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.Actions) > 0 {
-		for k, v := range m.Actions {
+	if len(m.AllowActions) > 0 {
+		for k, v := range m.AllowActions {
 			_ = k
 			_ = v
 			l = 0
@@ -6312,7 +6312,7 @@ func (m *RunnableRolePolicySet_Rule) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Actions", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowActions", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6339,8 +6339,8 @@ func (m *RunnableRolePolicySet_Rule) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Actions == nil {
-				m.Actions = make(map[string]*emptypb1.Empty)
+			if m.AllowActions == nil {
+				m.AllowActions = make(map[string]*emptypb1.Empty)
 			}
 			var mapkey string
 			var mapvalue *emptypb1.Empty
@@ -6437,7 +6437,7 @@ func (m *RunnableRolePolicySet_Rule) UnmarshalVT(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.Actions[mapkey] = mapvalue
+			m.AllowActions[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
