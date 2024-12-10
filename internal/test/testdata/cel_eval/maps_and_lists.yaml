@@ -78,7 +78,6 @@ request: {
     "attr": {
       "department": "marketing",
       "teams": ["design", "communications", "product", "commercial"],
-      "abc": ["a", "bb", "ccc"],
       "1-2-3": [1, 2, 3],
       "clients": {
         "acme": {"active": true},
