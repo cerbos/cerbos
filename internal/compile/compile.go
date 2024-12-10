@@ -86,9 +86,9 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		}
 
 		resources[r.Resource].Rules = append(resources[r.Resource].Rules, &runtimev1.RunnableRolePolicySet_Rule{
-			Resource:  r.Resource,
-			Actions:   allowActions,
-			Condition: compileCondition(modCtx, policy.RolePolicyConditionProtoPath(i), r.Condition, true),
+			Resource:     r.Resource,
+			AllowActions: allowActions,
+			Condition:    compileCondition(modCtx, policy.RolePolicyConditionProtoPath(i), r.Condition, true),
 		})
 	}
 

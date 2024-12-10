@@ -19,7 +19,7 @@
         "rules": [
           {
             "resource": "acme_admin",
-            "actions": {
+            "allowActions": {
               "*": {}
             }
           }
@@ -29,7 +29,7 @@
         "rules": [
           {
             "resource": "expenses_report",
-            "actions": {
+            "allowActions": {
               "create": {},
               "delete": {},
               "view": {}
