@@ -20,4 +20,4 @@ resourcePolicy:
         - employee
       condition:
         match:
-          expr: G.my_map.exists(key, key == "foo" && G.my_map.foo.size() == 2)
+          expr: G.my_map.exists(key, val, key == "foo" && val.size() == 2)
