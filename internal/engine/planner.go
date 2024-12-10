@@ -81,7 +81,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 			}
 
 			derivedRolesList := planner.MkDerivedRolesList(nil)
-			if c, ok := scopedDerivedRolesList[scope]; ok {
+			if c, ok := scopedDerivedRolesList[scope]; ok { //nolint:nestif
 				derivedRolesList = c
 			} else {
 				var derivedRoles []planner.RN
@@ -137,7 +137,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 					return nil, err
 				}
 
-				switch row.Effect {
+				switch row.Effect { //nolint:exhaustive
 				case effectv1.Effect_EFFECT_ALLOW:
 					if scopeAllowNode == nil {
 						scopeAllowNode = node
@@ -153,7 +153,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 				}
 			}
 
-			if scopeAllowNode != nil {
+			if scopeAllowNode != nil { //nolint:nestif
 				if roleAllowNode == nil {
 					roleAllowNode = scopeAllowNode
 				} else {
@@ -176,7 +176,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *RuleTable, input
 				}
 			}
 
-			switch ruleTable.GetScopeScopePermissions(scope) {
+			switch ruleTable.GetScopeScopePermissions(scope) { //nolint:exhaustive
 			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 				if scopeAllowNode == nil && scopeDenyNode == nil {
 					roleDenyNode = planner.MkTrueNode()

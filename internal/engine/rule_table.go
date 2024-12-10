@@ -130,10 +130,10 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 
 		for _, rule := range p.Rules {
 			emitOutput := rule.EmitOutput
-			if emitOutput == nil && rule.Output != nil {
+			if emitOutput == nil && rule.Output != nil { //nolint:staticcheck
 				emitOutput = &runtimev1.Output{
 					When: &runtimev1.Output_When{
-						RuleActivated: rule.Output,
+						RuleActivated: rule.Output, //nolint:staticcheck
 					},
 				}
 			}
@@ -409,7 +409,7 @@ func (rt *RuleTable) getParentRoles(roles []string) []string {
 			}
 			rt.parentRoleAncestorsCache[role] = roleParents
 		}
-		parentRoles = append(parentRoles, roleParents...)
+		parentRoles = append(parentRoles, roleParents...) //nolint:makezero
 	}
 	return parentRoles
 }
@@ -495,7 +495,9 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 		switch evt.Kind {
 		case storage.EventReload:
 			rt.log.Info("Reloading ruletable")
-			rt.triggerReload()
+			if err := rt.triggerReload(); err != nil {
+				rt.log.Warnw("Error while processing reload event", "event", evt, "error", err)
+			}
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			rt.log.Debugw("Processing storage event", "event", evt)
 			if err := rt.processPolicyEvent(evt); err != nil {
