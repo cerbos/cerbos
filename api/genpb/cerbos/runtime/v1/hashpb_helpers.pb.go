@@ -463,7 +463,7 @@ func cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m *RuleTable_Metadata, hash
 }
 
 func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.originFqn"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.origin_fqn"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetOriginFqn()))
 
 	}
@@ -493,7 +493,7 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.scopePermissions"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.scope_permissions"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
 
 	}
@@ -501,7 +501,7 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersion()))
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.originDerivedRole"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.origin_derived_role"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetOriginDerivedRole()))
 
 	}
@@ -524,7 +524,7 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 }
 
 func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Rules"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.rules"]; !ok {
 		if len(m.Rules) > 0 {
 			for _, v := range m.Rules {
 				if v != nil {

@@ -39,22 +39,22 @@ message RuleTable {
   }
 
   message RuleRow {
-    string originFqn = 1;
+    string origin_fqn = 1;
     string resource = 2;
     string role = 3;
     string action = 4;
     Condition condition = 5;
     cerbos.effect.v1.Effect effect = 6;
     string scope = 7;
-    cerbos.policy.v1.ScopePermissions scopePermissions = 8;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 8;
     string version = 9;
-    string originDerivedRole = 10;
+    string origin_derived_role = 10;
     Output emit_output = 11;
     string name = 12;
     Metadata meta = 13;
   }
 
-  repeated RuleRow Rules = 1;
+  repeated RuleRow rules = 1;
 }
 
 message RunnableRolePolicySet {

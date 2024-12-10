@@ -91,7 +91,7 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 }
 
-func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, eparams evalParams) Evaluator {
 	if pps == nil || len(pps.Policies) == 0 {
 		return noopEvaluator{}
 	}
@@ -126,7 +126,7 @@ type ruleTableEvaluator struct {
 func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	version := input.Resource.PolicyVersion
 	if version == "" {
-		version = "default"
+		version = defaultVersion
 	}
 
 	request := checkInputToRequest(input)
@@ -292,7 +292,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						satisfiesCondition = ok
 					}
 
-					if satisfiesCondition {
+					if satisfiesCondition { //nolint:nestif
 						// If we're just overriding an existing ALLOW, we can skip.
 						if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow && row.Effect == effectv1.Effect_EFFECT_ALLOW {
 							continue
@@ -328,7 +328,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 				}
 
-				switch rte.GetScopeScopePermissions(scope) {
+				switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive
 				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 					if len(roleEffectSet) == 0 {
 						roleEffectInfo = EffectInfo{
@@ -739,13 +739,6 @@ func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
 
 	if current.Effect != effectv1.Effect_EFFECT_DENY {
 		er.Effects[action] = effect
-	}
-}
-
-func (er *PolicyEvalResult) setDefaultEffect(tctx tracer.Context, effect EffectInfo) {
-	for a := range er.toResolve {
-		er.Effects[a] = effect
-		tctx.StartAction(a).AppliedEffect(effect.Effect, "Default effect")
 	}
 }
 
