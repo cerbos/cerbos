@@ -55,9 +55,14 @@ condition:
           [1, 2, 1, 3, 1, 4].existsOne(i, v, i == 1 || v == 1) == false &&
           {'i': 0, 'j': 1, 'k': 2}.existsOne(i, v, i == 'l' || v == 1)
       - expr: |-
-          [1, 2, 3].transformList(indexVar, valueVar, (indexVar * valueVar) + valueVar) == [1, 4, 9] && 
-          [1, 2, 3].transformList(indexVar, valueVar, indexVar % 2 == 0, (indexVar * valueVar) + valueVar) == [1, 9] &&
-          {'greeting': 'hello', 'farewell': 'goodbye'}.transformList(k, _, k) == ['greeting', 'farewell'] &&
+          [1, 2, 3].transformList(indexVar, valueVar, (indexVar * valueVar) + valueVar) == [1, 4, 9]
+      - expr: |-
+          P.attr["1-2-3"].map(x, int(x)).transformList(indexVar, valueVar, (indexVar * valueVar) + valueVar) == [1, 4, 9]
+      - expr: |-
+          [1, 2, 3].transformList(indexVar, valueVar, indexVar % 2 == 0, (indexVar * valueVar) + valueVar) == [1, 9]
+      - expr: |-
+          {'greeting': 'hello', 'farewell': 'goodbye'}.transformList(k, _, k) == ['greeting', 'farewell']
+      - expr: |-
           {'greeting': 'hello', 'farewell': 'goodbye'}.transformList(_, v, v) == ['hello', 'goodbye']
       - expr: |-
           [1, 2, 3].transformMap(indexVar, valueVar, (indexVar * valueVar) + valueVar) == {0: 1, 1: 4, 2: 9} &&
@@ -75,7 +80,6 @@ request: {
       "teams": ["design", "communications", "product", "commercial"],
       "abc": ["a", "bb", "ccc"],
       "1-2-3": [1, 2, 3],
-      "123-2": [1, 2, 3],
       "clients": {
         "acme": {"active": true},
         "bb inc": {"active": true}
