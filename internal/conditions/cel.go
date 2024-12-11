@@ -53,9 +53,12 @@ var (
 	}
 
 	StdEnvOptions = []cel.EnvOption{
+		ext.TwoVarComprehensions(),
 		cel.CrossTypeNumericComparisons(true),
 		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
 		cel.Declarations(StdEnvDecls...),
+		ext.Lists(),
+		ext.Bindings(),
 		ext.Strings(),
 		ext.Encoders(),
 		ext.Math(),

@@ -15,11 +15,13 @@ type lambdaAST struct {
 	lambdaExpr *exprpb.Expr
 	operator   string
 	iterVar    string
+	iterVar2   string
 }
 
 func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	obj := &lambdaAST{
 		iterVar:   e.IterVar,
+		iterVar2:  e.IterVar2,
 		iterRange: e.IterRange,
 	}
 	var step *exprpb.Expr_CallExpr
@@ -49,6 +51,9 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 			return nil, fmt.Errorf("expected loop-accu-init expression type ConstExpr or ListExpr, got: %T", e.AccuInit.ExprKind)
 		}
 		obj.lambdaExpr = step.CallExpr.Args[0]
+	case "cel.@mapInsert":
+		obj.operator = "transformMap"
+		obj.lambdaExpr = step.CallExpr.Args[2]
 	default:
 		return nil, fmt.Errorf("unexpected loop-step function: %q", step.CallExpr.Function)
 	}
