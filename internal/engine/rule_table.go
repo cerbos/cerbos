@@ -361,7 +361,7 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 	parentRoles := rt.getParentRoles(roles)
 
 	for _, row := range rt.rules {
-		cp := proto.Clone(row.RuleTable_RuleRow).(*runtimev1.RuleTable_RuleRow)
+		cp := proto.Clone(row.RuleTable_RuleRow).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
 		rowCopy := &RuleTableRow{
 			RuleTable_RuleRow: cp,
 			params:            row.params,
