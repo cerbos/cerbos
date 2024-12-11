@@ -582,45 +582,60 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 
 func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyVer, scope string, inputRoles []string) (*RuleTable, error) {
 	// A matching scope must have at least one resource or role policy or a mixture of both.
-	// To begin, we attempt to retrieve the full scope hierarchy of resource policies.
-	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, true)
-	if err != nil {
-		return nil, err
-	}
-	if rps == nil {
-		return nil, nil
-	}
 
 	ruleTable := NewRuleTable()
+	// Add rules for policies at all scope levels.
+	// We duplicate rows for all role policy parent roles recursively.
+	//
+	// Rule table resource policies are added as individual units rather than as compilation units.
+	// Therefore, we need to retrieve the compilation unit for each scope, remove all bar the first policy,
+	// and pass all individually to the LoadPolicies method.
+	toLoad := []*runtimev1.RunnablePolicySet{}
+	addScopedPolicyRules := func(scope string) error {
+		rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, true)
+		if err != nil {
+			return err
+		}
 
-	// add rules for resource policy
-	ruleTable.LoadPolicies([]*runtimev1.RunnablePolicySet{rps})
+		if rps != nil {
+			rps.GetResourcePolicy().Policies = rps.GetResourcePolicy().Policies[:1]
+			toLoad = append(toLoad, rps)
+		}
 
-	// add rules for role policies at all scope levels
-	// we duplicate rows for all parent roles recursively
-	addScopedRolePolicyRules := func(scope string) error {
 		rlps, err := engine.getRolePolicySets(ctx, scope, inputRoles)
 		if err != nil {
 			return err
 		}
 
-		ruleTable.LoadPolicies(rlps)
+		if rps == nil && len(rlps) == 0 {
+			return errNoPoliciesMatched
+		}
+
+		toLoad = append(toLoad, rlps...)
 
 		return nil
 	}
 
-	if err := addScopedRolePolicyRules(scope); err != nil {
+	if err := addScopedPolicyRules(scope); err != nil {
+		if errors.Is(err, errNoPoliciesMatched) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
 	for i := len(scope) - 1; i >= 0; i-- {
 		if scope[i] == '.' || i == 0 {
 			partialScope := scope[:i]
-			if err := addScopedRolePolicyRules(partialScope); err != nil {
+			if err := addScopedPolicyRules(partialScope); err != nil {
+				if errors.Is(err, errNoPoliciesMatched) {
+					return nil, nil
+				}
 				return nil, err
 			}
 		}
 	}
+
+	ruleTable.LoadPolicies(toLoad)
 
 	return ruleTable, nil
 }

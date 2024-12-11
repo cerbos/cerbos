@@ -44,40 +44,51 @@ func TestCheck(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone})
 	defer cancelFunc()
 
+	ruleTableEngine, ruleTableCancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone, enableRuleTable: true})
+	defer ruleTableCancelFunc()
+
+	engMap := map[string]*Engine{
+		"WithoutRuleEngine": eng,
+		"WithRuleEngine":    ruleTableEngine,
+	}
+
 	testCases := test.LoadTestCases(t, "engine")
 
-	for _, tcase := range testCases {
-		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readTestCase(t, tcase.Input)
-			mockAuditLog.clear()
+	for engPrefix, eng := range engMap {
+		for _, tcase := range testCases {
+			t.Run(fmt.Sprintf("%s/%s", engPrefix, tcase.Name), func(t *testing.T) {
+				tc := readTestCase(t, tcase.Input)
+				mockAuditLog.clear()
 
-			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
+				traceCollector := tracer.NewCollector()
+				haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
 
-			if tc.WantError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
+				if tc.WantError {
+					require.Error(t, err)
+				} else {
+					require.NoError(t, err)
+				}
 
-			for i, have := range haveOutputs {
-				require.Empty(t, cmp.Diff(tc.WantOutputs[i],
-					have,
+				for i, have := range haveOutputs {
+					require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+						have,
+						protocmp.Transform(),
+						protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles", "outputs"),
+					))
+				}
+
+				haveDecisionLogs := mockAuditLog.getDecisionLogs()
+
+				require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
+					haveDecisionLogs,
 					protocmp.Transform(),
-					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles", "outputs"),
+					protocmp.IgnoreEmptyMessages(),
+					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+					protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
+					protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
 				))
-			}
-
-			haveDecisionLogs := mockAuditLog.getDecisionLogs()
-
-			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
-				haveDecisionLogs,
-				protocmp.Transform(),
-				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-				protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
-				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
-			))
-		})
+			})
+		}
 	}
 
 	t.Run("deterministic_now", func(t *testing.T) {
@@ -171,6 +182,7 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
 				haveDecisionLogs,
 				protocmp.Transform(),
+				protocmp.IgnoreEmptyMessages(),
 				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
 				protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
 				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
@@ -272,6 +284,7 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 
 type param struct {
 	enableAuditLog     bool
+	enableRuleTable    bool
 	schemaEnforcement  schema.Enforcement
 	subDir             string
 	lenientScopeSearch bool
@@ -295,6 +308,16 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
 	compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+
+	var rt *RuleTable
+	if p.enableRuleTable {
+		rt = NewRuleTable().WithPolicyLoader(compiler)
+
+		rps, err := compiler.GetAll(ctx)
+		require.NoError(tb, err)
+
+		rt.LoadPolicies(rps)
+	}
 
 	var auditLog audit.Log
 	switch {
@@ -320,6 +343,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 
 	eng := NewFromConf(ctx, engineConf, Components{
 		PolicyLoader:      compiler,
+		RuleTable:         rt,
 		SchemaMgr:         schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),

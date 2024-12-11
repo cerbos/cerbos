@@ -46,6 +46,7 @@ wantDecisionLogs:
     {
       "callId": "01HGJWYCZD22KHX0V9SFWMBE2E",
       "timestamp": "2023-12-01T14:36:25.453336812Z",
+      "auditTrail": {},
       "checkResources":
         {
           "inputs":
