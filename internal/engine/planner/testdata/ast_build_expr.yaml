@@ -259,3 +259,26 @@
                   - variable: x
                   - variable: t
             - variable: t
+"['a', 'b'].exists(k, v, k != v)":
+  expression: &compre
+    operator: exists
+    operands:
+      - value: ['a', 'b']
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: ne
+                operands:
+                  - variable: k
+                  - variable: v
+            - variable: k
+            - variable: v
+"['a', 'b'].exists_one(k, v, k != v)":
+  expression:
+    <<: *compre
+    operator: exists_one
+"['a', 'b'].all(k, v, k != v)":
+  expression:
+    <<: *compre
+    operator: all

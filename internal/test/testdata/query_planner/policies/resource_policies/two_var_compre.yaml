@@ -30,10 +30,10 @@ resourcePolicy:
         match:
           expr: R.attr.deps.exists_one(k, v, k != v)
     - actions:
-        - filter
+        - transformMap
       effect: EFFECT_ALLOW
       roles:
         - employee
       condition:
         match:
-          expr: R.attr.deps.filter(k, v, k != v)
+          expr: R.attr.deps.transformMap(k, v, v * 2)

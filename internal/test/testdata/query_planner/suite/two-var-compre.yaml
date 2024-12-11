@@ -47,7 +47,7 @@ tests:
           expression:
             <<: *compre
             operator: exists_one
-    - action: filter
+    - action: transformMap
       resource:
         <<: *resource_decl
       want:
@@ -55,4 +55,4 @@ tests:
         condition:
           expression:
             <<: *compre
-            operator: filter
+            operator: transformMap
