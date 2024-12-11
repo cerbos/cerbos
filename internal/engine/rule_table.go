@@ -17,6 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -93,6 +94,15 @@ func (rt *RuleTable) addPolicy(rps *runtimev1.RunnablePolicySet) {
 func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet) {
 	sanitizedResource := namer.SanitizedResource(rrps.Meta.Resource)
 
+	rt.schemas[rrps.Meta.Fqn] = rrps.Schemas
+
+	policies := rrps.GetPolicies()
+	if len(policies) == 0 {
+		return
+	}
+
+	p := rrps.GetPolicies()[0]
+
 	meta := &runtimev1.RuleTable_Metadata{
 		Fqn:              rrps.Meta.Fqn,
 		Name:             &runtimev1.RuleTable_Metadata_Resource{Resource: sanitizedResource},
@@ -101,122 +111,117 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		Annotations:      rrps.Meta.Annotations,
 	}
 
-	rt.schemas[rrps.Meta.Fqn] = rrps.Schemas
+	wrapped := make(map[string]*wrappedRunnableDerivedRole)
+	for n, dr := range p.DerivedRoles {
+		wrapped[n] = &wrappedRunnableDerivedRole{
+			RunnableDerivedRole: dr,
+			constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
+		}
+	}
+	rt.policyDerivedRoles[rrps.Meta.Fqn] = wrapped
 
-	for _, p := range rrps.GetPolicies() {
-		scopeFqn := namer.ResourcePolicyFQN(rrps.Meta.Resource, rrps.Meta.Version, p.Scope)
-		wrapped := make(map[string]*wrappedRunnableDerivedRole)
-		for n, dr := range p.DerivedRoles {
-			wrapped[n] = &wrappedRunnableDerivedRole{
-				RunnableDerivedRole: dr,
-				constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
+	rt.scopeMap[p.Scope] = struct{}{}
+
+	policyParameters := &RuleTableRowParams{
+		key:       namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope),
+		variables: p.OrderedVariables,
+		constants: (&structpb.Struct{Fields: p.Constants}).AsMap(),
+	}
+
+	scopePermissions := p.ScopePermissions
+	if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+	}
+	rt.scopeScopePermissions[p.Scope] = scopePermissions
+
+	for _, rule := range p.Rules {
+		emitOutput := rule.EmitOutput
+		if emitOutput == nil && rule.Output != nil { //nolint:staticcheck
+			emitOutput = &runtimev1.Output{
+				When: &runtimev1.Output_When{
+					RuleActivated: rule.Output, //nolint:staticcheck
+				},
 			}
 		}
-		rt.policyDerivedRoles[scopeFqn] = wrapped
 
-		rt.scopeMap[p.Scope] = struct{}{}
-
-		policyParameters := &RuleTableRowParams{
-			key:       namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope),
-			variables: p.OrderedVariables,
-			constants: (&structpb.Struct{Fields: p.Constants}).AsMap(),
-		}
-
-		scopePermissions := p.ScopePermissions
-		if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-			scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
-		}
-		rt.scopeScopePermissions[p.Scope] = scopePermissions
-
-		for _, rule := range p.Rules {
-			emitOutput := rule.EmitOutput
-			if emitOutput == nil && rule.Output != nil { //nolint:staticcheck
-				emitOutput = &runtimev1.Output{
-					When: &runtimev1.Output_When{
-						RuleActivated: rule.Output, //nolint:staticcheck
+		ruleFqn := namer.RuleFQN(meta, p.Scope, rule.Name)
+		evaluationKey := fmt.Sprintf("%s#%s", policyParameters.key, ruleFqn)
+		for a := range rule.Actions {
+			for r := range rule.Roles {
+				rt.rules = append(rt.rules, &RuleTableRow{
+					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+						OriginFqn:        rrps.Meta.Fqn,
+						Resource:         sanitizedResource,
+						Role:             r,
+						Action:           a,
+						Condition:        rule.Condition,
+						Effect:           rule.Effect,
+						Scope:            p.Scope,
+						ScopePermissions: scopePermissions,
+						Version:          rrps.Meta.Version,
+						EmitOutput:       emitOutput,
+						Name:             rule.Name,
+						Meta:             meta,
 					},
-				}
+					params:        policyParameters,
+					evaluationKey: evaluationKey,
+				})
 			}
 
-			ruleFqn := namer.RuleFQN(meta, p.Scope, rule.Name)
-			evaluationKey := fmt.Sprintf("%s#%s", policyParameters.key, ruleFqn)
-			for a := range rule.Actions {
-				for r := range rule.Roles {
-					rt.rules = append(rt.rules, &RuleTableRow{
-						RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-							OriginFqn:        rrps.Meta.Fqn,
-							Resource:         sanitizedResource,
-							Role:             r,
-							Action:           a,
-							Condition:        rule.Condition,
-							Effect:           rule.Effect,
-							Scope:            p.Scope,
-							ScopePermissions: scopePermissions,
-							Version:          rrps.Meta.Version,
-							EmitOutput:       emitOutput,
-							Name:             rule.Name,
-							Meta:             meta,
-						},
-						params:        policyParameters,
-						evaluationKey: evaluationKey,
-					})
-				}
+			// merge derived roles as roles with added conditions
+			for dr := range rule.DerivedRoles {
+				if rdr, ok := p.DerivedRoles[dr]; ok {
+					mergedVariables := make([]*runtimev1.Variable, len(p.OrderedVariables)+len(rdr.OrderedVariables))
+					copy(mergedVariables, p.OrderedVariables)
+					copy(mergedVariables[len(p.OrderedVariables):], rdr.OrderedVariables)
 
-				// merge derived roles as roles with added conditions
-				for dr := range rule.DerivedRoles {
-					if rdr, ok := p.DerivedRoles[dr]; ok {
-						mergedVariables := make([]*runtimev1.Variable, len(p.OrderedVariables)+len(rdr.OrderedVariables))
-						copy(mergedVariables, p.OrderedVariables)
-						copy(mergedVariables[len(p.OrderedVariables):], rdr.OrderedVariables)
+					mergedConstants := maps.Clone(p.Constants)
+					for k, c := range rdr.Constants {
+						mergedConstants[k] = c
+					}
 
-						mergedConstants := maps.Clone(p.Constants)
-						for k, c := range rdr.Constants {
-							mergedConstants[k] = c
-						}
+					mergedParameters := &RuleTableRowParams{
+						key:       fmt.Sprintf("%s:%s", policyParameters.key, namer.DerivedRolesFQN(rdr.Name)),
+						variables: mergedVariables,
+						constants: (&structpb.Struct{Fields: mergedConstants}).AsMap(),
+					}
 
-						mergedParameters := &RuleTableRowParams{
-							key:       fmt.Sprintf("%s:%s", policyParameters.key, namer.DerivedRolesFQN(rdr.Name)),
-							variables: mergedVariables,
-							constants: (&structpb.Struct{Fields: mergedConstants}).AsMap(),
-						}
-
-						cond := rule.Condition
-						if rdr.Condition != nil {
-							if cond == nil {
-								cond = rdr.Condition
-							} else {
-								cond = &runtimev1.Condition{
-									Op: &runtimev1.Condition_All{
-										All: &runtimev1.Condition_ExprList{
-											Expr: []*runtimev1.Condition{cond, rdr.Condition},
-										},
+					cond := rule.Condition
+					if rdr.Condition != nil {
+						if cond == nil {
+							cond = rdr.Condition
+						} else {
+							cond = &runtimev1.Condition{
+								Op: &runtimev1.Condition_All{
+									All: &runtimev1.Condition_ExprList{
+										Expr: []*runtimev1.Condition{cond, rdr.Condition},
 									},
-								}
+								},
 							}
 						}
+					}
 
-						evaluationKey := fmt.Sprintf("%s#%s", mergedParameters.key, ruleFqn)
-						for pr := range rdr.ParentRoles {
-							rt.rules = append(rt.rules, &RuleTableRow{
-								RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-									OriginFqn:         rrps.Meta.Fqn,
-									Resource:          sanitizedResource,
-									Role:              pr,
-									Action:            a,
-									Condition:         cond,
-									Effect:            rule.Effect,
-									Scope:             p.Scope,
-									ScopePermissions:  scopePermissions,
-									Version:           rrps.Meta.Version,
-									OriginDerivedRole: dr,
-									EmitOutput:        emitOutput,
-									Name:              rule.Name,
-									Meta:              meta,
-								},
-								params:        mergedParameters,
-								evaluationKey: evaluationKey,
-							})
-						}
+					evaluationKey := fmt.Sprintf("%s#%s", mergedParameters.key, ruleFqn)
+					for pr := range rdr.ParentRoles {
+						rt.rules = append(rt.rules, &RuleTableRow{
+							RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+								OriginFqn:         rrps.Meta.Fqn,
+								Resource:          sanitizedResource,
+								Role:              pr,
+								Action:            a,
+								Condition:         cond,
+								Effect:            rule.Effect,
+								Scope:             p.Scope,
+								ScopePermissions:  scopePermissions,
+								Version:           rrps.Meta.Version,
+								OriginDerivedRole: dr,
+								EmitOutput:        emitOutput,
+								Name:              rule.Name,
+								Meta:              meta,
+							},
+							params:        mergedParameters,
+							evaluationKey: evaluationKey,
+						})
 					}
 				}
 			}
@@ -356,6 +361,13 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 	parentRoles := rt.getParentRoles(roles)
 
 	for _, row := range rt.rules {
+		cp := proto.Clone(row.RuleTable_RuleRow).(*runtimev1.RuleTable_RuleRow)
+		rowCopy := &RuleTableRow{
+			RuleTable_RuleRow: cp,
+			params:            row.params,
+			evaluationKey:     row.evaluationKey,
+		}
+
 		if version != "" && version != row.Version {
 			continue
 		}
@@ -378,13 +390,13 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 			// if the row matched on an assumed parent role, update the role in the row to an arbitrary base role
 			// so that we don't need to retrieve parent roles each time we query on the same set of data.
 			if len(util.FilterGlob(row.Role, parentRoles)) > 0 {
-				row.Role = roles[0]
+				rowCopy.Role = roles[0]
 			} else {
 				continue
 			}
 		}
 
-		res.addMatchingRow(row)
+		res.addMatchingRow(rowCopy)
 	}
 
 	return res

@@ -130,8 +130,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	}
 
 	request := checkInputToRequest(input)
-	sourceAttrs := make(map[string]*policyv1.SourceAttributes)
-	trail := newAuditTrail(sourceAttrs)
+	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
 	if !rte.ScopeExists(input.Resource.Scope) && !rte.evalParams.lenientScopeSearch {
@@ -259,7 +258,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					rctx := sctx.StartRule(row.Name)
 
 					if m := row.GetMeta(); m != nil && m.GetSourceAttributes() != nil {
-						maps.Copy(sourceAttrs, row.GetMeta().GetSourceAttributes())
+						maps.Copy(result.AuditTrail.EffectivePolicies, row.GetMeta().GetSourceAttributes())
 					}
 
 					var constants map[string]any
@@ -370,8 +369,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		if actionEffectInfo.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 			actionEffectInfo = EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey}
 		}
-
-		result.AuditTrail.EffectivePolicies = sourceAttrs
 
 		result.setEffect(action, actionEffectInfo)
 		actx.AppliedEffect(actionEffectInfo.Effect, "")

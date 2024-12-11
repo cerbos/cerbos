@@ -148,14 +148,6 @@ wantDecisionLogs:
                       "source": "resource_policies/policy_05_acme.hr.yaml",
                     },
                 },
-              "resource.leave_request.vdefault/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.uk.yaml",
-                    },
-                },
               "role.acme_assistant/acme.hr.uk":
                 {
                   "attributes":
