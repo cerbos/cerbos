@@ -9,12 +9,13 @@ principal:
         - employee
 tests:
     - action: all
-      resource:
+      resource: &resource_decl
         kind: two-var-compre
-        policyVersion: defaul
+        policyVersion: default
       want:
+        kind: KIND_CONDITIONAL
         condition:
-          expression:
+          expression: &compre
             operator: all
             operands:
               - variable: request.resource.attr.deps
@@ -28,3 +29,30 @@ tests:
                           - variable: v
                     - variable: k
                     - variable: v
+    - action: exists
+      resource:
+        <<: *resource_decl
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            <<: *compre
+            operator: exists
+    - action: exists_one
+      resource:
+        <<: *resource_decl
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            <<: *compre
+            operator: exists_one
+    - action: filter
+      resource:
+        <<: *resource_decl
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            <<: *compre
+            operator: filter

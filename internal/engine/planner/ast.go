@@ -490,7 +490,11 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			return err
 		}
 
-		acc.Node = mkExprOpExpr(lambdaAst.operator, op, &ExprOp{Node: mkExprOpExpr(Lambda, lambda, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar}})})
+		lambdaArgs := []*ExprOp{lambda, {Node: &ExprOpVar{Variable: lambdaAst.iterVar}}}
+		if lambdaAst.iterVar2 != "" {
+			lambdaArgs = append(lambdaArgs, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar2}})
+		}
+		acc.Node = mkExprOpExpr(lambdaAst.operator, op, &ExprOp{Node: mkExprOpExpr(Lambda, lambdaArgs...)})
 	default:
 		return fmt.Errorf("buildExprImpl: unsupported expression: %v", expr)
 	}
