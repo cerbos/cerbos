@@ -11,11 +11,12 @@ import (
 )
 
 type lambdaAST struct {
-	iterRange  *exprpb.Expr
-	lambdaExpr *exprpb.Expr
-	operator   string
-	iterVar    string
-	iterVar2   string
+	iterRange *exprpb.Expr
+	expr      *exprpb.Expr
+	expr2     *exprpb.Expr
+	iterVar   string
+	iterVar2  string
+	operator  string
 }
 
 func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
@@ -32,14 +33,14 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	switch step.CallExpr.Function {
 	case operators.LogicalAnd:
 		obj.operator = All
-		obj.lambdaExpr = step.CallExpr.Args[1]
+		obj.expr = step.CallExpr.Args[1]
 	case operators.LogicalOr:
 		obj.operator = Exists
-		obj.lambdaExpr = step.CallExpr.Args[1]
+		obj.expr = step.CallExpr.Args[1]
 	case operators.Add:
 		obj.operator = Map
 		if elements := step.CallExpr.Args[1].GetListExpr().GetElements(); len(elements) > 0 {
-			obj.lambdaExpr = elements[0]
+			obj.expr = elements[0]
 		}
 	case operators.Conditional:
 		switch e.AccuInit.ExprKind.(type) {
@@ -50,10 +51,10 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 		default:
 			return nil, fmt.Errorf("expected loop-accu-init expression type ConstExpr or ListExpr, got: %T", e.AccuInit.ExprKind)
 		}
-		obj.lambdaExpr = step.CallExpr.Args[0]
+		obj.expr = step.CallExpr.Args[0]
 	case "cel.@mapInsert":
 		obj.operator = "transformMap"
-		obj.lambdaExpr = step.CallExpr.Args[2]
+		obj.expr = step.CallExpr.Args[2]
 	default:
 		return nil, fmt.Errorf("unexpected loop-step function: %q", step.CallExpr.Function)
 	}

@@ -301,3 +301,27 @@
   expression:
     <<: *compre_map
     operator: map
+"[1, 2].transformList(i, v, i % 2 == 0, k * v)":
+  expression:
+    operator: transformMap
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: i
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: mult
+                operands:
+                  - variable: i
+                  - variable: v
+            - variable: i
+            - variable: v
