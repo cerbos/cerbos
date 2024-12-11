@@ -13,3 +13,27 @@ resourcePolicy:
       condition:
         match:
           expr: R.attr.deps.all(k, v, k != v)
+    - actions:
+        - exists
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
+      condition:
+        match:
+          expr: R.attr.deps.exists(k, v, k != v)
+    - actions:
+        - exists_one
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
+      condition:
+        match:
+          expr: R.attr.deps.exists_one(k, v, k != v)
+    - actions:
+        - filter
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
+      condition:
+        match:
+          expr: R.attr.deps.filter(k, v, k != v)

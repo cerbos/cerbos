@@ -15,11 +15,13 @@ type lambdaAST struct {
 	lambdaExpr *exprpb.Expr
 	operator   string
 	iterVar    string
+	iterVar2   string
 }
 
 func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	obj := &lambdaAST{
 		iterVar:   e.IterVar,
+		iterVar2:  e.IterVar2,
 		iterRange: e.IterRange,
 	}
 	var step *exprpb.Expr_CallExpr
