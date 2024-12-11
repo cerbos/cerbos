@@ -283,7 +283,7 @@
     <<: *compre
     operator: all
 "['a', 'b'].transformMap(k, v, k * v)":
-  expression:
+  expression: &compre_map
     operator: transformMap
     operands:
       - value: ['a', 'b']
@@ -297,3 +297,7 @@
                   - variable: v
             - variable: k
             - variable: v
+"['a', 'b'].transformList(k, v, k * v)":
+  expression:
+    <<: *compre_map
+    operator: map
