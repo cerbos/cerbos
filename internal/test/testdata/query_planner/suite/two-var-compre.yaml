@@ -1,0 +1,30 @@
+
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Role policies tax return tests for emma
+principal:
+    id: mark
+    policyVersion: default
+    roles:
+        - employee
+tests:
+    - action: all
+      resource:
+        kind: two-var-compre
+        policyVersion: defaul
+      want:
+        condition:
+          expression:
+            operator: all
+            operands:
+              - variable: request.resource.attr.deps
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: ne
+                        operands:
+                          - variable: k
+                          - variable: v
+                    - variable: k
+                    - variable: v
