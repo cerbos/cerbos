@@ -46,6 +46,7 @@ const (
 	Index              = "index"
 	All                = "all"
 	Filter             = "filter"
+	TransformMap       = "TransformMap"
 	Exists             = "exists"
 	ExistsOne          = "exists_one"
 	Map                = "map"
@@ -475,7 +476,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			iterRange = mkListExpr(structKeys(x.StructExpr))
 		}
 		lambda := new(ExprOp)
-		err = buildExprImpl(lambdaAst.lambdaExpr, lambda, cur)
+		err = buildExprImpl(lambdaAst.expr, lambda, cur)
 		if err != nil {
 			return err
 		}
