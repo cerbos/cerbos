@@ -10,14 +10,16 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cerbos/cloud-api/bundle"
+	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
-	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const bundleName = "bundle.crbp"
@@ -28,9 +30,10 @@ func TestLocalSource(t *testing.T) {
 	key := loadKey(t)
 
 	ls, err := hub.NewLocalSource(hub.LocalParams{
-		BundlePath: bundlePath,
-		TempDir:    tempDir,
-		SecretKey:  key,
+		BundlePath:    bundlePath,
+		BundleVersion: bundle.Version1,
+		TempDir:       tempDir,
+		SecretKey:     key,
 	})
 	require.NoError(t, err, "Failed to create local source")
 	t.Cleanup(func() {

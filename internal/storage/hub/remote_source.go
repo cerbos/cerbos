@@ -78,12 +78,24 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to establish Cerbos Hub connection: %w", err)
 	}
 
-	client, err := hubInstance.BundleClient(cloudapi.ClientConf{
-		CacheDir: s.conf.Remote.CacheDir,
-		TempDir:  s.conf.Remote.TempDir,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create API client: %w", err)
+	var client CloudAPIClient
+	switch s.conf.BundleVersion {
+	case cloudapi.Version1:
+		if client, err = hubInstance.BundleClient(cloudapi.ClientConf{
+			CacheDir: s.conf.Remote.CacheDir,
+			TempDir:  s.conf.Remote.TempDir,
+		}); err != nil {
+			return fmt.Errorf("failed to create API client: %w", err)
+		}
+	case cloudapi.Version2:
+		if client, err = hubInstance.BundleClientV2(cloudapi.ClientConf{
+			CacheDir: s.conf.Remote.CacheDir,
+			TempDir:  s.conf.Remote.TempDir,
+		}); err != nil {
+			return fmt.Errorf("failed to create API client v2: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported bundle version: %d", s.conf.BundleVersion)
 	}
 
 	return s.InitWithClient(ctx, client)
@@ -195,10 +207,21 @@ func (s *RemoteSource) swapBundle(bundlePath string) error {
 		opts.Credentials = s.client.HubCredentials()
 	}
 
-	bundle, err := Open(opts)
-	if err != nil {
-		s.log.Error("Failed to open bundle", zap.Error(err))
-		return fmt.Errorf("failed to open bundle: %w", err)
+	var bundle *Bundle
+	var err error
+	switch s.conf.BundleVersion {
+	case cloudapi.Version1:
+		if bundle, err = Open(opts); err != nil {
+			s.log.Error("Failed to open bundle", zap.Error(err))
+			return fmt.Errorf("failed to open bundle: %w", err)
+		}
+	case cloudapi.Version2:
+		if bundle, err = OpenV2(opts); err != nil {
+			s.log.Error("Failed to open bundle v2", zap.Error(err))
+			return fmt.Errorf("failed to open bundle v2: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported bundle version: %d", s.conf.BundleVersion)
 	}
 
 	s.mu.Lock()

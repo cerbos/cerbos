@@ -356,7 +356,8 @@ func mkConf(t *testing.T, opts ...confOption) *hubstore.Conf {
 	t.Helper()
 
 	conf := &hubstore.Conf{
-		CacheSize: 1024,
+		BundleVersion: cloudapi.Version1,
+		CacheSize:     1024,
 		Remote: &hubstore.RemoteSourceConf{
 			BundleLabel: "label",
 		},
