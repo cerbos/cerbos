@@ -282,3 +282,18 @@
   expression:
     <<: *compre
     operator: all
+"['a', 'b'].transformMap(k, v, k * v)":
+  expression:
+    operator: transformMap
+    operands:
+      - value: ['a', 'b']
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: mult
+                operands:
+                  - variable: k
+                  - variable: v
+            - variable: k
+            - variable: v
