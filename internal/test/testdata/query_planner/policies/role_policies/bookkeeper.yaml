@@ -3,7 +3,7 @@
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role:  bookkeeper
-  scope: acme
+  scope: acme.finance
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   parentRoles:
     - manager

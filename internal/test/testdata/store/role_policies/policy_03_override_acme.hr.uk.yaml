@@ -3,7 +3,7 @@
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_assistant
-  scope: acme.hr.de
+  scope: acme.hr.uk
   scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
   parentRoles:
     - "acme_travel_agent"
