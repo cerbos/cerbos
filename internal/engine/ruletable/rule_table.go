@@ -18,7 +18,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -372,13 +371,6 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 	defer rt.mu.RUnlock()
 
 	for _, row := range rt.rules {
-		cp := proto.Clone(row.RuleTable_RuleRow).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
-		rowCopy := &Row{
-			RuleTable_RuleRow: cp,
-			Params:            row.Params,
-			EvaluationKey:     row.EvaluationKey,
-		}
-
 		if version != "" && version != row.Version {
 			continue
 		}
@@ -397,17 +389,14 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 			continue
 		}
 
-		if len(roles) > 0 && len(util.FilterGlob(row.Role, roles)) == 0 {
-			// if the row matched on an assumed parent role, update the role in the row to an arbitrary base role
-			// so that we don't need to retrieve parent roles each time we query on the same set of data.
-			if len(util.FilterGlob(row.Role, parentRoles)) > 0 {
-				rowCopy.Role = roles[0]
-			} else {
-				continue
-			}
+		// TODO(saml) if the row matched on an assumed parent role, update the role in the row to the matching base role
+		// so that we don't need to retrieve parent roles each time we query on the same set of data.
+		// This'll involve creating a copy of the role, or introducing a new ephemeral field on the row struct
+		if len(roles) > 0 && len(util.FilterGlob(row.Role, roles)) == 0 && len(util.FilterGlob(row.Role, parentRoles)) == 0 {
+			continue
 		}
 
-		res.addMatchingRow(rowCopy)
+		res.addMatchingRow(row)
 	}
 
 	return res
@@ -498,10 +487,7 @@ func (rt *RuleTable) Filter(rrs *RuleSet, scopes, roles, actions []string) *Rule
 		if sMap, ok := rrs.scopeIndex[s]; ok {
 			for _, row := range sMap {
 				if len(actions) == 0 || len(util.FilterGlob(row.Action, actions)) > 0 {
-					if len(roles) == 0 || len(util.FilterGlob(row.Role, roles)) > 0 {
-						res.addMatchingRow(row)
-					} else if len(util.FilterGlob(row.Role, parentRoles)) > 0 {
-						row.Role = roles[0]
+					if len(roles) == 0 || len(util.FilterGlob(row.Role, roles)) > 0 || len(util.FilterGlob(row.Role, parentRoles)) > 0 {
 						res.addMatchingRow(row)
 					}
 				}
