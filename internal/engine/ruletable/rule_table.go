@@ -102,6 +102,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		return
 	}
 
+	// we only process the first of resource policy sets as it's assumed parent scopes are handled in separate calls
 	p := rrps.GetPolicies()[0]
 
 	meta := &runtimev1.RuleTable_Metadata{
@@ -355,9 +356,6 @@ func (rt *RuleTable) GetAllScopes(scope, resource, version string) ([]string, st
 }
 
 func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions []string) *RuleSet {
-	rt.mu.RLock()
-	defer rt.mu.RUnlock()
-
 	res := &RuleSet{
 		scopeIndex: make(map[string][]*Row),
 	}
@@ -368,6 +366,10 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 	}
 
 	parentRoles := rt.GetParentRoles(roles)
+
+	// GetParentRoles takes a Lock, hence we RLock after the cache has been (possibly) updated
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
 
 	for _, row := range rt.rules {
 		cp := proto.Clone(row.RuleTable_RuleRow).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
@@ -412,6 +414,9 @@ func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions [
 }
 
 func (rt *RuleTable) GetParentRoles(roles []string) []string {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
 	// recursively collect all parent roles, caching the flat list on the very first traversal for
 	// each role within the ruletable
 	parentRoles := make([]string, len(roles))

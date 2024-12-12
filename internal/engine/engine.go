@@ -594,7 +594,6 @@ func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyV
 		}
 
 		if rps != nil {
-			rps.GetResourcePolicy().Policies = rps.GetResourcePolicy().Policies[:1]
 			toLoad = append(toLoad, rps)
 		}
 
