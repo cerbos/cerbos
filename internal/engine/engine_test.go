@@ -71,10 +71,21 @@ func TestCheck(t *testing.T) {
 				}
 
 				for i, have := range haveOutputs {
+					// TODO(saml) I can't, for the life of me, figure out out to order this via a transformation
+					// function in `cmp.Diff` below, so this'll have to do for now
+					slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
+						if a.Src < b.Src {
+							return -1
+						} else if a.Src > b.Src {
+							return 1
+						}
+						return 0
+					})
+
 					require.Empty(t, cmp.Diff(tc.WantOutputs[i],
 						have,
 						protocmp.Transform(),
-						protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles", "outputs"),
+						protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
 					))
 				}
 
@@ -172,7 +183,6 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 					have,
 					protocmp.Transform(),
 					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-					// protocmp.SortRepeatedFields(&enginev1.OutputEntry{}, "src"),
 					protocmp.FilterField(&enginev1.CheckOutput{}, "outputs", cmpopts.SortSlices(func(x, y *enginev1.OutputEntry) bool {
 						return x.Src < y.Src
 					})),
@@ -219,6 +229,9 @@ func TestSchemaValidation(t *testing.T) {
 							have,
 							protocmp.Transform(),
 							protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+							protocmp.FilterField(&enginev1.CheckOutput{}, "outputs", cmpopts.SortSlices(func(x, y *enginev1.OutputEntry) bool {
+								return x.Src < y.Src
+							})),
 							protocmp.SortRepeated(cmpValidationError),
 						))
 					}
