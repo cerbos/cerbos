@@ -18,7 +18,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
-	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -99,8 +99,8 @@ type Store struct {
 	conf                 *Conf
 	baseStore            storage.Store
 	fallbackStore        storage.Store
-	basePolicyLoader     engine.PolicyLoader
-	fallbackPolicyLoader engine.PolicyLoader
+	basePolicyLoader     policyloader.PolicyLoader
+	fallbackPolicyLoader policyloader.PolicyLoader
 	circuitBreaker       *gobreaker.CircuitBreaker[any]
 }
 
@@ -117,8 +117,8 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker[any] {
 }
 
 // GetOverlayPolicyLoader instantiates both the base and fallback policy loaders and then returns itself.
-func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error) {
-	getPolicyLoader := func(storeInterface storage.Store, key string) (engine.PolicyLoader, error) {
+func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (policyloader.PolicyLoader, error) {
+	getPolicyLoader := func(storeInterface storage.Store, key string) (policyloader.PolicyLoader, error) {
 		switch st := storeInterface.(type) {
 		case storage.SourceStore:
 			pl, err := compile.NewManager(ctx, st, schemaMgr)

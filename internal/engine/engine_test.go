@@ -28,6 +28,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -309,9 +310,9 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 
 	compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
-	var rt *RuleTable
+	var rt *ruletable.RuleTable
 	if p.enableRuleTable {
-		rt = NewRuleTable().WithPolicyLoader(compiler)
+		rt = ruletable.NewRuleTable().WithPolicyLoader(compiler)
 
 		rps, err := compiler.GetAll(ctx)
 		require.NoError(tb, err)

@@ -255,7 +255,7 @@ func convert(expr *enginev1.PlanResourcesAst_Node, acc *enginev1.PlanResourcesFi
 	return nil
 }
 
-func MkConstStringExpr(s string) *exprpb.Expr {
+func mkConstStringExpr(s string) *exprpb.Expr {
 	return &exprpb.Expr{
 		ExprKind: &exprpb.Expr_ConstExpr{
 			ConstExpr: &exprpb.Constant{
@@ -281,7 +281,7 @@ func structKeys(x *exprpb.Expr_CreateStruct) []*exprpb.Expr {
 		case *exprpb.Expr_CreateStruct_Entry_MapKey:
 			expr = e.MapKey
 		case *exprpb.Expr_CreateStruct_Entry_FieldKey:
-			expr = MkConstStringExpr(e.FieldKey)
+			expr = mkConstStringExpr(e.FieldKey)
 		}
 
 		elems[i] = element{
@@ -302,7 +302,7 @@ func structKeys(x *exprpb.Expr_CreateStruct) []*exprpb.Expr {
 	return exprs
 }
 
-func MkListExpr(elems []*exprpb.Expr) *exprpb.Expr {
+func mkListExpr(elems []*exprpb.Expr) *exprpb.Expr {
 	return &exprpb.Expr{
 		ExprKind: &exprpb.Expr_ListExpr{
 			ListExpr: &exprpb.Expr_CreateList{
@@ -437,7 +437,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			const nArgs = 2
 			const rhsIndex = 1 // right-hand side arg index
 			if c.Function == operators.In && len(c.Args) == nArgs && c.Args[rhsIndex] == cur {
-				list := MkListExpr(structKeys(x))
+				list := mkListExpr(structKeys(x))
 				err := buildExprImpl(list, acc, parent)
 				if err != nil {
 					return err
@@ -472,7 +472,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		}
 		iterRange := lambdaAst.iterRange
 		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok {
-			iterRange = MkListExpr(structKeys(x.StructExpr))
+			iterRange = mkListExpr(structKeys(x.StructExpr))
 		}
 		lambda := new(ExprOp)
 		err = buildExprImpl(lambdaAst.lambdaExpr, lambda, cur)
