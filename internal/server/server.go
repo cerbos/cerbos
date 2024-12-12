@@ -38,6 +38,8 @@ import (
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/engine/policyloader"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/telemetry"
 	"github.com/cerbos/cerbos/internal/validator"
 
@@ -131,7 +133,7 @@ func Start(ctx context.Context) error {
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
-	var policyLoader engine.PolicyLoader
+	var policyLoader policyloader.PolicyLoader
 	switch st := store.(type) {
 	// Overlay needs to take precedence over BinaryStore in this type switch,
 	// as our overlay store implements BinaryStore also
@@ -156,7 +158,7 @@ func Start(ctx context.Context) error {
 		return ErrInvalidStore
 	}
 
-	rt := engine.NewRuleTable().WithPolicyLoader(policyLoader)
+	rt := ruletable.NewRuleTable().WithPolicyLoader(policyLoader)
 
 	// For now, we're only enabling the ruletable engine for non-mutable stores populate rule table
 	// for non-mutable stores

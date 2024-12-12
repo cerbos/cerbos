@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -41,7 +42,7 @@ const udsMaxSocketPathLength = 104
 
 type testParam struct {
 	store        storage.Store
-	policyLoader engine.PolicyLoader
+	policyLoader policyloader.PolicyLoader
 	schemaMgr    schema.Manager
 }
 

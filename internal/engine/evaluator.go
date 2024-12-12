@@ -27,6 +27,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/internal"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -99,8 +100,8 @@ func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, epar
 	return &principalPolicyEvaluator{policy: pps, evalParams: eparams}
 }
 
-func NewRuleTableEvaluator(rt *RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	if len(rt.rules) == 0 {
+func NewRuleTableEvaluator(rt *ruletable.RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
+	if len(rt.Rows()) == 0 {
 		return noopEvaluator{}
 	}
 
@@ -118,7 +119,7 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 }
 
 type ruleTableEvaluator struct {
-	*RuleTable
+	*ruletable.RuleTable
 	schemaMgr  schema.Manager
 	evalParams evalParams
 }
@@ -173,12 +174,12 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	// defined within a resource policy (regardless of if they're used or not). This is primarily for the
 	// runtime.EffectiveDerivedRoles usage
 	includingParentRoles := make(map[string]struct{})
-	for _, r := range rte.getParentRoles(input.Principal.Roles) {
+	for _, r := range rte.GetParentRoles(input.Principal.Roles) {
 		includingParentRoles[r] = struct{}{}
 	}
 	for _, scope := range scopes {
 		scopeFqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)
-		if drs, ok := rte.policyDerivedRoles[scopeFqn]; ok {
+		if drs := rte.GetDerivedRoles(scopeFqn); drs != nil {
 			for name, dr := range drs {
 				if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
 					continue
@@ -186,12 +187,12 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 				effectiveDerivedRoles[name] = struct{}{}
 
-				variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), dr.constants, dr.OrderedVariables)
+				variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), dr.Constants, dr.OrderedVariables)
 				if err != nil {
 					return nil, err
 				}
 
-				ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, dr.constants, variables)
+				ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, dr.Constants, variables)
 				if err != nil {
 					continue
 				}
@@ -263,23 +264,23 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 					var constants map[string]any
 					var variables map[string]any
-					if row.params != nil {
-						constants = row.params.constants
-						if c, ok := varCache[row.params.key]; ok {
+					if row.Params != nil {
+						constants = row.Params.Constants
+						if c, ok := varCache[row.Params.Key]; ok {
 							variables = c
 						} else {
 							var err error
-							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.params.variables)
+							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.Params.Variables)
 							if err != nil {
 								rctx.Skipped(err, "Error evaluating variables")
 								return nil, err
 							}
-							varCache[row.params.key] = variables
+							varCache[row.Params.Key] = variables
 						}
 					}
 
 					var satisfiesCondition bool
-					if c, ok := conditionCache[row.evaluationKey]; ok {
+					if c, ok := conditionCache[row.EvaluationKey]; ok {
 						satisfiesCondition = c
 					} else {
 						ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
@@ -287,7 +288,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							rctx.Skipped(err, "Error evaluating condition")
 							continue
 						}
-						conditionCache[row.evaluationKey] = ok
+						conditionCache[row.EvaluationKey] = ok
 						satisfiesCondition = ok
 					}
 
@@ -308,7 +309,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
-								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, row.params.constants, variables),
+								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, row.Params.Constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
 							octx.ComputedOutput(output)
@@ -318,7 +319,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
-								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, row.params.constants, variables),
+								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
 							octx.ComputedOutput(output)

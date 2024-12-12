@@ -26,6 +26,8 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/planner"
+	"github.com/cerbos/cerbos/internal/engine/policyloader"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -45,12 +47,6 @@ const (
 	workerResetJitter    = 1 << 4
 	workerResetThreshold = 1 << 16
 )
-
-type PolicyLoader interface {
-	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
-	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
-	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
-}
 
 type CheckOptions struct {
 	tracerSink tracer.Sink
@@ -143,8 +139,8 @@ func WithDefaultPolicyVersion(defaultPolicyVersion string) CheckOpt {
 type Engine struct {
 	schemaMgr         schema.Manager
 	auditLog          audit.Log
-	policyLoader      PolicyLoader
-	ruleTable         *RuleTable
+	policyLoader      policyloader.PolicyLoader
+	ruleTable         *ruletable.RuleTable
 	conf              *Conf
 	metadataExtractor audit.MetadataExtractor
 	workerPool        []chan<- workIn
@@ -153,8 +149,8 @@ type Engine struct {
 
 type Components struct {
 	AuditLog          audit.Log
-	PolicyLoader      PolicyLoader
-	RuleTable         *RuleTable
+	PolicyLoader      policyloader.PolicyLoader
+	RuleTable         *ruletable.RuleTable
 	SchemaMgr         schema.Manager
 	MetadataExtractor audit.MetadataExtractor
 }
@@ -184,7 +180,7 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	return engine
 }
 
-func NewEphemeral(policyLoader PolicyLoader, schemaMgr schema.Manager) (*Engine, error) {
+func NewEphemeral(policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Engine, error) {
 	conf, err := GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
@@ -297,7 +293,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	if ruleTable != nil {
-		ruleTableResult, err := EvaluateRuleTableQueryPlan(ctx, ruleTable, input, engine.schemaMgr, opts)
+		ruleTableResult, err := planner.EvaluateRuleTableQueryPlan(ctx, ruleTable, input, engine.schemaMgr, opts.NowFunc(), opts.Globals())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -580,10 +576,10 @@ func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalPar
 	return NewRuleTableEvaluator(ruleTable, engine.schemaMgr, eparams), nil
 }
 
-func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyVer, scope string, inputRoles []string) (*RuleTable, error) {
+func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyVer, scope string, inputRoles []string) (*ruletable.RuleTable, error) {
 	// A matching scope must have at least one resource or role policy or a mixture of both.
 
-	ruleTable := NewRuleTable()
+	ruleTable := ruletable.NewRuleTable()
 	// Add rules for policies at all scope levels.
 	// We duplicate rows for all role policy parent roles recursively.
 	//

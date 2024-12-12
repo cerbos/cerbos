@@ -6,7 +6,7 @@ package overlay
 import (
 	"context"
 
-	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
@@ -15,5 +15,5 @@ import (
 // `schema` in order to build the compile managers in the GetOverlayPolicyLoader method.
 type Overlay interface {
 	// GetOverlayPolicyLoader returns a PolicyLoader implementation that wraps two SourceStores
-	GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (engine.PolicyLoader, error)
+	GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (policyloader.PolicyLoader, error)
 }
