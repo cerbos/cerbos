@@ -263,7 +263,7 @@ func BenchmarkCheck(b *testing.B) {
 	for _, enableAuditLog := range []bool{false, true} {
 		for _, schemaEnforcement := range []schema.Enforcement{schema.EnforcementNone, schema.EnforcementWarn, schema.EnforcementReject} {
 			b.Run(fmt.Sprintf("auditLog=%t/schemaEnforcement=%s", enableAuditLog, schemaEnforcement), func(b *testing.B) {
-				eng, cancelFunc := mkEngine(b, param{enableAuditLog: enableAuditLog, schemaEnforcement: schemaEnforcement})
+				eng, cancelFunc := mkEngine(b, param{enableAuditLog: enableAuditLog, schemaEnforcement: schemaEnforcement, enableRuleTable: true})
 				defer cancelFunc()
 
 				runBenchmarks(b, eng, testCases)
