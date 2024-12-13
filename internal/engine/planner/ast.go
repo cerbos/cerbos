@@ -46,7 +46,8 @@ const (
 	Index              = "index"
 	All                = "all"
 	Filter             = "filter"
-	TransformMap       = "TransformMap"
+	TransformMap       = "transformMap"
+	TransformList      = "transformList"
 	Exists             = "exists"
 	ExistsOne          = "exists_one"
 	Map                = "map"
@@ -475,23 +476,40 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok {
 			iterRange = mkListExpr(structKeys(x.StructExpr))
 		}
-		lambda := new(ExprOp)
-		err = buildExprImpl(lambdaAst.expr, lambda, cur)
+		buildLambda := func(expr *exprpb.Expr) (*ExprOp, error) {
+			if expr == nil {
+				return nil, nil
+			}
+			lambda := new(ExprOp)
+			err := buildExprImpl(expr, lambda, cur)
+			if err != nil {
+				return nil, err
+			}
+			if _, ok := lambda.Node.(*ExprOpExpr); !ok {
+				if _, ok := lambda.Node.(*ExprOpVar); !ok {
+					return nil, fmt.Errorf("expected expression or variable, got %T", lambda.Node)
+				}
+			}
+			return lambda, nil
+		}
+		lambda, err := buildLambda(lambdaAst.expr)
 		if err != nil {
 			return err
 		}
-		if _, ok := lambda.Node.(*ExprOpExpr); !ok {
-			if _, ok := lambda.Node.(*ExprOpVar); !ok {
-				return fmt.Errorf("expected expression or variable, got %T", lambda.Node)
-			}
+		lambda2, err := buildLambda(lambdaAst.expr2)
+		if err != nil {
+			return err
 		}
 		op := new(ExprOp)
 		err = buildExprImpl(iterRange, op, cur)
 		if err != nil {
 			return err
 		}
-
-		lambdaArgs := []*ExprOp{lambda, {Node: &ExprOpVar{Variable: lambdaAst.iterVar}}}
+		lambdaArgs := []*ExprOp{lambda}
+		if lambda2 != nil {
+			lambdaArgs = append(lambdaArgs, lambda2)
+		}
+		lambdaArgs = append(lambdaArgs, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar}})
 		if lambdaAst.iterVar2 != "" {
 			lambdaArgs = append(lambdaArgs, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar2}})
 		}
