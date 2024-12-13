@@ -5,9 +5,10 @@ package planner
 
 import (
 	"fmt"
-
 	"github.com/google/cel-go/common/operators"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/encoding/protojson"
+	"os"
 )
 
 type lambdaAST struct {
@@ -30,6 +31,17 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	if step, ok = e.LoopStep.ExprKind.(*exprpb.Expr_CallExpr); !ok {
 		return nil, fmt.Errorf("expected loop-step expression type CallExpr, got: %T", e.LoopStep.ExprKind)
 	}
+	f, err := os.CreateTemp("/Users/dennis/scratch", "*.json")
+	if err != nil {
+		panic("could not create temp file")
+	}
+	repr := protojson.Format(e)
+	_, err = f.WriteString(repr)
+	if err != nil {
+		panic("could not write temp file")
+	}
+	_ = f.Close()
+	fmt.Printf("save repr to the temp file %s\n", f.Name())
 	switch step.CallExpr.Function {
 	case operators.LogicalAnd:
 		obj.operator = All
@@ -45,7 +57,12 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	case operators.Conditional:
 		switch e.AccuInit.ExprKind.(type) {
 		case *exprpb.Expr_ListExpr:
-			obj.operator = Filter
+			if e2 := step.CallExpr.Args[1].GetCallExpr().Args[1].GetListExpr().GetElements()[0]; e2.GetCallExpr() != nil {
+				obj.expr2 = e2
+				obj.operator = TransformMap
+			} else {
+				obj.operator = Filter
+			}
 		case *exprpb.Expr_ConstExpr:
 			obj.operator = ExistsOne
 		default:
