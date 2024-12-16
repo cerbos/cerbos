@@ -26,17 +26,17 @@ func (m *RuleTable) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *RuleTable_Metadata) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *RuleTable_RuleRow) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m, hasher, ignore)
+		cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *RuleTable_RuleRow) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *RuleTableMetadata) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m, hasher, ignore)
+		cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m, hasher, ignore)
 	}
 }
 

@@ -318,11 +318,11 @@ func RuleFQN(rpsMeta any, scope, ruleName string) string {
 		policyFqn = ResourcePolicyFQN(m.Resource, m.Version, scope)
 	case *runtimev1.RunnablePrincipalPolicySet_Metadata:
 		policyFqn = PrincipalPolicyFQN(m.Principal, m.Version, scope)
-	case *runtimev1.RuleTable_Metadata:
+	case *runtimev1.RuleTableMetadata:
 		switch t := m.Name.(type) {
-		case *runtimev1.RuleTable_Metadata_Resource:
+		case *runtimev1.RuleTableMetadata_Resource:
 			policyFqn = ResourcePolicyFQN(t.Resource, m.Version, scope)
-		case *runtimev1.RuleTable_Metadata_Role:
+		case *runtimev1.RuleTableMetadata_Role:
 			policyFqn = RolePolicyFQN(t.Role, scope)
 		}
 	default:

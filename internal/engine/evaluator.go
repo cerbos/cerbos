@@ -130,7 +130,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		version = defaultVersion
 	}
 
-	request := checkInputToRequest(input)
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
@@ -167,6 +166,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		}
 	}
 
+	request := checkInputToRequest(input)
 	evalCtx := newEvalContext(rte.evalParams, request)
 
 	effectiveDerivedRoles := make(internal.StringSet)
@@ -258,8 +258,8 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				for _, row := range rte.Filter(scopedScanResult, []string{scope}, []string{role}, []string{action}).GetRows() {
 					rctx := sctx.StartRule(row.Name)
 
-					if m := row.GetMeta(); m != nil && m.GetSourceAttributes() != nil {
-						maps.Copy(result.AuditTrail.EffectivePolicies, row.GetMeta().GetSourceAttributes())
+					if m := rte.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+						maps.Copy(result.AuditTrail.EffectivePolicies, m.GetSourceAttributes())
 					}
 
 					var constants map[string]any
@@ -293,11 +293,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 
 					if satisfiesCondition { //nolint:nestif
-						// If we're just overriding an existing ALLOW, we can skip.
-						if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow && row.Effect == effectv1.Effect_EFFECT_ALLOW {
-							continue
-						}
-
 						roleEffectSet[row.Effect] = struct{}{}
 
 						var outputExpr *exprpb.CheckedExpr
@@ -308,7 +303,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						if outputExpr != nil {
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
-								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
+								Src: namer.RuleFQN(rte.GetMeta(row.OriginFqn), row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(outputExpr, row.Params.Constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
@@ -318,7 +313,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
 							octx := rctx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
-								Src: namer.RuleFQN(row.Meta, row.Scope, row.Name),
+								Src: namer.RuleFQN(rte.GetMeta(row.OriginFqn), row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
 							}
 							result.Outputs = append(result.Outputs, output)
