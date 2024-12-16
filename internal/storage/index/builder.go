@@ -386,17 +386,11 @@ ancestors:
 
 		// check to see if matching role policies (with a rule for the given resource) reside in any of the missing scopes
 		if !ok && resourceKind != "" { //nolint:nestif
-			segments := strings.Split(ancestorPolicyKey, "/")
-			baseFqn := segments[0]
+			baseFqn, scope, _ := strings.Cut(ancestorPolicyKey, "/")
 
-			var scope, version string
-			if len(segments) == 2 { //nolint:mnd
-				scope = segments[1]
-			}
-
-			subSegments := strings.SplitN(baseFqn, ".", 3) //nolint:mnd
-			if len(subSegments) == 3 && strings.HasPrefix(subSegments[2], "v") {
-				version = strings.TrimPrefix(subSegments[2], "v")
+			var version string
+			if versionIndex := strings.LastIndex(baseFqn, ".v"); versionIndex != -1 {
+				version = baseFqn[versionIndex+2:]
 			}
 
 			for foundResource, scopes := range idx.foundRolePolicyResourceScopes {

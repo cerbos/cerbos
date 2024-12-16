@@ -76,9 +76,6 @@ func (rt *RuleTable) WithPolicyLoader(policyLoader policyloader.PolicyLoader) *R
 }
 
 func (rt *RuleTable) LoadPolicies(rps []*runtimev1.RunnablePolicySet) {
-	rt.mu.Lock()
-	defer rt.mu.Unlock()
-
 	for _, rp := range rps {
 		rt.addPolicy(rp)
 	}
