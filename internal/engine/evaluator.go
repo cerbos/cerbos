@@ -169,44 +169,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	request := checkInputToRequest(input)
 	evalCtx := newEvalContext(rte.evalParams, request)
 
-	effectiveDerivedRoles := make(internal.StringSet)
-	// This is a bit of a bolt-on evaluation in order to support the existing requirement of evaluating all derived roles
-	// defined within a resource policy (regardless of if they're used or not). This is primarily for the
-	// runtime.EffectiveDerivedRoles usage
-	includingParentRoles := make(map[string]struct{})
-	for _, r := range rte.GetParentRoles(input.Principal.Roles) {
-		includingParentRoles[r] = struct{}{}
-	}
-	for _, scope := range scopes {
-		scopeFqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)
-		if drs := rte.GetDerivedRoles(scopeFqn); drs != nil {
-			for name, dr := range drs {
-				if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
-					continue
-				}
-
-				effectiveDerivedRoles[name] = struct{}{}
-
-				variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), dr.Constants, dr.OrderedVariables)
-				if err != nil {
-					return nil, err
-				}
-
-				ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, dr.Constants, variables)
-				if err != nil {
-					continue
-				}
-
-				if ok {
-					result.EffectiveDerivedRoles[name] = struct{}{}
-				}
-			}
-		}
-	}
-
-	// for runtime.EffectiveDerivedRoles support
-	evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
-
 	actionsToResolve := result.unresolvedActions()
 	if len(actionsToResolve) == 0 {
 		return result, nil
@@ -218,6 +180,11 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		return result, nil
 	}
 
+	includingParentRoles := make(map[string]struct{})
+	for _, r := range rte.GetParentRoles(input.Principal.Roles) {
+		includingParentRoles[r] = struct{}{}
+	}
+
 	// Filter down to matching roles and actions
 	scanResult = rte.Filter(scanResult, scopes, input.Principal.Roles, actionsToResolve)
 
@@ -226,6 +193,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	// We use a compound key comprising the parameter origin and the rule FQN.
 	conditionCache := make(map[string]bool)
 
+	processedScopedDerivedRoles := make(map[string]struct{})
 	for _, action := range actionsToResolve {
 		actx := pctx.StartAction(action)
 
@@ -242,6 +210,39 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		scopesLoop:
 			for _, scope := range scopes {
 				sctx := roctx.StartScope(scope)
+
+				// This is for backwards compatibility with effectiveDerivedRoles.
+				// If we reach this point, we can assert that the given {origin policy + scope} combination has been evaluated
+				// and therefore we build the effectiveDerivedRoles from those referenced in the policy.
+				if _, ok := processedScopedDerivedRoles[scope]; !ok {
+					effectiveDerivedRoles := make(internal.StringSet)
+					if drs := rte.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)); drs != nil {
+						for name, dr := range drs {
+							if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
+								continue
+							}
+
+							variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), dr.Constants, dr.OrderedVariables)
+							if err != nil {
+								return nil, err
+							}
+
+							ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, dr.Constants, variables)
+							if err != nil {
+								continue
+							}
+
+							if ok {
+								effectiveDerivedRoles[name] = struct{}{}
+								result.EffectiveDerivedRoles[name] = struct{}{}
+							}
+						}
+					}
+
+					evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
+
+					processedScopedDerivedRoles[scope] = struct{}{}
+				}
 
 				if roleEffectInfo.Effect != effectv1.Effect_EFFECT_NO_MATCH {
 					break

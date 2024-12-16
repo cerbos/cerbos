@@ -51,7 +51,7 @@ wantOutputs:
               "scope": "acme.hr",
             },
         },
-      "effectiveDerivedRoles": ["any_employee", "employee_that_owns_the_record"],
+      "effectiveDerivedRoles": ["employee_that_owns_the_record"],
     },
   ]
 wantDecisionLogs:
@@ -111,7 +111,7 @@ wantDecisionLogs:
                         "scope": "acme.hr",
                       },
                   },
-                "effectiveDerivedRoles": ["any_employee", "employee_that_owns_the_record"]
+                "effectiveDerivedRoles": ["employee_that_owns_the_record"]
               },
             ],
         },
