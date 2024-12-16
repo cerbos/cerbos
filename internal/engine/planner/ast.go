@@ -47,6 +47,7 @@ const (
 	All                = "all"
 	Filter             = "filter"
 	TransformMap       = "transformMap"
+	TransformMapEntry  = "transformMapEntry"
 	TransformList      = "transformList"
 	Exists             = "exists"
 	ExistsOne          = "exists_one"
@@ -473,7 +474,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			return err
 		}
 		iterRange := lambdaAst.iterRange
-		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok {
+		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok && !canOperateOnStruct(lambdaAst.operator) {
 			iterRange = mkListExpr(structKeys(x.StructExpr))
 		}
 		buildLambda := func(expr *exprpb.Expr) (*ExprOp, error) {
@@ -832,4 +833,8 @@ func filterExprOpExprToString(b *strings.Builder, expr *enginev1.PlanResourcesFi
 	}
 
 	b.WriteString(")")
+}
+
+func canOperateOnStruct(op string) bool {
+	return op == TransformMap || op == TransformMapEntry || op == TransformList
 }
