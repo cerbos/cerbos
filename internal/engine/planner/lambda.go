@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/google/cel-go/common/operators"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/encoding/protojson"
-	"os"
 )
 
 type lambdaAST struct {
@@ -34,17 +32,6 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	} else {
 		return nil, fmt.Errorf("expected loop-step expression type CallExpr, got: %T", e.LoopStep.ExprKind)
 	}
-	f, err := os.CreateTemp("/Users/dennis/scratch", "*.json")
-	if err != nil {
-		panic("could not create temp file")
-	}
-	repr := protojson.Format(e)
-	_, err = f.WriteString(repr)
-	if err != nil {
-		panic("could not write temp file")
-	}
-	_ = f.Close()
-
 	switch function {
 	case operators.LogicalAnd:
 		obj.operator = All
@@ -70,17 +57,26 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 		case *exprpb.Expr_ConstExpr:
 			obj.operator = ExistsOne
 		case *exprpb.Expr_StructExpr:
-			obj.operator = TransformMapEntry
-			if e2 := (*wrapper)(e.LoopStep).getArg(1).getArg(1).e(); e2.GetStructExpr() != nil {
-				obj.expr2 = e2
+			e2 := loopStep.getArg(1).e()
+			if args := e2.GetCallExpr().GetArgs(); len(args) == 2 {
+				obj.operator = TransformMapEntry
+				obj.expr2 = args[1]
+			} else {
+				obj.operator = TransformMap
+				obj.expr2 = args[2]
 			}
 		default:
 			return nil, fmt.Errorf("expected loop-accu-init expression type ConstExpr or ListExpr, got: %T", e.AccuInit.ExprKind)
 		}
 		obj.expr = loopStep.getArg(0).e()
 	case "cel.@mapInsert":
-		obj.operator = "transformMap"
-		obj.expr = loopStep.getArg(2).e()
+		if len(loopStep.e().GetCallExpr().GetArgs()) == 2 {
+			obj.operator = TransformMapEntry
+			obj.expr = loopStep.getArg(1).e()
+		} else {
+			obj.operator = TransformMap
+			obj.expr = loopStep.getArg(2).e()
+		}
 	default:
 		return nil, fmt.Errorf("unexpected loop-step function: %q", function)
 	}
