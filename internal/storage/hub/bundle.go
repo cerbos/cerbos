@@ -190,36 +190,25 @@ func loadManifest(bundleFS afero.Fs) (*bundlev1.Manifest, error) {
 
 func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	for _, id := range candidates {
-		cached, ok := b.cache.Get(id)
-		if ok {
-			return cached.policySet, cached.err
+		policySet, err := b.getMatch(id, true)
+		if err != nil {
+			return nil, err
 		}
 
-		idHex := id.HexStr()
-		fileName := policyDir + idHex
-
-		if _, err := b.bundleFS.Stat(fileName); err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
-			}
-
-			return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
+		if policySet != nil {
+			return policySet, nil
 		}
-
-		policySet, err := b.loadPolicySet(idHex, fileName)
-		b.cache.Set(id, cacheEntry{policySet: policySet, err: err})
-		return policySet, err
 	}
 
 	return nil, nil
 }
 
-func (b *Bundle) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+func (b *Bundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, error) {
 	res := []*runtimev1.RunnablePolicySet{}
 	for fqn := range b.manifest.PolicyIndex {
 		modID := namer.GenModuleIDFromFQN(fqn)
 
-		policySet, err := b.GetFirstMatch(ctx, []namer.ModuleID{modID})
+		policySet, err := b.getMatch(modID, false)
 		if err != nil {
 			return nil, err
 		}
@@ -234,10 +223,10 @@ func (b *Bundle) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, er
 
 // GetAllMatching attempts to retrieve all policies from the passed modIDs, unlike `GetFirstMatch` which returns the first
 // of the passed candidates, this function returns list of all available modules from the provided IDs.
-func (b *Bundle) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+func (b *Bundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	res := []*runtimev1.RunnablePolicySet{}
 	for _, id := range modIDs {
-		policySet, err := b.GetFirstMatch(ctx, []namer.ModuleID{id})
+		policySet, err := b.getMatch(id, true)
 		if err != nil {
 			return nil, err
 		}
@@ -248,6 +237,31 @@ func (b *Bundle) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([
 	}
 
 	return res, nil
+}
+
+func (b *Bundle) getMatch(id namer.ModuleID, withFileStat bool) (*runtimev1.RunnablePolicySet, error) {
+	cached, ok := b.cache.Get(id)
+	if ok {
+		return cached.policySet, cached.err
+	}
+
+	idHex := id.HexStr()
+	fileName := policyDir + idHex
+
+	if withFileStat {
+		if _, err := b.bundleFS.Stat(fileName); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil, nil
+			}
+
+			return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
+		}
+	}
+
+	policySet, err := b.loadPolicySet(idHex, fileName)
+	b.cache.Set(id, cacheEntry{policySet: policySet, err: err})
+
+	return policySet, err
 }
 
 func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolicySet, error) {
