@@ -401,6 +401,22 @@
                   - variable: v
             - variable: i
             - variable: v
+"{}.transformList(i, v, i * v)":
+  expression:
+    operator: transformList
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: mult
+                operands:
+                  - variable: i
+                  - variable: v
+            - variable: i
+            - variable: v
 "{}.transformList(k, v, k % 2 == 0, k * v)":
   expression:
     operator: transformList
