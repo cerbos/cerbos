@@ -587,6 +587,10 @@ func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyV
 	// Therefore, we need to retrieve the compilation unit for each scope, remove all bar the first policy,
 	// and pass all individually to the LoadPolicies method.
 	toLoad := []*runtimev1.RunnablePolicySet{}
+	// we force lenientScopeSearch when retrieving resource policy sets as lenient scope search is enforced
+	// in the evaluator function. Therefore, to prevent duplicate rows in the rule table, we check the returned
+	// policy scope before adding to `toLoad`
+	addedResourceScopes := make(map[string]struct{})
 	addScopedPolicyRules := func(scope string) error {
 		rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope, true)
 		if err != nil {
@@ -594,7 +598,14 @@ func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyV
 		}
 
 		if rps != nil {
-			toLoad = append(toLoad, rps)
+			// check the first policy scope
+			for _, p := range rps.GetResourcePolicy().GetPolicies() {
+				if _, ok := addedResourceScopes[p.Scope]; !ok {
+					toLoad = append(toLoad, rps)
+					addedResourceScopes[p.Scope] = struct{}{}
+				}
+				break
+			}
 		}
 
 		rlps, err := engine.getRolePolicySets(ctx, scope, inputRoles)
@@ -602,7 +613,7 @@ func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyV
 			return err
 		}
 
-		if rps == nil && len(rlps) == 0 {
+		if (rps == nil || len(rps.GetResourcePolicy().GetPolicies()) == 0) && len(rlps) == 0 {
 			return errNoPoliciesMatched
 		}
 
@@ -628,6 +639,10 @@ func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyV
 				return nil, err
 			}
 		}
+	}
+
+	if len(toLoad) == 0 {
+		return nil, nil
 	}
 
 	ruleTable.LoadPolicies(toLoad)

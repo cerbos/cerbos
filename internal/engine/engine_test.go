@@ -150,55 +150,65 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone, lenientScopeSearch: true})
 	defer cancelFunc()
 
+	ruleTableEngine, ruleTableCancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone, enableRuleTable: true})
+	defer ruleTableCancelFunc()
+
+	engMap := map[string]*Engine{
+		"WithoutRuleEngine": eng,
+		"WithRuleEngine":    ruleTableEngine,
+	}
+
 	testCases := test.LoadTestCases(t, "engine")
 	testCases = append(testCases, test.LoadTestCases(t, "engine_lenient_scope_search")...)
 
-	for _, tcase := range testCases {
-		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readTestCase(t, tcase.Input)
-			mockAuditLog.clear()
+	for engPrefix, eng := range engMap {
+		for _, tcase := range testCases {
+			t.Run(fmt.Sprintf("%s/%s", engPrefix, tcase.Name), func(t *testing.T) {
+				tc := readTestCase(t, tcase.Input)
+				mockAuditLog.clear()
 
-			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
+				traceCollector := tracer.NewCollector()
+				haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
 
-			if tc.WantError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
+				if tc.WantError {
+					require.Error(t, err)
+				} else {
+					require.NoError(t, err)
+				}
 
-			for i, have := range haveOutputs {
-				// TODO(saml) I can't, for the life of me, figure out out to order this via a transformation
-				// function in `cmp.Diff` below, so this'll have to do for now
-				slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
-					if a.Src < b.Src {
-						return -1
-					} else if a.Src > b.Src {
-						return 1
-					}
-					return 0
-				})
+				for i, have := range haveOutputs {
+					// TODO(saml) I can't, for the life of me, figure out out to order this via a transformation
+					// function in `cmp.Diff` below, so this'll have to do for now
+					slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
+						if a.Src < b.Src {
+							return -1
+						} else if a.Src > b.Src {
+							return 1
+						}
+						return 0
+					})
 
-				require.Empty(t, cmp.Diff(tc.WantOutputs[i],
-					have,
+					require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+						have,
+						protocmp.Transform(),
+						protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+						protocmp.FilterField(&enginev1.CheckOutput{}, "outputs", cmpopts.SortSlices(func(x, y *enginev1.OutputEntry) bool {
+							return x.Src < y.Src
+						})),
+					))
+				}
+
+				haveDecisionLogs := mockAuditLog.getDecisionLogs()
+				require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
+					haveDecisionLogs,
 					protocmp.Transform(),
+					protocmp.IgnoreEmptyMessages(),
 					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-					protocmp.FilterField(&enginev1.CheckOutput{}, "outputs", cmpopts.SortSlices(func(x, y *enginev1.OutputEntry) bool {
-						return x.Src < y.Src
-					})),
+					protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
+					protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
 				))
-			}
-
-			haveDecisionLogs := mockAuditLog.getDecisionLogs()
-			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
-				haveDecisionLogs,
-				protocmp.Transform(),
-				protocmp.IgnoreEmptyMessages(),
-				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-				protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
-				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
-			))
-		})
+			})
+		}
 	}
 }
 
