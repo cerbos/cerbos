@@ -5,6 +5,7 @@ package planner
 
 import (
 	"fmt"
+
 	"github.com/google/cel-go/common/operators"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
@@ -34,6 +35,7 @@ func getTransformMapExpression(w *wrapper) (string, *exprpb.Expr, error) {
 	}
 	return op, w.getArg(n - 1).e(), nil
 }
+
 func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	obj := &lambdaAST{
 		iterVar:   e.IterVar,
