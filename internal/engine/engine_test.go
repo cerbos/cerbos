@@ -150,7 +150,7 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone, lenientScopeSearch: true})
 	defer cancelFunc()
 
-	ruleTableEngine, ruleTableCancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone, enableRuleTable: true})
+	ruleTableEngine, ruleTableCancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone, enableRuleTable: true, lenientScopeSearch: true})
 	defer ruleTableCancelFunc()
 
 	engMap := map[string]*Engine{
