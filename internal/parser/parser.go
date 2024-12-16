@@ -15,6 +15,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
@@ -991,11 +992,41 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 	}
 
 	for _, v := range verrs.Violations {
-		path := v.Proto.GetField()
-		outErr = errors.Join(outErr, uctx.verrorf(path.String(), v.Proto.GetMessage()))
+		path := fieldPathString(v.Proto.GetField().GetElements())
+		outErr = errors.Join(outErr, uctx.verrorf(path, v.Proto.GetMessage()))
 	}
 
 	return outErr
+}
+
+// From https://github.com/bufbuild/protovalidate-go/blob/a2088ebbecbdc76f081644b55914e762dca29646/internal/errors/utils.go#L133
+func fieldPathString(path []*validate.FieldPathElement) string {
+	var result strings.Builder
+	for i, element := range path {
+		if i > 0 {
+			result.WriteByte('.')
+		}
+		result.WriteString(element.GetFieldName())
+		subscript := element.GetSubscript()
+		if subscript == nil {
+			continue
+		}
+		result.WriteByte('[')
+		switch value := subscript.(type) {
+		case *validate.FieldPathElement_Index:
+			result.WriteString(strconv.FormatUint(value.Index, 10))
+		case *validate.FieldPathElement_BoolKey:
+			result.WriteString(strconv.FormatBool(value.BoolKey))
+		case *validate.FieldPathElement_IntKey:
+			result.WriteString(strconv.FormatInt(value.IntKey, 10))
+		case *validate.FieldPathElement_UintKey:
+			result.WriteString(strconv.FormatUint(value.UintKey, 10))
+		case *validate.FieldPathElement_StringKey:
+			result.WriteString(strconv.Quote(value.StringKey))
+		}
+		result.WriteByte(']')
+	}
+	return result.String()
 }
 
 func pos(n ast.Node) string {
