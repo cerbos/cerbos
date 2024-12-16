@@ -403,28 +403,28 @@ func cerbos_runtime_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map
 	}
 }
 
-func cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m *RuleTable_Metadata, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Metadata.fqn"]; !ok {
+func cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m *RuleTableMetadata, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTableMetadata.fqn"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetFqn()))
 
 	}
 	if m.Name != nil {
-		if _, ok := ignore["cerbos.runtime.v1.RuleTable.Metadata.name"]; !ok {
+		if _, ok := ignore["cerbos.runtime.v1.RuleTableMetadata.name"]; !ok {
 			switch t := m.Name.(type) {
-			case *RuleTable_Metadata_Resource:
+			case *RuleTableMetadata_Resource:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.Resource))
 
-			case *RuleTable_Metadata_Role:
+			case *RuleTableMetadata_Role:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.Role))
 
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Metadata.version"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTableMetadata.version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetVersion()))
 
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Metadata.source_attributes"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTableMetadata.source_attributes"]; !ok {
 		if len(m.SourceAttributes) > 0 {
 			keys := make([]string, len(m.SourceAttributes))
 			i := 0
@@ -443,7 +443,7 @@ func cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m *RuleTable_Metadata, hash
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Metadata.annotations"]; !ok {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTableMetadata.annotations"]; !ok {
 		if len(m.Annotations) > 0 {
 			keys := make([]string, len(m.Annotations))
 			i := 0
@@ -513,12 +513,6 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
-
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.meta"]; !ok {
-		if m.GetMeta() != nil {
-			cerbos_runtime_v1_RuleTable_Metadata_hashpb_sum(m.GetMeta(), hasher, ignore)
-		}
 
 	}
 }

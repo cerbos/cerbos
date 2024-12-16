@@ -710,8 +710,6 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 			return err
 		}
 
-		sets = append(sets, currSets...)
-
 		for _, r := range currSets {
 			rp := r.GetRolePolicy()
 
@@ -730,6 +728,8 @@ func (engine *Engine) getRolePolicySets(ctx context.Context, scope string, roles
 			if requireParentalConsent > 0 && overrideParent > 0 {
 				return errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
 			}
+
+			sets = append(sets, r)
 		}
 		return nil
 	}

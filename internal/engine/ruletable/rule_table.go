@@ -30,6 +30,7 @@ type RuleTable struct {
 	policyLoader             policyloader.PolicyLoader
 	log                      *zap.SugaredLogger
 	schemas                  map[string]*policyv1.Schemas
+	meta                     map[string]*runtimev1.RuleTableMetadata
 	policyDerivedRoles       map[string]map[string]*WrappedRunnableDerivedRole
 	scopeMap                 map[string]struct{}
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
@@ -60,6 +61,7 @@ func NewRuleTable() *RuleTable {
 	return &RuleTable{
 		log:                      zap.S().Named("ruletable"),
 		schemas:                  make(map[string]*policyv1.Schemas),
+		meta:                     make(map[string]*runtimev1.RuleTableMetadata),
 		policyDerivedRoles:       make(map[string]map[string]*WrappedRunnableDerivedRole),
 		scopeMap:                 make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
@@ -104,9 +106,9 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 	// we only process the first of resource policy sets as it's assumed parent scopes are handled in separate calls
 	p := rrps.GetPolicies()[0]
 
-	meta := &runtimev1.RuleTable_Metadata{
+	rt.meta[rrps.Meta.Fqn] = &runtimev1.RuleTableMetadata{
 		Fqn:              rrps.Meta.Fqn,
-		Name:             &runtimev1.RuleTable_Metadata_Resource{Resource: sanitizedResource},
+		Name:             &runtimev1.RuleTableMetadata_Resource{Resource: sanitizedResource},
 		Version:          rrps.Meta.Version,
 		SourceAttributes: rrps.Meta.SourceAttributes,
 		Annotations:      rrps.Meta.Annotations,
@@ -145,7 +147,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			}
 		}
 
-		ruleFqn := namer.RuleFQN(meta, p.Scope, rule.Name)
+		ruleFqn := namer.RuleFQN(rt.meta[rrps.Meta.Fqn], p.Scope, rule.Name)
 		evaluationKey := fmt.Sprintf("%s#%s", policyParameters.Key, ruleFqn)
 		for a := range rule.Actions {
 			for r := range rule.Roles {
@@ -162,7 +164,6 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 						Version:          rrps.Meta.Version,
 						EmitOutput:       emitOutput,
 						Name:             rule.Name,
-						Meta:             meta,
 					},
 					Params:        policyParameters,
 					EvaluationKey: evaluationKey,
@@ -211,14 +212,13 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 								Role:              pr,
 								Action:            a,
 								Condition:         cond,
-								Effect:            rule.Effect,
+								Effect:            rule.Effect, // TODO(saml) what happens if the rdr effect is DENY?
 								Scope:             p.Scope,
 								ScopePermissions:  scopePermissions,
 								Version:           rrps.Meta.Version,
 								OriginDerivedRole: dr,
 								EmitOutput:        emitOutput,
 								Name:              rule.Name,
-								Meta:              meta,
 							},
 							Params:        mergedParameters,
 							EvaluationKey: evaluationKey,
@@ -235,9 +235,9 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	rt.scopeScopePermissions[p.Scope] = p.ScopePermissions
 
 	version := "default"
-	meta := &runtimev1.RuleTable_Metadata{
+	rt.meta[p.Meta.Fqn] = &runtimev1.RuleTableMetadata{
 		Fqn:              p.Meta.Fqn,
-		Name:             &runtimev1.RuleTable_Metadata_Role{Role: p.Role},
+		Name:             &runtimev1.RuleTableMetadata_Role{Role: p.Role},
 		Version:          version,
 		SourceAttributes: p.Meta.SourceAttributes,
 		Annotations:      p.Meta.Annotations,
@@ -257,7 +257,6 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 						Scope:            p.Scope,
 						ScopePermissions: p.ScopePermissions,
 						Version:          version,
-						Meta:             meta,
 					},
 					EvaluationKey: evaluationKey,
 				})
@@ -460,6 +459,17 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 	defer rt.mu.RUnlock()
 
 	if s, ok := rt.schemas[fqn]; ok {
+		return s
+	}
+
+	return nil
+}
+
+func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+
+	if s, ok := rt.meta[fqn]; ok {
 		return s
 	}
 
