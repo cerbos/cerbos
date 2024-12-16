@@ -1,0 +1,54 @@
+-- example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  rules:
+    - actions:
+        - view
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: `request.principal.attr.ip == "10.20.2.2"`
+      output:
+        when:
+          ruleActivated: R
+
+-- example_test.yaml --
+---
+name: Example test suite
+principals:
+  exampleUser:
+    id: example.user@yourapp.example.com
+    roles:
+      - user
+    attr:
+      ip: 10.20.2.2
+resources:
+  exampleResource:
+    kind: example
+    id: example-001
+    attr:
+      owner: example.user@yourapp.example.com
+tests:
+  - name: Example test
+    input:
+      principals:
+        - exampleUser
+      resources:
+        - exampleResource
+      actions:
+        - view
+    expected:
+      - principal: exampleUser
+        resource: exampleResource
+        actions:
+          view: EFFECT_ALLOW
+        outputs:
+          - action: edit
+            expected:
+              - src: x
+                val: x
