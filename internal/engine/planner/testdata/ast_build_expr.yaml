@@ -282,11 +282,11 @@
   expression:
     <<: *compre
     operator: all
-"['a', 'b'].transformMap(k, v, k * v)":
+"[1, 2].transformMap(k, v, k * v)":
   expression:
     operator: transformMap
     operands:
-      - value: ['a', 'b']
+      - value: [1, 2]
       - expression:
           operator: lambda
           operands:
@@ -295,6 +295,30 @@
                 operands:
                   - variable: k
                   - variable: v
+            - variable: k
+            - variable: v
+"[1, 2].transformMap(k, v, k % 2 == 0, v * k)":
+  expression:
+    operator: transformMap
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: k
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: mult
+                operands:
+                  - variable: v
+                  - variable: k
             - variable: k
             - variable: v
 "{}.transformMap(k, v, k * v)":
@@ -311,6 +335,31 @@
                 operands:
                   - variable: k
                   - variable: v
+            - variable: k
+            - variable: v
+"{}.transformMap(k, v, k % 2 == 0, v * k)":
+  expression:
+    operator: transformMap
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: k
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: mult
+                operands:
+                  - variable: v
+                  - variable: k
             - variable: k
             - variable: v
 "[1, 2].transformList(i, v, i * v)":
