@@ -3,7 +3,6 @@ module github.com/cerbos/cerbos
 go 1.23
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.2-20241127180247-a33202765966.1
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/adrg/xdg v0.5.3
 	github.com/alecthomas/chroma/v2 v2.14.0
@@ -35,7 +34,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/goccy/go-yaml v1.15.10
 	github.com/golang-migrate/migrate/v4 v4.18.1
-	github.com/google/cel-go v0.21.0
+	github.com/google/cel-go v0.22.2-0.20241212161259-8b07a00f37bd
 	github.com/google/go-cmp v0.6.0
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.6.0
@@ -120,7 +119,8 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
-	cel.dev/expr v0.18.0 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.2-20241127180247-a33202765966.1 // indirect
+	cel.dev/expr v0.19.1 // indirect
 	cloud.google.com/go v0.115.0 // indirect
 	cloud.google.com/go/auth v0.8.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
