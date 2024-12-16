@@ -18,6 +18,22 @@ type lambdaAST struct {
 	operator  string
 }
 
+func getTransformMapExpression(w *wrapper) (string, *exprpb.Expr, error) {
+	const nTransformMapEntryArgs = 2
+	const nTransformMapArgs = 3
+	n := w.getArgsLen()
+	var op string
+
+	switch n {
+	case nTransformMapArgs:
+		op = TransformMap
+	case nTransformMapEntryArgs:
+		op = TransformMapEntry
+	default:
+		return "", nil, fmt.Errorf("unexpected args #, got: %d", n)
+	}
+	return op, w.getArg(n - 1).e(), nil
+}
 func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	obj := &lambdaAST{
 		iterVar:   e.IterVar,
@@ -57,25 +73,20 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 		case *exprpb.Expr_ConstExpr:
 			obj.operator = ExistsOne
 		case *exprpb.Expr_StructExpr:
-			e2 := loopStep.getArg(1).e()
-			if args := e2.GetCallExpr().GetArgs(); len(args) == 2 {
-				obj.operator = TransformMapEntry
-				obj.expr2 = args[1]
-			} else {
-				obj.operator = TransformMap
-				obj.expr2 = args[2]
+			var err error
+			obj.operator, obj.expr2, err = getTransformMapExpression(loopStep.getArg(1))
+			if err != nil {
+				return nil, err
 			}
 		default:
 			return nil, fmt.Errorf("expected loop-accu-init expression type ConstExpr or ListExpr, got: %T", e.AccuInit.ExprKind)
 		}
 		obj.expr = loopStep.getArg(0).e()
 	case "cel.@mapInsert":
-		if len(loopStep.e().GetCallExpr().GetArgs()) == 2 {
-			obj.operator = TransformMapEntry
-			obj.expr = loopStep.getArg(1).e()
-		} else {
-			obj.operator = TransformMap
-			obj.expr = loopStep.getArg(2).e()
+		var err error
+		obj.operator, obj.expr, err = getTransformMapExpression(loopStep)
+		if err != nil {
+			return nil, err
 		}
 	default:
 		return nil, fmt.Errorf("unexpected loop-step function: %q", function)
@@ -94,18 +105,27 @@ func (w *wrapper) getArg(i int) *wrapper {
 	if w == nil {
 		return nil
 	}
-	x := w.e().GetCallExpr()
-	if x != nil && i < len(x.Args) {
+	if x := w.e().GetCallExpr(); x != nil && i < len(x.Args) {
 		return (*wrapper)(x.Args[i])
 	}
 	return nil
 }
+
+func (w *wrapper) getArgsLen() int {
+	if w == nil {
+		return 0
+	}
+	if x := w.e().GetCallExpr(); x != nil {
+		return len(x.Args)
+	}
+	return 0
+}
+
 func (w *wrapper) getListElement(i int) *wrapper {
 	if w == nil {
 		return nil
 	}
-	x := w.e().GetListExpr()
-	if x != nil && i < len(x.Elements) {
+	if x := w.e().GetListExpr(); x != nil && i < len(x.Elements) {
 		return (*wrapper)(x.Elements[i])
 	}
 	return nil
