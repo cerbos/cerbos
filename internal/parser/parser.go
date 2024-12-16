@@ -991,8 +991,8 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 	}
 
 	for _, v := range verrs.Violations {
-		path := v.GetFieldPath()
-		outErr = errors.Join(outErr, uctx.verrorf(path, v.GetMessage()))
+		path := v.Proto.GetField()
+		outErr = errors.Join(outErr, uctx.verrorf(path.String(), v.Proto.GetMessage()))
 	}
 
 	return outErr
