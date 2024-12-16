@@ -46,6 +46,9 @@ const (
 	Index              = "index"
 	All                = "all"
 	Filter             = "filter"
+	TransformMap       = "transformMap"
+	TransformMapEntry  = "transformMapEntry"
+	TransformList      = "transformList"
 	Exists             = "exists"
 	ExistsOne          = "exists_one"
 	Map                = "map"
@@ -158,7 +161,7 @@ func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err
 
 // This functions wraps references to known resource attributes in an `id` function call, which simply returns its argument.
 // E.g. Replace R.attr.field1 with id(R.attr.field1) iif R.attr.field1 is passed in the request to the Query Planner API.
-// This trick is necessary evaluate expression like `P.attr.struct1[R.attr.field1]`, otherwise CEL tries to use `R.attr.field1`
+// This trick is necessary to evaluate expression like `P.attr.struct1[R.attr.field1]`, otherwise CEL tries to use `R.attr.field1`
 // as a qualifier for `P.attr.struct1` and produces the error https://github.com/cerbos/cerbos/issues/1340
 func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value) (output *exprpb.Expr, err error) {
 	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
@@ -471,26 +474,47 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			return err
 		}
 		iterRange := lambdaAst.iterRange
-		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok {
+		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok && !canOperateOnStruct(lambdaAst.operator) {
 			iterRange = mkListExpr(structKeys(x.StructExpr))
 		}
-		lambda := new(ExprOp)
-		err = buildExprImpl(lambdaAst.lambdaExpr, lambda, cur)
+		buildLambda := func(expr *exprpb.Expr) (*ExprOp, error) {
+			if expr == nil {
+				return nil, nil
+			}
+			lambda := new(ExprOp)
+			err := buildExprImpl(expr, lambda, cur)
+			if err != nil {
+				return nil, err
+			}
+			if _, ok := lambda.Node.(*ExprOpExpr); !ok {
+				if _, ok := lambda.Node.(*ExprOpVar); !ok {
+					return nil, fmt.Errorf("expected expression or variable, got %T", lambda.Node)
+				}
+			}
+			return lambda, nil
+		}
+		lambda, err := buildLambda(lambdaAst.expr)
 		if err != nil {
 			return err
 		}
-		if _, ok := lambda.Node.(*ExprOpExpr); !ok {
-			if _, ok := lambda.Node.(*ExprOpVar); !ok {
-				return fmt.Errorf("expected expression or variable, got %T", lambda.Node)
-			}
+		lambda2, err := buildLambda(lambdaAst.expr2)
+		if err != nil {
+			return err
 		}
 		op := new(ExprOp)
 		err = buildExprImpl(iterRange, op, cur)
 		if err != nil {
 			return err
 		}
-
-		acc.Node = mkExprOpExpr(lambdaAst.operator, op, &ExprOp{Node: mkExprOpExpr(Lambda, lambda, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar}})})
+		lambdaArgs := []*ExprOp{lambda}
+		if lambda2 != nil {
+			lambdaArgs = append(lambdaArgs, lambda2)
+		}
+		lambdaArgs = append(lambdaArgs, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar}})
+		if lambdaAst.iterVar2 != "" {
+			lambdaArgs = append(lambdaArgs, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar2}})
+		}
+		acc.Node = mkExprOpExpr(lambdaAst.operator, op, &ExprOp{Node: mkExprOpExpr(Lambda, lambdaArgs...)})
 	default:
 		return fmt.Errorf("buildExprImpl: unsupported expression: %v", expr)
 	}
@@ -809,4 +833,8 @@ func filterExprOpExprToString(b *strings.Builder, expr *enginev1.PlanResourcesFi
 	}
 
 	b.WriteString(")")
+}
+
+func canOperateOnStruct(op string) bool {
+	return op == TransformMap || op == TransformMapEntry || op == TransformList
 }
