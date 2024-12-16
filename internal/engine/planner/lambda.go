@@ -26,9 +26,12 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 		iterVar2:  e.IterVar2,
 		iterRange: e.IterRange,
 	}
-	var step *exprpb.Expr_CallExpr
-	var ok bool
-	if step, ok = e.LoopStep.ExprKind.(*exprpb.Expr_CallExpr); !ok {
+	var function string
+	var loopStep *wrapper
+	if call := e.LoopStep.GetCallExpr(); call != nil {
+		function = call.Function
+		loopStep = (*wrapper)(e.LoopStep)
+	} else {
 		return nil, fmt.Errorf("expected loop-step expression type CallExpr, got: %T", e.LoopStep.ExprKind)
 	}
 	f, err := os.CreateTemp("/Users/dennis/scratch", "*.json")
@@ -42,25 +45,23 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	}
 	_ = f.Close()
 
-	switch step.CallExpr.Function {
+	switch function {
 	case operators.LogicalAnd:
 		obj.operator = All
-		obj.expr = step.CallExpr.Args[1]
+		obj.expr = loopStep.getArg(1).e()
 	case operators.LogicalOr:
 		obj.operator = Exists
-		obj.expr = step.CallExpr.Args[1]
+		obj.expr = loopStep.getArg(1).e()
 	case operators.Add:
 		obj.operator = Map
 		if obj.iterVar2 != "" {
 			obj.operator = TransformList
 		}
-		if elements := step.CallExpr.Args[1].GetListExpr().GetElements(); len(elements) > 0 {
-			obj.expr = elements[0]
-		}
+		obj.expr = loopStep.getArg(1).getListElement(0).e()
 	case operators.Conditional:
 		switch e.AccuInit.ExprKind.(type) {
 		case *exprpb.Expr_ListExpr:
-			if e2 := step.CallExpr.Args[1].GetCallExpr().Args[1].GetListExpr().GetElements()[0]; e2.GetCallExpr() != nil {
+			if e2 := loopStep.getArg(1).getArg(1).getListElement(0).e(); e2.GetCallExpr() != nil {
 				obj.expr2 = e2
 				obj.operator = TransformList
 			} else {
@@ -70,19 +71,46 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 			obj.operator = ExistsOne
 		case *exprpb.Expr_StructExpr:
 			obj.operator = TransformMapEntry
-			if e2 := step.CallExpr.Args[1].GetCallExpr().Args[1]; e2.GetStructExpr() != nil {
+			if e2 := (*wrapper)(e.LoopStep).getArg(1).getArg(1).e(); e2.GetStructExpr() != nil {
 				obj.expr2 = e2
 			}
 		default:
 			return nil, fmt.Errorf("expected loop-accu-init expression type ConstExpr or ListExpr, got: %T", e.AccuInit.ExprKind)
 		}
-		obj.expr = step.CallExpr.Args[0]
+		obj.expr = loopStep.getArg(0).e()
 	case "cel.@mapInsert":
 		obj.operator = "transformMap"
-		obj.expr = step.CallExpr.Args[2]
+		obj.expr = loopStep.getArg(2).e()
 	default:
-		return nil, fmt.Errorf("unexpected loop-step function: %q", step.CallExpr.Function)
+		return nil, fmt.Errorf("unexpected loop-step function: %q", function)
 	}
 
 	return obj, nil
+}
+
+type wrapper exprpb.Expr
+
+func (w *wrapper) e() *exprpb.Expr {
+	return (*exprpb.Expr)(w)
+}
+
+func (w *wrapper) getArg(i int) *wrapper {
+	if w == nil {
+		return nil
+	}
+	x := w.e().GetCallExpr()
+	if x != nil && i < len(x.Args) {
+		return (*wrapper)(x.Args[i])
+	}
+	return nil
+}
+func (w *wrapper) getListElement(i int) *wrapper {
+	if w == nil {
+		return nil
+	}
+	x := w.e().GetListExpr()
+	if x != nil && i < len(x.Elements) {
+		return (*wrapper)(x.Elements[i])
+	}
+	return nil
 }
