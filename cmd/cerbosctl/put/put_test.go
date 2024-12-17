@@ -104,6 +104,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault",
 					"resource.equipment_request.vdefault",
 					"resource.equipment_request.vdefault/acme",
+					"resource.example.vdefault",
 					"resource.global.vdefault",
 					"resource.import_derived_roles_that_import_variables.vdefault",
 					"resource.import_variables.vdefault",
