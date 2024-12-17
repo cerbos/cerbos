@@ -80,6 +80,17 @@ func (r *testSuiteRun) buildExpectationLookup(table *policyv1.TestTable) (map[te
 	for _, expectation := range table.Expected {
 		outputs := outputExpectations(expectation)
 
+		var unreachableOutputs []string
+		for action := range outputs {
+			if _, ok := inputActionsMap[action]; !ok {
+				unreachableOutputs = append(unreachableOutputs, action)
+			}
+		}
+
+		if len(unreachableOutputs) > 0 {
+			return nil, fmt.Errorf("found output expectations for actions that are not in the input actions list: [%s]", strings.Join(unreachableOutputs, ","))
+		}
+
 		principals, err := r.collectFixtures(expectation.Principal, expectation.Principals, expectation.PrincipalGroups, r.lookupPrincipalGroup)
 		if err != nil {
 			return nil, err
