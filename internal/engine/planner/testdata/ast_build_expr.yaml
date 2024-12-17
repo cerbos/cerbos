@@ -555,3 +555,8 @@
     operator: distinct
     operands:
       - variable: x
+"x.flatten()":
+  expression:
+    operator: flatten
+    operands:
+      - variable: x
