@@ -85,6 +85,8 @@ condition:
           [1, 2, 3, 4].slice(2, 4) == [3, 4]
       - expr: |-
           [1,[2,[3,4]]].flatten() == [1, 2, [3, 4]]
+      - expr: |-
+          [{ "name": "foo", "score": 0 },{ "name": "bar", "score": -10 },{ "name": "baz", "score": 1000 }].sortBy(e, e.score).map(e, e.name) == ["bar", "foo", "baz"]
 request: {
   "principal": {
     "id": "john",
