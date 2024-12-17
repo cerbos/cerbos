@@ -534,3 +534,24 @@
                         - variable: k
             - variable: k
             - variable: v
+"x.sort()":
+  expression:
+    operator: sort
+    operands:
+      - variable: x
+"x.reverse()":
+  expression:
+    operator: reverse
+    operands:
+      - variable: x
+"lists.range(3)":
+  expression:
+    operator: range
+    operands:
+      - variable: lists
+      - value: 3
+"x.distinct()":
+  expression:
+    operator: distinct
+    operands:
+      - variable: x
