@@ -6,6 +6,7 @@ package planner
 import (
 	"errors"
 	"fmt"
+
 	"github.com/google/cel-go/common/operators"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
@@ -44,7 +45,7 @@ func mkSortByAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	const function = "sortByAssociatedKeys"
 	w := (*wrapper)(e.Result)
 	var e2 *exprpb.Expr_Comprehension
-	if e2 = w.getArg(0).e().GetComprehensionExpr(); e2 == nil || w.getArgsLen() != 1 {
+	if e2 = w.getArg(0).e().GetComprehensionExpr(); e2 == nil || w.getArgsLen() != 1 || w.Function() != function {
 		return nil, fmt.Errorf("%w, got %s", ErrExpectedSortBy, e.String())
 	}
 	obj := &lambdaAST{
@@ -70,12 +71,6 @@ func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 		return mkSortByAST(e)
 	default:
 		return nil, fmt.Errorf("expected loop-step expression type CallExpr, got: %T", ls)
-	}
-	if call := e.LoopStep.GetCallExpr(); call != nil {
-		function = call.Function
-		loopStep = (*wrapper)(e.LoopStep)
-	} else {
-		return nil, fmt.Errorf("expected loop-step expression type CallExpr, got: %T", e.LoopStep.ExprKind)
 	}
 	obj := &lambdaAST{
 		iterVar:   e.IterVar,
@@ -136,9 +131,6 @@ func (w *wrapper) e() *exprpb.Expr {
 }
 
 func (w *wrapper) getArg(i int) *wrapper {
-	if w == nil {
-		return nil
-	}
 	if x := w.e().GetCallExpr(); x != nil && i < len(x.Args) {
 		return (*wrapper)(x.Args[i])
 	}
@@ -146,9 +138,6 @@ func (w *wrapper) getArg(i int) *wrapper {
 }
 
 func (w *wrapper) getArgsLen() int {
-	if w == nil {
-		return 0
-	}
 	if x := w.e().GetCallExpr(); x != nil {
 		return len(x.Args)
 	}
@@ -156,11 +145,15 @@ func (w *wrapper) getArgsLen() int {
 }
 
 func (w *wrapper) getListElement(i int) *wrapper {
-	if w == nil {
-		return nil
-	}
 	if x := w.e().GetListExpr(); x != nil && i < len(x.Elements) {
 		return (*wrapper)(x.Elements[i])
 	}
 	return nil
+}
+
+func (w *wrapper) Function() string {
+	if x := w.e().GetCallExpr(); x != nil {
+		return x.GetFunction()
+	}
+	return ""
 }
