@@ -294,7 +294,6 @@ func TestAuditLogFilter(t *testing.T) {
 		}
 
 		masker, err := hub.NewAuditLogFilter(maskConf)
-		// TODO(saml) assert that generated ast is as expected
 		require.NoError(t, err)
 
 		wantRemoved := []string{

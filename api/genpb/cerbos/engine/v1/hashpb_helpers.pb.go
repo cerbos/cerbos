@@ -610,6 +610,9 @@ func cerbos_engine_v1_Trace_Component_hashpb_sum(m *Trace_Component, hasher hash
 			case *Trace_Component_RolePolicyScope:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.RolePolicyScope))
 
+			case *Trace_Component_Role:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Role))
+
 			}
 		}
 	}

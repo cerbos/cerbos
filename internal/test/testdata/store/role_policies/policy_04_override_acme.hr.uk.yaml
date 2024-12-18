@@ -2,11 +2,12 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_sr_admin
+  role: acme_travel_agent # (saml): sorry I'm running out of role ideas
   scope: acme.hr.uk
-  parentRoles: ["acme_jr_admin"]
-  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+  scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
+  parentRoles:
+    - employee
   rules:
     - resource: leave_request
       allowActions:
-        - delete
+        - suggest

@@ -1,12 +1,14 @@
 # yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: api.cerbos.dev/v1
-rolePolicy:
-  role: acme_manager
-  scope: acme.hr.uk
-  parentRoles: ["manager", "acme_creator"]
+resourcePolicy:
+  version: "default"
+  scope: "acme.hr.uk.brighton"
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+  resource: leave_request
   rules:
-    - resource: leave_request
-      allowActions:
-        - view:*
+    - roles: ["employee"]
+      actions:
+        - defer
+        - invite
+      effect: EFFECT_ALLOW
