@@ -599,12 +599,10 @@ func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyV
 
 		if rps != nil {
 			// check the first policy scope
-			for _, p := range rps.GetResourcePolicy().GetPolicies() {
-				if _, ok := addedResourceScopes[p.Scope]; !ok {
-					toLoad = append(toLoad, rps)
-					addedResourceScopes[p.Scope] = struct{}{}
-				}
-				break
+			p := rps.GetResourcePolicy().GetPolicies()[0]
+			if _, ok := addedResourceScopes[p.Scope]; !ok {
+				toLoad = append(toLoad, rps)
+				addedResourceScopes[p.Scope] = struct{}{}
 			}
 		}
 

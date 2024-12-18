@@ -285,6 +285,7 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 	rt.rules = newRules
 
 	delete(rt.schemas, deletedFqn)
+	delete(rt.meta, deletedFqn)
 
 	var scope string
 	switch rps.PolicySet.(type) {

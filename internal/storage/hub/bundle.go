@@ -190,7 +190,7 @@ func loadManifest(bundleFS afero.Fs) (*bundlev1.Manifest, error) {
 
 func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	for _, id := range candidates {
-		policySet, err := b.getMatch(id, true)
+		policySet, err := b.getMatch(id)
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +208,7 @@ func (b *Bundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, erro
 	for fqn := range b.manifest.PolicyIndex {
 		modID := namer.GenModuleIDFromFQN(fqn)
 
-		policySet, err := b.getMatch(modID, false)
+		policySet, err := b.getMatch(modID)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +226,7 @@ func (b *Bundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, erro
 func (b *Bundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	res := []*runtimev1.RunnablePolicySet{}
 	for _, id := range modIDs {
-		policySet, err := b.getMatch(id, true)
+		policySet, err := b.getMatch(id)
 		if err != nil {
 			return nil, err
 		}
@@ -239,7 +239,7 @@ func (b *Bundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*
 	return res, nil
 }
 
-func (b *Bundle) getMatch(id namer.ModuleID, withFileStat bool) (*runtimev1.RunnablePolicySet, error) {
+func (b *Bundle) getMatch(id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	cached, ok := b.cache.Get(id)
 	if ok {
 		return cached.policySet, cached.err
@@ -248,14 +248,12 @@ func (b *Bundle) getMatch(id namer.ModuleID, withFileStat bool) (*runtimev1.Runn
 	idHex := id.HexStr()
 	fileName := policyDir + idHex
 
-	if withFileStat {
-		if _, err := b.bundleFS.Stat(fileName); err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil, nil
-			}
-
-			return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
+	if _, err := b.bundleFS.Stat(fileName); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
 		}
+
+		return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
 	}
 
 	policySet, err := b.loadPolicySet(idHex, fileName)
