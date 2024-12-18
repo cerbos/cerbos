@@ -4,8 +4,8 @@
 package planner
 
 import (
+	"errors"
 	"fmt"
-
 	"github.com/google/cel-go/common/operators"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
@@ -36,19 +36,51 @@ func getTransformMapExpression(w *wrapper) (string, *exprpb.Expr, error) {
 	return op, w.getArg(n - 1).e(), nil
 }
 
-func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
-	obj := &lambdaAST{
-		iterVar:   e.IterVar,
-		iterVar2:  e.IterVar2,
-		iterRange: e.IterRange,
+var ErrExpectedSortBy = errors.New("expected sortBy comprehension")
+
+const sortByFuncName = "sortBy"
+
+func mkSortByAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
+	const function = "sortByAssociatedKeys"
+	w := (*wrapper)(e.Result)
+	var e2 *exprpb.Expr_Comprehension
+	if e2 = w.getArg(0).e().GetComprehensionExpr(); e2 == nil || w.getArgsLen() != 1 {
+		return nil, fmt.Errorf("%w, got %s", ErrExpectedSortBy, e.String())
 	}
+	obj := &lambdaAST{
+		operator:  sortByFuncName,
+		iterRange: e.AccuInit,
+		iterVar:   e2.IterVar,
+		expr:      (*wrapper)(e2.LoopStep).getArg(1).getListElement(0).e(),
+	}
+	if obj.expr == nil {
+		return nil, fmt.Errorf("%w, got %s", ErrExpectedSortBy, e.String())
+	}
+	return obj, nil
+}
+
+func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	var function string
 	var loopStep *wrapper
+	switch ls := e.LoopStep.ExprKind.(type) {
+	case *exprpb.Expr_CallExpr:
+		function = ls.CallExpr.Function
+		loopStep = (*wrapper)(e.LoopStep)
+	case *exprpb.Expr_IdentExpr:
+		return mkSortByAST(e)
+	default:
+		return nil, fmt.Errorf("expected loop-step expression type CallExpr, got: %T", ls)
+	}
 	if call := e.LoopStep.GetCallExpr(); call != nil {
 		function = call.Function
 		loopStep = (*wrapper)(e.LoopStep)
 	} else {
 		return nil, fmt.Errorf("expected loop-step expression type CallExpr, got: %T", e.LoopStep.ExprKind)
+	}
+	obj := &lambdaAST{
+		iterVar:   e.IterVar,
+		iterVar2:  e.IterVar2,
+		iterRange: e.IterRange,
 	}
 	switch function {
 	case operators.LogicalAnd:

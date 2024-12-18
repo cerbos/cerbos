@@ -565,3 +565,8 @@
     operator: sortBy
     operands:
       - variable: xs
+      - expression:
+          operator: lambda
+          operands:
+            - variable: x.score
+            - variable: x
