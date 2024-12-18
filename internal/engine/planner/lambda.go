@@ -42,7 +42,7 @@ var ErrExpectedSortBy = errors.New("expected sortBy comprehension")
 const sortByFuncName = "sortBy"
 
 func mkSortByAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
-	const function = "sortByAssociatedKeys"
+	const function = "@sortByAssociatedKeys"
 	w := (*wrapper)(e.Result)
 	var e2 *exprpb.Expr_Comprehension
 	if e2 = w.getArg(0).e().GetComprehensionExpr(); e2 == nil || w.getArgsLen() != 1 || w.Function() != function {
