@@ -34,6 +34,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	hubstore "github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cloud-api/bundle"
 )
 
 // NOTE(saml) this is the max allowable path length on macOS, which appears to be the shortest of common platforms (at 104).
@@ -75,37 +76,54 @@ func TestServer(t *testing.T) {
 	})
 
 	t.Run("store=bundle_local", func(t *testing.T) {
-		tpg := func(t *testing.T) testParam {
-			t.Helper()
-			ctx, cancelFunc := context.WithCancel(context.Background())
-			t.Cleanup(cancelFunc)
+		tpg := func(version bundle.Version) func(t *testing.T) testParam {
+			return func(t *testing.T) testParam {
+				t.Helper()
+				ctx, cancelFunc := context.WithCancel(context.Background())
+				t.Cleanup(cancelFunc)
 
-			dir := test.PathToDir(t, "bundle")
+				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", version)))
 
-			keyBytes, err := os.ReadFile(filepath.Join(dir, "secret_key.txt"))
-			require.NoError(t, err, "Failed to read secret key")
+				conf := &hubstore.Conf{
+					BundleVersion: version,
+					CacheSize:     1024,
+					Local: &hubstore.LocalSourceConf{
+						BundlePath: filepath.Join(dir, "bundle.crbp"),
+						TempDir:    t.TempDir(),
+					},
+				}
 
-			conf := &hubstore.Conf{
-				CacheSize:   1024,
-				Credentials: &hub.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))},
-				Local: &hubstore.LocalSourceConf{
-					BundlePath: filepath.Join(dir, "bundle.crbp"),
-					TempDir:    t.TempDir(),
-				},
+				switch version {
+				case bundle.Version1:
+					keyBytes, err := os.ReadFile(filepath.Join(dir, "secret_key.txt"))
+					require.NoError(t, err, "Failed to read secret key")
+
+					conf.Credentials = &hub.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))}
+				case bundle.Version2:
+					keyBytes, err := os.ReadFile(filepath.Join(dir, "encryption_key.txt"))
+					require.NoError(t, err, "Failed to read encryption key")
+
+					conf.Local.EncryptionKey = string(keyBytes)
+				default:
+				}
+
+				store, err := hubstore.NewStore(ctx, conf)
+				require.NoError(t, err)
+
+				schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
+				tp := testParam{
+					store:        store,
+					policyLoader: store,
+					schemaMgr:    schemaMgr,
+				}
+				return tp
 			}
-			store, err := hubstore.NewStore(ctx, conf)
-			require.NoError(t, err)
-
-			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-			tp := testParam{
-				store:        store,
-				policyLoader: store,
-				schemaMgr:    schemaMgr,
-			}
-			return tp
 		}
 
-		t.Run("api", apiTests(tpg))
+		t.Run("api", func(t *testing.T) {
+			t.Run("bundlev1", apiTests(tpg(bundle.Version1)))
+			t.Run("bundlev2", apiTests(tpg(bundle.Version2)))
+		})
 	})
 }
 
