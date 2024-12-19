@@ -102,7 +102,7 @@ require (
 	gocloud.dev v0.40.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/exp v0.0.0-20241215155358-4a5509556b9e
-	golang.org/x/net v0.32.0
+	golang.org/x/net v0.33.0
 	golang.org/x/sync v0.10.0
 	golang.org/x/tools v0.28.0
 	gonum.org/v1/gonum v0.15.1
