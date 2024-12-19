@@ -24,6 +24,7 @@ type Context interface {
 	StartPolicy(name string) Context
 	StartRolePolicyScope(scope string) Context
 	StartResource(kind string) Context
+	StartRole(role string) Context
 	StartRule(name string) Context
 	StartScope(scope string) Context
 	StartVariable(name, expr string) Context
@@ -113,6 +114,13 @@ func (c *context) StartResource(kind string) Context {
 	return c.start(&enginev1.Trace_Component{
 		Kind:    enginev1.Trace_Component_KIND_RESOURCE,
 		Details: &enginev1.Trace_Component_Resource{Resource: kind},
+	})
+}
+
+func (c *context) StartRole(role string) Context {
+	return c.start(&enginev1.Trace_Component{
+		Kind:    enginev1.Trace_Component_KIND_ROLE,
+		Details: &enginev1.Trace_Component_Role{Role: role},
 	})
 }
 
@@ -266,6 +274,8 @@ func (c noopContext) StartPolicy(string) Context { return c }
 func (c noopContext) StartRolePolicyScope(string) Context { return c }
 
 func (c noopContext) StartResource(string) Context { return c }
+
+func (c noopContext) StartRole(string) Context { return c }
 
 func (c noopContext) StartRule(string) Context { return c }
 

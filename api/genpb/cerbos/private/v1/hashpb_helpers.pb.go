@@ -744,6 +744,9 @@ func cerbos_engine_v1_Trace_Component_hashpb_sum(m *v11.Trace_Component, hasher 
 			case *v11.Trace_Component_RolePolicyScope:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.RolePolicyScope))
 
+			case *v11.Trace_Component_Role:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Role))
+
 			}
 		}
 	}
@@ -1363,6 +1366,12 @@ func cerbos_policy_v1_RoleRule_hashpb_sum(m *v12.RoleRule, hasher hash.Hash, ign
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.RoleRule.condition"]; !ok {
+		if m.GetCondition() != nil {
+			cerbos_policy_v1_Condition_hashpb_sum(m.GetCondition(), hasher, ignore)
+		}
+
 	}
 }
 

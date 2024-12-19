@@ -2,9 +2,14 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_creator
-  scope: acme.hr.uk
+  role: acme_london_employee
+  scope: acme.hr.uk.london
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+  parentRoles:
+    - "employee"
   rules:
     - resource: "*"
       allowActions: ["create"]
+      condition:
+        match:
+          expr: P.attr.city == "london"
