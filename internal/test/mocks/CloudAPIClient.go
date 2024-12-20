@@ -28,32 +28,41 @@ func (_m *CloudAPIClient) EXPECT() *CloudAPIClient_Expecter {
 	return &CloudAPIClient_Expecter{mock: &_m.Mock}
 }
 
-// BootstrapBundle provides a mock function with given fields: _a0, _a1
-func (_m *CloudAPIClient) BootstrapBundle(_a0 context.Context, _a1 string) (string, error) {
-	ret := _m.Called(_a0, _a1)
+// BootstrapBundle provides a mock function with given fields: ctx, bundleLabel
+func (_m *CloudAPIClient) BootstrapBundle(ctx context.Context, bundleLabel string) (string, []byte, error) {
+	ret := _m.Called(ctx, bundleLabel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BootstrapBundle")
 	}
 
 	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return rf(_a0, _a1)
+	var r1 []byte
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, []byte, error)); ok {
+		return rf(ctx, bundleLabel)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = rf(_a0, _a1)
+		r0 = rf(ctx, bundleLabel)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, string) []byte); ok {
+		r1 = rf(ctx, bundleLabel)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]byte)
+		}
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, bundleLabel)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // CloudAPIClient_BootstrapBundle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BootstrapBundle'
@@ -62,31 +71,31 @@ type CloudAPIClient_BootstrapBundle_Call struct {
 }
 
 // BootstrapBundle is a helper method to define mock.On call
-//   - _a0 context.Context
-//   - _a1 string
-func (_e *CloudAPIClient_Expecter) BootstrapBundle(_a0 interface{}, _a1 interface{}) *CloudAPIClient_BootstrapBundle_Call {
-	return &CloudAPIClient_BootstrapBundle_Call{Call: _e.mock.On("BootstrapBundle", _a0, _a1)}
+//   - ctx context.Context
+//   - bundleLabel string
+func (_e *CloudAPIClient_Expecter) BootstrapBundle(ctx interface{}, bundleLabel interface{}) *CloudAPIClient_BootstrapBundle_Call {
+	return &CloudAPIClient_BootstrapBundle_Call{Call: _e.mock.On("BootstrapBundle", ctx, bundleLabel)}
 }
 
-func (_c *CloudAPIClient_BootstrapBundle_Call) Run(run func(_a0 context.Context, _a1 string)) *CloudAPIClient_BootstrapBundle_Call {
+func (_c *CloudAPIClient_BootstrapBundle_Call) Run(run func(ctx context.Context, bundleLabel string)) *CloudAPIClient_BootstrapBundle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *CloudAPIClient_BootstrapBundle_Call) Return(_a0 string, _a1 error) *CloudAPIClient_BootstrapBundle_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *CloudAPIClient_BootstrapBundle_Call) Return(_a0 string, _a1 []byte, _a2 error) *CloudAPIClient_BootstrapBundle_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *CloudAPIClient_BootstrapBundle_Call) RunAndReturn(run func(context.Context, string) (string, error)) *CloudAPIClient_BootstrapBundle_Call {
+func (_c *CloudAPIClient_BootstrapBundle_Call) RunAndReturn(run func(context.Context, string) (string, []byte, error)) *CloudAPIClient_BootstrapBundle_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetBundle provides a mock function with given fields: _a0, _a1
-func (_m *CloudAPIClient) GetBundle(_a0 context.Context, _a1 string) (string, error) {
+func (_m *CloudAPIClient) GetBundle(_a0 context.Context, _a1 string) (string, []byte, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -94,8 +103,9 @@ func (_m *CloudAPIClient) GetBundle(_a0 context.Context, _a1 string) (string, er
 	}
 
 	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+	var r1 []byte
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, []byte, error)); ok {
 		return rf(_a0, _a1)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
@@ -104,13 +114,21 @@ func (_m *CloudAPIClient) GetBundle(_a0 context.Context, _a1 string) (string, er
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string) []byte); ok {
 		r1 = rf(_a0, _a1)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]byte)
+		}
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(_a0, _a1)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // CloudAPIClient_GetBundle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBundle'
@@ -132,12 +150,12 @@ func (_c *CloudAPIClient_GetBundle_Call) Run(run func(_a0 context.Context, _a1 s
 	return _c
 }
 
-func (_c *CloudAPIClient_GetBundle_Call) Return(_a0 string, _a1 error) *CloudAPIClient_GetBundle_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *CloudAPIClient_GetBundle_Call) Return(_a0 string, _a1 []byte, _a2 error) *CloudAPIClient_GetBundle_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *CloudAPIClient_GetBundle_Call) RunAndReturn(run func(context.Context, string) (string, error)) *CloudAPIClient_GetBundle_Call {
+func (_c *CloudAPIClient_GetBundle_Call) RunAndReturn(run func(context.Context, string) (string, []byte, error)) *CloudAPIClient_GetBundle_Call {
 	_c.Call.Return(run)
 	return _c
 }

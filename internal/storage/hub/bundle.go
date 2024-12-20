@@ -5,6 +5,7 @@ package hub
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -13,10 +14,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cerbos/cerbos/internal/util"
-
 	"github.com/cerbos/cloud-api/credentials"
+	"github.com/cerbos/cloud-api/crypto"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/zipfs"
 	"go.uber.org/zap"
@@ -29,6 +30,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -40,19 +42,34 @@ const (
 type cleanupFn func() error
 
 type OpenOpts struct {
-	Credentials *credentials.Credentials
-	ScratchFS   afero.Fs
-	BundlePath  string
-	Source      string
-	CacheSize   uint
+	Credentials   *credentials.Credentials
+	ScratchFS     afero.Fs
+	BundlePath    string
+	Source        string
+	EncryptionKey []byte
+	CacheSize     uint
 }
 
 type Bundle struct {
 	bundleFS afero.Fs
-	manifest *bundlev1.Manifest
+	manifest *bundlev2.Manifest
 	cache    *cache.Cache[namer.ModuleID, cacheEntry]
 	cleanup  cleanupFn
 	path     string
+}
+
+func toManifestV2(manifest *bundlev1.Manifest) *bundlev2.Manifest {
+	m := &bundlev2.Manifest{
+		ApiVersion:  manifest.GetApiVersion(),
+		PolicyIndex: manifest.GetPolicyIndex(),
+		Schemas:     manifest.GetSchemas(),
+		Meta: &bundlev2.Meta{
+			Identifier: manifest.GetMeta().GetIdentifier(),
+			Source:     manifest.GetMeta().GetSource(),
+		},
+	}
+
+	return m
 }
 
 type cacheEntry struct {
@@ -82,10 +99,9 @@ func Open(opts OpenOpts) (*Bundle, error) {
 	}
 
 	logger.Info("Bundle opened", zap.String("identifier", manifest.Meta.Identifier))
-
 	return &Bundle{
 		path:     decryptedPath,
-		manifest: manifest,
+		manifest: toManifestV2(manifest),
 		bundleFS: zipFS,
 		cleanup:  cleanup,
 		cache:    cache.New[namer.ModuleID, cacheEntry]("bundle", opts.CacheSize, metrics.SourceKey(opts.Source)),
@@ -131,6 +147,79 @@ func decryptBundle(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
 	return fileName, size, nil
 }
 
+func OpenV2(opts OpenOpts) (*Bundle, error) {
+	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
+	logger.Info("Opening bundle v2")
+
+	decryptedPath, size, err := decryptBundleV2(opts, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	zipFS, cleanup, err := archiveToFS(opts, decryptedPath, size, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debug("Reading manifest")
+	manifest, err := loadManifestV2(zipFS)
+	if err != nil {
+		_ = cleanup()
+		return nil, err
+	}
+
+	logger.Info("Bundle v2 opened", zap.String("identifier", manifest.Meta.Identifier))
+	return &Bundle{
+		path:     decryptedPath,
+		manifest: manifest,
+		bundleFS: zipFS,
+		cleanup:  cleanup,
+		cache:    cache.New[namer.ModuleID, cacheEntry]("bundle", opts.CacheSize, metrics.SourceKey(opts.Source)),
+	}, nil
+}
+
+func decryptBundleV2(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
+	input, err := os.Open(opts.BundlePath)
+	if err != nil {
+		logger.Debug("Failed to open bundle v2", zap.Error(err))
+		return "", 0, fmt.Errorf("failed to open bundle v2 at path %q: %w", opts.BundlePath, err)
+	}
+	defer input.Close()
+
+	var decrypted io.Reader
+	if opts.EncryptionKey == nil {
+		decrypted = input
+	} else {
+		logger.Debug("Decrypting bundle")
+
+		var d bytes.Buffer
+		_, err := crypto.DecryptChaCha20Poly1305Stream(opts.EncryptionKey, input, &d)
+		if err != nil {
+			return "", 0, fmt.Errorf("failed to decrypt: %w", err)
+		}
+
+		decrypted = &d
+	}
+
+	afs := &afero.Afero{Fs: opts.ScratchFS}
+	outFile, err := afs.TempFile(".", "bundle-*")
+	if err != nil {
+		logger.Debug("Failed to create temporary file", zap.Error(err))
+		return "", 0, fmt.Errorf("failed to create temporary file: %w", err)
+	}
+	defer outFile.Close()
+
+	fileName := outFile.Name()
+	logger.Debug("Writing bundle v2 archive", zap.String("archive", fileName))
+	size, err := io.Copy(outFile, decrypted)
+	if err != nil {
+		logger.Debug("Failed to write bundle v2 archive", zap.Error(err))
+		return "", 0, fmt.Errorf("failed to write bundle v2 archive: %w", err)
+	}
+
+	return fileName, size, nil
+}
+
 func archiveToFS(opts OpenOpts, archivePath string, archiveSize int64, logger *zap.Logger) (afero.Fs, cleanupFn, error) {
 	log := logger.With(zap.String("archive", archivePath))
 	afs := &afero.Afero{Fs: opts.ScratchFS}
@@ -169,6 +258,34 @@ func archiveToFS(opts OpenOpts, archivePath string, archiveSize int64, logger *z
 }
 
 func loadManifest(bundleFS afero.Fs) (*bundlev1.Manifest, error) {
+	manifestBytes, err := readManifestFile(bundleFS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read manifest: %w", err)
+	}
+
+	manifest := &bundlev1.Manifest{}
+	if err := manifest.UnmarshalVT(manifestBytes); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal manifest: %w", err)
+	}
+
+	return manifest, nil
+}
+
+func loadManifestV2(bundleFS afero.Fs) (*bundlev2.Manifest, error) {
+	manifestBytes, err := readManifestFile(bundleFS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read manifest: %w", err)
+	}
+
+	manifest := &bundlev2.Manifest{}
+	if err := manifest.UnmarshalVT(manifestBytes); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal manifest: %w", err)
+	}
+
+	return manifest, nil
+}
+
+func readManifestFile(bundleFS afero.Fs) ([]byte, error) {
 	mf, err := bundleFS.Open(manifestFileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read manifest: %w", err)
@@ -180,12 +297,7 @@ func loadManifest(bundleFS afero.Fs) (*bundlev1.Manifest, error) {
 		return nil, fmt.Errorf("failed to read manifest bytes: %w", err)
 	}
 
-	manifest := &bundlev1.Manifest{}
-	if err := manifest.UnmarshalVT(manifestBytes); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal manifest: %w", err)
-	}
-
-	return manifest, nil
+	return manifestBytes, nil
 }
 
 func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
