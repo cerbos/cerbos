@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 
 	"github.com/cerbos/cerbos/schema"
 )

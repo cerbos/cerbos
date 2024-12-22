@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v6"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
