@@ -358,6 +358,11 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
   "attr": {
     "id": "125",
     "teams": ["design", "communications", "product", "commercial"],
+    "allowance": 5000,
+    "limits": {
+        "design": 1000,
+        "product": 20000
+    },
     "clients": {
       "acme": {"active": true},
       "bb inc": {"active": true}
@@ -373,17 +378,24 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | Operator/Function | Description | Example
 | + | Concatenates lists | P.attr.teams + ["design", "engineering"]
 | []       | Index into a list or a map | P.attr.teams[0] == "design" && P.attr.clients["acme"]["active"] == true
-| all      | Check whether all elements in a list match the predicate | P.attr.teams.all(t, size(t) > 3)
-| except | Produces the set difference of two lists | P.attr.teams.except(["design", "engineering"]) == ["communications", "product", "commercial"]
-| exists   | Check whether at least one element matching the predicate exists | P.attr.teams.exists(t, t.startsWith("comm"))
-| exists_one | Check that only one element matching the predicate exists | P.attr.teams.exists_one(t, t.startsWith("comm")) == false
-| filter   | Filter a list using the predicate | size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
+| all      | Check whether all elements in a list match the predicate. | P.attr.teams.all(t, size(t) > 3) && 
+| distinct | Returns the distinct elements of a list | [1, 2, 2, 3, 3, 3].distinct() == [1, 2, 3]
+| except   | Produces the set difference of two lists | P.attr.teams.except(["design", "engineering"]) == ["communications", "product", "commercial"]
+| exists   | Check whether at least one element matching the predicate exists in a list or map. Support two variable form: <list\|map>.exists(<indexVar\|keyVar>, <valueVar>, <predicate>) | P.attr.teams.exists(t, t.startsWith("comm"))
+| exists_one | Check that only one element matching the predicate exists. Support two variable form: <list\|map>.exists_one(<indexVar\|keyVar>, <valueVar>, <predicate>) | P.attr.teams.exists_one(t, t.startsWith("comm")) == false
+| filter   | Filter a list using the predicate. Support two variable form: <list\|map>.filter(<indexVar\|keyVar>, <valueVar>, <predicate>)| size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
+| flatten   | Flattens a list. If an optional depth is provided, the list is flattened to a the specified level. A negative depth value will result in an error| 1,2,[],[],[3,4]].flatten() == [1, 2, 3, 4] && [1,[2,[3,[4]]]].flatten(2) == [1, 2, 3, [4]]
 | hasIntersection| Checks whether the lists have at least one common element | hasIntersection(["design", "engineering"], P.attr.teams)
 | in       | Check whether the given element is contained in the list or map | ("design" in P.attr.teams) && ("acme" in P.attr.clients)
 | intersect| Produces the set intersection of two lists | intersect(["design", "engineering"], P.attr.teams) == ["design"]
-| isSubset| Checks whether the list is a subset of another list | ["design", "engineering"].isSubset(P.attr.teams) == false
+| isSubset | Checks whether the list is a subset of another list | ["design", "engineering"].isSubset(P.attr.teams) == false
 | map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
+| range    | Returns a list of integers from 0 to n-1 | lists.range(5) == [0, 1, 2, 3, 4]
+| reverse  | Returns the elements of a list in reverse order | [5, 3, 1, 2].reverse() == [2, 1, 3, 5]
 | size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
+| slice    | Returns a new sub-list using the indexes provided | [1,2,3,4].slice(1, 3) == [2, 3]
+| sort     | Sorts a list with comparable elements. If the element type is not comparable or the element types are not the same, the function will produce an error | [3, 2, 1].sort() == [1, 2, 3]
+| sortBy   | Sorts a list by a key value, i.e., the order is determined by the result of an expression applied to each element of the list | [{ "name": "foo", "score": 0 },{ "name": "bar", "score": -10 },{ "name": "baz", "score": 1000 }].sortBy(e, e.score).map(e, e.name) == ["bar", "foo", "baz"]
 |===
 
 
