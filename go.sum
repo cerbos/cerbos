@@ -153,8 +153,10 @@ github.com/cerbos/cerbos-sdk-go v0.2.11 h1:dY9le6woEq6n4LyuWIlfvfcT8gWIkhDUj/nkr
 github.com/cerbos/cerbos-sdk-go v0.2.11/go.mod h1:i+t8VwRlSXWVqnaSUBG3BUKuQOZOatWBIsL/+9f/Ob0=
 github.com/cerbos/cerbos/api/genpb v0.40.0 h1:4DbSY1krFTrPDmI5SndXu8qX+zi0mhimTa5TzBM1COs=
 github.com/cerbos/cerbos/api/genpb v0.40.0/go.mod h1:OuWT4RJkmIxqLos3+c6y3NLDjoggOlTAXb04vQaMQIY=
-github.com/cerbos/cloud-api v0.1.31 h1:S9bPCwTnzA26qJK60tqDXNT+K1DntIINTjlzyHBu43s=
-github.com/cerbos/cloud-api v0.1.31/go.mod h1:fW7iZ0UAF+xX2RmFtMFzwmUQtPxrZoZdF8Dmj8Wg330=
+github.com/cerbos/cloud-api v0.1.32-0.20241216190745-352d09c284f0 h1:5mOe7hcB9QofqiWndEHqM9jmy9io7NjETnf9Wat/h6k=
+github.com/cerbos/cloud-api v0.1.32-0.20241216190745-352d09c284f0/go.mod h1:6vb38plbfodVBhmfTA2NuG6xI8n/hHlmLkCOC/+LLNo=
+github.com/cerbos/cloud-api v0.1.32 h1:xrsNZxloROJpCZpFdnLbbgKRmd0S/ufbb1GnLO2czr8=
+github.com/cerbos/cloud-api v0.1.32/go.mod h1:6vb38plbfodVBhmfTA2NuG6xI8n/hHlmLkCOC/+LLNo=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
