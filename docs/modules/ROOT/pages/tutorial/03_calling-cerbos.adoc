@@ -27,10 +27,14 @@ Once Cerbos has started up you should see an output confirming that there are 3 
 
 [source,sh]
 ----
-2022-01-25T09:46:03.370Z  INFO  cerbos.server maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined
-2022-01-25T09:46:03.382Z  INFO  cerbos.index  Found 3 executable policies
-2022-01-25T09:46:03.383Z  INFO  cerbos.grpc Starting gRPC server at :3593
-2022-01-25T09:46:03.383Z  INFO  cerbos.http Starting HTTP server at :3592
+2024-12-28T13:55:57.043+0600    INFO    cerbos.server   maxprocs: Leaving GOMAXPROCS=8: CPU quota undefined
+2024-12-28T13:55:57.044+0600    INFO    cerbos.server   Loading configuration from .cerbos.yaml
+2024-12-28T13:55:57.045+0600    WARN    cerbos.otel     Disabling OTLP traces because neither OTEL_EXPORTER_OTLP_ENDPOINT nor OTEL_EXPORTER_OTLP_TRACES_ENDPOINT is defined
+2024-12-28T13:55:57.046+0600    INFO    cerbos.disk.store       Initializing disk store from /Users/username/tutorial/policies
+2024-12-28T13:55:57.048+0600    INFO    cerbos.index    Found 3 executable policies
+2024-12-28T13:55:57.048+0600    INFO    cerbos.telemetry        Telemetry disabled
+2024-12-28T13:55:57.048+0600    INFO    cerbos.grpc     Starting gRPC server at :3593
+2024-12-28T13:55:57.050+0600    INFO    cerbos.http     Starting HTTP server at :3592
 ----
 
 At this point how you make a request to the Cerbos instance is down to your preference - a simple cURL command or using a GUI such as Postman also works.
@@ -44,7 +48,7 @@ A call to Cerbos contains 3 key bits of information:
 . The Resources - a map of entities of a resource kind that are they requesting access too
 . The Actions - what actions are they trying to perform on the entities
 
-The request payload to the `/api/check` endpoint takes these 3 bits of information as JSON:
+The request payload to the `/api/check/resources` endpoint takes these 3 bits of information as JSON:
 
 [source,json]
 ----
@@ -54,15 +58,16 @@ The request payload to the `/api/check` endpoint takes these 3 bits of informati
     "roles": ["user"],  // list of roles from user's profile
     "attr": {}          // a map of attributes about the user - not used yet
   },
-  "resource": {
-    "kind": "contact",  // the type of the resources
-    "instances": {      // a map of the resource instance(s) being checked
-        "contact_1": {  // key is the ID of the resource instance
-            "attr": {}  // a map of attributes about the resource - not used yet
-        }
+  "resources": [        // an array of resources being accessed
+    {
+      "actions": ["read"],  // the list of actions to be performed on the resource
+      "resource": {         // details about the resource
+        "kind": "contact",  // the type of the resource
+        "id": "contact_1",  // the ID of the specific resource instance
+        "attr": {}          // a map of attributes about the resource - not used yet
+      }
     }
-  },
-  "actions": ["read"]   // the list of actions to be done on the resource
+  ]
 }
 ----
 
@@ -70,7 +75,7 @@ To make the actual call as a cURL with the default server config:
 
 [source,sh]
 ----
-curl --location --request POST 'http://localhost:3592/api/check' \
+curl --location --request POST 'http://localhost:3592/api/check/resources' \
     --header 'Content-Type: application/json' \
     --data-raw '{
       "principal": {
@@ -78,15 +83,16 @@ curl --location --request POST 'http://localhost:3592/api/check' \
         "roles": ["user"],
         "attr": {}
       },
-      "resource": {
-        "kind": "contact",
-        "instances": {
-            "contact_1": {
-                "attr": {}
-            }
-        }
-      },
-      "actions": ["read"]
+      "resources": [
+          {
+              "actions": ["read"],
+              "resource": {
+                  "kind": "contact",
+                  "id": "contact_1",
+                  "attr": {}
+              }
+          }
+      ]
     }'
 ----
 
@@ -95,13 +101,18 @@ The response object looks as follows where for each instance of the resource the
 [source,json]
 ----
 {
-  "resourceInstances": {
-    "contact_1": {
-      "actions": {
-        "read": "EFFECT_ALLOW"
-      }
-    }
-  }
+    "results": [
+        {
+            "resource": {
+                "id": "contact_1",
+                "kind": "contact"
+            },
+            "actions": {
+                "read": "EFFECT_ALLOW"
+            }
+        }
+    ],
+    "cerbosCallId": "49KQ6456PRBLWYMXYDBKZM1F6H"
 }
 ----
 
