@@ -1,0 +1,15 @@
+{
+  "suites": [
+    {
+      "file": "example_test.yaml",
+      "name": "Example test suite",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
+      },
+      "error": "Failed to load the test suite: invalid test \"Example test\": found output expectations for actions that are not in the input actions list: [edit]"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
+  }
+}
