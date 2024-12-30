@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: two-var-compre
+  rules:
+    - actions:
+        - all
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
+      condition:
+        match:
+          expr: R.attr.deps.all(k, v, k != v)

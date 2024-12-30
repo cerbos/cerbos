@@ -41,6 +41,52 @@ condition:
           ["design", "engineering"].isSubset(P.attr.teams) == false
       - expr: |-
           P.attr.teams.except(["design", "engineering"]) == ["communications", "product", "commercial"]
+      - expr: |-
+          P.attr["1-2-3"].all(i, j, i < j)
+      - expr: |-
+          {'hello': 'world', 'taco': 'taco'}.all(k, v, k != v) == false
+      - expr: |-
+          {'h': ['hello', 'hi'], 'j': ['joke', 'jog']}.all(k, vals, vals.all(v, v.startsWith(k)))
+      - expr: |-
+          {'greeting': 'hello', 'farewell': 'goodbye'}.exists(k, v, k.startsWith('good') || v.endsWith('bye'))
+      - expr: |-
+          [1, 2, 4, 8, 16].exists(i, v, v % 2 != i)
+      - expr: |-
+          [1, 2, 1, 3, 1, 4].existsOne(i, v, i == 1 || v == 1) == false &&
+          {'i': 0, 'j': 1, 'k': 2}.existsOne(i, v, i == 'l' || v == 1)
+      - expr: |-
+          [1, 2, 3].transformList(indexVar, valueVar, (indexVar * valueVar) + valueVar) == [1, 4, 9]
+      - expr: |-
+          P.attr["1-2-3"].map(x, int(x)).transformList(indexVar, valueVar, (indexVar * valueVar) + valueVar) == [1, 4, 9]
+      - expr: |-
+          [1, 2, 3].transformList(indexVar, valueVar, indexVar % 2 == 0, (indexVar * valueVar) + valueVar) == [1, 9]
+      - expr: |-
+          {'greeting': 'hello', 'farewell': 'goodbye'}.transformList(k, _, k).sort() == ['greeting', 'farewell'].sort()
+      - expr: |-
+          {'greeting': 'hello', 'farewell': 'goodbye'}.transformList(_, v, v).sort() == ['hello', 'goodbye'].sort()
+      - expr: |-
+          [1, 2, 3].transformMap(indexVar, valueVar, (indexVar * valueVar) + valueVar) == {0: 1, 1: 4, 2: 9} &&
+          [1, 2, 3].transformMap(indexVar, valueVar, indexVar % 2 == 0, (indexVar * valueVar) + valueVar) == {0: 1, 2: 9} &&
+          {'greeting': 'hello'}.transformMap(k, v, v + '!') == {'greeting': 'hello!'}
+      - expr: |-
+          {'greeting': 'hello'}.transformMapEntry(keyVar, valueVar, {valueVar: keyVar}) == {'hello': 'greeting'} &&
+          P.attr["1-2-3"].transformMapEntry(indexVar, valueVar, {valueVar: indexVar}) == {1: 0, 2: 1, 3: 2}
+      - expr: |-
+          [3, 2, 1].sort() == [1, 2, 3] &&
+          ['c', 'b', 'a'].sort() == ['a', 'b', 'c']
+      - expr: |-
+          [2, 1, 'a'].reverse() == ['a', 1, 2]
+      - expr: |-
+          lists.range(3) == [0, 1, 2]
+      - expr: |-
+          [1, 2, 1, 2, 3, 1, 2].distinct().sort() == [1, 2, 3]
+      - expr: |-
+          [1, 2, 3, 4].slice(1, 3) == [2, 3] &&
+          [1, 2, 3, 4].slice(2, 4) == [3, 4]
+      - expr: |-
+          [1,[2,[3,4]]].flatten() == [1, 2, [3, 4]]
+      - expr: |-
+          [{ "name": "foo", "score": 0 },{ "name": "bar", "score": -10 },{ "name": "baz", "score": 1000 }].sortBy(e, e.score).map(e, e.name) == ["bar", "foo", "baz"]
 request: {
   "principal": {
     "id": "john",
@@ -48,6 +94,7 @@ request: {
     "attr": {
       "department": "marketing",
       "teams": ["design", "communications", "product", "commercial"],
+      "1-2-3": [1, 2, 3],
       "clients": {
         "acme": {"active": true},
         "bb inc": {"active": true}

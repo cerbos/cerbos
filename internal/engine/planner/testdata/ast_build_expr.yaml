@@ -259,3 +259,314 @@
                   - variable: x
                   - variable: t
             - variable: t
+"['a', 'b'].exists(k, v, k != v)":
+  expression: &compre
+    operator: exists
+    operands:
+      - value: ['a', 'b']
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: ne
+                operands:
+                  - variable: k
+                  - variable: v
+            - variable: k
+            - variable: v
+"['a', 'b'].exists_one(k, v, k != v)":
+  expression:
+    <<: *compre
+    operator: exists_one
+"['a', 'b'].all(k, v, k != v)":
+  expression:
+    <<: *compre
+    operator: all
+"[1, 2].transformMap(k, v, k * v)":
+  expression:
+    operator: transformMap
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: mult
+                operands:
+                  - variable: k
+                  - variable: v
+            - variable: k
+            - variable: v
+"[1, 2].transformMap(k, v, k % 2 == 0, v * k)":
+  expression:
+    operator: transformMap
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: k
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: mult
+                operands:
+                  - variable: v
+                  - variable: k
+            - variable: k
+            - variable: v
+"{}.transformMap(k, v, k * v)":
+  expression:
+    operator: transformMap
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: mult
+                operands:
+                  - variable: k
+                  - variable: v
+            - variable: k
+            - variable: v
+"{}.transformMap(k, v, k % 2 == 0, v * k)":
+  expression:
+    operator: transformMap
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: k
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: mult
+                operands:
+                  - variable: v
+                  - variable: k
+            - variable: k
+            - variable: v
+"[1, 2].transformList(i, v, i * v)":
+  expression:
+    operator: transformList
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: mult
+                operands:
+                  - variable: i
+                  - variable: v
+            - variable: i
+            - variable: v
+"[1, 2].transformList(i, v, i % 2 == 0, i * v)":
+  expression:
+    operator: transformList
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: i
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: mult
+                operands:
+                  - variable: i
+                  - variable: v
+            - variable: i
+            - variable: v
+"{}.transformList(i, v, i * v)":
+  expression:
+    operator: transformList
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: mult
+                operands:
+                  - variable: i
+                  - variable: v
+            - variable: i
+            - variable: v
+"{}.transformList(k, v, k % 2 == 0, k * v)":
+  expression:
+    operator: transformList
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: k
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: mult
+                operands:
+                  - variable: k
+                  - variable: v
+            - variable: k
+            - variable: v
+"{}.transformMapEntry(k, v, k % 2 == 0, {v: k})":
+  expression:
+    operator: transformMapEntry
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: k
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: struct
+                operands:
+                  - expression:
+                      operator: set-field
+                      operands:
+                        - variable: v
+                        - variable: k
+            - variable: k
+            - variable: v
+"{}.transformMapEntry(k, v, {v: k})":
+  expression:
+    operator: transformMapEntry
+    operands:
+      - expression:
+          operator: struct
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: struct
+                operands:
+                  - expression:
+                      operator: set-field
+                      operands:
+                        - variable: v
+                        - variable: k
+            - variable: k
+            - variable: v
+"[1, 2].transformMapEntry(k, v, k % 2 == 0, {v: k})":
+  expression:
+    operator: transformMapEntry
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      operator: mod
+                      operands:
+                        - variable: k
+                        - value: 2
+                  - value: 0
+            - expression:
+                operator: struct
+                operands:
+                  - expression:
+                      operator: set-field
+                      operands:
+                        - variable: v
+                        - variable: k
+            - variable: k
+            - variable: v
+"[1, 2].transformMapEntry(k, v, {v: k})":
+  expression:
+    operator: transformMapEntry
+    operands:
+      - value: [1, 2]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: struct
+                operands:
+                  - expression:
+                      operator: set-field
+                      operands:
+                        - variable: v
+                        - variable: k
+            - variable: k
+            - variable: v
+"xs.sort()":
+  expression:
+    operator: sort
+    operands:
+      - variable: xs
+"xs.reverse()":
+  expression:
+    operator: reverse
+    operands:
+      - variable: xs
+"lists.range(3)":
+  expression:
+    operator: range
+    operands:
+      - variable: lists
+      - value: 3
+"xs.distinct()":
+  expression:
+    operator: distinct
+    operands:
+      - variable: xs
+"xs.flatten()":
+  expression:
+    operator: flatten
+    operands:
+      - variable: xs
+"xs.sortBy(x, x.score)":
+  expression:
+    operator: sortBy
+    operands:
+      - variable: xs
+      - expression:
+          operator: lambda
+          operands:
+            - variable: x.score
+            - variable: x
