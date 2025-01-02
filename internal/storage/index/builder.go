@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"path"
 	"sort"
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -160,33 +161,37 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 }
 
 type indexBuilder struct {
-	executables                 ModuleIDSet
-	modIDToFile                 map[namer.ModuleID]string
-	fileToModID                 map[string]namer.ModuleID
-	dependents                  map[namer.ModuleID]ModuleIDSet
-	dependencies                map[namer.ModuleID]ModuleIDSet
-	missingScopes               map[string]map[string]struct{}
-	sharedScopePermissionGroups map[string]map[policyv1.ScopePermissions]struct{}
-	conflictingScopes           map[string]struct{}
-	missing                     map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
-	stats                       *statsCollector
-	duplicates                  []*runtimev1.IndexBuildErrors_DuplicateDef
-	loadFailures                []*runtimev1.IndexBuildErrors_LoadFailure
-	disabled                    []*runtimev1.IndexBuildErrors_Disabled
+	executables                   ModuleIDSet
+	modIDToFile                   map[namer.ModuleID]string
+	fileToModID                   map[string]namer.ModuleID
+	dependents                    map[namer.ModuleID]ModuleIDSet
+	dependencies                  map[namer.ModuleID]ModuleIDSet
+	missingScopes                 map[string]map[string]struct{}
+	sharedScopePermissionGroups   map[string]map[policyv1.ScopePermissions]struct{}
+	conflictingScopes             map[string]struct{}
+	missingResourceScopes         map[string]map[string]map[string]struct{} // map[{resource}]map[{scope}]map[{version}]struct{}
+	foundRolePolicyResourceScopes map[string]map[string]map[string]struct{} // map[{resource}]map[{scope}]map[{version}]struct{}
+	missing                       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
+	stats                         *statsCollector
+	duplicates                    []*runtimev1.IndexBuildErrors_DuplicateDef
+	loadFailures                  []*runtimev1.IndexBuildErrors_LoadFailure
+	disabled                      []*runtimev1.IndexBuildErrors_Disabled
 }
 
 func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
-		executables:                 make(ModuleIDSet),
-		modIDToFile:                 make(map[namer.ModuleID]string),
-		fileToModID:                 make(map[string]namer.ModuleID),
-		dependents:                  make(map[namer.ModuleID]ModuleIDSet),
-		dependencies:                make(map[namer.ModuleID]ModuleIDSet),
-		missing:                     make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
-		missingScopes:               make(map[string]map[string]struct{}),
-		sharedScopePermissionGroups: make(map[string]map[policyv1.ScopePermissions]struct{}),
-		conflictingScopes:           make(map[string]struct{}),
-		stats:                       newStatsCollector(),
+		executables:                   make(ModuleIDSet),
+		modIDToFile:                   make(map[namer.ModuleID]string),
+		fileToModID:                   make(map[string]namer.ModuleID),
+		dependents:                    make(map[namer.ModuleID]ModuleIDSet),
+		dependencies:                  make(map[namer.ModuleID]ModuleIDSet),
+		missing:                       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
+		missingScopes:                 make(map[string]map[string]struct{}),
+		sharedScopePermissionGroups:   make(map[string]map[policyv1.ScopePermissions]struct{}),
+		conflictingScopes:             make(map[string]struct{}),
+		missingResourceScopes:         make(map[string]map[string]map[string]struct{}),
+		foundRolePolicyResourceScopes: make(map[string]map[string]map[string]struct{}),
+		stats:                         newStatsCollector(),
 	}
 }
 
@@ -251,29 +256,92 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 	delete(idx.missingScopes, policyKey)
 	idx.stats.add(p)
 
+	var scopePermission policyv1.ScopePermissions
+	var resourceKind string
 	switch p.Kind {
-	case policy.RolePolicyKind:
-		sharedScope, ok := idx.sharedScopePermissionGroups[p.Scope]
-		if !ok {
-			sharedScope = make(map[policyv1.ScopePermissions]struct{})
-			idx.sharedScopePermissionGroups[p.Scope] = sharedScope
-		} else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
-			scopePermission := p.GetRolePolicy().ScopePermissions
-			if _, ok := sharedScope[scopePermission]; !ok {
-				sharedScope[scopePermission] = struct{}{}
-			}
+	case policy.ResourceKind:
+		rp := p.GetResourcePolicy()
+		scopePermission = rp.ScopePermissions
+		resourceKind = rp.Resource
+		idx.executables[p.ID] = struct{}{}
 
-			if len(sharedScope) > 1 {
-				idx.conflictingScopes[p.Scope] = struct{}{}
+		var scopes map[string]map[string]struct{}
+		var ok bool
+		if scopes, ok = idx.missingResourceScopes[resourceKind]; ok {
+			var versions map[string]struct{}
+			if versions, ok = scopes[rp.Scope]; ok {
+				delete(versions, rp.Version)
+			}
+			if len(versions) == 0 {
+				delete(scopes, rp.Scope)
 			}
 		}
+		if len(scopes) == 0 {
+			delete(idx.missingResourceScopes, resourceKind)
+		}
 
-		fallthrough
-	case policy.ResourceKind, policy.PrincipalKind:
+	case policy.PrincipalKind:
+		scopePermission = p.GetPrincipalPolicy().ScopePermissions
 		idx.executables[p.ID] = struct{}{}
+
+	case policy.RolePolicyKind:
+		scopePermission = p.GetRolePolicy().ScopePermissions
+		idx.executables[p.ID] = struct{}{}
+
+		rp := p.GetRolePolicy()
+		for _, rule := range rp.GetRules() {
+			version := "default" // TODO(saml) add `version` to role policies
+			var resource string
+			var scopes map[string]map[string]struct{}
+			for resource, scopes = range idx.missingResourceScopes {
+				if util.MatchesGlob(rule.Resource, resource) {
+					var versions map[string]struct{}
+					var ok bool
+					if versions, ok = scopes[rp.Scope]; ok {
+						delete(idx.missingScopes, namer.PolicyKeyFromFQN(namer.ResourcePolicyFQN(resource, version, rp.Scope)))
+						delete(versions, version)
+					}
+					if len(versions) == 0 {
+						delete(scopes, rp.Scope)
+					}
+				}
+			}
+			if len(scopes) == 0 {
+				delete(idx.missingResourceScopes, resourceKind)
+			}
+
+			// Record that this role policy combination exists
+			scopes, ok := idx.foundRolePolicyResourceScopes[rule.Resource]
+			if !ok {
+				scopes = make(map[string]map[string]struct{})
+				idx.foundRolePolicyResourceScopes[rule.Resource] = scopes
+			}
+
+			versions, ok := scopes[rp.Scope]
+			if !ok {
+				versions = make(map[string]struct{})
+				scopes[rp.Scope] = versions
+			}
+
+			versions[version] = struct{}{}
+		}
 
 	case policy.DerivedRolesKind, policy.ExportConstantsKind, policy.ExportVariablesKind:
 		// not executable
+	}
+
+	sharedScope, ok := idx.sharedScopePermissionGroups[p.Scope]
+	if !ok {
+		sharedScope = make(map[policyv1.ScopePermissions]struct{})
+		idx.sharedScopePermissionGroups[p.Scope] = sharedScope
+	} else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
+		if _, ok := sharedScope[scopePermission]; !ok {
+			sharedScope[scopePermission] = struct{}{}
+		}
+
+		if len(sharedScope) > 1 {
+			idx.conflictingScopes[p.Scope] = struct{}{}
+		}
 	}
 
 	deps, paths := policy.Dependencies(p.Policy)
@@ -311,9 +379,46 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		}
 	}
 
+ancestors:
 	for moduleID, fqn := range policy.RequiredAncestors(p.Policy) {
 		ancestorPolicyKey := namer.PolicyKeyFromFQN(fqn)
-		if _, ok := idx.modIDToFile[moduleID]; !ok {
+		_, ok := idx.modIDToFile[moduleID]
+
+		// check to see if matching role policies (with a rule for the given resource) reside in any of the missing scopes
+		if !ok && resourceKind != "" { //nolint:nestif
+			baseFqn, scope, _ := strings.Cut(ancestorPolicyKey, "/")
+
+			var version string
+			if versionIndex := strings.LastIndex(baseFqn, ".v"); versionIndex != -1 {
+				version = baseFqn[versionIndex+2:]
+			}
+
+			for foundResource, scopes := range idx.foundRolePolicyResourceScopes {
+				if util.MatchesGlob(foundResource, resourceKind) {
+					if versions, ok := scopes[scope]; ok {
+						if _, ok := versions[version]; ok {
+							continue ancestors
+						}
+					}
+				}
+			}
+
+			scopes, ok := idx.missingResourceScopes[resourceKind]
+			if !ok {
+				scopes = make(map[string]map[string]struct{})
+				idx.missingResourceScopes[resourceKind] = scopes
+			}
+
+			versions, ok := scopes[scope]
+			if !ok {
+				versions = make(map[string]struct{})
+				scopes[scope] = versions
+			}
+
+			versions[version] = struct{}{}
+		}
+
+		if !ok {
 			if ma, ok := idx.missingScopes[ancestorPolicyKey]; !ok {
 				idx.missingScopes[ancestorPolicyKey] = map[string]struct{}{policyKey: {}}
 			} else {

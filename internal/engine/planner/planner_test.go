@@ -173,7 +173,7 @@ func Test_evaluateCondition(t *testing.T) {
 			want: "true",
 		},
 	}
-	evalCtx := &evalContext{timeFn: time.Now}
+	evalCtx := &evalContext{TimeFn: time.Now}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("Expr:%q", tt.args.expr), func(t *testing.T) {
 			is := require.New(t)
@@ -294,7 +294,7 @@ func TestResidualExpr(t *testing.T) {
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: ex})
 			_, det, err = conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			haveResidualExpr, err := ResidualExpr(ast, det)
+			haveResidualExpr, err := residualExpr(ast, det)
 			is.NoError(err)
 			p := newPartialEvaluator(env, pvars, nowFn)
 			err = p.evalComprehensionBody(haveResidualExpr)
@@ -384,7 +384,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
 			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			haveExpr, err := ResidualExpr(ast, det)
+			haveExpr, err := residualExpr(ast, det)
 			is.NoError(err)
 			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
 			err = p.evalComprehensionBody(haveExpr)

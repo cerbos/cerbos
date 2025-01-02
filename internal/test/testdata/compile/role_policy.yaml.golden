@@ -13,21 +13,31 @@
     },
     "role": "leave_request",
     "scope": "acme",
+    "scopePermissions": "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS",
     "resources": {
       "acme_admin": {
-        "actions": {
-          "*": {}
-        }
+        "rules": [
+          {
+            "resource": "acme_admin",
+            "allowActions": {
+              "*": {}
+            }
+          }
+        ]
       },
       "expenses_report": {
-        "actions": {
-          "create": {},
-          "delete": {},
-          "view": {}
-        }
+        "rules": [
+          {
+            "resource": "expenses_report",
+            "allowActions": {
+              "create": {},
+              "delete": {},
+              "view": {}
+            }
+          }
+        ]
       }
-    },
-    "scopePermissions": "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+    }
   },
   "compilerVersion": 1
 }

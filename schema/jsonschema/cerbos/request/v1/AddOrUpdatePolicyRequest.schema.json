@@ -621,6 +621,9 @@
           "minItems": 1,
           "uniqueItems": true
         },
+        "condition": {
+          "$ref": "#/definitions/cerbos.policy.v1.Condition"
+        },
         "resource": {
           "type": "string",
           "minLength": 1

@@ -112,8 +112,9 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vdefault",
 					"resource.leave_request.vdefault/acme",
 					"resource.leave_request.vdefault/acme.hr",
-					"resource.leave_request.vdefault/acme.hr.fr",
 					"resource.leave_request.vdefault/acme.hr.uk",
+					"resource.leave_request.vdefault/acme.hr.uk.brighton",
+					"resource.leave_request.vdefault/acme.hr.uk.london",
 					"resource.leave_request.vstaging",
 					"resource.missing_attr.vdefault",
 					"resource.output_now.vdefault",
@@ -121,12 +122,11 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.purchase_order.vdefault",
 					"resource.runtime_effective_derived_roles.vdefault",
 					"resource.variables_referencing_variables.vdefault",
-					"role.acme_assistant/acme.hr.de",
-					"role.acme_creator/acme.hr.uk",
-					"role.acme_jr_admin/acme.hr.uk",
-					"role.acme_manager/acme.hr.uk",
-					"role.acme_sr_admin/acme.hr.uk",
-					"role.acme_travel_agent/acme.hr.de",
+					"role.acme_assistant/acme.hr.uk",
+					"role.acme_creator/acme.hr.uk.brighton",
+					"role.acme_jr_admin/acme.hr.uk.brighton",
+					"role.acme_london_employee/acme.hr.uk.london",
+					"role.acme_travel_agent/acme.hr.uk",
 				}, listPolicies(t, clientCtx))
 			})
 
