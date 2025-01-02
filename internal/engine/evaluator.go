@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package engine
@@ -214,7 +214,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				// This is for backwards compatibility with effectiveDerivedRoles.
 				// If we reach this point, we can assert that the given {origin policy + scope} combination has been evaluated
 				// and therefore we build the effectiveDerivedRoles from those referenced in the policy.
-				if _, ok := processedScopedDerivedRoles[scope]; !ok {
+				if _, ok := processedScopedDerivedRoles[scope]; !ok { //nolint:nestif
 					effectiveDerivedRoles := make(internal.StringSet)
 					if drs := rte.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)); drs != nil {
 						for name, dr := range drs {
