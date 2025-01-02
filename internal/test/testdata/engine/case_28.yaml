@@ -1,45 +1,27 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Role policy with parent role (require parental consent for allows)"
+description: "Resource policy which references role policy defined in same scope with non matching condition"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
-        "view:public", # allowed in role policy and resource policy for "manager"
-        "delete", # not allowed in role policy, but is in resource policy for "manager" (which role policy reduces permissions of)
-        "redirect", # not allowed in role policy, but allowed in resource policy for "employee" (which role policy does NOT reduce permissions of)
-        "create", # inherited from `acme_creator` parent role
+        "create",
+        "defer",
         ],
       "principal":
         {
           "id": "john",
-          "scope": "acme.hr.uk",
-          "roles": [
-            "acme_manager", # implicitly assumes `manager` role also
-            "employee", # does not match a role policy, evaluated independently
-          ],
-          "attr":
-            {
-              "department": "marketing",
-              "geography": "GB",
-              "team": "design",
-              "ip_address": "10.20.0.13",
-              "managed_geographies": "GB",
-            },
+          "roles": ["acme_london_employee"],
         },
       "resource":
         {
           "kind": "leave_request",
-          "scope": "acme.hr.uk",
+          "scope": "acme.hr.uk.london",
           "id": "XX125",
           "attr":
             {
-              "department": "marketing",
-              "geography": "GB",
-              "id": "XX125",
               "owner": "john",
-              "team": "design",
             },
         },
     },
@@ -51,33 +33,21 @@ wantOutputs:
       "resourceId": "XX125",
       "actions":
         {
-          "view:public":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme.hr",
-            },
-          "delete":
+          "create":
             {
               "effect": "EFFECT_DENY",
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.london",
+            },
+          "defer":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
               "scope": "acme.hr.uk",
-            },
-          "redirect":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme.hr",
-            },
-          "create":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme",
             },
         },
       "effectiveDerivedRoles":
-        ["any_employee", "direct_manager", "employee_that_owns_the_record"],
+        ["employee_that_owns_the_record"],
     },
   ]
 wantDecisionLogs:
@@ -97,29 +67,16 @@ wantDecisionLogs:
                     "id": "XX125",
                     "attr":
                       {
-                        "department": "marketing",
-                        "geography": "GB",
-                        "id": "XX125",
                         "owner": "john",
-                        "team": "design",
                       },
-                    "scope": "acme.hr.uk",
+                    "scope": "acme.hr.uk.london",
                   },
                 "principal":
                   {
                     "id": "john",
-                    "scope": "acme.hr.uk",
-                    "roles": ["acme_manager", "employee", "manager", "acme_creator"],
-                    "attr":
-                      {
-                        "department": "marketing",
-                        "geography": "GB",
-                        "ip_address": "10.20.0.13",
-                        "team": "design",
-                        "managed_geographies": "GB",
-                      },
+                    "roles": ["acme_london_employee"],
                   },
-                "actions": ["view:public", "delete", "redirect", "create"],
+                "actions": ["create", "defer"],
               },
             ],
           "outputs":
@@ -129,33 +86,21 @@ wantDecisionLogs:
                 "resourceId": "XX125",
                 "actions":
                   {
-                    "view:public":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme.hr",
-                      },
-                    "delete":
+                    "create":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.london",
+                      },
+                    "defer":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
                         "scope": "acme.hr.uk",
-                      },
-                    "redirect":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme.hr",
-                      },
-                    "create":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme",
                       },
                   },
                 "effectiveDerivedRoles":
-                  ["any_employee", "direct_manager", "employee_that_owns_the_record"],
+                  ["employee_that_owns_the_record"],
               },
             ],
         },
@@ -163,22 +108,6 @@ wantDecisionLogs:
         {
           "effectivePolicies":
             {
-              "cerbos.role.acme_creator/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_02.yaml",
-                    },
-                },
-              "cerbos.role.acme_manager/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_04.yaml",
-                    },
-                },
               "resource.leave_request.vdefault":
                 {
                   "attributes":
@@ -209,6 +138,22 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "resource_policies/policy_05_acme.hr.uk.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault/acme.hr.uk.london":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05_acme.hr.uk.london.yaml",
+                    },
+                },
+              "role.acme_london_employee/acme.hr.uk.london":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_05_acme.hr.uk.london.yaml",
                     },
                 },
             },

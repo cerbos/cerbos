@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package compile
@@ -74,19 +74,22 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
-	resources := make(map[string]*runtimev1.RunnableRolePolicySet_AllowActions)
-	for _, r := range rp.Rules {
-		actions, ok := resources[r.Resource]
-		if !ok {
-			actions = &runtimev1.RunnableRolePolicySet_AllowActions{
-				Actions: make(map[string]*emptypb.Empty),
-			}
-			resources[r.Resource] = actions
+	resources := make(map[string]*runtimev1.RunnableRolePolicySet_RuleList)
+	for i, r := range rp.Rules {
+		if _, ok := resources[r.Resource]; !ok {
+			resources[r.Resource] = &runtimev1.RunnableRolePolicySet_RuleList{}
 		}
 
+		allowActions := make(map[string]*emptypb.Empty, len(r.AllowActions))
 		for _, a := range r.AllowActions {
-			actions.Actions[a] = &emptypb.Empty{}
+			allowActions[a] = &emptypb.Empty{}
 		}
+
+		resources[r.Resource].Rules = append(resources[r.Resource].Rules, &runtimev1.RunnableRolePolicySet_Rule{
+			Resource:     r.Resource,
+			AllowActions: allowActions,
+			Condition:    compileCondition(modCtx, policy.RolePolicyConditionProtoPath(i), r.Condition, true),
+		})
 	}
 
 	return &runtimev1.RunnablePolicySet{

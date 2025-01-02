@@ -3,14 +3,13 @@
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: "default"
-  scope: "acme.hr.fr"
+  scope: "acme.hr.uk.london"
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   resource: leave_request
   rules:
     - actions: ["defer"]
       effect: EFFECT_ALLOW
-      roles: ["employee"]
-
-    - actions: ["redirect"]
-      effect: EFFECT_ALLOW
-      roles: ["employee"]
+      roles: ["acme_london_employee"]
+      condition:
+        match:
+          expr: R.attr.owner == P.id

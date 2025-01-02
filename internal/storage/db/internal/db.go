@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package internal
@@ -47,7 +47,8 @@ type DBStorage interface {
 	storage.Verifiable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
-	GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error)
+	GetAll(ctx context.Context) ([]*policy.CompilationUnit, error)
+	GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error)
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
@@ -314,7 +315,21 @@ func (s *dbStorage) GetFirstMatch(ctx context.Context, candidates []namer.Module
 	return nil, nil
 }
 
-func (s *dbStorage) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+func (s *dbStorage) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
+	policyKeys, err := s.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
+	if err != nil {
+		return nil, err
+	}
+
+	modIDs := make([]namer.ModuleID, len(policyKeys))
+	for i, k := range policyKeys {
+		modIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(k))
+	}
+
+	return s.GetAllMatching(ctx, modIDs)
+}
+
+func (s *dbStorage) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
 	cus, err := s.GetCompilationUnits(ctx, modIDs...)
 	if err != nil {
 		return nil, err

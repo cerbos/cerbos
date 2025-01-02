@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !race
@@ -294,7 +294,6 @@ func TestAuditLogFilter(t *testing.T) {
 		}
 
 		masker, err := hub.NewAuditLogFilter(maskConf)
-		// TODO(saml) assert that generated ast is as expected
 		require.NoError(t, err)
 
 		wantRemoved := []string{

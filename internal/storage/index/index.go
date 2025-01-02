@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package index
@@ -47,7 +47,8 @@ type Index interface {
 	io.Closer
 	storage.Instrumented
 	GetFirstMatch([]namer.ModuleID) (*policy.CompilationUnit, error)
-	GetAll([]namer.ModuleID) ([]*policy.CompilationUnit, error)
+	GetAll(context.Context) ([]*policy.CompilationUnit, error)
+	GetAllMatching([]namer.ModuleID) ([]*policy.CompilationUnit, error)
 	GetCompilationUnits(...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	AddOrUpdate(Entry) (storage.Event, error)
@@ -93,51 +94,33 @@ func (idx *index) GetFiles() []string {
 }
 
 func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
-	idx.mu.RLock()
-	defer idx.mu.RUnlock()
-
-	for _, id := range candidates {
-		if _, ok := idx.modIDToFile[id]; !ok {
-			continue
-		}
-
-		p, sc, err := idx.loadPolicy(id)
+	for _, modID := range candidates {
+		res, err := idx.GetCompilationUnits(modID)
 		if err != nil {
 			return nil, err
 		}
 
-		policyKey := namer.PolicyKey(p)
-
-		cu := &policy.CompilationUnit{
-			ModID:          id,
-			Definitions:    map[namer.ModuleID]*policyv1.Policy{id: p},
-			SourceContexts: map[namer.ModuleID]parser.SourceCtx{id: sc},
-		}
-
-		// add dependencies
-		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {
-			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
-		}
-
-		// load ancestors of the policy
-		for _, ancestor := range cu.Ancestors() {
-			p, sc, err := idx.loadPolicy(ancestor)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
-			}
-			cu.AddDefinition(ancestor, p, sc)
-			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
-				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
+		if len(res) > 0 {
+			for _, cu := range res {
+				return cu, nil
 			}
 		}
-
-		return cu, nil
 	}
 
 	return nil, nil
 }
 
-func (idx *index) GetAll(modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+func (idx *index) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
+	res := []*policy.CompilationUnit{}
+
+	for cu := range idx.GetAllCompilationUnits(ctx) {
+		res = append(res, cu)
+	}
+
+	return res, nil
+}
+
+func (idx *index) GetAllMatching(modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
 	cus, err := idx.GetCompilationUnits(modIDs...)
 	if err != nil {
 		return nil, err
@@ -184,7 +167,6 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
 		}
 
-		// load ancestors of the policy
 		for _, ancestor := range cu.Ancestors() {
 			p, sc, err := idx.loadPolicy(ancestor)
 			if err != nil {

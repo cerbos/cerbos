@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package namer
@@ -179,6 +179,10 @@ func FQNFromPolicyKey(s string) string {
 	return fqnPrefix + s
 }
 
+func SanitizedResource(resource string) string {
+	return sanitize(resource)
+}
+
 // ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource, version and scope.
 func ResourcePolicyFQN(resource, version, scope string) string {
 	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, sanitize(resource), sanitize(version))
@@ -190,7 +194,7 @@ func ResourcePolicyModuleID(resource, version, scope string) ModuleID {
 	return GenModuleIDFromFQN(ResourcePolicyFQN(resource, version, scope))
 }
 
-// ScopedResourcePolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
+// ScopedResourcePolicyModuleIDs returns a list of module IDs for each scope segment if `genTree` is true.
 // For example, if the scope is `a.b.c`, the list will contain the module IDs for scopes `a.b.c`, `a.b`, `a` and `""` in that order.
 func ScopedResourcePolicyModuleIDs(resource, version, scope string, genTree bool) []ModuleID {
 	if !genTree || scope == "" {
@@ -314,6 +318,13 @@ func RuleFQN(rpsMeta any, scope, ruleName string) string {
 		policyFqn = ResourcePolicyFQN(m.Resource, m.Version, scope)
 	case *runtimev1.RunnablePrincipalPolicySet_Metadata:
 		policyFqn = PrincipalPolicyFQN(m.Principal, m.Version, scope)
+	case *runtimev1.RuleTableMetadata:
+		switch t := m.Name.(type) {
+		case *runtimev1.RuleTableMetadata_Resource:
+			policyFqn = ResourcePolicyFQN(t.Resource, m.Version, scope)
+		case *runtimev1.RuleTableMetadata_Role:
+			policyFqn = RolePolicyFQN(t.Role, scope)
+		}
 	default:
 		panic(fmt.Errorf("unknown runnable policy set meta type %T", m))
 	}

@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package policy
@@ -604,11 +604,13 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 			}
 		}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		for _, r := range set.RolePolicy.Resources {
-			for a := range r.Actions {
-				if _, ok := ss[a]; !ok {
-					ss[a] = struct{}{}
-					actions = append(actions, a)
+		for _, rl := range set.RolePolicy.Resources {
+			for _, r := range rl.Rules {
+				for a := range r.AllowActions {
+					if _, ok := ss[a]; !ok {
+						ss[a] = struct{}{}
+						actions = append(actions, a)
+					}
 				}
 			}
 		}

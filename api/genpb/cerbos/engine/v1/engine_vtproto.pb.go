@@ -1464,6 +1464,20 @@ func (m *Trace_Component_RolePolicyScope) MarshalToSizedBufferVT(dAtA []byte) (i
 	dAtA[i] = 0x62
 	return len(dAtA) - i, nil
 }
+func (m *Trace_Component_Role) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Trace_Component_Role) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.Role)
+	copy(dAtA[i:], m.Role)
+	i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Role)))
+	i--
+	dAtA[i] = 0x6a
+	return len(dAtA) - i, nil
+}
 func (m *Trace_Event) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -2518,6 +2532,16 @@ func (m *Trace_Component_RolePolicyScope) SizeVT() (n int) {
 	var l int
 	_ = l
 	l = len(m.RolePolicyScope)
+	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	return n
+}
+func (m *Trace_Component_Role) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Role)
 	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	return n
 }
@@ -6390,6 +6414,38 @@ func (m *Trace_Component) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Details = &Trace_Component_RolePolicyScope{RolePolicyScope: string(dAtA[iNdEx:postIndex])}
+			iNdEx = postIndex
+		case 13:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Role", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Details = &Trace_Component_Role{Role: string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

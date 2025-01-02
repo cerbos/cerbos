@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package hub
@@ -399,7 +399,7 @@ func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 	return s.bundle.GetFirstMatch(ctx, candidates)
 }
 
-func (s *RemoteSource) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+func (s *RemoteSource) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -407,7 +407,18 @@ func (s *RemoteSource) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*
 		return nil, ErrBundleNotLoaded
 	}
 
-	return s.bundle.GetAll(ctx, modIDs)
+	return s.bundle.GetAll(ctx)
+}
+
+func (s *RemoteSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
+	return s.bundle.GetAllMatching(ctx, modIDs)
 }
 
 func (s *RemoteSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

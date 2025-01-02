@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package overlay
@@ -244,7 +244,12 @@ func (m *MockPolicyLoader) GetFirstMatch(ctx context.Context, candidates []namer
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
-func (m *MockPolicyLoader) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+func (m *MockPolicyLoader) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
+}
+
+func (m *MockPolicyLoader) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx, modIDs)
 	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
 }
@@ -300,7 +305,12 @@ func (m *MockBinaryStore) GetFirstMatch(ctx context.Context, candidates []namer.
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
-func (m *MockBinaryStore) GetAll(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+func (m *MockBinaryStore) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
+}
+
+func (m *MockBinaryStore) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx, modIDs)
 	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
 }

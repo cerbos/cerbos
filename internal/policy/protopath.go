@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package policy
@@ -39,6 +39,10 @@ func PrincipalPolicyActionRuleProtoPath(parentIdx, idx int) string {
 
 func RolePolicyRuleProtoPath(idx int) string {
 	return fmt.Sprintf("role_policy.rules[%d]", idx)
+}
+
+func RolePolicyConditionProtoPath(idx int) string {
+	return fmt.Sprintf("%s.condition", RolePolicyRuleProtoPath(idx))
 }
 
 func DerivedRoleConditionProtoPath(idx int) string {

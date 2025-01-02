@@ -78,10 +78,10 @@ playgroundProxy:
                   "operator": "eq",
                   "operands": [
                     {
-                      "variable": "request.resource.attr.geography"
+                      "variable": "request.resource.attr.status"
                     },
                     {
-                      "value": "GB"
+                      "value": "PENDING_APPROVAL"
                     }
                   ]
                 }
@@ -91,10 +91,10 @@ playgroundProxy:
                   "operator": "eq",
                   "operands": [
                     {
-                      "variable": "request.resource.attr.status"
+                      "variable": "request.resource.attr.geography"
                     },
                     {
-                      "value": "PENDING_APPROVAL"
+                      "value": "GB"
                     }
                   ]
                 }
@@ -104,7 +104,7 @@ playgroundProxy:
         }
       },
       "meta": {
-        "filterDebug": "(and (eq request.resource.attr.geography \"GB\") (eq request.resource.attr.status \"PENDING_APPROVAL\"))"
+        "filterDebug": "(and (eq request.resource.attr.status \"PENDING_APPROVAL\") (eq request.resource.attr.geography \"GB\"))"
       }
     }
   }

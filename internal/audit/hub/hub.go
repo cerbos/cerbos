@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package hub
@@ -119,7 +119,6 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 	}
 
 	key := local.GenKey(AccessSyncPrefix, callID)
-	// TODO(saml) retrieve key generated in embedded call above to avoid recalc?
 	value := local.GenKey(local.AccessLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
@@ -143,7 +142,6 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	}
 
 	key := local.GenKey(DecisionSyncPrefix, callID)
-	// TODO(saml) retrieve key generated in embedded call above to avoid recalc?
 	value := local.GenKey(local.DecisionLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
