@@ -27,7 +27,7 @@ Submitting pull requests
 - Write idiomatic Go. [Effective Go](https://golang.org/doc/effective_go) is the canonical source while the [Uber style guide](https://github.com/uber-go/guide/blob/master/style.md) contains a lot of good advice as well.
 - Make sure each source file contains the appropriate licence header:
     ```
-    Copyright 2021-2024 Zenauth Ltd.
+    Copyright 2021-2025 Zenauth Ltd.
     SPDX-License-Identifier: Apache-2.0
     ```
 - Add tests to cover the functionality you are adding or modifying.
