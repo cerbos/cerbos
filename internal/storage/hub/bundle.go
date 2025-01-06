@@ -192,13 +192,13 @@ func decryptBundleV2(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
 	} else {
 		logger.Debug("Decrypting bundle")
 
-		var d bytes.Buffer
-		_, err := crypto.DecryptChaCha20Poly1305Stream(opts.EncryptionKey, input, &d)
+		d := new(bytes.Buffer)
+		_, err := crypto.DecryptChaCha20Poly1305Stream(opts.EncryptionKey, input, d)
 		if err != nil {
 			return "", 0, fmt.Errorf("failed to decrypt: %w", err)
 		}
 
-		decrypted = &d
+		decrypted = d
 	}
 
 	afs := &afero.Afero{Fs: opts.ScratchFS}

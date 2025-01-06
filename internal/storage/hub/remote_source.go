@@ -132,23 +132,21 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to establish Cerbos Hub connection: %w", err)
 	}
 
+	clientConf := cloudapi.ClientConf{
+		CacheDir: s.conf.Remote.CacheDir,
+		TempDir:  s.conf.Remote.TempDir,
+	}
 	var client CloudAPIClient
 	switch s.conf.BundleVersion {
 	case cloudapi.Version1:
-		clientv1, err := hubInstance.BundleClient(cloudapi.ClientConf{
-			CacheDir: s.conf.Remote.CacheDir,
-			TempDir:  s.conf.Remote.TempDir,
-		})
+		clientv1, err := hubInstance.BundleClient(clientConf)
 		if err != nil {
 			return fmt.Errorf("failed to create API client v1: %w", err)
 		}
 
 		client = &cloudAPIv1{client: clientv1}
 	case cloudapi.Version2:
-		clientv2, err := hubInstance.BundleClientV2(cloudapi.ClientConf{
-			CacheDir: s.conf.Remote.CacheDir,
-			TempDir:  s.conf.Remote.TempDir,
-		})
+		clientv2, err := hubInstance.BundleClientV2(clientConf)
 		if err != nil {
 			return fmt.Errorf("failed to create API client v2: %w", err)
 		}

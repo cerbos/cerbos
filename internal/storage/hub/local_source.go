@@ -48,17 +48,22 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 		BundleVersion: conf.BundleVersion,
 	}
 
-	if conf.Credentials != nil {
-		lp.SecretKey = conf.Credentials.WorkspaceSecret
-	}
-
-	if conf.Local != nil && conf.Local.EncryptionKey != "" {
-		encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode encryption key: %w", err)
+	switch conf.BundleVersion {
+	case cloudapi.Version1:
+		if conf.Credentials != nil {
+			lp.SecretKey = conf.Credentials.WorkspaceSecret
 		}
+	case cloudapi.Version2:
+		if conf.Local != nil && conf.Local.EncryptionKey != "" {
+			encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode encryption key: %w", err)
+			}
 
-		lp.EncryptionKey = encryptionKey
+			lp.EncryptionKey = encryptionKey
+		}
+	default:
+		return nil, fmt.Errorf("unsupported bundle version: %d", conf.BundleVersion)
 	}
 
 	return NewLocalSource(lp)
