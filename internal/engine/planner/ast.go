@@ -484,6 +484,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 
 	return nil
 }
+
 func (lambdaAst *lambdaAST) mkNode(cur *exprpb.Expr) (*exprOpExpr, error) {
 	lambda, err := buildLambdaExprOp(lambdaAst.expr, cur)
 	if err != nil {
@@ -507,6 +508,7 @@ func (lambdaAst *lambdaAST) mkNode(cur *exprpb.Expr) (*exprOpExpr, error) {
 	}
 	return mkExprOpExpr(lambdaAst.operator, target, &exprOp{Node: mkExprOpExpr(Lambda, lambdaArgs...)}), nil
 }
+
 func (lambdaAst *lambdaAST) buildIterRangeOp(cur *exprpb.Expr) (*exprOp, error) {
 	ir := lambdaAst.iterRange
 	if x, ok := ir.ExprKind.(*exprpb.Expr_StructExpr); ok && !canOperateOnStruct(lambdaAst.operator) {
