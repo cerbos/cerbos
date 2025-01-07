@@ -231,7 +231,7 @@ func (m *RuleTable_RuleRow) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Name)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
 		i--
-		dAtA[i] = 0x62
+		dAtA[i] = 0x6a
 	}
 	if m.EmitOutput != nil {
 		size, err := m.EmitOutput.MarshalToSizedBufferVT(dAtA[:i])
@@ -241,38 +241,48 @@ func (m *RuleTable_RuleRow) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x5a
+		dAtA[i] = 0x62
 	}
 	if len(m.OriginDerivedRole) > 0 {
 		i -= len(m.OriginDerivedRole)
 		copy(dAtA[i:], m.OriginDerivedRole)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.OriginDerivedRole)))
 		i--
-		dAtA[i] = 0x52
+		dAtA[i] = 0x5a
 	}
 	if len(m.Version) > 0 {
 		i -= len(m.Version)
 		copy(dAtA[i:], m.Version)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Version)))
 		i--
-		dAtA[i] = 0x4a
+		dAtA[i] = 0x52
 	}
 	if m.ScopePermissions != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopePermissions))
 		i--
-		dAtA[i] = 0x40
+		dAtA[i] = 0x48
 	}
 	if len(m.Scope) > 0 {
 		i -= len(m.Scope)
 		copy(dAtA[i:], m.Scope)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scope)))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x42
 	}
 	if m.Effect != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Effect))
 		i--
-		dAtA[i] = 0x30
+		dAtA[i] = 0x38
+	}
+	if m.DerivedRoleCondition != nil {
+		size, err := m.DerivedRoleCondition.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x32
 	}
 	if m.Condition != nil {
 		size, err := m.Condition.MarshalToSizedBufferVT(dAtA[:i])
@@ -3312,6 +3322,10 @@ func (m *RuleTable_RuleRow) SizeVT() (n int) {
 		l = m.Condition.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	if m.DerivedRoleCondition != nil {
+		l = m.DerivedRoleCondition.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	if m.Effect != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.Effect))
 	}
@@ -5101,6 +5115,42 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DerivedRoleCondition", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DerivedRoleCondition == nil {
+				m.DerivedRoleCondition = &Condition{}
+			}
+			if err := m.DerivedRoleCondition.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Effect", wireType)
 			}
@@ -5119,7 +5169,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-		case 7:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Scope", wireType)
 			}
@@ -5151,7 +5201,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Scope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 8:
+		case 9:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ScopePermissions", wireType)
 			}
@@ -5170,7 +5220,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-		case 9:
+		case 10:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
 			}
@@ -5202,7 +5252,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Version = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 10:
+		case 11:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field OriginDerivedRole", wireType)
 			}
@@ -5234,7 +5284,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 			}
 			m.OriginDerivedRole = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 11:
+		case 12:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EmitOutput", wireType)
 			}
@@ -5270,7 +5320,7 @@ func (m *RuleTable_RuleRow) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 12:
+		case 13:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}

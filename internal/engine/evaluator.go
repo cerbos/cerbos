@@ -101,7 +101,7 @@ func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, epar
 }
 
 func NewRuleTableEvaluator(rt *ruletable.RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	if len(rt.Rows()) == 0 {
+	if rt.Len() == 0 {
 		return noopEvaluator{}
 	}
 
@@ -174,19 +174,20 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		return result, nil
 	}
 
+	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
 	// Return early if no scoped resource policy exists at all
-	scanResult := rte.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, []string{}, []string{})
-	if len(scanResult.GetRows()) == 0 {
+	if !rte.ScopedResourceExists(version, sanitizedResource, scopes) {
 		return result, nil
 	}
 
+	allRoles := rte.GetParentRoles(input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
-	for _, r := range rte.GetParentRoles(input.Principal.Roles) {
+	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
 	}
 
 	// Filter down to matching roles and actions
-	scanResult = rte.Filter(scanResult, scopes, input.Principal.Roles, actionsToResolve)
+	candidateRows := rte.ScanRows(version, sanitizedResource, scopes, allRoles, actionsToResolve)
 
 	varCache := make(map[string]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
@@ -207,6 +208,8 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				Policy: policyKey,
 			}
 
+			parentRoles := rte.GetParentRoles([]string{role})
+
 		scopesLoop:
 			for _, scope := range scopes {
 				sctx := roctx.StartScope(scope)
@@ -222,11 +225,20 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 								continue
 							}
 
-							variables, err := evalCtx.evaluateVariables(tctx.StartVariables(), dr.Constants, dr.OrderedVariables)
-							if err != nil {
-								return nil, err
+							var variables map[string]any
+							key := namer.DerivedRolesFQN(name)
+							if c, ok := varCache[key]; ok {
+								variables = c
+							} else {
+								var err error
+								variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), dr.Constants, dr.OrderedVariables)
+								if err != nil {
+									return nil, err
+								}
+								varCache[key] = variables
 							}
 
+							// we don't use `conditionCache` as we don't do any evaluations scoped solely to derived role conditions
 							ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), dr.Condition, dr.Constants, variables)
 							if err != nil {
 								continue
@@ -248,15 +260,25 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					break
 				}
 
-				scopedScanResult := rte.Filter(scanResult, []string{scope}, []string{role}, actionsToResolve)
-				if len(scopedScanResult.GetRows()) == 0 {
+				var scopedRoleExists bool
+				for _, r := range parentRoles {
+					if rte.ScopedRoleExists(version, scope, r) {
+						scopedRoleExists = true
+						break
+					}
+				}
+				if !scopedRoleExists {
 					// the role doesn't exist in this scope for any actions, so continue.
 					// this prevents an implicit DENY from incorrectly narrowing an independent role
 					sctx.Skipped(nil, "No matching rules")
 					continue
 				}
 
-				for _, row := range rte.Filter(scopedScanResult, []string{scope}, []string{role}, []string{action}).GetRows() {
+				for _, row := range candidateRows {
+					if !row.Matches(scope, action, parentRoles) {
+						continue
+					}
+
 					rctx := sctx.StartRule(row.Name)
 
 					if m := rte.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
@@ -284,13 +306,40 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					if c, ok := conditionCache[row.EvaluationKey]; ok {
 						satisfiesCondition = c
 					} else {
-						ok, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
+						isSatisfied, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
 						if err != nil {
 							rctx.Skipped(err, "Error evaluating condition")
 							continue
 						}
-						conditionCache[row.EvaluationKey] = ok
-						satisfiesCondition = ok
+
+						// if there's a derived role condition, we need to evaluate that too
+						if isSatisfied && row.DerivedRoleCondition != nil {
+							var derivedRoleConstants map[string]any
+							var derivedRoleVariables map[string]any
+							if row.DerivedRoleParams != nil {
+								derivedRoleConstants = row.DerivedRoleParams.Constants
+								if c, ok := varCache[row.DerivedRoleParams.Key]; ok {
+									derivedRoleVariables = c
+								} else {
+									var err error
+									derivedRoleVariables, err = evalCtx.evaluateVariables(tctx.StartVariables(), derivedRoleConstants, row.DerivedRoleParams.Variables)
+									if err != nil {
+										rctx.Skipped(err, "Error evaluating derived role variables")
+										return nil, err
+									}
+									varCache[row.DerivedRoleParams.Key] = derivedRoleVariables
+								}
+							}
+
+							isSatisfied, err = evalCtx.satisfiesCondition(tctx.StartCondition(), row.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
+							if err != nil {
+								rctx.Skipped(err, "Error evaluating derived role condition")
+								continue
+							}
+						}
+
+						conditionCache[row.EvaluationKey] = isSatisfied
+						satisfiesCondition = isSatisfied
 					}
 
 					if satisfiesCondition { //nolint:nestif
