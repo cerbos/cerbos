@@ -5,6 +5,6 @@
     "start": "verdaccio"
   },
   "dependencies": {
-    "verdaccio": "6.0.2"
+    "verdaccio": "6.0.5"
   }
 }

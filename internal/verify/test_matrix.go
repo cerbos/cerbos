@@ -1,4 +1,4 @@
-// Copyright 2021-2024 Zenauth Ltd.
+// Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 package verify
@@ -79,6 +79,17 @@ func (r *testSuiteRun) buildExpectationLookup(table *policyv1.TestTable) (map[te
 	lookup := make(map[testMatrixKey]*testMatrixExpectations, len(table.Expected))
 	for _, expectation := range table.Expected {
 		outputs := outputExpectations(expectation)
+
+		var unreachableOutputs []string
+		for action := range outputs {
+			if _, ok := inputActionsMap[action]; !ok {
+				unreachableOutputs = append(unreachableOutputs, action)
+			}
+		}
+
+		if len(unreachableOutputs) > 0 {
+			return nil, fmt.Errorf("found output expectations for actions that are not in the input actions list: [%s]", strings.Join(unreachableOutputs, ","))
+		}
 
 		principals, err := r.collectFixtures(expectation.Principal, expectation.Principals, expectation.PrincipalGroups, r.lookupPrincipalGroup)
 		if err != nil {

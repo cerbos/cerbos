@@ -82,7 +82,7 @@ jobs:
     steps:
       - name: Download previous test times
         continue-on-error: true
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v7
         with:
           workflow: pr-test.yaml
           name: test-times
@@ -265,7 +265,7 @@ jobs:
           fetch-tags: true
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1.47.2
+        uses: bufbuild/buf-setup-action@v1.48.0
         with:
           github_token: ${{ github.token }}
 

@@ -1,0 +1,17 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  rules:
+    - actions:
+        - view
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: request.principal.attr.ip.inIPAddrRange("10.20.0.0/16")
+      output:
+        when:
+          ruleActivated: R
