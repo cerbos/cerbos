@@ -299,7 +299,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	allRoles := ruleTable.GetParentRoles(input.Principal.Roles)
 
 	// Filter down to matching roles and action
-	candidateRows := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
+	candidateRows := ruleTable.GetRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
 
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {

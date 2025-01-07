@@ -440,7 +440,7 @@ func (rt *RuleTable) ScopedRoleExists(version, scope, role string) bool {
 	return false
 }
 
-func (rt *RuleTable) ScanRows(version, resource string, scopes, roles, actions []string) []*row {
+func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []string) []*row {
 	res := []*row{}
 
 	rt.mu.RLock()

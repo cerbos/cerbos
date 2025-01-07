@@ -187,7 +187,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	}
 
 	// Filter down to matching roles and actions
-	candidateRows := rte.ScanRows(version, sanitizedResource, scopes, allRoles, actionsToResolve)
+	candidateRows := rte.GetRows(version, sanitizedResource, scopes, allRoles, actionsToResolve)
 
 	varCache := make(map[string]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
