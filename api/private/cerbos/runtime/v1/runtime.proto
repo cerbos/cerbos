@@ -33,13 +33,14 @@ message RuleTable {
     string role = 3;
     string action = 4;
     Condition condition = 5;
-    cerbos.effect.v1.Effect effect = 6;
-    string scope = 7;
-    cerbos.policy.v1.ScopePermissions scope_permissions = 8;
-    string version = 9;
-    string origin_derived_role = 10;
-    Output emit_output = 11;
-    string name = 12;
+    Condition derived_role_condition = 6;
+    cerbos.effect.v1.Effect effect = 7;
+    string scope = 8;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 9;
+    string version = 10;
+    string origin_derived_role = 11;
+    Output emit_output = 12;
+    string name = 13;
   }
 
   repeated RuleRow rules = 1;
