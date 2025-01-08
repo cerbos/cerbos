@@ -389,7 +389,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | intersect| Produces the set intersection of two lists | intersect(["design", "engineering"], P.attr.teams) == ["design"]
 | isSubset | Checks whether the list is a subset of another list | ["design", "engineering"].isSubset(P.attr.teams) == false
 | map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
-| range    | Returns a list of integers from 0 to n-1 | lists.range(5) == [0, 1, 2, 3, 4]
+| lists.range    | Returns a list of integers from 0 to n-1 | lists.range(5) == [0, 1, 2, 3, 4]
 | reverse  | Returns the elements of a list in reverse order | [5, 3, 1, 2].reverse() == [2, 1, 3, 5]
 | size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 | slice    | Returns a new sub-list using the indexes provided | [1,2,3,4].slice(1, 3) == [2, 3]
