@@ -395,9 +395,9 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | slice    | Returns a new sub-list using the indexes provided | [1,2,3,4].slice(1, 3) == [2, 3]
 | sort     | Sorts a list with comparable elements | [3, 2, 1].sort() == [1, 2, 3]
 | sortBy   | Sorts a list by a key value, i.e., the order is determined by the result of an expression applied to each element of the list | [{ "name": "foo", "score": 0 },{ "name": "bar", "score": -10 },{ "name": "baz", "score": 1000 }].sortBy(e, e.score).map(e, e.name) == ["bar", "foo", "baz"]
-| transformList | Converts a map or a list into a list value. The output expression determines the contents of the output list. Elements in the list may optionally be filtered | [1, 2, 3].transformList(i, v, i % 2 == 0, (i * v) + v) == [1, 9] && +
-[1, 2, 3].transformList(i, v, (i * v) + v) == [1, 4, 9]
-| transformMap | Converts a map or a list into a map value. The output expression determines the value of the output map entry; however, the key remains fixed. Elements in the map may optionally be filtered| [1, 2, 3].transformMap(i, v, i % 2 == 0, (i * v) + v) == {0: 1, 1: 9}
+| transformList | Converts a map or a list into a list value. The output expression determines the contents of the output list. Elements in the list may optionally be filtered | [1, 2, 3].transformList(i, v, i > 0, 2 * v) == [4, 6] && +
+[1, 2, 3].transformList(i, v, 2 * v) == [2, 4, 6]
+| transformMap | Converts a map or a list into a map value. The key remains unchanged and only the value is changed. | [1, 2, 3].transformMap(i, v, i > 0, 2 * v) == {1: 4, 2: 6}
 | transformMapEntry | Converts a map or a list into a map value; however, this transform expects the entry expression be a map literal. Elements in the map may optionally be filtered | {'greeting': 'hello'}.transformMapEntry(k, v, {v: k}) == {'hello': 'greeting'}
 |===
 
