@@ -485,6 +485,12 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 		}
 
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.derived_role_condition"]; !ok {
+		if m.GetDerivedRoleCondition() != nil {
+			cerbos_runtime_v1_Condition_hashpb_sum(m.GetDerivedRoleCondition(), hasher, ignore)
+		}
+
+	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.effect"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetEffect())))
 

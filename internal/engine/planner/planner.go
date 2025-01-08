@@ -296,11 +296,13 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		}
 	}
 
-	// Filter down to matching roles and actions
-	scanResult := ruleTable.ScanRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, []string{})
+	allRoles := ruleTable.GetParentRoles(input.Principal.Roles)
+
+	// Filter down to matching roles and action
+	candidateRows := ruleTable.GetRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
 
 	includingParentRoles := make(map[string]struct{})
-	for _, r := range ruleTable.GetParentRoles(input.Principal.Roles) {
+	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
 	}
 
@@ -311,12 +313,20 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		var roleAllowNode, roleDenyNode *qpN
 		var scopePermissionsBoundaryOpen bool
 
+		parentRoles := ruleTable.GetParentRoles([]string{role})
+
 	scopesLoop:
 		for _, scope := range scopes {
 			var scopeAllowNode, scopeDenyNode *qpN
 
-			scopedScanResult := ruleTable.Filter(scanResult, []string{scope}, []string{role}, []string{})
-			if len(scopedScanResult.GetRows()) == 0 {
+			var scopedRoleExists bool
+			for _, r := range parentRoles {
+				if ruleTable.ScopedRoleExists(version, scope, r) {
+					scopedRoleExists = true
+					break
+				}
+			}
+			if !scopedRoleExists {
 				// the role doesn't exist in this scope for any actions, so continue.
 				// this prevents an implicit DENY from incorrectly narrowing an independent role
 				continue
@@ -362,7 +372,11 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				scopedDerivedRolesList[scope] = derivedRolesList
 			}
 
-			for _, row := range ruleTable.Filter(scanResult, []string{scope}, []string{role}, []string{input.Action}).GetRows() {
+			for _, row := range candidateRows {
+				if !row.Matches(scope, input.Action, parentRoles) {
+					continue
+				}
+
 				var constants map[string]any
 				var variables map[string]*exprpb.Expr
 				if row.Params != nil {
@@ -377,6 +391,29 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				node, err := evalCtx.evaluateCondition(row.Condition, request, globals, constants, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
+				}
+
+				if row.DerivedRoleCondition != nil {
+					var variables map[string]*exprpb.Expr
+					if row.DerivedRoleParams != nil {
+						var err error
+						variables, err = variableExprs(row.DerivedRoleParams.Variables)
+						if err != nil {
+							return nil, err
+						}
+					}
+
+					drNode, err := evalCtx.evaluateCondition(row.DerivedRoleCondition, request, globals, row.DerivedRoleParams.Constants, variables, derivedRolesList)
+					if err != nil {
+						return nil, err
+					}
+
+					if row.Condition == nil {
+						node = drNode
+					} else {
+						node = mkNodeFromLO(mkAndLogicalOperation([]*qpN{node, drNode}))
+					}
+
 				}
 
 				switch row.Effect { //nolint:exhaustive
