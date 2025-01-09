@@ -293,7 +293,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							variables = c
 						} else {
 							var err error
-							variables, err = evalCtx.evaluateVariables(tctx.StartVariables(), constants, row.Params.Variables)
+							variables, err = evalCtx.evaluateCELProgramsOrVariables(tctx, constants, row.Params.CelPrograms, row.Params.Variables)
 							if err != nil {
 								rctx.Skipped(err, "Error evaluating variables")
 								return nil, err
@@ -322,7 +322,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 									derivedRoleVariables = c
 								} else {
 									var err error
-									derivedRoleVariables, err = evalCtx.evaluateVariables(tctx.StartVariables(), derivedRoleConstants, row.DerivedRoleParams.Variables)
+									derivedRoleVariables, err = evalCtx.evaluateCELProgramsOrVariables(tctx, derivedRoleConstants, row.DerivedRoleParams.CelPrograms, row.DerivedRoleParams.Variables)
 									if err != nil {
 										rctx.Skipped(err, "Error evaluating derived role variables")
 										return nil, err
@@ -331,6 +331,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 								}
 							}
 
+							// TODO(saml) we could probably pre-compile the condition also
 							isSatisfied, err = evalCtx.satisfiesCondition(tctx.StartCondition(), row.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
 							if err != nil {
 								rctx.Skipped(err, "Error evaluating derived role condition")
@@ -532,9 +533,18 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 			}
 		}
 
-		// result.setDefaultEffect(pctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
 		return result, nil
 	})
+}
+
+func (ec *evalContext) evaluateCELProgramsOrVariables(tctx tracer.Context, constants map[string]any, celPrograms []*ruletable.CelProgram, variables []*runtimev1.Variable) (map[string]any, error) {
+	// if nowFunc is provided, we need to recompute the cel.Program to handle the custom time decorator, otherwise we can reuse the precomputed program
+	// from build-time.
+	if ec.nowFunc == nil {
+		return ec.evaluatePrograms(constants, celPrograms)
+	} else {
+		return ec.evaluateVariables(tctx.StartVariables(), constants, variables)
+	}
 }
 
 func (ec *evalContext) evaluateVariables(tctx tracer.Context, constants map[string]any, variables []*runtimev1.Variable) (map[string]any, error) {
@@ -551,6 +561,38 @@ func (ec *evalContext) evaluateVariables(tctx tracer.Context, constants map[stri
 
 		evalVars[variable.Name] = val
 		vctx.ComputedResult(val)
+	}
+
+	return evalVars, errs
+}
+
+func (ec *evalContext) buildEvalVars(constants, variables map[string]any) map[string]any {
+	return map[string]any{
+		conditions.CELRequestIdent:    ec.request,
+		conditions.CELResourceAbbrev:  ec.request.Resource,
+		conditions.CELPrincipalAbbrev: ec.request.Principal,
+		conditions.CELRuntimeIdent:    ec.lazyRuntime,
+		conditions.CELConstantsIdent:  constants,
+		conditions.CELConstantsAbbrev: constants,
+		conditions.CELVariablesIdent:  variables,
+		conditions.CELVariablesAbbrev: variables,
+		conditions.CELGlobalsIdent:    ec.globals,
+		conditions.CELGlobalsAbbrev:   ec.globals,
+	}
+}
+
+func (ec *evalContext) evaluatePrograms(constants map[string]any, celPrograms []*ruletable.CelProgram) (map[string]any, error) {
+	var errs error
+
+	evalVars := make(map[string]any, len(celPrograms))
+	for _, prg := range celPrograms {
+		result, _, err := prg.Prog.Eval(ec.buildEvalVars(constants, evalVars))
+		if err != nil {
+			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s`: %w", prg.Name, err))
+			continue
+		}
+
+		evalVars[prg.Name] = result.Value()
 	}
 
 	return evalVars, errs
@@ -682,18 +724,7 @@ func (ec *evalContext) evaluateCELExpr(expr *exprpb.CheckedExpr, constants, vari
 		return nil, nil
 	}
 
-	result, _, err := conditions.Eval(conditions.StdEnv, cel.CheckedExprToAst(expr), map[string]any{
-		conditions.CELRequestIdent:    ec.request,
-		conditions.CELResourceAbbrev:  ec.request.Resource,
-		conditions.CELPrincipalAbbrev: ec.request.Principal,
-		conditions.CELRuntimeIdent:    ec.lazyRuntime,
-		conditions.CELConstantsIdent:  constants,
-		conditions.CELConstantsAbbrev: constants,
-		conditions.CELVariablesIdent:  variables,
-		conditions.CELVariablesAbbrev: variables,
-		conditions.CELGlobalsIdent:    ec.globals,
-		conditions.CELGlobalsAbbrev:   ec.globals,
-	}, ec.nowFunc)
+	result, _, err := conditions.Eval(conditions.StdEnv, cel.CheckedExprToAst(expr), ec.buildEvalVars(constants, variables), ec.nowFunc)
 	if err != nil {
 		// ignore expressions that are invalid
 		if types.IsError(result) {
