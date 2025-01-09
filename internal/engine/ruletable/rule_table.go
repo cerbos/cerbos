@@ -285,13 +285,13 @@ func (rt *RuleTable) insertRule(r *row) {
 			scopeMap[r.Scope] = roleMap
 		}
 
-		actionMap, ok := roleMap.Get(r.Role)
+		actionMap, ok := roleMap.GetLiteral(r.Role)
 		if !ok {
 			actionMap = util.NewGlobMap(make(map[string][]*row))
 			roleMap.Set(r.Role, actionMap)
 		}
 
-		rows, _ := actionMap.Get(r.Action)
+		rows, _ := actionMap.GetLiteral(r.Action)
 		rows = append(rows, r)
 		actionMap.Set(r.Action, rows)
 	}
