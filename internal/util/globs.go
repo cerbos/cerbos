@@ -126,7 +126,7 @@ func (gm *GlobMap[T]) Get(k string) (T, bool) {
 	return zero, false
 }
 
-func (gm *GlobMap[T]) GetLiteral(k string) (T, bool) {
+func (gm *GlobMap[T]) GetWithLiteral(k string) (T, bool) {
 	if v, ok := gm.literals[k]; ok {
 		return v, true
 	}
