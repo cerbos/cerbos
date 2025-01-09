@@ -168,7 +168,9 @@ func Start(ctx context.Context) error {
 			return fmt.Errorf("failed to retrieve runnable policy sets: %w", err)
 		}
 
-		rt.LoadPolicies(rps)
+		if err := rt.LoadPolicies(rps); err != nil {
+			return fmt.Errorf("failed to load policies into rule table: %w", err)
+		}
 
 		if ss, ok := store.(storage.Subscribable); ok {
 			ss.Subscribe(rt)

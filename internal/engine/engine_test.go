@@ -340,7 +340,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		rps, err := compiler.GetAll(ctx)
 		require.NoError(tb, err)
 
-		rt.LoadPolicies(rps)
+		require.NoError(tb, rt.LoadPolicies(rps))
 	}
 
 	var auditLog audit.Log

@@ -643,7 +643,9 @@ func (engine *Engine) getPartialRuleTable(ctx context.Context, resource, policyV
 		return nil, nil
 	}
 
-	ruleTable.LoadPolicies(toLoad)
+	if err := ruleTable.LoadPolicies(toLoad); err != nil {
+		return nil, err
+	}
 
 	return ruleTable, nil
 }

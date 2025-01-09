@@ -12,10 +12,12 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -79,9 +81,15 @@ func (r *row) Matches(scope, action string, roles []string) bool {
 }
 
 type rowParams struct {
-	Key       string
-	Constants map[string]any // conditions can be converted to Go native types at build time
-	Variables []*runtimev1.Variable
+	Key         string
+	Constants   map[string]any        // conditions can be converted to Go native types at build time
+	CelPrograms []*CelProgram         // these need to be ordered for self referential variables at eval time
+	Variables   []*runtimev1.Variable // only used in the query planner
+}
+
+type CelProgram struct {
+	Name string
+	Prog cel.Program
 }
 
 func NewRuleTable() *RuleTable {
@@ -104,29 +112,35 @@ func (rt *RuleTable) WithPolicyLoader(policyLoader policyloader.PolicyLoader) *R
 	return rt
 }
 
-func (rt *RuleTable) LoadPolicies(rps []*runtimev1.RunnablePolicySet) {
+func (rt *RuleTable) LoadPolicies(rps []*runtimev1.RunnablePolicySet) error {
 	for _, rp := range rps {
-		rt.addPolicy(rp)
+		if err := rt.addPolicy(rp); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func (rt *RuleTable) addPolicy(rps *runtimev1.RunnablePolicySet) {
+func (rt *RuleTable) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	switch rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		rt.addResourcePolicy(rps.GetResourcePolicy())
+		return rt.addResourcePolicy(rps.GetResourcePolicy())
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		rt.addRolePolicy(rps.GetRolePolicy())
 	}
+
+	return nil
 }
 
-func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet) {
+func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet) error {
 	sanitizedResource := namer.SanitizedResource(rrps.Meta.Resource)
 
 	rt.schemas[rrps.Meta.Fqn] = rrps.Schemas
 
 	policies := rrps.GetPolicies()
 	if len(policies) == 0 {
-		return
+		return nil
 	}
 
 	// we only process the first of resource policy sets as it's assumed parent scopes are handled in separate calls
@@ -149,10 +163,15 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 	}
 	rt.policyDerivedRoles[rrps.Meta.Fqn] = wrapped
 
+	progs, err := getCelProgramsFromExpressions(p.OrderedVariables)
+	if err != nil {
+		return err
+	}
 	policyParameters := &rowParams{
-		Key:       namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope),
-		Variables: p.OrderedVariables,
-		Constants: (&structpb.Struct{Fields: p.Constants}).AsMap(),
+		Key:         namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope),
+		Variables:   p.OrderedVariables,
+		Constants:   (&structpb.Struct{Fields: p.Constants}).AsMap(),
+		CelPrograms: progs,
 	}
 
 	scopePermissions := p.ScopePermissions
@@ -197,10 +216,16 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			// merge derived roles as roles with added conditions
 			for dr := range rule.DerivedRoles {
 				if rdr, ok := p.DerivedRoles[dr]; ok {
+
+					progs, err := getCelProgramsFromExpressions(rdr.OrderedVariables)
+					if err != nil {
+						return err
+					}
 					derivedRoleParams := &rowParams{
-						Key:       namer.DerivedRolesFQN(dr),
-						Variables: rdr.OrderedVariables,
-						Constants: (&structpb.Struct{Fields: rdr.Constants}).AsMap(),
+						Key:         namer.DerivedRolesFQN(dr),
+						Variables:   rdr.OrderedVariables,
+						Constants:   (&structpb.Struct{Fields: rdr.Constants}).AsMap(),
+						CelPrograms: progs,
 					}
 
 					evaluationKey := fmt.Sprintf("%s#%s", derivedRoleParams.Key, ruleFqn)
@@ -230,6 +255,27 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			}
 		}
 	}
+
+	return nil
+}
+
+func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, error) {
+	progs := make([]*CelProgram, len(vars))
+
+	for i, v := range vars {
+		if v.Expr.Checked == nil {
+			continue
+		}
+
+		p, err := conditions.StdEnv.Program(cel.CheckedExprToAst(v.Expr.Checked))
+		if err != nil {
+			return progs, err
+		}
+
+		progs[i] = &CelProgram{v.Name, p}
+	}
+
+	return progs, nil
 }
 
 func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
@@ -577,9 +623,8 @@ func (rt *RuleTable) triggerReload() error {
 	}
 
 	rt.purge()
-	rt.LoadPolicies(rpss)
 
-	return nil
+	return rt.LoadPolicies(rpss)
 }
 
 func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
