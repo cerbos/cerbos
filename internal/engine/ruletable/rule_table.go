@@ -82,9 +82,9 @@ func (r *row) Matches(scope, action string, roles []string) bool {
 
 type rowParams struct {
 	Key         string
-	Constants   map[string]any        // conditions can be converted to Go native types at build time
-	CelPrograms []*CelProgram         // these need to be ordered for self referential variables at eval time
-	Variables   []*runtimev1.Variable // only used in the query planner
+	Constants   map[string]any // conditions can be converted to Go native types at build time
+	CelPrograms []*CelProgram  // these need to be ordered for self referential variables at eval time
+	Variables   []*runtimev1.Variable
 }
 
 type CelProgram struct {
