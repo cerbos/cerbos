@@ -303,7 +303,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 
 					var satisfiesCondition bool
-					if c, ok := conditionCache[row.EvaluationKey]; ok {
+					if c, ok := conditionCache[row.EvaluationKey]; ok { //nolint:nestif
 						satisfiesCondition = c
 					} else {
 						isSatisfied, err := evalCtx.satisfiesCondition(tctx.StartCondition(), row.Condition, constants, variables)
@@ -542,9 +542,9 @@ func (ec *evalContext) evaluateCELProgramsOrVariables(tctx tracer.Context, const
 	// from build-time.
 	if ec.nowFunc == nil {
 		return ec.evaluatePrograms(constants, celPrograms)
-	} else {
-		return ec.evaluateVariables(tctx.StartVariables(), constants, variables)
 	}
+
+	return ec.evaluateVariables(tctx.StartVariables(), constants, variables)
 }
 
 func (ec *evalContext) evaluateVariables(tctx tracer.Context, constants map[string]any, variables []*runtimev1.Variable) (map[string]any, error) {

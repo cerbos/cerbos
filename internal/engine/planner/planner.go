@@ -393,7 +393,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					return nil, err
 				}
 
-				if row.DerivedRoleCondition != nil {
+				if row.DerivedRoleCondition != nil { //nolint:nestif
 					var variables map[string]*exprpb.Expr
 					if row.DerivedRoleParams != nil {
 						var err error
@@ -413,7 +413,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					} else {
 						node = mkNodeFromLO(mkAndLogicalOperation([]*qpN{node, drNode}))
 					}
-
 				}
 
 				switch row.Effect { //nolint:exhaustive

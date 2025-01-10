@@ -162,7 +162,7 @@ func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
 	return res
 }
 
-// mergeMaps recursively merges the values of key collisions between two maps
+// mergeMaps recursively merges the values of key collisions between two maps.
 func mergeMaps(m1, m2 map[string]interface{}) map[string]interface{} {
 	for k, v2 := range m2 {
 		if v1, ok := m1[k]; ok {

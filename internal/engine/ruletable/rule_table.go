@@ -29,33 +29,33 @@ const (
 
 type RuleTable struct {
 	policyLoader             policyloader.PolicyLoader
-	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*row]]
+	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
 	scopedResourceIdx        map[string]map[string]*util.GlobMap[struct{}]
 	log                      *zap.SugaredLogger
 	schemas                  map[string]*policyv1.Schemas
 	meta                     map[string]*runtimev1.RuleTableMetadata
-	policyDerivedRoles       map[string]map[string]*wrappedRunnableDerivedRole
+	policyDerivedRoles       map[string]map[string]*WrappedRunnableDerivedRole
 	scopeMap                 map[string]struct{}
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoles              map[string][]string
 	parentRoleAncestorsCache map[string][]string
-	rules                    []*row
+	rules                    []*Row
 	mu                       sync.RWMutex
 }
 
-type wrappedRunnableDerivedRole struct {
+type WrappedRunnableDerivedRole struct {
 	*runtimev1.RunnableDerivedRole
 	Constants map[string]any
 }
 
-type row struct {
+type Row struct {
 	*runtimev1.RuleTable_RuleRow
 	Params            *rowParams
 	DerivedRoleParams *rowParams
 	EvaluationKey     string
 }
 
-func (r *row) Matches(scope, action string, roles []string) bool {
+func (r *Row) Matches(scope, action string, roles []string) bool {
 	if scope != r.Scope {
 		return false
 	}
@@ -88,18 +88,18 @@ type rowParams struct {
 }
 
 type CelProgram struct {
-	Name string
 	Prog cel.Program
+	Name string
 }
 
 func NewRuleTable() *RuleTable {
 	return &RuleTable{
-		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*row]]),
+		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
 		scopedResourceIdx:        make(map[string]map[string]*util.GlobMap[struct{}]),
 		log:                      zap.S().Named("ruletable"),
 		schemas:                  make(map[string]*policyv1.Schemas),
 		meta:                     make(map[string]*runtimev1.RuleTableMetadata),
-		policyDerivedRoles:       make(map[string]map[string]*wrappedRunnableDerivedRole),
+		policyDerivedRoles:       make(map[string]map[string]*WrappedRunnableDerivedRole),
 		scopeMap:                 make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
 		parentRoles:              make(map[string][]string),
@@ -154,9 +154,9 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		Annotations:      rrps.Meta.Annotations,
 	}
 
-	wrapped := make(map[string]*wrappedRunnableDerivedRole)
+	wrapped := make(map[string]*WrappedRunnableDerivedRole)
 	for n, dr := range p.DerivedRoles {
-		wrapped[n] = &wrappedRunnableDerivedRole{
+		wrapped[n] = &WrappedRunnableDerivedRole{
 			RunnableDerivedRole: dr,
 			Constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
 		}
@@ -194,7 +194,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		evaluationKey := fmt.Sprintf("%s#%s", policyParameters.Key, ruleFqn)
 		for a := range rule.Actions {
 			for r := range rule.Roles {
-				rt.insertRule(&row{
+				rt.insertRule(&Row{
 					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 						OriginFqn:        rrps.Meta.Fqn,
 						Resource:         sanitizedResource,
@@ -216,7 +216,6 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			// merge derived roles as roles with added conditions
 			for dr := range rule.DerivedRoles {
 				if rdr, ok := p.DerivedRoles[dr]; ok {
-
 					progs, err := getCelProgramsFromExpressions(rdr.OrderedVariables)
 					if err != nil {
 						return err
@@ -230,7 +229,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 
 					evaluationKey := fmt.Sprintf("%s#%s", derivedRoleParams.Key, ruleFqn)
 					for pr := range rdr.ParentRoles {
-						rt.insertRule(&row{
+						rt.insertRule(&Row{
 							RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 								OriginFqn:            rrps.Meta.Fqn,
 								Resource:             sanitizedResource,
@@ -272,7 +271,7 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 			return progs, err
 		}
 
-		progs[i] = &CelProgram{v.Name, p}
+		progs[i] = &CelProgram{Name: v.Name, Prog: p}
 	}
 
 	return progs, nil
@@ -293,7 +292,7 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 		for idx, rule := range rl.Rules {
 			evaluationKey := fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx)
 			for a := range rule.AllowActions {
-				rt.insertRule(&row{
+				rt.insertRule(&Row{
 					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 						OriginFqn:        p.Meta.Fqn,
 						Role:             p.Role,
@@ -314,26 +313,26 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	rt.parentRoles[p.Role] = p.ParentRoles
 }
 
-func (rt *RuleTable) insertRule(r *row) {
+func (rt *RuleTable) insertRule(r *Row) {
 	rt.scopeMap[r.Scope] = struct{}{}
 
 	// index as `version->scope->role_glob->action_glob`
 	{
 		scopeMap, ok := rt.primaryIdx[r.Version]
 		if !ok {
-			scopeMap = make(map[string]*util.GlobMap[*util.GlobMap[[]*row]])
+			scopeMap = make(map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
 			rt.primaryIdx[r.Version] = scopeMap
 		}
 
 		roleMap, ok := scopeMap[r.Scope]
 		if !ok {
-			roleMap = util.NewGlobMap(make(map[string]*util.GlobMap[[]*row]))
+			roleMap = util.NewGlobMap(make(map[string]*util.GlobMap[[]*Row]))
 			scopeMap[r.Scope] = roleMap
 		}
 
 		actionMap, ok := roleMap.GetWithLiteral(r.Role)
 		if !ok {
-			actionMap = util.NewGlobMap(make(map[string][]*row))
+			actionMap = util.NewGlobMap(make(map[string][]*Row))
 			roleMap.Set(r.Role, actionMap)
 		}
 
@@ -374,7 +373,7 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 	versionSet := make(map[string]struct{})
 	scopeSet := make(map[string]struct{})
 
-	newRules := []*row{}
+	newRules := []*Row{}
 	for _, r := range rt.rules {
 		if r.OriginFqn != deletedFqn {
 			newRules = append(newRules, r)
@@ -417,12 +416,12 @@ func (rt *RuleTable) purge() {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	rt.rules = []*row{}
+	rt.rules = []*Row{}
 	rt.parentRoles = make(map[string][]string)
 	rt.schemas = make(map[string]*policyv1.Schemas)
 
 	rt.scopeMap = make(map[string]struct{})
-	rt.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*row]])
+	rt.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
 	rt.scopedResourceIdx = make(map[string]map[string]*util.GlobMap[struct{}])
 	rt.parentRoleAncestorsCache = make(map[string][]string)
 }
@@ -431,7 +430,7 @@ func (rt *RuleTable) Len() int {
 	return len(rt.rules)
 }
 
-func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*wrappedRunnableDerivedRole {
+func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
 	return rt.policyDerivedRoles[fqn]
 }
 
@@ -486,8 +485,8 @@ func (rt *RuleTable) ScopedRoleExists(version, scope, role string) bool {
 	return false
 }
 
-func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []string) []*row {
-	res := []*row{}
+func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
+	res := []*Row{}
 
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
@@ -639,7 +638,9 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
 	rt.deletePolicy(rps)
 
 	if ev.Kind == storage.EventAddOrUpdatePolicy {
-		rt.addPolicy(rps)
+		if err := rt.addPolicy(rps); err != nil {
+			return err
+		}
 	}
 
 	return nil

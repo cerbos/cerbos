@@ -164,36 +164,6 @@ playgroundTest:
                                                             "kind": "KIND_ACTION",
                                                             "action": "view",
                                                           },
-                                                          {
-                                                            "kind": "KIND_ROLE",
-                                                            "role": "user",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_SCOPE",
-                                                            "scope": "",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_RULE",
-                                                            "rule": "rule-001",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "message": "Condition not satisfied",
-                                                          "status": "STATUS_SKIPPED",
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album_object.vdefault",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_ACTION",
-                                                            "action": "view",
-                                                          },
                                                         ],
                                                       "event":
                                                         {
