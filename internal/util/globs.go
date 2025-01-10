@@ -126,6 +126,19 @@ func (gm *GlobMap[T]) Get(k string) (T, bool) {
 	return zero, false
 }
 
+func (gm *GlobMap[T]) GetWithLiteral(k string) (T, bool) {
+	if v, ok := gm.literals[k]; ok {
+		return v, true
+	}
+
+	if v, ok := gm.globs[k]; ok {
+		return v, true
+	}
+
+	var zero T
+	return zero, false
+}
+
 func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
 	merged := make(map[string]any)
 
