@@ -8,20 +8,17 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/engine"
+	internalengine "github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/private/compile"
+	"github.com/cerbos/cerbos/private/engine"
 )
 
-func Resources(ctx context.Context, idx compile.Index, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
+func Resources(ctx context.Context, conf *engine.Conf, idx compile.Index, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng, err := engine.NewEphemeral(compiler, schemaMgr)
-	if err != nil {
-		return nil, err
-	}
-
+	eng := internalengine.NewEphemeral(conf, compiler, schemaMgr)
 	return eng.PlanResources(ctx, input)
 }

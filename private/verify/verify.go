@@ -48,10 +48,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng, err := engine.NewEphemeral(compiler, schemaMgr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create engine: %w", err)
-	}
+	eng := engine.NewEphemeral(nil, compiler, schemaMgr)
 
 	results, err := verify.Verify(ctx, fsys, eng, verify.Config{Trace: true})
 	if err != nil {
@@ -78,10 +75,7 @@ func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, er
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
-	eng, err := engine.NewEphemeral(bundleSrc, schemaMgr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create engine: %w", err)
-	}
+	eng := engine.NewEphemeral(nil, bundleSrc, schemaMgr)
 
 	results, err := verify.Verify(ctx, os.DirFS(params.TestsDir), eng, verify.Config{Trace: true})
 	if err != nil {
