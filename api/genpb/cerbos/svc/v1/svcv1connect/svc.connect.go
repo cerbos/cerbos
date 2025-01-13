@@ -11,9 +11,9 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	http "net/http"
 	strings "strings"
 )
@@ -107,41 +107,13 @@ const (
 	CerbosPlaygroundServicePlaygroundProxyProcedure = "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundProxy"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	cerbosServiceServiceDescriptor                            = v1.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosService")
-	cerbosServiceCheckResourceSetMethodDescriptor             = cerbosServiceServiceDescriptor.Methods().ByName("CheckResourceSet")
-	cerbosServiceCheckResourceBatchMethodDescriptor           = cerbosServiceServiceDescriptor.Methods().ByName("CheckResourceBatch")
-	cerbosServiceCheckResourcesMethodDescriptor               = cerbosServiceServiceDescriptor.Methods().ByName("CheckResources")
-	cerbosServiceServerInfoMethodDescriptor                   = cerbosServiceServiceDescriptor.Methods().ByName("ServerInfo")
-	cerbosServicePlanResourcesMethodDescriptor                = cerbosServiceServiceDescriptor.Methods().ByName("PlanResources")
-	cerbosAdminServiceServiceDescriptor                       = v1.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosAdminService")
-	cerbosAdminServiceAddOrUpdatePolicyMethodDescriptor       = cerbosAdminServiceServiceDescriptor.Methods().ByName("AddOrUpdatePolicy")
-	cerbosAdminServiceInspectPoliciesMethodDescriptor         = cerbosAdminServiceServiceDescriptor.Methods().ByName("InspectPolicies")
-	cerbosAdminServiceListPoliciesMethodDescriptor            = cerbosAdminServiceServiceDescriptor.Methods().ByName("ListPolicies")
-	cerbosAdminServiceGetPolicyMethodDescriptor               = cerbosAdminServiceServiceDescriptor.Methods().ByName("GetPolicy")
-	cerbosAdminServiceDisablePolicyMethodDescriptor           = cerbosAdminServiceServiceDescriptor.Methods().ByName("DisablePolicy")
-	cerbosAdminServiceEnablePolicyMethodDescriptor            = cerbosAdminServiceServiceDescriptor.Methods().ByName("EnablePolicy")
-	cerbosAdminServiceListAuditLogEntriesMethodDescriptor     = cerbosAdminServiceServiceDescriptor.Methods().ByName("ListAuditLogEntries")
-	cerbosAdminServiceAddOrUpdateSchemaMethodDescriptor       = cerbosAdminServiceServiceDescriptor.Methods().ByName("AddOrUpdateSchema")
-	cerbosAdminServiceListSchemasMethodDescriptor             = cerbosAdminServiceServiceDescriptor.Methods().ByName("ListSchemas")
-	cerbosAdminServiceGetSchemaMethodDescriptor               = cerbosAdminServiceServiceDescriptor.Methods().ByName("GetSchema")
-	cerbosAdminServiceDeleteSchemaMethodDescriptor            = cerbosAdminServiceServiceDescriptor.Methods().ByName("DeleteSchema")
-	cerbosAdminServiceReloadStoreMethodDescriptor             = cerbosAdminServiceServiceDescriptor.Methods().ByName("ReloadStore")
-	cerbosPlaygroundServiceServiceDescriptor                  = v1.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosPlaygroundService")
-	cerbosPlaygroundServicePlaygroundValidateMethodDescriptor = cerbosPlaygroundServiceServiceDescriptor.Methods().ByName("PlaygroundValidate")
-	cerbosPlaygroundServicePlaygroundTestMethodDescriptor     = cerbosPlaygroundServiceServiceDescriptor.Methods().ByName("PlaygroundTest")
-	cerbosPlaygroundServicePlaygroundEvaluateMethodDescriptor = cerbosPlaygroundServiceServiceDescriptor.Methods().ByName("PlaygroundEvaluate")
-	cerbosPlaygroundServicePlaygroundProxyMethodDescriptor    = cerbosPlaygroundServiceServiceDescriptor.Methods().ByName("PlaygroundProxy")
-)
-
 // CerbosServiceClient is a client for the cerbos.svc.v1.CerbosService service.
 type CerbosServiceClient interface {
-	CheckResourceSet(context.Context, *connect.Request[v11.CheckResourceSetRequest]) (*connect.Response[v12.CheckResourceSetResponse], error)
-	CheckResourceBatch(context.Context, *connect.Request[v11.CheckResourceBatchRequest]) (*connect.Response[v12.CheckResourceBatchResponse], error)
-	CheckResources(context.Context, *connect.Request[v11.CheckResourcesRequest]) (*connect.Response[v12.CheckResourcesResponse], error)
-	ServerInfo(context.Context, *connect.Request[v11.ServerInfoRequest]) (*connect.Response[v12.ServerInfoResponse], error)
-	PlanResources(context.Context, *connect.Request[v11.PlanResourcesRequest]) (*connect.Response[v12.PlanResourcesResponse], error)
+	CheckResourceSet(context.Context, *connect.Request[v1.CheckResourceSetRequest]) (*connect.Response[v11.CheckResourceSetResponse], error)
+	CheckResourceBatch(context.Context, *connect.Request[v1.CheckResourceBatchRequest]) (*connect.Response[v11.CheckResourceBatchResponse], error)
+	CheckResources(context.Context, *connect.Request[v1.CheckResourcesRequest]) (*connect.Response[v11.CheckResourcesResponse], error)
+	ServerInfo(context.Context, *connect.Request[v1.ServerInfoRequest]) (*connect.Response[v11.ServerInfoResponse], error)
+	PlanResources(context.Context, *connect.Request[v1.PlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error)
 }
 
 // NewCerbosServiceClient constructs a client for the cerbos.svc.v1.CerbosService service. By
@@ -153,35 +125,36 @@ type CerbosServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewCerbosServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CerbosServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	cerbosServiceMethods := v12.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosService").Methods()
 	return &cerbosServiceClient{
-		checkResourceSet: connect.NewClient[v11.CheckResourceSetRequest, v12.CheckResourceSetResponse](
+		checkResourceSet: connect.NewClient[v1.CheckResourceSetRequest, v11.CheckResourceSetResponse](
 			httpClient,
 			baseURL+CerbosServiceCheckResourceSetProcedure,
-			connect.WithSchema(cerbosServiceCheckResourceSetMethodDescriptor),
+			connect.WithSchema(cerbosServiceMethods.ByName("CheckResourceSet")),
 			connect.WithClientOptions(opts...),
 		),
-		checkResourceBatch: connect.NewClient[v11.CheckResourceBatchRequest, v12.CheckResourceBatchResponse](
+		checkResourceBatch: connect.NewClient[v1.CheckResourceBatchRequest, v11.CheckResourceBatchResponse](
 			httpClient,
 			baseURL+CerbosServiceCheckResourceBatchProcedure,
-			connect.WithSchema(cerbosServiceCheckResourceBatchMethodDescriptor),
+			connect.WithSchema(cerbosServiceMethods.ByName("CheckResourceBatch")),
 			connect.WithClientOptions(opts...),
 		),
-		checkResources: connect.NewClient[v11.CheckResourcesRequest, v12.CheckResourcesResponse](
+		checkResources: connect.NewClient[v1.CheckResourcesRequest, v11.CheckResourcesResponse](
 			httpClient,
 			baseURL+CerbosServiceCheckResourcesProcedure,
-			connect.WithSchema(cerbosServiceCheckResourcesMethodDescriptor),
+			connect.WithSchema(cerbosServiceMethods.ByName("CheckResources")),
 			connect.WithClientOptions(opts...),
 		),
-		serverInfo: connect.NewClient[v11.ServerInfoRequest, v12.ServerInfoResponse](
+		serverInfo: connect.NewClient[v1.ServerInfoRequest, v11.ServerInfoResponse](
 			httpClient,
 			baseURL+CerbosServiceServerInfoProcedure,
-			connect.WithSchema(cerbosServiceServerInfoMethodDescriptor),
+			connect.WithSchema(cerbosServiceMethods.ByName("ServerInfo")),
 			connect.WithClientOptions(opts...),
 		),
-		planResources: connect.NewClient[v11.PlanResourcesRequest, v12.PlanResourcesResponse](
+		planResources: connect.NewClient[v1.PlanResourcesRequest, v11.PlanResourcesResponse](
 			httpClient,
 			baseURL+CerbosServicePlanResourcesProcedure,
-			connect.WithSchema(cerbosServicePlanResourcesMethodDescriptor),
+			connect.WithSchema(cerbosServiceMethods.ByName("PlanResources")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -189,45 +162,45 @@ func NewCerbosServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // cerbosServiceClient implements CerbosServiceClient.
 type cerbosServiceClient struct {
-	checkResourceSet   *connect.Client[v11.CheckResourceSetRequest, v12.CheckResourceSetResponse]
-	checkResourceBatch *connect.Client[v11.CheckResourceBatchRequest, v12.CheckResourceBatchResponse]
-	checkResources     *connect.Client[v11.CheckResourcesRequest, v12.CheckResourcesResponse]
-	serverInfo         *connect.Client[v11.ServerInfoRequest, v12.ServerInfoResponse]
-	planResources      *connect.Client[v11.PlanResourcesRequest, v12.PlanResourcesResponse]
+	checkResourceSet   *connect.Client[v1.CheckResourceSetRequest, v11.CheckResourceSetResponse]
+	checkResourceBatch *connect.Client[v1.CheckResourceBatchRequest, v11.CheckResourceBatchResponse]
+	checkResources     *connect.Client[v1.CheckResourcesRequest, v11.CheckResourcesResponse]
+	serverInfo         *connect.Client[v1.ServerInfoRequest, v11.ServerInfoResponse]
+	planResources      *connect.Client[v1.PlanResourcesRequest, v11.PlanResourcesResponse]
 }
 
 // CheckResourceSet calls cerbos.svc.v1.CerbosService.CheckResourceSet.
-func (c *cerbosServiceClient) CheckResourceSet(ctx context.Context, req *connect.Request[v11.CheckResourceSetRequest]) (*connect.Response[v12.CheckResourceSetResponse], error) {
+func (c *cerbosServiceClient) CheckResourceSet(ctx context.Context, req *connect.Request[v1.CheckResourceSetRequest]) (*connect.Response[v11.CheckResourceSetResponse], error) {
 	return c.checkResourceSet.CallUnary(ctx, req)
 }
 
 // CheckResourceBatch calls cerbos.svc.v1.CerbosService.CheckResourceBatch.
-func (c *cerbosServiceClient) CheckResourceBatch(ctx context.Context, req *connect.Request[v11.CheckResourceBatchRequest]) (*connect.Response[v12.CheckResourceBatchResponse], error) {
+func (c *cerbosServiceClient) CheckResourceBatch(ctx context.Context, req *connect.Request[v1.CheckResourceBatchRequest]) (*connect.Response[v11.CheckResourceBatchResponse], error) {
 	return c.checkResourceBatch.CallUnary(ctx, req)
 }
 
 // CheckResources calls cerbos.svc.v1.CerbosService.CheckResources.
-func (c *cerbosServiceClient) CheckResources(ctx context.Context, req *connect.Request[v11.CheckResourcesRequest]) (*connect.Response[v12.CheckResourcesResponse], error) {
+func (c *cerbosServiceClient) CheckResources(ctx context.Context, req *connect.Request[v1.CheckResourcesRequest]) (*connect.Response[v11.CheckResourcesResponse], error) {
 	return c.checkResources.CallUnary(ctx, req)
 }
 
 // ServerInfo calls cerbos.svc.v1.CerbosService.ServerInfo.
-func (c *cerbosServiceClient) ServerInfo(ctx context.Context, req *connect.Request[v11.ServerInfoRequest]) (*connect.Response[v12.ServerInfoResponse], error) {
+func (c *cerbosServiceClient) ServerInfo(ctx context.Context, req *connect.Request[v1.ServerInfoRequest]) (*connect.Response[v11.ServerInfoResponse], error) {
 	return c.serverInfo.CallUnary(ctx, req)
 }
 
 // PlanResources calls cerbos.svc.v1.CerbosService.PlanResources.
-func (c *cerbosServiceClient) PlanResources(ctx context.Context, req *connect.Request[v11.PlanResourcesRequest]) (*connect.Response[v12.PlanResourcesResponse], error) {
+func (c *cerbosServiceClient) PlanResources(ctx context.Context, req *connect.Request[v1.PlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error) {
 	return c.planResources.CallUnary(ctx, req)
 }
 
 // CerbosServiceHandler is an implementation of the cerbos.svc.v1.CerbosService service.
 type CerbosServiceHandler interface {
-	CheckResourceSet(context.Context, *connect.Request[v11.CheckResourceSetRequest]) (*connect.Response[v12.CheckResourceSetResponse], error)
-	CheckResourceBatch(context.Context, *connect.Request[v11.CheckResourceBatchRequest]) (*connect.Response[v12.CheckResourceBatchResponse], error)
-	CheckResources(context.Context, *connect.Request[v11.CheckResourcesRequest]) (*connect.Response[v12.CheckResourcesResponse], error)
-	ServerInfo(context.Context, *connect.Request[v11.ServerInfoRequest]) (*connect.Response[v12.ServerInfoResponse], error)
-	PlanResources(context.Context, *connect.Request[v11.PlanResourcesRequest]) (*connect.Response[v12.PlanResourcesResponse], error)
+	CheckResourceSet(context.Context, *connect.Request[v1.CheckResourceSetRequest]) (*connect.Response[v11.CheckResourceSetResponse], error)
+	CheckResourceBatch(context.Context, *connect.Request[v1.CheckResourceBatchRequest]) (*connect.Response[v11.CheckResourceBatchResponse], error)
+	CheckResources(context.Context, *connect.Request[v1.CheckResourcesRequest]) (*connect.Response[v11.CheckResourcesResponse], error)
+	ServerInfo(context.Context, *connect.Request[v1.ServerInfoRequest]) (*connect.Response[v11.ServerInfoResponse], error)
+	PlanResources(context.Context, *connect.Request[v1.PlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error)
 }
 
 // NewCerbosServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -236,34 +209,35 @@ type CerbosServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewCerbosServiceHandler(svc CerbosServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	cerbosServiceMethods := v12.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosService").Methods()
 	cerbosServiceCheckResourceSetHandler := connect.NewUnaryHandler(
 		CerbosServiceCheckResourceSetProcedure,
 		svc.CheckResourceSet,
-		connect.WithSchema(cerbosServiceCheckResourceSetMethodDescriptor),
+		connect.WithSchema(cerbosServiceMethods.ByName("CheckResourceSet")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosServiceCheckResourceBatchHandler := connect.NewUnaryHandler(
 		CerbosServiceCheckResourceBatchProcedure,
 		svc.CheckResourceBatch,
-		connect.WithSchema(cerbosServiceCheckResourceBatchMethodDescriptor),
+		connect.WithSchema(cerbosServiceMethods.ByName("CheckResourceBatch")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosServiceCheckResourcesHandler := connect.NewUnaryHandler(
 		CerbosServiceCheckResourcesProcedure,
 		svc.CheckResources,
-		connect.WithSchema(cerbosServiceCheckResourcesMethodDescriptor),
+		connect.WithSchema(cerbosServiceMethods.ByName("CheckResources")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosServiceServerInfoHandler := connect.NewUnaryHandler(
 		CerbosServiceServerInfoProcedure,
 		svc.ServerInfo,
-		connect.WithSchema(cerbosServiceServerInfoMethodDescriptor),
+		connect.WithSchema(cerbosServiceMethods.ByName("ServerInfo")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosServicePlanResourcesHandler := connect.NewUnaryHandler(
 		CerbosServicePlanResourcesProcedure,
 		svc.PlanResources,
-		connect.WithSchema(cerbosServicePlanResourcesMethodDescriptor),
+		connect.WithSchema(cerbosServiceMethods.ByName("PlanResources")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/cerbos.svc.v1.CerbosService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -287,40 +261,40 @@ func NewCerbosServiceHandler(svc CerbosServiceHandler, opts ...connect.HandlerOp
 // UnimplementedCerbosServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCerbosServiceHandler struct{}
 
-func (UnimplementedCerbosServiceHandler) CheckResourceSet(context.Context, *connect.Request[v11.CheckResourceSetRequest]) (*connect.Response[v12.CheckResourceSetResponse], error) {
+func (UnimplementedCerbosServiceHandler) CheckResourceSet(context.Context, *connect.Request[v1.CheckResourceSetRequest]) (*connect.Response[v11.CheckResourceSetResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosService.CheckResourceSet is not implemented"))
 }
 
-func (UnimplementedCerbosServiceHandler) CheckResourceBatch(context.Context, *connect.Request[v11.CheckResourceBatchRequest]) (*connect.Response[v12.CheckResourceBatchResponse], error) {
+func (UnimplementedCerbosServiceHandler) CheckResourceBatch(context.Context, *connect.Request[v1.CheckResourceBatchRequest]) (*connect.Response[v11.CheckResourceBatchResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosService.CheckResourceBatch is not implemented"))
 }
 
-func (UnimplementedCerbosServiceHandler) CheckResources(context.Context, *connect.Request[v11.CheckResourcesRequest]) (*connect.Response[v12.CheckResourcesResponse], error) {
+func (UnimplementedCerbosServiceHandler) CheckResources(context.Context, *connect.Request[v1.CheckResourcesRequest]) (*connect.Response[v11.CheckResourcesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosService.CheckResources is not implemented"))
 }
 
-func (UnimplementedCerbosServiceHandler) ServerInfo(context.Context, *connect.Request[v11.ServerInfoRequest]) (*connect.Response[v12.ServerInfoResponse], error) {
+func (UnimplementedCerbosServiceHandler) ServerInfo(context.Context, *connect.Request[v1.ServerInfoRequest]) (*connect.Response[v11.ServerInfoResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosService.ServerInfo is not implemented"))
 }
 
-func (UnimplementedCerbosServiceHandler) PlanResources(context.Context, *connect.Request[v11.PlanResourcesRequest]) (*connect.Response[v12.PlanResourcesResponse], error) {
+func (UnimplementedCerbosServiceHandler) PlanResources(context.Context, *connect.Request[v1.PlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosService.PlanResources is not implemented"))
 }
 
 // CerbosAdminServiceClient is a client for the cerbos.svc.v1.CerbosAdminService service.
 type CerbosAdminServiceClient interface {
-	AddOrUpdatePolicy(context.Context, *connect.Request[v11.AddOrUpdatePolicyRequest]) (*connect.Response[v12.AddOrUpdatePolicyResponse], error)
-	InspectPolicies(context.Context, *connect.Request[v11.InspectPoliciesRequest]) (*connect.Response[v12.InspectPoliciesResponse], error)
-	ListPolicies(context.Context, *connect.Request[v11.ListPoliciesRequest]) (*connect.Response[v12.ListPoliciesResponse], error)
-	GetPolicy(context.Context, *connect.Request[v11.GetPolicyRequest]) (*connect.Response[v12.GetPolicyResponse], error)
-	DisablePolicy(context.Context, *connect.Request[v11.DisablePolicyRequest]) (*connect.Response[v12.DisablePolicyResponse], error)
-	EnablePolicy(context.Context, *connect.Request[v11.EnablePolicyRequest]) (*connect.Response[v12.EnablePolicyResponse], error)
-	ListAuditLogEntries(context.Context, *connect.Request[v11.ListAuditLogEntriesRequest]) (*connect.ServerStreamForClient[v12.ListAuditLogEntriesResponse], error)
-	AddOrUpdateSchema(context.Context, *connect.Request[v11.AddOrUpdateSchemaRequest]) (*connect.Response[v12.AddOrUpdateSchemaResponse], error)
-	ListSchemas(context.Context, *connect.Request[v11.ListSchemasRequest]) (*connect.Response[v12.ListSchemasResponse], error)
-	GetSchema(context.Context, *connect.Request[v11.GetSchemaRequest]) (*connect.Response[v12.GetSchemaResponse], error)
-	DeleteSchema(context.Context, *connect.Request[v11.DeleteSchemaRequest]) (*connect.Response[v12.DeleteSchemaResponse], error)
-	ReloadStore(context.Context, *connect.Request[v11.ReloadStoreRequest]) (*connect.Response[v12.ReloadStoreResponse], error)
+	AddOrUpdatePolicy(context.Context, *connect.Request[v1.AddOrUpdatePolicyRequest]) (*connect.Response[v11.AddOrUpdatePolicyResponse], error)
+	InspectPolicies(context.Context, *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error)
+	ListPolicies(context.Context, *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error)
+	GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error)
+	DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error)
+	EnablePolicy(context.Context, *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error)
+	ListAuditLogEntries(context.Context, *connect.Request[v1.ListAuditLogEntriesRequest]) (*connect.ServerStreamForClient[v11.ListAuditLogEntriesResponse], error)
+	AddOrUpdateSchema(context.Context, *connect.Request[v1.AddOrUpdateSchemaRequest]) (*connect.Response[v11.AddOrUpdateSchemaResponse], error)
+	ListSchemas(context.Context, *connect.Request[v1.ListSchemasRequest]) (*connect.Response[v11.ListSchemasResponse], error)
+	GetSchema(context.Context, *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error)
+	DeleteSchema(context.Context, *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error)
+	ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error)
 }
 
 // NewCerbosAdminServiceClient constructs a client for the cerbos.svc.v1.CerbosAdminService service.
@@ -332,77 +306,78 @@ type CerbosAdminServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewCerbosAdminServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CerbosAdminServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	cerbosAdminServiceMethods := v12.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosAdminService").Methods()
 	return &cerbosAdminServiceClient{
-		addOrUpdatePolicy: connect.NewClient[v11.AddOrUpdatePolicyRequest, v12.AddOrUpdatePolicyResponse](
+		addOrUpdatePolicy: connect.NewClient[v1.AddOrUpdatePolicyRequest, v11.AddOrUpdatePolicyResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceAddOrUpdatePolicyProcedure,
-			connect.WithSchema(cerbosAdminServiceAddOrUpdatePolicyMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("AddOrUpdatePolicy")),
 			connect.WithClientOptions(opts...),
 		),
-		inspectPolicies: connect.NewClient[v11.InspectPoliciesRequest, v12.InspectPoliciesResponse](
+		inspectPolicies: connect.NewClient[v1.InspectPoliciesRequest, v11.InspectPoliciesResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceInspectPoliciesProcedure,
-			connect.WithSchema(cerbosAdminServiceInspectPoliciesMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("InspectPolicies")),
 			connect.WithClientOptions(opts...),
 		),
-		listPolicies: connect.NewClient[v11.ListPoliciesRequest, v12.ListPoliciesResponse](
+		listPolicies: connect.NewClient[v1.ListPoliciesRequest, v11.ListPoliciesResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceListPoliciesProcedure,
-			connect.WithSchema(cerbosAdminServiceListPoliciesMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("ListPolicies")),
 			connect.WithClientOptions(opts...),
 		),
-		getPolicy: connect.NewClient[v11.GetPolicyRequest, v12.GetPolicyResponse](
+		getPolicy: connect.NewClient[v1.GetPolicyRequest, v11.GetPolicyResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceGetPolicyProcedure,
-			connect.WithSchema(cerbosAdminServiceGetPolicyMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("GetPolicy")),
 			connect.WithClientOptions(opts...),
 		),
-		disablePolicy: connect.NewClient[v11.DisablePolicyRequest, v12.DisablePolicyResponse](
+		disablePolicy: connect.NewClient[v1.DisablePolicyRequest, v11.DisablePolicyResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceDisablePolicyProcedure,
-			connect.WithSchema(cerbosAdminServiceDisablePolicyMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("DisablePolicy")),
 			connect.WithClientOptions(opts...),
 		),
-		enablePolicy: connect.NewClient[v11.EnablePolicyRequest, v12.EnablePolicyResponse](
+		enablePolicy: connect.NewClient[v1.EnablePolicyRequest, v11.EnablePolicyResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceEnablePolicyProcedure,
-			connect.WithSchema(cerbosAdminServiceEnablePolicyMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("EnablePolicy")),
 			connect.WithClientOptions(opts...),
 		),
-		listAuditLogEntries: connect.NewClient[v11.ListAuditLogEntriesRequest, v12.ListAuditLogEntriesResponse](
+		listAuditLogEntries: connect.NewClient[v1.ListAuditLogEntriesRequest, v11.ListAuditLogEntriesResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceListAuditLogEntriesProcedure,
-			connect.WithSchema(cerbosAdminServiceListAuditLogEntriesMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("ListAuditLogEntries")),
 			connect.WithClientOptions(opts...),
 		),
-		addOrUpdateSchema: connect.NewClient[v11.AddOrUpdateSchemaRequest, v12.AddOrUpdateSchemaResponse](
+		addOrUpdateSchema: connect.NewClient[v1.AddOrUpdateSchemaRequest, v11.AddOrUpdateSchemaResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceAddOrUpdateSchemaProcedure,
-			connect.WithSchema(cerbosAdminServiceAddOrUpdateSchemaMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("AddOrUpdateSchema")),
 			connect.WithClientOptions(opts...),
 		),
-		listSchemas: connect.NewClient[v11.ListSchemasRequest, v12.ListSchemasResponse](
+		listSchemas: connect.NewClient[v1.ListSchemasRequest, v11.ListSchemasResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceListSchemasProcedure,
-			connect.WithSchema(cerbosAdminServiceListSchemasMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("ListSchemas")),
 			connect.WithClientOptions(opts...),
 		),
-		getSchema: connect.NewClient[v11.GetSchemaRequest, v12.GetSchemaResponse](
+		getSchema: connect.NewClient[v1.GetSchemaRequest, v11.GetSchemaResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceGetSchemaProcedure,
-			connect.WithSchema(cerbosAdminServiceGetSchemaMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("GetSchema")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteSchema: connect.NewClient[v11.DeleteSchemaRequest, v12.DeleteSchemaResponse](
+		deleteSchema: connect.NewClient[v1.DeleteSchemaRequest, v11.DeleteSchemaResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceDeleteSchemaProcedure,
-			connect.WithSchema(cerbosAdminServiceDeleteSchemaMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("DeleteSchema")),
 			connect.WithClientOptions(opts...),
 		),
-		reloadStore: connect.NewClient[v11.ReloadStoreRequest, v12.ReloadStoreResponse](
+		reloadStore: connect.NewClient[v1.ReloadStoreRequest, v11.ReloadStoreResponse](
 			httpClient,
 			baseURL+CerbosAdminServiceReloadStoreProcedure,
-			connect.WithSchema(cerbosAdminServiceReloadStoreMethodDescriptor),
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("ReloadStore")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -410,94 +385,94 @@ func NewCerbosAdminServiceClient(httpClient connect.HTTPClient, baseURL string, 
 
 // cerbosAdminServiceClient implements CerbosAdminServiceClient.
 type cerbosAdminServiceClient struct {
-	addOrUpdatePolicy   *connect.Client[v11.AddOrUpdatePolicyRequest, v12.AddOrUpdatePolicyResponse]
-	inspectPolicies     *connect.Client[v11.InspectPoliciesRequest, v12.InspectPoliciesResponse]
-	listPolicies        *connect.Client[v11.ListPoliciesRequest, v12.ListPoliciesResponse]
-	getPolicy           *connect.Client[v11.GetPolicyRequest, v12.GetPolicyResponse]
-	disablePolicy       *connect.Client[v11.DisablePolicyRequest, v12.DisablePolicyResponse]
-	enablePolicy        *connect.Client[v11.EnablePolicyRequest, v12.EnablePolicyResponse]
-	listAuditLogEntries *connect.Client[v11.ListAuditLogEntriesRequest, v12.ListAuditLogEntriesResponse]
-	addOrUpdateSchema   *connect.Client[v11.AddOrUpdateSchemaRequest, v12.AddOrUpdateSchemaResponse]
-	listSchemas         *connect.Client[v11.ListSchemasRequest, v12.ListSchemasResponse]
-	getSchema           *connect.Client[v11.GetSchemaRequest, v12.GetSchemaResponse]
-	deleteSchema        *connect.Client[v11.DeleteSchemaRequest, v12.DeleteSchemaResponse]
-	reloadStore         *connect.Client[v11.ReloadStoreRequest, v12.ReloadStoreResponse]
+	addOrUpdatePolicy   *connect.Client[v1.AddOrUpdatePolicyRequest, v11.AddOrUpdatePolicyResponse]
+	inspectPolicies     *connect.Client[v1.InspectPoliciesRequest, v11.InspectPoliciesResponse]
+	listPolicies        *connect.Client[v1.ListPoliciesRequest, v11.ListPoliciesResponse]
+	getPolicy           *connect.Client[v1.GetPolicyRequest, v11.GetPolicyResponse]
+	disablePolicy       *connect.Client[v1.DisablePolicyRequest, v11.DisablePolicyResponse]
+	enablePolicy        *connect.Client[v1.EnablePolicyRequest, v11.EnablePolicyResponse]
+	listAuditLogEntries *connect.Client[v1.ListAuditLogEntriesRequest, v11.ListAuditLogEntriesResponse]
+	addOrUpdateSchema   *connect.Client[v1.AddOrUpdateSchemaRequest, v11.AddOrUpdateSchemaResponse]
+	listSchemas         *connect.Client[v1.ListSchemasRequest, v11.ListSchemasResponse]
+	getSchema           *connect.Client[v1.GetSchemaRequest, v11.GetSchemaResponse]
+	deleteSchema        *connect.Client[v1.DeleteSchemaRequest, v11.DeleteSchemaResponse]
+	reloadStore         *connect.Client[v1.ReloadStoreRequest, v11.ReloadStoreResponse]
 }
 
 // AddOrUpdatePolicy calls cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy.
-func (c *cerbosAdminServiceClient) AddOrUpdatePolicy(ctx context.Context, req *connect.Request[v11.AddOrUpdatePolicyRequest]) (*connect.Response[v12.AddOrUpdatePolicyResponse], error) {
+func (c *cerbosAdminServiceClient) AddOrUpdatePolicy(ctx context.Context, req *connect.Request[v1.AddOrUpdatePolicyRequest]) (*connect.Response[v11.AddOrUpdatePolicyResponse], error) {
 	return c.addOrUpdatePolicy.CallUnary(ctx, req)
 }
 
 // InspectPolicies calls cerbos.svc.v1.CerbosAdminService.InspectPolicies.
-func (c *cerbosAdminServiceClient) InspectPolicies(ctx context.Context, req *connect.Request[v11.InspectPoliciesRequest]) (*connect.Response[v12.InspectPoliciesResponse], error) {
+func (c *cerbosAdminServiceClient) InspectPolicies(ctx context.Context, req *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error) {
 	return c.inspectPolicies.CallUnary(ctx, req)
 }
 
 // ListPolicies calls cerbos.svc.v1.CerbosAdminService.ListPolicies.
-func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, req *connect.Request[v11.ListPoliciesRequest]) (*connect.Response[v12.ListPoliciesResponse], error) {
+func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, req *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error) {
 	return c.listPolicies.CallUnary(ctx, req)
 }
 
 // GetPolicy calls cerbos.svc.v1.CerbosAdminService.GetPolicy.
-func (c *cerbosAdminServiceClient) GetPolicy(ctx context.Context, req *connect.Request[v11.GetPolicyRequest]) (*connect.Response[v12.GetPolicyResponse], error) {
+func (c *cerbosAdminServiceClient) GetPolicy(ctx context.Context, req *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error) {
 	return c.getPolicy.CallUnary(ctx, req)
 }
 
 // DisablePolicy calls cerbos.svc.v1.CerbosAdminService.DisablePolicy.
-func (c *cerbosAdminServiceClient) DisablePolicy(ctx context.Context, req *connect.Request[v11.DisablePolicyRequest]) (*connect.Response[v12.DisablePolicyResponse], error) {
+func (c *cerbosAdminServiceClient) DisablePolicy(ctx context.Context, req *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error) {
 	return c.disablePolicy.CallUnary(ctx, req)
 }
 
 // EnablePolicy calls cerbos.svc.v1.CerbosAdminService.EnablePolicy.
-func (c *cerbosAdminServiceClient) EnablePolicy(ctx context.Context, req *connect.Request[v11.EnablePolicyRequest]) (*connect.Response[v12.EnablePolicyResponse], error) {
+func (c *cerbosAdminServiceClient) EnablePolicy(ctx context.Context, req *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error) {
 	return c.enablePolicy.CallUnary(ctx, req)
 }
 
 // ListAuditLogEntries calls cerbos.svc.v1.CerbosAdminService.ListAuditLogEntries.
-func (c *cerbosAdminServiceClient) ListAuditLogEntries(ctx context.Context, req *connect.Request[v11.ListAuditLogEntriesRequest]) (*connect.ServerStreamForClient[v12.ListAuditLogEntriesResponse], error) {
+func (c *cerbosAdminServiceClient) ListAuditLogEntries(ctx context.Context, req *connect.Request[v1.ListAuditLogEntriesRequest]) (*connect.ServerStreamForClient[v11.ListAuditLogEntriesResponse], error) {
 	return c.listAuditLogEntries.CallServerStream(ctx, req)
 }
 
 // AddOrUpdateSchema calls cerbos.svc.v1.CerbosAdminService.AddOrUpdateSchema.
-func (c *cerbosAdminServiceClient) AddOrUpdateSchema(ctx context.Context, req *connect.Request[v11.AddOrUpdateSchemaRequest]) (*connect.Response[v12.AddOrUpdateSchemaResponse], error) {
+func (c *cerbosAdminServiceClient) AddOrUpdateSchema(ctx context.Context, req *connect.Request[v1.AddOrUpdateSchemaRequest]) (*connect.Response[v11.AddOrUpdateSchemaResponse], error) {
 	return c.addOrUpdateSchema.CallUnary(ctx, req)
 }
 
 // ListSchemas calls cerbos.svc.v1.CerbosAdminService.ListSchemas.
-func (c *cerbosAdminServiceClient) ListSchemas(ctx context.Context, req *connect.Request[v11.ListSchemasRequest]) (*connect.Response[v12.ListSchemasResponse], error) {
+func (c *cerbosAdminServiceClient) ListSchemas(ctx context.Context, req *connect.Request[v1.ListSchemasRequest]) (*connect.Response[v11.ListSchemasResponse], error) {
 	return c.listSchemas.CallUnary(ctx, req)
 }
 
 // GetSchema calls cerbos.svc.v1.CerbosAdminService.GetSchema.
-func (c *cerbosAdminServiceClient) GetSchema(ctx context.Context, req *connect.Request[v11.GetSchemaRequest]) (*connect.Response[v12.GetSchemaResponse], error) {
+func (c *cerbosAdminServiceClient) GetSchema(ctx context.Context, req *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error) {
 	return c.getSchema.CallUnary(ctx, req)
 }
 
 // DeleteSchema calls cerbos.svc.v1.CerbosAdminService.DeleteSchema.
-func (c *cerbosAdminServiceClient) DeleteSchema(ctx context.Context, req *connect.Request[v11.DeleteSchemaRequest]) (*connect.Response[v12.DeleteSchemaResponse], error) {
+func (c *cerbosAdminServiceClient) DeleteSchema(ctx context.Context, req *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error) {
 	return c.deleteSchema.CallUnary(ctx, req)
 }
 
 // ReloadStore calls cerbos.svc.v1.CerbosAdminService.ReloadStore.
-func (c *cerbosAdminServiceClient) ReloadStore(ctx context.Context, req *connect.Request[v11.ReloadStoreRequest]) (*connect.Response[v12.ReloadStoreResponse], error) {
+func (c *cerbosAdminServiceClient) ReloadStore(ctx context.Context, req *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error) {
 	return c.reloadStore.CallUnary(ctx, req)
 }
 
 // CerbosAdminServiceHandler is an implementation of the cerbos.svc.v1.CerbosAdminService service.
 type CerbosAdminServiceHandler interface {
-	AddOrUpdatePolicy(context.Context, *connect.Request[v11.AddOrUpdatePolicyRequest]) (*connect.Response[v12.AddOrUpdatePolicyResponse], error)
-	InspectPolicies(context.Context, *connect.Request[v11.InspectPoliciesRequest]) (*connect.Response[v12.InspectPoliciesResponse], error)
-	ListPolicies(context.Context, *connect.Request[v11.ListPoliciesRequest]) (*connect.Response[v12.ListPoliciesResponse], error)
-	GetPolicy(context.Context, *connect.Request[v11.GetPolicyRequest]) (*connect.Response[v12.GetPolicyResponse], error)
-	DisablePolicy(context.Context, *connect.Request[v11.DisablePolicyRequest]) (*connect.Response[v12.DisablePolicyResponse], error)
-	EnablePolicy(context.Context, *connect.Request[v11.EnablePolicyRequest]) (*connect.Response[v12.EnablePolicyResponse], error)
-	ListAuditLogEntries(context.Context, *connect.Request[v11.ListAuditLogEntriesRequest], *connect.ServerStream[v12.ListAuditLogEntriesResponse]) error
-	AddOrUpdateSchema(context.Context, *connect.Request[v11.AddOrUpdateSchemaRequest]) (*connect.Response[v12.AddOrUpdateSchemaResponse], error)
-	ListSchemas(context.Context, *connect.Request[v11.ListSchemasRequest]) (*connect.Response[v12.ListSchemasResponse], error)
-	GetSchema(context.Context, *connect.Request[v11.GetSchemaRequest]) (*connect.Response[v12.GetSchemaResponse], error)
-	DeleteSchema(context.Context, *connect.Request[v11.DeleteSchemaRequest]) (*connect.Response[v12.DeleteSchemaResponse], error)
-	ReloadStore(context.Context, *connect.Request[v11.ReloadStoreRequest]) (*connect.Response[v12.ReloadStoreResponse], error)
+	AddOrUpdatePolicy(context.Context, *connect.Request[v1.AddOrUpdatePolicyRequest]) (*connect.Response[v11.AddOrUpdatePolicyResponse], error)
+	InspectPolicies(context.Context, *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error)
+	ListPolicies(context.Context, *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error)
+	GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error)
+	DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error)
+	EnablePolicy(context.Context, *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error)
+	ListAuditLogEntries(context.Context, *connect.Request[v1.ListAuditLogEntriesRequest], *connect.ServerStream[v11.ListAuditLogEntriesResponse]) error
+	AddOrUpdateSchema(context.Context, *connect.Request[v1.AddOrUpdateSchemaRequest]) (*connect.Response[v11.AddOrUpdateSchemaResponse], error)
+	ListSchemas(context.Context, *connect.Request[v1.ListSchemasRequest]) (*connect.Response[v11.ListSchemasResponse], error)
+	GetSchema(context.Context, *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error)
+	DeleteSchema(context.Context, *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error)
+	ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error)
 }
 
 // NewCerbosAdminServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -506,76 +481,77 @@ type CerbosAdminServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	cerbosAdminServiceMethods := v12.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosAdminService").Methods()
 	cerbosAdminServiceAddOrUpdatePolicyHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceAddOrUpdatePolicyProcedure,
 		svc.AddOrUpdatePolicy,
-		connect.WithSchema(cerbosAdminServiceAddOrUpdatePolicyMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("AddOrUpdatePolicy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceInspectPoliciesHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceInspectPoliciesProcedure,
 		svc.InspectPolicies,
-		connect.WithSchema(cerbosAdminServiceInspectPoliciesMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("InspectPolicies")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceListPoliciesHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceListPoliciesProcedure,
 		svc.ListPolicies,
-		connect.WithSchema(cerbosAdminServiceListPoliciesMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("ListPolicies")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceGetPolicyHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceGetPolicyProcedure,
 		svc.GetPolicy,
-		connect.WithSchema(cerbosAdminServiceGetPolicyMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("GetPolicy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceDisablePolicyHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceDisablePolicyProcedure,
 		svc.DisablePolicy,
-		connect.WithSchema(cerbosAdminServiceDisablePolicyMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("DisablePolicy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceEnablePolicyHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceEnablePolicyProcedure,
 		svc.EnablePolicy,
-		connect.WithSchema(cerbosAdminServiceEnablePolicyMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("EnablePolicy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceListAuditLogEntriesHandler := connect.NewServerStreamHandler(
 		CerbosAdminServiceListAuditLogEntriesProcedure,
 		svc.ListAuditLogEntries,
-		connect.WithSchema(cerbosAdminServiceListAuditLogEntriesMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("ListAuditLogEntries")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceAddOrUpdateSchemaHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceAddOrUpdateSchemaProcedure,
 		svc.AddOrUpdateSchema,
-		connect.WithSchema(cerbosAdminServiceAddOrUpdateSchemaMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("AddOrUpdateSchema")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceListSchemasHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceListSchemasProcedure,
 		svc.ListSchemas,
-		connect.WithSchema(cerbosAdminServiceListSchemasMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("ListSchemas")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceGetSchemaHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceGetSchemaProcedure,
 		svc.GetSchema,
-		connect.WithSchema(cerbosAdminServiceGetSchemaMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("GetSchema")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceDeleteSchemaHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceDeleteSchemaProcedure,
 		svc.DeleteSchema,
-		connect.WithSchema(cerbosAdminServiceDeleteSchemaMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("DeleteSchema")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceReloadStoreHandler := connect.NewUnaryHandler(
 		CerbosAdminServiceReloadStoreProcedure,
 		svc.ReloadStore,
-		connect.WithSchema(cerbosAdminServiceReloadStoreMethodDescriptor),
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("ReloadStore")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/cerbos.svc.v1.CerbosAdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -613,60 +589,60 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 // UnimplementedCerbosAdminServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCerbosAdminServiceHandler struct{}
 
-func (UnimplementedCerbosAdminServiceHandler) AddOrUpdatePolicy(context.Context, *connect.Request[v11.AddOrUpdatePolicyRequest]) (*connect.Response[v12.AddOrUpdatePolicyResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) AddOrUpdatePolicy(context.Context, *connect.Request[v1.AddOrUpdatePolicyRequest]) (*connect.Response[v11.AddOrUpdatePolicyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) InspectPolicies(context.Context, *connect.Request[v11.InspectPoliciesRequest]) (*connect.Response[v12.InspectPoliciesResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) InspectPolicies(context.Context, *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.InspectPolicies is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) ListPolicies(context.Context, *connect.Request[v11.ListPoliciesRequest]) (*connect.Response[v12.ListPoliciesResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) ListPolicies(context.Context, *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.ListPolicies is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) GetPolicy(context.Context, *connect.Request[v11.GetPolicyRequest]) (*connect.Response[v12.GetPolicyResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.GetPolicy is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) DisablePolicy(context.Context, *connect.Request[v11.DisablePolicyRequest]) (*connect.Response[v12.DisablePolicyResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.DisablePolicy is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) EnablePolicy(context.Context, *connect.Request[v11.EnablePolicyRequest]) (*connect.Response[v12.EnablePolicyResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) EnablePolicy(context.Context, *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.EnablePolicy is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) ListAuditLogEntries(context.Context, *connect.Request[v11.ListAuditLogEntriesRequest], *connect.ServerStream[v12.ListAuditLogEntriesResponse]) error {
+func (UnimplementedCerbosAdminServiceHandler) ListAuditLogEntries(context.Context, *connect.Request[v1.ListAuditLogEntriesRequest], *connect.ServerStream[v11.ListAuditLogEntriesResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.ListAuditLogEntries is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) AddOrUpdateSchema(context.Context, *connect.Request[v11.AddOrUpdateSchemaRequest]) (*connect.Response[v12.AddOrUpdateSchemaResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) AddOrUpdateSchema(context.Context, *connect.Request[v1.AddOrUpdateSchemaRequest]) (*connect.Response[v11.AddOrUpdateSchemaResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.AddOrUpdateSchema is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) ListSchemas(context.Context, *connect.Request[v11.ListSchemasRequest]) (*connect.Response[v12.ListSchemasResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) ListSchemas(context.Context, *connect.Request[v1.ListSchemasRequest]) (*connect.Response[v11.ListSchemasResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.ListSchemas is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) GetSchema(context.Context, *connect.Request[v11.GetSchemaRequest]) (*connect.Response[v12.GetSchemaResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) GetSchema(context.Context, *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.GetSchema is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) DeleteSchema(context.Context, *connect.Request[v11.DeleteSchemaRequest]) (*connect.Response[v12.DeleteSchemaResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) DeleteSchema(context.Context, *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.DeleteSchema is not implemented"))
 }
 
-func (UnimplementedCerbosAdminServiceHandler) ReloadStore(context.Context, *connect.Request[v11.ReloadStoreRequest]) (*connect.Response[v12.ReloadStoreResponse], error) {
+func (UnimplementedCerbosAdminServiceHandler) ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.ReloadStore is not implemented"))
 }
 
 // CerbosPlaygroundServiceClient is a client for the cerbos.svc.v1.CerbosPlaygroundService service.
 type CerbosPlaygroundServiceClient interface {
-	PlaygroundValidate(context.Context, *connect.Request[v11.PlaygroundValidateRequest]) (*connect.Response[v12.PlaygroundValidateResponse], error)
-	PlaygroundTest(context.Context, *connect.Request[v11.PlaygroundTestRequest]) (*connect.Response[v12.PlaygroundTestResponse], error)
-	PlaygroundEvaluate(context.Context, *connect.Request[v11.PlaygroundEvaluateRequest]) (*connect.Response[v12.PlaygroundEvaluateResponse], error)
-	PlaygroundProxy(context.Context, *connect.Request[v11.PlaygroundProxyRequest]) (*connect.Response[v12.PlaygroundProxyResponse], error)
+	PlaygroundValidate(context.Context, *connect.Request[v1.PlaygroundValidateRequest]) (*connect.Response[v11.PlaygroundValidateResponse], error)
+	PlaygroundTest(context.Context, *connect.Request[v1.PlaygroundTestRequest]) (*connect.Response[v11.PlaygroundTestResponse], error)
+	PlaygroundEvaluate(context.Context, *connect.Request[v1.PlaygroundEvaluateRequest]) (*connect.Response[v11.PlaygroundEvaluateResponse], error)
+	PlaygroundProxy(context.Context, *connect.Request[v1.PlaygroundProxyRequest]) (*connect.Response[v11.PlaygroundProxyResponse], error)
 }
 
 // NewCerbosPlaygroundServiceClient constructs a client for the
@@ -678,29 +654,30 @@ type CerbosPlaygroundServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewCerbosPlaygroundServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CerbosPlaygroundServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	cerbosPlaygroundServiceMethods := v12.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosPlaygroundService").Methods()
 	return &cerbosPlaygroundServiceClient{
-		playgroundValidate: connect.NewClient[v11.PlaygroundValidateRequest, v12.PlaygroundValidateResponse](
+		playgroundValidate: connect.NewClient[v1.PlaygroundValidateRequest, v11.PlaygroundValidateResponse](
 			httpClient,
 			baseURL+CerbosPlaygroundServicePlaygroundValidateProcedure,
-			connect.WithSchema(cerbosPlaygroundServicePlaygroundValidateMethodDescriptor),
+			connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundValidate")),
 			connect.WithClientOptions(opts...),
 		),
-		playgroundTest: connect.NewClient[v11.PlaygroundTestRequest, v12.PlaygroundTestResponse](
+		playgroundTest: connect.NewClient[v1.PlaygroundTestRequest, v11.PlaygroundTestResponse](
 			httpClient,
 			baseURL+CerbosPlaygroundServicePlaygroundTestProcedure,
-			connect.WithSchema(cerbosPlaygroundServicePlaygroundTestMethodDescriptor),
+			connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundTest")),
 			connect.WithClientOptions(opts...),
 		),
-		playgroundEvaluate: connect.NewClient[v11.PlaygroundEvaluateRequest, v12.PlaygroundEvaluateResponse](
+		playgroundEvaluate: connect.NewClient[v1.PlaygroundEvaluateRequest, v11.PlaygroundEvaluateResponse](
 			httpClient,
 			baseURL+CerbosPlaygroundServicePlaygroundEvaluateProcedure,
-			connect.WithSchema(cerbosPlaygroundServicePlaygroundEvaluateMethodDescriptor),
+			connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundEvaluate")),
 			connect.WithClientOptions(opts...),
 		),
-		playgroundProxy: connect.NewClient[v11.PlaygroundProxyRequest, v12.PlaygroundProxyResponse](
+		playgroundProxy: connect.NewClient[v1.PlaygroundProxyRequest, v11.PlaygroundProxyResponse](
 			httpClient,
 			baseURL+CerbosPlaygroundServicePlaygroundProxyProcedure,
-			connect.WithSchema(cerbosPlaygroundServicePlaygroundProxyMethodDescriptor),
+			connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundProxy")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -708,39 +685,39 @@ func NewCerbosPlaygroundServiceClient(httpClient connect.HTTPClient, baseURL str
 
 // cerbosPlaygroundServiceClient implements CerbosPlaygroundServiceClient.
 type cerbosPlaygroundServiceClient struct {
-	playgroundValidate *connect.Client[v11.PlaygroundValidateRequest, v12.PlaygroundValidateResponse]
-	playgroundTest     *connect.Client[v11.PlaygroundTestRequest, v12.PlaygroundTestResponse]
-	playgroundEvaluate *connect.Client[v11.PlaygroundEvaluateRequest, v12.PlaygroundEvaluateResponse]
-	playgroundProxy    *connect.Client[v11.PlaygroundProxyRequest, v12.PlaygroundProxyResponse]
+	playgroundValidate *connect.Client[v1.PlaygroundValidateRequest, v11.PlaygroundValidateResponse]
+	playgroundTest     *connect.Client[v1.PlaygroundTestRequest, v11.PlaygroundTestResponse]
+	playgroundEvaluate *connect.Client[v1.PlaygroundEvaluateRequest, v11.PlaygroundEvaluateResponse]
+	playgroundProxy    *connect.Client[v1.PlaygroundProxyRequest, v11.PlaygroundProxyResponse]
 }
 
 // PlaygroundValidate calls cerbos.svc.v1.CerbosPlaygroundService.PlaygroundValidate.
-func (c *cerbosPlaygroundServiceClient) PlaygroundValidate(ctx context.Context, req *connect.Request[v11.PlaygroundValidateRequest]) (*connect.Response[v12.PlaygroundValidateResponse], error) {
+func (c *cerbosPlaygroundServiceClient) PlaygroundValidate(ctx context.Context, req *connect.Request[v1.PlaygroundValidateRequest]) (*connect.Response[v11.PlaygroundValidateResponse], error) {
 	return c.playgroundValidate.CallUnary(ctx, req)
 }
 
 // PlaygroundTest calls cerbos.svc.v1.CerbosPlaygroundService.PlaygroundTest.
-func (c *cerbosPlaygroundServiceClient) PlaygroundTest(ctx context.Context, req *connect.Request[v11.PlaygroundTestRequest]) (*connect.Response[v12.PlaygroundTestResponse], error) {
+func (c *cerbosPlaygroundServiceClient) PlaygroundTest(ctx context.Context, req *connect.Request[v1.PlaygroundTestRequest]) (*connect.Response[v11.PlaygroundTestResponse], error) {
 	return c.playgroundTest.CallUnary(ctx, req)
 }
 
 // PlaygroundEvaluate calls cerbos.svc.v1.CerbosPlaygroundService.PlaygroundEvaluate.
-func (c *cerbosPlaygroundServiceClient) PlaygroundEvaluate(ctx context.Context, req *connect.Request[v11.PlaygroundEvaluateRequest]) (*connect.Response[v12.PlaygroundEvaluateResponse], error) {
+func (c *cerbosPlaygroundServiceClient) PlaygroundEvaluate(ctx context.Context, req *connect.Request[v1.PlaygroundEvaluateRequest]) (*connect.Response[v11.PlaygroundEvaluateResponse], error) {
 	return c.playgroundEvaluate.CallUnary(ctx, req)
 }
 
 // PlaygroundProxy calls cerbos.svc.v1.CerbosPlaygroundService.PlaygroundProxy.
-func (c *cerbosPlaygroundServiceClient) PlaygroundProxy(ctx context.Context, req *connect.Request[v11.PlaygroundProxyRequest]) (*connect.Response[v12.PlaygroundProxyResponse], error) {
+func (c *cerbosPlaygroundServiceClient) PlaygroundProxy(ctx context.Context, req *connect.Request[v1.PlaygroundProxyRequest]) (*connect.Response[v11.PlaygroundProxyResponse], error) {
 	return c.playgroundProxy.CallUnary(ctx, req)
 }
 
 // CerbosPlaygroundServiceHandler is an implementation of the cerbos.svc.v1.CerbosPlaygroundService
 // service.
 type CerbosPlaygroundServiceHandler interface {
-	PlaygroundValidate(context.Context, *connect.Request[v11.PlaygroundValidateRequest]) (*connect.Response[v12.PlaygroundValidateResponse], error)
-	PlaygroundTest(context.Context, *connect.Request[v11.PlaygroundTestRequest]) (*connect.Response[v12.PlaygroundTestResponse], error)
-	PlaygroundEvaluate(context.Context, *connect.Request[v11.PlaygroundEvaluateRequest]) (*connect.Response[v12.PlaygroundEvaluateResponse], error)
-	PlaygroundProxy(context.Context, *connect.Request[v11.PlaygroundProxyRequest]) (*connect.Response[v12.PlaygroundProxyResponse], error)
+	PlaygroundValidate(context.Context, *connect.Request[v1.PlaygroundValidateRequest]) (*connect.Response[v11.PlaygroundValidateResponse], error)
+	PlaygroundTest(context.Context, *connect.Request[v1.PlaygroundTestRequest]) (*connect.Response[v11.PlaygroundTestResponse], error)
+	PlaygroundEvaluate(context.Context, *connect.Request[v1.PlaygroundEvaluateRequest]) (*connect.Response[v11.PlaygroundEvaluateResponse], error)
+	PlaygroundProxy(context.Context, *connect.Request[v1.PlaygroundProxyRequest]) (*connect.Response[v11.PlaygroundProxyResponse], error)
 }
 
 // NewCerbosPlaygroundServiceHandler builds an HTTP handler from the service implementation. It
@@ -749,28 +726,29 @@ type CerbosPlaygroundServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewCerbosPlaygroundServiceHandler(svc CerbosPlaygroundServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	cerbosPlaygroundServiceMethods := v12.File_cerbos_svc_v1_svc_proto.Services().ByName("CerbosPlaygroundService").Methods()
 	cerbosPlaygroundServicePlaygroundValidateHandler := connect.NewUnaryHandler(
 		CerbosPlaygroundServicePlaygroundValidateProcedure,
 		svc.PlaygroundValidate,
-		connect.WithSchema(cerbosPlaygroundServicePlaygroundValidateMethodDescriptor),
+		connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundValidate")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosPlaygroundServicePlaygroundTestHandler := connect.NewUnaryHandler(
 		CerbosPlaygroundServicePlaygroundTestProcedure,
 		svc.PlaygroundTest,
-		connect.WithSchema(cerbosPlaygroundServicePlaygroundTestMethodDescriptor),
+		connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundTest")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosPlaygroundServicePlaygroundEvaluateHandler := connect.NewUnaryHandler(
 		CerbosPlaygroundServicePlaygroundEvaluateProcedure,
 		svc.PlaygroundEvaluate,
-		connect.WithSchema(cerbosPlaygroundServicePlaygroundEvaluateMethodDescriptor),
+		connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundEvaluate")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosPlaygroundServicePlaygroundProxyHandler := connect.NewUnaryHandler(
 		CerbosPlaygroundServicePlaygroundProxyProcedure,
 		svc.PlaygroundProxy,
-		connect.WithSchema(cerbosPlaygroundServicePlaygroundProxyMethodDescriptor),
+		connect.WithSchema(cerbosPlaygroundServiceMethods.ByName("PlaygroundProxy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/cerbos.svc.v1.CerbosPlaygroundService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -792,18 +770,18 @@ func NewCerbosPlaygroundServiceHandler(svc CerbosPlaygroundServiceHandler, opts 
 // UnimplementedCerbosPlaygroundServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCerbosPlaygroundServiceHandler struct{}
 
-func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundValidate(context.Context, *connect.Request[v11.PlaygroundValidateRequest]) (*connect.Response[v12.PlaygroundValidateResponse], error) {
+func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundValidate(context.Context, *connect.Request[v1.PlaygroundValidateRequest]) (*connect.Response[v11.PlaygroundValidateResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosPlaygroundService.PlaygroundValidate is not implemented"))
 }
 
-func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundTest(context.Context, *connect.Request[v11.PlaygroundTestRequest]) (*connect.Response[v12.PlaygroundTestResponse], error) {
+func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundTest(context.Context, *connect.Request[v1.PlaygroundTestRequest]) (*connect.Response[v11.PlaygroundTestResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosPlaygroundService.PlaygroundTest is not implemented"))
 }
 
-func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundEvaluate(context.Context, *connect.Request[v11.PlaygroundEvaluateRequest]) (*connect.Response[v12.PlaygroundEvaluateResponse], error) {
+func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundEvaluate(context.Context, *connect.Request[v1.PlaygroundEvaluateRequest]) (*connect.Response[v11.PlaygroundEvaluateResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosPlaygroundService.PlaygroundEvaluate is not implemented"))
 }
 
-func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundProxy(context.Context, *connect.Request[v11.PlaygroundProxyRequest]) (*connect.Response[v12.PlaygroundProxyResponse], error) {
+func (UnimplementedCerbosPlaygroundServiceHandler) PlaygroundProxy(context.Context, *connect.Request[v1.PlaygroundProxyRequest]) (*connect.Response[v11.PlaygroundProxyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosPlaygroundService.PlaygroundProxy is not implemented"))
 }
