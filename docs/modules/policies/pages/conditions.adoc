@@ -409,7 +409,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 |===
 | Function | Description | Example
 | math.abs | Returns the absolute value of the numeric type provided as input | math.abs(1.2) == 1.2 && math.abs(-2) == 2
-| math.bitAnd | Performs a bitwise-AND operation over two int or uint values | math.bitAnd(3u, 2u) == 2u && math.bitAnd(3, 5) == 3 && math.bitAnd(-3, -5) == -7
+| math.bitAnd | Performs a bitwise-AND operation over two int or uint values | math.bitAnd(3u, 2u) == 2u && math.bitAnd(3, 5) == 1 && math.bitAnd(-3, -5) == -7
 | math.bitNot | Function which accepts a single int or uint and performs a bitwise-NOT ones-complement of the given binary value | math.bitNot(1) == -1 && math.bitNot(-1) == 0 && math.bitNot(0u) == 18446744073709551615u
 | math.bitOr | Performs a bitwise-OR operation over two int or uint values | math.bitOr(1u, 2u) == 3u && math.bitOr(-2, -4) == -2
 | math.bitShiftLeft | Perform a left shift of bits on the first parameter, by the amount of bits specified in the second parameter. The first parameter is either a uint or an int. The second parameter must be an int | math.bitShiftLeft(1, 2) == 4 && math.bitShiftLeft(-1, 2) == -4 && math.bitShiftLeft(1u, 2) == 4u && math.bitShiftLeft(1u, 200) == 0u
@@ -423,7 +423,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | math.isNaN | Returns true if the input double value is NaN, false otherwise | math.isNaN(0.0/0.0) && !math.isNaN(1.2)
 | math.least | Get the least valued number present in the arguments | math.least([1, 3, 5]) == 1 && math.least(1, 3, 5) == 1
 | math.round | Rounds the double value to the nearest whole number with ties rounding away from zero, e.g. 1.5 -> 2.0, -1.5 -> -2.0 | math.round(1.2) == 1.0 && math.round(1.5) == 2.0 && math.round(-1.5) == -2.0
-| math.sign | Returns the sign of the numeric type, either -1, 0, 1 | math.sign(1.2) == 1 && math.sign(-2) == -1 && math.sign(0) == 0
+| math.sign | Returns the sign of the numeric type, either -1, 0, 1 | math.sign(1.2) == 1.0 && math.sign(-2) == -1 && math.sign(0) == 0
 | math.trunc | Truncates the fractional portion of the double value | math.trunc(1.2) == 1.0 && math.trunc(-1.2) == -1.0
 |===
 
