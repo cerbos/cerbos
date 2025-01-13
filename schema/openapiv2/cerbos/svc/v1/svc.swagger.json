@@ -3054,6 +3054,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
         }
       }
     },

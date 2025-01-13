@@ -36,8 +36,8 @@ func (gc *globCache) matches(globExpr, val string) bool {
 }
 
 // MatchesGlob returns true if the given glob expression matches the given string.
-func MatchesGlob(globExpr, val string) bool {
-	return globs.matches(globExpr, val)
+func MatchesGlob(g, val string) bool {
+	return globs.matches(fixGlob(g), val)
 }
 
 // FilterGlob returns the set of values that match the given glob.
@@ -99,17 +99,81 @@ func NewGlobMap[T any](m map[string]T) *GlobMap[T] {
 	return gm
 }
 
-func (gm *GlobMap[T]) Get(k string) T {
+func (gm *GlobMap[T]) Len() int {
+	return len(gm.literals) + len(gm.globs)
+}
+
+func (gm *GlobMap[T]) Set(k string, v T) {
+	if strings.ContainsRune(k, wildcardAny) {
+		gm.globs[k] = v
+	} else {
+		gm.literals[k] = v
+	}
+}
+
+func (gm *GlobMap[T]) Get(k string) (T, bool) {
 	if v, ok := gm.literals[k]; ok {
-		return v
+		return v, true
 	}
 
 	for g, v := range gm.globs {
 		if MatchesGlob(g, k) {
-			return v
+			return v, true
 		}
 	}
 
 	var zero T
-	return zero
+	return zero, false
+}
+
+func (gm *GlobMap[T]) GetWithLiteral(k string) (T, bool) {
+	if v, ok := gm.literals[k]; ok {
+		return v, true
+	}
+
+	if v, ok := gm.globs[k]; ok {
+		return v, true
+	}
+
+	var zero T
+	return zero, false
+}
+
+func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
+	merged := make(map[string]any)
+
+	if v, ok := gm.literals[k]; ok {
+		merged = map[string]any{k: v}
+	}
+
+	for g, v := range gm.globs {
+		if MatchesGlob(g, k) {
+			merged = mergeMaps(merged, map[string]any{g: v})
+		}
+	}
+
+	res := make(map[string]T)
+	for key, val := range merged {
+		if typedVal, ok := val.(T); ok {
+			res[key] = typedVal
+		}
+	}
+
+	return res
+}
+
+// mergeMaps recursively merges the values of key collisions between two maps.
+func mergeMaps(m1, m2 map[string]interface{}) map[string]interface{} {
+	for k, v2 := range m2 {
+		if v1, ok := m1[k]; ok {
+			if sub1, ok1 := v1.(map[string]interface{}); ok1 {
+				if sub2, ok2 := v2.(map[string]interface{}); ok2 {
+					m1[k] = mergeMaps(sub1, sub2)
+					continue
+				}
+			}
+		}
+		m1[k] = v2
+	}
+	return m1
 }

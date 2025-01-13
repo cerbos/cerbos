@@ -1,31 +1,43 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Resource policy with SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+description: "Interleaved resource and role policies with parent roles and REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
-        "redirect", # exists, falls through, allow
-        "defer", # exists, falls through, no match
-        "nonaction", # doesn't exist, falls through, no match
-      ],
+        "create", # matches `acme_creator` wildcard resource and parent scope rule with `employee` role
+        "delete", # not defined in leaf scope, is in parent scope for matching (narrowed) derived role
+        "view:public", # matches `acme_jr_admin` action wildcard and `employee_that_owns_the_record` in parent scope
+        "deny", # allowed in target scope, no matching actions in parent scopes
+        "redirect", # not allowed in target scope, but is in parent scope for "employee" which role policy recursively assumes
+                    # and therefore reduces permissions of
+        "block", # Not allowed in target scope, but is allowed in parent scope for role "boss" which role policy does NOT reduce
+                 # permissions of (passed explicitly rather than implicit parent of role policy)
+        "defer", # allowed in target scope resource policy, allowed in parent scope
+        "invite", # allowed in target scope resource policy, no match in parent scope
+        ],
       "principal":
         {
           "id": "john",
-          "roles": ["employee"],
+          "roles": [
+            # "employee", # even though this is nested parent role of a referenced role policy, passing it explicitly means we can
+                        # evaluate it with more authority in the parent scopes. TODO(saml) this behaviour requires some thought
+            "acme_creator", # implicitly assumes `acme_jr_admin` as parent role, which itself has `employee` as a parent role
+            "boss",
+          ],
           "attr":
             {
               "department": "marketing",
               "geography": "GB",
               "team": "design",
-              "ip_address": "10.20.0.13",
+              "ip_address": "10.21.0.13",
             },
         },
       "resource":
         {
           "kind": "leave_request",
-          "scope": "acme.hr.fr",
+          "scope": "acme.hr.uk.brighton",
           "id": "XX125",
           "attr":
             {
@@ -45,24 +57,55 @@ wantOutputs:
       "resourceId": "XX125",
       "actions":
         {
-          "redirect":
+          "view:public":
             {
               "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.fr",
-              "scope": "acme.hr"
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "scope": "acme.hr",
+            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.brighton"
+            },
+          "create":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "scope": "acme",
+            },
+          "deny":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+            },
+          "redirect":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.brighton"
+            },
+          "block":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk",
             },
           "defer":
             {
-              "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.fr",
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk",
             },
-          "nonaction":
+          "invite":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.fr",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
             },
         },
-        "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"],
+      "effectiveDerivedRoles":
+        ["any_employee", "employee_that_owns_the_record"],
     },
   ]
 wantDecisionLogs:
@@ -88,21 +131,22 @@ wantDecisionLogs:
                         "owner": "john",
                         "team": "design",
                       },
-                    "scope": "acme.hr.fr",
+                    "scope": "acme.hr.uk.brighton",
                   },
                 "principal":
                   {
                     "id": "john",
-                    "roles": ["employee"],
+                    # "roles": ["employee", "acme_creator", "boss"],
+                    "roles": ["acme_creator", "boss"],
                     "attr":
                       {
                         "department": "marketing",
                         "geography": "GB",
-                        "ip_address": "10.20.0.13",
+                        "ip_address": "10.21.0.13",
                         "team": "design",
                       },
                   },
-                "actions": ["redirect", "defer", "nonaction"],
+                "actions": ["create", "delete", "view:public", "deny", "redirect", "block", "defer", "invite"],
               },
             ],
           "outputs":
@@ -112,24 +156,55 @@ wantDecisionLogs:
                 "resourceId": "XX125",
                 "actions":
                   {
-                    "defer":
+                    "create":
                       {
-                        "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.fr",
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+                        "scope": "acme",
                       },
-                    "nonaction":
+                    "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.fr",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.brighton",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+                        "scope": "acme.hr",
+                      },
+                    "deny":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
                       },
                     "redirect":
                       {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.brighton",
+                      },
+                    "block":
+                      {
                         "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.fr",
-                        "scope": "acme.hr"
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk",
+                      },
+                    "defer":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk",
+                      },
+                    "invite":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
                       },
                   },
-                "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"],
+                "effectiveDerivedRoles":
+                  ["any_employee", "employee_that_owns_the_record"],
               },
             ],
         },
@@ -161,12 +236,36 @@ wantDecisionLogs:
                       "source": "resource_policies/policy_05_acme.hr.yaml",
                     },
                 },
-              "resource.leave_request.vdefault/acme.hr.fr":
+              "resource.leave_request.vdefault/acme.hr.uk":
                 {
                   "attributes":
                     {
                       "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.fr.yaml",
+                      "source": "resource_policies/policy_05_acme.hr.uk.yaml",
+                    },
+                },
+              "resource.leave_request.vdefault/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_05_acme.hr.uk.brighton.yaml",
+                    },
+                },
+              "role.acme_jr_admin/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_01_acme.hr.uk.brighton.yaml",
+                    },
+                },
+              "role.acme_creator/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_02_acme.hr.uk.brighton.yaml",
                     },
                 },
             },

@@ -138,8 +138,12 @@ func (hs *HybridStore) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 	return hs.withActiveSource().GetFirstMatch(ctx, candidates)
 }
 
-func (hs *HybridStore) GetAll(ctx context.Context, candidates []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	return hs.withActiveSource().GetAll(ctx, candidates)
+func (hs *HybridStore) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+	return hs.withActiveSource().GetAll(ctx)
+}
+
+func (hs *HybridStore) GetAllMatching(ctx context.Context, candidates []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	return hs.withActiveSource().GetAllMatching(ctx, candidates)
 }
 
 func (hs *HybridStore) SourceKind() string {

@@ -31,4 +31,4 @@ planResources:
     filter:
       kind: KIND_ALWAYS_DENIED
     meta:
-      filterDebug: NO_MATCH
+      filterDebug: "(false)" 

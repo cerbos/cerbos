@@ -2,6 +2,104 @@
   "$id": "https://api.cerbos.dev/cerbos/policy/v1/RolePolicy.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.policy.v1.Condition": {
+      "allOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "match": {
+              "$ref": "#/definitions/cerbos.policy.v1.Match"
+            },
+            "script": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "match"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "script"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "cerbos.policy.v1.Match": {
+      "allOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "all": {
+              "$ref": "#/definitions/cerbos.policy.v1.Match.ExprList"
+            },
+            "any": {
+              "$ref": "#/definitions/cerbos.policy.v1.Match.ExprList"
+            },
+            "expr": {
+              "type": "string"
+            },
+            "none": {
+              "$ref": "#/definitions/cerbos.policy.v1.Match.ExprList"
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "all"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "any"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "none"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "expr"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "cerbos.policy.v1.Match.ExprList": {
+      "type": "object",
+      "required": [
+        "of"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "of": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.Match"
+          },
+          "minItems": 1
+        }
+      }
+    },
     "cerbos.policy.v1.RoleRule": {
       "type": "object",
       "required": [
@@ -18,6 +116,9 @@
           },
           "minItems": 1,
           "uniqueItems": true
+        },
+        "condition": {
+          "$ref": "#/definitions/cerbos.policy.v1.Condition"
         },
         "resource": {
           "type": "string",

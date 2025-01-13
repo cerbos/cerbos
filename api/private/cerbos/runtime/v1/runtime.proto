@@ -26,6 +26,37 @@ message RunnablePolicySet {
   uint32 compiler_version = 6;
 }
 
+message RuleTable {
+  message RuleRow {
+    string origin_fqn = 1;
+    string resource = 2;
+    string role = 3;
+    string action = 4;
+    Condition condition = 5;
+    Condition derived_role_condition = 6;
+    cerbos.effect.v1.Effect effect = 7;
+    string scope = 8;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 9;
+    string version = 10;
+    string origin_derived_role = 11;
+    Output emit_output = 12;
+    string name = 13;
+  }
+
+  repeated RuleRow rules = 1;
+}
+
+message RuleTableMetadata {
+  string fqn = 1;
+  oneof name {
+    string resource = 2;
+    string role = 3;
+  }
+  string version = 4;
+  map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 5;
+  map<string, string> annotations = 6;
+}
+
 message RunnableRolePolicySet {
   message Metadata {
     string fqn = 1;
@@ -33,16 +64,22 @@ message RunnableRolePolicySet {
     map<string, string> annotations = 3;
   }
 
-  message AllowActions {
-    map<string, google.protobuf.Empty> actions = 1;
+  message Rule {
+    string resource = 1;
+    map<string, google.protobuf.Empty> allow_actions = 2;
+    Condition condition = 3;
+  }
+
+  message RuleList {
+    repeated Rule rules = 1;
   }
 
   Metadata meta = 1;
   string role = 2;
-  repeated string parent_roles = 6;
   string scope = 3;
-  map<string, AllowActions> resources = 4;
   cerbos.policy.v1.ScopePermissions scope_permissions = 5;
+  repeated string parent_roles = 6;
+  map<string, RuleList> resources = 7;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies
