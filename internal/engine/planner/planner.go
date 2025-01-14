@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"time"
 
@@ -46,11 +47,12 @@ type (
 	}
 
 	PolicyPlanResult struct {
-		Scope            string
-		allowFilter      []*qpN
-		denyFilter       []*qpN
-		ValidationErrors []*schemav1.ValidationError
-		ScopePermissions policyv1.ScopePermissions
+		EffectivePolicies map[string]*policyv1.SourceAttributes
+		Scope             string
+		allowFilter       []*qpN
+		denyFilter        []*qpN
+		ValidationErrors  []*schemav1.ValidationError
+		ScopePermissions  policyv1.ScopePermissions
 	}
 )
 
@@ -279,7 +281,9 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	request := planResourcesInputToRequest(input)
 	evalCtx := &evalContext{TimeFn: nowFunc}
 
-	result := new(PolicyPlanResult)
+	result := &PolicyPlanResult{
+		EffectivePolicies: make(map[string]*policyv1.SourceAttributes),
+	}
 
 	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, ruleTable.GetSchema(fqn), input)
 	if err != nil {
@@ -375,6 +379,10 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 			for _, row := range candidateRows {
 				if !row.Matches(scope, input.Action, parentRoles) {
 					continue
+				}
+
+				if m := ruleTable.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+					maps.Copy(result.EffectivePolicies, m.GetSourceAttributes())
 				}
 
 				var constants map[string]any
@@ -500,6 +508,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		result.add(denyNode, effectv1.Effect_EFFECT_DENY)
 	}
 
+	result.ValidationErrors = validationErrors
 	return result, nil
 }
 

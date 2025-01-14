@@ -298,6 +298,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 			return nil, nil, err
 		}
 
+		maps.Copy(auditTrail.EffectivePolicies, ruleTableResult.EffectivePolicies)
 		result = planner.CombinePlans(result, ruleTableResult)
 	}
 
