@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -306,8 +307,17 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
+	rt := ruletable.NewRuleTable().WithPolicyLoader(tp.policyLoader)
+
+	rps, err := tp.policyLoader.GetAll(ctx)
+	require.NoError(t, err, "Failed to get all policies")
+
+	err = rt.LoadPolicies(rps)
+	require.NoError(t, err, "Failed to load policies into rule table")
+
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      tp.policyLoader,
+		RuleTable:         rt,
 		SchemaMgr:         tp.schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),
