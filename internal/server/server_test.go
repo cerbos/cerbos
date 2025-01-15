@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -44,6 +45,7 @@ type testParam struct {
 	store        storage.Store
 	policyLoader policyloader.PolicyLoader
 	schemaMgr    schema.Manager
+	ruletable    *ruletable.RuleTable
 }
 
 type testParamGen func(*testing.T) testParam
@@ -64,10 +66,19 @@ func TestServer(t *testing.T) {
 			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 			policyLoader := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
+			rt := ruletable.NewRuleTable().WithPolicyLoader(policyLoader)
+
+			rps, err := policyLoader.GetAll(ctx)
+			require.NoError(t, err, "Failed to get all policies")
+
+			err = rt.LoadPolicies(rps)
+			require.NoError(t, err, "Failed to load policies into rule table")
+
 			tp := testParam{
 				store:        store,
 				policyLoader: policyLoader,
 				schemaMgr:    schemaMgr,
+				ruletable:    rt,
 			}
 			return tp
 		}
@@ -97,11 +108,20 @@ func TestServer(t *testing.T) {
 			store, err := hubstore.NewStore(ctx, conf)
 			require.NoError(t, err)
 
+			rt := ruletable.NewRuleTable().WithPolicyLoader(store)
+
+			rps, err := store.GetAll(ctx)
+			require.NoError(t, err, "Failed to get all policies")
+
+			err = rt.LoadPolicies(rps)
+			require.NoError(t, err, "Failed to load policies into rule table")
+
 			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 			tp := testParam{
 				store:        store,
 				policyLoader: store,
 				schemaMgr:    schemaMgr,
+				ruletable:    rt,
 			}
 			return tp
 		}
@@ -308,6 +328,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      tp.policyLoader,
+		RuleTable:         tp.ruletable,
 		SchemaMgr:         tp.schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),
