@@ -264,10 +264,10 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	return acc, nil
 }
 
-func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTable, input *enginev1.PlanResourcesInput, schemaMgr schema.Manager, nowFunc conditions.NowFunc, globals map[string]any) (*PolicyPlanResult, error) {
+func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTable, input *enginev1.PlanResourcesInput, schemaMgr schema.Manager, nowFunc conditions.NowFunc, globals map[string]any, defaultPolicyVersion string) (*PolicyPlanResult, error) {
 	version := input.Resource.PolicyVersion
 	if version == "" {
-		version = "default"
+		version = defaultPolicyVersion
 	}
 
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, input.Resource.Scope)

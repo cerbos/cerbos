@@ -127,7 +127,7 @@ type ruleTableEvaluator struct {
 func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	version := input.Resource.PolicyVersion
 	if version == "" {
-		version = defaultVersion
+		version = rte.evalParams.defaultPolicyVersion
 	}
 
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))

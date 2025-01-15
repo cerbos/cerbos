@@ -41,7 +41,6 @@ var errNoPoliciesMatched = errors.New("no matching policies")
 const (
 	defaultEffect        = effectv1.Effect_EFFECT_DENY
 	noPolicyMatch        = "NO_MATCH"
-	defaultVersion       = "default"
 	parallelismThreshold = 5
 	workerQueueSize      = 4
 	workerResetJitter    = 1 << 4
@@ -283,9 +282,6 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	if ruleTable == nil {
 		var err error
 		version := input.Resource.PolicyVersion
-		if version == "" {
-			version = defaultVersion
-		}
 		ruleTable, err = engine.getPartialRuleTable(ctx, input.Resource.Kind, version, input.Resource.Scope, input.Principal.Roles)
 		if err != nil {
 			return nil, nil, err
@@ -293,7 +289,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	if ruleTable != nil {
-		ruleTableResult, err := planner.EvaluateRuleTableQueryPlan(ctx, ruleTable, input, engine.schemaMgr, opts.NowFunc(), opts.Globals())
+		ruleTableResult, err := planner.EvaluateRuleTableQueryPlan(ctx, ruleTable, input, engine.schemaMgr, opts.NowFunc(), opts.Globals(), opts.DefaultPolicyVersion())
 		if err != nil {
 			return nil, nil, err
 		}
