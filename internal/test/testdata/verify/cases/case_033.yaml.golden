@@ -4,16 +4,12 @@
       "file": "suite_test.yaml",
       "name": "TestSuite",
       "summary": {
-        "overallResult": "RESULT_FAILED",
+        "overallResult": "RESULT_PASSED",
         "testsCount": 3,
         "resultCounts": [
           {
             "result": "RESULT_PASSED",
-            "count": 1
-          },
-          {
-            "result": "RESULT_FAILED",
-            "count": 2
+            "count": 3
           }
         ]
       },
@@ -30,10 +26,9 @@
                     {
                       "name": "view:public",
                       "details": {
-                        "result": "RESULT_FAILED",
-                        "failure": {
-                          "expected": "EFFECT_ALLOW",
-                          "actual": "EFFECT_DENY"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
                         }
                       }
                     },
@@ -49,10 +44,9 @@
                     {
                       "name": "defer",
                       "details": {
-                        "result": "RESULT_FAILED",
-                        "failure": {
-                          "expected": "EFFECT_ALLOW",
-                          "actual": "EFFECT_DENY"
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
                         }
                       }
                     }
@@ -67,16 +61,12 @@
     }
   ],
   "summary": {
-    "overallResult": "RESULT_FAILED",
+    "overallResult": "RESULT_PASSED",
     "testsCount": 3,
     "resultCounts": [
       {
         "result": "RESULT_PASSED",
-        "count": 1
-      },
-      {
-        "result": "RESULT_FAILED",
-        "count": 2
+        "count": 3
       }
     ]
   }
