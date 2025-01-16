@@ -264,19 +264,14 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	return acc, nil
 }
 
-func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTable, input *enginev1.PlanResourcesInput, schemaMgr schema.Manager, nowFunc conditions.NowFunc, globals map[string]any, defaultPolicyVersion string) (*PolicyPlanResult, error) {
-	version := input.Resource.PolicyVersion
-	if version == "" {
-		version = defaultPolicyVersion
-	}
-
-	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, version, input.Resource.Scope)
+func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTable, input *enginev1.PlanResourcesInput, policyVersion string, schemaMgr schema.Manager, nowFunc conditions.NowFunc, globals map[string]any) (*PolicyPlanResult, error) {
+	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, policyVersion, input.Resource.Scope)
 
 	_, span := tracing.StartSpan(ctx, "rule_table.EvaluateRuleTableQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
-	scopes, _, _ := ruleTable.GetAllScopes(input.Resource.Scope, input.Resource.Kind, version)
+	scopes, _, _ := ruleTable.GetAllScopes(input.Resource.Scope, input.Resource.Kind, policyVersion)
 
 	request := planResourcesInputToRequest(input)
 	evalCtx := &evalContext{TimeFn: nowFunc}
@@ -303,7 +298,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	allRoles := ruleTable.GetParentRoles(input.Principal.Roles)
 
 	// Filter down to matching roles and action
-	candidateRows := ruleTable.GetRows(version, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
+	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
 
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
@@ -325,7 +320,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 
 			var scopedRoleExists bool
 			for _, r := range parentRoles {
-				if ruleTable.ScopedRoleExists(version, scope, r) {
+				if ruleTable.ScopedRoleExists(policyVersion, scope, r) {
 					scopedRoleExists = true
 					break
 				}
@@ -341,7 +336,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				derivedRolesList = c
 			} else {
 				var derivedRoles []rN
-				if drs := ruleTable.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)); drs != nil {
+				if drs := ruleTable.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, policyVersion, scope)); drs != nil {
 					for name, dr := range drs {
 						if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
 							continue

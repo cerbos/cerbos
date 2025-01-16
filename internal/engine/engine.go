@@ -278,18 +278,22 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
 	}
 
+	policyVersion := input.Resource.PolicyVersion
+	if policyVersion == "" {
+		policyVersion = opts.DefaultPolicyVersion()
+	}
+
 	ruleTable := engine.ruleTable
 	if ruleTable == nil {
 		var err error
-		version := input.Resource.PolicyVersion
-		ruleTable, err = engine.getPartialRuleTable(ctx, input.Resource.Kind, version, input.Resource.Scope, input.Principal.Roles)
+		ruleTable, err = engine.getPartialRuleTable(ctx, input.Resource.Kind, policyVersion, input.Resource.Scope, input.Principal.Roles)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	if ruleTable != nil {
-		ruleTableResult, err := planner.EvaluateRuleTableQueryPlan(ctx, ruleTable, input, engine.schemaMgr, opts.NowFunc(), opts.Globals(), opts.DefaultPolicyVersion())
+		ruleTableResult, err := planner.EvaluateRuleTableQueryPlan(ctx, ruleTable, input, policyVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
 		if err != nil {
 			return nil, nil, err
 		}
