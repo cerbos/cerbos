@@ -133,10 +133,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		}
 
 		compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-		eng, err := engine.NewEphemeral(compiler, schemaMgr)
-		if err != nil {
-			return fmt.Errorf("failed to create engine to run tests: %w", err)
-		}
+		eng := engine.NewEphemeral(nil, compiler, schemaMgr)
 
 		testFsys, testDir, err := c.testsDir()
 		if err != nil {

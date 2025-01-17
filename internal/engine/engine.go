@@ -179,13 +179,13 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	return engine
 }
 
-func NewEphemeral(policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Engine, error) {
-	conf, err := GetConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
+func NewEphemeral(conf *Conf, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) *Engine {
+	if conf == nil {
+		conf = &Conf{}
+		conf.SetDefaults()
 	}
 
-	return newEngine(conf, Components{PolicyLoader: policyLoader, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()}), nil
+	return newEngine(conf, Components{PolicyLoader: policyLoader, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()})
 }
 
 func newEngine(conf *Conf, c Components) *Engine {

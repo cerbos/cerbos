@@ -196,6 +196,11 @@ func implementsIface(iface *types.Interface, obj types.Object) bool {
 		return false
 	}
 
+	name, ok := obj.(*types.TypeName)
+	if !ok || name.IsAlias() {
+		return false
+	}
+
 	t := obj.Type()
 	if types.Implements(t, iface) {
 		return true

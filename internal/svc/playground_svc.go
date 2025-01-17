@@ -454,5 +454,5 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	return engine.NewEphemeral(cm, c.schemaMgr)
+	return engine.NewEphemeral(nil, cm, c.schemaMgr), nil
 }
