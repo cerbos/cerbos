@@ -9,6 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/cel-go/cel"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -17,9 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/cel-go/cel"
-	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -32,9 +33,9 @@ type RuleTable struct {
 	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
 	scopedResourceIdx        map[string]map[string]*util.GlobMap[struct{}]
 	log                      *zap.SugaredLogger
-	schemas                  map[string]*policyv1.Schemas
-	meta                     map[string]*runtimev1.RuleTableMetadata
-	policyDerivedRoles       map[string]map[string]*WrappedRunnableDerivedRole
+	schemas                  map[namer.ModuleID]*policyv1.Schemas
+	meta                     map[namer.ModuleID]*runtimev1.RuleTableMetadata
+	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	scopeMap                 map[string]struct{}
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoles              map[string][]string
@@ -53,6 +54,7 @@ type Row struct {
 	Params            *rowParams
 	DerivedRoleParams *rowParams
 	EvaluationKey     string
+	OriginModuleID    namer.ModuleID
 }
 
 func (r *Row) Matches(scope, action string, roles []string) bool {
@@ -97,9 +99,9 @@ func NewRuleTable() *RuleTable {
 		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
 		scopedResourceIdx:        make(map[string]map[string]*util.GlobMap[struct{}]),
 		log:                      zap.S().Named("ruletable"),
-		schemas:                  make(map[string]*policyv1.Schemas),
-		meta:                     make(map[string]*runtimev1.RuleTableMetadata),
-		policyDerivedRoles:       make(map[string]map[string]*WrappedRunnableDerivedRole),
+		schemas:                  make(map[namer.ModuleID]*policyv1.Schemas),
+		meta:                     make(map[namer.ModuleID]*runtimev1.RuleTableMetadata),
+		policyDerivedRoles:       make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole),
 		scopeMap:                 make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
 		parentRoles:              make(map[string][]string),
@@ -136,8 +138,6 @@ func (rt *RuleTable) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet) error {
 	sanitizedResource := namer.SanitizedResource(rrps.Meta.Resource)
 
-	rt.schemas[rrps.Meta.Fqn] = rrps.Schemas
-
 	policies := rrps.GetPolicies()
 	if len(policies) == 0 {
 		return nil
@@ -146,7 +146,9 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 	// we only process the first of resource policy sets as it's assumed parent scopes are handled in separate calls
 	p := rrps.GetPolicies()[0]
 
-	rt.meta[rrps.Meta.Fqn] = &runtimev1.RuleTableMetadata{
+	moduleID := namer.GenModuleIDFromFQN(rrps.Meta.Fqn)
+	rt.schemas[moduleID] = rrps.Schemas
+	rt.meta[moduleID] = &runtimev1.RuleTableMetadata{
 		Fqn:              rrps.Meta.Fqn,
 		Name:             &runtimev1.RuleTableMetadata_Resource{Resource: sanitizedResource},
 		Version:          rrps.Meta.Version,
@@ -161,7 +163,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			Constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
 		}
 	}
-	rt.policyDerivedRoles[rrps.Meta.Fqn] = wrapped
+	rt.policyDerivedRoles[moduleID] = wrapped
 
 	progs, err := getCelProgramsFromExpressions(p.OrderedVariables)
 	if err != nil {
@@ -190,7 +192,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			}
 		}
 
-		ruleFqn := namer.RuleFQN(rt.meta[rrps.Meta.Fqn], p.Scope, rule.Name)
+		ruleFqn := namer.RuleFQN(rt.meta[moduleID], p.Scope, rule.Name)
 		evaluationKey := fmt.Sprintf("%s#%s", policyParameters.Key, ruleFqn)
 		for a := range rule.Actions {
 			for r := range rule.Roles {
@@ -208,8 +210,9 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 						EmitOutput:       emitOutput,
 						Name:             rule.Name,
 					},
-					Params:        policyParameters,
-					EvaluationKey: evaluationKey,
+					Params:         policyParameters,
+					EvaluationKey:  evaluationKey,
+					OriginModuleID: moduleID,
 				})
 			}
 
@@ -248,6 +251,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 							Params:            policyParameters,
 							DerivedRoleParams: derivedRoleParams,
 							EvaluationKey:     evaluationKey,
+							OriginModuleID:    moduleID,
 						})
 					}
 				}
@@ -281,7 +285,8 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	rt.scopeScopePermissions[p.Scope] = p.ScopePermissions
 
 	version := "default"
-	rt.meta[p.Meta.Fqn] = &runtimev1.RuleTableMetadata{
+	moduleID := namer.GenModuleIDFromFQN(p.Meta.Fqn)
+	rt.meta[moduleID] = &runtimev1.RuleTableMetadata{
 		Fqn:              p.Meta.Fqn,
 		Name:             &runtimev1.RuleTableMetadata_Role{Role: p.Role},
 		Version:          version,
@@ -304,7 +309,8 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 						ScopePermissions: p.ScopePermissions,
 						Version:          version,
 					},
-					EvaluationKey: evaluationKey,
+					EvaluationKey:  evaluationKey,
+					OriginModuleID: moduleID,
 				})
 			}
 		}
@@ -361,7 +367,7 @@ func (rt *RuleTable) insertRule(r *Row) {
 	rt.rules = append(rt.rules, r)
 }
 
-func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
+func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 	// TODO(saml) rebuilding/reassigning the whole row slice on each delete is hugely inefficient.
 	// Perhaps we could mark as `deleted` and periodically purge the deleted rows.
 	// However, it's unlikely this bespoke table implementation will be around long enough to worry about this.
@@ -369,43 +375,40 @@ func (rt *RuleTable) deletePolicy(rps *runtimev1.RunnablePolicySet) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	deletedFqn := rps.Fqn
+	meta := rt.meta[moduleID]
+	rt.log.Debugf("Deleting policy %s", meta.GetFqn())
+
 	versionSet := make(map[string]struct{})
 	scopeSet := make(map[string]struct{})
 
-	newRules := []*Row{}
+	newRules := make([]*Row, 0, len(rt.rules))
 	for _, r := range rt.rules {
-		if r.OriginFqn != deletedFqn {
+		if r.OriginModuleID != moduleID {
 			newRules = append(newRules, r)
 			versionSet[r.Version] = struct{}{}
 			scopeSet[r.Scope] = struct{}{}
+		} else {
+			rt.log.Debugf("Dropping rule %s", r.GetOriginFqn())
 		}
 	}
 	rt.rules = newRules
 
-	delete(rt.schemas, deletedFqn)
-	delete(rt.meta, deletedFqn)
+	delete(rt.schemas, moduleID)
+	delete(rt.meta, moduleID)
+	delete(rt.policyDerivedRoles, moduleID)
 
-	var version, scope string
-	switch rps.PolicySet.(type) {
-	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		rp := rps.GetResourcePolicy()
-		version = rp.Meta.Version
-		scope = rp.Policies[0].Scope
-	case *runtimev1.RunnablePolicySet_RolePolicy:
-		rlp := rps.GetRolePolicy()
-		version = "default" // TODO(saml)
-		scope = rlp.Scope
-
-		delete(rt.parentRoles, rlp.Role)
-		delete(rt.parentRoleAncestorsCache, rlp.Role)
+	if role := meta.GetRole(); role != "" {
+		delete(rt.parentRoles, role)
+		delete(rt.parentRoleAncestorsCache, role)
 	}
 
+	version := meta.GetVersion()
 	if _, ok := versionSet[version]; !ok {
 		delete(rt.primaryIdx, version)
 		delete(rt.scopedResourceIdx, version)
 	}
 
+	scope := namer.ScopeFromFQN(meta.GetFqn())
 	if _, ok := scopeSet[scope]; !ok {
 		delete(rt.scopeMap, scope)
 		delete(rt.scopeScopePermissions, scope)
@@ -416,14 +419,16 @@ func (rt *RuleTable) purge() {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	rt.rules = []*Row{}
-	rt.parentRoles = make(map[string][]string)
-	rt.schemas = make(map[string]*policyv1.Schemas)
-
-	rt.scopeMap = make(map[string]struct{})
-	rt.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
-	rt.scopedResourceIdx = make(map[string]map[string]*util.GlobMap[struct{}])
-	rt.parentRoleAncestorsCache = make(map[string][]string)
+	clear(rt.meta)
+	clear(rt.parentRoleAncestorsCache)
+	clear(rt.parentRoles)
+	clear(rt.policyDerivedRoles)
+	clear(rt.primaryIdx)
+	clear(rt.rules)
+	clear(rt.schemas)
+	clear(rt.scopeMap)
+	clear(rt.scopeScopePermissions)
+	clear(rt.scopedResourceIdx)
 }
 
 func (rt *RuleTable) Len() int {
@@ -431,7 +436,7 @@ func (rt *RuleTable) Len() int {
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
-	return rt.policyDerivedRoles[fqn]
+	return rt.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }
 
 func (rt *RuleTable) GetAllScopes(scope, resource, version string) ([]string, string, string) {
@@ -571,7 +576,7 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	if s, ok := rt.schemas[fqn]; ok {
+	if s, ok := rt.schemas[namer.GenModuleIDFromFQN(fqn)]; ok {
 		return s
 	}
 
@@ -582,7 +587,7 @@ func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	if s, ok := rt.meta[fqn]; ok {
+	if s, ok := rt.meta[namer.GenModuleIDFromFQN(fqn)]; ok {
 		return s
 	}
 
@@ -630,14 +635,17 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), storeFetchTimeout)
 	defer cancelFunc()
 
-	rps, err := rt.policyLoader.GetFirstMatch(ctx, []namer.ModuleID{ev.PolicyID})
-	if err != nil {
-		return err
+	rt.deletePolicy(ev.PolicyID)
+	if ev.OldPolicyID != nil {
+		rt.deletePolicy(*ev.OldPolicyID)
 	}
 
-	rt.deletePolicy(rps)
-
 	if ev.Kind == storage.EventAddOrUpdatePolicy {
+		rps, err := rt.policyLoader.GetFirstMatch(ctx, []namer.ModuleID{ev.PolicyID})
+		if err != nil {
+			return err
+		}
+
 		if err := rt.addPolicy(rps); err != nil {
 			return err
 		}

@@ -160,8 +160,7 @@ func Start(ctx context.Context) error {
 
 	rt := ruletable.NewRuleTable().WithPolicyLoader(policyLoader)
 
-	// For now, we're only enabling the ruletable engine for non-mutable stores populate rule table
-	// for non-mutable stores
+	// Populate rule table for non-mutable stores.
 	if _, ok := store.(storage.MutableStore); !ok {
 		rps, err := policyLoader.GetAll(ctx)
 		if err != nil {
@@ -171,10 +170,10 @@ func Start(ctx context.Context) error {
 		if err := rt.LoadPolicies(rps); err != nil {
 			return fmt.Errorf("failed to load policies into rule table: %w", err)
 		}
+	}
 
-		if ss, ok := store.(storage.Subscribable); ok {
-			ss.Subscribe(rt)
-		}
+	if ss, ok := policyLoader.(storage.Subscribable); ok {
+		ss.Subscribe(rt)
 	}
 
 	// create engine

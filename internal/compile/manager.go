@@ -30,12 +30,13 @@ const (
 )
 
 type Manager struct {
-	log           *zap.SugaredLogger
-	store         storage.SourceStore
-	schemaMgr     schema.Manager
-	updateQueue   chan storage.Event
-	cache         *cache.Cache[namer.ModuleID, *runtimev1.RunnablePolicySet]
-	sf            singleflight.Group
+	store       storage.SourceStore
+	schemaMgr   schema.Manager
+	sf          singleflight.Group
+	log         *zap.SugaredLogger
+	updateQueue chan storage.Event
+	cache       *cache.Cache[namer.ModuleID, *runtimev1.RunnablePolicySet]
+	*storage.SubscriptionManager
 	cacheDuration time.Duration
 }
 
@@ -54,12 +55,13 @@ func NewManagerFromDefaultConf(ctx context.Context, store storage.SourceStore, s
 
 func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.SourceStore, schemaMgr schema.Manager) *Manager {
 	c := &Manager{
-		log:           zap.S().Named("compiler"),
-		store:         store,
-		schemaMgr:     schemaMgr,
-		updateQueue:   make(chan storage.Event, updateQueueSize),
-		cache:         cache.New[namer.ModuleID, *runtimev1.RunnablePolicySet]("compile", conf.CacheSize),
-		cacheDuration: conf.CacheDuration,
+		log:                 zap.S().Named("compiler"),
+		store:               store,
+		schemaMgr:           schemaMgr,
+		updateQueue:         make(chan storage.Event, updateQueueSize),
+		cache:               cache.New[namer.ModuleID, *runtimev1.RunnablePolicySet]("compile", conf.CacheSize),
+		cacheDuration:       conf.CacheDuration,
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
 
 	go c.processUpdateQueue(ctx)
@@ -90,6 +92,7 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 			case storage.EventReload:
 				c.log.Info("Purging compile cache")
 				c.cache.Purge()
+				c.NotifySubscribers(evt)
 			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 				if err := c.recompile(evt); err != nil {
 					c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
@@ -151,6 +154,7 @@ func (c *Manager) recompile(evt storage.Event) error {
 		}
 	}
 
+	c.NotifySubscribers(evt)
 	return nil
 }
 
