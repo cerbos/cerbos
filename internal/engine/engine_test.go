@@ -364,6 +364,7 @@ func TestQueryPlan(t *testing.T) {
 	suites := test.LoadTestCases(t, "query_planner/suite")
 	timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395716+13:00")
 	require.NoError(t, err)
+	ctx := context.Background()
 	for _, suite := range suites {
 		s := suite
 		t.Run(s.Name, func(t *testing.T) {

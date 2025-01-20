@@ -145,13 +145,14 @@ func Now() NowFunc {
 func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	return ContextEval(context.TODO(), env, ast, vars, nowFunc, opts...)
 }
+
 func ContextEval(ctx context.Context, env *cel.Env, ast *cel.Ast, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator(nowFunc))}, opts...)
 	prg, err := env.Program(ast, programOpts...)
 	if err != nil {
 		return nil, nil, err
 	}
-	return prg.ContextEval(ctx, vars)
+	return prg.Eval(vars)
 }
 
 func newTimeDecorator(nowFunc NowFunc) interpreter.InterpretableDecorator {

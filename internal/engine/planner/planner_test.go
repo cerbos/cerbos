@@ -5,6 +5,7 @@ package planner
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -174,10 +175,11 @@ func Test_evaluateCondition(t *testing.T) {
 		},
 	}
 	evalCtx := &evalContext{TimeFn: time.Now}
+	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("Expr:%q", tt.args.expr), func(t *testing.T) {
 			is := require.New(t)
-			got, err := evalCtx.evaluateCondition(tt.args.condition, tt.args.request, nil, nil, nil, nil)
+			got, err := evalCtx.evaluateCondition(ctx, tt.args.condition, tt.args.request, nil, nil, nil, nil)
 			is.NoError(err)
 			expression := got.GetExpression()
 			is.Equal(tt.want, unparse(t, expression))
@@ -230,7 +232,7 @@ func Test_evaluateCondition(t *testing.T) {
 					}
 				}
 			}
-			got, err := evalCtx.evaluateCondition(c, &enginev1.Request{
+			got, err := evalCtx.evaluateCondition(ctx, c, &enginev1.Request{
 				Principal: &enginev1.Request_Principal{Attr: principalAttr},
 				Resource:  &enginev1.Request_Resource{Attr: resourceAttr},
 			}, nil, nil, nil, nil)
