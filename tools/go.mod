@@ -4,31 +4,31 @@ go 1.23.2
 
 require (
 	connectrpc.com/connect v1.18.1
-	github.com/bufbuild/buf v1.49.0
+	github.com/bufbuild/buf v1.50.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.3.5
 	github.com/cerbos/protoc-gen-jsonschema v0.1.5
-	github.com/dadav/helm-schema v0.0.0-20250111173502-429f45a09f4e
+	github.com/dadav/helm-schema v0.0.0-20250114174818-5c6cc3ff8e04
 	github.com/fullstorydev/grpcurl v1.9.2
 	github.com/golangci/golangci-lint v1.63.4
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser/v2 v2.5.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
-	github.com/vektra/mockery/v2 v2.50.4
+	github.com/vektra/mockery/v2 v2.51.1
 	go.elastic.co/go-licence-detector v0.7.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
-	google.golang.org/protobuf v1.36.2
+	google.golang.org/protobuf v1.36.4-0.20250116160514-2005adbe0cf6
 	gotest.tools/gotestsum v1.12.0
 )
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
 	4d63.com/gochecknoglobals v0.2.1 // indirect
-	buf.build/gen/go/bufbuild/bufplugin/protocolbuffers/go v1.36.1-20241031151143-70f632351282.1 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.1-20241127180247-a33202765966.1 // indirect
-	buf.build/gen/go/bufbuild/registry/connectrpc/go v1.17.0-20241227185654-946b6dd39b27.1 // indirect
-	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.36.1-20241227185654-946b6dd39b27.1 // indirect
-	buf.build/gen/go/pluginrpc/pluginrpc/protocolbuffers/go v1.36.1-20241007202033-cf42259fcbfc.1 // indirect
+	buf.build/gen/go/bufbuild/bufplugin/protocolbuffers/go v1.36.3-20241031151143-70f632351282.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.3-20241127180247-a33202765966.1 // indirect
+	buf.build/gen/go/bufbuild/registry/connectrpc/go v1.18.1-20250106231242-56271afbd6ce.1 // indirect
+	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.36.3-20250106231242-56271afbd6ce.1 // indirect
+	buf.build/gen/go/pluginrpc/pluginrpc/protocolbuffers/go v1.36.3-20241007202033-cf42259fcbfc.1 // indirect
 	buf.build/go/bufplugin v0.6.0 // indirect
 	buf.build/go/protoyaml v0.3.1 // indirect
 	buf.build/go/spdx v0.2.0 // indirect
@@ -137,7 +137,7 @@ require (
 	github.com/breml/bidichk v0.3.2 // indirect
 	github.com/breml/errchkjson v0.4.0 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
-	github.com/bufbuild/protoplugin v0.0.0-20240911180120-7bb73e41a54a // indirect
+	github.com/bufbuild/protoplugin v0.0.0-20250106231243-3a819552c9d9 // indirect
 	github.com/bufbuild/protovalidate-go v0.8.2 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/butuzov/ireturn v0.3.1 // indirect
@@ -166,7 +166,7 @@ require (
 	github.com/cloudflare/circl v1.5.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20240905190251-b4127c9b8d78 // indirect
 	github.com/containerd/cgroups/v3 v3.0.5 // indirect
-	github.com/containerd/containerd v1.7.24 // indirect
+	github.com/containerd/containerd v1.7.25 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
@@ -190,9 +190,9 @@ require (
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
-	github.com/docker/cli v27.4.1+incompatible // indirect
+	github.com/docker/cli v27.5.0+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v27.4.1+incompatible // indirect
+	github.com/docker/docker v27.5.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -368,6 +368,7 @@ require (
 	github.com/moby/patternmatcher v0.6.0 // indirect
 	github.com/moby/sys/mount v0.3.4 // indirect
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
+	github.com/moby/sys/reexec v0.1.0 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
 	github.com/moby/sys/user v0.3.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
@@ -522,7 +523,7 @@ require (
 	go.uber.org/zap/exp v0.3.0 // indirect
 	gocloud.dev v0.40.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
-	golang.org/x/exp v0.0.0-20250103183323-7d7fa50e5329 // indirect
+	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20241108190413-2d47ceb2692f // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
@@ -536,9 +537,9 @@ require (
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
 	google.golang.org/api v0.198.0 // indirect
 	google.golang.org/genproto v0.0.0-20240903143218-8af14fe29dc1 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250102185135-69823020774d // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
-	google.golang.org/grpc v1.69.2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250106144421-5f5ef82da422 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250106144421-5f5ef82da422 // indirect
+	google.golang.org/grpc v1.69.4 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
