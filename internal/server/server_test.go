@@ -131,13 +131,12 @@ func TestServer(t *testing.T) {
 				require.NoError(t, err, "Failed to load policies into rule table")
 
 				schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-				tp := testParam{
+				return testParam{
 					store:        store,
 					policyLoader: store,
 					schemaMgr:    schemaMgr,
 					ruletable:    rt,
 				}
-				return tp
 			}
 		}
 

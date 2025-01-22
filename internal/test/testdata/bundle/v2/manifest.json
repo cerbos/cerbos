@@ -23,20 +23,20 @@
     "cerbos.resource.leave_request.vdefault": "policies/EF8C9BEB57967AA0",
     "cerbos.resource.leave_request.vdefault/acme": "policies/827F815FFA0C2AC5",
     "cerbos.resource.leave_request.vdefault/acme.hr": "policies/FBAEBB70E5F8BBE6",
-    "cerbos.resource.leave_request.vdefault/acme.hr.fr": "policies/2A3DBD3DD9EF1F7B",
     "cerbos.resource.leave_request.vdefault/acme.hr.uk": "policies/BC5AE9FB81ACF7B2",
+    "cerbos.resource.leave_request.vdefault/acme.hr.uk.brighton": "policies/66F0D66E65A4E98",
+    "cerbos.resource.leave_request.vdefault/acme.hr.uk.london": "policies/A6B40AB5AE94039D",
     "cerbos.resource.leave_request.vstaging": "policies/AD56144EE420A347",
     "cerbos.resource.missing_attr.vdefault": "policies/131D16D1DB4AD8E7",
     "cerbos.resource.output_now.vdefault": "policies/B60C34C563EA79A",
     "cerbos.resource.purchase_order.vdefault": "policies/B55EE74E34DF4F2B",
     "cerbos.resource.runtime_effective_derived_roles.vdefault": "policies/8AF83EE9B401DBF5",
     "cerbos.resource.variables_referencing_variables.vdefault": "policies/528071D04EFEBBF9",
-    "cerbos.role.acme_assistant/acme.hr.de": "policies/9FAC6730FBDAC922",
-    "cerbos.role.acme_creator/acme.hr.uk": "policies/420F6D95BA099732",
-    "cerbos.role.acme_jr_admin/acme.hr.uk": "policies/4449D25C7A896A65",
-    "cerbos.role.acme_manager/acme.hr.uk": "policies/12F89F7090A2C8EA",
-    "cerbos.role.acme_sr_admin/acme.hr.uk": "policies/5DC11BCECEE27415",
-    "cerbos.role.acme_travel_agent/acme.hr.de": "policies/960AD94679752E45"
+    "cerbos.role.acme_assistant/acme.hr.uk": "policies/77C53F4F92A176EA",
+    "cerbos.role.acme_creator/acme.hr.uk.brighton": "policies/498506F5740220EB",
+    "cerbos.role.acme_jr_admin/acme.hr.uk.brighton": "policies/9DB2774CA4E44C05",
+    "cerbos.role.acme_london_employee/acme.hr.uk.london": "policies/5816AC3EB92F65DA",
+    "cerbos.role.acme_travel_agent/acme.hr.uk": "policies/F003E1CA7BAC2D00"
   },
   "schemas": [
     "principal.json",
@@ -45,7 +45,7 @@
     "resources/salary_record.json"
   ],
   "meta": {
-    "identifier": "1HIZLQO25ZKLPCOW",
+    "identifier": "NCX4NBNOUSOU9KHO",
     "source": "/Users/oguzhan/github/oguzhand95/cerbos/internal/test/testdata/store"
   }
 }
