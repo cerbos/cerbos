@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cerbos/cloud-api/bundle"
 	"go.uber.org/multierr"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -36,12 +37,16 @@ type Conf struct {
 	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
 	// CacheSize defines the number of policies to cache in memory.
 	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
+	// BundleVersion defines the bundle service version.
+	BundleVersion bundle.Version `yaml:"bundleVersion" conf:",ignore"`
 }
 
 // LocalSourceConf holds configuration for local bundle store.
 type LocalSourceConf struct {
 	// BundlePath is the full path to the local bundle file.
 	BundlePath string `yaml:"bundlePath" conf:"required,example=/path/to/bundle.crbp"`
+	// EncryptionKey is encryption key to decode the bundle. It must be string encoded.
+	EncryptionKey string `yaml:"encryptionKey" conf:",ignore"`
 	// TempDir is the directory to use for temporary files.
 	TempDir string `yaml:"tempDir" conf:",example=${TEMP}"`
 }
@@ -65,6 +70,7 @@ func (conf *Conf) Key() string {
 }
 
 func (conf *Conf) SetDefaults() {
+	conf.BundleVersion = bundle.Version1
 	conf.CacheSize = defaultCacheSize
 }
 
@@ -75,6 +81,10 @@ func (conf *Conf) Validate() (outErr error) {
 
 	if conf.CacheSize == 0 {
 		outErr = multierr.Append(outErr, errors.New("cacheSize must be greater than zero"))
+	}
+
+	if conf.BundleVersion == bundle.VersionUnspecified {
+		outErr = multierr.Append(outErr, errors.New("bundleVersion must be specified"))
 	}
 
 	if err := conf.Local.validate(); err != nil {

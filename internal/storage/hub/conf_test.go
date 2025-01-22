@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cloud-api/bundle"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
@@ -169,7 +170,8 @@ func doTestConfig(driver string) func(*testing.T) {
 		}
 
 		want := &hubstore.Conf{
-			CacheSize: 1024,
+			BundleVersion: bundle.Version1,
+			CacheSize:     1024,
 			Credentials: &hub.CredentialsConf{
 				PDPID:           "pdp-id",
 				ClientID:        "client-id",

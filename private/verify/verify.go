@@ -11,6 +11,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/cerbos/cloud-api/bundle"
+	"go.uber.org/zap"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
@@ -21,9 +25,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
 	"github.com/cerbos/cerbos/private/compile"
-
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"go.uber.org/zap"
 )
 
 // Files runs tests using the policy files in the given file system.
@@ -67,8 +68,9 @@ type BundleParams struct {
 // Bundle runs tests using the given policy bundle.
 func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, error) {
 	bundleSrc, err := hub.NewLocalSource(hub.LocalParams{
-		BundlePath: params.BundlePath,
-		TempDir:    params.WorkDir,
+		BundlePath:    params.BundlePath,
+		BundleVersion: bundle.Version1,
+		TempDir:       params.WorkDir,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create local bundle source from %q: %w", params.BundlePath, err)
