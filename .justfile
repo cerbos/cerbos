@@ -64,7 +64,7 @@ generate-json-schemas: _buf
         "${TOOLS_BIN_DIR}/buf" generate --template=jsonschema.gen.yaml --output=.. ../api/public
     )
 
-generate-mocks QUIET='--quiet': _mockery
+generate-mocks QUIET='--log-level=""': _mockery
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{ justfile_directory() }}

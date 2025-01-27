@@ -4,6 +4,8 @@ filename: "{{.InterfaceName}}.go"
 mockname: "{{.InterfaceName}}"
 outpkg: mocks
 with-expecter: True
+issue-845-fix: True
+resolve-type-alias: False
 packages:
   github.com/cerbos/cerbos/internal/audit/hub:
     interfaces:
