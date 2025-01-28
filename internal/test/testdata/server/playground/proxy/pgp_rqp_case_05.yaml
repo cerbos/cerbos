@@ -68,7 +68,7 @@ playgroundProxy:
         "kind": "KIND_ALWAYS_DENIED"
       },
       "meta": {
-        "filterDebug": "(false)"
+        "filterDebug": "NO_MATCH"
       }
     }
   }

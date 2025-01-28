@@ -287,18 +287,21 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	var validationErrors []*schemav1.ValidationError
 	if len(vr.Errors) > 0 {
 		validationErrors = vr.Errors.SchemaErrors()
+		result.ValidationErrors = validationErrors
 
 		if vr.Reject {
-			result.ValidationErrors = validationErrors
 			result.add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
 			return result, nil
 		}
 	}
 
-	allRoles := ruleTable.GetParentRoles(input.Principal.Roles)
+	allRoles := ruleTable.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 
 	// Filter down to matching roles and action
 	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
+	if len(candidateRows) == 0 {
+		return result, nil
+	}
 
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
@@ -312,7 +315,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		var roleAllowNode, roleDenyNode *qpN
 		var scopePermissionsBoundaryOpen bool
 
-		parentRoles := ruleTable.GetParentRoles([]string{role})
+		parentRoles := ruleTable.GetParentRoles(input.Resource.Scope, []string{role})
 
 	scopesLoop:
 		for _, scope := range scopes {
@@ -503,7 +506,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		result.add(denyNode, effectv1.Effect_EFFECT_DENY)
 	}
 
-	result.ValidationErrors = validationErrors
 	return result, nil
 }
 
