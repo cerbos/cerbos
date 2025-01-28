@@ -9,6 +9,7 @@ inputs:
         "create", # exists, falls through, allow
         "delete", # exists, falls through, no match
         "nonaction", # doesn't exist, falls through, no match
+        "acme_action" # doesn't exist, falls through, match (implicit DENY)
       ],
       "principal":
         {
@@ -44,7 +45,14 @@ wantOutputs:
           "nonaction":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH"
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.sales"
+            },
+          "acme_action":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.sales"
             },
         }
     },
@@ -71,7 +79,7 @@ wantDecisionLogs:
                     "roles": ["employee"],
                     "scope": "acme.sales",
                   },
-                "actions": ["create", "delete", "nonaction"],
+                "actions": ["create", "delete", "nonaction", "acme_action"],
               },
             ],
           "outputs":
@@ -95,7 +103,14 @@ wantDecisionLogs:
                     "nonaction":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH"
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.sales"
+                      },
+                    "acme_action":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.sales"
                       },
                   },
               },

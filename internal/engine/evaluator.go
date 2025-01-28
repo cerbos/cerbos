@@ -447,6 +447,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 				constants := constantValues(p.Constants)
 
+				implicitlyAllowedActions := make(map[string]struct{})
+
 				// evaluate the variables of this policy
 				variables, err := tracing.RecordSpan2(ctx, "evaluate_variables", func(_ context.Context, _ trace.Span) (map[string]any, error) {
 					return evalCtx.evaluateVariables(sctx.StartVariables(), constants, p.OrderedVariables)
@@ -464,7 +466,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 							continue
 						}
 
-					outer:
 						for _, rule := range resourceRules.ActionRules {
 							matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 							ruleActivated := false
@@ -492,7 +493,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 								}
 
 								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									continue outer
+									implicitlyAllowedActions[action] = struct{}{}
+									continue
 								}
 
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
@@ -522,6 +524,19 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						}
 					}
 				})
+
+				if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+					for _, a := range result.unresolvedActions() {
+						if _, ok := implicitlyAllowedActions[a]; !ok {
+							result.setEffect(a, EffectInfo{
+								Effect: effectv1.Effect_EFFECT_DENY,
+								Policy: noMatchScopePermissions,
+								Scope:  p.Scope,
+							})
+						}
+					}
+				}
+
 				return nil
 			})
 			if err != nil {
