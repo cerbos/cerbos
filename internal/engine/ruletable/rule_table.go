@@ -146,7 +146,7 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 		resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, partialScope)
 
 		// Check to see if the store has already been queried for the given parameters.
-		if policyExists, isQueried := rt.storeQueryRegister[resourceModID]; !isQueried {
+		if policyExists, isQueried := rt.storeQueryRegister[resourceModID]; !isQueried { //nolint:nestif
 			var err error
 			rps, err = rt.getResourcePolicySet(ctx, resource, policyVer, partialScope, true)
 			if err != nil {
@@ -851,9 +851,7 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 			}
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			rt.log.Debugw("Processing storage event", "event", evt)
-			if err := rt.processPolicyEvent(evt); err != nil {
-				rt.log.Warnw("Error while processing storage event", "event", evt, "error", err)
-			}
+			rt.processPolicyEvent(evt)
 		default:
 			rt.log.Debugw("Ignoring storage event", "event", evt)
 		}
@@ -874,11 +872,9 @@ func (rt *RuleTable) triggerReload() error {
 	return rt.loadPolicies(rpss)
 }
 
-func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
+func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 	rt.deletePolicy(ev.PolicyID)
 	if ev.OldPolicyID != nil {
 		rt.deletePolicy(*ev.OldPolicyID)
 	}
-
-	return nil
 }

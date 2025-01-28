@@ -140,13 +140,8 @@ func (gm *GlobMap[T]) GetWithLiteral(k string) (T, bool) {
 }
 
 func (gm *GlobMap[T]) DeleteLiteral(k string) {
-	if _, ok := gm.literals[k]; ok {
-		delete(gm.literals, k)
-	}
-
-	if _, ok := gm.globs[k]; ok {
-		delete(gm.globs, k)
-	}
+	delete(gm.literals, k)
+	delete(gm.globs, k)
 }
 
 func (gm *GlobMap[T]) GetAll() map[string]T {
