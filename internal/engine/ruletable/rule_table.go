@@ -599,9 +599,9 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 		return
 	}
 
-	delete(rt.storeQueryRegister, moduleID)
-
 	rt.log.Debugf("Deleting policy %s", meta.GetFqn())
+
+	delete(rt.storeQueryRegister, moduleID)
 
 	for version, scopeMap := range rt.primaryIdx {
 		for scope, roleMap := range scopeMap {
@@ -609,9 +609,6 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 			scopedParentRoles := rt.parentRoles[scope]
 
 			for role, actionMap := range roleMap.GetAll() {
-				delete(scopedParentRoleAncestors, role)
-				delete(scopedParentRoles, role)
-
 				for action, rules := range actionMap.GetAll() {
 					newRules := make([]*Row, 0, len(rules))
 					for _, r := range rules {
@@ -631,6 +628,8 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 
 				if actionMap.Len() == 0 {
 					roleMap.DeleteLiteral(role)
+					delete(scopedParentRoleAncestors, role)
+					delete(scopedParentRoles, role)
 				}
 			}
 
