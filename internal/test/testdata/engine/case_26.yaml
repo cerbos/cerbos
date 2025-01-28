@@ -8,7 +8,7 @@ inputs:
       "actions": [
         "create", # exists, falls through, allow
         "delete", # exists, falls through, no match
-        "nonaction", # doesn't exist, falls through, no match
+        "nonaction", # doesn't exist, falls through, no match (even with matching rule in rule table)
         "acme_action" # doesn't exist, falls through, match (implicit DENY)
       ],
       "principal":

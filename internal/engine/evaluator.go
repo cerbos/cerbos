@@ -434,6 +434,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 		trail := newAuditTrail(ppe.policy.GetMeta().GetSourceAttributes())
 		result := newEvalResult(input.Actions, trail)
 
+		implicitlyAllowedActions := make(map[string]struct{})
+
 		pctx := tctx.StartPolicy(ppe.policy.Meta.Fqn)
 		for _, p := range ppe.policy.Policies {
 			actionsToResolve := result.unresolvedActions()
@@ -446,8 +448,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				sctx := pctx.StartScope(p.Scope)
 
 				constants := constantValues(p.Constants)
-
-				implicitlyAllowedActions := make(map[string]struct{})
 
 				// evaluate the variables of this policy
 				variables, err := tracing.RecordSpan2(ctx, "evaluate_variables", func(_ context.Context, _ trace.Span) (map[string]any, error) {
@@ -497,6 +497,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 									continue
 								}
 
+								delete(implicitlyAllowedActions, action)
+
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 								actx.AppliedEffect(rule.Effect, "")
 								ruleActivated = true
@@ -533,6 +535,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 								Policy: noMatchScopePermissions,
 								Scope:  p.Scope,
 							})
+							delete(implicitlyAllowedActions, a)
 						}
 					}
 				}
@@ -542,6 +545,15 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 			if err != nil {
 				return nil, err
 			}
+		}
+
+		// Any remaining `implicitlyAllowedActions` had a matching `ALLOW` in the `REQUIRES_PARENTAL_CONSENT` scope but
+		// no matching rule in the parent scopes, therefore we issue a `DENY`.
+		for action := range implicitlyAllowedActions {
+			result.setEffect(action, EffectInfo{
+				Effect: effectv1.Effect_EFFECT_DENY,
+				Policy: noPolicyMatch,
+			})
 		}
 
 		return result, nil

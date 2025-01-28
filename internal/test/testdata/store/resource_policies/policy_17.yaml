@@ -1,0 +1,11 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: calendar_entry
+  version: default
+  rules:
+    - actions:
+        - nonaction
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
