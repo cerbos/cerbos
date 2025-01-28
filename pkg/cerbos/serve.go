@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/google/gops/agent"
+	gomaxecs "github.com/rdforte/gomaxecs/maxprocs"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 
@@ -83,7 +84,14 @@ func Serve(ctx context.Context, options ...ServeOption) error {
 
 	log := zap.S().Named("server")
 
-	undo, err := maxprocs.Set(maxprocs.Logger(log.Infof))
+	var undo func()
+	var err error
+	if gomaxecs.IsECS() {
+		undo, err = gomaxecs.Set(gomaxecs.WithLogger(log.Infof))
+	} else {
+		undo, err = maxprocs.Set(maxprocs.Logger(log.Infof))
+	}
+
 	defer undo()
 	if err != nil {
 		log.Warnw("Failed to adjust GOMAXPROCS", "error", err)

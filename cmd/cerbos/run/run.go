@@ -20,6 +20,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/go-cmd/cmd"
+	gomaxecs "github.com/rdforte/gomaxecs/maxprocs"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/strvals"
@@ -90,7 +91,12 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	log := zap.S().Named("run")
 
-	undo, _ := maxprocs.Set(maxprocs.Logger(log.Infof))
+	var undo func()
+	if gomaxecs.IsECS() {
+		undo, _ = gomaxecs.Set(gomaxecs.WithLogger(log.Infof))
+	} else {
+		undo, _ = maxprocs.Set(maxprocs.Logger(log.Infof))
+	}
 	defer undo()
 
 	if err := c.loadConfig(); err != nil {
