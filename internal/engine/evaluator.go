@@ -101,10 +101,6 @@ func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, epar
 }
 
 func NewRuleTableEvaluator(rt *ruletable.RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	if rt.Len() == 0 {
-		return noopEvaluator{}
-	}
-
 	return &ruleTableEvaluator{
 		RuleTable:  rt,
 		schemaMgr:  schemaMgr,
@@ -180,7 +176,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		return result, nil
 	}
 
-	allRoles := rte.GetParentRoles(input.Principal.Roles)
+	allRoles := rte.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
@@ -208,7 +204,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				Policy: policyKey,
 			}
 
-			parentRoles := rte.GetParentRoles([]string{role})
+			parentRoles := rte.GetParentRoles(input.Resource.Scope, []string{role})
 
 		scopesLoop:
 			for _, scope := range scopes {

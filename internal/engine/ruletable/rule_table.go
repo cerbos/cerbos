@@ -5,7 +5,10 @@ package ruletable
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"maps"
+	"net/http"
 	"sync"
 	"time"
 
@@ -19,6 +22,7 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -28,19 +32,23 @@ const (
 	storeFetchTimeout  = 2 * time.Second
 )
 
+var errNoPoliciesMatched = errors.New("no matching policies")
+
 type RuleTable struct {
-	policyLoader             policyloader.PolicyLoader
-	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
-	scopedResourceIdx        map[string]map[string]*util.GlobMap[struct{}]
-	log                      *zap.SugaredLogger
-	schemas                  map[namer.ModuleID]*policyv1.Schemas
-	meta                     map[namer.ModuleID]*runtimev1.RuleTableMetadata
-	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	scopeMap                 map[string]struct{}
-	scopeScopePermissions    map[string]policyv1.ScopePermissions
-	parentRoles              map[string][]string
-	parentRoleAncestorsCache map[string][]string
-	rules                    []*Row
+	policyLoader policyloader.PolicyLoader
+	// version -> scope -> role -> action -> []rows
+	primaryIdx            map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	scopedResourceIdx     map[string]map[string]*util.GlobMap[struct{}]
+	log                   *zap.SugaredLogger
+	schemas               map[namer.ModuleID]*policyv1.Schemas
+	meta                  map[namer.ModuleID]*runtimev1.RuleTableMetadata
+	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	storeQueryRegister    map[namer.ModuleID]bool
+	scopeMap              map[string]struct{}
+	scopeScopePermissions map[string]policyv1.ScopePermissions
+	// role policies are per-scope, so the maps takes the form `map[scope]map[role][]roles`
+	parentRoles              map[string]map[string][]string
+	parentRoleAncestorsCache map[string]map[string][]string
 	mu                       sync.RWMutex
 }
 
@@ -94,7 +102,7 @@ type CelProgram struct {
 	Name string
 }
 
-func NewRuleTable() *RuleTable {
+func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
 	return &RuleTable{
 		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
 		scopedResourceIdx:        make(map[string]map[string]*util.GlobMap[struct{}]),
@@ -102,19 +110,232 @@ func NewRuleTable() *RuleTable {
 		schemas:                  make(map[namer.ModuleID]*policyv1.Schemas),
 		meta:                     make(map[namer.ModuleID]*runtimev1.RuleTableMetadata),
 		policyDerivedRoles:       make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole),
+		storeQueryRegister:       make(map[namer.ModuleID]bool),
 		scopeMap:                 make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
-		parentRoles:              make(map[string][]string),
-		parentRoleAncestorsCache: make(map[string][]string),
+		parentRoles:              make(map[string]map[string][]string),
+		parentRoleAncestorsCache: make(map[string]map[string][]string),
+		policyLoader:             policyLoader,
 	}
 }
 
-func (rt *RuleTable) WithPolicyLoader(policyLoader policyloader.PolicyLoader) *RuleTable {
-	rt.policyLoader = policyLoader
-	return rt
+func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope string, inputRoles []string) error {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
+	// A matching scope must have at least one resource or role policy or a mixture of both.
+	// Add rules for policies at all scope levels.
+	// We duplicate rows for all role policy parent roles recursively.
+	//
+	// Rule table resource policies are added as individual units rather than as compilation units.
+	// Therefore, we need to retrieve the compilation unit for each scope, remove all bar the first policy,
+	// and pass all individually to the loadPolicies method.
+	toLoad := []*runtimev1.RunnablePolicySet{}
+
+	// we don't want to add retrieved mod IDs to the cache until the rule table has been successfully updated
+	registryBuffer := make(map[namer.ModuleID]bool)
+
+	// we force lenientScopeSearch when retrieving resource policy sets as lenient scope search is enforced
+	// in the evaluator function. Therefore, to prevent duplicate rows in the rule table, we check the returned
+	// policy scope before adding to `toLoad`
+	addScopedPolicyRules := func(partialScope string) error {
+		var rps *runtimev1.RunnablePolicySet
+
+		cachedPolicyCount := 0
+
+		resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, partialScope)
+
+		// Check to see if the store has already been queried for the given parameters.
+		if policyExists, isQueried := rt.storeQueryRegister[resourceModID]; !isQueried {
+			var err error
+			rps, err = rt.getResourcePolicySet(ctx, resource, policyVer, partialScope, true)
+			if err != nil {
+				return err
+			}
+
+			if rps == nil {
+				registryBuffer[resourceModID] = false
+				// we used lenientScopeSearch, so we can assert that no policies exist for all child scopes
+				// TODO(saml) refactor
+				for i := len(scope) - 1; i >= 0; i-- {
+					if scope[i] == '.' || i == 0 {
+						registryBuffer[namer.ResourcePolicyModuleID(resource, policyVer, scope[:i])] = false
+					}
+				}
+			} else {
+				// check the first policy scope
+				p := rps.GetResourcePolicy().GetPolicies()[0]
+
+				// lenientScopeSearch might return a parent policy which we've already added--don't load if this is the case
+				if p.Scope != partialScope {
+					// the target scoped resource policy didn't exist, so register the query with a false hit
+					// TODO(saml) this can be done for every intermediate scope also
+					registryBuffer[resourceModID] = false
+
+					resourceModID = namer.ResourcePolicyModuleID(resource, policyVer, p.Scope)
+				}
+
+				_, mainExists := rt.storeQueryRegister[resourceModID]
+				_, bufferExists := registryBuffer[resourceModID]
+				if !mainExists && !bufferExists {
+					toLoad = append(toLoad, rps)
+					registryBuffer[resourceModID] = true
+				} else {
+					cachedPolicyCount++
+				}
+			}
+		} else if policyExists {
+			cachedPolicyCount++
+		}
+
+		missingInputRoles := make([]string, 0, len(inputRoles))
+		for _, r := range inputRoles {
+			roleModID := namer.RolePolicyModuleID(r, partialScope)
+			if policyExists, isQueried := rt.storeQueryRegister[roleModID]; !isQueried {
+				missingInputRoles = append(missingInputRoles, r)
+			} else if policyExists {
+				cachedPolicyCount++
+			}
+		}
+
+		rlps, err := rt.getRolePolicySets(ctx, partialScope, missingInputRoles)
+		if err != nil {
+			return err
+		}
+
+		existingRolePolicies := make(map[string]struct{}, len(rlps))
+		for _, rlp := range rlps {
+			modID := namer.GenModuleIDFromFQN(rlp.GetFqn())
+			registryBuffer[modID] = true
+			existingRolePolicies[rlp.GetRolePolicy().GetRole()] = struct{}{}
+		}
+
+		for _, r := range missingInputRoles {
+			if _, exists := existingRolePolicies[r]; !exists {
+				registryBuffer[namer.RolePolicyModuleID(r, partialScope)] = false
+			}
+		}
+
+		if (rps == nil || len(rps.GetResourcePolicy().GetPolicies()) == 0) && len(rlps) == 0 && cachedPolicyCount == 0 {
+			return errNoPoliciesMatched
+		}
+
+		toLoad = append(toLoad, rlps...)
+
+		return nil
+	}
+
+	if err := addScopedPolicyRules(scope); err != nil {
+		if errors.Is(err, errNoPoliciesMatched) {
+			return nil
+		}
+		return err
+	}
+
+	for i := len(scope) - 1; i >= 0; i-- {
+		if scope[i] == '.' || i == 0 {
+			partialScope := scope[:i]
+			if err := addScopedPolicyRules(partialScope); err != nil {
+				if errors.Is(err, errNoPoliciesMatched) {
+					break
+				}
+				return err
+			}
+		}
+	}
+
+	if len(toLoad) == 0 {
+		return nil
+	}
+
+	if err := rt.loadPolicies(toLoad); err != nil {
+		return err
+	}
+
+	maps.Copy(rt.storeQueryRegister, registryBuffer)
+
+	return nil
 }
 
-func (rt *RuleTable) LoadPolicies(rps []*runtimev1.RunnablePolicySet) error {
+func (rt *RuleTable) getResourcePolicySet(ctx context.Context, resource, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.GetResourcePolicy")
+	defer span.End()
+	span.SetAttributes(tracing.PolicyName(resource), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
+
+	resourceModIDs := namer.ScopedResourcePolicyModuleIDs(resource, policyVer, scope, lenientScopeSearch)
+	rps, err := rt.policyLoader.GetFirstMatch(ctx, resourceModIDs)
+	if err != nil {
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+		return nil, err
+	}
+
+	return rps, nil
+}
+
+func (rt *RuleTable) getRolePolicySets(ctx context.Context, scope string, roles []string) ([]*runtimev1.RunnablePolicySet, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.GetRolePolicies")
+	defer span.End()
+	span.SetAttributes(tracing.PolicyScope(scope))
+
+	var requireParentalConsent, overrideParent int
+	processedRoles := make(map[string]struct{})
+	sets := []*runtimev1.RunnablePolicySet{}
+
+	// we recursively retrieve all role policies defined within parent roles
+	// (parent roles can be base level or role policy roles)
+	//
+	// TODO: to avoid repeat unconstrained (and potentially expensive) recursions,
+	// we could cache the result here and invalidate if the index changes. This might
+	// not be relevant if we rethink how the index is implemented down the line
+	var getPolicies func([]string, map[string]struct{}) error
+
+	getPolicies = func(roles []string, processedRoles map[string]struct{}) error {
+		roleModIDs := make([]namer.ModuleID, 0, len(roles))
+		for _, r := range roles {
+			if _, ok := processedRoles[r]; !ok {
+				roleModIDs = append(roleModIDs, namer.RolePolicyModuleID(r, scope))
+				processedRoles[r] = struct{}{}
+			}
+		}
+
+		currSets, err := rt.policyLoader.GetAllMatching(ctx, roleModIDs)
+		if err != nil {
+			tracing.MarkFailed(span, http.StatusInternalServerError, err)
+			return err
+		}
+
+		for _, r := range currSets {
+			rp := r.GetRolePolicy()
+
+			err := getPolicies(rp.GetParentRoles(), processedRoles)
+			if err != nil {
+				return err
+			}
+
+			switch rp.ScopePermissions { //nolint:exhaustive
+			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
+				requireParentalConsent++
+			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
+				overrideParent++
+			}
+
+			if requireParentalConsent > 0 && overrideParent > 0 {
+				return errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
+			}
+
+			sets = append(sets, r)
+		}
+		return nil
+	}
+
+	if err := getPolicies(roles, processedRoles); err != nil {
+		return nil, err
+	}
+
+	return sets, nil
+}
+
+func (rt *RuleTable) loadPolicies(rps []*runtimev1.RunnablePolicySet) error {
 	for _, rp := range rps {
 		if err := rt.addPolicy(rp); err != nil {
 			return err
@@ -316,7 +537,11 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 		}
 	}
 
-	rt.parentRoles[p.Role] = p.ParentRoles
+	if _, ok := rt.parentRoles[p.Scope]; !ok {
+		rt.parentRoles[p.Scope] = make(map[string][]string)
+	}
+
+	rt.parentRoles[p.Scope][p.Role] = p.ParentRoles
 }
 
 func (rt *RuleTable) insertRule(r *Row) {
@@ -363,56 +588,68 @@ func (rt *RuleTable) insertRule(r *Row) {
 
 		resourceMap.Set(r.Resource, struct{}{})
 	}
-
-	rt.rules = append(rt.rules, r)
 }
 
 func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
-	// TODO(saml) rebuilding/reassigning the whole row slice on each delete is hugely inefficient.
-	// Perhaps we could mark as `deleted` and periodically purge the deleted rows.
-	// However, it's unlikely this bespoke table implementation will be around long enough to worry about this.
-
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
 	meta := rt.meta[moduleID]
+	if meta == nil {
+		return
+	}
+
+	delete(rt.storeQueryRegister, moduleID)
+
 	rt.log.Debugf("Deleting policy %s", meta.GetFqn())
 
-	versionSet := make(map[string]struct{})
-	scopeSet := make(map[string]struct{})
+	for version, scopeMap := range rt.primaryIdx {
+		for scope, roleMap := range scopeMap {
+			scopedParentRoleAncestors := rt.parentRoleAncestorsCache[scope]
+			scopedParentRoles := rt.parentRoles[scope]
 
-	newRules := make([]*Row, 0, len(rt.rules))
-	for _, r := range rt.rules {
-		if r.OriginModuleID != moduleID {
-			newRules = append(newRules, r)
-			versionSet[r.Version] = struct{}{}
-			scopeSet[r.Scope] = struct{}{}
-		} else {
-			rt.log.Debugf("Dropping rule %s", r.GetOriginFqn())
+			for role, actionMap := range roleMap.GetAll() {
+				delete(scopedParentRoleAncestors, role)
+				delete(scopedParentRoles, role)
+
+				for action, rules := range actionMap.GetAll() {
+					newRules := make([]*Row, 0, len(rules))
+					for _, r := range rules {
+						if r.OriginModuleID != moduleID {
+							newRules = append(newRules, r)
+						} else {
+							rt.log.Debugf("Dropping rule %s", r.GetOriginFqn())
+						}
+					}
+
+					if len(newRules) > 0 {
+						actionMap.Set(action, newRules)
+					} else {
+						actionMap.DeleteLiteral(action)
+					}
+				}
+
+				if actionMap.Len() == 0 {
+					roleMap.DeleteLiteral(role)
+				}
+			}
+
+			if roleMap.Len() == 0 {
+				delete(scopeMap, scope)
+				delete(rt.scopeMap, scope)
+				delete(rt.scopeScopePermissions, scope)
+			}
+		}
+
+		if len(scopeMap) == 0 {
+			delete(rt.primaryIdx, version)
+			delete(rt.scopedResourceIdx, version)
 		}
 	}
-	rt.rules = newRules
 
 	delete(rt.schemas, moduleID)
 	delete(rt.meta, moduleID)
 	delete(rt.policyDerivedRoles, moduleID)
-
-	if role := meta.GetRole(); role != "" {
-		delete(rt.parentRoles, role)
-		delete(rt.parentRoleAncestorsCache, role)
-	}
-
-	version := meta.GetVersion()
-	if _, ok := versionSet[version]; !ok {
-		delete(rt.primaryIdx, version)
-		delete(rt.scopedResourceIdx, version)
-	}
-
-	scope := namer.ScopeFromFQN(meta.GetFqn())
-	if _, ok := scopeSet[scope]; !ok {
-		delete(rt.scopeMap, scope)
-		delete(rt.scopeScopePermissions, scope)
-	}
 }
 
 func (rt *RuleTable) purge() {
@@ -424,15 +661,11 @@ func (rt *RuleTable) purge() {
 	clear(rt.parentRoles)
 	clear(rt.policyDerivedRoles)
 	clear(rt.primaryIdx)
-	clear(rt.rules)
 	clear(rt.schemas)
 	clear(rt.scopeMap)
 	clear(rt.scopeScopePermissions)
 	clear(rt.scopedResourceIdx)
-}
-
-func (rt *RuleTable) Len() int {
-	return len(rt.rules)
+	clear(rt.storeQueryRegister)
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
@@ -519,7 +752,7 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []
 	return res
 }
 
-func (rt *RuleTable) GetParentRoles(roles []string) []string {
+func (rt *RuleTable) GetParentRoles(scope string, roles []string) []string {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
@@ -527,35 +760,45 @@ func (rt *RuleTable) GetParentRoles(roles []string) []string {
 	// each role within the ruletable
 	parentRoles := make([]string, len(roles))
 	copy(parentRoles, roles)
+
+	parentRoleAncestorsCache, ok := rt.parentRoleAncestorsCache[scope]
+	if !ok {
+		parentRoleAncestorsCache = make(map[string][]string)
+		rt.parentRoleAncestorsCache[scope] = parentRoleAncestorsCache
+	}
+
 	for _, role := range roles {
 		var roleParents []string
-		if c, ok := rt.parentRoleAncestorsCache[role]; ok {
+		if c, ok := parentRoleAncestorsCache[role]; ok {
 			roleParents = c
 		} else {
 			visited := make(map[string]struct{})
 			roleParentsSet := make(map[string]struct{})
-			rt.collectParentRoles(role, roleParentsSet, visited)
+			rt.collectParentRoles(scope, role, roleParentsSet, visited)
 			roleParents = make([]string, 0, len(roleParentsSet))
 			for r := range roleParentsSet {
 				roleParents = append(roleParents, r)
 			}
-			rt.parentRoleAncestorsCache[role] = roleParents
+			parentRoleAncestorsCache[role] = roleParents
 		}
 		parentRoles = append(parentRoles, roleParents...) //nolint:makezero
 	}
+
 	return parentRoles
 }
 
-func (rt *RuleTable) collectParentRoles(role string, parentRoleSet, visited map[string]struct{}) {
+func (rt *RuleTable) collectParentRoles(scope, role string, parentRoleSet, visited map[string]struct{}) {
 	if _, seen := visited[role]; seen {
 		return
 	}
 	visited[role] = struct{}{}
 
-	if prs, ok := rt.parentRoles[role]; ok {
-		for _, pr := range prs {
-			parentRoleSet[pr] = struct{}{}
-			rt.collectParentRoles(pr, parentRoleSet, visited)
+	if parentRoles, ok := rt.parentRoles[scope]; ok {
+		if prs, ok := parentRoles[role]; ok {
+			for _, pr := range prs {
+				parentRoleSet[pr] = struct{}{}
+				rt.collectParentRoles(scope, pr, parentRoleSet, visited)
+			}
 		}
 	}
 }
@@ -628,27 +871,13 @@ func (rt *RuleTable) triggerReload() error {
 
 	rt.purge()
 
-	return rt.LoadPolicies(rpss)
+	return rt.loadPolicies(rpss)
 }
 
 func (rt *RuleTable) processPolicyEvent(ev storage.Event) error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), storeFetchTimeout)
-	defer cancelFunc()
-
 	rt.deletePolicy(ev.PolicyID)
 	if ev.OldPolicyID != nil {
 		rt.deletePolicy(*ev.OldPolicyID)
-	}
-
-	if ev.Kind == storage.EventAddOrUpdatePolicy {
-		rps, err := rt.policyLoader.GetFirstMatch(ctx, []namer.ModuleID{ev.PolicyID})
-		if err != nil {
-			return err
-		}
-
-		if err := rt.addPolicy(rps); err != nil {
-			return err
-		}
 	}
 
 	return nil

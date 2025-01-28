@@ -139,6 +139,30 @@ func (gm *GlobMap[T]) GetWithLiteral(k string) (T, bool) {
 	return zero, false
 }
 
+func (gm *GlobMap[T]) DeleteLiteral(k string) {
+	if _, ok := gm.literals[k]; ok {
+		delete(gm.literals, k)
+	}
+
+	if _, ok := gm.globs[k]; ok {
+		delete(gm.globs, k)
+	}
+}
+
+func (gm *GlobMap[T]) GetAll() map[string]T {
+	res := make(map[string]T, gm.Len())
+
+	for k, v := range gm.literals {
+		res[k] = v
+	}
+
+	for k, v := range gm.globs {
+		res[k] = v
+	}
+
+	return res
+}
+
 func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
 	merged := make(map[string]any)
 
