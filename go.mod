@@ -64,6 +64,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/pterm/pterm v0.12.80
+	github.com/rdforte/gomaxecs v1.1.1
 	github.com/rivo/tview v0.0.0-20241227133733-17b7edb88c57
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.13.1
