@@ -302,7 +302,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		result = planner.CombinePlans(result, ruleTableResult)
 	}
 
-	if result.AllowIsEmpty() && !result.DenyIsEmpty() { // reset an conditional DENY to an unconditional one
+	if result.AllowIsEmpty() && !result.DenyIsEmpty() { // reset a conditional DENY to an unconditional one
 		result.ResetToUnconditionalDeny()
 	}
 
