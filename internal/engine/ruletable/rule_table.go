@@ -157,10 +157,8 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 				registryBuffer[resourceModID] = false
 				// we used lenientScopeSearch, so we can assert that no policies exist for all child scopes
 				// TODO(saml) refactor
-				for i := len(scope) - 1; i >= 0; i-- {
-					if scope[i] == '.' || i == 0 {
-						registryBuffer[namer.ResourcePolicyModuleID(resource, policyVer, scope[:i])] = false
-					}
+				for s := range namer.ScopeParents(scope) {
+					registryBuffer[namer.ResourcePolicyModuleID(resource, policyVer, s)] = false
 				}
 			} else {
 				// check the first policy scope
@@ -232,15 +230,12 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 		return err
 	}
 
-	for i := len(scope) - 1; i >= 0; i-- {
-		if scope[i] == '.' || i == 0 {
-			partialScope := scope[:i]
-			if err := addScopedPolicyRules(partialScope); err != nil {
-				if errors.Is(err, errNoPoliciesMatched) {
-					break
-				}
-				return err
+	for s := range namer.ScopeParents(scope) {
+		if err := addScopedPolicyRules(s); err != nil {
+			if errors.Is(err, errNoPoliciesMatched) {
+				break
 			}
+			return err
 		}
 	}
 
@@ -680,15 +675,12 @@ func (rt *RuleTable) GetAllScopes(scope, resource, version string) ([]string, st
 		scopes = append(scopes, scope)
 	}
 
-	for i := len(scope) - 1; i >= 0; i-- {
-		if scope[i] == '.' || i == 0 {
-			partialScope := scope[:i]
-			if rt.ScopeExists(partialScope) {
-				scopes = append(scopes, partialScope)
-				if firstPolicyKey == "" {
-					firstFqn = namer.ResourcePolicyFQN(resource, version, partialScope)
-					firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
-				}
+	for s := range namer.ScopeParents(scope) {
+		if rt.ScopeExists(s) {
+			scopes = append(scopes, s)
+			if firstPolicyKey == "" {
+				firstFqn = namer.ResourcePolicyFQN(resource, version, s)
+				firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
 			}
 		}
 	}
