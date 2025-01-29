@@ -152,7 +152,7 @@ func ContextEval(ctx context.Context, env *cel.Env, ast *cel.Ast, vars any, nowF
 	if err != nil {
 		return nil, nil, err
 	}
-	return prg.Eval(vars)
+	return prg.ContextEval(ctx, vars)
 }
 
 func newTimeDecorator(nowFunc NowFunc) interpreter.InterpretableDecorator {
