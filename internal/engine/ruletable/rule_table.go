@@ -506,7 +506,7 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	rt.scopeScopePermissions[p.Scope] = p.ScopePermissions
 
-	version := "default"
+	version := "default" //nolint:goconst
 	moduleID := namer.GenModuleIDFromFQN(p.Meta.Fqn)
 	rt.meta[moduleID] = &runtimev1.RuleTableMetadata{
 		Fqn:              p.Meta.Fqn,
