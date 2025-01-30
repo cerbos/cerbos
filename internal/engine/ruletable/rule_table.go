@@ -135,6 +135,15 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 	// we don't want to add retrieved mod IDs to the cache until the rule table has been successfully updated
 	registryBuffer := make(map[namer.ModuleID]bool)
 
+	checkRegisters := func(modID namer.ModuleID) (bool, bool) {
+		if policyExists, isQueried := registryBuffer[modID]; isQueried {
+			return policyExists, isQueried
+		}
+
+		policyExists, isQueried := rt.storeQueryRegister[modID]
+		return policyExists, isQueried
+	}
+
 	// we force lenientScopeSearch when retrieving resource policy sets as lenient scope search is enforced
 	// in the evaluator function. Therefore, to prevent duplicate rows in the rule table, we check the returned
 	// policy scope before adding to `toLoad`
@@ -146,7 +155,7 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 		resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, partialScope)
 
 		// Check to see if the store has already been queried for the given parameters.
-		if policyExists, isQueried := rt.storeQueryRegister[resourceModID]; !isQueried { //nolint:nestif
+		if policyExists, isQueried := checkRegisters(resourceModID); !isQueried { //nolint:nestif
 			var err error
 			rps, err = rt.getResourcePolicySet(ctx, resource, policyVer, partialScope, true)
 			if err != nil {
@@ -156,7 +165,6 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 			if rps == nil {
 				registryBuffer[resourceModID] = false
 				// we used lenientScopeSearch, so we can assert that no policies exist for all child scopes
-				// TODO(saml) refactor
 				for s := range namer.ScopeParents(scope) {
 					registryBuffer[namer.ResourcePolicyModuleID(resource, policyVer, s)] = false
 				}
@@ -173,9 +181,7 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 					resourceModID = namer.ResourcePolicyModuleID(resource, policyVer, p.Scope)
 				}
 
-				_, mainExists := rt.storeQueryRegister[resourceModID]
-				_, bufferExists := registryBuffer[resourceModID]
-				if !mainExists && !bufferExists {
+				if _, exists := checkRegisters(resourceModID); !exists {
 					toLoad = append(toLoad, rps)
 					registryBuffer[resourceModID] = true
 				} else {
@@ -189,7 +195,7 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 		missingInputRoles := make([]string, 0, len(inputRoles))
 		for _, r := range inputRoles {
 			roleModID := namer.RolePolicyModuleID(r, partialScope)
-			if policyExists, isQueried := rt.storeQueryRegister[roleModID]; !isQueried {
+			if policyExists, isQueried := checkRegisters(roleModID); !isQueried {
 				missingInputRoles = append(missingInputRoles, r)
 			} else if policyExists {
 				cachedPolicyCount++
@@ -596,7 +602,7 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 
 	rt.log.Debugf("Deleting policy %s", meta.GetFqn())
 
-	delete(rt.storeQueryRegister, moduleID)
+	rt.storeQueryRegister[moduleID] = false
 
 	for version, scopeMap := range rt.primaryIdx {
 		for scope, roleMap := range scopeMap {
@@ -632,6 +638,8 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 				delete(scopeMap, scope)
 				delete(rt.scopeMap, scope)
 				delete(rt.scopeScopePermissions, scope)
+				delete(rt.parentRoleAncestorsCache, scope)
+				delete(rt.parentRoles, scope)
 			}
 		}
 
@@ -867,5 +875,11 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 	rt.deletePolicy(ev.PolicyID)
 	if ev.OldPolicyID != nil {
 		rt.deletePolicy(*ev.OldPolicyID)
+	}
+
+	if ev.Kind == storage.EventAddOrUpdatePolicy {
+		// we load lazily--invalidating the query register ensures the store gets
+		// queried again the next time.
+		delete(rt.storeQueryRegister, ev.PolicyID)
 	}
 }
