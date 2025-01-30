@@ -101,10 +101,6 @@ func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, epar
 }
 
 func NewRuleTableEvaluator(rt *ruletable.RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	if rt.Len() == 0 {
-		return noopEvaluator{}
-	}
-
 	return &ruleTableEvaluator{
 		RuleTable:  rt,
 		schemaMgr:  schemaMgr,
@@ -180,7 +176,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		return result, nil
 	}
 
-	allRoles := rte.GetParentRoles(input.Principal.Roles)
+	allRoles := rte.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
@@ -208,7 +204,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				Policy: policyKey,
 			}
 
-			parentRoles := rte.GetParentRoles([]string{role})
+			parentRoles := rte.GetParentRoles(input.Resource.Scope, []string{role})
 
 		scopesLoop:
 			for _, scope := range scopes {
@@ -438,6 +434,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 		trail := newAuditTrail(ppe.policy.GetMeta().GetSourceAttributes())
 		result := newEvalResult(input.Actions, trail)
 
+		implicitlyAllowedActions := make(map[string]struct{})
+
 		pctx := tctx.StartPolicy(ppe.policy.Meta.Fqn)
 		for _, p := range ppe.policy.Policies {
 			actionsToResolve := result.unresolvedActions()
@@ -468,7 +466,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 							continue
 						}
 
-					outer:
 						for _, rule := range resourceRules.ActionRules {
 							matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 							ruleActivated := false
@@ -496,8 +493,11 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 								}
 
 								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									continue outer
+									implicitlyAllowedActions[action] = struct{}{}
+									continue
 								}
+
+								delete(implicitlyAllowedActions, action)
 
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 								actx.AppliedEffect(rule.Effect, "")
@@ -526,11 +526,34 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						}
 					}
 				})
+
+				if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+					for _, a := range result.unresolvedActions() {
+						if _, ok := implicitlyAllowedActions[a]; !ok {
+							result.setEffect(a, EffectInfo{
+								Effect: effectv1.Effect_EFFECT_DENY,
+								Policy: noMatchScopePermissions,
+								Scope:  p.Scope,
+							})
+							delete(implicitlyAllowedActions, a)
+						}
+					}
+				}
+
 				return nil
 			})
 			if err != nil {
 				return nil, err
 			}
+		}
+
+		// Any remaining `implicitlyAllowedActions` had a matching `ALLOW` in the `REQUIRES_PARENTAL_CONSENT` scope but
+		// no matching rule in the parent scopes, therefore we issue a `DENY`.
+		for action := range implicitlyAllowedActions {
+			result.setEffect(action, EffectInfo{
+				Effect: effectv1.Effect_EFFECT_DENY,
+				Policy: noPolicyMatch,
+			})
 		}
 
 		return result, nil

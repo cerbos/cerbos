@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"iter"
 	"regexp"
 	"strconv"
 	"strings"
@@ -157,6 +158,18 @@ func buildFQNTree[T any](fqn, scope string, elementFn func(string) T) []T {
 	fqnTree = append(fqnTree, elementFn(fqn))
 
 	return fqnTree
+}
+
+func ScopeParents(scope string) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for i := len(scope) - 1; i >= 0; i-- {
+			if scope[i] == '.' || i == 0 {
+				if !yield(scope[:i]) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func ScopeFromFQN(fqn string) string {

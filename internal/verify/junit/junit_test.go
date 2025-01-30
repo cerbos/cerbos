@@ -22,6 +22,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -139,8 +140,11 @@ func mkEngine(t *testing.T) *engine.Engine {
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
+	mgr := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+
 	eng, err := engine.New(ctx, engine.Components{
-		PolicyLoader:      compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
+		PolicyLoader:      mgr,
+		RuleTable:         ruletable.NewRuleTable(mgr),
 		SchemaMgr:         schemaMgr,
 		AuditLog:          audit.NewNopLog(),
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),

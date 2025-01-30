@@ -158,24 +158,10 @@ func Start(ctx context.Context) error {
 		return ErrInvalidStore
 	}
 
-	var rt *ruletable.RuleTable
+	rt := ruletable.NewRuleTable(policyLoader)
 
-	// Populate rule table for non-mutable stores.
-	if _, ok := store.(storage.MutableStore); !ok {
-		rps, err := policyLoader.GetAll(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to retrieve runnable policy sets: %w", err)
-		}
-
-		rt = ruletable.NewRuleTable().WithPolicyLoader(policyLoader)
-
-		if err := rt.LoadPolicies(rps); err != nil {
-			return fmt.Errorf("failed to load policies into rule table: %w", err)
-		}
-
-		if ss, ok := policyLoader.(storage.Subscribable); ok {
-			ss.Subscribe(rt)
-		}
+	if ss, ok := policyLoader.(storage.Subscribable); ok {
+		ss.Subscribe(rt)
 	}
 
 	// create engine

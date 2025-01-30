@@ -256,6 +256,11 @@ func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, e
 
 func (c *Manager) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	res := []*runtimev1.RunnablePolicySet{}
+
+	if len(modIDs) == 0 {
+		return res, nil
+	}
+
 	missed := make(map[namer.ModuleID]struct{})
 	for _, id := range modIDs {
 		if rps, ok := c.cache.Get(id); ok && rps != nil {
