@@ -175,8 +175,14 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 				// lenientScopeSearch might return a parent policy which we've already added--don't load if this is the case
 				if p.Scope != partialScope {
 					// the target scoped resource policy didn't exist, so register the query with a false hit
-					// TODO(saml) this can be done for every intermediate scope also
 					registryBuffer[resourceModID] = false
+					// also for those scopes between
+					for s := range namer.ScopeParents(partialScope) {
+						if s == p.Scope {
+							break
+						}
+						registryBuffer[namer.ResourcePolicyModuleID(resource, policyVer, partialScope)] = false
+					}
 
 					resourceModID = namer.ResourcePolicyModuleID(resource, policyVer, p.Scope)
 				}
