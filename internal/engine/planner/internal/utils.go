@@ -5,6 +5,24 @@ package internal
 
 import exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
+type IDGen struct {
+	ids map[int64]int64
+	c   int64
+}
+
+func NewIDGen() *IDGen {
+	return &IDGen{
+		ids: make(map[int64]int64),
+	}
+}
+func (g *IDGen) Remap(id int64) int64 {
+	if n, ok := g.ids[id]; ok {
+		return n
+	}
+	g.c++
+	g.ids[id] = g.c
+	return g.c
+}
 func UpdateIDs(e *exprpb.Expr) {
 	var n int64
 	ids := make(map[*exprpb.Expr]int64)

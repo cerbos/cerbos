@@ -103,29 +103,11 @@ func (e *callExpr) Args() []ast.Expr {
 // List expression implementation
 type listExpr struct {
 	ast.ListExpr
-	elements        []ast.Expr
-	optionalIndices []int32
+	elements []ast.Expr
 }
 
 func (e *listExpr) Elements() []ast.Expr {
 	return e.elements
-}
-
-func (e *listExpr) OptionalIndices() []int32 {
-	return e.optionalIndices
-}
-
-func (e *listExpr) IsOptional(idx int32) bool {
-	for _, i := range e.optionalIndices {
-		if i == idx {
-			return true
-		}
-	}
-	return false
-}
-
-func (e *listExpr) Size() int {
-	return len(e.elements)
 }
 
 // Select expression implementation
@@ -210,9 +192,6 @@ func (f *structField) Value() ast.Expr {
 type comprehensionExpr struct {
 	ast.ComprehensionExpr
 	iterRange     ast.Expr
-	iterVar       string
-	iterVar2      string
-	accuVar       string
 	accuInit      ast.Expr
 	loopCondition ast.Expr
 	loopStep      ast.Expr
@@ -221,22 +200,6 @@ type comprehensionExpr struct {
 
 func (e *comprehensionExpr) IterRange() ast.Expr {
 	return e.iterRange
-}
-
-func (e *comprehensionExpr) IterVar() string {
-	return e.iterVar
-}
-
-func (e *comprehensionExpr) IterVar2() string {
-	return e.iterVar2
-}
-
-func (e *comprehensionExpr) HasIterVar2() bool {
-	return e.iterVar2 != ""
-}
-
-func (e *comprehensionExpr) AccuVar() string {
-	return e.accuVar
 }
 
 func (e *comprehensionExpr) AccuInit() ast.Expr {

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/cel-go/common/ast"
-	"google.golang.org/api/displayvideo/v1"
 	"sort"
 	"strings"
 
@@ -226,27 +225,31 @@ func replaceVarsGen2(e ast.Expr, f replaceVarsFunc2) (output ast.Expr, err error
 				entries[i] = &entryExpr{entry, nil, structField}
 			}
 			return &structExprOverride{e, &structExpr{ex, entries}}
-		case *exprpb.Expr_ComprehensionExpr:
-			ce := ex.ComprehensionExpr
-			ce.IterRange = r(ce.IterRange)
-			ce.AccuInit = r(ce.AccuInit)
-			ce.LoopStep = r(ce.LoopStep)
-			ce.LoopCondition = r(ce.LoopCondition)
-			// ce.Result seems to be always an identifier, so isn't necessary to process
-		case *exprpb.Expr_ListExpr:
-			for i, element := range ex.ListExpr.Elements {
-				ex.ListExpr.Elements[i] = r(element)
+		case ast.ComprehensionKind:
+			ex := e.AsComprehension()
+			ce := &comprehensionExpr{
+				ComprehensionExpr: ex,
+				iterRange:         r(ex.IterRange()),
+				accuInit:          r(ex.AccuInit()),
+				loopCondition:     r(ex.LoopCondition()),
+				loopStep:          r(ex.LoopStep()),
+				// ce.Result seems to be always an identifier, so isn't necessary to process
+				//result:            r(ex.Result()),
 			}
+			return &comprehensionExprOverride{e, ce}
+		case ast.ListKind:
+			ex := e.AsList()
+			elements := make([]ast.Expr, len(ex.Elements()))
+			for i, element := range ex.Elements() {
+				elements[i] = r(element)
+			}
+			return &listExprOverride{e, &listExpr{ex, elements}}
 		}
 		return e
 	}
 
-	output, ok := proto.Clone(e).(*exprpb.Expr)
-	if !ok {
-		return nil, fmt.Errorf("failed to clone an expression: %v", e)
-	}
-	output = r(output)
-	internal.UpdateIDs(output)
+	output = r(e)
+	output.RenumberIDs(internal.NewIDGen().Remap)
 
 	return output, err
 }
