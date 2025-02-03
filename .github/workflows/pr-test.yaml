@@ -374,7 +374,9 @@ jobs:
       - name: Check out .node-version file
         uses: actions/checkout@v4
         with:
-          sparse-checkout: .node-version
+          sparse-checkout: |
+            .node-version
+            hack/scripts/install-corepack.sh
           sparse-checkout-cone-mode: false
 
       - name: Download npm packages
@@ -395,6 +397,9 @@ jobs:
       # https://github.com/actions/runner-images/issues/9626
       - name: Don't force curl to use IPv4
         run: rm -f ~/.curlrc
+
+      - name: Install corepack
+        run: hack/scripts/install-corepack.sh
 
       - name: Test npm packages
         working-directory: npm

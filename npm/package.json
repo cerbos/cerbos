@@ -6,5 +6,8 @@
   "packageManager": "npm@10.9.2",
   "scripts": {
     "test": "test/run.sh"
+  },
+  "devDependencies": {
+    "corepack": "0.31.0"
   }
 }
