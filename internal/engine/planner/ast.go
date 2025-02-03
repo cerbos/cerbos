@@ -200,14 +200,32 @@ func replaceVarsGen2(e ast.Expr, f replaceVarsFunc2) (output ast.Expr, err error
 			}}
 		case ast.MapKind:
 			ex := e.AsMap()
-			entries := make([]ast.MapEntry, len(ex.Entries()))
+			entries := make([]ast.EntryExpr, len(ex.Entries()))
 			for i, entry := range ex.Entries() {
-				entries[i] = mapEntry{
-					key:      r(entry.AsMapEntry().Key()),
-					value:    r(entry.AsMapEntry().Value()),
-					optional: entry.AsMapEntry().IsOptional(),
+				me := entry.AsMapEntry()
+
+				mapEntry := &mapEntry{
+					MapEntry: me,
+					key:      r(me.Key()),
+					value:    r(me.Value()),
 				}
+				entries[i] = &entryExpr{entry, mapEntry, nil}
 			}
+			return &mapExprOverride{e, &mapExpr{ex, entries}}
+		case ast.StructKind:
+			ex := e.AsStruct()
+			entries := make([]ast.EntryExpr, len(ex.Fields()))
+			for i, entry := range ex.Fields() {
+				sf := entry.AsStructField()
+
+				structField := &structField{
+					StructField: sf,
+					name:        sf.Name(),
+					value:       r(sf.Value()),
+				}
+				entries[i] = &entryExpr{entry, nil, structField}
+			}
+			return &structExprOverride{e, &structExpr{ex, entries}}
 		case *exprpb.Expr_ComprehensionExpr:
 			ce := ex.ComprehensionExpr
 			ce.IterRange = r(ce.IterRange)

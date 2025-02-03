@@ -138,6 +138,20 @@ func (e *selectExpr) Operand() ast.Expr {
 	return e.operand
 }
 
+type entryExpr struct {
+	ast.EntryExpr
+	mapEntry    *mapEntry
+	structField *structField
+}
+
+func (e *entryExpr) MapEntry() ast.MapEntry {
+	return e.mapEntry
+}
+
+func (e *entryExpr) StructField() *structField {
+	return e.structField
+}
+
 // Map expression implementation
 type mapExpr struct {
 	ast.MapExpr
@@ -154,9 +168,9 @@ func (e *mapExpr) Size() int {
 
 // Map entry implementation
 type mapEntry struct {
-	key      ast.Expr
-	value    ast.Expr
-	optional bool
+	ast.MapEntry
+	key   ast.Expr
+	value ast.Expr
 }
 
 func (e *mapEntry) Key() ast.Expr {
@@ -167,21 +181,10 @@ func (e *mapEntry) Value() ast.Expr {
 	return e.value
 }
 
-func (e *mapEntry) IsOptional() bool {
-	return e.optional
-}
-
-func (e *mapEntry) isEntryExpr() {}
-
 // Struct expression implementation
 type structExpr struct {
 	ast.StructExpr
-	typeName string
-	fields   []ast.EntryExpr
-}
-
-func (e *structExpr) TypeName() string {
-	return e.typeName
+	fields []ast.EntryExpr
 }
 
 func (e *structExpr) Fields() []ast.EntryExpr {
@@ -190,9 +193,9 @@ func (e *structExpr) Fields() []ast.EntryExpr {
 
 // Struct field implementation
 type structField struct {
-	name     string
-	value    ast.Expr
-	optional bool
+	ast.StructField
+	name  string
+	value ast.Expr
 }
 
 func (f *structField) Name() string {
@@ -202,12 +205,6 @@ func (f *structField) Name() string {
 func (f *structField) Value() ast.Expr {
 	return f.value
 }
-
-func (f *structField) IsOptional() bool {
-	return f.optional
-}
-
-func (f *structField) isEntryExpr() {}
 
 // Comprehension expression implementation
 type comprehensionExpr struct {
