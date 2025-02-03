@@ -6,6 +6,8 @@ package planner
 import (
 	"errors"
 	"fmt"
+	"github.com/google/cel-go/common/ast"
+	"google.golang.org/api/displayvideo/v1"
 	"sort"
 	"strings"
 
@@ -133,6 +135,78 @@ func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err
 					k.MapKey = r(k.MapKey)
 				}
 				entry.Value = r(entry.Value)
+			}
+		case *exprpb.Expr_ComprehensionExpr:
+			ce := ex.ComprehensionExpr
+			ce.IterRange = r(ce.IterRange)
+			ce.AccuInit = r(ce.AccuInit)
+			ce.LoopStep = r(ce.LoopStep)
+			ce.LoopCondition = r(ce.LoopCondition)
+			// ce.Result seems to be always an identifier, so isn't necessary to process
+		case *exprpb.Expr_ListExpr:
+			for i, element := range ex.ListExpr.Elements {
+				ex.ListExpr.Elements[i] = r(element)
+			}
+		}
+		return e
+	}
+
+	output, ok := proto.Clone(e).(*exprpb.Expr)
+	if !ok {
+		return nil, fmt.Errorf("failed to clone an expression: %v", e)
+	}
+	output = r(output)
+	internal.UpdateIDs(output)
+
+	return output, err
+}
+
+type replaceVarsFunc2 func(e ast.Expr) (output ast.Expr, matched bool, err error)
+
+func replaceVarsGen2(e ast.Expr, f replaceVarsFunc2) (output ast.Expr, err error) {
+	var r func(e ast.Expr) ast.Expr
+
+	r = func(e ast.Expr) ast.Expr {
+		if e == nil {
+			return nil
+		}
+
+		switch e.Kind() {
+		case ast.SelectKind:
+			ex := e.AsSelect()
+			var e1 ast.Expr
+			var matched bool
+
+			e1, matched, err = f(e)
+			if err != nil {
+				break
+			}
+			if matched {
+				return e1
+			}
+			return &selectExprOverride{
+				e,
+				&selectExpr{ex, r(ex.Operand())},
+			}
+		case ast.CallKind:
+			ex := e.AsCall()
+			args := make([]ast.Expr, len(ex.Args()))
+			for i, arg := range ex.Args() {
+				args[i] = r(arg)
+			}
+			return &callExprOverride{e, &callExpr{
+				target: ex.Target(),
+				args:   args,
+			}}
+		case ast.MapKind:
+			ex := e.AsMap()
+			entries := make([]ast.MapEntry, len(ex.Entries()))
+			for i, entry := range ex.Entries() {
+				entries[i] = mapEntry{
+					key:      r(entry.AsMapEntry().Key()),
+					value:    r(entry.AsMapEntry().Value()),
+					optional: entry.AsMapEntry().IsOptional(),
+				}
 			}
 		case *exprpb.Expr_ComprehensionExpr:
 			ce := ex.ComprehensionExpr
