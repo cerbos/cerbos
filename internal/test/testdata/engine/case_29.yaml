@@ -1,0 +1,123 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Resource policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": [
+        "create" # exists, falls through, allow
+#        "delete", # exists, falls through, no match
+#        "nonaction", # doesn't exist, falls through, no match (even with matching rule in rule table)
+#        "acme_action" # doesn't exist, falls through, match (implicit DENY)
+      ],
+      "principal":
+        {
+          "id": "x001",
+          "roles": ["employee"],
+        },
+      "resource":
+        {
+          "kind": "calendar_entry",
+          "id": "XX125",
+          "scope": "acme.sales",
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "create":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.calendar_entry.vdefault/acme.sales",
+              "scope": "acme"
+            },
+#          "delete":
+#            {
+#              "effect": "EFFECT_DENY",
+#              "policy": "NO_MATCH"
+#            },
+#          "nonaction":
+#            {
+#              "effect": "EFFECT_DENY",
+#              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+#              "scope": "acme.sales"
+#            },
+#          "acme_action":
+#            {
+#              "effect": "EFFECT_DENY",
+#              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+#              "scope": "acme.sales"
+#            },
+        }
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01JK9QZVV2RQNBKQ36PV8TSGMZ",
+      "timestamp": "2025-02-05T00:26:04.514071Z",
+      "peer": { },
+      "checkResources": {
+        "inputs": [
+          {
+            "requestId": "test",
+            "resource": {
+              "kind": "calendar_entry",
+              "id": "XX125",
+              "scope": "acme.sales"
+            },
+            "principal": {
+              "id": "x001",
+              "roles": [
+                "employee"
+              ]
+            },
+            "actions": [
+              "create"
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "requestId": "test",
+            "resourceId": "XX125",
+            "actions": {
+              "create": {
+                "effect": "EFFECT_ALLOW",
+                "policy": "resource.calendar_entry.vdefault/acme.sales",
+                "scope": "acme"
+              }
+            }
+          }
+        ]
+      },
+      "auditTrail": {
+        "effectivePolicies": {
+          "resource.calendar_entry.vdefault": {
+            "attributes": {
+              "driver": "disk",
+              "source": "resource_policies/policy_17.yaml"
+            }
+          },
+          "resource.calendar_entry.vdefault/acme": {
+            "attributes": {
+              "driver": "disk",
+              "source": "resource_policies/policy_17.acme.yaml"
+            }
+          },
+          "resource.calendar_entry.vdefault/acme.sales": {
+            "attributes": {
+              "driver": "disk",
+              "source": "resource_policies/policy_17.acme.sales.yaml"
+            }
+          }
+        }
+      }
+    }
+  ]

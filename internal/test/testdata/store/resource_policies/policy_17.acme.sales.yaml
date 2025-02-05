@@ -1,0 +1,13 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: calendar_entry
+  version: default
+  scope: "acme.sales"
+  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+  rules:
+    - actions:
+        - create
+      effect: EFFECT_ALLOW
+      roles:
+        - employee
