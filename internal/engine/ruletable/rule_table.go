@@ -10,7 +10,6 @@ import (
 	"maps"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
@@ -25,11 +24,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
-)
-
-const (
-	storeReloadTimeout = 5 * time.Second
-	storeFetchTimeout  = 2 * time.Second
 )
 
 var errNoPoliciesMatched = errors.New("no matching policies")
