@@ -81,7 +81,7 @@ func TestCheck(t *testing.T) {
 			}
 
 			haveDecisionLogs := mockAuditLog.getDecisionLogs()
-			fmt.Println(protojson.Format(haveDecisionLogs[0]))
+
 			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
 				haveDecisionLogs,
 				protocmp.Transform(),
