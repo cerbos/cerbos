@@ -6,7 +6,7 @@ inputs:
     {
       "requestId": "test",
       "actions": [
-        "move", # exists, falls through, allow
+        "move", # don't exist, falls through, allow
       ],
       "principal":
         {
@@ -28,28 +28,11 @@ wantOutputs:
       "resourceId": "XX125",
       "actions":
         {
-          "create":
+          "move":
             {
               "effect": "EFFECT_ALLOW",
               "policy": "resource.calendar_entry.vdefault/acme.sales",
               "scope": "acme"
-            },
-          "delete":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "resource.calendar_entry.vdefault/acme.sales"
-            },
-          "nonaction":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.sales"
-            },
-          "acme_action":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.sales"
             },
         }
     },
@@ -57,8 +40,8 @@ wantOutputs:
 wantDecisionLogs:
   [
     {
-      "callId": "01JK9T5YFVEHNY3M0M8R1W0YVX",
-      "timestamp": "2025-02-05T01:04:20.987069Z",
+      "callId": "01JK9VA8K2JWTC43XJA1G4TY72",
+      "timestamp": "2025-02-05T01:24:10.978848Z",
       "peer": {},
       "checkResources": {
         "inputs": [
@@ -72,14 +55,11 @@ wantDecisionLogs:
             "principal": {
               "id": "x001",
               "roles": [
-                "employee"
+                "admin"
               ]
             },
             "actions": [
-              "create",
-              "delete",
-              "nonaction",
-              "acme_action"
+              "move"
             ]
           }
         ],
@@ -88,24 +68,10 @@ wantDecisionLogs:
             "requestId": "test",
             "resourceId": "XX125",
             "actions": {
-              "acme_action": {
-                "effect": "EFFECT_DENY",
-                "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                "scope": "acme.sales"
-              },
-              "create": {
+              "move": {
                 "effect": "EFFECT_ALLOW",
                 "policy": "resource.calendar_entry.vdefault/acme.sales",
                 "scope": "acme"
-              },
-              "delete": {
-                "effect": "EFFECT_DENY",
-                "policy": "resource.calendar_entry.vdefault/acme.sales"
-              },
-              "nonaction": {
-                "effect": "EFFECT_DENY",
-                "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                "scope": "acme.sales"
               }
             }
           }
@@ -123,12 +89,6 @@ wantDecisionLogs:
             "attributes": {
               "driver": "disk",
               "source": "resource_policies/policy_17.acme.yaml"
-            }
-          },
-          "resource.calendar_entry.vdefault/acme.sales": {
-            "attributes": {
-              "driver": "disk",
-              "source": "resource_policies/policy_17.acme.sales.yaml"
             }
           }
         }

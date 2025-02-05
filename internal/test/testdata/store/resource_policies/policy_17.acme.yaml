@@ -11,3 +11,8 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       roles:
         - employee
+    - actions:
+        - move
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
