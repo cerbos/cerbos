@@ -6,7 +6,8 @@ inputs:
     {
       "requestId": "test",
       "actions": [
-        "move", # don't exist, falls through, allow
+        "move", # allowed for admin in the parent scope, allow
+        "acme_action", # allowed for employee in the parent scope, deny
       ],
       "principal":
         {
@@ -34,15 +35,20 @@ wantOutputs:
               "policy": "resource.calendar_entry.vdefault/acme.sales",
               "scope": "acme"
             },
+          "acme_action":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.calendar_entry.vdefault/acme.sales",
+            },
         }
     },
   ]
 wantDecisionLogs:
   [
     {
-      "callId": "01JK9VA8K2JWTC43XJA1G4TY72",
-      "timestamp": "2025-02-05T01:24:10.978848Z",
-      "peer": {},
+      "callId": "01JK9Y8KVCW2RYCZWKEVXJC4RN",
+      "timestamp": "2025-02-05T02:15:42.700511Z",
+      "peer": { },
       "checkResources": {
         "inputs": [
           {
@@ -60,7 +66,8 @@ wantDecisionLogs:
               ]
             },
             "actions": [
-              "move"
+              "move",
+              "acme_action"
             ]
           }
         ],
@@ -69,6 +76,10 @@ wantDecisionLogs:
             "requestId": "test",
             "resourceId": "XX125",
             "actions": {
+              "acme_action": {
+                "effect": "EFFECT_DENY",
+                "policy": "resource.calendar_entry.vdefault/acme.sales"
+              },
               "move": {
                 "effect": "EFFECT_ALLOW",
                 "policy": "resource.calendar_entry.vdefault/acme.sales",
