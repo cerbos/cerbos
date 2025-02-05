@@ -6,10 +6,10 @@ inputs:
     {
       "requestId": "test",
       "actions": [
-        "create" # exists, falls through, allow
-#        "delete", # exists, falls through, no match
-#        "nonaction", # doesn't exist, falls through, no match (even with matching rule in rule table)
-#        "acme_action" # doesn't exist, falls through, match (implicit DENY)
+        "create", # exists, falls through, allow
+        "delete", # exists, falls through, no match
+        "nonaction", # doesn't exist, falls through, no match (even with matching rule in rule table)
+        "acme_action" # doesn't exist, falls through, match (implicit DENY)
       ],
       "principal":
         {
@@ -37,32 +37,32 @@ wantOutputs:
               "policy": "resource.calendar_entry.vdefault/acme.sales",
               "scope": "acme"
             },
-#          "delete":
-#            {
-#              "effect": "EFFECT_DENY",
-#              "policy": "NO_MATCH"
-#            },
-#          "nonaction":
-#            {
-#              "effect": "EFFECT_DENY",
-#              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-#              "scope": "acme.sales"
-#            },
-#          "acme_action":
-#            {
-#              "effect": "EFFECT_DENY",
-#              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-#              "scope": "acme.sales"
-#            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.calendar_entry.vdefault/acme.sales"
+            },
+          "nonaction":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.sales"
+            },
+          "acme_action":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.sales"
+            },
         }
     },
   ]
 wantDecisionLogs:
   [
     {
-      "callId": "01JK9QZVV2RQNBKQ36PV8TSGMZ",
-      "timestamp": "2025-02-05T00:26:04.514071Z",
-      "peer": { },
+      "callId": "01JK9T5YFVEHNY3M0M8R1W0YVX",
+      "timestamp": "2025-02-05T01:04:20.987069Z",
+      "peer": {},
       "checkResources": {
         "inputs": [
           {
@@ -79,7 +79,10 @@ wantDecisionLogs:
               ]
             },
             "actions": [
-              "create"
+              "create",
+              "delete",
+              "nonaction",
+              "acme_action"
             ]
           }
         ],
@@ -88,10 +91,24 @@ wantDecisionLogs:
             "requestId": "test",
             "resourceId": "XX125",
             "actions": {
+              "acme_action": {
+                "effect": "EFFECT_DENY",
+                "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                "scope": "acme.sales"
+              },
               "create": {
                 "effect": "EFFECT_ALLOW",
                 "policy": "resource.calendar_entry.vdefault/acme.sales",
                 "scope": "acme"
+              },
+              "delete": {
+                "effect": "EFFECT_DENY",
+                "policy": "resource.calendar_entry.vdefault/acme.sales"
+              },
+              "nonaction": {
+                "effect": "EFFECT_DENY",
+                "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                "scope": "acme.sales"
               }
             }
           }
