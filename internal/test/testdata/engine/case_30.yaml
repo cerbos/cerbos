@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Resource policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS, implicit DENY"
+description: "Resource policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS, leaf skipped"
 inputs:
   [
     {
@@ -11,7 +11,7 @@ inputs:
       "principal":
         {
           "id": "x001",
-          "roles": ["admin"],
+          "roles": ["admin", "employee"],
         },
       "resource":
         {
@@ -55,7 +55,8 @@ wantDecisionLogs:
             "principal": {
               "id": "x001",
               "roles": [
-                "admin"
+                "admin",
+                "employee"
               ]
             },
             "actions": [
