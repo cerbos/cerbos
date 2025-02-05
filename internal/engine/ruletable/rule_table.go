@@ -10,7 +10,6 @@ import (
 	"maps"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
@@ -25,11 +24,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
-)
-
-const (
-	storeReloadTimeout = 5 * time.Second
-	storeFetchTimeout  = 2 * time.Second
 )
 
 var errNoPoliciesMatched = errors.New("no matching policies")
@@ -850,10 +844,8 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 	for _, evt := range events {
 		switch evt.Kind {
 		case storage.EventReload:
-			rt.log.Info("Reloading ruletable")
-			if err := rt.triggerReload(); err != nil {
-				rt.log.Warnw("Error while processing reload event", "event", evt, "error", err)
-			}
+			rt.log.Info("Purging ruletable")
+			rt.purge()
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			rt.log.Debugw("Processing storage event", "event", evt)
 			rt.processPolicyEvent(evt)
@@ -861,20 +853,6 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 			rt.log.Debugw("Ignoring storage event", "event", evt)
 		}
 	}
-}
-
-func (rt *RuleTable) triggerReload() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), storeReloadTimeout)
-	defer cancelFunc()
-
-	rpss, err := rt.policyLoader.GetAll(ctx)
-	if err != nil {
-		return err
-	}
-
-	rt.purge()
-
-	return rt.loadPolicies(rpss)
 }
 
 func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
