@@ -70,7 +70,7 @@ func TestBuildFromServerConf(t *testing.T) {
 					Key:  keyPath,
 				},
 			},
-			wantAddr: "https://127.0.0.1:3592/_cerbos/health",
+			wantAddr: "https://127.0.0.1:3592/_cerbos/health?service=cerbos.svc.v1.CerbosService",
 		},
 		{
 			name: "http/tls/insecure",
@@ -83,7 +83,7 @@ func TestBuildFromServerConf(t *testing.T) {
 					Key:  keyPath,
 				},
 			},
-			wantAddr: "https://127.0.0.1:3592/_cerbos/health",
+			wantAddr: "https://127.0.0.1:3592/_cerbos/health?service=cerbos.svc.v1.CerbosService",
 		},
 		{
 			name: "http/no-tls",
@@ -92,7 +92,7 @@ func TestBuildFromServerConf(t *testing.T) {
 				HTTPListenAddr: ":3592",
 				GRPCListenAddr: ":3593",
 			},
-			wantAddr: "http://127.0.0.1:3592/_cerbos/health",
+			wantAddr: "http://127.0.0.1:3592/_cerbos/health?service=cerbos.svc.v1.CerbosService",
 		},
 		{
 			name: "http/specific-host",
@@ -101,7 +101,7 @@ func TestBuildFromServerConf(t *testing.T) {
 				HTTPListenAddr: "10.0.1.5:3592",
 				GRPCListenAddr: ":3593",
 			},
-			wantAddr: "http://10.0.1.5:3592/_cerbos/health",
+			wantAddr: "http://10.0.1.5:3592/_cerbos/health?service=cerbos.svc.v1.CerbosService",
 		},
 	}
 
@@ -168,18 +168,18 @@ func TestBuildManual(t *testing.T) {
 			name:     "http/tls/secure",
 			cmd:      &Cmd{Kind: "http"},
 			wantTLS:  true,
-			wantAddr: "https://127.0.0.1:3592/_cerbos/health",
+			wantAddr: "https://127.0.0.1:3592/_cerbos/health?service=cerbos.svc.v1.CerbosService",
 		},
 		{
 			name:     "http/tls/insecure",
 			cmd:      &Cmd{Kind: "http", Insecure: true, HostPort: "10.0.1.5:3592"},
 			wantTLS:  true,
-			wantAddr: "https://10.0.1.5:3592/_cerbos/health",
+			wantAddr: "https://10.0.1.5:3592/_cerbos/health?service=cerbos.svc.v1.CerbosService",
 		},
 		{
 			name:     "http/no-tls",
 			cmd:      &Cmd{Kind: "http", NoTLS: true},
-			wantAddr: "http://127.0.0.1:3592/_cerbos/health",
+			wantAddr: "http://127.0.0.1:3592/_cerbos/health?service=cerbos.svc.v1.CerbosService",
 		},
 	}
 
