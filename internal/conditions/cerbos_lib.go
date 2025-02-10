@@ -5,6 +5,7 @@ package conditions
 
 import (
 	"fmt"
+	celast "github.com/google/cel-go/common/ast"
 	"net"
 	"time"
 
@@ -141,9 +142,9 @@ func Now() NowFunc {
 // The given nowFunc must return the same timestamp each time it is called.
 //
 // See https://pkg.go.dev/github.com/google/cel-go/cel#Program.Eval.
-func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
+func Eval(env *cel.Env, ast *celast.AST, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator(nowFunc))}, opts...)
-	prg, err := env.Program(ast, programOpts...)
+	prg, err := env.PlanProgram(ast, programOpts...)
 	if err != nil {
 		return nil, nil, err
 	}

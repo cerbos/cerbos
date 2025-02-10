@@ -289,7 +289,7 @@ func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value) (outpu
 	})
 }
 
-func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.Expr, err error) {
+func replaceVarsProto(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.Expr, err error) {
 	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
 		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
 		if !ok {
@@ -304,6 +304,26 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 				output = proto.Clone(e1).(*exprpb.Expr)
 			} else {
 				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.Field))
+			}
+		}
+		return
+	})
+}
+
+func replaceVars(e ast.Expr, vars map[string]ast.Expr) (output ast.Expr, err error) {
+	return replaceVarsGen2(e, func(ex ast.Expr) (output ast.Expr, matched bool, err error) {
+		if ex.Kind() != ast.StructKind {
+			return nil, false, nil
+		}
+		sel := ex.AsSelect()
+		ident := sel.Operand().AsIdent()
+		if sel.Operand().Kind() == ast.IdentKind && (ident == conditions.CELVariablesAbbrev || ident == conditions.CELVariablesIdent) {
+			matched = true
+			if e1, ok := vars[sel.FieldName()]; ok {
+				fact := ast.NewExprFactory()
+				output = fact.CopyExpr(e1)
+			} else {
+				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.FieldName()))
 			}
 		}
 		return

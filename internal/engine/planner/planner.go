@@ -732,13 +732,12 @@ type partialEvaluator struct {
 
 func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
-
 	val, details, err := conditions.Eval(p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return val, nil, err
 	}
 
-	residual, err := residualExpr(ast, details)
+	residual, err := residualExprProto(ast, details)
 	return val, residual, err
 }
 
@@ -842,7 +841,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		if err != nil {
 			return err
 		}
-		le, err = residualExpr(ast, det)
+		le, err = residualExprProto(ast, det)
 		if err != nil {
 			return err
 		}
@@ -861,7 +860,12 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 	return err
 }
 
-func residualExpr(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
+func residualExpr(ast *celast.AST, details *cel.EvalDetails) (celast.Expr, error) {
+	prunedAST := interpreter.PruneAst(ast.Expr(), ast.SourceInfo().MacroCalls(), details.State())
+	return prunedAST.Expr(), nil
+}
+
+func residualExprProto(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
 	ast := a.NativeRep()
 	prunedAST := interpreter.PruneAst(ast.Expr(), ast.SourceInfo().MacroCalls(), details.State())
 	return celast.ExprToProto(prunedAST.Expr())
