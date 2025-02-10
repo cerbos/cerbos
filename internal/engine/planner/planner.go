@@ -381,7 +381,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 
 				var constants map[string]any
-				var variables map[string]*exprpb.Expr
+				var variables map[string]celast.Expr
 				if row.Params != nil {
 					constants = row.Params.Constants
 					var err error
@@ -397,7 +397,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 
 				if row.DerivedRoleCondition != nil { //nolint:nestif
-					var variables map[string]*exprpb.Expr
+					var variables map[string]celast.Expr
 					if row.DerivedRoleParams != nil {
 						var err error
 						variables, err = variableExprs(row.DerivedRoleParams.Variables)
@@ -563,7 +563,7 @@ type evalContext struct {
 	TimeFn func() time.Time
 }
 
-func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
+func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -647,7 +647,8 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evalCtx.evaluateConditionExpression(t.Expr.GetChecked(), request, globals, constants, variables, derivedRolesList)
+		ex, err := celast.ProtoToExpr(t.Expr.GetChecked().GetExpr())
+		residual, err := evalCtx.evaluateConditionExpression(ex, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -658,13 +659,13 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	return res, nil
 }
 
-func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
 	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
 	}
 
-	e, err := replaceVars(expr.Expr, variables)
+	e, err := replaceVars(expr, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -837,7 +838,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 			return err
 		}
 		var det *cel.EvalDetails
-		_, det, err = conditions.Eval(env1, ast, pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		_, det, err = conditions.Eval(env1, ast.NativeRep(), pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
 			return err
 		}
@@ -875,14 +876,18 @@ func constantValues(constants map[string]*structpb.Value) map[string]any {
 	return (&structpb.Struct{Fields: constants}).AsMap()
 }
 
-func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {
+func variableExprs(variables []*runtimev1.Variable) (map[string]celast.Expr, error) {
 	if len(variables) == 0 {
 		return nil, nil
 	}
 
-	exprs := make(map[string]*exprpb.Expr, len(variables))
+	exprs := make(map[string]celast.Expr, len(variables))
 	for _, variable := range variables {
-		expr, err := replaceVars(variable.Expr.Checked.Expr, exprs)
+		e, err := celast.ProtoToExpr(variable.Expr.GetChecked().GetExpr())
+		if err != nil {
+			return nil, err
+		}
+		expr, err := replaceVars(e, exprs)
 		if err != nil {
 			return nil, err
 		}
@@ -908,14 +913,14 @@ func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 	}
 }
 
-func replaceRuntimeEffectiveDerivedRoles(expr *exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.Expr, error) {
-	return replaceVarsGen(expr, func(input *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
-		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
+func replaceRuntimeEffectiveDerivedRoles(expr celast.Expr, derivedRolesList func() (celast.Expr, error)) (celast.Expr, error) {
+	return replaceVarsGen2(expr, func(input celast.Expr) (output celast.Expr, matched bool, err error) {
+		se := input.AsSelect()
+		if input.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
 
-		if isRuntimeEffectiveDerivedRoles(se.SelectExpr) {
+		if isRuntimeEffectiveDerivedRoles(se) {
 			output, err = derivedRolesList()
 			return output, true, err
 		}
@@ -924,12 +929,12 @@ func replaceRuntimeEffectiveDerivedRoles(expr *exprpb.Expr, derivedRolesList fun
 	})
 }
 
-func isRuntimeEffectiveDerivedRoles(expr *exprpb.Expr_Select) bool {
-	ident := expr.Operand.GetIdentExpr()
+func isRuntimeEffectiveDerivedRoles(expr celast.SelectExpr) bool {
+	ident := expr.Operand().AsIdent()
 
-	return ident != nil &&
-		ident.Name == conditions.CELRuntimeIdent &&
-		(expr.Field == "effective_derived_roles" || expr.Field == "effectiveDerivedRoles")
+	return expr.Operand().Kind() == celast.IdentKind &&
+		ident == conditions.CELRuntimeIdent &&
+		(expr.FieldName() == "effective_derived_roles" || expr.FieldName() == "effectiveDerivedRoles")
 }
 
 func mkDerivedRolesList(derivedRoles []rN) func() (*exprpb.Expr, error) {

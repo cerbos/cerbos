@@ -258,31 +258,34 @@ func replaceVarsGen2(e ast.Expr, f replaceVarsFunc2) (output ast.Expr, err error
 // E.g. Replace R.attr.field1 with id(R.attr.field1) iif R.attr.field1 is passed in the request to the Query Planner API.
 // This trick is necessary to evaluate expression like `P.attr.struct1[R.attr.field1]`, otherwise CEL tries to use `R.attr.field1`
 // as a qualifier for `P.attr.struct1` and produces the error https://github.com/cerbos/cerbos/issues/1340
-func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value) (output *exprpb.Expr, err error) {
-	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
-		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
+func replaceResourceVals(e ast.Expr, vals map[string]*structpb.Value) (output ast.Expr, err error) {
+	return replaceVarsGen2(e, func(ex ast.Expr) (output ast.Expr, matched bool, err error) {
+		if e.Kind() != ast.SelectKind {
 			return nil, false, nil
 		}
-		sel := se.SelectExpr
+		sel := ex.AsSelect()
 
-		field := sel.Field
-		if _, ok = vals[field]; ok {
-			sel = sel.GetOperand().GetSelectExpr()
-			if sel == nil || sel.Field != conditions.CELAttrField {
+		field := sel.FieldName()
+		if _, ok := vals[field]; ok {
+			sel = sel.Operand().AsSelect()
+			if sel.FieldName() != conditions.CELAttrField {
 				return nil, false, nil
 			}
 			// match R.attr.<field>
-			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELResourceAbbrev {
-				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
+			ident := sel.Operand().AsIdent()
+			if sel.Operand().Kind() == ast.IdentKind && ident == conditions.CELResourceAbbrev {
+				fact := ast.NewExprFactory()
+				return fact.NewCall(0, conditions.IDFn, ex), true, nil
 			}
-			sel = sel.GetOperand().GetSelectExpr()
-			if sel == nil || sel.Field != conditions.CELResourceField {
+			if sel.Operand().Kind() == ast.SelectKind || sel.Operand().AsSelect().FieldName() != conditions.CELResourceField {
 				return nil, false, nil
 			}
+			sel = sel.Operand().AsSelect()
+			ident = sel.Operand().AsIdent()
 			// match request.resource.attr.<field>
-			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELRequestIdent {
-				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
+			if sel.Operand().Kind() == ast.IdentKind && ident == conditions.CELRequestIdent {
+				fact := ast.NewExprFactory()
+				return fact.NewCall(0, conditions.IDFn, ex), true, nil
 			}
 		}
 		return nil, false, nil

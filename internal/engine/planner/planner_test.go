@@ -6,7 +6,6 @@ package planner
 import (
 	"bytes"
 	"fmt"
-	"github.com/google/cel-go/common"
 	"testing"
 	"time"
 
@@ -293,8 +292,7 @@ func TestResidualExpr(t *testing.T) {
 			is.NoError(err)
 			wantResidualExpr := re.Expr
 
-			si := celast.NewSourceInfo(common.NewTextSource(s))
-			nativeAST := celast.NewAST(ex, si)
+			nativeAST := celast.NewAST(ex, nil)
 			_, det, err = conditions.Eval(env, nativeAST, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			haveResidualExpr, err := residualExpr(nativeAST, det)
@@ -382,12 +380,12 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 
 			pe, err := cel.AstToParsedExpr(ast)
 			is.NoError(err)
-			e, err := replaceVars(pe.Expr, variables)
+			e, err := replaceVars(ast.NativeRep().Expr(), variables)
 			is.NoError(err)
-			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			astNative := celast.NewAST(e, nil)
+			_, det, err := conditions.Eval(env, astNative, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			haveExpr, err := residualExpr(ast, det)
+			haveExpr, err := residualExpr(astNative, det)
 			is.NoError(err)
 			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
 			err = p.evalComprehensionBody(haveExpr)
