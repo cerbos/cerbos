@@ -423,16 +423,6 @@ func structKeys(x *exprpb.Expr_CreateStruct) []*exprpb.Expr {
 	return exprs
 }
 
-func mkListExpr(elems []*exprpb.Expr) *exprpb.Expr {
-	return &exprpb.Expr{
-		ExprKind: &exprpb.Expr_ListExpr{
-			ListExpr: &exprpb.Expr_CreateList{
-				Elements: elems,
-			},
-		},
-	}
-}
-
 func mkExprOpExpr(op string, args ...*enginev1.PlanResourcesFilter_Expression_Operand) *exprOpExpr {
 	return &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
 		Expression: &enginev1.PlanResourcesFilter_Expression{Operator: op, Operands: args},
@@ -559,7 +549,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			const nArgs = 2
 			const rhsIndex = 1 // right-hand side arg index
 			if c.Function == operators.In && len(c.Args) == nArgs && c.Args[rhsIndex] == cur {
-				list := mkListExpr(structKeys(x))
+				list := internal.MkListExprProto(structKeys(x))
 				err := buildExprImpl(list, acc, parent)
 				if err != nil {
 					return err
@@ -630,7 +620,7 @@ func (lambdaAst *lambdaAST) mkNode(cur *exprpb.Expr) (*exprOpExpr, error) {
 func (lambdaAst *lambdaAST) buildIterRangeOp(cur *exprpb.Expr) (*exprOp, error) {
 	ir := lambdaAst.iterRange
 	if x, ok := ir.ExprKind.(*exprpb.Expr_StructExpr); ok && !canOperateOnStruct(lambdaAst.operator) {
-		ir = mkListExpr(structKeys(x.StructExpr))
+		ir = internal.MkListExprProto(structKeys(x.StructExpr))
 	}
 	irExprOp := new(exprOp)
 	err := buildExprImpl(ir, irExprOp, cur)

@@ -3,7 +3,10 @@
 
 package internal
 
-import exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+import (
+	celast "github.com/google/cel-go/common/ast"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+)
 
 type IDGen struct {
 	ids map[int64]int64
@@ -69,7 +72,27 @@ func UpdateIDs(e *exprpb.Expr) {
 	impl(e)
 }
 
-func MkCallExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
+func MkListExpr(elems []celast.Expr) celast.Expr {
+	fact := celast.NewExprFactory()
+	return fact.NewList(0, elems, nil)
+}
+
+func MkListExprProto(elems []*exprpb.Expr) *exprpb.Expr {
+	return &exprpb.Expr{
+		ExprKind: &exprpb.Expr_ListExpr{
+			ListExpr: &exprpb.Expr_CreateList{
+				Elements: elems,
+			},
+		},
+	}
+}
+
+func MkCallExpr(op string, args ...celast.Expr) celast.Expr {
+	fact := celast.NewExprFactory()
+	return fact.NewCall(0, op, args...)
+}
+
+func MkCallExprProto(op string, args ...*exprpb.Expr) *exprpb.Expr {
 	e := &exprpb.Expr{
 		ExprKind: &exprpb.Expr_CallExpr{CallExpr: &exprpb.Expr_Call{
 			Function: op,

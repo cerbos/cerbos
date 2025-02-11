@@ -563,7 +563,7 @@ type evalContext struct {
 	TimeFn func() time.Time
 }
 
-func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
+func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (celast.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -647,7 +647,8 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		ex, err := celast.ProtoToExpr(t.Expr.GetChecked().GetExpr())
+		expr := t.Expr.GetChecked().GetExpr()
+		ex, err := celast.ProtoToExpr(expr)
 		residual, err := evalCtx.evaluateConditionExpression(ex, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
@@ -659,7 +660,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	return res, nil
 }
 
-func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (celast.Expr, error)) (*exprpb.CheckedExpr, error) {
 	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
@@ -731,14 +732,14 @@ type partialEvaluator struct {
 	nowFn func() time.Time
 }
 
-func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
-	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
+func (p *partialEvaluator) evalPartially(e celast.Expr) (ref.Val, celast.Expr, error) {
+	ast := celast.NewAST(e, nil)
 	val, details, err := conditions.Eval(p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return val, nil, err
 	}
 
-	residual, err := residualExprProto(ast, details)
+	residual, err := residualExpr(ast, details)
 	return val, residual, err
 }
 
@@ -786,7 +787,7 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	return newPartialEvaluator(env, vars, evalCtx.TimeFn), nil
 }
 
-func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {
+func (p *partialEvaluator) evalComprehensionBody(e celast.Expr) (err error) {
 	return evalComprehensionBodyImpl(p.env, p.vars, p.nowFn, e)
 }
 
@@ -937,12 +938,12 @@ func isRuntimeEffectiveDerivedRoles(expr celast.SelectExpr) bool {
 		(expr.FieldName() == "effective_derived_roles" || expr.FieldName() == "effectiveDerivedRoles")
 }
 
-func mkDerivedRolesList(derivedRoles []rN) func() (*exprpb.Expr, error) {
-	return memoize(func() (_ *exprpb.Expr, err error) {
+func mkDerivedRolesList(derivedRoles []rN) func() (celast.Expr, error) {
+	return memoize(func() (_ celast.Expr, err error) {
+		fact := celast.NewExprFactory()
 		switch len(derivedRoles) {
 		case 0:
-			return mkListExpr(nil), nil
-
+			return fact.NewList(0, nil, nil), nil
 		case 1:
 			return derivedRoleListElement(derivedRoles[0])
 
@@ -1044,29 +1045,20 @@ func memoize[T any](f func() (T, error)) func() (T, error) {
 	}
 }
 
-func replaceCamelCaseFields(expr *exprpb.Expr) (*exprpb.Expr, error) {
+func replaceCamelCaseFields(expr celast.Expr) (celast.Expr, error) {
 	// For some reason, the JSONFieldProvider is ignored in the planner. It _should_ work, and I haven't been able to work out why it doesn't.
 	// For now, work around the issue by rewriting camel case fields to snake case.
 	// We don't need to rewrite `runtime.effectiveDerivedRoles`, because that is handled in replaceRuntimeEffectiveDerivedRoles.
-	return replaceVarsGen(expr, func(input *exprpb.Expr) (*exprpb.Expr, bool, error) {
-		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
+	return replaceVarsGen2(expr, func(input celast.Expr) (celast.Expr, bool, error) {
+		if input.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
-		sel := se.SelectExpr
+		sel := input.AsSelect()
+		ident := sel.Operand().AsIdent()
 
-		ident := sel.Operand.GetIdentExpr()
-
-		if ident != nil && ident.Name == conditions.CELRequestIdent && sel.Field == "auxData" {
-			return &exprpb.Expr{
-				ExprKind: &exprpb.Expr_SelectExpr{
-					SelectExpr: &exprpb.Expr_Select{
-						Operand:  sel.Operand,
-						Field:    "aux_data",
-						TestOnly: sel.TestOnly,
-					},
-				},
-			}, true, nil
+		if sel.Operand().Kind() == celast.IdentKind && ident == conditions.CELRequestIdent && sel.FieldName() == "auxData" {
+			fact := celast.NewExprFactory()
+			return fact.NewSelect(0, sel.Operand(), "aux_data"), true, nil
 		}
 
 		return nil, false, nil
