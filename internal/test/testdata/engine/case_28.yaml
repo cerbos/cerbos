@@ -1,13 +1,14 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Resource policy which references role policy defined in same scope with non matching condition"
+description: "Resource policy narrowed by role policy defined in same scope with non matching condition"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
-        "create",
-        "defer",
+          "create", # Matching rule in the role policy, but does not satisfy the condition
+          "view",  # No matching rule in the role policy
+          "anonymise", # ALLOW in the role policy. ALLOW in resource policy with matching condition
         ],
       "principal":
         {
@@ -39,11 +40,17 @@ wantOutputs:
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
               "scope": "acme.hr.uk.london",
             },
-          "defer":
+          "view":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.london",
+            },
+          "anonymise":
             {
               "effect": "EFFECT_ALLOW",
               "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
-              "scope": "acme.hr.uk",
+              "scope": "acme.hr",
             },
         },
       "effectiveDerivedRoles":
@@ -76,7 +83,7 @@ wantDecisionLogs:
                     "id": "john",
                     "roles": ["acme_london_employee"],
                   },
-                "actions": ["create", "defer"],
+                "actions": ["create", "view", "anonymise"],
               },
             ],
           "outputs":
@@ -92,11 +99,17 @@ wantDecisionLogs:
                         "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
                         "scope": "acme.hr.uk.london",
                       },
-                    "defer":
+                    "view":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.london",
+                      },
+                    "anonymise":
                       {
                         "effect": "EFFECT_ALLOW",
                         "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
-                        "scope": "acme.hr.uk",
+                        "scope": "acme.hr",
                       },
                   },
                 "effectiveDerivedRoles":

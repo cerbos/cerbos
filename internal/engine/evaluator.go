@@ -183,7 +183,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	}
 
 	// Filter down to matching roles and actions
-	candidateRows := rte.GetRows(version, sanitizedResource, scopes, allRoles, actionsToResolve)
+	candidateRows := rte.GetRows(version, sanitizedResource, scopes, input.Principal.Roles, allRoles, actionsToResolve)
 
 	varCache := make(map[string]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
@@ -254,20 +254,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 				if roleEffectInfo.Effect != effectv1.Effect_EFFECT_NO_MATCH {
 					break
-				}
-
-				var scopedRoleExists bool
-				for _, r := range parentRoles {
-					if rte.ScopedRoleExists(version, scope, r) {
-						scopedRoleExists = true
-						break
-					}
-				}
-				if !scopedRoleExists {
-					// the role doesn't exist in this scope for any actions, so continue.
-					// this prevents an implicit DENY from incorrectly narrowing an independent role
-					sctx.Skipped(nil, "No matching rules")
-					continue
 				}
 
 				for _, row := range candidateRows {
@@ -341,6 +327,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 					if satisfiesCondition { //nolint:nestif
 						roleEffectSet[row.Effect] = struct{}{}
+						roleEffectInfo.Scope = scope
 
 						var outputExpr *exprpb.CheckedExpr
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
@@ -370,30 +357,21 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 				}
 
-				switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive
-				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-					if len(roleEffectSet) == 0 {
-						roleEffectInfo = EffectInfo{
-							Effect: effectv1.Effect_EFFECT_DENY,
-							Policy: noMatchScopePermissions,
-							Scope:  scope,
-						}
+				if _, hasDeny := roleEffectSet[effectv1.Effect_EFFECT_DENY]; hasDeny {
+					roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
+					if rte.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+						roleEffectInfo.Policy = noMatchScopePermissions
 					}
-
-					delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
-				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
-					if len(roleEffectSet) > 0 {
-						roleEffectInfo.Scope = scope
-
-						if _, ok := roleEffectSet[effectv1.Effect_EFFECT_DENY]; ok {
-							roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
-						} else {
-							roleEffectInfo.Effect = effectv1.Effect_EFFECT_ALLOW
-						}
-
-						// explicit ALLOW or DENY for this role, so we can exit the loop
-						break scopesLoop
+					break scopesLoop
+				} else if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow {
+					switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive
+					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
+						delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
+						continue scopesLoop
+					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
+						roleEffectInfo.Effect = effectv1.Effect_EFFECT_ALLOW
 					}
+					break scopesLoop
 				}
 			}
 

@@ -298,7 +298,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	allRoles := ruleTable.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 
 	// Filter down to matching roles and action
-	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
+	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, allRoles, []string{input.Action})
 	if len(candidateRows) == 0 {
 		return result, nil
 	}
