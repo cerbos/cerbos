@@ -26,6 +26,9 @@ func (g *IDGen) Remap(id int64) int64 {
 	g.ids[id] = g.c
 	return g.c
 }
+func RenumberIDs(e celast.Expr) {
+	e.RenumberIDs(NewIDGen().Remap)
+}
 func UpdateIDs(e *exprpb.Expr) {
 	var n int64
 	ids := make(map[*exprpb.Expr]int64)

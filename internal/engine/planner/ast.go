@@ -315,7 +315,7 @@ func replaceVarsProto(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exp
 
 func replaceVars(e ast.Expr, vars map[string]ast.Expr) (output ast.Expr, err error) {
 	return replaceVarsGen2(e, func(ex ast.Expr) (output ast.Expr, matched bool, err error) {
-		if ex.Kind() != ast.StructKind {
+		if ex.Kind() != ast.SelectKind {
 			return nil, false, nil
 		}
 		sel := ex.AsSelect()
