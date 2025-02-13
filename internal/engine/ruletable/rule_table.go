@@ -26,7 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const allowActionsIdxKey = "_cerbosAllowActions" // TODO(saml) determine protected key
+const allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
 
 var errNoPoliciesMatched = errors.New("no matching policies")
 
@@ -794,6 +794,7 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, 
 								for _, action := range actions {
 									if ars, isAllowed := roleAllowActions[action]; !isAllowed {
 										if _, isPrimaryRole := roleMap[role]; isPrimaryRole {
+											// add a blanket DENY for non matching actions
 											res = append(res, &Row{
 												RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 													ActionSet: &runtimev1.RuleTable_RuleRow_Action{
@@ -831,7 +832,7 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, 
 											}
 
 											if row.Condition != nil {
-												// TODO(saml) is there a more concise way of inverting?
+												// Invert the condition given we're also inverting the EFFECT
 												row.Condition = &runtimev1.Condition{
 													Op: &runtimev1.Condition_None{
 														None: &runtimev1.Condition_ExprList{
