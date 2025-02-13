@@ -328,6 +328,9 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					if satisfiesCondition { //nolint:nestif
 						roleEffectSet[row.Effect] = struct{}{}
 						roleEffectInfo.Scope = scope
+						if row.NoMatchForScopePermissions {
+							roleEffectInfo.Policy = noMatchScopePermissions
+						}
 
 						var outputExpr *exprpb.CheckedExpr
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
@@ -359,9 +362,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 				if _, hasDeny := roleEffectSet[effectv1.Effect_EFFECT_DENY]; hasDeny {
 					roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
-					if rte.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-						roleEffectInfo.Policy = noMatchScopePermissions
-					}
 					break scopesLoop
 				} else if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow {
 					switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive

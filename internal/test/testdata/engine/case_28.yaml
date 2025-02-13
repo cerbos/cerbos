@@ -37,7 +37,7 @@ wantOutputs:
           "create":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
               "scope": "acme.hr.uk.london",
             },
           "view":
@@ -96,7 +96,7 @@ wantDecisionLogs:
                     "create":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
                         "scope": "acme.hr.uk.london",
                       },
                     "view":

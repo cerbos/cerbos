@@ -55,10 +55,11 @@ type WrappedRunnableDerivedRole struct {
 
 type Row struct {
 	*runtimev1.RuleTable_RuleRow
-	Params            *rowParams
-	DerivedRoleParams *rowParams
-	EvaluationKey     string
-	OriginModuleID    namer.ModuleID
+	Params                     *rowParams
+	DerivedRoleParams          *rowParams
+	EvaluationKey              string
+	OriginModuleID             namer.ModuleID
+	NoMatchForScopePermissions bool
 }
 
 func (r *Row) Matches(scope, action string, roles []string) bool {
@@ -806,6 +807,7 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, 
 													ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
 													Version:          version,
 												},
+												NoMatchForScopePermissions: true,
 											})
 										}
 									} else {
