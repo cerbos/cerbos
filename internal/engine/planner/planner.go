@@ -321,19 +321,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		for _, scope := range scopes {
 			var scopeAllowNode, scopeDenyNode *qpN
 
-			var scopedRoleExists bool
-			for _, r := range parentRoles {
-				if ruleTable.ScopedRoleExists(policyVersion, scope, r) {
-					scopedRoleExists = true
-					break
-				}
-			}
-			if !scopedRoleExists {
-				// the role doesn't exist in this scope for any actions, so continue.
-				// this prevents an implicit DENY from incorrectly narrowing an independent role
-				continue
-			}
-
 			derivedRolesList := mkDerivedRolesList(nil)
 			if c, ok := scopedDerivedRolesList[scope]; ok { //nolint:nestif
 				derivedRolesList = c
@@ -460,16 +447,14 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 			}
 
-			switch ruleTable.GetScopeScopePermissions(scope) { //nolint:exhaustive
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-				if scopeAllowNode == nil && scopeDenyNode == nil {
-					roleDenyNode = mkTrueNode()
-					break scopesLoop
-				} else if scopeAllowNode != nil && scopeDenyNode == nil {
+			if scopeDenyNode != nil {
+				result.Scope = scope
+				break scopesLoop
+			} else if scopeAllowNode != nil {
+				switch ruleTable.GetScopeScopePermissions(scope) { //nolint:exhaustive
+				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 					scopePermissionsBoundaryOpen = true
-				}
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
-				if scopeAllowNode != nil || scopeDenyNode != nil {
+				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
 					result.Scope = scope
 					break scopesLoop
 				}
