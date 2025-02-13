@@ -237,11 +237,11 @@ func replaceVarsGen2(e celast.Expr, f replaceVarsFunc2) (output celast.Expr, err
 		default:
 			return fact.CopyExpr(e)
 		}
-		return e
+		return fact.CopyExpr(e)
 	}
 
 	output = r(e)
-	output.RenumberIDs(internal.NewIDGen().Remap)
+	internal.RenumberIDs(output)
 
 	return output, err
 }

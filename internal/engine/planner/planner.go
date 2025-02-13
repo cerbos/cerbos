@@ -666,29 +666,30 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 		return nil, err
 	}
 
-	e, err := replaceVars(expr, variables)
-	if err != nil {
-		return nil, err
-	}
+	//e, err := replaceVars(expr, variables)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	if m := request.Resource.GetAttr(); len(m) > 0 {
-		e, err = replaceResourceVals(e, m)
-		if err != nil {
-			return nil, err
-		}
-	}
+	//if m := request.Resource.GetAttr(); len(m) > 0 {
+	//	e, err = replaceResourceVals(e, m)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
 
-	e, err = replaceRuntimeEffectiveDerivedRoles(e, func() (celast.Expr, error) {
-		expr, err := derivedRolesList()
-		if err != nil {
-			return nil, err
-		}
-		return celast.ProtoToExpr(expr)
-	})
-	if err != nil {
-		return nil, err
-	}
+	//e, err = replaceRuntimeEffectiveDerivedRoles(e, func() (celast.Expr, error) {
+	//	expr, err := derivedRolesList()
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	return celast.ProtoToExpr(expr)
+	//})
+	//if err != nil {
+	//	return nil, err
+	//}
 
+	e := expr
 	e, err = replaceCamelCaseFields(e)
 	if err != nil {
 		return nil, err
