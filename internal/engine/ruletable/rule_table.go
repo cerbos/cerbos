@@ -525,7 +525,7 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
 			evaluationKey := fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx)
-			switch p.ScopePermissions {
+			switch p.ScopePermissions { //nolint:exhaustive
 			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
 				for a := range rule.AllowActions {
 					rt.insertRule(&Row{
@@ -769,7 +769,7 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, 
 		roleMap[r] = struct{}{}
 	}
 
-	if scopeSet, ok := rt.primaryIdx[version]; ok {
+	if scopeSet, ok := rt.primaryIdx[version]; ok { //nolint:nestif
 		for _, scope := range scopes {
 			scopePermissions := rt.GetScopeScopePermissions(scope)
 			if roleSet, ok := scopeSet[scope]; ok {

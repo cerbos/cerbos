@@ -367,11 +367,10 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive
 					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 						delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
-						continue scopesLoop
 					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
 						roleEffectInfo.Effect = effectv1.Effect_EFFECT_ALLOW
+						break scopesLoop
 					}
-					break scopesLoop
 				}
 			}
 
