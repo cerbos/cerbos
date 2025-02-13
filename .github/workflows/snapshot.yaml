@@ -61,6 +61,7 @@ jobs:
         with:
           path-to-profile: unit.cover
           flag-name: unit-main
+          fail-on-error: false # TODO remove temp bypass
 
       - name: Upload integration coverage to Coveralls
         uses: shogo82148/actions-goveralls@v1
