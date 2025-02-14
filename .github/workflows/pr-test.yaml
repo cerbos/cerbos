@@ -158,7 +158,6 @@ jobs:
           path-to-profile: unit.cover
           flag-name: unit-${{ strategy.job-index }}
           parallel: true
-          fail-on-error: false # TODO remove temp bypass
 
       - name: Upload integration coverage to Coveralls
         uses: shogo82148/actions-goveralls@v1
