@@ -19,6 +19,10 @@ func NewIDGen() *IDGen {
 	}
 }
 func (g *IDGen) Remap(id int64) int64 {
+	if id == 0 {
+		g.c++
+		return g.c
+	}
 	if n, ok := g.ids[id]; ok {
 		return n
 	}
