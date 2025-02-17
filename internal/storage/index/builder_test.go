@@ -5,7 +5,6 @@ package index
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"io"
 	"io/fs"
@@ -34,7 +33,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 	fsys, err := util.OpenDirectoryFS(dir)
 	require.NoError(t, err)
 
-	idx, err := Build(context.Background(), fsys)
+	idx, err := Build(t.Context(), fsys)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -138,7 +137,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 	})
 
 	t.Run("check_stats", func(t *testing.T) {
-		stats := idx.RepoStats(context.Background())
+		stats := idx.RepoStats(t.Context())
 		require.GreaterOrEqual(t, 3, stats.SchemaCount)
 
 		for _, k := range []policy.Kind{policy.DerivedRolesKind, policy.PrincipalKind, policy.ResourceKind} {
@@ -185,7 +184,7 @@ func TestBuildIndex(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 			fs := toFS(t, tc)
 
-			idx, haveErr := Build(context.Background(), fs)
+			idx, haveErr := Build(t.Context(), fs)
 			switch {
 			case tc.WantErrList != nil:
 				errList := new(BuildError)

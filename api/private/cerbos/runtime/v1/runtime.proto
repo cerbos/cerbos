@@ -28,10 +28,17 @@ message RunnablePolicySet {
 
 message RuleTable {
   message RuleRow {
+    message AllowActions {
+      map<string, google.protobuf.Empty> actions = 1;
+    }
+
     string origin_fqn = 1;
     string resource = 2;
     string role = 3;
-    string action = 4;
+    oneof action_set {
+      string action = 4;
+      AllowActions allow_actions = 15;
+    }
     Condition condition = 5;
     Condition derived_role_condition = 6;
     cerbos.effect.v1.Effect effect = 7;

@@ -30,7 +30,7 @@ const timeout = 2 * time.Second
 func TestSuite(store DBStorage) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))

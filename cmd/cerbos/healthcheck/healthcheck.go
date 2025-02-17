@@ -235,7 +235,7 @@ func newHTTPCheck(hostPort string, tlsConf *tls.Config) httpCheck {
 		protocol = "https"
 	}
 
-	url := fmt.Sprintf("%s://%s/_cerbos/health", protocol, hostPort)
+	url := fmt.Sprintf("%s://%s/_cerbos/health?service=%s", protocol, hostPort, svcv1.CerbosService_ServiceDesc.ServiceName)
 	return httpCheck{url: url, tlsConf: tlsConf}
 }
 

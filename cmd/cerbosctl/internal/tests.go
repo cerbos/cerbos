@@ -34,7 +34,7 @@ func StartTestServer(t *testing.T) *testutil.CerbosServerInstance {
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), readyTimeout)
+	ctx, cancel := context.WithTimeout(t.Context(), readyTimeout)
 	t.Cleanup(cancel)
 
 	s, err := testutil.LaunchCerbosServer(ctx, conf)

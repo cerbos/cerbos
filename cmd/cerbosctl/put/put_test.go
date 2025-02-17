@@ -8,7 +8,6 @@ package put_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -202,14 +201,14 @@ func put(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, a
 
 func listPolicies(t *testing.T, clientCtx *cmdclient.Context) []string {
 	t.Helper()
-	policies, err := clientCtx.AdminClient.ListPolicies(context.Background())
+	policies, err := clientCtx.AdminClient.ListPolicies(t.Context())
 	require.NoError(t, err, "failed to list policies")
 	return policies
 }
 
 func listSchemas(t *testing.T, clientCtx *cmdclient.Context) []string {
 	t.Helper()
-	schemas, err := clientCtx.AdminClient.ListSchemas(context.Background())
+	schemas, err := clientCtx.AdminClient.ListSchemas(t.Context())
 	require.NoError(t, err, "failed to list schemas")
 	return schemas
 }
@@ -262,7 +261,7 @@ func getSchema(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Glob
 func writeToTmpFile(t *testing.T, p *policyv1.Policy) string {
 	t.Helper()
 
-	f, err := os.CreateTemp("", "policy_*.yaml")
+	f, err := os.CreateTemp(t.TempDir(), "policy_*.yaml")
 	require.NoError(t, err)
 
 	pBytes, err := protojson.Marshal(p)

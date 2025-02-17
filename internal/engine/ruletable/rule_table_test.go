@@ -20,7 +20,7 @@ import (
 func TestRuleTable(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	defer cancelFunc()
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
@@ -33,11 +33,7 @@ func TestRuleTable(t *testing.T) {
 
 	rt := NewRuleTable(compiler)
 
-	t.Run("add and delete resource policy", func(t *testing.T) {
-		t.Cleanup(func() {
-			rt.purge()
-		})
-
+	t.Run("resource policy", func(t *testing.T) {
 		resource := "leave_request"
 		version := "default"
 		scope := ""
@@ -47,73 +43,87 @@ func TestRuleTable(t *testing.T) {
 
 		modID := namer.ResourcePolicyModuleID(resource, version, scope)
 
-		rps, err := compiler.GetFirstMatch(ctx, []namer.ModuleID{modID})
-		require.NoError(t, err)
-
-		require.NoError(t, rt.addPolicy(rps))
-
 		// version -> scope -> role -> action -> []rows
-		require.Contains(t, rt.primaryIdx, version)
-		require.Contains(t, rt.primaryIdx[version], scope)
-		actionMap, exists := rt.primaryIdx[version][scope].GetWithLiteral(role)
-		require.True(t, exists)
-		rows, exists := actionMap.GetWithLiteral("*")
-		require.True(t, exists)
-		require.Len(t, rows, 1)
+		checkIndexes := func(t *testing.T) {
+			t.Helper()
 
-		require.Contains(t, rt.scopedResourceIdx, version)
-		require.Contains(t, rt.scopedResourceIdx[version], scope)
-		_, exists = rt.scopedResourceIdx[version][scope].GetWithLiteral("leave_request")
-		require.True(t, exists)
+			require.Contains(t, rt.primaryIdx, version)
+			require.Contains(t, rt.primaryIdx[version], scope)
+			actionMap, exists := rt.primaryIdx[version][scope].GetWithLiteral(role)
+			require.True(t, exists)
+			rows, exists := actionMap.GetWithLiteral("*")
+			require.True(t, exists)
+			require.Len(t, rows, 1)
 
-		require.Contains(t, rt.schemas, modID)
-		require.Contains(t, rt.meta, modID)
+			require.Contains(t, rt.scopedResourceIdx, version)
+			require.Contains(t, rt.scopedResourceIdx[version], scope)
+			_, exists = rt.scopedResourceIdx[version][scope].GetWithLiteral("leave_request")
+			require.True(t, exists)
 
-		require.Contains(t, rt.policyDerivedRoles, modID)
-		require.Empty(t, rt.policyDerivedRoles[modID])
-		// require.Contains(t, rt.policyDerivedRoles[modID], "alpha")
-		// require.Contains(t, rt.policyDerivedRoles[modID], "beta")
+			require.Contains(t, rt.schemas, modID)
+			require.Contains(t, rt.meta, modID)
 
-		require.Contains(t, rt.scopeMap, scope)
-		scopePermissions, exists := rt.scopeScopePermissions[scope]
-		require.True(t, exists)
-		require.Equal(t, scopePermissions, policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT)
+			require.Contains(t, rt.policyDerivedRoles, modID)
+			require.Empty(t, rt.policyDerivedRoles[modID])
 
-		exists, queried := rt.storeQueryRegister[modID]
-		require.False(t, queried)
-		require.False(t, exists)
+			require.Contains(t, rt.scopeMap, scope)
+			scopePermissions, exists := rt.scopeScopePermissions[scope]
+			require.True(t, exists)
+			require.Equal(t, scopePermissions, policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT)
+		}
 
-		// Registry stores the modID after LazyLoads
-		require.NoError(t, rt.LazyLoad(ctx, resource, version, scope, []string{role}))
-		exists, queried = rt.storeQueryRegister[modID]
-		require.True(t, queried)
-		require.True(t, exists)
-		exists, queried = rt.storeQueryRegister[nonexistentRolePolicyModID]
-		require.True(t, queried)
-		require.False(t, exists)
+		t.Run("add policy caches", func(t *testing.T) {
+			t.Cleanup(func() {
+				rt.purge()
+			})
 
-		rt.deletePolicy(modID)
+			rps, err := compiler.GetFirstMatch(ctx, []namer.ModuleID{modID})
+			require.NoError(t, err)
 
-		require.Empty(t, rt.primaryIdx)
-		require.Empty(t, rt.scopedResourceIdx)
-		require.Empty(t, rt.schemas)
-		require.Empty(t, rt.meta)
-		require.Empty(t, rt.policyDerivedRoles)
-		require.Empty(t, rt.scopeMap)
-		require.Empty(t, rt.scopeScopePermissions)
-		// we keep the registry entry but set it to `false`
-		require.Len(t, rt.storeQueryRegister, 2)
-		exists, queried = rt.storeQueryRegister[modID]
-		require.True(t, queried)
-		require.False(t, exists)
-		require.Contains(t, rt.storeQueryRegister, nonexistentRolePolicyModID)
-	})
+			require.NoError(t, rt.addPolicy(rps))
 
-	t.Run("add and delete role policy", func(t *testing.T) {
-		t.Cleanup(func() {
-			rt.purge()
+			checkIndexes(t)
+
+			exists, queried := rt.storeQueryRegister[modID]
+			require.False(t, queried)
+			require.False(t, exists)
 		})
 
+		t.Run("lazy load and delete", func(t *testing.T) {
+			t.Cleanup(func() {
+				rt.purge()
+			})
+
+			// Registry stores the modID after LazyLoads
+			require.NoError(t, rt.LazyLoad(ctx, resource, version, scope, []string{role}))
+			exists, queried := rt.storeQueryRegister[modID]
+			require.True(t, queried)
+			require.True(t, exists)
+			exists, queried = rt.storeQueryRegister[nonexistentRolePolicyModID]
+			require.True(t, queried)
+			require.False(t, exists)
+
+			checkIndexes(t)
+
+			rt.deletePolicy(modID)
+
+			require.Empty(t, rt.primaryIdx)
+			require.Empty(t, rt.scopedResourceIdx)
+			require.Empty(t, rt.schemas)
+			require.Empty(t, rt.meta)
+			require.Empty(t, rt.policyDerivedRoles)
+			require.Empty(t, rt.scopeMap)
+			require.Empty(t, rt.scopeScopePermissions)
+			// we keep the registry entry but set it to `false`
+			require.Len(t, rt.storeQueryRegister, 2)
+			exists, queried = rt.storeQueryRegister[modID]
+			require.True(t, queried)
+			require.False(t, exists)
+			require.Contains(t, rt.storeQueryRegister, nonexistentRolePolicyModID)
+		})
+	})
+
+	t.Run("role policy with REQUIRE_PARENTAL_CONSENT", func(t *testing.T) {
 		role := "acme_london_employee"
 		version := "default"
 		scope := "acme.hr.uk.london"
@@ -121,80 +131,217 @@ func TestRuleTable(t *testing.T) {
 
 		modID := namer.RolePolicyModuleID(role, scope)
 
-		rps, err := compiler.GetFirstMatch(ctx, []namer.ModuleID{modID})
-		require.NoError(t, err)
+		checkIndexes := func(t *testing.T) {
+			t.Helper()
 
-		require.NoError(t, rt.addPolicy(rps))
+			// version -> scope -> role -> action -> []rows
+			require.Contains(t, rt.primaryIdx, version)
+			require.Contains(t, rt.primaryIdx[version], scope)
+			actionMap, exists := rt.primaryIdx[version][scope].GetWithLiteral(role)
+			require.True(t, exists)
+			// REQUIRE_PARENTAL_CONSENT actions get stored in the shared AllowActions cache
+			rows, exists := actionMap.GetWithLiteral(allowActionsIdxKey)
+			require.True(t, exists)
+			// two rules exist for `acme_london_employee`
+			require.Len(t, rows, 2)
 
-		// version -> scope -> role -> action -> []rows
-		require.Contains(t, rt.primaryIdx, version)
-		require.Contains(t, rt.primaryIdx[version], scope)
-		actionMap, exists := rt.primaryIdx[version][scope].GetWithLiteral(role)
-		require.True(t, exists)
-		rows, exists := actionMap.GetWithLiteral("create")
-		require.True(t, exists)
-		require.Len(t, rows, 1)
+			require.Contains(t, rt.scopedResourceIdx, version)
+			require.Contains(t, rt.scopedResourceIdx[version], scope)
+			_, exists = rt.scopedResourceIdx[version][scope].GetWithLiteral(resource)
+			require.True(t, exists)
 
-		require.Contains(t, rt.scopedResourceIdx, version)
-		require.Contains(t, rt.scopedResourceIdx[version], scope)
-		_, exists = rt.scopedResourceIdx[version][scope].GetWithLiteral(resource)
-		require.True(t, exists)
+			require.Contains(t, rt.meta, modID)
 
-		require.Contains(t, rt.meta, modID)
+			require.Contains(t, rt.scopeMap, scope)
+			scopePermissions, exists := rt.scopeScopePermissions[scope]
+			require.True(t, exists)
+			require.Equal(t, scopePermissions, policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS)
 
-		require.Contains(t, rt.scopeMap, scope)
-		scopePermissions, exists := rt.scopeScopePermissions[scope]
-		require.True(t, exists)
-		require.Equal(t, scopePermissions, policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS)
+			// warm up the parent roles cache
+			rt.GetParentRoles(scope, []string{role})
+			require.Contains(t, rt.parentRoles, scope)
+			require.Contains(t, rt.parentRoles[scope], role)
+			require.Contains(t, rt.parentRoleAncestorsCache, scope)
+			require.Contains(t, rt.parentRoleAncestorsCache[scope], role)
+		}
 
-		// warm up the parent roles cache
-		rt.GetParentRoles(scope, []string{role})
-		require.Contains(t, rt.parentRoles, scope)
-		require.Contains(t, rt.parentRoles[scope], role)
-		require.Contains(t, rt.parentRoleAncestorsCache, scope)
-		require.Contains(t, rt.parentRoleAncestorsCache[scope], role)
+		t.Run("add policy caches", func(t *testing.T) {
+			t.Cleanup(func() {
+				rt.purge()
+			})
 
-		exists, queried := rt.storeQueryRegister[modID]
-		require.False(t, queried)
-		require.False(t, exists)
+			rps, err := compiler.GetFirstMatch(ctx, []namer.ModuleID{modID})
+			require.NoError(t, err)
 
-		// Registry stores the modID after LazyLoads
-		require.NoError(t, rt.LazyLoad(ctx, resource, version, scope, []string{role}))
-		// A store miss for the resource policy with lenientScopeSearch allows pre-optimised assertion that no
-		// resource policies exist in any scopes, hence the extra keys in the storeQueryRegister.
-		require.Len(t, rt.storeQueryRegister, 7)
-		exists, queried = rt.storeQueryRegister[modID]
-		require.True(t, queried)
-		require.True(t, exists)
-		// all nonexistent resource policy FQN
-		exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, scope)]
-		require.True(t, queried)
-		require.False(t, exists)
-		for s := range namer.ScopeParents(scope) {
-			exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, s)]
+			require.NoError(t, rt.addPolicy(rps))
+
+			checkIndexes(t)
+
+			exists, queried := rt.storeQueryRegister[modID]
+			require.False(t, queried)
+			require.False(t, exists)
+		})
+
+		t.Run("lazy load and delete", func(t *testing.T) {
+			t.Cleanup(func() {
+				rt.purge()
+			})
+
+			// Registry stores the modID after LazyLoads
+			require.NoError(t, rt.LazyLoad(ctx, resource, version, scope, []string{role}))
+			// A store miss for the resource policy with lenientScopeSearch allows pre-optimised assertion that no
+			// resource policies exist in any scopes, hence the extra keys in the storeQueryRegister.
+			require.Len(t, rt.storeQueryRegister, 7)
+			exists, queried := rt.storeQueryRegister[modID]
+			require.True(t, queried)
+			require.True(t, exists)
+			// all nonexistent resource policy FQNs
+			exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, scope)]
 			require.True(t, queried)
 			require.False(t, exists)
+			for s := range namer.ScopeParents(scope) {
+				exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, s)]
+				require.True(t, queried)
+				require.False(t, exists)
+			}
+			// Missing role policy in first parent scope (the search breaks after this with "not found")
+			exists, queried = rt.storeQueryRegister[namer.RolePolicyModuleID(role, "acme.hr.uk")]
+			require.True(t, queried)
+			require.False(t, exists)
+
+			checkIndexes(t)
+
+			rt.deletePolicy(modID)
+
+			require.Empty(t, rt.primaryIdx)
+			require.Empty(t, rt.scopedResourceIdx)
+			require.Empty(t, rt.schemas)
+			require.Empty(t, rt.meta)
+			require.Empty(t, rt.policyDerivedRoles)
+			require.Empty(t, rt.scopeMap)
+			require.Empty(t, rt.scopeScopePermissions)
+			require.Empty(t, rt.parentRoles)
+			require.Empty(t, rt.parentRoleAncestorsCache)
+			// not deleted, just set to `false`
+			require.Len(t, rt.storeQueryRegister, 7)
+			exists, queried = rt.storeQueryRegister[modID]
+			require.True(t, queried)
+			require.False(t, exists)
+		})
+	})
+
+	t.Run("role policy with OVERRIDE_PARENT", func(t *testing.T) {
+		role := "acme_assistant"
+		version := "default"
+		scope := "acme.hr.uk"
+		resource := "leave_request"
+
+		modID := namer.RolePolicyModuleID(role, scope)
+
+		checkIndexes := func(t *testing.T) {
+			t.Helper()
+
+			// version -> scope -> role -> action -> []rows
+			require.Contains(t, rt.primaryIdx, version)
+			require.Contains(t, rt.primaryIdx[version], scope)
+			actionMap, exists := rt.primaryIdx[version][scope].GetWithLiteral(role)
+			require.True(t, exists)
+			rows, exists := actionMap.GetWithLiteral("assist")
+			require.True(t, exists)
+			require.Len(t, rows, 1)
+
+			require.Contains(t, rt.scopedResourceIdx, version)
+			require.Contains(t, rt.scopedResourceIdx[version], scope)
+			_, exists = rt.scopedResourceIdx[version][scope].GetWithLiteral(resource)
+			require.True(t, exists)
+
+			require.Contains(t, rt.meta, modID)
+
+			require.Contains(t, rt.scopeMap, scope)
+			scopePermissions, exists := rt.scopeScopePermissions[scope]
+			require.True(t, exists)
+			require.Equal(t, scopePermissions, policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT)
+
+			// warm up the parent roles cache
+			rt.GetParentRoles(scope, []string{role})
+			require.Contains(t, rt.parentRoles, scope)
+			require.Contains(t, rt.parentRoles[scope], role)
+			require.Contains(t, rt.parentRoleAncestorsCache, scope)
+			require.Contains(t, rt.parentRoleAncestorsCache[scope], role)
 		}
-		// Missing role policy in first parent scope (the search breaks after this with "not found")
-		exists, queried = rt.storeQueryRegister[namer.RolePolicyModuleID(role, "acme.hr.uk")]
-		require.True(t, queried)
-		require.False(t, exists)
 
-		rt.deletePolicy(modID)
+		t.Run("add policy caches", func(t *testing.T) {
+			t.Cleanup(func() {
+				rt.purge()
+			})
 
-		require.Empty(t, rt.primaryIdx)
-		require.Empty(t, rt.scopedResourceIdx)
-		require.Empty(t, rt.schemas)
-		require.Empty(t, rt.meta)
-		require.Empty(t, rt.policyDerivedRoles)
-		require.Empty(t, rt.scopeMap)
-		require.Empty(t, rt.scopeScopePermissions)
-		require.Empty(t, rt.parentRoles)
-		require.Empty(t, rt.parentRoleAncestorsCache)
-		// not deleted, just set to `false`
-		require.Len(t, rt.storeQueryRegister, 7)
-		exists, queried = rt.storeQueryRegister[modID]
-		require.True(t, queried)
-		require.False(t, exists)
+			rps, err := compiler.GetFirstMatch(ctx, []namer.ModuleID{modID})
+			require.NoError(t, err)
+
+			require.NoError(t, rt.addPolicy(rps))
+
+			checkIndexes(t)
+
+			exists, queried := rt.storeQueryRegister[modID]
+			require.False(t, queried)
+			require.False(t, exists)
+		})
+
+		t.Run("lazy load and delete", func(t *testing.T) {
+			t.Cleanup(func() {
+				rt.purge()
+			})
+
+			// Registry stores the modID after LazyLoads
+			require.NoError(t, rt.LazyLoad(ctx, resource, version, scope, []string{role}))
+			// 9 made up of:
+			// - 1 matching resource policy per scope (x4)
+			// - 2 matching role policies in leaf scope (due to parent role relationship)
+			// - 1 NON matching role policy entry for 3 remaining scopes
+			require.Len(t, rt.storeQueryRegister, 9)
+			exists, queried := rt.storeQueryRegister[modID]
+			require.True(t, queried)
+			require.True(t, exists)
+			// all resource policy FQNs
+			exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, scope)]
+			require.True(t, queried)
+			require.True(t, exists)
+			for s := range namer.ScopeParents(scope) {
+				exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, s)]
+				require.True(t, queried)
+				require.True(t, exists)
+			}
+			// all nonexistent role policies
+			for s := range namer.ScopeParents(scope) {
+				exists, queried = rt.storeQueryRegister[namer.RolePolicyModuleID(role, s)]
+				require.True(t, queried)
+				require.False(t, exists)
+			}
+
+			checkIndexes(t)
+
+			rt.deletePolicy(modID)
+			// delete the other implicitly added policies
+			rt.deletePolicy(namer.RolePolicyModuleID("acme_travel_agent", scope))
+			rt.deletePolicy(namer.ResourcePolicyModuleID(resource, version, scope))
+			for s := range namer.ScopeParents(scope) {
+				rt.deletePolicy(namer.ResourcePolicyModuleID(resource, version, s))
+			}
+
+			require.Empty(t, rt.primaryIdx)
+			require.Empty(t, rt.scopedResourceIdx)
+			require.Empty(t, rt.schemas)
+			require.Empty(t, rt.meta)
+			require.Empty(t, rt.policyDerivedRoles)
+			require.Empty(t, rt.scopeMap)
+			require.Empty(t, rt.scopeScopePermissions)
+			require.Empty(t, rt.parentRoles)
+			require.Empty(t, rt.parentRoleAncestorsCache)
+			// not deleted, just set to `false`
+			require.Len(t, rt.storeQueryRegister, 9)
+			exists, queried = rt.storeQueryRegister[modID]
+			require.True(t, queried)
+			require.False(t, exists)
+		})
 	})
 }

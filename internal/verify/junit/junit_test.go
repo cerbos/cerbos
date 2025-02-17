@@ -131,7 +131,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 
 	dir := test.PathToDir(t, filepath.Join("verify_junit", "store"))
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	t.Cleanup(cancelFunc)
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
@@ -160,7 +160,7 @@ func runPolicyTests(t *testing.T, eng *engine.Engine, archive *txtar.Archive) (*
 	dir := t.TempDir()
 	require.NoError(t, txtar.Write(archive, dir), "Failed to expand archive")
 
-	return verify.Verify(context.Background(), os.DirFS(dir), eng, verify.Config{
+	return verify.Verify(t.Context(), os.DirFS(dir), eng, verify.Config{
 		Trace: verbose,
 	})
 }

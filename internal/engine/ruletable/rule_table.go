@@ -10,7 +10,6 @@ import (
 	"maps"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
@@ -27,10 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const (
-	storeReloadTimeout = 5 * time.Second
-	storeFetchTimeout  = 2 * time.Second
-)
+const allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
 
 var errNoPoliciesMatched = errors.New("no matching policies")
 
@@ -59,10 +55,11 @@ type WrappedRunnableDerivedRole struct {
 
 type Row struct {
 	*runtimev1.RuleTable_RuleRow
-	Params            *rowParams
-	DerivedRoleParams *rowParams
-	EvaluationKey     string
-	OriginModuleID    namer.ModuleID
+	Params                     *rowParams
+	DerivedRoleParams          *rowParams
+	EvaluationKey              string
+	OriginModuleID             namer.ModuleID
+	NoMatchForScopePermissions bool
 }
 
 func (r *Row) Matches(scope, action string, roles []string) bool {
@@ -83,7 +80,8 @@ func (r *Row) Matches(scope, action string, roles []string) bool {
 		}
 	}
 
-	if r.Action != action && !util.MatchesGlob(r.Action, action) {
+	a := r.GetAction()
+	if a != action && !util.MatchesGlob(a, action) {
 		return false
 	}
 
@@ -426,10 +424,12 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			for r := range rule.Roles {
 				rt.insertRule(&Row{
 					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-						OriginFqn:        rrps.Meta.Fqn,
-						Resource:         sanitizedResource,
-						Role:             r,
-						Action:           a,
+						OriginFqn: rrps.Meta.Fqn,
+						Resource:  sanitizedResource,
+						Role:      r,
+						ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+							Action: a,
+						},
 						Condition:        rule.Condition,
 						Effect:           rule.Effect,
 						Scope:            p.Scope,
@@ -462,10 +462,12 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 					for pr := range rdr.ParentRoles {
 						rt.insertRule(&Row{
 							RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-								OriginFqn:            rrps.Meta.Fqn,
-								Resource:             sanitizedResource,
-								Role:                 pr,
-								Action:               a,
+								OriginFqn: rrps.Meta.Fqn,
+								Resource:  sanitizedResource,
+								Role:      pr,
+								ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+									Action: a,
+								},
 								Condition:            rule.Condition,
 								DerivedRoleCondition: rdr.Condition,
 								Effect:               rule.Effect,
@@ -524,15 +526,38 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
 			evaluationKey := fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx)
-			for a := range rule.AllowActions {
+			switch p.ScopePermissions { //nolint:exhaustive
+			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
+				for a := range rule.AllowActions {
+					rt.insertRule(&Row{
+						RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+							OriginFqn: p.Meta.Fqn,
+							Role:      p.Role,
+							Resource:  resource,
+							ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+								Action: a,
+							},
+							Effect:           effectv1.Effect_EFFECT_ALLOW,
+							Scope:            p.Scope,
+							ScopePermissions: p.ScopePermissions,
+							Version:          version,
+						},
+						EvaluationKey:  evaluationKey,
+						OriginModuleID: moduleID,
+					})
+				}
+			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 				rt.insertRule(&Row{
 					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-						OriginFqn:        p.Meta.Fqn,
-						Role:             p.Role,
-						Resource:         resource,
-						Action:           a,
+						OriginFqn: p.Meta.Fqn,
+						Role:      p.Role,
+						Resource:  resource,
+						ActionSet: &runtimev1.RuleTable_RuleRow_AllowActions_{
+							AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+								Actions: rule.AllowActions,
+							},
+						},
 						Condition:        rule.Condition,
-						Effect:           effectv1.Effect_EFFECT_ALLOW,
 						Scope:            p.Scope,
 						ScopePermissions: p.ScopePermissions,
 						Version:          version,
@@ -574,9 +599,15 @@ func (rt *RuleTable) insertRule(r *Row) {
 			roleMap.Set(r.Role, actionMap)
 		}
 
-		rows, _ := actionMap.GetWithLiteral(r.Action)
+		action := r.GetAction()
+		if r.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
+			len(r.GetAllowActions().GetActions()) > 0 {
+			action = allowActionsIdxKey
+		}
+
+		rows, _ := actionMap.GetWithLiteral(action)
 		rows = append(rows, r)
-		actionMap.Set(r.Action, rows)
+		actionMap.Set(action, rows)
 	}
 
 	// separate scopedResource index
@@ -728,17 +759,97 @@ func (rt *RuleTable) ScopedRoleExists(version, scope, role string) bool {
 	return false
 }
 
-func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
+func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, actions []string) []*Row {
 	res := []*Row{}
 
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	if scopeSet, ok := rt.primaryIdx[version]; ok {
+	roleMap := make(map[string]struct{}, len(roles))
+	for _, r := range roles {
+		roleMap[r] = struct{}{}
+	}
+
+	if scopeSet, ok := rt.primaryIdx[version]; ok { //nolint:nestif
 		for _, scope := range scopes {
+			scopePermissions := rt.GetScopeScopePermissions(scope)
 			if roleSet, ok := scopeSet[scope]; ok {
-				for _, role := range roles {
+				for _, role := range allRoles {
+					roleFqn := namer.RolePolicyFQN(role, scope)
 					for _, actionSet := range roleSet.GetMerged(role) {
+						if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+							if ars, ok := actionSet.GetWithLiteral(allowActionsIdxKey); ok {
+								actionMatchedRows := make(map[string][]*Row)
+								// retrieve actions mapped to all effectual rows
+								for _, ar := range ars {
+									if _, isPrimaryRole := roleMap[ar.Role]; isPrimaryRole {
+										if util.MatchesGlob(ar.Resource, resource) {
+											for a := range ar.GetAllowActions().GetActions() {
+												actionMatchedRows[a] = append(actionMatchedRows[a], ar)
+											}
+										}
+									}
+								}
+
+								for _, action := range actions {
+									if matchedRows, isAllowed := actionMatchedRows[action]; !isAllowed {
+										if _, isPrimaryRole := roleMap[role]; isPrimaryRole {
+											// add a blanket DENY for non matching actions
+											res = append(res, &Row{
+												RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+													ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+														Action: action,
+													},
+													OriginFqn:        roleFqn,
+													Resource:         resource,
+													Role:             role,
+													Effect:           effectv1.Effect_EFFECT_DENY,
+													Scope:            scope,
+													ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
+													Version:          version,
+												},
+												NoMatchForScopePermissions: true,
+											})
+										}
+									} else {
+										for _, ar := range matchedRows {
+											row := &Row{
+												RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+													ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+														Action: action,
+													},
+													OriginFqn:        ar.OriginFqn,
+													Resource:         resource,
+													Condition:        ar.Condition,
+													Role:             ar.Role,
+													Effect:           effectv1.Effect_EFFECT_ALLOW,
+													Scope:            scope,
+													ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
+													Version:          version,
+												},
+												EvaluationKey:  ar.EvaluationKey,
+												OriginModuleID: ar.OriginModuleID,
+											}
+
+											if row.Condition != nil {
+												// Invert the condition given we're also inverting the EFFECT
+												row.Condition = &runtimev1.Condition{
+													Op: &runtimev1.Condition_None{
+														None: &runtimev1.Condition_ExprList{
+															Expr: []*runtimev1.Condition{row.Condition},
+														},
+													},
+												}
+												row.Effect = effectv1.Effect_EFFECT_DENY
+											}
+
+											res = append(res, row)
+										}
+									}
+								}
+							}
+						}
+
 						for _, action := range actions {
 							for _, rules := range actionSet.GetMerged(action) {
 								for _, r := range rules {
@@ -850,10 +961,8 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 	for _, evt := range events {
 		switch evt.Kind {
 		case storage.EventReload:
-			rt.log.Info("Reloading ruletable")
-			if err := rt.triggerReload(); err != nil {
-				rt.log.Warnw("Error while processing reload event", "event", evt, "error", err)
-			}
+			rt.log.Info("Purging ruletable")
+			rt.purge()
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			rt.log.Debugw("Processing storage event", "event", evt)
 			rt.processPolicyEvent(evt)
@@ -861,20 +970,6 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 			rt.log.Debugw("Ignoring storage event", "event", evt)
 		}
 	}
-}
-
-func (rt *RuleTable) triggerReload() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), storeReloadTimeout)
-	defer cancelFunc()
-
-	rpss, err := rt.policyLoader.GetAll(ctx)
-	if err != nil {
-		return err
-	}
-
-	rt.purge()
-
-	return rt.loadPolicies(rpss)
 }
 
 func (rt *RuleTable) processPolicyEvent(ev storage.Event) {

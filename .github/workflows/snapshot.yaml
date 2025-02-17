@@ -61,6 +61,7 @@ jobs:
         with:
           path-to-profile: unit.cover
           flag-name: unit-main
+          fail-on-error: false # TODO remove temp bypass
 
       - name: Upload integration coverage to Coveralls
         uses: shogo82148/actions-goveralls@v1
@@ -138,7 +139,7 @@ jobs:
           write_build_cache: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.7.0
+        uses: sigstore/cosign-installer@v3.8.0
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0

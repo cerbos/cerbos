@@ -19,7 +19,7 @@ import (
 )
 
 func TestFiles(t *testing.T) {
-	results, err := verify.Files(context.Background(), os.DirFS(test.PathToDir(t, "store")), nil)
+	results, err := verify.Files(t.Context(), os.DirFS(test.PathToDir(t, "store")), nil)
 	require.NoError(t, err)
 
 	require.Equal(t, results.Summary.OverallResult, policyv1.TestResults_RESULT_PASSED)
@@ -32,7 +32,7 @@ func TestBundle(t *testing.T) {
 		WorkDir:    t.TempDir(),
 	}
 
-	ctx, cancelFn := context.WithCancel(context.Background())
+	ctx, cancelFn := context.WithCancel(t.Context())
 	t.Cleanup(cancelFn)
 
 	results, err := verify.Bundle(ctx, params)

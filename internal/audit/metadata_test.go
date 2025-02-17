@@ -4,7 +4,6 @@
 package audit
 
 import (
-	"context"
 	"testing"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -63,7 +62,7 @@ func TestMetadataExtractor(t *testing.T) {
 				},
 			}
 			me := NewMetadataExtractorFromConf(conf)
-			ctx := metadata.NewIncomingContext(context.Background(), metadata.New(tc.input))
+			ctx := metadata.NewIncomingContext(t.Context(), metadata.New(tc.input))
 
 			have := me(ctx)
 			require.Len(t, have, len(tc.want))

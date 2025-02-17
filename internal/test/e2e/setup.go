@@ -81,12 +81,12 @@ func dumpOutput(ctx Ctx, s cmd.Status) {
 	ctx.Logf("Command=[%s] Code=%d Error=%v", s.Cmd, s.Exit, s.Error)
 	ctx.Logf("-----Stdout-----")
 	for _, l := range s.Stdout {
-		ctx.Logf(l)
+		ctx.Logf("%s", l)
 	}
 
 	ctx.Logf("-----Stderr-----")
 	for _, l := range s.Stderr {
-		ctx.Logf(l)
+		ctx.Logf("%s", l)
 	}
 }
 

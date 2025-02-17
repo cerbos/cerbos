@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Resource policy which assumes role policy defined in same scope"
+description: "Resource policy which is narrowed by role policy defined in same scope"
 inputs:
   [
     {
@@ -45,9 +45,9 @@ wantOutputs:
             },
           "defer":
             {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
-              "scope": "acme.hr.uk",
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.london",
             },
         },
       "effectiveDerivedRoles":
@@ -102,9 +102,9 @@ wantDecisionLogs:
                       },
                     "defer":
                       {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
-                        "scope": "acme.hr.uk",
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.london",
                       },
                   },
                 "effectiveDerivedRoles":

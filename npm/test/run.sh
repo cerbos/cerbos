@@ -96,7 +96,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 start_registry
 
 log_heading "Publishing packages to local registry"
-corepack npm publish --workspaces --registry=http://localhost:4873
+corepack npm publish --workspaces --registry=http://localhost:4873 --tag=latest
 
 cd test/cases
 

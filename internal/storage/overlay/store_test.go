@@ -30,7 +30,7 @@ var (
 )
 
 func TestDriverInstantiation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	bucketName := "test"
 	t.Setenv("AWS_ACCESS_KEY_ID", "minioadmin")
@@ -58,7 +58,7 @@ func TestDriverInstantiation(t *testing.T) {
 
 	// policy loader successfully created
 	t.Run("policy loader creation successful", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		store, err := storage.New(ctx)
@@ -104,7 +104,7 @@ func TestFailover(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("failover not triggered when consecutive failures within threshold", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		nFailures := fallbackErrorThreshold - 1
@@ -135,7 +135,7 @@ func TestFailover(t *testing.T) {
 	})
 
 	t.Run("failover triggered when consecutive failures exceed threshold", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		nFailures := fallbackErrorThreshold
@@ -167,7 +167,7 @@ func TestFailover(t *testing.T) {
 	})
 
 	t.Run("reload only called on baseStore if not implemented on fallbackStore", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		baseStore := new(MockReloadable)
@@ -191,7 +191,7 @@ func TestFailover(t *testing.T) {
 	})
 
 	t.Run("reload only called on fallbackStore if not implemented on baseStore", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		baseStore := new(MockBinaryStore)
@@ -214,7 +214,7 @@ func TestFailover(t *testing.T) {
 	})
 
 	t.Run("reload not called if not implemented on either store", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		baseStore := new(MockBinaryStore)

@@ -7,7 +7,7 @@ resourcePolicy:
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   resource: leave_request
   rules:
-    - actions: ["defer"]
+    - actions: ["defer", "anonymise"]
       effect: EFFECT_ALLOW
       roles: ["acme_london_employee"]
       condition:
