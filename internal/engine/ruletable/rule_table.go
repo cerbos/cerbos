@@ -601,7 +601,7 @@ func (rt *RuleTable) insertRule(r *Row) {
 
 		action := r.GetAction()
 		if r.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
-			r.GetAllowActions() != nil {
+			len(r.GetAllowActions().GetActions()) > 0 {
 			action = allowActionsIdxKey
 		}
 
@@ -779,20 +779,20 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, 
 					for _, actionSet := range roleSet.GetMerged(role) {
 						if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 							if ars, ok := actionSet.GetWithLiteral(allowActionsIdxKey); ok {
-								roleAllowActions := make(map[string][]*Row)
+								actionMatchedRows := make(map[string][]*Row)
 								// retrieve actions mapped to all effectual rows
 								for _, ar := range ars {
 									if _, isPrimaryRole := roleMap[ar.Role]; isPrimaryRole {
 										if util.MatchesGlob(ar.Resource, resource) {
 											for a := range ar.GetAllowActions().GetActions() {
-												roleAllowActions[a] = append(roleAllowActions[a], ar)
+												actionMatchedRows[a] = append(actionMatchedRows[a], ar)
 											}
 										}
 									}
 								}
 
 								for _, action := range actions {
-									if ars, isAllowed := roleAllowActions[action]; !isAllowed {
+									if matchedRows, isAllowed := actionMatchedRows[action]; !isAllowed {
 										if _, isPrimaryRole := roleMap[role]; isPrimaryRole {
 											// add a blanket DENY for non matching actions
 											res = append(res, &Row{
@@ -812,7 +812,7 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, 
 											})
 										}
 									} else {
-										for _, ar := range ars {
+										for _, ar := range matchedRows {
 											row := &Row{
 												RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 													ActionSet: &runtimev1.RuleTable_RuleRow_Action{
