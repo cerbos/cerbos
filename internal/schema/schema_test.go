@@ -73,7 +73,7 @@ func TestLoad(t *testing.T) {
 		t.Run(storeName, func(t *testing.T) {
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					err := mgr.CheckSchema(context.Background(), tc.url)
+					err := mgr.CheckSchema(t.Context(), tc.url)
 					if tc.wantErr {
 						require.Error(t, err)
 						return
@@ -92,7 +92,7 @@ func TestValidate(t *testing.T) {
 		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
 			store := mkStore(t)
 			conf := schema.NewConf(enforcement)
-			mgr := schema.NewFromConf(context.Background(), store, conf)
+			mgr := schema.NewFromConf(t.Context(), store, conf)
 
 			for _, tcase := range testCases {
 				t.Run(tcase.Name, func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestValidate(t *testing.T) {
 				tc := readTestCase(t, tcase.Input)
 				store := mkStore(t)
 				conf := schema.NewConf(schema.EnforcementNone)
-				mgr := schema.NewFromConf(context.Background(), store, conf)
+				mgr := schema.NewFromConf(t.Context(), store, conf)
 
 				have, err := validate(mgr, tc)
 				require.NoError(t, err)
@@ -154,12 +154,12 @@ func TestCache(t *testing.T) {
 	fsDir := test.PathToDir(t, filepath.Join("schema", "fs"))
 	fsys := afero.NewCopyOnWriteFs(afero.FromIOFS{FS: os.DirFS(fsDir)}, afero.NewMemMapFs())
 
-	index, err := index.Build(context.Background(), afero.NewIOFS(fsys))
+	index, err := index.Build(t.Context(), afero.NewIOFS(fsys))
 	require.NoError(t, err)
 
 	store := disk.NewFromIndexWithConf(index, &disk.Conf{})
 	conf := schema.NewConf(schema.EnforcementReject)
-	mgr := schema.NewFromConf(context.Background(), store, conf)
+	mgr := schema.NewFromConf(t.Context(), store, conf)
 
 	s, ok := mgr.(storage.Subscriber)
 	require.True(t, ok)
@@ -173,17 +173,17 @@ func TestCache(t *testing.T) {
 		schemaURL := fmt.Sprintf("%s:///complex_object.json", schema.URLScheme)
 
 		// control test (everything is as it should be)
-		require.NoError(t, mgr.CheckSchema(context.Background(), schemaURL))
+		require.NoError(t, mgr.CheckSchema(t.Context(), schemaURL))
 
 		// write rubbish to file
 		require.NoError(t, afero.WriteFile(fsys, schemaFile, []byte("blah"), 0o644))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "complex_object.json"})
-		require.Error(t, mgr.CheckSchema(context.Background(), schemaURL))
+		require.Error(t, mgr.CheckSchema(t.Context(), schemaURL))
 
 		// reset
 		require.NoError(t, afero.WriteFile(fsys, schemaFile, schemaBytes, 0o644))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "complex_object.json"})
-		require.NoError(t, mgr.CheckSchema(context.Background(), schemaURL))
+		require.NoError(t, mgr.CheckSchema(t.Context(), schemaURL))
 	})
 
 	t.Run("add_and_delete", func(t *testing.T) {
@@ -191,17 +191,17 @@ func TestCache(t *testing.T) {
 		schemaURL := fmt.Sprintf("%s:///wibble.json", schema.URLScheme)
 
 		// control test
-		require.Error(t, mgr.CheckSchema(context.Background(), schemaURL))
+		require.Error(t, mgr.CheckSchema(t.Context(), schemaURL))
 
 		// add file
 		require.NoError(t, afero.WriteFile(fsys, schemaFile, schemaBytes, 0o644))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "wibble.json"})
-		require.NoError(t, mgr.CheckSchema(context.Background(), schemaURL))
+		require.NoError(t, mgr.CheckSchema(t.Context(), schemaURL))
 
 		// delete file
 		require.NoError(t, fsys.Remove(schemaFile))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventDeleteSchema, SchemaFile: "wibble.json"})
-		require.Error(t, mgr.CheckSchema(context.Background(), schemaURL))
+		require.Error(t, mgr.CheckSchema(t.Context(), schemaURL))
 	})
 }
 
@@ -220,7 +220,7 @@ func mkStore(t *testing.T) *disk.Store {
 	fsDir := test.PathToDir(t, filepath.Join("schema", "fs"))
 	fsys := os.DirFS(fsDir)
 
-	index, err := index.Build(context.Background(), fsys)
+	index, err := index.Build(t.Context(), fsys)
 	require.NoError(t, err)
 
 	return disk.NewFromIndexWithConf(index, &disk.Conf{})
@@ -239,7 +239,7 @@ func mkMgrs(t *testing.T, fsDir string) map[string]schema.Manager {
 
 	schemasDir := test.PathToDir(t, filepath.Join("schema", "fs", schema.Directory))
 	fsys := os.DirFS(fsDir)
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	t.Cleanup(cancelFunc)
 
 	// Create mgr with disk store

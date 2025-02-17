@@ -5,7 +5,6 @@ package hub_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -38,7 +37,7 @@ func TestLocalSource(t *testing.T) {
 		require.NoError(t, protojson.Unmarshal(mb, manifest))
 
 		t.Run("original", runLocalSourceTests(lsv1, manifest.PolicyIndex, manifest.Schemas))
-		require.NoError(t, lsv1.Reload(context.Background()), "Failed to reload local source")
+		require.NoError(t, lsv1.Reload(t.Context()), "Failed to reload local source")
 		t.Run("reloaded", runLocalSourceTests(lsv1, manifest.PolicyIndex, manifest.Schemas))
 	})
 
@@ -52,7 +51,7 @@ func TestLocalSource(t *testing.T) {
 		require.NoError(t, protojson.Unmarshal(mb, manifest))
 
 		t.Run("original", runLocalSourceTests(lsv2, manifest.PolicyIndex, manifest.Schemas))
-		require.NoError(t, lsv2.Reload(context.Background()), "Failed to reload local source")
+		require.NoError(t, lsv2.Reload(t.Context()), "Failed to reload local source")
 		t.Run("reloaded", runLocalSourceTests(lsv2, manifest.PolicyIndex, manifest.Schemas))
 	})
 }
@@ -60,7 +59,7 @@ func TestLocalSource(t *testing.T) {
 func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, schemas []string) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Run("listPolicyIDs", func(t *testing.T) {
-			havePolicies, err := have.ListPolicyIDs(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+			havePolicies, err := have.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err)
 			require.Len(t, havePolicies, len(policyIndex))
 
@@ -70,12 +69,12 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 		})
 
 		t.Run("inspectPolicies", func(t *testing.T) {
-			results, err := have.InspectPolicies(context.Background(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+			results, err := have.InspectPolicies(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err)
 
 			for policyKey, h := range results {
 				mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(policyKey))
-				ps, err := have.GetFirstMatch(context.Background(), []namer.ModuleID{mID})
+				ps, err := have.GetFirstMatch(t.Context(), []namer.ModuleID{mID})
 				require.NoError(t, err)
 
 				expected := policy.ListPolicySetActions(ps)
@@ -84,7 +83,7 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 		})
 
 		t.Run("listSchemaIDs", func(t *testing.T) {
-			haveSchemas, err := have.ListSchemaIDs(context.Background())
+			haveSchemas, err := have.ListSchemaIDs(t.Context())
 			require.NoError(t, err)
 			require.Len(t, haveSchemas, len(schemas))
 
@@ -99,7 +98,7 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 			t.Run("existing", func(t *testing.T) {
 				for fqn := range policyIndex {
 					modID := namer.GenModuleIDFromFQN(fqn)
-					havePolicy, err := have.GetFirstMatch(context.Background(), []namer.ModuleID{blahMod, modID})
+					havePolicy, err := have.GetFirstMatch(t.Context(), []namer.ModuleID{blahMod, modID})
 					require.NoError(t, err, "Failed to get policy set for %q", fqn)
 					require.NotNil(t, havePolicy, "Policy set %q is nil", fqn)
 					require.Equal(t, havePolicy.Fqn, fqn, "FQN mismatch for policy set %q", fqn)
@@ -107,7 +106,7 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 			})
 
 			t.Run("nonExisting", func(t *testing.T) {
-				havePolicy, err := have.GetFirstMatch(context.Background(), []namer.ModuleID{blahMod})
+				havePolicy, err := have.GetFirstMatch(t.Context(), []namer.ModuleID{blahMod})
 				require.NoError(t, err)
 				require.Nil(t, havePolicy)
 			})
@@ -116,7 +115,7 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 		t.Run("loadSchema", func(t *testing.T) {
 			t.Run("existing", func(t *testing.T) {
 				for _, path := range schemas {
-					haveSchema, err := have.LoadSchema(context.Background(), path)
+					haveSchema, err := have.LoadSchema(t.Context(), path)
 					require.NoError(t, err, "Failed to get schema %q", path)
 					t.Cleanup(func() { _ = haveSchema.Close() })
 
@@ -125,7 +124,7 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 			})
 
 			t.Run("nonExisting", func(t *testing.T) {
-				_, err := have.LoadSchema(context.Background(), "blah")
+				_, err := have.LoadSchema(t.Context(), "blah")
 				require.Error(t, err)
 			})
 		})

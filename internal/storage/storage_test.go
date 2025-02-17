@@ -26,7 +26,7 @@ func TestDriverInstantiation(t *testing.T) {
 
 	require.NoError(t, config.LoadMap(conf))
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	defer cancelFunc()
 
 	store, err := storage.New(ctx)

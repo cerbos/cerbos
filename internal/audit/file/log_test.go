@@ -4,7 +4,6 @@
 package file_test
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -36,7 +35,7 @@ func TestLog(t *testing.T) {
 		require.True(t, log.Enabled())
 
 		ch := make(chan int, 100)
-		g, ctx := errgroup.WithContext(context.Background())
+		g, ctx := errgroup.WithContext(t.Context())
 
 		for i := 0; i < 10; i++ {
 			g.Go(func() error {

@@ -53,7 +53,7 @@ func TestCheck(t *testing.T) {
 			mockAuditLog.clear()
 
 			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
+			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(traceCollector))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -120,7 +120,7 @@ func TestCheck(t *testing.T) {
 			},
 		}
 
-		outputs, err := eng.Check(context.Background(), inputs)
+		outputs, err := eng.Check(t.Context(), inputs)
 		require.NoError(t, err)
 		require.Len(t, outputs, len(inputs))
 
@@ -149,7 +149,7 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 			mockAuditLog.clear()
 
 			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
+			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(traceCollector))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -206,7 +206,7 @@ func TestSchemaValidation(t *testing.T) {
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
 
-					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(newTestTraceSink(t)))
+					haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(newTestTraceSink(t)))
 
 					if tc.WantError {
 						require.Error(t, err)
@@ -273,7 +273,7 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				have, err := eng.Check(context.Background(), tc.Inputs)
+				have, err := eng.Check(b.Context(), tc.Inputs)
 				if tc.WantError {
 					if err == nil {
 						b.Errorf("Expected error but got none")
@@ -302,7 +302,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	}
 	dir := test.PathToDir(tb, p.subDir)
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(tb.Context())
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
@@ -384,7 +384,7 @@ func TestQueryPlan(t *testing.T) {
 						IncludeMeta: true,
 						AuxData:     auxData,
 					}
-					response, err := eng.PlanResources(context.Background(), request, WithNowFunc(func() time.Time { return timestamp }))
+					response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
 					if tt.WantErr {
 						is.Error(err)
 					} else {

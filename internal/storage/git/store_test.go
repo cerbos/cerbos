@@ -4,7 +4,6 @@
 package git
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -57,7 +56,7 @@ func TestNewStore(t *testing.T) {
 		checkoutDir := filepath.Join(t.TempDir(), "clone")
 		conf := mkConf(t, sourceGitDir, checkoutDir)
 
-		store, err := NewStore(context.Background(), conf)
+		store, err := NewStore(t.Context(), conf)
 		require.NoError(t, err)
 
 		requireIndexContains(t, store, wantFiles)
@@ -68,7 +67,7 @@ func TestNewStore(t *testing.T) {
 		checkoutDir := t.TempDir()
 		conf := mkConf(t, sourceGitDir, checkoutDir)
 
-		store, err := NewStore(context.Background(), conf)
+		store, err := NewStore(t.Context(), conf)
 		require.NoError(t, err)
 
 		requireIndexContains(t, store, wantFiles)
@@ -86,7 +85,7 @@ func TestNewStore(t *testing.T) {
 
 		conf := mkConf(t, sourceGitDir, checkoutDir)
 
-		store, err := NewStore(context.Background(), conf)
+		store, err := NewStore(t.Context(), conf)
 		require.NoError(t, err)
 
 		requireIndexContains(t, store, wantFiles)
@@ -103,7 +102,7 @@ func TestNewStore(t *testing.T) {
 
 		conf := mkConf(t, sourceGitDir, checkoutDir)
 
-		store, err := NewStore(context.Background(), conf)
+		store, err := NewStore(t.Context(), conf)
 		require.Nil(t, store)
 		require.ErrorIs(t, err, git.ErrRepositoryNotExists)
 	})
@@ -126,7 +125,7 @@ func setupUpdateStoreTest(t *testing.T, numPolicySets int) testParams {
 	_ = createGitRepo(t, sourceGitDir, numPolicySets)
 
 	conf := mkConf(t, sourceGitDir, checkoutDir)
-	store, err := NewStore(context.Background(), conf)
+	store, err := NewStore(t.Context(), conf)
 	require.NoError(t, err)
 
 	mockIdx := &mocks.Index{}
@@ -154,7 +153,7 @@ func TestUpdateStore(t *testing.T) {
 		param := setupUpdateStoreTest(t, numPolicySets)
 		checkEvents := storage.TestSubscription(param.store)
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		checkEvents(t, timeout)
 	})
@@ -182,7 +181,7 @@ func TestUpdateStore(t *testing.T) {
 			return writePolicySet(filepath.Join(param.sourceGitDir, policyDir), pset)
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
@@ -229,7 +228,7 @@ func TestUpdateStore(t *testing.T) {
 			return writePolicySet(filepath.Join(param.sourceGitDir, policyDir), pset)
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
@@ -264,7 +263,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
@@ -297,7 +296,7 @@ func TestUpdateStore(t *testing.T) {
 			return nil
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNotCalled(t, "AddOrUpdate", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t, timeout)
@@ -333,7 +332,7 @@ func TestUpdateStore(t *testing.T) {
 			return nil
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
@@ -386,7 +385,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
@@ -432,7 +431,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
@@ -459,7 +458,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t, timeout)
@@ -480,7 +479,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t, timeout)
@@ -506,7 +505,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 
 		checkEvents(t, timeout,
@@ -540,7 +539,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 
 		checkEvents(t, timeout,
@@ -566,7 +565,7 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, param.store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(t.Context()))
 		param.mockIdx.AssertExpectations(t)
 
 		checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, "invalid.json"))
@@ -772,7 +771,7 @@ func mkEmptyStoreAndRepo(t *testing.T, sourceGitDir, checkoutDir string) *Store 
 	t.Helper()
 
 	_ = createGitRepo(t, sourceGitDir, 0)
-	store, err := NewStore(context.Background(), mkConf(t, sourceGitDir, checkoutDir))
+	store, err := NewStore(t.Context(), mkConf(t, sourceGitDir, checkoutDir))
 	require.NoError(t, err)
 
 	return store

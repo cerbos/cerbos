@@ -4,7 +4,6 @@
 package disk
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -28,7 +27,7 @@ func TestReloadable(t *testing.T) {
 func mkStore(t *testing.T, dir string) *Store {
 	t.Helper()
 
-	store, err := NewStore(context.Background(), &Conf{Directory: dir})
+	store, err := NewStore(t.Context(), &Conf{Directory: dir})
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = store.Close() })
 

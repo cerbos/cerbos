@@ -8,7 +8,6 @@ package put_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -202,14 +201,14 @@ func put(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, a
 
 func listPolicies(t *testing.T, clientCtx *cmdclient.Context) []string {
 	t.Helper()
-	policies, err := clientCtx.AdminClient.ListPolicies(context.Background())
+	policies, err := clientCtx.AdminClient.ListPolicies(t.Context())
 	require.NoError(t, err, "failed to list policies")
 	return policies
 }
 
 func listSchemas(t *testing.T, clientCtx *cmdclient.Context) []string {
 	t.Helper()
-	schemas, err := clientCtx.AdminClient.ListSchemas(context.Background())
+	schemas, err := clientCtx.AdminClient.ListSchemas(t.Context())
 	require.NoError(t, err, "failed to list schemas")
 	return schemas
 }

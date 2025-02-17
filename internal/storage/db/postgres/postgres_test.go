@@ -38,7 +38,7 @@ func TestPostgres(t *testing.T) {
 
 	createSchema(t, fmt.Sprintf("postgres://postgres:postgres@localhost:%d?sslmode=disable", port))
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	defer cancelFunc()
 
 	connURL := fmt.Sprintf("postgres://cerbos_user:changeme@localhost:%d/postgres?sslmode=disable&search_path=cerbos", port)
@@ -63,7 +63,7 @@ func TestPostgres(t *testing.T) {
 func createSchema(t *testing.T, url string) {
 	t.Helper()
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	defer cancelFunc()
 
 	conn, err := pgx.Connect(ctx, url)

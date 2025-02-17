@@ -36,7 +36,7 @@ func TestEnableCmd(t *testing.T) {
 	defer s.Stop() //nolint:errcheck
 
 	globals := internal.CreateGlobalsFlagset(t, s.GRPCAddr())
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(t.Context(), timeout)
 	t.Cleanup(cancel)
 	cctx := mkClients(t, globals)
 	loadPolicies(t, cctx.AdminClient)
@@ -150,7 +150,7 @@ func loadPolicies(t *testing.T, ac *cerbos.GRPCAdminClient) {
 		ps.AddPolicies(withScope(test.GenDisabledPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
 		ps.AddPolicies(withScope(test.GenDisabledPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
 
-		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
+		require.NoError(t, ac.AddOrUpdatePolicy(t.Context(), ps))
 	}
 }
 

@@ -7,7 +7,6 @@ package get_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -433,7 +432,7 @@ func loadPolicies(t *testing.T, ac *cerbos.GRPCAdminClient) {
 		ps.AddPolicies(withMeta(withScope(test.GenRolePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr")))
 		ps.AddPolicies(withMeta(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme")))
 		ps.AddPolicies(withMeta(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr")))
-		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
+		require.NoError(t, ac.AddOrUpdatePolicy(t.Context(), ps))
 	}
 }
 

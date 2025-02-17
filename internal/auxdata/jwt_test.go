@@ -47,7 +47,7 @@ func TestKeySet(t *testing.T) {
 			}
 
 			lks := newLocalKeySet(conf, []any{jws.WithRequireKid(false)})
-			ks, opts, err := lks.keySet(context.Background())
+			ks, opts, err := lks.keySet(t.Context())
 			require.NoError(t, err)
 			require.NotNil(t, ks)
 			require.True(t, ks.Len() > 0)
@@ -65,7 +65,7 @@ func TestKeySet(t *testing.T) {
 			}
 
 			lks := newLocalKeySet(conf, nil)
-			ks, opts, err := lks.keySet(context.Background())
+			ks, opts, err := lks.keySet(t.Context())
 			require.NoError(t, err)
 			require.NotNil(t, ks)
 			require.True(t, ks.Len() > 0)
@@ -79,7 +79,7 @@ func TestKeySet(t *testing.T) {
 					URL: fmt.Sprintf("%s/%s", ts.URL, filepath.Base(k)),
 				}
 
-				ctx, cancelFn := context.WithTimeout(context.Background(), 1*time.Second)
+				ctx, cancelFn := context.WithTimeout(t.Context(), 1*time.Second)
 				defer cancelFn()
 
 				rks := newRemoteKeySet(jwk.NewCache(ctx), conf, []any{jws.WithInferAlgorithmFromKey(true)})
@@ -160,7 +160,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 		},
 	}
 
-	ctx, cancelFn := context.WithCancel(context.Background())
+	ctx, cancelFn := context.WithCancel(t.Context())
 	t.Cleanup(cancelFn)
 
 	jh := newJWTHelper(ctx, conf)
@@ -201,7 +201,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 					KeySetId: ksID,
 				}
 
-				have, err := jh.extract(context.Background(), input)
+				have, err := jh.extract(t.Context(), input)
 				if !tc.valid {
 					require.Error(t, err)
 					return
@@ -218,7 +218,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 	t.Run("no_token", func(t *testing.T) {
 		input := &requestv1.AuxData_JWT{}
 
-		have, err := jh.extract(context.Background(), input)
+		have, err := jh.extract(t.Context(), input)
 		require.NoError(t, err)
 		require.Empty(t, have)
 	})
@@ -228,7 +228,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 			Token: mkSignedToken(t, time.Now().Add(1*time.Hour)),
 		}
 
-		_, err := jh.extract(context.Background(), input)
+		_, err := jh.extract(t.Context(), input)
 		require.Error(t, err)
 	})
 
@@ -238,7 +238,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 			KeySetId: "blah",
 		}
 
-		_, err := jh.extract(context.Background(), input)
+		_, err := jh.extract(t.Context(), input)
 		require.Error(t, err)
 	})
 }
@@ -257,7 +257,7 @@ func TestExtract_SingleKeySet(t *testing.T) {
 		},
 	}
 
-	ctx, cancelFn := context.WithCancel(context.Background())
+	ctx, cancelFn := context.WithCancel(t.Context())
 	t.Cleanup(cancelFn)
 
 	jh := newJWTHelper(ctx, conf)
@@ -291,7 +291,7 @@ func TestExtract_SingleKeySet(t *testing.T) {
 				Token: mkSignedToken(t, tc.expiry),
 			}
 
-			have, err := jh.extract(context.Background(), input)
+			have, err := jh.extract(t.Context(), input)
 			if !tc.valid {
 				require.Error(t, err)
 				return
@@ -305,7 +305,7 @@ func TestExtract_SingleKeySet(t *testing.T) {
 }
 
 func TestExtract_NoKeySets(t *testing.T) {
-	ctx, cancelFn := context.WithCancel(context.Background())
+	ctx, cancelFn := context.WithCancel(t.Context())
 	t.Cleanup(cancelFn)
 
 	jh := newJWTHelper(ctx, nil)
@@ -333,7 +333,7 @@ func TestExtract_NoKeySets(t *testing.T) {
 				Token: mkSignedToken(t, tc.expiry),
 			}
 
-			_, err := jh.extract(context.Background(), input)
+			_, err := jh.extract(t.Context(), input)
 			require.Error(t, err)
 		})
 	}

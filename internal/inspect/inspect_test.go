@@ -33,7 +33,7 @@ import (
 
 func TestInspect(t *testing.T) {
 	testCases := test.LoadTestCases(t, "inspect")
-	ctx := context.Background()
+	ctx := t.Context()
 	for _, testMetadata := range testCases {
 		testCase := readTestCase(t, testMetadata.Input)
 		t.Run(testMetadata.Name, func(t *testing.T) {
