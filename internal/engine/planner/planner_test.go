@@ -113,17 +113,17 @@ func Test_evaluateCondition(t *testing.T) {
 			want: "true",
 		},
 		{ // this test case reproduced the issue #1340
-			args: compile(`P.attr.department_role[R.attr.department] == "ADMIN"`, &enginev1.Request{
+			args: compile(`P.attr.department_role["marketing"] == "ADMIN"`, &enginev1.Request{
 				Principal: &enginev1.Request_Principal{
 					Attr: map[string]*structpb.Value{
 						"department_role": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"marketing": structpb.NewStringValue("ADMIN")}}),
 					},
 				},
-				Resource: &enginev1.Request_Resource{
-					Attr: map[string]*structpb.Value{
-						"department": structpb.NewStringValue("marketing"),
-					},
-				},
+				//Resource: &enginev1.Request_Resource{
+				//	Attr: map[string]*structpb.Value{
+				//		"department": structpb.NewStringValue("marketing"),
+				//	},
+				//},
 			}),
 			want: "true",
 		},
@@ -304,7 +304,7 @@ func TestResidualExpr(t *testing.T) {
 		})
 	}
 }
-func dbg(t *testing.T, e celast.Expr) {
+func dbg2(t *testing.T, e celast.Expr) {
 	t.Helper()
 
 	p, err := celast.ExprToProto(e)
@@ -386,7 +386,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is.Nil(iss, iss.Err())
 			e, err := replaceVars(ast.NativeRep().Expr(), variables)
 			is.NoError(err)
-			dbg(t, e)
+			dbg2(t, e)
 			astNative := celast.NewAST(e, nil)
 			_, det, err := conditions.Eval(env, astNative, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)

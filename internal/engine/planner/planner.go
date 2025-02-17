@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"google.golang.org/protobuf/encoding/protojson"
 	"maps"
 	"sort"
 	"time"
@@ -647,7 +648,8 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		expr := t.Expr.GetChecked().GetExpr()
+		checked := t.Expr.GetChecked()
+		expr := checked.GetExpr()
 		ex, err := celast.ProtoToExpr(expr)
 		residual, err := evalCtx.evaluateConditionExpression(ex, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
@@ -670,14 +672,14 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 	//if err != nil {
 	//	return nil, err
 	//}
-
+	//
 	//if m := request.Resource.GetAttr(); len(m) > 0 {
 	//	e, err = replaceResourceVals(e, m)
 	//	if err != nil {
 	//		return nil, err
 	//	}
 	//}
-
+	//
 	//e, err = replaceRuntimeEffectiveDerivedRoles(e, func() (celast.Expr, error) {
 	//	expr, err := derivedRolesList()
 	//	if err != nil {
@@ -688,13 +690,13 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 	//if err != nil {
 	//	return nil, err
 	//}
-
+	//
+	//e, err = replaceCamelCaseFields(e)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//dbg(e)
 	e := expr
-	e, err = replaceCamelCaseFields(e)
-	if err != nil {
-		return nil, err
-	}
-
 	val, residual, err := p.evalPartially(e)
 	if err != nil {
 		// ignore expressions that are invalid
@@ -740,6 +742,14 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 	return conditions.FalseExpr, nil
 }
 
+func dbg(e celast.Expr) {
+	p, err := celast.ExprToProto(e)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(protojson.Format(p))
+}
+
 type partialEvaluator struct {
 	env   *cel.Env
 	vars  interpreter.PartialActivation
@@ -750,7 +760,8 @@ func (p *partialEvaluator) evalPartially(e celast.Expr) (ref.Val, celast.Expr, e
 	ast := celast.NewAST(e, nil)
 	val, details, err := conditions.Eval(p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
-		return val, nil, err
+		panic(err)
+		//return val, nil, err
 	}
 
 	residual, err := residualExpr(ast, details)
