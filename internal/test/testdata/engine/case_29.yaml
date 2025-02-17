@@ -44,15 +44,14 @@ wantOutputs:
             },
           "nonaction":
             {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.sales"
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.calendar_entry.vdefault/acme.sales",
             },
           "acme_action":
             {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.sales"
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.calendar_entry.vdefault/acme.sales",
+              "scope": "acme"
             },
         }
     },
@@ -92,9 +91,9 @@ wantDecisionLogs:
             "resourceId": "XX125",
             "actions": {
               "acme_action": {
-                "effect": "EFFECT_DENY",
-                "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                "scope": "acme.sales"
+                "effect": "EFFECT_ALLOW",
+                "policy": "resource.calendar_entry.vdefault/acme.sales",
+                "scope": "acme"
               },
               "create": {
                 "effect": "EFFECT_ALLOW",
@@ -106,9 +105,8 @@ wantDecisionLogs:
                 "policy": "resource.calendar_entry.vdefault/acme.sales"
               },
               "nonaction": {
-                "effect": "EFFECT_DENY",
-                "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                "scope": "acme.sales"
+                "effect": "EFFECT_ALLOW",
+                "policy": "resource.calendar_entry.vdefault/acme.sales",
               }
             }
           }

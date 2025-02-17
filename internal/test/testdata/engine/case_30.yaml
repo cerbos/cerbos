@@ -37,8 +37,9 @@ wantOutputs:
             },
           "acme_action":
             {
-              "effect": "EFFECT_DENY",
+              "effect": "EFFECT_ALLOW",
               "policy": "resource.calendar_entry.vdefault/acme.sales",
+              "scope": "acme"
             },
         }
     },
@@ -77,8 +78,9 @@ wantDecisionLogs:
             "resourceId": "XX125",
             "actions": {
               "acme_action": {
-                "effect": "EFFECT_DENY",
-                "policy": "resource.calendar_entry.vdefault/acme.sales"
+                "effect": "EFFECT_ALLOW",
+                "policy": "resource.calendar_entry.vdefault/acme.sales",
+                "scope": "acme"
               },
               "move": {
                 "effect": "EFFECT_ALLOW",
