@@ -2,8 +2,6 @@ module github.com/cerbos/cerbos/tools
 
 go 1.24
 
-toolchain go1.24.0
-
 require (
 	connectrpc.com/connect v1.18.1
 	github.com/bufbuild/buf v1.50.0

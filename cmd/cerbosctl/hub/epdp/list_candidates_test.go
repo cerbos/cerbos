@@ -6,7 +6,6 @@
 package epdp
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 
@@ -68,7 +67,7 @@ func TestListCandidates(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.testFile, func(t *testing.T) {
 			fsys := test.ExtractTxtArchiveToFS(t, filepath.Join("testdata", testCase.testFile))
-			candidates, err := listCandidates(context.Background(), fsys)
+			candidates, err := listCandidates(t.Context(), fsys)
 			if testCase.expectedErr != "" {
 				require.ErrorContains(t, err, testCase.expectedErr)
 			} else {

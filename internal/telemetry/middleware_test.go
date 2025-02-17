@@ -21,7 +21,7 @@ func TestMiddleware(t *testing.T) {
 	shutdown := make(chan struct{})
 	middleware := newStatsInterceptors(mock, 1*time.Millisecond, shutdown)
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	t.Cleanup(cancelFunc)
 
 	g, _ := errgroup.WithContext(ctx)
@@ -36,7 +36,7 @@ func TestMiddleware(t *testing.T) {
 			}
 
 			md := metadata.New(map[string]string{"user-agent": "grpc/v1.14.6"})
-			ctx := metadata.NewIncomingContext(context.Background(), md)
+			ctx := metadata.NewIncomingContext(t.Context(), md)
 
 			for j := 0; j < 10_000; j++ {
 				idx := j % len(methods)

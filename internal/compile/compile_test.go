@@ -135,7 +135,7 @@ func mkCompilationUnit(t *testing.T, mainDef string, archive *txtar.Archive) *po
 func mkSchemaMgr(t *testing.T) schema.Manager {
 	t.Helper()
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	t.Cleanup(cancelFunc)
 
 	dir := test.PathToDir(t, filepath.Join("schema", "fs"))

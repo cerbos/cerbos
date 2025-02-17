@@ -20,7 +20,7 @@ import (
 func TestRuleTable(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	defer cancelFunc()
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})

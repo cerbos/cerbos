@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewTLSConfig(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 
 	// certPath or keyPath are required if either one are set

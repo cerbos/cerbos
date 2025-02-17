@@ -58,7 +58,7 @@ func TestBadgerLog(t *testing.T) {
 	t.Run("lastNAccessLogEntries", func(t *testing.T) {
 		n := 100
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		it := db.LastNAccessLogEntries(ctx, uint(n))
@@ -83,7 +83,7 @@ func TestBadgerLog(t *testing.T) {
 	t.Run("lastNDecisionLogEntries", func(t *testing.T) {
 		n := 100
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		it := db.LastNDecisionLogEntries(ctx, uint(n))
@@ -111,7 +111,7 @@ func TestBadgerLog(t *testing.T) {
 		startTime := startDate.Add(100_000 * time.Second)
 		endTime := startDate.Add(200_000 * time.Second)
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		it := db.AccessLogEntriesBetween(ctx, startTime, endTime)
@@ -138,7 +138,7 @@ func TestBadgerLog(t *testing.T) {
 		startTime := startDate.Add(100_000 * time.Second)
 		endTime := startDate.Add(200_000 * time.Second)
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		it := db.DecisionLogEntriesBetween(ctx, startTime, endTime)
@@ -162,11 +162,11 @@ func TestBadgerLog(t *testing.T) {
 	})
 
 	t.Run("accessLogEntryByID", func(t *testing.T) {
-		it := db.LastNAccessLogEntries(context.Background(), 1)
+		it := db.LastNAccessLogEntries(t.Context(), 1)
 		wantRecord, err := it.Next()
 		require.NoError(t, err)
 
-		it = db.AccessLogEntryByID(context.Background(), audit.ID(wantRecord.CallId))
+		it = db.AccessLogEntryByID(t.Context(), audit.ID(wantRecord.CallId))
 		haveRecord, err := it.Next()
 		require.NoError(t, err)
 
@@ -174,11 +174,11 @@ func TestBadgerLog(t *testing.T) {
 	})
 
 	t.Run("decisionLogEntryByID", func(t *testing.T) {
-		it := db.LastNDecisionLogEntries(context.Background(), 1)
+		it := db.LastNDecisionLogEntries(t.Context(), 1)
 		wantRecord, err := it.Next()
 		require.NoError(t, err)
 
-		it = db.DecisionLogEntryByID(context.Background(), audit.ID(wantRecord.CallId))
+		it = db.DecisionLogEntryByID(t.Context(), audit.ID(wantRecord.CallId))
 		haveRecord, err := it.Next()
 		require.NoError(t, err)
 
@@ -190,7 +190,7 @@ func loadData(t *testing.T, db *local.Log, startDate time.Time) {
 	t.Helper()
 
 	ch := make(chan int, 100)
-	g, ctx := errgroup.WithContext(context.Background())
+	g, ctx := errgroup.WithContext(t.Context())
 
 	for i := 0; i < 100; i++ {
 		g.Go(func() error {

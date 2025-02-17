@@ -1,8 +1,6 @@
 module github.com/cerbos/cerbos
 
-go 1.23.0
-
-toolchain go1.24.0
+go 1.24
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.5-20250130201111-63bb56e20495.1

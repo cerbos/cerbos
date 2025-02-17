@@ -33,7 +33,7 @@ func TestDirWatch(t *testing.T) {
 	}
 
 	t.Run("add_file", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		subMgr := storage.NewSubscriptionManager(ctx)
@@ -81,7 +81,7 @@ func TestDirWatch(t *testing.T) {
 		writePolicy(t, policyFile, rp.Policy)
 
 		// Start watch
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		subMgr := storage.NewSubscriptionManager(ctx)
@@ -116,7 +116,7 @@ func TestDirWatch(t *testing.T) {
 	})
 
 	t.Run("add_schema_file", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		subMgr := storage.NewSubscriptionManager(ctx)
@@ -135,7 +135,7 @@ func TestDirWatch(t *testing.T) {
 	})
 
 	t.Run("delete_schema_file", func(t *testing.T) {
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		defer cancelFunc()
 
 		subMgr := storage.NewSubscriptionManager(ctx)

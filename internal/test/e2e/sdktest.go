@@ -99,7 +99,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			}
 
 			t.Run("Direct", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.CheckResources(ctx, principal, resources)
@@ -109,7 +109,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			})
 
 			t.Run("WithPrincipal", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.WithPrincipal(principal).CheckResources(ctx, resources)
@@ -172,7 +172,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			}
 
 			t.Run("Direct", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.CheckResources(ctx, principal, resources)
@@ -180,7 +180,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			})
 
 			t.Run("WithPrincipal", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.WithPrincipal(principal).CheckResources(ctx, resources)
@@ -244,7 +244,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			}
 
 			t.Run("Direct", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.CheckResources(ctx, principal, resources)
@@ -252,7 +252,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			})
 
 			t.Run("WithPrincipal", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.WithPrincipal(principal).CheckResources(ctx, resources)
@@ -281,7 +281,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 				})
 
 			t.Run("Direct", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.IsAllowed(ctx, principal, resource, "defer")
@@ -290,7 +290,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			})
 
 			t.Run("WithPrincipal", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := c.WithPrincipal(principal).IsAllowed(ctx, resource, "defer")
@@ -329,7 +329,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			}
 
 			t.Run("Direct", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := cc.PlanResources(ctx, principal, resource, "approve")
@@ -337,7 +337,7 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 			})
 
 			t.Run("WithPrincipal", func(t *testing.T) {
-				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				ctx, cancelFunc := context.WithTimeout(t.Context(), timeout)
 				defer cancelFunc()
 
 				have, err := cc.WithPrincipal(principal).PlanResources(ctx, resource, "approve")

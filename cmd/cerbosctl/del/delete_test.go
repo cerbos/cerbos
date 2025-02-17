@@ -33,7 +33,7 @@ func TestDeleteCmd(t *testing.T) {
 	defer s.Stop() //nolint:errcheck
 
 	globals := internal.CreateGlobalsFlagset(t, s.GRPCAddr())
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(t.Context(), timeout)
 	t.Cleanup(cancel)
 	cctx := mkClients(t, globals)
 	loadSchemas(t, cctx.AdminClient)
@@ -135,7 +135,7 @@ func loadSchemas(t *testing.T, ac *cerbos.GRPCAdminClient) {
 	ss := cerbos.NewSchemaSet()
 	ss.AddSchemas(s)
 	ss.AddSchemas(s2)
-	require.NoError(t, ac.AddOrUpdateSchema(context.Background(), ss))
+	require.NoError(t, ac.AddOrUpdateSchema(t.Context(), ss))
 }
 
 func mkClients(t *testing.T, globals *flagset.Globals) *cmdclient.Context {
