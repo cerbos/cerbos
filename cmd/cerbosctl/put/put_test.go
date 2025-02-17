@@ -262,7 +262,7 @@ func getSchema(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Glob
 func writeToTmpFile(t *testing.T, p *policyv1.Policy) string {
 	t.Helper()
 
-	f, err := os.CreateTemp("", "policy_*.yaml")
+	f, err := os.CreateTemp(t.TempDir(), "policy_*.yaml")
 	require.NoError(t, err)
 
 	pBytes, err := protojson.Marshal(p)
