@@ -415,7 +415,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		if ok { // only values in list, so acc.Node is a list of values
 			listValue := structpb.ListValue{Values: make([]*structpb.Value, len(x.Elements))}
 			for i, e := range x.Elements {
-				value, err := visitConst(e.ExprKind.(*exprpb.Expr_ConstExpr).ConstExpr)
+				value, err := visitConst(e.ExprKind.(*exprpb.Expr_ConstExpr).ConstExpr) //nolint:forcetypeassert
 				if err != nil {
 					return err
 				}
