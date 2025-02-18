@@ -48,7 +48,7 @@ func ReadPolicyWithSourceContext(fsys fs.FS, path string) (*policyv1.Policy, par
 }
 
 func ReadPolicyWithSourceContextFromReader(src io.Reader) (*policyv1.Policy, parser.SourceCtx, error) {
-	policies, contexts, err := parser.Unmarshal(src, func() *policyv1.Policy { return &policyv1.Policy{} }, parser.WithValidator(validator.Validator))
+	policies, contexts, err := parser.Unmarshal(src, func() *policyv1.Policy { return &policyv1.Policy{} }, parser.WithValidator(validator.Validator()))
 	switch len(policies) {
 	case 0:
 		return nil, parser.SourceCtx{}, err
