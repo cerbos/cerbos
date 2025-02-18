@@ -7,7 +7,6 @@ resourcePolicy:
   rules:
     - actions:
         - create
-        - acme_action
       effect: EFFECT_ALLOW
       roles:
         - employee
