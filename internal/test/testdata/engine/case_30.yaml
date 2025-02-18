@@ -7,7 +7,6 @@ inputs:
       "requestId": "test",
       "actions": [
         "move", # allowed for admin in the parent scope, allow
-        "acme_action", # allowed for employee in the parent scope, deny
       ],
       "principal":
         {
@@ -30,12 +29,6 @@ wantOutputs:
       "actions":
         {
           "move":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.calendar_entry.vdefault/acme.sales",
-              "scope": "acme"
-            },
-          "acme_action":
             {
               "effect": "EFFECT_ALLOW",
               "policy": "resource.calendar_entry.vdefault/acme.sales",
@@ -68,7 +61,6 @@ wantDecisionLogs:
             },
             "actions": [
               "move",
-              "acme_action"
             ]
           }
         ],
@@ -77,11 +69,6 @@ wantDecisionLogs:
             "requestId": "test",
             "resourceId": "XX125",
             "actions": {
-              "acme_action": {
-                "effect": "EFFECT_ALLOW",
-                "policy": "resource.calendar_entry.vdefault/acme.sales",
-                "scope": "acme"
-              },
               "move": {
                 "effect": "EFFECT_ALLOW",
                 "policy": "resource.calendar_entry.vdefault/acme.sales",

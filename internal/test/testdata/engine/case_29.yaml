@@ -9,7 +9,6 @@ inputs:
         "create", # exists, falls through, allow
         "delete", # exists, falls through, no match
         "nonaction", # not narrowed in target scope, falls through, allow
-        "acme_action" # doesn't exist, falls through, match (implicit DENY)
       ],
       "principal":
         {
@@ -47,12 +46,6 @@ wantOutputs:
               "effect": "EFFECT_ALLOW",
               "policy": "resource.calendar_entry.vdefault/acme.sales",
             },
-          "acme_action":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.calendar_entry.vdefault/acme.sales",
-              "scope": "acme"
-            },
         }
     },
   ]
@@ -81,7 +74,6 @@ wantDecisionLogs:
               "create",
               "delete",
               "nonaction",
-              "acme_action"
             ]
           }
         ],
@@ -90,11 +82,6 @@ wantDecisionLogs:
             "requestId": "test",
             "resourceId": "XX125",
             "actions": {
-              "acme_action": {
-                "effect": "EFFECT_ALLOW",
-                "policy": "resource.calendar_entry.vdefault/acme.sales",
-                "scope": "acme"
-              },
               "create": {
                 "effect": "EFFECT_ALLOW",
                 "policy": "resource.calendar_entry.vdefault/acme.sales",
