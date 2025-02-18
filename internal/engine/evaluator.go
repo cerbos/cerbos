@@ -327,9 +327,9 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 					if satisfiesCondition { //nolint:nestif
 						roleEffectSet[row.Effect] = struct{}{}
-						roleEffectInfo.Scope = scope
 						if row.NoMatchForScopePermissions {
 							roleEffectInfo.Policy = noMatchScopePermissions
+							roleEffectInfo.Scope = scope
 						}
 
 						var outputExpr *exprpb.CheckedExpr
@@ -369,6 +369,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
 					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
 						roleEffectInfo.Effect = effectv1.Effect_EFFECT_ALLOW
+						roleEffectInfo.Scope = scope
 						break scopesLoop
 					}
 				}
@@ -379,10 +380,15 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				actionEffectInfo = roleEffectInfo
 			}
 
-			// Finalise and return the first independent ALLOW, if present
 			if roleEffectInfo.Effect == effectv1.Effect_EFFECT_ALLOW {
+				// Finalise and return the first independent ALLOW
 				actionEffectInfo = roleEffectInfo
 				break
+			} else if roleEffectInfo.Effect == effectv1.Effect_EFFECT_DENY &&
+				actionEffectInfo.Policy == noMatchScopePermissions &&
+				roleEffectInfo.Policy != noMatchScopePermissions {
+				// Override `noMatchScopePermissions` DENYs with explicit ones for clarity
+				actionEffectInfo = roleEffectInfo
 			}
 		}
 
