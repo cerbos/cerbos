@@ -470,11 +470,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 								}
 
 								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									implicitlyAllowedActions[action] = struct{}{}
 									continue
 								}
-
-								delete(implicitlyAllowedActions, action)
 
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 								actx.AppliedEffect(rule.Effect, "")
@@ -503,19 +500,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						}
 					}
 				})
-
-				if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-					for _, a := range result.unresolvedActions() {
-						if _, ok := implicitlyAllowedActions[a]; !ok {
-							result.setEffect(a, EffectInfo{
-								Effect: effectv1.Effect_EFFECT_DENY,
-								Policy: noMatchScopePermissions,
-								Scope:  p.Scope,
-							})
-							delete(implicitlyAllowedActions, a)
-						}
-					}
-				}
 
 				return nil
 			})
