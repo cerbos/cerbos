@@ -12,7 +12,7 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
 
-var Validator protovalidate.Validator
+var Validator *protovalidate.Validator
 
 func init() {
 	var err error

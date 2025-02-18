@@ -293,7 +293,7 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 }
 
 type unmarshalOpts struct {
-	validator           protovalidate.Validator
+	validator           *protovalidate.Validator
 	ignoreUnknownFields bool
 }
 
@@ -307,7 +307,7 @@ func WithIgnoreUnknownFields() UnmarshalOpt {
 }
 
 // WithValidate validates the unmarshaled message using protovalidate.
-func WithValidator(validator protovalidate.Validator) UnmarshalOpt {
+func WithValidator(validator *protovalidate.Validator) UnmarshalOpt {
 	return func(uo *unmarshalOpts) {
 		uo.validator = validator
 	}
