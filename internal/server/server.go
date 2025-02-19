@@ -446,14 +446,14 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 		grpc.ChainStreamInterceptor(
 			grpc_recovery.StreamServerInterceptor(),
 			telemetryInt.StreamServerInterceptor(),
-			grpc_validator.StreamServerInterceptor(validator.Validator),
+			grpc_validator.StreamServerInterceptor(validator.Validator()),
 			grpc_logging.StreamServerInterceptor(RequestLogger(log, "Handled request")),
 			grpc_logging.StreamServerInterceptor(PayloadLogger(s.conf), grpc_logging.WithLogOnEvents(grpc_logging.PayloadReceived, grpc_logging.PayloadSent)),
 		),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
 			telemetryInt.UnaryServerInterceptor(),
-			grpc_validator.UnaryServerInterceptor(validator.Validator),
+			grpc_validator.UnaryServerInterceptor(validator.Validator()),
 			RequestMetadataUnaryServerInterceptor,
 			auditInterceptor,
 			grpc_logging.UnaryServerInterceptor(RequestLogger(log, "Handled request")),
