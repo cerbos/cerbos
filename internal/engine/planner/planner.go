@@ -408,7 +408,28 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					}
 				}
 
-				switch row.Effect { //nolint:exhaustive
+				effect := row.Effect
+				if row.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
+					row.Effect == effectv1.Effect_EFFECT_DENY && row.Condition != nil {
+					effect = effectv1.Effect_EFFECT_ALLOW
+
+					if lo, ok := node.Node.(*enginev1.PlanResourcesAst_Node_LogicalOperation); ok {
+						// No point NOT'ing a NOT. Therefore strip the existing NOT operator
+						if lo.LogicalOperation.Operator == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT {
+							nodes := lo.LogicalOperation.GetNodes()
+							switch len(nodes) {
+							case 1:
+								node = lo.LogicalOperation.GetNodes()[0]
+							default:
+								node = mkNodeFromLO(mkAndLogicalOperation(nodes))
+							}
+						}
+					} else {
+						node = invertNodeBooleanValue(node)
+					}
+				}
+
+				switch effect { //nolint:exhaustive
 				case effectv1.Effect_EFFECT_ALLOW:
 					if scopeAllowNode == nil {
 						scopeAllowNode = node
