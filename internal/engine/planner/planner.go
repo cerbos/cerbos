@@ -668,35 +668,35 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 		return nil, err
 	}
 
-	//e, err := replaceVars(expr, variables)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//if m := request.Resource.GetAttr(); len(m) > 0 {
-	//	e, err = replaceResourceVals(e, m)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
-	//
-	//e, err = replaceRuntimeEffectiveDerivedRoles(e, func() (celast.Expr, error) {
-	//	expr, err := derivedRolesList()
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	return celast.ProtoToExpr(expr)
-	//})
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//e, err = replaceCamelCaseFields(e)
-	//if err != nil {
-	//	return nil, err
-	//}
+	e, err := replaceVars(expr, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	if m := request.Resource.GetAttr(); len(m) > 0 {
+		e, err = replaceResourceVals(e, m)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	e, err = replaceRuntimeEffectiveDerivedRoles(e, func() (celast.Expr, error) {
+		expr, err := derivedRolesList()
+		if err != nil {
+			return nil, err
+		}
+		return celast.ProtoToExpr(expr)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	e, err = replaceCamelCaseFields(e)
+	if err != nil {
+		return nil, err
+	}
 	//dbg(e)
-	e := expr
+	//e := expr
 	val, residual, err := p.evalPartially(e)
 	if err != nil {
 		// ignore expressions that are invalid
