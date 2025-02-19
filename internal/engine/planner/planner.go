@@ -839,6 +839,9 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		if err != nil {
 			return nil, err
 		}
+		if sel.IsTestOnly() {
+			return fact.NewPresenceTest(0, expr, sel.FieldName()), nil
+		}
 		return fact.NewSelect(0, expr, sel.FieldName()), nil
 	case celast.CallKind:
 		call := e.AsCall()

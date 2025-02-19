@@ -174,7 +174,7 @@ func replaceVarsGen2(e celast.Expr, f replaceVarsFunc2) (output celast.Expr, err
 		case celast.IdentKind:
 			e1, matched, err := f(e)
 			if err != nil {
-				break
+				return nil
 			}
 			if matched {
 				return e1
@@ -187,10 +187,13 @@ func replaceVarsGen2(e celast.Expr, f replaceVarsFunc2) (output celast.Expr, err
 
 			e1, matched, err = f(e)
 			if err != nil {
-				break
+				return nil
 			}
 			if matched {
 				return e1
+			}
+			if ex.IsTestOnly() {
+				return fact.NewPresenceTest(0, r(ex.Operand()), ex.FieldName())
 			}
 			return fact.NewSelect(0, r(ex.Operand()), ex.FieldName())
 		case celast.CallKind:
@@ -235,11 +238,14 @@ func replaceVarsGen2(e celast.Expr, f replaceVarsFunc2) (output celast.Expr, err
 			}
 			return fact.NewList(0, elements, ex.OptionalIndices())
 		default:
-			return fact.CopyExpr(e)
+			ret := fact.CopyExpr(e)
+			internal.ZeroIDs(ret)
+			return ret
 		}
-		return fact.CopyExpr(e)
 	}
-
+	if err != nil {
+		return nil, err
+	}
 	output = r(e)
 	internal.RenumberIDs(output)
 
@@ -317,6 +323,7 @@ func replaceVars(e celast.Expr, vars map[string]celast.Expr) (output celast.Expr
 			if e1, ok := vars[sel.FieldName()]; ok {
 				fact := celast.NewExprFactory()
 				output = fact.CopyExpr(e1)
+				internal.ZeroIDs(output)
 			} else {
 				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.FieldName()))
 			}
