@@ -113,17 +113,17 @@ func Test_evaluateCondition(t *testing.T) {
 			want: "true",
 		},
 		{ // this test case reproduced the issue #1340
-			args: compile(`P.attr.department_role["marketing"] == "ADMIN"`, &enginev1.Request{
+			args: compile(`P.attr.department_role[R.attr.department] == "ADMIN"`, &enginev1.Request{
 				Principal: &enginev1.Request_Principal{
 					Attr: map[string]*structpb.Value{
 						"department_role": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"marketing": structpb.NewStringValue("ADMIN")}}),
 					},
 				},
-				//Resource: &enginev1.Request_Resource{
-				//	Attr: map[string]*structpb.Value{
-				//		"department": structpb.NewStringValue("marketing"),
-				//	},
-				//},
+				Resource: &enginev1.Request_Resource{
+					Attr: map[string]*structpb.Value{
+						"department": structpb.NewStringValue("marketing"),
+					},
+				},
 			}),
 			want: "true",
 		},

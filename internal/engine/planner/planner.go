@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"google.golang.org/protobuf/encoding/protojson"
 	"maps"
 	"sort"
 	"time"
@@ -20,6 +19,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -786,7 +786,14 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	const nNameVariants = 2 // qualified, unqualified name
 	ds := make([]*exprpb.Decl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
 	if len(request.Resource.GetAttr()) > 0 {
-		for name, value := range request.Resource.Attr {
+		reg, err := types.NewRegistry()
+		if err != nil {
+			return nil, err
+		}
+		structVal := structpb.Struct{Fields: request.Resource.GetAttr()}
+		m := types.NewJSONStruct(reg, &structVal)
+		for name := range request.Resource.Attr {
+			value := m.Get(types.String(name))
 			for _, s := range conditions.ResourceAttributeNames(name) {
 				ds = append(ds, decls.NewVar(s, decls.Dyn))
 				knownVars[s] = value
