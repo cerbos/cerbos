@@ -32,3 +32,8 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       roles:
         - boss
+
+    - actions: ["party_plan"]
+      effect: EFFECT_ALLOW
+      roles:
+        - organiser

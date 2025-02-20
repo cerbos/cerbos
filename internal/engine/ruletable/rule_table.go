@@ -422,7 +422,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		evaluationKey := fmt.Sprintf("%s#%s", policyParameters.Key, ruleFqn)
 		for a := range rule.Actions {
 			for r := range rule.Roles {
-				rt.insertRule(&Row{
+				row := &Row{
 					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 						OriginFqn: rrps.Meta.Fqn,
 						Resource:  sanitizedResource,
@@ -441,7 +441,22 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 					Params:         policyParameters,
 					EvaluationKey:  evaluationKey,
 					OriginModuleID: moduleID,
-				})
+				}
+
+				if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
+					row.Effect == effectv1.Effect_EFFECT_ALLOW &&
+					row.Condition != nil {
+					row.Condition = &runtimev1.Condition{
+						Op: &runtimev1.Condition_None{
+							None: &runtimev1.Condition_ExprList{
+								Expr: []*runtimev1.Condition{row.Condition},
+							},
+						},
+					}
+					row.Effect = effectv1.Effect_EFFECT_DENY
+				}
+
+				rt.insertRule(row)
 			}
 
 			// merge derived roles as roles with added conditions
@@ -460,7 +475,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 
 					evaluationKey := fmt.Sprintf("%s#%s", derivedRoleParams.Key, ruleFqn)
 					for pr := range rdr.ParentRoles {
-						rt.insertRule(&Row{
+						row := &Row{
 							RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 								OriginFqn: rrps.Meta.Fqn,
 								Resource:  sanitizedResource,
@@ -482,7 +497,22 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 							DerivedRoleParams: derivedRoleParams,
 							EvaluationKey:     evaluationKey,
 							OriginModuleID:    moduleID,
-						})
+						}
+
+						if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
+							row.Effect == effectv1.Effect_EFFECT_ALLOW &&
+							row.Condition != nil {
+							row.Condition = &runtimev1.Condition{
+								Op: &runtimev1.Condition_None{
+									None: &runtimev1.Condition_ExprList{
+										Expr: []*runtimev1.Condition{row.Condition},
+									},
+								},
+							}
+							row.Effect = effectv1.Effect_EFFECT_DENY
+						}
+
+						rt.insertRule(row)
 					}
 				}
 			}

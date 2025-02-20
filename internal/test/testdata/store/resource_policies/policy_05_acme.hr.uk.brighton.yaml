@@ -12,3 +12,11 @@ resourcePolicy:
         - defer
         - invite
       effect: EFFECT_ALLOW
+
+    - roles: ["organiser"]
+      actions:
+        - party_plan
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: P.attr.in_party_committee == true

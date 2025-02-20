@@ -14,6 +14,7 @@ inputs:
         "defer", # ALLOW in resource policy for a role that `acme_creator` recursively narrows. However, because the named role is
                  # defined in a role policy, it narrows the permissions of `employee` rather than assuming them, even if they share
                  # the same scope. If the principal explicitly had the role `employee`, this would be allowed. 
+        "party_plan", # Rule with non-matching condition in target scope which implicitly DENYs (even with ALLOW in parent scope)
         ],
       "principal":
         {
@@ -21,6 +22,7 @@ inputs:
           "roles": [
             "acme_creator", # narrows `acme_jr_admin`, which itself narrows `employee`
             "boss",
+            "organiser",
           ],
           "attr":
             {
@@ -89,6 +91,11 @@ wantOutputs:
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
               "scope": "acme.hr.uk.brighton"
             },
+          "party_plan":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+            },
         },
       "effectiveDerivedRoles":
         ["any_employee", "employee_that_owns_the_record"],
@@ -122,17 +129,16 @@ wantDecisionLogs:
                 "principal":
                   {
                     "id": "john",
-                    # "roles": ["employee", "acme_creator", "boss"],
-                    "roles": ["acme_creator", "boss"],
+                    "roles": ["acme_creator", "boss", "organiser"],
                     "attr":
                       {
                         "department": "marketing",
                         "geography": "GB",
-                        "ip_address": "10.20.0.13",
                         "team": "design",
+                        "ip_address": "10.20.0.13",
                       },
                   },
-                "actions": ["create", "delete", "view:public", "deny", "block", "defer"],
+                "actions": ["create", "delete", "view:public", "deny", "block", "defer", "party_plan"],
               },
             ],
           "outputs":
@@ -177,6 +183,11 @@ wantDecisionLogs:
                         "effect": "EFFECT_DENY",
                         "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
                         "scope": "acme.hr.uk.brighton"
+                      },
+                    "party_plan":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
                       },
                   },
                 "effectiveDerivedRoles":

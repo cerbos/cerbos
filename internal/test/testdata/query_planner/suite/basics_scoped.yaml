@@ -50,12 +50,12 @@ tests:
                   operator: eq
                   operands:
                     - variable: request.resource.attr.status
-                    - value: PENDING_STATUS 
+                    - value: PENDING_STATUS
               - expression:
                   operator: eq
                   operands:
                     - variable: request.resource.attr.status
-                    - value: APPROVED 
+                    - value: APPROVED
     - action: debug
       resource:
         kind: x
