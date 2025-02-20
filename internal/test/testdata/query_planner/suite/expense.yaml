@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
 ---
-description: Role policies tax return tests for x003
+description: Scope value used in expressions
 principal:
   id: 25859a53-0b45-4fef-a932-65078e0a776c
   roles:
