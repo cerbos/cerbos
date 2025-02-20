@@ -472,6 +472,11 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 										result.Outputs = append(result.Outputs, output)
 										octx.ComputedOutput(output)
 									}
+
+									if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+										result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey, Scope: p.Scope})
+									}
+
 									continue
 								}
 

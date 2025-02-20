@@ -10,7 +10,8 @@ inputs:
         "delete", # ALLOW in target scope, no match is parent principal scopes or resource scopes
         "plan", # ALLOW in target scope, no match in parent principal scopes, match in resource policy scope
         "nonaction", # no match in target scope, no match in principal policies, match in resource policy scope
-        "acme_action" # no match in target scope, match in principal policies
+        "acme_action", # no match in target scope, match in principal policies
+        "duplicate"  # Matching rule but condition not satisfied in target scope, ALLOW in parent, still DENY
       ],
       "principal":
         {
@@ -59,6 +60,12 @@ wantOutputs:
               "policy": "principal.donald_duck.vdefault/acme.sales",
               "scope": "acme"
             },
+          "duplicate":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "principal.donald_duck.vdefault/acme.sales",
+              "scope": "acme.sales"
+            },
         }
     },
   ]
@@ -84,7 +91,7 @@ wantDecisionLogs:
                     "roles": ["employee"],
                     "scope": "acme.sales",
                   },
-                "actions": ["create", "delete", "plan", "nonaction", "acme_action"],
+                "actions": ["create", "delete", "plan", "nonaction", "acme_action", "duplicate"],
               },
             ],
           "outputs":
@@ -120,6 +127,12 @@ wantDecisionLogs:
                         "effect": "EFFECT_ALLOW",
                         "policy": "principal.donald_duck.vdefault/acme.sales",
                         "scope": "acme"
+                      },
+                    "duplicate":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "principal.donald_duck.vdefault/acme.sales",
+                        "scope": "acme.sales"
                       },
                   },
               },
