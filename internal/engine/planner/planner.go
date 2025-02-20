@@ -313,11 +313,10 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	var allowNode, denyNode *qpN
 	for _, role := range input.Principal.Roles {
 		var roleAllowNode, roleDenyNode *qpN
-		var scopePermissionsBoundaryOpen bool
+		var pendingAllow bool
 
 		parentRoles := ruleTable.GetParentRoles(input.Resource.Scope, []string{role})
 
-	scopesLoop:
 		for _, scope := range scopes {
 			var scopeAllowNode, scopeDenyNode *qpN
 
@@ -408,28 +407,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					}
 				}
 
-				effect := row.Effect
-				if row.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
-					row.Effect == effectv1.Effect_EFFECT_DENY && row.Condition != nil {
-					effect = effectv1.Effect_EFFECT_ALLOW
-
-					if lo, ok := node.Node.(*enginev1.PlanResourcesAst_Node_LogicalOperation); ok {
-						// No point NOT'ing a NOT. Therefore strip the existing NOT operator
-						if lo.LogicalOperation.Operator == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT {
-							nodes := lo.LogicalOperation.GetNodes()
-							switch len(nodes) {
-							case 1:
-								node = lo.LogicalOperation.GetNodes()[0]
-							default:
-								node = mkNodeFromLO(mkAndLogicalOperation(nodes))
-							}
-						}
-					} else {
-						node = invertNodeBooleanValue(node)
-					}
-				}
-
-				switch effect { //nolint:exhaustive
+				switch row.Effect { //nolint:exhaustive
 				case effectv1.Effect_EFFECT_ALLOW:
 					if scopeAllowNode == nil {
 						scopeAllowNode = node
@@ -445,21 +423,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 			}
 
-			if scopeAllowNode != nil { //nolint:nestif
-				if roleAllowNode == nil {
-					roleAllowNode = scopeAllowNode
-				} else {
-					var lo *enginev1.PlanResourcesAst_LogicalOperation
-					if scopePermissionsBoundaryOpen {
-						lo = mkAndLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
-						scopePermissionsBoundaryOpen = false
-					} else {
-						lo = mkOrLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
-					}
-					roleAllowNode = mkNodeFromLO(lo)
-				}
-			}
-
 			if scopeDenyNode != nil {
 				if roleDenyNode == nil {
 					roleDenyNode = scopeDenyNode
@@ -468,23 +431,35 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 			}
 
-			if scopeDenyNode != nil {
-				result.Scope = scope
-				break scopesLoop
-			} else if scopeAllowNode != nil {
-				switch ruleTable.GetScopeScopePermissions(scope) { //nolint:exhaustive
-				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-					scopePermissionsBoundaryOpen = true
-				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
-					result.Scope = scope
-					break scopesLoop
+			if scopeAllowNode != nil { //nolint:nestif
+				if roleAllowNode == nil {
+					roleAllowNode = scopeAllowNode
+				} else {
+					var lo *enginev1.PlanResourcesAst_LogicalOperation
+					if pendingAllow {
+						lo = mkAndLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
+						pendingAllow = false
+					} else {
+						lo = mkOrLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
+					}
+					roleAllowNode = mkNodeFromLO(lo)
 				}
+
+				if ruleTable.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+					pendingAllow = true
+				}
+			}
+
+			if (scopeDenyNode != nil || scopeAllowNode != nil) &&
+				ruleTable.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+				result.Scope = scope
+				break
 			}
 		}
 
 		// only an ALLOW from a scope with ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS exists with no
 		// matching rules in the parent scopes, therefore null the node
-		if scopePermissionsBoundaryOpen {
+		if pendingAllow {
 			roleAllowNode = nil
 		}
 
@@ -560,6 +535,19 @@ func mkTrueNode() *enginev1.PlanResourcesAst_Node {
 }
 
 func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
+	if lo, ok := node.Node.(*enginev1.PlanResourcesAst_Node_LogicalOperation); ok {
+		// No point NOT'ing a NOT. Therefore strip the existing NOT operator
+		if lo.LogicalOperation.Operator == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT {
+			nodes := lo.LogicalOperation.GetNodes()
+			switch len(nodes) {
+			case 1:
+				return lo.LogicalOperation.GetNodes()[0]
+			default:
+				return mkNodeFromLO(mkAndLogicalOperation(nodes))
+			}
+		}
+	}
+
 	lo := &enginev1.PlanResourcesAst_LogicalOperation{
 		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT,
 		Nodes:    []*enginev1.PlanResourcesAst_Node{node},
