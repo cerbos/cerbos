@@ -15,10 +15,10 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cerbos/cloud-api/base"
-	cloudapi "github.com/cerbos/cloud-api/bundle"
-	cloudapiv1 "github.com/cerbos/cloud-api/bundle/v1"
-	cloudapiv2 "github.com/cerbos/cloud-api/bundle/v2"
+	bundleapi "github.com/cerbos/cloud-api/bundle"
+	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
+	hubapi "github.com/cerbos/cloud-api/hub"
 	"github.com/spf13/afero"
 	"go.uber.org/zap"
 
@@ -46,121 +46,175 @@ var (
 	ErrOfflineModeNotAvailable = errors.New("offline mode is not available when bundle version is set to 2")
 )
 
-type CloudAPIClient interface {
-	BootstrapBundle(ctx context.Context, bundleLabel string) (string, []byte, error)
-	GetBundle(context.Context, string) (string, []byte, error)
-	GetCachedBundle(string) (string, error)
-	HubCredentials() *credentials.Credentials
-	WatchBundle(context.Context, string) (cloudapi.WatchHandle, error)
+type cloudAPIClient interface {
+	BootstrapBundle(context.Context) (string, []byte, error)
+	GetBundle(context.Context) (string, []byte, error)
+	GetCachedBundle() (string, error)
+	OpenCredentials() *credentials.Credentials
+	WatchBundle(context.Context) (bundleapi.WatchHandle, error)
 }
 
 type cloudAPIv1 struct {
-	client *cloudapiv1.Client
+	client      ClientV1
+	bundleLabel string
+	playground  bool
 }
 
-func (apiv1 *cloudAPIv1) BootstrapBundle(ctx context.Context, bundleLabel string) (string, []byte, error) {
-	path, err := apiv1.client.BootstrapBundle(ctx, bundleLabel)
+func (apiv1 *cloudAPIv1) BootstrapBundle(ctx context.Context) (string, []byte, error) {
+	if apiv1.playground {
+		return "", nil, bundleapi.ErrBootstrappingNotSupported
+	}
+
+	path, err := apiv1.client.BootstrapBundle(ctx, apiv1.bundleLabel)
 	return path, nil, err
 }
 
-func (apiv1 *cloudAPIv1) GetBundle(ctx context.Context, bundleLabel string) (string, []byte, error) {
-	path, err := apiv1.client.GetBundle(ctx, bundleLabel)
+func (apiv1 *cloudAPIv1) GetBundle(ctx context.Context) (string, []byte, error) {
+	path, err := apiv1.client.GetBundle(ctx, apiv1.bundleLabel)
 	return path, nil, err
 }
 
-func (apiv1 *cloudAPIv1) GetCachedBundle(bundleLabel string) (string, error) {
-	return apiv1.client.GetCachedBundle(bundleLabel)
+func (apiv1 *cloudAPIv1) GetCachedBundle() (string, error) {
+	return apiv1.client.GetCachedBundle(apiv1.bundleLabel)
 }
 
-func (apiv1 *cloudAPIv1) HubCredentials() *credentials.Credentials {
+func (apiv1 *cloudAPIv1) OpenCredentials() *credentials.Credentials {
+	if apiv1.playground {
+		return nil
+	}
 	return apiv1.client.HubCredentials()
 }
 
-func (apiv1 *cloudAPIv1) WatchBundle(ctx context.Context, bundleLabel string) (cloudapi.WatchHandle, error) {
-	return apiv1.client.WatchBundle(ctx, bundleLabel)
+func (apiv1 *cloudAPIv1) WatchBundle(ctx context.Context) (bundleapi.WatchHandle, error) {
+	return apiv1.client.WatchBundle(ctx, apiv1.bundleLabel)
 }
 
 type cloudAPIv2 struct {
-	client *cloudapiv2.Client
+	client ClientV2
+	source bundleapiv2.Source
 }
 
-func (apiv2 *cloudAPIv2) BootstrapBundle(ctx context.Context, bundleLabel string) (string, []byte, error) {
-	return apiv2.client.BootstrapBundle(ctx, bundleLabel)
+func (apiv2 *cloudAPIv2) BootstrapBundle(ctx context.Context) (string, []byte, error) {
+	return apiv2.client.BootstrapBundle(ctx, apiv2.source)
 }
 
-func (apiv2 *cloudAPIv2) GetBundle(ctx context.Context, bundleLabel string) (string, []byte, error) {
-	return apiv2.client.GetBundle(ctx, bundleLabel)
+func (apiv2 *cloudAPIv2) GetBundle(ctx context.Context) (string, []byte, error) {
+	return apiv2.client.GetBundle(ctx, apiv2.source)
 }
 
-func (apiv2 *cloudAPIv2) GetCachedBundle(bundleLabel string) (string, error) {
-	return apiv2.client.GetCachedBundle(bundleLabel)
+func (apiv2 *cloudAPIv2) GetCachedBundle() (string, error) {
+	return apiv2.client.GetCachedBundle(apiv2.source)
 }
 
-func (apiv2 *cloudAPIv2) HubCredentials() *credentials.Credentials {
-	return apiv2.client.HubCredentials()
+func (apiv2 *cloudAPIv2) OpenCredentials() *credentials.Credentials {
+	return nil
 }
 
-func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context, bundleLabel string) (cloudapi.WatchHandle, error) {
-	return apiv2.client.WatchBundle(ctx, bundleLabel)
+func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context) (bundleapi.WatchHandle, error) {
+	return apiv2.client.WatchBundle(ctx, apiv2.source)
 }
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	log        *zap.Logger
-	conf       *Conf
-	bundle     *Bundle
-	scratchFS  afero.Fs
-	client     CloudAPIClient
-	mu         sync.RWMutex
-	healthy    bool
-	playground bool
+	log       *zap.Logger
+	conf      *Conf
+	hub       ClientProvider
+	bundle    *Bundle
+	scratchFS afero.Fs
+	client    cloudAPIClient
+	mu        sync.RWMutex
+	healthy   bool
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
+	hubInstance, err := hub.Get()
+	if err != nil {
+		return nil, fmt.Errorf("failed to establish Cerbos Hub connection: %w", err)
+	}
+
+	return NewRemoteSourceWithHub(conf, hubClientProvider{Hub: hubInstance})
+}
+
+type ClientProvider interface {
+	V1(bundleapi.ClientConf) (ClientV1, error)
+	V2(bundleapi.ClientConf) (ClientV2, error)
+}
+
+type hubClientProvider struct {
+	*hubapi.Hub
+}
+
+func (h hubClientProvider) V1(conf bundleapi.ClientConf) (ClientV1, error) {
+	return h.Hub.BundleClient(conf)
+}
+
+func (h hubClientProvider) V2(conf bundleapi.ClientConf) (ClientV2, error) {
+	return h.Hub.BundleClientV2(conf)
+}
+
+type ClientV1 interface {
+	HubCredentials() *credentials.Credentials
+	BootstrapBundle(context.Context, string) (string, error)
+	GetBundle(context.Context, string) (string, error)
+	GetCachedBundle(string) (string, error)
+	WatchBundle(context.Context, string) (bundleapi.WatchHandle, error)
+}
+
+type ClientV2 interface {
+	BootstrapBundle(context.Context, bundleapiv2.Source) (string, []byte, error)
+	GetBundle(context.Context, bundleapiv2.Source) (string, []byte, error)
+	GetCachedBundle(bundleapiv2.Source) (string, error)
+	WatchBundle(context.Context, bundleapiv2.Source) (bundleapi.WatchHandle, error)
+}
+
+func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, error) {
 	return &RemoteSource{
-		conf:       conf,
-		healthy:    false,
-		playground: playgroundLabelPattern.MatchString(conf.Remote.BundleLabel),
-		log:        zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel)),
-		scratchFS:  afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
+		conf:      conf,
+		hub:       hub,
+		healthy:   false,
+		log:       zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel)),
+		scratchFS: afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
 	}, nil
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
-	hubInstance, err := hub.Get()
-	if err != nil {
-		return fmt.Errorf("failed to establish Cerbos Hub connection: %w", err)
-	}
-
-	clientConf := cloudapi.ClientConf{
+	clientConf := bundleapi.ClientConf{
 		CacheDir: s.conf.Remote.CacheDir,
 		TempDir:  s.conf.Remote.TempDir,
 	}
-	var client CloudAPIClient
+
 	switch s.conf.BundleVersion {
-	case cloudapi.Version1:
-		clientv1, err := hubInstance.BundleClient(clientConf)
+	case bundleapi.Version1:
+		clientv1, err := s.hub.V1(clientConf)
 		if err != nil {
 			return fmt.Errorf("failed to create API client v1: %w", err)
 		}
 
-		client = &cloudAPIv1{client: clientv1}
-	case cloudapi.Version2:
-		clientv2, err := hubInstance.BundleClientV2(clientConf)
+		s.client = &cloudAPIv1{
+			client:      clientv1,
+			bundleLabel: s.conf.Remote.BundleLabel,
+			playground:  playgroundLabelPattern.MatchString(s.conf.Remote.BundleLabel),
+		}
+	case bundleapi.Version2:
+		clientv2, err := s.hub.V2(clientConf)
 		if err != nil {
 			return fmt.Errorf("failed to create API client v2: %w", err)
 		}
 
-		client = &cloudAPIv2{client: clientv2}
+		var source bundleapiv2.Source
+		switch {
+		case s.conf.Remote.DeploymentID != "":
+			source = bundleapiv2.DeploymentID(s.conf.Remote.DeploymentID)
+		case s.conf.Remote.PlaygroundID != "":
+			source = bundleapiv2.PlaygroundID(s.conf.Remote.PlaygroundID)
+		default:
+			return errors.New("no bundle source configured")
+		}
+
+		s.client = &cloudAPIv2{client: clientv2, source: source}
 	default:
 		return fmt.Errorf("unsupported bundle version: %d", s.conf.BundleVersion)
 	}
-
-	return s.InitWithClient(ctx, client)
-}
-
-func (s *RemoteSource) InitWithClient(ctx context.Context, client CloudAPIClient) error {
-	s.client = client
 
 	// Ideally we want to be able to automatically switch between online and offline modes.
 	// That logic is complicated to implement and test in the little time we have. There are open questions
@@ -170,7 +224,7 @@ func (s *RemoteSource) InitWithClient(ctx context.Context, client CloudAPIClient
 	// TODO(cell): Implement automatic online/offline mode
 	// TODO(oguzhan): Get rid of offline mode when we no longer support bundle.Version1.
 	if shouldWorkOffline() {
-		if s.conf.BundleVersion == cloudapi.Version2 {
+		if s.conf.BundleVersion == bundleapi.Version2 {
 			return ErrOfflineModeNotAvailable
 		}
 
@@ -208,19 +262,21 @@ func shouldWorkOffline() bool {
 }
 
 func (s *RemoteSource) fetchBundle(ctx context.Context) error {
-	if !s.playground {
-		s.log.Info("Fetching bootstrap bundle")
-		bdlPath, encryptionKey, err := s.client.BootstrapBundle(ctx, s.conf.Remote.BundleLabel)
-		if err == nil {
-			s.log.Debug("Using bootstrap bundle")
-			return s.swapBundle(bdlPath, encryptionKey)
-		}
+	s.log.Info("Fetching bootstrap bundle")
+	bdlPath, encryptionKey, err := s.client.BootstrapBundle(ctx)
+	if err == nil {
+		s.log.Debug("Using bootstrap bundle")
+		return s.swapBundle(bdlPath, encryptionKey)
+	}
 
+	if errors.Is(err, bundleapi.ErrBootstrappingNotSupported) {
+		s.log.Info("Skipped fetching bootstrap bundle", zap.Error(err))
+	} else {
 		s.log.Warn("Failed to fetch bootstrap bundle", zap.Error(err))
 	}
 
 	s.log.Info("Fetching bundle from the API")
-	bdlPath, encryptionKey, err := s.client.GetBundle(ctx, s.conf.Remote.BundleLabel)
+	bdlPath, encryptionKey, err = s.client.GetBundle(ctx)
 	if err != nil {
 		s.log.Error("Failed to fetch bundle using the API", zap.Error(err))
 		metrics.Inc(ctx, metrics.BundleFetchErrorsCount())
@@ -234,7 +290,7 @@ func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 func (s *RemoteSource) fetchBundleOffline() error {
 	// TODO(oguzhan): Get rid of offline mode when we no longer support bundle.Version1.
 	s.log.Info("Looking for cached bundle")
-	bdlPath, err := s.client.GetCachedBundle(s.conf.Remote.BundleLabel)
+	bdlPath, err := s.client.GetCachedBundle()
 	if err != nil {
 		s.log.Error("Failed to find cached bundle", zap.Error(err))
 		return fmt.Errorf("failed to find cached bundle: %w", err)
@@ -260,29 +316,23 @@ func (s *RemoteSource) removeBundle(healthy bool) {
 func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte) error {
 	s.log.Debug("Swapping bundle", zap.String("path", bundlePath))
 	opts := OpenOpts{
-		Source:     "remote",
-		BundlePath: bundlePath,
-		ScratchFS:  s.scratchFS,
-		CacheSize:  s.conf.CacheSize,
+		Source:        "remote",
+		BundlePath:    bundlePath,
+		Credentials:   s.client.OpenCredentials(),
+		EncryptionKey: encryptionKey,
+		ScratchFS:     s.scratchFS,
+		CacheSize:     s.conf.CacheSize,
 	}
 
 	var bundle *Bundle
 	var err error
 	switch s.conf.BundleVersion {
-	case cloudapi.Version1:
-		if !s.playground {
-			opts.Credentials = s.client.HubCredentials()
-		}
-
+	case bundleapi.Version1:
 		if bundle, err = Open(opts); err != nil {
 			s.log.Error("Failed to open bundle", zap.Error(err))
 			return fmt.Errorf("failed to open bundle: %w", err)
 		}
-	case cloudapi.Version2:
-		if !s.playground {
-			opts.EncryptionKey = encryptionKey
-		}
-
+	case bundleapi.Version2:
 		if bundle, err = OpenV2(opts); err != nil {
 			s.log.Error("Failed to open bundle v2", zap.Error(err))
 			return fmt.Errorf("failed to open bundle v2: %w", err)
@@ -309,22 +359,22 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte) error
 	return nil
 }
 
-func (s *RemoteSource) activeBundleVersion() string {
+func (s *RemoteSource) activeBundleID() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	if s.bundle == nil || s.bundle.manifest == nil || s.bundle.manifest.Meta == nil {
-		return cloudapi.BundleIDUnknown
+		return bundleapi.BundleIDUnknown
 	}
 
-	return s.bundle.manifest.Meta.Identifier
+	return s.bundle.manifest.Meta.BundleId
 }
 
 func (s *RemoteSource) startWatchLoop(ctx context.Context, noBundleBackoff backoff.BackOff) {
 	s.log.Info("Starting watch")
 	wait, err := s.startWatch(ctx)
 	if err != nil {
-		if !errors.Is(err, cloudapi.ErrBundleNotFound) {
+		if !errors.Is(err, bundleapi.ErrBundleNotFound) {
 			s.log.Warn("Terminating bundle watch", zap.Error(err))
 			metrics.Add(ctx, metrics.HubConnected(), -1)
 			return
@@ -371,9 +421,9 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 	b.MaxElapsedTime = 0 // Retry indefinitely
 	backoffCtx := backoff.WithContext(b, ctx)
 
-	var watchHandle cloudapi.WatchHandle
+	var watchHandle bundleapi.WatchHandle
 	op := func() (err error) {
-		watchHandle, err = s.client.WatchBundle(ctx, s.conf.Remote.BundleLabel)
+		watchHandle, err = s.client.WatchBundle(ctx)
 		if err != nil {
 			s.mu.Lock()
 			s.healthy = false
@@ -415,37 +465,37 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 			}
 
 			switch evt.Kind {
-			case cloudapi.ServerEventError:
+			case bundleapi.ServerEventError:
 				incEventMetric("error")
-				if errors.Is(evt.Error, cloudapi.ErrBundleNotFound) {
+				if errors.Is(evt.Error, bundleapi.ErrBundleNotFound) {
 					s.log.Error("Bundle label does not exist", zap.Error(evt.Error))
 					s.removeBundle(true)
-					if err := watchHandle.ActiveBundleChanged(cloudapi.BundleIDOrphaned); err != nil {
+					if err := watchHandle.ActiveBundleChanged(bundleapi.BundleIDOrphaned); err != nil {
 						s.log.Warn("Failed to notify server about orphaned bundle", zap.Error(err))
 					}
 
-					return 0, cloudapi.ErrBundleNotFound
+					return 0, bundleapi.ErrBundleNotFound
 				}
 
 				s.log.Warn("Restarting watch", zap.Error(evt.Error))
 				return 0, nil
-			case cloudapi.ServerEventReconnect:
+			case bundleapi.ServerEventReconnect:
 				incEventMetric("reconnect")
 				s.log.Debug(fmt.Sprintf("Server requests reconnect in %s", evt.ReconnectBackoff))
 				return evt.ReconnectBackoff, nil
-			case cloudapi.ServerEventBundleRemoved:
+			case bundleapi.ServerEventBundleRemoved:
 				incEventMetric("bundle_removed")
 				s.log.Warn("Bundle label no longer exists")
 				s.removeBundle(true)
-				if err := watchHandle.ActiveBundleChanged(cloudapi.BundleIDOrphaned); err != nil {
+				if err := watchHandle.ActiveBundleChanged(bundleapi.BundleIDOrphaned); err != nil {
 					s.log.Warn("Failed to notify server about bundle swap", zap.Error(err))
 				}
-			case cloudapi.ServerEventNewBundle:
+			case bundleapi.ServerEventNewBundle:
 				incEventMetric("bundle_update")
 				if err := s.swapBundle(evt.NewBundlePath, evt.EncryptionKey); err != nil {
 					s.log.Warn("Failed to swap bundle", zap.Error(err))
 				} else {
-					if err := watchHandle.ActiveBundleChanged(s.activeBundleVersion()); err != nil {
+					if err := watchHandle.ActiveBundleChanged(s.activeBundleID()); err != nil {
 						s.log.Warn("Failed to notify server about bundle swap", zap.Error(err))
 					}
 				}
