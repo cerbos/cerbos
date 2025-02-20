@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Role policies tax return tests for x003
+principal:
+  id: 25859a53-0b45-4fef-a932-65078e0a776c
+  roles:
+    - ADMIN
+  attr:
+    organizations:
+      - tailwind
+      - globalcorp
+tests:
+    - action: view
+      resource:
+        kind: expense
+        scope: tailwind
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_ALLOWED
