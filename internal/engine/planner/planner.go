@@ -757,6 +757,14 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 		ds = append(ds, decls.NewVar(s, decls.String))
 		knownVars[s] = request.Resource.GetKind()
 	}
+	for _, s := range conditions.ResourceFieldNames(conditions.CELScopeField) {
+		ds = append(ds, decls.NewVar(s, decls.String))
+		knownVars[s] = request.Resource.GetScope()
+	}
+	for _, s := range conditions.PrincipalFieldNames(conditions.CELScopeField) {
+		ds = append(ds, decls.NewVar(s, decls.String))
+		knownVars[s] = request.Principal.GetScope()
+	}
 	env, err = env.Extend(cel.Declarations(ds...))
 	if err != nil {
 		return nil, err
@@ -881,10 +889,12 @@ func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 			Id:    input.Principal.Id,
 			Roles: input.Principal.Roles,
 			Attr:  input.Principal.Attr,
+			Scope: input.Principal.Scope,
 		},
 		Resource: &enginev1.Request_Resource{
-			Kind: input.Resource.Kind,
-			Attr: input.Resource.Attr,
+			Kind:  input.Resource.Kind,
+			Attr:  input.Resource.Attr,
+			Scope: input.Resource.Scope,
 		},
 		AuxData: input.AuxData,
 	}

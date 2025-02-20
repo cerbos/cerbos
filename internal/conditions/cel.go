@@ -31,6 +31,7 @@ const (
 	CELGlobalsIdent      = "globals"
 	CELGlobalsAbbrev     = "G"
 	CELAttrField         = "attr"
+	CELScopeField        = "scope"
 )
 
 var (
@@ -124,6 +125,13 @@ func ResourceFieldNames(s string) []string {
 	return []string{
 		fmt.Sprintf("%s.%s", CELResourceAbbrev, s),     // R.<s>
 		fmt.Sprintf("%s.%s", Fqn(CELResourceField), s), // request.resource.<s>
+	}
+}
+
+func PrincipalFieldNames(s string) []string {
+	return []string{
+		fmt.Sprintf("%s.%s", CELPrincipalAbbrev, s),     // P.<s>
+		fmt.Sprintf("%s.%s", Fqn(CELPrincipalField), s), // request.principal.<s>
 	}
 }
 
