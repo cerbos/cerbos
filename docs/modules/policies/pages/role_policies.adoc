@@ -6,7 +6,9 @@ include::ROOT:partial$version-check.adoc[]
 
 WARNING: Role policies are still under development and should be considered unstable for production use cases.
 
-Role policies are ABAC policies in which you specify a number of resources; each with a set of allowable actions that the role can carry out on the resource. Optionally, a condition can also be set for each set of allowable actions. In the simple case, they allow you to author permissions from the view of an IdP role, rather than for a given resource.
+Role policies are ABAC policies in which you specify a number of resources, each with a set of allowable actions that the role can carry out on the resource. Optionally, a condition can also be specified for each set of allowable actions. In the simple case, they allow you to author permissions from the view of an IdP role, rather than for a given resource.
+
+Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, they specify **allowable actions**, which default to `ALLOW` unless restricted by conditions or parental constraints.
 
 Additionally, they allow you to create "custom roles" that exist within your system's boundaries. These roles can optionally define `parentRoles`, inheriting their permissions by default. A parent role can be either an arbitrary IdP role or another custom role within the system. Parent role resolution is recursive—if a custom role inherits from another custom role that also has parent roles, it inherits their permissions as well.
 
@@ -14,15 +16,19 @@ Additionally, they allow you to create "custom roles" that exist within your sys
 
 If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS` and specifies parent roles, it **inherits and restricts** their permissions. The policy can only define rules that are a subset of the parent role’s permissions—it cannot introduce any new rules beyond what the parent roles allow. This applies whether the parent role is another custom role within the same scope or a role with rules defined in a parent scope.
 
-The rules specified within the role policy constitute the **full** set of permissions for the role. If an action is not explicitly allowed for a given resource, it is implicitly denied. 
+All role policies within the same scope must use the same `scopePermissions` setting. If conflicting settings are detected, a build-time error will occur.
 
-== Scope Permissions: Override Parent 
+The rules specified within the role policy constitute the **full** set of permissions for the role. If an action is not explicitly allowed for a given resource, it is implicitly denied.
 
-If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT`, it **inherits** the permissions of its parent roles by default. 
+== Scope Permissions: Override Parent
 
-Additionally, the allowable actions do **not** define the complete set of permissions for the given resource-action combinations. If no matching rule is found, the evaluator will continue checking higher up the scope chain. 
+If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT`, it **inherits** the permissions of its parent roles by default.
 
-NOTE: See the xref:scope_permissions.adoc[scopePermissions documentation] for more details.
+Additionally, the allowable actions do **not** define the complete set of permissions for the given resource-action combinations. If no matching rule is found, the evaluator will continue checking higher up the scope hierarchy.
+
+However, if an action is **not explicitly allowed anywhere in the scope hierarchy**, it is implicitly denied.
+
+NOTE: See the xref:scope_permissions.adoc[scope permissions documentation] for more details.
 
 [source,yaml,linenums]
 ----
@@ -53,8 +59,9 @@ rolePolicy:
 <1> The role to which this policy applies.
 <2> Optional principal xref:scoped_policies.adoc[scope] for this policy.
 <3> The xref:scope_permissions.adoc[scope permissions] setting for this policy.
-<4> The list of parent roles that the custom role 
+<4> The list of parent roles that the custom role inherits.
 <5> The resource to which the following rule applies.
 <6> The list of allowable actions that the role can carry out on the given resource.
 <7> Wildcard actions are supported.
+<8> A condition that must be met for the action to be allowed.
 <9> Wildcard resources are also supported.

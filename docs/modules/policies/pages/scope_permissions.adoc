@@ -49,7 +49,7 @@ If an input does not match an explicit rule in a `REQUIRE_PARENTAL_CONSENT` poli
 
 == Policy-Specific Behaviour
 
-The behavior of `scopePermissions` differs depending on whether it is applied to **resource policies**, **principal policies**, or **role policies**.
+The behaviour of `scopePermissions` differs depending on whether it is applied to **resource policies**, **principal policies**, or **role policies**.
 
 === Resource & Principal Policies
 

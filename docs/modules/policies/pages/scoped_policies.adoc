@@ -31,7 +31,7 @@ resourcePolicy:
 <1> Scope definition
 <2> Scope permissions setting
 
-The value of `scope` is a dot-separated string where each dotted segment defines an ancestor. During policy evaluation, the Cerbos engine starts with the most specific scoped policy and moves up the hierarchy. The evaluation behavior depends on the `scopePermissions` setting:
+The value of `scope` is a dot-separated string where each dotted segment defines an ancestor. During policy evaluation, the Cerbos engine starts with the most specific scoped policy and moves up the hierarchy. The evaluation behaviour depends on the `scopePermissions` setting:
 
 - **`SCOPE_PERMISSIONS_OVERRIDE_PARENT`**: Evaluation progresses from the most specific to the least specific scope until all actions receive a decision.
 - **`SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`**: Policies at the leaf nodes cannot introduce new permissions beyond what their parents allow. Instead, they can only enforce stricter constraints.
@@ -86,7 +86,7 @@ image::decision_flow.png[]
 
 * The policy without any scope defined is always the base policy. It is used by default if a request does not specify any scope.
 * Scope permissions must be consistent within the same scope. If conflicting `scopePermissions` settings are detected in policies within a shared scope, a build-time error will occur.
-* Scope traversal behavior depends on `scopePermissions`:
+* Scope traversal behaviour depends on `scopePermissions`:
   - With `SCOPE_PERMISSIONS_OVERRIDE_PARENT`, the first policy to return a decision wins for each action.
   - With `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, leaf nodes can only **restrict** access and must conform to parent permissions.
 * There must be no gaps in the policy chain. For example, if you define a policy with scope `a.b.c`, then policies with scopes `a.b`, `a`, and no-scope should also exist in the policy repository.
