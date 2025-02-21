@@ -17,7 +17,9 @@ packages:
 
   github.com/cerbos/cerbos/internal/storage/hub:
     interfaces:
-      CloudAPIClient:
+      ClientProvider:
+      ClientV1:
+      ClientV2:
 
   github.com/cerbos/cerbos/internal/storage/index:
     interfaces:

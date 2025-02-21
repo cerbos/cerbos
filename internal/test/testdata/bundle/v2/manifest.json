@@ -45,7 +45,7 @@
     "resources/salary_record.json"
   ],
   "meta": {
-    "identifier": "NCX4NBNOUSOU9KHO",
+    "bundleId": "NCX4NBNOUSOU9KHO",
     "source": "/Users/oguzhan/github/oguzhand95/cerbos/internal/test/testdata/store"
   }
 }
