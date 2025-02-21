@@ -8,7 +8,7 @@ TIP: Scoped Policies are optional and are only evaluated if a "scope" is passed 
 
 NOTE: Policies can define "scopePermissions", which affects how rules are applied across scopes. See the xref:scope_permissions.adoc[scope permissions documentation] for more details.
 
-Scoped policies offer a way to model hierarchical relationships that regularly occur in many situations. Typically, the requirement is to have a base set of policies that can then be overridden for specific cases. For example, a multi-tenant SaaS system could have a standard set of access rules that can then be customized to suit the requirements of different tenants. Another example is a large organization that might want to have regional or departmental customizations to their global access rules.
+Scoped policies offer a way to model hierarchical relationships that regularly occur in many situations. Typically, the requirement is to have a base set of policies that can then be overridden for specific cases. For example, a multi-tenant SaaS system could have a standard set of access rules that can then be customised to suit the requirements of different tenants. Another example is a large organization that might want to have regional or departmental customisations to their global access rules.
 
 image::hierarchy.png[]
 
