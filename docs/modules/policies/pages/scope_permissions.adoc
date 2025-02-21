@@ -1,0 +1,80 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Scope Permissions
+
+include::ROOT:partial$version-check.adoc[]
+
+== Overview
+
+`scopePermissions` is a setting applied to all policies that impacts how rules are evaluated within a scope hierarchy. It defines whether policies in a given scope can **override** parent scope rules or whether they can only **restrict** the permissions granted by parent scopes.
+
+All policies within the same scope **must** use the same `scopePermissions` setting. If conflicting settings are detected within a shared scope, a build-time error will occur.
+
+There are two available settings:
+
+- `SCOPE_PERMISSIONS_OVERRIDE_PARENT`
+- `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`
+
+NOTE: By default, resource and principal policies use `SCOPE_PERMISSIONS_OVERRIDE_PARENT` unless explicitly set otherwise.
+
+IMPORTANT: Role policies require this field to be specified explicitly.
+
+== Scope Permissions: Override Parent
+
+`SCOPE_PERMISSIONS_OVERRIDE_PARENT` follows the pre-existing evaluation strategy. When this setting is applied, policies evaluate each action independently, progressing up the hierarchy for each action until a decision is reached.
+
+A child `OVERRIDE_PARENT` scope can **override** the behaviour of a parent if it has a matching rule for a given action. If no rule is found at the current scope for a specific action, evaluation continues up the hierarchy until a decision is made.
+
+=== Behaviour
+
+- Policies evaluate actions independently, resolving each action from the highest scope level up the chain until a decision is reached.
+- If an input matches a rule and optionally, its condition is met, we apply the effect of that rule.
+- If an input matches a rule but its condition is not met, or if no matching rule is found, evaluation continues up the hierarchy.
+
+== Scope Permissions: Require Parental Consent
+
+When a policy is configured with `scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, it **inherits and restricts** the permissions of parent scopes. Policies at this level must define rules within the maximum set of permissions allowed by parent policies—they cannot introduce new permissions that exceed what a parent scope already permits.
+
+Policies using this setting must be at the leaf nodes of the scope hierarchy, meaning there can only be a single optional layer of `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, with all scopes above it using `SCOPE_PERMISSIONS_OVERRIDE_PARENT`.
+
+If an input does not match an explicit rule in a `REQUIRE_PARENTAL_CONSENT` policy, it must continue up the scope hierarchy for evaluation. However, if a rule is matched but its condition is not met, the request is implicitly denied.
+
+=== Behaviour
+
+- Policies inherit permissions from parent scope policies but can only narrow them.
+- Any rules defined must be a subset of the permissions granted by parent policies.
+- If an input matches a rule but its condition is not met, an implicit DENY is issued.
+- If no matching rule is found, evaluation continues up the scope hierarchy.
+- This setting must only exist at the leaf nodes of a scope hierarchy.
+
+== Policy-Specific Behaviour
+
+The behavior of `scopePermissions` differs depending on whether it is applied to **resource policies**, **principal policies**, or **role policies**.
+
+=== Resource & Principal Policies
+
+For resource and principal policies with `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, permissions must be defined within the maximum set of `ALLOW` rules from parent policies. Policies at this level can override parent permissions, but **only within the limits already permitted by parent scopes**.
+
+- If an input is not matched, evaluation continues up the scope hierarchy.
+- If a rule is matched but its condition is not met, an implicit DENY is issued.
+- If a rule matches and the condition is met, evaluation continues to parent policies to verify that the action is also allowed at a higher level.
+
+In contrast, resource and principal policies with `SCOPE_PERMISSIONS_OVERRIDE_PARENT` behave as follows:
+
+- If an input matches a rule and its condition is met, the specified effect is applied (no need to check parents).
+- If a rule is matched but its condition is not met, or if a rule is not matched, evaluation continues up the hierarchy.
+
+=== Role Policies
+
+Role policies function differently because they do not use explicit `ALLOW` or `DENY` effects. Instead, they define a set of allowable actions, which default to `ALLOW`.
+
+For role policies with `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`:
+
+- If a matching resource-action pair is found and the condition is met, evaluation continues up in the parent scopes.
+- If a matching resource-action pair is found but the condition is not met, or if a resource-action pair is not defined, an implicit DENY is issued for the named role.
+- Other roles are evaluated independently—if one role allows an action while another denies it, the `ALLOW` takes precedence for that action.
+
+For role policies with `SCOPE_PERMISSIONS_OVERRIDE_PARENT`:
+
+- If a matching resource-action pair is found and the condition is met, an ALLOW is immediately issued.
+- If a matching resource-action pair is found but the condition is not met, or if a resource-action pair is not defined, evaluation continues up the hierarchy.
