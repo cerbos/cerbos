@@ -6,10 +6,12 @@ inputs:
     {
       "requestId": "test",
       "actions": [
-        "create", # exists, falls through, allow
-        "delete", # exists, falls through, no match
-        "nonaction", # doesn't exist, falls through, no match (even with matching rule in rule table)
-        "acme_action" # doesn't exist, falls through, match (implicit DENY)
+        "create", # ALLOW in target scope, ALLOW in parent
+        "delete", # ALLOW in target scope, no match is parent principal scopes or resource scopes
+        "plan", # ALLOW in target scope, no match in parent principal scopes, match in resource policy scope
+        "nonaction", # no match in target scope, no match in principal policies, match in resource policy scope
+        "acme_action", # no match in target scope, match in principal policies
+        "duplicate"  # Matching rule but condition not satisfied in target scope, ALLOW in parent, still DENY
       ],
       "principal":
         {
@@ -40,18 +42,28 @@ wantOutputs:
           "delete":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH"
+              "policy": "resource.calendar_entry.vdefault"
+            },
+          "plan":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.calendar_entry.vdefault",
             },
           "nonaction":
             {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.sales"
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.calendar_entry.vdefault",
             },
           "acme_action":
             {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.vdefault/acme.sales",
+              "scope": "acme"
+            },
+          "duplicate":
+            {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "policy": "principal.donald_duck.vdefault/acme.sales",
               "scope": "acme.sales"
             },
         }
@@ -79,7 +91,7 @@ wantDecisionLogs:
                     "roles": ["employee"],
                     "scope": "acme.sales",
                   },
-                "actions": ["create", "delete", "nonaction", "acme_action"],
+                "actions": ["create", "delete", "plan", "nonaction", "acme_action", "duplicate"],
               },
             ],
           "outputs":
@@ -98,18 +110,28 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH",
+                        "policy": "resource.calendar_entry.vdefault"
+                      },
+                    "plan":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.calendar_entry.vdefault",
                       },
                     "nonaction":
                       {
-                        "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.sales"
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.calendar_entry.vdefault",
                       },
                     "acme_action":
                       {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.vdefault/acme.sales",
+                        "scope": "acme"
+                      },
+                    "duplicate":
+                      {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "policy": "principal.donald_duck.vdefault/acme.sales",
                         "scope": "acme.sales"
                       },
                   },
@@ -142,6 +164,14 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "principal_policies/policy_02_acme.sales.yaml",
+                    },
+                },
+              "resource.calendar_entry.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_17.yaml",
                     },
                 },
             },

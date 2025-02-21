@@ -14,3 +14,12 @@ principalPolicy:
 
       - action: "delete"
         effect: EFFECT_ALLOW
+
+      - action: "plan"
+        effect: EFFECT_ALLOW
+
+      - action: "duplicate"
+        effect: EFFECT_ALLOW
+        condition:
+          match:
+            expr: P.attr.copy_cat == true

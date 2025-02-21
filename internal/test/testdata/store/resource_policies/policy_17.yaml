@@ -6,6 +6,7 @@ resourcePolicy:
   rules:
     - actions:
         - nonaction
+        - plan
       effect: EFFECT_ALLOW
       roles:
         - employee
