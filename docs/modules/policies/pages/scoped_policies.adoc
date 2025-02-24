@@ -31,11 +31,8 @@ resourcePolicy:
 <1> Scope definition
 <2> Scope permissions setting
 
-The value of `scope` is a dot-separated string where each dotted segment defines an ancestor. During policy evaluation, the Cerbos engine starts with the most specific scoped policy and moves up the hierarchy. The evaluation behaviour depends on the `scopePermissions` setting:
-
-- **`SCOPE_PERMISSIONS_OVERRIDE_PARENT`**: Evaluation progresses from the most specific to the least specific scope until all actions receive a decision.
-- **`SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`**: Policies at the leaf nodes cannot introduce new permissions beyond what their parents allow. Instead, they can only enforce stricter constraints.
-
+The value of `scope` is a dot-separated string where each dotted segment defines an ancestor. During policy evaluation, the Cerbos engine starts with the most specific scoped policy and moves up the hierarchy. 
+NOTE: The value of the `scopePermissions` field affects the policy evaluation behaviour. See xref:scope_permissions.adoc[scope permissions] for more information.
 For example, consider a policy with the scope `a.b.c`. The Cerbos engine could process up to four policies to arrive at the final decision:
 
 * scope `a.b.c`

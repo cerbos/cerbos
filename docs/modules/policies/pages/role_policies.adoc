@@ -10,17 +10,18 @@ Role policies are ABAC policies in which you specify a number of resources, each
 
 Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, they specify **allowable actions**, which default to `ALLOW` unless restricted by conditions or parental constraints.
 
-Additionally, they allow you to create "custom roles" that exist within your system's boundaries. These roles can optionally define `parentRoles`, inheriting their permissions by default. A parent role can be either an arbitrary IdP role or another custom role within the system. Parent role resolution is recursive—if a custom role inherits from another custom role that also has parent roles, it inherits their permissions as well.
+The name of a role policy is effectively a custom role within the context of Cerbos. A role policy (custom role) can optionally define `parentRoles`, inheriting their permissions by default. A parent role can be either an arbitrary IdP role or the name of another role policy within the system. Parent role resolution is recursive—if a custom role inherits from another custom role that also has parent roles, it inherits their permissions as well.
 
-== Scope Permissions: Require Parental Consent
+== Scope permissions
+=== SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
 
-If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS` and specifies parent roles, it **inherits and restricts** their permissions. The policy can only define rules that are a subset of the parent role’s permissions—it cannot introduce any new rules beyond what the parent roles allow. This applies whether the parent role is another custom role within the same scope or a role with rules defined in a parent scope.
+If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS` and specifies parent roles, it **inherits and restricts** their permissions. The policy can only define rules that are a strict subset of the parent role’s permissions and cannot introduce any extra rules beyond what the parent roles allow. They can immediately DENY an action but if they ALLOW an action, a parent policy higher up the scope chain must also ALLOW the same action. 
 
 All role policies within the same scope must use the same `scopePermissions` setting. If conflicting settings are detected, a build-time error will occur.
 
 The rules specified within the role policy constitute the **full** set of permissions for the role. If an action is not explicitly allowed for a given resource, it is implicitly denied.
 
-== Scope Permissions: Override Parent
+=== SCOPE_PERMISSIONS_OVERRIDE_PARENT
 
 If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT`, it **inherits** the permissions of its parent roles by default.
 
