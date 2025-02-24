@@ -29,10 +29,9 @@ This is the default evaluation strategy for scoped policies. Cerbos starts evalu
 
 When a policy is configured with `scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, it **inherits and restricts** the permissions of parent scopes. Policies at this level must define rules within the maximum set of permissions allowed by parent policies—they cannot introduce new permissions that exceed what a parent scope already permits.
 
-Policies using this setting must be at the leaf nodes of the scope hierarchy, meaning there can only be a single optional layer of `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, with all scopes above it using `SCOPE_PERMISSIONS_OVERRIDE_PARENT`.
+In this mode, an `ALLOW` rule that matches an action doesn't immediately generate an `ALLOW` decision. A parent policy higher up in the scope chain must also `ALLOW` that same action in order to produce a definitive decision. However, if a rule is matched but its condition is not met, the request is implicitly denied.
 
-If an input does not match an explicit rule in a `REQUIRE_PARENTAL_CONSENT` policy, it must continue up the scope hierarchy for evaluation. However, if a rule is matched but its condition is not met, the request is implicitly denied.
-
+IMPORTANT: Policies using this setting must be at the leaf nodes of the scope hierarchy, meaning there can only be a single optional layer of `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, with all scopes above it using `SCOPE_PERMISSIONS_OVERRIDE_PARENT`.
 
 == Policy-specific behaviour
 

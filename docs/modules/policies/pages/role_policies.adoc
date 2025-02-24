@@ -8,7 +8,7 @@ WARNING: Role policies are still under development and should be considered unst
 
 Role policies are ABAC policies in which you specify a number of resources, each with a set of allowable actions that the role can carry out on the resource. Optionally, a condition can also be specified for each set of allowable actions. In the simple case, they allow you to author permissions from the view of an IdP role, rather than for a given resource.
 
-Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, they specify **allowable actions**, which default to `ALLOW` unless restricted by conditions or parental constraints.
+Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, they specify **allowable actions**, an exhaustive list of resources and the actions allowed on those resources, with an optional condition. Any resource and action pair not defined in this list is immediately denied for that role. Allowable actions with conditions behave differently depending on the policy's `scopePermissions` setting. The section below details these behaviours.
 
 The name of a role policy is effectively a custom role within the context of Cerbos. A role policy (custom role) can optionally define `parentRoles`, inheriting their permissions by default. A parent role can be either an arbitrary IdP role or the name of another role policy within the system. Parent role resolution is recursive—if a custom role inherits from another custom role that also has parent roles, it inherits their permissions as well.
 
