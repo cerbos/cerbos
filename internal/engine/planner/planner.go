@@ -760,8 +760,7 @@ func (p *partialEvaluator) evalPartially(e celast.Expr) (ref.Val, celast.Expr, e
 	ast := celast.NewAST(e, nil)
 	val, details, err := conditions.Eval(p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
-		panic(err)
-		//return val, nil, err
+		return val, nil, err
 	}
 
 	residual, err := residualExpr(ast, details)

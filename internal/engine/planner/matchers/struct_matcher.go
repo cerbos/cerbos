@@ -5,6 +5,7 @@ package matchers
 
 import (
 	"errors"
+	"github.com/google/cel-go/common/types"
 	"sort"
 
 	celast "github.com/google/cel-go/common/ast"
@@ -133,8 +134,14 @@ func (s *structMatcher) Process(e celast.Expr) (bool, celast.Expr, error) {
 			entries = append(entries, entry{key: mapEntry.Key(), value: mapEntry.Value()})
 		}
 	}
+	// need to sort only to make the tests deterministic
 	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].key.ID() < entries[j].key.ID()
+		a, ok1 := entries[i].key.AsLiteral().(types.String)
+		b, ok2 := entries[j].key.AsLiteral().(types.String)
+		if !ok1 || !ok2 {
+			return false
+		}
+		return a < b
 	})
 	opts := make([]celast.Expr, 0, len(entries))
 	for _, item := range entries {
@@ -155,6 +162,7 @@ func (s *structMatcher) Process(e celast.Expr) (bool, celast.Expr, error) {
 	} else {
 		output = mkLogicalOr(opts)
 	}
+	internal.ZeroIDs(output)
 	output.RenumberIDs(internal.NewIDGen().Remap)
 	return true, output, nil
 }
