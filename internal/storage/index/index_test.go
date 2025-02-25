@@ -7,7 +7,6 @@
 package index_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -53,18 +52,18 @@ func TestIndexLoadPolicy(t *testing.T) {
 		base := test.PathToDir(t, path)
 		fsys, err := util.OpenDirectoryFS(base)
 		require.NoError(t, err)
-		idx, err := index.Build(context.Background(), fsys)
+		idx, err := index.Build(t.Context(), fsys)
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = idx.Close() })
 
 		t.Run("should load the policies", func(t *testing.T) {
-			policies, err := idx.LoadPolicy(context.Background(), policyFiles...)
+			policies, err := idx.LoadPolicy(t.Context(), policyFiles...)
 			require.NoError(t, err)
 			require.Len(t, policies, len(policyFiles))
 		})
 
 		t.Run("should have not empty metadata in the policies", func(t *testing.T) {
-			policies, err := idx.LoadPolicy(context.Background(), policyFiles...)
+			policies, err := idx.LoadPolicy(t.Context(), policyFiles...)
 			require.NoError(t, err)
 
 			for _, p := range policies {
@@ -73,7 +72,7 @@ func TestIndexLoadPolicy(t *testing.T) {
 		})
 
 		t.Run("should have the store identifier in the metadata of the policies", func(t *testing.T) {
-			policies, err := idx.LoadPolicy(context.Background(), policyFiles...)
+			policies, err := idx.LoadPolicy(t.Context(), policyFiles...)
 			require.NoError(t, err)
 
 			for idx, p := range policies {
@@ -82,7 +81,7 @@ func TestIndexLoadPolicy(t *testing.T) {
 		})
 
 		t.Run("should have the hash in the metadata of the policies", func(t *testing.T) {
-			policies, err := idx.LoadPolicy(context.Background(), policyFiles...)
+			policies, err := idx.LoadPolicy(t.Context(), policyFiles...)
 			require.NoError(t, err)
 
 			for _, p := range policies {
@@ -106,7 +105,7 @@ func TestIndexLoadPolicy(t *testing.T) {
 }
 
 func TestIndexListSchemaIDs(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	fsys := os.DirFS(test.PathToDir(t, "."))
 
 	idx, err := index.Build(ctx, fsys, index.WithRootDir("store"))
@@ -126,7 +125,7 @@ func TestIndexListSchemaIDs(t *testing.T) {
 func TestIndexGetFirstMatch(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	fsys := os.DirFS(test.PathToDir(t, "."))
 
 	idx, err := index.Build(ctx, fsys, index.WithRootDir("store"))
@@ -225,7 +224,7 @@ func TestIndexGetFirstMatch(t *testing.T) {
 }
 
 func TestIndexGetDependents(t *testing.T) {
-	idx, err := index.Build(context.Background(), os.DirFS(test.PathToDir(t, "store")))
+	idx, err := index.Build(t.Context(), os.DirFS(test.PathToDir(t, "store")))
 	require.NoError(t, err)
 
 	modID := namer.ExportVariablesModuleID("foobar")

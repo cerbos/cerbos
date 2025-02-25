@@ -26,7 +26,7 @@ func TestCloneResult(t *testing.T) {
 		t.Skip()
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	testCases := test.LoadTestCases(t, "blob_cloner")
 	for _, testMetadata := range testCases {
 		testCase := readTestCase(t, testMetadata.Input)

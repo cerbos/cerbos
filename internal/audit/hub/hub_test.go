@@ -319,7 +319,7 @@ func getLocalKeys(t *testing.T, db *hub.Log) [][]byte {
 func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	syncKeys := make([][]byte, numRecords)
 	for i := 0; i < (numRecords / 2); i++ {
 		ts := startDate.Add(time.Duration(i) * time.Second)

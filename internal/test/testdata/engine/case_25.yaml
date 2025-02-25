@@ -6,32 +6,30 @@ inputs:
     {
       "requestId": "test",
       "actions": [
-        "create", # matches `acme_creator` wildcard resource and parent scope rule with `employee` role
-        "delete", # not defined in leaf scope, is in parent scope for matching (narrowed) derived role
-        "view:public", # matches `acme_jr_admin` action wildcard and `employee_that_owns_the_record` in parent scope
-        "deny", # allowed in target scope, no matching actions in parent scopes
-        "redirect", # not allowed in target scope, but is in parent scope for "employee" which role policy recursively assumes
-                    # and therefore reduces permissions of
-        "block", # Not allowed in target scope, but is allowed in parent scope for role "boss" which role policy does NOT reduce
-                 # permissions of (passed explicitly rather than implicit parent of role policy)
-        "defer", # allowed in target scope resource policy, allowed in parent scope
-        "invite", # allowed in target scope resource policy, no match in parent scope
+        "create", # ALLOW for `acme_creator` wildcard. ALLOW in parent scope for `employee`.
+        "delete", # No match in target scope. ALLOW in parent scope for conditional rule for `employee_that_owns_the_record`.
+        "view:public", # No match for `acme_creator`. ALLOW for `acme_jr_admin` wildcard. ALLOW in parent scope for `employee_that_owns_the_record`.
+        "deny", # No match for `acme_creator`. ALLOW for `acme_jr_admin` which `acme_creator` narrows. No match in parent scope.
+        "block", # No match in target scope. BUT ALLOW in parent scope for role `boss` which no role policies narrow permissions of.
+        "defer", # ALLOW in resource policy for a role that `acme_creator` recursively narrows. However, because the named role is
+                 # defined in a role policy, it narrows the permissions of `employee` rather than assuming them, even if they share
+                 # the same scope. If the principal explicitly had the role `employee`, this would be allowed. 
+        "party_plan", # Rule with non-matching condition in target scope which implicitly DENYs (even with ALLOW in parent scope)
         ],
       "principal":
         {
           "id": "john",
           "roles": [
-            # "employee", # even though this is nested parent role of a referenced role policy, passing it explicitly means we can
-                        # evaluate it with more authority in the parent scopes. TODO(saml) this behaviour requires some thought
-            "acme_creator", # implicitly assumes `acme_jr_admin` as parent role, which itself has `employee` as a parent role
+            "acme_creator", # narrows `acme_jr_admin`, which itself narrows `employee`
             "boss",
+            "organiser",
           ],
           "attr":
             {
               "department": "marketing",
               "geography": "GB",
               "team": "design",
-              "ip_address": "10.21.0.13",
+              "ip_address": "10.20.0.13",
             },
         },
       "resource":
@@ -59,9 +57,9 @@ wantOutputs:
         {
           "view:public":
             {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-              "scope": "acme.hr",
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.brighton"
             },
           "delete":
             {
@@ -78,11 +76,6 @@ wantOutputs:
           "deny":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-            },
-          "redirect":
-            {
-              "effect": "EFFECT_DENY",
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
               "scope": "acme.hr.uk.brighton"
             },
@@ -94,11 +87,11 @@ wantOutputs:
             },
           "defer":
             {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-              "scope": "acme.hr.uk",
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "scope": "acme.hr.uk.brighton"
             },
-          "invite":
+          "party_plan":
             {
               "effect": "EFFECT_DENY",
               "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
@@ -136,17 +129,16 @@ wantDecisionLogs:
                 "principal":
                   {
                     "id": "john",
-                    # "roles": ["employee", "acme_creator", "boss"],
-                    "roles": ["acme_creator", "boss"],
+                    "roles": ["acme_creator", "boss", "organiser"],
                     "attr":
                       {
                         "department": "marketing",
                         "geography": "GB",
-                        "ip_address": "10.21.0.13",
                         "team": "design",
+                        "ip_address": "10.20.0.13",
                       },
                   },
-                "actions": ["create", "delete", "view:public", "deny", "redirect", "block", "defer", "invite"],
+                "actions": ["create", "delete", "view:public", "deny", "block", "defer", "party_plan"],
               },
             ],
           "outputs":
@@ -170,16 +162,11 @@ wantDecisionLogs:
                       },
                     "view:public":
                       {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-                        "scope": "acme.hr",
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.brighton"
                       },
                     "deny":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-                      },
-                    "redirect":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
@@ -193,11 +180,11 @@ wantDecisionLogs:
                       },
                     "defer":
                       {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-                        "scope": "acme.hr.uk",
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "scope": "acme.hr.uk.brighton"
                       },
-                    "invite":
+                    "party_plan":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
@@ -250,14 +237,6 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "resource_policies/policy_05_acme.hr.uk.brighton.yaml",
-                    },
-                },
-              "role.acme_jr_admin/acme.hr.uk.brighton":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_01_acme.hr.uk.brighton.yaml",
                     },
                 },
               "role.acme_creator/acme.hr.uk.brighton":

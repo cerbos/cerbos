@@ -288,18 +288,21 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	var validationErrors []*schemav1.ValidationError
 	if len(vr.Errors) > 0 {
 		validationErrors = vr.Errors.SchemaErrors()
+		result.ValidationErrors = validationErrors
 
 		if vr.Reject {
-			result.ValidationErrors = validationErrors
 			result.add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
 			return result, nil
 		}
 	}
 
-	allRoles := ruleTable.GetParentRoles(input.Principal.Roles)
+	allRoles := ruleTable.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 
 	// Filter down to matching roles and action
-	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
+	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, allRoles, []string{input.Action})
+	if len(candidateRows) == 0 {
+		return result, nil
+	}
 
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
@@ -311,26 +314,12 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	var allowNode, denyNode *qpN
 	for _, role := range input.Principal.Roles {
 		var roleAllowNode, roleDenyNode *qpN
-		var scopePermissionsBoundaryOpen bool
+		var pendingAllow bool
 
-		parentRoles := ruleTable.GetParentRoles([]string{role})
+		parentRoles := ruleTable.GetParentRoles(input.Resource.Scope, []string{role})
 
-	scopesLoop:
 		for _, scope := range scopes {
 			var scopeAllowNode, scopeDenyNode *qpN
-
-			var scopedRoleExists bool
-			for _, r := range parentRoles {
-				if ruleTable.ScopedRoleExists(policyVersion, scope, r) {
-					scopedRoleExists = true
-					break
-				}
-			}
-			if !scopedRoleExists {
-				// the role doesn't exist in this scope for any actions, so continue.
-				// this prevents an implicit DENY from incorrectly narrowing an independent role
-				continue
-			}
 
 			derivedRolesList := mkDerivedRolesList(nil)
 			if c, ok := scopedDerivedRolesList[scope]; ok { //nolint:nestif
@@ -435,21 +424,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 			}
 
-			if scopeAllowNode != nil { //nolint:nestif
-				if roleAllowNode == nil {
-					roleAllowNode = scopeAllowNode
-				} else {
-					var lo *enginev1.PlanResourcesAst_LogicalOperation
-					if scopePermissionsBoundaryOpen {
-						lo = mkAndLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
-						scopePermissionsBoundaryOpen = false
-					} else {
-						lo = mkOrLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
-					}
-					roleAllowNode = mkNodeFromLO(lo)
-				}
-			}
-
 			if scopeDenyNode != nil {
 				if roleDenyNode == nil {
 					roleDenyNode = scopeDenyNode
@@ -458,25 +432,35 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 			}
 
-			switch ruleTable.GetScopeScopePermissions(scope) { //nolint:exhaustive
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-				if scopeAllowNode == nil && scopeDenyNode == nil {
-					roleDenyNode = mkTrueNode()
-					break scopesLoop
-				} else if scopeAllowNode != nil && scopeDenyNode == nil {
-					scopePermissionsBoundaryOpen = true
+			if scopeAllowNode != nil { //nolint:nestif
+				if roleAllowNode == nil {
+					roleAllowNode = scopeAllowNode
+				} else {
+					var lo *enginev1.PlanResourcesAst_LogicalOperation
+					if pendingAllow {
+						lo = mkAndLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
+						pendingAllow = false
+					} else {
+						lo = mkOrLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
+					}
+					roleAllowNode = mkNodeFromLO(lo)
 				}
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
-				if scopeAllowNode != nil || scopeDenyNode != nil {
-					result.Scope = scope
-					break scopesLoop
+
+				if ruleTable.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+					pendingAllow = true
 				}
+			}
+
+			if (scopeDenyNode != nil || scopeAllowNode != nil) &&
+				ruleTable.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+				result.Scope = scope
+				break
 			}
 		}
 
 		// only an ALLOW from a scope with ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS exists with no
 		// matching rules in the parent scopes, therefore null the node
-		if scopePermissionsBoundaryOpen {
+		if pendingAllow {
 			roleAllowNode = nil
 		}
 
@@ -504,7 +488,6 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		result.add(denyNode, effectv1.Effect_EFFECT_DENY)
 	}
 
-	result.ValidationErrors = validationErrors
 	return result, nil
 }
 
@@ -553,6 +536,19 @@ func mkTrueNode() *enginev1.PlanResourcesAst_Node {
 }
 
 func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
+	if lo, ok := node.Node.(*enginev1.PlanResourcesAst_Node_LogicalOperation); ok {
+		// No point NOT'ing a NOT. Therefore strip the existing NOT operator
+		if lo.LogicalOperation.Operator == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT {
+			nodes := lo.LogicalOperation.GetNodes()
+			switch len(nodes) {
+			case 1:
+				return lo.LogicalOperation.GetNodes()[0]
+			default:
+				return mkNodeFromLO(mkAndLogicalOperation(nodes))
+			}
+		}
+	}
+
 	lo := &enginev1.PlanResourcesAst_LogicalOperation{
 		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT,
 		Nodes:    []*enginev1.PlanResourcesAst_Node{node},
@@ -803,6 +799,14 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 		ds = append(ds, decls.NewVar(s, decls.String))
 		knownVars[s] = request.Resource.GetKind()
 	}
+	for _, s := range conditions.ResourceFieldNames(conditions.CELScopeField) {
+		ds = append(ds, decls.NewVar(s, decls.String))
+		knownVars[s] = request.Resource.GetScope()
+	}
+	for _, s := range conditions.PrincipalFieldNames(conditions.CELScopeField) {
+		ds = append(ds, decls.NewVar(s, decls.String))
+		knownVars[s] = request.Principal.GetScope()
+	}
 	env, err = env.Extend(cel.Declarations(ds...))
 	if err != nil {
 		return nil, err
@@ -992,10 +996,12 @@ func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 			Id:    input.Principal.Id,
 			Roles: input.Principal.Roles,
 			Attr:  input.Principal.Attr,
+			Scope: input.Principal.Scope,
 		},
 		Resource: &enginev1.Request_Resource{
-			Kind: input.Resource.Kind,
-			Attr: input.Resource.Attr,
+			Kind:  input.Resource.Kind,
+			Attr:  input.Resource.Attr,
+			Scope: input.Resource.Scope,
 		},
 		AuxData: input.AuxData,
 	}

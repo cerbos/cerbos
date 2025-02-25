@@ -101,10 +101,6 @@ func NewPrincipalPolicyEvaluator(pps *runtimev1.RunnablePrincipalPolicySet, epar
 }
 
 func NewRuleTableEvaluator(rt *ruletable.RuleTable, schemaMgr schema.Manager, eparams evalParams) Evaluator {
-	if rt.Len() == 0 {
-		return noopEvaluator{}
-	}
-
 	return &ruleTableEvaluator{
 		RuleTable:  rt,
 		schemaMgr:  schemaMgr,
@@ -180,14 +176,14 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 		return result, nil
 	}
 
-	allRoles := rte.GetParentRoles(input.Principal.Roles)
+	allRoles := rte.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
 	}
 
 	// Filter down to matching roles and actions
-	candidateRows := rte.GetRows(version, sanitizedResource, scopes, allRoles, actionsToResolve)
+	candidateRows := rte.GetRows(version, sanitizedResource, scopes, input.Principal.Roles, allRoles, actionsToResolve)
 
 	varCache := make(map[string]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
@@ -208,7 +204,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				Policy: policyKey,
 			}
 
-			parentRoles := rte.GetParentRoles([]string{role})
+			parentRoles := rte.GetParentRoles(input.Resource.Scope, []string{role})
 
 		scopesLoop:
 			for _, scope := range scopes {
@@ -258,20 +254,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 				if roleEffectInfo.Effect != effectv1.Effect_EFFECT_NO_MATCH {
 					break
-				}
-
-				var scopedRoleExists bool
-				for _, r := range parentRoles {
-					if rte.ScopedRoleExists(version, scope, r) {
-						scopedRoleExists = true
-						break
-					}
-				}
-				if !scopedRoleExists {
-					// the role doesn't exist in this scope for any actions, so continue.
-					// this prevents an implicit DENY from incorrectly narrowing an independent role
-					sctx.Skipped(nil, "No matching rules")
-					continue
 				}
 
 				for _, row := range candidateRows {
@@ -345,6 +327,10 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 					if satisfiesCondition { //nolint:nestif
 						roleEffectSet[row.Effect] = struct{}{}
+						if row.NoMatchForScopePermissions {
+							roleEffectInfo.Policy = noMatchScopePermissions
+							roleEffectInfo.Scope = scope
+						}
 
 						var outputExpr *exprpb.CheckedExpr
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
@@ -374,28 +360,16 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 				}
 
-				switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive
-				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-					if len(roleEffectSet) == 0 {
-						roleEffectInfo = EffectInfo{
-							Effect: effectv1.Effect_EFFECT_DENY,
-							Policy: noMatchScopePermissions,
-							Scope:  scope,
-						}
-					}
-
-					delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
-				case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
-					if len(roleEffectSet) > 0 {
+				if _, hasDeny := roleEffectSet[effectv1.Effect_EFFECT_DENY]; hasDeny {
+					roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
+					break scopesLoop
+				} else if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow {
+					switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive
+					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
+						delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
+					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
+						roleEffectInfo.Effect = effectv1.Effect_EFFECT_ALLOW
 						roleEffectInfo.Scope = scope
-
-						if _, ok := roleEffectSet[effectv1.Effect_EFFECT_DENY]; ok {
-							roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
-						} else {
-							roleEffectInfo.Effect = effectv1.Effect_EFFECT_ALLOW
-						}
-
-						// explicit ALLOW or DENY for this role, so we can exit the loop
 						break scopesLoop
 					}
 				}
@@ -406,10 +380,15 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 				actionEffectInfo = roleEffectInfo
 			}
 
-			// Finalise and return the first independent ALLOW, if present
 			if roleEffectInfo.Effect == effectv1.Effect_EFFECT_ALLOW {
+				// Finalise and return the first independent ALLOW
 				actionEffectInfo = roleEffectInfo
 				break
+			} else if roleEffectInfo.Effect == effectv1.Effect_EFFECT_DENY &&
+				actionEffectInfo.Policy == noMatchScopePermissions &&
+				roleEffectInfo.Policy != noMatchScopePermissions {
+				// Override `noMatchScopePermissions` DENYs with explicit ones for clarity
+				actionEffectInfo = roleEffectInfo
 			}
 		}
 
@@ -437,6 +416,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 		evalCtx := newEvalContext(ppe.evalParams, checkInputToRequest(input))
 		trail := newAuditTrail(ppe.policy.GetMeta().GetSourceAttributes())
 		result := newEvalResult(input.Actions, trail)
+
+		implicitlyAllowedActions := make(map[string]struct{})
 
 		pctx := tctx.StartPolicy(ppe.policy.Meta.Fqn)
 		for _, p := range ppe.policy.Policies {
@@ -468,7 +449,6 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 							continue
 						}
 
-					outer:
 						for _, rule := range resourceRules.ActionRules {
 							matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 							ruleActivated := false
@@ -492,11 +472,16 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 										result.Outputs = append(result.Outputs, output)
 										octx.ComputedOutput(output)
 									}
+
+									if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+										result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey, Scope: p.Scope})
+									}
+
 									continue
 								}
 
 								if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && rule.Effect == effectv1.Effect_EFFECT_ALLOW {
-									continue outer
+									continue
 								}
 
 								result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
@@ -526,11 +511,21 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 						}
 					}
 				})
+
 				return nil
 			})
 			if err != nil {
 				return nil, err
 			}
+		}
+
+		// Any remaining `implicitlyAllowedActions` had a matching `ALLOW` in the `REQUIRES_PARENTAL_CONSENT` scope but
+		// no matching rule in the parent scopes, therefore we issue a `DENY`.
+		for action := range implicitlyAllowedActions {
+			result.setEffect(action, EffectInfo{
+				Effect: effectv1.Effect_EFFECT_DENY,
+				Policy: noPolicyMatch,
+			})
 		}
 
 		return result, nil

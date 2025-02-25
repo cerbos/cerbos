@@ -46,18 +46,17 @@ type testParam struct {
 	store        storage.Store
 	policyLoader policyloader.PolicyLoader
 	schemaMgr    schema.Manager
-	ruletable    *ruletable.RuleTable
 }
 
 type testParamGen func(*testing.T) testParam
 
 func TestServer(t *testing.T) {
-	logging.InitLogging(context.Background(), "ERROR")
+	logging.InitLogging(t.Context(), "ERROR")
 
 	t.Run("store=disk", func(t *testing.T) {
 		tpg := func(t *testing.T) testParam {
 			t.Helper()
-			ctx, cancelFunc := context.WithCancel(context.Background())
+			ctx, cancelFunc := context.WithCancel(t.Context())
 			t.Cleanup(cancelFunc)
 
 			dir := test.PathToDir(t, "store")
@@ -67,19 +66,10 @@ func TestServer(t *testing.T) {
 			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 			policyLoader := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
-			rt := ruletable.NewRuleTable().WithPolicyLoader(policyLoader)
-
-			rps, err := policyLoader.GetAll(ctx)
-			require.NoError(t, err, "Failed to get all policies")
-
-			err = rt.LoadPolicies(rps)
-			require.NoError(t, err, "Failed to load policies into rule table")
-
 			tp := testParam{
 				store:        store,
 				policyLoader: policyLoader,
 				schemaMgr:    schemaMgr,
-				ruletable:    rt,
 			}
 			return tp
 		}
@@ -91,7 +81,7 @@ func TestServer(t *testing.T) {
 		tpg := func(version bundle.Version) func(t *testing.T) testParam {
 			return func(t *testing.T) testParam {
 				t.Helper()
-				ctx, cancelFunc := context.WithCancel(context.Background())
+				ctx, cancelFunc := context.WithCancel(t.Context())
 				t.Cleanup(cancelFunc)
 
 				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", version)))
@@ -122,20 +112,11 @@ func TestServer(t *testing.T) {
 				store, err := hubstore.NewStore(ctx, conf)
 				require.NoError(t, err)
 
-				rt := ruletable.NewRuleTable().WithPolicyLoader(store)
-
-				rps, err := store.GetAll(ctx)
-				require.NoError(t, err, "Failed to get all policies")
-
-				err = rt.LoadPolicies(rps)
-				require.NoError(t, err, "Failed to load policies into rule table")
-
 				schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 				return testParam{
 					store:        store,
 					policyLoader: store,
 					schemaMgr:    schemaMgr,
-					ruletable:    rt,
 				}
 			}
 		}
@@ -270,7 +251,7 @@ func TestAdminService(t *testing.T) {
 	tpg := func(t *testing.T) testParam {
 		t.Helper()
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		ctx, cancelFunc := context.WithCancel(t.Context())
 		t.Cleanup(cancelFunc)
 
 		store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
@@ -330,7 +311,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 
 	tp := tpg(t)
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	t.Cleanup(cancelFunc)
 
 	auditLog := audit.NewNopLog()
@@ -345,7 +326,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      tp.policyLoader,
-		RuleTable:         tp.ruletable,
+		RuleTable:         ruletable.NewRuleTable(tp.policyLoader),
 		SchemaMgr:         tp.schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),

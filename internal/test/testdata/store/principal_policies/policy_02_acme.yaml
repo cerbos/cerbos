@@ -31,3 +31,7 @@ principalPolicy:
       actions:
         - action: "create"
           effect: EFFECT_ALLOW
+        - action: "acme_action"
+          effect: EFFECT_ALLOW
+        - action: "duplicate"
+          effect: EFFECT_ALLOW

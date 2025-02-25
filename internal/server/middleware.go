@@ -190,7 +190,7 @@ func withCORS(conf *Conf, handler http.Handler) http.Handler {
 
 func handleUnknownServices(_ any, stream grpc.ServerStream) error {
 	errFn := func(msg string) error {
-		return status.Errorf(codes.Unimplemented, msg) //nolint:govet
+		return status.Errorf(codes.Unimplemented, "%s", msg) //nolint:govet
 	}
 
 	method, ok := grpc.MethodFromServerStream(stream)
@@ -218,7 +218,7 @@ func handleRoutingError(ctx context.Context, mux *runtime.ServeMux, marshaler ru
 		errHandler := func(msg string) {
 			err := &runtime.HTTPStatusError{
 				HTTPStatus: httpStatus,
-				Err:        status.Errorf(codes.Unimplemented, msg), //nolint:govet
+				Err:        status.Errorf(codes.Unimplemented, "%s", msg), //nolint:govet
 			}
 			runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
 		}

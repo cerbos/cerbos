@@ -13,3 +13,6 @@ rolePolicy:
       condition:
         match:
           expr: P.attr.city == "london"
+
+    - resource: "leave_request"
+      allowActions: ["anonymise"]

@@ -1,0 +1,98 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Resource policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS, leaf skipped"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": [
+        "move", # allowed for admin in the parent scope, allow
+      ],
+      "principal":
+        {
+          "id": "x001",
+          "roles": ["admin", "employee"],
+        },
+      "resource":
+        {
+          "kind": "calendar_entry",
+          "id": "XX125",
+          "scope": "acme.sales",
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "move":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.calendar_entry.vdefault/acme.sales",
+              "scope": "acme"
+            },
+        }
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01JK9Y8KVCW2RYCZWKEVXJC4RN",
+      "timestamp": "2025-02-05T02:15:42.700511Z",
+      "peer": { },
+      "checkResources": {
+        "inputs": [
+          {
+            "requestId": "test",
+            "resource": {
+              "kind": "calendar_entry",
+              "id": "XX125",
+              "scope": "acme.sales"
+            },
+            "principal": {
+              "id": "x001",
+              "roles": [
+                "admin",
+                "employee"
+              ]
+            },
+            "actions": [
+              "move",
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "requestId": "test",
+            "resourceId": "XX125",
+            "actions": {
+              "move": {
+                "effect": "EFFECT_ALLOW",
+                "policy": "resource.calendar_entry.vdefault/acme.sales",
+                "scope": "acme"
+              }
+            }
+          }
+        ]
+      },
+      "auditTrail": {
+        "effectivePolicies": {
+          "resource.calendar_entry.vdefault": {
+            "attributes": {
+              "driver": "disk",
+              "source": "resource_policies/policy_17.yaml"
+            }
+          },
+          "resource.calendar_entry.vdefault/acme": {
+            "attributes": {
+              "driver": "disk",
+              "source": "resource_policies/policy_17.acme.yaml"
+            }
+          }
+        }
+      }
+    }
+  ]

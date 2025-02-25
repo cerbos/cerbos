@@ -158,24 +158,10 @@ func Start(ctx context.Context) error {
 		return ErrInvalidStore
 	}
 
-	var rt *ruletable.RuleTable
+	rt := ruletable.NewRuleTable(policyLoader)
 
-	// Populate rule table for non-mutable stores.
-	if _, ok := store.(storage.MutableStore); !ok {
-		rps, err := policyLoader.GetAll(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to retrieve runnable policy sets: %w", err)
-		}
-
-		rt = ruletable.NewRuleTable().WithPolicyLoader(policyLoader)
-
-		if err := rt.LoadPolicies(rps); err != nil {
-			return fmt.Errorf("failed to load policies into rule table: %w", err)
-		}
-
-		if ss, ok := policyLoader.(storage.Subscribable); ok {
-			ss.Subscribe(rt)
-		}
+	if ss, ok := policyLoader.(storage.Subscribable); ok {
+		ss.Subscribe(rt)
 	}
 
 	// create engine
@@ -460,14 +446,14 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 		grpc.ChainStreamInterceptor(
 			grpc_recovery.StreamServerInterceptor(),
 			telemetryInt.StreamServerInterceptor(),
-			grpc_validator.StreamServerInterceptor(validator.Validator),
+			grpc_validator.StreamServerInterceptor(validator.Validator()),
 			grpc_logging.StreamServerInterceptor(RequestLogger(log, "Handled request")),
 			grpc_logging.StreamServerInterceptor(PayloadLogger(s.conf), grpc_logging.WithLogOnEvents(grpc_logging.PayloadReceived, grpc_logging.PayloadSent)),
 		),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
 			telemetryInt.UnaryServerInterceptor(),
-			grpc_validator.UnaryServerInterceptor(validator.Validator),
+			grpc_validator.UnaryServerInterceptor(validator.Validator()),
 			RequestMetadataUnaryServerInterceptor,
 			auditInterceptor,
 			grpc_logging.UnaryServerInterceptor(RequestLogger(log, "Handled request")),

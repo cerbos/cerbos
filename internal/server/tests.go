@@ -130,7 +130,7 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 		var have, want proto.Message
 		var err error
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
+		ctx, cancelFunc := context.WithTimeout(t.Context(), tr.Timeout)
 		defer cancelFunc()
 
 		backoffConf := backoff.WithContext(
@@ -298,7 +298,7 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 		reqBytes, err := protojson.Marshal(input)
 		require.NoError(t, err, "Failed to marshal request")
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
+		ctx, cancelFunc := context.WithTimeout(t.Context(), tr.Timeout)
 		defer cancelFunc()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))
@@ -366,7 +366,7 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 			t.Run(path, func(t *testing.T) {
 				for _, method := range methods {
 					t.Run(method, func(t *testing.T) {
-						ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
+						ctx, cancelFunc := context.WithTimeout(t.Context(), tr.Timeout)
 						defer cancelFunc()
 
 						req, err := http.NewRequestWithContext(ctx, http.MethodOptions, fmt.Sprintf("%s%s", hostAddr, path), http.NoBody)
@@ -446,7 +446,7 @@ func grpcHealthCheckPasses(t *testing.T, grpcConn *grpc.ClientConn, reqTimeout t
 	return func() bool {
 		client := healthpb.NewHealthClient(grpcConn)
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), reqTimeout)
+		ctx, cancelFunc := context.WithTimeout(t.Context(), reqTimeout)
 		defer cancelFunc()
 
 		resp, err := client.Check(ctx, &healthpb.HealthCheckRequest{})

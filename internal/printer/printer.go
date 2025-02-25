@@ -172,7 +172,7 @@ func (p *Printer) printTraceComponents(components []*enginev1.Trace_Component) {
 	p.Printf("  ")
 	for i, component := range components {
 		if i > 0 {
-			p.Printf(colored.TraceComponentSeparator(" > ")) //nolint:govet
+			p.Printf("%s", colored.TraceComponentSeparator(" > ")) //nolint:govet
 		}
 		p.printTraceComponent(component)
 	}
@@ -185,16 +185,16 @@ func (p *Printer) printTraceComponent(component *enginev1.Trace_Component) {
 		p.Printf("%s%s", colored.TraceComponentKey("action="), component.GetAction())
 
 	case enginev1.Trace_Component_KIND_CONDITION_ALL:
-		p.Printf(colored.TraceComponentKey("conditionAll")) //nolint:govet
+		p.Printf("%s", colored.TraceComponentKey("conditionAll")) //nolint:govet
 
 	case enginev1.Trace_Component_KIND_CONDITION_ANY:
-		p.Printf(colored.TraceComponentKey("conditionAny")) //nolint:govet
+		p.Printf("%s", colored.TraceComponentKey("conditionAny")) //nolint:govet
 
 	case enginev1.Trace_Component_KIND_CONDITION_NONE:
-		p.Printf(colored.TraceComponentKey("conditionNone")) //nolint:govet
+		p.Printf("%s", colored.TraceComponentKey("conditionNone")) //nolint:govet
 
 	case enginev1.Trace_Component_KIND_CONDITION:
-		p.Printf(colored.TraceComponentKey("condition")) //nolint:govet
+		p.Printf("%s", colored.TraceComponentKey("condition")) //nolint:govet
 		if details, ok := component.Details.(*enginev1.Trace_Component_Index); ok {
 			p.Printf("#%d", details.Index)
 		}
@@ -225,13 +225,13 @@ func (p *Printer) printTraceComponent(component *enginev1.Trace_Component) {
 		p.Printf("%s`%s`", colored.TraceComponentKey(component.GetVariable().Name, "="), component.GetVariable().Expr)
 
 	case enginev1.Trace_Component_KIND_VARIABLES:
-		p.Printf(colored.TraceComponentKey("variables")) //nolint:govet
+		p.Printf("%s", colored.TraceComponentKey("variables")) //nolint:govet
 
 	case enginev1.Trace_Component_KIND_OUTPUT:
 		p.Printf("%s=%s", colored.TraceComponentKey("output"), component.GetOutput())
 
 	default:
-		p.Printf(colored.ErrorMsg("<unexpected trace component!>")) //nolint:govet
+		p.Printf("%s", colored.ErrorMsg("<unexpected trace component!>")) //nolint:govet
 	}
 }
 

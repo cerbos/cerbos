@@ -3,8 +3,11 @@
   "workspaces": [
     "packages/*"
   ],
-  "packageManager": "npm@10.9.2",
+  "packageManager": "npm@11.1.0",
   "scripts": {
     "test": "test/run.sh"
+  },
+  "devDependencies": {
+    "corepack": "0.31.0"
   }
 }

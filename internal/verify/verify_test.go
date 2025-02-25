@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -119,7 +120,7 @@ func runPolicyTests(t *testing.T, eng *engine.Engine, tc *TestCase) (*policyv1.T
 
 	config := tc.GetConfig()
 
-	return Verify(context.Background(), os.DirFS(dir), eng, Config{
+	return Verify(t.Context(), os.DirFS(dir), eng, Config{
 		ExcludedResourcePolicyFQNs:  util.ToStringSet(config.GetExcludedResourcePolicyFqns()),
 		ExcludedPrincipalPolicyFQNs: util.ToStringSet(config.GetExcludedPrincipalPolicyFqns()),
 		IncludedTestNamesRegexp:     config.GetIncludedTestNamesRegexp(),
@@ -292,7 +293,7 @@ func Test_doVerify(t *testing.T) {
 				}
 				table := genTable(t, optionResources != external, optionPrincipals != external)
 				fsys["leave_request_test.yaml"] = newMapFile(table)
-				result, err := Verify(context.Background(), fsys, eng, Config{})
+				result, err := Verify(t.Context(), fsys, eng, Config{})
 				is := require.New(t)
 				is.NoError(err)
 				is.Len(result.Suites, 1)
@@ -308,7 +309,7 @@ func Test_doVerify(t *testing.T) {
 
 		table := genTable(t, false, false)
 		fsys["leave_request_test.yaml"] = newMapFile(table)
-		result, err := Verify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(t.Context(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
@@ -322,7 +323,7 @@ func Test_doVerify(t *testing.T) {
 
 		table := genTable(t, false, false)
 		fsys["leave_request_test.yaml"] = newMapFile(table)
-		result, err := Verify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(t.Context(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
@@ -339,7 +340,7 @@ func Test_doVerify(t *testing.T) {
 			fsys[dir+"/leave_request_test.yaml"] = newMapFile(ts)
 		}
 
-		result, err := Verify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(t.Context(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 3)
@@ -357,7 +358,7 @@ func Test_doVerify(t *testing.T) {
 		fsys[filepath.Join(util.TestDataDirectory, principalsFileName)+".yaml"] = newMapFile(principals)
 		fsys["leave_request_test.yaml"] = newMapFile(ts)
 
-		result, err := Verify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(t.Context(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
@@ -371,7 +372,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 
 	dir := test.PathToDir(t, "store")
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 	t.Cleanup(cancelFunc)
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
@@ -380,8 +381,11 @@ func mkEngine(t *testing.T) *engine.Engine {
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
+	mgr := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+
 	eng, err := engine.New(ctx, engine.Components{
-		PolicyLoader:      compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
+		PolicyLoader:      mgr,
+		RuleTable:         ruletable.NewRuleTable(mgr),
 		SchemaMgr:         schemaMgr,
 		AuditLog:          audit.NewNopLog(),
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),

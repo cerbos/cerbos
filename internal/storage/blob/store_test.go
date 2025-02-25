@@ -34,7 +34,7 @@ type (
 )
 
 func TestNewStore(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("clone failure makes ctor fail", func(t *testing.T) {
 		workDir := t.TempDir()
@@ -98,7 +98,7 @@ func TestReloadable(t *testing.T) {
 }
 
 func TestStore_updateIndex(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	must := require.New(t)
 	workDir := t.TempDir()
@@ -187,7 +187,7 @@ func mkInitFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 
 	return func() error {
 		var err error
-		keysInStore, err = uploadDirToBucket(t, context.Background(), testdataDir, bucket)
+		keysInStore, err = uploadDirToBucket(t, t.Context(), testdataDir, bucket)
 		if err != nil {
 			return fmt.Errorf("failed to add to the store: %w", err)
 		}
@@ -200,7 +200,7 @@ func mkDeleteFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 
 	return func() error {
 		for _, key := range keysInStore {
-			err := bucket.Delete(context.Background(), key)
+			err := bucket.Delete(t.Context(), key)
 			if err != nil {
 				return fmt.Errorf("failed to delete from the store: %w", err)
 			}
@@ -215,7 +215,7 @@ func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 
 	return func() error {
 		var err error
-		keysInStore, err = uploadDirToBucket(t, context.Background(), test.PathToDir(t, "store"), bucket)
+		keysInStore, err = uploadDirToBucket(t, t.Context(), test.PathToDir(t, "store"), bucket)
 		if err != nil {
 			return fmt.Errorf("failed to add to the store: %w", err)
 		}
@@ -226,15 +226,15 @@ func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 	t.Helper()
 
-	endpoint := StartMinio(context.Background(), t, bucketName)
+	endpoint := StartMinio(t.Context(), t, bucketName)
 	conf := mkConf(t, dir, bucketName, endpoint)
-	bucket, err := newBucket(context.Background(), conf)
+	bucket, err := newBucket(t.Context(), conf)
 	require.NoError(t, err)
 	cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
 	cloner, err := NewCloner(bucket, cacheDir)
 	require.NoError(t, err)
 
-	store, err := NewStore(context.Background(), conf, newBlobFS(dir), cloner, mkSymlinker(cacheDir, dir))
+	store, err := NewStore(t.Context(), conf, newBlobFS(dir), cloner, mkSymlinker(cacheDir, dir))
 	require.NoError(t, err)
 
 	return store, bucket
