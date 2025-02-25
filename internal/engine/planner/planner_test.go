@@ -295,7 +295,7 @@ func TestResidualExpr(t *testing.T) {
 			nativeAST := celast.NewAST(ex, nil)
 			_, det, err = conditions.Eval(env, nativeAST, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			got, err := residualExpr(nativeAST, det)
+			got := residualExpr(nativeAST, det)
 			is.NoError(err)
 			p := newPartialEvaluator(env, pvars, nowFn)
 			got, err = p.evalComprehensionBody(got)
@@ -384,7 +384,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			astNative := celast.NewAST(e, nil)
 			_, det, err := conditions.Eval(env, astNative, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			haveExpr, err := residualExpr(astNative, det)
+			haveExpr := residualExpr(astNative, det)
 			is.NoError(err)
 			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
 			haveExpr, err = p.evalComprehensionBody(haveExpr)
