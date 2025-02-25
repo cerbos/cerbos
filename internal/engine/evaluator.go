@@ -7,9 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	celast "github.com/google/cel-go/common/ast"
 	"reflect"
 	"sort"
+
+	celast "github.com/google/cel-go/common/ast"
 
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"

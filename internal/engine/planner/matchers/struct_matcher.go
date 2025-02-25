@@ -5,8 +5,9 @@ package matchers
 
 import (
 	"errors"
-	"github.com/google/cel-go/common/types"
 	"sort"
+
+	"github.com/google/cel-go/common/types"
 
 	celast "github.com/google/cel-go/common/ast"
 
@@ -221,7 +222,7 @@ func mkLogicalOr(args []celast.Expr) celast.Expr {
 	return internal.MkCallExpr(operators.LogicalOr, args[0], mkLogicalOr(args[1:]))
 }
 
-func mkOption(op string, key celast.Expr, val, expr celast.Expr, constExpr celast.Expr) celast.Expr {
+func mkOption(op string, key, val, expr, constExpr celast.Expr) celast.Expr {
 	if op == "" {
 		panic("mkOption: operation is empty")
 	}

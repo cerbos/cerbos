@@ -18,6 +18,7 @@ func NewIDGen() *IDGen {
 		ids: make(map[int64]int64),
 	}
 }
+
 func (g *IDGen) Remap(id int64) int64 {
 	if id == 0 {
 		g.c++
@@ -34,11 +35,13 @@ func (g *IDGen) Remap(id int64) int64 {
 func RenumberIDs(e celast.Expr) {
 	e.RenumberIDs(NewIDGen().Remap)
 }
+
 func ZeroIDs(e celast.Expr) {
 	e.RenumberIDs(func(_ int64) int64 {
 		return 0
 	})
 }
+
 func UpdateIDs(e *exprpb.Expr) {
 	var n int64
 	ids := make(map[*exprpb.Expr]int64)

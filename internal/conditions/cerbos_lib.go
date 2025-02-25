@@ -5,9 +5,10 @@ package conditions
 
 import (
 	"fmt"
-	celast "github.com/google/cel-go/common/ast"
 	"net"
 	"time"
+
+	celast "github.com/google/cel-go/common/ast"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"

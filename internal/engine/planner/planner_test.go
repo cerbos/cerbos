@@ -306,6 +306,7 @@ func TestResidualExpr(t *testing.T) {
 		})
 	}
 }
+
 func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	now := time.Now()
 	nowStr := now.Format(time.RFC3339Nano)

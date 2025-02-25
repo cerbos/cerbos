@@ -15,7 +15,6 @@ import (
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -98,66 +97,6 @@ func opFromCLE(fn string) (string, error) {
 	default:
 		return fn, ErrUnknownOperator
 	}
-}
-
-type replaceVarsFunc func(e *exprpb.Expr) (output *exprpb.Expr, matched bool, err error)
-
-func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err error) {
-	var r func(e *exprpb.Expr) *exprpb.Expr
-
-	r = func(e *exprpb.Expr) *exprpb.Expr {
-		if e == nil {
-			return nil
-		}
-
-		switch ex := e.ExprKind.(type) {
-		case *exprpb.Expr_SelectExpr:
-			var e1 *exprpb.Expr
-			var matched bool
-
-			e1, matched, err = f(e)
-			if err != nil {
-				break
-			}
-			if matched {
-				return e1
-			}
-			ex.SelectExpr.Operand = r(ex.SelectExpr.Operand)
-		case *exprpb.Expr_CallExpr:
-			ex.CallExpr.Target = r(ex.CallExpr.Target)
-			for i, arg := range ex.CallExpr.Args {
-				ex.CallExpr.Args[i] = r(arg)
-			}
-		case *exprpb.Expr_StructExpr:
-			for _, entry := range ex.StructExpr.Entries {
-				if k, ok := entry.KeyKind.(*exprpb.Expr_CreateStruct_Entry_MapKey); ok {
-					k.MapKey = r(k.MapKey)
-				}
-				entry.Value = r(entry.Value)
-			}
-		case *exprpb.Expr_ComprehensionExpr:
-			ce := ex.ComprehensionExpr
-			ce.IterRange = r(ce.IterRange)
-			ce.AccuInit = r(ce.AccuInit)
-			ce.LoopStep = r(ce.LoopStep)
-			ce.LoopCondition = r(ce.LoopCondition)
-			// ce.Result seems to be always an identifier, so isn't necessary to process
-		case *exprpb.Expr_ListExpr:
-			for i, element := range ex.ListExpr.Elements {
-				ex.ListExpr.Elements[i] = r(element)
-			}
-		}
-		return e
-	}
-
-	output, ok := proto.Clone(e).(*exprpb.Expr)
-	if !ok {
-		return nil, fmt.Errorf("failed to clone an expression: %v", e)
-	}
-	output = r(output)
-	internal.UpdateIDs(output)
-
-	return output, err
 }
 
 type replaceVarsFunc2 func(e celast.Expr) (output celast.Expr, matched bool, err error)
@@ -287,27 +226,6 @@ func replaceResourceVals(e celast.Expr, vals map[string]*structpb.Value) (output
 			}
 		}
 		return nil, false, nil
-	})
-}
-
-func replaceVarsProto(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.Expr, err error) {
-	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
-		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
-			return nil, false, nil
-		}
-		sel := se.SelectExpr
-		ident := sel.Operand.GetIdentExpr()
-		if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
-			matched = true
-			if e1, ok := vars[sel.Field]; ok {
-				//nolint:forcetypeassert
-				output = proto.Clone(e1).(*exprpb.Expr)
-			} else {
-				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.Field))
-			}
-		}
-		return
 	})
 }
 

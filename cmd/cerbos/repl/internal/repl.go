@@ -438,7 +438,7 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 		return nil, nil, errSilent
 	}
 
-	val, _, err := conditions.Eval(env, ast, r.vars, conditions.Now())
+	val, _, err := conditions.Eval(env, ast.NativeRep(), r.vars, conditions.Now())
 	if err != nil {
 		return nil, nil, err
 	}

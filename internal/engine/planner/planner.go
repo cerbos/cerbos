@@ -19,7 +19,6 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -644,9 +643,11 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		checked := t.Expr.GetChecked()
-		expr := checked.GetExpr()
+		expr := t.Expr.GetChecked().GetExpr()
 		ex, err := celast.ProtoToExpr(expr)
+		if err != nil {
+			return nil, fmt.Errorf("celast.ProtoToExpr: %w", err)
+		}
 		residual, err := evalCtx.evaluateConditionExpression(ex, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
@@ -691,8 +692,6 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 	if err != nil {
 		return nil, err
 	}
-	//dbg(e)
-	//e := expr
 	val, residual, err := p.evalPartially(e)
 	if err != nil {
 		// ignore expressions that are invalid
@@ -703,28 +702,7 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 		return nil, err
 	}
 	if types.IsUnknown(val) {
-		residual, err = p.evalComprehensionBody(residual)
-		if err != nil {
-			return nil, err
-		}
-		m := matchers.NewExpressionProcessor()
-		var r bool
-		r, e, err = m.Process(residual)
-		if err != nil {
-			return nil, err
-		}
-		if r {
-			_, residual, err = p.evalPartially(e)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		expr2, err := celast.ExprToProto(residual)
-		if err != nil {
-			return nil, fmt.Errorf("error converting expression to proto: %w", err)
-		}
-		return &exprpb.CheckedExpr{Expr: expr2}, nil
+		return p.evaluateUnknown(residual)
 	}
 
 	expr2, err := celast.ExprToProto(residual)
@@ -738,18 +716,36 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr celast.Expr, reques
 	return conditions.FalseExpr, nil
 }
 
-func dbg(e celast.Expr) {
-	p, err := celast.ExprToProto(e)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(protojson.Format(p))
-}
-
 type partialEvaluator struct {
 	env   *cel.Env
 	vars  interpreter.PartialActivation
 	nowFn func() time.Time
+}
+
+func (p *partialEvaluator) evaluateUnknown(residual celast.Expr) (_ *exprpb.CheckedExpr, err error) {
+	residual, err = p.evalComprehensionBody(residual)
+	if err != nil {
+		return nil, err
+	}
+	m := matchers.NewExpressionProcessor()
+	var r bool
+	var e celast.Expr
+	r, e, err = m.Process(residual)
+	if err != nil {
+		return nil, err
+	}
+	if r {
+		_, residual, err = p.evalPartially(e)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	expr2, err := celast.ExprToProto(residual)
+	if err != nil {
+		return nil, fmt.Errorf("error converting expression to proto: %w", err)
+	}
+	return &exprpb.CheckedExpr{Expr: expr2}, nil
 }
 
 func (p *partialEvaluator) evalPartially(e celast.Expr) (ref.Val, celast.Expr, error) {
@@ -759,8 +755,7 @@ func (p *partialEvaluator) evalPartially(e celast.Expr) (ref.Val, celast.Expr, e
 		return val, nil, err
 	}
 
-	residual, err := residualExpr(ast, details)
-	return val, residual, err
+	return val, residualExpr(ast, details), err
 }
 
 func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn func() time.Time) *partialEvaluator {
@@ -880,6 +875,9 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		entries := make([]celast.EntryExpr, 0, len(m.Entries()))
 		for _, entry := range m.Entries() {
 			k, err := impl(entry.AsMapEntry().Key())
+			if err != nil {
+				return nil, err
+			}
 			v, err := impl(entry.AsMapEntry().Value())
 			if err != nil {
 				return nil, err
@@ -918,11 +916,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		if err != nil {
 			return nil, err
 		}
-		le, err = residualExpr(ast, det)
-		if err != nil {
-			return nil, err
-		}
-		//loopStep.CallExpr.Args[i] = le
+		le = residualExpr(ast, det)
 		le, err = evalComprehensionBodyImpl(env1, pvars1, nowFn, le)
 		if err != nil {
 			return nil, err
@@ -953,15 +947,9 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 	}
 }
 
-func residualExpr(ast *celast.AST, details *cel.EvalDetails) (celast.Expr, error) {
+func residualExpr(ast *celast.AST, details *cel.EvalDetails) celast.Expr {
 	prunedAST := interpreter.PruneAst(ast.Expr(), ast.SourceInfo().MacroCalls(), details.State())
-	return prunedAST.Expr(), nil
-}
-
-func residualExprProto(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
-	ast := a.NativeRep()
-	prunedAST := interpreter.PruneAst(ast.Expr(), ast.SourceInfo().MacroCalls(), details.State())
-	return celast.ExprToProto(prunedAST.Expr())
+	return prunedAST.Expr()
 }
 
 func constantValues(constants map[string]*structpb.Value) map[string]any {
