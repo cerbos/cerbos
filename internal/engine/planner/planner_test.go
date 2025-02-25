@@ -306,14 +306,6 @@ func TestResidualExpr(t *testing.T) {
 		})
 	}
 }
-func dbg2(t *testing.T, e celast.Expr) {
-	t.Helper()
-
-	p, err := celast.ExprToProto(e)
-	require.NoError(t, err)
-
-	t.Log(protojson.Format(p))
-}
 func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	now := time.Now()
 	nowStr := now.Format(time.RFC3339Nano)
@@ -388,7 +380,6 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is.Nil(iss, iss.Err())
 			e, err := replaceVars(ast.NativeRep().Expr(), variables)
 			is.NoError(err)
-			dbg2(t, e)
 			astNative := celast.NewAST(e, nil)
 			_, det, err := conditions.Eval(env, astNative, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
