@@ -15,6 +15,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/private/engine"
 	"github.com/cerbos/cerbos/private/verify"
 )
 
@@ -26,16 +27,16 @@ func TestFiles(t *testing.T) {
 }
 
 func TestBundle(t *testing.T) {
-	params := verify.BundleParams{
-		BundlePath: filepath.Join(test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", bundle.Version1))), "bundle_unencrypted.crbp"),
-		TestsDir:   test.PathToDir(t, "store"),
-		WorkDir:    t.TempDir(),
+	params := engine.BundleParams{
+		BundlePath:    filepath.Join(test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", bundle.Version1))), "bundle_unencrypted.crbp"),
+		BundleVersion: engine.BundleVersion1,
+		TempDir:       t.TempDir(),
 	}
 
 	ctx, cancelFn := context.WithCancel(t.Context())
 	t.Cleanup(cancelFn)
 
-	results, err := verify.Bundle(ctx, params)
+	results, err := verify.Bundle(ctx, params, test.PathToDir(t, "store"))
 	require.NoError(t, err)
 	require.Equal(t, results.Summary.OverallResult, policyv1.TestResults_RESULT_PASSED)
 }
