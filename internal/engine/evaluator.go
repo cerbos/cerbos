@@ -11,7 +11,6 @@ import (
 	"sort"
 
 	celast "github.com/google/cel-go/common/ast"
-
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"go.opentelemetry.io/otel/trace"

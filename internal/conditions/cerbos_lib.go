@@ -8,9 +8,8 @@ import (
 	"net"
 	"time"
 
-	celast "github.com/google/cel-go/common/ast"
-
 	"github.com/google/cel-go/cel"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
