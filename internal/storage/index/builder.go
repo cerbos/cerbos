@@ -241,11 +241,10 @@ type scopeNode struct {
 	children         map[string]*scopeNode
 	scope            string
 	scopePermissions policyv1.ScopePermissions
-	found            bool
 }
 
 func (n *scopeNode) collectInvalidScopes(invalidScopes []string) []string {
-	if n.found && n.scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && len(n.children) > 0 {
+	if n.scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && len(n.children) > 0 {
 		invalidScopes = append(invalidScopes, n.scope)
 	}
 
@@ -259,7 +258,6 @@ func (n *scopeNode) collectInvalidScopes(invalidScopes []string) []string {
 func (idx *indexBuilder) addScopeNode(scope string, permission policyv1.ScopePermissions) {
 	if scope == "" {
 		idx.scopeTree.scopePermissions = permission
-		idx.scopeTree.found = true
 		return
 	}
 
@@ -271,14 +269,13 @@ func (idx *indexBuilder) addScopeNode(scope string, permission policyv1.ScopePer
 		}
 		child, ok := node.children[part]
 		if !ok {
-			child = &scopeNode{scope: part, found: false}
+			child = &scopeNode{scope: part}
 			node.children[part] = child
 		}
 		node = child
 	}
 
 	node.scopePermissions = permission
-	node.found = true
 }
 
 func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p policy.Wrapper) {
