@@ -441,7 +441,7 @@ func TestREPL(t *testing.T) {
 
 			for _, d := range tc.directives {
 				t.Run(d.Directive, func(t *testing.T) {
-					err := repl.handleInput(d.Directive)
+					err := repl.handleInput(t.Context(), d.Directive)
 					if d.WantErr {
 						require.Error(t, err)
 						return
