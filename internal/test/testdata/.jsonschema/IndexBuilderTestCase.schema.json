@@ -74,6 +74,12 @@
           "items": {
             "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts"
           }
+        },
+        "scopePermissionsOrdering": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsOrdering"
+          }
         }
       }
     },
@@ -168,6 +174,15 @@
       }
     },
     "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsOrdering": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
