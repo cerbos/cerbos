@@ -99,9 +99,9 @@ func opFromCLE(fn string) (string, error) {
 	}
 }
 
-type replaceVarsFunc2 func(e celast.Expr) (output celast.Expr, matched bool, err error)
+type replaceVarsFunc func(e celast.Expr) (output celast.Expr, matched bool, err error)
 
-func replaceVarsGen2(e celast.Expr, f replaceVarsFunc2) (output celast.Expr, err error) {
+func replaceVarsGen(e celast.Expr, f replaceVarsFunc) (output celast.Expr, err error) {
 	var r func(e celast.Expr) celast.Expr
 
 	r = func(e celast.Expr) celast.Expr {
@@ -196,7 +196,7 @@ func replaceVarsGen2(e celast.Expr, f replaceVarsFunc2) (output celast.Expr, err
 // This trick is necessary to evaluate expression like `P.attr.struct1[R.attr.field1]`, otherwise CEL tries to use `R.attr.field1`
 // as a qualifier for `P.attr.struct1` and produces the error https://github.com/cerbos/cerbos/issues/1340
 func replaceResourceVals(e celast.Expr, vals map[string]*structpb.Value) (output celast.Expr, err error) {
-	return replaceVarsGen2(e, func(ex celast.Expr) (output celast.Expr, matched bool, err error) {
+	return replaceVarsGen(e, func(ex celast.Expr) (output celast.Expr, matched bool, err error) {
 		if e.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
@@ -230,7 +230,7 @@ func replaceResourceVals(e celast.Expr, vals map[string]*structpb.Value) (output
 }
 
 func replaceVars(e celast.Expr, vars map[string]celast.Expr) (output celast.Expr, err error) {
-	return replaceVarsGen2(e, func(ex celast.Expr) (output celast.Expr, matched bool, err error) {
+	return replaceVarsGen(e, func(ex celast.Expr) (output celast.Expr, matched bool, err error) {
 		if ex.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}

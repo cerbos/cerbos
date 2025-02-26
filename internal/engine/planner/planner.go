@@ -996,7 +996,7 @@ func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 }
 
 func replaceRuntimeEffectiveDerivedRoles(expr celast.Expr, derivedRolesList func() (celast.Expr, error)) (celast.Expr, error) {
-	return replaceVarsGen2(expr, func(input celast.Expr) (output celast.Expr, matched bool, err error) {
+	return replaceVarsGen(expr, func(input celast.Expr) (output celast.Expr, matched bool, err error) {
 		se := input.AsSelect()
 		if input.Kind() != celast.SelectKind {
 			return nil, false, nil
@@ -1130,7 +1130,7 @@ func replaceCamelCaseFields(expr celast.Expr) (celast.Expr, error) {
 	// For some reason, the JSONFieldProvider is ignored in the planner. It _should_ work, and I haven't been able to work out why it doesn't.
 	// For now, work around the issue by rewriting camel case fields to snake case.
 	// We don't need to rewrite `runtime.effectiveDerivedRoles`, because that is handled in replaceRuntimeEffectiveDerivedRoles.
-	return replaceVarsGen2(expr, func(input celast.Expr) (celast.Expr, bool, error) {
+	return replaceVarsGen(expr, func(input celast.Expr) (celast.Expr, bool, error) {
 		if input.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
