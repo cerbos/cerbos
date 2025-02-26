@@ -692,7 +692,7 @@ func (evalCtx *evalContext) evaluateConditionExpression(ctx context.Context, exp
 		return nil, err
 	}
 	if types.IsUnknown(val) {
-		err = p.evalComprehensionBody(residual)
+		err = p.evalComprehensionBody(ctx, residual)
 		if err != nil {
 			return nil, err
 		}
@@ -789,17 +789,17 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	return newPartialEvaluator(env, vars, evalCtx.TimeFn), nil
 }
 
-func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {
-	return evalComprehensionBodyImpl(p.env, p.vars, p.nowFn, e)
+func (p *partialEvaluator) evalComprehensionBody(ctx context.Context, e *exprpb.Expr) (err error) {
+	return evalComprehensionBodyImpl(ctx, p.env, p.vars, p.nowFn, e)
 }
 
-func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e *exprpb.Expr) (err error) {
+func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e *exprpb.Expr) (err error) {
 	if e == nil {
 		return nil
 	}
 	impl := func(e1 *exprpb.Expr) {
 		if err == nil {
-			err = evalComprehensionBodyImpl(env, pvars, nowFn, e1)
+			err = evalComprehensionBodyImpl(ctx, env, pvars, nowFn, e1)
 		}
 	}
 	switch e := e.ExprKind.(type) {
@@ -841,7 +841,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 			return err
 		}
 		var det *cel.EvalDetails
-		_, det, err = conditions.Eval(env1, ast, pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		_, det, err = conditions.ContextEval(ctx, env1, ast, pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
 			return err
 		}
@@ -850,7 +850,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 			return err
 		}
 		loopStep.CallExpr.Args[i] = le
-		err = evalComprehensionBodyImpl(env1, pvars1, nowFn, le)
+		err = evalComprehensionBodyImpl(ctx, env1, pvars1, nowFn, le)
 		if err != nil {
 			return err
 		}

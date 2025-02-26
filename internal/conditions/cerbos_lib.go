@@ -136,16 +136,12 @@ func Now() NowFunc {
 	return func() time.Time { return now }
 }
 
-// Eval returns the result of an evaluation of the ast and environment against the input vars,
+// ContextEval returns the result of an evaluation of the ast and environment against the input vars,
 // providing time-based functions with a static definition of the current time.
 //
 // The given nowFunc must return the same timestamp each time it is called.
 //
-// See https://pkg.go.dev/github.com/google/cel-go/cel#Program.Eval.
-func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
-	return ContextEval(context.TODO(), env, ast, vars, nowFunc, opts...)
-}
-
+// See https://pkg.go.dev/github.com/google/cel-go/cel#Program.ContextEval.
 func ContextEval(ctx context.Context, env *cel.Env, ast *cel.Ast, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator(nowFunc))}, opts...)
 	prg, err := env.Program(ast, programOpts...)

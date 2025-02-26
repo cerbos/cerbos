@@ -106,7 +106,7 @@ func TestCerbosLib(t *testing.T) {
 			ast, issues := env.Compile(tc.expr)
 			is.NoError(issues.Err())
 
-			have, _, err := conditions.Eval(env, ast, cel.NoVars(), conditions.Now())
+			have, _, err := conditions.ContextEval(t.Context(), env, ast, cel.NoVars(), conditions.Now())
 			if tc.wantErr {
 				is.Error(err)
 			} else {
@@ -176,7 +176,7 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 		is.NoError(issues.Err())
 	}
 
-	out, det, err := conditions.Eval(env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	out, det, err := conditions.ContextEval(t.Context(), env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 	is.NoError(err)
 	is.True(types.IsUnknown(out))
 	residual, err := env.ResidualAst(ast, det)
@@ -257,7 +257,7 @@ func TestPartialEvaluation(t *testing.T) {
 				is.NoError(issues.Err())
 			}
 
-			out, det, err := conditions.Eval(env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			out, det, err := conditions.ContextEval(t.Context(), env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
 			t.Log(out.Type())
 			is.NoError(err)

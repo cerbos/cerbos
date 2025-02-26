@@ -285,7 +285,7 @@ func TestResidualExpr(t *testing.T) {
 			ex, err := replaceVars(e.Expr, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: ex})
-			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err := conditions.ContextEval(t.Context(), env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			residualAst, err := env.ResidualAst(ast, det)
 			is.NoError(err)
@@ -294,12 +294,12 @@ func TestResidualExpr(t *testing.T) {
 			wantResidualExpr := re.Expr
 
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: ex})
-			_, det, err = conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err = conditions.ContextEval(t.Context(), env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			haveResidualExpr, err := residualExpr(ast, det)
 			is.NoError(err)
 			p := newPartialEvaluator(env, pvars, nowFn)
-			err = p.evalComprehensionBody(haveResidualExpr)
+			err = p.evalComprehensionBody(t.Context(), haveResidualExpr)
 			is.NoError(err)
 			is.Empty(cmp.Diff(wantResidualExpr, haveResidualExpr, protocmp.Transform(), ignoreID))
 		})
@@ -384,12 +384,12 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			e, err := replaceVars(pe.Expr, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err := conditions.ContextEval(t.Context(), env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			haveExpr, err := residualExpr(ast, det)
 			is.NoError(err)
 			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
-			err = p.evalComprehensionBody(haveExpr)
+			err = p.evalComprehensionBody(t.Context(), haveExpr)
 			internal.UpdateIDs(haveExpr)
 			is.NoError(err)
 
