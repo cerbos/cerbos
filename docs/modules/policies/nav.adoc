@@ -5,6 +5,7 @@
 * xref:principal_policies.adoc[Principal policies]
 * xref:role_policies.adoc[Role policies]
 * xref:scoped_policies.adoc[Scoped policies]
+* xref:scope_permissions.adoc[Scope permissions]
 * xref:conditions.adoc[Conditions]
 * xref:variables.adoc[Variables and constants]
 * xref:outputs.adoc[Outputs]
