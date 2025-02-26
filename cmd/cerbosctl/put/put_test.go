@@ -102,6 +102,8 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.album_object.vdefault",
 					"resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault",
 					"resource.calendar_entry.vdefault",
+					"resource.calendar_entry.vdefault/acme",
+					"resource.calendar_entry.vdefault/acme.sales",
 					"resource.equipment_request.vdefault",
 					"resource.equipment_request.vdefault/acme",
 					"resource.example.vdefault",
