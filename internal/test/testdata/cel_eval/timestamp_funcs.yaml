@@ -8,7 +8,7 @@ condition:
       - expr: timestamp(R.attr.lastAccessed).getDayOfWeek() == 2
       - expr: timestamp(R.attr.lastAccessed).getDayOfYear() == 109
       - expr: timestamp(R.attr.lastAccessed).getFullYear() == 2021
-      - expr: int(timestamp(R.attr.lastAccessed).getHours()) == 10
+      - expr: timestamp(R.attr.lastAccessed).getHours() == 10
       - expr: timestamp(R.attr.lastAccessed).getMilliseconds() == 21
       - expr: timestamp(R.attr.lastAccessed).getMinutes() == 5
       - expr: timestamp(R.attr.lastAccessed).getMonth() == 3
