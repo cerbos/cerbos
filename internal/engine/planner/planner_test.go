@@ -9,9 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/cel-go/common/types"
+
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	celast "github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -407,11 +409,11 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string]*expr.Expr) {
 	t.Helper()
 
-	env, err := conditions.StdEnv.Extend(cel.Declarations(
-		decls.NewVar("gb_us", decls.NewListType(decls.String)),
-		decls.NewVar("gbLoc", decls.String),
-		decls.NewVar("ca", decls.String),
-		decls.NewVar("T", decls.Int),
+	env, err := conditions.StdEnv.Extend(cel.VariableDecls(
+		decls.NewVariable("gb_us", types.NewListType(types.StringType)),
+		decls.NewVariable("gbLoc", types.StringType),
+		decls.NewVariable("ca", types.StringType),
+		decls.NewVariable("T", types.IntType),
 	))
 	require.NoError(t, err)
 
