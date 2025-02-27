@@ -4,30 +4,19 @@
 package validator
 
 import (
-	"sync"
-
 	"github.com/bufbuild/protovalidate-go"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
 
-var Validator = sync.OnceValue(func() protovalidate.Validator {
-	validator, err := protovalidate.New(
-		protovalidate.WithMessages(
-			&policyv1.Policy{},
-			&requestv1.CheckResourcesRequest{},
-			&requestv1.PlanResourcesRequest{}),
-	)
-	if err != nil {
-		zap.L().Fatal(err.Error())
-	}
+var Validator = validator(protovalidate.Validate)
 
-	return validator
-})
+// validator implements protovalidate.Validate interface.
+type validator func(proto.Message) error
+
+func (v validator) Validate(msg proto.Message) error {
+	return v(msg)
+}
 
 func Validate(msg proto.Message) error {
-	return Validator().Validate(msg)
+	return protovalidate.Validate(msg)
 }
