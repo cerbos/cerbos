@@ -84,6 +84,8 @@ message RunnableRolePolicySet {
   Metadata meta = 1;
   string role = 2;
   string scope = 3;
+  reserved 5;
+  reserved "scope_permissions";
   repeated string parent_roles = 6;
   map<string, RuleList> resources = 7;
 }
