@@ -3037,9 +3037,6 @@
             "type": "object",
             "$ref": "#/definitions/v1RoleRule"
           }
-        },
-        "scopePermissions": {
-          "$ref": "#/definitions/v1ScopePermissions"
         }
       }
     },

@@ -328,7 +328,6 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		idx.executables[p.ID] = struct{}{}
 
 	case policy.RolePolicyKind:
-		scopePermission = p.GetRolePolicy().ScopePermissions
 		idx.executables[p.ID] = struct{}{}
 
 		rp := p.GetRolePolicy()

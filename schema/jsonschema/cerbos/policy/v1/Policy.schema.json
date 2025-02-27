@@ -467,9 +467,6 @@
       "allOf": [
         {
           "type": "object",
-          "required": [
-            "scopePermissions"
-          ],
           "additionalProperties": false,
           "properties": {
             "parentRoles": {
@@ -493,13 +490,6 @@
             "scope": {
               "type": "string",
               "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
-            },
-            "scopePermissions": {
-              "type": "string",
-              "enum": [
-                "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
-                "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
-              ]
             }
           }
         },

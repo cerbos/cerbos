@@ -5,26 +5,38 @@ principal:
     id: x002
     policyVersion: default
     roles:
-        - accountant
+        - employee
+        - bookkeeper
 tests:
-    - action: comment
+    # not allowed in `bookkeeper`
+    - action: reference
       resource:
         kind: tax_return
-        scope: acme
-        policyVersion: default
-      want:
-        kind: KIND_ALWAYS_ALLOWED
-    - action: view
-      resource:
-        kind: tax_return
-        scope: acme
+        scope: acme.finance
         policyVersion: default
       want:
         kind: KIND_ALWAYS_DENIED
+    # allowed in `bookkeeper`, not allowed in parent scopes for narrowed role. not allowed for non-narrowed role
+    - action: comment
+      resource:
+        kind: tax_return
+        scope: acme.finance
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_DENIED
+    # allowed in parent scope for non-narrowed role
+    - action: view
+      resource:
+        kind: tax_return
+        scope: acme.finance
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_ALLOWED
+    # allowed in `bookkeeper`, allowed in parent scopes for narrowed role
     - action: create
       resource:
         kind: tax_return
-        scope: acme
+        scope: acme.finance
         policyVersion: default
       want:
         kind: KIND_ALWAYS_ALLOWED

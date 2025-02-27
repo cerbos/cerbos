@@ -13,7 +13,6 @@
     },
     "role": "leave_request",
     "scope": "acme",
-    "scopePermissions": "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS",
     "resources": {
       "acme_admin": {
         "rules": [

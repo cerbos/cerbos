@@ -8,13 +8,23 @@ principal:
         - accountant
         - employee
 tests:
+    # allowed in `accountant`, not in parent scope resource policy
     - action: comment
       resource:
         kind: tax_return
         scope: acme
         policyVersion: default
       want:
+        kind: KIND_ALWAYS_DENIED
+    # allowed in `accountant` and in parent scope resource policy for narrowed `manager` role
+    - action: create
+      resource:
+        kind: tax_return
+        scope: acme
+        policyVersion: default
+      want:
         kind: KIND_ALWAYS_ALLOWED
+    # not allowed in `accountant` but is in parent scope resource policy for non-narrowed `employee` role
     - action: view
       resource:
         kind: tax_return

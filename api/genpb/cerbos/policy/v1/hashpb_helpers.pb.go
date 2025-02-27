@@ -812,10 +812,6 @@ func cerbos_policy_v1_RolePolicy_hashpb_sum(m *RolePolicy, hasher hash.Hash, ign
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.policy.v1.RolePolicy.scope_permissions"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetScopePermissions())))
-
-	}
 	if _, ok := ignore["cerbos.policy.v1.RolePolicy.parent_roles"]; !ok {
 		if len(m.ParentRoles) > 0 {
 			for _, v := range m.ParentRoles {
