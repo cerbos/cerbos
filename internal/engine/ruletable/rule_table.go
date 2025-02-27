@@ -763,19 +763,24 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []
 					roleFqn := namer.RolePolicyFQN(role, scope)
 					for _, actionSet := range roleSet.GetMerged(role) {
 						if ars, ok := actionSet.GetWithLiteral(allowActionsIdxKey); ok {
-							actionMatchedRows := make(map[string][]*Row)
+							actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 							// retrieve actions mapped to all effectual rows
-							// TODO(saml) currently not handling wildcard allow actions
 							for _, ar := range ars {
 								if util.MatchesGlob(ar.Resource, resource) {
 									for a := range ar.GetAllowActions().GetActions() {
-										actionMatchedRows[a] = append(actionMatchedRows[a], ar)
+										rows, _ := actionMatchedRows.Get(a)
+										rows = append(rows, ar)
+										actionMatchedRows.Set(a, rows)
 									}
 								}
 							}
 
 							for _, action := range actions {
-								if matchedRows, isAllowed := actionMatchedRows[action]; !isAllowed {
+								matchedRows := []*Row{}
+								for _, rows := range actionMatchedRows.GetMerged(action) {
+									matchedRows = append(matchedRows, rows...)
+								}
+								if len(matchedRows) == 0 {
 									// add a blanket DENY for non matching actions
 									res = append(res, &Row{
 										RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{

@@ -7,9 +7,17 @@ rolePolicy:
   parentRoles:
     - employee
   rules:
+    # this is in to test that we match both rules correctly
+    - resource: leave_request
+      allowActions:
+        - view:public
+      condition:
+        match:
+          expr: P.id == "john"
+
     - resource: leave_request
       allowActions:
         - suggest
         - assist
         - redirect
-        - view:public
+        - view:*
