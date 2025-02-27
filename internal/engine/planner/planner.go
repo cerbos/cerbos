@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	celast "github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -754,28 +754,28 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	env := conditions.StdEnv
 
 	const nNameVariants = 2 // qualified, unqualified name
-	ds := make([]*exprpb.Decl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
+	ds := make([]*decls.VariableDecl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
 	if len(request.Resource.GetAttr()) > 0 {
 		for name, value := range request.Resource.Attr {
 			for _, s := range conditions.ResourceAttributeNames(name) {
-				ds = append(ds, decls.NewVar(s, decls.Dyn))
+				ds = append(ds, decls.NewVariable(s, types.DynType))
 				knownVars[s] = value
 			}
 		}
 	}
 	for _, s := range conditions.ResourceFieldNames(conditions.CELResourceKindField) {
-		ds = append(ds, decls.NewVar(s, decls.String))
+		ds = append(ds, decls.NewVariable(s, types.StringType))
 		knownVars[s] = request.Resource.GetKind()
 	}
 	for _, s := range conditions.ResourceFieldNames(conditions.CELScopeField) {
-		ds = append(ds, decls.NewVar(s, decls.String))
+		ds = append(ds, decls.NewVariable(s, types.StringType))
 		knownVars[s] = request.Resource.GetScope()
 	}
 	for _, s := range conditions.PrincipalFieldNames(conditions.CELScopeField) {
-		ds = append(ds, decls.NewVar(s, decls.String))
+		ds = append(ds, decls.NewVariable(s, types.StringType))
 		knownVars[s] = request.Principal.GetScope()
 	}
-	env, err = env.Extend(cel.Declarations(ds...))
+	env, err = env.Extend(cel.VariableDecls(ds...))
 	if err != nil {
 		return nil, err
 	}
@@ -828,7 +828,7 @@ func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpre
 		}
 		le := loopStep.CallExpr.Args[i]
 		var env1 *cel.Env
-		env1, err = env.Extend(cel.Declarations(decls.NewVar(ce.IterVar, decls.Dyn)))
+		env1, err = env.Extend(cel.VariableDecls(decls.NewVariable(ce.IterVar, types.DynType)))
 		if err != nil {
 			return err
 		}
