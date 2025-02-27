@@ -146,6 +146,7 @@ func newFunction(name string, opts ...decls.FunctionOpt) *decls.FunctionDecl {
 	}
 	return f
 }
+
 func unaryHierarchyFnImpl(v ref.Val) ref.Val {
 	switch hv := v.(type) {
 	case Hierarchy:
