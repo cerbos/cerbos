@@ -81,7 +81,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 	}
 
 	return []cel.EnvOption{
-		cel.Declarations(customtypes.HierarchyDeclrations...),
+		cel.FunctionDecls(customtypes.HierarchyDeclrations...),
 		cel.Types(customtypes.HierarchyType),
 		cel.Function(exceptFn, setOpFuncOverloads(exceptFn, exceptList)...),
 		cel.Function(hasIntersectionFn, setCheckFuncOverloads(hasIntersectionFn, hasIntersection)...),

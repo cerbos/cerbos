@@ -9,13 +9,12 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/overloads"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
@@ -62,69 +61,69 @@ var (
 		),
 	)
 
-	hierarchyTypeExpr = decls.NewObjectType(hierarchyTypeName)
+	hierarchyTypeExpr = types.NewObjectType(hierarchyTypeName)
 
-	HierarchyDeclrations = []*exprpb.Decl{
-		decls.NewFunction(overloadAncestorOf,
-			decls.NewInstanceOverload(overloadAncestorOf,
-				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-				decls.Bool,
+	HierarchyDeclrations = []*decls.FunctionDecl{
+		newFunction(overloadAncestorOf,
+			decls.MemberOverload(overloadAncestorOf,
+				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				types.BoolType,
 			),
 		),
 
-		decls.NewFunction(overloadCommonAncestors,
-			decls.NewInstanceOverload(overloadCommonAncestors,
-				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+		newFunction(overloadCommonAncestors,
+			decls.MemberOverload(overloadCommonAncestors,
+				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
 				hierarchyTypeExpr,
 			),
 		),
 
-		decls.NewFunction(overloadDescendentOf,
-			decls.NewInstanceOverload(overloadDescendentOf,
-				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-				decls.Bool,
+		newFunction(overloadDescendentOf,
+			decls.MemberOverload(overloadDescendentOf,
+				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				types.BoolType,
 			),
 		),
 
-		decls.NewFunction(overloadImmediateChildOf,
-			decls.NewInstanceOverload(overloadImmediateChildOf,
-				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-				decls.Bool,
+		newFunction(overloadImmediateChildOf,
+			decls.MemberOverload(overloadImmediateChildOf,
+				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				types.BoolType,
 			),
 		),
 
-		decls.NewFunction(overloadImmediateParentOf,
-			decls.NewInstanceOverload(overloadImmediateParentOf,
-				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-				decls.Bool,
+		newFunction(overloadImmediateParentOf,
+			decls.MemberOverload(overloadImmediateParentOf,
+				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				types.BoolType,
 			),
 		),
 
-		decls.NewFunction(overloadOverlaps,
-			decls.NewInstanceOverload(overloadOverlaps,
-				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-				decls.Bool,
+		newFunction(overloadOverlaps,
+			decls.MemberOverload(overloadOverlaps,
+				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				types.BoolType,
 			),
 		),
 
-		decls.NewFunction(overloadSiblingOf,
-			decls.NewInstanceOverload(overloadSiblingOf,
-				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-				decls.Bool,
+		newFunction(overloadSiblingOf,
+			decls.MemberOverload(overloadSiblingOf,
+				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				types.BoolType,
 			),
 		),
 
-		decls.NewFunction(overloads.Size,
-			decls.NewInstanceOverload(fmt.Sprintf("%s_size", hierarchyFn),
-				[]*exprpb.Type{hierarchyTypeExpr},
-				decls.Int,
+		newFunction(overloads.Size,
+			decls.MemberOverload(fmt.Sprintf("%s_size", hierarchyFn),
+				[]*types.Type{hierarchyTypeExpr},
+				types.IntType,
 			),
 		),
 
-		decls.NewFunction(operators.Index,
-			decls.NewOverload(fmt.Sprintf("%s_index", hierarchyFn),
-				[]*exprpb.Type{hierarchyTypeExpr, decls.Int},
-				decls.String,
+		newFunction(operators.Index,
+			decls.Overload(fmt.Sprintf("%s_index", hierarchyFn),
+				[]*types.Type{hierarchyTypeExpr, types.IntType},
+				types.StringType,
 			),
 		),
 	}
@@ -140,6 +139,13 @@ var (
 	}
 )
 
+func newFunction(name string, opts ...decls.FunctionOpt) *decls.FunctionDecl {
+	f, err := decls.NewFunction(name, opts...)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
 func unaryHierarchyFnImpl(v ref.Val) ref.Val {
 	switch hv := v.(type) {
 	case Hierarchy:
