@@ -22,15 +22,14 @@ import (
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -85,7 +84,7 @@ type policyHolder struct {
 type REPL struct {
 	output       Output
 	vars         variables
-	decls        map[string]*exprpb.Decl
+	decls        map[string]*decls.VariableDecl
 	reader       *liner.State
 	parser       *participle.Parser[REPLDirective]
 	toRefVal     func(any) ref.Val
@@ -417,12 +416,12 @@ func (r *REPL) processExpr(ctx context.Context, name, expr string) error {
 
 	r.output.PrintResult(name, val)
 	r.vars[name] = val
-	r.decls[name] = decls.NewVar(name, tpe)
+	r.decls[name] = decls.NewVariable(name, tpe)
 
 	return nil
 }
 
-func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *exprpb.Type, error) {
+func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *types.Type, error) {
 	env, err := r.mkEnv()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create environment: %w", err)
@@ -449,12 +448,7 @@ func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *exprpb.Type
 		tpe = t
 	}
 
-	exprpbTpe, err := types.TypeToExprType(tpe)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return val, exprpbTpe, nil
+	return val, tpe, nil
 }
 
 func (r *REPL) loadPolicy(ctx context.Context, path string) error {
@@ -761,7 +755,7 @@ func (r *REPL) doEvalCondition(ctx context.Context, condition *runtimev1.Conditi
 		}
 
 		r.vars[lastResultVar] = val
-		r.decls[lastResultVar] = decls.NewVar(lastResultVar, tpe)
+		r.decls[lastResultVar] = decls.NewVariable(lastResultVar, tpe)
 
 		if success, ok := val.Value().(bool); ok {
 			return &eval{err: nil, success: success, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
@@ -795,14 +789,14 @@ func (r *REPL) doEvalCondition(ctx context.Context, condition *runtimev1.Conditi
 }
 
 func (r *REPL) mkEnv() (*cel.Env, error) {
-	decls := make([]*exprpb.Decl, len(r.decls))
+	decls := make([]*decls.VariableDecl, len(r.decls))
 	i := 0
 	for _, d := range r.decls {
 		decls[i] = d
 		i++
 	}
 
-	return conditions.StdEnv.Extend(cel.Declarations(decls...))
+	return conditions.StdEnv.Extend(cel.VariableDecls(decls...))
 }
 
 func (r *REPL) Complete(line string) []string {

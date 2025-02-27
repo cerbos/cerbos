@@ -5,7 +5,6 @@ package planner
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -175,7 +174,7 @@ func Test_evaluateCondition(t *testing.T) {
 		},
 	}
 	evalCtx := &evalContext{TimeFn: time.Now}
-	ctx := context.Background()
+	ctx := t.Context()
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("Expr:%q", tt.args.expr), func(t *testing.T) {
 			is := require.New(t)

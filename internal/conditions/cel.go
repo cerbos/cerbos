@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/decls"
+	celtypes "github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -40,24 +41,24 @@ var (
 
 	StdEnv *cel.Env
 
-	StdEnvDecls = []*exprpb.Decl{
-		decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.Request")),
-		decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Principal")),
-		decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Request.Resource")),
-		decls.NewVar(CELRuntimeIdent, decls.NewObjectType("cerbos.engine.v1.Runtime")),
-		decls.NewVar(CELConstantsIdent, decls.NewMapType(decls.String, decls.Dyn)),
-		decls.NewVar(CELConstantsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-		decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
-		decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-		decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn)),
-		decls.NewVar(CELGlobalsAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+	StdEnvDecls = []*decls.VariableDecl{
+		decls.NewVariable(CELRequestIdent, celtypes.NewObjectType("cerbos.engine.v1.Request")),
+		decls.NewVariable(CELPrincipalAbbrev, celtypes.NewObjectType("cerbos.engine.v1.Request.Principal")),
+		decls.NewVariable(CELResourceAbbrev, celtypes.NewObjectType("cerbos.engine.v1.Request.Resource")),
+		decls.NewVariable(CELRuntimeIdent, celtypes.NewObjectType("cerbos.engine.v1.Runtime")),
+		decls.NewVariable(CELConstantsIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		decls.NewVariable(CELConstantsAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		decls.NewVariable(CELVariablesIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		decls.NewVariable(CELVariablesAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		decls.NewVariable(CELGlobalsIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		decls.NewVariable(CELGlobalsAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
 	}
 
 	StdEnvOptions = []cel.EnvOption{
 		ext.TwoVarComprehensions(),
 		cel.CrossTypeNumericComparisons(true),
 		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
-		cel.Declarations(StdEnvDecls...),
+		cel.VariableDecls(StdEnvDecls...),
 		cel.DefaultUTCTimeZone(false),
 		ext.Lists(),
 		ext.Bindings(),
