@@ -463,8 +463,8 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 			roleAllowNode = nil
 		}
 
-		if roleAllowNode != nil {
-		// If this role yields an unconditional ALLOW and no DENY, override all denies.
+		if roleAllowNode != nil { //nolint:nestif
+			// If this role yields an unconditional ALLOW and no DENY, override all denies.
 			if roleDenyNode == nil {
 				if b, ok := isNodeConstBool(roleAllowNode); ok && b {
 					allowNode = roleAllowNode
