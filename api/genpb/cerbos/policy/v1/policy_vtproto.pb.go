@@ -665,6 +665,11 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			dAtA[i] = 0x2a
 		}
 	}
+	if m.ScopePermissions != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ScopePermissions))
+		i--
+		dAtA[i] = 0x20
+	}
 	if len(m.Rules) > 0 {
 		for iNdEx := len(m.Rules) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Rules[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -4394,6 +4399,9 @@ func (m *RolePolicy) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
+	if m.ScopePermissions != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ScopePermissions))
+	}
 	if len(m.ParentRoles) > 0 {
 		for _, s := range m.ParentRoles {
 			l = len(s)
@@ -7710,6 +7718,25 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ScopePermissions", wireType)
+			}
+			m.ScopePermissions = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ScopePermissions |= ScopePermissions(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ParentRoles", wireType)

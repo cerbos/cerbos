@@ -139,8 +139,16 @@ message RolePolicy {
   }];
   string scope = 2 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   repeated RoleRule rules = 3;
-  reserved 4;
-  reserved "scope_permissions";
+  // Deprecated: no-op.
+  ScopePermissions scope_permissions = 4 [
+    (buf.validate.field).enum = {
+      in: [
+        0,
+        2
+      ]
+    },
+    deprecated = true
+  ];
 }
 
 message RoleRule {
