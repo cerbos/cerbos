@@ -6,7 +6,6 @@ package matchers
 import (
 	"testing"
 
-	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -46,12 +45,10 @@ func TestStructMatcher(t *testing.T) {
 		t.Run(test.expr, func(t *testing.T) {
 			ast, issues := conditions.StdEnv.Compile(test.expr)
 			require.Nil(t, issues.Err())
-			ex, err := cel.AstToParsedExpr(ast)
-			require.NoError(t, err)
 			s := NewExpressionProcessor()
-			res, _, err := s.Process(ex.Expr)
+			res, _, err := s.Process(ast.NativeRep().Expr())
 			require.NoError(t, err)
-			require.Equal(t, res, test.res)
+			require.Equal(t, test.res, res)
 		})
 	}
 }

@@ -9,12 +9,12 @@ import (
 	"sort"
 	"strings"
 
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/operators"
 	"github.com/tidwall/pretty"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -99,62 +99,94 @@ func opFromCLE(fn string) (string, error) {
 	}
 }
 
-type replaceVarsFunc func(e *exprpb.Expr) (output *exprpb.Expr, matched bool, err error)
+type replaceVarsFunc func(e celast.Expr) (output celast.Expr, matched bool, err error)
 
-func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err error) {
-	var r func(e *exprpb.Expr) *exprpb.Expr
+func replaceVarsGen(e celast.Expr, f replaceVarsFunc) (output celast.Expr, err error) {
+	var r func(e celast.Expr) celast.Expr
 
-	r = func(e *exprpb.Expr) *exprpb.Expr {
+	r = func(e celast.Expr) celast.Expr {
 		if e == nil {
 			return nil
 		}
-
-		switch ex := e.ExprKind.(type) {
-		case *exprpb.Expr_SelectExpr:
-			var e1 *exprpb.Expr
-			var matched bool
-
-			e1, matched, err = f(e)
+		fact := celast.NewExprFactory()
+		switch e.Kind() {
+		case celast.IdentKind:
+			e1, matched, err := f(e)
 			if err != nil {
-				break
+				return nil
 			}
 			if matched {
 				return e1
 			}
-			ex.SelectExpr.Operand = r(ex.SelectExpr.Operand)
-		case *exprpb.Expr_CallExpr:
-			ex.CallExpr.Target = r(ex.CallExpr.Target)
-			for i, arg := range ex.CallExpr.Args {
-				ex.CallExpr.Args[i] = r(arg)
-			}
-		case *exprpb.Expr_StructExpr:
-			for _, entry := range ex.StructExpr.Entries {
-				if k, ok := entry.KeyKind.(*exprpb.Expr_CreateStruct_Entry_MapKey); ok {
-					k.MapKey = r(k.MapKey)
-				}
-				entry.Value = r(entry.Value)
-			}
-		case *exprpb.Expr_ComprehensionExpr:
-			ce := ex.ComprehensionExpr
-			ce.IterRange = r(ce.IterRange)
-			ce.AccuInit = r(ce.AccuInit)
-			ce.LoopStep = r(ce.LoopStep)
-			ce.LoopCondition = r(ce.LoopCondition)
-			// ce.Result seems to be always an identifier, so isn't necessary to process
-		case *exprpb.Expr_ListExpr:
-			for i, element := range ex.ListExpr.Elements {
-				ex.ListExpr.Elements[i] = r(element)
-			}
-		}
-		return e
-	}
+			return fact.NewIdent(0, e.AsIdent())
+		case celast.SelectKind:
+			ex := e.AsSelect()
+			var e1 celast.Expr
+			var matched bool
 
-	output, ok := proto.Clone(e).(*exprpb.Expr)
-	if !ok {
-		return nil, fmt.Errorf("failed to clone an expression: %v", e)
+			e1, matched, err = f(e)
+			if err != nil {
+				return nil
+			}
+			if matched {
+				return e1
+			}
+			if ex.IsTestOnly() {
+				return fact.NewPresenceTest(0, r(ex.Operand()), ex.FieldName())
+			}
+			return fact.NewSelect(0, r(ex.Operand()), ex.FieldName())
+		case celast.CallKind:
+			ex := e.AsCall()
+			args := make([]celast.Expr, len(ex.Args()))
+			for i, arg := range ex.Args() {
+				args[i] = r(arg)
+			}
+			if ex.IsMemberFunction() {
+				return fact.NewMemberCall(0, ex.FunctionName(), r(ex.Target()), args...)
+			}
+			return fact.NewCall(0, ex.FunctionName(), args...)
+		case celast.MapKind:
+			ex := e.AsMap()
+			entries := make([]celast.EntryExpr, len(ex.Entries()))
+			for i, entry := range ex.Entries() {
+				me := entry.AsMapEntry()
+
+				entries[i] = fact.NewMapEntry(0, r(me.Key()), r(me.Value()), me.IsOptional())
+			}
+			return fact.NewMap(0, entries)
+		case celast.StructKind:
+			ex := e.AsStruct()
+			entries := make([]celast.EntryExpr, len(ex.Fields()))
+			for i, entry := range ex.Fields() {
+				sf := entry.AsStructField()
+
+				entries[i] = fact.NewStructField(0, sf.Name(), r(sf.Value()), sf.IsOptional())
+			}
+			return fact.NewStruct(0, ex.TypeName(), entries)
+		case celast.ComprehensionKind:
+			ex := e.AsComprehension()
+			if ex.HasIterVar2() {
+				return fact.NewComprehensionTwoVar(0, r(ex.IterRange()), ex.IterVar(), ex.IterVar2(), ex.AccuVar(), r(ex.AccuInit()), r(ex.LoopCondition()), r(ex.LoopStep()), ex.Result())
+			}
+			return fact.NewComprehension(0, r(ex.IterRange()), ex.IterVar(), ex.AccuVar(), r(ex.AccuInit()), r(ex.LoopCondition()), r(ex.LoopStep()), ex.Result())
+		case celast.ListKind:
+			ex := e.AsList()
+			elements := make([]celast.Expr, len(ex.Elements()))
+			for i, element := range ex.Elements() {
+				elements[i] = r(element)
+			}
+			return fact.NewList(0, elements, ex.OptionalIndices())
+		default:
+			ret := fact.CopyExpr(e)
+			internal.ZeroIDs(ret)
+			return ret
+		}
 	}
-	output = r(output)
-	internal.UpdateIDs(output)
+	if err != nil {
+		return nil, err
+	}
+	output = r(e)
+	internal.RenumberIDs(output)
 
 	return output, err
 }
@@ -163,52 +195,55 @@ func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err
 // E.g. Replace R.attr.field1 with id(R.attr.field1) iif R.attr.field1 is passed in the request to the Query Planner API.
 // This trick is necessary to evaluate expression like `P.attr.struct1[R.attr.field1]`, otherwise CEL tries to use `R.attr.field1`
 // as a qualifier for `P.attr.struct1` and produces the error https://github.com/cerbos/cerbos/issues/1340
-func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value) (output *exprpb.Expr, err error) {
-	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
-		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
+func replaceResourceVals(e celast.Expr, vals map[string]*structpb.Value) (output celast.Expr, err error) {
+	return replaceVarsGen(e, func(ex celast.Expr) (output celast.Expr, matched bool, err error) {
+		if e.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
-		sel := se.SelectExpr
+		sel := ex.AsSelect()
 
-		field := sel.Field
-		if _, ok = vals[field]; ok {
-			sel = sel.GetOperand().GetSelectExpr()
-			if sel == nil || sel.Field != conditions.CELAttrField {
+		field := sel.FieldName()
+		if _, ok := vals[field]; ok {
+			sel = sel.Operand().AsSelect()
+			if sel.FieldName() != conditions.CELAttrField {
 				return nil, false, nil
 			}
 			// match R.attr.<field>
-			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELResourceAbbrev {
-				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
+			ident := sel.Operand().AsIdent()
+			if sel.Operand().Kind() == celast.IdentKind && ident == conditions.CELResourceAbbrev {
+				fact := celast.NewExprFactory()
+				return fact.NewCall(0, conditions.IDFn, ex), true, nil
 			}
-			sel = sel.GetOperand().GetSelectExpr()
-			if sel == nil || sel.Field != conditions.CELResourceField {
+			if sel.Operand().Kind() == celast.SelectKind || sel.Operand().AsSelect().FieldName() != conditions.CELResourceField {
 				return nil, false, nil
 			}
+			sel = sel.Operand().AsSelect()
+			ident = sel.Operand().AsIdent()
 			// match request.resource.attr.<field>
-			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELRequestIdent {
-				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
+			if sel.Operand().Kind() == celast.IdentKind && ident == conditions.CELRequestIdent {
+				fact := celast.NewExprFactory()
+				return fact.NewCall(0, conditions.IDFn, ex), true, nil
 			}
 		}
 		return nil, false, nil
 	})
 }
 
-func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.Expr, err error) {
-	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
-		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
+func replaceVars(e celast.Expr, vars map[string]celast.Expr) (output celast.Expr, err error) {
+	return replaceVarsGen(e, func(ex celast.Expr) (output celast.Expr, matched bool, err error) {
+		if ex.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
-		sel := se.SelectExpr
-		ident := sel.Operand.GetIdentExpr()
-		if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
+		sel := ex.AsSelect()
+		ident := sel.Operand().AsIdent()
+		if sel.Operand().Kind() == celast.IdentKind && (ident == conditions.CELVariablesAbbrev || ident == conditions.CELVariablesIdent) {
 			matched = true
-			if e1, ok := vars[sel.Field]; ok {
-				//nolint:forcetypeassert
-				output = proto.Clone(e1).(*exprpb.Expr)
+			if e1, ok := vars[sel.FieldName()]; ok {
+				fact := celast.NewExprFactory()
+				output = fact.CopyExpr(e1)
+				internal.ZeroIDs(output)
 			} else {
-				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.Field))
+				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.FieldName()))
 			}
 		}
 		return
@@ -303,16 +338,6 @@ func structKeys(x *exprpb.Expr_CreateStruct) []*exprpb.Expr {
 	}
 
 	return exprs
-}
-
-func mkListExpr(elems []*exprpb.Expr) *exprpb.Expr {
-	return &exprpb.Expr{
-		ExprKind: &exprpb.Expr_ListExpr{
-			ListExpr: &exprpb.Expr_CreateList{
-				Elements: elems,
-			},
-		},
-	}
 }
 
 func mkExprOpExpr(op string, args ...*enginev1.PlanResourcesFilter_Expression_Operand) *exprOpExpr {
@@ -441,7 +466,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			const nArgs = 2
 			const rhsIndex = 1 // right-hand side arg index
 			if c.Function == operators.In && len(c.Args) == nArgs && c.Args[rhsIndex] == cur {
-				list := mkListExpr(structKeys(x))
+				list := internal.MkListExprProto(structKeys(x))
 				err := buildExprImpl(list, acc, parent)
 				if err != nil {
 					return err
@@ -512,7 +537,7 @@ func (lambdaAst *lambdaAST) mkNode(cur *exprpb.Expr) (*exprOpExpr, error) {
 func (lambdaAst *lambdaAST) buildIterRangeOp(cur *exprpb.Expr) (*exprOp, error) {
 	ir := lambdaAst.iterRange
 	if x, ok := ir.ExprKind.(*exprpb.Expr_StructExpr); ok && !canOperateOnStruct(lambdaAst.operator) {
-		ir = mkListExpr(structKeys(x.StructExpr))
+		ir = internal.MkListExprProto(structKeys(x.StructExpr))
 	}
 	irExprOp := new(exprOp)
 	err := buildExprImpl(ir, irExprOp, cur)
@@ -659,7 +684,7 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 				case logicalOperator == Or && !boolVal:
 					// Ignore literal false values because they don't matter
 					continue
-				case logicalOperator == And && !boolVal:
+				case logicalOperator == And /* && !boolVal*/ :
 					// A literal false makes the whole AND expression return false
 					return falseExprOpValue
 				case logicalOperator == Or && boolVal:
