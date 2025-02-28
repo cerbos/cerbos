@@ -6,14 +6,14 @@ include::ROOT:partial$version-check.adoc[]
 
 TIP: Scoped Policies are optional and are only evaluated if a "scope" is passed in the request, and there are matching "scope" attributes defined in the policies.
 
-NOTE: Policies can define "scopePermissions", which affects how rules are applied across scopes. See the xref:scope_permissions.adoc[scope permissions documentation] for more details.
+NOTE: Resource and principal policies can define "scopePermissions", which affects how rules are applied across scopes. See the xref:scope_permissions.adoc[scope permissions documentation] for more details.
 
 Scoped policies offer a way to model hierarchical relationships that regularly occur in many situations. Typically, the requirement is to have a base set of policies that can then be overridden for specific cases. For example, a multi-tenant SaaS system could have a standard set of access rules that can then be customised to suit the requirements of different tenants. Another example is a large organization that might want to have regional or departmental customisations to their global access rules.
 
 image::hierarchy.png[]
 
 
-Cerbos resource and principal policies have an optional `scope` field that can be used to indicate that they are part of a set of policies that must be evaluated together. Additionally, all policies within the same scope must use the same `scopePermissions` setting to define how rules interact across scope levels.
+Cerbos resource and principal policies have an optional `scope` field that can be used to indicate that they are part of a set of policies that must be evaluated together. Additionally, resource and principal policies within the same scope must use the same `scopePermissions` setting to define how rules interact across scope levels.
 
 [source,yaml,linenums]
 ----
