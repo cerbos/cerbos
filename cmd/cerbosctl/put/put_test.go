@@ -116,6 +116,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vdefault/acme.hr",
 					"resource.leave_request.vdefault/acme.hr.uk",
 					"resource.leave_request.vdefault/acme.hr.uk.brighton",
+					"resource.leave_request.vdefault/acme.hr.uk.brighton.kemptown",
 					"resource.leave_request.vdefault/acme.hr.uk.london",
 					"resource.leave_request.vstaging",
 					"resource.missing_attr.vdefault",
@@ -124,11 +125,13 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.purchase_order.vdefault",
 					"resource.runtime_effective_derived_roles.vdefault",
 					"resource.variables_referencing_variables.vdefault",
+					"role.accountant/acme",
 					"role.acme_assistant/acme.hr.uk",
 					"role.acme_creator/acme.hr.uk.brighton",
 					"role.acme_jr_admin/acme.hr.uk.brighton",
 					"role.acme_london_employee/acme.hr.uk.london",
 					"role.acme_travel_agent/acme.hr.uk",
+					"role.party_person/acme.hr.uk.brighton.kemptown",
 				}, listPolicies(t, clientCtx))
 			})
 

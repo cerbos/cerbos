@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  scope: "acme.hr.uk.brighton.kemptown"
+  scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
+  resource: leave_request
+  rules:
+    - roles: ["employee"]
+      actions:
+        - party
+        - beach_stroll
+      effect: EFFECT_ALLOW
