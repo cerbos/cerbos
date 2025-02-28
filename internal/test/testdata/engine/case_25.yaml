@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Interleaved REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS resource policies interleaved with role policies with parent roles"
+description: "REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS resource policies interleaved with role policies with parent roles"
 inputs:
   [
     {

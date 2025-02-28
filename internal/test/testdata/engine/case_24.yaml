@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Interleaved OVERRIDE_PARENT resource policies interleaved with role policies with parent roles"
+description: "OVERRIDE_PARENT resource policies interleaved with role policies with parent roles"
 inputs:
   [
     {
