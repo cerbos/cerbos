@@ -55,6 +55,12 @@ wantOutputs:
       "resourceId": "XX125",
       "actions":
         {
+          "create":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "scope": "acme",
+            },
           "view:public":
             {
               "effect": "EFFECT_DENY",
@@ -66,12 +72,6 @@ wantOutputs:
               "effect": "EFFECT_DENY",
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
               "scope": "acme.hr.uk.brighton"
-            },
-          "create":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-              "scope": "acme",
             },
           "deny":
             {
