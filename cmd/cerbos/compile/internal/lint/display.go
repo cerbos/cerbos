@@ -98,13 +98,5 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 		p.Println()
 	}
 
-	if len(errs.ScopePermissionsOrdering) > 0 {
-		p.Println(colored.Header("Scope permission ordering errors"))
-		for _, spo := range errs.ScopePermissionsOrdering {
-			p.Printf("scope %s: REQUIRE_PARENTAL_CONSENT can only be used at leaf nodes\n", spo.Scope)
-		}
-		p.Println()
-	}
-
 	return compileerrors.ErrFailed
 }

@@ -4,7 +4,6 @@ apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_london_employee
   scope: acme.hr.uk.london
-  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
   parentRoles:
     - "employee"
   rules:

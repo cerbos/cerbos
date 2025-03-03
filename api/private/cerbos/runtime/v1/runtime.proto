@@ -84,7 +84,8 @@ message RunnableRolePolicySet {
   Metadata meta = 1;
   string role = 2;
   string scope = 3;
-  cerbos.policy.v1.ScopePermissions scope_permissions = 5;
+  // Deprecated: no-op.
+  cerbos.policy.v1.ScopePermissions scope_permissions = 5 [deprecated = true];
   repeated string parent_roles = 6;
   map<string, RuleList> resources = 7;
 }
@@ -281,10 +282,6 @@ message IndexBuildErrors {
     string scope = 1;
   }
 
-  message ScopePermissionsOrdering {
-    string scope = 1;
-  }
-
   message LoadFailure {
     string file = 1;
     string error = 2 [deprecated = true];
@@ -305,7 +302,6 @@ message IndexBuildErrors {
   repeated Disabled disabled_defs = 6;
   repeated MissingScope missing_scope_details = 7;
   repeated ScopePermissionsConflicts scope_permissions_conflicts = 8;
-  repeated ScopePermissionsOrdering scope_permissions_ordering = 9;
 }
 
 message Errors {

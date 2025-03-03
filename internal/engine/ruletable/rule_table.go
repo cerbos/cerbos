@@ -282,7 +282,6 @@ func (rt *RuleTable) getRolePolicySets(ctx context.Context, scope string, roles 
 	defer span.End()
 	span.SetAttributes(tracing.PolicyScope(scope))
 
-	var requireParentalConsent, overrideParent int
 	processedRoles := make(map[string]struct{})
 	sets := []*runtimev1.RunnablePolicySet{}
 
@@ -315,17 +314,6 @@ func (rt *RuleTable) getRolePolicySets(ctx context.Context, scope string, roles 
 			err := getPolicies(rp.GetParentRoles(), processedRoles)
 			if err != nil {
 				return err
-			}
-
-			switch rp.ScopePermissions { //nolint:exhaustive
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-				requireParentalConsent++
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
-				overrideParent++
-			}
-
-			if requireParentalConsent > 0 && overrideParent > 0 {
-				return errors.New("invalid scope permissions: role policies cannot combine different scope permissions within the same scope")
 			}
 
 			sets = append(sets, r)
@@ -542,8 +530,6 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 }
 
 func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
-	rt.scopeScopePermissions[p.Scope] = p.ScopePermissions
-
 	version := "default" //nolint:goconst
 	moduleID := namer.GenModuleIDFromFQN(p.Meta.Fqn)
 	rt.meta[moduleID] = &runtimev1.RuleTableMetadata{
@@ -555,47 +541,23 @@ func (rt *RuleTable) addRolePolicy(p *runtimev1.RunnableRolePolicySet) {
 	}
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
-			evaluationKey := fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx)
-			switch p.ScopePermissions { //nolint:exhaustive
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
-				for a := range rule.AllowActions {
-					rt.insertRule(&Row{
-						RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-							OriginFqn: p.Meta.Fqn,
-							Role:      p.Role,
-							Resource:  resource,
-							ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-								Action: a,
-							},
-							Effect:           effectv1.Effect_EFFECT_ALLOW,
-							Scope:            p.Scope,
-							ScopePermissions: p.ScopePermissions,
-							Version:          version,
+			rt.insertRule(&Row{
+				RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+					OriginFqn: p.Meta.Fqn,
+					Role:      p.Role,
+					Resource:  resource,
+					ActionSet: &runtimev1.RuleTable_RuleRow_AllowActions_{
+						AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+							Actions: rule.AllowActions,
 						},
-						EvaluationKey:  evaluationKey,
-						OriginModuleID: moduleID,
-					})
-				}
-			case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-				rt.insertRule(&Row{
-					RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-						OriginFqn: p.Meta.Fqn,
-						Role:      p.Role,
-						Resource:  resource,
-						ActionSet: &runtimev1.RuleTable_RuleRow_AllowActions_{
-							AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
-								Actions: rule.AllowActions,
-							},
-						},
-						Condition:        rule.Condition,
-						Scope:            p.Scope,
-						ScopePermissions: p.ScopePermissions,
-						Version:          version,
 					},
-					EvaluationKey:  evaluationKey,
-					OriginModuleID: moduleID,
-				})
-			}
+					Condition: rule.Condition,
+					Scope:     p.Scope,
+					Version:   version,
+				},
+				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx),
+				OriginModuleID: moduleID,
+			})
 		}
 	}
 
@@ -630,8 +592,7 @@ func (rt *RuleTable) insertRule(r *Row) {
 		}
 
 		action := r.GetAction()
-		if r.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
-			len(r.GetAllowActions().GetActions()) > 0 {
+		if len(r.GetAllowActions().GetActions()) > 0 {
 			action = allowActionsIdxKey
 		}
 
@@ -789,91 +750,80 @@ func (rt *RuleTable) ScopedRoleExists(version, scope, role string) bool {
 	return false
 }
 
-func (rt *RuleTable) GetRows(version, resource string, scopes, roles, allRoles, actions []string) []*Row {
+func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
 	res := []*Row{}
 
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	roleMap := make(map[string]struct{}, len(roles))
-	for _, r := range roles {
-		roleMap[r] = struct{}{}
-	}
-
 	if scopeSet, ok := rt.primaryIdx[version]; ok { //nolint:nestif
 		for _, scope := range scopes {
-			scopePermissions := rt.GetScopeScopePermissions(scope)
 			if roleSet, ok := scopeSet[scope]; ok {
-				for _, role := range allRoles {
+				for _, role := range roles {
 					roleFqn := namer.RolePolicyFQN(role, scope)
 					for _, actionSet := range roleSet.GetMerged(role) {
-						if scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-							if ars, ok := actionSet.GetWithLiteral(allowActionsIdxKey); ok {
-								actionMatchedRows := make(map[string][]*Row)
-								// retrieve actions mapped to all effectual rows
-								for _, ar := range ars {
-									if _, isPrimaryRole := roleMap[ar.Role]; isPrimaryRole {
-										if util.MatchesGlob(ar.Resource, resource) {
-											for a := range ar.GetAllowActions().GetActions() {
-												actionMatchedRows[a] = append(actionMatchedRows[a], ar)
-											}
-										}
+						if ars, ok := actionSet.GetWithLiteral(allowActionsIdxKey); ok {
+							actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+							// retrieve actions mapped to all effectual rows
+							for _, ar := range ars {
+								if util.MatchesGlob(ar.Resource, resource) {
+									for a := range ar.GetAllowActions().GetActions() {
+										rows, _ := actionMatchedRows.Get(a)
+										rows = append(rows, ar)
+										actionMatchedRows.Set(a, rows)
 									}
 								}
+							}
 
-								for _, action := range actions {
-									if matchedRows, isAllowed := actionMatchedRows[action]; !isAllowed {
-										if _, isPrimaryRole := roleMap[role]; isPrimaryRole {
-											// add a blanket DENY for non matching actions
+							for _, action := range actions {
+								matchedRows := []*Row{}
+								for _, rows := range actionMatchedRows.GetMerged(action) {
+									matchedRows = append(matchedRows, rows...)
+								}
+								if len(matchedRows) == 0 {
+									// add a blanket DENY for non matching actions
+									res = append(res, &Row{
+										RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+											ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+												Action: action,
+											},
+											OriginFqn: roleFqn,
+											Resource:  resource,
+											Role:      role,
+											Effect:    effectv1.Effect_EFFECT_DENY,
+											Scope:     scope,
+											Version:   version,
+										},
+										NoMatchForScopePermissions: true,
+									})
+								} else {
+									for _, ar := range matchedRows {
+										// Don't bother adding a rule if there's no condition.
+										// Otherwise, we invert the condition and set a DENY
+										if ar.Condition != nil {
 											res = append(res, &Row{
 												RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
 													ActionSet: &runtimev1.RuleTable_RuleRow_Action{
 														Action: action,
 													},
-													OriginFqn:        roleFqn,
-													Resource:         resource,
-													Role:             role,
-													Effect:           effectv1.Effect_EFFECT_DENY,
-													Scope:            scope,
-													ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
-													Version:          version,
-												},
-												NoMatchForScopePermissions: true,
-											})
-										}
-									} else {
-										for _, ar := range matchedRows {
-											row := &Row{
-												RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-													ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-														Action: action,
+													OriginFqn: ar.OriginFqn,
+													Resource:  resource,
+													Condition: &runtimev1.Condition{
+														Op: &runtimev1.Condition_None{
+															None: &runtimev1.Condition_ExprList{
+																Expr: []*runtimev1.Condition{ar.Condition},
+															},
+														},
 													},
-													OriginFqn:        ar.OriginFqn,
-													Resource:         resource,
-													Condition:        ar.Condition,
 													Role:             ar.Role,
-													Effect:           effectv1.Effect_EFFECT_ALLOW,
+													Effect:           effectv1.Effect_EFFECT_DENY,
 													Scope:            scope,
 													ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
 													Version:          version,
 												},
 												EvaluationKey:  ar.EvaluationKey,
 												OriginModuleID: ar.OriginModuleID,
-											}
-
-											if row.Condition != nil {
-												// Invert the condition given we're also inverting the EFFECT
-												row.Condition = &runtimev1.Condition{
-													Op: &runtimev1.Condition_None{
-														None: &runtimev1.Condition_ExprList{
-															Expr: []*runtimev1.Condition{row.Condition},
-														},
-													},
-												}
-												row.Effect = effectv1.Effect_EFFECT_DENY
-											}
-
-											res = append(res, row)
+											})
 										}
 									}
 								}

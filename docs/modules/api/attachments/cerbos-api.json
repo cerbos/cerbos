@@ -3039,7 +3039,8 @@
           }
         },
         "scopePermissions": {
-          "$ref": "#/definitions/v1ScopePermissions"
+          "$ref": "#/definitions/v1ScopePermissions",
+          "description": "Deprecated: no-op."
         }
       }
     },

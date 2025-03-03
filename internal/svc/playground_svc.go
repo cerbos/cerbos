@@ -379,18 +379,12 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		})
 	}
 
-	for _, c := range errs.ScopePermissionsConflicts {
+	for _, scopePermissionConflict := range errs.ScopePermissionsConflicts {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			Error: fmt.Sprintf(
 				"Policies sharing scope %s have conflicting scopePermissions\n",
-				c.Scope,
+				scopePermissionConflict.Scope,
 			),
-		})
-	}
-
-	for _, e := range errs.ScopePermissionsOrdering {
-		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			Error: fmt.Sprintf("scope %s: REQUIRE_PARENTAL_CONSENT can only be used at leaf nodes\n", e.Scope),
 		})
 	}
 

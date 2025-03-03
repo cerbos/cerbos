@@ -298,7 +298,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	allRoles := ruleTable.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 
 	// Filter down to matching roles and action
-	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, input.Principal.Roles, allRoles, []string{input.Action})
+	candidateRows := ruleTable.GetRows(policyVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, []string{input.Action})
 	if len(candidateRows) == 0 {
 		return result, nil
 	}
@@ -463,16 +463,29 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 			roleAllowNode = nil
 		}
 
-		if allowNode == nil {
-			allowNode = roleAllowNode
+		if roleAllowNode != nil { //nolint:nestif
+			// If this role yields an unconditional ALLOW and no DENY, override all denies.
+			if roleDenyNode == nil {
+				if b, ok := isNodeConstBool(roleAllowNode); ok && b {
+					allowNode = roleAllowNode
+					denyNode = nil
+					break
+				}
+			}
+
+			if allowNode == nil {
+				allowNode = roleAllowNode
+			} else {
+				allowNode = mkNodeFromLO(mkOrLogicalOperation([]*qpN{allowNode, roleAllowNode}))
+			}
 		}
 
-		if denyNode == nil {
-			denyNode = roleDenyNode
-		}
-
-		if roleAllowNode != nil {
-			break
+		if roleDenyNode != nil {
+			if denyNode == nil {
+				denyNode = roleDenyNode
+			} else {
+				denyNode = mkNodeFromLO(mkOrLogicalOperation([]*qpN{denyNode, roleDenyNode}))
+			}
 		}
 	}
 

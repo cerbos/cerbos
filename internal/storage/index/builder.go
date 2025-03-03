@@ -39,8 +39,8 @@ type BuildError struct {
 }
 
 func (ibe *BuildError) Error() string {
-	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d, scope permission conflicts=%d, scope permission ordering errors=%d",
-		len(ibe.MissingImports), len(ibe.MissingScopeDetails), len(ibe.DuplicateDefs), len(ibe.LoadFailures), len(ibe.ScopePermissionsConflicts), len(ibe.ScopePermissionsOrdering))
+	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d, scope permission conflicts=%d",
+		len(ibe.MissingImports), len(ibe.MissingScopeDetails), len(ibe.DuplicateDefs), len(ibe.LoadFailures), len(ibe.ScopePermissionsConflicts))
 }
 
 type buildOptions struct {
@@ -161,22 +161,21 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 }
 
 type indexBuilder struct {
-	missingResourceScopes         map[string]map[string]map[string]struct{}
-	foundRolePolicyResourceScopes map[string]map[string]map[string]struct{}
+	executables                   ModuleIDSet
+	modIDToFile                   map[namer.ModuleID]string
 	fileToModID                   map[string]namer.ModuleID
 	dependents                    map[namer.ModuleID]ModuleIDSet
 	dependencies                  map[namer.ModuleID]ModuleIDSet
 	missingScopes                 map[string]map[string]struct{}
-	modIDToFile                   map[namer.ModuleID]string
 	sharedScopePermissionGroups   map[string]map[policyv1.ScopePermissions]struct{}
-	executables                   ModuleIDSet
 	conflictingScopes             map[string]struct{}
+	missingResourceScopes         map[string]map[string]map[string]struct{} // map[{resource}]map[{scope}]map[{version}]struct{}
+	foundRolePolicyResourceScopes map[string]map[string]map[string]struct{} // map[{resource}]map[{scope}]map[{version}]struct{}
 	missing                       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
 	stats                         *statsCollector
-	scopeTree                     *scopeNode
+	duplicates                    []*runtimev1.IndexBuildErrors_DuplicateDef
 	loadFailures                  []*runtimev1.IndexBuildErrors_LoadFailure
 	disabled                      []*runtimev1.IndexBuildErrors_Disabled
-	duplicates                    []*runtimev1.IndexBuildErrors_DuplicateDef
 }
 
 func newIndexBuilder() *indexBuilder {
@@ -193,7 +192,6 @@ func newIndexBuilder() *indexBuilder {
 		missingResourceScopes:         make(map[string]map[string]map[string]struct{}),
 		foundRolePolicyResourceScopes: make(map[string]map[string]map[string]struct{}),
 		stats:                         newStatsCollector(),
-		scopeTree:                     &scopeNode{children: make(map[string]*scopeNode)},
 	}
 }
 
@@ -235,47 +233,6 @@ func (idx *indexBuilder) addDisabled(file string, srcCtx parser.SourceCtx, p *po
 		Policy:   namer.PolicyKey(p),
 		Position: srcCtx.StartPosition(),
 	})
-}
-
-type scopeNode struct {
-	children         map[string]*scopeNode
-	scope            string
-	scopePermissions policyv1.ScopePermissions
-}
-
-func (n *scopeNode) collectInvalidScopes(invalidScopes []string) []string {
-	if n.scopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS && len(n.children) > 0 {
-		invalidScopes = append(invalidScopes, n.scope)
-	}
-
-	for _, child := range n.children {
-		invalidScopes = child.collectInvalidScopes(invalidScopes)
-	}
-
-	return invalidScopes
-}
-
-func (idx *indexBuilder) addScopeNode(scope string, permission policyv1.ScopePermissions) {
-	if scope == "" {
-		idx.scopeTree.scopePermissions = permission
-		return
-	}
-
-	parts := strings.Split(scope, ".")
-	node := idx.scopeTree
-	for _, part := range parts {
-		if node.children == nil {
-			node.children = make(map[string]*scopeNode)
-		}
-		child, ok := node.children[part]
-		if !ok {
-			child = &scopeNode{scope: part}
-			node.children[part] = child
-		}
-		node = child
-	}
-
-	node.scopePermissions = permission
 }
 
 func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p policy.Wrapper) {
@@ -328,7 +285,6 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		idx.executables[p.ID] = struct{}{}
 
 	case policy.RolePolicyKind:
-		scopePermission = p.GetRolePolicy().ScopePermissions
 		idx.executables[p.ID] = struct{}{}
 
 		rp := p.GetRolePolicy()
@@ -371,10 +327,6 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 
 	case policy.DerivedRolesKind, policy.ExportConstantsKind, policy.ExportVariablesKind:
 		// not executable
-	}
-
-	if p.Kind == policy.ResourceKind || p.Kind == policy.PrincipalKind || p.Kind == policy.RolePolicyKind {
-		idx.addScopeNode(p.Scope, scopePermission)
 	}
 
 	sharedScope, ok := idx.sharedScopePermissionGroups[p.Scope]
@@ -491,11 +443,10 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 
 func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	logger := zap.L().Named("index")
-	var buildErr *BuildError
 
 	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes) + len(idx.conflictingScopes)
 	if nErr > 0 {
-		buildErr = &BuildError{
+		err := &BuildError{
 			IndexBuildErrors: &runtimev1.IndexBuildErrors{
 				DuplicateDefs: idx.duplicates,
 				LoadFailures:  idx.loadFailures,
@@ -505,7 +456,7 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 		}
 
 		for _, missing := range idx.missing {
-			buildErr.MissingImports = append(buildErr.MissingImports, missing...)
+			err.MissingImports = append(err.MissingImports, missing...)
 		}
 
 		for policyKey, descendants := range idx.missingScopes {
@@ -515,44 +466,27 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 			}
 			sort.Strings(sortedDescendants)
 
-			buildErr.MissingScopeDetails = append(buildErr.MissingScopeDetails, &runtimev1.IndexBuildErrors_MissingScope{
+			err.MissingScopeDetails = append(err.MissingScopeDetails, &runtimev1.IndexBuildErrors_MissingScope{
 				Descendants:   sortedDescendants,
 				MissingPolicy: policyKey,
 			})
 		}
 
 		if len(idx.missingScopes) > 0 {
-			sort.Slice(buildErr.MissingScopeDetails, func(i, j int) bool {
-				return sort.StringsAreSorted([]string{buildErr.MissingScopeDetails[i].MissingPolicy, buildErr.MissingScopeDetails[j].MissingPolicy})
+			sort.Slice(err.MissingScopeDetails, func(i, j int) bool {
+				return sort.StringsAreSorted([]string{err.MissingScopeDetails[i].MissingPolicy, err.MissingScopeDetails[j].MissingPolicy})
 			})
 		}
 
 		for s := range idx.conflictingScopes {
-			buildErr.ScopePermissionsConflicts = append(buildErr.ScopePermissionsConflicts, &runtimev1.IndexBuildErrors_ScopePermissionsConflicts{
+			err.ScopePermissionsConflicts = append(err.ScopePermissionsConflicts, &runtimev1.IndexBuildErrors_ScopePermissionsConflicts{
 				Scope: s,
 			})
 		}
-	}
 
-	invalidScopes := []string{}
-	if invalidScopes = idx.scopeTree.collectInvalidScopes(invalidScopes); len(invalidScopes) > 0 {
-		if buildErr == nil {
-			buildErr = &BuildError{
-				IndexBuildErrors: &runtimev1.IndexBuildErrors{},
-			}
-		}
+		logBuildFailure(logger, opts.buildFailureLogLevel, err)
 
-		buildErr.nErr += len(invalidScopes)
-		for _, s := range invalidScopes {
-			buildErr.ScopePermissionsOrdering = append(buildErr.ScopePermissionsOrdering, &runtimev1.IndexBuildErrors_ScopePermissionsOrdering{
-				Scope: s,
-			})
-		}
-	}
-
-	if buildErr != nil {
-		logBuildFailure(logger, opts.buildFailureLogLevel, buildErr)
-		return nil, buildErr
+		return nil, err
 	}
 
 	logger.Info(fmt.Sprintf("Found %d executable policies", len(idx.executables)))
@@ -606,10 +540,6 @@ func logBuildFailure(logger *zap.Logger, level zapcore.Level, err *BuildError) {
 
 	if len(err.ScopePermissionsConflicts) > 0 {
 		fields = append(fields, zap.Any("scope_permissions", err.ScopePermissionsConflicts))
-	}
-
-	if len(err.ScopePermissionsOrdering) > 0 {
-		fields = append(fields, zap.Any("scope_permissions", err.ScopePermissionsOrdering))
 	}
 
 	ce.Write(fields...)

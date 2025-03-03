@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: acme_travel_agent
+  scope: acme.hr.uk
+  parentRoles:
+    - employee
+  rules:
+    # this is in to test that we match both rules correctly
+    - resource: leave_request
+      allowActions:
+        - view:public
+      condition:
+        match:
+          expr: P.id == "john"
+
+    - resource: leave_request
+      allowActions:
+        - suggest
+        - assist
+        - redirect
+        - view:*

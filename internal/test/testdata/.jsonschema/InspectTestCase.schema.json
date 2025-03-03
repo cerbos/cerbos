@@ -560,9 +560,6 @@
       "allOf": [
         {
           "type": "object",
-          "required": [
-            "scopePermissions"
-          ],
           "additionalProperties": false,
           "properties": {
             "parentRoles": {
@@ -590,7 +587,7 @@
             "scopePermissions": {
               "type": "string",
               "enum": [
-                "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+                "SCOPE_PERMISSIONS_UNSPECIFIED",
                 "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
               ]
             }
@@ -983,12 +980,6 @@
           "items": {
             "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts"
           }
-        },
-        "scopePermissionsOrdering": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsOrdering"
-          }
         }
       }
     },
@@ -1083,15 +1074,6 @@
       }
     },
     "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "scope": {
-          "type": "string"
-        }
-      }
-    },
-    "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsOrdering": {
       "type": "object",
       "additionalProperties": false,
       "properties": {

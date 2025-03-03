@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Interleaved resource and role policies with parent roles and REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+description: "REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS resource policies interleaved with role policies with parent roles"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
-        "create", # ALLOW for `acme_creator` wildcard. ALLOW in parent scope for `employee`.
+        "create", # ALLOW for `acme_creator` wildcard. ALLOW in parent custom role. ALLOW in parent scope for `employee`.
         "delete", # No match in target scope. ALLOW in parent scope for conditional rule for `employee_that_owns_the_record`.
         "view:public", # No match for `acme_creator`. ALLOW for `acme_jr_admin` wildcard. ALLOW in parent scope for `employee_that_owns_the_record`.
         "deny", # No match for `acme_creator`. ALLOW for `acme_jr_admin` which `acme_creator` narrows. No match in parent scope.
@@ -55,6 +55,12 @@ wantOutputs:
       "resourceId": "XX125",
       "actions":
         {
+          "create":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "scope": "acme",
+            },
           "view:public":
             {
               "effect": "EFFECT_DENY",
@@ -66,12 +72,6 @@ wantOutputs:
               "effect": "EFFECT_DENY",
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
               "scope": "acme.hr.uk.brighton"
-            },
-          "create":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
-              "scope": "acme",
             },
           "deny":
             {
@@ -245,6 +245,14 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "role_policies/policy_02_acme.hr.uk.brighton.yaml",
+                    },
+                },
+              "role.acme_jr_admin/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_01_acme.hr.uk.brighton.yaml",
                     },
                 },
             },

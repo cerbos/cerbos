@@ -1,26 +1,23 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "OVERRIDE_PARENT resource policies interleaved with role policies with parent roles"
+description: "OVERRIDE_PARENT scope as descendent of REQUIRE_PARENTAL_CONSENT"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
-        "assist", # allowed in named role, parent custom role and in resource policy in same scope
-        "aid", # allowed in named role, but not in parent custom role. is in resource policy but will be denied by parent custom role
-        "suggest", # not allowed in named role, but is in parent custom role
-        "redirect", # allowed in named role and parent custom role and for parent role in resource policy in parent scope
-        "view:public", # allowed in `any_employee` derived role which has the `employee` parent role
+        "party",
+        "beach_stroll"
       ],
       "principal":
         {
           "id": "john",
-          "roles": ["acme_assistant"],
+          "roles": ["party_person"],
         },
       "resource":
         {
           "kind": "leave_request",
-          "scope": "acme.hr.uk",
+          "scope": "acme.hr.uk.brighton.kemptown",
           "id": "XX125",
         },
     },
@@ -32,38 +29,19 @@ wantOutputs:
       "resourceId": "XX125",
       "actions":
         {
-          "assist":
+          "party":
             {
               "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme.hr.uk",
+              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton.kemptown",
+              "scope": "acme.hr.uk.brighton.kemptown",
             },
-          "aid":
+          "beach_stroll":
             {
               "effect": "EFFECT_DENY",
               "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk",
-            },
-          "suggest":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk",
-            },
-          "redirect":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme.hr",
-            },
-          "view:public":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme",
+              "scope": "acme.hr.uk.brighton.kemptown",
             },
         },
-      "effectiveDerivedRoles": ["any_employee"]
     },
   ]
 wantDecisionLogs:
@@ -80,15 +58,15 @@ wantDecisionLogs:
                 "resource":
                   {
                     "kind": "leave_request",
-                    "scope": "acme.hr.uk",
+                    "scope": "acme.hr.uk.brighton.kemptown",
                     "id": "XX125",
                   },
                 "principal":
                   {
                     "id": "john",
-                    "roles": ["acme_assistant"],
+                    "roles": ["party_person"],
                   },
-                "actions": ["assist", "aid", "suggest", "redirect", "view:public"],
+                "actions": ["party", "beach_stroll"],
               },
             ],
           "outputs":
@@ -98,38 +76,19 @@ wantDecisionLogs:
                 "resourceId": "XX125",
                 "actions":
                   {
-                    "assist":
+                    "party":
                       {
                         "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme.hr.uk",
+                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton.kemptown",
+                        "scope": "acme.hr.uk.brighton.kemptown",
                       },
-                    "aid":
+                    "beach_stroll":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk",
-                      },
-                    "suggest":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk",
-                      },
-                    "redirect":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme.hr",
-                      },
-                    "view:public":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme",
+                        "scope": "acme.hr.uk.brighton.kemptown",
                       },
                   },
-                "effectiveDerivedRoles": ["any_employee"]
               },
             ],
         },
@@ -169,23 +128,32 @@ wantDecisionLogs:
                       "source": "resource_policies/policy_05_acme.hr.uk.yaml",
                     },
                 },
-              "role.acme_assistant/acme.hr.uk":
+              "resource.leave_request.vdefault/acme.hr.uk.brighton":
                 {
                   "attributes":
                     {
                       "driver": "disk",
-                      "source": "role_policies/policy_03_acme.hr.uk.yaml",
+                      "source": "resource_policies/policy_05_acme.hr.uk.brighton.yaml",
                     },
                 },
-              "role.acme_travel_agent/acme.hr.uk":
+              "resource.leave_request.vdefault/acme.hr.uk.brighton.kemptown":
                 {
                   "attributes":
                     {
                       "driver": "disk",
-                      "source": "role_policies/policy_04_acme.hr.uk.yaml",
+                      "source": "resource_policies/policy_05_acme.hr.uk.brighton.kemptown.yaml",
+                    },
+                },
+              "role.party_person/acme.hr.uk.brighton.kemptown":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_06_acme.hr.uk.brighton.kemptown.yaml",
                     },
                 },
             },
         },
     },
   ]
+

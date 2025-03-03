@@ -130,9 +130,6 @@
   "allOf": [
     {
       "type": "object",
-      "required": [
-        "scopePermissions"
-      ],
       "additionalProperties": false,
       "properties": {
         "parentRoles": {
@@ -160,7 +157,7 @@
         "scopePermissions": {
           "type": "string",
           "enum": [
-            "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+            "SCOPE_PERMISSIONS_UNSPECIFIED",
             "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
           ]
         }

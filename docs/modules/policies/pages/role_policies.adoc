@@ -4,32 +4,13 @@ include::ROOT:partial$attributes.adoc[]
 
 include::ROOT:partial$version-check.adoc[]
 
-WARNING: Role policies are still under development and should be considered unstable for production use cases.
-
 Role policies are ABAC policies in which you specify a number of resources, each with a set of allowable actions that the role can carry out on the resource. Optionally, a condition can also be specified for each set of allowable actions. In the simple case, they allow you to author permissions from the view of an IdP role, rather than for a given resource.
 
-Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, they specify **allowable actions**, an exhaustive list of resources and the actions allowed on those resources, with an optional condition. Any resource and action pair not defined in this list is immediately denied for that role. Allowable actions with conditions behave differently depending on the policy's `scopePermissions` setting. The section below details these behaviours.
+Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, the **allowable actions** act as an exhaustive list of actions allowed on each resource. Any resource and action pair not defined in this list is immediately denied for that role.
 
-The name of a role policy is effectively a custom role within the context of Cerbos. A role policy (custom role) can optionally define `parentRoles`, inheriting their permissions by default. A parent role can be either an arbitrary IdP role or the name of another role policy within the system. Parent role resolution is recursive—if a custom role inherits from another custom role that also has parent roles, it inherits their permissions as well.
+The name of a role policy is effectively a custom role within the context of Cerbos. A role policy (custom role) can optionally define `parentRoles`, inheriting and narrowing their permissions by default. The policy can only define rules that are a strict subset of the parent role’s permissions and cannot introduce any extra rules beyond what the parent roles allow. They can immediately DENY an action but if they ALLOW an action, a parent policy higher up the scope chain must also ALLOW the same action.
 
-== Scope permissions
-=== SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
-
-If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS` and specifies parent roles, it **inherits and restricts** their permissions. The policy can only define rules that are a strict subset of the parent role’s permissions and cannot introduce any extra rules beyond what the parent roles allow. They can immediately DENY an action but if they ALLOW an action, a parent policy higher up the scope chain must also ALLOW the same action. 
-
-All role policies within the same scope must use the same `scopePermissions` setting. If conflicting settings are detected, a build-time error will occur.
-
-The rules specified within the role policy constitute the **full** set of permissions for the role. If an action is not explicitly allowed for a given resource, it is implicitly denied.
-
-=== SCOPE_PERMISSIONS_OVERRIDE_PARENT
-
-If a role policy includes `scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT`, it **inherits** the permissions of its parent roles by default.
-
-Additionally, the allowable actions do **not** define the complete set of permissions for the given resource-action combinations. If no matching rule is found, the evaluator will continue checking higher up the scope hierarchy.
-
-However, if an action is **not explicitly allowed anywhere in the scope hierarchy**, it is implicitly denied.
-
-NOTE: See the xref:scope_permissions.adoc[scope permissions documentation] for more details.
+A parent role can be either an arbitrary IdP role or the name of another role policy within the system. Parent role resolution is recursive—if a custom role inherits from another custom role that also has parent roles, it inherits and narrows their permissions as well.
 
 [source,yaml,linenums]
 ----
@@ -38,31 +19,29 @@ apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: "acme_admin" <1>
   scope: "acme.hr.uk" <2>
-  scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS <3>
-  parentRoles: <4>
+  parentRoles: <3>
     - admin
   rules:
-    - resource: leave_request <5>
-      allowActions: <6>
-        - view:* <7>
+    - resource: leave_request <4>
+      allowActions: <5>
+        - view:* <6>
         - deny
 
     - resource: salary_record
       allowActions:
         - edit
-      condition: <8>
+      condition: <7>
         match:
           expr: R.attr.owner == P.id
 
-    - resource: "*" <9>
+    - resource: "*" <8>
       allowActions: ["create"]
 ----
 <1> The role to which this policy applies.
 <2> Optional principal xref:scoped_policies.adoc[scope] for this policy.
-<3> The xref:scope_permissions.adoc[scope permissions] setting for this policy.
-<4> The list of parent roles that the custom role inherits.
-<5> The resource to which the following rule applies.
-<6> The list of allowable actions that the role can carry out on the given resource.
-<7> Wildcard actions are supported.
-<8> A condition that must be met for the action to be allowed.
-<9> Wildcard resources are also supported.
+<3> The list of parent roles that the custom role inherits.
+<4> The resource to which the following rule applies.
+<5> The list of allowable actions that the role can carry out on the given resource.
+<6> Wildcard actions are supported.
+<7> A condition that must be met for the action to be allowed.
+<8> Wildcard resources are also supported.
