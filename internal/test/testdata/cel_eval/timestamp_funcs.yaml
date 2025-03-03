@@ -7,11 +7,11 @@ condition:
       - expr: timestamp(R.attr.lastAccessed).getDayOfMonth("-05:00") == 19
       - expr: timestamp(R.attr.lastAccessed).getDayOfWeek("-05:00") == 2
       - expr: timestamp(R.attr.lastAccessed).getDayOfYear("-05:00") == 109
-      - expr: timestamp(R.attr.lastAccessed).getFullYear("-05:00") == 2021
+      - expr: timestamp(R.attr.lastAccessed).getFullYear() == 2021
       - expr: timestamp(R.attr.lastAccessed).getHours("-05:00") == 10
       - expr: timestamp(R.attr.lastAccessed).getMilliseconds("-05:00") == 21
-      - expr: timestamp(R.attr.lastAccessed).getMinutes("-05:00") == 5
-      - expr: timestamp(R.attr.lastAccessed).getMonth("-05:00") == 3
+      - expr: timestamp(R.attr.lastAccessed).getMinutes("UTC") == 5
+      - expr: timestamp(R.attr.lastAccessed).getMonth("Australia/Melbourne") == 3
       - expr: timestamp(R.attr.lastAccessed).getSeconds("-05:00") == 20
       - expr: |-
           timestamp(R.attr.lastAccessed) + duration("24h") == timestamp("2021-04-21T10:05:20.021-05:00")

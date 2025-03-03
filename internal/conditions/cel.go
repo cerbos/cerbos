@@ -59,7 +59,6 @@ var (
 		cel.CrossTypeNumericComparisons(true),
 		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
 		cel.VariableDecls(StdEnvDecls...),
-		cel.DefaultUTCTimeZone(false),
 		ext.Lists(),
 		ext.Bindings(),
 		ext.Strings(),
