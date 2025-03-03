@@ -46,8 +46,7 @@ wantOutputs:
           "defer":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.london",
+              "policy": "role.acme_london_employee/acme.hr.uk.london",
             },
         },
       "effectiveDerivedRoles":
@@ -103,8 +102,7 @@ wantDecisionLogs:
                     "defer":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.london",
+                        "policy": "role.acme_london_employee/acme.hr.uk.london",
                       },
                   },
                 "effectiveDerivedRoles":
@@ -130,30 +128,6 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "resource_policies/policy_05_acme.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.uk.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr.uk.london":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.uk.london.yaml",
                     },
                 },
               "role.acme_london_employee/acme.hr.uk.london":

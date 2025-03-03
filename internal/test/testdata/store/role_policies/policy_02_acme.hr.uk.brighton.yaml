@@ -8,4 +8,4 @@ rolePolicy:
     - "acme_jr_admin"
   rules:
     - resource: "*"
-      allowActions: ["create"]
+      allowActions: ["create", "make"]

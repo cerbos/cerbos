@@ -37,13 +37,12 @@ wantOutputs:
           "create":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
+              "policy": "role.acme_london_employee/acme.hr.uk.london",
             },
           "view":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.london",
+              "policy": "role.acme_london_employee/acme.hr.uk.london",
             },
           "anonymise":
             {
@@ -95,13 +94,12 @@ wantDecisionLogs:
                     "create":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
+                        "policy": "role.acme_london_employee/acme.hr.uk.london",
                       },
                     "view":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.london",
+                        "policy": "role.acme_london_employee/acme.hr.uk.london",
                       },
                     "anonymise":
                       {
