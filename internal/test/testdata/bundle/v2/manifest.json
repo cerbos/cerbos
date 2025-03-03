@@ -51,7 +51,7 @@
     "resources/salary_record.json"
   ],
   "meta":  {
-    "identifier":  "66PXRRKTQ396OECH",
+    "bundleId":  "66PXRRKTQ396OECH",
     "source":  "/Users/samuellock/cerbos/cerbos/internal/test/testdata/store"
   }
 }

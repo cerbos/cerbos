@@ -11,20 +11,19 @@ import (
 	"os"
 	"time"
 
-	"github.com/cerbos/cloud-api/bundle"
 	"go.uber.org/zap"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/engine"
+	internalengine "github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
 	"github.com/cerbos/cerbos/private/compile"
+	"github.com/cerbos/cerbos/private/engine"
 )
 
 // Files runs tests using the policy files in the given file system.
@@ -49,7 +48,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng := engine.NewEphemeral(nil, compiler, schemaMgr)
+	eng := internalengine.NewEphemeral(nil, compiler, schemaMgr)
 
 	results, err := verify.Verify(ctx, fsys, eng, verify.Config{Trace: true})
 	if err != nil {
@@ -59,27 +58,14 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	return results, nil
 }
 
-type BundleParams struct {
-	BundlePath string
-	TestsDir   string
-	WorkDir    string
-}
-
 // Bundle runs tests using the given policy bundle.
-func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, error) {
-	bundleSrc, err := hub.NewLocalSource(hub.LocalParams{
-		BundlePath:    params.BundlePath,
-		BundleVersion: bundle.Version1,
-		TempDir:       params.WorkDir,
-	})
+func Bundle(ctx context.Context, params engine.BundleParams, testsDir string) (*policyv1.TestResults, error) {
+	eng, err := engine.FromBundle(ctx, params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create local bundle source from %q: %w", params.BundlePath, err)
+		return nil, err
 	}
 
-	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
-	eng := engine.NewEphemeral(nil, bundleSrc, schemaMgr)
-
-	results, err := verify.Verify(ctx, os.DirFS(params.TestsDir), eng, verify.Config{Trace: true})
+	results, err := verify.Verify(ctx, os.DirFS(testsDir), eng, verify.Config{Trace: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}
@@ -139,6 +125,6 @@ func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker, opts ...Opt
 
 type checkFunc func(context.Context, []*enginev1.CheckInput, CheckOptions) ([]*enginev1.CheckOutput, error)
 
-func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
-	return f(ctx, inputs, engine.ApplyCheckOptions(opts...))
+func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...internalengine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+	return f(ctx, inputs, internalengine.ApplyCheckOptions(opts...))
 }

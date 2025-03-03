@@ -57,6 +57,10 @@ type RemoteSourceConf struct {
 	Connection *hub.ConnectionConf `yaml:"connection" conf:",ignore"`
 	// BundleLabel to fetch from the server.
 	BundleLabel string `yaml:"bundleLabel" conf:"required,example=latest"`
+	// DeploymentID to fetch from the server.
+	DeploymentID string `yaml:"deploymentID" conf:",ignore"`
+	// PlaygroundID to fetch from the server.
+	PlaygroundID string `yaml:"playgroundID" conf:",ignore"`
 	// CacheDir is the directory to use for caching downloaded bundles.
 	CacheDir string `yaml:"cacheDir" conf:",example=${XDG_CACHE_DIR}"`
 	// TempDir is the directory to use for temporary files.
@@ -91,7 +95,7 @@ func (conf *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, err)
 	}
 
-	if err := conf.Remote.validate(); err != nil {
+	if err := conf.Remote.validate(conf.BundleVersion); err != nil {
 		outErr = multierr.Append(outErr, err)
 	}
 
@@ -150,31 +154,46 @@ func (lc *LocalSourceConf) setDefaultsForUnsetFields() error {
 	return nil
 }
 
-func (rc *RemoteSourceConf) validate() error {
+func (rc *RemoteSourceConf) validate(bundleVersion bundle.Version) error {
 	if rc == nil {
 		return nil
 	}
 
-	if rc.BundleLabel == "" {
-		rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
-	}
+	switch bundleVersion {
+	case bundle.Version1:
+		if rc.BundleLabel == "" {
+			rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
+		}
 
-	if strings.TrimSpace(rc.BundleLabel) == "" {
-		return errors.New("bundleLabel must be specified")
+		if strings.TrimSpace(rc.BundleLabel) == "" {
+			return errors.New("bundleLabel must be specified")
+		}
+
+	case bundle.Version2:
+		if rc.DeploymentID == "" {
+			rc.DeploymentID = hub.GetEnv(hub.DeploymentIDKey)
+		}
+
+		if rc.PlaygroundID == "" {
+			rc.PlaygroundID = hub.GetEnv(hub.PlaygroundIDKey)
+		}
+
+		if rc.DeploymentID == "" {
+			if rc.PlaygroundID == "" {
+				return errors.New("deploymentID or playgroundID must be specified")
+			}
+		} else if rc.PlaygroundID != "" {
+			return errors.New("deploymentID and playgroundID must not both be specified")
+		}
+
+	default:
+		return nil
 	}
 
 	return rc.setDefaultsForUnsetFields()
 }
 
 func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
-	if rc == nil {
-		return errors.New("configuration is undefined")
-	}
-
-	if rc.BundleLabel == "" {
-		rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
-	}
-
 	if rc.TempDir == "" {
 		dir, err := os.MkdirTemp("", "cerbos-hub-*")
 		if err != nil {
