@@ -15,6 +15,7 @@ inputs:
                  # defined in a role policy, it narrows the permissions of `employee` rather than assuming them, even if they share
                  # the same scope. If the principal explicitly had the role `employee`, this would be allowed. 
         "party_plan", # Rule with non-matching condition in target scope which implicitly DENYs (even with ALLOW in parent scope)
+        "make", # ALLOW for `acme_creator`, no match in parent custom role
         ],
       "principal":
         {
@@ -64,20 +65,20 @@ wantOutputs:
           "view:public":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "delete":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "deny":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "block":
             {
@@ -88,13 +89,20 @@ wantOutputs:
           "defer":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "party_plan":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
+            },
+          "make":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
         },
       "effectiveDerivedRoles":
@@ -138,7 +146,7 @@ wantDecisionLogs:
                         "ip_address": "10.20.0.13",
                       },
                   },
-                "actions": ["create", "delete", "view:public", "deny", "block", "defer", "party_plan"],
+                "actions": ["create", "delete", "view:public", "deny", "block", "defer", "party_plan", "make"],
               },
             ],
           "outputs":
@@ -157,19 +165,19 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "view:public":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.brighton"
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "deny":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "block":
@@ -181,13 +189,20 @@ wantDecisionLogs:
                     "defer":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.brighton"
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "party_plan":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
+                      },
+                    "make":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                   },
                 "effectiveDerivedRoles":

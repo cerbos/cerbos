@@ -326,12 +326,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 
 					if satisfiesCondition { //nolint:nestif
-						roleEffectSet[row.Effect] = struct{}{}
-						if row.NoMatchForScopePermissions {
-							roleEffectInfo.Policy = noMatchScopePermissions
-							roleEffectInfo.Scope = scope
-						}
-
 						var outputExpr *exprpb.CheckedExpr
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
 							outputExpr = row.EmitOutput.When.RuleActivated.Checked
@@ -345,6 +339,17 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							}
 							result.Outputs = append(result.Outputs, output)
 							octx.ComputedOutput(output)
+						}
+
+						roleEffectSet[row.Effect] = struct{}{}
+						if row.Effect == effectv1.Effect_EFFECT_DENY {
+							roleEffectInfo.Policy = namer.PolicyKeyFromFQN(row.OriginFqn)
+							roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
+							roleEffectInfo.Scope = scope
+							break scopesLoop
+						} else if row.NoMatchForScopePermissions {
+							roleEffectInfo.Policy = noMatchScopePermissions
+							roleEffectInfo.Scope = scope
 						}
 					} else {
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
@@ -360,10 +365,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					}
 				}
 
-				if _, hasDeny := roleEffectSet[effectv1.Effect_EFFECT_DENY]; hasDeny {
-					roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
-					break scopesLoop
-				} else if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow {
+				if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow {
 					switch rte.GetScopeScopePermissions(scope) { //nolint:exhaustive
 					case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 						delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)

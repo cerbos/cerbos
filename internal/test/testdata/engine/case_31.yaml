@@ -38,7 +38,7 @@ wantOutputs:
           "beach_stroll":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+              "policy": "role.party_person/acme.hr.uk.brighton.kemptown",
               "scope": "acme.hr.uk.brighton.kemptown",
             },
         },
@@ -85,7 +85,7 @@ wantDecisionLogs:
                     "beach_stroll":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "policy": "role.party_person/acme.hr.uk.brighton.kemptown",
                         "scope": "acme.hr.uk.brighton.kemptown",
                       },
                   },
