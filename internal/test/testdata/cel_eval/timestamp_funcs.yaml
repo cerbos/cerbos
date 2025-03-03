@@ -3,16 +3,16 @@
 condition:
   all:
     of:
-      - expr: timestamp(R.attr.lastAccessed).getDate() == 20
-      - expr: timestamp(R.attr.lastAccessed).getDayOfMonth() == 19
-      - expr: timestamp(R.attr.lastAccessed).getDayOfWeek() == 2
-      - expr: timestamp(R.attr.lastAccessed).getDayOfYear() == 109
+      - expr: timestamp(R.attr.lastAccessed).getDate("-05:00") == 20
+      - expr: timestamp(R.attr.lastAccessed).getDayOfMonth("-05:00") == 19
+      - expr: timestamp(R.attr.lastAccessed).getDayOfWeek("-05:00") == 2
+      - expr: timestamp(R.attr.lastAccessed).getDayOfYear("-05:00") == 109
       - expr: timestamp(R.attr.lastAccessed).getFullYear() == 2021
-      - expr: timestamp(R.attr.lastAccessed).getHours() == 10
-      - expr: timestamp(R.attr.lastAccessed).getMilliseconds() == 21
-      - expr: timestamp(R.attr.lastAccessed).getMinutes() == 5
-      - expr: timestamp(R.attr.lastAccessed).getMonth() == 3
-      - expr: timestamp(R.attr.lastAccessed).getSeconds() == 20
+      - expr: timestamp(R.attr.lastAccessed).getHours("-05:00") == 10
+      - expr: timestamp(R.attr.lastAccessed).getMilliseconds("-05:00") == 21
+      - expr: timestamp(R.attr.lastAccessed).getMinutes("UTC") == 5
+      - expr: timestamp(R.attr.lastAccessed).getMonth("NZ") == 3
+      - expr: timestamp(R.attr.lastAccessed).getSeconds("-05:00") == 20
       - expr: |-
           timestamp(R.attr.lastAccessed) + duration("24h") == timestamp("2021-04-21T10:05:20.021-05:00")
 

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
 	celast "github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
 	"github.com/google/cel-go/parser"
@@ -106,7 +106,7 @@ func TestCerbosLib(t *testing.T) {
 			ast, issues := env.Compile(tc.expr)
 			is.NoError(issues.Err())
 
-			have, _, err := conditions.Eval(env, ast, cel.NoVars(), conditions.Now())
+			have, _, err := conditions.ContextEval(t.Context(), env, ast, cel.NoVars(), conditions.Now())
 			if tc.wantErr {
 				is.Error(err)
 			} else {
@@ -121,11 +121,11 @@ func TestCmpSelectAndCall(t *testing.T) {
 	t.Skip()
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
-		cel.Declarations(
-			decls.NewVar("y", decls.NewListType(decls.String)),
-			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar("z", decls.String),
-			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+		cel.VariableDecls(
+			decls.NewVariable("y", types.NewListType(types.StringType)),
+			decls.NewVariable(conditions.CELResourceAbbrev, types.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVariable("z", types.StringType),
+			decls.NewVariable("v", types.NewMapType(types.StringType, types.DynType))),
 		ext.Strings())
 
 	expr0 := "v.geo() in (y + [z]).map(t, t.upperAscii())"
@@ -153,10 +153,10 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 	geo := parser.NewReceiverMacro("geo", 0, expander)
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
-		cel.Declarations(
-			decls.NewVar("y", decls.NewListType(decls.String)),
-			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar("z", decls.String)),
+		cel.VariableDecls(
+			decls.NewVariable("y", types.NewListType(types.StringType)),
+			decls.NewVariable(conditions.CELResourceAbbrev, types.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVariable("z", types.StringType)),
 		// decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
 		ext.Strings(),
 		cel.Macros(geo))
@@ -176,7 +176,7 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 		is.NoError(issues.Err())
 	}
 
-	out, det, err := conditions.Eval(env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	out, det, err := conditions.ContextEval(t.Context(), env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 	is.NoError(err)
 	is.True(types.IsUnknown(out))
 	residual, err := env.ResidualAst(ast, det)
@@ -189,13 +189,13 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 func TestPartialEvaluation(t *testing.T) {
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
-		cel.Declarations(
-			decls.NewVar(conditions.CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
-			decls.NewVar("y", decls.NewListType(decls.String)),
-			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar("request.principal", decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar("z", decls.String),
-			decls.NewVar("R.attr.department", decls.String)),
+		cel.VariableDecls(
+			decls.NewVariable(conditions.CELRequestIdent, types.NewObjectType("cerbos.engine.v1.CheckInput")),
+			decls.NewVariable("y", types.NewListType(types.StringType)),
+			decls.NewVariable(conditions.CELResourceAbbrev, types.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVariable("request.principal", types.NewMapType(types.StringType, types.DynType)),
+			decls.NewVariable("z", types.StringType),
+			decls.NewVariable("R.attr.department", types.StringType)),
 		ext.Strings())
 
 	vars, _ := cel.PartialVars(map[string]any{
@@ -257,7 +257,7 @@ func TestPartialEvaluation(t *testing.T) {
 				is.NoError(issues.Err())
 			}
 
-			out, det, err := conditions.Eval(env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			out, det, err := conditions.ContextEval(t.Context(), env, ast, vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
 			t.Log(out.Type())
 			is.NoError(err)

@@ -4,6 +4,7 @@
 package internal
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -21,15 +22,14 @@ import (
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -84,7 +84,7 @@ type policyHolder struct {
 type REPL struct {
 	output       Output
 	vars         variables
-	decls        map[string]*exprpb.Decl
+	decls        map[string]*decls.VariableDecl
 	reader       *liner.State
 	parser       *participle.Parser[REPLDirective]
 	toRefVal     func(any) ref.Val
@@ -111,7 +111,7 @@ func NewREPL(reader *liner.State, output Output) (*REPL, error) {
 	return repl, repl.reset()
 }
 
-func (r *REPL) Loop() error {
+func (r *REPL) Loop(ctx context.Context) error {
 	r.output.Println(banner)
 	r.output.Println(fmt.Sprintf("Type %s to get help", colored.REPLCmd(":help")))
 	r.output.Println()
@@ -132,7 +132,7 @@ func (r *REPL) Loop() error {
 		}
 
 		r.reader.AppendHistory(input)
-		if err := r.handleInput(input); err != nil {
+		if err := r.handleInput(ctx, input); err != nil {
 			if errors.Is(err, errExit) {
 				return nil
 			}
@@ -185,18 +185,18 @@ func (r *REPL) readInput() (string, error) {
 	}
 }
 
-func (r *REPL) handleInput(input string) error {
+func (r *REPL) handleInput(ctx context.Context, input string) error {
 	switch input[0] {
 	case directivePrefix:
-		return r.processDirective(input[1:])
+		return r.processDirective(ctx, input[1:])
 	case commentPrefix:
 		return nil
 	default:
-		return r.processExpr(lastResultVar, input)
+		return r.processExpr(ctx, lastResultVar, input)
 	}
 }
 
-func (r *REPL) processDirective(line string) error {
+func (r *REPL) processDirective(ctx context.Context, line string) error {
 	directive, err := r.parser.ParseString("", line)
 	if err != nil {
 		return fmt.Errorf("invalid directive %q: %w", line, err)
@@ -216,13 +216,13 @@ func (r *REPL) processDirective(line string) error {
 	case directive.Let != nil:
 		prefix, _, _ := strings.Cut(directive.Let.Name, ".")
 		if _, ok := specialVars[prefix]; ok {
-			return r.setSpecialVar(directive.Let.Name, directive.Let.Expr)
+			return r.setSpecialVar(ctx, directive.Let.Name, directive.Let.Expr)
 		}
-		return r.processExpr(directive.Let.Name, directive.Let.Expr)
+		return r.processExpr(ctx, directive.Let.Name, directive.Let.Expr)
 	case directive.Load != nil:
-		return r.loadPolicy(directive.Load.Path)
+		return r.loadPolicy(ctx, directive.Load.Path)
 	case directive.Exec != nil:
-		return r.execRule(directive.Exec.RuleID)
+		return r.execRule(ctx, directive.Exec.RuleID)
 	default:
 		return fmt.Errorf("unknown directive %q", line)
 	}
@@ -277,7 +277,7 @@ func (r *REPL) showRules() error {
 	return nil
 }
 
-func (r *REPL) setSpecialVar(name, value string) error {
+func (r *REPL) setSpecialVar(ctx context.Context, name, value string) error {
 	switch name {
 	case lastResultVar:
 		return fmt.Errorf("%s is a read-only variable", lastResultVar)
@@ -295,7 +295,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		r.vars[conditions.CELPrincipalAbbrev] = r.toRefVal(request.Principal)
 		r.vars[conditions.CELResourceAbbrev] = r.toRefVal(request.Resource)
 
-		r.evalPolicyVariables()
+		r.evalPolicyVariables(ctx)
 
 	case conditions.CELPrincipalAbbrev, qualifiedPrincipal:
 		request, err := getCheckInput(r.vars)
@@ -317,7 +317,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		r.vars[conditions.CELPrincipalAbbrev] = principalVal
 		r.vars[conditions.CELResourceAbbrev] = r.toRefVal(request.Resource)
 
-		r.evalPolicyVariables()
+		r.evalPolicyVariables(ctx)
 
 	case conditions.CELResourceAbbrev, qualifiedResource:
 		request, err := getCheckInput(r.vars)
@@ -339,7 +339,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		r.vars[conditions.CELPrincipalAbbrev] = r.toRefVal(request.Principal)
 		r.vars[conditions.CELResourceAbbrev] = resourceVal
 
-		r.evalPolicyVariables()
+		r.evalPolicyVariables(ctx)
 
 	case conditions.CELConstantsIdent, conditions.CELConstantsAbbrev:
 		var c map[string]any
@@ -348,7 +348,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		}
 
 		r.addToVarC(c)
-		r.evalPolicyVariables()
+		r.evalPolicyVariables(ctx)
 		r.output.PrintResult(name, r.vars[conditions.CELConstantsIdent])
 
 	case conditions.CELVariablesIdent, conditions.CELVariablesAbbrev:
@@ -358,7 +358,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		}
 
 		r.addToVarV(v)
-		r.evalPolicyVariables()
+		r.evalPolicyVariables(ctx)
 		r.output.PrintResult(name, r.vars[conditions.CELVariablesIdent])
 
 	case conditions.CELGlobalsIdent, conditions.CELGlobalsAbbrev:
@@ -370,7 +370,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		globalsVal := r.toRefVal(globals)
 		r.vars[conditions.CELGlobalsIdent] = globalsVal
 		r.vars[conditions.CELGlobalsAbbrev] = globalsVal
-		r.evalPolicyVariables()
+		r.evalPolicyVariables(ctx)
 		r.output.PrintResult(name, r.vars[conditions.CELGlobalsIdent])
 
 	default:
@@ -408,20 +408,20 @@ func (r *REPL) addToVarV(v map[string]any) {
 	r.vars[conditions.CELVariablesAbbrev] = varsVal
 }
 
-func (r *REPL) processExpr(name, expr string) error {
-	val, tpe, err := r.evalExpr(expr)
+func (r *REPL) processExpr(ctx context.Context, name, expr string) error {
+	val, tpe, err := r.evalExpr(ctx, expr)
 	if err != nil {
 		return err
 	}
 
 	r.output.PrintResult(name, val)
 	r.vars[name] = val
-	r.decls[name] = decls.NewVar(name, tpe)
+	r.decls[name] = decls.NewVariable(name, tpe)
 
 	return nil
 }
 
-func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
+func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *types.Type, error) {
 	env, err := r.mkEnv()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create environment: %w", err)
@@ -438,7 +438,7 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 		return nil, nil, errSilent
 	}
 
-	val, _, err := conditions.Eval(env, ast, r.vars, conditions.Now())
+	val, _, err := conditions.ContextEval(ctx, env, ast, r.vars, conditions.Now())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -448,15 +448,10 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 		tpe = t
 	}
 
-	exprpbTpe, err := types.TypeToExprType(tpe)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return val, exprpbTpe, nil
+	return val, tpe, nil
 }
 
-func (r *REPL) loadPolicy(path string) error {
+func (r *REPL) loadPolicy(ctx context.Context, path string) error {
 	f, err := os.Open(strings.TrimSpace(path))
 	if err != nil {
 		return fmt.Errorf("failed to open policy file at %s: %w", path, err)
@@ -534,7 +529,7 @@ func (r *REPL) loadPolicy(path string) error {
 	}
 
 	r.policy = ph
-	r.evalPolicyVariables()
+	r.evalPolicyVariables(ctx)
 
 	r.output.Println(fmt.Sprintf("Loaded %s", colored.REPLPolicyName(ph.key)))
 	r.output.Println()
@@ -703,14 +698,14 @@ func mergeVariableDefinitions(merged map[string]string, sources map[string][]str
 	}
 }
 
-func (r *REPL) evalPolicyVariables() {
+func (r *REPL) evalPolicyVariables(ctx context.Context) {
 	if r.policy == nil || len(r.policy.variables) == 0 {
 		return
 	}
 
 	result := make(map[string]any, len(r.policy.variables))
 	for name, expr := range r.policy.variables {
-		v, _, err := r.evalExpr(expr)
+		v, _, err := r.evalExpr(ctx, expr)
 		if err != nil {
 			result[name] = types.NewErr("failed to evaluate '%s = %s': %v", name, expr, err)
 		} else {
@@ -721,15 +716,15 @@ func (r *REPL) evalPolicyVariables() {
 	r.addToVarV(result)
 }
 
-func (r *REPL) execRule(id int) error {
+func (r *REPL) execRule(ctx context.Context, id int) error {
 	if r.policy == nil || id >= len(r.policy.rules) {
 		return fmt.Errorf("failed to find rule %d", id)
 	}
 
-	return r.evalCondition(id)
+	return r.evalCondition(ctx, id)
 }
 
-func (r *REPL) evalCondition(id int) error {
+func (r *REPL) evalCondition(ctx context.Context, id int) error {
 	var cond *policyv1.Condition
 	switch rt := r.policy.rules[id].(type) {
 	case *policyv1.ResourceRule:
@@ -745,22 +740,22 @@ func (r *REPL) evalCondition(id int) error {
 		return fmt.Errorf("failed to compile condition: %w", err)
 	}
 
-	e := r.doEvalCondition(condition)
+	e := r.doEvalCondition(ctx, condition)
 	eo := buildEvalOutput(e)
 
 	return pterm.DefaultTree.WithRoot(putils.TreeFromLeveledList(eo.tree)).Render()
 }
 
-func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {
+func (r *REPL) doEvalCondition(ctx context.Context, condition *runtimev1.Condition) *eval {
 	switch c := condition.Op.(type) {
 	case *runtimev1.Condition_Expr:
-		val, tpe, err := r.evalExpr(c.Expr.Original)
+		val, tpe, err := r.evalExpr(ctx, c.Expr.Original)
 		if err != nil {
 			return &eval{err: err, success: false, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
 		}
 
 		r.vars[lastResultVar] = val
-		r.decls[lastResultVar] = decls.NewVar(lastResultVar, tpe)
+		r.decls[lastResultVar] = decls.NewVariable(lastResultVar, tpe)
 
 		if success, ok := val.Value().(bool); ok {
 			return &eval{err: nil, success: success, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
@@ -770,21 +765,21 @@ func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {
 	case *runtimev1.Condition_All:
 		eval := &eval{err: nil, success: true, evalType: evalTypeAll, evals: nil}
 		for _, expr := range c.All.GetExpr() {
-			e := r.doEvalCondition(expr)
+			e := r.doEvalCondition(ctx, expr)
 			eval.append(e)
 		}
 		return eval
 	case *runtimev1.Condition_Any:
 		eval := &eval{err: nil, success: true, evalType: evalTypeAny, evals: nil}
 		for _, expr := range c.Any.GetExpr() {
-			e := r.doEvalCondition(expr)
+			e := r.doEvalCondition(ctx, expr)
 			eval.append(e)
 		}
 		return eval
 	case *runtimev1.Condition_None:
 		eval := &eval{err: nil, success: true, evalType: evalTypeNone, evals: nil}
 		for _, expr := range c.None.GetExpr() {
-			e := r.doEvalCondition(expr)
+			e := r.doEvalCondition(ctx, expr)
 			eval.append(e)
 		}
 		return eval
@@ -794,14 +789,14 @@ func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {
 }
 
 func (r *REPL) mkEnv() (*cel.Env, error) {
-	decls := make([]*exprpb.Decl, len(r.decls))
+	decls := make([]*decls.VariableDecl, len(r.decls))
 	i := 0
 	for _, d := range r.decls {
 		decls[i] = d
 		i++
 	}
 
-	return conditions.StdEnv.Extend(cel.Declarations(decls...))
+	return conditions.StdEnv.Extend(cel.VariableDecls(decls...))
 }
 
 func (r *REPL) Complete(line string) []string {

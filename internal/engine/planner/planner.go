@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	celast "github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -251,7 +251,7 @@ func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					continue
 				}
 
-				filter, err := evalCtx.evaluateCondition(rule.Condition, request, ppe.Globals, constants, variables, derivedRolesList)
+				filter, err := evalCtx.evaluateCondition(ctx, rule.Condition, request, ppe.Globals, constants, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -337,7 +337,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 							return nil, err
 						}
 
-						node, err := evalCtx.evaluateCondition(dr.Condition, request, globals, dr.Constants, variables, derivedRolesList)
+						node, err := evalCtx.evaluateCondition(ctx, dr.Condition, request, globals, dr.Constants, variables, derivedRolesList)
 						if err != nil {
 							return nil, err
 						}
@@ -380,7 +380,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					}
 				}
 
-				node, err := evalCtx.evaluateCondition(row.Condition, request, globals, constants, variables, derivedRolesList)
+				node, err := evalCtx.evaluateCondition(ctx, row.Condition, request, globals, constants, variables, derivedRolesList)
 				if err != nil {
 					return nil, err
 				}
@@ -395,7 +395,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 						}
 					}
 
-					drNode, err := evalCtx.evaluateCondition(row.DerivedRoleCondition, request, globals, row.DerivedRoleParams.Constants, variables, derivedRolesList)
+					drNode, err := evalCtx.evaluateCondition(ctx, row.DerivedRoleCondition, request, globals, row.DerivedRoleParams.Constants, variables, derivedRolesList)
 					if err != nil {
 						return nil, err
 					}
@@ -572,7 +572,7 @@ type evalContext struct {
 	TimeFn func() time.Time
 }
 
-func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
+func (evalCtx *evalContext) evaluateCondition(ctx context.Context, condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -582,7 +582,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	case *runtimev1.Condition_Any:
 		nodes := make([]*qpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(ctx, c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -606,7 +606,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(ctx, c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -629,7 +629,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
-			node, err := evalCtx.evaluateCondition(c, request, globals, constants, variables, derivedRolesList)
+			node, err := evalCtx.evaluateCondition(ctx, c, request, globals, constants, variables, derivedRolesList)
 			if err != nil {
 				return nil, err
 			}
@@ -656,7 +656,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evalCtx.evaluateConditionExpression(t.Expr.Checked, request, globals, constants, variables, derivedRolesList)
+		residual, err := evalCtx.evaluateConditionExpression(ctx, t.Expr.Checked, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -667,7 +667,7 @@ func (evalCtx *evalContext) evaluateCondition(condition *runtimev1.Condition, re
 	return res, nil
 }
 
-func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+func (evalCtx *evalContext) evaluateConditionExpression(ctx context.Context, expr *exprpb.CheckedExpr, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
 	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
@@ -695,7 +695,7 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr
 		return nil, err
 	}
 
-	val, residual, err := p.evalPartially(e)
+	val, residual, err := p.evalPartially(ctx, e)
 	if err != nil {
 		// ignore expressions that are invalid
 		if types.IsError(val) {
@@ -705,7 +705,7 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr
 		return nil, err
 	}
 	if types.IsUnknown(val) {
-		err = p.evalComprehensionBody(residual)
+		err = p.evalComprehensionBody(ctx, residual)
 		if err != nil {
 			return nil, err
 		}
@@ -718,7 +718,7 @@ func (evalCtx *evalContext) evaluateConditionExpression(expr *exprpb.CheckedExpr
 		if !r {
 			return &exprpb.CheckedExpr{Expr: residual}, nil
 		}
-		_, residual, err = p.evalPartially(e)
+		_, residual, err = p.evalPartially(ctx, e)
 		if err != nil {
 			return nil, err
 		}
@@ -739,9 +739,10 @@ type partialEvaluator struct {
 	nowFn func() time.Time
 }
 
-func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
+func (p *partialEvaluator) evalPartially(ctx context.Context, e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
-	val, details, err := conditions.Eval(p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	const checkFrequency = 100
+	val, details, err := conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState), cel.InterruptCheckFrequency(checkFrequency))
 	if err != nil {
 		return val, nil, err
 	}
@@ -766,28 +767,28 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	env := conditions.StdEnv
 
 	const nNameVariants = 2 // qualified, unqualified name
-	ds := make([]*exprpb.Decl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
+	ds := make([]*decls.VariableDecl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
 	if len(request.Resource.GetAttr()) > 0 {
 		for name, value := range request.Resource.Attr {
 			for _, s := range conditions.ResourceAttributeNames(name) {
-				ds = append(ds, decls.NewVar(s, decls.Dyn))
+				ds = append(ds, decls.NewVariable(s, types.DynType))
 				knownVars[s] = value
 			}
 		}
 	}
 	for _, s := range conditions.ResourceFieldNames(conditions.CELResourceKindField) {
-		ds = append(ds, decls.NewVar(s, decls.String))
+		ds = append(ds, decls.NewVariable(s, types.StringType))
 		knownVars[s] = request.Resource.GetKind()
 	}
 	for _, s := range conditions.ResourceFieldNames(conditions.CELScopeField) {
-		ds = append(ds, decls.NewVar(s, decls.String))
+		ds = append(ds, decls.NewVariable(s, types.StringType))
 		knownVars[s] = request.Resource.GetScope()
 	}
 	for _, s := range conditions.PrincipalFieldNames(conditions.CELScopeField) {
-		ds = append(ds, decls.NewVar(s, decls.String))
+		ds = append(ds, decls.NewVariable(s, types.StringType))
 		knownVars[s] = request.Principal.GetScope()
 	}
-	env, err = env.Extend(cel.Declarations(ds...))
+	env, err = env.Extend(cel.VariableDecls(ds...))
 	if err != nil {
 		return nil, err
 	}
@@ -802,17 +803,17 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	return newPartialEvaluator(env, vars, evalCtx.TimeFn), nil
 }
 
-func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {
-	return evalComprehensionBodyImpl(p.env, p.vars, p.nowFn, e)
+func (p *partialEvaluator) evalComprehensionBody(ctx context.Context, e *exprpb.Expr) (err error) {
+	return evalComprehensionBodyImpl(ctx, p.env, p.vars, p.nowFn, e)
 }
 
-func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e *exprpb.Expr) (err error) {
+func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e *exprpb.Expr) (err error) {
 	if e == nil {
 		return nil
 	}
 	impl := func(e1 *exprpb.Expr) {
 		if err == nil {
-			err = evalComprehensionBodyImpl(env, pvars, nowFn, e1)
+			err = evalComprehensionBodyImpl(ctx, env, pvars, nowFn, e1)
 		}
 	}
 	switch e := e.ExprKind.(type) {
@@ -840,7 +841,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 		}
 		le := loopStep.CallExpr.Args[i]
 		var env1 *cel.Env
-		env1, err = env.Extend(cel.Declarations(decls.NewVar(ce.IterVar, decls.Dyn)))
+		env1, err = env.Extend(cel.VariableDecls(decls.NewVariable(ce.IterVar, types.DynType)))
 		if err != nil {
 			return err
 		}
@@ -854,7 +855,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 			return err
 		}
 		var det *cel.EvalDetails
-		_, det, err = conditions.Eval(env1, ast, pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		_, det, err = conditions.ContextEval(ctx, env1, ast, pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
 			return err
 		}
@@ -863,7 +864,7 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 			return err
 		}
 		loopStep.CallExpr.Args[i] = le
-		err = evalComprehensionBodyImpl(env1, pvars1, nowFn, le)
+		err = evalComprehensionBodyImpl(ctx, env1, pvars1, nowFn, le)
 		if err != nil {
 			return err
 		}

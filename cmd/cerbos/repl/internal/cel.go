@@ -6,9 +6,8 @@ package internal
 import (
 	"fmt"
 
-	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -28,20 +27,20 @@ func buildSpecialVarsSet() map[string]struct{} {
 
 	m[lastResultVar] = struct{}{}
 	for _, d := range conditions.StdEnvDecls {
-		m[d.GetName()] = struct{}{}
+		m[d.Name()] = struct{}{}
 	}
 
 	return m
 }
 
-func resetVarsAndDecls() (variables, map[string]*exprpb.Decl) {
+func resetVarsAndDecls() (variables, map[string]*decls.VariableDecl) {
 	vars := variables{}
 	for v := range specialVars {
 		vars[v] = types.NullValue
 	}
 
 	// request and variable decls are already defined in StdEnv
-	decls := map[string]*exprpb.Decl{lastResultVar: decls.NewVar(lastResultVar, decls.Dyn)}
+	decls := map[string]*decls.VariableDecl{lastResultVar: decls.NewVariable(lastResultVar, types.DynType)}
 
 	return vars, decls
 }

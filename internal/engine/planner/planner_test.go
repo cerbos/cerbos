@@ -9,9 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/cel-go/common/types"
+
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	celast "github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -174,10 +176,11 @@ func Test_evaluateCondition(t *testing.T) {
 		},
 	}
 	evalCtx := &evalContext{TimeFn: time.Now}
+	ctx := t.Context()
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("Expr:%q", tt.args.expr), func(t *testing.T) {
 			is := require.New(t)
-			got, err := evalCtx.evaluateCondition(tt.args.condition, tt.args.request, nil, nil, nil, nil)
+			got, err := evalCtx.evaluateCondition(ctx, tt.args.condition, tt.args.request, nil, nil, nil, nil)
 			is.NoError(err)
 			expression := got.GetExpression()
 			is.Equal(tt.want, unparse(t, expression))
@@ -230,7 +233,7 @@ func Test_evaluateCondition(t *testing.T) {
 					}
 				}
 			}
-			got, err := evalCtx.evaluateCondition(c, &enginev1.Request{
+			got, err := evalCtx.evaluateCondition(ctx, c, &enginev1.Request{
 				Principal: &enginev1.Request_Principal{Attr: principalAttr},
 				Resource:  &enginev1.Request_Resource{Attr: resourceAttr},
 			}, nil, nil, nil, nil)
@@ -283,7 +286,7 @@ func TestResidualExpr(t *testing.T) {
 			ex, err := replaceVars(e.Expr, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: ex})
-			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err := conditions.ContextEval(t.Context(), env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			residualAst, err := env.ResidualAst(ast, det)
 			is.NoError(err)
@@ -292,12 +295,12 @@ func TestResidualExpr(t *testing.T) {
 			wantResidualExpr := re.Expr
 
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: ex})
-			_, det, err = conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err = conditions.ContextEval(t.Context(), env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			haveResidualExpr, err := residualExpr(ast, det)
 			is.NoError(err)
 			p := newPartialEvaluator(env, pvars, nowFn)
-			err = p.evalComprehensionBody(haveResidualExpr)
+			err = p.evalComprehensionBody(t.Context(), haveResidualExpr)
 			is.NoError(err)
 			is.Empty(cmp.Diff(wantResidualExpr, haveResidualExpr, protocmp.Transform(), ignoreID))
 		})
@@ -382,12 +385,12 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			e, err := replaceVars(pe.Expr, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err := conditions.Eval(env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err := conditions.ContextEval(t.Context(), env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			haveExpr, err := residualExpr(ast, det)
 			is.NoError(err)
 			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
-			err = p.evalComprehensionBody(haveExpr)
+			err = p.evalComprehensionBody(t.Context(), haveExpr)
 			internal.UpdateIDs(haveExpr)
 			is.NoError(err)
 
@@ -406,11 +409,11 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string]*expr.Expr) {
 	t.Helper()
 
-	env, err := conditions.StdEnv.Extend(cel.Declarations(
-		decls.NewVar("gb_us", decls.NewListType(decls.String)),
-		decls.NewVar("gbLoc", decls.String),
-		decls.NewVar("ca", decls.String),
-		decls.NewVar("T", decls.Int),
+	env, err := conditions.StdEnv.Extend(cel.VariableDecls(
+		decls.NewVariable("gb_us", types.NewListType(types.StringType)),
+		decls.NewVariable("gbLoc", types.StringType),
+		decls.NewVariable("ca", types.StringType),
+		decls.NewVariable("T", types.IntType),
 	))
 	require.NoError(t, err)
 

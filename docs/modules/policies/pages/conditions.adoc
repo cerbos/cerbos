@@ -496,14 +496,16 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | getDayOfWeek | Get day of week from a timestamp. Returns a zero-based value where Sunday is 0 | timestamp(R.attr.lastAccessed).getDayOfWeek() == 2
 | getDayOfYear | Get day of year from a timestamp. Returns a zero-based value | timestamp(R.attr.lastAccessed).getDayOfYear() == 109
 | getFullYear | Get full year from a timestamp | timestamp(R.attr.lastAccessed).getFullYear() == 2021
-| getHours | Get hours from a timestamp | timestamp(R.attr.lastAccessed).getHours() == 10
+| getHours | Get hours from a timestamp | timestamp(R.attr.lastAccessed).getHours("-05:00") == 10
 | getMilliseconds | Get milliseconds from a timestamp | timestamp(R.attr.lastAccessed).getMilliseconds() == 21
-| getMinutes | Get minutes from a timestamp | timestamp(R.attr.lastAccessed).getMinutes() == 5
-| getMonth | Get month from a timestamp. Returns a zero-based value where January is 0 | timestamp(R.attr.lastAccessed).getMonth() == 3
+| getMinutes | Get minutes from a timestamp | timestamp(R.attr.lastAccessed).getMinutes("UTC") == 5
+| getMonth | Get month from a timestamp. Returns a zero-based value where January is 0 | timestamp(R.attr.lastAccessed).getMonth("NZ") == 3
 | getSeconds | Get seconds from a timestamp | timestamp(R.attr.lastAccessed).getSeconds() == 20
 | now | Current time on the server. This is a Cerbos extension to CEL | now() > timestamp(R.attr.lastAccessed)
 | timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
+
+NOTE: All timestamp getters—getHours, getMinutes, getDayOfWeek, and similar—take a timezone parameter. If omitted, the 'UTC' timezone is used by default.
 
 .Example: Assert that more than 36 hours has elapsed between last access time and last update time
 [source,yaml,linenums]
