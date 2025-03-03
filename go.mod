@@ -14,7 +14,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.26.0
 	github.com/aws/smithy-go v1.22.3
 	github.com/bluele/gcache v0.0.2
-	github.com/bufbuild/protovalidate-go v0.9.2
+	github.com/bufbuild/protovalidate-go v0.9.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cerbos/cerbos-sdk-go v0.2.15
 	github.com/cerbos/cerbos/api/genpb v0.40.0
