@@ -345,6 +345,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						if row.Effect == effectv1.Effect_EFFECT_DENY {
 							roleEffectInfo.Policy = namer.PolicyKeyFromFQN(row.OriginFqn)
 							roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
+							roleEffectInfo.Scope = scope
 							break scopesLoop
 						} else if row.NoMatchForScopePermissions {
 							roleEffectInfo.Policy = noMatchScopePermissions

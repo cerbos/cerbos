@@ -39,6 +39,7 @@ wantOutputs:
             {
               "effect": "EFFECT_DENY",
               "policy": "role.party_person/acme.hr.uk.brighton.kemptown",
+              "scope": "acme.hr.uk.brighton.kemptown",
             },
         },
     },
@@ -85,6 +86,7 @@ wantDecisionLogs:
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.party_person/acme.hr.uk.brighton.kemptown",
+                        "scope": "acme.hr.uk.brighton.kemptown",
                       },
                   },
               },

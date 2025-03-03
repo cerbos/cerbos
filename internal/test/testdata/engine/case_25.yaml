@@ -66,16 +66,19 @@ wantOutputs:
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "delete":
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "deny":
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "block":
             {
@@ -87,16 +90,19 @@ wantOutputs:
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "party_plan":
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "make":
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
         },
       "effectiveDerivedRoles":
@@ -160,16 +166,19 @@ wantDecisionLogs:
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "view:public":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "deny":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "block":
                       {
@@ -181,16 +190,19 @@ wantDecisionLogs:
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "party_plan":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "make":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                   },
                 "effectiveDerivedRoles":

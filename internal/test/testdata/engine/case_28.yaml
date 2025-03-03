@@ -38,11 +38,13 @@ wantOutputs:
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_london_employee/acme.hr.uk.london",
+              "scope": "acme.hr.uk.london",
             },
           "view":
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_london_employee/acme.hr.uk.london",
+              "scope": "acme.hr.uk.london",
             },
           "anonymise":
             {
@@ -95,11 +97,13 @@ wantDecisionLogs:
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_london_employee/acme.hr.uk.london",
+                        "scope": "acme.hr.uk.london",
                       },
                     "view":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_london_employee/acme.hr.uk.london",
+                        "scope": "acme.hr.uk.london",
                       },
                     "anonymise":
                       {

@@ -42,11 +42,13 @@ wantOutputs:
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_travel_agent/acme.hr.uk",
+              "scope": "acme.hr.uk",
             },
           "suggest":
             {
               "effect": "EFFECT_DENY",
               "policy": "role.acme_assistant/acme.hr.uk",
+              "scope": "acme.hr.uk",
             },
           "redirect":
             {
@@ -106,11 +108,13 @@ wantDecisionLogs:
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_travel_agent/acme.hr.uk",
+                        "scope": "acme.hr.uk",
                       },
                     "suggest":
                       {
                         "effect": "EFFECT_DENY",
                         "policy": "role.acme_assistant/acme.hr.uk",
+                        "scope": "acme.hr.uk",
                       },
                     "redirect":
                       {
