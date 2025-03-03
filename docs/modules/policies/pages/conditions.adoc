@@ -499,7 +499,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | getHours | Get hours from a timestamp | timestamp(R.attr.lastAccessed).getHours("-05:00") == 10
 | getMilliseconds | Get milliseconds from a timestamp | timestamp(R.attr.lastAccessed).getMilliseconds() == 21
 | getMinutes | Get minutes from a timestamp | timestamp(R.attr.lastAccessed).getMinutes("UTC") == 5
-| getMonth | Get month from a timestamp. Returns a zero-based value where January is 0 | timestamp(R.attr.lastAccessed).getMonth("Australia/Melbourne") == 3
+| getMonth | Get month from a timestamp. Returns a zero-based value where January is 0 | timestamp(R.attr.lastAccessed).getMonth("NZ") == 3
 | getSeconds | Get seconds from a timestamp | timestamp(R.attr.lastAccessed).getSeconds() == 20
 | now | Current time on the server. This is a Cerbos extension to CEL | now() > timestamp(R.attr.lastAccessed)
 | timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
