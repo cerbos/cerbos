@@ -7,7 +7,7 @@ include::ROOT:partial$version-check.adoc[]
 
 :page-aliases: tutorials:orm/prisma/index.adoc
 
-https://prisma.io[Prisma]  is a powerful ORM for modern Node.js applications, and Cerbos provides a robust authorization layer that simplifies role-based access control (RBAC) and attribute-based access control (ABAC). With the latest Cerbos Prisma Query Plan Adapter, integrating dynamic authorization rules into your Prisma queries is easier than ever.
+https://prisma.io[Prisma] is a powerful ORM for modern Node.js applications. The Cerbos Prisma query plan adapter provides a powerful integration that effortlessly converts Cerbos xref:api:index.adoc#resources-query-plan[query plan] responses into Prisma queries.
 
 This article covers setting up a basic CRM web application using Prisma for data storage and Cerbos for authorization to create, read, update and delete contacts based on who the user is. Our business requirements for who can do what are as follows:
 
