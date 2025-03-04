@@ -1,13 +1,13 @@
 include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-orm-prisma]
-= Tutorial: Using Cerbos with Prisma
+= Tutorial: Using Cerbos with Prisma for fine-grained authorization
 
 include::ROOT:partial$version-check.adoc[]
 
 :page-aliases: tutorials:orm/prisma/index.adoc
 
-https://prisma.io[Prisma] has come onto the Node/Typescript scene recently as a new generation of ORM. With it’s strongly-typed client, schema abstraction and great documentation, it is turning into the natural choice for modern applications.
+https://prisma.io[Prisma]  is a powerful ORM for modern Node.js applications, and Cerbos provides a robust authorization layer that simplifies role-based access control (RBAC) and attribute-based access control (ABAC). With the latest Cerbos Prisma Query Plan Adapter, integrating dynamic authorization rules into your Prisma queries is easier than ever.
 
 This article covers setting up a basic CRM web application using Prisma for data storage and Cerbos for authorization to create, read, update and delete contacts based on who the user is. Our business requirements for who can do what are as follows:
 
@@ -262,10 +262,10 @@ mkdir src
 cat << EOF > src/index.ts
 import { PrismaClient } from "@prisma/client";
 import express, { Request, Response } from "express";
-import { GRPC } from "@cerbos/grpc";
+import { GRPC as Cerbos } from "@cerbos/grpc";
 
-const prisma = new PrismaClient({ log: ["query", "info", "warn", "error"] });
-const cerbos = new GRPC("localhost:3592", { tls: false }); // The Cerbos PDP instance
+const prisma = new PrismaClient();
+const cerbos = new Cerbos("localhost:3592", { tls: false }); // The Cerbos PDP instance
 
 const app = express();
 
@@ -288,9 +288,7 @@ Using the Prisma client, query for the contact which matches the ID of the URL p
 const user = {
   "id": "1", // user id
   "role": "user", // single role (user, admin)
-  //"role": "admin",
   "department": "Sales" // department of the user
-  //"department": "Marketing"
 };
 
 app.get("/contacts/:id", async ({ params }, res) => {
@@ -314,60 +312,60 @@ To do this, we need to update our `GET` handler and replace the `TODO` with a ca
 
 [source,js]
 ----
-  // check user is authorized
-  const decision = await cerbos.checkResource({
-    principal: {
-      id: `${user.id}`,
-      roles: [user.role],
-      attributes: {
-        department: user.department,
-      },
+// check user is authorized
+const decision = await cerbos.checkResource({
+  principal: {
+    id: `${user.id}`,
+    roles: [user.role],
+    attributes: {
+      department: user.department,
     },
-    resource: {
-      kind: "contact",
-      id: contact.id + '',
-      attributes: JSON.parse(JSON.stringify(contact)),
-    },
-    actions: ["read"],
-  });
+  },
+  resource: {
+    kind: "contact",
+    id: contact.id + '',
+    attributes: JSON.parse(JSON.stringify(contact)),
+  },
+  actions: ["read"],
+});
 
-  // authorized for read action
-  if (decision.isAllowed("read")) {
-    return res.json(contact);
-  } else {
-    return res.status(403).json({ error: "Unauthorized" });
-  }
+// authorized for read action
+if (decision.isAllowed("read")) {
+  return res.json(contact);
+} else {
+  return res.status(403).json({ error: "Unauthorized" });
+}
 ----
 
 In this case, we are only checking a single contact using the `checkResource` method. There is also a `checkResources` method available which supports batching resources into a single request (perhaps for use in a `list` endpoint). A `checkResources` call could be used like this:
 
 [source,js]
 ----
-  const decision = await cerbos.checkResources({
-    principal: {
-        id: `${user.id}`,
-        roles: [user.role]
-        attributes: {
-          department: user.department,
-        },
-    },
-    resources: [
-      {
-        resource: {
-          kind: "contact",
-          id: contact.id + '',
-          attributes: JSON.parse(JSON.stringify(contact)),
-        },
-        actions: ["read"],
+const decision = await cerbos.checkResources({
+  principal: {
+      id: `${user.id}`,
+      roles: [user.role]
+      attributes: {
+        department: user.department,
       },
-      ...
-    ],
-  });
+  },
+  resources: [
+    {
+      resource: {
+        kind: "contact",
+        id: contact.id + '',
+        attributes: JSON.parse(JSON.stringify(contact)),
+      },
+      actions: ["read"],
+    },
+    ...
+  ],
+});
 
-  decision.isAllowed({
-    resource: { kind: "contact", id: ${user.id} },
-    action: "read",
-  }); // => true
+decision.isAllowed({
+  resource: { kind: "contact", id: ${user.id} },
+  action: "read",
+}); // => true
 ----
 
 Once we get the response back from Cerbos, calling the `.isAllowed` method for the required action (and optionally, the given resource ID in the `checkResources` case) will return a simple boolean of whether the user is authorized or not. Using this, we can either return the contact or throw an `HTTP 403 Unauthorized` response.
@@ -414,40 +412,40 @@ We can then use the https://github.com/cerbos/query-plan-adapters/blob/main/pris
 
 [source,js]
 ----
-  const queryPlanResult = queryPlanToPrisma({
-    queryPlan: contactQueryPlan,
-    // map or function to change field names to match the prisma model
-    fieldNameMapper: {
-      "request.resource.attr.ownerId": "ownerId",
-      "request.resource.attr.department": "department",
-      "request.resource.attr.active": "active",
-      "request.resource.attr.marketingOptIn": "marketingOptIn",
+const queryPlanResult = queryPlanToPrisma({
+  queryPlan: contactQueryPlan,
+  // map or function to change field names to match the prisma model
+  mapper: {
+    "request.resource.attr.ownerId": "ownerId",
+    "request.resource.attr.department": "department",
+    "request.resource.attr.active": "active",
+    "request.resource.attr.marketingOptIn": "marketingOptIn",
+  },
+});
+
+let contacts: any[];
+
+if (queryPlanResult.kind === PlanKind.ALWAYS_DENIED) {
+  contacts = [];
+} else {
+  // Pass the filters in as where conditions
+  // If you have prexisting where conditions, you can pass them in an AND clause
+  contacts = await prisma.contact.findMany({
+    where: {
+      AND: queryPlanResult.filters
+    },
+    select: {
+      firstName: true,
+      lastName: true,
+      active: true,
+      marketingOptIn: true,
     },
   });
+}
 
-  let contacts: any[];
-
-  if (queryPlanResult.kind === PlanKind.ALWAYS_DENIED) {
-    contacts = [];
-  } else {
-    // Pass the filters in as where conditions
-    // If you have prexisting where conditions, you can pass them in an AND clause
-    contacts = await prisma.contact.findMany({
-      where: {
-        AND: queryPlanResult.filters
-      },
-      select: {
-        firstName: true,
-        lastName: true,
-        active: true,
-        marketingOptIn: true,
-      },
-    });
-  }
-
-  return res.json({
-    contacts,
-  });
+return res.json({
+  contacts,
+});
 ----
 
 In the case that the result `kind` is not `ALWAYS_DENIED`, we retrieve the filters from the adapter instance, and use them to construct a query using the Prisma ORM.
