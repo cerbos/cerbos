@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
 	"sort"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/multierr"
-	"golang.org/x/exp/maps"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 

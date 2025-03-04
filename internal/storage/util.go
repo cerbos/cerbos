@@ -11,13 +11,6 @@ import (
 
 const MaxPoliciesInBatch = 25
 
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func BatchLoadPolicy(
 	ctx context.Context,
 	maxPoliciesInBatch int,
@@ -27,7 +20,7 @@ func BatchLoadPolicy(
 ) error {
 	for idx := range ids {
 		if idx%maxPoliciesInBatch == 0 {
-			idxEnd := minInt(idx+maxPoliciesInBatch, len(ids))
+			idxEnd := min(idx+maxPoliciesInBatch, len(ids))
 			var err error
 			policies, err := loadPolicyFn(ctx, ids[idx:idxEnd]...)
 			if err != nil {
