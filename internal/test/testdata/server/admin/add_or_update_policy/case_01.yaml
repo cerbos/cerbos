@@ -12,6 +12,7 @@ adminAddOrUpdatePolicy:
       {{- readPolicy "store/resource_policies/policy_11.yaml" | toPolicyJSON }},
       {{- readPolicy "store/principal_policies/policy_04.yaml" | toPolicyJSON }},
       {{- readPolicy "store/principal_policies/policy_06.yaml" | toPolicyJSON }},
+      {{- readPolicy "store/resource_policies/policy_05_acme.hr.uk.brighton.yaml" | toPolicyJSON }},
     ]
   }
   wantResponse: {"success":{}}
