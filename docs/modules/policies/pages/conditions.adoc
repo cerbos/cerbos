@@ -472,6 +472,8 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 
 == Timestamps
 
+IMPORTANT: All timestamp getters (getHours, getMinutes, getDayOfWeek, and similar) take a time zone parameter. If omitted, the 'UTC' time zone is used by default.
+
 .Test data
 [source,json,linenums]
 ----
@@ -505,7 +507,6 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
 
-NOTE: All timestamp getters—getHours, getMinutes, getDayOfWeek, and similar—take a timezone parameter. If omitted, the 'UTC' timezone is used by default.
 
 .Example: Assert that more than 36 hours has elapsed between last access time and last update time
 [source,yaml,linenums]
