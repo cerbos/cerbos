@@ -22,8 +22,9 @@ Cerbos now correctly detects the number of available CPUs in Amazon ECS deployme
 == Changelog
 
 
-=== Bug Fixes
+=== Bug fixes
 
+* Add missing policy required for mutable e2e tests (link:https://github.com/cerbos/cerbos/pull/2502[#2502])
 * Correctly handle defaultPolicyVersion engine config (link:https://github.com/cerbos/cerbos/pull/2449[#2449])
 * Correctly handle partial rule table and event subscription (link:https://github.com/cerbos/cerbos/pull/2455[#2455])
 * Fall back to default policy version sooner in query planner (link:https://github.com/cerbos/cerbos/pull/2450[#2450])
@@ -55,6 +56,7 @@ Cerbos now correctly detects the number of available CPUs in Amazon ECS deployme
 
 === Chores
 
+* Add 0.41.0 release notes
 * Add read function to private package (link:https://github.com/cerbos/cerbos/pull/2433[#2433])
 * Add tests for resource policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS (link:https://github.com/cerbos/cerbos/pull/2466[#2466])
 * Bump filippo.io/age from 1.2.0 to 1.2.1 (link:https://github.com/cerbos/cerbos/pull/2423[#2423])
@@ -72,11 +74,13 @@ Cerbos now correctly detects the number of available CPUs in Amazon ECS deployme
 * Remove SQL Server dependencies (link:https://github.com/cerbos/cerbos/pull/2394[#2394])
 * Remove SQL Server driver (link:https://github.com/cerbos/cerbos/pull/2393[#2393])
 * Remove map of relations section from the best practises page (link:https://github.com/cerbos/cerbos/pull/2399[#2399])
+* Replace `golang.org/x/exp/maps` with stdlib `maps` (link:https://github.com/cerbos/cerbos/pull/2504[#2504])
 * #**BREAKING**# Role policy deny rows (link:https://github.com/cerbos/cerbos/pull/2475[#2475])
 * Small optimisation in rule table lazy load (link:https://github.com/cerbos/cerbos/pull/2461[#2461])
 * Specify service when checking health via HTTP (link:https://github.com/cerbos/cerbos/pull/2468[#2468])
 * Temporarily disable fail-on-error behaviour for Coveralls unit test coverable uploads in GitHub workflow (link:https://github.com/cerbos/cerbos/pull/2476[#2476])
 * Test against npm v11 and pnpm v10 (link:https://github.com/cerbos/cerbos/pull/2439[#2439])
+* Update Prisma guide to use v2.0 (link:https://github.com/cerbos/cerbos/pull/2501[#2501])
 * Update alecthomas/kong to v1.5.1 (link:https://github.com/cerbos/cerbos/pull/2404[#2404])
 * Update copyright header (link:https://github.com/cerbos/cerbos/pull/2434[#2434])
 * Update dawidd6/action-download-artifact action to v7 (link:https://github.com/cerbos/cerbos/pull/2417[#2417])
@@ -122,3 +126,4 @@ Cerbos now correctly detects the number of available CPUs in Amazon ECS deployme
 * update node.js deps (link:https://github.com/cerbos/cerbos/pull/2490[#2490])
 * update npm to v11 (link:https://github.com/cerbos/cerbos/pull/2471[#2471])
 * update pnpm to v10.2.1 (link:https://github.com/cerbos/cerbos/pull/2470[#2470])
+
