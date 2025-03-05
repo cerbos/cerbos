@@ -1,0 +1,129 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.41.0]
+= Cerbos v0.41.0
+
+
+== Highlights
+
+Since the last release, a lot of behind-the-scenes work has gone into revamping the Cerbos engine to better support xref:policies:scope_permissions.adoc[scope permissions] and xref:policies:role_policies.adoc[role policies]. Scope permissions allow users to change how xref:policies:scoped_policies.adoc[scoped policies] are evaluated by Cerbos. The default behaviour of scoped policies for a given action is to stop at the first policy in the scope chain that produces a decision. However, if the `scopePermissions` field of a scoped resource or principal policy is set to `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, any ALLOW decision produced by that policy requires another ALLOW decision from a policy higher up in the scope chain. Effectively, scope permissions is a way to restrict child scopes from being more permissive than their parents.
+
+xref:policies:role_policies.adoc[Role policies] supplement resource policies by allowing policy authors to further narrow the set of permissions for a given role. Any action not explicitly allowed by a role policy is immediately denied. Any allowed actions must still be allowed by the relevant resource policies as well. Role policies are activated based on the set of roles sent as `principal.roles` in the Cerbos `CheckResources` request and can be used to implement custom roles within applications.
+
+Time-based functions used in condition expressions such as `getHours` and `getMinutes` default to UTC unless the time zone is explicitly provided as an argument to the function. Before upgrading, it's recommended to review your policies to make sure that time calculations use the correct time zone. Refer to xref:policies:conditions.adoc#_timestamps[timestamps documentation] to identify the affected functions.
+
+Query planner now correctly handles expressions that refer to the principal or resource scope.
+
+Policy tests are now stricter and will fail if a test defines an output expectation for an action that doesn't exist in the input actions list.
+
+Cerbos now correctly detects the number of available CPUs in Amazon ECS deployments. This should help reduce CPU throttling of the Cerbos process and make it more responsive.
+
+
+== Changelog
+
+
+=== Bug fixes
+
+* Add missing policy required for mutable e2e tests (link:https://github.com/cerbos/cerbos/pull/2502[#2502])
+* Correctly handle defaultPolicyVersion engine config (link:https://github.com/cerbos/cerbos/pull/2449[#2449])
+* Correctly handle partial rule table and event subscription (link:https://github.com/cerbos/cerbos/pull/2455[#2455])
+* Fall back to default policy version sooner in query planner (link:https://github.com/cerbos/cerbos/pull/2450[#2450])
+* Reload rule table when store contents change (link:https://github.com/cerbos/cerbos/pull/2452[#2452])
+* Return validation errors and effective policies in query planner responses (link:https://github.com/cerbos/cerbos/pull/2447[#2447])
+* Rule table reload should only purge (link:https://github.com/cerbos/cerbos/pull/2467[#2467])
+* Use correct filterDebug type in e2e query planner test (link:https://github.com/cerbos/cerbos/pull/2448[#2448])
+
+=== Features
+
+* Replace labels with deployments in bundle API v2 (link:https://github.com/cerbos/cerbos/pull/2483[#2483])
+* Use scope value in the query plan (link:https://github.com/cerbos/cerbos/pull/2485[#2485])
+
+=== Enhancements
+
+* Correctly set GOMAXPROCS on ECS (link:https://github.com/cerbos/cerbos/pull/2459[#2459])
+* Fail tests with unreachable output expectations (link:https://github.com/cerbos/cerbos/pull/2418[#2418])
+* Lazy rule table (link:https://github.com/cerbos/cerbos/pull/2460[#2460])
+* Rule table engine (link:https://github.com/cerbos/cerbos/pull/2442[#2442])
+* Support bundlev2 (link:https://github.com/cerbos/cerbos/pull/2395[#2395])
+* #**BREAKING**# Switch to ContextEval to evaluate CEL expressions (link:https://github.com/cerbos/cerbos/pull/2495[#2495])
+
+=== Documentation
+
+* Correct examples for math functions (link:https://github.com/cerbos/cerbos/pull/2445[#2445])
+* Scope permissions (link:https://github.com/cerbos/cerbos/pull/2487[#2487])
+* Update 03_calling-cerbos.adoc of tutorial to use the updated `/api/check/resources` endpoint (link:https://github.com/cerbos/cerbos/pull/2429[#2429])
+* Update what-is-cerbos.adoc tenant ->tenet (link:https://github.com/cerbos/cerbos/pull/2406[#2406])
+
+=== Chores
+
+* Add 0.41.0 release notes
+* Add read function to private package (link:https://github.com/cerbos/cerbos/pull/2433[#2433])
+* Add tests for resource policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS (link:https://github.com/cerbos/cerbos/pull/2466[#2466])
+* Bump filippo.io/age from 1.2.0 to 1.2.1 (link:https://github.com/cerbos/cerbos/pull/2423[#2423])
+* Bump github.com/go-jose/go-jose/v4 from 4.0.4 to 4.0.5 in /tools (link:https://github.com/cerbos/cerbos/pull/2491[#2491])
+* Bump github.com/quic-go/quic-go from 0.48.1 to 0.48.2 in /tools (link:https://github.com/cerbos/cerbos/pull/2405[#2405])
+* Bump golang.org/x/crypto from 0.29.0 to 0.31.0 in /tools (link:https://github.com/cerbos/cerbos/pull/2414[#2414])
+* Bump version to 0.41.0
+* Decouple role policies from scope permissions (link:https://github.com/cerbos/cerbos/pull/2496[#2496])
+* Downgrade protovalidate to 0.9.1 (link:https://github.com/cerbos/cerbos/pull/2486[#2486])
+* Implicit denies are now attributed to role policies instead of scoped resources (link:https://github.com/cerbos/cerbos/pull/2500[#2500])
+* Initialise protovalidate lazily (link:https://github.com/cerbos/cerbos/pull/2482[#2482])
+* Make ephemeral engine configurable (link:https://github.com/cerbos/cerbos/pull/2446[#2446])
+* Protect against non leaf REQUIRE_PARENTAL_CONSENT scopes (link:https://github.com/cerbos/cerbos/pull/2493[#2493])
+* #**BREAKING**# REQUIRE_PARENTAL_CONSENT refinements for resource and principal policies (link:https://github.com/cerbos/cerbos/pull/2484[#2484])
+* Remove SQL Server dependencies (link:https://github.com/cerbos/cerbos/pull/2394[#2394])
+* Remove SQL Server driver (link:https://github.com/cerbos/cerbos/pull/2393[#2393])
+* Remove map of relations section from the best practises page (link:https://github.com/cerbos/cerbos/pull/2399[#2399])
+* Replace `golang.org/x/exp/maps` with stdlib `maps` (link:https://github.com/cerbos/cerbos/pull/2504[#2504])
+* #**BREAKING**# Role policy deny rows (link:https://github.com/cerbos/cerbos/pull/2475[#2475])
+* Small optimisation in rule table lazy load (link:https://github.com/cerbos/cerbos/pull/2461[#2461])
+* Specify service when checking health via HTTP (link:https://github.com/cerbos/cerbos/pull/2468[#2468])
+* Temporarily disable fail-on-error behaviour for Coveralls unit test coverable uploads in GitHub workflow (link:https://github.com/cerbos/cerbos/pull/2476[#2476])
+* Test against npm v11 and pnpm v10 (link:https://github.com/cerbos/cerbos/pull/2439[#2439])
+* Update Prisma guide to use v2.0 (link:https://github.com/cerbos/cerbos/pull/2501[#2501])
+* Update alecthomas/kong to v1.5.1 (link:https://github.com/cerbos/cerbos/pull/2404[#2404])
+* Update copyright header (link:https://github.com/cerbos/cerbos/pull/2434[#2434])
+* Update dawidd6/action-download-artifact action to v7 (link:https://github.com/cerbos/cerbos/pull/2417[#2417])
+* Update dependency node to v22.13.0 (link:https://github.com/cerbos/cerbos/pull/2444[#2444])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2427[#2427])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2464[#2464])
+* Update github.com/bufbuild/protovalidate-go to 0.8.0 (link:https://github.com/cerbos/cerbos/pull/2428[#2428])
+* Update github.com/go-git/go-git/v5 (link:https://github.com/cerbos/cerbos/pull/2437[#2437])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2397[#2397])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2407[#2407])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2415[#2415])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2431[#2431])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2435[#2435])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2443[#2443])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2453[#2453])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2457[#2457])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2463[#2463])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2472[#2472])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2478[#2478])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2488[#2488])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2498[#2498])
+* Update golang.org/x/crypto to 0.35.0 (link:https://github.com/cerbos/cerbos/pull/2494[#2494])
+* Update golang.org/x/net to 0.33.0 (link:https://github.com/cerbos/cerbos/pull/2425[#2425])
+* Update golangci/golangci-lint-action action to v6.5.0 (link:https://github.com/cerbos/cerbos/pull/2479[#2479])
+* Update module golang.org/x/crypto to v0.31.0 [security] (link:https://github.com/cerbos/cerbos/pull/2413[#2413])
+* Update module golang.org/x/net to v0.33.0 [security] (link:https://github.com/cerbos/cerbos/pull/2424[#2424])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2398[#2398])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2408[#2408])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2416[#2416])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2426[#2426])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2430[#2430])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2499[#2499])
+* Update pnpm to v9.15.3 (link:https://github.com/cerbos/cerbos/pull/2436[#2436])
+* Update pnpm to v9.15.4 (link:https://github.com/cerbos/cerbos/pull/2454[#2454])
+* Update sigstore/cosign-installer action to v3.8.1 (link:https://github.com/cerbos/cerbos/pull/2489[#2489])
+* Upgrade CEL (link:https://github.com/cerbos/cerbos/pull/2412[#2412])
+* Upgrade to Go 1.24 (link:https://github.com/cerbos/cerbos/pull/2480[#2480])
+* Upgrade to go-yaml 1.15.6 (link:https://github.com/cerbos/cerbos/pull/2403[#2403])
+* Use global protovalidate Validator (link:https://github.com/cerbos/cerbos/pull/2497[#2497])
+* update dawidd6/action-download-artifact action to v8 (link:https://github.com/cerbos/cerbos/pull/2474[#2474])
+* update github actions deps (link:https://github.com/cerbos/cerbos/pull/2473[#2473])
+* update node.js deps (link:https://github.com/cerbos/cerbos/pull/2458[#2458])
+* update node.js deps (link:https://github.com/cerbos/cerbos/pull/2490[#2490])
+* update npm to v11 (link:https://github.com/cerbos/cerbos/pull/2471[#2471])
+* update pnpm to v10.2.1 (link:https://github.com/cerbos/cerbos/pull/2470[#2470])
+
