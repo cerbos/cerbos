@@ -113,6 +113,7 @@ func request_CerbosService_ServerInfo_0(ctx context.Context, marshaler runtime.M
 		protoReq requestv1.ServerInfoRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	msg, err := client.ServerInfo(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
@@ -205,6 +206,7 @@ func request_CerbosAdminService_InspectPolicies_0(ctx context.Context, marshaler
 		protoReq requestv1.InspectPoliciesRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -237,6 +239,7 @@ func request_CerbosAdminService_ListPolicies_0(ctx context.Context, marshaler ru
 		protoReq requestv1.ListPoliciesRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -269,6 +272,7 @@ func request_CerbosAdminService_GetPolicy_0(ctx context.Context, marshaler runti
 		protoReq requestv1.GetPolicyRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -301,6 +305,7 @@ func request_CerbosAdminService_DisablePolicy_0(ctx context.Context, marshaler r
 		protoReq requestv1.DisablePolicyRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -357,6 +362,7 @@ func request_CerbosAdminService_DisablePolicy_2(ctx context.Context, marshaler r
 		protoReq requestv1.DisablePolicyRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -389,6 +395,7 @@ func request_CerbosAdminService_EnablePolicy_0(ctx context.Context, marshaler ru
 		protoReq requestv1.EnablePolicyRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -447,6 +454,7 @@ func request_CerbosAdminService_ListAuditLogEntries_0(ctx context.Context, marsh
 		e        int32
 		err      error
 	)
+	io.Copy(io.Discard, req.Body)
 	val, ok := pathParams["kind"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
@@ -527,6 +535,7 @@ func request_CerbosAdminService_ListSchemas_0(ctx context.Context, marshaler run
 		protoReq requestv1.ListSchemasRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	msg, err := client.ListSchemas(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
@@ -547,6 +556,7 @@ func request_CerbosAdminService_GetSchema_0(ctx context.Context, marshaler runti
 		protoReq requestv1.GetSchemaRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -579,6 +589,7 @@ func request_CerbosAdminService_DeleteSchema_0(ctx context.Context, marshaler ru
 		protoReq requestv1.DeleteSchemaRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -611,6 +622,7 @@ func request_CerbosAdminService_ReloadStore_0(ctx context.Context, marshaler run
 		protoReq requestv1.ReloadStoreRequest
 		metadata runtime.ServerMetadata
 	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
