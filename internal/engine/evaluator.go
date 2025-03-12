@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/google/cel-go/cel"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"go.opentelemetry.io/otel/trace"
@@ -721,7 +721,11 @@ func (ec *evalContext) evaluateCELExpr(ctx context.Context, expr *exprpb.Checked
 		return nil, nil
 	}
 
-	result, _, err := conditions.ContextEval(ctx, conditions.StdEnv, cel.CheckedExprToAst(expr), ec.buildEvalVars(constants, variables), ec.nowFunc)
+	ast, err := celast.ToAST(expr)
+	if err != nil {
+		return nil, err
+	}
+	result, _, err := conditions.ContextEval(ctx, conditions.StdEnv, ast, ec.buildEvalVars(constants, variables), ec.nowFunc)
 	if err != nil {
 		// ignore expressions that are invalid
 		if types.IsError(result) {

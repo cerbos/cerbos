@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/cel-go/cel"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
@@ -142,9 +143,9 @@ func Now() NowFunc {
 // The given nowFunc must return the same timestamp each time it is called.
 //
 // See https://pkg.go.dev/github.com/google/cel-go/cel#Program.ContextEval.
-func ContextEval(ctx context.Context, env *cel.Env, ast *cel.Ast, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
+func ContextEval(ctx context.Context, env *cel.Env, ast *celast.AST, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator(nowFunc))}, opts...)
-	prg, err := env.Program(ast, programOpts...)
+	prg, err := env.PlanProgram(ast, programOpts...)
 	if err != nil {
 		return nil, nil, err
 	}

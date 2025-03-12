@@ -7,12 +7,15 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/google/cel-go/common/types"
+
+	celast "github.com/google/cel-go/common/ast"
+
 	"github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/google/cel-go/common/operators"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
-type exprMatcherFunc func(e *exprpb.Expr) (bool, []*exprpb.Expr)
+type exprMatcherFunc func(e celast.Expr) (bool, []celast.Expr)
 
 type exprMatcher struct {
 	f  exprMatcherFunc
@@ -20,12 +23,12 @@ type exprMatcher struct {
 }
 
 type ExpressionProcessor interface {
-	Process(e *exprpb.Expr) (bool, *exprpb.Expr, error)
+	Process(e celast.Expr) (bool, celast.Expr, error)
 }
 
 type processors []ExpressionProcessor
 
-func (p processors) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
+func (p processors) Process(e celast.Expr) (bool, celast.Expr, error) {
 	for _, v := range p {
 		r, expr, err := v.Process(e)
 		if err != nil {
@@ -38,7 +41,7 @@ func (p processors) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 	return false, nil, nil
 }
 
-func (m *exprMatcher) run(e *exprpb.Expr) (bool, error) {
+func (m *exprMatcher) run(e celast.Expr) (bool, error) {
 	r, args := m.f(e)
 	if r {
 		if len(args) != len(m.ns) {
@@ -55,9 +58,9 @@ func (m *exprMatcher) run(e *exprpb.Expr) (bool, error) {
 
 func getConstExprMatcher(s *structMatcher) *exprMatcher {
 	return &exprMatcher{
-		f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-			if c := e.GetConstExpr(); c != nil {
-				s.constExpr = c
+		f: func(e celast.Expr) (bool, []celast.Expr) {
+			if e.Kind() == celast.LiteralKind {
+				s.constExpr = e
 				return true, nil
 			}
 			return false, nil
@@ -67,30 +70,33 @@ func getConstExprMatcher(s *structMatcher) *exprMatcher {
 
 func getStructIndexerExprMatcher(s *structMatcher) *exprMatcher {
 	return &exprMatcher{
-		f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
+		f: func(e celast.Expr) (bool, []celast.Expr) {
 			ex := e
-			if selExpr := ex.GetSelectExpr(); selExpr != nil {
-				s.field = selExpr.Field
-				ex = selExpr.Operand
+			selExpr := ex.AsSelect()
+			if ex.Kind() == celast.SelectKind {
+				s.field = selExpr.FieldName()
+				ex = selExpr.Operand()
 			}
-			if indexExpr := ex.GetCallExpr(); indexExpr != nil && indexExpr.Function == operators.Index {
-				return true, indexExpr.Args
+			indexExpr := ex.AsCall()
+			if ex.Kind() == celast.CallKind && indexExpr.FunctionName() == operators.Index {
+				return true, indexExpr.Args()
 			}
 			return false, nil
 		},
 		ns: []*exprMatcher{
 			{
-				f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-					if structExpr := e.GetStructExpr(); structExpr != nil {
-						s.structExpr = structExpr
+				f: func(e celast.Expr) (bool, []celast.Expr) {
+					structExpr := e.AsMap()
+					if e.Kind() == celast.MapKind {
+						s.mapExpr = structExpr
 						return true, nil
 					}
 					return false, nil
 				},
 			},
 			{
-				f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-					if indexerExpr := e.GetSelectExpr(); indexerExpr != nil {
+				f: func(e celast.Expr) (bool, []celast.Expr) {
+					if e.Kind() == celast.SelectKind {
 						s.indexerExpr = e
 						return true, nil
 					}
@@ -104,34 +110,41 @@ func getStructIndexerExprMatcher(s *structMatcher) *exprMatcher {
 // expression: indexExpr <function> <const>
 // indexExpr: structExpr[indexerExpr].
 type structMatcher struct {
-	structExpr  *exprpb.Expr_CreateStruct
-	indexerExpr *exprpb.Expr
-	constExpr   *exprpb.Constant
+	mapExpr     celast.MapExpr
+	indexerExpr celast.Expr
+	constExpr   celast.Expr
 	rootMatch   *exprMatcher
 	function    string
 	field       string // optional field. E.g. P.attr[R.id].role == "OWNER"
 }
 
-func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
+func (s *structMatcher) Process(e celast.Expr) (bool, celast.Expr, error) {
 	r, err := s.rootMatch.run(e)
 	if err != nil || !r {
 		return false, nil, err
 	}
 
 	type entry struct {
-		key   *exprpb.Constant
-		value *exprpb.Expr
+		key   celast.Expr
+		value celast.Expr
 	}
-	entries := make([]entry, 0, len(s.structExpr.Entries))
-	for _, item := range s.structExpr.Entries {
-		if key := item.GetMapKey().GetConstExpr(); key != nil {
-			entries = append(entries, entry{key: key, value: item.GetValue()})
+	entries := make([]entry, 0, len(s.mapExpr.Entries()))
+	for _, en := range s.mapExpr.Entries() {
+		mapEntry := en.AsMapEntry()
+		if en.Kind() == celast.MapEntryKind {
+			entries = append(entries, entry{key: mapEntry.Key(), value: mapEntry.Value()})
 		}
 	}
+	// need to sort only to make the tests deterministic
 	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].key.String() < entries[j].key.String()
+		a, ok1 := entries[i].key.AsLiteral().(types.String)
+		b, ok2 := entries[j].key.AsLiteral().(types.String)
+		if !ok1 || !ok2 {
+			return false
+		}
+		return a < b
 	})
-	opts := make([]*exprpb.Expr, 0, len(entries))
+	opts := make([]celast.Expr, 0, len(entries))
 	for _, item := range entries {
 		v := item.value
 		if s.field != "" {
@@ -143,14 +156,15 @@ func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 	if n == 0 {
 		return false, e, nil
 	}
-	var output *exprpb.Expr
+	var output celast.Expr
 
 	if n == 1 {
 		output = opts[0]
 	} else {
 		output = mkLogicalOr(opts)
 	}
-	internal.UpdateIDs(output)
+	internal.ZeroIDs(output)
+	output.RenumberIDs(internal.NewIDGen().Remap)
 	return true, output, nil
 }
 
@@ -166,11 +180,12 @@ var supportedOps = map[string]struct{}{
 func NewExpressionProcessor() ExpressionProcessor {
 	s1 := new(structMatcher)
 	s1.rootMatch = &exprMatcher{
-		f: func(e *exprpb.Expr) (res bool, args []*exprpb.Expr) {
-			if ce := e.GetCallExpr(); ce != nil && len(ce.Args) == 2 {
-				if _, ok := supportedOps[ce.Function]; ok {
-					s1.function = ce.Function
-					return true, ce.Args
+		f: func(e celast.Expr) (res bool, args []celast.Expr) {
+			ce := e.AsCall()
+			if e.Kind() == celast.CallKind && len(ce.Args()) == 2 {
+				if _, ok := supportedOps[ce.FunctionName()]; ok {
+					s1.function = ce.FunctionName()
+					return true, ce.Args()
 				}
 			}
 			return false, nil
@@ -182,10 +197,11 @@ func NewExpressionProcessor() ExpressionProcessor {
 	}
 	s2 := new(structMatcher)
 	s2.rootMatch = &exprMatcher{
-		f: func(e *exprpb.Expr) (res bool, args []*exprpb.Expr) {
-			if ce := e.GetCallExpr(); ce != nil && len(ce.Args) == 2 && ce.Function == operators.In {
-				s2.function = ce.Function
-				return true, ce.Args
+		f: func(e celast.Expr) (res bool, args []celast.Expr) {
+			ce := e.AsCall()
+			if e.Kind() == celast.CallKind && len(ce.Args()) == 2 && ce.FunctionName() == operators.In {
+				s2.function = ce.FunctionName()
+				return true, ce.Args()
 			}
 			return false, nil
 		},
@@ -198,7 +214,7 @@ func NewExpressionProcessor() ExpressionProcessor {
 	return processors([]ExpressionProcessor{s1, s2})
 }
 
-func mkLogicalOr(args []*exprpb.Expr) *exprpb.Expr {
+func mkLogicalOr(args []celast.Expr) celast.Expr {
 	const logicalOrArity = 2
 	if len(args) == logicalOrArity {
 		return internal.MkCallExpr(operators.LogicalOr, args...)
@@ -206,15 +222,11 @@ func mkLogicalOr(args []*exprpb.Expr) *exprpb.Expr {
 	return internal.MkCallExpr(operators.LogicalOr, args[0], mkLogicalOr(args[1:]))
 }
 
-func constToExpr(c *exprpb.Constant) *exprpb.Expr {
-	return &exprpb.Expr{ExprKind: &exprpb.Expr_ConstExpr{ConstExpr: c}}
-}
-
-func mkOption(op string, key *exprpb.Constant, val, expr *exprpb.Expr, constExpr *exprpb.Constant) *exprpb.Expr {
+func mkOption(op string, key, val, expr, constExpr celast.Expr) celast.Expr {
 	if op == "" {
 		panic("mkOption: operation is empty")
 	}
-	lhs := internal.MkCallExpr(operators.Equals, expr, constToExpr(key))
-	rhs := internal.MkCallExpr(op, constToExpr(constExpr), val)
+	lhs := internal.MkCallExpr(operators.Equals, expr, key)
+	rhs := internal.MkCallExpr(op, constExpr, val)
 	return internal.MkCallExpr(operators.LogicalAnd, lhs, rhs)
 }

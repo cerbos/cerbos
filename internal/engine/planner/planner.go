@@ -370,7 +370,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 
 				var constants map[string]any
-				var variables map[string]*exprpb.Expr
+				var variables map[string]celast.Expr
 				if row.Params != nil {
 					constants = row.Params.Constants
 					var err error
@@ -386,7 +386,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				}
 
 				if row.DerivedRoleCondition != nil { //nolint:nestif
-					var variables map[string]*exprpb.Expr
+					var variables map[string]celast.Expr
 					if row.DerivedRoleParams != nil {
 						var err error
 						variables, err = variableExprs(row.DerivedRoleParams.Variables)
@@ -572,7 +572,7 @@ type evalContext struct {
 	TimeFn func() time.Time
 }
 
-func (evalCtx *evalContext) evaluateCondition(ctx context.Context, condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
+func (evalCtx *evalContext) evaluateCondition(ctx context.Context, condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
 	if condition == nil {
 		return mkTrueNode(), nil
 	}
@@ -656,7 +656,12 @@ func (evalCtx *evalContext) evaluateCondition(ctx context.Context, condition *ru
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evalCtx.evaluateConditionExpression(ctx, t.Expr.Checked, request, globals, constants, variables, derivedRolesList)
+		expr := t.Expr.GetChecked().GetExpr()
+		ex, err := celast.ProtoToExpr(expr)
+		if err != nil {
+			return nil, fmt.Errorf("celast.ProtoToExpr: %w", err)
+		}
+		residual, err := evalCtx.evaluateConditionExpression(ctx, ex, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -667,13 +672,13 @@ func (evalCtx *evalContext) evaluateCondition(ctx context.Context, condition *ru
 	return res, nil
 }
 
-func (evalCtx *evalContext) evaluateConditionExpression(ctx context.Context, expr *exprpb.CheckedExpr, request *enginev1.Request, globals, constants map[string]any, variables map[string]*exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+func (evalCtx *evalContext) evaluateConditionExpression(ctx context.Context, expr celast.Expr, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
 	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
 	}
 
-	e, err := replaceVars(expr.Expr, variables)
+	e, err := replaceVars(expr, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -685,7 +690,13 @@ func (evalCtx *evalContext) evaluateConditionExpression(ctx context.Context, exp
 		}
 	}
 
-	e, err = replaceRuntimeEffectiveDerivedRoles(e, derivedRolesList)
+	e, err = replaceRuntimeEffectiveDerivedRoles(e, func() (celast.Expr, error) {
+		expr, err := derivedRolesList()
+		if err != nil {
+			return nil, err
+		}
+		return celast.ProtoToExpr(expr)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -705,29 +716,15 @@ func (evalCtx *evalContext) evaluateConditionExpression(ctx context.Context, exp
 		return nil, err
 	}
 	if types.IsUnknown(val) {
-		err = p.evalComprehensionBody(ctx, residual)
-		if err != nil {
-			return nil, err
-		}
-		m := matchers.NewExpressionProcessor()
-		var r bool
-		r, e, err = m.Process(residual)
-		if err != nil {
-			return nil, err
-		}
-		if !r {
-			return &exprpb.CheckedExpr{Expr: residual}, nil
-		}
-		_, residual, err = p.evalPartially(ctx, e)
-		if err != nil {
-			return nil, err
-		}
-
-		return &exprpb.CheckedExpr{Expr: residual}, nil
+		return p.evaluateUnknown(ctx, residual)
 	}
 
+	expr2, err := celast.ExprToProto(residual)
+	if err != nil {
+		return nil, fmt.Errorf("error converting expression to proto: %w", err)
+	}
 	if _, ok := val.Value().(bool); ok {
-		return &exprpb.CheckedExpr{Expr: residual}, nil
+		return &exprpb.CheckedExpr{Expr: expr2}, nil
 	}
 
 	return conditions.FalseExpr, nil
@@ -739,16 +736,40 @@ type partialEvaluator struct {
 	nowFn func() time.Time
 }
 
-func (p *partialEvaluator) evalPartially(ctx context.Context, e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
-	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
-	const checkFrequency = 100
-	val, details, err := conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState), cel.InterruptCheckFrequency(checkFrequency))
+func (p *partialEvaluator) evaluateUnknown(ctx context.Context, residual celast.Expr) (_ *exprpb.CheckedExpr, err error) {
+	residual, err = p.evalComprehensionBody(ctx, residual)
+	if err != nil {
+		return nil, err
+	}
+	m := matchers.NewExpressionProcessor()
+	var r bool
+	var e celast.Expr
+	r, e, err = m.Process(residual)
+	if err != nil {
+		return nil, err
+	}
+	if r {
+		_, residual, err = p.evalPartially(ctx, e)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	expr2, err := celast.ExprToProto(residual)
+	if err != nil {
+		return nil, fmt.Errorf("error converting expression to proto: %w", err)
+	}
+	return &exprpb.CheckedExpr{Expr: expr2}, nil
+}
+
+func (p *partialEvaluator) evalPartially(ctx context.Context, e celast.Expr) (ref.Val, celast.Expr, error) {
+	ast := celast.NewAST(e, nil)
+	val, details, err := conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return val, nil, err
 	}
 
-	residual, err := residualExpr(ast, details)
-	return val, residual, err
+	return val, residualExpr(ast, details), err
 }
 
 func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn func() time.Time) *partialEvaluator {
@@ -769,7 +790,14 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	const nNameVariants = 2 // qualified, unqualified name
 	ds := make([]*decls.VariableDecl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
 	if len(request.Resource.GetAttr()) > 0 {
-		for name, value := range request.Resource.Attr {
+		reg, err := types.NewRegistry()
+		if err != nil {
+			return nil, err
+		}
+		structVal := structpb.Struct{Fields: request.Resource.GetAttr()}
+		m := types.NewJSONStruct(reg, &structVal)
+		for name := range request.Resource.Attr {
+			value := m.Get(types.String(name))
 			for _, s := range conditions.ResourceAttributeNames(name) {
 				ds = append(ds, decls.NewVariable(s, types.DynType))
 				knownVars[s] = value
@@ -803,99 +831,157 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 	return newPartialEvaluator(env, vars, evalCtx.TimeFn), nil
 }
 
-func (p *partialEvaluator) evalComprehensionBody(ctx context.Context, e *exprpb.Expr) (err error) {
+func (p *partialEvaluator) evalComprehensionBody(ctx context.Context, e celast.Expr) (celast.Expr, error) {
 	return evalComprehensionBodyImpl(ctx, p.env, p.vars, p.nowFn, e)
 }
 
-func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e *exprpb.Expr) (err error) {
+func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e celast.Expr) (celast.Expr, error) {
 	if e == nil {
-		return nil
+		return nil, nil
 	}
-	impl := func(e1 *exprpb.Expr) {
-		if err == nil {
-			err = evalComprehensionBodyImpl(ctx, env, pvars, nowFn, e1)
-		}
+	impl := func(e1 celast.Expr) (celast.Expr, error) {
+		return evalComprehensionBodyImpl(ctx, env, pvars, nowFn, e1)
 	}
-	switch e := e.ExprKind.(type) {
-	case *exprpb.Expr_SelectExpr:
-		impl(e.SelectExpr.Operand)
-	case *exprpb.Expr_CallExpr:
-		impl(e.CallExpr.Target)
-		for _, arg := range e.CallExpr.Args {
-			impl(arg)
+	fact := celast.NewExprFactory()
+
+	switch e.Kind() {
+	case celast.SelectKind:
+		sel := e.AsSelect()
+		expr, err := impl(sel.Operand())
+		if err != nil {
+			return nil, err
 		}
-	case *exprpb.Expr_StructExpr:
-		for _, entry := range e.StructExpr.Entries {
-			impl(entry.GetMapKey())
-			impl(entry.GetValue())
+		if sel.IsTestOnly() {
+			return fact.NewPresenceTest(0, expr, sel.FieldName()), nil
 		}
-	case *exprpb.Expr_ComprehensionExpr:
-		ce := e.ComprehensionExpr
-		loopStep, ok := ce.LoopStep.ExprKind.(*exprpb.Expr_CallExpr)
-		if !ok {
-			return errors.New("expected call expr")
+		return fact.NewSelect(0, expr, sel.FieldName()), nil
+	case celast.CallKind:
+		call := e.AsCall()
+		args := make([]celast.Expr, 0, len(call.Args()))
+		for _, arg := range call.Args() {
+			expr, err := impl(arg)
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, expr)
 		}
+		if call.IsMemberFunction() {
+			target, err := impl(call.Target())
+			if err != nil {
+				return nil, err
+			}
+			return fact.NewMemberCall(0, call.FunctionName(), target, args...), nil
+		}
+		return fact.NewCall(0, call.FunctionName(), args...), nil
+	case celast.StructKind:
+		st := e.AsStruct()
+		flds := make([]celast.EntryExpr, 0, len(st.Fields()))
+		for _, entry := range st.Fields() {
+			expr, err := impl(entry.AsStructField().Value())
+			if err != nil {
+				return nil, err
+			}
+			flds = append(flds, fact.NewStructField(0, entry.AsStructField().Name(), expr, entry.AsStructField().IsOptional()))
+		}
+		return fact.NewStruct(0, st.TypeName(), flds), nil
+	case celast.MapKind:
+		m := e.AsMap()
+		entries := make([]celast.EntryExpr, 0, len(m.Entries()))
+		for _, entry := range m.Entries() {
+			k, err := impl(entry.AsMapEntry().Key())
+			if err != nil {
+				return nil, err
+			}
+			v, err := impl(entry.AsMapEntry().Value())
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, fact.NewMapEntry(0, k, v, entry.AsMapEntry().IsOptional()))
+		}
+		return fact.NewMap(0, entries), nil
+	case celast.ComprehensionKind:
+		ce := e.AsComprehension()
+		if ce.LoopStep().Kind() != celast.CallKind {
+			return nil, errors.New("expected call expr")
+		}
+		loopStep := ce.LoopStep().AsCall()
 		var i int
-		if loopStep.CallExpr.Args[i].GetIdentExpr().GetName() == ce.AccuVar {
+		args := make([]celast.Expr, len(loopStep.Args()))
+		copy(args, loopStep.Args())
+		if args[i].AsIdent() == ce.AccuVar() {
 			i++
 		}
-		le := loopStep.CallExpr.Args[i]
-		var env1 *cel.Env
-		env1, err = env.Extend(cel.VariableDecls(decls.NewVariable(ce.IterVar, types.DynType)))
+		le := args[i]
+		env1, err := env.Extend(cel.VariableDecls(decls.NewVariable(ce.IterVar(), types.DynType)))
 		if err != nil {
-			return err
+			return nil, err
 		}
-		plannerutils.UpdateIDs(le)
-		ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: le})
+		le.RenumberIDs(plannerutils.NewIDGen().Remap)
+		ast := celast.NewAST(le, nil)
 
-		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar))
+		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar()))
 		var pvars1 interpreter.PartialActivation
 		pvars1, err = cel.PartialVars(pvars, unknowns...)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		var det *cel.EvalDetails
 		_, det, err = conditions.ContextEval(ctx, env1, ast, pvars1, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
-			return err
+			return nil, err
 		}
-		le, err = residualExpr(ast, det)
+		le = residualExpr(ast, det)
+		le, err = evalComprehensionBodyImpl(ctx, env1, pvars1, nowFn, le)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		loopStep.CallExpr.Args[i] = le
-		err = evalComprehensionBodyImpl(ctx, env1, pvars1, nowFn, le)
+		args[i] = le
+		loopStep1 := fact.NewCall(0, loopStep.FunctionName(), args...)
+		ir, err := impl(ce.IterRange())
 		if err != nil {
-			return err
+			return nil, err
 		}
-		impl(ce.IterRange)
-	case *exprpb.Expr_ListExpr:
-		for _, element := range e.ListExpr.Elements {
-			impl(element)
+		if ce.IterVar2() == "" {
+			return fact.NewComprehension(0, ir, ce.IterVar(), ce.AccuVar(), ce.AccuInit(), ce.LoopCondition(), loopStep1, ce.Result()), nil
 		}
+		return fact.NewComprehensionTwoVar(0, ir, ce.IterVar(), ce.IterVar2(), ce.AccuVar(), ce.AccuInit(), ce.LoopCondition(), loopStep1, ce.Result()), nil
+	case celast.ListKind:
+		lst := e.AsList()
+		elmts := make([]celast.Expr, 0, len(lst.Elements()))
+		for _, element := range e.AsList().Elements() {
+			expr, err := impl(element)
+			if err != nil {
+				return nil, err
+			}
+			elmts = append(elmts, expr)
+		}
+		return fact.NewList(0, elmts, lst.OptionalIndices()), nil
+	default:
+		return fact.CopyExpr(e), nil
 	}
-
-	return err
 }
 
-func residualExpr(a *cel.Ast, details *cel.EvalDetails) (*exprpb.Expr, error) {
-	ast := a.NativeRep()
+func residualExpr(ast *celast.AST, details *cel.EvalDetails) celast.Expr {
 	prunedAST := interpreter.PruneAst(ast.Expr(), ast.SourceInfo().MacroCalls(), details.State())
-	return celast.ExprToProto(prunedAST.Expr())
+	return prunedAST.Expr()
 }
 
 func constantValues(constants map[string]*structpb.Value) map[string]any {
 	return (&structpb.Struct{Fields: constants}).AsMap()
 }
 
-func variableExprs(variables []*runtimev1.Variable) (map[string]*exprpb.Expr, error) {
+func variableExprs(variables []*runtimev1.Variable) (map[string]celast.Expr, error) {
 	if len(variables) == 0 {
 		return nil, nil
 	}
 
-	exprs := make(map[string]*exprpb.Expr, len(variables))
+	exprs := make(map[string]celast.Expr, len(variables))
 	for _, variable := range variables {
-		expr, err := replaceVars(variable.Expr.Checked.Expr, exprs)
+		e, err := celast.ProtoToExpr(variable.Expr.GetChecked().GetExpr())
+		if err != nil {
+			return nil, err
+		}
+		expr, err := replaceVars(e, exprs)
 		if err != nil {
 			return nil, err
 		}
@@ -923,14 +1009,14 @@ func planResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 	}
 }
 
-func replaceRuntimeEffectiveDerivedRoles(expr *exprpb.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.Expr, error) {
-	return replaceVarsGen(expr, func(input *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
-		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
+func replaceRuntimeEffectiveDerivedRoles(expr celast.Expr, derivedRolesList func() (celast.Expr, error)) (celast.Expr, error) {
+	return replaceVarsGen(expr, func(input celast.Expr) (output celast.Expr, matched bool, err error) {
+		se := input.AsSelect()
+		if input.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
 
-		if isRuntimeEffectiveDerivedRoles(se.SelectExpr) {
+		if isRuntimeEffectiveDerivedRoles(se) {
 			output, err = derivedRolesList()
 			return output, true, err
 		}
@@ -939,19 +1025,19 @@ func replaceRuntimeEffectiveDerivedRoles(expr *exprpb.Expr, derivedRolesList fun
 	})
 }
 
-func isRuntimeEffectiveDerivedRoles(expr *exprpb.Expr_Select) bool {
-	ident := expr.Operand.GetIdentExpr()
+func isRuntimeEffectiveDerivedRoles(expr celast.SelectExpr) bool {
+	ident := expr.Operand().AsIdent()
 
-	return ident != nil &&
-		ident.Name == conditions.CELRuntimeIdent &&
-		(expr.Field == "effective_derived_roles" || expr.Field == "effectiveDerivedRoles")
+	return expr.Operand().Kind() == celast.IdentKind &&
+		ident == conditions.CELRuntimeIdent &&
+		(expr.FieldName() == "effective_derived_roles" || expr.FieldName() == "effectiveDerivedRoles")
 }
 
 func mkDerivedRolesList(derivedRoles []rN) func() (*exprpb.Expr, error) {
 	return memoize(func() (_ *exprpb.Expr, err error) {
 		switch len(derivedRoles) {
 		case 0:
-			return mkListExpr(nil), nil
+			return plannerutils.MkListExprProto(nil), nil
 
 		case 1:
 			return derivedRoleListElement(derivedRoles[0])
@@ -973,10 +1059,10 @@ func mkDerivedRolesList(derivedRoles []rN) func() (*exprpb.Expr, error) {
 func mkBinaryOperatorExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
 	const arity = 2
 	if len(args) == arity {
-		return plannerutils.MkCallExpr(op, args[0], args[1])
+		return plannerutils.MkCallExprProto(op, args[0], args[1])
 	}
 
-	return plannerutils.MkCallExpr(op, args[0], mkBinaryOperatorExpr(op, args[1:]...))
+	return plannerutils.MkCallExprProto(op, args[0], mkBinaryOperatorExpr(op, args[1:]...))
 }
 
 func derivedRoleListElement(derivedRole rN) (*exprpb.Expr, error) {
@@ -990,11 +1076,11 @@ func derivedRoleListElement(derivedRole rN) (*exprpb.Expr, error) {
 		return nil, err
 	}
 
-	return plannerutils.MkCallExpr(
+	return plannerutils.MkCallExprProto(
 		operators.Conditional,
 		conditionExpr,
-		mkListExpr([]*exprpb.Expr{mkConstStringExpr(derivedRole.Role)}),
-		mkListExpr(nil),
+		plannerutils.MkListExprProto([]*exprpb.Expr{mkConstStringExpr(derivedRole.Role)}),
+		plannerutils.MkListExprProto(nil),
 	), nil
 }
 
@@ -1011,7 +1097,7 @@ func qpNToExpr(node *qpN) (*exprpb.Expr, error) {
 			if err != nil {
 				return nil, err
 			}
-			return plannerutils.MkCallExpr(operators.LogicalNot, arg), nil
+			return plannerutils.MkCallExprProto(operators.LogicalNot, arg), nil
 
 		case enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND:
 			op = operators.LogicalAnd
@@ -1054,29 +1140,20 @@ func memoize[T any](f func() (T, error)) func() (T, error) {
 	}
 }
 
-func replaceCamelCaseFields(expr *exprpb.Expr) (*exprpb.Expr, error) {
+func replaceCamelCaseFields(expr celast.Expr) (celast.Expr, error) {
 	// For some reason, the JSONFieldProvider is ignored in the planner. It _should_ work, and I haven't been able to work out why it doesn't.
 	// For now, work around the issue by rewriting camel case fields to snake case.
 	// We don't need to rewrite `runtime.effectiveDerivedRoles`, because that is handled in replaceRuntimeEffectiveDerivedRoles.
-	return replaceVarsGen(expr, func(input *exprpb.Expr) (*exprpb.Expr, bool, error) {
-		se, ok := input.ExprKind.(*exprpb.Expr_SelectExpr)
-		if !ok {
+	return replaceVarsGen(expr, func(input celast.Expr) (celast.Expr, bool, error) {
+		if input.Kind() != celast.SelectKind {
 			return nil, false, nil
 		}
-		sel := se.SelectExpr
+		sel := input.AsSelect()
+		ident := sel.Operand().AsIdent()
 
-		ident := sel.Operand.GetIdentExpr()
-
-		if ident != nil && ident.Name == conditions.CELRequestIdent && sel.Field == "auxData" {
-			return &exprpb.Expr{
-				ExprKind: &exprpb.Expr_SelectExpr{
-					SelectExpr: &exprpb.Expr_Select{
-						Operand:  sel.Operand,
-						Field:    "aux_data",
-						TestOnly: sel.TestOnly,
-					},
-				},
-			}, true, nil
+		if sel.Operand().Kind() == celast.IdentKind && ident == conditions.CELRequestIdent && sel.FieldName() == "auxData" {
+			fact := celast.NewExprFactory()
+			return fact.NewSelect(0, sel.Operand(), "aux_data"), true, nil
 		}
 
 		return nil, false, nil

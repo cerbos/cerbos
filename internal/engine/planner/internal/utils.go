@@ -3,7 +3,44 @@
 
 package internal
 
-import exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+import (
+	celast "github.com/google/cel-go/common/ast"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+)
+
+type IDGen struct {
+	ids map[int64]int64
+	c   int64
+}
+
+func NewIDGen() *IDGen {
+	return &IDGen{
+		ids: make(map[int64]int64),
+	}
+}
+
+func (g *IDGen) Remap(id int64) int64 {
+	if id == 0 {
+		g.c++
+		return g.c
+	}
+	if n, ok := g.ids[id]; ok {
+		return n
+	}
+	g.c++
+	g.ids[id] = g.c
+	return g.c
+}
+
+func RenumberIDs(e celast.Expr) {
+	e.RenumberIDs(NewIDGen().Remap)
+}
+
+func ZeroIDs(e celast.Expr) {
+	e.RenumberIDs(func(_ int64) int64 {
+		return 0
+	})
+}
 
 func UpdateIDs(e *exprpb.Expr) {
 	var n int64
@@ -51,7 +88,27 @@ func UpdateIDs(e *exprpb.Expr) {
 	impl(e)
 }
 
-func MkCallExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
+func MkListExpr(elems []celast.Expr) celast.Expr {
+	fact := celast.NewExprFactory()
+	return fact.NewList(0, elems, nil)
+}
+
+func MkListExprProto(elems []*exprpb.Expr) *exprpb.Expr {
+	return &exprpb.Expr{
+		ExprKind: &exprpb.Expr_ListExpr{
+			ListExpr: &exprpb.Expr_CreateList{
+				Elements: elems,
+			},
+		},
+	}
+}
+
+func MkCallExpr(op string, args ...celast.Expr) celast.Expr {
+	fact := celast.NewExprFactory()
+	return fact.NewCall(0, op, args...)
+}
+
+func MkCallExprProto(op string, args ...*exprpb.Expr) *exprpb.Expr {
 	e := &exprpb.Expr{
 		ExprKind: &exprpb.Expr_CallExpr{CallExpr: &exprpb.Expr_Call{
 			Function: op,
@@ -61,7 +118,12 @@ func MkCallExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
 	return e
 }
 
-func MkSelectExpr(operand *exprpb.Expr, field string) *exprpb.Expr {
+func MkSelectExpr(operand celast.Expr, field string) celast.Expr {
+	fact := celast.NewExprFactory()
+	return fact.NewSelect(0, operand, field)
+}
+
+func MkSelectExprProto(operand *exprpb.Expr, field string) *exprpb.Expr {
 	return &exprpb.Expr{
 		ExprKind: &exprpb.Expr_SelectExpr{
 			SelectExpr: &exprpb.Expr_Select{

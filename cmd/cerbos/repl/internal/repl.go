@@ -438,7 +438,7 @@ func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *types.Type,
 		return nil, nil, errSilent
 	}
 
-	val, _, err := conditions.ContextEval(ctx, env, ast, r.vars, conditions.Now())
+	val, _, err := conditions.ContextEval(ctx, env, ast.NativeRep(), r.vars, conditions.Now())
 	if err != nil {
 		return nil, nil, err
 	}
