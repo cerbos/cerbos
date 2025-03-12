@@ -12,6 +12,9 @@ resourcePolicy:
         - defer
         - invite
       effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: P.attr.department == R.attr.department
 
     - roles: ["organiser"]
       actions:

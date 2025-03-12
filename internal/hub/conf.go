@@ -22,7 +22,9 @@ const (
 	OfflineKey
 	PDPIDKey
 	WorkspaceSecretKey
-	BundleVersion
+	BundleVersionKey
+	DeploymentIDKey
+	PlaygroundIDKey
 )
 
 var envVars = map[EnvVarKey][]string{
@@ -32,7 +34,9 @@ var envVars = map[EnvVarKey][]string{
 	OfflineKey:         {"CERBOS_HUB_OFFLINE", "CERBOS_CLOUD_OFFLINE"},
 	PDPIDKey:           {"CERBOS_HUB_PDP_ID", "CERBOS_PDP_ID"},
 	WorkspaceSecretKey: {"CERBOS_HUB_WORKSPACE_SECRET", "CERBOS_CLOUD_SECRET_KEY"},
-	BundleVersion:      {"CERBOS_HUB_BUNDLE_VERSION"},
+	BundleVersionKey:   {"CERBOS_HUB_BUNDLE_VERSION"},
+	DeploymentIDKey:    {"CERBOS_HUB_DEPLOYMENT_ID"},
+	PlaygroundIDKey:    {"CERBOS_HUB_PLAYGROUND_ID"},
 }
 
 func GetEnv(key EnvVarKey) string {

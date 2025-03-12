@@ -248,7 +248,6 @@ files:
     rolePolicy:
       role: acme_admin
       scope: "acme.hr.uk"
-      scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
       rules:
         - resource: leave_request
           allowActions:

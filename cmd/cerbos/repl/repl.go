@@ -4,6 +4,7 @@
 package repl
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -53,7 +54,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	reader.SetCompleter(r.Complete)
 
-	return r.Loop()
+	return r.Loop(context.Background())
 }
 
 func getHistoryFile(path string) string {

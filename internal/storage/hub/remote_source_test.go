@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/cerbos/cloud-api/base"
-	cloudapi "github.com/cerbos/cloud-api/bundle"
+	bundleapi "github.com/cerbos/cloud-api/bundle"
+	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -24,41 +25,37 @@ import (
 )
 
 const (
-	bundleV1ID      = "h1:Agebx+guQj0D+tgRjjOfbZp9U47poVhF9tV/P03KVmc="
-	bundleV2ID      = "NCX4NBNOUSOU9KHO"
+	bundleV1ID      = "h1:oWTxBWyUjfwEWASC1EjzT9HGuVuVt3vgjO1GVcsJ0DQ="
+	bundleV2ID      = "66PXRRKTQ396OECH"
+	label           = "label"
 	playgroundLabel = "playground/A4W8GJAIZYIH"
+	deploymentID    = bundleapiv2.DeploymentID("3LWZ3N3GFMIL")
+	playgroundID    = bundleapiv2.PlaygroundID("A4W8GJAIZYIH")
 )
 
 func TestRemoteSource(t *testing.T) {
-	t.Run("v1", runRemoteTests(mkTestCtx(t, cloudapi.Version1)))
-	t.Run("v2", runRemoteTests(mkTestCtx(t, cloudapi.Version2)))
+	t.Run("v1", runRemoteTests(mkTestCtx(t, bundleapi.Version1)))
+	t.Run("v2", runRemoteTests(mkTestCtx(t, bundleapi.Version2)))
 }
 
 func runRemoteTests(tctx testCtx) func(t *testing.T) {
 	return func(t *testing.T) {
-		creds := mkCredentials(t, tctx)
-
 		t.Run("WithoutAutoUpdate", func(t *testing.T) {
-			conf := mkConf(t, withDisableAutoUpdate(), withBundleVersion(tctx.version))
+			conf := mkConf(t, tctx, withDisableAutoUpdate())
 
 			t.Run("BootstrapSuccess", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
-
-				mockClient := mocks.NewCloudAPIClient(t)
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().HubCredentials().Return(creds)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Once()
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
-				case cloudapi.Version2:
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
 
-				require.NoError(t, rs.InitWithClient(t.Context(), mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 				require.NoError(t, err, "Failed to call ListPolicyIDs")
@@ -66,25 +63,21 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			})
 
 			t.Run("BootstrapFail", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
-
-				mockClient := mocks.NewCloudAPIClient(t)
-				mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return("", nil, cloudapi.ErrBootstrapBundleNotFound).Once()
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
 				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().HubCredentials().Return(creds)
-					mockClient.EXPECT().GetBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Once()
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return("", bundleapi.ErrBootstrapBundleNotFound).Once()
+					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
-				case cloudapi.Version2:
-					mockClient.EXPECT().GetBundle(mock.Anything, "label").Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", nil, bundleapi.ErrBootstrapBundleNotFound).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
 
-				require.NoError(t, rs.InitWithClient(t.Context(), mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 				require.NoError(t, err, "Failed to call ListPolicyIDs")
@@ -92,40 +85,42 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			})
 
 			t.Run("BootstrapAndAPIFailure", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
-				mockClient := mocks.NewCloudAPIClient(t)
-				mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return("", nil, errors.New("fail")).Once()
-				mockClient.EXPECT().GetBundle(mock.Anything, "label").Return("", nil, errors.New("fail")).Once()
+				switch tctx.version {
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return("", errors.New("fail")).Once()
+					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return("", errors.New("fail")).Once()
 
-				require.Error(t, rs.InitWithClient(t.Context(), mockClient), "Expected error")
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", nil, errors.New("fail")).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return("", nil, errors.New("fail")).Once()
+
+				default:
+				}
+
+				require.Error(t, rs.Init(t.Context()), "Expected error")
 				require.False(t, rs.IsHealthy(), "Source should be unhealthy")
 
-				_, err = rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+				_, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 				require.Error(t, err, "Expected error from ListPolicyIDs")
 				require.ErrorIs(t, err, hub.ErrBundleNotLoaded, "Exepcted bundle not loaded error")
 			})
 
 			t.Run("Reload", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
-				mockClient := mocks.NewCloudAPIClient(t)
 				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().HubCredentials().Return(creds)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Twice()
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Twice()
 
-				case cloudapi.Version2:
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Twice()
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Twice()
 
 				default:
 				}
 
-				require.NoError(t, rs.InitWithClient(t.Context(), mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 				require.NoError(t, rs.Reload(t.Context()), "Failed to reload")
 
 				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
@@ -134,14 +129,20 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			})
 
 			t.Run("Playground", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(mkConf(t, withBundleVersion(tctx.version), withDisableAutoUpdate(), withPlayground()))
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, mkConf(t, tctx, withDisableAutoUpdate(), withPlayground()))
 
-				mockClient := mocks.NewCloudAPIClient(t)
-				mockClient.EXPECT().GetBundle(mock.Anything, playgroundLabel).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), nil, nil).Once()
+				switch tctx.version {
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().GetBundle(mock.Anything, playgroundLabel).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), nil).Once()
 
-				require.NoError(t, rs.InitWithClient(t.Context(), mockClient), "Failed to init")
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, playgroundID).Return("", nil, bundleapi.ErrBootstrappingNotSupported).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, playgroundID).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), nil, nil).Once()
+
+				default:
+				}
+
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 				require.NoError(t, err, "Failed to call ListPolicyIDs")
@@ -152,48 +153,37 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 		t.Run("OfflineMode", func(t *testing.T) {
 			t.Setenv("CERBOS_HUB_OFFLINE", "true")
 
-			rs, err := hub.NewRemoteSource(mkConf(t, withBundleVersion(tctx.version)))
-			require.NoError(t, err, "Failed to create remote source")
-			t.Cleanup(func() { _ = rs.Close() })
+			rs, mockClientV1, _ := mkRemoteSource(t, tctx, mkConf(t, tctx))
 
-			mockClient := mocks.NewCloudAPIClient(t)
 			switch tctx.version {
-			case cloudapi.Version1:
-				mockClient.EXPECT().HubCredentials().Return(creds)
-				mockClient.EXPECT().GetCachedBundle("label").Return(tctx.bundlePath, nil).Once()
+			case bundleapi.Version1:
+				mockClientV1.EXPECT().GetCachedBundle(label).Return(tctx.bundlePath, nil).Once()
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
+
+				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+				require.NoError(t, err, "Failed to call ListPolicyIDs")
+				require.True(t, len(ids) > 0, "Policy IDs are empty")
+
+			case bundleapi.Version2:
+				require.ErrorIs(t, rs.Init(t.Context()), hub.ErrOfflineModeNotAvailable)
 
 			default:
 			}
-
-			switch tctx.version {
-			case cloudapi.Version1:
-				require.NoError(t, rs.InitWithClient(t.Context(), mockClient), "Failed to init")
-
-			case cloudapi.Version2:
-				require.ErrorIs(t, rs.InitWithClient(t.Context(), mockClient), hub.ErrOfflineModeNotAvailable)
-				return
-
-			default:
-			}
-
-			ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-			require.NoError(t, err, "Failed to call ListPolicyIDs")
-			require.True(t, len(ids) > 0, "Policy IDs are empty")
 		})
 
 		t.Run("WithAutoUpdate", func(t *testing.T) {
-			conf := mkConf(t, withBundleVersion(tctx.version))
+			conf := mkConf(t, tctx)
 
 			type watchHandle struct {
 				mockHandle *mocks.WatchHandle
-				eventChan  chan cloudapi.ServerEvent
+				eventChan  chan bundleapi.ServerEvent
 				errorChan  chan error
 				callsDone  chan struct{}
 			}
 
 			mkWatchHandle := func() *watchHandle {
 				mockHandle := mocks.NewWatchHandle(t)
-				eventChan := make(chan cloudapi.ServerEvent)
+				eventChan := make(chan bundleapi.ServerEvent)
 				errorChan := make(chan error)
 				callsDone := make(chan struct{})
 
@@ -209,35 +199,33 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			}
 
 			t.Run("AuthFailure", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
 				callsDone := make(chan struct{})
 
-				mockClient := mocks.NewCloudAPIClient(t)
-				mockClient.EXPECT().WatchBundle(mock.Anything, "label").
-					Run(func(_ context.Context, _ string) {
-						close(callsDone)
-					}).
-					Return(nil, base.ErrAuthenticationFailed).
-					Once()
-
-				ctx, cancelFn := context.WithCancel(t.Context())
-				t.Cleanup(cancelFn)
-
 				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().HubCredentials().Return(creds)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Once()
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
+					mockClientV1.EXPECT().WatchBundle(mock.Anything, label).
+						Run(func(context.Context, string) {
+							close(callsDone)
+						}).
+						Return(nil, base.ErrAuthenticationFailed).
+						Once()
 
-				case cloudapi.Version2:
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
+						Run(func(context.Context, bundleapiv2.Source) {
+							close(callsDone)
+						}).
+						Return(nil, base.ErrAuthenticationFailed).
+						Once()
 
 				default:
 				}
 
-				require.NoError(t, rs.InitWithClient(ctx, mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				waitForCallsDone(t, callsDone)
 
@@ -245,58 +233,41 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					return rs.IsHealthy() == false
 				}, 60*time.Millisecond, 10*time.Millisecond, "Source should be unhealthy")
 
-				_, err = rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+				_, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 				require.Error(t, err, "Expected error from ListPolicyIDs")
 				require.ErrorIs(t, err, hub.ErrBundleNotLoaded, "Expected bundle not loaded error")
 			})
 
 			t.Run("BundleRemoved", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
-
-				mockClient := mocks.NewCloudAPIClient(t)
-
-				ctx, cancelFn := context.WithCancel(t.Context())
-				t.Cleanup(cancelFn)
-
-				events := []cloudapi.ServerEvent{
-					{Kind: cloudapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
-					{Kind: cloudapi.ServerEventBundleRemoved},
-				}
-				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Once()
-					mockClient.EXPECT().HubCredentials().Return(creds)
-
-				case cloudapi.Version2:
-					encryptionKey := loadEncryptionKey(t, tctx)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, encryptionKey, nil).Once()
-
-					events[0].EncryptionKey = encryptionKey
-
-				default:
-				}
-
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 				wh := mkWatchHandle()
-				mockClient.EXPECT().WatchBundle(mock.Anything, "label").Return(wh.mockHandle, nil).Once()
+				events := []bundleapi.ServerEvent{
+					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
+					{Kind: bundleapi.ServerEventBundleRemoved},
+				}
 
 				switch tctx.version {
-				case cloudapi.Version1:
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
+					mockClientV1.EXPECT().WatchBundle(mock.Anything, label).Return(wh.mockHandle, nil).Once()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV1ID).Return(nil)
 
-				case cloudapi.Version2:
+				case bundleapi.Version2:
+					encryptionKey := loadEncryptionKey(t, tctx)
+					events[0].EncryptionKey = encryptionKey
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Once()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).Return(nil)
 
 				default:
 				}
 
-				wh.mockHandle.EXPECT().ActiveBundleChanged(cloudapi.BundleIDOrphaned).
+				wh.mockHandle.EXPECT().ActiveBundleChanged(bundleapi.BundleIDOrphaned).
 					Run(func(_ string) {
 						close(wh.callsDone)
 					}).
 					Return(nil)
-				require.NoError(t, rs.InitWithClient(ctx, mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				for _, evt := range events {
 					wh.eventChan <- evt
@@ -310,39 +281,29 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			})
 
 			t.Run("ErrorsInEvents", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
-
-				mockClient := mocks.NewCloudAPIClient(t)
-
-				ctx, cancelFn := context.WithCancel(t.Context())
-				t.Cleanup(cancelFn)
-
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 				wh := mkWatchHandle()
-				mockClient.EXPECT().WatchBundle(mock.Anything, "label").Return(wh.mockHandle, nil).Twice()
 
-				events := []cloudapi.ServerEvent{
-					{Kind: cloudapi.ServerEventError, Error: errors.New("error1")},
-					{Kind: cloudapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
+				events := []bundleapi.ServerEvent{
+					{Kind: bundleapi.ServerEventError, Error: errors.New("error1")},
+					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
 				}
 
 				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().HubCredentials().Return(creds)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Once()
-
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
+					mockClientV1.EXPECT().WatchBundle(mock.Anything, label).Return(wh.mockHandle, nil).Twice()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV1ID).
 						Run(func(_ string) {
 							close(wh.callsDone)
 						}).
 						Return(nil)
 
-				case cloudapi.Version2:
+				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, encryptionKey, nil).Once()
 					events[1].EncryptionKey = encryptionKey
-
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Twice()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).
 						Run(func(_ string) {
 							close(wh.callsDone)
@@ -352,7 +313,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				default:
 				}
 
-				require.NoError(t, rs.InitWithClient(ctx, mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				for _, evt := range events {
 					wh.eventChan <- evt
@@ -366,51 +327,51 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			})
 
 			t.Run("Reconnect", func(t *testing.T) {
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
-
-				mockClient := mocks.NewCloudAPIClient(t)
-
-				ctx, cancelFn := context.WithCancel(t.Context())
-				t.Cleanup(cancelFn)
-
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 				wh := mkWatchHandle()
-
 				var callCount int32
-				// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
-				mockClient.EXPECT().WatchBundle(mock.Anything, "label").
-					Run(func(_ context.Context, _ string) {
-						if atomic.AddInt32(&callCount, 1) == 2 {
-							close(wh.callsDone)
-						}
-					}).
-					Return(wh.mockHandle, nil).
-					Twice()
-
-				events := []cloudapi.ServerEvent{
-					{Kind: cloudapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
-					{Kind: cloudapi.ServerEventReconnect, ReconnectBackoff: 100 * time.Millisecond},
+				events := []bundleapi.ServerEvent{
+					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
+					{Kind: bundleapi.ServerEventReconnect, ReconnectBackoff: 100 * time.Millisecond},
 				}
 
 				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().HubCredentials().Return(creds)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Once()
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
+
+					// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
+					mockClientV1.EXPECT().WatchBundle(mock.Anything, label).
+						Run(func(context.Context, string) {
+							if atomic.AddInt32(&callCount, 1) == 2 {
+								close(wh.callsDone)
+							}
+						}).
+						Return(wh.mockHandle, nil).
+						Twice()
 
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV1ID).Return(nil)
 
-				case cloudapi.Version2:
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+				case bundleapi.Version2:
+					encryptionKey := loadEncryptionKey(t, tctx)
+					events[0].EncryptionKey = encryptionKey
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+
+					// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
+					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
+						Run(func(context.Context, bundleapiv2.Source) {
+							if atomic.AddInt32(&callCount, 1) == 2 {
+								close(wh.callsDone)
+							}
+						}).
+						Return(wh.mockHandle, nil).
+						Twice()
 
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).Return(nil)
-
-					events[0].EncryptionKey = loadEncryptionKey(t, tctx)
 
 				default:
 				}
 
-				require.NoError(t, rs.InitWithClient(ctx, mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				for _, evt := range events {
 					wh.eventChan <- evt
@@ -428,39 +389,40 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					t.SkipNow()
 				}
 
-				rs, err := hub.NewRemoteSource(conf)
-				require.NoError(t, err, "Failed to create remote source")
-				t.Cleanup(func() { _ = rs.Close() })
-
-				mockClient := mocks.NewCloudAPIClient(t)
-
-				ctx, cancelFn := context.WithCancel(t.Context())
-				t.Cleanup(cancelFn)
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
 				var callCount int32
 				callsDone := make(chan struct{})
 
-				// Returning an error should force the caller to retry
-				mockClient.EXPECT().WatchBundle(mock.Anything, "label").
-					Run(func(_ context.Context, _ string) {
-						if atomic.AddInt32(&callCount, 1) == 3 {
-							close(callsDone)
-						}
-					}).
-					Return(nil, errors.New("error"))
-
 				switch tctx.version {
-				case cloudapi.Version1:
-					mockClient.EXPECT().HubCredentials().Return(creds)
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, nil, nil).Once()
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
-				case cloudapi.Version2:
-					mockClient.EXPECT().BootstrapBundle(mock.Anything, "label").Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					// Returning an error should force the caller to retry
+					mockClientV1.EXPECT().WatchBundle(mock.Anything, label).
+						Run(func(context.Context, string) {
+							if atomic.AddInt32(&callCount, 1) == 3 {
+								close(callsDone)
+							}
+						}).
+						Return(nil, errors.New("error"))
+
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+
+					// Returning an error should force the caller to retry
+					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
+						Run(func(context.Context, bundleapiv2.Source) {
+							if atomic.AddInt32(&callCount, 1) == 3 {
+								close(callsDone)
+							}
+						}).
+						Return(nil, errors.New("error"))
 
 				default:
 				}
 
-				require.NoError(t, rs.InitWithClient(ctx, mockClient), "Failed to init")
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
 				waitForCallsDone(t, callsDone)
 
@@ -476,12 +438,6 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 type confOption func(*hub.Conf)
 
-func withBundleVersion(version cloudapi.Version) confOption {
-	return func(conf *hub.Conf) {
-		conf.BundleVersion = version
-	}
-}
-
 func withDisableAutoUpdate() confOption {
 	return func(conf *hub.Conf) {
 		conf.Remote.DisableAutoUpdate = true
@@ -490,19 +446,32 @@ func withDisableAutoUpdate() confOption {
 
 func withPlayground() confOption {
 	return func(conf *hub.Conf) {
-		conf.Remote.BundleLabel = playgroundLabel
+		switch conf.BundleVersion {
+		case bundleapi.Version1:
+			conf.Remote.BundleLabel = playgroundLabel
+		case bundleapi.Version2:
+			conf.Remote.DeploymentID = ""
+			conf.Remote.PlaygroundID = string(playgroundID)
+		default:
+		}
 	}
 }
 
-func mkConf(t *testing.T, opts ...confOption) *hub.Conf {
+func mkConf(t *testing.T, tctx testCtx, opts ...confOption) *hub.Conf {
 	t.Helper()
 
 	conf := &hub.Conf{
-		BundleVersion: cloudapi.Version1,
+		BundleVersion: tctx.version,
 		CacheSize:     1024,
-		Remote: &hub.RemoteSourceConf{
-			BundleLabel: "label",
-		},
+		Remote:        &hub.RemoteSourceConf{},
+	}
+
+	switch tctx.version {
+	case bundleapi.Version1:
+		conf.Remote.BundleLabel = "label"
+	case bundleapi.Version2:
+		conf.Remote.DeploymentID = string(deploymentID)
+	default:
 	}
 
 	for _, opt := range opts {
@@ -522,7 +491,7 @@ func mkCredentials(t *testing.T, tctx testCtx) *credentials.Credentials {
 		PDPID:        "pdpid",
 	}
 
-	if tctx.version == cloudapi.Version1 {
+	if tctx.version == bundleapi.Version1 {
 		conf.WorkspaceSecret = loadSecretKey(t, tctx)
 	}
 
@@ -530,6 +499,36 @@ func mkCredentials(t *testing.T, tctx testCtx) *credentials.Credentials {
 	require.NoError(t, err)
 
 	return creds
+}
+
+func mkRemoteSource(t *testing.T, tctx testCtx, conf *hub.Conf) (_ *hub.RemoteSource, mockClientV1 *mocks.ClientV1, mockClientV2 *mocks.ClientV2) {
+	t.Helper()
+
+	provider := mocks.NewClientProvider(t)
+
+	clientConf := bundleapi.ClientConf{
+		CacheDir: conf.Remote.CacheDir,
+		TempDir:  conf.Remote.TempDir,
+	}
+
+	switch tctx.version {
+	case bundleapi.Version1:
+		mockClientV1 = mocks.NewClientV1(t)
+		provider.EXPECT().V1(clientConf).Return(mockClientV1, nil)
+		mockClientV1.EXPECT().HubCredentials().Return(mkCredentials(t, tctx)).Maybe()
+
+	case bundleapi.Version2:
+		mockClientV2 = mocks.NewClientV2(t)
+		provider.EXPECT().V2(clientConf).Return(mockClientV2, nil)
+
+	default:
+	}
+
+	rs, err := hub.NewRemoteSourceWithHub(conf, provider)
+	require.NoError(t, err, "Failed to create remote source")
+	t.Cleanup(func() { _ = rs.Close() })
+
+	return rs, mockClientV1, mockClientV2
 }
 
 func waitForCallsDone(t *testing.T, callsDone <-chan struct{}) {

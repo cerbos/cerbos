@@ -84,7 +84,8 @@ message RunnableRolePolicySet {
   Metadata meta = 1;
   string role = 2;
   string scope = 3;
-  cerbos.policy.v1.ScopePermissions scope_permissions = 5;
+  // Deprecated: no-op.
+  cerbos.policy.v1.ScopePermissions scope_permissions = 5 [deprecated = true];
   repeated string parent_roles = 6;
   map<string, RuleList> resources = 7;
 }

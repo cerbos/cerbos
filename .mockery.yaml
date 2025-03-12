@@ -6,6 +6,7 @@ outpkg: mocks
 with-expecter: True
 issue-845-fix: True
 resolve-type-alias: False
+disable-version-string: True
 packages:
   github.com/cerbos/cerbos/internal/audit/hub:
     interfaces:
@@ -17,7 +18,9 @@ packages:
 
   github.com/cerbos/cerbos/internal/storage/hub:
     interfaces:
-      CloudAPIClient:
+      ClientProvider:
+      ClientV1:
+      ClientV2:
 
   github.com/cerbos/cerbos/internal/storage/index:
     interfaces:

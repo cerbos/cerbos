@@ -2,12 +2,11 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: acme_assistant
-  scope: acme.hr.uk
-  scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
+  role: party_person
+  scope: acme.hr.uk.brighton.kemptown
   parentRoles:
-    - "acme_travel_agent"
+    - "employee"
   rules:
-    - resource: leave_request
+    - resource: "leave_request"
       allowActions:
-        - assist
+        - party

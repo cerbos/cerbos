@@ -64,8 +64,8 @@ func toManifestV2(manifest *bundlev1.Manifest) *bundlev2.Manifest {
 		PolicyIndex: manifest.GetPolicyIndex(),
 		Schemas:     manifest.GetSchemas(),
 		Meta: &bundlev2.Meta{
-			Identifier: manifest.GetMeta().GetIdentifier(),
-			Source:     manifest.GetMeta().GetSource(),
+			BundleId: manifest.GetMeta().GetIdentifier(),
+			Source:   manifest.GetMeta().GetSource(),
 		},
 	}
 
@@ -168,7 +168,7 @@ func OpenV2(opts OpenOpts) (*Bundle, error) {
 		return nil, err
 	}
 
-	logger.Info("Bundle v2 opened", zap.String("identifier", manifest.Meta.Identifier))
+	logger.Info("Bundle v2 opened", zap.String("id", manifest.Meta.BundleId))
 	return &Bundle{
 		path:     decryptedPath,
 		manifest: manifest,

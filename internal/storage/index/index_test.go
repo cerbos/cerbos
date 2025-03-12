@@ -41,8 +41,8 @@ func TestIndexLoadPolicy(t *testing.T) {
 		"resource_policies/policy_06.yaml",
 		"role_policies/policy_01_acme.hr.uk.brighton.yaml",
 		"role_policies/policy_02_acme.hr.uk.brighton.yaml",
-		"role_policies/policy_03_override_acme.hr.uk.yaml",
-		"role_policies/policy_04_override_acme.hr.uk.yaml",
+		"role_policies/policy_03_acme.hr.uk.yaml",
+		"role_policies/policy_04_acme.hr.uk.yaml",
 		"role_policies/policy_05_acme.hr.uk.london.yaml",
 	}
 

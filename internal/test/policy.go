@@ -216,7 +216,6 @@ func GenRolePolicy(mod NameMod) *policyv1.Policy {
 				PolicyType: &policyv1.RolePolicy_Role{
 					Role: mod("acme_admin"),
 				},
-				ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
 				Rules: []*policyv1.RoleRule{
 					{
 						Resource: mod("leave_request"),

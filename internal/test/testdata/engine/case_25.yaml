@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Interleaved resource and role policies with parent roles and REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+description: "REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS resource policies interleaved with role policies with parent roles"
 inputs:
   [
     {
       "requestId": "test",
       "actions": [
-        "create", # ALLOW for `acme_creator` wildcard. ALLOW in parent scope for `employee`.
+        "create", # ALLOW for `acme_creator` wildcard. ALLOW in parent custom role. ALLOW in parent scope for `employee`.
         "delete", # No match in target scope. ALLOW in parent scope for conditional rule for `employee_that_owns_the_record`.
         "view:public", # No match for `acme_creator`. ALLOW for `acme_jr_admin` wildcard. ALLOW in parent scope for `employee_that_owns_the_record`.
         "deny", # No match for `acme_creator`. ALLOW for `acme_jr_admin` which `acme_creator` narrows. No match in parent scope.
@@ -15,6 +15,7 @@ inputs:
                  # defined in a role policy, it narrows the permissions of `employee` rather than assuming them, even if they share
                  # the same scope. If the principal explicitly had the role `employee`, this would be allowed. 
         "party_plan", # Rule with non-matching condition in target scope which implicitly DENYs (even with ALLOW in parent scope)
+        "make", # ALLOW for `acme_creator`, no match in parent custom role
         ],
       "principal":
         {
@@ -55,29 +56,29 @@ wantOutputs:
       "resourceId": "XX125",
       "actions":
         {
-          "view:public":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
-            },
-          "delete":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
-            },
           "create":
             {
               "effect": "EFFECT_ALLOW",
               "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
               "scope": "acme",
             },
+          "view:public":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
+            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
+            },
           "deny":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "block":
             {
@@ -88,13 +89,20 @@ wantOutputs:
           "defer":
             {
               "effect": "EFFECT_DENY",
-              "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-              "scope": "acme.hr.uk.brighton"
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
           "party_plan":
             {
               "effect": "EFFECT_DENY",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
+            },
+          "make":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+              "scope": "acme.hr.uk.brighton",
             },
         },
       "effectiveDerivedRoles":
@@ -138,7 +146,7 @@ wantDecisionLogs:
                         "ip_address": "10.20.0.13",
                       },
                   },
-                "actions": ["create", "delete", "view:public", "deny", "block", "defer", "party_plan"],
+                "actions": ["create", "delete", "view:public", "deny", "block", "defer", "party_plan", "make"],
               },
             ],
           "outputs":
@@ -157,19 +165,19 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "view:public":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.brighton"
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "deny":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "block":
@@ -181,13 +189,20 @@ wantDecisionLogs:
                     "defer":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "NO_MATCH_FOR_SCOPE_PERMISSIONS",
-                        "scope": "acme.hr.uk.brighton"
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                     "party_plan":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.brighton",
+                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
+                      },
+                    "make":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+                        "scope": "acme.hr.uk.brighton",
                       },
                   },
                 "effectiveDerivedRoles":
@@ -245,6 +260,14 @@ wantDecisionLogs:
                     {
                       "driver": "disk",
                       "source": "role_policies/policy_02_acme.hr.uk.brighton.yaml",
+                    },
+                },
+              "role.acme_jr_admin/acme.hr.uk.brighton":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_01_acme.hr.uk.brighton.yaml",
                     },
                 },
             },
