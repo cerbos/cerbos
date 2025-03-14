@@ -190,7 +190,7 @@ func Test_evaluateCondition(t *testing.T) {
 	// filter test cases with "complex" expression, i.e. having calls.
 	// then group these expressions in logical expressions
 	j := 0
-	for i := 0; i < len(tests); i++ {
+	for i := range tests {
 		if tests[i].want != "true" && tests[i].want != "false" {
 			tests[j] = tests[i]
 			j++
@@ -212,7 +212,7 @@ func Test_evaluateCondition(t *testing.T) {
 		}
 		t.Run(opStr, func(t *testing.T) {
 			is := require.New(t)
-			for i := 0; i < len(tests); i++ {
+			for i := range tests {
 				exprList.Expr = append(exprList.Expr, tests[i].args.condition)
 				conds[i] = tests[i].args.condition
 				request := tests[i].args.request
@@ -242,7 +242,7 @@ func Test_evaluateCondition(t *testing.T) {
 			operation := got.GetLogicalOperation()
 			is.NotNil(operation)
 			is.Equal(op, int32(operation.Operator))
-			for i := 0; i < len(tests); i++ {
+			for i := range tests {
 				expression := operation.Nodes[i].GetExpression()
 				is.Equal(tests[i].want, unparse(t, expression))
 			}

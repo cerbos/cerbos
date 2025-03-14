@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -385,9 +386,7 @@ func (r *REPL) addToVarC(c map[string]any) {
 		r.varC = make(map[string]any, len(c))
 	}
 
-	for name, val := range c {
-		r.varC[name] = val
-	}
+	maps.Copy(r.varC, c)
 
 	varsVal := r.toRefVal(r.varC)
 	r.vars[conditions.CELConstantsIdent] = varsVal
@@ -399,9 +398,7 @@ func (r *REPL) addToVarV(v map[string]any) {
 		r.varV = make(map[string]any, len(v))
 	}
 
-	for name, val := range v {
-		r.varV[name] = val
-	}
+	maps.Copy(r.varV, v)
 
 	varsVal := r.toRefVal(r.varV)
 	r.vars[conditions.CELVariablesIdent] = varsVal

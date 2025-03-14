@@ -374,7 +374,7 @@ func hierarchySiblingOf(h Hierarchy, path ref.Val) ref.Val {
 		return types.Bool(false)
 	}
 
-	for i := 0; i < len(h)-1; i++ {
+	for i := range len(h) - 1 {
 		if h[i] != otherHierarchy[i] {
 			return types.Bool(false)
 		}

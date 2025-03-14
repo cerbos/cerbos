@@ -37,7 +37,7 @@ func TestLog(t *testing.T) {
 		ch := make(chan int, 100)
 		g, ctx := errgroup.WithContext(t.Context())
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			g.Go(func() error {
 				for x := range ch {
 					ts := startDate.Add(time.Duration(x) * time.Second)
@@ -62,7 +62,7 @@ func TestLog(t *testing.T) {
 		g.Go(func() error {
 			defer close(ch)
 
-			for i := 0; i < numRecords; i++ {
+			for i := range numRecords {
 				if err := ctx.Err(); err != nil {
 					return err
 				}

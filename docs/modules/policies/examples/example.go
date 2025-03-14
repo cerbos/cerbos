@@ -14,12 +14,12 @@ func main() {
 	}
 
 	principal := cerbos.NewPrincipal("123", "USER")
-	// We use map[string]interface{} as strictly typed nested maps aren't supported
-	principal.WithAttr("workspaces", map[string]map[string]interface{}{
-		"workspaceA": map[string]interface{}{
+	// We use map[string]any as strictly typed nested maps aren't supported
+	principal.WithAttr("workspaces", map[string]map[string]any{
+		"workspaceA": {
 			"role": "OWNER",
 		},
-		"workspaceB": map[string]interface{}{
+		"workspaceB": {
 			"role": "MEMBER",
 		},
 	})

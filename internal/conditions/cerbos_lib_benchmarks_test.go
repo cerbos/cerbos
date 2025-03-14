@@ -34,8 +34,8 @@ func benchmarkIntersect(b *testing.B, size int) {
 	b.Helper()
 	expr := generateExpr(size)
 	prg := prepareProgram(b, expr)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for b.Loop() {
 		_, _, err := prg.Eval(cel.NoVars())
 		require.NoError(b, err)
 	}
@@ -43,7 +43,7 @@ func benchmarkIntersect(b *testing.B, size int) {
 
 func generateExpr(size int) string {
 	lhs := make([]string, size)
-	for i := 0; i < size; i++ {
+	for i := range size {
 		lhs[i] = fmt.Sprintf("'%05d'", i)
 	}
 	rhs := make([]string, size)

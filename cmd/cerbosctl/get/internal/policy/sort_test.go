@@ -23,7 +23,7 @@ func TestSort(t *testing.T) {
 		noOfPolicies := 3
 		policies := mkPoliciesForSort(t, noOfPolicies)
 		expected := make([]string, noOfPolicies)
-		for i := 0; i < noOfPolicies; i++ {
+		for i := range noOfPolicies {
 			expected[i] = fmt.Sprintf(principalPoliciesFmt, i)
 		}
 
@@ -38,7 +38,7 @@ func TestSort(t *testing.T) {
 		noOfPolicies := 3
 		policies := mkPoliciesForSort(t, noOfPolicies)
 		expected := make([]string, noOfPolicies)
-		for i := 0; i < noOfPolicies; i++ {
+		for i := range noOfPolicies {
 			expected[i] = fmt.Sprintf(principalPoliciesNameFmt, i)
 		}
 
@@ -75,7 +75,7 @@ func mkPoliciesForSortByVersion(t *testing.T, noOfPolicies int) []policy.Wrapper
 	t.Helper()
 
 	policies := mkPoliciesForSort(t, noOfPolicies)
-	for i := 0; i < noOfPolicies; i++ {
+	for i := range noOfPolicies {
 		policies[i].Version = fmt.Sprintf("%s_%d", policies[i].Version, noOfPolicies-i-1)
 		policies[i].Policy = policy.WithStoreIdentifier(policies[i].Policy, fmt.Sprintf("%s_%d", policies[i].Metadata.StoreIdentifier, noOfPolicies-i-1))
 	}

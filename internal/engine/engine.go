@@ -169,7 +169,7 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	if numWorkers := conf.NumWorkers; numWorkers > 0 {
 		engine.workerPool = make([]chan<- workIn, numWorkers)
 
-		for i := 0; i < int(numWorkers); i++ {
+		for i := range int(numWorkers) {
 			inputChan := make(chan workIn, workerQueueSize)
 			engine.workerPool[i] = inputChan
 			go engine.startWorker(ctx, i, inputChan)
@@ -204,7 +204,7 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 	// See https://adtac.in/2021/04/23/note-on-worker-pools-in-go.html
 
 	threshold := workerResetThreshold + rand.Intn(workerResetJitter) //nolint:gosec
-	for i := 0; i < threshold; i++ {
+	for range threshold {
 		select {
 		case <-ctx.Done():
 			return
@@ -458,7 +458,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 		}
 	}
 
-	for i := 0; i < len(inputs); i++ {
+	for range inputs {
 		select {
 		case <-ctx.Done():
 			return nil, nil, ctx.Err()
@@ -629,7 +629,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 		return resp, nil
 	}
 
-	for i := 0; i < ec.numChecks; i++ {
+	for i := range ec.numChecks {
 		c := ec.checks[i]
 		result, err := c.Evaluate(ctx, tctx, input)
 		if err != nil {

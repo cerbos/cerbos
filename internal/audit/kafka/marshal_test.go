@@ -23,7 +23,7 @@ func BenchmarkRecordMarshaller_AccessLog(b *testing.B) {
 			b.ResetTimer()
 			b.ReportAllocs()
 
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				if _, err := m.Marshal(rec, KindAccess); err != nil {
 					b.Fatal(err)
 				}
@@ -43,7 +43,7 @@ func BenchmarkRecordMarshaller_DecisionLog(b *testing.B) {
 			b.ResetTimer()
 			b.ReportAllocs()
 
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				if _, err := m.Marshal(rec, KindDecision); err != nil {
 					b.Fatal(err)
 				}

@@ -122,7 +122,7 @@ func TestFailover(t *testing.T) {
 			circuitBreaker:       newCircuitBreaker(conf),
 		}
 
-		for i := 0; i < nRequests; i++ {
+		for i := range nRequests {
 			_, err := wrappedSourceStore.GetFirstMatch(ctx, []namer.ModuleID{namer.GenModuleIDFromFQN("example")})
 			if i < nFailures {
 				require.Error(t, err, "expected base store to return an error")
@@ -153,7 +153,7 @@ func TestFailover(t *testing.T) {
 			circuitBreaker:       newCircuitBreaker(conf),
 		}
 
-		for i := 0; i < nRequests; i++ {
+		for i := range nRequests {
 			_, err := wrappedSourceStore.GetFirstMatch(ctx, []namer.ModuleID{namer.GenModuleIDFromFQN("example")})
 			if i < nFailures {
 				require.Error(t, err, "expected base store to return an error")

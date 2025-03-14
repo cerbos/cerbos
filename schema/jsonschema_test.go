@@ -46,7 +46,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 	require.NoError(t, err, "failed to compile policy schema")
 
 	tests := []struct {
-		policy interface{}
+		policy any
 		title  string
 		valid  bool
 	}{
@@ -72,17 +72,17 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title:  "invalid: empty object",
-			policy: map[string]interface{}{},
+			policy: map[string]any{},
 			valid:  false,
 		},
 		{
 			title:  "invalid: missing policy body",
-			policy: map[string]interface{}{"apiVersion": "api.cerbos.dev/v1"},
+			policy: map[string]any{"apiVersion": "api.cerbos.dev/v1"},
 			valid:  false,
 		},
 		{
 			title: "invalid: wrong API version",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.ApiVersion = "api.cerbos.dev/v0"
 				return jsonify(t, policy)
@@ -91,7 +91,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid derived roles: name doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenDerivedRoles(test.NoMod())
 				policy.GetDerivedRoles().Name = "?"
 				return jsonify(t, policy)
@@ -100,7 +100,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid derived roles: missing definitions",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenDerivedRoles(test.NoMod())
 				policy.GetDerivedRoles().Definitions = nil
 				return jsonify(t, policy)
@@ -109,7 +109,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid derived roles: definition name doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenDerivedRoles(test.NoMod())
 				policy.GetDerivedRoles().Definitions[0].Name = "?"
 				return jsonify(t, policy)
@@ -118,7 +118,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid derived roles: definition missing parent roles",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenDerivedRoles(test.NoMod())
 				policy.GetDerivedRoles().Definitions[0].ParentRoles = nil
 				return jsonify(t, policy)
@@ -127,7 +127,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid derived roles: definition has duplicate parent roles",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenDerivedRoles(test.NoMod())
 				policy.GetDerivedRoles().Definitions[0].ParentRoles = []string{"admin", "admin"}
 				return jsonify(t, policy)
@@ -136,7 +136,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid principal policy: empty principal",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenPrincipalPolicy(test.NoMod())
 				policy.GetPrincipalPolicy().Principal = ""
 				return jsonify(t, policy)
@@ -145,7 +145,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid principal policy: version doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenPrincipalPolicy(test.NoMod())
 				policy.GetPrincipalPolicy().Version = "?"
 				return jsonify(t, policy)
@@ -154,7 +154,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid principal policy: rule resource missing",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenPrincipalPolicy(test.NoMod())
 				policy.GetPrincipalPolicy().Rules[0].Resource = ""
 				return jsonify(t, policy)
@@ -163,7 +163,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid principal policy: rule action missing action",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenPrincipalPolicy(test.NoMod())
 				policy.GetPrincipalPolicy().Rules[0].Actions[0].Action = ""
 				return jsonify(t, policy)
@@ -172,7 +172,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid principal policy: rule action effect not allowed",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenPrincipalPolicy(test.NoMod())
 				policy.GetPrincipalPolicy().Rules[0].Actions[0].Effect = effectv1.Effect_EFFECT_NO_MATCH
 				return jsonify(t, policy)
@@ -181,7 +181,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid principal policy: rule action name doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenPrincipalPolicy(test.NoMod())
 				policy.GetPrincipalPolicy().Rules[0].Actions[0].Name = "?"
 				return jsonify(t, policy)
@@ -190,7 +190,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid principal policy: scope doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenPrincipalPolicy(test.NoMod())
 				policy.GetPrincipalPolicy().Scope = "?"
 				return jsonify(t, policy)
@@ -199,7 +199,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: empty kind",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Resource = ""
 				return jsonify(t, policy)
@@ -208,7 +208,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: version doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Version = "-1"
 				return jsonify(t, policy)
@@ -217,7 +217,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: duplicate import derived roles",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().ImportDerivedRoles = []string{"derived_roles", "derived_roles"}
 				return jsonify(t, policy)
@@ -226,7 +226,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: import derived role doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().ImportDerivedRoles = []string{"?"}
 				return jsonify(t, policy)
@@ -235,7 +235,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: rule missing actions",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].Actions = nil
 				return jsonify(t, policy)
@@ -244,7 +244,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: duplicate rule actions",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].Actions = []string{"view", "view"}
 				return jsonify(t, policy)
@@ -253,7 +253,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: empty rule action",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].Actions = []string{""}
 				return jsonify(t, policy)
@@ -262,7 +262,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: duplicate rule derived roles",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].DerivedRoles = []string{"owner", "owner"}
 				return jsonify(t, policy)
@@ -271,7 +271,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: rule derived role doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].DerivedRoles = []string{"?"}
 				return jsonify(t, policy)
@@ -280,7 +280,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: duplicate rule roles",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].Roles = []string{"owner", "owner"}
 				return jsonify(t, policy)
@@ -289,7 +289,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: rule role is empty",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].Roles = []string{""}
 				return jsonify(t, policy)
@@ -298,7 +298,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: rule effect not allowed",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].Effect = effectv1.Effect_EFFECT_NO_MATCH
 				return jsonify(t, policy)
@@ -307,7 +307,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: rule name doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Rules[0].Name = "?"
 				return jsonify(t, policy)
@@ -316,7 +316,7 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 		},
 		{
 			title: "invalid resource policy: scope doesn't match pattern",
-			policy: func() interface{} {
+			policy: func() any {
 				policy := test.GenResourcePolicy(test.NoMod())
 				policy.GetResourcePolicy().Scope = "?"
 				return jsonify(t, policy)
@@ -338,13 +338,13 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 	}
 }
 
-func jsonify(t *testing.T, message proto.Message) map[string]interface{} {
+func jsonify(t *testing.T, message proto.Message) map[string]any {
 	t.Helper()
 
 	data, err := protojson.Marshal(message)
 	require.NoError(t, err, "failed to marshal message to JSON")
 
-	var result map[string]interface{}
+	var result map[string]any
 	err = json.Unmarshal(data, &result)
 	require.NoError(t, err, "failed to unmarshal message from JSON")
 

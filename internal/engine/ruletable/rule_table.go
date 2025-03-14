@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"sync"
 
 	"github.com/google/cel-go/cel"
@@ -68,14 +69,7 @@ func (r *Row) Matches(scope, action string, roles []string) bool {
 	}
 
 	if r.Role != "*" {
-		var hasMatch bool
-		for _, role := range roles {
-			if r.Role == role {
-				hasMatch = true
-				break
-			}
-		}
-		if !hasMatch {
+		if !slices.Contains(roles, r.Role) {
 			return false
 		}
 	}

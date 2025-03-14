@@ -272,7 +272,7 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 			b.ResetTimer()
 			b.ReportAllocs()
 
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				have, err := eng.Check(b.Context(), tc.Inputs)
 				if tc.WantError {
 					if err == nil {

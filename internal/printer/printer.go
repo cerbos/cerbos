@@ -140,7 +140,7 @@ func (p *Printer) PrintProtoYAML(message proto.Message, colorLevel outputcolor.L
 		}
 	}
 
-	for _, line := range strings.Split(strings.TrimSuffix(string(yamlBytes), "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSuffix(string(yamlBytes), "\n"), "\n") {
 		fmt.Fprintf(p.stdout, "%s%s\n", strings.Repeat("  ", indent), line)
 	}
 

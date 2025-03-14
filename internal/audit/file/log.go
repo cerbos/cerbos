@@ -215,7 +215,7 @@ func (pl protoList) MarshalLogArray(enc zapcore.ArrayEncoder) error {
 		return nil
 	}
 
-	for i := 0; i < pl.l.Len(); i++ {
+	for i := range pl.l.Len() {
 		v := pl.l.Get(i)
 
 		switch pl.valueFD.Kind() {
