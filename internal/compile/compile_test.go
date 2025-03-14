@@ -147,16 +147,15 @@ func mkSchemaMgr(t *testing.T) schema.Manager {
 
 func BenchmarkCompile(b *testing.B) {
 	cases := make([]*policy.CompilationUnit, b.N)
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		cases[i] = generateCompilationUnit()
 	}
 
 	schemaMgr := schema.NewNopManager()
 
-	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		c := cases[i]
 		_, err := compile.Compile(c, schemaMgr)
 		if err != nil {
@@ -175,12 +174,12 @@ func generateCompilationUnit() *policy.CompilationUnit {
 	cu := &policy.CompilationUnit{}
 
 	rp := test.NewResourcePolicyBuilder(resource, "default")
-	for i := 0; i < numDerivedRolesFiles; i++ {
+	for i := range numDerivedRolesFiles {
 		drName := fmt.Sprintf("derived_%02d", i)
 		rr := test.NewResourceRule(fmt.Sprintf("action_%d", i)).WithEffect(effectv1.Effect_EFFECT_ALLOW).WithMatchExpr(mkMatchExpr(3)...)
 
 		dr := test.NewDerivedRolesBuilder(drName)
-		for j := 0; j < numDerivedRolesPerFile; j++ {
+		for range numDerivedRolesPerFile {
 			name := test.RandomStr(8)
 			dr = dr.AddRoleWithMatch(name, mkRandomRoleNames(5), mkMatchExpr(5)...)
 			rr = rr.WithDerivedRoles(name)
@@ -203,7 +202,7 @@ func generateCompilationUnit() *policy.CompilationUnit {
 
 func mkMatchExpr(n int) []string {
 	exprs := make([]string, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		exprs[i] = fmt.Sprintf("request.principal.attr.attr_%d == request.resource.attr.attr_%d", i, i)
 	}
 
@@ -212,7 +211,7 @@ func mkMatchExpr(n int) []string {
 
 func mkRandomRoleNames(n int) []string {
 	roles := make([]string, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		roles[i] = test.RandomStr(5)
 	}
 

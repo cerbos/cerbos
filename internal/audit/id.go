@@ -95,7 +95,7 @@ func newRandPool(size uint64, seed int64) *randPool {
 	}
 
 	randSeed := rand.NewSource(seed)
-	for i := 0; i < int(s); i++ {
+	for i := range int(s) {
 		rp.pool[i] = newLockedRand(randSeed.Int63())
 	}
 

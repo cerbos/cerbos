@@ -397,7 +397,7 @@ func noOfPoliciesInCmdOutput(t *testing.T, cmdOut string) int {
 	t.Helper()
 
 	count := 0
-	for _, line := range strings.Split(strings.TrimSuffix(cmdOut, "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSuffix(cmdOut, "\n"), "\n") {
 		if policyKeyRegex.MatchString(line) {
 			count++
 		}
@@ -408,7 +408,7 @@ func noOfPoliciesInCmdOutput(t *testing.T, cmdOut string) int {
 func loadPolicies(t *testing.T, ac *cerbos.GRPCAdminClient) {
 	t.Helper()
 
-	for i := 0; i < policiesPerType; i++ {
+	for i := range policiesPerType {
 		ps := cerbos.NewPolicySet()
 
 		ps.AddPolicies(withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i)))))

@@ -110,7 +110,7 @@ func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 	ticker := time.NewTicker(flushInterval)
 	defer ticker.Stop()
 
-	for i := 0; i < goroutineResetThreshold; i++ {
+	for range goroutineResetThreshold {
 		select {
 		case <-l.stopChan:
 			batch.flush()
@@ -142,7 +142,7 @@ func (l *Log) gc(gcInterval time.Duration) {
 	ticker := time.NewTicker(gcInterval)
 	defer ticker.Stop()
 
-	for i := 0; i < goroutineResetThreshold; i++ {
+	for range goroutineResetThreshold {
 		select {
 		case <-l.stopChan:
 			l.wg.Done()
@@ -485,7 +485,7 @@ func (b *batcher) flush() error {
 		wb.Cancel()
 	}()
 
-	for i := 0; i < b.ptr; i++ {
+	for i := range b.ptr {
 		entry := b.batch[i]
 		if entry == nil {
 			continue

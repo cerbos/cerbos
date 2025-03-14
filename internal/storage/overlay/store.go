@@ -151,7 +151,7 @@ func withCircuitBreaker[T any](s *Store, baseFn, fallbackFn func() (T, error)) (
 	}
 
 	s.log.Debug("Calling overlay base method")
-	result, err := s.circuitBreaker.Execute(func() (interface{}, error) {
+	result, err := s.circuitBreaker.Execute(func() (any, error) {
 		return baseFn()
 	})
 

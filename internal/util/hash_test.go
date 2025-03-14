@@ -26,7 +26,7 @@ var (
 func BenchmarkHashString(b *testing.B) {
 	numInp := 10_000
 	inputs := make([]string, numInp)
-	for i := 0; i < numInp; i++ {
+	for i := range numInp {
 		inputs[i] = test.RandomStr(200)
 	}
 
@@ -34,7 +34,7 @@ func BenchmarkHashString(b *testing.B) {
 	b.Run("no_pool", func(b *testing.B) {
 		b.SetBytes(int64(len(inputs[0])))
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			h := xxhashv2.Sum64String(inputs[rand.Intn(numInp)])
 			dummy += h >> 4
 		}
@@ -43,7 +43,7 @@ func BenchmarkHashString(b *testing.B) {
 	b.Run("with_pool", func(b *testing.B) {
 		b.SetBytes(int64(len(inputs[0])))
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			h := hashStrPool(inputs[rand.Intn(numInp)])
 			dummy += h >> 4
 		}
@@ -65,7 +65,7 @@ func hashStrPool(s string) uint64 {
 func BenchmarkHashPB(b *testing.B) {
 	numInp := 10_000
 	inputs := make([]*policyv1.Policy, numInp)
-	for i := 0; i < numInp; i++ {
+	for i := range numInp {
 		inputs[i] = test.GenResourcePolicy(test.Suffix(test.RandomStr(5)))
 	}
 
@@ -73,7 +73,7 @@ func BenchmarkHashPB(b *testing.B) {
 	b.Run("no_pool", func(b *testing.B) {
 		b.SetBytes(int64(proto.Size(inputs[0])))
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			h := hashPBNoPool(inputs[rand.Intn(numInp)])
 			dummy += h >> 4
 		}
@@ -82,7 +82,7 @@ func BenchmarkHashPB(b *testing.B) {
 	b.Run("with_pool", func(b *testing.B) {
 		b.SetBytes(int64(proto.Size(inputs[0])))
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			h := hashPBPool(inputs[rand.Intn(numInp)])
 			dummy += h >> 4
 		}

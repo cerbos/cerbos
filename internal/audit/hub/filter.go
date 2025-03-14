@@ -371,7 +371,7 @@ func visit(t *Token, m protoreflect.Message) {
 	case tokenWildcard:
 		fds := m.Descriptor().Fields()
 		fieldsToInspect = make([]protoreflect.FieldDescriptor, fds.Len())
-		for i := 0; i < fds.Len(); i++ {
+		for i := range fds.Len() {
 			fieldsToInspect[i] = fds.Get(i)
 		}
 	}
@@ -408,7 +408,7 @@ func visit(t *Token, m protoreflect.Message) {
 
 				switch c.typ { //nolint:exhaustive
 				case tokenWildcard:
-					for i := 0; i < listVal.Len(); i++ {
+					for i := range listVal.Len() {
 						handleArrayIndex(i)
 					}
 				case tokenIndex:
@@ -445,7 +445,7 @@ func visitStructpb(t *Token, v *structpb.Value) {
 					v = nil
 					continue
 				}
-				for i := 0; i < len(k.ListValue.Values); i++ {
+				for i := range k.ListValue.Values {
 					visitStructpb(c, k.ListValue.Values[i])
 				}
 			case tokenIndex:

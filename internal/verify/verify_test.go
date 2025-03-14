@@ -344,7 +344,7 @@ func Test_doVerify(t *testing.T) {
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 3)
-		for i := 0; i < len(result.Suites); i++ {
+		for i := range result.Suites {
 			is.Len(result.Suites[i].TestCases, 2)
 			is.Len(result.Suites[i].TestCases[0].Principals, 2)
 			is.Len(result.Suites[i].TestCases[0].Principals[0].Resources, 1)

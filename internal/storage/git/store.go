@@ -261,7 +261,7 @@ func (s *Store) loadAll(ctx context.Context) error {
 }
 
 func (s *Store) pullAndCompare(ctx context.Context) (object.Changes, error) {
-	changes, err, _ := s.sf.Do("pullAndCompare", func() (interface{}, error) {
+	changes, err, _ := s.sf.Do("pullAndCompare", func() (any, error) {
 		// open the repo if it's not already open.
 		if s.repo == nil {
 			if err := s.openRepo(); err != nil {

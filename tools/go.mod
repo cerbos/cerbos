@@ -16,6 +16,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/vektra/mockery/v2 v2.53.1
 	go.elastic.co/go-licence-detector v0.7.0
+	golang.org/x/tools/gopls v0.18.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
 	google.golang.org/protobuf v1.36.5
 	gotest.tools/gotestsum v1.12.0
@@ -533,7 +534,7 @@ require (
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
-	golang.org/x/tools v0.30.0 // indirect
+	golang.org/x/tools v0.30.1-0.20250221230316-5055f70f240c // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
 	google.golang.org/api v0.220.0 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect

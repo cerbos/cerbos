@@ -108,13 +108,16 @@ generate-testdata-json-schemas: _buf
     mv {{ testdata_json_schema_dir }}/cerbos/private/v1/*TestCase.schema.json {{ testdata_json_schema_dir }}/cerbos/private/v1/QueryPlannerTestSuite.schema.json {{ testdata_json_schema_dir }}
     rm -rf {{ testdata_json_schema_dir }}/cerbos
 
-lint: _golangcilint _buf
+lint: lint-modernize _golangcilint _buf
     @ "${TOOLS_BIN_DIR}/golangci-lint" run --config=.golangci.yaml --fix
     @ "${TOOLS_BIN_DIR}/buf" lint
     @ "${TOOLS_BIN_DIR}/buf" format --diff --exit-code
 
 lint-helm:
     @ deploy/charts/validate.sh
+
+lint-modernize: _modernize
+    @ GOFLAGS=-tags=tests,integration "${TOOLS_BIN_DIR}/modernize" -fix -test ./...
 
 package $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='' $AWS_CONTAINER_REPO='aws.local/cerbos/cerbos' $AWS_PRODUCT_CODE='': _goreleaser
     @ "${TOOLS_BIN_DIR}/goreleaser"  release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
@@ -202,6 +205,8 @@ _goreleaser: (_install "goreleaser" "github.com/goreleaser/goreleaser/v2")
 _helm-schema: (_install "helm-schema" "github.com/dadav/helm-schema" "cmd/helm-schema")
 
 _mockery: (_install "mockery" "github.com/vektra/mockery/v2")
+
+_modernize: (_install "modernize" "golang.org/x/tools/gopls" "internal/analysis/modernize/cmd/modernize")
 
 _testsplit:
     @ GOWORK=off GOBIN="$TOOLS_BIN_DIR" go install -C {{ testsplit_dir }}

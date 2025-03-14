@@ -41,10 +41,10 @@ func TestIDGen(t *testing.T) {
 	out := make(chan audit.ID, 8)
 
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(1)
 		go func() {
-			for j := 0; j < 10_000; j++ {
+			for range 10_000 {
 				id, err := audit.NewID()
 				if err != nil {
 					panic(err)

@@ -139,7 +139,7 @@ func testEnableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flagse
 func loadPolicies(t *testing.T, ac *cerbos.GRPCAdminClient) {
 	t.Helper()
 
-	for i := 0; i < policiesPerType; i++ {
+	for i := range policiesPerType {
 		ps := cerbos.NewPolicySet()
 		ps.AddPolicies(test.GenDisabledPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenDisabledResourcePolicy(test.Suffix(strconv.Itoa(i))))
