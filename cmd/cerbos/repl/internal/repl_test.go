@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/go-cmp/cmp"
+	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -37,6 +38,7 @@ func TestREPL(t *testing.T) {
 	rpPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_01.yaml")
 	ppPath := filepath.Join(test.PathToDir(t, "store"), "principal_policies", "policy_01.yaml")
 	rpImportVariablesPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_09.yaml")
+	rpAnyAllNonePath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_18.yaml")
 	ecPath := filepath.Join(test.PathToDir(t, "store"), "export_constants", "export_constants_01.yaml")
 	evPath := filepath.Join(test.PathToDir(t, "store"), "export_variables", "export_variables_01.yaml")
 	drConds := loadConditionsFromPolicy(t, drPath)
@@ -431,6 +433,59 @@ func TestREPL(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "exec",
+			directives: []DirectiveTest{
+				{
+					Directive: fmt.Sprintf(":load %s", rpAnyAllNonePath),
+				},
+				{
+					Directive: anyAllNoneResourceDirective(true, true),
+				},
+				{
+					Directive: ":exec #0",
+					Check:     checkAnyAllNoneTree(true, true, "all", true),
+				},
+				{
+					Directive: ":exec #1",
+					Check:     checkAnyAllNoneTree(true, true, "any", true),
+				},
+				{
+					Directive: ":exec #2",
+					Check:     checkAnyAllNoneTree(true, true, "none", false),
+				},
+				{
+					Directive: anyAllNoneResourceDirective(true, false),
+				},
+				{
+					Directive: ":exec #0",
+					Check:     checkAnyAllNoneTree(true, false, "all", false),
+				},
+				{
+					Directive: ":exec #1",
+					Check:     checkAnyAllNoneTree(true, false, "any", true),
+				},
+				{
+					Directive: ":exec #2",
+					Check:     checkAnyAllNoneTree(true, false, "none", false),
+				},
+				{
+					Directive: anyAllNoneResourceDirective(false, false),
+				},
+				{
+					Directive: ":exec #0",
+					Check:     checkAnyAllNoneTree(false, false, "all", false),
+				},
+				{
+					Directive: ":exec #1",
+					Check:     checkAnyAllNoneTree(false, false, "any", false),
+				},
+				{
+					Directive: ":exec #2",
+					Check:     checkAnyAllNoneTree(false, false, "none", true),
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -454,6 +509,21 @@ func TestREPL(t *testing.T) {
 				})
 			}
 		})
+	}
+}
+
+func anyAllNoneResourceDirective(a, b bool) string {
+	return fmt.Sprintf(`:let R = {"kind":"any_all_none","id":"1","attr":{"a":%t,"b":%t}}`, a, b)
+}
+
+func checkAnyAllNoneTree(a, b bool, operator string, result bool) func(*testing.T, *mockOutput) {
+	return func(t *testing.T, output *mockOutput) {
+		t.Helper()
+		require.Equal(t, pterm.LeveledList{
+			{Level: 0, Text: fmt.Sprintf("%s [%t]", operator, result)},
+			{Level: 1, Text: fmt.Sprintf("R.attr.a [%t]", a)},
+			{Level: 1, Text: fmt.Sprintf("R.attr.b [%t]", b)},
+		}, output.tree)
 	}
 }
 
@@ -499,6 +569,7 @@ type mockOutput struct {
 	resultName string
 	resultVal  ref.Val
 	rules      []proto.Message
+	tree       pterm.LeveledList
 	err        error
 }
 
@@ -527,6 +598,11 @@ func (mo *mockOutput) PrintJSON(obj any) {
 
 func (mo *mockOutput) PrintYAML(obj proto.Message, _ int) {
 	mo.yamlObj = obj
+}
+
+func (mo *mockOutput) PrintTree(tree pterm.LeveledList) error {
+	mo.tree = tree
+	return nil
 }
 
 func (mo *mockOutput) PrintErr(msg string, err error) {

@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: all_any_none
+  rules:
+    - actions:
+        - all
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.a
+              - expr: R.attr.b
+
+    - actions:
+        - any
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          any:
+            of:
+              - expr: R.attr.a
+              - expr: R.attr.b
+
+    - actions:
+        - none
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          none:
+            of:
+              - expr: R.attr.a
+              - expr: R.attr.b
