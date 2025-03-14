@@ -211,6 +211,9 @@ func (p *Printer) printTraceComponent(component *enginev1.Trace_Component) {
 	case enginev1.Trace_Component_KIND_RESOURCE:
 		p.Printf("%s%s", colored.TraceComponentKey("resource="), component.GetResource())
 
+	case enginev1.Trace_Component_KIND_ROLE:
+		p.Printf("%s%s", colored.TraceComponentKey("role="), component.GetRole())
+
 	case enginev1.Trace_Component_KIND_RULE:
 		p.Printf("%s%s", colored.TraceComponentKey("rule="), component.GetRule())
 
