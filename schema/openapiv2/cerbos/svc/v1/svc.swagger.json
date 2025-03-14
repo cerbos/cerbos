@@ -928,6 +928,41 @@
         ]
       }
     },
+    "/api/plan/x-scopes-resources": {
+      "post": {
+        "summary": "Plan resources across provided scopes",
+        "description": "Produce a query plan across all provided scopes ith conditions that must be satisfied for accessing a set of instances of a resource",
+        "operationId": "CerbosService_CrossScopePlanResources",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlanResourcesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "PDP Resources Query Plan Request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CrossScopePlanResourcesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
     "/api/server_info": {
       "get": {
         "summary": "Get server information",
@@ -2074,6 +2109,72 @@
           "additionalProperties": {}
         }
       }
+    },
+    "v1CrossScopePlanResourcesInputResource": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind."
+        },
+        "attr": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Key-value pairs of contextual data about the resource that are known at a time of the request."
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+          },
+          "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "v1CrossScopePlanResourcesRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action to be applied to each resource in the list."
+        },
+        "principal": {
+          "$ref": "#/definitions/enginev1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1CrossScopePlanResourcesInputResource"
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
+        },
+        "includeMeta": {
+          "type": "boolean",
+          "description": "Opt to receive request processing metadata in the response."
+        }
+      },
+      "description": "PDP Resources Query Plan Request",
+      "required": [
+        "action",
+        "principal",
+        "resource"
+      ]
     },
     "v1DecisionLogEntry": {
       "type": "object",

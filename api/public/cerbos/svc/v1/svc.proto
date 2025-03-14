@@ -91,6 +91,17 @@ service CerbosService {
       description: "Produce a query plan with conditions that must be satisfied for accessing a set of instances of a resource"
     };
   }
+
+  rpc CrossScopePlanResources(cerbos.request.v1.CrossScopePlanResourcesRequest) returns (cerbos.response.v1.PlanResourcesResponse) {
+    option (google.api.http) = {
+      post: "/api/plan/x-scopes-resources"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Plan resources across provided scopes"
+      description: "Produce a query plan across all provided scopes ith conditions that must be satisfied for accessing a set of instances of a resource"
+    };
+  }
 }
 
 service CerbosAdminService {

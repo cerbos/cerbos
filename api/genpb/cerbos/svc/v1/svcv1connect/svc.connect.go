@@ -57,6 +57,9 @@ const (
 	// CerbosServicePlanResourcesProcedure is the fully-qualified name of the CerbosService's
 	// PlanResources RPC.
 	CerbosServicePlanResourcesProcedure = "/cerbos.svc.v1.CerbosService/PlanResources"
+	// CerbosServiceCrossScopePlanResourcesProcedure is the fully-qualified name of the CerbosService's
+	// CrossScopePlanResources RPC.
+	CerbosServiceCrossScopePlanResourcesProcedure = "/cerbos.svc.v1.CerbosService/CrossScopePlanResources"
 	// CerbosAdminServiceAddOrUpdatePolicyProcedure is the fully-qualified name of the
 	// CerbosAdminService's AddOrUpdatePolicy RPC.
 	CerbosAdminServiceAddOrUpdatePolicyProcedure = "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy"
@@ -114,6 +117,7 @@ type CerbosServiceClient interface {
 	CheckResources(context.Context, *connect.Request[v1.CheckResourcesRequest]) (*connect.Response[v11.CheckResourcesResponse], error)
 	ServerInfo(context.Context, *connect.Request[v1.ServerInfoRequest]) (*connect.Response[v11.ServerInfoResponse], error)
 	PlanResources(context.Context, *connect.Request[v1.PlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error)
+	CrossScopePlanResources(context.Context, *connect.Request[v1.CrossScopePlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error)
 }
 
 // NewCerbosServiceClient constructs a client for the cerbos.svc.v1.CerbosService service. By
@@ -157,16 +161,23 @@ func NewCerbosServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(cerbosServiceMethods.ByName("PlanResources")),
 			connect.WithClientOptions(opts...),
 		),
+		crossScopePlanResources: connect.NewClient[v1.CrossScopePlanResourcesRequest, v11.PlanResourcesResponse](
+			httpClient,
+			baseURL+CerbosServiceCrossScopePlanResourcesProcedure,
+			connect.WithSchema(cerbosServiceMethods.ByName("CrossScopePlanResources")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // cerbosServiceClient implements CerbosServiceClient.
 type cerbosServiceClient struct {
-	checkResourceSet   *connect.Client[v1.CheckResourceSetRequest, v11.CheckResourceSetResponse]
-	checkResourceBatch *connect.Client[v1.CheckResourceBatchRequest, v11.CheckResourceBatchResponse]
-	checkResources     *connect.Client[v1.CheckResourcesRequest, v11.CheckResourcesResponse]
-	serverInfo         *connect.Client[v1.ServerInfoRequest, v11.ServerInfoResponse]
-	planResources      *connect.Client[v1.PlanResourcesRequest, v11.PlanResourcesResponse]
+	checkResourceSet        *connect.Client[v1.CheckResourceSetRequest, v11.CheckResourceSetResponse]
+	checkResourceBatch      *connect.Client[v1.CheckResourceBatchRequest, v11.CheckResourceBatchResponse]
+	checkResources          *connect.Client[v1.CheckResourcesRequest, v11.CheckResourcesResponse]
+	serverInfo              *connect.Client[v1.ServerInfoRequest, v11.ServerInfoResponse]
+	planResources           *connect.Client[v1.PlanResourcesRequest, v11.PlanResourcesResponse]
+	crossScopePlanResources *connect.Client[v1.CrossScopePlanResourcesRequest, v11.PlanResourcesResponse]
 }
 
 // CheckResourceSet calls cerbos.svc.v1.CerbosService.CheckResourceSet.
@@ -194,6 +205,11 @@ func (c *cerbosServiceClient) PlanResources(ctx context.Context, req *connect.Re
 	return c.planResources.CallUnary(ctx, req)
 }
 
+// CrossScopePlanResources calls cerbos.svc.v1.CerbosService.CrossScopePlanResources.
+func (c *cerbosServiceClient) CrossScopePlanResources(ctx context.Context, req *connect.Request[v1.CrossScopePlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error) {
+	return c.crossScopePlanResources.CallUnary(ctx, req)
+}
+
 // CerbosServiceHandler is an implementation of the cerbos.svc.v1.CerbosService service.
 type CerbosServiceHandler interface {
 	CheckResourceSet(context.Context, *connect.Request[v1.CheckResourceSetRequest]) (*connect.Response[v11.CheckResourceSetResponse], error)
@@ -201,6 +217,7 @@ type CerbosServiceHandler interface {
 	CheckResources(context.Context, *connect.Request[v1.CheckResourcesRequest]) (*connect.Response[v11.CheckResourcesResponse], error)
 	ServerInfo(context.Context, *connect.Request[v1.ServerInfoRequest]) (*connect.Response[v11.ServerInfoResponse], error)
 	PlanResources(context.Context, *connect.Request[v1.PlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error)
+	CrossScopePlanResources(context.Context, *connect.Request[v1.CrossScopePlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error)
 }
 
 // NewCerbosServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -240,6 +257,12 @@ func NewCerbosServiceHandler(svc CerbosServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(cerbosServiceMethods.ByName("PlanResources")),
 		connect.WithHandlerOptions(opts...),
 	)
+	cerbosServiceCrossScopePlanResourcesHandler := connect.NewUnaryHandler(
+		CerbosServiceCrossScopePlanResourcesProcedure,
+		svc.CrossScopePlanResources,
+		connect.WithSchema(cerbosServiceMethods.ByName("CrossScopePlanResources")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cerbos.svc.v1.CerbosService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CerbosServiceCheckResourceSetProcedure:
@@ -252,6 +275,8 @@ func NewCerbosServiceHandler(svc CerbosServiceHandler, opts ...connect.HandlerOp
 			cerbosServiceServerInfoHandler.ServeHTTP(w, r)
 		case CerbosServicePlanResourcesProcedure:
 			cerbosServicePlanResourcesHandler.ServeHTTP(w, r)
+		case CerbosServiceCrossScopePlanResourcesProcedure:
+			cerbosServiceCrossScopePlanResourcesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -279,6 +304,10 @@ func (UnimplementedCerbosServiceHandler) ServerInfo(context.Context, *connect.Re
 
 func (UnimplementedCerbosServiceHandler) PlanResources(context.Context, *connect.Request[v1.PlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosService.PlanResources is not implemented"))
+}
+
+func (UnimplementedCerbosServiceHandler) CrossScopePlanResources(context.Context, *connect.Request[v1.CrossScopePlanResourcesRequest]) (*connect.Response[v11.PlanResourcesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosService.CrossScopePlanResources is not implemented"))
 }
 
 // CerbosAdminServiceClient is a client for the cerbos.svc.v1.CerbosAdminService service.

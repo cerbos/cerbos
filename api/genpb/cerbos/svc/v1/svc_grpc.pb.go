@@ -24,11 +24,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CerbosService_CheckResourceSet_FullMethodName   = "/cerbos.svc.v1.CerbosService/CheckResourceSet"
-	CerbosService_CheckResourceBatch_FullMethodName = "/cerbos.svc.v1.CerbosService/CheckResourceBatch"
-	CerbosService_CheckResources_FullMethodName     = "/cerbos.svc.v1.CerbosService/CheckResources"
-	CerbosService_ServerInfo_FullMethodName         = "/cerbos.svc.v1.CerbosService/ServerInfo"
-	CerbosService_PlanResources_FullMethodName      = "/cerbos.svc.v1.CerbosService/PlanResources"
+	CerbosService_CheckResourceSet_FullMethodName        = "/cerbos.svc.v1.CerbosService/CheckResourceSet"
+	CerbosService_CheckResourceBatch_FullMethodName      = "/cerbos.svc.v1.CerbosService/CheckResourceBatch"
+	CerbosService_CheckResources_FullMethodName          = "/cerbos.svc.v1.CerbosService/CheckResources"
+	CerbosService_ServerInfo_FullMethodName              = "/cerbos.svc.v1.CerbosService/ServerInfo"
+	CerbosService_PlanResources_FullMethodName           = "/cerbos.svc.v1.CerbosService/PlanResources"
+	CerbosService_CrossScopePlanResources_FullMethodName = "/cerbos.svc.v1.CerbosService/CrossScopePlanResources"
 )
 
 // CerbosServiceClient is the client API for CerbosService service.
@@ -40,6 +41,7 @@ type CerbosServiceClient interface {
 	CheckResources(ctx context.Context, in *v1.CheckResourcesRequest, opts ...grpc.CallOption) (*v11.CheckResourcesResponse, error)
 	ServerInfo(ctx context.Context, in *v1.ServerInfoRequest, opts ...grpc.CallOption) (*v11.ServerInfoResponse, error)
 	PlanResources(ctx context.Context, in *v1.PlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error)
+	CrossScopePlanResources(ctx context.Context, in *v1.CrossScopePlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error)
 }
 
 type cerbosServiceClient struct {
@@ -100,6 +102,16 @@ func (c *cerbosServiceClient) PlanResources(ctx context.Context, in *v1.PlanReso
 	return out, nil
 }
 
+func (c *cerbosServiceClient) CrossScopePlanResources(ctx context.Context, in *v1.CrossScopePlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.PlanResourcesResponse)
+	err := c.cc.Invoke(ctx, CerbosService_CrossScopePlanResources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CerbosServiceServer is the server API for CerbosService service.
 // All implementations must embed UnimplementedCerbosServiceServer
 // for forward compatibility.
@@ -109,6 +121,7 @@ type CerbosServiceServer interface {
 	CheckResources(context.Context, *v1.CheckResourcesRequest) (*v11.CheckResourcesResponse, error)
 	ServerInfo(context.Context, *v1.ServerInfoRequest) (*v11.ServerInfoResponse, error)
 	PlanResources(context.Context, *v1.PlanResourcesRequest) (*v11.PlanResourcesResponse, error)
+	CrossScopePlanResources(context.Context, *v1.CrossScopePlanResourcesRequest) (*v11.PlanResourcesResponse, error)
 	mustEmbedUnimplementedCerbosServiceServer()
 }
 
@@ -133,6 +146,9 @@ func (UnimplementedCerbosServiceServer) ServerInfo(context.Context, *v1.ServerIn
 }
 func (UnimplementedCerbosServiceServer) PlanResources(context.Context, *v1.PlanResourcesRequest) (*v11.PlanResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlanResources not implemented")
+}
+func (UnimplementedCerbosServiceServer) CrossScopePlanResources(context.Context, *v1.CrossScopePlanResourcesRequest) (*v11.PlanResourcesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CrossScopePlanResources not implemented")
 }
 func (UnimplementedCerbosServiceServer) mustEmbedUnimplementedCerbosServiceServer() {}
 func (UnimplementedCerbosServiceServer) testEmbeddedByValue()                       {}
@@ -245,6 +261,24 @@ func _CerbosService_PlanResources_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosService_CrossScopePlanResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.CrossScopePlanResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosServiceServer).CrossScopePlanResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CerbosService_CrossScopePlanResources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosServiceServer).CrossScopePlanResources(ctx, req.(*v1.CrossScopePlanResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CerbosService_ServiceDesc is the grpc.ServiceDesc for CerbosService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -271,6 +305,10 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PlanResources",
 			Handler:    _CerbosService_PlanResources_Handler,
+		},
+		{
+			MethodName: "CrossScopePlanResources",
+			Handler:    _CerbosService_CrossScopePlanResources_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
