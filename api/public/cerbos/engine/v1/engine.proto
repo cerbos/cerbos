@@ -59,6 +59,56 @@ message PlanResourcesInput {
   bool include_meta = 6;
 }
 
+message CrossScopePlanResourcesInput {
+  message Resource {
+    string kind = 1 [
+      (buf.validate.field).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Resource kind."
+        example: "\"album:object\""
+      }
+    ];
+
+    map<string, google.protobuf.Value> attr = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Key-value pairs of contextual data about the resource that are known at a time of the request."}];
+
+    string policy_version = 3 [
+      (buf.validate.field).string = {pattern: "^[[:word:]]*$"},
+      (google.api.field_behavior) = OPTIONAL,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
+        pattern: "^[[:word:]]*$"
+        example: "\"default\""
+      }
+    ];
+
+    repeated string scope = 4 [
+      (buf.validate.field).repeated = {
+        unique: true
+        items: {
+          string: {
+            min_len: 1
+            pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+          }
+        }
+        min_items: 1
+      },
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
+        pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+      }
+    ];
+  }
+
+  string request_id = 1;
+  string action = 2;
+  Principal principal = 3;
+  Resource resource = 4;
+  AuxData aux_data = 5;
+  bool include_meta = 6;
+}
+
 message PlanResourcesAst {
   message Node {
     oneof node {

@@ -144,6 +144,77 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *CheckOutput, hasher hash.Hash, i
 	}
 }
 
+func cerbos_engine_v1_CrossScopePlanResourcesInput_Resource_hashpb_sum(m *CrossScopePlanResourcesInput_Resource, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.Resource.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetKind()))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.Resource.attr"]; !ok {
+		if len(m.Attr) > 0 {
+			keys := make([]string, len(m.Attr))
+			i := 0
+			for k := range m.Attr {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Attr[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Attr[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.Resource.policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPolicyVersion()))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.Resource.scope"]; !ok {
+		if len(m.Scope) > 0 {
+			for _, v := range m.Scope {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_CrossScopePlanResourcesInput_hashpb_sum(m *CrossScopePlanResourcesInput, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.request_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRequestId()))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetAction()))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.principal"]; !ok {
+		if m.GetPrincipal() != nil {
+			cerbos_engine_v1_Principal_hashpb_sum(m.GetPrincipal(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.resource"]; !ok {
+		if m.GetResource() != nil {
+			cerbos_engine_v1_CrossScopePlanResourcesInput_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.aux_data"]; !ok {
+		if m.GetAuxData() != nil {
+			cerbos_engine_v1_AuxData_hashpb_sum(m.GetAuxData(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.include_meta"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetIncludeMeta())))
+
+	}
+}
+
 func cerbos_engine_v1_OutputEntry_hashpb_sum(m *OutputEntry, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.engine.v1.OutputEntry.src"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetSrc()))

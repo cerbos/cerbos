@@ -1000,6 +1000,39 @@ func cerbos_request_v1_CheckResourcesRequest_hashpb_sum(m *CheckResourcesRequest
 	}
 }
 
+func cerbos_request_v1_CrossScopePlanResourcesRequest_hashpb_sum(m *CrossScopePlanResourcesRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.CrossScopePlanResourcesRequest.request_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRequestId()))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.CrossScopePlanResourcesRequest.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetAction()))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.CrossScopePlanResourcesRequest.principal"]; !ok {
+		if m.GetPrincipal() != nil {
+			cerbos_engine_v1_Principal_hashpb_sum(m.GetPrincipal(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.request.v1.CrossScopePlanResourcesRequest.resource"]; !ok {
+		if m.GetResource() != nil {
+			cerbos_engine_v1_PlanResourcesInput_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.request.v1.CrossScopePlanResourcesRequest.aux_data"]; !ok {
+		if m.GetAuxData() != nil {
+			cerbos_request_v1_AuxData_hashpb_sum(m.GetAuxData(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.request.v1.CrossScopePlanResourcesRequest.include_meta"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetIncludeMeta())))
+
+	}
+}
+
 func cerbos_request_v1_DeleteSchemaRequest_hashpb_sum(m *DeleteSchemaRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.DeleteSchemaRequest.id"]; !ok {
 		if len(m.Id) > 0 {
