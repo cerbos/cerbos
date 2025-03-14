@@ -79,7 +79,7 @@ message CrossScopePlanResourcesRequest {
     (google.api.field_behavior) = REQUIRED
   ];
 
-  cerbos.engine.v1.PlanResourcesInput.Resource resource = 4 [
+  cerbos.engine.v1.CrossScopePlanResourcesInput.Resource resource = 4 [
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
