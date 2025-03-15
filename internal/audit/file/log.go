@@ -4,8 +4,8 @@
 package file
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -175,8 +175,8 @@ func encodeSingular(enc zapcore.ObjectEncoder, fieldName string, fd protoreflect
 		// output readbale timestamps and values
 		switch msg.Descriptor().FullName() {
 		case "google.protobuf.Timestamp", "google.protobuf.Value":
-			if tsVal, err := protojson.Marshal(msg.Interface()); err == nil {
-				enc.AddByteString(fieldName, bytes.Trim(tsVal, `"`))
+			if val, err := protojson.Marshal(msg.Interface()); err == nil {
+				_ = enc.AddReflected(fieldName, json.RawMessage(val))
 				return
 			}
 		default:
