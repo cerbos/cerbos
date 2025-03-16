@@ -2012,6 +2012,64 @@ func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesRespo
 	}
 }
 
+func cerbos_response_v1_CrossScopePlanResourcesResponse_hashpb_sum(m *CrossScopePlanResourcesResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.request_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRequestId()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetAction()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.resource_kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetResourceKind()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPolicyVersion()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.filter"]; !ok {
+		if m.GetFilter() != nil {
+			cerbos_engine_v1_PlanResourcesFilter_hashpb_sum(m.GetFilter(), hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.meta"]; !ok {
+		if len(m.Meta) > 0 {
+			keys := make([]string, len(m.Meta))
+			i := 0
+			for k := range m.Meta {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Meta[k] != nil {
+					cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m.Meta[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.validation_errors"]; !ok {
+		if len(m.ValidationErrors) > 0 {
+			for _, v := range m.ValidationErrors {
+				if v != nil {
+					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.cerbos_call_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetCerbosCallId()))
+
+	}
+}
+
 func cerbos_response_v1_DeleteSchemaResponse_hashpb_sum(m *DeleteSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.DeleteSchemaResponse.deleted_schemas"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDeletedSchemas())))

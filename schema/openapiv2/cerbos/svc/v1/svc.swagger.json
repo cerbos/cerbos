@@ -937,7 +937,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1PlanResourcesResponse"
+              "$ref": "#/definitions/v1CrossScopePlanResourcesResponse"
             }
           },
           "default": {
@@ -2175,6 +2175,55 @@
         "principal",
         "resource"
       ]
+    },
+    "v1CrossScopePlanResourcesResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind."
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version."
+        },
+        "filter": {
+          "$ref": "#/definitions/v1PlanResourcesFilter",
+          "description": "Filter"
+        },
+        "meta": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1PlanResourcesResponseMeta"
+          },
+          "description": "Optional metadata about the request evaluation process"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ValidationError"
+          },
+          "description": "List of validation errors (if schema validation is enabled)"
+        },
+        "cerbosCallId": {
+          "type": "string",
+          "description": "Audit log call ID associated with this request"
+        }
+      },
+      "description": "Resources query plan response for a set of resources."
     },
     "v1DecisionLogEntry": {
       "type": "object",

@@ -49,6 +49,10 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData, reqLimits Re
 	}
 }
 
+func (cs *CerbosService) CrossScopePlanResources(context.Context, *requestv1.CrossScopePlanResourcesRequest) (*responsev1.CrossScopePlanResourcesResponse, error) {
+	panic("not implemented")
+}
+
 func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 

@@ -41,7 +41,7 @@ type CerbosServiceClient interface {
 	CheckResources(ctx context.Context, in *v1.CheckResourcesRequest, opts ...grpc.CallOption) (*v11.CheckResourcesResponse, error)
 	ServerInfo(ctx context.Context, in *v1.ServerInfoRequest, opts ...grpc.CallOption) (*v11.ServerInfoResponse, error)
 	PlanResources(ctx context.Context, in *v1.PlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error)
-	CrossScopePlanResources(ctx context.Context, in *v1.CrossScopePlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error)
+	CrossScopePlanResources(ctx context.Context, in *v1.CrossScopePlanResourcesRequest, opts ...grpc.CallOption) (*v11.CrossScopePlanResourcesResponse, error)
 }
 
 type cerbosServiceClient struct {
@@ -102,9 +102,9 @@ func (c *cerbosServiceClient) PlanResources(ctx context.Context, in *v1.PlanReso
 	return out, nil
 }
 
-func (c *cerbosServiceClient) CrossScopePlanResources(ctx context.Context, in *v1.CrossScopePlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error) {
+func (c *cerbosServiceClient) CrossScopePlanResources(ctx context.Context, in *v1.CrossScopePlanResourcesRequest, opts ...grpc.CallOption) (*v11.CrossScopePlanResourcesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(v11.PlanResourcesResponse)
+	out := new(v11.CrossScopePlanResourcesResponse)
 	err := c.cc.Invoke(ctx, CerbosService_CrossScopePlanResources_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ type CerbosServiceServer interface {
 	CheckResources(context.Context, *v1.CheckResourcesRequest) (*v11.CheckResourcesResponse, error)
 	ServerInfo(context.Context, *v1.ServerInfoRequest) (*v11.ServerInfoResponse, error)
 	PlanResources(context.Context, *v1.PlanResourcesRequest) (*v11.PlanResourcesResponse, error)
-	CrossScopePlanResources(context.Context, *v1.CrossScopePlanResourcesRequest) (*v11.PlanResourcesResponse, error)
+	CrossScopePlanResources(context.Context, *v1.CrossScopePlanResourcesRequest) (*v11.CrossScopePlanResourcesResponse, error)
 	mustEmbedUnimplementedCerbosServiceServer()
 }
 
@@ -147,7 +147,7 @@ func (UnimplementedCerbosServiceServer) ServerInfo(context.Context, *v1.ServerIn
 func (UnimplementedCerbosServiceServer) PlanResources(context.Context, *v1.PlanResourcesRequest) (*v11.PlanResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlanResources not implemented")
 }
-func (UnimplementedCerbosServiceServer) CrossScopePlanResources(context.Context, *v1.CrossScopePlanResourcesRequest) (*v11.PlanResourcesResponse, error) {
+func (UnimplementedCerbosServiceServer) CrossScopePlanResources(context.Context, *v1.CrossScopePlanResourcesRequest) (*v11.CrossScopePlanResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CrossScopePlanResources not implemented")
 }
 func (UnimplementedCerbosServiceServer) mustEmbedUnimplementedCerbosServiceServer() {}
