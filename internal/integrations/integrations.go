@@ -35,7 +35,7 @@ func initAWSMarketplace(ctx context.Context) error {
 	}
 
 	client := marketplacemetering.NewFromConfig(cfg, func(o *marketplacemetering.Options) {
-		o.Logger = logging.LoggerFunc(func(classification logging.Classification, format string, v ...interface{}) {
+		o.Logger = logging.LoggerFunc(func(classification logging.Classification, format string, v ...any) {
 			switch classification {
 			case logging.Warn:
 				logger.Warnf(format, v...)

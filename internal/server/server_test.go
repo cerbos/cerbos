@@ -215,7 +215,7 @@ func createTempDirForUDS(t *testing.T) string {
 	}
 
 	maxAttempts := 5
-	for i := 0; i < maxAttempts; i++ {
+	for range maxAttempts {
 		s, err := generateRandomString(leafDirNameLen)
 		require.NoError(t, err, "failed to generate random string for UDS directory path")
 

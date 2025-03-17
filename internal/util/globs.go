@@ -4,6 +4,7 @@
 package util
 
 import (
+	"maps"
 	"strings"
 
 	"github.com/cerbos/cerbos/internal/cache"
@@ -147,13 +148,9 @@ func (gm *GlobMap[T]) DeleteLiteral(k string) {
 func (gm *GlobMap[T]) GetAll() map[string]T {
 	res := make(map[string]T, gm.Len())
 
-	for k, v := range gm.literals {
-		res[k] = v
-	}
+	maps.Copy(res, gm.literals)
 
-	for k, v := range gm.globs {
-		res[k] = v
-	}
+	maps.Copy(res, gm.globs)
 
 	return res
 }
@@ -182,11 +179,11 @@ func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
 }
 
 // mergeMaps recursively merges the values of key collisions between two maps.
-func mergeMaps(m1, m2 map[string]interface{}) map[string]interface{} {
+func mergeMaps(m1, m2 map[string]any) map[string]any {
 	for k, v2 := range m2 {
 		if v1, ok := m1[k]; ok {
-			if sub1, ok1 := v1.(map[string]interface{}); ok1 {
-				if sub2, ok2 := v2.(map[string]interface{}); ok2 {
+			if sub1, ok1 := v1.(map[string]any); ok1 {
+				if sub2, ok2 := v2.(map[string]any); ok2 {
 					m1[k] = mergeMaps(sub1, sub2)
 					continue
 				}

@@ -318,7 +318,7 @@ func TestFind(t *testing.T) {
 func findCandidate(t *testing.T, rnd *rand.Rand, items []*privatev1.ProtoYamlTestCase_Want) (*policyv1.Policy, func(*policyv1.Policy) bool) {
 	t.Helper()
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		idx := rnd.Intn(len(items))
 		if m := items[idx].Message; m != nil && m.GetPolicyType() != nil {
 			fqn := namer.FQN(m)

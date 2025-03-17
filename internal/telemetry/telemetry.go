@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -87,13 +88,7 @@ func isEnabled(conf *Conf) bool {
 		return false
 	}
 
-	for _, v := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
-		if disabledByEnvVar(v) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc([]string{noTelemetryEnvVar, doNotTrackEnvVar}, disabledByEnvVar)
 }
 
 func disabledByEnvVar(name string) bool {

@@ -6,6 +6,7 @@ package verification
 import (
 	"encoding/xml"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -164,13 +165,7 @@ func (o *testOutput) addTestCase(suite *policyv1.TestResults_Suite, testCase *po
 }
 
 func (o *testOutput) shouldAddTestCase(testCase *policyv1.TestResults_TestCase) bool {
-	for _, principal := range testCase.Principals {
-		if o.shouldAddPrincipal(principal) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(testCase.Principals, o.shouldAddPrincipal)
 }
 
 func (o *testOutput) addPrincipal(suite *policyv1.TestResults_Suite, principal *policyv1.TestResults_Principal) {
@@ -186,13 +181,7 @@ func (o *testOutput) addPrincipal(suite *policyv1.TestResults_Suite, principal *
 }
 
 func (o *testOutput) shouldAddPrincipal(principal *policyv1.TestResults_Principal) bool {
-	for _, resource := range principal.Resources {
-		if o.shouldAddResource(resource) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(principal.Resources, o.shouldAddResource)
 }
 
 func (o *testOutput) addResource(suite *policyv1.TestResults_Suite, principal *policyv1.TestResults_Principal, resource *policyv1.TestResults_Resource) {
@@ -208,13 +197,7 @@ func (o *testOutput) addResource(suite *policyv1.TestResults_Suite, principal *p
 }
 
 func (o *testOutput) shouldAddResource(resource *policyv1.TestResults_Resource) bool {
-	for _, action := range resource.Actions {
-		if o.shouldAddAction(action) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(resource.Actions, o.shouldAddAction)
 }
 
 func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *policyv1.TestResults_Principal, resource *policyv1.TestResults_Resource, action *policyv1.TestResults_Action) {

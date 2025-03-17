@@ -321,7 +321,7 @@ func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 
 	ctx := t.Context()
 	syncKeys := make([][]byte, numRecords)
-	for i := 0; i < (numRecords / 2); i++ {
+	for i := range numRecords / 2 {
 		ts := startDate.Add(time.Duration(i) * time.Second)
 		id, err := audit.NewIDForTime(ts)
 		require.NoError(t, err)

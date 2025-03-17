@@ -198,9 +198,9 @@ func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *po
 	return nil
 }
 
-func attrToJSONObject(src ErrSource, attr map[string]*structpb.Value) (interface{}, error) {
+func attrToJSONObject(src ErrSource, attr map[string]*structpb.Value) (any, error) {
 	if attr == nil {
-		return map[string]interface{}{}, nil
+		return map[string]any{}, nil
 	}
 
 	jsonBytes, err := protojson.Marshal(&privatev1.AttrWrapper{Attr: attr})
