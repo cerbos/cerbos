@@ -341,7 +341,7 @@ func structKeys(x *exprpb.Expr_CreateStruct) []*exprpb.Expr {
 }
 
 func mkExprOpExpr(op string, args ...*enginev1.PlanResourcesFilter_Expression_Operand) *exprOpExpr {
-	return &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
+	return &exprOpExpr{
 		Expression: &enginev1.PlanResourcesFilter_Expression{Operator: op, Operands: args},
 	}
 }

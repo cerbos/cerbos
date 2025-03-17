@@ -6,6 +6,7 @@ package svc
 import (
 	"context"
 	"errors"
+	"github.com/cerbos/cerbos/internal/engine/planner"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -49,8 +50,57 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData, reqLimits Re
 	}
 }
 
-func (cs *CerbosService) CrossScopePlanResources(context.Context, *requestv1.CrossScopePlanResourcesRequest) (*responsev1.CrossScopePlanResourcesResponse, error) {
-	panic("not implemented")
+func (cs *CerbosService) CrossScopePlanResources(ctx context.Context, request *requestv1.CrossScopePlanResourcesRequest) (*responsev1.CrossScopePlanResourcesResponse, error) {
+	log := logging.ReqScopeLog(ctx)
+
+	auxData, err := cs.auxData.Extract(ctx, request.AuxData)
+	if err != nil {
+		log.Error("Failed to extract auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
+	}
+
+	ctx = logging.ToContext(ctx, log)
+	response := &responsev1.CrossScopePlanResourcesResponse{
+		RequestId:    request.RequestId,
+		Action:       request.Action,
+		ResourceKind: request.Resource.Kind,
+		Meta:         make(map[string]*responsev1.PlanResourcesResponse_Meta, len(request.Resource.Scope)),
+	}
+	filters := make(map[string]*enginev1.PlanResourcesOutput, len(request.Resource.Scope))
+	for _, scope := range request.Resource.Scope {
+		input := &enginev1.PlanResourcesInput{
+			RequestId: request.RequestId,
+			Action:    request.Action,
+			Principal: request.Principal,
+			Resource: &enginev1.PlanResourcesInput_Resource{
+				Kind:          request.Resource.Kind,
+				Attr:          request.Resource.Attr,
+				PolicyVersion: request.Resource.PolicyVersion,
+				Scope:         scope,
+			},
+			AuxData:     auxData,
+			IncludeMeta: true,
+		}
+		output, err := cs.eng.PlanResources(ctx, input)
+		if err != nil {
+			log.Error("Resources query plan request failed", zap.Error(err))
+			if errors.Is(err, compile.PolicyCompilationErr{}) {
+				return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+			}
+			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+		}
+		filters[scope] = output
+
+		if input.IncludeMeta {
+			response.Meta[scope] = &responsev1.PlanResourcesResponse_Meta{
+				FilterDebug:  output.FilterDebug,
+				MatchedScope: output.Scope,
+			}
+		}
+	}
+
+	response.Filter = planner.Merge(filters)
+	return response, nil
 }
 
 func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
