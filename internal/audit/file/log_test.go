@@ -4,14 +4,17 @@
 package file_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -139,6 +142,103 @@ func TestLog(t *testing.T) {
 
 		testLogger(t, log, output1, output2)
 	})
+
+	t.Run("format", func(t *testing.T) {
+		t.Parallel()
+
+		decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
+		outPath := filepath.Join(t.TempDir(), "audit.log")
+		log, err := file.NewLog(&file.Conf{Path: outPath}, decisionFilter)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			log.Close()
+		})
+
+		ts := time.Now()
+		id, err := audit.NewIDForTime(ts)
+		require.NoError(t, err)
+
+		require.NoError(t, log.WriteAccessLogEntry(t.Context(), mkAccessLogEntry(t, id, 42, ts)))
+
+		require.NoError(t, log.WriteDecisionLogEntry(t.Context(), mkDecisionLogEntry(t, id, 42, ts)))
+
+		require.NoError(t, log.Close())
+
+		outFile, err := os.Open(outPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			outFile.Close()
+		})
+
+		decoder := json.NewDecoder(outFile)
+
+		tsEncoded := ts.UTC().Format("2006-01-02T15:04:05.000000000")
+		tsEncoded = strings.TrimSuffix(tsEncoded, "000")
+		tsEncoded = strings.TrimSuffix(tsEncoded, "000")
+		tsEncoded = strings.TrimSuffix(tsEncoded, ".000")
+		tsEncoded += "Z"
+
+		haveAccessLogEntry := make(map[string]any)
+		require.NoError(t, decoder.Decode(&haveAccessLogEntry))
+		require.Equal(t, map[string]any{
+			"log.logger": "cerbos.audit",
+			"log.kind":   "access",
+			"callId":     string(id),
+			"timestamp":  tsEncoded,
+			"metadata": map[string]any{
+				"Num": map[string]any{"values": []any{"42"}},
+			},
+			"method": "/cerbos.svc.v1.CerbosService/Check",
+			"peer":   map[string]any{"address": "1.1.1.1"},
+		}, haveAccessLogEntry)
+
+		haveDecisionLogEntry := make(map[string]any)
+		require.NoError(t, decoder.Decode(&haveDecisionLogEntry))
+		require.Equal(t, map[string]any{
+			"log.logger": "cerbos.audit",
+			"log.kind":   "decision",
+			"callId":     string(id),
+			"timestamp":  tsEncoded,
+			"inputs": []any{
+				map[string]any{
+					"requestId": "42",
+					"resource": map[string]any{
+						"kind": "test:kind",
+						"id":   "test",
+						"attr": map[string]any{
+							"top": []any{
+								map[string]any{
+									"hello":  "world",
+									"bottom": []any{float64(1), nil, true},
+								},
+							},
+						},
+					},
+					"principal": map[string]any{
+						"id":    "test",
+						"roles": []any{"a", "b"},
+					},
+					"actions": []any{"a1", "a2"},
+				},
+			},
+			"outputs": []any{
+				map[string]any{
+					"requestId":  "42",
+					"resourceId": "test",
+					"actions": map[string]any{
+						"a1": map[string]any{
+							"effect": "EFFECT_ALLOW",
+							"policy": "resource.test.v1",
+						},
+						"a2": map[string]any{
+							"effect": "EFFECT_ALLOW",
+							"policy": "resource.test.v1",
+						},
+					},
+				},
+			},
+		}, haveDecisionLogEntry)
+	})
 }
 
 func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.AccessLogEntryMaker {
@@ -170,6 +270,24 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 					Resource: &enginev1.Resource{
 						Kind: "test:kind",
 						Id:   "test",
+						Attr: map[string]*structpb.Value{
+							"top": structpb.NewListValue(&structpb.ListValue{
+								Values: []*structpb.Value{
+									structpb.NewStructValue(&structpb.Struct{
+										Fields: map[string]*structpb.Value{
+											"hello": structpb.NewStringValue("world"),
+											"bottom": structpb.NewListValue(&structpb.ListValue{
+												Values: []*structpb.Value{
+													structpb.NewNumberValue(1),
+													structpb.NewNullValue(),
+													structpb.NewBoolValue(true),
+												},
+											}),
+										},
+									}),
+								},
+							}),
+						},
 					},
 					Principal: &enginev1.Principal{
 						Id:    "test",
