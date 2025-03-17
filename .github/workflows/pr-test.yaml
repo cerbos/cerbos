@@ -255,7 +255,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6.5.0
+        uses: golangci/golangci-lint-action@v6.5.1
         with:
           version: latest
           args: "--config=.golangci.yaml -v"
