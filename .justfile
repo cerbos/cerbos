@@ -105,7 +105,10 @@ generate-testdata-json-schemas: _buf
         cd {{ tools_mod_dir }}
         "${TOOLS_BIN_DIR}/buf" generate --template=testdata_jsonschema.gen.yaml --output=.. ../api/private
     )
-    mv {{ testdata_json_schema_dir }}/cerbos/private/v1/*TestCase.schema.json {{ testdata_json_schema_dir }}/cerbos/private/v1/QueryPlannerTestSuite.schema.json {{ testdata_json_schema_dir }}
+    mv \
+     {{ testdata_json_schema_dir }}/cerbos/private/v1/*TestCase.schema.json \
+     {{ testdata_json_schema_dir }}/cerbos/private/v1/{CrossScope,}QueryPlannerTestSuite.schema.json \
+     {{ testdata_json_schema_dir }}
     rm -rf {{ testdata_json_schema_dir }}/cerbos
 
 lint: _golangcilint _buf
