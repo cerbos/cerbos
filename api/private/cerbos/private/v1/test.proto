@@ -244,6 +244,18 @@ message QueryPlannerTestSuite {
   repeated Test tests = 3;
 }
 
+message CrossScopeQueryPlannerTestSuite {
+  string description = 1;
+  cerbos.engine.v1.Principal principal = 2;
+  message Test {
+    string action = 1;
+    cerbos.engine.v1.PlanResourcesFilter want = 2;
+    cerbos.engine.v1.CrossScopePlanResourcesInput.Resource resource = 3;
+    bool want_err = 4;
+  }
+  repeated Test tests = 3;
+}
+
 message VerifyTestSuiteRunGetTestsTestCase {
   cerbos.policy.v1.TestTable table = 1;
   repeated cerbos.policy.v1.Test want_tests = 2;
