@@ -45,9 +45,9 @@ func cerbos_engine_v1_CrossScopePlanResourcesInput_Resource_hashpb_sum(m *v1.Cro
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPolicyVersion()))
 
 	}
-	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.Resource.scope"]; !ok {
-		if len(m.Scope) > 0 {
-			for _, v := range m.Scope {
+	if _, ok := ignore["cerbos.engine.v1.CrossScopePlanResourcesInput.Resource.scopes"]; !ok {
+		if len(m.Scopes) > 0 {
+			for _, v := range m.Scopes {
 				_, _ = hasher.Write(protowire.AppendString(nil, v))
 
 			}

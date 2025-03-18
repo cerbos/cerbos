@@ -217,11 +217,11 @@ func (m *CrossScopePlanResourcesInput_Resource) MarshalToSizedBufferVT(dAtA []by
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Scope) > 0 {
-		for iNdEx := len(m.Scope) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Scope[iNdEx])
-			copy(dAtA[i:], m.Scope[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scope[iNdEx])))
+	if len(m.Scopes) > 0 {
+		for iNdEx := len(m.Scopes) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Scopes[iNdEx])
+			copy(dAtA[i:], m.Scopes[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Scopes[iNdEx])))
 			i--
 			dAtA[i] = 0x22
 		}
@@ -2133,8 +2133,8 @@ func (m *CrossScopePlanResourcesInput_Resource) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.Scope) > 0 {
-		for _, s := range m.Scope {
+	if len(m.Scopes) > 0 {
+		for _, s := range m.Scopes {
 			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
@@ -3689,7 +3689,7 @@ func (m *CrossScopePlanResourcesInput_Resource) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Scope", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Scopes", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3717,7 +3717,7 @@ func (m *CrossScopePlanResourcesInput_Resource) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Scope = append(m.Scope, string(dAtA[iNdEx:postIndex]))
+			m.Scopes = append(m.Scopes, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

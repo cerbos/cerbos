@@ -83,7 +83,7 @@ message CrossScopePlanResourcesInput {
       }
     ];
 
-    repeated string scope = 4 [
+    repeated string scopes = 4 [
       (buf.validate.field).repeated = {
         unique: true
         items: {

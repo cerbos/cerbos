@@ -64,10 +64,10 @@ func (cs *CerbosService) CrossScopePlanResources(ctx context.Context, request *r
 		RequestId:    request.RequestId,
 		Action:       request.Action,
 		ResourceKind: request.Resource.Kind,
-		Meta:         make(map[string]*responsev1.PlanResourcesResponse_Meta, len(request.Resource.Scope)),
+		Meta:         make(map[string]*responsev1.PlanResourcesResponse_Meta, len(request.Resource.Scopes)),
 	}
-	filters := make(map[string]*enginev1.PlanResourcesOutput, len(request.Resource.Scope))
-	for _, scope := range request.Resource.Scope {
+	filters := make(map[string]*enginev1.PlanResourcesOutput, len(request.Resource.Scopes))
+	for _, scope := range request.Resource.Scopes {
 		input := &enginev1.PlanResourcesInput{
 			RequestId: request.RequestId,
 			Action:    request.Action,
