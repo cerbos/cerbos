@@ -423,7 +423,8 @@ func TestCrossScopeQueryPlan(t *testing.T) {
 		t.Run(s.Name, func(t *testing.T) {
 			ts := readXScopeQPTestSuite(t, s.Input)
 			for _, tt := range ts.Tests {
-				t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, tt.Action), func(t *testing.T) {
+				name := planner.FilterToString(tt.Want)
+				t.Run(name, func(t *testing.T) {
 					scopes := tt.Resource.GetScopes()
 					responses := make(map[string]*enginev1.PlanResourcesOutput, len(scopes))
 					for _, scope := range scopes {
