@@ -463,7 +463,3 @@ func readQPFilterTestCase(tb testing.TB, data []byte) *privatev1.QueryPlannerFil
 
 	return tc
 }
-
-func TestMerge(t *testing.T) {
-
-}

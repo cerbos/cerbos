@@ -4,12 +4,13 @@
 package planner
 
 import (
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
-	"google.golang.org/protobuf/types/known/structpb"
 	"maps"
 	"slices"
 	"sort"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
@@ -29,6 +30,8 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 			nots = append(nots, scope)
 		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
 			conds[output.FilterDebug] = append(conds[output.FilterDebug], scope)
+		case enginev1.PlanResourcesFilter_KIND_UNSPECIFIED:
+			panic("unspecified filter kind")
 		}
 	}
 	expressions = allowedExprs(outputs, conds, expressions)
@@ -59,6 +62,7 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 	}
 	return response
 }
+
 func allowedExprs(outputs map[string]*enginev1.PlanResourcesOutput, conds map[string][]string, expressions []*enginev1.PlanResourcesFilter_Expression_Operand) []*enginev1.PlanResourcesFilter_Expression_Operand {
 	ks := slices.Sorted(maps.Keys(conds))
 	for _, k := range ks {
@@ -73,6 +77,7 @@ func allowedExprs(outputs map[string]*enginev1.PlanResourcesOutput, conds map[st
 	}
 	return expressions
 }
+
 func mkExprOpFromVar(variable string) *exprOp {
 	return &exprOp{
 		Node: &exprOpVar{
@@ -80,6 +85,7 @@ func mkExprOpFromVar(variable string) *exprOp {
 		},
 	}
 }
+
 func mkExprOpFromValue(value *structpb.Value) *exprOp {
 	return &exprOp{
 		Node: &exprOpValue{
@@ -87,11 +93,13 @@ func mkExprOpFromValue(value *structpb.Value) *exprOp {
 		},
 	}
 }
+
 func mkScopeOp(op, scope string) *exprOp {
 	return &exprOp{
 		Node: mkExprOpExpr(op, mkExprOpFromVar(conditions.ResourceFqn(conditions.CELScopeField)), mkExprOpFromValue(structpb.NewStringValue(scope))),
 	}
 }
+
 func mkScopeIn(scopes []string) *exprOp {
 	values := make([]*structpb.Value, 0, len(scopes))
 	sort.Strings(scopes)

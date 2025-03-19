@@ -6,6 +6,7 @@ package svc
 import (
 	"context"
 	"errors"
+
 	"github.com/cerbos/cerbos/internal/engine/planner"
 
 	"go.opentelemetry.io/otel/trace"
