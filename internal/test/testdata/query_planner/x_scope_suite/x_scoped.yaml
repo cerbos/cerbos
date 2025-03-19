@@ -128,7 +128,7 @@ tests:
         policyVersion: default
       want:
         kind: KIND_CONDITIONAL
-        condition:
+        condition: &eng_it
           expression:
             operator: and
             operands:
@@ -144,3 +144,25 @@ tests:
                   operands:
                     - variable: request.resource.attr.status
                     - value: "PENDING_STATUS"
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.hr
+          - acme.fin
+          - acme.marketing
+          - acme.it
+          - acme.eng
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - <<: *hr
+                    - <<: *eng_it
+              - <<: *nots
