@@ -9,28 +9,33 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func Merge(filters map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
+func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
 	response := &enginev1.PlanResourcesFilter{
 		Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
 	}
-	expressions := make([]*enginev1.PlanResourcesFilter_Expression_Operand, 0, len(filters))
-	nots := make([]string, 0, len(filters))
-	for scope, filter := range filters {
-		switch filter.Kind {
-		case enginev1.PlanResourcesFilter_Kind_name[int32(enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED)]:
+	expressions := make([]*enginev1.PlanResourcesFilter_Expression_Operand, 0, len(outputs))
+	nots := make([]string, 0, len(outputs))
+	for scope, output := range outputs {
+		switch output.Filter.Kind {
+		case enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED:
 			expressions = append(expressions, mkScopeOp(Equals, scope))
-		case enginev1.PlanResourcesFilter_Kind_name[int32(enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED)]:
+		case enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED:
 			nots = append(nots, scope)
-		case enginev1.PlanResourcesFilter_Kind_name[int32(enginev1.PlanResourcesFilter_KIND_CONDITIONAL)]:
-			expressions = append(expressions, &exprOp{Node: mkExprOpExpr(And, mkScopeOp(Equals, scope), filter.Filter.Condition)})
+		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
+			expressions = append(expressions, &exprOp{Node: mkExprOpExpr(And, mkScopeOp(Equals, scope), output.Filter.Condition)})
 		}
 	}
-	or := mkExprOpExpr(Or, expressions...)
+	var or *exprOp
+	if len(expressions) > 1 {
+		or = &exprOp{Node: mkExprOpExpr(Or, expressions...)}
+	} else {
+		or = expressions[0]
+	}
 	switch len(nots) {
 	case 0:
-		response.Condition = &exprOp{Node: or}
+		response.Condition = or
 	case 1:
-		response.Condition = &exprOp{Node: mkExprOpExpr(And, &exprOp{Node: or}, mkScopeOp(NotEquals, nots[0]))}
+		response.Condition = &exprOp{Node: mkExprOpExpr(And, or, mkScopeOp(NotEquals, nots[0]))}
 	default:
 		values := make([]*structpb.Value, 0, len(nots))
 		for _, scope := range nots {
@@ -38,7 +43,7 @@ func Merge(filters map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 		}
 		response.Condition = &exprOp{
 			Node: mkExprOpExpr(And,
-				&exprOp{Node: or},
+				or,
 				&exprOp{
 					Node: mkExprOpExpr(Not,
 						&exprOp{
