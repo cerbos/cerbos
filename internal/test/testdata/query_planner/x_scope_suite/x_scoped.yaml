@@ -62,7 +62,7 @@ tests:
         policyVersion: default
       want:
         kind: KIND_CONDITIONAL
-        condition:
+        condition: &hr_it
           expression:
             operator: or
             operands:
@@ -102,3 +102,20 @@ tests:
                     - value:
                         - acme.fin
                         - acme.marketing
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.hr
+          - acme.fin
+          - acme.marketing
+          - acme.it
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - <<: *hr_it
+              - <<: *nots
