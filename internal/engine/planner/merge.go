@@ -7,15 +7,21 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"google.golang.org/protobuf/types/known/structpb"
+	"maps"
+	"slices"
+	"sort"
 )
 
 func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
 	response := &enginev1.PlanResourcesFilter{
 		Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
 	}
+	scopes := slices.Collect(maps.Keys(outputs))
+	sort.Strings(scopes)
 	expressions := make([]*enginev1.PlanResourcesFilter_Expression_Operand, 0, len(outputs))
 	nots := make([]string, 0, len(outputs))
-	for scope, output := range outputs {
+	for _, scope := range scopes {
+		output := outputs[scope]
 		switch output.Filter.Kind {
 		case enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED:
 			expressions = append(expressions, mkScopeOp(Equals, scope))
@@ -41,6 +47,7 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 		}
 	default:
 		values := make([]*structpb.Value, 0, len(nots))
+		sort.Strings(nots)
 		for _, scope := range nots {
 			values = append(values, &structpb.Value{Kind: &structpb.Value_StringValue{StringValue: scope}})
 		}
