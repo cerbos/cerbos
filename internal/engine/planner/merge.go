@@ -28,31 +28,37 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 	var or *exprOp
 	if len(expressions) > 1 {
 		or = &exprOp{Node: mkExprOpExpr(Or, expressions...)}
-	} else {
+	} else if len(expressions) == 1 {
 		or = expressions[0]
 	}
 	switch len(nots) {
 	case 0:
 		response.Condition = or
 	case 1:
-		response.Condition = &exprOp{Node: mkExprOpExpr(And, or, mkScopeOp(NotEquals, nots[0]))}
+		response.Condition = mkScopeOp(NotEquals, nots[0])
+		if or != nil {
+			response.Condition = &exprOp{Node: mkExprOpExpr(And, or, response.Condition)}
+		}
 	default:
 		values := make([]*structpb.Value, 0, len(nots))
 		for _, scope := range nots {
 			values = append(values, &structpb.Value{Kind: &structpb.Value_StringValue{StringValue: scope}})
 		}
 		response.Condition = &exprOp{
-			Node: mkExprOpExpr(And,
-				or,
+			Node: mkExprOpExpr(Not,
 				&exprOp{
-					Node: mkExprOpExpr(Not,
-						&exprOp{
-							Node: mkExprOpExpr(In,
-								mkExprOpFromVar(conditions.ResourceFqn(conditions.CELScopeField)),
-								mkExprOpFromValue(structpb.NewListValue(&structpb.ListValue{Values: values})))},
-					),
-				},
+					Node: mkExprOpExpr(In,
+						mkExprOpFromVar(conditions.ResourceFqn(conditions.CELScopeField)),
+						mkExprOpFromValue(structpb.NewListValue(&structpb.ListValue{Values: values})))},
 			),
+		}
+		if or != nil {
+			response.Condition = &exprOp{
+				Node: mkExprOpExpr(And,
+					or,
+					response.Condition,
+				),
+			}
 		}
 	}
 	return response

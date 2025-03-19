@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../.jsonschema/CrossScopeQueryPlannerTestSuite.schema.json
 ---
-description: Basics tests with a scope, should fall through to the parent policy 
+description: Cross scope tests
 principal:
     id: user123
     policyVersion: default
@@ -68,3 +68,17 @@ tests:
             operands:
               - <<: *it
               - <<: *hr
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.fin
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition: &it
+          expression:
+            operator: ne
+            operands:
+              - variable: request.resource.scope
+              - value: acme.fin
