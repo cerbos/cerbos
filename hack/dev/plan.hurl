@@ -54,7 +54,7 @@ jsonpath "$.action" == "view"
 jsonpath "$.resourceKind" == "album:object"
 jsonpath "$.policyVersion" == "nonexistent"
 jsonpath "$.filter.kind" == "KIND_ALWAYS_DENIED"
-jsonpath "$.meta.filterDebug" == "(false)"
+jsonpath "$.meta.filterDebug" == "NO_MATCH"
 jsonpath "$.cerbosCallId" exists
 
 
