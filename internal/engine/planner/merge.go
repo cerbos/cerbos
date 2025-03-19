@@ -16,10 +16,10 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 	response := &enginev1.PlanResourcesFilter{
 		Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
 	}
-	scopes := slices.Collect(maps.Keys(outputs))
-	sort.Strings(scopes)
+	scopes := slices.Sorted(maps.Keys(outputs))
 	expressions := make([]*enginev1.PlanResourcesFilter_Expression_Operand, 0, len(outputs))
 	nots := make([]string, 0, len(outputs))
+	conds := make(map[string][]string, len(outputs))
 	for _, scope := range scopes {
 		output := outputs[scope]
 		switch output.Filter.Kind {
@@ -28,9 +28,10 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 		case enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED:
 			nots = append(nots, scope)
 		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
-			expressions = append(expressions, &exprOp{Node: mkExprOpExpr(And, mkScopeOp(Equals, scope), output.Filter.Condition)})
+			conds[output.FilterDebug] = append(conds[output.FilterDebug], scope)
 		}
 	}
+	expressions = allowedExprs(outputs, conds, expressions)
 	var or *exprOp
 	if len(expressions) > 1 {
 		or = &exprOp{Node: mkExprOpExpr(Or, expressions...)}
@@ -46,19 +47,7 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 			response.Condition = &exprOp{Node: mkExprOpExpr(And, or, response.Condition)}
 		}
 	default:
-		values := make([]*structpb.Value, 0, len(nots))
-		sort.Strings(nots)
-		for _, scope := range nots {
-			values = append(values, &structpb.Value{Kind: &structpb.Value_StringValue{StringValue: scope}})
-		}
-		response.Condition = &exprOp{
-			Node: mkExprOpExpr(Not,
-				&exprOp{
-					Node: mkExprOpExpr(In,
-						mkExprOpFromVar(conditions.ResourceFqn(conditions.CELScopeField)),
-						mkExprOpFromValue(structpb.NewListValue(&structpb.ListValue{Values: values})))},
-			),
-		}
+		response.Condition = &exprOp{Node: mkExprOpExpr(Not, mkScopeIn(nots))}
 		if or != nil {
 			response.Condition = &exprOp{
 				Node: mkExprOpExpr(And,
@@ -69,6 +58,20 @@ func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 		}
 	}
 	return response
+}
+func allowedExprs(outputs map[string]*enginev1.PlanResourcesOutput, conds map[string][]string, expressions []*enginev1.PlanResourcesFilter_Expression_Operand) []*enginev1.PlanResourcesFilter_Expression_Operand {
+	ks := slices.Sorted(maps.Keys(conds))
+	for _, k := range ks {
+		ss := conds[k]
+		scope := ss[0]
+		c := outputs[scope].Filter.Condition
+		if len(ss) > 1 {
+			expressions = append(expressions, &exprOp{Node: mkExprOpExpr(And, mkScopeIn(ss), c)})
+		} else {
+			expressions = append(expressions, &exprOp{Node: mkExprOpExpr(And, mkScopeOp(Equals, scope), c)})
+		}
+	}
+	return expressions
 }
 func mkExprOpFromVar(variable string) *exprOp {
 	return &exprOp{
@@ -87,5 +90,17 @@ func mkExprOpFromValue(value *structpb.Value) *exprOp {
 func mkScopeOp(op, scope string) *exprOp {
 	return &exprOp{
 		Node: mkExprOpExpr(op, mkExprOpFromVar(conditions.ResourceFqn(conditions.CELScopeField)), mkExprOpFromValue(structpb.NewStringValue(scope))),
+	}
+}
+func mkScopeIn(scopes []string) *exprOp {
+	values := make([]*structpb.Value, 0, len(scopes))
+	sort.Strings(scopes)
+	for _, scope := range scopes {
+		values = append(values, &structpb.Value{Kind: &structpb.Value_StringValue{StringValue: scope}})
+	}
+	return &exprOp{
+		Node: mkExprOpExpr(In,
+			mkExprOpFromVar(conditions.ResourceFqn(conditions.CELScopeField)),
+			mkExprOpFromValue(structpb.NewListValue(&structpb.ListValue{Values: values}))),
 	}
 }

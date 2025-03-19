@@ -119,3 +119,28 @@ tests:
             operands:
               - <<: *hr_it
               - <<: *nots
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.eng
+          - acme.it
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: in
+                  operands:
+                    - variable: request.resource.scope
+                    - value:
+                        - acme.eng
+                        - acme.it
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: "PENDING_STATUS"
