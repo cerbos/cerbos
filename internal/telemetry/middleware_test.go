@@ -26,7 +26,7 @@ func TestMiddleware(t *testing.T) {
 
 	g, _ := errgroup.WithContext(ctx)
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		g.Go(func() error {
 			methods := []string{
 				"/cerbos.svc.v1.CerbosService/CheckResources",
@@ -38,7 +38,7 @@ func TestMiddleware(t *testing.T) {
 			md := metadata.New(map[string]string{"user-agent": "grpc/v1.14.6"})
 			ctx := metadata.NewIncomingContext(t.Context(), md)
 
-			for j := 0; j < 10_000; j++ {
+			for j := range 10_000 {
 				idx := j % len(methods)
 				middleware.collectStats(ctx, methods[idx])
 			}

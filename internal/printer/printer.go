@@ -140,7 +140,7 @@ func (p *Printer) PrintProtoYAML(message proto.Message, colorLevel outputcolor.L
 		}
 	}
 
-	for _, line := range strings.Split(strings.TrimSuffix(string(yamlBytes), "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSuffix(string(yamlBytes), "\n"), "\n") {
 		fmt.Fprintf(p.stdout, "%s%s\n", strings.Repeat("  ", indent), line)
 	}
 
@@ -210,6 +210,9 @@ func (p *Printer) printTraceComponent(component *enginev1.Trace_Component) {
 
 	case enginev1.Trace_Component_KIND_RESOURCE:
 		p.Printf("%s%s", colored.TraceComponentKey("resource="), component.GetResource())
+
+	case enginev1.Trace_Component_KIND_ROLE:
+		p.Printf("%s%s", colored.TraceComponentKey("role="), component.GetRole())
 
 	case enginev1.Trace_Component_KIND_RULE:
 		p.Printf("%s%s", colored.TraceComponentKey("rule="), component.GetRule())

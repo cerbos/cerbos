@@ -73,10 +73,23 @@ type eval struct {
 }
 
 func (e *eval) append(eval *eval) {
-	if eval.err != nil || !eval.success {
+	e.evals = append(e.evals, eval)
+
+	if eval.err != nil {
 		e.err = errEvalErrorPresent
 		e.success = false
 	}
 
-	e.evals = append(e.evals, eval)
+	if e.err == nil {
+		switch e.evalType {
+		case evalTypeAll:
+			e.success = e.success && eval.success
+		case evalTypeAny:
+			e.success = e.success || eval.success
+		case evalTypeNone:
+			e.success = e.success && !eval.success
+		default:
+			panic(fmt.Errorf("unexpected append to eval of type %q", e.evalType))
+		}
+	}
 }

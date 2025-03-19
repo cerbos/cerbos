@@ -21,6 +21,7 @@ import (
 	_ "github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto"
 	_ "github.com/vektra/mockery/v2"
 	_ "go.elastic.co/go-licence-detector"
+	_ "golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
 	_ "gotest.tools/gotestsum"

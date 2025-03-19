@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"maps"
 	"path/filepath"
 	"testing"
 	"text/template"
@@ -36,9 +37,7 @@ func RenderTemplate(tb testing.TB, path string, data any) []byte {
 
 func TemplateFuncs() template.FuncMap {
 	funcs := make(map[string]any)
-	for n, f := range sprig.FuncMap() {
-		funcs[n] = f
-	}
+	maps.Copy(funcs, sprig.FuncMap())
 
 	th := &templateHelper{fsys: DataFS()}
 	funcs["fileBytes"] = th.FileBytes

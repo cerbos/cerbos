@@ -42,7 +42,7 @@ func ansiConcatWithSep(sep string, args ...any) exp.Expression {
 	default:
 		f := strings.Repeat("? || ? || ", n-1) + "?"
 		a := make([]any, (2*n)-1)
-		for i := 0; i < n-1; i++ {
+		for i := range n - 1 {
 			a[i*2] = args[i]
 			a[(i*2)+1] = sep
 		}

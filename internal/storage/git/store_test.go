@@ -95,7 +95,7 @@ func TestNewStore(t *testing.T) {
 	t.Run("directory is not empty", func(t *testing.T) {
 		checkoutDir := t.TempDir()
 
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			file := filepath.Join(checkoutDir, fmt.Sprintf("file_%02d.txt", i))
 			require.NoError(t, os.WriteFile(file, []byte("some data"), 0o600))
 		}
@@ -839,7 +839,7 @@ func createGitRepo(t *testing.T, dir string, policyCount int) []string {
 	var allFiles []string
 
 	// write policies
-	for i := 0; i < policyCount; i++ {
+	for i := range policyCount {
 		pset := genPolicySet(i)
 
 		require.NoError(t, writePolicySet(fullPolicyDir, pset), "Failed to write policies to policy dir")

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -385,9 +386,7 @@ func (r *REPL) addToVarC(c map[string]any) {
 		r.varC = make(map[string]any, len(c))
 	}
 
-	for name, val := range c {
-		r.varC[name] = val
-	}
+	maps.Copy(r.varC, c)
 
 	varsVal := r.toRefVal(r.varC)
 	r.vars[conditions.CELConstantsIdent] = varsVal
@@ -399,9 +398,7 @@ func (r *REPL) addToVarV(v map[string]any) {
 		r.varV = make(map[string]any, len(v))
 	}
 
-	for name, val := range v {
-		r.varV[name] = val
-	}
+	maps.Copy(r.varV, v)
 
 	varsVal := r.toRefVal(r.varV)
 	r.vars[conditions.CELVariablesIdent] = varsVal
@@ -743,7 +740,7 @@ func (r *REPL) evalCondition(ctx context.Context, id int) error {
 	e := r.doEvalCondition(ctx, condition)
 	eo := buildEvalOutput(e)
 
-	return pterm.DefaultTree.WithRoot(putils.TreeFromLeveledList(eo.tree)).Render()
+	return r.output.PrintTree(eo.tree)
 }
 
 func (r *REPL) doEvalCondition(ctx context.Context, condition *runtimev1.Condition) *eval {
@@ -770,7 +767,7 @@ func (r *REPL) doEvalCondition(ctx context.Context, condition *runtimev1.Conditi
 		}
 		return eval
 	case *runtimev1.Condition_Any:
-		eval := &eval{err: nil, success: true, evalType: evalTypeAny, evals: nil}
+		eval := &eval{err: nil, success: false, evalType: evalTypeAny, evals: nil}
 		for _, expr := range c.Any.GetExpr() {
 			e := r.doEvalCondition(ctx, expr)
 			eval.append(e)
@@ -1007,18 +1004,21 @@ type Output interface {
 	PrintRule(int, proto.Message) error
 	PrintJSON(any)
 	PrintYAML(proto.Message, int)
+	PrintTree(pterm.LeveledList) error
 	PrintErr(string, error)
 }
 
 type PrinterOutput struct {
 	*printer.Printer
-	level outputcolor.Level
+	treePrinter *pterm.TreePrinter
+	level       outputcolor.Level
 }
 
 func NewPrinterOutput(stdout, stderr io.Writer) *PrinterOutput {
 	return &PrinterOutput{
-		Printer: printer.New(stdout, stderr),
-		level:   outputcolor.DefaultLevel(),
+		Printer:     printer.New(stdout, stderr),
+		treePrinter: pterm.DefaultTree.WithWriter(stdout),
+		level:       outputcolor.DefaultLevel(),
 	}
 }
 
@@ -1079,6 +1079,10 @@ func (po *PrinterOutput) PrintYAML(obj proto.Message, indent int) {
 		po.Println("<...>")
 	}
 	po.Println()
+}
+
+func (po *PrinterOutput) PrintTree(tree pterm.LeveledList) error {
+	return po.treePrinter.WithRoot(putils.TreeFromLeveledList(tree)).Render()
 }
 
 func (po *PrinterOutput) PrintErr(msg string, err error) {

@@ -20,7 +20,7 @@ import (
 
 func TestServe(t *testing.T) {
 	// run twice to make sure that global state initialization is idempotent
-	for run := 0; run < 2; run++ {
+	for run := range 2 {
 		t.Run(fmt.Sprintf("run_%d", run), func(t *testing.T) {
 			ctx, cancel := context.WithCancel(t.Context())
 			t.Cleanup(cancel)

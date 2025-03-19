@@ -6,6 +6,7 @@ package policy
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"strings"
@@ -324,12 +325,8 @@ func mergeAnnotations(a, b map[string]string) map[string]string {
 	}
 
 	c := make(map[string]string, len(a)+len(b))
-	for k, v := range a {
-		c[k] = v
-	}
-	for k, v := range b {
-		c[k] = v
-	}
+	maps.Copy(c, a)
+	maps.Copy(c, b)
 	return c
 }
 

@@ -24,7 +24,7 @@ func ToStructPB(v any) (*structpb.Value, error) {
 	switch vv.Kind() {
 	case reflect.Array, reflect.Slice:
 		arr := make([]any, vv.Len())
-		for i := 0; i < vv.Len(); i++ {
+		for i := range vv.Len() {
 			el := vv.Index(i)
 			// TODO (cell) Recurse
 			arr[i] = el.Interface()
