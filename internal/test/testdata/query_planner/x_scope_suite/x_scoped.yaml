@@ -166,3 +166,40 @@ tests:
                     - <<: *hr
                     - <<: *eng_it
               - <<: *nots
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.hr
+          - acme.fin
+          - acme.marketing
+          - acme.it
+          - acme.eng
+          - acme.c
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: in
+                              operands:
+                                - variable: request.resource.scope
+                                - value:
+                                    - acme.c
+                                    - acme.hr
+                          - expression:
+                              operator: eq
+                              operands:
+                                - value: z0
+                                - variable: request.resource.id
+                    - <<: *eng_it
+              - <<: *nots
