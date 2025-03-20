@@ -83,7 +83,8 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 
 	return []cel.EnvOption{
 		cel.FunctionDecls(customtypes.HierarchyDeclrations...),
-		cel.Types(customtypes.HierarchyType),
+		cel.FunctionDecls(customtypes.SPIFFEDeclrations...),
+		cel.Types(customtypes.HierarchyType, customtypes.SPIFFEIDType, customtypes.SPIFFETrustDomainType, customtypes.SPIFFEMatcherType),
 		cel.Function(exceptFn, setOpFuncOverloads(exceptFn, exceptList)...),
 		cel.Function(hasIntersectionFn, setCheckFuncOverloads(hasIntersectionFn, hasIntersection)...),
 		cel.Function(hasIntersectionFnDeprecated, setCheckFuncOverloads(hasIntersectionFnDeprecated, hasIntersection)...),
@@ -115,13 +116,20 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				cel.UnaryBinding(callInTimestampOutDuration(time.Now().Sub)),
 			),
 		),
+		cel.Function(IDFn,
+			cel.Overload(fmt.Sprintf("%s_overload", IDFn),
+				[]*cel.Type{cel.DynType},
+				cel.DynType,
+				cel.UnaryBinding(func(value ref.Val) ref.Val { return value }),
+			),
+		),
 		customtypes.HierarchyFunc,
-		cel.Function(IDFn, cel.Overload(fmt.Sprintf("%s_overload", IDFn),
-			[]*cel.Type{cel.DynType},
-			cel.DynType,
-			cel.UnaryBinding(func(value ref.Val) ref.Val {
-				return value
-			}))),
+		customtypes.SPIFFEIDFunc,
+		customtypes.SPIFFEMatchAnyFunc,
+		customtypes.SPIFFEMatchExactFunc,
+		customtypes.SPIFFEMatchOneOfFunc,
+		customtypes.SPIFFEMatchTrustDomainFunc,
+		customtypes.SPIFFETrustDomainFunc,
 	}
 }
 
