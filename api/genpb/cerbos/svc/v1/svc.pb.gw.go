@@ -880,7 +880,7 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CrossScopePlanResources", runtime.WithHTTPPathPattern("/api/plan/x-scopes-resources"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CrossScopePlanResources", runtime.WithHTTPPathPattern("/api/plan/x-scope-resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1450,7 +1450,7 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CrossScopePlanResources", runtime.WithHTTPPathPattern("/api/plan/x-scopes-resources"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/CrossScopePlanResources", runtime.WithHTTPPathPattern("/api/plan/x-scope-resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1472,7 +1472,7 @@ var (
 	pattern_CerbosService_CheckResources_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "check", "resources"}, ""))
 	pattern_CerbosService_ServerInfo_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "server_info"}, ""))
 	pattern_CerbosService_PlanResources_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "plan", "resources"}, ""))
-	pattern_CerbosService_CrossScopePlanResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "plan", "x-scopes-resources"}, ""))
+	pattern_CerbosService_CrossScopePlanResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "plan", "x-scope-resources"}, ""))
 )
 
 var (

@@ -94,7 +94,7 @@ service CerbosService {
 
   rpc CrossScopePlanResources(cerbos.request.v1.CrossScopePlanResourcesRequest) returns (cerbos.response.v1.CrossScopePlanResourcesResponse) {
     option (google.api.http) = {
-      post: "/api/plan/x-scopes-resources"
+      post: "/api/plan/x-scope-resources"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

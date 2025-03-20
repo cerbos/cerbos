@@ -928,7 +928,7 @@
         ]
       }
     },
-    "/api/plan/x-scopes-resources": {
+    "/api/plan/x-scope-resources": {
       "post": {
         "summary": "Plan resources across provided scopes",
         "description": "Produce a query plan across all provided scopes ith conditions that must be satisfied for accessing a set of instances of a resource",
