@@ -215,7 +215,7 @@ check-http-insecure:
 
 .PHONY: test-http
 test-http:
-	@ hurl -k --variable protocol=$(HTTP_PROTO) --variable host=$(HTTP_HOST) --variable port=$(HTTP_PORT) --test $(DEV_DIR)/{check,playground,plan}.hurl
+	@ hurl -k --variable protocol=$(HTTP_PROTO) --variable host=$(HTTP_HOST) --variable port=$(HTTP_PORT) --test $(DEV_DIR)/{check,playground,plan,x_scope_plan}.hurl
 
 
 .PHONY: perf

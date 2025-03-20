@@ -62,9 +62,10 @@ func (cs *CerbosService) CrossScopePlanResources(ctx context.Context, request *r
 
 	ctx = logging.ToContext(ctx, log)
 	response := &responsev1.CrossScopePlanResourcesResponse{
-		RequestId:    request.RequestId,
-		Action:       request.Action,
-		ResourceKind: request.Resource.Kind,
+		RequestId:     request.RequestId,
+		Action:        request.Action,
+		ResourceKind:  request.Resource.Kind,
+		PolicyVersion: request.Resource.PolicyVersion,
 	}
 	if request.IncludeMeta {
 		response.Meta = &responsev1.CrossScopePlanResourcesResponse_Meta{

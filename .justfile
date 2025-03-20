@@ -174,6 +174,7 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
     tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
     tests["cerbos.svc.v1.CerbosService/PlanResources"]="plan_resources"
+    tests["cerbos.svc.v1.CerbosService/CrossScopePlanResources"]="x_scope_plan_resources"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"]="playground_validate"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate"]="playground_evaluate"
 
@@ -187,7 +188,7 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     done
 
 check-http PROTOCOL='https' HOST='localhost' PORT='3592':
-	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan}.hurl
+	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan,x_scope_plan}.hurl
 
 # Executables
 
