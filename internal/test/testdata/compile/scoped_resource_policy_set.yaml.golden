@@ -314,7 +314,8 @@
                   }
                 ]
               }
-            }
+            },
+            "originFqn": "cerbos.derived_roles.my_derived_roles"
           }
         },
         "rules": [
@@ -454,7 +455,8 @@
             "name": "any_employee",
             "parentRoles": {
               "employee": {}
-            }
+            },
+            "originFqn": "cerbos.derived_roles.my_derived_roles"
           },
           "direct_manager": {
             "name": "direct_manager",
@@ -738,7 +740,8 @@
                   }
                 ]
               }
-            }
+            },
+            "originFqn": "cerbos.derived_roles.my_derived_roles"
           },
           "employee_that_owns_the_record": {
             "name": "employee_that_owns_the_record",
@@ -843,7 +846,8 @@
                   }
                 }
               }
-            }
+            },
+            "originFqn": "cerbos.derived_roles.my_derived_roles"
           }
         },
         "rules": [

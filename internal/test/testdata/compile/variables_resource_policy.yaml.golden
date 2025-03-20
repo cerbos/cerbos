@@ -953,7 +953,8 @@
               "f": 6,
               "h": 8,
               "i": 9
-            }
+            },
+            "originFqn": "cerbos.derived_roles.one"
           }
         },
         "variables": {
@@ -2909,7 +2910,8 @@
               "g": 7,
               "h": 8,
               "z": 0
-            }
+            },
+            "originFqn": "cerbos.derived_roles.one"
           },
           "B": {
             "name": "B",
@@ -3842,7 +3844,8 @@
               "f": 6,
               "h": 8,
               "i": 9
-            }
+            },
+            "originFqn": "cerbos.derived_roles.one"
           },
           "C": {
             "name": "C",
@@ -4452,7 +4455,8 @@
               "d": 4,
               "e": 5,
               "j": 10
-            }
+            },
+            "originFqn": "cerbos.derived_roles.two"
           }
         },
         "variables": {

@@ -20,7 +20,8 @@
             "name": "tester",
             "parentRoles": {
               "*": {}
-            }
+            },
+            "originFqn": "cerbos.derived_roles.my_derived_roles"
           }
         },
         "rules": [

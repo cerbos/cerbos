@@ -147,6 +147,7 @@ message RunnableDerivedRole {
   Condition condition = 4;
   repeated Variable ordered_variables = 5;
   map<string, google.protobuf.Value> constants = 6;
+  string origin_fqn = 7;
 }
 
 message RunnableDerivedRolesSet {

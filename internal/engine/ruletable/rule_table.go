@@ -34,12 +34,14 @@ var errNoPoliciesMatched = errors.New("no matching policies")
 type RuleTable struct {
 	policyLoader policyloader.PolicyLoader
 	// version -> scope -> role -> action -> []rows
-	primaryIdx            map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
-	scopedResourceIdx     map[string]map[string]*util.GlobMap[struct{}]
-	log                   *zap.SugaredLogger
-	schemas               map[namer.ModuleID]*policyv1.Schemas
-	meta                  map[namer.ModuleID]*runtimev1.RuleTableMetadata
-	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	primaryIdx         map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	scopedResourceIdx  map[string]map[string]*util.GlobMap[struct{}]
+	log                *zap.SugaredLogger
+	schemas            map[namer.ModuleID]*policyv1.Schemas
+	meta               map[namer.ModuleID]*runtimev1.RuleTableMetadata
+	policyDerivedRoles map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	// reverse mapping of derived role mod IDs to the resource policies it's referenced in
+	derivedRolePolicies   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	storeQueryRegister    map[namer.ModuleID]bool
 	scopeMap              map[string]struct{}
 	scopeScopePermissions map[string]policyv1.ScopePermissions
@@ -102,6 +104,7 @@ func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
 		schemas:                  make(map[namer.ModuleID]*policyv1.Schemas),
 		meta:                     make(map[namer.ModuleID]*runtimev1.RuleTableMetadata),
 		policyDerivedRoles:       make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole),
+		derivedRolePolicies:      make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		storeQueryRegister:       make(map[namer.ModuleID]bool),
 		scopeMap:                 make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
@@ -370,8 +373,16 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 			RunnableDerivedRole: dr,
 			Constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
 		}
+
+		drModID := namer.GenModuleIDFromFQN(dr.OriginFqn)
+		if _, ok := rt.derivedRolePolicies[drModID]; !ok {
+			rt.derivedRolePolicies[drModID] = make(map[namer.ModuleID]struct{})
+		}
+		rt.derivedRolePolicies[drModID][moduleID] = struct{}{}
 	}
-	rt.policyDerivedRoles[moduleID] = wrapped
+	if len(wrapped) > 0 {
+		rt.policyDerivedRoles[moduleID] = wrapped
+	}
 
 	progs, err := getCelProgramsFromExpressions(p.OrderedVariables)
 	if err != nil {
@@ -662,6 +673,9 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 				delete(rt.scopeScopePermissions, scope)
 				delete(rt.parentRoleAncestorsCache, scope)
 				delete(rt.parentRoles, scope)
+				if v, ok := rt.scopedResourceIdx[version]; ok {
+					delete(v, scope)
+				}
 			}
 		}
 
@@ -674,6 +688,13 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 	delete(rt.schemas, moduleID)
 	delete(rt.meta, moduleID)
 	delete(rt.policyDerivedRoles, moduleID)
+}
+
+func (rt *RuleTable) invalidatePolicy(modID namer.ModuleID) {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
+	delete(rt.storeQueryRegister, modID)
 }
 
 func (rt *RuleTable) purge() {
@@ -947,14 +968,44 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 }
 
 func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
-	rt.deletePolicy(ev.PolicyID)
+	// derived role policy conditions are baked into resource policy rows, so we need to retrieve
+	// all resource policy rows that reference a changed derived role policy and handle them
+	// independently.
+	var modIDs []namer.ModuleID
+	if resourceModIDs, ok := rt.derivedRolePolicies[ev.PolicyID]; ok {
+		modIDs = make([]namer.ModuleID, 0, len(resourceModIDs))
+		for id := range resourceModIDs {
+			modIDs = append(modIDs, id)
+		}
+		delete(rt.derivedRolePolicies, ev.PolicyID)
+	} else {
+		modIDs = []namer.ModuleID{ev.PolicyID}
+	}
 	if ev.OldPolicyID != nil {
-		rt.deletePolicy(*ev.OldPolicyID)
+		var oldModIDs []namer.ModuleID
+		if resourceModIDs, ok := rt.derivedRolePolicies[*ev.OldPolicyID]; ok {
+			oldModIDs = make([]namer.ModuleID, 0, len(resourceModIDs))
+			for id := range resourceModIDs {
+				oldModIDs = append(oldModIDs, id)
+			}
+			delete(rt.derivedRolePolicies, *ev.OldPolicyID)
+		} else {
+			oldModIDs = []namer.ModuleID{*ev.OldPolicyID}
+		}
+
+		temp := make([]namer.ModuleID, len(modIDs)+len(oldModIDs))
+		copy(temp, modIDs)
+		copy(temp[len(temp):], oldModIDs)
+		modIDs = temp
 	}
 
-	if ev.Kind == storage.EventAddOrUpdatePolicy {
-		// we load lazily--invalidating the query register ensures the store gets
-		// queried again the next time.
-		delete(rt.storeQueryRegister, ev.PolicyID)
+	for _, modID := range modIDs {
+		rt.deletePolicy(modID)
+
+		if ev.Kind == storage.EventAddOrUpdatePolicy {
+			// We load lazily--invalidating the query register ensures the store gets
+			// queried again the next time.
+			rt.invalidatePolicy(modID)
+		}
 	}
 }
