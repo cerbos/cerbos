@@ -92,7 +92,16 @@ message CrossScopePlanResourcesResponse {
 
   cerbos.engine.v1.PlanResourcesFilter filter = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter"}];
 
-  map<string, PlanResourcesResponse.Meta> meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
+  message Meta {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "Metadata about request evaluation."}
+    };
+
+    string filter_debug = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter textual representation for debugging purposes."}];
+
+    map<string, PlanResourcesResponse.Meta> scopes_meta = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
+  }
+  Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
 
   repeated cerbos.schema.v1.ValidationError validation_errors = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
 

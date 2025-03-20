@@ -65,7 +65,11 @@ func (cs *CerbosService) CrossScopePlanResources(ctx context.Context, request *r
 		RequestId:    request.RequestId,
 		Action:       request.Action,
 		ResourceKind: request.Resource.Kind,
-		Meta:         make(map[string]*responsev1.PlanResourcesResponse_Meta, len(request.Resource.Scopes)),
+	}
+	if request.IncludeMeta {
+		response.Meta = &responsev1.CrossScopePlanResourcesResponse_Meta{
+			ScopesMeta: make(map[string]*responsev1.PlanResourcesResponse_Meta, len(request.Resource.Scopes)),
+		}
 	}
 	filters := make(map[string]*enginev1.PlanResourcesOutput, len(request.Resource.Scopes))
 	for _, scope := range request.Resource.Scopes {
@@ -92,8 +96,8 @@ func (cs *CerbosService) CrossScopePlanResources(ctx context.Context, request *r
 		}
 		filters[scope] = output
 
-		if input.IncludeMeta {
-			response.Meta[scope] = &responsev1.PlanResourcesResponse_Meta{
+		if request.IncludeMeta {
+			response.Meta.ScopesMeta[scope] = &responsev1.PlanResourcesResponse_Meta{
 				FilterDebug:  output.FilterDebug,
 				MatchedScope: output.Scope,
 			}
@@ -101,6 +105,9 @@ func (cs *CerbosService) CrossScopePlanResources(ctx context.Context, request *r
 	}
 
 	response.Filter = planner.Merge(filters)
+	if request.IncludeMeta {
+		response.Meta.FilterDebug = planner.FilterToString(response.Filter)
+	}
 	return response, nil
 }
 

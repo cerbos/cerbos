@@ -2204,10 +2204,7 @@
           "description": "Filter"
         },
         "meta": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1PlanResourcesResponseMeta"
-          },
+          "$ref": "#/definitions/v1CrossScopePlanResourcesResponseMeta",
           "description": "Optional metadata about the request evaluation process"
         },
         "validationErrors": {
@@ -2224,6 +2221,23 @@
         }
       },
       "description": "Resources query plan response for a set of resources."
+    },
+    "v1CrossScopePlanResourcesResponseMeta": {
+      "type": "object",
+      "properties": {
+        "filterDebug": {
+          "type": "string",
+          "description": "Filter textual representation for debugging purposes."
+        },
+        "scopesMeta": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1PlanResourcesResponseMeta"
+          },
+          "description": "Optional metadata about the request evaluation process"
+        }
+      },
+      "description": "Metadata about request evaluation."
     },
     "v1DecisionLogEntry": {
       "type": "object",

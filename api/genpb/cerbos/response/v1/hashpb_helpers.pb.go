@@ -2012,6 +2012,32 @@ func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesRespo
 	}
 }
 
+func cerbos_response_v1_CrossScopePlanResourcesResponse_Meta_hashpb_sum(m *CrossScopePlanResourcesResponse_Meta, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.Meta.filter_debug"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetFilterDebug()))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.Meta.scopes_meta"]; !ok {
+		if len(m.ScopesMeta) > 0 {
+			keys := make([]string, len(m.ScopesMeta))
+			i := 0
+			for k := range m.ScopesMeta {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.ScopesMeta[k] != nil {
+					cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m.ScopesMeta[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_response_v1_CrossScopePlanResourcesResponse_hashpb_sum(m *CrossScopePlanResourcesResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.request_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetRequestId()))
@@ -2036,23 +2062,10 @@ func cerbos_response_v1_CrossScopePlanResourcesResponse_hashpb_sum(m *CrossScope
 
 	}
 	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.meta"]; !ok {
-		if len(m.Meta) > 0 {
-			keys := make([]string, len(m.Meta))
-			i := 0
-			for k := range m.Meta {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.Meta[k] != nil {
-					cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m.Meta[k], hasher, ignore)
-				}
-
-			}
+		if m.GetMeta() != nil {
+			cerbos_response_v1_CrossScopePlanResourcesResponse_Meta_hashpb_sum(m.GetMeta(), hasher, ignore)
 		}
+
 	}
 	if _, ok := ignore["cerbos.response.v1.CrossScopePlanResourcesResponse.validation_errors"]; !ok {
 		if len(m.ValidationErrors) > 0 {

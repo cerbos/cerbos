@@ -53,6 +53,21 @@
         "KIND_CONDITIONAL"
       ]
     },
+    "cerbos.response.v1.CrossScopePlanResourcesResponse.Meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "filterDebug": {
+          "type": "string"
+        },
+        "scopesMeta": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Meta"
+          }
+        }
+      }
+    },
     "cerbos.response.v1.PlanResourcesResponse.Meta": {
       "type": "object",
       "additionalProperties": false,
@@ -106,10 +121,7 @@
       "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
     },
     "meta": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Meta"
-      }
+      "$ref": "#/definitions/cerbos.response.v1.CrossScopePlanResourcesResponse.Meta"
     },
     "policyVersion": {
       "type": "string"
