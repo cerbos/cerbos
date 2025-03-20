@@ -269,6 +269,9 @@ func (m *manager) OnStorageEvent(events ...storage.Event) {
 			cacheKey := fmt.Sprintf("%s:///%s", URLScheme, event.SchemaFile)
 			_ = m.cache.Remove(cacheKey)
 			m.log.Warn("Handled schema delete event", zap.String("schema", cacheKey))
+		case storage.EventReload:
+			m.cache.Purge()
+			m.log.Debug("Handled store reload event")
 		}
 	}
 }
