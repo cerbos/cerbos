@@ -4,13 +4,8 @@ apiVersion: "api.cerbos.dev/v1"
 resourcePolicy:
   version: default
   resource: x
-  scope: acme.hr
+  scope: acme.it
   rules:
-    - actions:
-        - update_profile
-      effect: EFFECT_ALLOW
-      roles:
-        - USER
     - actions:
         - writeX
       effect: EFFECT_ALLOW
@@ -19,4 +14,4 @@ resourcePolicy:
       condition:
         match:
           expr: |-
-            P.attr.userQid == R.id
+            R.attr.status == "PENDING_STATUS"

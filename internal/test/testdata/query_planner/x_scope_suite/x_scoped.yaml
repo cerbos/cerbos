@@ -1,0 +1,205 @@
+# yaml-language-server: $schema=../../.jsonschema/CrossScopeQueryPlannerTestSuite.schema.json
+---
+description: Cross scope tests
+principal:
+    id: user123
+    policyVersion: default
+    roles:
+        - USER
+    attr:
+      userQid: z0
+tests:
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.hr
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition: &hr
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.scope
+                    - value: acme.hr
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: z0
+                    - variable: request.resource.id
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.it
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition: &it
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.scope
+                    - value: acme.it
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: "PENDING_STATUS"
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.it
+          - acme.hr
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition: &hr_it
+          expression:
+            operator: or
+            operands:
+              - <<: *hr
+              - <<: *it
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.fin
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: ne
+            operands:
+              - variable: request.resource.scope
+              - value: acme.fin
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.fin
+          - acme.marketing
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition: &nots
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: in
+                  operands:
+                    - variable: request.resource.scope
+                    - value:
+                        - acme.fin
+                        - acme.marketing
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.hr
+          - acme.fin
+          - acme.marketing
+          - acme.it
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - <<: *hr_it
+              - <<: *nots
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.eng
+          - acme.it
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition: &eng_it
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: in
+                  operands:
+                    - variable: request.resource.scope
+                    - value:
+                        - acme.eng
+                        - acme.it
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: "PENDING_STATUS"
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.hr
+          - acme.fin
+          - acme.marketing
+          - acme.it
+          - acme.eng
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - <<: *hr
+                    - <<: *eng_it
+              - <<: *nots
+    - action: writeX
+      resource:
+        kind: x
+        scopes:
+          - acme.hr
+          - acme.fin
+          - acme.marketing
+          - acme.it
+          - acme.eng
+          - acme.c
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: in
+                              operands:
+                                - variable: request.resource.scope
+                                - value:
+                                    - acme.c
+                                    - acme.hr
+                          - expression:
+                              operator: eq
+                              operands:
+                                - value: z0
+                                - variable: request.resource.id
+                    - <<: *eng_it
+              - <<: *nots

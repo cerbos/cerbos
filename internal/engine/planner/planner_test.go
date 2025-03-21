@@ -449,7 +449,7 @@ func TestNormaliseFilter(t *testing.T) {
 			haveFilter := normaliseFilter(tc.Input)
 			require.Empty(t, cmp.Diff(tc.WantFilter, haveFilter, protocmp.Transform()))
 
-			haveStr := filterToString(haveFilter)
+			haveStr := FilterToString(haveFilter)
 			require.Equal(t, tc.WantString, haveStr)
 		})
 	}

@@ -4,19 +4,10 @@ apiVersion: "api.cerbos.dev/v1"
 resourcePolicy:
   version: default
   resource: x
-  scope: acme.hr
+  scope: acme.fin
   rules:
     - actions:
-        - update_profile
-      effect: EFFECT_ALLOW
-      roles:
-        - USER
-    - actions:
         - writeX
-      effect: EFFECT_ALLOW
+      effect: EFFECT_DENY
       roles:
         - USER
-      condition:
-        match:
-          expr: |-
-            P.attr.userQid == R.id

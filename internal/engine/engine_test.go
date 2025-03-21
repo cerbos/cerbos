@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/engine/planner"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
@@ -392,6 +394,59 @@ func TestQueryPlan(t *testing.T) {
 						is.NotNil(response)
 						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s\n%s\n", response.FilterDebug, protojson.Format(response.Filter))
 					}
+				})
+			}
+		})
+	}
+}
+
+func readXScopeQPTestSuite(t *testing.T, data []byte) *privatev1.CrossScopeQueryPlannerTestSuite {
+	t.Helper()
+
+	tc := &privatev1.CrossScopeQueryPlannerTestSuite{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
+}
+
+func TestCrossScopeQueryPlan(t *testing.T) {
+	eng, cancelFunc := mkEngine(t, param{subDir: "query_planner/policies"})
+	defer cancelFunc()
+
+	auxData := &enginev1.AuxData{Jwt: make(map[string]*structpb.Value)}
+	auxData.Jwt["customInt"] = structpb.NewNumberValue(42)
+
+	suites := test.LoadTestCases(t, "query_planner/x_scope_suite")
+	timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395716+13:00")
+	require.NoError(t, err)
+	for _, suite := range suites {
+		s := suite
+		t.Run(s.Name, func(t *testing.T) {
+			ts := readXScopeQPTestSuite(t, s.Input)
+			for _, tt := range ts.Tests {
+				name := planner.FilterToString(tt.Want)
+				t.Run(name, func(t *testing.T) {
+					scopes := tt.Resource.GetScopes()
+					responses := make(map[string]*enginev1.PlanResourcesOutput, len(scopes))
+					for _, scope := range scopes {
+						request := &enginev1.PlanResourcesInput{
+							RequestId: "requestId",
+							Action:    tt.Action,
+							Principal: ts.Principal,
+							Resource: &enginev1.PlanResourcesInput_Resource{
+								Kind:          tt.Resource.Kind,
+								Attr:          tt.Resource.Attr,
+								PolicyVersion: tt.Resource.PolicyVersion,
+								Scope:         scope,
+							},
+							IncludeMeta: true,
+							AuxData:     auxData,
+						}
+						responses[scope], err = eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
+						require.NoError(t, err)
+					}
+					filter := planner.Merge(responses)
+					require.Empty(t, cmp.Diff(tt.Want, filter, protocmp.Transform()), "AST: %s\n%s\n", planner.FilterToString(filter), protojson.Format(filter))
 				})
 			}
 		})
