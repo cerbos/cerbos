@@ -427,6 +427,37 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | math.trunc | Truncates the fractional portion of the double value | math.trunc(1.2) == 1.0 && math.trunc(-1.2) == -1.0
 |===
 
+[#spiffe]
+== SPIFFE
+
+NOTE: The SPIFFE functions are Cerbos-specific extensions to CEL.
+
+.Test data
+[source,json,linenums]
+----
+...
+"principal": {
+  "id": "spiffe://cerbos.dev/ns/privileged/sa/curl",
+  "roles": ["api"],
+}
+...
+----
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example
+| spiffeID.isMemberOf | Check whether the ID belongs to given trust domain | spiffeID(P.id).isMemberOf(spiffeTrustDomain("spiffe://cerbos.dev"))
+| spiffeID.path | Get the path element of ID | spiffeID(P.id).path() == "/ns/privileged/sa/curl"
+| spiffeID.trustDomain | Get the trust domain of ID | spiffeID(P.id).trustDomain() == spiffeTrustDomain("spiffe://cerbos.dev")
+| spiffeMatchAny | Match any SPIFFE ID | spiffeMatchAny().matchesID(spiffeID(P.id)) == true
+| spiffeMatchExact | Match a single SPIFFE ID | spiffeMatchExact(spiffeID("spiffe://cerbos.dev/ns/privileged/sa/curl")).matchesID(spiffeID(P.id)) == true
+| spiffeMatchOneOf | Match any one of SPIFFE IDs | spiffeMatchOneOf(["spiffe://cerbos.dev/ns/privileged/sa/curl", "spiffe://cerbos.dev/ns/privileged/sa/foo"]).matchesID(spiffeID(P.id)) == true
+| spiffeMatchTrustDomain | Match any ID from the trust domain | spiffeMatchTrustDomain(spiffeTrustDomain("spiffe://cerbos.dev")).matchesID(spiffeID(P.id)) == true
+| spiffeTrustDomain.id | Fully qualified trust domain ID   | spiffeTrustDomain("cerbos.dev").id() == "spiffe://cerbos.dev"
+| spiffeTrustDomain.name | Name of trust domain   | spiffeTrustDomain("spiffe://cerbos.dev").name() == "cerbos.dev"
+|===
+
 
 == Strings
 

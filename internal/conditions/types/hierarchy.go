@@ -36,93 +36,89 @@ var (
 		traits.SizerType,
 		traits.ReceiverType)
 
-	hierarchyCelType = cel.ObjectType(hierarchyTypeName)
-
 	HierarchyFunc = cel.Function(hierarchyFn,
 		cel.Overload(
 			fmt.Sprintf("%s_string", hierarchyFn),
 			[]*cel.Type{cel.StringType},
-			hierarchyCelType,
+			HierarchyType,
 			cel.UnaryBinding(unaryHierarchyFnImpl),
 		),
 
 		cel.Overload(
 			fmt.Sprintf("%s_string_string", hierarchyFn),
 			[]*cel.Type{cel.StringType, cel.StringType},
-			hierarchyCelType,
+			HierarchyType,
 			cel.BinaryBinding(binaryHierarchyFnImpl),
 		),
 
 		cel.Overload(
 			fmt.Sprintf("%s_stringarray", hierarchyFn),
 			[]*cel.Type{cel.ListType(cel.StringType)},
-			hierarchyCelType,
+			HierarchyType,
 			cel.UnaryBinding(unaryHierarchyFnImpl),
 		),
 	)
 
-	hierarchyTypeExpr = types.NewObjectType(hierarchyTypeName)
-
 	HierarchyDeclrations = []*decls.FunctionDecl{
 		newFunction(overloadAncestorOf,
 			decls.MemberOverload(overloadAncestorOf,
-				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				[]*types.Type{HierarchyType, HierarchyType},
 				types.BoolType,
 			),
 		),
 
 		newFunction(overloadCommonAncestors,
 			decls.MemberOverload(overloadCommonAncestors,
-				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-				hierarchyTypeExpr,
+				[]*types.Type{HierarchyType, HierarchyType},
+				HierarchyType,
 			),
 		),
 
 		newFunction(overloadDescendentOf,
 			decls.MemberOverload(overloadDescendentOf,
-				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				[]*types.Type{HierarchyType, HierarchyType},
 				types.BoolType,
 			),
 		),
 
 		newFunction(overloadImmediateChildOf,
 			decls.MemberOverload(overloadImmediateChildOf,
-				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				[]*types.Type{HierarchyType, HierarchyType},
 				types.BoolType,
 			),
 		),
 
 		newFunction(overloadImmediateParentOf,
 			decls.MemberOverload(overloadImmediateParentOf,
-				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				[]*types.Type{HierarchyType, HierarchyType},
 				types.BoolType,
 			),
 		),
 
 		newFunction(overloadOverlaps,
 			decls.MemberOverload(overloadOverlaps,
-				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				[]*types.Type{HierarchyType, HierarchyType},
 				types.BoolType,
 			),
 		),
 
 		newFunction(overloadSiblingOf,
 			decls.MemberOverload(overloadSiblingOf,
-				[]*types.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				[]*types.Type{HierarchyType, HierarchyType},
 				types.BoolType,
 			),
 		),
 
 		newFunction(overloads.Size,
 			decls.MemberOverload(fmt.Sprintf("%s_size", hierarchyFn),
-				[]*types.Type{hierarchyTypeExpr},
+				[]*types.Type{HierarchyType},
 				types.IntType,
 			),
 		),
 
 		newFunction(operators.Index,
 			decls.Overload(fmt.Sprintf("%s_index", hierarchyFn),
-				[]*types.Type{hierarchyTypeExpr, types.IntType},
+				[]*types.Type{HierarchyType, types.IntType},
 				types.StringType,
 			),
 		),
