@@ -993,10 +993,7 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 			oldModIDs = []namer.ModuleID{*ev.OldPolicyID}
 		}
 
-		temp := make([]namer.ModuleID, len(modIDs)+len(oldModIDs))
-		copy(temp, modIDs)
-		copy(temp[len(temp):], oldModIDs)
-		modIDs = temp
+		modIDs = slices.Concat(modIDs, oldModIDs)
 	}
 
 	for _, modID := range modIDs {
