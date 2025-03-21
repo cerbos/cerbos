@@ -20,7 +20,8 @@
             "name": "any_employee",
             "parentRoles": {
               "employee": {}
-            }
+            },
+            "originFqn": "cerbos.derived_roles.beta"
           },
           "direct_manager": {
             "name": "direct_manager",
@@ -304,7 +305,8 @@
                   }
                 ]
               }
-            }
+            },
+            "originFqn": "cerbos.derived_roles.gamma"
           },
           "employee_that_owns_the_record": {
             "name": "employee_that_owns_the_record",
@@ -409,7 +411,8 @@
                   }
                 }
               }
-            }
+            },
+            "originFqn": "cerbos.derived_roles.alpha"
           }
         },
         "rules": [

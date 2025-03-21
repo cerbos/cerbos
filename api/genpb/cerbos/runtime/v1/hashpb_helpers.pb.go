@@ -646,6 +646,10 @@ func cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m *RunnableDerivedRole, ha
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableDerivedRole.origin_fqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetOriginFqn()))
+
+	}
 }
 
 func cerbos_runtime_v1_RunnableDerivedRolesSet_Metadata_hashpb_sum(m *RunnableDerivedRolesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}) {

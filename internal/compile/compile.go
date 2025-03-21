@@ -317,6 +317,7 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 		rdr := &runtimev1.RunnableDerivedRole{
 			Name:        def.Name,
 			ParentRoles: make(map[string]*emptypb.Empty, len(def.ParentRoles)),
+			OriginFqn:   namer.DerivedRolesFQN(dr.Name),
 		}
 
 		for _, pr := range def.ParentRoles {

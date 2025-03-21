@@ -13,6 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 )
@@ -63,8 +64,7 @@ func TestRuleTable(t *testing.T) {
 			require.Contains(t, rt.schemas, modID)
 			require.Contains(t, rt.meta, modID)
 
-			require.Contains(t, rt.policyDerivedRoles, modID)
-			require.Empty(t, rt.policyDerivedRoles[modID])
+			require.NotContains(t, rt.policyDerivedRoles, modID)
 
 			require.Contains(t, rt.scopeMap, scope)
 			scopePermissions, exists := rt.scopeScopePermissions[scope]
@@ -105,7 +105,10 @@ func TestRuleTable(t *testing.T) {
 
 			checkIndexes(t)
 
-			rt.deletePolicy(modID)
+			rt.processPolicyEvent(storage.Event{
+				Kind:     storage.EventDeleteOrDisablePolicy,
+				PolicyID: modID,
+			})
 
 			require.Empty(t, rt.primaryIdx)
 			require.Empty(t, rt.scopedResourceIdx)
@@ -211,7 +214,10 @@ func TestRuleTable(t *testing.T) {
 
 			checkIndexes(t)
 
-			rt.deletePolicy(modID)
+			rt.processPolicyEvent(storage.Event{
+				Kind:     storage.EventDeleteOrDisablePolicy,
+				PolicyID: modID,
+			})
 
 			require.Empty(t, rt.primaryIdx)
 			require.Empty(t, rt.scopedResourceIdx)
@@ -228,5 +234,64 @@ func TestRuleTable(t *testing.T) {
 			require.True(t, queried)
 			require.False(t, exists)
 		})
+	})
+
+	t.Run("resource policy with derived role", func(t *testing.T) {
+		t.Cleanup(func() {
+			rt.purge()
+		})
+
+		resource := "leave_request"
+		version := "default"
+		scope := "acme"
+
+		require.NoError(t, rt.LazyLoad(ctx, resource, version, scope, []string{}))
+
+		modID := namer.ResourcePolicyModuleID(resource, version, scope)
+		baseModID := namer.ResourcePolicyModuleID(resource, version, "")
+
+		alphaModID := namer.DerivedRolesModuleID("alpha")
+		betaModID := namer.DerivedRolesModuleID("beta")
+
+		// at scope "acme"
+		drs, exists := rt.policyDerivedRoles[modID]
+		require.True(t, exists)
+		require.Contains(t, drs, "employee_that_owns_the_record")
+		require.Contains(t, drs, "any_employee")
+		// no rules in the "" scope policy reference a derived role, hence it doesn't exist
+		_, exists = rt.policyDerivedRoles[baseModID]
+		require.False(t, exists)
+
+		alpha, exists := rt.derivedRolePolicies[alphaModID]
+		require.True(t, exists)
+		require.Contains(t, alpha, modID)
+		beta, exists := rt.derivedRolePolicies[betaModID]
+		require.True(t, exists)
+		require.Contains(t, beta, modID)
+
+		// trigger (empty) update on `alpha` derived role policy
+		rt.processPolicyEvent(storage.Event{
+			Kind:     storage.EventAddOrUpdatePolicy,
+			PolicyID: alphaModID,
+		})
+
+		// the resource policy that references the derived role at scope "acme" should be deleted.
+		// the resource policy at scope "" remains (it's rules didn't reference a derived role).
+		require.Empty(t, rt.policyDerivedRoles)
+		require.NotContains(t, rt.primaryIdx[version], scope)
+		require.NotContains(t, rt.scopedResourceIdx[version], scope)
+		require.NotContains(t, rt.schemas, modID)
+		require.NotContains(t, rt.meta, modID)
+		require.NotContains(t, rt.scopeMap, scope)
+		require.NotContains(t, rt.scopeScopePermissions, scope)
+		// referencing resource policy is deleted to prompt fresh retrieval
+		require.NotContains(t, rt.storeQueryRegister, modID)
+		// non-referencing resource policy is still present and untouched
+		exists, queried := rt.storeQueryRegister[baseModID]
+		require.True(t, queried)
+		require.True(t, exists)
+
+		require.NotContains(t, rt.derivedRolePolicies, alphaModID)
+		require.Contains(t, rt.derivedRolePolicies, betaModID)
 	})
 }
