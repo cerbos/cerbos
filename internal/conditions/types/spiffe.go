@@ -38,35 +38,29 @@ var (
 	SPIFFETrustDomainType = cel.ObjectType(spiffeTrustDomainTypeName, traits.ReceiverType, traits.ComparerType)
 	SPIFFEMatcherType     = cel.ObjectType(spiffeMatcherTypeName, traits.ReceiverType)
 
-	spiffeIDCelType = cel.ObjectType(spiffeIDTypeName)
-
 	SPIFFEIDFunc = cel.Function(spiffeIDFn,
 		cel.Overload(
 			fmt.Sprintf("%s_string", spiffeIDFn),
 			[]*cel.Type{cel.StringType},
-			spiffeIDCelType,
+			SPIFFEIDType,
 			cel.UnaryBinding(unarySPIFFEIDFnImpl),
 		),
 	)
-
-	spiffeTrustDomainCelType = cel.ObjectType(spiffeTrustDomainTypeName)
 
 	SPIFFETrustDomainFunc = cel.Function(spiffeTrustDomainFn,
 		cel.Overload(
 			fmt.Sprintf("%s_string", spiffeTrustDomainFn),
 			[]*cel.Type{cel.StringType},
-			spiffeTrustDomainCelType,
+			SPIFFETrustDomainType,
 			cel.UnaryBinding(unarySPIFFETrustDomainFnImpl),
 		),
 	)
-
-	spiffeMatcherCelType = cel.ObjectType(spiffeMatcherTypeName)
 
 	SPIFFEMatchAnyFunc = cel.Function(spiffeMatchAnyFn,
 		cel.Overload(
 			spiffeMatchAnyFn,
 			nil,
-			spiffeMatcherCelType,
+			SPIFFEMatcherType,
 			cel.FunctionBinding(unarySPIFFEMatchAnyFnImpl),
 		),
 	)
@@ -74,15 +68,15 @@ var (
 	SPIFFEMatchExactFunc = cel.Function(spiffeMatchExactFn,
 		cel.Overload(
 			fmt.Sprintf("%s_spiffeID", spiffeMatchExactFn),
-			[]*cel.Type{spiffeIDCelType},
-			spiffeMatcherCelType,
+			[]*cel.Type{SPIFFEIDType},
+			SPIFFEMatcherType,
 			cel.UnaryBinding(unarySPIFFEMatchExactFnImpl),
 		),
 
 		cel.Overload(
 			fmt.Sprintf("%s_string", spiffeMatchExactFn),
 			[]*cel.Type{cel.StringType},
-			spiffeMatcherCelType,
+			SPIFFEMatcherType,
 			cel.UnaryBinding(unarySPIFFEMatchExactFnImpl),
 		),
 	)
@@ -90,15 +84,15 @@ var (
 	SPIFFEMatchOneOfFunc = cel.Function(spiffeMatchOneOfFn,
 		cel.Overload(
 			fmt.Sprintf("%s_spiffeIDList", spiffeMatchOneOfFn),
-			[]*cel.Type{cel.ListType(spiffeIDCelType)},
-			spiffeMatcherCelType,
+			[]*cel.Type{cel.ListType(SPIFFEIDType)},
+			SPIFFEMatcherType,
 			cel.UnaryBinding(unarySPIFFEMatchOneOfFnImpl),
 		),
 
 		cel.Overload(
 			fmt.Sprintf("%s_stringList", spiffeMatchOneOfFn),
 			[]*cel.Type{cel.ListType(cel.StringType)},
-			spiffeMatcherCelType,
+			SPIFFEMatcherType,
 			cel.UnaryBinding(unarySPIFFEMatchOneOfFnImpl),
 		),
 	)
@@ -106,15 +100,15 @@ var (
 	SPIFFEMatchTrustDomainFunc = cel.Function(spiffeMatchTrustDomainFn,
 		cel.Overload(
 			fmt.Sprintf("%s_spiffeTrustDomain", spiffeMatchTrustDomainFn),
-			[]*cel.Type{spiffeTrustDomainCelType},
-			spiffeMatcherCelType,
+			[]*cel.Type{SPIFFETrustDomainType},
+			SPIFFEMatcherType,
 			cel.UnaryBinding(unarySPIFFEMatchTrustDomainFnImpl),
 		),
 
 		cel.Overload(
 			fmt.Sprintf("%s_string", spiffeMatchTrustDomainFn),
 			[]*cel.Type{cel.StringType},
-			spiffeMatcherCelType,
+			SPIFFEMatcherType,
 			cel.UnaryBinding(unarySPIFFEMatchTrustDomainFnImpl),
 		),
 	)
