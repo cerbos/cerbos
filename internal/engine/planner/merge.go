@@ -4,6 +4,7 @@
 package planner
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"sort"
@@ -13,6 +14,40 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
+	response := &enginev1.PlanResourcesFilter{
+		Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
+	}
+	conds := make(map[string]*exprOp, len(responses))
+	for _, res := range responses {
+		switch res.Filter.Kind {
+		case enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED:
+			continue
+		case enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED:
+			return &enginev1.PlanResourcesFilter{
+				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
+			}
+		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
+			conds[res.FilterDebug] = res.Filter.Condition
+		case enginev1.PlanResourcesFilter_KIND_UNSPECIFIED:
+			panic(fmt.Errorf("unknown filter kind %s", res.Filter.Kind))
+		}
+	}
+	switch len(conds) {
+	case 0:
+		response = &enginev1.PlanResourcesFilter{
+			Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED,
+		}
+	case 1:
+		for _, filter := range conds {
+			response.Condition = filter
+		}
+	default:
+		filters := slices.Collect(maps.Values(conds))
+		response.Condition = &exprOp{Node: mkExprOpExpr(And, filters...)}
+	}
+	return response
+}
 func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
 	response := &enginev1.PlanResourcesFilter{
 		Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,

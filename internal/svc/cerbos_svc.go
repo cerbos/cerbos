@@ -6,7 +6,6 @@ package svc
 import (
 	"context"
 	"errors"
-
 	"github.com/cerbos/cerbos/internal/engine/planner"
 
 	"go.opentelemetry.io/otel/trace"
@@ -18,6 +17,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -124,7 +124,8 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	if request.Action != "" {
 		request.Actions = []string{request.Action}
 	}
-	var response *responsev1.PlanResourcesResponse
+	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
+
 	for _, action := range request.Actions {
 		input := &enginev1.PlanResourcesInput{
 			RequestId:   request.RequestId,
@@ -142,21 +143,30 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 			}
 			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
 		}
+		outputs = append(outputs, output)
+	}
+	filter := planner.MergeWithAnd(outputs)
+	validationErrors := make([]*v11.ValidationError, 0, len(outputs))
+	scopes := make([]string, 0, len(outputs))
+	for _, output := range outputs {
+		validationErrors = append(validationErrors, output.ValidationErrors...)
+		scopes = append(scopes, output.Scope)
+	}
+	response := &responsev1.PlanResourcesResponse{
+		RequestId:        request.RequestId,
+		Actions:          request.Actions,
+		Action:           request.Action,
+		ResourceKind:     request.Resource.Kind,
+		PolicyVersion:    request.Resource.PolicyVersion,
+		Filter:           filter,
+		ValidationErrors: validationErrors,
+	}
 
-		response = &responsev1.PlanResourcesResponse{
-			RequestId:        output.RequestId,
-			Action:           output.Action,
-			ResourceKind:     output.Kind,
-			PolicyVersion:    output.PolicyVersion,
-			Filter:           output.Filter,
-			ValidationErrors: output.ValidationErrors,
-		}
-
-		if input.IncludeMeta {
-			response.Meta = &responsev1.PlanResourcesResponse_Meta{
-				FilterDebug:  output.FilterDebug,
-				MatchedScope: output.Scope,
-			}
+	if request.IncludeMeta {
+		response.Meta = &responsev1.PlanResourcesResponse_Meta{
+			FilterDebug:   planner.FilterToString(response.Filter),
+			MatchedScope:  outputs[0].Scope,
+			MatchedScopes: scopes,
 		}
 	}
 

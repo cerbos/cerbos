@@ -34,6 +34,11 @@ message PlanResourcesResponse {
       description: "Policy scope that matched to produce this effect."
       example: "\"acme.corp.base\""
     }];
+
+    repeated string matched_scopes = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Policy scopes that matched to produce this effect."
+      example: "[\"acme.corp.base\", \"acme.corp.hk\"]"
+    }];
   }
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -44,6 +49,11 @@ message PlanResourcesResponse {
   string action = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Action"
     example: "\"view:public\""
+  }];
+
+  repeated string actions = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Actions"
+    example: "[\"view:public\", \"edit:profile\"]"
   }];
 
   string resource_kind = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {

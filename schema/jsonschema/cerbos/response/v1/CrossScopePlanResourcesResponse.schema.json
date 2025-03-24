@@ -77,6 +77,12 @@
         },
         "matchedScope": {
           "type": "string"
+        },
+        "matchedScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
