@@ -2842,7 +2842,19 @@
         "action": {
           "type": "string",
           "example": "view:public",
-          "description": "Action to be applied to each resource in the list."
+          "description": "Action to be applied to each resource in the list. Deprecated: use actions field instead."
+        },
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "edit:profile"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions to be applied to each resource in the list. Use this field instead of the deprecated action field. Must contain at least one action and all actions must be unique.",
+          "uniqueItems": true
         },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
@@ -2860,7 +2872,6 @@
       },
       "description": "PDP Resources Query Plan Request",
       "required": [
-        "action",
         "principal",
         "resource"
       ]

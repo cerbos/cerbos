@@ -121,36 +121,42 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
-	input := &enginev1.PlanResourcesInput{
-		RequestId:   request.RequestId,
-		Action:      request.Action,
-		Principal:   request.Principal,
-		Resource:    request.Resource,
-		AuxData:     auxData,
-		IncludeMeta: request.IncludeMeta,
+	if request.Action != "" {
+		request.Actions = []string{request.Action}
 	}
-	output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
-	if err != nil {
-		log.Error("Resources query plan request failed", zap.Error(err))
-		if errors.Is(err, compile.PolicyCompilationErr{}) {
-			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+	var response *responsev1.PlanResourcesResponse
+	for _, action := range request.Actions {
+		input := &enginev1.PlanResourcesInput{
+			RequestId:   request.RequestId,
+			Action:      action,
+			Principal:   request.Principal,
+			Resource:    request.Resource,
+			AuxData:     auxData,
+			IncludeMeta: request.IncludeMeta,
 		}
-		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
-	}
+		output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
+		if err != nil {
+			log.Error("Resources query plan request failed", zap.Error(err))
+			if errors.Is(err, compile.PolicyCompilationErr{}) {
+				return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+			}
+			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+		}
 
-	response := &responsev1.PlanResourcesResponse{
-		RequestId:        output.RequestId,
-		Action:           output.Action,
-		ResourceKind:     output.Kind,
-		PolicyVersion:    output.PolicyVersion,
-		Filter:           output.Filter,
-		ValidationErrors: output.ValidationErrors,
-	}
+		response = &responsev1.PlanResourcesResponse{
+			RequestId:        output.RequestId,
+			Action:           output.Action,
+			ResourceKind:     output.Kind,
+			PolicyVersion:    output.PolicyVersion,
+			Filter:           output.Filter,
+			ValidationErrors: output.ValidationErrors,
+		}
 
-	if input.IncludeMeta {
-		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:  output.FilterDebug,
-			MatchedScope: output.Scope,
+		if input.IncludeMeta {
+			response.Meta = &responsev1.PlanResourcesResponse_Meta{
+				FilterDebug:  output.FilterDebug,
+				MatchedScope: output.Scope,
+			}
 		}
 	}
 
