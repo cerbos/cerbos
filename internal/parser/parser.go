@@ -127,15 +127,11 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 	}
 
 	if len(f.Docs) == 0 {
-		if contentLen > 0 {
-			// Special case for unterminated strings. See test case 20.
-			return nil, nil, NewUnmarshalError(&sourcev1.Error{
-				Kind:     sourcev1.Error_KIND_PARSE_ERROR,
-				Message:  "invalid document: contents are not valid YAML or JSON",
-				Position: &sourcev1.Position{Line: 1, Column: 1, Path: "$"},
-			})
-		}
-		return nil, nil, nil
+		return nil, nil, NewUnmarshalError(&sourcev1.Error{
+			Kind:     sourcev1.Error_KIND_PARSE_ERROR,
+			Message:  "invalid document: contents are not valid YAML or JSON",
+			Position: &sourcev1.Position{Line: 1, Column: 1, Path: "$"},
+		})
 	}
 
 	u := &unmarshaler[T]{unmarshalOpts: unmarshalOpts{}}
