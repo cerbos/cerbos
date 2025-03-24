@@ -22,7 +22,6 @@ type Context interface {
 	StartExpr(expr string) Context
 	StartNthCondition(index int) Context
 	StartPolicy(name string) Context
-	StartRolePolicyScope(scope string) Context
 	StartResource(kind string) Context
 	StartRole(role string) Context
 	StartRule(name string) Context

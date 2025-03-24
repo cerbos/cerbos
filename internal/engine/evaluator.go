@@ -35,7 +35,10 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
+const (
+	noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
+	conditionNotSatisfied   = "Condition not satisfied"
+)
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
@@ -196,8 +199,6 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 		var actionEffectInfo EffectInfo
 		for _, role := range input.Principal.Roles {
-			roctx := actx.StartRole(role)
-
 			roleEffectSet := make(map[effectv1.Effect]struct{})
 			roleEffectInfo := EffectInfo{
 				Effect: effectv1.Effect_EFFECT_NO_MATCH,
@@ -208,7 +209,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 
 		scopesLoop:
 			for _, scope := range scopes {
-				sctx := roctx.StartScope(scope)
+				sctx := actx.StartScope(scope)
 
 				// This is for backwards compatibility with effectiveDerivedRoles.
 				// If we reach this point, we can assert that the given {origin policy + scope} combination has been evaluated
@@ -217,7 +218,9 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					effectiveDerivedRoles := make(internal.StringSet)
 					if drs := rte.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, version, scope)); drs != nil {
 						for name, dr := range drs {
+							drctx := tctx.StartPolicy(dr.OriginFqn).StartDerivedRole(name)
 							if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
+								drctx.Skipped(nil, "No matching roles")
 								continue
 							}
 
@@ -227,7 +230,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 								variables = c
 							} else {
 								var err error
-								variables, err = evalCtx.evaluateVariables(ctx, tctx.StartVariables(), dr.Constants, dr.OrderedVariables)
+								variables, err = evalCtx.evaluateVariables(ctx, drctx.StartVariables(), dr.Constants, dr.OrderedVariables)
 								if err != nil {
 									return nil, err
 								}
@@ -235,7 +238,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							}
 
 							// we don't use `conditionCache` as we don't do any evaluations scoped solely to derived role conditions
-							ok, err := evalCtx.satisfiesCondition(ctx, tctx.StartCondition(), dr.Condition, dr.Constants, variables)
+							ok, err := evalCtx.satisfiesCondition(ctx, drctx.StartCondition(), dr.Condition, dr.Constants, variables)
 							if err != nil {
 								continue
 							}
@@ -261,7 +264,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						continue
 					}
 
-					rctx := sctx.StartRule(row.Name)
+					rulectx := sctx.StartRule(row.Name)
 
 					if m := rte.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
 						maps.Copy(result.AuditTrail.EffectivePolicies, m.GetSourceAttributes())
@@ -275,9 +278,9 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							variables = c
 						} else {
 							var err error
-							variables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, tctx, constants, row.Params.CelPrograms, row.Params.Variables)
+							variables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, pctx, constants, row.Params.CelPrograms, row.Params.Variables)
 							if err != nil {
-								rctx.Skipped(err, "Error evaluating variables")
+								rulectx.Skipped(err, "Error evaluating variables")
 								return nil, err
 							}
 							varCache[row.Params.Key] = variables
@@ -288,14 +291,9 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 					if c, ok := conditionCache[row.EvaluationKey]; ok { //nolint:nestif
 						satisfiesCondition = c
 					} else {
-						isSatisfied, err := evalCtx.satisfiesCondition(ctx, tctx.StartCondition(), row.Condition, constants, variables)
-						if err != nil {
-							rctx.Skipped(err, "Error evaluating condition")
-							continue
-						}
-
-						// if there's a derived role condition, we need to evaluate that too
-						if isSatisfied && row.DerivedRoleCondition != nil {
+						// We evaluate the derived role condition (if any) first, as this leads to a more sane engine trace output.
+						if row.DerivedRoleCondition != nil {
+							drctx := rulectx.StartDerivedRole(row.OriginDerivedRole)
 							var derivedRoleConstants map[string]any
 							var derivedRoleVariables map[string]any
 							if row.DerivedRoleParams != nil {
@@ -304,21 +302,36 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 									derivedRoleVariables = c
 								} else {
 									var err error
-									derivedRoleVariables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, tctx, derivedRoleConstants, row.DerivedRoleParams.CelPrograms, row.DerivedRoleParams.Variables)
+									derivedRoleVariables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, drctx, derivedRoleConstants, row.DerivedRoleParams.CelPrograms, row.DerivedRoleParams.Variables)
 									if err != nil {
-										rctx.Skipped(err, "Error evaluating derived role variables")
+										rulectx.Skipped(err, "Error evaluating derived role variables")
 										return nil, err
 									}
 									varCache[row.DerivedRoleParams.Key] = derivedRoleVariables
 								}
 							}
 
+							// Derived role engine trace logs are handled above. Because derived role conditions are baked into the rule table rows, we don't want to
+							// confuse matters by adding condition trace logs if a rule is referencing a derived role, so we pass a no-op context here.
 							// TODO(saml) we could probably pre-compile the condition also
-							isSatisfied, err = evalCtx.satisfiesCondition(ctx, tctx.StartCondition(), row.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
+							drSatisfied, err := evalCtx.satisfiesCondition(ctx, tracer.Start(nil), row.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
 							if err != nil {
-								rctx.Skipped(err, "Error evaluating derived role condition")
+								rulectx.Skipped(err, "Error evaluating derived role condition")
 								continue
 							}
+
+							// terminate early if the derived role condition isn't satisfied, which is consistent with the pre-rule table implementation
+							if !drSatisfied {
+								rulectx.Skipped(err, "No matching derived roles")
+								conditionCache[row.EvaluationKey] = false
+								continue
+							}
+						}
+
+						isSatisfied, err := evalCtx.satisfiesCondition(ctx, rulectx.StartCondition(), row.Condition, constants, variables)
+						if err != nil {
+							rulectx.Skipped(err, "Error evaluating condition")
+							continue
 						}
 
 						conditionCache[row.EvaluationKey] = isSatisfied
@@ -332,7 +345,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 
 						if outputExpr != nil {
-							octx := rctx.StartOutput(row.Name)
+							octx := rulectx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(rte.GetMeta(row.OriginFqn), row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, row.Params.Constants, variables),
@@ -353,7 +366,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 						}
 					} else {
 						if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
-							octx := rctx.StartOutput(row.Name)
+							octx := rulectx.StartOutput(row.Name)
 							output := &enginev1.OutputEntry{
 								Src: namer.RuleFQN(rte.GetMeta(row.OriginFqn), row.Scope, row.Name),
 								Val: evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
@@ -361,7 +374,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							result.Outputs = append(result.Outputs, output)
 							octx.ComputedOutput(output)
 						}
-						rctx.Skipped(nil, "Condition not satisfied")
+						rulectx.Skipped(nil, conditionNotSatisfied)
 					}
 				}
 
@@ -464,7 +477,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 								}
 
 								if !ok {
-									actx.Skipped(nil, "Condition not satisfied")
+									actx.Skipped(nil, conditionNotSatisfied)
 									if rule.EmitOutput != nil && rule.EmitOutput.When != nil && rule.EmitOutput.When.ConditionNotMet != nil {
 										octx := rctx.StartOutput(rule.Name)
 										output := &enginev1.OutputEntry{

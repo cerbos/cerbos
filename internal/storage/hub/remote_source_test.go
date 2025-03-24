@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	bundleV1ID      = "h1:oWTxBWyUjfwEWASC1EjzT9HGuVuVt3vgjO1GVcsJ0DQ="
+	bundleV1ID      = "h1:Hdon9Em1L7cUu4dClTCYnoEvQXoJjsMocshQsadoAWk="
 	bundleV2ID      = "66PXRRKTQ396OECH"
 	label           = "label"
 	playgroundLabel = "playground/A4W8GJAIZYIH"
