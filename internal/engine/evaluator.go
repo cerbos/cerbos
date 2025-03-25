@@ -280,7 +280,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 							var err error
 							variables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, pctx, constants, row.Params.CelPrograms, row.Params.Variables)
 							if err != nil {
-								rulectx.Skipped(err, "Error evaluating variables")
+								pctx.Skipped(err, "Error evaluating variables")
 								return nil, err
 							}
 							varCache[row.Params.Key] = variables
@@ -304,7 +304,7 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 									var err error
 									derivedRoleVariables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, drctx, derivedRoleConstants, row.DerivedRoleParams.CelPrograms, row.DerivedRoleParams.Variables)
 									if err != nil {
-										rulectx.Skipped(err, "Error evaluating derived role variables")
+										drctx.Skipped(err, "Error evaluating derived role variables")
 										return nil, err
 									}
 									varCache[row.DerivedRoleParams.Key] = derivedRoleVariables
