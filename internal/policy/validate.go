@@ -12,6 +12,8 @@ import (
 	"github.com/cerbos/cerbos/internal/parser"
 )
 
+var errEmptyPolicy = errors.New("policy is empty")
+
 type ValidationError struct {
 	Err *sourcev1.Error
 }
@@ -30,7 +32,11 @@ func (ve ValidationError) Error() string {
 }
 
 func Validate(p *policyv1.Policy, sc parser.SourceCtx) error {
-	switch pt := p.PolicyType.(type) {
+	if p == nil {
+		return errEmptyPolicy
+	}
+
+	switch pt := p.GetPolicyType().(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		return validateResourcePolicy(pt.ResourcePolicy, sc)
 	case *policyv1.Policy_PrincipalPolicy:
