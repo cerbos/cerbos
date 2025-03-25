@@ -11,16 +11,44 @@ playgroundTest:
       "files":
         [
           {
-            "fileName": "common_roles.yaml",
-            "contents": "{{ fileString `store/derived_roles/common_roles.yaml` | b64enc }}",
+            "fileName": "_schemas/principal.json",
+            "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
           },
           {
-            "fileName": "policy_04.yaml",
-            "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
+            "fileName": "_schemas/resources/leave_request.json",
+            "contents": "{{ fileString `store/_schemas/resources/leave_request.json` | b64enc }}",
           },
           {
-            "fileName": "policy_04_test.yaml",
-            "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}",
+            "fileName": "derived_roles_01.yaml",
+            "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "derived_roles_02.yaml",
+            "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_05.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_05.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_05_acme.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_05_acme.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_05_acme.hr.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_05_acme.hr.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_05_acme.hr.uk.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_05_acme.hr.uk.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_04_acme.hr.uk.yaml",
+            "contents": "{{ fileString `store/role_policies/policy_04_acme.hr.uk.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_05_test.yaml",
+            "contents": "{{ fileString `store/tests/policy_05_test.yaml` | b64enc }}",
           },
         ],
     }
@@ -34,24 +62,24 @@ playgroundTest:
               "suites":
                 [
                   {
-                    "file": "policy_04_test.yaml",
-                    "name": "album_object resource policy tests",
+                    "file": "policy_05_test.yaml",
+                    "name": "leave_request role and resource policy tests",
                     "testCases":
                       [
                         {
-                          name: "User can view public album",
+                          name: "Travel agent can assist with a leave_request",
                           "principals":
                             [
                               {
-                                "name": "user",
+                                "name": "john",
                                 "resources":
                                   [
                                     {
-                                      "name": "album",
+                                      "name": "lr1",
                                       "actions":
                                         [
                                           {
-                                            "name": "view",
+                                            "name": "assist",
                                             "details":
                                               {
                                                 "result": "RESULT_PASSED",
@@ -64,36 +92,18 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.derived_roles.apatr_common_roles",
+                                                            "policy": "cerbos.derived_roles.alpha",
                                                           },
                                                           {
                                                             "kind": "KIND_DERIVED_ROLE",
-                                                            "derivedRole": "abuse_moderator",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_SKIPPED",
-                                                          "message": "No matching roles",
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.derived_roles.apatr_common_roles",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_DERIVED_ROLE",
-                                                            "derivedRole": "owner",
+                                                            "derivedRole": "employee_that_owns_the_record",
                                                           },
                                                           {
                                                             "kind": "KIND_CONDITION",
                                                           },
                                                           {
                                                             "kind": "KIND_EXPR",
-                                                            "expr": "request.resource.attr.owner == request.principal.id",
+                                                            "expr": "R.attr.owner == P.id",
                                                           },
                                                         ],
                                                       "event":
@@ -107,25 +117,17 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                            "policy": "cerbos.derived_roles.beta",
                                                           },
                                                           {
-                                                            "kind": "KIND_ACTION",
-                                                            "action": "view",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_SCOPE",
-                                                            "scope": "",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_RULE",
-                                                            "rule": "rule-001",
+                                                            "kind": "KIND_DERIVED_ROLE",
+                                                            "derivedRole": "direct_manager",
                                                           },
                                                         ],
                                                       "event":
                                                         {
                                                           "status": "STATUS_SKIPPED",
-                                                          "message": "No matching derived roles",
+                                                          "message": "No matching roles",
                                                         },
                                                     },
                                                     {
@@ -133,26 +135,22 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                            "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk",
                                                           },
                                                           {
                                                             "kind": "KIND_ACTION",
-                                                            "action": "view",
+                                                            "action": "assist",
                                                           },
                                                           {
                                                             "kind": "KIND_SCOPE",
-                                                            "scope": "",
+                                                            "scope": "acme.hr.uk",
                                                           },
                                                           {
                                                             "kind": "KIND_RULE",
-                                                            "rule": "rule-002",
+                                                            "rule": "rule-003",
                                                           },
                                                           {
                                                             "kind": "KIND_CONDITION",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_EXPR",
-                                                            "expr": "request.resource.attr.public == true",
                                                           },
                                                         ],
                                                       "event":
@@ -166,17 +164,42 @@ playgroundTest:
                                                         [
                                                           {
                                                             "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                            "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk",
                                                           },
                                                           {
                                                             "kind": "KIND_ACTION",
-                                                            "action": "view",
+                                                            "action": "assist",
                                                           },
                                                         ],
                                                       "event":
                                                         {
                                                           "status": "STATUS_ACTIVATED",
                                                           "effect": "EFFECT_ALLOW",
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_VARIABLES",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_VARIABLE",
+                                                            "variable":
+                                                              {
+                                                                "name": "principal_location",
+                                                                "expr": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                                                              },
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_ACTIVATED",
+                                                          "result": null,
                                                         },
                                                     },
                                                 ],

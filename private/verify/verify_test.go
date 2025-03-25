@@ -38,5 +38,5 @@ func TestBundle(t *testing.T) {
 
 	results, err := verify.Bundle(ctx, params, test.PathToDir(t, "store"))
 	require.NoError(t, err)
-	require.Equal(t, results.Summary.OverallResult, policyv1.TestResults_RESULT_PASSED)
+	require.Equal(t, policyv1.TestResults_RESULT_PASSED, results.Summary.OverallResult)
 }

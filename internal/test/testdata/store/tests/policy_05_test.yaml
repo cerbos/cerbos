@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/TestSuite.schema.json
+---
+name: leave_request role and resource policy tests
+
+principals:
+  john:
+    id: john
+    roles:
+      - acme_travel_agent 
+    attr:
+      department: engineering
+      geography: eu
+      team: a
+
+resources:
+  lr1:
+    id: lr1
+    kind: leave_request
+    scope: acme.hr.uk
+    attr:
+      id: lr1
+      department: engineering
+      geography: eu
+      team: a
+
+tests:
+  - name: Travel agent can assist with a leave_request
+    input:
+      principals:
+        - john
+      resources:
+        - lr1
+      actions:
+        - assist
+    expected:
+      - principal: john
+        resource: lr1
+        actions:
+          assist: EFFECT_ALLOW
