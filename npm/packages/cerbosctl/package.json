@@ -1,6 +1,6 @@
 {
   "name": "cerbosctl",
-  "version": "0.42.0",
+  "version": "0.43.0-prerelease",
   "description": "The cerbosctl binary",
   "repository": {
     "type": "git",
@@ -36,9 +36,9 @@
   ],
   "scripts": {},
   "optionalDependencies": {
-    "@cerbos/cerbosctl-darwin-arm64": "0.42.0",
-    "@cerbos/cerbosctl-darwin-x64": "0.42.0",
-    "@cerbos/cerbosctl-linux-arm64": "0.42.0",
-    "@cerbos/cerbosctl-linux-x64": "0.42.0"
+    "@cerbos/cerbosctl-darwin-arm64": "0.43.0-prerelease",
+    "@cerbos/cerbosctl-darwin-x64": "0.43.0-prerelease",
+    "@cerbos/cerbosctl-linux-arm64": "0.43.0-prerelease",
+    "@cerbos/cerbosctl-linux-x64": "0.43.0-prerelease"
   }
 }
