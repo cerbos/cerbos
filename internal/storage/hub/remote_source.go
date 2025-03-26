@@ -172,7 +172,7 @@ func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, erro
 		conf:      conf,
 		hub:       hub,
 		healthy:   false,
-		log:       zap.L().Named(DriverName).With(zap.String("label", conf.Remote.BundleLabel)),
+		log:       zap.L().Named(DriverName),
 		scratchFS: afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
 	}, nil
 }
@@ -195,6 +195,8 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 			bundleLabel: s.conf.Remote.BundleLabel,
 			playground:  playgroundLabelPattern.MatchString(s.conf.Remote.BundleLabel),
 		}
+		s.log = s.log.With(zap.String("label", s.conf.Remote.BundleLabel))
+
 	case bundleapi.Version2:
 		clientv2, err := s.hub.V2(clientConf)
 		if err != nil {
@@ -212,6 +214,7 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		}
 
 		s.client = &cloudAPIv2{client: clientv2, source: source}
+		s.log = s.log.With(zap.Stringer("source", source))
 	default:
 		return fmt.Errorf("unsupported bundle version: %d", s.conf.BundleVersion)
 	}
