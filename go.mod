@@ -17,7 +17,7 @@ require (
 	github.com/bufbuild/protovalidate-go v0.9.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cerbos/cerbos-sdk-go v0.2.15
-	github.com/cerbos/cerbos/api/genpb v0.41.0
+	github.com/cerbos/cerbos/api/genpb v0.41.1-0.20250326075130-4e6d19b9ef74
 	github.com/cerbos/cloud-api v0.1.38
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
@@ -72,6 +72,7 @@ require (
 	github.com/sony/gobreaker/v2 v2.1.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/afero v1.12.0
+	github.com/spiffe/go-spiffe/v2 v2.5.0
 	github.com/stoewer/go-strcase v1.3.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.18.0
@@ -257,7 +258,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/spf13/cast v1.7.0 // indirect
-	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.9.0 // indirect
