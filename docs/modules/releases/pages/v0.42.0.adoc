@@ -1,0 +1,57 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.42.0]
+= Cerbos v0.42.0
+
+== Highlights
+
+This release adds support for working with link:https://spiffe.io[SPIFFE] identities in policy conditions. When writing policies for authorizing actions performed by other services or applications, these new functions help with writing rules based on the workload identity of the caller such as comparing the trust domain or matching a set of pre-defined identities among other things. See the xref:policies:conditions.adoc#spiffe[function documentation] for examples.
+
+Audit log entries now contain nested attribute values as actual JSON values instead of stringified JSON. Note that this might be a breaking change if your log aggregation system is configured to extract particular values from the stringified representation.
+
+During the engine overhaul in version 0.41.0, a bug was introduced where changes to derived role policies didn't update the cached policy state of the PDP. This issue is now rectified.
+
+Other bug fixes include triggering a reload of schemas when the store reload Admin API endpoint is called and fixing the evaluation of nested condition blocks in the REPL.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Ensure derived role updates purge rule table caches (link:https://github.com/cerbos/cerbos/pull/2523[#2523])
+* Evaluate condition blocks correctly in REPL (link:https://github.com/cerbos/cerbos/pull/2513[#2513])
+* Purge schema cache on store reload (link:https://github.com/cerbos/cerbos/pull/2522[#2522])
+* Tidy up rule table trace outputs (link:https://github.com/cerbos/cerbos/pull/2531[#2531])
+
+=== Features
+
+* SPIFFE functions (link:https://github.com/cerbos/cerbos/pull/2524[#2524])
+
+=== Enhancements
+
+* #**BREAKING**# Stop logging attribute values as JSON-encoded strings in decision logs (link:https://github.com/cerbos/cerbos/pull/2516[#2516])
+
+=== Documentation
+
+* Remove symlink to SQL Server schema (link:https://github.com/cerbos/cerbos/pull/2505[#2505])
+
+=== Chores
+
+* Add gopls's modernizer to linters (link:https://github.com/cerbos/cerbos/pull/2515[#2515])
+* Bump github.com/containerd/containerd from 1.7.25 to 1.7.27 in /tools (link:https://github.com/cerbos/cerbos/pull/2520[#2520])
+* Bump github.com/golang-jwt/jwt/v4 from 4.5.1 to 4.5.2 in /tools (link:https://github.com/cerbos/cerbos/pull/2527[#2527])
+* Bump github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 in /tools (link:https://github.com/cerbos/cerbos/pull/2526[#2526])
+* Bump github.com/redis/go-redis/v9 from 9.7.0 to 9.7.3 (link:https://github.com/cerbos/cerbos/pull/2525[#2525])
+* Bump golang.org/x/net from 0.35.0 to 0.36.0 in /api/genpb (link:https://github.com/cerbos/cerbos/pull/2514[#2514])
+* Bump golang.org/x/net from 0.35.0 to 0.36.0 in /tools (link:https://github.com/cerbos/cerbos/pull/2509[#2509])
+* Bump version to 0.42.0
+* Handle empty policies in the parser (link:https://github.com/cerbos/cerbos/pull/2530[#2530])
+* Handle kind ROLE in trace printer (link:https://github.com/cerbos/cerbos/pull/2511[#2511])
+* Switch from CEL protobuf to native types (link:https://github.com/cerbos/cerbos/pull/2492[#2492])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2507[#2507])
+* Update golangci/golangci-lint-action action to v6.5.1 (link:https://github.com/cerbos/cerbos/pull/2517[#2517])
+* Update golangci/golangci-lint-action action to v6.5.2 (link:https://github.com/cerbos/cerbos/pull/2528[#2528])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2508[#2508])
+* Update pnpm to v10.6.3 (link:https://github.com/cerbos/cerbos/pull/2518[#2518])
+* Update pnpm to v10.6.5 (link:https://github.com/cerbos/cerbos/pull/2529[#2529])
