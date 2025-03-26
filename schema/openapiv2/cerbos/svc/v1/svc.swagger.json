@@ -2792,6 +2792,18 @@
           "type": "string",
           "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
           "pattern": "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+        },
+        "scopes": {
+          "type": "array",
+          "example": [
+            "acme.it",
+            "acme.hk"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of dot-separated scopes.",
+          "uniqueItems": true
         }
       },
       "required": [

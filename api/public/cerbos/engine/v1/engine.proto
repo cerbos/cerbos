@@ -42,6 +42,7 @@ message PlanResourcesInput {
     ];
 
     string scope = 4 [
+      deprecated = true,
       (buf.validate.field).string = {pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"},
       (google.api.field_behavior) = OPTIONAL,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -49,6 +50,26 @@ message PlanResourcesInput {
         pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
       }
     ];
+    repeated string scopes = 5 [
+      (buf.validate.field).repeated = {
+        unique: true
+        items: {
+          string: {min_len: 0}
+        }
+        min_items: 0
+      },
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "A list of dot-separated scopes."
+        min_items: 0
+        unique_items: true
+        example: "[\"acme.it\", \"acme.hk\"]"
+      }
+    ];
+    option (buf.validate.message).cel = {
+      id: "exclusiveFieldsScopeOrScopes"
+      expression: "has(this.scope) && !has(this.scopes) || !has(this.scope) && size(this.scopes) > 0"
+      message: "Exactly one of 'scope' or 'scopes' field must be set"
+    };
   }
 
   string request_id = 1;

@@ -120,54 +120,79 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		log.Error("Failed to extract auxData", zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
-
+	deprecated := false
 	if request.Action != "" {
 		request.Actions = []string{request.Action}
+		deprecated = true
 	}
-	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
-
-	for _, action := range request.Actions {
-		input := &enginev1.PlanResourcesInput{
-			RequestId:   request.RequestId,
-			Action:      action,
-			Principal:   request.Principal,
-			Resource:    request.Resource,
-			AuxData:     auxData,
-			IncludeMeta: request.IncludeMeta,
-		}
-		output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
-		if err != nil {
-			log.Error("Resources query plan request failed", zap.Error(err))
-			if errors.Is(err, compile.PolicyCompilationErr{}) {
-				return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+	if request.Resource.Scope != "" {
+		deprecated = true
+		request.Resource.Scopes = []string{request.Resource.Scope}
+	}
+	outputPerScope := make(map[string]*enginev1.PlanResourcesOutput, len(request.Resource.Scopes))
+	matched_scopes := make([]string, 0, len(request.Resource.Scopes)*len(request.Actions))
+	for _, scope := range request.Resource.Scopes {
+		outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
+		for _, action := range request.Actions {
+			input := &enginev1.PlanResourcesInput{
+				RequestId:   request.RequestId,
+				Action:      action,
+				Principal:   request.Principal,
+				Resource:    request.Resource,
+				AuxData:     auxData,
+				IncludeMeta: request.IncludeMeta,
 			}
-			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+			output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
+			if err != nil {
+				log.Error("Resources query plan request failed", zap.Error(err))
+				if errors.Is(err, compile.PolicyCompilationErr{}) {
+					return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+				}
+				return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+			}
+			outputs = append(outputs, output)
+			matched_scopes = append(matched_scopes, output.Scope)
 		}
-		outputs = append(outputs, output)
+		f := planner.MergeWithAnd(outputs)
+		validationErrors := make([]*v11.ValidationError, 0, len(outputs))
+		scopes := make([]string, 0, len(outputs))
+		for _, output := range outputs {
+			validationErrors = append(validationErrors, output.ValidationErrors...)
+			scopes = append(scopes, output.Scope)
+		}
+		outputPerScope[scope] = &enginev1.PlanResourcesOutput{
+			Filter:           f,
+			FilterDebug:      planner.FilterToString(f),
+			ValidationErrors: validationErrors,
+		}
 	}
-	filter := planner.MergeWithAnd(outputs)
-	validationErrors := make([]*v11.ValidationError, 0, len(outputs))
-	scopes := make([]string, 0, len(outputs))
-	for _, output := range outputs {
+	f := planner.Merge(outputPerScope)
+	validationErrors := make([]*v11.ValidationError, 0, len(outputPerScope))
+	for _, output := range outputPerScope {
 		validationErrors = append(validationErrors, output.ValidationErrors...)
-		scopes = append(scopes, output.Scope)
 	}
 	response := &responsev1.PlanResourcesResponse{
 		RequestId:        request.RequestId,
 		Actions:          request.Actions,
-		Action:           request.Action,
 		ResourceKind:     request.Resource.Kind,
 		PolicyVersion:    request.Resource.PolicyVersion,
-		Filter:           filter,
+		Filter:           f,
 		ValidationErrors: validationErrors,
 	}
 
 	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
 			FilterDebug:   planner.FilterToString(response.Filter),
-			MatchedScope:  outputs[0].Scope,
-			MatchedScopes: scopes,
+			MatchedScopes: matched_scopes,
 		}
+		if deprecated {
+			response.Meta.MatchedScope = matched_scopes[0]
+			response.Meta.MatchedScopes = nil
+		}
+	}
+	if deprecated {
+		response.Action = request.Action
+		response.Actions = nil
 	}
 
 	return response, nil

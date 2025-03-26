@@ -87,6 +87,14 @@ func cerbos_engine_v1_PlanResourcesInput_Resource_hashpb_sum(m *v1.PlanResources
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetScope()))
 
 	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.Resource.scopes"]; !ok {
+		if len(m.Scopes) > 0 {
+			for _, v := range m.Scopes {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 }
 
 func cerbos_engine_v1_Principal_hashpb_sum(m *v1.Principal, hasher hash.Hash, ignore map[string]struct{}) {
