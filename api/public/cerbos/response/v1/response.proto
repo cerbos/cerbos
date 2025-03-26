@@ -34,7 +34,51 @@ message PlanResourcesResponse {
       description: "Policy scope that matched to produce this effect."
       example: "\"acme.corp.base\""
     }];
+
+    repeated string matched_scopes = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Policy scopes that matched to produce this effect."
+      example: "[\"acme.corp.base\", \"acme.corp.hk\"]"
+    }];
   }
+
+  string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Request ID provided in the request."
+    example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+  }];
+
+  string action = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Action"
+    example: "\"view:public\""
+  }];
+
+  repeated string actions = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Actions"
+    example: "[\"view:public\", \"edit:profile\"]"
+  }];
+
+  string resource_kind = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Resource kind."
+    example: "\"album:object\""
+  }];
+
+  string policy_version = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "The policy version."
+    example: "\"default\""
+  }];
+
+  cerbos.engine.v1.PlanResourcesFilter filter = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter"}];
+
+  Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
+
+  repeated cerbos.schema.v1.ValidationError validation_errors = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
+
+  string cerbos_call_id = 8 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Audit log call ID associated with this request"}];
+}
+
+message CrossScopePlanResourcesResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Resources query plan response for a set of resources."}
+  };
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Request ID provided in the request."
@@ -58,6 +102,15 @@ message PlanResourcesResponse {
 
   cerbos.engine.v1.PlanResourcesFilter filter = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter"}];
 
+  message Meta {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "Metadata about request evaluation."}
+    };
+
+    string filter_debug = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter textual representation for debugging purposes."}];
+
+    map<string, PlanResourcesResponse.Meta> scopes_meta = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
+  }
   Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
 
   repeated cerbos.schema.v1.ValidationError validation_errors = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];

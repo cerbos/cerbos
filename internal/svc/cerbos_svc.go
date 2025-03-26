@@ -6,6 +6,7 @@ package svc
 import (
 	"context"
 	"errors"
+	"github.com/cerbos/cerbos/internal/engine/planner"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -16,6 +17,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -49,7 +51,7 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData, reqLimits Re
 	}
 }
 
-func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
+func (cs *CerbosService) CrossScopePlanResources(ctx context.Context, request *requestv1.CrossScopePlanResourcesRequest) (*responsev1.CrossScopePlanResourcesResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 
 	auxData, err := cs.auxData.Extract(ctx, request.AuxData)
@@ -58,37 +60,139 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
-	input := &enginev1.PlanResourcesInput{
-		RequestId:   request.RequestId,
-		Action:      request.Action,
-		Principal:   request.Principal,
-		Resource:    request.Resource,
-		AuxData:     auxData,
-		IncludeMeta: request.IncludeMeta,
+	ctx = logging.ToContext(ctx, log)
+	response := &responsev1.CrossScopePlanResourcesResponse{
+		RequestId:     request.RequestId,
+		Action:        request.Action,
+		ResourceKind:  request.Resource.Kind,
+		PolicyVersion: request.Resource.PolicyVersion,
 	}
-	output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
+	if request.IncludeMeta {
+		response.Meta = &responsev1.CrossScopePlanResourcesResponse_Meta{
+			ScopesMeta: make(map[string]*responsev1.PlanResourcesResponse_Meta, len(request.Resource.Scopes)),
+		}
+	}
+	filters := make(map[string]*enginev1.PlanResourcesOutput, len(request.Resource.Scopes))
+	for _, scope := range request.Resource.Scopes {
+		input := &enginev1.PlanResourcesInput{
+			RequestId: request.RequestId,
+			Action:    request.Action,
+			Principal: request.Principal,
+			Resource: &enginev1.PlanResourcesInput_Resource{
+				Kind:          request.Resource.Kind,
+				Attr:          request.Resource.Attr,
+				PolicyVersion: request.Resource.PolicyVersion,
+				Scope:         scope,
+			},
+			AuxData:     auxData,
+			IncludeMeta: true,
+		}
+		output, err := cs.eng.PlanResources(ctx, input)
+		if err != nil {
+			log.Error("Resources query plan request failed", zap.Error(err))
+			if errors.Is(err, compile.PolicyCompilationErr{}) {
+				return nil, status.Errorf(codes.FailedPrecondition, "Cross-scope Resources query plan failed due to invalid policy")
+			}
+			return nil, status.Errorf(codes.Internal, "Cross-scope Resources query plan request failed")
+		}
+		filters[scope] = output
+
+		if request.IncludeMeta {
+			response.Meta.ScopesMeta[scope] = &responsev1.PlanResourcesResponse_Meta{
+				FilterDebug:  output.FilterDebug,
+				MatchedScope: output.Scope,
+			}
+		}
+	}
+
+	response.Filter = planner.Merge(filters)
+	if request.IncludeMeta {
+		response.Meta.FilterDebug = planner.FilterToString(response.Filter)
+	}
+	return response, nil
+}
+
+func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
+	log := logging.ReqScopeLog(ctx)
+
+	auxData, err := cs.auxData.Extract(ctx, request.AuxData)
 	if err != nil {
-		log.Error("Resources query plan request failed", zap.Error(err))
-		if errors.Is(err, compile.PolicyCompilationErr{}) {
-			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
-		}
-		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+		log.Error("Failed to extract auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
-
+	deprecated := false
+	if request.Action != "" {
+		request.Actions = []string{request.Action}
+		deprecated = true
+	}
+	if request.Resource.Scope != "" {
+		deprecated = true
+		request.Resource.Scopes = []string{request.Resource.Scope}
+	}
+	outputPerScope := make(map[string]*enginev1.PlanResourcesOutput, len(request.Resource.Scopes))
+	matched_scopes := make([]string, 0, len(request.Resource.Scopes)*len(request.Actions))
+	for _, scope := range request.Resource.Scopes {
+		outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
+		for _, action := range request.Actions {
+			input := &enginev1.PlanResourcesInput{
+				RequestId:   request.RequestId,
+				Action:      action,
+				Principal:   request.Principal,
+				Resource:    request.Resource,
+				AuxData:     auxData,
+				IncludeMeta: request.IncludeMeta,
+			}
+			output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
+			if err != nil {
+				log.Error("Resources query plan request failed", zap.Error(err))
+				if errors.Is(err, compile.PolicyCompilationErr{}) {
+					return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+				}
+				return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+			}
+			outputs = append(outputs, output)
+			matched_scopes = append(matched_scopes, output.Scope)
+		}
+		f := planner.MergeWithAnd(outputs)
+		validationErrors := make([]*v11.ValidationError, 0, len(outputs))
+		scopes := make([]string, 0, len(outputs))
+		for _, output := range outputs {
+			validationErrors = append(validationErrors, output.ValidationErrors...)
+			scopes = append(scopes, output.Scope)
+		}
+		outputPerScope[scope] = &enginev1.PlanResourcesOutput{
+			Filter:           f,
+			FilterDebug:      planner.FilterToString(f),
+			ValidationErrors: validationErrors,
+		}
+	}
+	f := planner.Merge(outputPerScope)
+	validationErrors := make([]*v11.ValidationError, 0, len(outputPerScope))
+	for _, output := range outputPerScope {
+		validationErrors = append(validationErrors, output.ValidationErrors...)
+	}
 	response := &responsev1.PlanResourcesResponse{
-		RequestId:        output.RequestId,
-		Action:           output.Action,
-		ResourceKind:     output.Kind,
-		PolicyVersion:    output.PolicyVersion,
-		Filter:           output.Filter,
-		ValidationErrors: output.ValidationErrors,
+		RequestId:        request.RequestId,
+		Actions:          request.Actions,
+		ResourceKind:     request.Resource.Kind,
+		PolicyVersion:    request.Resource.PolicyVersion,
+		Filter:           f,
+		ValidationErrors: validationErrors,
 	}
 
-	if input.IncludeMeta {
+	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:  output.FilterDebug,
-			MatchedScope: output.Scope,
+			FilterDebug:   planner.FilterToString(response.Filter),
+			MatchedScopes: matched_scopes,
 		}
+		if deprecated {
+			response.Meta.MatchedScope = matched_scopes[0]
+			response.Meta.MatchedScopes = nil
+		}
+	}
+	if deprecated {
+		response.Action = request.Action
+		response.Actions = nil
 	}
 
 	return response, nil

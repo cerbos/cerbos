@@ -98,6 +98,15 @@
         "scope": {
           "type": "string",
           "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0
+          },
+          "minItems": 0,
+          "uniqueItems": true
         }
       }
     },
@@ -1630,7 +1639,6 @@
     "cerbos.request.v1.PlanResourcesRequest": {
       "type": "object",
       "required": [
-        "action",
         "principal",
         "resource"
       ],
@@ -1639,6 +1647,15 @@
         "action": {
           "type": "string",
           "minLength": 1
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
         },
         "auxData": {
           "$ref": "#/definitions/cerbos.request.v1.AuxData"
@@ -2062,6 +2079,12 @@
         "action": {
           "type": "string"
         },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "cerbosCallId": {
           "type": "string"
         },
@@ -2097,6 +2120,12 @@
         },
         "matchedScope": {
           "type": "string"
+        },
+        "matchedScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

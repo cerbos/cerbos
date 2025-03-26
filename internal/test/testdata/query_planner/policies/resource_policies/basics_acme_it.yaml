@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: "api.cerbos.dev/v1"
+resourcePolicy:
+  version: default
+  resource: x
+  scope: acme.it
+  rules:
+    - actions:
+        - writeX
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: |-
+            R.attr.status == "PENDING_STATUS"

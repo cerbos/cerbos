@@ -105,7 +105,10 @@ generate-testdata-json-schemas: _buf
         cd {{ tools_mod_dir }}
         "${TOOLS_BIN_DIR}/buf" generate --template=testdata_jsonschema.gen.yaml --output=.. ../api/private
     )
-    mv {{ testdata_json_schema_dir }}/cerbos/private/v1/*TestCase.schema.json {{ testdata_json_schema_dir }}/cerbos/private/v1/QueryPlannerTestSuite.schema.json {{ testdata_json_schema_dir }}
+    mv \
+     {{ testdata_json_schema_dir }}/cerbos/private/v1/*TestCase.schema.json \
+     {{ testdata_json_schema_dir }}/cerbos/private/v1/{CrossScope,}QueryPlannerTestSuite.schema.json \
+     {{ testdata_json_schema_dir }}
     rm -rf {{ testdata_json_schema_dir }}/cerbos
 
 lint: lint-modernize _golangcilint _buf
@@ -171,6 +174,7 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
     tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
     tests["cerbos.svc.v1.CerbosService/PlanResources"]="plan_resources"
+    tests["cerbos.svc.v1.CerbosService/CrossScopePlanResources"]="x_scope_plan_resources"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"]="playground_validate"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate"]="playground_evaluate"
 
@@ -184,7 +188,7 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     done
 
 check-http PROTOCOL='https' HOST='localhost' PORT='3592':
-	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan}.hurl
+	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan,x_scope_plan}.hurl
 
 # Executables
 

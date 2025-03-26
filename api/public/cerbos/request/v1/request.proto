@@ -30,6 +30,60 @@ message PlanResourcesRequest {
   }];
 
   string action = 2 [
+    deprecated = true,
+    (buf.validate.field).string.min_len = 1,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Action to be applied to each resource in the list. Deprecated: use actions field instead."
+      example: "\"view:public\""
+    }
+  ];
+  repeated string actions = 7 [
+    (buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+      min_items: 0
+    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Actions to be applied to each resource in the list. Use this field instead of the deprecated action field. Must contain at least one action and all actions must be unique."
+      min_items: 0
+      unique_items: true
+      example: "[\"view:public\", \"edit:profile\"]"
+    }
+  ];
+  option (buf.validate.message).cel = {
+    id: "exclusiveFieldsActionOrActions"
+    expression: "has(this.action) && !has(this.actions) || !has(this.action) && size(this.actions) > 0"
+    message: "Exactly one of 'action' or 'actions' field must be set"
+  };
+
+  cerbos.engine.v1.Principal principal = 3 [
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  cerbos.engine.v1.PlanResourcesInput.Resource resource = 4 [
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  AuxData aux_data = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  bool include_meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Opt to receive request processing metadata in the response."}];
+}
+
+message CrossScopePlanResourcesRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "PDP Resources Query Plan Request"}
+  };
+
+  string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Optional application-specific ID useful for correlating logs for analysis."
+    example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+  }];
+
+  string action = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (google.api.field_behavior) = REQUIRED,
@@ -44,7 +98,7 @@ message PlanResourcesRequest {
     (google.api.field_behavior) = REQUIRED
   ];
 
-  cerbos.engine.v1.PlanResourcesInput.Resource resource = 4 [
+  cerbos.engine.v1.CrossScopePlanResourcesInput.Resource resource = 4 [
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED
   ];
