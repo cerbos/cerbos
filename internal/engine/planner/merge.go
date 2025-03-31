@@ -4,9 +4,10 @@
 package planner
 
 import (
+	"google.golang.org/protobuf/types/known/structpb"
+
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func Merge(filters map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
