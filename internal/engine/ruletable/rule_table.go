@@ -973,7 +973,8 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 	// independently.
 	var modIDs []namer.ModuleID
 	if resourceModIDs, ok := rt.derivedRolePolicies[ev.PolicyID]; ok {
-		modIDs = make([]namer.ModuleID, 0, len(resourceModIDs))
+		modIDs = make([]namer.ModuleID, 1, len(resourceModIDs)+1)
+		modIDs[0] = ev.PolicyID
 		for id := range resourceModIDs {
 			modIDs = append(modIDs, id)
 		}
@@ -983,7 +984,8 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 	if ev.OldPolicyID != nil {
 		var oldModIDs []namer.ModuleID
 		if resourceModIDs, ok := rt.derivedRolePolicies[*ev.OldPolicyID]; ok {
-			oldModIDs = make([]namer.ModuleID, 0, len(resourceModIDs))
+			oldModIDs = make([]namer.ModuleID, 1, len(resourceModIDs)+1)
+			oldModIDs[0] = *ev.OldPolicyID
 			for id := range resourceModIDs {
 				oldModIDs = append(oldModIDs, id)
 			}
