@@ -1005,7 +1005,7 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 			// an immediate ADD/UPDATE. We need the `derivedRolePolicies` record to hang around after the
 			// DELETE otherwise we have no reference to the dependent resource policies that are needed, to
 			// invalidate the query register on the subsequent event.
-			// Symantically, this is correct--the only time we need to worry about purging the derivedRolePolicies
+			// Semantically, this is correct--the only time we need to worry about purging the derivedRolePolicies
 			// cache is when we're guaranteed to set it again. We invalidate here in the knowledge that future
 			// lazy-loads will correctly set the derivedRolePolicies again.
 			delete(rt.derivedRolePolicies, modID)
