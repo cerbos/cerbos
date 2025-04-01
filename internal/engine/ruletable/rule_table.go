@@ -690,7 +690,7 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 	delete(rt.policyDerivedRoles, moduleID)
 }
 
-func (rt *RuleTable) invalidatePolicy(modID namer.ModuleID) {
+func (rt *RuleTable) invalidateQueryRegister(modID namer.ModuleID) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
@@ -977,7 +977,6 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 		for id := range resourceModIDs {
 			modIDs = append(modIDs, id)
 		}
-		delete(rt.derivedRolePolicies, ev.PolicyID)
 	} else {
 		modIDs = []namer.ModuleID{ev.PolicyID}
 	}
@@ -988,7 +987,6 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 			for id := range resourceModIDs {
 				oldModIDs = append(oldModIDs, id)
 			}
-			delete(rt.derivedRolePolicies, *ev.OldPolicyID)
 		} else {
 			oldModIDs = []namer.ModuleID{*ev.OldPolicyID}
 		}
@@ -1002,7 +1000,15 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 		if ev.Kind == storage.EventAddOrUpdatePolicy {
 			// We load lazily--invalidating the query register ensures the store gets
 			// queried again the next time.
-			rt.invalidatePolicy(modID)
+			rt.invalidateQueryRegister(modID)
+			// In the event of a policy update, some stores (e.g. blob stores) send a DELETE followed by
+			// an immediate ADD/UPDATE. We need the `derivedRolePolicies` record to hang around after the
+			// DELETE otherwise we have no reference to the dependent resource policies that are needed, to
+			// invalidate the query register on the subsequent event.
+			// Symantically, this is correct--the only time we need to worry about purging the derivedRolePolicies
+			// cache is when we're guaranteed to set it again. We invalidate here in the knowledge that future
+			// lazy-loads will correctly set the derivedRolePolicies again.
+			delete(rt.derivedRolePolicies, modID)
 		}
 	}
 }
