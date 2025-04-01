@@ -2680,6 +2680,18 @@
           "example": "view:public",
           "description": "Action to be applied to each resource in the list."
         },
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "edit:profile"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions to be applied to each resource in the list. Use this field instead of the deprecated action field. Must contain at least one action and all actions must be unique.",
+          "uniqueItems": true
+        },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
         },

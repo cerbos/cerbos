@@ -943,6 +943,13 @@ func cerbos_request_v1_PlanResourcesRequest_hashpb_sum(m *PlanResourcesRequest, 
 	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.include_meta"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetIncludeMeta())))
 	}
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+			}
+		}
+	}
 }
 
 func cerbos_request_v1_PlaygroundEvaluateRequest_hashpb_sum(m *PlaygroundEvaluateRequest, hasher hash.Hash, ignore map[string]struct{}) {
