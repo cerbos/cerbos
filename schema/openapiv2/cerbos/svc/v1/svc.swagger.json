@@ -2726,6 +2726,17 @@
           "example": "view:public",
           "description": "Action"
         },
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "edit:profile"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions"
+        },
         "resourceKind": {
           "type": "string",
           "example": "album:object",
@@ -2770,6 +2781,13 @@
           "type": "string",
           "example": "acme.corp.base",
           "description": "Policy scope that matched to produce this effect."
+        },
+        "matchedScopePerAction": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Matched scope for each action."
         }
       },
       "description": "Metadata about request evaluation."

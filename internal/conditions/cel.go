@@ -115,6 +115,10 @@ func Fqn(s string) string {
 	return fmt.Sprintf("%s.%s", CELRequestIdent, s)
 }
 
+func ResourceFqn(s string) string {
+	return fmt.Sprintf("%s.%s.%s", CELRequestIdent, CELResourceField, s)
+}
+
 func ResourceAttributeNames(s string) []string {
 	return []string{
 		fmt.Sprintf("%s.%s.%s", CELResourceAbbrev, CELAttrField, s),     // R.attr.<s>

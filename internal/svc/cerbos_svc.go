@@ -16,6 +16,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -58,37 +59,60 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
-	input := &enginev1.PlanResourcesInput{
-		RequestId:   request.RequestId,
-		Action:      request.Action,
-		Principal:   request.Principal,
-		Resource:    request.Resource,
-		AuxData:     auxData,
-		IncludeMeta: request.IncludeMeta,
-	}
-	output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
-	if err != nil {
-		log.Error("Resources query plan request failed", zap.Error(err))
-		if errors.Is(err, compile.PolicyCompilationErr{}) {
-			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
-		}
-		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+	deprecated := false
+	if request.Action != "" {
+		request.Actions = []string{request.Action}
+		deprecated = true
 	}
 
+	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
+	for _, action := range request.Actions {
+		input := &enginev1.PlanResourcesInput{
+			RequestId:   request.RequestId,
+			Action:      action,
+			Principal:   request.Principal,
+			Resource:    request.Resource,
+			AuxData:     auxData,
+			IncludeMeta: request.IncludeMeta,
+		}
+		output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
+		if err != nil {
+			log.Error("Resources query plan request failed", zap.Error(err))
+			if errors.Is(err, compile.PolicyCompilationErr{}) {
+				return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+			}
+			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+		}
+		outputs = append(outputs, output)
+	}
+
+	validationErrors := make([]*schemav1.ValidationError, 0, len(outputs))
+	for _, output := range outputs {
+		validationErrors = append(validationErrors, output.ValidationErrors...)
+	}
+	//TODO: dedupe validation errors
 	response := &responsev1.PlanResourcesResponse{
-		RequestId:        output.RequestId,
-		Action:           output.Action,
-		ResourceKind:     output.Kind,
-		PolicyVersion:    output.PolicyVersion,
-		Filter:           output.Filter,
-		ValidationErrors: output.ValidationErrors,
+		RequestId:        request.RequestId,
+		Actions:          request.Actions,
+		ResourceKind:     request.Resource.Kind,
+		PolicyVersion:    request.Resource.PolicyVersion,
+		Filter:           f,
+		ValidationErrors: validationErrors,
 	}
 
-	if input.IncludeMeta {
+	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:  output.FilterDebug,
-			MatchedScope: output.Scope,
+			FilterDebug:   planner.FilterToString(response.Filter),
+			MatchedScopes: matched_scopes,
 		}
+		if deprecated {
+			response.Meta.MatchedScope = matched_scopes[0]
+			response.Meta.MatchedScopes = nil
+		}
+	}
+	if deprecated {
+		response.Action = request.Action
+		response.Actions = nil
 	}
 
 	return response, nil

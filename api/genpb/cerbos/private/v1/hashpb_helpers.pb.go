@@ -3312,6 +3312,13 @@ func cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m *v14.PlanResourc
 	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.Meta.matched_scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMatchedScope()))
 	}
+	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.Meta.matched_scope_per_action"]; !ok {
+		if len(m.MatchedScopePerAction) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.MatchedScopePerAction)) {
+				_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScopePerAction[k]))
+			}
+		}
+	}
 }
 
 func cerbos_response_v1_PlanResourcesResponse_hashpb_sum(m *v14.PlanResourcesResponse, hasher hash.Hash, ignore map[string]struct{}) {
@@ -3348,6 +3355,13 @@ func cerbos_response_v1_PlanResourcesResponse_hashpb_sum(m *v14.PlanResourcesRes
 	}
 	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.cerbos_call_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetCerbosCallId()))
+	}
+	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+			}
+		}
 	}
 }
 
