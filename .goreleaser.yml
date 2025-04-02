@@ -100,19 +100,19 @@ universal_binaries:
 
 archives:
   - id: cerbos
-    builds:
+    ids:
       - cerbos
       - cerbosctl
     name_template: 'cerbos_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
   - id: cerbosctl
-    builds:
+    ids:
       - cerbosctl
     name_template: 'cerbosctl_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 
 nfpms:
   - id: cerbos
     package_name: cerbos
-    builds:
+    ids:
       - cerbos
       - cerbosctl
     vendor: Zenauth Ltd.
