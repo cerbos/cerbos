@@ -29,13 +29,15 @@ start_registry() {
   log_subheading "Waiting for local registry to be ready"
 
   local attempts=0
-  while ! ping_registry; do
+  until ping_registry; do
     if [[ $((attempts++)) -gt 100 ]]; then
       log_error "Timed out"
       log_subheading "Dumping logs"
       cat storage/.verdaccio.log
       exit 1
     fi
+
+    kill -s 0 $registry_pid 2> /dev/null
 
     printf "."
     sleep 0.1
