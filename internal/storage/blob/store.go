@@ -385,6 +385,7 @@ func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (idx in
 		metrics.Inc(ctx, metrics.StorePollCount(), metrics.DriverKey(DriverName))
 		if err != nil {
 			metrics.Inc(ctx, metrics.StoreSyncErrorCount(), metrics.DriverKey(DriverName))
+			s.NotifySubscribers(storage.Event{Kind: storage.EventDisableRuleTable})
 		} else {
 			metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), ts, metrics.DriverKey(DriverName))
 		}

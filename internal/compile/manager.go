@@ -93,9 +93,12 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 				c.log.Info("Purging compile cache")
 				c.cache.Purge()
 				c.NotifySubscribers(evt)
+			case storage.EventDisableRuleTable:
+				c.NotifySubscribers(evt)
 			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 				if err := c.recompile(evt); err != nil {
 					c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
+					c.NotifySubscribers(storage.Event{Kind: storage.EventDisableRuleTable})
 				}
 			default:
 				c.log.Debugw("Ignoring storage event", "event", evt)
