@@ -94,10 +94,12 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 				c.cache.Purge()
 				c.NotifySubscribers(evt)
 			case storage.EventDisableRuleTable:
+				// passed through from blob store
 				c.NotifySubscribers(evt)
 			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 				if err := c.recompile(evt); err != nil {
 					c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
+					// triggered by disk/git store build failures
 					c.NotifySubscribers(storage.Event{Kind: storage.EventDisableRuleTable})
 				}
 			default:
