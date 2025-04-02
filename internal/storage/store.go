@@ -208,6 +208,7 @@ const (
 	EventAddOrUpdateSchema
 	EventDeleteSchema
 	EventReload
+	EventDisableRuleTable
 	EventNop
 )
 
@@ -235,6 +236,8 @@ func (evt Event) String() string {
 		id = evt.SchemaFile
 	case EventReload:
 		kind = "RELOAD"
+	case EventDisableRuleTable:
+		kind = "DISABLE RULE TABLE"
 	case EventNop:
 		kind = "NOP"
 	default:
