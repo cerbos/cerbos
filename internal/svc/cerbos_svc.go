@@ -107,7 +107,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		}
 		if deprecated {
 			response.Meta.MatchedScope = matched_scopes[0]
-			response.Meta.MatchedScopes = nil
+.Meta.MatchedScopes = nil
 		}
 	}
 	if deprecated {
