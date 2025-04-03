@@ -233,10 +233,9 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 	}
 
 	if err := addScopedPolicyRules(scope); err != nil {
-		if errors.Is(err, errNoPoliciesMatched) {
-			return nil
+		if !errors.Is(err, errNoPoliciesMatched) {
+			return err
 		}
-		return err
 	}
 
 	for s := range namer.ScopeParents(scope) {
@@ -249,6 +248,7 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 	}
 
 	if len(toLoad) == 0 {
+		maps.Copy(rt.storeQueryRegister, registryBuffer)
 		return nil
 	}
 

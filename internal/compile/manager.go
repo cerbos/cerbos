@@ -156,6 +156,7 @@ func (c *Manager) recompile(evt storage.Event) error {
 			// log and remove the module that failed to compile.
 			c.log.Errorw("Failed to recompile", "id", modID, "error", err)
 			c.evict(modID)
+			c.NotifySubscribers(storage.Event{Kind: storage.EventDisableRuleTable})
 		}
 	}
 
@@ -273,6 +274,10 @@ func (c *Manager) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) (
 			continue
 		}
 		missed[id] = struct{}{}
+	}
+
+	if len(missed) == 0 {
+		return res, nil
 	}
 
 	toResolve := make([]namer.ModuleID, len(missed))
