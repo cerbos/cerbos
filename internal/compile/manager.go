@@ -156,6 +156,7 @@ func (c *Manager) recompile(evt storage.Event) error {
 			// log and remove the module that failed to compile.
 			c.log.Errorw("Failed to recompile", "id", modID, "error", err)
 			c.evict(modID)
+			// triggered by mutable stores
 			c.NotifySubscribers(storage.Event{Kind: storage.EventDisableRuleTable})
 		}
 	}
