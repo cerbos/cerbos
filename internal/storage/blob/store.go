@@ -202,7 +202,7 @@ func (s *Store) init(ctx context.Context) error {
 		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	idx, dirName, _, err := s.buildIndex(ctx, cr.all)
+	idx, dirName, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		return fmt.Errorf("failed to build index from the new set of files: %w", err)
 	}
@@ -394,18 +394,18 @@ func (e *indexBuildError) Error() string {
 // buildIndex creates a new work directory with its name set to current timestamp, creates symlinks targeted to
 // s.cacheDir according to the given map 'all' and tries to build a temporary index to see if there are any errors
 // with the incoming policies/schemas. If there are no errors returns the index built and the path to the new work directory.
-func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (index.Index, string, int64, error) {
+func (s *Store) buildIndex(ctx context.Context, all map[string][]string) (index.Index, string, error) {
 	dir, dirName, ts, err := s.prepareWorkDir(ctx, all)
 	if err != nil {
-		return nil, "", 0, err
+		return nil, "", err
 	}
 
 	idx, err := s.buildIndexFromWorkDir(ctx, dir, dirName, ts)
 	if err != nil {
-		return nil, "", 0, err
+		return nil, "", err
 	}
 
-	return idx, dirName, ts, nil
+	return idx, dirName, nil
 }
 
 func (s *Store) prepareWorkDir(ctx context.Context, all map[string][]string) (dir, currDirName string, ts int64, err error) {
@@ -504,7 +504,7 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to clone blob store: %w", err)
 	}
 
-	idx, dirName, _, err := s.buildIndex(ctx, cr.all)
+	idx, dirName, err := s.buildIndex(ctx, cr.all)
 	if err != nil {
 		if errors.Is(err, &indexBuildError{}) {
 			s.log.Warnw("Remote store is in an invalid state", "error", err)
