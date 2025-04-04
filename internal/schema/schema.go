@@ -259,6 +259,9 @@ func (m *manager) SubscriberID() string {
 
 func (m *manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
+		if event.IndexUnhealthy {
+			continue
+		}
 		//nolint:exhaustive
 		switch event.Kind {
 		case storage.EventAddOrUpdateSchema:
