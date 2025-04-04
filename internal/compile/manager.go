@@ -96,7 +96,12 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 				if err := c.recompile(evt); err != nil {
 					c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
+					evt.IndexUnhealthy = true
 				}
+				// we forward on events regardless of errors, as we want any dependent subscribers
+				// (namely, the rule table) to still know about any events, valid or not, so that
+				// it remains in sync
+				c.NotifySubscribers(evt)
 			default:
 				c.log.Debugw("Ignoring storage event", "event", evt)
 			}
@@ -154,7 +159,6 @@ func (c *Manager) recompile(evt storage.Event) error {
 		}
 	}
 
-	c.NotifySubscribers(evt)
 	return nil
 }
 
@@ -268,6 +272,10 @@ func (c *Manager) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) (
 			continue
 		}
 		missed[id] = struct{}{}
+	}
+
+	if len(missed) == 0 {
+		return res, nil
 	}
 
 	toResolve := make([]namer.ModuleID, len(missed))
