@@ -208,16 +208,16 @@ const (
 	EventAddOrUpdateSchema
 	EventDeleteSchema
 	EventReload
-	EventDisableRuleTable
 	EventNop
 )
 
 // Event is an event detected by the storage layer.
 type Event struct {
-	OldPolicyID *namer.ModuleID
-	SchemaFile  string
-	Kind        EventKind
-	PolicyID    namer.ModuleID
+	OldPolicyID    *namer.ModuleID
+	SchemaFile     string
+	Kind           EventKind
+	PolicyID       namer.ModuleID
+	IndexUnhealthy bool
 }
 
 func (evt Event) String() string {
@@ -236,8 +236,6 @@ func (evt Event) String() string {
 		id = evt.SchemaFile
 	case EventReload:
 		kind = "RELOAD"
-	case EventDisableRuleTable:
-		kind = "DISABLE RULE TABLE"
 	case EventNop:
 		kind = "NOP"
 	default:
