@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"slices"
 	"sync"
+	"sync/atomic"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
@@ -48,7 +49,7 @@ type RuleTable struct {
 	// role policies are per-scope, so the maps takes the form `map[scope]map[role][]roles`
 	parentRoles              map[string]map[string][]string
 	parentRoleAncestorsCache map[string]map[string][]string
-	awaitingHealthyIndex     chan struct{}
+	awaitingHealthyIndex     atomic.Bool
 	mu                       sync.RWMutex
 }
 
@@ -111,7 +112,7 @@ func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
 		parentRoles:              make(map[string]map[string][]string),
 		parentRoleAncestorsCache: make(map[string]map[string][]string),
-		awaitingHealthyIndex:     make(chan struct{}, 1),
+		awaitingHealthyIndex:     atomic.Bool{},
 		policyLoader:             policyLoader,
 	}
 }
@@ -957,9 +958,6 @@ func (rt *RuleTable) SubscriberID() string {
 func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 	for _, evt := range events {
 		switch evt.Kind {
-		case storage.EventDisableRuleTable:
-			rt.log.Debug("Attempting to disable rule table")
-			rt.setIndexUnhealthy()
 		case storage.EventReload:
 			rt.log.Info("Purging ruletable")
 			rt.purge()
@@ -969,14 +967,6 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 		default:
 			rt.log.Debugw("Ignoring storage event", "event", evt)
 		}
-	}
-}
-
-func (rt *RuleTable) setIndexUnhealthy() {
-	select {
-	case rt.awaitingHealthyIndex <- struct{}{}:
-		rt.log.Debugw("Disabling rule table")
-	default:
 	}
 }
 
@@ -992,12 +982,17 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 	//   never made it to the rule table update, thus the old definition is still in the rule table
 	// - the ruletable will continue to return stale data until another (valid) resource policy update
 	//   triggers a reload.
-	select {
-	case <-rt.awaitingHealthyIndex:
+	if ev.IndexUnhealthy {
+		if !rt.awaitingHealthyIndex.Load() {
+			rt.log.Debugw("Disabling rule table")
+			rt.awaitingHealthyIndex.Store(true)
+		}
+		return
+	} else if rt.awaitingHealthyIndex.Load() {
+		rt.awaitingHealthyIndex.Store(false)
 		rt.log.Debugw("Purging and re-enabling rule table")
 		rt.purge()
 		return
-	default:
 	}
 
 	// derived role policy conditions are baked into resource policy rows, so we need to retrieve

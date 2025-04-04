@@ -93,15 +93,15 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 				c.log.Info("Purging compile cache")
 				c.cache.Purge()
 				c.NotifySubscribers(evt)
-			case storage.EventDisableRuleTable:
-				// passed through from blob store
-				c.NotifySubscribers(evt)
 			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 				if err := c.recompile(evt); err != nil {
 					c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
-					// triggered by disk/git store build failures
-					c.NotifySubscribers(storage.Event{Kind: storage.EventDisableRuleTable})
+					evt.IndexUnhealthy = true
 				}
+				// we forward on events regardless of errors, as we want any dependent subscribers
+				// (namely, the rule table) to still know about any events, valid or not, so that
+				// it remains in sync
+				c.NotifySubscribers(evt)
 			default:
 				c.log.Debugw("Ignoring storage event", "event", evt)
 			}
@@ -156,12 +156,9 @@ func (c *Manager) recompile(evt storage.Event) error {
 			// log and remove the module that failed to compile.
 			c.log.Errorw("Failed to recompile", "id", modID, "error", err)
 			c.evict(modID)
-			// triggered by mutable stores
-			c.NotifySubscribers(storage.Event{Kind: storage.EventDisableRuleTable})
 		}
 	}
 
-	c.NotifySubscribers(evt)
 	return nil
 }
 
