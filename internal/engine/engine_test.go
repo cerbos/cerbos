@@ -401,7 +401,8 @@ func TestQueryPlan(t *testing.T) {
 						}
 						outputs = append(outputs, response)
 					}
-					filter := planner.MergeWithAnd(outputs)
+					filter, err := planner.MergeWithAnd(outputs)
+					require.NoError(t, err)
 					require.Empty(t, cmp.Diff(tt.Want, filter, protocmp.Transform()), "AST: %s\n%s\n", planner.FilterToString(filter), protojson.Format(filter))
 				})
 			}
