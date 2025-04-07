@@ -1,6 +1,6 @@
 {
   "name": "@cerbos/cerbos-darwin-arm64",
-  "version": "0.43.0-prerelease",
+  "version": "0.43.0",
   "description": "The darwin-arm64 binary for cerbos",
   "repository": {
     "type": "git",
