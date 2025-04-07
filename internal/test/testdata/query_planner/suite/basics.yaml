@@ -69,6 +69,18 @@ tests:
             operands:
               - value: z0
               - variable: request.resource.id
+    - actions: ["write", "edit", "now-once"]
+      resource:
+        kind: x
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id
     - actions: ["edit", "reference_globals"]
       resource:
         kind: x
@@ -89,3 +101,9 @@ tests:
                   operands:
                     - variable: request.resource.attr.environment
                     - value: test
+    - actions: ["edit", "reference_globals", "lecture"]
+      resource:
+        kind: x
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_DENIED
