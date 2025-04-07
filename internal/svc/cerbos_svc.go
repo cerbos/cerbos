@@ -62,14 +62,14 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
-	one_action := false
+	oneAction := false
 	if request.Action != "" {
 		request.Actions = []string{request.Action}
-		one_action = true
+		oneAction = true
 	}
 
 	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
-	matched_scopes := make(map[string]string, len(request.Actions))
+	matchedScopes := make(map[string]string, len(request.Actions))
 	for _, action := range request.Actions {
 		input := &enginev1.PlanResourcesInput{
 			RequestId:   request.RequestId,
@@ -88,7 +88,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
 		}
 		outputs = append(outputs, output)
-		matched_scopes[action] = output.Scope
+		matchedScopes[action] = output.Scope
 	}
 
 	validationErrors := make([]*schemav1.ValidationError, 0, len(outputs))
@@ -123,15 +123,15 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
 			FilterDebug:           planner.FilterToString(response.Filter),
-			MatchedScopePerAction: matched_scopes,
+			MatchedScopePerAction: matchedScopes,
 		}
 	}
 
-	if one_action {
+	if oneAction {
 		response.Action = request.Action
 		response.Actions = nil
 		if request.IncludeMeta {
-			response.Meta.MatchedScope = matched_scopes[response.Action]
+			response.Meta.MatchedScope = matchedScopes[response.Action]
 			response.Meta.MatchedScopePerAction = nil
 		}
 	}
