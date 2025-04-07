@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"slices"
 	"sync"
+	"sync/atomic"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
@@ -48,6 +49,7 @@ type RuleTable struct {
 	// role policies are per-scope, so the maps takes the form `map[scope]map[role][]roles`
 	parentRoles              map[string]map[string][]string
 	parentRoleAncestorsCache map[string]map[string][]string
+	awaitingHealthyIndex     atomic.Bool
 	mu                       sync.RWMutex
 }
 
@@ -110,6 +112,7 @@ func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
 		parentRoles:              make(map[string]map[string][]string),
 		parentRoleAncestorsCache: make(map[string]map[string][]string),
+		awaitingHealthyIndex:     atomic.Bool{},
 		policyLoader:             policyLoader,
 	}
 }
@@ -231,10 +234,9 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 	}
 
 	if err := addScopedPolicyRules(scope); err != nil {
-		if errors.Is(err, errNoPoliciesMatched) {
-			return nil
+		if !errors.Is(err, errNoPoliciesMatched) {
+			return err
 		}
-		return err
 	}
 
 	for s := range namer.ScopeParents(scope) {
@@ -247,6 +249,7 @@ func (rt *RuleTable) LazyLoad(ctx context.Context, resource, policyVer, scope st
 	}
 
 	if len(toLoad) == 0 {
+		maps.Copy(rt.storeQueryRegister, registryBuffer)
 		return nil
 	}
 
@@ -968,6 +971,30 @@ func (rt *RuleTable) OnStorageEvent(events ...storage.Event) {
 }
 
 func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
+	// if the index has been unhealthy, we have no way of knowing if there are unlinked dependents
+	// in the rule table, so we purge the table in it's entirety and then return.
+	// An example scenario:
+	// - a PDP is started with a valid policy set including a resource policy
+	// - the resource policy is updated to reference a non-existent derived role
+	// - the index build fails but no updates occur to the rule table and it continues to operate
+	//   on the last valid dataset
+	// - the missing derived roles policy is added, but the resource policy Update event with the import
+	//   never made it to the rule table update, thus the old definition is still in the rule table
+	// - the ruletable will continue to return stale data until another (valid) resource policy update
+	//   triggers a reload.
+	if ev.IndexUnhealthy {
+		if !rt.awaitingHealthyIndex.Load() {
+			rt.log.Debugw("Disabling rule table")
+			rt.awaitingHealthyIndex.Store(true)
+		}
+		return
+	} else if rt.awaitingHealthyIndex.Load() {
+		rt.awaitingHealthyIndex.Store(false)
+		rt.log.Debugw("Purging and re-enabling rule table")
+		rt.purge()
+		return
+	}
+
 	// derived role policy conditions are baked into resource policy rows, so we need to retrieve
 	// all resource policy rows that reference a changed derived role policy and handle them
 	// independently.
