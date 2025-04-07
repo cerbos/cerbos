@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
+func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) (*enginev1.PlanResourcesFilter, error) {
 	response := &enginev1.PlanResourcesFilter{
 		Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
 	}
@@ -26,11 +26,11 @@ func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 		case enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED:
 			return &enginev1.PlanResourcesFilter{
 				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
-			}
+			}, nil
 		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
 			conds[res.FilterDebug] = res.Filter.Condition
 		case enginev1.PlanResourcesFilter_KIND_UNSPECIFIED:
-			panic(fmt.Errorf("unknown filter kind %s", res.Filter.Kind))
+			return nil, fmt.Errorf("unknown filter kind %s", res.Filter.Kind)
 		}
 	}
 	switch len(conds) {
@@ -46,7 +46,7 @@ func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) *enginev1.PlanResou
 		filters := slices.Collect(maps.Values(conds))
 		response.Condition = &exprOp{Node: mkExprOpExpr(And, filters...)}
 	}
-	return response
+	return response, nil
 }
 func Merge(outputs map[string]*enginev1.PlanResourcesOutput) *enginev1.PlanResourcesFilter {
 	response := &enginev1.PlanResourcesFilter{

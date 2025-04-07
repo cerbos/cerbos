@@ -6,6 +6,8 @@ package svc
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -93,14 +95,28 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	for _, output := range outputs {
 		validationErrors = append(validationErrors, output.ValidationErrors...)
 	}
-	//TODO: dedupe validation errors
-	f := planner.MergeWithAnd(outputs)
+	if len(validationErrors) > 0 {
+		m := make(map[string]*schemav1.ValidationError, len(validationErrors))
+		for _, e := range validationErrors {
+			m[e.String()] = e
+		}
+		validationErrors = slices.Collect(maps.Values(m))
+	}
+
+	filter := outputs[0].Filter
+	if len(outputs) > 1 {
+		filter, err = planner.MergeWithAnd(outputs)
+		if err != nil {
+			log.Error("Resources query plan request failed", zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "Merging plans failed")
+		}
+	}
 	response := &responsev1.PlanResourcesResponse{
 		RequestId:        request.RequestId,
 		Actions:          request.Actions,
 		ResourceKind:     request.Resource.Kind,
 		PolicyVersion:    request.Resource.PolicyVersion,
-		Filter:           f,
+		Filter:           filter,
 		ValidationErrors: validationErrors,
 	}
 
