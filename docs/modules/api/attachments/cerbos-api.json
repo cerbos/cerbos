@@ -2680,6 +2680,18 @@
           "example": "view:public",
           "description": "Action to be applied to each resource in the list."
         },
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "edit:profile"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions to be applied to each resource in the list. Use this field instead of the deprecated action field. Must contain at least one action and all actions must be unique.",
+          "uniqueItems": true
+        },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
         },
@@ -2696,7 +2708,6 @@
       },
       "description": "PDP Resources Query Plan Request",
       "required": [
-        "action",
         "principal",
         "resource"
       ]
@@ -2713,6 +2724,17 @@
           "type": "string",
           "example": "view:public",
           "description": "Action"
+        },
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "edit:profile"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Actions"
         },
         "resourceKind": {
           "type": "string",
@@ -2758,6 +2780,13 @@
           "type": "string",
           "example": "acme.corp.base",
           "description": "Policy scope that matched to produce this effect."
+        },
+        "matchedScopePerAction": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Matched scope for each action."
         }
       },
       "description": "Metadata about request evaluation."

@@ -9,6 +9,12 @@
     },
     "matchedScope": {
       "type": "string"
+    },
+    "matchedScopePerAction": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   }
 }

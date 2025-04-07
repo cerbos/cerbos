@@ -309,7 +309,6 @@
     "cerbos.request.v1.PlanResourcesRequest": {
       "type": "object",
       "required": [
-        "action",
         "principal",
         "resource"
       ],
@@ -317,7 +316,16 @@
       "properties": {
         "action": {
           "type": "string",
-          "minLength": 1
+          "minLength": 0
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
         },
         "auxData": {
           "$ref": "#/definitions/cerbos.request.v1.AuxData"

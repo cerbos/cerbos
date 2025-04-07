@@ -62,6 +62,12 @@
         },
         "matchedScope": {
           "type": "string"
+        },
+        "matchedScopePerAction": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -98,6 +104,12 @@
   "properties": {
     "action": {
       "type": "string"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "cerbosCallId": {
       "type": "string"
