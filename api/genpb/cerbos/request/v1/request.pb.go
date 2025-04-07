@@ -1841,11 +1841,11 @@ var File_cerbos_request_v1_request_proto protoreflect.FileDescriptor
 
 const file_cerbos_request_v1_request_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcerbos/request/v1/request.proto\x12\x11cerbos.request.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xbd\b\n" +
+	"\x1fcerbos/request/v1/request.proto\x12\x11cerbos.request.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xb7\b\n" +
 	"\x14PlanResourcesRequest\x12\x96\x01\n" +
 	"\n" +
-	"request_id\x18\x01 \x01(\tBw\x92At2JOptional application-specific ID useful for correlating logs for analysis.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x12k\n" +
-	"\x06action\x18\x02 \x01(\tBS\x92AC22Action to be applied to each resource in the list.J\r\"view:public\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x00R\x06action\x12\x81\x02\n" +
+	"request_id\x18\x01 \x01(\tBw\x92At2JOptional application-specific ID useful for correlating logs for analysis.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x12e\n" +
+	"\x06action\x18\x02 \x01(\tBM\x92AC22Action to be applied to each resource in the list.J\r\"view:public\"\xbaH\x04r\x02\x10\x00R\x06action\x12\x81\x02\n" +
 	"\aactions\x18\a \x03(\tB\xe6\x01\x92A\xd2\x012\xab\x01Actions to be applied to each resource in the list. Use this field instead of the deprecated action field. Must contain at least one action and all actions must be unique.J\x1f[\"view:public\", \"edit:profile\"]\xb0\x01\x01\xbaH\r\x92\x01\n" +
 	"\b\x00\x18\x01\"\x04r\x02\x10\x01R\aactions\x12D\n" +
 	"\tprincipal\x18\x03 \x01(\v2\x1b.cerbos.engine.v1.PrincipalB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\tprincipal\x12T\n" +

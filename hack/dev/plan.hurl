@@ -54,7 +54,7 @@ jsonpath "$.action" == "view"
 jsonpath "$.resourceKind" == "album:object"
 jsonpath "$.policyVersion" == "nonexistent"
 jsonpath "$.filter.kind" == "KIND_ALWAYS_DENIED"
-jsonpath "$.meta.filterDebug" == "NO_MATCH"
+jsonpath "$.meta.filterDebug" == "(false)"
 jsonpath "$.cerbosCallId" exists
 
 
@@ -70,4 +70,19 @@ jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.filter.kind" == "KIND_CONDITIONAL"
 jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"john\")"
 jsonpath "$.meta.matchedScope" == "acme.hr.uk"
+jsonpath "$.cerbosCallId" exists
+
+POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
+Content-Type: application/json
+file,requests/plan_resources/req6.json;
+HTTP 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.actions[0]" == "approve"
+jsonpath "$.actions[1]" == "defer"
+jsonpath "$.resourceKind" == "leave_request"
+jsonpath "$.policyVersion" == "20210210"
+jsonpath "$.filter" != null
+jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.status \"PENDING_APPROVAL\")"
+jsonpath "$.meta.matchedScopePerAction" exists
 jsonpath "$.cerbosCallId" exists

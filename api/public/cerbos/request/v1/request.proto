@@ -30,9 +30,7 @@ message PlanResourcesRequest {
   }];
 
   string action = 2 [
-    (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 0,
-    (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Action to be applied to each resource in the list."
       example: "\"view:public\""

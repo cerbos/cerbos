@@ -2708,7 +2708,6 @@
       },
       "description": "PDP Resources Query Plan Request",
       "required": [
-        "action",
         "principal",
         "resource"
       ]

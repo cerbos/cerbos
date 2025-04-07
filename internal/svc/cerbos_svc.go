@@ -60,10 +60,10 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
-	deprecated := false
+	one_action := false
 	if request.Action != "" {
 		request.Actions = []string{request.Action}
-		deprecated = true
+		one_action = true
 	}
 
 	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
@@ -75,7 +75,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 			Principal:   request.Principal,
 			Resource:    request.Resource,
 			AuxData:     auxData,
-			IncludeMeta: request.IncludeMeta,
+			IncludeMeta: true,
 		}
 		output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
 		if err != nil {
@@ -111,7 +111,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		}
 	}
 
-	if deprecated {
+	if one_action {
 		response.Action = request.Action
 		response.Actions = nil
 		if request.IncludeMeta {
