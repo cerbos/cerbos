@@ -154,18 +154,21 @@ jobs:
 
       - name: Upload unit coverage to Coveralls
         uses: shogo82148/actions-goveralls@v1
+        continue-on-error: true
         with:
           path-to-profile: unit.cover
           flag-name: unit-${{ strategy.job-index }}
           parallel: true
-          fail-on-error: false # TODO remove temp bypass
+          fail-on-error: false
 
       - name: Upload integration coverage to Coveralls
         uses: shogo82148/actions-goveralls@v1
+        continue-on-error: true
         with:
           path-to-profile: integration.cover
           flag-name: integration-${{ strategy.job-index }}
           parallel: true
+          fail-on-error: false
 
   upload-test-times:
     needs: test
@@ -213,8 +216,10 @@ jobs:
 
       - name: Complete coveralls report
         uses: shogo82148/actions-goveralls@v1
+        continue-on-error: true
         with:
           parallel-finished: true
+          fail-on-error: false
 
   docs:
     needs: changes
