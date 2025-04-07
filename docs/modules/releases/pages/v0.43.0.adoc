@@ -1,0 +1,27 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.43.0]
+= Cerbos v0.43.0
+
+== Highlights
+
+This is a bug-fix release to address a couple of issues where updates to the policies on the store were not correctly propagated to the serving policy cache. The first issue only affected the `blob` store when multiple edits were made to a derived role policy file. The second issue only manifested itself when invalid policies were committed to the store after Cerbos had started. In practice, with good GitOps hygiene, this issue should never occur in production.
+
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Maintain derived role mappings during policy updates (link:https://github.com/cerbos/cerbos/pull/2536[#2536])
+* Purge rule table on index build failure (link:https://github.com/cerbos/cerbos/pull/2538[#2538])
+
+=== Chores
+
+* Bump version to 0.43.0
+* Change logger keys based on bundle version (link:https://github.com/cerbos/cerbos/pull/2533[#2533])
+* Make Coveralls upload optional (link:https://github.com/cerbos/cerbos/pull/2541[#2541])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2534[#2534])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2540[#2540])
+* update node.js deps (link:https://github.com/cerbos/cerbos/pull/2535[#2535])
