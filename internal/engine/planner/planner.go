@@ -153,7 +153,7 @@ func (p *PolicyPlanResult) ToPlanResourcesOutput(input *enginev1.PlanResourcesIn
 	}
 
 	if input.IncludeMeta {
-		result.FilterDebug = filterToString(result.Filter)
+		result.FilterDebug = FilterToString(result.Filter)
 	}
 
 	return result, nil

@@ -2082,6 +2082,13 @@ func cerbos_private_v1_QueryPlannerTestSuite_Test_hashpb_sum(m *QueryPlannerTest
 	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.want_err"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetWantErr())))
 	}
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+			}
+		}
+	}
 }
 
 func cerbos_private_v1_QueryPlannerTestSuite_hashpb_sum(m *QueryPlannerTestSuite, hasher hash.Hash, ignore map[string]struct{}) {

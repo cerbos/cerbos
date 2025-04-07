@@ -57,3 +57,15 @@ tests:
         policyVersion: default
       want:
         kind: KIND_ALWAYS_DENIED
+    - actions: ["write", "edit"]
+      resource:
+        kind: x
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id

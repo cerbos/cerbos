@@ -820,7 +820,7 @@ func asBoolValue(op *enginev1.PlanResourcesFilter_Expression_Operand) (bool, boo
 	return false, false
 }
 
-func filterToString(filter *enginev1.PlanResourcesFilter) string {
+func FilterToString(filter *enginev1.PlanResourcesFilter) string {
 	switch filter.Kind {
 	case enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED:
 		return "(true)"
