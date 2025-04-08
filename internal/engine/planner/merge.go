@@ -11,7 +11,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
-func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) (*enginev1.PlanResourcesFilter, error) {
+func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) (*enginev1.PlanResourcesFilter, string, error) {
 	response := &enginev1.PlanResourcesFilter{
 		Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
 	}
@@ -23,11 +23,11 @@ func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) (*enginev1.PlanReso
 		case enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED:
 			return &enginev1.PlanResourcesFilter{
 				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
-			}, nil
+			}, res.FilterDebug, nil
 		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
 			conds[res.FilterDebug] = res.Filter.Condition
 		case enginev1.PlanResourcesFilter_KIND_UNSPECIFIED:
-			return nil, fmt.Errorf("unknown filter kind %s", res.Filter.Kind)
+			return nil, "", fmt.Errorf("unknown filter kind %s", res.Filter.Kind)
 		}
 	}
 	switch len(conds) {
@@ -43,5 +43,5 @@ func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) (*enginev1.PlanReso
 		filters := slices.Collect(maps.Values(conds))
 		response.Condition = &exprOp{Node: mkExprOpExpr(And, filters...)}
 	}
-	return response, nil
+	return response, FilterToString(response), nil
 }

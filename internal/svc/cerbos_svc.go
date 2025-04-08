@@ -103,9 +103,9 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		validationErrors = slices.Collect(maps.Values(m))
 	}
 
-	filter := outputs[0].Filter
+	filter, filterDebug := outputs[0].Filter, outputs[0].FilterDebug
 	if len(outputs) > 1 {
-		filter, err = planner.MergeWithAnd(outputs)
+		filter, filterDebug, err = planner.MergeWithAnd(outputs)
 		if err != nil {
 			log.Error("Resources query plan request failed", zap.Error(err))
 			return nil, status.Errorf(codes.Internal, "Merging plans failed")
@@ -122,7 +122,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 
 	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:           planner.FilterToString(response.Filter),
+			FilterDebug:           filterDebug,
 			MatchedScopePerAction: matchedScopes,
 		}
 	}
