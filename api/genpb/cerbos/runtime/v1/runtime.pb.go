@@ -231,6 +231,7 @@ type RuleTableMetadata struct {
 	//
 	//	*RuleTableMetadata_Resource
 	//	*RuleTableMetadata_Role
+	//	*RuleTableMetadata_Principal
 	Name             isRuleTableMetadata_Name        `protobuf_oneof:"name"`
 	Version          string                          `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
 	SourceAttributes map[string]*v1.SourceAttributes `protobuf:"bytes,5,rep,name=source_attributes,json=sourceAttributes,proto3" json:"source_attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -301,6 +302,15 @@ func (x *RuleTableMetadata) GetRole() string {
 	return ""
 }
 
+func (x *RuleTableMetadata) GetPrincipal() string {
+	if x != nil {
+		if x, ok := x.Name.(*RuleTableMetadata_Principal); ok {
+			return x.Principal
+		}
+	}
+	return ""
+}
+
 func (x *RuleTableMetadata) GetVersion() string {
 	if x != nil {
 		return x.Version
@@ -334,9 +344,15 @@ type RuleTableMetadata_Role struct {
 	Role string `protobuf:"bytes,3,opt,name=role,proto3,oneof"`
 }
 
+type RuleTableMetadata_Principal struct {
+	Principal string `protobuf:"bytes,7,opt,name=principal,proto3,oneof"`
+}
+
 func (*RuleTableMetadata_Resource) isRuleTableMetadata_Name() {}
 
 func (*RuleTableMetadata_Role) isRuleTableMetadata_Name() {}
+
+func (*RuleTableMetadata_Principal) isRuleTableMetadata_Name() {}
 
 type RunnableRolePolicySet struct {
 	state protoimpl.MessageState          `protogen:"open.v1"`
@@ -1266,6 +1282,7 @@ type RuleTable_RuleRow struct {
 	OriginDerivedRole    string                        `protobuf:"bytes,11,opt,name=origin_derived_role,json=originDerivedRole,proto3" json:"origin_derived_role,omitempty"`
 	EmitOutput           *Output                       `protobuf:"bytes,12,opt,name=emit_output,json=emitOutput,proto3" json:"emit_output,omitempty"`
 	Name                 string                        `protobuf:"bytes,13,opt,name=name,proto3" json:"name,omitempty"`
+	Principal            string                        `protobuf:"bytes,14,opt,name=principal,proto3" json:"principal,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -1405,6 +1422,13 @@ func (x *RuleTable_RuleRow) GetEmitOutput() *Output {
 func (x *RuleTable_RuleRow) GetName() string {
 	if x != nil {
 		return x.Name
+	}
+	return ""
+}
+
+func (x *RuleTable_RuleRow) GetPrincipal() string {
+	if x != nil {
+		return x.Principal
 	}
 	return ""
 }
@@ -2874,9 +2898,9 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"rolePolicy\x12)\n" +
 	"\x10compiler_version\x18\x06 \x01(\rR\x0fcompilerVersionB\f\n" +
 	"\n" +
-	"policy_set\"\xa6\a\n" +
+	"policy_set\"\xc4\a\n" +
 	"\tRuleTable\x12:\n" +
-	"\x05rules\x18\x01 \x03(\v2$.cerbos.runtime.v1.RuleTable.RuleRowR\x05rules\x1a\xdc\x06\n" +
+	"\x05rules\x18\x01 \x03(\v2$.cerbos.runtime.v1.RuleTable.RuleRowR\x05rules\x1a\xfa\x06\n" +
 	"\aRuleRow\x12\x1d\n" +
 	"\n" +
 	"origin_fqn\x18\x01 \x01(\tR\toriginFqn\x12\x1a\n" +
@@ -2894,18 +2918,20 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\x13origin_derived_role\x18\v \x01(\tR\x11originDerivedRole\x12:\n" +
 	"\vemit_output\x18\f \x01(\v2\x19.cerbos.runtime.v1.OutputR\n" +
 	"emitOutput\x12\x12\n" +
-	"\x04name\x18\r \x01(\tR\x04name\x1a\xbc\x01\n" +
+	"\x04name\x18\r \x01(\tR\x04name\x12\x1c\n" +
+	"\tprincipal\x18\x0e \x01(\tR\tprincipal\x1a\xbc\x01\n" +
 	"\fAllowActions\x12X\n" +
 	"\aactions\x18\x01 \x03(\v2>.cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntryR\aactions\x1aR\n" +
 	"\fActionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.EmptyR\x05value:\x028\x01B\f\n" +
 	"\n" +
-	"action_set\"\xe6\x03\n" +
+	"action_set\"\x86\x04\n" +
 	"\x11RuleTableMetadata\x12\x10\n" +
 	"\x03fqn\x18\x01 \x01(\tR\x03fqn\x12\x1c\n" +
 	"\bresource\x18\x02 \x01(\tH\x00R\bresource\x12\x14\n" +
-	"\x04role\x18\x03 \x01(\tH\x00R\x04role\x12\x18\n" +
+	"\x04role\x18\x03 \x01(\tH\x00R\x04role\x12\x1e\n" +
+	"\tprincipal\x18\a \x01(\tH\x00R\tprincipal\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\tR\aversion\x12g\n" +
 	"\x11source_attributes\x18\x05 \x03(\v2:.cerbos.runtime.v1.RuleTableMetadata.SourceAttributesEntryR\x10sourceAttributes\x12W\n" +
 	"\vannotations\x18\x06 \x03(\v25.cerbos.runtime.v1.RuleTableMetadata.AnnotationsEntryR\vannotations\x1ag\n" +
@@ -3378,6 +3404,7 @@ func file_cerbos_runtime_v1_runtime_proto_init() {
 	file_cerbos_runtime_v1_runtime_proto_msgTypes[2].OneofWrappers = []any{
 		(*RuleTableMetadata_Resource)(nil),
 		(*RuleTableMetadata_Role)(nil),
+		(*RuleTableMetadata_Principal)(nil),
 	}
 	file_cerbos_runtime_v1_runtime_proto_msgTypes[12].OneofWrappers = []any{
 		(*Condition_All)(nil),
