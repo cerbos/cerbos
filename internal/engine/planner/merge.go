@@ -40,7 +40,10 @@ func MergeWithAnd(responses []*enginev1.PlanResourcesOutput) (*enginev1.PlanReso
 			response.Condition = filter
 		}
 	default:
-		filters := slices.Collect(maps.Values(conds))
+		filters := make([]*exprOp, 0, len(conds))
+		for _, key := range slices.Sorted(maps.Keys(conds)) {
+			filters = append(filters, conds[key])
+		}
 		response.Condition = &exprOp{Node: mkExprOpExpr(And, filters...)}
 	}
 	return response, FilterToString(response), nil
