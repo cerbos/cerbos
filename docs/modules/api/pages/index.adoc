@@ -214,47 +214,49 @@ Produces a query plan that can be used to obtain a list of resources that a prin
 {
   "requestId":  "test01", <1>
   "action":  "approve", <2>
+  "actions":  ["approve", "view"], <3>
   "resource":  {
-    "policyVersion": "dev", <3>
-    "kind":  "leave_request", <4>
-    "scope": "acme.corp", <5>
-    "attr":  { <6>
+    "policyVersion": "dev", <4>
+    "kind":  "leave_request", <5>
+    "scope": "acme.corp", <6>
+    "attr":  { <7>
       "owner":  "alicia"
     }
   },
   "principal":  {
-    "id":  "alicia", <7>
-    "policyVersion": "dev", <8>
-    "scope": "acme.corp", <9>
-    "roles":  ["user"], <10>
-    "attr": { <11>
+    "id":  "alicia", <8>
+    "policyVersion": "dev", <9>
+    "scope": "acme.corp", <10>
+    "roles":  ["user"], <11>
+    "attr": { <12>
       "geography": "GB"
     }
   },
-  "includeMeta": true, <12>
-  "auxData": { <13>
+  "includeMeta": true, <13>
+  "auxData": { <14>
     "jwt": {
-      "token": "xxx.yyy.zzz", <14>
-      "keySetId": "ks-1" <15>
+      "token": "xxx.yyy.zzz", <15>
+      "keySetId": "ks-1" <16>
     }
   }
 }
 ----
 <1> Request ID can be anything that uniquely identifies a request.
-<2> Action being performed on the resource instances. Required.
-<3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<4> Resource kind. Required. This value is used to determine the resource policy to evaluate.
-<5> Resource scope. Optional. See xref:policies:scoped_policies.adoc[].
-<6> Free-form context data about the resources under consideration. The object holds all attributes known about the resource at the time the request. Optional. Policy rule conditions will be (partially) evaluated based on these values. If an effective policy rule condition(s) requires a resource attribute not present in this object, then the response will contain the condition(s) abstract syntax tree.
-<7> ID of the principal performing the actions. Required.
-<8> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<9> Principal scope. Optional. See xref:policies:scoped_policies.adoc[].
-<10> Static roles that are assigned to this principal by your identity management system. Required.
-<11> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
-<12> An optional flag to signal that the response should include metadata about evaluation. Useful for debugging.
-<13> Optional section for providing auxiliary data.
-<14> JWT to use as an auxiliary data source.
-<15> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<2> Action being performed on the resource instances. Either <2> or <3> is required.
+<3> Actions being performed on the resource instances. The query plan is the logical AND of individual query plans for each action. Either <2> or <3> is required.
+<4> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<5> Resource kind. Required. This value is used to determine the resource policy to evaluate.
+<6> Resource scope. Optional. See xref:policies:scoped_policies.adoc[].
+<7> Free-form context data about the resources under consideration. The object holds all attributes known about the resource at the time the request. Optional. Policy rule conditions will be (partially) evaluated based on these values. If an effective policy rule condition(s) requires a resource attribute not present in this object, then the response will contain the condition(s) abstract syntax tree.
+<8> ID of the principal performing the actions. Required.
+<9> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<10> Principal scope. Optional. See xref:policies:scoped_policies.adoc[].
+<11> Static roles that are assigned to this principal by your identity management system. Required.
+<12> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
+<13> An optional flag to signal that the response should include metadata about evaluation. Useful for debugging.
+<14> Optional section for providing auxiliary data.
+<15> JWT to use as an auxiliary data source.
+<16> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
 
 
 .Response

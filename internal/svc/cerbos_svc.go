@@ -6,6 +6,8 @@ package svc
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -16,10 +18,12 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
@@ -58,36 +62,77 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
-	input := &enginev1.PlanResourcesInput{
-		RequestId:   request.RequestId,
-		Action:      request.Action,
-		Principal:   request.Principal,
-		Resource:    request.Resource,
-		AuxData:     auxData,
-		IncludeMeta: request.IncludeMeta,
+	oneAction := false
+	if request.Action != "" { //nolint:staticcheck
+		request.Actions = []string{request.Action} ///nolint:staticcheck
+		oneAction = true
 	}
-	output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
-	if err != nil {
-		log.Error("Resources query plan request failed", zap.Error(err))
-		if errors.Is(err, compile.PolicyCompilationErr{}) {
-			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+
+	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
+	matchedScopes := make(map[string]string, len(request.Actions))
+	for _, action := range request.Actions {
+		input := &enginev1.PlanResourcesInput{
+			RequestId:   request.RequestId,
+			Action:      action,
+			Principal:   request.Principal,
+			Resource:    request.Resource,
+			AuxData:     auxData,
+			IncludeMeta: true,
 		}
-		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+		output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
+		if err != nil {
+			log.Error("Resources query plan request failed", zap.Error(err))
+			if errors.Is(err, compile.PolicyCompilationErr{}) {
+				return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+			}
+			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+		}
+		outputs = append(outputs, output)
+		matchedScopes[action] = output.Scope
 	}
 
+	validationErrors := make([]*schemav1.ValidationError, 0, len(outputs))
+	for _, output := range outputs {
+		validationErrors = append(validationErrors, output.ValidationErrors...)
+	}
+	if len(validationErrors) > 0 {
+		m := make(map[string]*schemav1.ValidationError, len(validationErrors))
+		for _, e := range validationErrors {
+			m[e.String()] = e
+		}
+		validationErrors = slices.Collect(maps.Values(m))
+	}
+
+	filter, filterDebug := outputs[0].Filter, outputs[0].FilterDebug
+	if len(outputs) > 1 {
+		filter, filterDebug, err = planner.MergeWithAnd(outputs)
+		if err != nil {
+			log.Error("Resources query plan request failed", zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "Merging plans failed")
+		}
+	}
 	response := &responsev1.PlanResourcesResponse{
-		RequestId:        output.RequestId,
-		Action:           output.Action,
-		ResourceKind:     output.Kind,
-		PolicyVersion:    output.PolicyVersion,
-		Filter:           output.Filter,
-		ValidationErrors: output.ValidationErrors,
+		RequestId:        request.RequestId,
+		Actions:          request.Actions,
+		ResourceKind:     request.Resource.Kind,
+		PolicyVersion:    request.Resource.PolicyVersion,
+		Filter:           filter,
+		ValidationErrors: validationErrors,
 	}
 
-	if input.IncludeMeta {
+	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:  output.FilterDebug,
-			MatchedScope: output.Scope,
+			FilterDebug:   filterDebug,
+			MatchedScopes: matchedScopes,
+		}
+	}
+
+	if oneAction {
+		response.Action = request.Action //nolint:staticcheck
+		response.Actions = nil
+		if request.IncludeMeta {
+			response.Meta.MatchedScope = matchedScopes[response.Action]
+			response.Meta.MatchedScopes = nil
 		}
 	}
 
