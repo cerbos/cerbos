@@ -34,7 +34,7 @@ message PlanResourcesResponse {
       description: "Policy scope that matched to produce this effect."
       example: "\"acme.corp.base\""
     }];
-    map<string, string> matched_scope_per_action = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Matched scope for each action."}];
+    map<string, string> matched_scopes = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Matched scope for each action."}];
   }
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
