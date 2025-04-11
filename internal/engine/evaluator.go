@@ -187,12 +187,13 @@ func (rte *ruleTableEvaluator) Evaluate(ctx context.Context, tctx tracer.Context
 	conditionCache := make(map[string]bool)
 
 	processedScopedDerivedRoles := make(map[string]struct{})
+	policyTypes := []policy.Kind{policy.PrincipalKind, policy.ResourceKind}
 	for _, action := range actionsToResolve {
 		actx := pctx.StartAction(action)
 
 		var actionEffectInfo EffectInfo
 		var mainPolicyKey string
-		for _, pt := range []policy.Kind{policy.PrincipalKind, policy.ResourceKind} {
+		for _, pt := range policyTypes {
 			if pt == policy.PrincipalKind {
 				mainPolicyKey = principalPolicyKey
 			} else {

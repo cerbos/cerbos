@@ -261,11 +261,11 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
 
 	if err := engine.ruleTable.LazyLoadPrincipalPolicy(ctx, ppName, ppVersion, ppScope); err != nil {
-		return nil, nil, fmt.Errorf("failed to load principal policy [%s.%s]: %w", ppName, ppVersion, err)
+		return nil, nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", ppName, ppVersion, ppScope, err)
 	}
 
 	if err := engine.ruleTable.LazyLoadResourcePolicy(ctx, rpName, rpVersion, rpScope, input.Principal.Roles); err != nil {
-		return nil, nil, fmt.Errorf("failed to load resource policy [%s.%s]: %w", rpName, rpVersion, err)
+		return nil, nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", rpName, rpVersion, rpScope, err)
 	}
 
 	result, err := planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTable, input, ppVersion, rpVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
@@ -517,7 +517,18 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, eparams)
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, eparams)
 
-	check, err := engine.getRuleTableEvaluator(ctx, eparams, ppName, ppVersion, ppScope, rpName, rpVersion, rpScope, input.Principal.Roles)
+	principal := ruleTableEvaluatorParams{
+		name:    ppName,
+		version: ppVersion,
+		scope:   ppScope,
+	}
+	resource := ruleTableEvaluatorParams{
+		name:    rpName,
+		version: rpVersion,
+		scope:   rpScope,
+	}
+
+	check, err := engine.getRuleTableEvaluator(ctx, eparams, principal, resource, input.Principal.Roles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get evaluator: %w", err)
 	}
@@ -525,13 +536,17 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	return &evaluationCtx{check}, nil
 }
 
-func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, principal, principalPolicyVer, principalScope, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
-	if err := engine.ruleTable.LazyLoadPrincipalPolicy(ctx, principal, principalPolicyVer, principalScope); err != nil {
-		return nil, fmt.Errorf("failed to load principal policy [%s.%s]: %w", principal, principalPolicyVer, err)
+type ruleTableEvaluatorParams struct {
+	name, version, scope string
+}
+
+func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, principal, resource ruleTableEvaluatorParams, inputRoles []string) (Evaluator, error) {
+	if err := engine.ruleTable.LazyLoadPrincipalPolicy(ctx, principal.name, principal.version, principal.scope); err != nil {
+		return nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", principal.name, principal.version, principal.scope, err)
 	}
 
-	if err := engine.ruleTable.LazyLoadResourcePolicy(ctx, resource, policyVer, scope, inputRoles); err != nil {
-		return nil, fmt.Errorf("failed to load resource policy [%s.%s]: %w", resource, policyVer, err)
+	if err := engine.ruleTable.LazyLoadResourcePolicy(ctx, resource.name, resource.version, resource.scope, inputRoles); err != nil {
+		return nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", resource.name, resource.version, resource.scope, err)
 	}
 
 	return NewRuleTableEvaluator(engine.ruleTable, engine.schemaMgr, eparams), nil
