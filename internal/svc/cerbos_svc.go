@@ -63,8 +63,8 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	}
 
 	oneAction := false
-	if request.Action != "" {
-		request.Actions = []string{request.Action}
+	if request.Action != "" { //nolint:staticcheck
+		request.Actions = []string{request.Action} ///nolint:staticcheck
 		oneAction = true
 	}
 
@@ -128,7 +128,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	}
 
 	if oneAction {
-		response.Action = request.Action
+		response.Action = request.Action //nolint:staticcheck
 		response.Actions = nil
 		if request.IncludeMeta {
 			response.Meta.MatchedScope = matchedScopes[response.Action]

@@ -2689,7 +2689,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Actions to be applied to each resource in the list. Use this field instead of the deprecated action field. Must contain at least one action and all actions must be unique.",
+          "description": "List of actions to generate the query plan for. Mutually exclusive with the singular action field. Must contain at least one action and all actions must be unique.",
           "uniqueItems": true
         },
         "principal": {
@@ -2781,7 +2781,7 @@
           "example": "acme.corp.base",
           "description": "Policy scope that matched to produce this effect."
         },
-        "matchedScopePerAction": {
+        "matchedScopes": {
           "type": "object",
           "additionalProperties": {
             "type": "string"

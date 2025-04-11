@@ -1636,8 +1636,7 @@
       "additionalProperties": false,
       "properties": {
         "action": {
-          "type": "string",
-          "minLength": 0
+          "type": "string"
         },
         "actions": {
           "type": "array",
@@ -1645,6 +1644,7 @@
             "type": "string",
             "minLength": 1
           },
+          "maxItems": 20,
           "minItems": 0,
           "uniqueItems": true
         },
@@ -2112,7 +2112,7 @@
         "matchedScope": {
           "type": "string"
         },
-        "matchedScopePerAction": {
+        "matchedScopes": {
           "type": "object",
           "additionalProperties": {
             "type": "string"

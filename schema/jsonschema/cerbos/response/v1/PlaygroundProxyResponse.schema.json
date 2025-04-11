@@ -333,7 +333,7 @@
         "matchedScope": {
           "type": "string"
         },
-        "matchedScopePerAction": {
+        "matchedScopes": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
