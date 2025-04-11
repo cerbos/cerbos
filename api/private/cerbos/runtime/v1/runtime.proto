@@ -48,6 +48,7 @@ message RuleTable {
     string origin_derived_role = 11;
     Output emit_output = 12;
     string name = 13;
+    string principal = 14;
   }
 
   repeated RuleRow rules = 1;
@@ -58,6 +59,7 @@ message RuleTableMetadata {
   oneof name {
     string resource = 2;
     string role = 3;
+    string principal = 7;
   }
   string version = 4;
   map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 5;

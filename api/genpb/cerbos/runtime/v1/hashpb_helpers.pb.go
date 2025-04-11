@@ -354,6 +354,8 @@ func cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m *RuleTableMetadata, hasher
 				_, _ = hasher.Write(protowire.AppendString(nil, t.Resource))
 			case *RuleTableMetadata_Role:
 				_, _ = hasher.Write(protowire.AppendString(nil, t.Role))
+			case *RuleTableMetadata_Principal:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Principal))
 			}
 		}
 	}
@@ -444,6 +446,9 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetName()))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.principal"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.GetPrincipal()))
 	}
 }
 
