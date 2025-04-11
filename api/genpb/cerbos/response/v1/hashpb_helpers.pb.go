@@ -1759,10 +1759,10 @@ func cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m *PlanResourcesRe
 	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.Meta.matched_scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.GetMatchedScope()))
 	}
-	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.Meta.matched_scope_per_action"]; !ok {
-		if len(m.MatchedScopePerAction) > 0 {
-			for _, k := range slices.Sorted(maps.Keys(m.MatchedScopePerAction)) {
-				_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScopePerAction[k]))
+	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.Meta.matched_scopes"]; !ok {
+		if len(m.MatchedScopes) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.MatchedScopes)) {
+				_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScopes[k]))
 			}
 		}
 	}

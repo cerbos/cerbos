@@ -1594,12 +1594,12 @@ func (*ReloadStoreResponse) Descriptor() ([]byte, []int) {
 }
 
 type PlanResourcesResponse_Meta struct {
-	state                 protoimpl.MessageState `protogen:"open.v1"`
-	FilterDebug           string                 `protobuf:"bytes,1,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
-	MatchedScope          string                 `protobuf:"bytes,2,opt,name=matched_scope,json=matchedScope,proto3" json:"matched_scope,omitempty"`
-	MatchedScopePerAction map[string]string      `protobuf:"bytes,3,rep,name=matched_scope_per_action,json=matchedScopePerAction,proto3" json:"matched_scope_per_action,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FilterDebug   string                 `protobuf:"bytes,1,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
+	MatchedScope  string                 `protobuf:"bytes,2,opt,name=matched_scope,json=matchedScope,proto3" json:"matched_scope,omitempty"`
+	MatchedScopes map[string]string      `protobuf:"bytes,3,rep,name=matched_scopes,json=matchedScopes,proto3" json:"matched_scopes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PlanResourcesResponse_Meta) Reset() {
@@ -1646,9 +1646,9 @@ func (x *PlanResourcesResponse_Meta) GetMatchedScope() string {
 	return ""
 }
 
-func (x *PlanResourcesResponse_Meta) GetMatchedScopePerAction() map[string]string {
+func (x *PlanResourcesResponse_Meta) GetMatchedScopes() map[string]string {
 	if x != nil {
-		return x.MatchedScopePerAction
+		return x.MatchedScopes
 	}
 	return nil
 }
@@ -2825,7 +2825,8 @@ var File_cerbos_response_v1_response_proto protoreflect.FileDescriptor
 
 const file_cerbos_response_v1_response_proto_rawDesc = "" +
 	"\n" +
-	"!cerbos/response/v1/response.proto\x12\x12cerbos.response.v1\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x8a\v\n" +
+	"!cerbos/response/v1/response.proto\x12\x12cerbos.response.v1\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xe8\n" +
+	"\n" +
 	"\x15PlanResourcesResponse\x12o\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tBP\x92AM2#Request ID provided in the request.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x122\n" +
@@ -2836,12 +2837,12 @@ const file_cerbos_response_v1_response_proto_rawDesc = "" +
 	"\x06filter\x18\x05 \x01(\v2%.cerbos.engine.v1.PlanResourcesFilterB\v\x92A\b2\x06FilterR\x06filter\x12\x7f\n" +
 	"\x04meta\x18\x06 \x01(\v2..cerbos.response.v1.PlanResourcesResponse.MetaB;\x92A826Optional metadata about the request evaluation processR\x04meta\x12\x90\x01\n" +
 	"\x11validation_errors\x18\a \x03(\v2!.cerbos.schema.v1.ValidationErrorB@\x92A=2;List of validation errors (if schema validation is enabled)R\x10validationErrors\x12Y\n" +
-	"\x0ecerbos_call_id\x18\b \x01(\tB3\x92A02.Audit log call ID associated with this requestR\fcerbosCallId\x1a\xf3\x03\n" +
+	"\x0ecerbos_call_id\x18\b \x01(\tB3\x92A02.Audit log call ID associated with this requestR\fcerbosCallId\x1a\xd1\x03\n" +
 	"\x04Meta\x12]\n" +
 	"\ffilter_debug\x18\x01 \x01(\tB:\x92A725Filter textual representation for debugging purposes.R\vfilterDebug\x12m\n" +
-	"\rmatched_scope\x18\x02 \x01(\tBH\x92AE21Policy scope that matched to produce this effect.J\x10\"acme.corp.base\"R\fmatchedScope\x12\xa7\x01\n" +
-	"\x18matched_scope_per_action\x18\x03 \x03(\v2I.cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopePerActionEntryB#\x92A 2\x1eMatched scope for each action.R\x15matchedScopePerAction\x1aH\n" +
-	"\x1aMatchedScopePerActionEntry\x12\x10\n" +
+	"\rmatched_scope\x18\x02 \x01(\tBH\x92AE21Policy scope that matched to produce this effect.J\x10\"acme.corp.base\"R\fmatchedScope\x12\x8d\x01\n" +
+	"\x0ematched_scopes\x18\x03 \x03(\v2A.cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntryB#\x92A 2\x1eMatched scope for each action.R\rmatchedScopes\x1a@\n" +
+	"\x12MatchedScopesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01:)\x92A&\n" +
 	"$2\"Metadata about request evaluation.:<\x92A9\n" +
@@ -3121,7 +3122,7 @@ var file_cerbos_response_v1_response_proto_goTypes = []any{
 	(*DeleteSchemaResponse)(nil),                     // 24: cerbos.response.v1.DeleteSchemaResponse
 	(*ReloadStoreResponse)(nil),                      // 25: cerbos.response.v1.ReloadStoreResponse
 	(*PlanResourcesResponse_Meta)(nil),               // 26: cerbos.response.v1.PlanResourcesResponse.Meta
-	nil,                                              // 27: cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopePerActionEntry
+	nil,                                              // 27: cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntry
 	(*CheckResourceSetResponse_ActionEffectMap)(nil), // 28: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
 	(*CheckResourceSetResponse_Meta)(nil),            // 29: cerbos.response.v1.CheckResourceSetResponse.Meta
 	nil,                                              // 30: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
@@ -3187,7 +3188,7 @@ var file_cerbos_response_v1_response_proto_depIdxs = []int32{
 	60, // 22: cerbos.response.v1.GetPolicyResponse.policies:type_name -> cerbos.policy.v1.Policy
 	54, // 23: cerbos.response.v1.InspectPoliciesResponse.results:type_name -> cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
 	61, // 24: cerbos.response.v1.GetSchemaResponse.schemas:type_name -> cerbos.schema.v1.Schema
-	27, // 25: cerbos.response.v1.PlanResourcesResponse.Meta.matched_scope_per_action:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopePerActionEntry
+	27, // 25: cerbos.response.v1.PlanResourcesResponse.Meta.matched_scopes:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntry
 	31, // 26: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
 	56, // 27: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
 	34, // 28: cerbos.response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry

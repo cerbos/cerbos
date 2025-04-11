@@ -58,9 +58,9 @@ func (m *PlanResourcesResponse_Meta) MarshalToSizedBufferVT(dAtA []byte) (int, e
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.MatchedScopePerAction) > 0 {
-		for k := range m.MatchedScopePerAction {
-			v := m.MatchedScopePerAction[k]
+	if len(m.MatchedScopes) > 0 {
+		for k := range m.MatchedScopes {
+			v := m.MatchedScopes[k]
 			baseI := i
 			i -= len(v)
 			copy(dAtA[i:], v)
@@ -2855,8 +2855,8 @@ func (m *PlanResourcesResponse_Meta) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.MatchedScopePerAction) > 0 {
-		for k, v := range m.MatchedScopePerAction {
+	if len(m.MatchedScopes) > 0 {
+		for k, v := range m.MatchedScopes {
 			_ = k
 			_ = v
 			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + 1 + len(v) + protohelpers.SizeOfVarint(uint64(len(v)))
@@ -4126,7 +4126,7 @@ func (m *PlanResourcesResponse_Meta) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MatchedScopePerAction", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field MatchedScopes", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4153,8 +4153,8 @@ func (m *PlanResourcesResponse_Meta) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.MatchedScopePerAction == nil {
-				m.MatchedScopePerAction = make(map[string]string)
+			if m.MatchedScopes == nil {
+				m.MatchedScopes = make(map[string]string)
 			}
 			var mapkey string
 			var mapvalue string
@@ -4249,7 +4249,7 @@ func (m *PlanResourcesResponse_Meta) UnmarshalVT(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.MatchedScopePerAction[mapkey] = mapvalue
+			m.MatchedScopes[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
