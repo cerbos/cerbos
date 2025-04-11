@@ -83,8 +83,9 @@ func (ListAuditLogEntriesRequest_Kind) EnumDescriptor() ([]byte, []int) {
 }
 
 type PlanResourcesRequest struct {
-	state         protoimpl.MessageState          `protogen:"open.v1"`
-	RequestId     string                          `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	RequestId string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// Deprecated: Marked as deprecated in cerbos/request/v1/request.proto.
 	Action        string                          `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 	Actions       []string                        `protobuf:"bytes,7,rep,name=actions,proto3" json:"actions,omitempty"`
 	Principal     *v1.Principal                   `protobuf:"bytes,3,opt,name=principal,proto3" json:"principal,omitempty"`
@@ -132,6 +133,7 @@ func (x *PlanResourcesRequest) GetRequestId() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in cerbos/request/v1/request.proto.
 func (x *PlanResourcesRequest) GetAction() string {
 	if x != nil {
 		return x.Action
@@ -1841,13 +1843,12 @@ var File_cerbos_request_v1_request_proto protoreflect.FileDescriptor
 
 const file_cerbos_request_v1_request_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcerbos/request/v1/request.proto\x12\x11cerbos.request.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xaf\b\n" +
+	"\x1fcerbos/request/v1/request.proto\x12\x11cerbos.request.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xac\b\n" +
 	"\x14PlanResourcesRequest\x12\x96\x01\n" +
 	"\n" +
-	"request_id\x18\x01 \x01(\tBw\x92At2JOptional application-specific ID useful for correlating logs for analysis.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x12e\n" +
-	"\x06action\x18\x02 \x01(\tBM\x92AC22Action to be applied to each resource in the list.J\r\"view:public\"\xbaH\x04r\x02\x10\x00R\x06action\x12\xf9\x01\n" +
-	"\aactions\x18\a \x03(\tB\xde\x01\x92A\xca\x012\xa3\x01List of actions to generate the query plan for. Mutually exclusive with the singular action field. Must contain at least one action and all actions must be unique.J\x1f[\"view:public\", \"edit:profile\"]\xb0\x01\x01\xbaH\r\x92\x01\n" +
-	"\b\x00\x18\x01\"\x04r\x02\x10\x01R\aactions\x12D\n" +
+	"request_id\x18\x01 \x01(\tBw\x92At2JOptional application-specific ID useful for correlating logs for analysis.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x12`\n" +
+	"\x06action\x18\x02 \x01(\tBH\x92AC22Action to be applied to each resource in the list.J\r\"view:public\"\x18\x01R\x06action\x12\xfb\x01\n" +
+	"\aactions\x18\a \x03(\tB\xe0\x01\x92A\xca\x012\xa3\x01List of actions to generate the query plan for. Mutually exclusive with the singular action field. Must contain at least one action and all actions must be unique.J\x1f[\"view:public\", \"edit:profile\"]\xb0\x01\x01\xbaH\x0f\x92\x01\f\b\x00\x10\x14\x18\x01\"\x04r\x02\x10\x01R\aactions\x12D\n" +
 	"\tprincipal\x18\x03 \x01(\v2\x1b.cerbos.engine.v1.PrincipalB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\tprincipal\x12T\n" +
 	"\bresource\x18\x04 \x01(\v2-.cerbos.engine.v1.PlanResourcesInput.ResourceB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\bresource\x12:\n" +
 	"\baux_data\x18\x05 \x01(\v2\x1a.cerbos.request.v1.AuxDataB\x03\xe0A\x01R\aauxData\x12c\n" +

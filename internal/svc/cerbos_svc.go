@@ -122,8 +122,8 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 
 	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:           filterDebug,
-			MatchedScopePerAction: matchedScopes,
+			FilterDebug:   filterDebug,
+			MatchedScopes: matchedScopes,
 		}
 	}
 
@@ -132,7 +132,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		response.Actions = nil
 		if request.IncludeMeta {
 			response.Meta.MatchedScope = matchedScopes[response.Action]
-			response.Meta.MatchedScopePerAction = nil
+			response.Meta.MatchedScopes = nil
 		}
 	}
 

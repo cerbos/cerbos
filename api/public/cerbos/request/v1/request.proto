@@ -30,7 +30,7 @@ message PlanResourcesRequest {
   }];
 
   string action = 2 [
-    (buf.validate.field).string.min_len = 0,
+    deprecated = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Action to be applied to each resource in the list."
       example: "\"view:public\""
@@ -44,6 +44,7 @@ message PlanResourcesRequest {
         string: {min_len: 1}
       }
       min_items: 0
+      max_items: 20
     },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of actions to generate the query plan for. Mutually exclusive with the singular action field. Must contain at least one action and all actions must be unique."
