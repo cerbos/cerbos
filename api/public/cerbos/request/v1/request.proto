@@ -46,7 +46,7 @@ message PlanResourcesRequest {
       min_items: 0
     },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Actions to be applied to each resource in the list. Use this field instead of the deprecated action field. Must contain at least one action and all actions must be unique."
+      description: "List of actions to generate the query plan for. Mutually exclusive with the singular action field. Must contain at least one action and all actions must be unique."
       min_items: 0
       unique_items: true
       example: "[\"view:public\", \"edit:profile\"]"
