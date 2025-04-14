@@ -15,6 +15,8 @@ import (
 	"github.com/cerbos/cloud-api/logcap"
 )
 
+const DefaultErrorBackoff = 30 * time.Second
+
 type ErrIngestBackoff struct {
 	underlying error
 	Backoff    time.Duration
@@ -50,13 +52,36 @@ func NewIngestSyncer(logger *zap.Logger) (*Impl, error) {
 	}, nil
 }
 
-func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
+func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) (err error) {
 	if len(batch.GetEntries()) > 0 {
-		if err := i.client.Ingest(ctx, batch); err != nil {
+		var backoff time.Duration
+		defer func() {
+			// if the server responds with a backoff, return it regardless of whether an error exists
+			if backoff != 0 {
+				err = ErrIngestBackoff{
+					underlying: err,
+					Backoff:    backoff,
+				}
+			} else if err != nil {
+				// Apply fixed default backoff for severe failures (typically network issues)
+				// where the server couldn't communicate a specific backoff duration.
+				// Using a conservative fixed backoff rather than exponential backoff as
+				// these errors are expected to be transient network issues and retrying
+				// too aggressively could exacerbate the problem (and because an exponential
+				// backoff here feels entirely overkill).
+				err = ErrIngestBackoff{
+					underlying: err,
+					Backoff:    DefaultErrorBackoff,
+				}
+			}
+		}()
+
+		backoff, err = i.client.Ingest(ctx, batch)
+		if err != nil {
 			i.log.Error("Failed to sync batch", zap.Error(err))
-			return err
+			return
 		}
 	}
 
-	return nil
+	return
 }
