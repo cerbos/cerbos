@@ -79,9 +79,9 @@ func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) (err error) 
 		backoff, err = i.client.Ingest(ctx, batch)
 		if err != nil {
 			i.log.Error("Failed to sync batch", zap.Error(err))
-			return
+			return err
 		}
 	}
 
-	return
+	return err
 }
