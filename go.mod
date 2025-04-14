@@ -18,7 +18,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/cerbos/cerbos-sdk-go v0.2.15
 	github.com/cerbos/cerbos/api/genpb v0.43.0
-	github.com/cerbos/cloud-api v0.1.40
+	github.com/cerbos/cloud-api v0.1.41
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.7.0
@@ -300,5 +300,3 @@ require (
 )
 
 exclude google.golang.org/grpc/stats/opentelemetry v0.0.0-20240907200651-3ffb98b2c93a
-
-replace github.com/cerbos/cloud-api => github.com/sambigeara/cloud-api v0.0.0-20250414073400-c65e647e25fa

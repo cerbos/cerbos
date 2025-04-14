@@ -170,6 +170,8 @@ github.com/cerbos/cerbos-sdk-go v0.2.15 h1:4FI7Ke01Y75VdNEe8a9yK6ZI5eQLyVd+IgIFa
 github.com/cerbos/cerbos-sdk-go v0.2.15/go.mod h1:RxOlKpE1K8RZI/DmiMGC0vLPuWaEQ0usBeGpfZO8W2s=
 github.com/cerbos/cerbos/api/genpb v0.43.0 h1:tHzzKDLA1Cuvm9mo7MfENt0LSaKSuOVIq+vRa5AmVKE=
 github.com/cerbos/cerbos/api/genpb v0.43.0/go.mod h1:gh5B1yEhn9C1Qr4CsTY3mEOLOFldGDif1p/TalobtpE=
+github.com/cerbos/cloud-api v0.1.41 h1:WWjeAhUnLHNv3dfk+Hm9mZ+WpTq2xVuemTCqg68SxEI=
+github.com/cerbos/cloud-api v0.1.41/go.mod h1:pwts93ZYEpH+sMjuhLFnY1YCezAP/SD0n7BdJ1KTCZo=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -640,8 +642,6 @@ github.com/rs/zerolog v1.34.0 h1:k43nTLIwcTVQAncfCw4KZ2VY6ukYoZaBPNOE8txlOeY=
 github.com/rs/zerolog v1.34.0/go.mod h1:bJsvje4Z08ROH4Nhs5iH600c3IkWhwp44iRc54W6wYQ=
 github.com/rudderlabs/analytics-go v3.3.3+incompatible h1:OG0XlKoXfr539e2t1dXtTB+Gr89uFW+OUNQBVhHIIBY=
 github.com/rudderlabs/analytics-go v3.3.3+incompatible/go.mod h1:LF8/ty9kUX4PTY3l5c97K3nZZaX5Hwsvt+NBaRL/f30=
-github.com/sambigeara/cloud-api v0.0.0-20250414073400-c65e647e25fa h1:pMZRsV7F37rt4ArTu9L2w5XpZl+MuV5WzH09MUtaT00=
-github.com/sambigeara/cloud-api v0.0.0-20250414073400-c65e647e25fa/go.mod h1:pwts93ZYEpH+sMjuhLFnY1YCezAP/SD0n7BdJ1KTCZo=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 h1:lZUw3E0/J3roVtGQ+SCrUrg3ON6NgVqpn3+iol9aGu4=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1/go.mod h1:uToXkOrWAZ6/Oc07xWQrPOhJotwFIyu2bBVN41fcDUY=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
