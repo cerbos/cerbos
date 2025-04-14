@@ -21,7 +21,6 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -29,7 +28,6 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
-	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -259,41 +257,21 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		return nil, nil, err
 	}
 
-	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, opts.evalParams)
-	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope, opts.LenientScopeSearch())
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
+	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
+
+	if err := engine.ruleTable.LazyLoadPrincipalPolicy(ctx, ppName, ppVersion, ppScope); err != nil {
+		return nil, nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", ppName, ppVersion, ppScope, err)
 	}
 
-	result := new(planner.PolicyPlanResult)
-	auditTrail := &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes, 2)} //nolint:mnd
-	if policy := policySet.GetPrincipalPolicy(); policy != nil {
-		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy, Globals: opts.Globals(), NowFn: opts.NowFunc()}
-		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		maps.Copy(auditTrail.EffectivePolicies, policy.GetMeta().GetSourceAttributes())
+	if err := engine.ruleTable.LazyLoadResourcePolicy(ctx, rpName, rpVersion, rpScope, input.Principal.Roles); err != nil {
+		return nil, nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", rpName, rpVersion, rpScope, err)
 	}
 
-	policyVersion := input.Resource.PolicyVersion
-	if policyVersion == "" {
-		policyVersion = opts.DefaultPolicyVersion()
-	}
-
-	if err := engine.ruleTable.LazyLoad(ctx, input.Resource.Kind, policyVersion, input.Resource.Scope, input.Principal.Roles); err != nil {
-		return nil, nil, err
-	}
-
-	ruleTableResult, err := planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTable, input, policyVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
+	result, err := planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTable, input, ppVersion, rpVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
 	if err != nil {
 		return nil, nil, err
 	}
-
-	maps.Copy(auditTrail.EffectivePolicies, ruleTableResult.EffectivePolicies)
-	result = planner.CombinePlans(result, ruleTableResult)
 
 	if result.AllowIsEmpty() && !result.DenyIsEmpty() { // reset an conditional DENY to an unconditional one
 		result.ResetToUnconditionalDeny()
@@ -307,6 +285,8 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	if result.Empty() {
 		output.FilterDebug = noPolicyMatch
 	}
+
+	auditTrail := &auditv1.AuditTrail{EffectivePolicies: result.EffectivePolicies} //nolint:mnd
 
 	return output, auditTrail, nil
 }
@@ -487,12 +467,6 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, nil, err
 	}
 
-	output := &enginev1.CheckOutput{
-		RequestId:  input.RequestId,
-		ResourceId: input.Resource.Id,
-		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
-	}
-
 	ec, err := engine.buildEvaluationCtx(ctx, checkOpts.evalParams, input)
 	if err != nil {
 		return nil, nil, err
@@ -505,6 +479,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	if err != nil {
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 		return nil, nil, fmt.Errorf("failed to evaluate policies: %w", err)
+	}
+
+	output := &enginev1.CheckOutput{
+		RequestId:  input.RequestId,
+		ResourceId: input.Resource.Id,
+		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
 	}
 
 	// update the output
@@ -534,60 +514,42 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 }
 
 func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams, input *enginev1.CheckInput) (*evaluationCtx, error) {
-	ec := &evaluationCtx{}
-
-	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, eparams)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, eparams, ppName, ppVersion, ppScope)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
-	}
-	ec.addCheck(ppCheck)
-
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, eparams)
-	pCheck, err := engine.getRuleTableEvaluator(ctx, eparams, rpName, rpVersion, rpScope, input.Principal.Roles)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
-	}
-	ec.addCheck(pCheck)
 
-	return ec, nil
+	principal := ruleTableEvaluatorParams{
+		name:    ppName,
+		version: ppVersion,
+		scope:   ppScope,
+	}
+	resource := ruleTableEvaluatorParams{
+		name:    rpName,
+		version: rpVersion,
+		scope:   rpScope,
+	}
+
+	check, err := engine.getRuleTableEvaluator(ctx, eparams, principal, resource, input.Principal.Roles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get evaluator: %w", err)
+	}
+
+	return &evaluationCtx{check}, nil
 }
 
-func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string, inputRoles []string) (Evaluator, error) {
-	if err := engine.ruleTable.LazyLoad(ctx, resource, policyVer, scope, inputRoles); err != nil {
-		return nil, err
+type ruleTableEvaluatorParams struct {
+	name, version, scope string
+}
+
+func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, principal, resource ruleTableEvaluatorParams, inputRoles []string) (Evaluator, error) {
+	if err := engine.ruleTable.LazyLoadPrincipalPolicy(ctx, principal.name, principal.version, principal.scope); err != nil {
+		return nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", principal.name, principal.version, principal.scope, err)
+	}
+
+	if err := engine.ruleTable.LazyLoadResourcePolicy(ctx, resource.name, resource.version, resource.scope, inputRoles); err != nil {
+		return nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", resource.name, resource.version, resource.scope, err)
 	}
 
 	return NewRuleTableEvaluator(engine.ruleTable, engine.schemaMgr, eparams), nil
-}
-
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {
-	rps, err := engine.getPrincipalPolicySet(ctx, principal, policyVer, scope, eparams.lenientScopeSearch)
-	if err != nil {
-		return nil, err
-	}
-
-	if rps == nil {
-		return nil, nil
-	}
-
-	return NewPrincipalPolicyEvaluator(rps.GetPrincipalPolicy(), eparams), nil
-}
-
-func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.GetPrincipalPolicy")
-	defer span.End()
-	span.SetAttributes(tracing.PolicyName(principal), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
-
-	principalModIDs := namer.ScopedPrincipalPolicyModuleIDs(principal, policyVer, scope, lenientScopeSearch)
-	rps, err := engine.policyLoader.GetFirstMatch(ctx, principalModIDs)
-	if err != nil {
-		tracing.MarkFailed(span, http.StatusInternalServerError, err)
-		return nil, err
-	}
-
-	return rps, nil
 }
 
 func (engine *Engine) policyAttr(name, version, scope string, params evalParams) (pName, pVersion, pScope string) {
@@ -603,57 +565,50 @@ func (engine *Engine) policyAttr(name, version, scope string, params evalParams)
 }
 
 type evaluationCtx struct {
-	checks    [2]Evaluator
-	numChecks int
-}
-
-func (ec *evaluationCtx) addCheck(eval Evaluator) {
-	if eval != nil {
-		ec.checks[ec.numChecks] = eval
-		ec.numChecks++
-	}
+	evaluator Evaluator
 }
 
 func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*evaluationResult, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.EvalCtxEvaluate")
 	defer span.End()
 
-	resp := &evaluationResult{
-		effectiveDerivedRoles: make(map[string]struct{}),
-		toResolve:             make(map[string]struct{}),
-	}
-	if len(ec.checks) == 0 {
+	if ec.evaluator == nil {
 		tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
 
+		resp := &evaluationResult{
+			effectiveDerivedRoles: make(map[string]struct{}),
+			toResolve:             make(map[string]struct{}),
+		}
 		resp.setDefaultsForUnmatchedActions(tctx, input)
 		return resp, nil
 	}
 
-	for i := range ec.numChecks {
-		c := ec.checks[i]
-		result, err := c.Evaluate(ctx, tctx, input)
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
-			tracing.MarkFailed(span, http.StatusInternalServerError, err)
-
-			return nil, fmt.Errorf("failed to execute policy: %w", err)
-		}
-
-		incomplete := resp.merge(result)
-		if !incomplete {
-			return resp, nil
-		}
+	result, err := ec.evaluator.Evaluate(ctx, tctx, input)
+	if err != nil {
+		logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+		return nil, fmt.Errorf("failed to execute policy: %w", err)
 	}
 
-	tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
-	resp.setDefaultsForUnmatchedActions(tctx, input)
+	resp := &evaluationResult{
+		effects:               result.Effects,
+		auditTrail:            result.AuditTrail,
+		effectiveDerivedRoles: result.EffectiveDerivedRoles,
+		toResolve:             result.toResolve,
+		validationErrors:      result.ValidationErrors,
+		outputs:               result.Outputs,
+	}
 
-	for action := range resp.toResolve {
-		if _, ok := resp.effects[action]; !ok {
-			tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
-			resp.effects[action] = EffectInfo{
-				Effect: defaultEffect,
-				Policy: noPolicyMatch,
+	if len(result.toResolve) > 0 {
+		tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
+
+		for action := range result.toResolve {
+			if _, ok := resp.effects[action]; !ok {
+				tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
+				resp.effects[action] = EffectInfo{
+					Effect: defaultEffect,
+					Policy: noPolicyMatch,
+				}
 			}
 		}
 	}
@@ -668,43 +623,6 @@ type evaluationResult struct {
 	toResolve             map[string]struct{}
 	validationErrors      []*schemav1.ValidationError
 	outputs               []*enginev1.OutputEntry
-}
-
-// merge the results by only updating the actions that have a no_match effect.
-func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
-	er.auditTrail = mergeTrails(er.auditTrail, res.AuditTrail)
-
-	if er.effects == nil {
-		er.effects = make(map[string]EffectInfo, len(res.Effects))
-	}
-
-	if len(res.EffectiveDerivedRoles) > 0 {
-		for edr := range res.EffectiveDerivedRoles {
-			er.effectiveDerivedRoles[edr] = struct{}{}
-		}
-	}
-
-	if len(res.ValidationErrors) > 0 {
-		er.validationErrors = append(er.validationErrors, res.ValidationErrors...)
-	}
-
-	if len(res.Outputs) > 0 {
-		er.outputs = append(er.outputs, res.Outputs...)
-	}
-
-	for action, effect := range res.Effects {
-		// if the action doesn't already exist or if it has a no_match effect, update it.
-		if currEffect, ok := er.effects[action]; !ok ||
-			currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
-			er.effects[action] = effect
-		}
-	}
-
-	for a := range res.toResolve {
-		er.toResolve[a] = struct{}{}
-	}
-
-	return len(res.toResolve) > 0
 }
 
 func (er *evaluationResult) setDefaultsForUnmatchedActions(tctx tracer.Context, input *enginev1.CheckInput) {
