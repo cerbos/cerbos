@@ -47,6 +47,13 @@ var (
 		)
 	})
 
+	AuditOversizedEntryCount = once(func() (metric.Int64Counter, error) {
+		return Meter().Int64Counter(
+			"cerbos_dev_audit_oversized_entry_count",
+			metric.WithDescription("Number of audit log entries skipped due to exceeding maximum size"),
+		)
+	})
+
 	BundleFetchErrorsCount = once(func() (metric.Int64Counter, error) {
 		return Meter().Int64Counter(
 			"cerbos_dev_store_bundle_fetch_errors_count",
