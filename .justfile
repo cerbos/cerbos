@@ -204,7 +204,7 @@ _goreleaser: (_install "goreleaser" "github.com/goreleaser/goreleaser/v2")
 
 _helm-schema: (_install "helm-schema" "github.com/dadav/helm-schema" "cmd/helm-schema")
 
-_mockery: (_install "mockery" "github.com/vektra/mockery/v2")
+_mockery: (_install "mockery" "github.com/vektra/mockery/v3")
 
 _modernize: (_install "modernize" "golang.org/x/tools/gopls" "internal/analysis/modernize/cmd/modernize")
 
