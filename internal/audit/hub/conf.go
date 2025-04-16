@@ -21,7 +21,7 @@ const (
 	defaultFlushTimeout      = 5 * time.Second
 	defaultNumGoRoutines     = 4
 	defaultMaxBatchSizeBytes = 4194304 // 4MB
-	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc
+	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc.
 	maxAllowedBatchSizeBytes = 6291456 // 6MB
 
 	minMinFlushInterval = 2 * time.Second
