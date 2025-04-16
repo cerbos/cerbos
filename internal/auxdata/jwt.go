@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/lestrrat-go/httprc/v2"
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jws"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jws"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 
