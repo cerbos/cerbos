@@ -287,7 +287,7 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 	}
 
 	var k string
-	switch kind {
+	switch kind { //nolint:exhaustive
 	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
 		k = audit.KindAccess
 	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
