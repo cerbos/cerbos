@@ -364,6 +364,13 @@ func cerbos_engine_v1_PlanResourcesInput_hashpb_sum(m *v11.PlanResourcesInput, h
 	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.include_meta"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetIncludeMeta())))
 	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+			}
+		}
+	}
 }
 
 func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *v11.PlanResourcesOutput, hasher hash.Hash, ignore map[string]struct{}) {
@@ -396,6 +403,13 @@ func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *v11.PlanResourcesOutput,
 				if v != nil {
 					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
 				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesOutput.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
 			}
 		}
 	}

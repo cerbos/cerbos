@@ -276,9 +276,11 @@ func (Trace_Event_Status) EnumDescriptor() ([]byte, []int) {
 }
 
 type PlanResourcesInput struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
-	RequestId     string                       `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	RequestId string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// Deprecated: Marked as deprecated in cerbos/engine/v1/engine.proto.
 	Action        string                       `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	Actions       []string                     `protobuf:"bytes,7,rep,name=actions,proto3" json:"actions,omitempty"`
 	Principal     *Principal                   `protobuf:"bytes,3,opt,name=principal,proto3" json:"principal,omitempty"`
 	Resource      *PlanResourcesInput_Resource `protobuf:"bytes,4,opt,name=resource,proto3" json:"resource,omitempty"`
 	AuxData       *AuxData                     `protobuf:"bytes,5,opt,name=aux_data,json=auxData,proto3" json:"aux_data,omitempty"`
@@ -324,11 +326,19 @@ func (x *PlanResourcesInput) GetRequestId() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in cerbos/engine/v1/engine.proto.
 func (x *PlanResourcesInput) GetAction() string {
 	if x != nil {
 		return x.Action
 	}
 	return ""
+}
+
+func (x *PlanResourcesInput) GetActions() []string {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
 }
 
 func (x *PlanResourcesInput) GetPrincipal() *Principal {
@@ -456,15 +466,17 @@ func (x *PlanResourcesFilter) GetCondition() *PlanResourcesFilter_Expression_Ope
 }
 
 type PlanResourcesOutput struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	RequestId        string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	Action           string                 `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
-	Kind             string                 `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
-	PolicyVersion    string                 `protobuf:"bytes,4,opt,name=policy_version,json=policyVersion,proto3" json:"policy_version,omitempty"`
-	Scope            string                 `protobuf:"bytes,5,opt,name=scope,proto3" json:"scope,omitempty"`
-	Filter           *PlanResourcesFilter   `protobuf:"bytes,6,opt,name=filter,proto3" json:"filter,omitempty"`
-	FilterDebug      string                 `protobuf:"bytes,7,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
-	ValidationErrors []*v1.ValidationError  `protobuf:"bytes,8,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	RequestId string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// Deprecated: Marked as deprecated in cerbos/engine/v1/engine.proto.
+	Action           string                `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	Kind             string                `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	PolicyVersion    string                `protobuf:"bytes,4,opt,name=policy_version,json=policyVersion,proto3" json:"policy_version,omitempty"`
+	Scope            string                `protobuf:"bytes,5,opt,name=scope,proto3" json:"scope,omitempty"`
+	Filter           *PlanResourcesFilter  `protobuf:"bytes,6,opt,name=filter,proto3" json:"filter,omitempty"`
+	FilterDebug      string                `protobuf:"bytes,7,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
+	ValidationErrors []*v1.ValidationError `protobuf:"bytes,8,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
+	Actions          []string              `protobuf:"bytes,9,rep,name=actions,proto3" json:"actions,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -506,6 +518,7 @@ func (x *PlanResourcesOutput) GetRequestId() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in cerbos/engine/v1/engine.proto.
 func (x *PlanResourcesOutput) GetAction() string {
 	if x != nil {
 		return x.Action
@@ -551,6 +564,13 @@ func (x *PlanResourcesOutput) GetFilterDebug() string {
 func (x *PlanResourcesOutput) GetValidationErrors() []*v1.ValidationError {
 	if x != nil {
 		return x.ValidationErrors
+	}
+	return nil
+}
+
+func (x *PlanResourcesOutput) GetActions() []string {
+	if x != nil {
+		return x.Actions
 	}
 	return nil
 }
@@ -2070,11 +2090,12 @@ var File_cerbos_engine_v1_engine_proto protoreflect.FileDescriptor
 
 const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcerbos/engine/v1/engine.proto\x12\x10cerbos.engine.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a&google/api/expr/v1alpha1/checked.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xe8\b\n" +
+	"\x1dcerbos/engine/v1/engine.proto\x12\x10cerbos.engine.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a&google/api/expr/v1alpha1/checked.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x86\t\n" +
 	"\x12PlanResourcesInput\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\x01 \x01(\tR\trequestId\x12\x16\n" +
-	"\x06action\x18\x02 \x01(\tR\x06action\x129\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1a\n" +
+	"\x06action\x18\x02 \x01(\tB\x02\x18\x01R\x06action\x12\x18\n" +
+	"\aactions\x18\a \x03(\tR\aactions\x129\n" +
 	"\tprincipal\x18\x03 \x01(\v2\x1b.cerbos.engine.v1.PrincipalR\tprincipal\x12I\n" +
 	"\bresource\x18\x04 \x01(\v2-.cerbos.engine.v1.PlanResourcesInput.ResourceR\bresource\x124\n" +
 	"\baux_data\x18\x05 \x01(\v2\x19.cerbos.engine.v1.AuxDataR\aauxData\x12!\n" +
@@ -2124,17 +2145,18 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13KIND_ALWAYS_ALLOWED\x10\x01\x12\x16\n" +
 	"\x12KIND_ALWAYS_DENIED\x10\x02\x12\x14\n" +
-	"\x10KIND_CONDITIONAL\x10\x03\"\xcf\x02\n" +
+	"\x10KIND_CONDITIONAL\x10\x03\"\xed\x02\n" +
 	"\x13PlanResourcesOutput\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\x01 \x01(\tR\trequestId\x12\x16\n" +
-	"\x06action\x18\x02 \x01(\tR\x06action\x12\x12\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1a\n" +
+	"\x06action\x18\x02 \x01(\tB\x02\x18\x01R\x06action\x12\x12\n" +
 	"\x04kind\x18\x03 \x01(\tR\x04kind\x12%\n" +
 	"\x0epolicy_version\x18\x04 \x01(\tR\rpolicyVersion\x12\x14\n" +
 	"\x05scope\x18\x05 \x01(\tR\x05scope\x12=\n" +
 	"\x06filter\x18\x06 \x01(\v2%.cerbos.engine.v1.PlanResourcesFilterR\x06filter\x12!\n" +
 	"\ffilter_debug\x18\a \x01(\tR\vfilterDebug\x12N\n" +
-	"\x11validation_errors\x18\b \x03(\v2!.cerbos.schema.v1.ValidationErrorR\x10validationErrors\"\x97\x02\n" +
+	"\x11validation_errors\x18\b \x03(\v2!.cerbos.schema.v1.ValidationErrorR\x10validationErrors\x12\x18\n" +
+	"\aactions\x18\t \x03(\tR\aactions\"\x97\x02\n" +
 	"\n" +
 	"CheckInput\x12\x1d\n" +
 	"\n" +

@@ -52,7 +52,8 @@ message PlanResourcesInput {
   }
 
   string request_id = 1;
-  string action = 2;
+  string action = 2 [deprecated = true];
+  repeated string actions = 7;
   Principal principal = 3;
   Resource resource = 4;
   AuxData aux_data = 5;
@@ -114,13 +115,14 @@ message PlanResourcesFilter {
 
 message PlanResourcesOutput {
   string request_id = 1;
-  string action = 2;
+  string action = 2 [deprecated = true];
   string kind = 3;
   string policy_version = 4;
   string scope = 5;
   PlanResourcesFilter filter = 6;
   string filter_debug = 7;
   repeated cerbos.schema.v1.ValidationError validation_errors = 8;
+  repeated string actions = 9;
 }
 
 message CheckInput {
