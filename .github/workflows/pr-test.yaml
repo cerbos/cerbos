@@ -61,7 +61,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: Generate
         run: just generate
@@ -129,7 +129,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: Download previous test times
         uses: actions/download-artifact@v4
@@ -198,7 +198,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: Download JUnit reports
         uses: actions/download-artifact@v4
@@ -254,7 +254,7 @@ jobs:
           cache: false
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: modernize
         run: just lint-modernize
