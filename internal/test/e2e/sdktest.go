@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -365,7 +365,7 @@ func generateToken(t *testing.T, expiry time.Time) string {
 	keySet, err := jwk.ParseKey(keyData)
 	require.NoError(t, err)
 
-	tokenBytes, err := jwt.Sign(token, jwt.WithKey(jwa.ES384, keySet))
+	tokenBytes, err := jwt.Sign(token, jwt.WithKey(jwa.ES384(), keySet))
 	require.NoError(t, err)
 
 	return string(tokenBytes)

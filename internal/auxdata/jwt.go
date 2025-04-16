@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lestrrat-go/httprc/v2"
+	"github.com/lestrrat-go/httprc/v3"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -73,13 +73,9 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 			switch {
 			case ks.Remote != nil:
 				if jwkCache == nil {
-					errSink := func(err error) {
-						log.Warn("Error refreshing keyset", zap.Error(err))
-					}
-
-					jwkCache = jwk.NewCache(ctx, jwk.WithErrSink(httprc.ErrSinkFunc(errSink)))
+					jwkCache = newJWKCache(ctx, log)
 				}
-				jh.keySets[ks.ID] = newRemoteKeySet(jwkCache, ks.Remote, opts)
+				jh.keySets[ks.ID] = newRemoteKeySet(ctx, jwkCache, ks.Remote, opts)
 			case ks.Local != nil:
 				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, opts)
 			}
@@ -91,6 +87,23 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 	}
 
 	return jh
+}
+
+func newJWKCache(ctx context.Context, log *zap.Logger) *jwk.Cache {
+	jwkCache, err := jwk.NewCache(ctx, httprc.NewClient(httprc.WithErrorSink(jwkErrSink{log: log})))
+	if err != nil {
+		// this should never happen; jwk.NewCache only returns an error if you pass it an httprc.Client that has already been started.
+		panic(fmt.Errorf("failed to create JWK cache: %w", err))
+	}
+	return jwkCache
+}
+
+type jwkErrSink struct {
+	log *zap.Logger
+}
+
+func (j jwkErrSink) Put(_ context.Context, err error) {
+	j.log.Warn("Error refreshing keyset", zap.Error(err))
 }
 
 func (j *jwtHelper) extract(ctx context.Context, auxJWT *requestv1.AuxData_JWT) (map[string]*structpb.Value, error) {
@@ -167,28 +180,29 @@ func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT
 	}
 
 	if cacheKey != "" {
-		expiry := defaultCacheExpiry
-		if exp := time.Until(token.Expiration()); exp > 0 {
-			expiry = exp
+		expiration, ok := token.Expiration()
+		expiry := time.Until(expiration)
+		if !ok || expiry <= 0 {
+			expiry = defaultCacheExpiry
 		}
 
 		j.cache.SetWithExpire(cacheKey, cacheEntry, expiry)
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)
-	for iter := token.Iterate(ctx); iter.Next(ctx); {
-		p := iter.Pair()
-		key, ok := p.Key.(string)
-		if !ok {
+	for _, key := range token.Keys() {
+		var v any
+		err := token.Get(key, &v)
+		if err != nil {
 			logging.FromContext(ctx).Named("auxdata").
-				Warn("Ignoring JWT key-value pair because the key is not a string", zap.Any("pair", p), zap.Error(err))
+				Warn("Ignoring JWT key-value pair because the value could not be read", zap.String("key", key), zap.Error(err))
 			continue
 		}
 
-		value, err := util.ToStructPB(p.Value)
+		value, err := util.ToStructPB(v)
 		if err != nil {
 			logging.FromContext(ctx).Named("auxdata").
-				Warn("Ignoring JWT key-value pair because the value is not in a known format", zap.Any("pair", p), zap.Error(err))
+				Warn("Ignoring JWT key-value pair because the value is not in a known format", zap.String("key", key), zap.Any("value", v), zap.Error(err))
 			continue
 		}
 
@@ -209,18 +223,18 @@ type remoteKeySet struct {
 	options []any
 }
 
-func newRemoteKeySet(cache *jwk.Cache, src *RemoteSource, options []any) *remoteKeySet {
+func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, options []any) *remoteKeySet {
 	if src.RefreshInterval > 0 {
-		_ = cache.Register(src.URL, jwk.WithRefreshInterval(src.RefreshInterval))
+		_ = cache.Register(ctx, src.URL, jwk.WithConstantInterval(src.RefreshInterval))
 	} else {
-		_ = cache.Register(src.URL)
+		_ = cache.Register(ctx, src.URL)
 	}
 
 	return &remoteKeySet{Cache: cache, url: src.URL, options: options}
 }
 
 func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
-	ks, err := rks.Get(ctx, rks.url)
+	ks, err := rks.Lookup(ctx, rks.url)
 	return ks, rks.options, err
 }
 
