@@ -196,7 +196,7 @@ _dlv: (_install "dlv" "github.com/go-delve/delve" "cmd/dlv")
 
 _go_licence_detector: (_install "go-licence-detector" "go.elastic.co/go-licence-detector")
 
-_golangcilint: (_install "golangci-lint" "github.com/golangci/golangci-lint" "cmd/golangci-lint")
+_golangcilint: (_install "golangci-lint" "github.com/golangci/golangci-lint/v2" "cmd/golangci-lint")
 
 _gotestsum: (_install "gotestsum" "gotest.tools/gotestsum")
 

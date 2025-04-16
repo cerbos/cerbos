@@ -191,7 +191,7 @@ func (pol *Policy) resolveDerivedRoles(ctx context.Context, loadPolicy loadPolic
 
 		if loadPolicy != nil {
 			if err := storage.BatchLoadPolicy(ctx, storage.MaxPoliciesInBatch, loadPolicy, func(wrapper *policy.Wrapper) error {
-				importedDerivedRoles := policy.ListExportedDerivedRoles(wrapper.Policy.GetDerivedRoles())
+				importedDerivedRoles := policy.ListExportedDerivedRoles(wrapper.GetDerivedRoles())
 				for _, importedDerivedRole := range importedDerivedRoles {
 					if _, ok := derivedRoles[importedDerivedRole.Name]; ok {
 						pol.results[policyID].DerivedRoles = append(pol.results[policyID].DerivedRoles, &responsev1.InspectPoliciesResponse_DerivedRole{

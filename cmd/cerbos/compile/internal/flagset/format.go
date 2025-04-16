@@ -16,7 +16,7 @@ const (
 type VerificationOutputFormat string
 
 func (v *VerificationOutputFormat) Validate() error {
-	if !(*v == "tree" || *v == "list" || *v == "json" || *v == "junit") {
+	if *v != "tree" && *v != "list" && *v != "json" && *v != "junit" {
 		return fmt.Errorf("valid options are tree, list, json or junit")
 	}
 

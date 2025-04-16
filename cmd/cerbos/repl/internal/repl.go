@@ -1055,7 +1055,6 @@ func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
 		}
 	}
 
-	//nolint: ifshort
 	goVal := value.Value()
 	if v, ok := goVal.(proto.Message); ok {
 		if err := po.PrintProtoJSON(v, po.level); err != nil {

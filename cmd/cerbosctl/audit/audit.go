@@ -68,7 +68,7 @@ func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 	}
 	defer writer.flush()
 
-	logOptions := c.AuditFilters.GenOptions()
+	logOptions := c.GenOptions()
 
 	switch kind := c.Kind; kind {
 	case "access":

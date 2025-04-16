@@ -85,7 +85,7 @@ func (c *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, errInvalidFlushTimeout)
 	}
 
-	if c.Ingest.MinFlushInterval >= c.Conf.Advanced.FlushInterval {
+	if c.Ingest.MinFlushInterval >= c.Advanced.FlushInterval {
 		outErr = multierr.Append(outErr, errors.New("ingest.minFlushInterval must be less than advanced.flushInterval"))
 	}
 
