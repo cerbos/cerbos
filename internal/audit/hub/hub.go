@@ -20,6 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
@@ -285,6 +286,14 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 		return nil
 	}
 
+	var k string
+	switch kind {
+	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+		k = audit.KindAccess
+	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+		k = audit.KindDecision
+	}
+
 	// Process entries in size-limited batches using a sliding window approach
 	left := 0
 outer:
@@ -300,6 +309,7 @@ outer:
 					logger.Error("Entry exceeds maximum batch size, skipping",
 						zap.Int("entrySize", entrySize),
 						zap.Int("maxBatchSizeBytes", l.maxBatchSizeBytes))
+					metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(k))
 					// Skip to next entry without adding it to the batch
 					left = right + 1
 					continue outer
