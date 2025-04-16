@@ -201,6 +201,8 @@ func TestHubLog(t *testing.T) {
 }
 
 func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
+	t.Helper()
+
 	return initDBWithBatchCfg(t, batchSize, 1048576)
 }
 
