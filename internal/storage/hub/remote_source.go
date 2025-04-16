@@ -241,17 +241,33 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 	}
 
 	if !s.conf.Remote.DisableAutoUpdate {
-		eb := backoff.NewExponentialBackOff()
-		eb.InitialInterval = noBundleInitialInterval
-		eb.MaxElapsedTime = 0
-		eb.MaxInterval = noBundleMaxInterval
-		eb.Multiplier = 2
-		b := backoff.WithMaxRetries(eb, noBundleMaxCount)
+		b := backoff.NewExponentialBackOff()
+		b.InitialInterval = noBundleInitialInterval
+		b.MaxInterval = noBundleMaxInterval
+		b.Multiplier = 2
 
-		go s.startWatchLoop(ctx, b)
+		go s.startWatchLoop(ctx, &noBundleBackoff{backoff: b})
 	}
 
 	return nil
+}
+
+type noBundleBackoff struct {
+	backoff backoff.BackOff
+	count   uint
+}
+
+func (b *noBundleBackoff) NextBackOff() time.Duration {
+	b.count++
+	if b.count >= noBundleMaxCount {
+		return backoff.Stop
+	}
+	return b.backoff.NextBackOff()
+}
+
+func (b *noBundleBackoff) Reset() {
+	b.backoff.Reset()
+	b.count = 0
 }
 
 func shouldWorkOffline() bool {
@@ -420,13 +436,8 @@ func incEventMetric(event string) {
 }
 
 func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
-	b := backoff.NewExponentialBackOff()
-	b.MaxElapsedTime = 0 // Retry indefinitely
-	backoffCtx := backoff.WithContext(b, ctx)
-
-	var watchHandle bundleapi.WatchHandle
-	op := func() (err error) {
-		watchHandle, err = s.client.WatchBundle(ctx)
+	op := func() (bundleapi.WatchHandle, error) {
+		watchHandle, err := s.client.WatchBundle(ctx)
 		if err != nil {
 			s.mu.Lock()
 			s.healthy = false
@@ -436,10 +447,10 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 			if errors.Is(err, base.ErrAuthenticationFailed) {
 				s.log.Error("Failed to authenticate to Cerbos Hub", zap.Error(err))
 				s.removeBundle(false)
-				return backoff.Permanent(err)
+				return nil, backoff.Permanent(err)
 			}
 		}
-		return err
+		return watchHandle, err
 	}
 
 	notify := func(err error, next time.Duration) {
@@ -447,7 +458,11 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 	}
 
 	s.log.Debug("Calling watch RPC")
-	if err := backoff.RetryNotify(op, backoffCtx, notify); err != nil {
+	watchHandle, err := backoff.Retry(ctx, op,
+		backoff.WithMaxElapsedTime(0), // retry indefinitely
+		backoff.WithNotify(notify),
+	)
+	if err != nil {
 		return 0, err
 	}
 

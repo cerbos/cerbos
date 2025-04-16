@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultRetryMaxAttempts = 3
+	defaultRetryMaxAttempts uint = 3
 )
 
 // ConnPoolConf holds common SQL connection pool settings.
@@ -36,8 +36,8 @@ func (cc *ConnPoolConf) Configure(db *sqlx.DB) {
 
 // ConnRetryConf holds common retry settings for establishing a database connection.
 type ConnRetryConf struct {
-	// MaxAttempts is the maximum number of retries to attempt before giving up.
-	MaxAttempts uint64 `yaml:"maxAttempts"`
+	// MaxAttempts is the maximum number of times to attempt to connect before giving up.
+	MaxAttempts uint `yaml:"maxAttempts"`
 	// InitialInterval is the initial wait period between retry attempts. Subsequent attempts will be longer depending on the attempt number.
 	InitialInterval time.Duration `yaml:"initialInterval"`
 	// MaxInterval is the maximum amount of time to wait between retry attempts.
@@ -64,19 +64,26 @@ func (rc *ConnRetryConf) Validate() (outErr error) {
 	return outErr
 }
 
-func (rc *ConnRetryConf) BackoffConf() backoff.BackOff {
-	if rc == nil {
-		return backoff.WithMaxRetries(backoff.NewExponentialBackOff(), defaultRetryMaxAttempts)
-	}
-
+func (rc *ConnRetryConf) BackoffOptions() []backoff.RetryOption {
 	b := backoff.NewExponentialBackOff()
-	if rc.MaxInterval > 0 {
-		b.MaxInterval = rc.MaxInterval
+	maxAttempts := defaultRetryMaxAttempts
+
+	if rc != nil {
+		if rc.MaxInterval > 0 {
+			b.MaxInterval = rc.MaxInterval
+		}
+
+		if rc.InitialInterval > 0 {
+			b.InitialInterval = rc.InitialInterval
+		}
+
+		if rc.MaxAttempts > 0 {
+			maxAttempts = rc.MaxAttempts
+		}
 	}
 
-	if rc.InitialInterval > 0 {
-		b.InitialInterval = rc.InitialInterval
+	return []backoff.RetryOption{
+		backoff.WithBackOff(b),
+		backoff.WithMaxTries(maxAttempts),
 	}
-
-	return backoff.WithMaxRetries(b, rc.MaxAttempts)
 }

@@ -35,7 +35,7 @@ type suiteOpt struct {
 	computedEnv       func(Ctx) map[string]string
 	postSetup         func(Ctx)
 	tlsDisabled       bool
-	overlayMaxRetries uint64
+	overlayMaxRetries uint
 }
 
 func WithContextID(contextID string) Opt {
@@ -80,7 +80,7 @@ func WithTLSDisabled() Opt {
 	}
 }
 
-func WithOverlayMaxRetries(nRetries uint64) Opt {
+func WithOverlayMaxRetries(nRetries uint) Opt {
 	return func(so *suiteOpt) {
 		so.overlayMaxRetries = nRetries
 	}
