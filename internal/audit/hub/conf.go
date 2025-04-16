@@ -16,10 +16,12 @@ import (
 const (
 	confKey = audit.ConfKey + ".hub"
 
-	defaultMaxBatchSize     = 16
-	defaultMinFlushInterval = 5 * time.Second
-	defaultFlushTimeout     = 5 * time.Second
-	defaultNumGoRoutines    = 4
+	defaultMaxBatchSize      = 16
+	defaultMinFlushInterval  = 5 * time.Second
+	defaultFlushTimeout      = 5 * time.Second
+	defaultNumGoRoutines     = 4
+	defaultMaxBatchSizeBytes = 2097152 // 2MB
+	maxAllowedBatchSizeBytes = 4194304 // 4MB
 
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second
@@ -42,6 +44,8 @@ type Conf struct {
 type IngestConf struct {
 	// MaxBatchSize defines the max number of log entries to send in each Ingest request.
 	MaxBatchSize uint `yaml:"maxBatchSize" conf:",example=32"`
+	// MaxBatchSizeBytes defines the max cumulative size in bytes for a batch of log entries.
+	MaxBatchSizeBytes uint `yaml:"maxBatchSizeBytes" conf:",example=2097152"`
 	// MinFlushInterval is the minimal duration between Ingest requests.
 	MinFlushInterval time.Duration `yaml:"minFlushInterval" conf:",example=3s"`
 	// FlushTimeout defines the max allowable timeout for each Ingest request.
@@ -65,6 +69,7 @@ func (c *Conf) SetDefaults() {
 	c.Conf.SetDefaults()
 
 	c.Ingest.MaxBatchSize = defaultMaxBatchSize
+	c.Ingest.MaxBatchSizeBytes = defaultMaxBatchSizeBytes
 	c.Ingest.MinFlushInterval = defaultMinFlushInterval
 	c.Ingest.FlushTimeout = defaultFlushTimeout
 	c.Ingest.NumGoRoutines = defaultNumGoRoutines
@@ -77,6 +82,14 @@ func (c *Conf) Validate() (outErr error) {
 
 	if c.Ingest.MaxBatchSize < 1 {
 		outErr = multierr.Append(outErr, errors.New("maxBatchSize must be at least 1"))
+	}
+
+	if c.Ingest.MaxBatchSizeBytes < 1 {
+		outErr = multierr.Append(outErr, errors.New("maxBatchSizeBytes must be at least 1"))
+	}
+
+	if c.Ingest.MaxBatchSizeBytes > maxAllowedBatchSizeBytes {
+		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes cannot exceed %d bytes", maxAllowedBatchSizeBytes))
 	}
 
 	if c.Ingest.MinFlushInterval < minMinFlushInterval {
