@@ -145,11 +145,11 @@ type hubClientProvider struct {
 }
 
 func (h hubClientProvider) V1(conf bundleapi.ClientConf) (ClientV1, error) {
-	return h.Hub.BundleClient(conf)
+	return h.BundleClient(conf)
 }
 
 func (h hubClientProvider) V2(conf bundleapi.ClientConf) (ClientV2, error) {
-	return h.Hub.BundleClientV2(conf)
+	return h.BundleClientV2(conf)
 }
 
 type ClientV1 interface {

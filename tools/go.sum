@@ -218,6 +218,8 @@ github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7 h1:uSoVVbwJiQipAclBb
 github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7/go.mod h1:6zEj6s6u/ghQa61ZWa/C2Aw3RkjiTBOix7dkqa1VLIs=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
 github.com/alecthomas/assert/v2 v2.11.0/go.mod h1:Bze95FyfUr7x34QZrjL+XP+0qgp/zg8yS+TtBj1WA3k=
+github.com/alecthomas/chroma/v2 v2.16.0 h1:QC5ZMizk67+HzxFDjQ4ASjni5kWBTGiigRG1u23IGvA=
+github.com/alecthomas/chroma/v2 v2.16.0/go.mod h1:RVX6AvYm4VfYe/zsk7mjHueLDZor3aWCNE14TFlepBk=
 github.com/alecthomas/go-check-sumtype v0.3.1 h1:u9aUvbGINJxLVXiFvHUlPEaD7VDULsrxJb4Aq31NLkU=
 github.com/alecthomas/go-check-sumtype v0.3.1/go.mod h1:A8TSiN3UPRw3laIgWEUOHHLPa6/r9MtoigdlP5h3K/E=
 github.com/alecthomas/repr v0.4.0 h1:GhI2A8MACjfegCPVq9f1FLvIBS+DrQ2KQBFZP1iFzXc=
@@ -459,6 +461,10 @@ github.com/dadav/helm-schema v0.0.0-20250122083607-0f182120235b h1:whSVmmrzvAtMO
 github.com/dadav/helm-schema v0.0.0-20250122083607-0f182120235b/go.mod h1:IFZOklxRcLrNhNQpwjAs4kAyz8Jpf4zJ8xnDIsAVm3E=
 github.com/daixiang0/gci v0.13.6 h1:RKuEOSkGpSadkGbvZ6hJ4ddItT3cVZ9Vn9Rybk6xjl8=
 github.com/daixiang0/gci v0.13.6/go.mod h1:12etP2OniiIdP4q+kjUGrC/rUagga7ODbqsom5Eo5Yk=
+github.com/dave/dst v0.27.3 h1:P1HPoMza3cMEquVf9kKy8yXsFirry4zEnWOdYPOoIzY=
+github.com/dave/dst v0.27.3/go.mod h1:jHh6EOibnHgcUW3WjKHisiooEkYwqpHLBSX1iOBhEyc=
+github.com/dave/jennifer v1.7.1 h1:B4jJJDHelWcDhlRQxWeo0Npa/pYKBLrirAQoTN45txo=
+github.com/dave/jennifer v1.7.1/go.mod h1:nXbxhEmQfOZhWml3D1cDK5M1FLnMSozpbFN/m3RmGZc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
@@ -705,8 +711,10 @@ github.com/golangci/go-printf-func-name v0.1.0 h1:dVokQP+NMTO7jwO4bwsRwLWeudOVUP
 github.com/golangci/go-printf-func-name v0.1.0/go.mod h1:wqhWFH5mUdJQhweRnldEywnR5021wTdZSNgwYceV14s=
 github.com/golangci/gofmt v0.0.0-20250106114630-d62b90e6713d h1:viFft9sS/dxoYY0aiOTsLKO2aZQAPT4nlQCsimGcSGE=
 github.com/golangci/gofmt v0.0.0-20250106114630-d62b90e6713d/go.mod h1:ivJ9QDg0XucIkmwhzCDsqcnxxlDStoTl89jDMIoNxKY=
-github.com/golangci/golangci-lint v1.64.8 h1:y5TdeVidMtBGG32zgSC7ZXTFNHrsJkDnpO4ItB3Am+I=
-github.com/golangci/golangci-lint v1.64.8/go.mod h1:5cEsUQBSr6zi8XI8OjmcY2Xmliqc4iYL7YoPrL+zLJ4=
+github.com/golangci/golangci-lint/v2 v2.1.2 h1:bcOB+jVr4EYEgOEIskQIhtdxOpIGl+iOCwliG/hNPXw=
+github.com/golangci/golangci-lint/v2 v2.1.2/go.mod h1:ApmXnYUmWDGu1CUZRkT3yzzFATmaViCY7BEtytG2AiU=
+github.com/golangci/golines v0.0.0-20250217134842-442fd0091d95 h1:AkK+w9FZBXlU/xUmBtSJN1+tAI4FIvy5WtnUnY8e4p8=
+github.com/golangci/golines v0.0.0-20250217134842-442fd0091d95/go.mod h1:k9mmcyWKSTMcPPvQUCfRWWQ9VHJ1U9Dc0R7kaXAgtnQ=
 github.com/golangci/misspell v0.6.0 h1:JCle2HUTNWirNlDIAUO44hUsKhOFqGPoC4LZxlaSXDs=
 github.com/golangci/misspell v0.6.0/go.mod h1:keMNyY6R9isGaSAu+4Q8NMBwMPkh15Gtc8UCVoDtAWo=
 github.com/golangci/plugin-module-register v0.1.1 h1:TCmesur25LnyJkpsVrupv1Cdzo+2f7zX0H6Jkw1Ol6c=
@@ -1010,6 +1018,8 @@ github.com/magiconair/properties v1.8.9 h1:nWcCbLq1N2v/cpNsy5WvQ37Fb+YElfq20WJ/a
 github.com/magiconair/properties v1.8.9/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
+github.com/manuelarte/funcorder v0.2.1 h1:7QJsw3qhljoZ5rH0xapIvjw31EcQeFbF31/7kQ/xS34=
+github.com/manuelarte/funcorder v0.2.1/go.mod h1:BQQ0yW57+PF9ZpjpeJDKOffEsQbxDFKW8F8zSMe/Zd0=
 github.com/maratori/testableexamples v1.0.0 h1:dU5alXRrD8WKSjOUnmJZuzdxWOEQ57+7s93SLMxb2vI=
 github.com/maratori/testableexamples v1.0.0/go.mod h1:4rhjL1n20TUTT4vdh3RDqSizKLyXp7K2u6HgraZCGzE=
 github.com/maratori/testpackage v1.1.1 h1:S58XVV5AD7HADMmD0fNnziNHqKvSdDuEKdPD1rNTU04=
@@ -1261,8 +1271,6 @@ github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/sivchari/containedctx v1.0.3 h1:x+etemjbsh2fB5ewm5FeLNi5bUjK0V8n0RB+Wwfd0XE=
 github.com/sivchari/containedctx v1.0.3/go.mod h1:c1RDvCbnJLtH4lLcYD/GqwiBSSf4F5Qk0xld2rBqzJ4=
-github.com/sivchari/tenv v1.12.1 h1:+E0QzjktdnExv/wwsnnyk4oqZBUfuh89YMQT1cyuvSY=
-github.com/sivchari/tenv v1.12.1/go.mod h1:1LjSOUCc25snIr5n3DtGGrENhX3LuWefcplwVGC24mw=
 github.com/skeema/knownhosts v1.3.0 h1:AM+y0rI04VksttfwjkSTNQorvGqmwATnvnAHpSgc0LY=
 github.com/skeema/knownhosts v1.3.0/go.mod h1:sPINvnADmT/qYH1kfv+ePMmOBTH6Tbl7b5LvTDjFK7M=
 github.com/slack-go/slack v0.16.0 h1:khp/WCFv+Hb/B/AJaAwvcxKun0hM6grN0bUZ8xG60P8=

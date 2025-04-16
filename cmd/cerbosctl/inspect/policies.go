@@ -37,17 +37,17 @@ func (c *PoliciesCmd) Run(k *kong.Kong, cctx *client.Context) error {
 		opts = append(opts, cerbos.WithPolicyID(c.PolicyIDs...))
 	}
 
-	if c.Filters.IncludeDisabled {
+	if c.IncludeDisabled {
 		opts = append(opts, cerbos.WithIncludeDisabled())
 	}
-	if c.Filters.NameRegexp != "" {
-		opts = append(opts, cerbos.WithNameRegexp(c.Filters.NameRegexp))
+	if c.NameRegexp != "" {
+		opts = append(opts, cerbos.WithNameRegexp(c.NameRegexp))
 	}
-	if c.Filters.ScopeRegexp != "" {
-		opts = append(opts, cerbos.WithScopeRegexp(c.Filters.ScopeRegexp))
+	if c.ScopeRegexp != "" {
+		opts = append(opts, cerbos.WithScopeRegexp(c.ScopeRegexp))
 	}
-	if c.Filters.VersionRegexp != "" {
-		opts = append(opts, cerbos.WithVersionRegexp(c.Filters.VersionRegexp))
+	if c.VersionRegexp != "" {
+		opts = append(opts, cerbos.WithVersionRegexp(c.VersionRegexp))
 	}
 
 	response, err := cctx.AdminClient.InspectPolicies(context.Background(), opts...)

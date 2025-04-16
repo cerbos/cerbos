@@ -1,58 +1,8 @@
 ---
+version: "2"
 run:
-  timeout: 300s
   build-tags:
     - tests
-
-linters-settings:
-  exhaustive:
-    default-signifies-exhaustive: true
-
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/cerbos/cerbos)
-      - blank
-      - dot
-    skip-generated: true
-    custom-order: true
-
-  gofumpt:
-    extra-rules: true
-
-  goheader:
-    values:
-      const:
-        COMPANY: Zenauth Ltd.
-    template: |-
-      Copyright {{ YEAR-RANGE }} {{ COMPANY }}
-      SPDX-License-Identifier: Apache-2.0
-
-  gomoddirectives:
-    replace-allow-list:
-      - github.com/goccy/go-yaml
-
-  gosec:
-    excludes:
-      - G115 # integer overflow conversion
-
-  govet:
-    enable-all: true
-    disable:
-      - shadow
-
-  nolintlint:
-    allow-unused: true # false would be preferable, but it's flaky (https://github.com/golangci/golangci-lint/issues/3228)
-    require-specific: true
-
-  tagliatelle:
-    case:
-      rules:
-        json: goCamel
-        yaml: goCamel
-        xml: goCamel
-        bson: goCamel
 
 linters:
   enable:
@@ -69,12 +19,9 @@ linters:
     - goconst
     - gocritic
     - godot
-    - gofumpt
-    - goimports
     - goheader
     - gomoddirectives
     - gosec
-    - govet
     - importas
     - makezero
     - misspell
@@ -99,21 +46,101 @@ linters:
     - wastedassign
     - whitespace
 
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    goheader:
+      values:
+        const:
+          COMPANY: Zenauth Ltd.
+      template: |-
+        Copyright {{ YEAR-RANGE }} {{ COMPANY }}
+        SPDX-License-Identifier: Apache-2.0
+
+    gomoddirectives:
+      replace-allow-list:
+        - github.com/goccy/go-yaml
+
+    gosec:
+      excludes:
+        - G115 # integer overflow conversion
+
+    govet:
+      disable:
+        - shadow
+      enable-all: true
+
+    nolintlint:
+      allow-unused: true # false would be preferable, but it's flaky (https://github.com/golangci/golangci-lint/issues/3228)
+      require-specific: true
+
+    tagliatelle:
+      case:
+        rules:
+          bson: goCamel
+          json: goCamel
+          xml: goCamel
+          yaml: goCamel
+
+  exclusions:
+    generated: lax
+
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+
+    rules:
+      - linters:
+          - dupl
+          - forcetypeassert
+          - goconst
+          - govet
+          - mnd
+        path: _test\.go
+
+    paths:
+      - ^api/*
+      - ^deploy/*
+      - ^docs/*
+      - ^hack/*
+      - ^internal/test/mocks/*
+      - third_party$
+      - builtin$
+      - examples$
+
 issues:
   max-same-issues: 30
 
-  exclude-dirs:
-    - "^api/*"
-    - "^deploy/*"
-    - "^docs/*"
-    - "^hack/*"
-    - "^internal/test/mocks/*"
+formatters:
+  enable:
+    - gofumpt
+    - goimports
 
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - dupl
-        - forcetypeassert
-        - goconst
-        - gomnd
-        - govet
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/cerbos/cerbos)
+        - blank
+        - dot
+      custom-order: true
+
+    gofumpt:
+      extra-rules: true
+
+  exclusions:
+    generated: lax
+
+    paths:
+      - ^api/*
+      - ^deploy/*
+      - ^docs/*
+      - ^hack/*
+      - ^internal/test/mocks/*
+      - third_party$
+      - builtin$
+      - examples$

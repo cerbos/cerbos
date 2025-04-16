@@ -281,14 +281,16 @@ func Test_doVerify(t *testing.T) {
 		for _, optionResources := range options {
 			t.Run(fmt.Sprintf("principals = %v, resources = %v", optionTitles[optionPrincipals], optionTitles[optionResources]), func(t *testing.T) {
 				fsys := make(fstest.MapFS)
-				if optionResources == external {
+				switch optionResources {
+				case external:
 					fsys[filepath.Join(util.TestDataDirectory, resourcesFileName)+".yaml"] = newMapFile(resources)
-				} else if optionResources == mixed {
+				case mixed:
 					fsys[filepath.Join(util.TestDataDirectory, resourcesFileName)+".json"] = newMapFile(fauxResources)
 				}
-				if optionPrincipals == external {
+				switch optionPrincipals {
+				case external:
 					fsys[filepath.Join(util.TestDataDirectory, principalsFileName)+".yaml"] = newMapFile(principals)
-				} else if optionPrincipals == mixed {
+				case mixed:
 					fsys[filepath.Join(util.TestDataDirectory, principalsFileName)+".json"] = newMapFile(fauxPrincipals)
 				}
 				table := genTable(t, optionResources != external, optionPrincipals != external)
