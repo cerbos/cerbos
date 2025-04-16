@@ -201,14 +201,19 @@ func TestHubLog(t *testing.T) {
 }
 
 func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
+	return initDBWithBatchCfg(t, batchSize, 1048576)
+}
+
+func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hub.Log, *mockSyncer) {
 	t.Helper()
 
 	conf := &hub.Conf{
 		Ingest: hub.IngestConf{
-			MaxBatchSize:     batchSize,
-			MinFlushInterval: flushInterval,
-			FlushTimeout:     1 * time.Second,
-			NumGoRoutines:    8,
+			MaxBatchSize:      maxBatchSize,
+			MaxBatchSizeBytes: maxBatchSizeBytes,
+			MinFlushInterval:  flushInterval,
+			FlushTimeout:      1 * time.Second,
+			NumGoRoutines:     8,
 		},
 		Mask: hub.MaskConf{
 			Peer: []string{"address"},
@@ -232,6 +237,101 @@ func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
 	require.Equal(t, hub.Backend, db.Backend())
 	require.True(t, db.Enabled())
 	return db, syncer
+}
+
+func TestSizeBasedBatching(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
+	require.NoError(t, err)
+
+	t.Run("createsBatchesBySize", func(t *testing.T) {
+		var maxBatchSizeBytes uint = 500 // single record in the realms of ~100-200 bytes
+		db, syncer := initDBWithBatchCfg(t, numRecords, maxBatchSizeBytes)
+		t.Cleanup(func() { _ = db.Close() })
+
+		// Count the number of Sync calls to verify multiple batches are created
+		syncCalls := 0
+		syncer.EXPECT().Sync(mock.Anything, mock.MatchedBy(func(batch *logsv1.IngestBatch) bool {
+			syncCalls++
+			return batch.SizeVT() <= int(maxBatchSizeBytes)
+		})).Return(nil)
+
+		loadedKeys := loadData(t, db, startDate)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.Greater(c, syncCalls, 1, "should have created multiple batches due to size limits")
+			assert.True(c, syncer.hasKeys(loadedKeys), "keys should have been synced")
+			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
+		}, 1*time.Second, 50*time.Millisecond)
+	})
+
+	t.Run("handlesOversizedEntries", func(t *testing.T) {
+		db, syncer := initDBWithBatchCfg(t, numRecords, 1024)
+		t.Cleanup(func() { _ = db.Close() })
+
+		ctx := t.Context()
+
+		// Create an ID for regular entry
+		id, err := audit.NewID()
+		require.NoError(t, err)
+
+		// First add a regular entry
+		normalEntry, err := mkAccessLogEntry(t, id, 1, startDate)()
+		require.NoError(t, err)
+
+		wrapped := func() (*auditv1.AccessLogEntry, error) {
+			return normalEntry, err
+		}
+
+		err = db.WriteAccessLogEntry(ctx, wrapped)
+		require.NoError(t, err)
+
+		// Create a different ID for the oversized entry
+		oversizeID, err := audit.NewID()
+		require.NoError(t, err)
+
+		// Add an oversized entry with lots of metadata to exceed the batch size
+		nValues := 1000
+		veryLargeMetadata := map[string]*auditv1.MetaValues{
+			"large": {Values: make([]string, nValues)},
+		}
+		for i := range nValues {
+			veryLargeMetadata["large"].Values[i] = "value" + strconv.Itoa(i)
+		}
+
+		err = db.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+			return &auditv1.AccessLogEntry{
+				CallId:    string(oversizeID),
+				Timestamp: timestamppb.New(startDate),
+				Peer: &auditv1.Peer{
+					Address: "1.1.1.1",
+				},
+				Metadata: veryLargeMetadata,
+				Method:   "/cerbos.svc.v1.CerbosService/Check",
+			}, nil
+		})
+		require.NoError(t, err)
+
+		syncer.EXPECT().Sync(mock.Anything, mock.MatchedBy(func(batch *logsv1.IngestBatch) bool {
+			for _, entry := range batch.Entries {
+				if accessEntry, ok := entry.Entry.(*logsv1.IngestBatch_Entry_AccessLogEntry); ok &&
+					len(accessEntry.AccessLogEntry.Metadata) > len(normalEntry.Metadata) {
+					return false
+				}
+			}
+			return true
+		})).Once().Return(nil)
+
+		time.Sleep(flushInterval * 20)
+
+		// Verify the oversized key is deleted even though it wasn't processed
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
+		}, 1*time.Second, 50*time.Millisecond)
+	})
 }
 
 func TestHubLogWithDecisionLogFilter(t *testing.T) {
