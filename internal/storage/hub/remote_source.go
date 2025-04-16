@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/cerbos/cloud-api/base"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
