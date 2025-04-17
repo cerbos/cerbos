@@ -69,10 +69,6 @@ func (p *nodeFilter) allowIsEmpty() bool {
 	return len(p.allowFilter) == 0
 }
 
-func (p *nodeFilter) empty() bool {
-	return p.allowIsEmpty() && p.denyIsEmpty()
-}
-
 func (p *nodeFilter) resetToUnconditionalDeny() {
 	p.denyFilter = []*qpN{mkFalseNode()}
 }
@@ -110,14 +106,14 @@ func (p *nodeFilter) toAST() *qpN {
 	}
 }
 
-func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, matchedScopes map[string]string, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
+func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, matchedScopes map[string]string, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
 	result := &enginev1.PlanResourcesOutput{
 		RequestId:        input.RequestId,
 		Kind:             input.Resource.Kind,
 		PolicyVersion:    input.Resource.PolicyVersion,
 		Actions:          input.Actions,
-		Scope: scope,
-		MatchedScopes: matchedScopes,
+		Scope:            input.Resource.Scope,
+		MatchedScopes:    matchedScopes,
 		ValidationErrors: validationErrors,
 	}
 	return result
@@ -152,7 +148,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		validationErrors = vr.Errors.SchemaErrors()
 
 		if vr.Reject {
-			output := mkPlanResourcesOutput(input, input.Resource.Scope, validationErrors)
+			output := mkPlanResourcesOutput(input, nil, validationErrors)
 			output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
 			output.FilterDebug = FilterToString(output.Filter)
 			return output, auditTrail, nil
@@ -163,7 +159,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 	scopes := ruleTable.CombineScopes(principalScopes, resourceScopes)
 	candidateRows := ruleTable.GetRows(resourceVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, input.Actions)
 	if len(candidateRows) == 0 {
-		output := mkPlanResourcesOutput(input, input.Resource.Scope, validationErrors)
+		output := mkPlanResourcesOutput(input, nil, validationErrors)
 		output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
 		output.FilterDebug = noPolicyMatch
 		return output, auditTrail, nil

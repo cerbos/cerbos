@@ -6,8 +6,6 @@ package svc
 import (
 	"context"
 	"errors"
-	"maps"
-	"slices"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -18,12 +16,10 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
@@ -68,7 +64,6 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		oneAction = true
 	}
 
-	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
 	matchedScopes := make(map[string]string, len(request.Actions))
 	input := &enginev1.PlanResourcesInput{
 		RequestId:   request.RequestId,
@@ -86,41 +81,19 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		}
 		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
 	}
-	outputs = append(outputs, output)
-	matchedScopes[action] = output.Scope
 
-	validationErrors := make([]*schemav1.ValidationError, 0, len(outputs))
-	for _, output := range outputs {
-		validationErrors = append(validationErrors, output.ValidationErrors...)
-	}
-	if len(validationErrors) > 0 {
-		m := make(map[string]*schemav1.ValidationError, len(validationErrors))
-		for _, e := range validationErrors {
-			m[e.String()] = e
-		}
-		validationErrors = slices.Collect(maps.Values(m))
-	}
-
-	filter, filterDebug := outputs[0].Filter, outputs[0].FilterDebug
-	if len(outputs) > 1 {
-		filter, filterDebug, err = planner.MergeWithAnd(outputs)
-		if err != nil {
-			log.Error("Resources query plan request failed", zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "Merging plans failed")
-		}
-	}
 	response := &responsev1.PlanResourcesResponse{
 		RequestId:        request.RequestId,
 		Actions:          request.Actions,
 		ResourceKind:     request.Resource.Kind,
 		PolicyVersion:    request.Resource.PolicyVersion,
-		Filter:           filter,
-		ValidationErrors: validationErrors,
+		Filter:           output.Filter,
+		ValidationErrors: output.ValidationErrors,
 	}
 
 	if request.IncludeMeta {
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:   filterDebug,
+			FilterDebug:   output.FilterDebug,
 			MatchedScopes: matchedScopes,
 		}
 	}

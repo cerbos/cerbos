@@ -30,7 +30,7 @@ func MergeWithAnd(filters []*enginev1.PlanResourcesFilter) (*enginev1.PlanResour
 	response := new(enginev1.PlanResourcesFilter)
 	switch len(conds) {
 	case 0:
-		response.Kind = enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED 
+		response.Kind = enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED
 	case 1:
 		for _, filter := range conds {
 			response.Condition = filter
