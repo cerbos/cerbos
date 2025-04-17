@@ -123,6 +123,7 @@ message PlanResourcesOutput {
   string filter_debug = 7;
   repeated cerbos.schema.v1.ValidationError validation_errors = 8;
   repeated string actions = 9;
+  map<string, string> matched_scopes = 10;
 }
 
 message CheckInput {

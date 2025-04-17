@@ -29,7 +29,6 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
@@ -376,32 +375,28 @@ func TestQueryPlan(t *testing.T) {
 					actions = []string{tt.Action}
 				}
 				t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, strings.Join(actions, ", ")), func(t *testing.T) {
-					outputs := make([]*enginev1.PlanResourcesOutput, 0, len(actions))
-					for _, action := range actions {
-						is := require.New(t)
-						request := &enginev1.PlanResourcesInput{
-							RequestId: "requestId",
-							Action:    action,
-							Principal: ts.Principal,
-							Resource: &enginev1.PlanResourcesInput_Resource{
-								Kind:          tt.Resource.Kind,
-								Attr:          tt.Resource.Attr,
-								PolicyVersion: tt.Resource.PolicyVersion,
-								Scope:         tt.Resource.Scope,
-							},
-							IncludeMeta: true,
-							AuxData:     auxData,
-						}
-						response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
-						if tt.WantErr {
-							is.Error(err)
-						} else {
-							is.NoError(err)
-							is.NotNil(response)
-						}
-						outputs = append(outputs, response)
+					is := require.New(t)
+					request := &enginev1.PlanResourcesInput{
+						RequestId: "requestId",
+						Actions:   actions,
+						Principal: ts.Principal,
+						Resource: &enginev1.PlanResourcesInput_Resource{
+							Kind:          tt.Resource.Kind,
+							Attr:          tt.Resource.Attr,
+							PolicyVersion: tt.Resource.PolicyVersion,
+							Scope:         tt.Resource.Scope,
+						},
+						IncludeMeta: true,
+						AuxData:     auxData,
 					}
-					filter, filterDebug, err := planner.MergeWithAnd(outputs)
+					response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
+					if tt.WantErr {
+						is.Error(err)
+					} else {
+						is.NoError(err)
+						is.NotNil(response)
+					}
+					filter, filterDebug := response.Filter, response.FilterDebug
 					require.NoError(t, err)
 					require.Empty(t, cmp.Diff(tt.Want, filter, protocmp.Transform()), "AST: %s\n%s\n", filterDebug, protojson.Format(filter))
 				})

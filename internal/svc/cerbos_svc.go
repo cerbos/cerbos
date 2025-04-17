@@ -70,26 +70,24 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 
 	outputs := make([]*enginev1.PlanResourcesOutput, 0, len(request.Actions))
 	matchedScopes := make(map[string]string, len(request.Actions))
-	for _, action := range request.Actions {
-		input := &enginev1.PlanResourcesInput{
-			RequestId:   request.RequestId,
-			Action:      action,
-			Principal:   request.Principal,
-			Resource:    request.Resource,
-			AuxData:     auxData,
-			IncludeMeta: true,
-		}
-		output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
-		if err != nil {
-			log.Error("Resources query plan request failed", zap.Error(err))
-			if errors.Is(err, compile.PolicyCompilationErr{}) {
-				return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
-			}
-			return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
-		}
-		outputs = append(outputs, output)
-		matchedScopes[action] = output.Scope
+	input := &enginev1.PlanResourcesInput{
+		RequestId:   request.RequestId,
+		Actions:     request.Actions,
+		Principal:   request.Principal,
+		Resource:    request.Resource,
+		AuxData:     auxData,
+		IncludeMeta: true,
 	}
+	output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
+	if err != nil {
+		log.Error("Resources query plan request failed", zap.Error(err))
+		if errors.Is(err, compile.PolicyCompilationErr{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+		}
+		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+	}
+	outputs = append(outputs, output)
+	matchedScopes[action] = output.Scope
 
 	validationErrors := make([]*schemav1.ValidationError, 0, len(outputs))
 	for _, output := range outputs {

@@ -47,12 +47,6 @@ type (
 		Role string
 	}
 
-	PolicyPlanResult struct {
-		Scope            string
-		ValidationErrors []*schemav1.ValidationError
-		ScopePermissions policyv1.ScopePermissions
-		filters          []*enginev1.PlanResourcesFilter
-	}
 	nodeFilter struct {
 		allowFilter []*qpN
 		denyFilter  []*qpN
@@ -67,19 +61,19 @@ func (p *nodeFilter) add(filter *qpN, effect effectv1.Effect) {
 	}
 }
 
-func (p *nodeFilter) DenyIsEmpty() bool {
+func (p *nodeFilter) denyIsEmpty() bool {
 	return len(p.denyFilter) == 0
 }
 
-func (p *nodeFilter) AllowIsEmpty() bool {
+func (p *nodeFilter) allowIsEmpty() bool {
 	return len(p.allowFilter) == 0
 }
 
-func (p *nodeFilter) Empty() bool {
-	return p.AllowIsEmpty() && p.DenyIsEmpty()
+func (p *nodeFilter) empty() bool {
+	return p.allowIsEmpty() && p.denyIsEmpty()
 }
 
-func (p *nodeFilter) ResetToUnconditionalDeny() {
+func (p *nodeFilter) resetToUnconditionalDeny() {
 	p.denyFilter = []*qpN{mkFalseNode()}
 }
 
@@ -116,13 +110,14 @@ func (p *nodeFilter) toAST() *qpN {
 	}
 }
 
-func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
+func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, matchedScopes map[string]string, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
 	result := &enginev1.PlanResourcesOutput{
 		RequestId:        input.RequestId,
 		Kind:             input.Resource.Kind,
 		PolicyVersion:    input.Resource.PolicyVersion,
 		Actions:          input.Actions,
-		Scope:            scope,
+		Scope: scope,
+		MatchedScopes: matchedScopes,
 		ValidationErrors: validationErrors,
 	}
 	return result
@@ -145,8 +140,9 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 
 	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
-	result := new(PolicyPlanResult)
 
+	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
+	matchedScopes := make(map[string]string, len(input.Actions))
 	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, ruleTable.GetSchema(fqn), input)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to validate input: %w", err)
@@ -338,7 +334,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 
 					if (scopeDenyNode != nil || scopeAllowNode != nil) &&
 						ruleTable.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-						result.Scope = scope
+						matchedScopes[action] = scope
 						break
 					}
 				}
@@ -403,28 +399,26 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		if rootNode != nil {
 			policyMatch = true
 			if !hasPolicyTypeAllow {
-				nf.ResetToUnconditionalDeny()
+				nf.resetToUnconditionalDeny()
 			} else {
 				nf.add(rootNode, effectv1.Effect_EFFECT_ALLOW)
 			}
 		}
 
-		if nf.AllowIsEmpty() && !nf.DenyIsEmpty() { // reset an conditional DENY to an unconditional one
-			nf.ResetToUnconditionalDeny()
+		if nf.allowIsEmpty() && !nf.denyIsEmpty() { // reset an conditional DENY to an unconditional one
+			nf.resetToUnconditionalDeny()
 		}
-		filter, err := toFilter(nf.toAST())
+		f, err := toFilter(nf.toAST())
 		if err != nil {
 			return nil, nil, err
 		}
-		result.filters = append(result.filters, filter)
+		filters = append(filters, f)
 	} // for each action
-	filter, filterDebug, err := MergeWithAnd(result.filters)
+	output := mkPlanResourcesOutput(input, matchedScopes, validationErrors)
+	output.Filter, output.FilterDebug, err = MergeWithAnd(filters)
 	if err != nil {
 		return nil, nil, err
 	}
-	output := mkPlanResourcesOutput(input, input.Resource.Scope, validationErrors)
-	output.Filter = filter
-	output.FilterDebug = filterDebug
 	if !policyMatch {
 		output.FilterDebug = noPolicyMatch
 	}

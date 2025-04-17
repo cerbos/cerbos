@@ -435,6 +435,13 @@ func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *v1.PlanResourcesOutput, 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesOutput.matched_scopes"]; !ok {
+		if len(m.MatchedScopes) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.MatchedScopes)) {
+				_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScopes[k]))
+			}
+		}
+	}
 }
 
 func cerbos_engine_v1_Principal_hashpb_sum(m *v1.Principal, hasher hash.Hash, ignore map[string]struct{}) {
