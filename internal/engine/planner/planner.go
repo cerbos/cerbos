@@ -172,6 +172,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 
 	policyMatch := false
 	for _, action := range input.Actions {
+		matchedScopes[action] = ""
 		nf := new(nodeFilter)
 		scopedDerivedRolesList := make(map[string]func() (*exprpb.Expr, error))
 
