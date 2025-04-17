@@ -71,7 +71,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		Principal:   request.Principal,
 		Resource:    request.Resource,
 		AuxData:     auxData,
-		IncludeMeta: true,
+		IncludeMeta: request.IncludeMeta,
 	}
 	output, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
 	if err != nil {
@@ -95,6 +95,9 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
 			FilterDebug:   output.FilterDebug,
 			MatchedScopes: matchedScopes,
+		}
+		if len(input.Actions) == 1 {
+			response.Meta.MatchedScope = matchedScopes[input.Actions[0]]
 		}
 	}
 
