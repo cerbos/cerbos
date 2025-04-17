@@ -5,6 +5,7 @@
 #      kubectl create secret generic cerbos-hub-credentials \
 #         --from-literal=CERBOS_HUB_CLIENT_ID=<YOUR_CLIENT_ID> \
 #         --from-literal=CERBOS_HUB_CLIENT_SECRET=<YOUR_CLIENT_SECRET> \
+#         --from-literal=CERBOS_HUB_WORKSPACE_SECRET=<YOUR_WORKSPACE_SECRET>
 
 cerbos:
   config:
@@ -12,9 +13,8 @@ cerbos:
     storage:
       driver: "hub"
       hub:
-        bundleVersion: 2
         remote:
-          deploymentID: "YOUR_DEPLOYMENT_ID" # Alternatively, add `CERBOS_HUB_DEPLOYMENT_ID=<YOUR_DEPLOYMENT_ID>` to the secret you created above
+          bundleLabel: "YOUR_LABEL" # Alternatively, add `CERBOS_HUB_BUNDLE=<YOUR_LABEL>` to the secret you created above.
 
     # Configure the Hub audit backend
     audit:
