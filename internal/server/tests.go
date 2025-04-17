@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -90,11 +90,11 @@ type TestRunner struct {
 	Cases                  []*privatev1.ServerTestCase
 	Timeout                time.Duration
 	HealthPollInterval     time.Duration
-	CerbosClientMaxRetries uint64
+	CerbosClientMaxRetries uint
 }
 
 // WithCerbosClientRetries is relevant to Overlay storage driver calls (specifically the e2e overlay test).
-func (tr *TestRunner) WithCerbosClientRetries(nRetries uint64) *TestRunner {
+func (tr *TestRunner) WithCerbosClientRetries(nRetries uint) *TestRunner {
 	tr.CerbosClientMaxRetries = nRetries
 	return tr
 }
@@ -133,34 +133,32 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 		ctx, cancelFunc := context.WithTimeout(t.Context(), tr.Timeout)
 		defer cancelFunc()
 
-		backoffConf := backoff.WithContext(
-			backoff.WithMaxRetries(
-				backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay),
-				tr.CerbosClientMaxRetries),
-			ctx)
+		retry := func(f func() (proto.Message, error)) (proto.Message, error) {
+			return backoff.Retry(ctx, f,
+				backoff.WithBackOff(backoff.NewConstantBackOff(time.Millisecond*retryBackoffDelay)),
+				backoff.WithMaxTries(tr.CerbosClientMaxRetries+1),
+			)
+		}
 
 		switch call := tc.CallKind.(type) {
 		case *privatev1.ServerTestCase_CheckResourceSet:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceSet.WantResponse
-			err = backoff.Retry(func() error {
-				have, err = cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
-				return err
-			}, backoffConf)
+			have, err = retry(func() (proto.Message, error) {
+				return cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
+			})
 		case *privatev1.ServerTestCase_CheckResourceBatch:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceBatch.WantResponse
-			err = backoff.Retry(func() error {
-				have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
-				return err
-			}, backoffConf)
+			have, err = retry(func() (proto.Message, error) {
+				return cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
+			})
 		case *privatev1.ServerTestCase_CheckResources:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResources.WantResponse
-			err = backoff.Retry(func() error {
-				have, err = cerbosClient.CheckResources(ctx, call.CheckResources.Input)
-				return err
-			}, backoffConf)
+			have, err = retry(func() (proto.Message, error) {
+				return cerbosClient.CheckResources(ctx, call.CheckResources.Input)
+			})
 		case *privatev1.ServerTestCase_PlaygroundValidate:
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundValidate.WantResponse

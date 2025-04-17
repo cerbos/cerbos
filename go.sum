@@ -163,6 +163,8 @@ github.com/bufbuild/protovalidate-go v0.9.3 h1:XvdtwQuppS3wjzGfpOirsqwN5ExH2+PiI
 github.com/bufbuild/protovalidate-go v0.9.3/go.mod h1:2lUDP6fNd3wxznRNH3Nj64VB07+PySeslamkerwP6tE=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
+github.com/cenkalti/backoff/v5 v5.0.2 h1:rIfFVxEf1QsI7E1ZHfp/B4DF/6QBAUhmgkxc0H7Zss8=
+github.com/cenkalti/backoff/v5 v5.0.2/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F97BxZthm/crw=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cerbos/cerbos-sdk-go v0.2.15 h1:4FI7Ke01Y75VdNEe8a9yK6ZI5eQLyVd+IgIFaLUZ0YU=
 github.com/cerbos/cerbos-sdk-go v0.2.15/go.mod h1:RxOlKpE1K8RZI/DmiMGC0vLPuWaEQ0usBeGpfZO8W2s=

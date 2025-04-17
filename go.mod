@@ -15,7 +15,7 @@ require (
 	github.com/aws/smithy-go v1.22.3
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/protovalidate-go v0.9.3
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/cerbos/cerbos-sdk-go v0.2.15
 	github.com/cerbos/cerbos/api/genpb v0.43.0
 	github.com/cerbos/cloud-api v0.1.40
@@ -163,6 +163,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20250326154945-ae57f3c0d45f // indirect
 	github.com/containerd/console v1.0.4 // indirect
