@@ -2591,6 +2591,12 @@
         "action": {
           "type": "string"
         },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
         },
@@ -2663,6 +2669,18 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1ValidationError"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "matchedScopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
           }
         }
       }
