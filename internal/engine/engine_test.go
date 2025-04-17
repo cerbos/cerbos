@@ -370,15 +370,14 @@ func TestQueryPlan(t *testing.T) {
 		t.Run(s.Name, func(t *testing.T) {
 			ts := readQPTestSuite(t, s.Input)
 			for _, tt := range ts.Tests {
-				actions := tt.Actions
-				if actions == nil {
-					actions = []string{tt.Action}
+				actionName := tt.Action
+				if tt.Actions != nil {
+					actionName = strings.Join(tt.Actions, ", ")
 				}
-				t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, strings.Join(actions, ", ")), func(t *testing.T) {
+				t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, actionName), func(t *testing.T) {
 					is := require.New(t)
 					request := &enginev1.PlanResourcesInput{
 						RequestId: "requestId",
-						Actions:   actions,
 						Principal: ts.Principal,
 						Resource: &enginev1.PlanResourcesInput_Resource{
 							Kind:          tt.Resource.Kind,
@@ -388,6 +387,11 @@ func TestQueryPlan(t *testing.T) {
 						},
 						IncludeMeta: true,
 						AuxData:     auxData,
+					}
+					if tt.Actions != nil {
+						request.Actions = tt.Actions
+					} else {
+						request.Action = tt.Action //nolint:staticcheck
 					}
 					response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
 					if tt.WantErr {

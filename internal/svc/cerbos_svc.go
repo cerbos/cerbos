@@ -58,13 +58,11 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
-	oneAction := false
-	if request.Action != "" { //nolint:staticcheck
-		request.Actions = []string{request.Action} ///nolint:staticcheck
-		oneAction = true
+	oneAction := request.Action //nolint:staticcheck
+	if oneAction != "" {
+		request.Actions = []string{oneAction}
 	}
 
-	matchedScopes := make(map[string]string, len(request.Actions))
 	input := &enginev1.PlanResourcesInput{
 		RequestId:   request.RequestId,
 		Actions:     request.Actions,
@@ -84,7 +82,6 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 
 	response := &responsev1.PlanResourcesResponse{
 		RequestId:        request.RequestId,
-		Actions:          request.Actions,
 		ResourceKind:     request.Resource.Kind,
 		PolicyVersion:    request.Resource.PolicyVersion,
 		Filter:           output.Filter,
@@ -92,22 +89,21 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	}
 
 	if request.IncludeMeta {
+		matchedScopes := output.MatchedScopes
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:   output.FilterDebug,
-			MatchedScopes: matchedScopes,
+			FilterDebug: output.FilterDebug,
 		}
-		if len(input.Actions) == 1 {
-			response.Meta.MatchedScope = matchedScopes[input.Actions[0]]
+		if oneAction == "" {
+			response.Meta.MatchedScopes = matchedScopes
+		} else {
+			response.Meta.MatchedScope = matchedScopes[oneAction] //nolint:staticcheck
 		}
 	}
 
-	if oneAction {
-		response.Action = request.Action //nolint:staticcheck
-		response.Actions = nil
-		if request.IncludeMeta {
-			response.Meta.MatchedScope = matchedScopes[response.Action]
-			response.Meta.MatchedScopes = nil
-		}
+	if oneAction == "" {
+		response.Actions = request.Actions
+	} else {
+		response.Action = oneAction //nolint:staticcheck
 	}
 
 	return response, nil

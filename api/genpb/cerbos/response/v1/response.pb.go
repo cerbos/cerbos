@@ -250,8 +250,9 @@ func (InspectPoliciesResponse_Variable_Kind) EnumDescriptor() ([]byte, []int) {
 }
 
 type PlanResourcesResponse struct {
-	state            protoimpl.MessageState      `protogen:"open.v1"`
-	RequestId        string                      `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	RequestId string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// Deprecated: Marked as deprecated in cerbos/response/v1/response.proto.
 	Action           string                      `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 	Actions          []string                    `protobuf:"bytes,9,rep,name=actions,proto3" json:"actions,omitempty"`
 	ResourceKind     string                      `protobuf:"bytes,3,opt,name=resource_kind,json=resourceKind,proto3" json:"resource_kind,omitempty"`
@@ -301,6 +302,7 @@ func (x *PlanResourcesResponse) GetRequestId() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in cerbos/response/v1/response.proto.
 func (x *PlanResourcesResponse) GetAction() string {
 	if x != nil {
 		return x.Action
@@ -1594,10 +1596,11 @@ func (*ReloadStoreResponse) Descriptor() ([]byte, []int) {
 }
 
 type PlanResourcesResponse_Meta struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FilterDebug   string                 `protobuf:"bytes,1,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
-	MatchedScope  string                 `protobuf:"bytes,2,opt,name=matched_scope,json=matchedScope,proto3" json:"matched_scope,omitempty"`
-	MatchedScopes map[string]string      `protobuf:"bytes,3,rep,name=matched_scopes,json=matchedScopes,proto3" json:"matched_scopes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	FilterDebug string                 `protobuf:"bytes,1,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
+	// Deprecated: Marked as deprecated in cerbos/response/v1/response.proto.
+	MatchedScope  string            `protobuf:"bytes,2,opt,name=matched_scope,json=matchedScope,proto3" json:"matched_scope,omitempty"`
+	MatchedScopes map[string]string `protobuf:"bytes,3,rep,name=matched_scopes,json=matchedScopes,proto3" json:"matched_scopes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1639,6 +1642,7 @@ func (x *PlanResourcesResponse_Meta) GetFilterDebug() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in cerbos/response/v1/response.proto.
 func (x *PlanResourcesResponse_Meta) GetMatchedScope() string {
 	if x != nil {
 		return x.MatchedScope
@@ -2825,23 +2829,23 @@ var File_cerbos_response_v1_response_proto protoreflect.FileDescriptor
 
 const file_cerbos_response_v1_response_proto_rawDesc = "" +
 	"\n" +
-	"!cerbos/response/v1/response.proto\x12\x12cerbos.response.v1\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xe8\n" +
+	"!cerbos/response/v1/response.proto\x12\x12cerbos.response.v1\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x91\n" +
 	"\n" +
 	"\x15PlanResourcesResponse\x12o\n" +
 	"\n" +
-	"request_id\x18\x01 \x01(\tBP\x92AM2#Request ID provided in the request.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x122\n" +
-	"\x06action\x18\x02 \x01(\tB\x1a\x92A\x172\x06ActionJ\r\"view:public\"R\x06action\x12G\n" +
+	"request_id\x18\x01 \x01(\tBP\x92AM2#Request ID provided in the request.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x12\x1a\n" +
+	"\x06action\x18\x02 \x01(\tB\x02\x18\x01R\x06action\x12G\n" +
 	"\aactions\x18\t \x03(\tB-\x92A*2\aActionsJ\x1f[\"view:public\", \"edit:profile\"]R\aactions\x12H\n" +
 	"\rresource_kind\x18\x03 \x01(\tB#\x92A 2\x0eResource kind.J\x0e\"album:object\"R\fresourceKind\x12J\n" +
 	"\x0epolicy_version\x18\x04 \x01(\tB#\x92A 2\x13The policy version.J\t\"default\"R\rpolicyVersion\x12J\n" +
 	"\x06filter\x18\x05 \x01(\v2%.cerbos.engine.v1.PlanResourcesFilterB\v\x92A\b2\x06FilterR\x06filter\x12\x7f\n" +
 	"\x04meta\x18\x06 \x01(\v2..cerbos.response.v1.PlanResourcesResponse.MetaB;\x92A826Optional metadata about the request evaluation processR\x04meta\x12\x90\x01\n" +
 	"\x11validation_errors\x18\a \x03(\v2!.cerbos.schema.v1.ValidationErrorB@\x92A=2;List of validation errors (if schema validation is enabled)R\x10validationErrors\x12Y\n" +
-	"\x0ecerbos_call_id\x18\b \x01(\tB3\x92A02.Audit log call ID associated with this requestR\fcerbosCallId\x1a\xd1\x03\n" +
+	"\x0ecerbos_call_id\x18\b \x01(\tB3\x92A02.Audit log call ID associated with this requestR\fcerbosCallId\x1a\x92\x03\n" +
 	"\x04Meta\x12]\n" +
-	"\ffilter_debug\x18\x01 \x01(\tB:\x92A725Filter textual representation for debugging purposes.R\vfilterDebug\x12m\n" +
-	"\rmatched_scope\x18\x02 \x01(\tBH\x92AE21Policy scope that matched to produce this effect.J\x10\"acme.corp.base\"R\fmatchedScope\x12\x8d\x01\n" +
-	"\x0ematched_scopes\x18\x03 \x03(\v2A.cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntryB#\x92A 2\x1eMatched scope for each action.R\rmatchedScopes\x1a@\n" +
+	"\ffilter_debug\x18\x01 \x01(\tB:\x92A725Filter textual representation for debugging purposes.R\vfilterDebug\x12'\n" +
+	"\rmatched_scope\x18\x02 \x01(\tB\x02\x18\x01R\fmatchedScope\x12\x94\x01\n" +
+	"\x0ematched_scopes\x18\x03 \x03(\v2A.cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntryB*\x92A'2%Matched policy scope for each action.R\rmatchedScopes\x1a@\n" +
 	"\x12MatchedScopesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01:)\x92A&\n" +

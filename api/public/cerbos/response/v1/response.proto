@@ -30,11 +30,8 @@ message PlanResourcesResponse {
 
     string filter_debug = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter textual representation for debugging purposes."}];
 
-    string matched_scope = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Policy scope that matched to produce this effect."
-      example: "\"acme.corp.base\""
-    }];
-    map<string, string> matched_scopes = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Matched scope for each action."}];
+    string matched_scope = 2 [deprecated = true];
+    map<string, string> matched_scopes = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Matched policy scope for each action."}];
   }
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -42,10 +39,7 @@ message PlanResourcesResponse {
     example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
   }];
 
-  string action = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Action"
-    example: "\"view:public\""
-  }];
+  string action = 2 [deprecated = true];
 
   repeated string actions = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Actions"
