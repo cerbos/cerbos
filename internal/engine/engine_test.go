@@ -391,7 +391,7 @@ func TestQueryPlan(t *testing.T) {
 					if tt.Actions != nil {
 						request.Actions = tt.Actions
 					} else {
-						request.Action = tt.Action //nolint:staticcheck
+						request.Actions = []string{tt.Action} //nolint:staticcheck
 					}
 					response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
 					if tt.WantErr {
