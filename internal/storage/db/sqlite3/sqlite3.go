@@ -88,7 +88,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	log := logging.FromContext(ctx).Named("sqlite3")
 	log.Info("Initializing sqlite3 storage", zap.String("DSN", conf.DSN))
 
-	db, err := internal.ConnectWithRetries("sqlite", conf.DSN, nil)
+	db, err := internal.ConnectWithRetries(ctx, "sqlite", conf.DSN, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

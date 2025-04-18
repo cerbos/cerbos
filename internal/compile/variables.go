@@ -268,7 +268,7 @@ func (vd *variableDefinitions) use(id int64, name string) {
 	references := vd.graph.To(id)
 	for references.Next() {
 		referenced := references.Node().(*variableNode) //nolint:forcetypeassert
-		vd.use(referenced.id, referenced.Variable.Name)
+		vd.use(referenced.id, referenced.Name)
 	}
 }
 

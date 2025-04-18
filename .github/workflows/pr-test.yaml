@@ -61,7 +61,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: Generate
         run: just generate
@@ -82,7 +82,7 @@ jobs:
     steps:
       - name: Download previous test times
         continue-on-error: true
-        uses: dawidd6/action-download-artifact@v8
+        uses: dawidd6/action-download-artifact@v9
         with:
           workflow: pr-test.yaml
           name: test-times
@@ -129,7 +129,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: Download previous test times
         uses: actions/download-artifact@v4
@@ -180,25 +180,18 @@ jobs:
       - name: Check test results
         run: test "${{ needs.test.result }}" = "success"
 
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.x
+          cache: false
+          check-latest: true
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: Download JUnit reports
         uses: actions/download-artifact@v4
@@ -254,13 +247,13 @@ jobs:
           cache: false
 
       - name: Install just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
 
       - name: modernize
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6.5.2
+        uses: golangci/golangci-lint-action@v7.0.0
         with:
           version: latest
           args: "--config=.golangci.yaml -v"

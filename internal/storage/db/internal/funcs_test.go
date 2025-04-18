@@ -104,8 +104,8 @@ type fakeDriver struct {
 }
 
 func (c *fakeDriver) Open(string) (driver.Conn, error) {
-	if c.attempts < c.nFailures {
-		c.attempts++
+	c.attempts++
+	if c.attempts <= c.nFailures {
 		return nil, errors.New("connection error")
 	}
 	fakeConn := &fakeConn{db: &fakeDB{}}
@@ -124,30 +124,30 @@ func TestConnectWithRetries(t *testing.T) {
 
 	t.Run("connect_with_no_retries", func(t *testing.T) {
 		defer resetConn()
-		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 0})
+		_, err := internal.ConnectWithRetries(t.Context(), driverName, "", &internal.ConnRetryConf{MaxAttempts: 1})
 		require.NoError(t, err)
-		require.Equal(t, 0, mc.attempts)
+		require.Equal(t, 1, mc.attempts)
 	})
 
 	t.Run("connect_with_no_failures", func(t *testing.T) {
 		defer resetConn()
-		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 1})
+		_, err := internal.ConnectWithRetries(t.Context(), driverName, "", &internal.ConnRetryConf{MaxAttempts: 2})
 		require.NoError(t, err)
-		require.Equal(t, 0, mc.attempts)
+		require.Equal(t, 1, mc.attempts)
 	})
 
 	t.Run("connect_with_retry", func(t *testing.T) {
 		defer resetConn()
 		mc.nFailures = 1
-		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 1})
+		_, err := internal.ConnectWithRetries(t.Context(), driverName, "", &internal.ConnRetryConf{MaxAttempts: 2})
 		require.NoError(t, err)
-		require.Equal(t, 1, mc.attempts)
+		require.Equal(t, 2, mc.attempts)
 	})
 
 	t.Run("connect_with_error", func(t *testing.T) {
 		defer resetConn()
 		mc.nFailures = 2
-		_, err := internal.ConnectWithRetries(driverName, "", &internal.ConnRetryConf{MaxAttempts: 1})
+		_, err := internal.ConnectWithRetries(t.Context(), driverName, "", &internal.ConnRetryConf{MaxAttempts: 2})
 		require.Error(t, err)
 		require.Equal(t, 2, mc.attempts)
 	})

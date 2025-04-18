@@ -56,7 +56,7 @@ type Cmd struct {
 }
 
 func (c *Cmd) Run(_ *kong.Kong, ctx *cmdclient.Context) error {
-	logOptions := c.AuditFilters.GenOptions()
+	logOptions := c.GenOptions()
 	logOptions.Type = cerbos.DecisionLogs
 
 	entries, err := ctx.AdminClient.AuditLogs(context.Background(), logOptions)
@@ -575,11 +575,11 @@ func (p *prettyJSON) write(out io.Writer, msg proto.Message) {
 
 	iterator, err := p.lexer.Tokenise(nil, protojson.Format(msg))
 	if err != nil {
-		_, _ = w.WriteString(fmt.Sprintf("Error tokenising JSON: %v", err))
+		_, _ = fmt.Fprintf(w, "Error tokenising JSON: %v", err)
 		return
 	}
 
 	if err := p.formatter.Format(w, p.style, iterator); err != nil {
-		_, _ = w.WriteString(fmt.Sprintf("Error printing JSON: %v", err))
+		_, _ = fmt.Fprintf(w, "Error printing JSON: %v", err)
 	}
 }

@@ -4,9 +4,10 @@
 package internal
 
 import (
+	"context"
 	"strings"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jmoiron/sqlx"
@@ -52,19 +53,8 @@ func ansiConcatWithSep(sep string, args ...any) exp.Expression {
 	}
 }
 
-func ConnectWithRetries(driverName, connStr string, retryConf *ConnRetryConf) (*sqlx.DB, error) {
-	var db *sqlx.DB
-
-	connectFn := func() error {
-		var err error
-		db, err = sqlx.Connect(driverName, connStr)
-		return err
-	}
-
-	err := backoff.Retry(connectFn, retryConf.BackoffConf())
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+func ConnectWithRetries(ctx context.Context, driverName, connStr string, retryConf *ConnRetryConf) (*sqlx.DB, error) {
+	return backoff.Retry(ctx, func() (*sqlx.DB, error) {
+		return sqlx.ConnectContext(ctx, driverName, connStr)
+	}, retryConf.BackoffOptions()...)
 }

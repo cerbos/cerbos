@@ -119,7 +119,8 @@ func TestStore_updateIndex(t *testing.T) {
 		mkMockCloner(cacheDir, policyDir, nil, func(_ context.Context) (*CloneResult, error) {
 			noOfClonerCalls++
 
-			if noOfClonerCalls == 2 { // first call to updateIndex after init
+			switch noOfClonerCalls {
+			case 2: // first call to updateIndex after init
 				return &CloneResult{
 					all: map[string][]string{
 						"policy": {policyFile},
@@ -136,7 +137,7 @@ func TestStore_updateIndex(t *testing.T) {
 						},
 					},
 				}, nil
-			} else if noOfClonerCalls == 3 { // second call to updateIndex after init
+			case 3: // second call to updateIndex after init
 				return &CloneResult{
 					deleted: []info{
 						{

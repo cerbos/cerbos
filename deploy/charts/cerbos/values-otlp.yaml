@@ -12,7 +12,7 @@ cerbos:
 env:
   - name: OTEL_SERVICE_NAME
     value: cerbos.myns.svc
-  - name: OTEL_TRACE_SAMPLER
+  - name: OTEL_TRACES_SAMPLER
     value: parentbased_always_on
   - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
     value: https://otlp.monitoring.svc.cluster.local

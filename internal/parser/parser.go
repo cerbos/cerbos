@@ -226,10 +226,7 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 	var errPrinter printer.Printer
 	i := 0
 	flowBlock := 0
-	for {
-		if i >= len(tokens) {
-			break
-		}
+	for i < len(tokens) {
 		tok := tokens[i]
 
 		// Check whether we are inside a flow block (e.g. foo: {"x": "y"})
@@ -251,7 +248,7 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 			continue
 		}
 
-		if !(tok.Type == token.DoubleQuoteType || tok.Type == token.SingleQuoteType) {
+		if tok.Type != token.DoubleQuoteType && tok.Type != token.SingleQuoteType {
 			i++
 			continue
 		}

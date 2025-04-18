@@ -58,7 +58,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	log.Info("Initializing Postgres storage", zap.String("host", pgConf.Host), zap.String("database", pgConf.Database))
 
 	connStr := stdlib.RegisterConnConfig(pgConf)
-	db, err := internal.ConnectWithRetries("pgx", connStr, conf.ConnRetry)
+	db, err := internal.ConnectWithRetries(ctx, "pgx", connStr, conf.ConnRetry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

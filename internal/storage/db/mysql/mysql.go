@@ -57,7 +57,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	db, err := internal.ConnectWithRetries("mysql", dsn, conf.ConnRetry)
+	db, err := internal.ConnectWithRetries(ctx, "mysql", dsn, conf.ConnRetry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}

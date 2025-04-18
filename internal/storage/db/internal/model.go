@@ -73,7 +73,7 @@ type PolicyDefWrapper struct {
 }
 
 func (pdw PolicyDefWrapper) Value() (driver.Value, error) {
-	return pdw.Policy.MarshalVT()
+	return pdw.MarshalVT()
 }
 
 func (pdw *PolicyDefWrapper) Scan(src any) error {
@@ -90,7 +90,7 @@ func (pdw *PolicyDefWrapper) Scan(src any) error {
 	}
 
 	pdw.Policy = &policyv1.Policy{}
-	if err := pdw.Policy.UnmarshalVT(source); err != nil {
+	if err := pdw.UnmarshalVT(source); err != nil {
 		return fmt.Errorf("failed to unmarshal policy definition: %w", err)
 	}
 
