@@ -20,6 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
@@ -54,14 +55,15 @@ func init() {
 type Log struct {
 	syncer IngestSyncer
 	*local.Log
-	logger           *zap.Logger
-	filter           *AuditLogFilter
-	pool             *pool.ContextPool
-	cancel           context.CancelFunc
-	minFlushInterval time.Duration
-	flushTimeout     time.Duration
-	maxBatchSize     int
-	numGo            int
+	logger            *zap.Logger
+	filter            *AuditLogFilter
+	pool              *pool.ContextPool
+	cancel            context.CancelFunc
+	minFlushInterval  time.Duration
+	flushTimeout      time.Duration
+	maxBatchSize      int
+	maxBatchSizeBytes int
+	numGo             int
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
@@ -74,6 +76,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 
 	minFlushInterval := conf.Ingest.MinFlushInterval
 	maxBatchSize := int(conf.Ingest.MaxBatchSize)
+	maxBatchSizeBytes := int(conf.Ingest.MaxBatchSizeBytes)
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
@@ -85,16 +88,17 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	ctx, cancelFn := context.WithCancel(context.Background())
 
 	log := &Log{
-		Log:              localLog,
-		syncer:           syncer,
-		logger:           logger,
-		filter:           filter,
-		minFlushInterval: minFlushInterval,
-		flushTimeout:     flushTimeout,
-		maxBatchSize:     maxBatchSize,
-		numGo:            numGo,
-		cancel:           cancelFn,
-		pool:             pool.New().WithContext(ctx),
+		Log:               localLog,
+		syncer:            syncer,
+		logger:            logger,
+		filter:            filter,
+		minFlushInterval:  minFlushInterval,
+		flushTimeout:      flushTimeout,
+		maxBatchSize:      maxBatchSize,
+		maxBatchSizeBytes: maxBatchSizeBytes,
+		numGo:             numGo,
+		cancel:            cancelFn,
+		pool:              pool.New().WithContext(ctx),
 	}
 
 	log.pool.Go(log.syncLoop)
@@ -237,6 +241,9 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			keys = make([][]byte, l.maxBatchSize)
 		} else {
 			keys = *(keysIface.(*[][]byte)) //nolint:forcetypeassert
+			if len(keys) < l.maxBatchSize {
+				keys = make([][]byte, l.maxBatchSize)
+			}
 		}
 		defer keysPool.Put(&keys)
 
@@ -279,30 +286,71 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 		return nil
 	}
 
-	logger.Log(zapcore.Level(-3), "Generating audit ID")
-	batchID, err := audit.NewID()
-	if err != nil {
-		return fmt.Errorf("failed to generate audit ID: %w", err)
+	var k string
+	switch kind { //nolint:exhaustive
+	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+		k = audit.KindAccess
+	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+		k = audit.KindDecision
 	}
 
-	{
-		ctx, cancelFn := context.WithTimeout(ctx, l.flushTimeout)
-		defer cancelFn()
+	// Process entries in size-limited batches using a sliding window approach
+	left := 0
+outer:
+	for left < len(entries) {
+		var right int
+		batchSizeBytes := 0
 
-		ingestBatch := &logsv1.IngestBatch{
-			Id:      string(batchID),
-			Entries: entries,
+		for right = left; right < len(entries); right++ {
+			entrySize := entries[right].SizeVT()
+
+			if batchSizeBytes+entrySize > l.maxBatchSizeBytes {
+				if batchSizeBytes == 0 {
+					logger.Error("Entry exceeds maximum batch size, skipping",
+						zap.Int("entrySize", entrySize),
+						zap.Int("maxBatchSizeBytes", l.maxBatchSizeBytes))
+					metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(k))
+					// Skip to next entry without adding it to the batch
+					left = right + 1
+					continue outer
+				}
+				break
+			}
+
+			batchSizeBytes += entrySize
 		}
 
-		logger.Log(zapcore.Level(-3), "Filtering batch of "+strconv.Itoa(len(ingestBatch.Entries)))
-		if err := l.filter.Filter(ingestBatch); err != nil {
-			return fmt.Errorf("failed to filter batch: %w", err)
+		logger.Log(zapcore.Level(-3), "Generated batch",
+			zap.Int("batchSize", right-left),
+			zap.Int("remainingEntries", len(entries)-right))
+
+		logger.Log(zapcore.Level(-3), "Generating audit ID")
+		batchID, err := audit.NewID()
+		if err != nil {
+			return fmt.Errorf("failed to generate audit ID: %w", err)
 		}
 
-		logger.Log(zapcore.Level(-3), "Syncing batch of "+strconv.Itoa(len(ingestBatch.Entries)))
-		if err := l.syncer.Sync(ctx, ingestBatch); err != nil {
-			return fmt.Errorf("failed to sync batch: %w", err)
+		{
+			ctxWithTimeout, cancelFn := context.WithTimeout(ctx, l.flushTimeout)
+			defer cancelFn()
+
+			ingestBatch := &logsv1.IngestBatch{
+				Id:      string(batchID),
+				Entries: entries[left:right],
+			}
+
+			logger.Log(zapcore.Level(-3), "Filtering batch of "+strconv.Itoa(len(ingestBatch.Entries)))
+			if err := l.filter.Filter(ingestBatch); err != nil {
+				return fmt.Errorf("failed to filter batch: %w", err)
+			}
+
+			logger.Log(zapcore.Level(-3), "Syncing batch of "+strconv.Itoa(len(ingestBatch.Entries)))
+			if err := l.syncer.Sync(ctxWithTimeout, ingestBatch); err != nil {
+				return fmt.Errorf("failed to sync batch: %w", err)
+			}
 		}
+
+		left = right
 	}
 
 	wb := l.Db.NewWriteBatch()
