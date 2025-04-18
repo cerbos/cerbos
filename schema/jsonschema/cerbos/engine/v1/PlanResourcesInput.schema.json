@@ -93,6 +93,12 @@
     "action": {
       "type": "string"
     },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "auxData": {
       "$ref": "#/definitions/cerbos.engine.v1.AuxData"
     },

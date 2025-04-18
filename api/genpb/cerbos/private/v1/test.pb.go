@@ -2878,6 +2878,7 @@ func (x *CompileTestCase_Variables_DerivedRole) GetConstants() []string {
 type QueryPlannerTestSuite_Test struct {
 	state         protoimpl.MessageState           `protogen:"open.v1"`
 	Action        string                           `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	Actions       []string                         `protobuf:"bytes,5,rep,name=actions,proto3" json:"actions,omitempty"`
 	Want          *v11.PlanResourcesFilter         `protobuf:"bytes,2,opt,name=want,proto3" json:"want,omitempty"`
 	Resource      *v11.PlanResourcesInput_Resource `protobuf:"bytes,3,opt,name=resource,proto3" json:"resource,omitempty"`
 	WantErr       bool                             `protobuf:"varint,4,opt,name=want_err,json=wantErr,proto3" json:"want_err,omitempty"`
@@ -2920,6 +2921,13 @@ func (x *QueryPlannerTestSuite_Test) GetAction() string {
 		return x.Action
 	}
 	return ""
+}
+
+func (x *QueryPlannerTestSuite_Test) GetActions() []string {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
 }
 
 func (x *QueryPlannerTestSuite_Test) GetWant() *v11.PlanResourcesFilter {
@@ -3273,13 +3281,14 @@ const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\x04attr\x18\x01 \x03(\v2(.cerbos.private.v1.AttrWrapper.AttrEntryR\x04attr\x1aO\n" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\xfb\x02\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\x95\x03\n" +
 	"\x15QueryPlannerTestSuite\x12 \n" +
 	"\vdescription\x18\x01 \x01(\tR\vdescription\x129\n" +
 	"\tprincipal\x18\x02 \x01(\v2\x1b.cerbos.engine.v1.PrincipalR\tprincipal\x12C\n" +
-	"\x05tests\x18\x03 \x03(\v2-.cerbos.private.v1.QueryPlannerTestSuite.TestR\x05tests\x1a\xbf\x01\n" +
+	"\x05tests\x18\x03 \x03(\v2-.cerbos.private.v1.QueryPlannerTestSuite.TestR\x05tests\x1a\xd9\x01\n" +
 	"\x04Test\x12\x16\n" +
-	"\x06action\x18\x01 \x01(\tR\x06action\x129\n" +
+	"\x06action\x18\x01 \x01(\tR\x06action\x12\x18\n" +
+	"\aactions\x18\x05 \x03(\tR\aactions\x129\n" +
 	"\x04want\x18\x02 \x01(\v2%.cerbos.engine.v1.PlanResourcesFilterR\x04want\x12I\n" +
 	"\bresource\x18\x03 \x01(\v2-.cerbos.engine.v1.PlanResourcesInput.ResourceR\bresource\x12\x19\n" +
 	"\bwant_err\x18\x04 \x01(\bR\awantErr\"\xa9\x01\n" +

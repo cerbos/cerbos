@@ -268,27 +268,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		return nil, nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", rpName, rpVersion, rpScope, err)
 	}
 
-	result, err := planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTable, input, ppVersion, rpVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if result.AllowIsEmpty() && !result.DenyIsEmpty() { // reset an conditional DENY to an unconditional one
-		result.ResetToUnconditionalDeny()
-	}
-
-	output, err := result.ToPlanResourcesOutput(input)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if result.Empty() {
-		output.FilterDebug = noPolicyMatch
-	}
-
-	auditTrail := &auditv1.AuditTrail{EffectivePolicies: result.EffectivePolicies} //nolint:mnd
-
-	return output, auditTrail, nil
+	return planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTable, input, ppVersion, rpVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {

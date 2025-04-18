@@ -30,14 +30,34 @@ message PlanResourcesRequest {
   }];
 
   string action = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (google.api.field_behavior) = REQUIRED,
+    deprecated = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Action to be applied to each resource in the list."
       example: "\"view:public\""
     }
   ];
+
+  repeated string actions = 7 [
+    (buf.validate.field).repeated = {
+      unique: true
+      items: {
+        string: {min_len: 1}
+      }
+      min_items: 0
+      max_items: 20
+    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "List of actions to generate the query plan for. Mutually exclusive with the singular action field. Must contain at least one action and all actions must be unique."
+      min_items: 0
+      unique_items: true
+      example: "[\"view:public\", \"edit:profile\"]"
+    }
+  ];
+  option (buf.validate.message).cel = {
+    id: "exclusiveFieldsActionOrActions"
+    expression: "has(this.action) && !has(this.actions) || !has(this.action) && size(this.actions) > 0"
+    message: "Exactly one of 'action' or 'actions' field must be set"
+  };
 
   cerbos.engine.v1.Principal principal = 3 [
     (buf.validate.field).required = true,
