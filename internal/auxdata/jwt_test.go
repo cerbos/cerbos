@@ -15,10 +15,11 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jws"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/httprc/v3"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jws"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -82,7 +83,9 @@ func TestKeySet(t *testing.T) {
 				ctx, cancelFn := context.WithTimeout(t.Context(), 1*time.Second)
 				defer cancelFn()
 
-				rks := newRemoteKeySet(jwk.NewCache(ctx), conf, []any{jws.WithInferAlgorithmFromKey(true)})
+				cache, err := jwk.NewCache(ctx, httprc.NewClient())
+				require.NoError(t, err, "Failed to create JWK cache")
+				rks := newRemoteKeySet(ctx, cache, conf, []any{jws.WithInferAlgorithmFromKey(true)})
 				ks, opts, err := rks.keySet(ctx)
 
 				require.NoError(t, err)
@@ -357,7 +360,7 @@ func mkSignedToken(t *testing.T, expiry time.Time) string {
 	keySet, err := jwk.ParseKey(keyData)
 	require.NoError(t, err)
 
-	tokenBytes, err := jwt.Sign(token, jwt.WithKey(jwa.ES384, keySet))
+	tokenBytes, err := jwt.Sign(token, jwt.WithKey(jwa.ES384(), keySet))
 	require.NoError(t, err)
 
 	return string(tokenBytes)

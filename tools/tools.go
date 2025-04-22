@@ -19,7 +19,7 @@ import (
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 	_ "github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto"
-	_ "github.com/vektra/mockery/v2"
+	_ "github.com/vektra/mockery/v3"
 	_ "go.elastic.co/go-licence-detector"
 	_ "golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"

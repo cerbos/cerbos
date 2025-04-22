@@ -1,31 +1,29 @@
-boilerplate-file: hack/copyright_header.txt
 dir: internal/test/mocks
 filename: "{{.InterfaceName}}.go"
-mockname: "{{.InterfaceName}}"
-outpkg: mocks
-with-expecter: True
-issue-845-fix: True
-resolve-type-alias: False
-disable-version-string: True
+pkgname: mocks
+structname: "{{.InterfaceName}}"
+template: testify
+template-data:
+  boilerplate-file: hack/copyright_header.txt
 packages:
   github.com/cerbos/cerbos/internal/audit/hub:
     interfaces:
-      IngestSyncer:
+      IngestSyncer: {}
 
   github.com/cerbos/cerbos/internal/storage:
     interfaces:
-      Store:
+      Store: {}
 
   github.com/cerbos/cerbos/internal/storage/hub:
     interfaces:
-      ClientProvider:
-      ClientV1:
-      ClientV2:
+      ClientProvider: {}
+      ClientV1: {}
+      ClientV2: {}
 
   github.com/cerbos/cerbos/internal/storage/index:
     interfaces:
-      Index:
+      Index: {}
 
   github.com/cerbos/cloud-api/bundle:
     interfaces:
-      WatchHandle:
+      WatchHandle: {}
