@@ -5,17 +5,25 @@ package hub
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/cenkalti/backoff/v5"
 	"github.com/cerbos/cerbos/internal/hub"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 	"github.com/cerbos/cloud-api/logcap"
 )
 
-const DefaultErrorBackoff = 30 * time.Second
+const (
+	initialBackoffInterval     = 1 * time.Second
+	backoffRandomizationFactor = 0.5
+	backoffMultiplier          = 1.5
+	maxBackoffInterval         = 2 * time.Minute
+)
 
 type ErrIngestBackoff struct {
 	underlying error
@@ -30,9 +38,29 @@ type IngestSyncer interface {
 	Sync(context.Context, *logsv1.IngestBatch) error
 }
 
+type wrappedBackOff struct {
+	backoff.BackOff
+	mu sync.Mutex
+}
+
+func (exp *wrappedBackOff) NextBackOff() time.Duration {
+	exp.mu.Lock()
+	defer exp.mu.Unlock()
+
+	return exp.BackOff.NextBackOff()
+}
+
+func (exp *wrappedBackOff) Reset() {
+	exp.mu.Lock()
+	defer exp.mu.Unlock()
+
+	exp.BackOff.Reset()
+}
+
 type Impl struct {
 	client *logcap.Client
 	log    *zap.Logger
+	wbo    *wrappedBackOff
 }
 
 func NewIngestSyncer(logger *zap.Logger) (*Impl, error) {
@@ -46,42 +74,48 @@ func NewIngestSyncer(logger *zap.Logger) (*Impl, error) {
 		return nil, err
 	}
 
+	bo := backoff.NewExponentialBackOff()
+	bo.InitialInterval = initialBackoffInterval
+	bo.RandomizationFactor = backoffRandomizationFactor
+	bo.Multiplier = backoffMultiplier
+	bo.MaxInterval = maxBackoffInterval
+	bo.Reset()
+
 	return &Impl{
 		client: client,
 		log:    logger,
+		wbo: &wrappedBackOff{
+			BackOff: bo,
+		},
 	}, nil
 }
 
-func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) (err error) {
-	if len(batch.GetEntries()) > 0 {
-		var backoff time.Duration
-		defer func() {
-			// if the server responds with a backoff, return it regardless of whether an error exists
-			if backoff != 0 {
-				err = ErrIngestBackoff{
-					underlying: err,
-					Backoff:    backoff,
-				}
-			} else if err != nil {
-				// Apply fixed default backoff for severe failures (typically network issues)
-				// where the server couldn't communicate a specific backoff duration.
-				// Using a conservative fixed backoff rather than exponential backoff as
-				// these errors are expected to be transient network issues and retrying
-				// too aggressively could exacerbate the problem (and because an exponential
-				// backoff here feels entirely overkill).
-				err = ErrIngestBackoff{
-					underlying: err,
-					Backoff:    DefaultErrorBackoff,
-				}
-			}
-		}()
-
-		backoff, err = i.client.Ingest(ctx, batch)
-		if err != nil {
-			i.log.Error("Failed to sync batch", zap.Error(err))
-			return err
-		}
+func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
+	if len(batch.GetEntries()) == 0 {
+		return nil
 	}
 
-	return err
+	resp, err := i.client.Ingest(ctx, batch)
+	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return err
+		}
+
+		i.log.Error("Failed to sync batch", zap.Error(err))
+
+		// Hard failure: use exponential backoff
+		duration := i.wbo.NextBackOff()
+		if duration == backoff.Stop {
+			return err
+		}
+		return ErrIngestBackoff{underlying: err, Backoff: duration}
+	}
+
+	i.wbo.Reset()
+
+	if resp > 0 {
+		return ErrIngestBackoff{underlying: errors.New("server requested backoff before retrying"), Backoff: resp}
+	}
+
+	return nil
 }
