@@ -23,11 +23,13 @@ const (
 
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second
+	maxMaxBatchSize     = 128
 )
 
 var (
 	errInvalidFlushInterval = fmt.Errorf("flushInterval must be at least %s", minMinFlushInterval)
 	errInvalidFlushTimeout  = fmt.Errorf("flushTimeout cannot be more than %s", maxFlushTimeout)
+	errInvalidMaxBatchSize  = fmt.Errorf("maxBatchSize cannot be more than %d", maxMaxBatchSize)
 )
 
 type Conf struct {
@@ -79,6 +81,10 @@ func (c *Conf) Validate() (outErr error) {
 
 	if c.Ingest.MinFlushInterval < minMinFlushInterval {
 		outErr = multierr.Append(outErr, errInvalidFlushInterval)
+	}
+
+	if c.Ingest.MaxBatchSize > maxMaxBatchSize {
+		outErr = multierr.Append(outErr, errInvalidMaxBatchSize)
 	}
 
 	if c.Ingest.FlushTimeout > maxFlushTimeout {
