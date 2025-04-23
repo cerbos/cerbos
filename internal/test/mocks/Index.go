@@ -448,12 +448,7 @@ func (_e *Index_Expecter) GetCompilationUnits(moduleIDs ...interface{}) *Index_G
 
 func (_c *Index_GetCompilationUnits_Call) Run(run func(moduleIDs ...namer.ModuleID)) *Index_GetCompilationUnits_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]namer.ModuleID, len(args)-0)
-		for i, a := range args[0:] {
-			if a != nil {
-				variadicArgs[i] = a.(namer.ModuleID)
-			}
-		}
+		variadicArgs := args[0].([]namer.ModuleID)
 		run(variadicArgs...)
 	})
 	return _c
@@ -517,12 +512,7 @@ func (_e *Index_Expecter) GetDependents(moduleIDs ...interface{}) *Index_GetDepe
 
 func (_c *Index_GetDependents_Call) Run(run func(moduleIDs ...namer.ModuleID)) *Index_GetDependents_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]namer.ModuleID, len(args)-0)
-		for i, a := range args[0:] {
-			if a != nil {
-				variadicArgs[i] = a.(namer.ModuleID)
-			}
-		}
+		variadicArgs := args[0].([]namer.ModuleID)
 		run(variadicArgs...)
 	})
 	return _c
@@ -689,12 +679,7 @@ func (_e *Index_Expecter) InspectPolicies(context1 interface{}, strings ...inter
 
 func (_c *Index_InspectPolicies_Call) Run(run func(context1 context.Context, strings ...string)) *Index_InspectPolicies_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]string, len(args)-1)
-		for i, a := range args[1:] {
-			if a != nil {
-				variadicArgs[i] = a.(string)
-			}
-		}
+		variadicArgs := args[1].([]string)
 		run(args[0].(context.Context), variadicArgs...)
 	})
 	return _c
@@ -759,12 +744,7 @@ func (_e *Index_Expecter) ListPolicyIDs(context1 interface{}, strings ...interfa
 
 func (_c *Index_ListPolicyIDs_Call) Run(run func(context1 context.Context, strings ...string)) *Index_ListPolicyIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]string, len(args)-1)
-		for i, a := range args[1:] {
-			if a != nil {
-				variadicArgs[i] = a.(string)
-			}
-		}
+		variadicArgs := args[1].([]string)
 		run(args[0].(context.Context), variadicArgs...)
 	})
 	return _c
@@ -885,12 +865,7 @@ func (_e *Index_Expecter) LoadPolicy(context1 interface{}, strings ...interface{
 
 func (_c *Index_LoadPolicy_Call) Run(run func(context1 context.Context, strings ...string)) *Index_LoadPolicy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]string, len(args)-1)
-		for i, a := range args[1:] {
-			if a != nil {
-				variadicArgs[i] = a.(string)
-			}
-		}
+		variadicArgs := args[1].([]string)
 		run(args[0].(context.Context), variadicArgs...)
 	})
 	return _c
