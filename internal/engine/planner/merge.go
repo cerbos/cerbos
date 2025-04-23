@@ -20,9 +20,9 @@ func MergeWithAnd(filters []*enginev1.PlanResourcesFilter) (*enginev1.PlanResour
 		case enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED:
 			return &enginev1.PlanResourcesFilter{
 				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
-			}, FilterToString(f), nil
+			}, filterToString(f), nil
 		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
-			conds[FilterToString(f)] = f.Condition
+			conds[filterToString(f)] = f.Condition
 		case enginev1.PlanResourcesFilter_KIND_UNSPECIFIED:
 			return nil, "", fmt.Errorf("unknown filter kind %s", f.Kind)
 		}
@@ -44,5 +44,5 @@ func MergeWithAnd(filters []*enginev1.PlanResourcesFilter) (*enginev1.PlanResour
 		response.Condition = &exprOp{Node: mkExprOpExpr(And, operands...)}
 		response.Kind = enginev1.PlanResourcesFilter_KIND_CONDITIONAL
 	}
-	return response, FilterToString(response), nil
+	return response, filterToString(response), nil
 }

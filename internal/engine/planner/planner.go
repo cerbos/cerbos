@@ -150,7 +150,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		if vr.Reject {
 			output := mkPlanResourcesOutput(input, nil, validationErrors)
 			output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
-			output.FilterDebug = FilterToString(output.Filter)
+			output.FilterDebug = filterToString(output.Filter)
 			return output, auditTrail, nil
 		}
 	}
