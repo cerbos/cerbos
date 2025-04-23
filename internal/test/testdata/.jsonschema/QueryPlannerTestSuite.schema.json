@@ -128,6 +128,12 @@
         "action": {
           "type": "string"
         },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "resource": {
           "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesInput.Resource"
         },

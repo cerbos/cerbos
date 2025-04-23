@@ -87,6 +87,12 @@
     "action": {
       "type": "string"
     },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "filter": {
       "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
     },
@@ -95,6 +101,12 @@
     },
     "kind": {
       "type": "string"
+    },
+    "matchedScopes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "policyVersion": {
       "type": "string"

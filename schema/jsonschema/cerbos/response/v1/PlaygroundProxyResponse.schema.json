@@ -291,6 +291,12 @@
         "action": {
           "type": "string"
         },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "cerbosCallId": {
           "type": "string"
         },
@@ -326,6 +332,12 @@
         },
         "matchedScope": {
           "type": "string"
+        },
+        "matchedScopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },

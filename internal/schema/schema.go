@@ -118,7 +118,7 @@ func (m *manager) ValidateCheckInput(ctx context.Context, schemas *policyv1.Sche
 }
 
 func (m *manager) ValidatePlanResourcesInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.PlanResourcesInput) (*ValidationResult, error) {
-	return m.validate(ctx, schemas, input.Principal.Attr, input.Resource.Attr, []string{input.Action}, func(err *jsonschema.ValidationError) bool {
+	return m.validate(ctx, schemas, input.Principal.Attr, input.Resource.Attr, input.Actions, func(err *jsonschema.ValidationError) bool {
 		// resource attributes are optional for query planning, so ignore errors from required properties
 		return !strings.HasSuffix(err.KeywordLocation, "/required")
 	})

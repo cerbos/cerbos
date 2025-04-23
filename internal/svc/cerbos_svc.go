@@ -58,9 +58,14 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
+	oneAction := request.Action //nolint:staticcheck
+	if oneAction != "" {
+		request.Actions = []string{oneAction}
+	}
+
 	input := &enginev1.PlanResourcesInput{
 		RequestId:   request.RequestId,
-		Action:      request.Action,
+		Actions:     request.Actions,
 		Principal:   request.Principal,
 		Resource:    request.Resource,
 		AuxData:     auxData,
@@ -76,19 +81,29 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	}
 
 	response := &responsev1.PlanResourcesResponse{
-		RequestId:        output.RequestId,
-		Action:           output.Action,
-		ResourceKind:     output.Kind,
-		PolicyVersion:    output.PolicyVersion,
+		RequestId:        request.RequestId,
+		ResourceKind:     request.Resource.Kind,
+		PolicyVersion:    request.Resource.PolicyVersion,
 		Filter:           output.Filter,
 		ValidationErrors: output.ValidationErrors,
 	}
 
-	if input.IncludeMeta {
+	if request.IncludeMeta {
+		matchedScopes := output.MatchedScopes
 		response.Meta = &responsev1.PlanResourcesResponse_Meta{
-			FilterDebug:  output.FilterDebug,
-			MatchedScope: output.Scope,
+			FilterDebug: output.FilterDebug,
 		}
+		if oneAction == "" {
+			response.Meta.MatchedScopes = matchedScopes
+		} else {
+			response.Meta.MatchedScope = matchedScopes[oneAction] //nolint:staticcheck
+		}
+	}
+
+	if oneAction == "" {
+		response.Actions = request.Actions
+	} else {
+		response.Action = oneAction //nolint:staticcheck
 	}
 
 	return response, nil

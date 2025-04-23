@@ -224,7 +224,7 @@ _install EXECUTABLE MODULE CMD_PKG="":
       mkdir -p "$TOOLS_BIN_DIR"
       find "${TOOLS_BIN_DIR}" -lname "$BINARY" -delete
       if [[ "{{ EXECUTABLE }}" == "golangci-lint" ]]; then
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$TOOLS_BIN_DIR"
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$TOOLS_BIN_DIR" "v${VERSION}"
       else
         export CGO_ENABLED={{ if EXECUTABLE =~ "(^sql|^tbls)" { "1" } else { "0" } }}
         GOWORK=off GOBIN="$TOOLS_BIN_DIR" go install {{ if CMD_PKG != "" { MODULE + "/" + CMD_PKG } else { MODULE } }}@v${VERSION}

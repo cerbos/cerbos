@@ -10,6 +10,7 @@ import (
 	"io"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -369,11 +370,14 @@ func TestQueryPlan(t *testing.T) {
 		t.Run(s.Name, func(t *testing.T) {
 			ts := readQPTestSuite(t, s.Input)
 			for _, tt := range ts.Tests {
-				t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, tt.Action), func(t *testing.T) {
+				actionName := tt.Action
+				if tt.Actions != nil {
+					actionName = strings.Join(tt.Actions, ", ")
+				}
+				t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, actionName), func(t *testing.T) {
 					is := require.New(t)
 					request := &enginev1.PlanResourcesInput{
 						RequestId: "requestId",
-						Action:    tt.Action,
 						Principal: ts.Principal,
 						Resource: &enginev1.PlanResourcesInput_Resource{
 							Kind:          tt.Resource.Kind,
@@ -384,14 +388,21 @@ func TestQueryPlan(t *testing.T) {
 						IncludeMeta: true,
 						AuxData:     auxData,
 					}
+					if tt.Actions != nil {
+						request.Actions = tt.Actions
+					} else {
+						request.Actions = []string{tt.Action} //nolint:staticcheck
+					}
 					response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
 					if tt.WantErr {
 						is.Error(err)
 					} else {
 						is.NoError(err)
 						is.NotNil(response)
-						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s\n%s\n", response.FilterDebug, protojson.Format(response.Filter))
 					}
+					filter, filterDebug := response.Filter, response.FilterDebug
+					require.NoError(t, err)
+					require.Empty(t, cmp.Diff(tt.Want, filter, protocmp.Transform()), "AST: %s\n%s\n", filterDebug, protojson.Format(filter))
 				})
 			}
 		})
