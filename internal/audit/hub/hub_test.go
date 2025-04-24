@@ -76,9 +76,11 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 		var key []byte
 		switch e.Kind {
 		case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-			key = keyFromCallID(m.t, e.GetAccessLogEntry().CallId, hub.AccessSyncPrefix)
+			a := e.GetAccessLogEntry()
+			key = keyFromCallID(m.t, a.CallId, a.SizeVT(), hub.AccessSyncPrefix)
 		case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-			key = keyFromCallID(m.t, e.GetDecisionLogEntry().CallId, hub.DecisionSyncPrefix)
+			d := e.GetDecisionLogEntry()
+			key = keyFromCallID(m.t, d.CallId, d.SizeVT(), hub.DecisionSyncPrefix)
 		case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
 			return errors.New("unspecified IngestBatch_EntryKind")
 		}
@@ -89,13 +91,13 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 	return nil
 }
 
-func keyFromCallID(t *testing.T, callID string, prefix []byte) []byte {
+func keyFromCallID(t *testing.T, callID string, size int, prefix []byte) []byte {
 	t.Helper()
 
 	callIDbytes, err := audit.ID(callID).Repr()
 	require.NoError(t, err)
 
-	return local.GenKey(prefix, callIDbytes)
+	return local.GenKeyWithByteSize(prefix, callIDbytes, size)
 }
 
 func (m *mockSyncer) hasKeys(keys [][]byte) bool {
@@ -430,15 +432,28 @@ func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 
 		callID, err := audit.ID(string(id)).Repr()
 		require.NoError(t, err)
+
+		accessLogEntry, err := mkAccessLogEntry(t, id, i, ts)()
+		require.NoError(t, err)
+		accessLogEntryMaker := func() (*auditv1.AccessLogEntry, error) {
+			return accessLogEntry, nil
+		}
+
+		decisionLogEntry, err := mkDecisionLogEntry(t, id, i, ts)()
+		require.NoError(t, err)
+		decisionLogEntryMaker := func() (*auditv1.DecisionLogEntry, error) {
+			return decisionLogEntry, nil
+		}
+
 		// We insert decision sync logs in the latter half as this is the same
 		// order that Badger retrieves keys from the LSM
-		syncKeys[i] = local.GenKey(hub.AccessSyncPrefix, callID)
-		syncKeys[i+(numRecords/2)] = local.GenKey(hub.DecisionSyncPrefix, callID)
+		syncKeys[i] = local.GenKeyWithByteSize(hub.AccessSyncPrefix, callID, accessLogEntry.SizeVT())
+		syncKeys[i+(numRecords/2)] = local.GenKeyWithByteSize(hub.DecisionSyncPrefix, callID, decisionLogEntry.SizeVT())
 
-		err = db.WriteAccessLogEntry(ctx, mkAccessLogEntry(t, id, i, ts))
+		err = db.WriteAccessLogEntry(ctx, accessLogEntryMaker)
 		require.NoError(t, err)
 
-		err = db.WriteDecisionLogEntry(ctx, mkDecisionLogEntry(t, id, i, ts))
+		err = db.WriteDecisionLogEntry(ctx, decisionLogEntryMaker)
 		require.NoError(t, err)
 	}
 

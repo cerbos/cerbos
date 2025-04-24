@@ -21,8 +21,6 @@ const (
 	defaultFlushTimeout      = 5 * time.Second
 	defaultNumGoRoutines     = 4
 	defaultMaxBatchSizeBytes = 4194304 // 4MB
-	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc.
-	maxAllowedBatchSizeBytes = 6291456 // 6MB
 
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second
@@ -89,8 +87,8 @@ func (c *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, errors.New("maxBatchSizeBytes must be at least 1"))
 	}
 
-	if c.Ingest.MaxBatchSizeBytes > maxAllowedBatchSizeBytes {
-		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes cannot exceed %d bytes", maxAllowedBatchSizeBytes))
+	if c.Ingest.MaxBatchSizeBytes > local.MaxAllowedBatchSizeBytes {
+		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes cannot exceed %d bytes", local.MaxAllowedBatchSizeBytes))
 	}
 
 	if c.Ingest.MinFlushInterval < minMinFlushInterval {

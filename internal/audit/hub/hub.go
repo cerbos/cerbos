@@ -28,10 +28,12 @@ const (
 	Backend = "hub"
 )
 
+type syncPrefix []byte
+
 var (
-	SyncStatusPrefix   = []byte("bs")   // "b" for contiguity with audit log keys in LSM, "s" because "sync"
-	AccessSyncPrefix   = []byte("bsac") // these need to be len(4) to correctly reuse `local.GenKey`
-	DecisionSyncPrefix = []byte("bsde")
+	SyncStatusPrefix   = syncPrefix("bs")   // "b" for contiguity with audit log keys in LSM, "s" because "sync"
+	AccessSyncPrefix   = syncPrefix("bsac") // these need to be len(4) to correctly reuse `local.GenKey`
+	DecisionSyncPrefix = syncPrefix("bsde")
 )
 
 func init() {
@@ -122,7 +124,17 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := local.GenKey(AccessSyncPrefix, callID)
+	s := rec.SizeVT()
+	if s > local.MaxAllowedBatchSizeBytes {
+		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
+		logger.Error("Entry exceeds maximum batch size, skipping",
+			zap.Int("entrySize", s),
+			zap.Int("maxAllowedBatchSizeBytes", int(local.MaxAllowedBatchSizeBytes)))
+		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindAccess))
+		return nil
+	}
+
+	key := local.GenKeyWithByteSize(AccessSyncPrefix, callID, s)
 	value := local.GenKey(local.AccessLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
@@ -145,7 +157,17 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := local.GenKey(DecisionSyncPrefix, callID)
+	s := rec.SizeVT()
+	if s > local.MaxAllowedBatchSizeBytes {
+		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
+		logger.Error("Entry exceeds maximum batch size, skipping",
+			zap.Int("entrySize", s),
+			zap.Int("maxAllowedBatchSizeBytes", int(local.MaxAllowedBatchSizeBytes)))
+		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindDecision))
+		return nil
+	}
+
+	key := local.GenKeyWithByteSize(DecisionSyncPrefix, callID, s)
 	value := local.GenKey(local.DecisionLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
@@ -217,11 +239,15 @@ func (l *Log) streamLogs() error {
 
 var keysPool = &sync.Pool{}
 
-func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
+func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix syncPrefix) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
 	syncKeys := func(keys [][]byte) error {
-		logger.Log(zapcore.Level(-3), "Syncing and deleting batch")
+		if len(keys) == 0 {
+			return nil
+		}
+		logger.Log(zapcore.Level(-3), "Syncing and deleting batch",
+			zap.Int("batchSize", len(keys)))
 		if err := l.syncThenDelete(ctx, kind, keys); err != nil {
 			return fmt.Errorf("failed to sync and delete logs: %w", err)
 		}
@@ -248,8 +274,23 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		defer keysPool.Put(&keys)
 
 		var i int
+		var batchSizeBytes uint64
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
+
+			// retrieve byte-size from key
+			size, err := strconv.ParseUint(string(item.Key()[local.KeyByteSizeStart:local.KeyByteSizeEnd]), 16, 64)
+			if err != nil {
+				return fmt.Errorf("failed to parse entry size from key: %w", err)
+			}
+
+			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > uint64(l.maxBatchSizeBytes)) {
+				if err := syncKeys(keys[:i]); err != nil {
+					return err
+				}
+				i = 0
+				batchSizeBytes = 0
+			}
 
 			if keys[i] == nil {
 				keys[i] = make([]byte, len(item.Key()))
@@ -258,14 +299,8 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			}
 			copy(keys[i], item.Key())
 
+			batchSizeBytes += size
 			i++
-			if i == l.maxBatchSize {
-				if err := syncKeys(keys); err != nil {
-					return err
-				}
-
-				i = 0
-			}
 		}
 
 		return syncKeys(keys[:i])
@@ -286,71 +321,30 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 		return nil
 	}
 
-	var k string
-	switch kind { //nolint:exhaustive
-	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-		k = audit.KindAccess
-	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-		k = audit.KindDecision
+	logger.Log(zapcore.Level(-3), "Generating audit ID")
+	batchID, err := audit.NewID()
+	if err != nil {
+		return fmt.Errorf("failed to generate audit ID: %w", err)
 	}
 
-	// Process entries in size-limited batches using a sliding window approach
-	left := 0
-outer:
-	for left < len(entries) {
-		var right int
-		batchSizeBytes := 0
+	{
+		ctx, cancelFn := context.WithTimeout(ctx, l.flushTimeout)
+		defer cancelFn()
 
-		for right = left; right < len(entries); right++ {
-			entrySize := entries[right].SizeVT()
-
-			if batchSizeBytes+entrySize > l.maxBatchSizeBytes {
-				if batchSizeBytes == 0 {
-					logger.Error("Entry exceeds maximum batch size, skipping",
-						zap.Int("entrySize", entrySize),
-						zap.Int("maxBatchSizeBytes", l.maxBatchSizeBytes))
-					metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(k))
-					// Skip to next entry without adding it to the batch
-					left = right + 1
-					continue outer
-				}
-				break
-			}
-
-			batchSizeBytes += entrySize
+		ingestBatch := &logsv1.IngestBatch{
+			Id:      string(batchID),
+			Entries: entries,
 		}
 
-		logger.Log(zapcore.Level(-3), "Generated batch",
-			zap.Int("batchSize", right-left),
-			zap.Int("remainingEntries", len(entries)-right))
-
-		logger.Log(zapcore.Level(-3), "Generating audit ID")
-		batchID, err := audit.NewID()
-		if err != nil {
-			return fmt.Errorf("failed to generate audit ID: %w", err)
+		logger.Log(zapcore.Level(-3), "Filtering batch of "+strconv.Itoa(len(ingestBatch.Entries)))
+		if err := l.filter.Filter(ingestBatch); err != nil {
+			return fmt.Errorf("failed to filter batch: %w", err)
 		}
 
-		{
-			ctxWithTimeout, cancelFn := context.WithTimeout(ctx, l.flushTimeout)
-			defer cancelFn()
-
-			ingestBatch := &logsv1.IngestBatch{
-				Id:      string(batchID),
-				Entries: entries[left:right],
-			}
-
-			logger.Log(zapcore.Level(-3), "Filtering batch of "+strconv.Itoa(len(ingestBatch.Entries)))
-			if err := l.filter.Filter(ingestBatch); err != nil {
-				return fmt.Errorf("failed to filter batch: %w", err)
-			}
-
-			logger.Log(zapcore.Level(-3), "Syncing batch of "+strconv.Itoa(len(ingestBatch.Entries)))
-			if err := l.syncer.Sync(ctxWithTimeout, ingestBatch); err != nil {
-				return fmt.Errorf("failed to sync batch: %w", err)
-			}
+		logger.Log(zapcore.Level(-3), "Syncing batch of "+strconv.Itoa(len(ingestBatch.Entries)))
+		if err := l.syncer.Sync(ctx, ingestBatch); err != nil {
+			return fmt.Errorf("failed to sync batch: %w", err)
 		}
-
-		left = right
 	}
 
 	wb := l.Db.NewWriteBatch()

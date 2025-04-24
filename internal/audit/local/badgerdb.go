@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/bits"
 	"sync"
 	"time"
 
@@ -23,18 +24,31 @@ const (
 	badgerDiscardRatio      = 0.5
 	goroutineResetThreshold = 1 << 16
 
-	Backend    = "local"
-	keyLen     = 20
-	keyTSStart = 4
-	keyTSEnd   = 10
+	Backend          = "local"
+	keyLen           = 20
+	keyTSStart       = 4
+	KeyByteSizeStart = 10 // the byte-size of the message in hex
+
+	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc.
+	MaxAllowedBatchSizeBytes = 6291456 // 6MB
 )
 
 var (
 	AccessLogPrefix   = []byte("aacc")
 	DecisionLogPrefix = []byte("adec")
+
+	// we store the message byte-size in hex. This could be calculated and hardcoded as a const, but I
+	// don't want to need to worry about updating two locations if changing MaxAllowedBatchSizeBytes.
+	keyByteSizeLen = int((bits.Len64(MaxAllowedBatchSizeBytes) + 3) / 4)
+	KeyByteSizeEnd = KeyByteSizeStart + keyByteSizeLen
 )
 
 func init() {
+	// a bit of a compile time hack to ensure we can fit everything we need inside the db keys
+	if KeyByteSizeEnd > keyLen {
+		panic(fmt.Sprintf("keyByteSizeEnd(%d) exceeds keyLen(%d). hub.MaxAllowedBatchSizeBytes needs to be smaller", KeyByteSizeEnd, keyLen))
+	}
+
 	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
@@ -402,6 +416,14 @@ func GenKey(prefix []byte, id audit.IDBytes) []byte {
 	return key[:]
 }
 
+func GenKeyWithByteSize(prefix []byte, id audit.IDBytes, nBytes int) []byte {
+	key := GenKey(prefix, id)
+	hex := fmt.Sprintf("%0*x", keyByteSizeLen, nBytes)
+	copy(key[KeyByteSizeStart:], hex[:])
+
+	return key
+}
+
 func genKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
 	id, err := audit.NewIDForTime(ts)
 	if err != nil {
@@ -430,7 +452,7 @@ func scanKeyForTime(prefix []byte, ts time.Time, randFiller byte) ([]byte, error
 		return nil, err
 	}
 
-	for i := keyTSEnd; i < keyLen; i++ {
+	for i := KeyByteSizeStart; i < keyLen; i++ {
 		key[i] = randFiller
 	}
 
