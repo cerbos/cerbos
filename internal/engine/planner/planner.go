@@ -111,6 +111,7 @@ func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, matchedScopes map
 		RequestId:        input.RequestId,
 		Kind:             input.Resource.Kind,
 		PolicyVersion:    input.Resource.PolicyVersion,
+		Action:           input.Action, //nolint:staticcheck
 		Actions:          input.Actions,
 		Scope:            input.Resource.Scope,
 		MatchedScopes:    matchedScopes,
