@@ -65,6 +65,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 
 	input := &enginev1.PlanResourcesInput{
 		RequestId:   request.RequestId,
+		Action:      request.Action, //nolint:staticcheck
 		Actions:     request.Actions,
 		Principal:   request.Principal,
 		Resource:    request.Resource,
