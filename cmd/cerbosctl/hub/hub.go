@@ -3,8 +3,12 @@
 
 package hub
 
-import "github.com/cerbos/cerbos/cmd/cerbosctl/hub/epdp"
+import (
+	"github.com/cerbos/cerbos/cmd/cerbosctl/hub/epdp"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/hub/store"
+)
 
 type Cmd struct {
-	EmbeddedPDP epdp.Cmd `cmd:"" name:"embedded_pdp" aliases:"epdp"`
+	EmbeddedPDP epdp.Cmd  `cmd:"" name:"embedded_pdp" aliases:"epdp"`
+	Store       store.Cmd `cmd:"" name:"store"`
 }
