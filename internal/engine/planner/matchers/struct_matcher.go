@@ -56,7 +56,7 @@ func (m *exprMatcher) run(e celast.Expr) (bool, error) {
 	return r, nil
 }
 
-func getConstExprMatcher(s *structMatcher) *exprMatcher {
+func mkConstExprMatcher(s *structMatcher) *exprMatcher {
 	return &exprMatcher{
 		f: func(e celast.Expr) (bool, []celast.Expr) {
 			if e.Kind() == celast.LiteralKind {
@@ -68,7 +68,7 @@ func getConstExprMatcher(s *structMatcher) *exprMatcher {
 	}
 }
 
-func getStructIndexerExprMatcher(s *structMatcher) *exprMatcher {
+func mkStructIndexerExprMatcher(s *structMatcher) *exprMatcher {
 	return &exprMatcher{
 		f: func(e celast.Expr) (bool, []celast.Expr) {
 			ex := e
@@ -191,8 +191,8 @@ func NewExpressionProcessor() ExpressionProcessor {
 			return false, nil
 		},
 		ns: []*exprMatcher{
-			getStructIndexerExprMatcher(s1),
-			getConstExprMatcher(s1),
+			mkStructIndexerExprMatcher(s1),
+			mkConstExprMatcher(s1),
 		},
 	}
 	s2 := new(structMatcher)
@@ -206,8 +206,8 @@ func NewExpressionProcessor() ExpressionProcessor {
 			return false, nil
 		},
 		ns: []*exprMatcher{
-			getConstExprMatcher(s2),
-			getStructIndexerExprMatcher(s2),
+			mkConstExprMatcher(s2),
+			mkStructIndexerExprMatcher(s2),
 		},
 	}
 
