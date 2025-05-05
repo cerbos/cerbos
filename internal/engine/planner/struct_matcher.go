@@ -1,7 +1,7 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package matchers
+package planner
 
 import (
 	"errors"
@@ -22,11 +22,11 @@ type exprMatcher struct {
 	ns []*exprMatcher // argument matchers
 }
 
-type ExpressionProcessor interface {
+type expressionProcessor interface {
 	Process(e celast.Expr) (bool, celast.Expr, error)
 }
 
-type processors []ExpressionProcessor
+type processors []expressionProcessor
 
 func (p processors) Process(e celast.Expr) (bool, celast.Expr, error) {
 	for _, v := range p {
@@ -177,7 +177,7 @@ var supportedOps = map[string]struct{}{
 	operators.GreaterEquals: {},
 }
 
-func NewExpressionProcessor() ExpressionProcessor {
+func newExpressionProcessor() expressionProcessor {
 	s1 := new(structMatcher)
 	s1.rootMatch = &exprMatcher{
 		f: func(e celast.Expr) (res bool, args []celast.Expr) {
@@ -211,7 +211,13 @@ func NewExpressionProcessor() ExpressionProcessor {
 		},
 	}
 
-	return processors([]ExpressionProcessor{s1, s2})
+	s3 := new(lambdaMatcher)
+	s3.rootMatcher = &exprMatcher{
+		f: func(e celast.Expr) (bool, []celast.Expr) {
+			return e.Kind() == celast.ComprehensionKind, nil
+		},
+	}
+	return processors([]expressionProcessor{s1, s2})
 }
 
 func mkLogicalOr(args []celast.Expr) celast.Expr {
@@ -230,3 +236,18 @@ func mkOption(op string, key, val, expr, constExpr celast.Expr) celast.Expr {
 	rhs := internal.MkCallExpr(op, constExpr, val)
 	return internal.MkCallExpr(operators.LogicalAnd, lhs, rhs)
 }
+
+type lambdaMatcher struct {
+	rootMatcher *exprMatcher
+}
+
+// func (s *lambdaMatcher) Process(e celast.Expr) (bool, celast.Expr, error) {
+// 	r, err := s.rootMatch.run(e)
+// 	if err != nil || !r {
+// 		return false, nil, err
+// 	}
+// 	e, err := celast.ExprToProto(e)
+// 	if err != nil {
+// 		return false, nil, fmt.Errorf("fail to convert expr to proto: %w", err)
+// 	}
+// }

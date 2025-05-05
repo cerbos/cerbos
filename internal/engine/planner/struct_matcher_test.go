@@ -1,12 +1,13 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package matchers
+package planner
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/conditions"
 )
@@ -40,13 +41,19 @@ func TestStructMatcher(t *testing.T) {
 		{
 			expr: "3 in P.attr.anyMap[R.attr.Id]",
 		},
+		{
+			expr: "{1: 1}.exists(k, v, k == v)",
+			res:  true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.expr, func(t *testing.T) {
 			ast, issues := conditions.StdEnv.Compile(test.expr)
 			require.Nil(t, issues.Err())
-			s := NewExpressionProcessor()
-			res, _, err := s.Process(ast.NativeRep().Expr())
+			s := newExpressionProcessor()
+			e := ast.NativeRep().Expr()
+			t.Log(protojson.Format(ast.Expr()))
+			res, _, err := s.Process(e)
 			require.NoError(t, err)
 			require.Equal(t, test.res, res)
 		})

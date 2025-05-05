@@ -30,7 +30,6 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/internal"
 	plannerutils "github.com/cerbos/cerbos/internal/engine/planner/internal"
-	"github.com/cerbos/cerbos/internal/engine/planner/matchers"
 	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -657,7 +656,7 @@ func (p *partialEvaluator) evaluateUnknown(ctx context.Context, residual celast.
 	if err != nil {
 		return nil, err
 	}
-	m := matchers.NewExpressionProcessor()
+	m := newExpressionProcessor()
 	var r bool
 	var e celast.Expr
 	r, e, err = m.Process(residual)
