@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bufbuild/protovalidate-go"
+	"buf.build/go/protovalidate"
 	"github.com/goccy/go-yaml/ast"
 	yamlparser "github.com/goccy/go-yaml/parser"
 	"github.com/google/go-cmp/cmp"
