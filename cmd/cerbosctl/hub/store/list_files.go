@@ -4,12 +4,14 @@
 package store
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/alecthomas/kong"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 )
@@ -22,14 +24,14 @@ type ListFilesCmd struct {
 func (lfc *ListFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	client, err := cmd.storeClient()
 	if err != nil {
-		return err
+		return lfc.toCommandError(k.Stderr, err)
 	}
 
 	req := hub.NewListFilesRequest(cmd.StoreID)
 	if lfc.Filter != "" {
 		kind, value, ok := strings.Cut(lfc.Filter, ":")
 		if !ok {
-			return fmt.Errorf("invalid filter expression: %q", lfc.Filter)
+			return lfc.toCommandError(k.Stderr, fmt.Errorf("invalid filter expression: %q", lfc.Filter))
 		}
 
 		switch strings.ToLower(kind) {
@@ -41,25 +43,36 @@ func (lfc *ListFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 			values := strings.Split(value, ",")
 			req.WithFileFilter(hub.FilterPathIn(values...))
 		default:
-			return fmt.Errorf("unknown filter kind: %q", kind)
+			return lfc.toCommandError(k.Stderr, fmt.Errorf("unknown filter kind: %q", kind))
 		}
 	}
 
 	resp, err := client.ListFiles(context.Background(), req)
 	if err != nil {
-		return err
+		return lfc.toCommandError(k.Stderr, err)
 	}
 
-	output := formatOutput(lfc.Output.Format, resp.ListFilesResponse, func(v *storev1.ListFilesResponse) string {
-		buf := new(bytes.Buffer)
-		fmt.Fprintf(buf, "Version: %d\n", v.GetStoreVersion())
-		for _, f := range v.GetFiles() {
-			fmt.Fprintln(buf, f)
-		}
-
-		return buf.String()
-	})
-	fmt.Fprintln(k.Stdout, output)
-
+	lfc.format(k.Stdout, listFilesOutput{ListFilesResponse: resp.ListFilesResponse})
 	return nil
+}
+
+type listFilesOutput struct {
+	*storev1.ListFilesResponse
+}
+
+func (lfo listFilesOutput) String() string {
+	sb := new(strings.Builder)
+	sb.WriteString("Version: ")
+	sb.WriteString(strconv.FormatInt(lfo.GetStoreVersion(), 10))
+	sb.WriteString("\n")
+	for _, f := range lfo.GetFiles() {
+		sb.WriteString(f)
+		sb.WriteString("\n")
+	}
+
+	return sb.String()
+}
+
+func (lfo listFilesOutput) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(lfo.ListFilesResponse)
 }
