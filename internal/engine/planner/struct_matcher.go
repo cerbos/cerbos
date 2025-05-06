@@ -5,8 +5,10 @@ package planner
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 
+	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 
 	celast "github.com/google/cel-go/common/ast"
@@ -23,14 +25,14 @@ type exprMatcher struct {
 }
 
 type expressionProcessor interface {
-	Process(e celast.Expr) (bool, celast.Expr, error)
+	Process(e celast.Expr, env *cel.Env) (bool, celast.Expr, error)
 }
 
 type processors []expressionProcessor
 
-func (p processors) Process(e celast.Expr) (bool, celast.Expr, error) {
+func (p processors) Process(e celast.Expr, env *cel.Env) (bool, celast.Expr, error) {
 	for _, v := range p {
-		r, expr, err := v.Process(e)
+		r, expr, err := v.Process(e, env)
 		if err != nil {
 			return false, nil, err
 		}
@@ -118,7 +120,7 @@ type structMatcher struct {
 	field       string // optional field. E.g. P.attr[R.id].role == "OWNER"
 }
 
-func (s *structMatcher) Process(e celast.Expr) (bool, celast.Expr, error) {
+func (s *structMatcher) Process(e celast.Expr, _ *cel.Env) (bool, celast.Expr, error) {
 	r, err := s.rootMatch.run(e)
 	if err != nil || !r {
 		return false, nil, err
@@ -217,7 +219,7 @@ func newExpressionProcessor() expressionProcessor {
 			return e.Kind() == celast.ComprehensionKind, nil
 		},
 	}
-	return processors([]expressionProcessor{s1, s2})
+	return processors([]expressionProcessor{s1, s2, s3})
 }
 
 func mkLogicalOr(args []celast.Expr) celast.Expr {
@@ -241,13 +243,30 @@ type lambdaMatcher struct {
 	rootMatcher *exprMatcher
 }
 
-// func (s *lambdaMatcher) Process(e celast.Expr) (bool, celast.Expr, error) {
-// 	r, err := s.rootMatch.run(e)
-// 	if err != nil || !r {
-// 		return false, nil, err
-// 	}
-// 	e, err := celast.ExprToProto(e)
-// 	if err != nil {
-// 		return false, nil, fmt.Errorf("fail to convert expr to proto: %w", err)
-// 	}
-// }
+func (s *lambdaMatcher) Process(e celast.Expr, _env *cel.Env) (bool, celast.Expr, error) {
+	r, err := s.rootMatcher.run(e)
+	if err != nil || !r {
+		return false, nil, err
+	}
+	ep, err := celast.ExprToProto(e)
+	if err != nil {
+		return false, nil, fmt.Errorf("fail to convert expr to proto: %w", err)
+	}
+	ce := ep.GetComprehensionExpr()
+	if ce == nil {
+		return false, nil, nil
+	}
+
+	lambda, err := buildLambdaAST(ce)
+	if err != nil {
+		return false, nil, err
+	}
+
+	se := lambda.expr.GetStructExpr()
+	if lambda.operator != Exists || se == nil {
+		return false, nil, err
+	}
+	// for _, entry := range se.GetEntries() {
+	// }
+	return false, nil, nil
+}

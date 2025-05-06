@@ -48,12 +48,13 @@ func TestStructMatcher(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.expr, func(t *testing.T) {
-			ast, issues := conditions.StdEnv.Compile(test.expr)
+			env := conditions.StdEnv
+			ast, issues := env.Compile(test.expr)
 			require.Nil(t, issues.Err())
 			s := newExpressionProcessor()
 			e := ast.NativeRep().Expr()
 			t.Log(protojson.Format(ast.Expr()))
-			res, _, err := s.Process(e)
+			res, _, err := s.Process(e, env)
 			require.NoError(t, err)
 			require.Equal(t, test.res, res)
 		})
