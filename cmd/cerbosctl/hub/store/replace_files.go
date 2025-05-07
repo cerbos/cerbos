@@ -17,11 +17,31 @@ import (
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
 )
 
+const replaceFilesHelp = `
+Replaces or deletes all files in the remote store so that it only contains the files provided.
+
+The following exit codes have a special meaning.
+	- 5: Command didn't change the remote store because it's already at the desired state
+	- 6: The version condition supplied using --version-must-eq wasn't satisfied
+
+# Upload a local directory
+
+cerbosctl hub store replace-files /path/to/dir
+
+# Upload a local zip archive
+
+cerbosctl hub store replace-files /path/to/archive.zip
+`
+
 type ReplaceFilesCmd struct {
 	Output        `embed:""`
 	Message       string `help:"Commit message for this change" default:"Uploaded using cerbosctl"`
-	VersionMustEq int64  `help:"Require that the store is at this version before commiting the change" optional:""`
 	Path          string `arg:"" type:"path" help:"Path to a directory or a zip file containing the contents to upload" required:""`
+	VersionMustEq int64  `help:"Require that the store is at this version before committing the change" optional:""`
+}
+
+func (*ReplaceFilesCmd) Help() string {
+	return replaceFilesHelp
 }
 
 func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {

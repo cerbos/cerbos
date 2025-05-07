@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -22,9 +23,25 @@ import (
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 )
 
+const downloadHelp = `
+
+# Download the store to a directory
+
+cerbosctl hub store download /path/to/dir
+
+# Download the store as a zip file
+
+cerbosctl hub store download /path/to/archive.zip
+
+`
+
 type DownloadCmd struct {
 	Output     `embed:""`
-	OutputPath string `name:"output-path" short:"O" type:"path" required:"" help:"Path to write the retrieved files. Must be a path to a directory, zip file or - for stdout."`
+	OutputPath string `arg:"" type:"path" required:"" help:"Path to write the retrieved files. Must be a path to a directory, zip file or - for stdout."`
+}
+
+func (*DownloadCmd) Help() string {
+	return downloadHelp
 }
 
 func (dc *DownloadCmd) Run(k *kong.Kong, cmd *Cmd) (outErr error) {
@@ -115,6 +132,7 @@ func newFileWriter(outputPath string) (*fileWriter, error) {
 
 func (fw *fileWriter) writeFiles(files []*storev1.File) error {
 	for _, file := range files {
+		//nolint:nestif
 		if fw.zipWriter != nil {
 			dest, err := fw.zipWriter.Create(file.GetPath())
 			if err != nil {
@@ -144,7 +162,6 @@ func (fw *fileWriter) writeFiles(files []*storev1.File) error {
 			if err := dest.Close(); err != nil {
 				return fmt.Errorf("failed to close %s: %w", file.GetPath(), err)
 			}
-
 		}
 	}
 
@@ -174,8 +191,11 @@ func mkdirAll(root *os.Root, path string) error {
 	}
 
 	slices.Reverse(dirs)
-	for _, dir := range dirs {
-		if err := root.Mkdir(dir, dirMode); err != nil {
+	for i := range dirs {
+		if err := root.Mkdir(filepath.Join(dirs[:i+1]...), dirMode); err != nil {
+			if errors.Is(err, fs.ErrExist) {
+				continue
+			}
 			return err
 		}
 	}
