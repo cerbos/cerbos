@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/conditions"
 )
@@ -42,7 +41,7 @@ func TestStructMatcher(t *testing.T) {
 			expr: "3 in P.attr.anyMap[R.attr.Id]",
 		},
 		{
-			expr: "{1: 1}.exists(k, v, k == v)",
+			expr: "{1: [1, 2]}.exists(k, v, k in v)",
 			res:  true,
 		},
 	}
@@ -53,7 +52,7 @@ func TestStructMatcher(t *testing.T) {
 			require.Nil(t, issues.Err())
 			s := newExpressionProcessor()
 			e := ast.NativeRep().Expr()
-			t.Log(protojson.Format(ast.Expr()))
+			// t.Log(protojson.Format(ast.Expr()))
 			res, _, err := s.Process(e, env)
 			require.NoError(t, err)
 			require.Equal(t, test.res, res)

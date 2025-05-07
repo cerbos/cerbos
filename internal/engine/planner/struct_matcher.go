@@ -216,7 +216,15 @@ func newExpressionProcessor() expressionProcessor {
 	s3 := new(lambdaMatcher)
 	s3.rootMatcher = &exprMatcher{
 		f: func(e celast.Expr) (bool, []celast.Expr) {
-			return e.Kind() == celast.ComprehensionKind, nil
+			if e.Kind() != celast.ComprehensionKind {
+				return false, nil
+			}
+
+			iterRange := e.AsComprehension().IterRange()
+			if k := iterRange.Kind(); k != celast.ListKind && k != celast.StructKind && k != celast.MapKind {
+				return false, nil
+			}
+			return containsOnlyKnownValues(iterRange), nil
 		},
 	}
 	return processors([]expressionProcessor{s1, s2, s3})
@@ -240,11 +248,51 @@ func mkOption(op string, key, val, expr, constExpr celast.Expr) celast.Expr {
 }
 
 type lambdaMatcher struct {
-	rootMatcher *exprMatcher
+	rootMatcher      *exprMatcher
+	iterRange        celast.Expr
+	innerExpr        celast.Expr
+	iterVar          string
+	iterVar2         string
+	partialEvaluator *partialEvaluator
 }
 
-func (s *lambdaMatcher) Process(e celast.Expr, _env *cel.Env) (bool, celast.Expr, error) {
-	r, err := s.rootMatcher.run(e)
+func containsOnlyKnownValues(expr celast.Expr) bool {
+	switch expr.Kind() {
+	case celast.LiteralKind:
+		return true
+	case celast.ListKind:
+		list := expr.AsList()
+		for _, element := range list.Elements() {
+			if !containsOnlyKnownValues(element) {
+				return false
+			}
+		}
+		return true
+	case celast.MapKind:
+		mapExpr := expr.AsMap()
+		for _, entry := range mapExpr.Entries() {
+			me := entry.AsMapEntry()
+			if !containsOnlyKnownValues(me.Key()) || !containsOnlyKnownValues(me.Value()) {
+				return false
+			}
+		}
+		return true
+	case celast.StructKind:
+		st := expr.AsStruct()
+		for _, field := range st.Fields() {
+			if !containsOnlyKnownValues(field.AsStructField().Value()) {
+				return false
+			}
+		}
+		return true
+	default:
+		// For other types like IdentKind, SelectKind, CallKind, ComprehensionKind, etc.
+		// These typically involve variables or complex expressions
+		return false
+	}
+}
+func (l *lambdaMatcher) Process(e celast.Expr, _env *cel.Env) (bool, celast.Expr, error) {
+	r, err := l.rootMatcher.run(e)
 	if err != nil || !r {
 		return false, nil, err
 	}
@@ -262,11 +310,37 @@ func (s *lambdaMatcher) Process(e celast.Expr, _env *cel.Env) (bool, celast.Expr
 		return false, nil, err
 	}
 
-	se := lambda.expr.GetStructExpr()
+	se := lambda.iterRange.GetStructExpr()
 	if lambda.operator != Exists || se == nil {
 		return false, nil, err
 	}
-	// for _, entry := range se.GetEntries() {
-	// }
+	l.iterRange, err = celast.ProtoToExpr(lambda.iterRange)
+	if err != nil {
+		return false, nil, err
+	}
+	l.innerExpr, err = celast.ProtoToExpr(lambda.expr)
+	if err != nil {
+		return false, nil, err
+	}
+	l.iterVar = lambda.iterVar
+	l.iterVar2 = lambda.iterVar2
+
+	switch l.iterRange.Kind() {
+	case celast.MapKind:
+		m := l.iterRange.AsMap()
+		opts := make([]celast.Expr, 0, len(m.Entries()))
+		for _, entry := range m.Entries() {
+			me := entry.AsMapEntry()
+			ex, err := l.evaluateExpr(me.Key(), me.Value())
+			if err != nil {
+				return false, nil, err
+			}
+			opts = append(opts, ex)
+		}
+	}
 	return false, nil, nil
+}
+
+func (l *lambdaMatcher) evaluateExpr(iterVar celast.Expr, iterVar2 celast.Expr) (celast.Expr, error) {
+	panic("unimplemented")
 }
