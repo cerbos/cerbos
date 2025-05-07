@@ -6,7 +6,9 @@ package planner
 import (
 	"testing"
 
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/conditions"
 )
@@ -53,7 +55,10 @@ func TestStructMatcher(t *testing.T) {
 			s := newExpressionProcessor()
 			e := ast.NativeRep().Expr()
 			// t.Log(protojson.Format(ast.Expr()))
-			res, _, err := s.Process(e, env)
+			res, e1, err := s.Process(t.Context(), e)
+			require.NoError(t, err)
+			ep, err := celast.ExprToProto(e1)
+			t.Log(protojson.Format(ep))
 			require.NoError(t, err)
 			require.Equal(t, test.res, res)
 		})

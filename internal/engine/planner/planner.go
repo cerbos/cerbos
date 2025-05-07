@@ -660,7 +660,7 @@ func (p *partialEvaluator) evaluateUnknown(ctx context.Context, residual celast.
 	m := newExpressionProcessor()
 	var r bool
 	var e celast.Expr
-	r, e, err = m.Process(residual, p.env)
+	r, e, err = m.Process(ctx, residual)
 	if err != nil {
 		return nil, err
 	}

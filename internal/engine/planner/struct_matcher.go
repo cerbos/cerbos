@@ -4,15 +4,19 @@
 package planner
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
 
 	celast "github.com/google/cel-go/common/ast"
 
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/google/cel-go/common/operators"
 )
@@ -25,14 +29,14 @@ type exprMatcher struct {
 }
 
 type expressionProcessor interface {
-	Process(e celast.Expr, env *cel.Env) (bool, celast.Expr, error)
+	Process(ctx context.Context, e celast.Expr) (bool, celast.Expr, error)
 }
 
 type processors []expressionProcessor
 
-func (p processors) Process(e celast.Expr, env *cel.Env) (bool, celast.Expr, error) {
+func (p processors) Process(ctx context.Context, e celast.Expr) (bool, celast.Expr, error) {
 	for _, v := range p {
-		r, expr, err := v.Process(e, env)
+		r, expr, err := v.Process(ctx, e)
 		if err != nil {
 			return false, nil, err
 		}
@@ -120,7 +124,7 @@ type structMatcher struct {
 	field       string // optional field. E.g. P.attr[R.id].role == "OWNER"
 }
 
-func (s *structMatcher) Process(e celast.Expr, _ *cel.Env) (bool, celast.Expr, error) {
+func (s *structMatcher) Process(ctx context.Context, e celast.Expr) (bool, celast.Expr, error) {
 	r, err := s.rootMatch.run(e)
 	if err != nil || !r {
 		return false, nil, err
@@ -291,7 +295,7 @@ func containsOnlyKnownValues(expr celast.Expr) bool {
 		return false
 	}
 }
-func (l *lambdaMatcher) Process(e celast.Expr, _env *cel.Env) (bool, celast.Expr, error) {
+func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celast.Expr, error) {
 	r, err := l.rootMatcher.run(e)
 	if err != nil || !r {
 		return false, nil, err
@@ -331,16 +335,52 @@ func (l *lambdaMatcher) Process(e celast.Expr, _env *cel.Env) (bool, celast.Expr
 		opts := make([]celast.Expr, 0, len(m.Entries()))
 		for _, entry := range m.Entries() {
 			me := entry.AsMapEntry()
-			ex, err := l.evaluateExpr(me.Key(), me.Value())
+			ex, err := l.evaluateExpr(ctx, me.Key(), me.Value())
 			if err != nil {
 				return false, nil, err
 			}
 			opts = append(opts, ex)
 		}
+		return true, mkLogicalOr(opts), nil
 	}
 	return false, nil, nil
 }
 
-func (l *lambdaMatcher) evaluateExpr(iterVar celast.Expr, iterVar2 celast.Expr) (celast.Expr, error) {
-	panic("unimplemented")
+func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar celast.Expr, iterVar2 celast.Expr) (celast.Expr, error) {
+	ds := make([]*decls.VariableDecl, 0, 2)
+	p := l.partialEvaluator
+	knownVars := make(map[string]any, len(p.knownVars)+2)
+	maps.Copy(knownVars, p.knownVars)
+	ast := celast.NewAST(iterVar, nil)
+	val, _, err := conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn)
+	if err != nil {
+		return nil, err
+	}
+	knownVars[l.iterVar] = val
+	ds = append(ds, decls.NewVariable(l.iterVar, types.DynType))
+	if l.iterVar2 != "" {
+		ast = celast.NewAST(iterVar2, nil)
+		val, _, err = conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn)
+		if err != nil {
+			return nil, err
+		}
+		knownVars[l.iterVar2] = val
+		ds = append(ds, decls.NewVariable(l.iterVar2, types.DynType))
+	}
+
+	env, err := p.env.Extend(cel.VariableDecls(ds...))
+	if err != nil {
+		return nil, err
+	}
+	vars, err := cel.PartialVars(knownVars, p.vars.UnknownAttributePatterns()...)
+	if err != nil {
+		return nil, err
+	}
+	ast = celast.NewAST(l.innerExpr, nil)
+	val, details, err := conditions.ContextEval(ctx, env, ast, vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	if err != nil {
+		return nil, err
+	}
+
+	return residualExpr(ast, details), nil
 }
