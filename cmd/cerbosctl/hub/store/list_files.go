@@ -16,9 +16,23 @@ import (
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 )
 
+const listFilesHelp = `
+# List all files
+
+cerbosctl hub store list-files
+
+# List files matching "resource"
+
+cerbosctl hub store list-files --filter=like:resource
+`
+
 type ListFilesCmd struct {
 	Output `embed:""`
 	Filter string `name:"filter" optional:"" help:"Optional file name filter in the form <operator>:<value>. Supported operators are 'eq', 'in' and 'like'. For 'in' multiple values can be provided as a comma separated list."`
+}
+
+func (*ListFilesCmd) Help() string {
+	return listFilesHelp
 }
 
 func (lfc *ListFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
@@ -50,6 +64,10 @@ func (lfc *ListFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	resp, err := client.ListFiles(context.Background(), req)
 	if err != nil {
 		return lfc.toCommandError(k.Stderr, err)
+	}
+
+	if len(resp.GetFiles()) == 0 {
+		return nil
 	}
 
 	lfc.format(k.Stdout, listFilesOutput{ListFilesResponse: resp.ListFilesResponse})
