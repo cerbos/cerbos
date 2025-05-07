@@ -6,7 +6,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -80,9 +79,6 @@ type listFilesOutput struct {
 
 func (lfo listFilesOutput) String() string {
 	sb := new(strings.Builder)
-	sb.WriteString("Version: ")
-	sb.WriteString(strconv.FormatInt(lfo.GetStoreVersion(), 10))
-	sb.WriteString("\n")
 	for _, f := range lfo.GetFiles() {
 		sb.WriteString(f)
 		sb.WriteString("\n")
