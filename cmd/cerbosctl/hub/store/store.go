@@ -28,6 +28,12 @@ const (
 	replaceFilesZipMaxSize = 15728640
 )
 
+const storeCmdHelp = `Interact with Cerbos Hub managed stores.
+
+Requires an existing managed store and the API credentials to access it.
+The store ID and credentials can be provided using either command-line flags or environment variables.
+`
+
 type Conn struct {
 	APIEndpoint  string `name:"api-endpoint" hidden:"" default:"https://api.cerbos.cloud" env:"CERBOS_HUB_API_ENDPOINT"`
 	StoreID      string `name:"store-id" help:"ID of the store to operate on" env:"CERBOS_HUB_STORE_ID" required:""`
@@ -47,11 +53,15 @@ func (c Conn) storeClient() (*hub.StoreClient, error) {
 type Cmd struct {
 	Conn         `embed:""`
 	ListFiles    ListFilesCmd    `cmd:"" name:"list-files" help:"List store files"`
-	GetFiles     GetFilesCmd     `cmd:"" name:"get-files" help:"Get file contents"`
+	GetFiles     GetFilesCmd     `cmd:"" name:"get-files" help:"Download files from the store"`
 	Download     DownloadCmd     `cmd:"" name:"download" help:"Download the entire store"`
 	ReplaceFiles ReplaceFilesCmd `cmd:"" name:"replace-files" help:"Overwrite the store with the given set of files"`
 	AddFiles     AddFilesCmd     `cmd:"" name:"add-files" help:"Add files to the store"`
 	DeleteFiles  DeleteFilesCmd  `cmd:"" name:"delete-files" help:"Delete files from the store"`
+}
+
+func (*Cmd) Help() string {
+	return storeCmdHelp
 }
 
 type Output struct {
@@ -157,9 +167,9 @@ func (o Output) format(w io.Writer, value any) {
 }
 
 type commandError struct {
-	exitCode     int
 	ErrorMessage string `json:"errorMessage,omitempty"`
 	ErrorDetails []any  `json:"errorDetails,omitempty"`
+	exitCode     int
 }
 
 func (ce commandError) Error() string {

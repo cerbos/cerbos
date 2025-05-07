@@ -19,12 +19,30 @@ import (
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 )
 
+const addFilesHelp = `
+The following exit codes have a special meaning.
+	- 5: Command didn't change the remote store because it's already at the desired state
+	- 6: The version condition supplied using --version-must-eq wasn't satisfied
+
+# Upload foo.yaml and all files in the bar directory
+
+cerbosctl hub store add-files foo.yaml bar
+
+# Upload bar.yaml, renaming it to foo/bar.yaml in the store
+
+cerbosctl hub store add-files --mesage="Adding foo/bar.yaml" foo/bar.yaml=bar.yaml
+`
+
 type AddFilesCmd struct {
-	Output        `embed:""`
-	Paths         []string `arg:"" help:"List of files or the directories to add to the store. To rename how the file appears in the store, use store_path=actual_path as the input format." required:""`
-	Message       string   `help:"Commit message for this change" default:"Uploaded using cerbosctl"`
-	VersionMustEq int64    `help:"Require that the store is at this version before commiting the change" optional:""`
 	filesToAdd    map[string]string
+	Output        `embed:""`
+	Message       string   `help:"Commit message for this change" default:"Uploaded using cerbosctl"`
+	Paths         []string `arg:"" help:"List of files or the directories to add to the store. To rename how the file appears in the store, use store_path=actual_path as the input format." required:""`
+	VersionMustEq int64    `help:"Require that the store is at this version before committing the change" optional:""`
+}
+
+func (*AddFilesCmd) Help() string {
+	return addFilesHelp
 }
 
 func (afc *AddFilesCmd) Validate() error {
@@ -57,6 +75,7 @@ func (afc *AddFilesCmd) Validate() error {
 			if err != nil {
 				return fmt.Errorf("failed to open %s: %w", filePath, err)
 			}
+			defer root.Close()
 
 			if err := fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
