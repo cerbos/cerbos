@@ -20,12 +20,10 @@ import (
 func TestStructMatcher(t *testing.T) {
 	tests := []struct {
 		expr string
-		res  bool
 		want string
 	}{
 		{
 			expr: "{\"a\": 3}[R.attr.Id] == 4",
-			res:  true,
 			want: `R.attr.Id == "a" && 4 == 3`,
 		},
 		{
@@ -36,7 +34,6 @@ func TestStructMatcher(t *testing.T) {
 		},
 		{
 			expr: `{"a1": {"role": "OWNER"}}[R.id].role == "OWNER"`,
-			res:  true,
 			want: `R.id == "a1" && "OWNER" == {"role": "OWNER"}.role`,
 		},
 		{
@@ -44,7 +41,6 @@ func TestStructMatcher(t *testing.T) {
 		},
 		{
 			expr: "3 in {\"a\": [3, 4]}[R.attr.Id]",
-			res:  true,
 			want: `R.attr.Id == "a" && 3 in [3, 4]`,
 		},
 		{
@@ -54,7 +50,6 @@ func TestStructMatcher(t *testing.T) {
 			expr: `{1: ["red", "square"], 2: ["blue", "triangle"], 3: ["black", "circle"]}.exists(k, v, R.attr.color == v[0] && R.attr.shape == v[1])`,
 			want: `R.attr.color == "red" && R.attr.shape == "square" || R.attr.color == "blue" && R.attr.shape == "triangle" ||
         R.attr.color == "black" && R.attr.shape == "circle"`,
-			res: true,
 		},
 	}
 	env := conditions.StdEnv
@@ -71,10 +66,12 @@ func TestStructMatcher(t *testing.T) {
 			ast, issues := env.Compile(tc.expr)
 			require.Nil(t, issues.Err())
 			e := ast.NativeRep().Expr()
-			res, e1, err := s.Process(t.Context(), e)
+			matched, e1, err := s.Process(t.Context(), e)
 			require.NoError(t, err)
-			require.Equal(t, tc.res, res)
-			if tc.res {
+			if tc.want == "" {
+				require.False(t, matched)
+			} else {
+				require.True(t, matched)
 				unparsed, err := unparseExpr(t, e1)
 				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(stripWs(tc.want), stripWs(unparsed)))
