@@ -51,6 +51,10 @@ func TestStructMatcher(t *testing.T) {
 			want: `R.attr.color == "red" && R.attr.shape == "square" || R.attr.color == "blue" && R.attr.shape == "triangle" ||
         R.attr.color == "black" && R.attr.shape == "circle"`,
 		},
+		{
+			expr: "{1: 1}.exists(k, v, k == v)",
+			want: "true",
+		},
 	}
 	env := conditions.StdEnv
 	knownVars := make(map[string]any)
