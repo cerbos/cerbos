@@ -66,12 +66,10 @@ func Run(args []string, exit func(int), stdout, stderr io.Writer) {
 	parser, cli := createParser(exit, stdout, stderr)
 
 	ctx, err := parser.Parse(args)
-	parser.FatalIfErrorf(err)
-
-	/*
-		clientCtx, err := createClientContext(cli)
-		ctx.FatalIfErrorf(err)
-	*/
+	if err != nil {
+		parser.FatalIfErrorf(err)
+		return
+	}
 
 	ctx.FatalIfErrorf(ctx.Run(&cli.Globals))
 }
