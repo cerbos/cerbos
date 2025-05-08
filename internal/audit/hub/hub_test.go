@@ -445,16 +445,18 @@ func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 			return decisionLogEntry, nil
 		}
 
-		// We insert decision sync logs in the latter half as this is the same
-		// order that Badger retrieves keys from the LSM
-		syncKeys[i] = local.GenKeyWithByteSize(hub.AccessSyncPrefix, callID, accessLogEntry.SizeVT())
-		syncKeys[i+(numRecords/2)] = local.GenKeyWithByteSize(hub.DecisionSyncPrefix, callID, decisionLogEntry.SizeVT())
-
 		err = db.WriteAccessLogEntry(ctx, accessLogEntryMaker)
 		require.NoError(t, err)
 
 		err = db.WriteDecisionLogEntry(ctx, decisionLogEntryMaker)
 		require.NoError(t, err)
+
+		// We insert decision sync logs in the latter half as this is the same
+		// order that Badger retrieves keys from the LSM.
+		// Key gen needs to follow on from the calls to `Write*LogEntry` as filtering occurs
+		// inside those calls, and we need the size of the stored log.
+		syncKeys[i] = local.GenKeyWithByteSize(hub.AccessSyncPrefix, callID, accessLogEntry.SizeVT())
+		syncKeys[i+(numRecords/2)] = local.GenKeyWithByteSize(hub.DecisionSyncPrefix, callID, decisionLogEntry.SizeVT())
 	}
 
 	time.Sleep(flushInterval * 20)

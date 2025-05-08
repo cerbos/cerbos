@@ -25,6 +25,10 @@ const (
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second
 	maxMaxBatchSize     = 128
+	// Arbitrary figure to account for additional metadata in the batch (we only track the size of the entries at batch time).
+	// It's not the end of the world if the batch size exceeds the limit (due to this number being set too low), but
+	// it reduces the chance of that happening.
+	batchSizeToleranceBytes = 128
 )
 
 var (
@@ -44,7 +48,7 @@ type IngestConf struct {
 	// MaxBatchSize defines the max number of log entries to send in each Ingest request.
 	MaxBatchSize uint `yaml:"maxBatchSize" conf:",example=32"`
 	// MaxBatchSizeBytes defines the max cumulative size in bytes for a batch of log entries.
-	MaxBatchSizeBytes uint `yaml:"maxBatchSizeBytes" conf:",example=2097152"`
+	MaxBatchSizeBytes uint `yaml:"maxBatchSizeBytes" conf:",example=2097152,ignore"`
 	// MinFlushInterval is the minimal duration between Ingest requests.
 	MinFlushInterval time.Duration `yaml:"minFlushInterval" conf:",example=3s"`
 	// FlushTimeout defines the max allowable timeout for each Ingest request.
@@ -83,12 +87,12 @@ func (c *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, errors.New("maxBatchSize must be at least 1"))
 	}
 
-	if c.Ingest.MaxBatchSizeBytes < 1 {
-		outErr = multierr.Append(outErr, errors.New("maxBatchSizeBytes must be at least 1"))
+	if c.Ingest.MaxBatchSizeBytes < batchSizeToleranceBytes+1 {
+		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes must be at least %d", batchSizeToleranceBytes+1))
 	}
 
-	if c.Ingest.MaxBatchSizeBytes > local.MaxAllowedBatchSizeBytes {
-		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes cannot exceed %d bytes", local.MaxAllowedBatchSizeBytes))
+	if c.Ingest.MaxBatchSizeBytes > local.MaxAllowedBatchSizeBytes-batchSizeToleranceBytes {
+		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes cannot exceed %d bytes", local.MaxAllowedBatchSizeBytes-batchSizeToleranceBytes))
 	}
 
 	if c.Ingest.MinFlushInterval < minMinFlushInterval {
