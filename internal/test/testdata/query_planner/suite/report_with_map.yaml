@@ -182,20 +182,20 @@ tests:
                 operator: and
                 operands:
                   - expression:
-                      operator: in
+                      operator: eq
                       operands:
                         - variable: request.resource.attr.color
-                        - value: ["red"]
+                        - value: "red"
                   - expression:
                       operator: in
                       operands:
                         - variable: request.resource.attr.shape
                         - value: ["square", "circle"]
                   - expression:
-                      operator: in
+                      operator: eq
                       operands:
                         - variable: request.resource.attr.size
-                        - value: ["small"]
+                        - value: "small"
             - expression:
                 operator: and
                 operands:
@@ -205,10 +205,10 @@ tests:
                         - variable: request.resource.attr.color
                         - value: ["blue", "black"]
                   - expression:
-                      operator: in
+                      operator: eq
                       operands:
                         - variable: request.resource.attr.shape
-                        - value: ["rectangle"]
+                        - value: "rectangle"
                   - expression:
                       operator: in
                       operands:
