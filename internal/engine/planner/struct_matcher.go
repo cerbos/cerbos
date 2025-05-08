@@ -346,7 +346,10 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 			}
 			opts = append(opts, ex)
 		}
-		return true, mkLogicalOr(opts), nil
+		output := mkLogicalOr(opts)
+		internal.ZeroIDs(output)
+		output.RenumberIDs(internal.NewIDGen().Remap)
+		return true, output, nil
 	}
 	return false, nil, nil
 }
@@ -386,6 +389,6 @@ func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar celast.Expr, i
 	if err != nil {
 		return nil, err
 	}
-
-	return residualExpr(ast, details), nil
+	output := residualExpr(ast, details)
+	return output, nil
 }
