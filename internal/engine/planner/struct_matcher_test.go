@@ -5,6 +5,7 @@ package planner
 
 import (
 	"testing"
+	"time"
 
 	celast "github.com/google/cel-go/common/ast"
 	"github.com/stretchr/testify/require"
@@ -43,23 +44,29 @@ func TestStructMatcher(t *testing.T) {
 			expr: "3 in P.attr.anyMap[R.attr.Id]",
 		},
 		{
-			expr: "{1: [1, 2]}.exists(k, v, k in v)",
+			expr: `{1: "red"}.exists(k, v, R.attr.team == v)`,
 			res:  true,
 		},
 	}
+	env := conditions.StdEnv
+	knownVars := make(map[string]any)
+	// env, knownVars, variables := setupEnv(t)
+	nowFn := func() time.Time {
+		return time.Now()
+	}
+	p, err := newPartialEvaluator(env, knownVars, nowFn)
+	require.NoError(t, err)
+	s := newExpressionProcessor(p)
 	for _, test := range tests {
 		t.Run(test.expr, func(t *testing.T) {
-			env := conditions.StdEnv
 			ast, issues := env.Compile(test.expr)
 			require.Nil(t, issues.Err())
-			s := newExpressionProcessor()
 			e := ast.NativeRep().Expr()
-			// t.Log(protojson.Format(ast.Expr()))
 			res, e1, err := s.Process(t.Context(), e)
 			require.NoError(t, err)
 			ep, err := celast.ExprToProto(e1)
-			t.Log(protojson.Format(ep))
 			require.NoError(t, err)
+			t.Log("result= ", protojson.Format(ep))
 			require.Equal(t, test.res, res)
 		})
 	}

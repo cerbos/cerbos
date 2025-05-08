@@ -183,7 +183,7 @@ var supportedOps = map[string]struct{}{
 	operators.GreaterEquals: {},
 }
 
-func newExpressionProcessor() expressionProcessor {
+func newExpressionProcessor(p *partialEvaluator) expressionProcessor {
 	s1 := new(structMatcher)
 	s1.rootMatch = &exprMatcher{
 		f: func(e celast.Expr) (res bool, args []celast.Expr) {
@@ -217,7 +217,9 @@ func newExpressionProcessor() expressionProcessor {
 		},
 	}
 
-	s3 := new(lambdaMatcher)
+	s3 := &lambdaMatcher{
+		partialEvaluator: p,
+	}
 	s3.rootMatcher = &exprMatcher{
 		f: func(e celast.Expr) (bool, []celast.Expr) {
 			if e.Kind() != celast.ComprehensionKind {
@@ -236,6 +238,9 @@ func newExpressionProcessor() expressionProcessor {
 
 func mkLogicalOr(args []celast.Expr) celast.Expr {
 	const logicalOrArity = 2
+	if len(args) == 1 {
+		return args[0]
+	}
 	if len(args) == logicalOrArity {
 		return internal.MkCallExpr(operators.LogicalOr, args...)
 	}

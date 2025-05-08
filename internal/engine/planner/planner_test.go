@@ -391,7 +391,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is.NoError(err)
 			haveExpr := residualExpr(astNative, det)
 			is.NoError(err)
-			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
+			p := partialEvaluator{env: env, knownVars: knownVars, vars: pvars, nowFn: nowFn}
 			haveExpr, err = p.evalComprehensionBody(t.Context(), haveExpr)
 			is.NoError(err)
 			internal.RenumberIDs(haveExpr)
