@@ -334,9 +334,13 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 	l.iterVar = lambda.iterVar
 	l.iterVar2 = lambda.iterVar2
 
+	const maxItems = 25
 	switch l.iterRange.Kind() {
 	case celast.MapKind:
 		m := l.iterRange.AsMap()
+		if len(m.Entries()) > maxItems {
+			return false, nil, nil
+		}
 		opts := make([]celast.Expr, 0, len(m.Entries()))
 		for _, entry := range m.Entries() {
 			me := entry.AsMapEntry()
