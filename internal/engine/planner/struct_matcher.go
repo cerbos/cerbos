@@ -124,7 +124,7 @@ type structMatcher struct {
 	field       string // optional field. E.g. P.attr[R.id].role == "OWNER"
 }
 
-func (s *structMatcher) Process(ctx context.Context, e celast.Expr) (bool, celast.Expr, error) {
+func (s *structMatcher) Process(_ context.Context, e celast.Expr) (bool, celast.Expr, error) {
 	r, err := s.rootMatch.run(e)
 	if err != nil || !r {
 		return false, nil, err
@@ -257,12 +257,12 @@ func mkOption(op string, key, val, expr, constExpr celast.Expr) celast.Expr {
 }
 
 type lambdaMatcher struct {
-	rootMatcher      *exprMatcher
 	iterRange        celast.Expr
 	innerExpr        celast.Expr
+	rootMatcher      *exprMatcher
+	partialEvaluator *partialEvaluator
 	iterVar          string
 	iterVar2         string
-	partialEvaluator *partialEvaluator
 }
 
 func containsOnlyKnownValues(expr celast.Expr) bool {
@@ -300,6 +300,7 @@ func containsOnlyKnownValues(expr celast.Expr) bool {
 		return false
 	}
 }
+
 func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celast.Expr, error) {
 	r, err := l.rootMatcher.run(e)
 	if err != nil || !r {
@@ -319,8 +320,7 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		return false, nil, err
 	}
 
-	se := lambda.iterRange.GetStructExpr()
-	if lambda.operator != Exists || se == nil {
+	if lambda.operator != Exists {
 		return false, nil, err
 	}
 	l.iterRange, err = celast.ProtoToExpr(lambda.iterRange)
@@ -354,14 +354,16 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		internal.ZeroIDs(output)
 		output.RenumberIDs(internal.NewIDGen().Remap)
 		return true, output, nil
+	default:
+		return false, nil, nil
 	}
-	return false, nil, nil
 }
 
-func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar celast.Expr, iterVar2 celast.Expr) (celast.Expr, error) {
-	ds := make([]*decls.VariableDecl, 0, 2)
+func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar, iterVar2 celast.Expr) (celast.Expr, error) {
+	const nLambdaVars = 2
+	ds := make([]*decls.VariableDecl, 0, nLambdaVars)
 	p := l.partialEvaluator
-	knownVars := make(map[string]any, len(p.knownVars)+2)
+	knownVars := make(map[string]any, len(p.knownVars)+nLambdaVars)
 	maps.Copy(knownVars, p.knownVars)
 	ast := celast.NewAST(iterVar, nil)
 	val, _, err := conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn)
@@ -389,7 +391,7 @@ func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar celast.Expr, i
 		return nil, err
 	}
 	ast = celast.NewAST(l.innerExpr, nil)
-	val, details, err := conditions.ContextEval(ctx, env, ast, vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	_, details, err := conditions.ContextEval(ctx, env, ast, vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return nil, err
 	}

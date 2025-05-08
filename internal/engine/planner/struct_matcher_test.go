@@ -54,11 +54,7 @@ func TestStructMatcher(t *testing.T) {
 	}
 	env := conditions.StdEnv
 	knownVars := make(map[string]any)
-	// env, knownVars, variables := setupEnv(t)
-	nowFn := func() time.Time {
-		return time.Now()
-	}
-	p, err := newPartialEvaluator(env, knownVars, nowFn)
+	p, err := newPartialEvaluator(env, knownVars, time.Now)
 	require.NoError(t, err)
 	s := newExpressionProcessor(p)
 	for _, tc := range tests {
@@ -72,18 +68,19 @@ func TestStructMatcher(t *testing.T) {
 				require.False(t, matched)
 			} else {
 				require.True(t, matched)
-				unparsed, err := unparseExpr(t, e1)
-				require.NoError(t, err)
+				unparsed := unparseExpr(t, e1)
 				require.Empty(t, cmp.Diff(stripWs(tc.want), stripWs(unparsed)))
 			}
 		})
 	}
 }
+
 func stripWs(s string) string {
-	r := regexp.MustCompile("\\s+")
+	r := regexp.MustCompile(`\s+`)
 	return string(r.ReplaceAll([]byte(s), []byte(" ")))
 }
-func unparseExpr(t *testing.T, expr celast.Expr) (string, error) {
+
+func unparseExpr(t *testing.T, expr celast.Expr) string {
 	t.Helper()
 	protoExpr, err := celast.ExprToProto(expr)
 	require.NoError(t, err)
@@ -100,5 +97,5 @@ func unparseExpr(t *testing.T, expr celast.Expr) (string, error) {
 
 	source, err := parser.Unparse(astExpr, srcInfo)
 	require.NoError(t, err)
-	return source, nil
+	return source
 }
