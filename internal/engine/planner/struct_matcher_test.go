@@ -8,11 +8,9 @@ import (
 	"testing"
 	"time"
 
-	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/parser"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	"github.com/cerbos/cerbos/internal/conditions"
 )
@@ -72,7 +70,8 @@ func TestStructMatcher(t *testing.T) {
 				require.False(t, matched)
 			} else {
 				require.True(t, matched)
-				unparsed := unparseExpr(t, e1)
+				unparsed, err := parser.Unparse(e1, nil)
+				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(stripWs(tc.want), stripWs(unparsed)))
 			}
 		})
@@ -82,24 +81,4 @@ func TestStructMatcher(t *testing.T) {
 func stripWs(s string) string {
 	r := regexp.MustCompile(`\s+`)
 	return string(r.ReplaceAll([]byte(s), []byte(" ")))
-}
-
-func unparseExpr(t *testing.T, expr celast.Expr) string {
-	t.Helper()
-	protoExpr, err := celast.ExprToProto(expr)
-	require.NoError(t, err)
-
-	astExpr, err := celast.ProtoToExpr(protoExpr)
-	require.NoError(t, err)
-
-	checkedExpr := &exprpb.CheckedExpr{
-		Expr:       protoExpr,
-		SourceInfo: &exprpb.SourceInfo{},
-	}
-	srcInfo, err := celast.ProtoToSourceInfo(checkedExpr.SourceInfo)
-	require.NoError(t, err)
-
-	source, err := parser.Unparse(astExpr, srcInfo)
-	require.NoError(t, err)
-	return source
 }
