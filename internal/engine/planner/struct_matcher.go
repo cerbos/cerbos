@@ -11,10 +11,10 @@ import (
 	"sort"
 
 	"github.com/google/cel-go/cel"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
-
-	celast "github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/parser"
 
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/planner/internal"
@@ -353,6 +353,7 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		output := mkLogicalOr(opts)
 		internal.ZeroIDs(output)
 		output.RenumberIDs(internal.NewIDGen().Remap)
+		Print(output)
 		return true, output, nil
 	default:
 		return false, nil, nil
@@ -390,11 +391,33 @@ func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar, iterVar2 cela
 	if err != nil {
 		return nil, err
 	}
-	ast = celast.NewAST(l.innerExpr, nil)
+	source, err := parser.Unparse(l.innerExpr, nil)
+	if err != nil {
+		return nil, err
+	}
+	ast1, issues := env.Compile(source)
+	if issues.Err() != nil {
+		return nil, issues.Err()
+	}
+	// ast = celast.NewAST(l.innerExpr, nil)
+	ast = ast1.NativeRep()
 	_, details, err := conditions.ContextEval(ctx, env, ast, vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return nil, err
 	}
+	Print(iterVar2)
 	output := residualExpr(ast, details)
+	Print(output)
 	return output, nil
+}
+
+func Print(expr celast.Expr) {
+
+	// Finally, unparse the expression
+	source, err := parser.Unparse(expr, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(source)
 }

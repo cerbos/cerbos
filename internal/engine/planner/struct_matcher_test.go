@@ -53,6 +53,10 @@ func TestStructMatcher(t *testing.T) {
 			expr: "{1: 1}.exists(k, v, k == v)",
 			want: "true",
 		},
+		{
+			expr: `{1: {"colors": ["red"]}}.exists(k, v, R.attr.color in v["colors"])`,
+			want: `R.attr.color in ["red"]`,
+		},
 	}
 	env := conditions.StdEnv
 	knownVars := make(map[string]any)

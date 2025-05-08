@@ -755,6 +755,7 @@ func (p *partialEvaluator) evalComprehensionBody(ctx context.Context, e celast.E
 	return evalComprehensionBodyImpl(ctx, p.env, p.vars, p.nowFn, e)
 }
 
+// TODO(dbuduev): is this (still) necessary?
 func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e celast.Expr) (celast.Expr, error) {
 	if e == nil {
 		return nil, nil
