@@ -6,13 +6,35 @@ cmp stdout $WORK/expectations/list-files-01.txt
 # Replacing with the same files should fail
 ! cerbosctl hub store replace-files $WORK/repo
 
+# Replacing with condition should fail
+! cerbosctl hub store replace-files --version-must-eq=999999999 $WORK/cond
+
 # Add some files
-cerbosctl hub store add-files principal-policies/donald.yaml=$WORK/add/donald.yaml principal-policies/goofy.yaml=$WORK/add/goofy.yaml
+cerbosctl hub store add-files $WORK/add/donald.yaml principal-policies/goofy.yaml=$WORK/add/goofy.yaml
 cerbosctl hub store list-files
 cmp stdout $WORK/expectations/list-files-02.txt
 
+# Adding the same files should fail
+! cerbosctl hub store add-files $WORK/add/donald.yaml principal-policies/goofy.yaml=$WORK/add/goofy.yaml
+
+# Adding with condition should fail
+! cerbosctl hub store add-files --version-must-eq=999999999 $WORK/cond/minnie.yaml
+
+# Adding with bad store path should fail
+! cerbosctl hub store add-files x.txt=$WORK/cond/minnie.yaml
+
 # Delete some files
-cerbosctl hub store delete-files principal-policies/donald.yaml
+cerbosctl hub store delete-files donald.yaml
+cerbosctl hub store list-files
+cmp stdout $WORK/expectations/list-files-03.txt
+
+# Deleting the same file should fail
+! cerbosctl hub store delete-files donald.yaml
+
+# Deleting with condition should fail
+! cerbosctl hub store delete-files --version-must-eq=999999999 principal-policies/daisy.yaml
+
+# Ensure store state is as expected
 cerbosctl hub store list-files
 cmp stdout $WORK/expectations/list-files-03.txt
 
@@ -77,14 +99,25 @@ principalPolicy:
       actions:
         - action: "view"
           effect: EFFECT_ALLOW
+-- cond/minnie.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: minnie
+  version: default
+  rules:
+    - resource: "expenses"
+      actions:
+        - action: "settle"
+          effect: EFFECT_ALLOW
 -- expectations/list-files-01.txt --
 exp-vars/exp-var.yaml
 principal-policies/daisy.yaml
 
 -- expectations/list-files-02.txt --
+donald.yaml
 exp-vars/exp-var.yaml
 principal-policies/daisy.yaml
-principal-policies/donald.yaml
 principal-policies/goofy.yaml
 
 -- expectations/list-files-03.txt --
