@@ -52,8 +52,8 @@ require (
 	cloud.google.com/go/storage v1.53.0 // indirect
 	code.gitea.io/sdk/gitea v0.21.0 // indirect
 	connectrpc.com/otelconnect v0.7.2 // indirect
-	dario.cat/mergo v1.0.2 // indirect
-	github.com/42wim/httpsig v1.2.3 // indirect
+	dario.cat/mergo v1.0.1 // indirect
+	github.com/42wim/httpsig v1.2.2 // indirect
 	github.com/4meepo/tagalign v1.4.2 // indirect
 	github.com/Abirdcfly/dupword v0.1.3 // indirect
 	github.com/AlekSi/pointer v1.2.0 // indirect
