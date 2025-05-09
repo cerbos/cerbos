@@ -10,7 +10,7 @@ import (
 	"context"
 	"io"
 
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/storage"
 	mock "github.com/stretchr/testify/mock"
 )

@@ -3,10 +3,11 @@ module github.com/cerbos/cerbos
 go 1.24
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250307204501-0409229c3780.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250425153114-8976f5be98c1.1
+	buf.build/go/protovalidate v0.12.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/adrg/xdg v0.5.3
-	github.com/alecthomas/chroma/v2 v2.17.0
+	github.com/alecthomas/chroma/v2 v2.17.2
 	github.com/alecthomas/kong v1.10.0
 	github.com/alecthomas/participle/v2 v2.1.4
 	github.com/aws/aws-sdk-go v1.55.7
@@ -14,7 +15,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.29.0
 	github.com/aws/smithy-go v1.22.3
 	github.com/bluele/gcache v0.0.2
-	github.com/bufbuild/protovalidate-go v0.9.3
 	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/cerbos/cerbos-sdk-go v0.2.15
 	github.com/cerbos/cerbos/api/genpb v0.43.0
@@ -34,13 +34,13 @@ require (
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/gobwas/glob v0.2.3
 	github.com/goccy/go-yaml v1.17.1
-	github.com/golang-migrate/migrate/v4 v4.18.2
+	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/cel-go v0.25.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/gops v0.3.28
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jackc/pgtype v1.14.4
@@ -51,7 +51,7 @@ require (
 	github.com/jwalton/go-supportscolor v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lestrrat-go/httprc/v3 v3.0.0-beta2
-	github.com/lestrrat-go/jwx/v3 v3.0.0
+	github.com/lestrrat-go/jwx/v3 v3.0.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/minio/minio-go/v7 v7.0.91
 	github.com/nlepage/go-tarfs v1.2.1
@@ -63,7 +63,7 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/pterm/pterm v0.12.80
 	github.com/rdforte/gomaxecs v1.1.1
-	github.com/rivo/tview v0.0.0-20250330220935-949945f8d922
+	github.com/rivo/tview v0.0.0-20250501113434-0c592cd31026
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/rs/cors v1.11.1
@@ -105,10 +105,10 @@ require (
 	gocloud.dev v0.41.0
 	golang.org/x/crypto v0.37.0
 	golang.org/x/net v0.39.0
-	golang.org/x/sync v0.13.0
+	golang.org/x/sync v0.14.0
 	golang.org/x/tools v0.32.0
 	gonum.org/v1/gonum v0.16.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250422160041-2d3770c4ea7f
+	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -163,6 +163,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/bufbuild/protovalidate-go v0.9.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20250326154945-ae57f3c0d45f // indirect
@@ -219,7 +220,7 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
-	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.3 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
@@ -292,7 +293,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.228.0 // indirect
 	google.golang.org/genproto v0.0.0-20250324211829-b45e905df463 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250414145226-207652e42e2e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250425173222-7b384671a197 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/libc v1.62.1 // indirect
