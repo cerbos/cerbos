@@ -145,6 +145,10 @@ jobs:
           CERBOS_DEBUG_DB: "true"
           CERBOS_DEBUG_ENGINE: "true"
           CERBOS_DEBUG_KAFKA: "true"
+          CERBOS_HUB_API_ENDPOINT: "${{ secrets.CERBOS_HUB_API_ENDPOINT }}"
+          CERBOS_HUB_CLIENT_ID: "${{ secrets.CERBOS_HUB_CLIENT_ID }}"
+          CERBOS_HUB_CLIENT_SECRET: "${{ secrets.CERBOS_HUB_CLIENT_SECRET }}"
+          CERBOS_HUB_STORE_ID: "${{ secrets.CERBOS_HUB_STORE_ID }}"
 
       - name: Upload JUnit reports
         uses: actions/upload-artifact@v4
