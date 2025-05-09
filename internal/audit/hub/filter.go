@@ -104,13 +104,14 @@ func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
 		return nil
 	}
 
+peerOuter:
 	for _, k := range entryKindPrefixes {
 		for _, r := range conf.Peer {
 			if r == "*" {
 				if err := parse(strings.Join([]string{k, peerPart}, ".")); err != nil {
 					outErr = multierr.Append(outErr, err)
 				}
-				continue
+				continue peerOuter
 			}
 			if err := parse(strings.Join([]string{k, peerPart, r}, ".")); err != nil {
 				outErr = multierr.Append(outErr, err)
@@ -118,13 +119,14 @@ func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
 		}
 	}
 
+metaOuter:
 	for _, k := range entryKindPrefixes {
 		for _, r := range conf.Metadata {
 			if r == "*" {
 				if err := parse(strings.Join([]string{k, metadataPart}, ".")); err != nil {
 					outErr = multierr.Append(outErr, err)
 				}
-				continue
+				continue metaOuter
 			}
 			if err := parse(strings.Join([]string{k, metadataPart, r}, ".")); err != nil {
 				outErr = multierr.Append(outErr, err)
