@@ -10,7 +10,7 @@ import (
 	"context"
 
 	"github.com/cerbos/cloud-api/bundle"
-	v2 "github.com/cerbos/cloud-api/bundle/v2"
+	"github.com/cerbos/cloud-api/bundle/v2"
 	mock "github.com/stretchr/testify/mock"
 )
 
