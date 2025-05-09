@@ -26,7 +26,6 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/cel-go/interpreter"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -268,7 +267,8 @@ func TestResidualExpr(t *testing.T) {
 		`timestamp(R.attr.lastAccessed) > now()`,
 	}
 
-	env, pvars, variables := setupEnv(t)
+	env, knownVars, variables := setupEnv(t)
+	pvars, _ := cel.PartialVars(knownVars, cel.AttributePattern("R").QualString("attr"))
 	ignoreID := cmpopts.IgnoreMapEntries(func(k string, _ any) bool { return k == "id" })
 	for _, tt := range tests {
 		s := tt
@@ -300,7 +300,8 @@ func TestResidualExpr(t *testing.T) {
 			is.NoError(err)
 			got := residualExpr(nativeAST, det)
 			is.NoError(err)
-			p := newPartialEvaluator(env, pvars, nowFn)
+			p, err := newPartialEvaluator(env, knownVars, nowFn)
+			is.NoError(err)
 			got, err = p.evalComprehensionBody(t.Context(), got)
 			is.NoError(err)
 			gotExpr, err := celast.ExprToProto(got)
@@ -374,7 +375,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		},
 	}
 
-	env, pvars, variables := setupEnv(t)
+	env, knownVars, variables := setupEnv(t)
+	pvars, _ := cel.PartialVars(knownVars, cel.AttributePattern("R").QualString("attr"))
 	ignoreID := cmpopts.IgnoreMapEntries(func(k string, _ any) bool { return k == "id" })
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
@@ -389,7 +391,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is.NoError(err)
 			haveExpr := residualExpr(astNative, det)
 			is.NoError(err)
-			p := partialEvaluator{env: env, vars: pvars, nowFn: nowFn}
+			p := partialEvaluator{env: env, knownVars: knownVars, vars: pvars, nowFn: nowFn}
 			haveExpr, err = p.evalComprehensionBody(t.Context(), haveExpr)
 			is.NoError(err)
 			internal.RenumberIDs(haveExpr)
@@ -407,7 +409,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	}
 }
 
-func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string]celast.Expr) {
+func setupEnv(t *testing.T) (*cel.Env, map[string]any, map[string]celast.Expr) {
 	t.Helper()
 
 	env, err := conditions.StdEnv.Extend(cel.VariableDecls(
@@ -418,12 +420,12 @@ func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string
 	))
 	require.NoError(t, err)
 
-	pvars, _ := cel.PartialVars(map[string]any{
+	knownVars := map[string]any{
 		"gb":    "en_GB",
 		"gb_us": []string{"GB", "US"},
 		"ca":    "ca",
 		"T":     100,
-	}, cel.AttributePattern("R").QualString("attr"))
+	}
 
 	variables := make(map[string]celast.Expr)
 	for k, txt := range map[string]string{
@@ -437,7 +439,7 @@ func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string
 		require.Nil(t, iss, iss.Err())
 		variables[k] = ast.NativeRep().Expr()
 	}
-	return env, pvars, variables
+	return env, knownVars, variables
 }
 
 func TestNormaliseFilter(t *testing.T) {

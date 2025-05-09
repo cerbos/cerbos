@@ -101,18 +101,18 @@ tests:
       kind: KIND_CONDITIONAL
       condition:
         expression:
-          operator: exists
+          operator: or
           operands:
-            - value: ["team1", "team2"]
             - expression:
-                operator: lambda
+                operator: eq
                 operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: t
-                        - variable: request.resource.attr.teamId
-                  - variable: t
+                  - value: team1
+                  - variable: request.resource.attr.teamId
+            - expression:
+                operator: eq
+                operands:
+                  - value: team2
+                  - variable: request.resource.attr.teamId
   - action: map-all
     resource:
       kind: leave_request

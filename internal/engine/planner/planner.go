@@ -30,7 +30,6 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/internal"
 	plannerutils "github.com/cerbos/cerbos/internal/engine/planner/internal"
-	"github.com/cerbos/cerbos/internal/engine/planner/matchers"
 	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -647,9 +646,10 @@ func (evalCtx *evalContext) evaluateConditionExpression(ctx context.Context, exp
 }
 
 type partialEvaluator struct {
-	env   *cel.Env
-	vars  interpreter.PartialActivation
-	nowFn func() time.Time
+	env       *cel.Env
+	knownVars map[string]any
+	vars      interpreter.PartialActivation
+	nowFn     func() time.Time
 }
 
 func (p *partialEvaluator) evaluateUnknown(ctx context.Context, residual celast.Expr) (_ *exprpb.CheckedExpr, err error) {
@@ -657,10 +657,10 @@ func (p *partialEvaluator) evaluateUnknown(ctx context.Context, residual celast.
 	if err != nil {
 		return nil, err
 	}
-	m := matchers.NewExpressionProcessor()
+	m := newExpressionProcessor(p)
 	var r bool
 	var e celast.Expr
-	r, e, err = m.Process(residual)
+	r, e, err = m.Process(ctx, residual)
 	if err != nil {
 		return nil, err
 	}
@@ -688,8 +688,19 @@ func (p *partialEvaluator) evalPartially(ctx context.Context, e celast.Expr) (re
 	return val, residualExpr(ast, details), err
 }
 
-func newPartialEvaluator(env *cel.Env, vars interpreter.PartialActivation, nowFn func() time.Time) *partialEvaluator {
-	return &partialEvaluator{env, vars, nowFn}
+func newPartialEvaluator(env *cel.Env, knownVars map[string]any, nowFn func() time.Time) (*partialEvaluator, error) {
+	vars, err := cel.PartialVars(knownVars,
+		cel.AttributePattern(conditions.CELResourceAbbrev),
+		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
+	if err != nil {
+		return nil, err
+	}
+	return &partialEvaluator{
+		env:       env,
+		knownVars: knownVars,
+		vars:      vars,
+		nowFn:     nowFn,
+	}, nil
 }
 
 func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, constants map[string]any) (p *partialEvaluator, err error) {
@@ -737,20 +748,14 @@ func (evalCtx *evalContext) newEvaluator(request *enginev1.Request, globals, con
 		return nil, err
 	}
 
-	vars, err := cel.PartialVars(knownVars,
-		cel.AttributePattern(conditions.CELResourceAbbrev),
-		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
-	if err != nil {
-		return nil, err
-	}
-
-	return newPartialEvaluator(env, vars, evalCtx.TimeFn), nil
+	return newPartialEvaluator(env, knownVars, evalCtx.TimeFn)
 }
 
 func (p *partialEvaluator) evalComprehensionBody(ctx context.Context, e celast.Expr) (celast.Expr, error) {
 	return evalComprehensionBodyImpl(ctx, p.env, p.vars, p.nowFn, e)
 }
 
+// TODO(dbuduev): is this (still) necessary?
 func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e celast.Expr) (celast.Expr, error) {
 	if e == nil {
 		return nil, nil

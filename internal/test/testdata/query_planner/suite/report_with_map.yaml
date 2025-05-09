@@ -28,7 +28,19 @@ principal: {
         "name": "workspaceB",
         "role": "MEMBER"
       }
-    ]
+    ],
+    "figures": {
+      "set-1": {
+        "colors": ["red"],
+        "shapes": ["square", "circle"],
+        "sizes": ["small"]
+      },
+      "set-2": {
+        "colors": ["blue", "black"],
+        "shapes": ["rectangle"],
+        "sizes": ["small", "large"]
+      },
+    }
   }
 }
 tests:
@@ -156,3 +168,55 @@ tests:
           operands:
             - variable: request.resource.attr.location_id
             - value: "1"
+  - action: match_by
+    resource:
+      kind: report_with_map
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: or
+          operands:
+            - expression:
+                operator: and
+                operands:
+                  - expression:
+                      operator: and
+                      operands:
+                        - expression:
+                            operator: eq
+                            operands:
+                              - variable: request.resource.attr.color
+                              - value: "red"
+                        - expression:
+                            operator: in
+                            operands:
+                              - variable: request.resource.attr.shape
+                              - value: ["square", "circle"]
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: request.resource.attr.size
+                        - value: "small"
+            - expression:
+                operator: and
+                operands:
+                  - expression:
+                      operator: and
+                      operands:
+                        - expression:
+                            operator: in
+                            operands:
+                              - variable: request.resource.attr.color
+                              - value: ["blue", "black"]
+                        - expression:
+                            operator: eq
+                            operands:
+                              - variable: request.resource.attr.shape
+                              - value: "rectangle"
+                  - expression:
+                      operator: in
+                      operands:
+                        - variable: request.resource.attr.size
+                        - value: ["small", "large"]

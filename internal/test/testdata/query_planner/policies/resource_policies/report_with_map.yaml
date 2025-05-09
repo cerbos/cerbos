@@ -95,3 +95,11 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       derivedRoles:
         - workspace_admin
+    - actions:
+        - match_by
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.figures.exists(k, v, R.attr.color in v["colors"] && R.attr.shape in v["shapes"] && R.attr.size in v["sizes"])
