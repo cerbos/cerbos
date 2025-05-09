@@ -347,7 +347,7 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		}
 		opts := make([]celast.Expr, 0, len(list.Elements()))
 		for i, el := range list.Elements() {
-			v, err := l.evaluateIterVar(ctx, l.iterVar2, el)
+			v, err := l.evaluateIterVar(ctx, el)
 			if err != nil {
 				return false, nil, err
 			}
@@ -375,11 +375,11 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		opts := make([]celast.Expr, 0, len(m.Entries()))
 		for _, entry := range m.Entries() {
 			me := entry.AsMapEntry()
-			k, err := l.evaluateIterVar(ctx, l.iterVar, me.Key())
+			k, err := l.evaluateIterVar(ctx, me.Key())
 			if err != nil {
 				return false, nil, err
 			}
-			v, err := l.evaluateIterVar(ctx, l.iterVar2, me.Value())
+			v, err := l.evaluateIterVar(ctx, me.Value())
 			if err != nil {
 				return false, nil, err
 			}
@@ -400,7 +400,7 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 	}
 }
 
-func (l *lambdaMatcher) evaluateIterVar(ctx context.Context, name string, iterVar celast.Expr) (ref.Val, error) {
+func (l *lambdaMatcher) evaluateIterVar(ctx context.Context, iterVar celast.Expr) (ref.Val, error) {
 	ast := celast.NewAST(iterVar, nil)
 	p := l.partialEvaluator
 	val, _, err := conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn)
