@@ -155,18 +155,18 @@ tests:
       kind: KIND_CONDITIONAL
       condition:
         expression:
-          operator: exists
+          operator: or
           operands:
-            - value: ["employee", "user"]
             - expression:
-                operator: lambda
+                operator: in
                 operands:
-                  - expression:
-                      operator: in
-                      operands:
-                        - variable: x
-                        - variable: request.resource.attr.roles
-                  - variable: x
+                  - value: "employee"
+                  - variable: request.resource.attr.roles
+            - expression:
+                operator: in
+                operands:
+                  - value: "user"
+                  - variable: request.resource.attr.roles
   - action: exists_one
     resource:
       kind: macro

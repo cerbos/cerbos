@@ -204,7 +204,7 @@ tests:
                 operands:
                   - expression:
                       operator: and
-                      # operands:
+                      operands:
                         - expression:
                             operator: in
                             operands:
