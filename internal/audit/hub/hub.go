@@ -57,15 +57,15 @@ func init() {
 type Log struct {
 	syncer IngestSyncer
 	*local.Log
-	logger            *zap.Logger
-	filter            *AuditLogFilter
-	pool              *pool.ContextPool
-	cancel            context.CancelFunc
-	minFlushInterval  time.Duration
-	flushTimeout      time.Duration
-	maxBatchSize      int
-	maxBatchSizeBytes int
-	numGo             int
+	logger                  *zap.Logger
+	filter, oversizedFilter *AuditLogFilter
+	pool                    *pool.ContextPool
+	cancel                  context.CancelFunc
+	minFlushInterval        time.Duration
+	flushTimeout            time.Duration
+	maxBatchSize            int
+	maxBatchSizeBytes       int
+	numGo                   int
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
@@ -87,6 +87,11 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		return nil, err
 	}
 
+	oversizedFilter, err := NewOversizedLogFilter()
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancelFn := context.WithCancel(context.Background())
 
 	log := &Log{
@@ -94,10 +99,11 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		syncer:            syncer,
 		logger:            logger,
 		filter:            filter,
+		oversizedFilter:   oversizedFilter,
 		minFlushInterval:  minFlushInterval,
 		flushTimeout:      flushTimeout,
 		maxBatchSize:      maxBatchSize,
-		maxBatchSizeBytes: maxBatchSizeBytes - batchSizeToleranceBytes,
+		maxBatchSizeBytes: maxBatchSizeBytes - BatchSizeToleranceBytes,
 		numGo:             numGo,
 		cancel:            cancelFn,
 		pool:              pool.New().WithContext(ctx),
@@ -125,6 +131,21 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 
 	rec = entry.GetAccessLogEntry()
 
+	s := rec.SizeVT()
+	if s > l.maxBatchSizeBytes {
+		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
+		logger.Error("Entry exceeds maximum batch size, masking",
+			zap.Int("entrySize", s),
+			zap.Int("maxAllowedBatchSizeBytes", int(l.maxBatchSizeBytes)))
+		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindAccess))
+
+		if err := l.oversizedFilter.Filter(entry); err != nil {
+			return fmt.Errorf("failed to filter oversized batch: %w", err)
+		}
+
+		rec = entry.GetAccessLogEntry()
+	}
+
 	if err := l.Log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
 		return rec, nil
 	}); err != nil {
@@ -134,17 +155,6 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 	callID, err := audit.ID(rec.CallId).Repr()
 	if err != nil {
 		return fmt.Errorf("invalid call ID: %w", err)
-	}
-
-	s := rec.SizeVT()
-	if s > l.maxBatchSizeBytes {
-		// TODO(saml) strip large fields
-		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
-		logger.Error("Entry exceeds maximum batch size, skipping",
-			zap.Int("entrySize", s),
-			zap.Int("maxAllowedBatchSizeBytes", int(l.maxBatchSizeBytes)))
-		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindAccess))
-		return nil
 	}
 
 	key := local.GenKeyWithByteSize(AccessSyncPrefix, callID, s)
@@ -171,6 +181,21 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 
 	rec = entry.GetDecisionLogEntry()
 
+	s := rec.SizeVT()
+	if s > l.maxBatchSizeBytes {
+		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
+		logger.Error("Entry exceeds maximum batch size, skipping",
+			zap.Int("entrySize", s),
+			zap.Int("maxAllowedBatchSizeBytes", int(l.maxBatchSizeBytes)))
+		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindDecision))
+
+		if err := l.oversizedFilter.Filter(entry); err != nil {
+			return fmt.Errorf("failed to filter oversized batch: %w", err)
+		}
+
+		rec = entry.GetDecisionLogEntry()
+	}
+
 	if err := l.Log.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
 		return rec, nil
 	}); err != nil {
@@ -180,17 +205,6 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	callID, err := audit.ID(rec.CallId).Repr()
 	if err != nil {
 		return fmt.Errorf("invalid call ID: %w", err)
-	}
-
-	s := rec.SizeVT()
-	if s > l.maxBatchSizeBytes {
-		// TODO(saml) strip large fields
-		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
-		logger.Error("Entry exceeds maximum batch size, skipping",
-			zap.Int("entrySize", s),
-			zap.Int("maxAllowedBatchSizeBytes", int(l.maxBatchSizeBytes)))
-		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindDecision))
-		return nil
 	}
 
 	key := local.GenKeyWithByteSize(DecisionSyncPrefix, callID, s)

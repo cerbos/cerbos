@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -273,7 +274,8 @@ func TestSizeBasedBatching(t *testing.T) {
 	})
 
 	t.Run("handlesOversizedEntries", func(t *testing.T) {
-		db, syncer := initDBWithBatchCfg(t, numRecords, 1024)
+		maxBatchSizeBytes := 1024
+		db, syncer := initDBWithBatchCfg(t, numRecords, uint(maxBatchSizeBytes))
 		t.Cleanup(func() { _ = db.Close() })
 
 		ctx := t.Context()
@@ -306,35 +308,124 @@ func TestSizeBasedBatching(t *testing.T) {
 			veryLargeMetadata["large"].Values[i] = "value" + strconv.Itoa(i)
 		}
 
-		err = db.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
-			return &auditv1.AccessLogEntry{
+		err = db.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+			return &auditv1.DecisionLogEntry{
 				CallId:    string(oversizeID),
 				Timestamp: timestamppb.New(startDate),
 				Peer: &auditv1.Peer{
 					Address: "1.1.1.1",
 				},
 				Metadata: veryLargeMetadata,
-				Method:   "/cerbos.svc.v1.CerbosService/Check",
+				Method: &auditv1.DecisionLogEntry_CheckResources_{
+					CheckResources: &auditv1.DecisionLogEntry_CheckResources{
+						Inputs: []*enginev1.CheckInput{
+							{
+								RequestId: "1",
+								Resource: &enginev1.Resource{
+									Kind:          "leave_request",
+									PolicyVersion: "default",
+									Id:            "lr1",
+									Attr: map[string]*structpb.Value{
+										"foo": structpb.NewBoolValue(true),
+										"bar": structpb.NewStringValue("barVal"),
+									},
+								},
+								Principal: &enginev1.Principal{
+									Id:            "p1",
+									PolicyVersion: "default",
+									Roles:         []string{"user"},
+									Attr: map[string]*structpb.Value{
+										"foo": structpb.NewBoolValue(true),
+										"bar": structpb.NewStringValue("barVal"),
+									},
+								},
+								Actions: []string{"view", "create", "delete"},
+								AuxData: &enginev1.AuxData{},
+							},
+						},
+						Outputs: []*enginev1.CheckOutput{
+							{
+								RequestId:  "1",
+								ResourceId: "lr1",
+								Actions: map[string]*enginev1.CheckOutput_ActionEffect{
+									"view": &enginev1.CheckOutput_ActionEffect{
+										Effect: effectv1.Effect_EFFECT_ALLOW,
+										Policy: "resource.test.v1",
+									},
+									"create": &enginev1.CheckOutput_ActionEffect{
+										Effect: effectv1.Effect_EFFECT_ALLOW,
+										Policy: "resource.test.v1",
+									},
+									"delete": &enginev1.CheckOutput_ActionEffect{
+										Effect: effectv1.Effect_EFFECT_DENY,
+										Policy: "resource.test.v1",
+									},
+								},
+								EffectiveDerivedRoles: []string{"derived_admin"},
+								Outputs: []*enginev1.OutputEntry{
+									{
+										Src: "resource.test.v1#some_rule",
+										Val: &structpb.Value{
+											Kind: &structpb.Value_BoolValue{
+												BoolValue: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			}, nil
 		})
 		require.NoError(t, err)
 
-		syncer.EXPECT().Sync(mock.Anything, mock.MatchedBy(func(batch *logsv1.IngestBatch) bool {
-			for _, entry := range batch.Entries {
-				if accessEntry, ok := entry.Entry.(*logsv1.IngestBatch_Entry_AccessLogEntry); ok &&
-					len(accessEntry.AccessLogEntry.Metadata) > len(normalEntry.Metadata) {
-					return false
-				}
-			}
-			return true
-		})).Once().Return(nil)
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Twice().Return(nil)
 
-		time.Sleep(flushInterval * 20)
-
-		// Verify the oversized key is deleted even though it wasn't processed
+		// Verify all keys are deleted after processing
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
 		}, 1*time.Second, 50*time.Millisecond)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			require.Len(c, syncer.entries, 2)
+
+			al := syncer.entries[0].GetAccessLogEntry()
+			require.NotNil(c, al)
+
+			require.Equal(c, al.CallId, string(id))
+			// only filtered by the custom filter
+			require.Empty(c, al.Peer.Address)
+			// bypasses oversized filter
+			require.NotEmpty(c, al.Metadata)
+
+			dl := syncer.entries[1].GetDecisionLogEntry()
+			require.NotNil(c, dl)
+
+			require.Equal(c, dl.CallId, string(oversizeID))
+			// custom filter
+			require.Empty(c, dl.Peer)
+			require.Empty(c, dl.Metadata)
+
+			cr := dl.GetCheckResources()
+			require.Empty(c, cr.Inputs[0].Actions)
+			require.Empty(c, cr.Inputs[0].AuxData)
+
+			require.NotEmpty(c, cr.Inputs[0].Resource.Kind)
+			require.Empty(c, cr.Inputs[0].Resource.Attr)
+
+			require.NotEmpty(c, cr.Inputs[0].Principal.Id)
+			require.Empty(c, cr.Inputs[0].Principal.Attr)
+
+			ef, exists := cr.Outputs[0].Actions["create"]
+			require.True(c, exists)
+			require.Equal(c, ef.Effect, effectv1.Effect_EFFECT_ALLOW)
+
+			require.Empty(c, cr.Outputs[0].EffectiveDerivedRoles)
+			require.Empty(c, cr.Outputs[0].Outputs)
+
+			require.LessOrEqual(c, dl.SizeVT(), maxBatchSizeBytes-hub.BatchSizeToleranceBytes)
+		}, 2*time.Second, 50*time.Millisecond)
 	})
 }
 

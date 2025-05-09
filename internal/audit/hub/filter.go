@@ -70,6 +70,29 @@ func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
 	}, nil
 }
 
+func NewOversizedLogFilter() (*AuditLogFilter, error) {
+	return NewAuditLogFilter(MaskConf{
+		Peer:     []string{"*"},
+		Metadata: []string{"*"},
+		CheckResources: []string{
+			"inputs[*].actions",
+			"inputs[*].auxData",
+			"inputs[*].resource.attr",
+			"inputs[*].principal.attr",
+			"outputs[*].effectiveDerivedRoles",
+			"outputs[*].outputs",
+		},
+		PlanResources: []string{
+			"inputs[*].actions",
+			"inputs[*].auxData",
+			"inputs[*].resource.attr",
+			"inputs[*].principal.attr",
+			"outputs[*].effectiveDerivedRoles",
+			"outputs[*].outputs",
+		},
+	})
+}
+
 func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
 	root := &Token{}
 
@@ -81,16 +104,28 @@ func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
 		return nil
 	}
 
-	for _, r := range conf.Peer {
-		for _, k := range entryKindPrefixes {
+	for _, k := range entryKindPrefixes {
+		for _, r := range conf.Peer {
+			if r == "*" {
+				if err := parse(strings.Join([]string{k, peerPart}, ".")); err != nil {
+					outErr = multierr.Append(outErr, err)
+				}
+				continue
+			}
 			if err := parse(strings.Join([]string{k, peerPart, r}, ".")); err != nil {
 				outErr = multierr.Append(outErr, err)
 			}
 		}
 	}
 
-	for _, r := range conf.Metadata {
-		for _, k := range entryKindPrefixes {
+	for _, k := range entryKindPrefixes {
+		for _, r := range conf.Metadata {
+			if r == "*" {
+				if err := parse(strings.Join([]string{k, metadataPart}, ".")); err != nil {
+					outErr = multierr.Append(outErr, err)
+				}
+				continue
+			}
 			if err := parse(strings.Join([]string{k, metadataPart, r}, ".")); err != nil {
 				outErr = multierr.Append(outErr, err)
 			}
