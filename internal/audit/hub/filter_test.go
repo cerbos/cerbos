@@ -326,8 +326,10 @@ func TestAuditLogFilter(t *testing.T) {
 			Entries: logEntries,
 		}
 		ingestBatchCopy := proto.Clone(ingestBatch).(*logsv1.IngestBatch)
-		err = masker.Filter(ingestBatch)
-		require.NoError(t, err)
+		for _, entry := range ingestBatch.Entries {
+			err = masker.Filter(entry)
+			require.NoError(t, err)
+		}
 
 		require.Len(t, ingestBatch.Entries, len(logEntries))
 

@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -76,9 +77,11 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 		var key []byte
 		switch e.Kind {
 		case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-			key = keyFromCallID(m.t, e.GetAccessLogEntry().CallId, hub.AccessSyncPrefix)
+			a := e.GetAccessLogEntry()
+			key = keyFromCallID(m.t, a.CallId, a.SizeVT(), hub.AccessSyncPrefix)
 		case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-			key = keyFromCallID(m.t, e.GetDecisionLogEntry().CallId, hub.DecisionSyncPrefix)
+			d := e.GetDecisionLogEntry()
+			key = keyFromCallID(m.t, d.CallId, d.SizeVT(), hub.DecisionSyncPrefix)
 		case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
 			return errors.New("unspecified IngestBatch_EntryKind")
 		}
@@ -89,13 +92,13 @@ func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error 
 	return nil
 }
 
-func keyFromCallID(t *testing.T, callID string, prefix []byte) []byte {
+func keyFromCallID(t *testing.T, callID string, size int, prefix []byte) []byte {
 	t.Helper()
 
 	callIDbytes, err := audit.ID(callID).Repr()
 	require.NoError(t, err)
 
-	return local.GenKey(prefix, callIDbytes)
+	return local.GenKeyWithByteSize(prefix, callIDbytes, size)
 }
 
 func (m *mockSyncer) hasKeys(keys [][]byte) bool {
@@ -203,12 +206,19 @@ func TestHubLog(t *testing.T) {
 func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
 	t.Helper()
 
+	return initDBWithBatchCfg(t, batchSize, 1048576)
+}
+
+func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hub.Log, *mockSyncer) {
+	t.Helper()
+
 	conf := &hub.Conf{
 		Ingest: hub.IngestConf{
-			MaxBatchSize:     batchSize,
-			MinFlushInterval: flushInterval,
-			FlushTimeout:     1 * time.Second,
-			NumGoRoutines:    8,
+			MaxBatchSize:      maxBatchSize,
+			MaxBatchSizeBytes: maxBatchSizeBytes,
+			MinFlushInterval:  flushInterval,
+			FlushTimeout:      1 * time.Second,
+			NumGoRoutines:     8,
 		},
 		Mask: hub.MaskConf{
 			Peer: []string{"address"},
@@ -232,6 +242,199 @@ func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
 	require.Equal(t, hub.Backend, db.Backend())
 	require.True(t, db.Enabled())
 	return db, syncer
+}
+
+func TestSizeBasedBatching(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
+	require.NoError(t, err)
+
+	t.Run("createsBatchesBySize", func(t *testing.T) {
+		var maxBatchSizeBytes uint = 500 // single record in the realms of ~100-200 bytes
+		db, syncer := initDBWithBatchCfg(t, numRecords, maxBatchSizeBytes)
+		t.Cleanup(func() { _ = db.Close() })
+
+		// Count the number of Sync calls to verify multiple batches are created
+		syncCalls := 0
+		syncer.EXPECT().Sync(mock.Anything, mock.MatchedBy(func(batch *logsv1.IngestBatch) bool {
+			syncCalls++
+			return batch.SizeVT() <= int(maxBatchSizeBytes)
+		})).Return(nil)
+
+		loadedKeys := loadData(t, db, startDate)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.Greater(c, syncCalls, 1, "should have created multiple batches due to size limits")
+			assert.True(c, syncer.hasKeys(loadedKeys), "keys should have been synced")
+			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
+		}, 1*time.Second, 50*time.Millisecond)
+	})
+
+	t.Run("handlesOversizedEntries", func(t *testing.T) {
+		maxBatchSizeBytes := 1024
+		db, syncer := initDBWithBatchCfg(t, numRecords, uint(maxBatchSizeBytes))
+		t.Cleanup(func() { _ = db.Close() })
+
+		ctx := t.Context()
+
+		// Create an ID for regular entry
+		id, err := audit.NewID()
+		require.NoError(t, err)
+
+		// First add a regular entry
+		normalEntry, err := mkAccessLogEntry(t, id, 1, startDate)()
+		require.NoError(t, err)
+
+		wrapped := func() (*auditv1.AccessLogEntry, error) {
+			return normalEntry, err
+		}
+
+		err = db.WriteAccessLogEntry(ctx, wrapped)
+		require.NoError(t, err)
+
+		// Create a different ID for the oversized entry
+		oversizeID, err := audit.NewID()
+		require.NoError(t, err)
+
+		// Add an oversized entry with lots of metadata to exceed the batch size
+		nValues := 1000
+		veryLargeMetadata := map[string]*auditv1.MetaValues{
+			"large": {Values: make([]string, nValues)},
+		}
+		for i := range nValues {
+			veryLargeMetadata["large"].Values[i] = "value" + strconv.Itoa(i)
+		}
+
+		err = db.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+			return &auditv1.DecisionLogEntry{
+				CallId:    string(oversizeID),
+				Timestamp: timestamppb.New(startDate),
+				Peer: &auditv1.Peer{
+					Address: "1.1.1.1",
+				},
+				Metadata: veryLargeMetadata,
+				Method: &auditv1.DecisionLogEntry_CheckResources_{
+					CheckResources: &auditv1.DecisionLogEntry_CheckResources{
+						Inputs: []*enginev1.CheckInput{
+							{
+								RequestId: "1",
+								Resource: &enginev1.Resource{
+									Kind:          "leave_request",
+									PolicyVersion: "default",
+									Id:            "lr1",
+									Attr: map[string]*structpb.Value{
+										"foo": structpb.NewBoolValue(true),
+										"bar": structpb.NewStringValue("barVal"),
+									},
+								},
+								Principal: &enginev1.Principal{
+									Id:            "p1",
+									PolicyVersion: "default",
+									Roles:         []string{"user"},
+									Attr: map[string]*structpb.Value{
+										"foo": structpb.NewBoolValue(true),
+										"bar": structpb.NewStringValue("barVal"),
+									},
+								},
+								Actions: []string{"view", "create", "delete"},
+								AuxData: &enginev1.AuxData{},
+							},
+						},
+						Outputs: []*enginev1.CheckOutput{
+							{
+								RequestId:  "1",
+								ResourceId: "lr1",
+								Actions: map[string]*enginev1.CheckOutput_ActionEffect{
+									"view": &enginev1.CheckOutput_ActionEffect{
+										Effect: effectv1.Effect_EFFECT_ALLOW,
+										Policy: "resource.test.v1",
+									},
+									"create": &enginev1.CheckOutput_ActionEffect{
+										Effect: effectv1.Effect_EFFECT_ALLOW,
+										Policy: "resource.test.v1",
+									},
+									"delete": &enginev1.CheckOutput_ActionEffect{
+										Effect: effectv1.Effect_EFFECT_DENY,
+										Policy: "resource.test.v1",
+									},
+								},
+								EffectiveDerivedRoles: []string{"derived_admin"},
+								Outputs: []*enginev1.OutputEntry{
+									{
+										Src: "resource.test.v1#some_rule",
+										Val: &structpb.Value{
+											Kind: &structpb.Value_BoolValue{
+												BoolValue: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}, nil
+		})
+		require.NoError(t, err)
+
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Twice().Return(nil)
+
+		// Verify all keys are deleted after processing
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
+		}, 1*time.Second, 50*time.Millisecond)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			require.Len(c, syncer.entries, 2)
+
+			var al *auditv1.AccessLogEntry
+			var dl *auditv1.DecisionLogEntry
+			switch syncer.entries[0].Entry.(type) {
+			case *logsv1.IngestBatch_Entry_AccessLogEntry:
+				al = syncer.entries[0].GetAccessLogEntry()
+				dl = syncer.entries[1].GetDecisionLogEntry()
+			case *logsv1.IngestBatch_Entry_DecisionLogEntry:
+				dl = syncer.entries[0].GetDecisionLogEntry()
+				al = syncer.entries[1].GetAccessLogEntry()
+			}
+
+			require.NotNil(c, al)
+			require.NotNil(c, dl)
+
+			require.Equal(c, al.CallId, string(id))
+			// only filtered by the custom filter
+			require.Empty(c, al.Peer.Address)
+			// bypasses oversized filter
+			require.NotEmpty(c, al.Metadata)
+
+			require.Equal(c, dl.CallId, string(oversizeID))
+			// custom filter
+			require.Empty(c, dl.Peer)
+			require.Empty(c, dl.Metadata)
+
+			cr := dl.GetCheckResources()
+			require.Empty(c, cr.Inputs[0].Actions)
+			require.Empty(c, cr.Inputs[0].AuxData)
+
+			require.NotEmpty(c, cr.Inputs[0].Resource.Kind)
+			require.Empty(c, cr.Inputs[0].Resource.Attr)
+
+			require.NotEmpty(c, cr.Inputs[0].Principal.Id)
+			require.Empty(c, cr.Inputs[0].Principal.Attr)
+
+			ef, exists := cr.Outputs[0].Actions["create"]
+			require.True(c, exists)
+			require.Equal(c, ef.Effect, effectv1.Effect_EFFECT_ALLOW)
+
+			require.Empty(c, cr.Outputs[0].EffectiveDerivedRoles)
+			require.Empty(c, cr.Outputs[0].Outputs)
+
+			require.LessOrEqual(c, dl.SizeVT(), maxBatchSizeBytes-hub.BatchSizeToleranceBytes)
+		}, 1*time.Second, 50*time.Millisecond)
+	})
 }
 
 func TestHubLogWithDecisionLogFilter(t *testing.T) {
@@ -328,16 +531,31 @@ func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 
 		callID, err := audit.ID(string(id)).Repr()
 		require.NoError(t, err)
+
+		accessLogEntry, err := mkAccessLogEntry(t, id, i, ts)()
+		require.NoError(t, err)
+		accessLogEntryMaker := func() (*auditv1.AccessLogEntry, error) {
+			return accessLogEntry, nil
+		}
+
+		decisionLogEntry, err := mkDecisionLogEntry(t, id, i, ts)()
+		require.NoError(t, err)
+		decisionLogEntryMaker := func() (*auditv1.DecisionLogEntry, error) {
+			return decisionLogEntry, nil
+		}
+
+		err = db.WriteAccessLogEntry(ctx, accessLogEntryMaker)
+		require.NoError(t, err)
+
+		err = db.WriteDecisionLogEntry(ctx, decisionLogEntryMaker)
+		require.NoError(t, err)
+
 		// We insert decision sync logs in the latter half as this is the same
-		// order that Badger retrieves keys from the LSM
-		syncKeys[i] = local.GenKey(hub.AccessSyncPrefix, callID)
-		syncKeys[i+(numRecords/2)] = local.GenKey(hub.DecisionSyncPrefix, callID)
-
-		err = db.WriteAccessLogEntry(ctx, mkAccessLogEntry(t, id, i, ts))
-		require.NoError(t, err)
-
-		err = db.WriteDecisionLogEntry(ctx, mkDecisionLogEntry(t, id, i, ts))
-		require.NoError(t, err)
+		// order that Badger retrieves keys from the LSM.
+		// Key gen needs to follow on from the calls to `Write*LogEntry` as filtering occurs
+		// inside those calls, and we need the size of the stored log.
+		syncKeys[i] = local.GenKeyWithByteSize(hub.AccessSyncPrefix, callID, accessLogEntry.SizeVT())
+		syncKeys[i+(numRecords/2)] = local.GenKeyWithByteSize(hub.DecisionSyncPrefix, callID, decisionLogEntry.SizeVT())
 	}
 
 	time.Sleep(flushInterval * 20)
