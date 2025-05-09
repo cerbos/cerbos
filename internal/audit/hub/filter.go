@@ -141,12 +141,24 @@ metaOuter:
 	}
 
 	for _, r := range conf.CheckResources {
+		if r == "*" {
+			if err := parse(checkResourcesPrefix); err != nil {
+				outErr = multierr.Append(outErr, err)
+			}
+			break
+		}
 		if err := parse(checkResourcesPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 	}
 
 	for _, r := range conf.PlanResources {
+		if r == "*" {
+			if err := parse(planResourcesPrefix); err != nil {
+				outErr = multierr.Append(outErr, err)
+			}
+			break
+		}
 		if err := parse(planResourcesPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
