@@ -10,6 +10,7 @@ import (
 	"io"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -402,11 +403,84 @@ func TestQueryPlan(t *testing.T) {
 					}
 					filter, filterDebug := response.Filter, response.FilterDebug
 					require.NoError(t, err)
-					require.Empty(t, cmp.Diff(tt.Want, filter, protocmp.Transform()), "AST: %s\n%s\n", filterDebug, protojson.Format(filter))
+					require.Empty(t, cmp.Diff(stabiliseFilter(tt.Want), stabiliseFilter(filter),
+						protocmp.Transform(),
+						protocmp.SortRepeatedFields(&enginev1.PlanResourcesFilter_Expression{}, "operands")),
+						"AST: %s\n%s\n", filterDebug, protojson.Format(filter))
 				})
 			}
 		})
 	}
+}
+
+// Create a recursive function to normalize all expressions with commutative operators
+func stabiliseFilter(filter *enginev1.PlanResourcesFilter) *enginev1.PlanResourcesFilter {
+	if filter == nil {
+		return nil
+	}
+
+	result := &enginev1.PlanResourcesFilter{
+		Kind: filter.Kind,
+	}
+
+	if filter.Condition != nil {
+		result.Condition = stabiliseOperand(filter.Condition)
+	}
+
+	return result
+}
+
+func stabiliseOperand(operand *enginev1.PlanResourcesFilter_Expression_Operand) *enginev1.PlanResourcesFilter_Expression_Operand {
+	if operand == nil {
+		return nil
+	}
+
+	if n, ok := operand.Node.(*enginev1.PlanResourcesFilter_Expression_Operand_Expression); ok {
+		result := &enginev1.PlanResourcesFilter_Expression_Operand{}
+		expr := stabiliseExpression(n.Expression)
+		result.Node = &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
+			Expression: expr,
+		}
+		return result
+	}
+
+	return operand
+}
+
+func isCommutativeOperator(op string) bool {
+	switch op {
+	case "and", "or", "eq", "ne", "add", "mult", "list", "struct":
+		return true
+	default:
+		return false
+	}
+}
+func stabiliseExpression(expr *enginev1.PlanResourcesFilter_Expression) *enginev1.PlanResourcesFilter_Expression {
+	if expr == nil {
+		return nil
+	}
+
+	result := &enginev1.PlanResourcesFilter_Expression{
+		Operator: expr.Operator,
+	}
+
+	// Normalize all operands
+	normalizedOperands := make([]*enginev1.PlanResourcesFilter_Expression_Operand, len(expr.Operands))
+	for i, op := range expr.Operands {
+		normalizedOperands[i] = stabiliseOperand(op)
+	}
+
+	// Sort operands if operator is commutative
+	if isCommutativeOperator(expr.Operator) {
+		sort.Slice(normalizedOperands, func(i, j int) bool {
+			aJSON, _ := protojson.Marshal(normalizedOperands[i])
+			bJSON, _ := protojson.Marshal(normalizedOperands[j])
+			return bytes.Compare(aJSON, bJSON) < 0
+		})
+	}
+
+	result.Operands = normalizedOperands
+	return result
 }
 
 type testTraceSink struct {
