@@ -219,7 +219,7 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 | *        | Multiplication
 | +        | Addition/concatenation
 | /        | Division
-| <=       | Less than or equal to
+| \<=      | Less than or equal to
 | <        | Less than
 | ==       | Equals
 | >=       | Greater than or equal to
