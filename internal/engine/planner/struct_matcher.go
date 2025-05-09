@@ -353,7 +353,6 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		output := mkLogicalOr(opts)
 		internal.ZeroIDs(output)
 		output.RenumberIDs(internal.NewIDGen().Remap)
-		Print(output)
 		return true, output, nil
 	default:
 		return false, nil, nil
@@ -405,19 +404,6 @@ func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar, iterVar2 cela
 	if err != nil {
 		return nil, err
 	}
-	Print(iterVar2)
 	output := residualExpr(ast, details)
-	Print(output)
 	return output, nil
-}
-
-func Print(expr celast.Expr) {
-
-	// Finally, unparse the expression
-	source, err := parser.Unparse(expr, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(source)
 }

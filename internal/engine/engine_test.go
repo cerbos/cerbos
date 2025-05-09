@@ -30,6 +30,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
@@ -413,7 +414,7 @@ func TestQueryPlan(t *testing.T) {
 	}
 }
 
-// Create a recursive function to normalize all expressions with commutative operators
+// Create a recursive function to normalize all expressions with commutative operators.
 func stabiliseFilter(filter *enginev1.PlanResourcesFilter) *enginev1.PlanResourcesFilter {
 	if filter == nil {
 		return nil
@@ -449,12 +450,13 @@ func stabiliseOperand(operand *enginev1.PlanResourcesFilter_Expression_Operand) 
 
 func isCommutativeOperator(op string) bool {
 	switch op {
-	case "and", "or", "eq", "ne", "add", "mult", "list", "struct":
+	case planner.And, planner.Or, planner.Equals, planner.NotEquals, planner.Add, planner.Mult:
 		return true
 	default:
 		return false
 	}
 }
+
 func stabiliseExpression(expr *enginev1.PlanResourcesFilter_Expression) *enginev1.PlanResourcesFilter_Expression {
 	if expr == nil {
 		return nil

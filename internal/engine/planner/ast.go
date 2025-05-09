@@ -745,17 +745,6 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 					}
 				}
 			}
-		case 2:
-			//TDOO: Uncomment if it's safe to make OR/AND support many arguments.
-			/* var operands1 []*enginev1.PlanResourcesFilter_Expression_Operand
-			for _, op := range operands {
-				if op.GetExpression().GetOperator() == logicalOperator {
-					operands1 = append(operands1, op.GetExpression().GetOperands()...)
-				} else {
-					operands1 = append(operands1, op)
-				}
-			}
-			operands = operands1 */
 		}
 	}
 
