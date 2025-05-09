@@ -338,7 +338,7 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 	knownVars := make(map[string]any, len(l.partialEvaluator.knownVars)+nLambdaVars)
 	maps.Copy(knownVars, l.partialEvaluator.knownVars)
 
-	const maxItems = 25
+	const maxItems = 10
 	switch l.iterRange.Kind() {
 	case celast.ListKind:
 		list := l.iterRange.AsList()
