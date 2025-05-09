@@ -390,17 +390,25 @@ func TestSizeBasedBatching(t *testing.T) {
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			require.Len(c, syncer.entries, 2)
 
-			al := syncer.entries[0].GetAccessLogEntry()
+			var al *auditv1.AccessLogEntry
+			var dl *auditv1.DecisionLogEntry
+			switch syncer.entries[0].Entry.(type) {
+			case *logsv1.IngestBatch_Entry_AccessLogEntry:
+				al = syncer.entries[0].GetAccessLogEntry()
+				dl = syncer.entries[1].GetDecisionLogEntry()
+			case *logsv1.IngestBatch_Entry_DecisionLogEntry:
+				dl = syncer.entries[0].GetDecisionLogEntry()
+				al = syncer.entries[1].GetAccessLogEntry()
+			}
+
 			require.NotNil(c, al)
+			require.NotNil(c, dl)
 
 			require.Equal(c, al.CallId, string(id))
 			// only filtered by the custom filter
 			require.Empty(c, al.Peer.Address)
 			// bypasses oversized filter
 			require.NotEmpty(c, al.Metadata)
-
-			dl := syncer.entries[1].GetDecisionLogEntry()
-			require.NotNil(c, dl)
 
 			require.Equal(c, dl.CallId, string(oversizeID))
 			// custom filter
@@ -425,7 +433,7 @@ func TestSizeBasedBatching(t *testing.T) {
 			require.Empty(c, cr.Outputs[0].Outputs)
 
 			require.LessOrEqual(c, dl.SizeVT(), maxBatchSizeBytes-hub.BatchSizeToleranceBytes)
-		}, 2*time.Second, 50*time.Millisecond)
+		}, 1*time.Second, 50*time.Millisecond)
 	})
 }
 
