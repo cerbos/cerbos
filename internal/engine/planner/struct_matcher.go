@@ -14,6 +14,7 @@ import (
 	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/parser"
 
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -334,8 +335,38 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 	l.iterVar = lambda.iterVar
 	l.iterVar2 = lambda.iterVar2
 
+	knownVars := make(map[string]any, len(l.partialEvaluator.knownVars)+nLambdaVars)
+	maps.Copy(knownVars, l.partialEvaluator.knownVars)
+
 	const maxItems = 25
 	switch l.iterRange.Kind() {
+	case celast.ListKind:
+		list := l.iterRange.AsList()
+		if len(list.Elements()) > maxItems {
+			return false, nil, nil
+		}
+		opts := make([]celast.Expr, 0, len(list.Elements()))
+		for i, el := range list.Elements() {
+			v, err := l.evaluateIterVar(ctx, l.iterVar2, el)
+			if err != nil {
+				return false, nil, err
+			}
+			if l.iterVar2 == "" {
+				knownVars[l.iterVar] = v
+			} else {
+				knownVars[l.iterVar] = i
+				knownVars[l.iterVar2] = v
+			}
+			ex, err := l.evaluateExpr(ctx, knownVars)
+			if err != nil {
+				return false, nil, err
+			}
+			opts = append(opts, ex)
+		}
+		output := mkLogicalOr(opts)
+		internal.ZeroIDs(output)
+		output.RenumberIDs(internal.NewIDGen().Remap)
+		return true, output, nil
 	case celast.MapKind:
 		m := l.iterRange.AsMap()
 		if len(m.Entries()) > maxItems {
@@ -344,7 +375,17 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		opts := make([]celast.Expr, 0, len(m.Entries()))
 		for _, entry := range m.Entries() {
 			me := entry.AsMapEntry()
-			ex, err := l.evaluateExpr(ctx, me.Key(), me.Value())
+			k, err := l.evaluateIterVar(ctx, l.iterVar, me.Key())
+			if err != nil {
+				return false, nil, err
+			}
+			v, err := l.evaluateIterVar(ctx, l.iterVar2, me.Value())
+			if err != nil {
+				return false, nil, err
+			}
+			knownVars[l.iterVar] = k
+			knownVars[l.iterVar2] = v
+			ex, err := l.evaluateExpr(ctx, knownVars)
 			if err != nil {
 				return false, nil, err
 			}
@@ -359,26 +400,23 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 	}
 }
 
-func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar, iterVar2 celast.Expr) (celast.Expr, error) {
-	const nLambdaVars = 2
-	ds := make([]*decls.VariableDecl, 0, nLambdaVars)
-	p := l.partialEvaluator
-	knownVars := make(map[string]any, len(p.knownVars)+nLambdaVars)
-	maps.Copy(knownVars, p.knownVars)
+func (l *lambdaMatcher) evaluateIterVar(ctx context.Context, name string, iterVar celast.Expr) (ref.Val, error) {
 	ast := celast.NewAST(iterVar, nil)
+	p := l.partialEvaluator
 	val, _, err := conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn)
 	if err != nil {
 		return nil, err
 	}
-	knownVars[l.iterVar] = val
+	return val, nil
+}
+
+const nLambdaVars = 2
+
+func (l *lambdaMatcher) evaluateExpr(ctx context.Context, knownVars map[string]any) (celast.Expr, error) {
+	ds := make([]*decls.VariableDecl, 0, nLambdaVars)
+	p := l.partialEvaluator
 	ds = append(ds, decls.NewVariable(l.iterVar, types.DynType))
 	if l.iterVar2 != "" {
-		ast = celast.NewAST(iterVar2, nil)
-		val, _, err = conditions.ContextEval(ctx, p.env, ast, p.vars, p.nowFn)
-		if err != nil {
-			return nil, err
-		}
-		knownVars[l.iterVar2] = val
 		ds = append(ds, decls.NewVariable(l.iterVar2, types.DynType))
 	}
 
@@ -399,7 +437,7 @@ func (l *lambdaMatcher) evaluateExpr(ctx context.Context, iterVar, iterVar2 cela
 		return nil, issues.Err()
 	}
 	// ast = celast.NewAST(l.innerExpr, nil)
-	ast = ast1.NativeRep()
+	ast := ast1.NativeRep()
 	_, details, err := conditions.ContextEval(ctx, env, ast, vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return nil, err
