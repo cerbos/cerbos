@@ -415,6 +415,9 @@ func TestSizeBasedBatching(t *testing.T) {
 			require.Empty(c, dl.Peer)
 			require.Empty(c, dl.Metadata)
 
+			require.False(c, al.Oversized)
+			require.True(c, dl.Oversized)
+
 			cr := dl.GetCheckResources()
 			require.Empty(c, cr.Inputs[0].Actions)
 			require.Empty(c, cr.Inputs[0].AuxData)

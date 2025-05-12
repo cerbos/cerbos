@@ -144,6 +144,7 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		}
 
 		rec = entry.GetAccessLogEntry()
+		rec.Oversized = true
 	}
 
 	if err := l.Log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
@@ -194,6 +195,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		}
 
 		rec = entry.GetDecisionLogEntry()
+		rec.Oversized = true
 	}
 
 	if err := l.Log.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
