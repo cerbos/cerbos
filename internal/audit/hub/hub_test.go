@@ -348,15 +348,15 @@ func TestSizeBasedBatching(t *testing.T) {
 								RequestId:  "1",
 								ResourceId: "lr1",
 								Actions: map[string]*enginev1.CheckOutput_ActionEffect{
-									"view": &enginev1.CheckOutput_ActionEffect{
+									"view": {
 										Effect: effectv1.Effect_EFFECT_ALLOW,
 										Policy: "resource.test.v1",
 									},
-									"create": &enginev1.CheckOutput_ActionEffect{
+									"create": {
 										Effect: effectv1.Effect_EFFECT_ALLOW,
 										Policy: "resource.test.v1",
 									},
-									"delete": &enginev1.CheckOutput_ActionEffect{
+									"delete": {
 										Effect: effectv1.Effect_EFFECT_DENY,
 										Policy: "resource.test.v1",
 									},

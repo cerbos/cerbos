@@ -25,7 +25,7 @@ const (
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second
 	maxMaxBatchSize     = 128
-	// Arbitrary figure to account for additional metadata in the batch (we only track the size of the entries at batch time).
+	// Arbitrary figure to account for additional metadata in the batch message as we only track the size of each entry at write time.
 	// It's not the end of the world if the batch size exceeds the limit (due to this number being set too low), but
 	// it reduces the chance of that happening.
 	BatchSizeToleranceBytes = 128
@@ -87,8 +87,8 @@ func (c *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, errors.New("maxBatchSize must be at least 1"))
 	}
 
-	if c.Ingest.MaxBatchSizeBytes < BatchSizeToleranceBytes+1 {
-		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes must be at least %d", BatchSizeToleranceBytes+1))
+	if c.Ingest.MaxBatchSizeBytes < BatchSizeToleranceBytes {
+		outErr = multierr.Append(outErr, fmt.Errorf("maxBatchSizeBytes must be at least %d", BatchSizeToleranceBytes))
 	}
 
 	if c.Ingest.MaxBatchSizeBytes > local.MaxAllowedBatchSizeBytes-BatchSizeToleranceBytes {

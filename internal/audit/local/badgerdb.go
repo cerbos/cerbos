@@ -39,12 +39,12 @@ var (
 
 	// we store the message byte-size in hex. This could be calculated and hardcoded as a const, but I
 	// don't want to need to worry about updating two locations if changing MaxAllowedBatchSizeBytes.
-	keyByteSizeLen = int((bits.Len64(MaxAllowedBatchSizeBytes) + 3) / 4)
+	keyByteSizeLen = (bits.Len64(MaxAllowedBatchSizeBytes) + 3) / 4 //nolint:mnd
 	KeyByteSizeEnd = KeyByteSizeStart + keyByteSizeLen
 )
 
 func init() {
-	// a bit of a compile time hack to ensure we can fit everything we need inside the db keys
+	// a compile time hack to ensure we can fit everything we need inside the db keys
 	if KeyByteSizeEnd > keyLen {
 		panic(fmt.Sprintf("keyByteSizeEnd(%d) exceeds keyLen(%d). hub.MaxAllowedBatchSizeBytes needs to be smaller", KeyByteSizeEnd, keyLen))
 	}
@@ -419,7 +419,7 @@ func GenKey(prefix []byte, id audit.IDBytes) []byte {
 func GenKeyWithByteSize(prefix []byte, id audit.IDBytes, nBytes int) []byte {
 	key := GenKey(prefix, id)
 	hex := fmt.Sprintf("%0*x", keyByteSizeLen, nBytes)
-	copy(key[KeyByteSizeStart:], hex[:])
+	copy(key[KeyByteSizeStart:], hex)
 
 	return key
 }

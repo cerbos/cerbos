@@ -346,6 +346,111 @@ func TestAuditLogFilter(t *testing.T) {
 		require.Len(t, l, 1)
 		require.Equal(t, l[0].GetStringValue(), "index1")
 	})
+
+	t.Run("FilterWithWildcardTargets", func(t *testing.T) {
+		now := time.Now()
+		ts := timestamppb.New(now)
+
+		maskConf := hub.MaskConf{
+			Peer:           []string{"*"},
+			Metadata:       []string{"*"},
+			CheckResources: []string{"*"},
+			PlanResources:  []string{"*"},
+		}
+
+		logEntry := &logsv1.IngestBatch_Entry{
+			Kind:      logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG,
+			Timestamp: ts,
+			Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{
+				DecisionLogEntry: &auditv1.DecisionLogEntry{
+					CallId:    "1",
+					Timestamp: ts,
+					Peer: &auditv1.Peer{
+						Address:      "1.1.1.1",
+						UserAgent:    "test-agent",
+						ForwardedFor: "2.2.2.2",
+					},
+					Metadata: map[string]*auditv1.MetaValues{
+						"test_key": {Values: []string{"test_value"}},
+					},
+					Method: &auditv1.DecisionLogEntry_CheckResources_{
+						CheckResources: &auditv1.DecisionLogEntry_CheckResources{
+							Inputs: []*enginev1.CheckInput{
+								{
+									RequestId: "check-1",
+									Principal: &enginev1.Principal{
+										Id: "test-principal",
+										Attr: map[string]*structpb.Value{
+											"test_attr": structpb.NewStringValue("test_value"),
+										},
+									},
+									Resource: &enginev1.Resource{
+										Kind: "test:kind",
+										Id:   "test-resource",
+										Attr: map[string]*structpb.Value{
+											"test_attr": structpb.NewStringValue("test_value"),
+										},
+									},
+									Actions: []string{"action1"},
+								},
+							},
+							Outputs: []*enginev1.CheckOutput{
+								{
+									RequestId:  "check-1",
+									ResourceId: "test-resource",
+									Actions: map[string]*enginev1.CheckOutput_ActionEffect{
+										"action1": {Effect: effectv1.Effect_EFFECT_ALLOW},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		planEntry := proto.Clone(logEntry).(*logsv1.IngestBatch_Entry)
+		planEntry.GetDecisionLogEntry().Method = &auditv1.DecisionLogEntry_PlanResources_{
+			PlanResources: &auditv1.DecisionLogEntry_PlanResources{
+				Input: &enginev1.PlanResourcesInput{
+					RequestId: "plan-1",
+					Principal: &enginev1.Principal{
+						Id: "test-principal",
+						Attr: map[string]*structpb.Value{
+							"test_attr": structpb.NewStringValue("test_value"),
+						},
+					},
+					Resource: &enginev1.PlanResourcesInput_Resource{
+						Kind: "test:kind",
+						Attr: map[string]*structpb.Value{
+							"test_attr": structpb.NewStringValue("test_value"),
+						},
+					},
+					Action: "action1",
+				},
+				Output: &enginev1.PlanResourcesOutput{
+					RequestId:   "plan-1",
+					Action:      "action1",
+					Kind:        "test:kind",
+					FilterDebug: "debug info",
+				},
+			},
+		}
+
+		masker, err := hub.NewAuditLogFilter(maskConf)
+		require.NoError(t, err)
+
+		err = masker.Filter(logEntry)
+		require.NoError(t, err)
+
+		err = masker.Filter(planEntry)
+		require.NoError(t, err)
+
+		require.Empty(t, logEntry.GetDecisionLogEntry().Peer)
+		require.Empty(t, logEntry.GetDecisionLogEntry().Metadata)
+		require.Empty(t, logEntry.GetDecisionLogEntry().GetCheckResources())
+		require.Empty(t, planEntry.GetDecisionLogEntry().GetPlanResources())
+	})
 }
 
 type diffReporter struct {
