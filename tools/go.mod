@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	connectrpc.com/connect v1.18.1
-	github.com/bufbuild/buf v1.53.0
+	github.com/bufbuild/buf v1.54.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.3.7
 	github.com/cerbos/protoc-gen-jsonschema v0.1.6
 	github.com/dadav/helm-schema v0.0.0-20250122083607-0f182120235b
