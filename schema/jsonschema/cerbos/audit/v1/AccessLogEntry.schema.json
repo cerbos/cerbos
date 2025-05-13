@@ -54,6 +54,9 @@
     "method": {
       "type": "string"
     },
+    "oversized": {
+      "type": "boolean"
+    },
     "peer": {
       "$ref": "#/definitions/cerbos.audit.v1.Peer"
     },

@@ -20,6 +20,7 @@ message AccessLogEntry {
   map<string, MetaValues> metadata = 4;
   string method = 5;
   uint32 status_code = 6;
+  bool oversized = 7;
 }
 
 message DecisionLogEntry {
@@ -50,6 +51,7 @@ message DecisionLogEntry {
   }
   map<string, MetaValues> metadata = 15;
   AuditTrail audit_trail = 16;
+  bool oversized = 17;
 }
 
 message MetaValues {

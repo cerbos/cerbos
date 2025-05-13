@@ -35,6 +35,7 @@ type AccessLogEntry struct {
 	Metadata      map[string]*MetaValues `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Method        string                 `protobuf:"bytes,5,opt,name=method,proto3" json:"method,omitempty"`
 	StatusCode    uint32                 `protobuf:"varint,6,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	Oversized     bool                   `protobuf:"varint,7,opt,name=oversized,proto3" json:"oversized,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,6 +112,13 @@ func (x *AccessLogEntry) GetStatusCode() uint32 {
 	return 0
 }
 
+func (x *AccessLogEntry) GetOversized() bool {
+	if x != nil {
+		return x.Oversized
+	}
+	return false
+}
+
 type DecisionLogEntry struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	CallId    string                 `protobuf:"bytes,1,opt,name=call_id,json=callId,proto3" json:"call_id,omitempty"`
@@ -135,6 +143,7 @@ type DecisionLogEntry struct {
 	Method        isDecisionLogEntry_Method `protobuf_oneof:"method"`
 	Metadata      map[string]*MetaValues    `protobuf:"bytes,15,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	AuditTrail    *AuditTrail               `protobuf:"bytes,16,opt,name=audit_trail,json=auditTrail,proto3" json:"audit_trail,omitempty"`
+	Oversized     bool                      `protobuf:"varint,17,opt,name=oversized,proto3" json:"oversized,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -251,6 +260,13 @@ func (x *DecisionLogEntry) GetAuditTrail() *AuditTrail {
 		return x.AuditTrail
 	}
 	return nil
+}
+
+func (x *DecisionLogEntry) GetOversized() bool {
+	if x != nil {
+		return x.Oversized
+	}
+	return false
 }
 
 type isDecisionLogEntry_Method interface {
@@ -549,7 +565,7 @@ var File_cerbos_audit_v1_audit_proto protoreflect.FileDescriptor
 
 const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcerbos/audit/v1/audit.proto\x12\x0fcerbos.audit.v1\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xec\x02\n" +
+	"\x1bcerbos/audit/v1/audit.proto\x12\x0fcerbos.audit.v1\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8a\x03\n" +
 	"\x0eAccessLogEntry\x12\x17\n" +
 	"\acall_id\x18\x01 \x01(\tR\x06callId\x128\n" +
 	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12)\n" +
@@ -557,10 +573,11 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\bmetadata\x18\x04 \x03(\v2-.cerbos.audit.v1.AccessLogEntry.MetadataEntryR\bmetadata\x12\x16\n" +
 	"\x06method\x18\x05 \x01(\tR\x06method\x12\x1f\n" +
 	"\vstatus_code\x18\x06 \x01(\rR\n" +
-	"statusCode\x1aX\n" +
+	"statusCode\x12\x1c\n" +
+	"\toversized\x18\a \x01(\bR\toversized\x1aX\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x121\n" +
-	"\x05value\x18\x02 \x01(\v2\x1b.cerbos.audit.v1.MetaValuesR\x05value:\x028\x01\"\x82\b\n" +
+	"\x05value\x18\x02 \x01(\v2\x1b.cerbos.audit.v1.MetaValuesR\x05value:\x028\x01\"\xa0\b\n" +
 	"\x10DecisionLogEntry\x12\x17\n" +
 	"\acall_id\x18\x01 \x01(\tR\x06callId\x128\n" +
 	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12)\n" +
@@ -572,7 +589,8 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x0eplan_resources\x18\b \x01(\v2/.cerbos.audit.v1.DecisionLogEntry.PlanResourcesH\x00R\rplanResources\x12K\n" +
 	"\bmetadata\x18\x0f \x03(\v2/.cerbos.audit.v1.DecisionLogEntry.MetadataEntryR\bmetadata\x12<\n" +
 	"\vaudit_trail\x18\x10 \x01(\v2\x1b.cerbos.audit.v1.AuditTrailR\n" +
-	"auditTrail\x1a\x95\x01\n" +
+	"auditTrail\x12\x1c\n" +
+	"\toversized\x18\x11 \x01(\bR\toversized\x1a\x95\x01\n" +
 	"\x0eCheckResources\x124\n" +
 	"\x06inputs\x18\x01 \x03(\v2\x1c.cerbos.engine.v1.CheckInputR\x06inputs\x127\n" +
 	"\aoutputs\x18\x02 \x03(\v2\x1d.cerbos.engine.v1.CheckOutputR\aoutputs\x12\x14\n" +
