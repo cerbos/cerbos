@@ -9,6 +9,7 @@ package hub_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"sync"
@@ -295,26 +296,27 @@ func TestSizeBasedBatching(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create a different ID for the oversized entry
-		oversizeID, err := audit.NewID()
+		crOversizeID, err := audit.NewID()
 		require.NoError(t, err)
 
-		// Add an oversized entry with lots of metadata to exceed the batch size
+		// Add an oversized check resources entry with lots of attributes to exceed the batch size
 		nValues := 1000
-		veryLargeMetadata := map[string]*auditv1.MetaValues{
-			"large": {Values: make([]string, nValues)},
-		}
+		veryLargeAttributes := make(map[string]*structpb.Value, nValues)
 		for i := range nValues {
-			veryLargeMetadata["large"].Values[i] = "value" + strconv.Itoa(i)
+			s := fmt.Sprintf("%d", i)
+			veryLargeAttributes[s] = structpb.NewStringValue(s)
 		}
 
 		err = db.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
 			return &auditv1.DecisionLogEntry{
-				CallId:    string(oversizeID),
+				CallId:    string(crOversizeID),
 				Timestamp: timestamppb.New(startDate),
 				Peer: &auditv1.Peer{
 					Address: "1.1.1.1",
 				},
-				Metadata: veryLargeMetadata,
+				Metadata: map[string]*auditv1.MetaValues{
+					"foo": {Values: []string{"bar"}},
+				},
 				Method: &auditv1.DecisionLogEntry_CheckResources_{
 					CheckResources: &auditv1.DecisionLogEntry_CheckResources{
 						Inputs: []*enginev1.CheckInput{
@@ -324,19 +326,13 @@ func TestSizeBasedBatching(t *testing.T) {
 									Kind:          "leave_request",
 									PolicyVersion: "default",
 									Id:            "lr1",
-									Attr: map[string]*structpb.Value{
-										"foo": structpb.NewBoolValue(true),
-										"bar": structpb.NewStringValue("barVal"),
-									},
+									Attr:          veryLargeAttributes,
 								},
 								Principal: &enginev1.Principal{
 									Id:            "p1",
 									PolicyVersion: "default",
 									Roles:         []string{"user"},
-									Attr: map[string]*structpb.Value{
-										"foo": structpb.NewBoolValue(true),
-										"bar": structpb.NewStringValue("barVal"),
-									},
+									Attr:          veryLargeAttributes,
 								},
 								Actions: []string{"view", "create", "delete"},
 								AuxData: &enginev1.AuxData{},
@@ -379,7 +375,54 @@ func TestSizeBasedBatching(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Twice().Return(nil)
+		prOversizeID, err := audit.NewID()
+		require.NoError(t, err)
+
+		err = db.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+			return &auditv1.DecisionLogEntry{
+				CallId:    string(prOversizeID),
+				Timestamp: timestamppb.New(startDate),
+				Peer: &auditv1.Peer{
+					Address: "1.1.1.1",
+				},
+				Metadata: map[string]*auditv1.MetaValues{
+					"foo": {Values: []string{"bar"}},
+				},
+				Method: &auditv1.DecisionLogEntry_PlanResources_{
+					PlanResources: &auditv1.DecisionLogEntry_PlanResources{
+						Input: &enginev1.PlanResourcesInput{
+							RequestId: "1",
+							Actions:   []string{"view", "create", "delete"},
+							Principal: &enginev1.Principal{
+								Id:            "p1",
+								PolicyVersion: "default",
+								Roles:         []string{"user"},
+								Attr:          veryLargeAttributes,
+							},
+							Resource: &enginev1.PlanResourcesInput_Resource{
+								Kind:          "leave_request",
+								PolicyVersion: "default",
+								Attr:          veryLargeAttributes,
+							},
+							AuxData: &enginev1.AuxData{},
+						},
+						Output: &enginev1.PlanResourcesOutput{
+							RequestId:     "1",
+							Kind:          "leave_request",
+							PolicyVersion: "default",
+							Filter: &enginev1.PlanResourcesFilter{
+								Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED,
+							},
+							Actions:     []string{"view", "create", "delete"},
+							FilterDebug: "hello I am filterDebug string",
+						},
+					},
+				},
+			}, nil
+		})
+		require.NoError(t, err)
+
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Times(3).Return(nil)
 
 		// Verify all keys are deleted after processing
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -387,39 +430,46 @@ func TestSizeBasedBatching(t *testing.T) {
 		}, 1*time.Second, 50*time.Millisecond)
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			require.Len(c, syncer.entries, 2)
+			require.Len(c, syncer.entries, 3)
 
 			var al *auditv1.AccessLogEntry
-			var dl *auditv1.DecisionLogEntry
-			switch syncer.entries[0].Entry.(type) {
-			case *logsv1.IngestBatch_Entry_AccessLogEntry:
-				al = syncer.entries[0].GetAccessLogEntry()
-				dl = syncer.entries[1].GetDecisionLogEntry()
-			case *logsv1.IngestBatch_Entry_DecisionLogEntry:
-				dl = syncer.entries[0].GetDecisionLogEntry()
-				al = syncer.entries[1].GetAccessLogEntry()
+			var dlcr, dlpr *auditv1.DecisionLogEntry
+			for i := range syncer.entries {
+				switch syncer.entries[i].Entry.(type) {
+				case *logsv1.IngestBatch_Entry_AccessLogEntry:
+					al = syncer.entries[i].GetAccessLogEntry()
+				case *logsv1.IngestBatch_Entry_DecisionLogEntry:
+					switch dl := syncer.entries[i].GetDecisionLogEntry(); dl.Method.(type) {
+					case *auditv1.DecisionLogEntry_CheckResources_:
+						dlcr = dl
+					case *auditv1.DecisionLogEntry_PlanResources_:
+						dlpr = dl
+					}
+				}
 			}
 
 			require.NotNil(c, al)
-			require.NotNil(c, dl)
+			require.NotNil(c, dlcr)
+			require.NotNil(c, dlpr)
 
 			require.Equal(c, al.CallId, string(id))
+			require.Equal(c, dlcr.CallId, string(crOversizeID))
+			require.Equal(c, dlpr.CallId, string(prOversizeID))
+
 			// only filtered by the custom filter
 			require.Empty(c, al.Peer.Address)
-			// bypasses oversized filter
-			require.NotEmpty(c, al.Metadata)
-
-			require.Equal(c, dl.CallId, string(oversizeID))
-			// custom filter
-			require.Empty(c, dl.Peer)
-			require.Empty(c, dl.Metadata)
+			require.Empty(c, dlcr.Peer.Address)
+			require.Empty(c, dlpr.Peer.Address)
 
 			require.False(c, al.Oversized)
-			require.True(c, dl.Oversized)
+			require.True(c, dlcr.Oversized)
+			require.True(c, dlpr.Oversized)
 
-			cr := dl.GetCheckResources()
-			require.Empty(c, cr.Inputs[0].Actions)
-			require.Empty(c, cr.Inputs[0].AuxData)
+			// oversized filter
+
+			cr := dlcr.GetCheckResources()
+			require.NotEmpty(c, cr.Inputs[0].Actions)
+			require.NotEmpty(c, cr.Inputs[0].AuxData)
 
 			require.NotEmpty(c, cr.Inputs[0].Resource.Kind)
 			require.Empty(c, cr.Inputs[0].Resource.Attr)
@@ -431,10 +481,22 @@ func TestSizeBasedBatching(t *testing.T) {
 			require.True(c, exists)
 			require.Equal(c, ef.Effect, effectv1.Effect_EFFECT_ALLOW)
 
-			require.Empty(c, cr.Outputs[0].EffectiveDerivedRoles)
-			require.Empty(c, cr.Outputs[0].Outputs)
+			require.NotEmpty(c, cr.Outputs[0].EffectiveDerivedRoles)
+			require.NotEmpty(c, cr.Outputs[0].Outputs)
 
-			require.LessOrEqual(c, dl.SizeVT(), maxBatchSizeBytes-hub.BatchSizeToleranceBytes)
+			pr := dlpr.GetPlanResources()
+			require.NotEmpty(c, pr.Input.Resource.Kind)
+			require.Empty(c, pr.Input.Resource.Attr)
+
+			require.NotEmpty(c, pr.Input.Principal.Id)
+			require.Empty(c, pr.Input.Principal.Attr)
+
+			require.Len(c, pr.Output.Actions, 3)
+
+			require.Empty(c, pr.Output.FilterDebug)
+
+			require.LessOrEqual(c, dlcr.SizeVT(), maxBatchSizeBytes-hub.BatchSizeToleranceBytes)
+			require.LessOrEqual(c, dlpr.SizeVT(), maxBatchSizeBytes-hub.BatchSizeToleranceBytes)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 }

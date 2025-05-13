@@ -72,23 +72,14 @@ func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
 
 func NewOversizedLogFilter() (*AuditLogFilter, error) {
 	return NewAuditLogFilter(MaskConf{
-		Peer:     []string{"*"},
-		Metadata: []string{"*"},
 		CheckResources: []string{
-			"inputs[*].actions",
-			"inputs[*].auxData",
 			"inputs[*].resource.attr",
 			"inputs[*].principal.attr",
-			"outputs[*].effectiveDerivedRoles",
-			"outputs[*].outputs",
 		},
 		PlanResources: []string{
-			"inputs[*].actions",
-			"inputs[*].auxData",
-			"inputs[*].resource.attr",
-			"inputs[*].principal.attr",
-			"outputs[*].effectiveDerivedRoles",
-			"outputs[*].outputs",
+			"input.resource.attr",
+			"input.principal.attr",
+			"output.filterDebug",
 		},
 	})
 }
