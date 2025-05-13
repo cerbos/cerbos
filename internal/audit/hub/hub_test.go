@@ -214,7 +214,6 @@ func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hu
 
 	conf := &hub.Conf{
 		Ingest: hub.IngestConf{
-			MaxBatchSize:      maxBatchSize,
 			MaxBatchSizeBytes: maxBatchSizeBytes,
 			MinFlushInterval:  flushInterval,
 			FlushTimeout:      1 * time.Second,
@@ -236,7 +235,7 @@ func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hu
 
 	syncer := newMockSyncer(t)
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
-	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"))
+	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"), hub.WithMaxBatchSize(int(maxBatchSize)))
 	require.NoError(t, err)
 
 	require.Equal(t, hub.Backend, db.Backend())
@@ -461,7 +460,6 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 					"gcInterval": 0,
 				},
 				"ingest": map[string]any{
-					"maxBatchSize":     batchSize,
 					"minFlushInterval": "2s",
 					"flushTimeout":     "1s",
 				},
@@ -480,7 +478,7 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&auditConf)
 	syncer := newMockSyncer(t)
-	db, err := hub.NewLog(&hubConf, decisionFilter, syncer, zap.L().Named("auditlog"))
+	db, err := hub.NewLog(&hubConf, decisionFilter, syncer, zap.L().Named("auditlog"), hub.WithMaxBatchSize(int(batchSize)))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 

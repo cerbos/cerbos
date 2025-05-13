@@ -16,7 +16,6 @@ import (
 const (
 	confKey = audit.ConfKey + ".hub"
 
-	defaultMaxBatchSize      = 16
 	defaultMinFlushInterval  = 5 * time.Second
 	defaultFlushTimeout      = 5 * time.Second
 	defaultNumGoRoutines     = 4
@@ -24,7 +23,6 @@ const (
 
 	minMinFlushInterval = 2 * time.Second
 	maxFlushTimeout     = 10 * time.Second
-	maxMaxBatchSize     = 128
 	// Arbitrary figure to account for additional metadata in the batch message as we only track the size of each entry at write time.
 	// It's not the end of the world if the batch size exceeds the limit (due to this number being set too low), but
 	// it reduces the chance of that happening.
@@ -34,7 +32,6 @@ const (
 var (
 	errInvalidFlushInterval = fmt.Errorf("flushInterval must be at least %s", minMinFlushInterval)
 	errInvalidFlushTimeout  = fmt.Errorf("flushTimeout cannot be more than %s", maxFlushTimeout)
-	errInvalidMaxBatchSize  = fmt.Errorf("maxBatchSize cannot be more than %d", maxMaxBatchSize)
 )
 
 type Conf struct {
@@ -45,8 +42,6 @@ type Conf struct {
 }
 
 type IngestConf struct {
-	// MaxBatchSize defines the max number of log entries to send in each Ingest request.
-	MaxBatchSize uint `yaml:"maxBatchSize" conf:",example=32"`
 	// MaxBatchSizeBytes defines the max cumulative size in bytes for a batch of log entries.
 	MaxBatchSizeBytes uint `yaml:"maxBatchSizeBytes" conf:",example=2097152,ignore"`
 	// MinFlushInterval is the minimal duration between Ingest requests.
@@ -71,7 +66,6 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.Conf.SetDefaults()
 
-	c.Ingest.MaxBatchSize = defaultMaxBatchSize
 	c.Ingest.MaxBatchSizeBytes = defaultMaxBatchSizeBytes
 	c.Ingest.MinFlushInterval = defaultMinFlushInterval
 	c.Ingest.FlushTimeout = defaultFlushTimeout
@@ -81,10 +75,6 @@ func (c *Conf) SetDefaults() {
 func (c *Conf) Validate() (outErr error) {
 	if err := c.Conf.Validate(); err != nil {
 		outErr = multierr.Append(outErr, err)
-	}
-
-	if c.Ingest.MaxBatchSize < 1 {
-		outErr = multierr.Append(outErr, errors.New("maxBatchSize must be at least 1"))
 	}
 
 	if c.Ingest.MaxBatchSizeBytes < BatchSizeToleranceBytes {
@@ -97,10 +87,6 @@ func (c *Conf) Validate() (outErr error) {
 
 	if c.Ingest.MinFlushInterval < minMinFlushInterval {
 		outErr = multierr.Append(outErr, errInvalidFlushInterval)
-	}
-
-	if c.Ingest.MaxBatchSize > maxMaxBatchSize {
-		outErr = multierr.Append(outErr, errInvalidMaxBatchSize)
 	}
 
 	if c.Ingest.FlushTimeout > maxFlushTimeout {

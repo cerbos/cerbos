@@ -26,6 +26,8 @@ import (
 
 const (
 	Backend = "hub"
+
+	maxAllowedBatchSize = 1024
 )
 
 type syncPrefix []byte
@@ -54,6 +56,18 @@ func init() {
 	})
 }
 
+type options struct {
+	maxBatchSize int
+}
+
+type Opt func(*options)
+
+func WithMaxBatchSize(maxBatchSize int) Opt {
+	return func(o *options) {
+		o.maxBatchSize = maxBatchSize
+	}
+}
+
 type Log struct {
 	syncer IngestSyncer
 	*local.Log
@@ -68,7 +82,15 @@ type Log struct {
 	numGo                   int
 }
 
-func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
+func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger, opts ...Opt) (*Log, error) {
+	o := &options{
+		maxBatchSize: maxAllowedBatchSize,
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
 	localLog, err := local.NewLog(&conf.Conf, decisionFilter)
 	if err != nil {
 		return nil, err
@@ -77,7 +99,6 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	logger.Info("Extending audit log")
 
 	minFlushInterval := conf.Ingest.MinFlushInterval
-	maxBatchSize := int(conf.Ingest.MaxBatchSize)
 	maxBatchSizeBytes := int(conf.Ingest.MaxBatchSizeBytes) - BatchSizeToleranceBytes
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
@@ -102,7 +123,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		oversizedFilter:   oversizedFilter,
 		minFlushInterval:  minFlushInterval,
 		flushTimeout:      flushTimeout,
-		maxBatchSize:      maxBatchSize,
+		maxBatchSize:      o.maxBatchSize,
 		maxBatchSizeBytes: maxBatchSizeBytes,
 		numGo:             numGo,
 		cancel:            cancelFn,
