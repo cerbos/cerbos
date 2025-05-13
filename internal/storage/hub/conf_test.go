@@ -50,8 +50,8 @@ func doTestConfig(driver string) func(*testing.T) {
 								"tempDir":     "/tmp",
 								"cacheDir":    "/tmp",
 								"connection": map[string]any{
-									"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-									"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+									"apiEndpoint":       "https://api.cerbos.cloud",
+									"bootstrapEndpoint": "https://cdn.cerbos.cloud",
 								},
 							},
 						},
@@ -70,8 +70,8 @@ func doTestConfig(driver string) func(*testing.T) {
 							"workspaceSecret": "workspace-secret",
 						},
 						"connection": map[string]any{
-							"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-							"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							"apiEndpoint":       "https://api.cerbos.cloud",
+							"bootstrapEndpoint": "https://cdn.cerbos.cloud",
 						},
 					},
 					"storage": map[string]any{
@@ -91,8 +91,8 @@ func doTestConfig(driver string) func(*testing.T) {
 				conf: map[string]any{
 					"hub": map[string]any{
 						"connection": map[string]any{
-							"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-							"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							"apiEndpoint":       "https://api.cerbos.cloud",
+							"bootstrapEndpoint": "https://cdn.cerbos.cloud",
 						},
 					},
 					"storage": map[string]any{
@@ -118,8 +118,8 @@ func doTestConfig(driver string) func(*testing.T) {
 				conf: map[string]any{
 					"hub": map[string]any{
 						"connection": map[string]any{
-							"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-							"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							"apiEndpoint":       "https://api.cerbos.cloud",
+							"bootstrapEndpoint": "https://cdn.cerbos.cloud",
 						},
 					},
 					"storage": map[string]any{
@@ -145,8 +145,8 @@ func doTestConfig(driver string) func(*testing.T) {
 				conf: map[string]any{
 					"hub": map[string]any{
 						"connection": map[string]any{
-							"apiEndpoint":       "https://api.stg-spitfire.cerbos.tech",
-							"bootstrapEndpoint": "https://cdn.stg-spitfire.cerbos.tech",
+							"apiEndpoint":       "https://api.cerbos.cloud",
+							"bootstrapEndpoint": "https://cdn.cerbos.cloud",
 						},
 					},
 					"storage": map[string]any{
@@ -183,8 +183,8 @@ func doTestConfig(driver string) func(*testing.T) {
 				TempDir:     "/tmp",
 				CacheDir:    "/tmp",
 				Connection: &hub.ConnectionConf{
-					APIEndpoint:       "https://api.stg-spitfire.cerbos.tech",
-					BootstrapEndpoint: "https://cdn.stg-spitfire.cerbos.tech",
+					APIEndpoint:       "https://api.cerbos.cloud",
+					BootstrapEndpoint: "https://cdn.cerbos.cloud",
 					MinRetryWait:      1 * time.Second,
 					MaxRetryWait:      120 * time.Second,
 					NumRetries:        5,
@@ -195,6 +195,7 @@ func doTestConfig(driver string) func(*testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
+				hub.ClearEnvVars(t)
 				for k, v := range tc.env {
 					t.Setenv(k, v)
 				}
