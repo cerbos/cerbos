@@ -6,9 +6,9 @@ package local
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
-	"math/bits"
 	"sync"
 	"time"
 
@@ -27,7 +27,8 @@ const (
 	Backend          = "local"
 	keyLen           = 20
 	keyTSStart       = 4
-	KeyByteSizeStart = 10 // the byte-size of the message in hex
+	KeyByteSizeStart = 10                   // the byte-size of the message in binary
+	KeyByteSizeEnd   = KeyByteSizeStart + 8 // byte size is stored in a uint64
 
 	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc.
 	MaxAllowedBatchSizeBytes = 6291456 // 6MB
@@ -36,19 +37,9 @@ const (
 var (
 	AccessLogPrefix   = []byte("aacc")
 	DecisionLogPrefix = []byte("adec")
-
-	// we store the message byte-size in hex. This could be calculated and hardcoded as a const, but I
-	// don't want to need to worry about updating two locations if changing MaxAllowedBatchSizeBytes.
-	keyByteSizeLen = (bits.Len64(MaxAllowedBatchSizeBytes) + 3) / 4 //nolint:mnd
-	KeyByteSizeEnd = KeyByteSizeStart + keyByteSizeLen
 )
 
 func init() {
-	// a compile time hack to ensure we can fit everything we need inside the db keys
-	if KeyByteSizeEnd > keyLen {
-		panic(fmt.Sprintf("keyByteSizeEnd(%d) exceeds keyLen(%d). hub.MaxAllowedBatchSizeBytes needs to be smaller", KeyByteSizeEnd, keyLen))
-	}
-
 	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
@@ -418,8 +409,7 @@ func GenKey(prefix []byte, id audit.IDBytes) []byte {
 
 func GenKeyWithByteSize(prefix []byte, id audit.IDBytes, nBytes int) []byte {
 	key := GenKey(prefix, id)
-	hex := fmt.Sprintf("%0*x", keyByteSizeLen, nBytes)
-	copy(key[KeyByteSizeStart:], hex)
+	binary.BigEndian.PutUint64(key[KeyByteSizeStart:], uint64(nBytes))
 
 	return key
 }

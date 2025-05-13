@@ -5,6 +5,7 @@ package hub
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -342,10 +343,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			item := it.Item()
 
 			// retrieve byte-size from key
-			size, err := strconv.ParseUint(string(item.Key()[local.KeyByteSizeStart:local.KeyByteSizeEnd]), 16, 64)
-			if err != nil {
-				return fmt.Errorf("failed to parse entry size from key: %w", err)
-			}
+			size := binary.BigEndian.Uint64(item.Key()[local.KeyByteSizeStart:local.KeyByteSizeEnd])
 
 			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > uint64(l.maxBatchSizeBytes)) {
 				if err := syncKeys(keys[:i]); err != nil {
