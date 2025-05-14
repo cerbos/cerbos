@@ -25,13 +25,13 @@ const (
 	goroutineResetThreshold = 1 << 16
 
 	Backend          = "local"
-	keyLen           = 20
+	keyLen           = 24
 	keyTSStart       = 4
-	KeyByteSizeStart = 10                   // the byte-size of the message in binary
-	KeyByteSizeEnd   = KeyByteSizeStart + 8 // byte size is stored in a uint64
-
+	keyTSEnd         = 10
+	KeyByteSizeStart = 20
 	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc.
 	MaxAllowedBatchSizeBytes = 6291456 // 6MB
+
 )
 
 var (
@@ -409,7 +409,7 @@ func GenKey(prefix []byte, id audit.IDBytes) []byte {
 
 func GenKeyWithByteSize(prefix []byte, id audit.IDBytes, nBytes int) []byte {
 	key := GenKey(prefix, id)
-	binary.BigEndian.PutUint64(key[KeyByteSizeStart:], uint64(nBytes))
+	binary.BigEndian.PutUint32(key[KeyByteSizeStart:], uint32(nBytes))
 
 	return key
 }
@@ -442,7 +442,7 @@ func scanKeyForTime(prefix []byte, ts time.Time, randFiller byte) ([]byte, error
 		return nil, err
 	}
 
-	for i := KeyByteSizeStart; i < keyLen; i++ {
+	for i := keyTSEnd; i < keyLen; i++ {
 		key[i] = randFiller
 	}
 

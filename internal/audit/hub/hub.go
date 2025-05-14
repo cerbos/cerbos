@@ -338,14 +338,14 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		defer keysPool.Put(&keys)
 
 		var i int
-		var batchSizeBytes uint64
+		var batchSizeBytes uint32
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 
 			// retrieve byte-size from key
-			size := binary.BigEndian.Uint64(item.Key()[local.KeyByteSizeStart:local.KeyByteSizeEnd])
+			size := binary.BigEndian.Uint32(item.Key()[local.KeyByteSizeStart:])
 
-			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > uint64(l.maxBatchSizeBytes)) {
+			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > uint32(l.maxBatchSizeBytes)) {
 				if err := syncKeys(keys[:i]); err != nil {
 					return err
 				}
