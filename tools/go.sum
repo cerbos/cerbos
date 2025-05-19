@@ -399,8 +399,8 @@ github.com/ccojocar/zxcvbn-go v1.0.4/go.mod h1:3GxGX+rHmueTUMvm5ium7irpyjmm7ikxY
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
-github.com/cerbos/protoc-gen-go-hashpb v0.3.7 h1:8d77DeoO7YdYxkzi0YfDaPLHKTbLxHVzroQ/dhVjn9Q=
-github.com/cerbos/protoc-gen-go-hashpb v0.3.7/go.mod h1:3jSMwjx4jeOHvtSs/Kgh9Q1Whc6eziTLbeZoU++lvLY=
+github.com/cerbos/protoc-gen-go-hashpb v0.4.0 h1:Gjd13xfRO2zhWUvlAuMJF5Q6hWZfufESC6lxZ+rxMrg=
+github.com/cerbos/protoc-gen-go-hashpb v0.4.0/go.mod h1:2xx4aHivI/LQZA2iusGwPwsg/EOKxRX59BZZbojy2OM=
 github.com/cerbos/protoc-gen-jsonschema v0.1.6 h1:qNQ0xQa2V3NOnkZ8VrKvzpk5PoFN+kQNk3KEOPUgT6s=
 github.com/cerbos/protoc-gen-jsonschema v0.1.6/go.mod h1:9MV/j6JJgUGCmBZDqcsAbT3Tk12qUf8zJyQB68H2E/A=
 github.com/certifi/gocertifi v0.0.0-20180118203423-deb3ae2ef261/go.mod h1:GJKEexRPVJrBSOjoqN5VNOIKJ5Q3RViH6eu3puDRwx4=
@@ -475,8 +475,8 @@ github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22r
 github.com/cyphar/filepath-securejoin v0.4.1/go.mod h1:Sdj7gXlvMcPZsbhwhQ33GguGLDGQL7h7bg04C/+u9jI=
 github.com/dadav/go-jsonpointer v0.0.0-20240918181927-335cbee8c279 h1:GxxxrAMM6YJK4Tf7c6APwkhXzzpJm2hGeWKpD3OKpHY=
 github.com/dadav/go-jsonpointer v0.0.0-20240918181927-335cbee8c279/go.mod h1:JoQhlwhuWFnmxzDNgByW0ONYJZjQGnUnRu9H7+C0lTU=
-github.com/dadav/helm-schema v0.0.0-20250122083607-0f182120235b h1:whSVmmrzvAtMOILCglirgpvm2CBX624skfiuS7i0rhU=
-github.com/dadav/helm-schema v0.0.0-20250122083607-0f182120235b/go.mod h1:IFZOklxRcLrNhNQpwjAs4kAyz8Jpf4zJ8xnDIsAVm3E=
+github.com/dadav/helm-schema v0.0.0-20250516042030-eb9f80173063 h1:8dHjiTRqQtIvEQLzxKEYecaYV06M4dpU/QAIBuBrvkw=
+github.com/dadav/helm-schema v0.0.0-20250516042030-eb9f80173063/go.mod h1:IFZOklxRcLrNhNQpwjAs4kAyz8Jpf4zJ8xnDIsAVm3E=
 github.com/daixiang0/gci v0.13.6 h1:RKuEOSkGpSadkGbvZ6hJ4ddItT3cVZ9Vn9Rybk6xjl8=
 github.com/daixiang0/gci v0.13.6/go.mod h1:12etP2OniiIdP4q+kjUGrC/rUagga7ODbqsom5Eo5Yk=
 github.com/danieljoos/wincred v1.2.2 h1:774zMFJrqaeYCK2W57BgAem/MLi6mtSE47MB6BOJ0i0=
