@@ -564,12 +564,12 @@ func TestSizeBasedBatching(t *testing.T) {
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			legacyKeysPresent := false
-			db.Db.View(func(txn *badgerv4.Txn) error {
+			require.NoError(t, db.Db.View(func(txn *badgerv4.Txn) error {
 				if _, err := txn.Get(legacyKey); err == nil {
 					legacyKeysPresent = true
 				}
 				return nil
-			})
+			}))
 
 			require.False(c, legacyKeysPresent)
 			require.Len(c, syncer.entries, 1)

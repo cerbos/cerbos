@@ -354,7 +354,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			// the next iteration.
 			// TODO: rip this if-else out in the future
 			var size int
-			if k := item.Key(); len(k) == local.KeyByteSizeStart {
+			if k := item.Key(); len(k) == local.KeyByteSizeStart { //nolint:nestif
 				entries, err := l.getIngestBatchEntries([][]byte{item.Key()}, kind)
 				if err != nil {
 					return err
@@ -364,7 +364,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 					size = entry.SizeVT()
 					if size > l.maxBatchSizeBytes {
 						// Write the new size-integrated key to Badger
-						switch kind {
+						switch kind { //nolint:exhaustive
 						case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
 							if err := l.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
 								return entry.GetAccessLogEntry(), nil
