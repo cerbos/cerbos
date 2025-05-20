@@ -499,6 +499,95 @@ func TestSizeBasedBatching(t *testing.T) {
 			require.LessOrEqual(c, dlpr.SizeVT(), maxBatchSizeBytes-hub.BatchSizeToleranceBytes)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
+
+	t.Run("handlesLegacyOversizedKeys", func(t *testing.T) {
+		maxBatchSizeBytes := 1024
+		db, syncer := initDBWithBatchCfg(t, numRecords, uint(maxBatchSizeBytes))
+		t.Cleanup(func() { _ = db.Close() })
+
+		// Create ID for legacy oversized entry
+		id, err := audit.NewID()
+		require.NoError(t, err)
+
+		nValues := 1000
+		veryLargeAttributes := make(map[string]*structpb.Value, nValues)
+		for i := range nValues {
+			s := fmt.Sprintf("%d", i)
+			veryLargeAttributes[s] = structpb.NewStringValue(s)
+		}
+
+		oversizedEntry := &auditv1.DecisionLogEntry{
+			CallId:    string(id),
+			Timestamp: timestamppb.New(startDate),
+			Peer: &auditv1.Peer{
+				Address: "1.1.1.1",
+			},
+			Method: &auditv1.DecisionLogEntry_CheckResources_{
+				CheckResources: &auditv1.DecisionLogEntry_CheckResources{
+					Inputs: []*enginev1.CheckInput{
+						{
+							RequestId: "1",
+							Resource: &enginev1.Resource{
+								Kind:          "leave_request",
+								PolicyVersion: "default",
+								Id:            "lr1",
+								Attr:          veryLargeAttributes,
+							},
+							Principal: &enginev1.Principal{
+								Id:            "p1",
+								PolicyVersion: "default",
+								Roles:         []string{"user"},
+								Attr:          veryLargeAttributes,
+							},
+							Actions: []string{"view", "create", "delete"},
+							AuxData: &enginev1.AuxData{},
+						},
+					},
+				},
+			},
+		}
+
+		// Add the legacy entry
+		require.NoError(t, db.Log.WriteDecisionLogEntry(t.Context(), func() (*auditv1.DecisionLogEntry, error) {
+			return oversizedEntry, nil
+		}))
+
+		callID, err := audit.ID(oversizedEntry.CallId).Repr()
+		require.NoError(t, err)
+
+		// manually cut the zero bytes from the end
+		legacyKey := local.GenKey(hub.DecisionSyncPrefix, callID)[:local.KeyByteSizeStart]
+		value := local.GenKey(local.DecisionLogPrefix, callID)
+		require.NoError(t, db.Write(t.Context(), legacyKey, value))
+
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Return(nil).Once()
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			legacyKeysPresent := false
+			db.Db.View(func(txn *badgerv4.Txn) error {
+				if _, err := txn.Get(legacyKey); err == nil {
+					legacyKeysPresent = true
+				}
+				return nil
+			})
+
+			require.False(c, legacyKeysPresent)
+			require.Len(c, syncer.entries, 1)
+
+			entry := syncer.entries[0].GetDecisionLogEntry()
+			require.NotNil(c, entry)
+
+			require.Equal(c, entry.CallId, string(id))
+			assert.True(c, entry.Oversized)
+			assert.Less(c, entry.SizeVT(), maxBatchSizeBytes, "processed entry should be smaller than max batch size")
+
+			cr := entry.GetCheckResources()
+			assert.NotNil(c, cr)
+			assert.NotEmpty(c, cr.Inputs)
+			assert.Empty(c, cr.Inputs[0].Resource.Attr, "resource attributes should be filtered")
+			assert.Empty(c, cr.Inputs[0].Principal.Attr, "principal attributes should be filtered")
+		}, 2*time.Second, 50*time.Millisecond)
+	})
 }
 
 func TestHubLogWithDecisionLogFilter(t *testing.T) {

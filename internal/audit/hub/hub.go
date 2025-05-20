@@ -153,7 +153,7 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 
 	rec = entry.GetAccessLogEntry()
 
-	s := rec.SizeVT()
+	s := entry.SizeVT()
 	if s > l.maxBatchSizeBytes {
 		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 		logger.Error("Entry exceeds maximum batch size, masking",
@@ -204,7 +204,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 
 	rec = entry.GetDecisionLogEntry()
 
-	s := rec.SizeVT()
+	s := entry.SizeVT()
 	if s > l.maxBatchSizeBytes {
 		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 		logger.Error("Entry exceeds maximum batch size, masking",
@@ -337,15 +337,69 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		}
 		defer keysPool.Put(&keys)
 
+		deleteBatch := l.Db.NewWriteBatch()
+		defer deleteBatch.Cancel()
+
 		var i int
-		var batchSizeBytes uint32
+		var batchSizeBytes int
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 
-			// retrieve byte-size from key
-			size := binary.BigEndian.Uint32(item.Key()[local.KeyByteSizeStart:])
+			// Retrieve byte-size from key.
+			// If we find a legacy key (without the message size stored in the final 4 bytes), we need
+			// to establish the message size now. Retrieving and sizing each entry individually is annoyingly
+			// inefficient, but given that this'll only happen "once" when dealing with old, unprocessed
+			// events, it's probably OK.
+			// If it's oversized, we just replace the key in the DB and skip, so that it can be picked up on
+			// the next iteration.
+			// TODO: rip this if-else out in the future
+			var size int
+			if k := item.Key(); len(k) == local.KeyByteSizeStart {
+				entries, err := l.getIngestBatchEntries([][]byte{item.Key()}, kind)
+				if err != nil {
+					return err
+				}
+				if len(entries) > 0 {
+					entry := entries[0]
+					size = entry.SizeVT()
+					if size > l.maxBatchSizeBytes {
+						// Write the new size-integrated key to Badger
+						switch kind {
+						case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+							if err := l.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+								return entry.GetAccessLogEntry(), nil
+							}); err != nil {
+								return err
+							}
+						case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+							if err := l.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+								return entry.GetDecisionLogEntry(), nil
+							}); err != nil {
+								return err
+							}
+						}
 
-			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > uint32(l.maxBatchSizeBytes)) {
+						// Delete the legacy (potentially oversized) key
+						if err := deleteBatch.Delete(k); err != nil {
+							if errors.Is(err, badgerv4.ErrDiscardedTxn) {
+								deleteBatch.Cancel()
+								deleteBatch = l.Db.NewWriteBatch()
+								_ = deleteBatch.Delete(k)
+							} else {
+								return fmt.Errorf("failed to delete key: %w", err)
+							}
+						}
+
+						// Skip this event for now. The new, correctly filtered event
+						// will be processed in a future run.
+						continue
+					}
+				}
+			} else {
+				size = int(binary.BigEndian.Uint32(item.Key()[local.KeyByteSizeStart:]))
+			}
+
+			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > l.maxBatchSizeBytes) {
 				if err := syncKeys(keys[:i]); err != nil {
 					return err
 				}
@@ -362,6 +416,13 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 
 			batchSizeBytes += size
 			i++
+		}
+
+		if err := deleteBatch.Flush(); err != nil {
+			// these legacy keys will be processed again on the next sync run
+			logger.Warn("Failed to delete legacy keys, will retry on next run",
+				zap.Error(err),
+				zap.Stringer("kind", kind))
 		}
 
 		return syncKeys(keys[:i])
