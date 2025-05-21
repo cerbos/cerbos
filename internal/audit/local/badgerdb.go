@@ -6,6 +6,7 @@ package local
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"sync"
@@ -23,10 +24,14 @@ const (
 	badgerDiscardRatio      = 0.5
 	goroutineResetThreshold = 1 << 16
 
-	Backend    = "local"
-	keyLen     = 20
-	keyTSStart = 4
-	keyTSEnd   = 10
+	Backend          = "local"
+	keyLen           = 24
+	keyTSStart       = 4
+	keyTSEnd         = 10
+	KeyByteSizeStart = 20
+	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc.
+	MaxAllowedBatchSizeBytes = 6291456 // 6MB
+
 )
 
 var (
@@ -400,6 +405,13 @@ func GenKey(prefix []byte, id audit.IDBytes) []byte {
 	copy(key[keyTSStart:], id[:])
 
 	return key[:]
+}
+
+func GenKeyWithByteSize(prefix []byte, id audit.IDBytes, nBytes int) []byte {
+	key := GenKey(prefix, id)
+	binary.BigEndian.PutUint32(key[KeyByteSizeStart:], uint32(nBytes))
+
+	return key
 }
 
 func genKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {

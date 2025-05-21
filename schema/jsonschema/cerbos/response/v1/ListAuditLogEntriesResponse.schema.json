@@ -18,6 +18,9 @@
         "method": {
           "type": "string"
         },
+        "oversized": {
+          "type": "boolean"
+        },
         "peer": {
           "$ref": "#/definitions/cerbos.audit.v1.Peer"
         },
@@ -75,6 +78,9 @@
           "items": {
             "$ref": "#/definitions/cerbos.engine.v1.CheckOutput"
           }
+        },
+        "oversized": {
+          "type": "boolean"
         },
         "peer": {
           "$ref": "#/definitions/cerbos.audit.v1.Peer"

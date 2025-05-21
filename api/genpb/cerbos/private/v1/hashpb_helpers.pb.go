@@ -142,6 +142,9 @@ func cerbos_audit_v1_DecisionLogEntry_hashpb_sum(m *v1.DecisionLogEntry, hasher 
 			cerbos_audit_v1_AuditTrail_hashpb_sum(m.GetAuditTrail(), hasher, ignore)
 		}
 	}
+	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.oversized"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetOversized())))
+	}
 }
 
 func cerbos_audit_v1_MetaValues_hashpb_sum(m *v1.MetaValues, hasher hash.Hash, ignore map[string]struct{}) {

@@ -5,6 +5,7 @@ package hub
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -20,17 +21,22 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
 const (
 	Backend = "hub"
+
+	maxAllowedBatchSize = 1024
 )
 
+type syncPrefix []byte
+
 var (
-	SyncStatusPrefix   = []byte("bs")   // "b" for contiguity with audit log keys in LSM, "s" because "sync"
-	AccessSyncPrefix   = []byte("bsac") // these need to be len(4) to correctly reuse `local.GenKey`
-	DecisionSyncPrefix = []byte("bsde")
+	SyncStatusPrefix   = syncPrefix("bs")   // "b" for contiguity with audit log keys in LSM, "s" because "sync"
+	AccessSyncPrefix   = syncPrefix("bsac") // these need to be len(4) to correctly reuse `local.GenKey`
+	DecisionSyncPrefix = syncPrefix("bsde")
 )
 
 func init() {
@@ -51,20 +57,41 @@ func init() {
 	})
 }
 
+type options struct {
+	maxBatchSize int
+}
+
+type Opt func(*options)
+
+func WithMaxBatchSize(maxBatchSize int) Opt {
+	return func(o *options) {
+		o.maxBatchSize = maxBatchSize
+	}
+}
+
 type Log struct {
 	syncer IngestSyncer
 	*local.Log
-	logger           *zap.Logger
-	filter           *AuditLogFilter
-	pool             *pool.ContextPool
-	cancel           context.CancelFunc
-	minFlushInterval time.Duration
-	flushTimeout     time.Duration
-	maxBatchSize     int
-	numGo            int
+	logger                  *zap.Logger
+	filter, oversizedFilter *AuditLogFilter
+	pool                    *pool.ContextPool
+	cancel                  context.CancelFunc
+	minFlushInterval        time.Duration
+	flushTimeout            time.Duration
+	maxBatchSize            int
+	maxBatchSizeBytes       int
+	numGo                   int
 }
 
-func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger) (*Log, error) {
+func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger, opts ...Opt) (*Log, error) {
+	o := &options{
+		maxBatchSize: maxAllowedBatchSize,
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
 	localLog, err := local.NewLog(&conf.Conf, decisionFilter)
 	if err != nil {
 		return nil, err
@@ -73,7 +100,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 	logger.Info("Extending audit log")
 
 	minFlushInterval := conf.Ingest.MinFlushInterval
-	maxBatchSize := int(conf.Ingest.MaxBatchSize)
+	maxBatchSizeBytes := int(conf.Ingest.MaxBatchSizeBytes) - BatchSizeToleranceBytes
 	flushTimeout := conf.Ingest.FlushTimeout
 	numGo := int(conf.Ingest.NumGoRoutines)
 
@@ -82,29 +109,64 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		return nil, err
 	}
 
+	oversizedFilter, err := NewOversizedLogFilter()
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancelFn := context.WithCancel(context.Background())
 
 	log := &Log{
-		Log:              localLog,
-		syncer:           syncer,
-		logger:           logger,
-		filter:           filter,
-		minFlushInterval: minFlushInterval,
-		flushTimeout:     flushTimeout,
-		maxBatchSize:     maxBatchSize,
-		numGo:            numGo,
-		cancel:           cancelFn,
-		pool:             pool.New().WithContext(ctx),
+		Log:               localLog,
+		syncer:            syncer,
+		logger:            logger,
+		filter:            filter,
+		oversizedFilter:   oversizedFilter,
+		minFlushInterval:  minFlushInterval,
+		flushTimeout:      flushTimeout,
+		maxBatchSize:      o.maxBatchSize,
+		maxBatchSizeBytes: maxBatchSizeBytes,
+		numGo:             numGo,
+		cancel:            cancelFn,
+		pool:              pool.New().WithContext(ctx),
 	}
 
 	log.pool.Go(log.syncLoop)
 	return log, nil
 }
 
-func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
+func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error { //nolint:dupl
 	rec, err := record()
 	if err != nil {
 		return err
+	}
+
+	entry := &logsv1.IngestBatch_Entry{
+		Entry: &logsv1.IngestBatch_Entry_AccessLogEntry{
+			AccessLogEntry: rec,
+		},
+	}
+
+	if err := l.filter.Filter(entry); err != nil {
+		return fmt.Errorf("failed to filter batch: %w", err)
+	}
+
+	rec = entry.GetAccessLogEntry()
+
+	s := entry.SizeVT()
+	if s > l.maxBatchSizeBytes {
+		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
+		logger.Error("Entry exceeds maximum batch size, masking",
+			zap.Int("entrySize", s),
+			zap.Int("maxAllowedBatchSizeBytes", l.maxBatchSizeBytes))
+		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindAccess))
+
+		if err := l.oversizedFilter.Filter(entry); err != nil {
+			return fmt.Errorf("failed to filter oversized batch: %w", err)
+		}
+
+		rec = entry.GetAccessLogEntry()
+		rec.Oversized = true
 	}
 
 	if err := l.Log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
@@ -118,16 +180,44 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := local.GenKey(AccessSyncPrefix, callID)
+	key := local.GenKeyWithByteSize(AccessSyncPrefix, callID, s)
 	value := local.GenKey(local.AccessLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
 }
 
-func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLogEntryMaker) error {
+func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLogEntryMaker) error { //nolint:dupl
 	rec, err := record()
 	if err != nil {
 		return err
+	}
+
+	entry := &logsv1.IngestBatch_Entry{
+		Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{
+			DecisionLogEntry: rec,
+		},
+	}
+
+	if err := l.filter.Filter(entry); err != nil {
+		return fmt.Errorf("failed to filter batch: %w", err)
+	}
+
+	rec = entry.GetDecisionLogEntry()
+
+	s := entry.SizeVT()
+	if s > l.maxBatchSizeBytes {
+		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
+		logger.Error("Entry exceeds maximum batch size, masking",
+			zap.Int("entrySize", s),
+			zap.Int("maxAllowedBatchSizeBytes", l.maxBatchSizeBytes))
+		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindDecision))
+
+		if err := l.oversizedFilter.Filter(entry); err != nil {
+			return fmt.Errorf("failed to filter oversized batch: %w", err)
+		}
+
+		rec = entry.GetDecisionLogEntry()
+		rec.Oversized = true
 	}
 
 	if err := l.Log.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
@@ -141,7 +231,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := local.GenKey(DecisionSyncPrefix, callID)
+	key := local.GenKeyWithByteSize(DecisionSyncPrefix, callID, s)
 	value := local.GenKey(local.DecisionLogPrefix, callID)
 
 	return l.Write(ctx, key, value)
@@ -213,11 +303,15 @@ func (l *Log) streamLogs() error {
 
 var keysPool = &sync.Pool{}
 
-func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix []byte) error {
+func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix syncPrefix) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
 	syncKeys := func(keys [][]byte) error {
-		logger.Log(zapcore.Level(-3), "Syncing and deleting batch")
+		if len(keys) == 0 {
+			return nil
+		}
+		logger.Log(zapcore.Level(-3), "Syncing and deleting batch",
+			zap.Int("batchSize", len(keys)))
 		if err := l.syncThenDelete(ctx, kind, keys); err != nil {
 			return fmt.Errorf("failed to sync and delete logs: %w", err)
 		}
@@ -237,12 +331,81 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			keys = make([][]byte, l.maxBatchSize)
 		} else {
 			keys = *(keysIface.(*[][]byte)) //nolint:forcetypeassert
+			if len(keys) < l.maxBatchSize {
+				keys = make([][]byte, l.maxBatchSize)
+			}
 		}
 		defer keysPool.Put(&keys)
 
+		deleteBatch := l.Db.NewWriteBatch()
+		defer deleteBatch.Cancel()
+
 		var i int
+		var batchSizeBytes int
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
+
+			// Retrieve byte-size from key.
+			// If we find a legacy key (without the message size stored in the final 4 bytes), we need
+			// to establish the message size now. Retrieving and sizing each entry individually is annoyingly
+			// inefficient, but given that this'll only happen "once" when dealing with old, unprocessed
+			// events, it's probably OK.
+			// If it's oversized, we just replace the key in the DB and skip, so that it can be picked up on
+			// the next iteration.
+			// TODO: rip this if-else out in the future
+			var size int
+			if k := item.Key(); len(k) == local.KeyByteSizeStart { //nolint:nestif
+				entries, err := l.getIngestBatchEntries([][]byte{item.Key()}, kind)
+				if err != nil {
+					return err
+				}
+				if len(entries) > 0 {
+					entry := entries[0]
+					size = entry.SizeVT()
+					if size > l.maxBatchSizeBytes {
+						// Write the new size-integrated key to Badger
+						switch kind { //nolint:exhaustive
+						case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+							if err := l.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+								return entry.GetAccessLogEntry(), nil
+							}); err != nil {
+								return err
+							}
+						case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+							if err := l.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+								return entry.GetDecisionLogEntry(), nil
+							}); err != nil {
+								return err
+							}
+						}
+
+						// Delete the legacy (potentially oversized) key
+						if err := deleteBatch.Delete(k); err != nil {
+							if errors.Is(err, badgerv4.ErrDiscardedTxn) {
+								deleteBatch.Cancel()
+								deleteBatch = l.Db.NewWriteBatch()
+								_ = deleteBatch.Delete(k)
+							} else {
+								return fmt.Errorf("failed to delete key: %w", err)
+							}
+						}
+
+						// Skip this event for now. The new, correctly filtered event
+						// will be processed in a future run.
+						continue
+					}
+				}
+			} else {
+				size = int(binary.BigEndian.Uint32(item.Key()[local.KeyByteSizeStart:]))
+			}
+
+			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > l.maxBatchSizeBytes) {
+				if err := syncKeys(keys[:i]); err != nil {
+					return err
+				}
+				i = 0
+				batchSizeBytes = 0
+			}
 
 			if keys[i] == nil {
 				keys[i] = make([]byte, len(item.Key()))
@@ -251,14 +414,15 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			}
 			copy(keys[i], item.Key())
 
+			batchSizeBytes += size
 			i++
-			if i == l.maxBatchSize {
-				if err := syncKeys(keys); err != nil {
-					return err
-				}
+		}
 
-				i = 0
-			}
+		if err := deleteBatch.Flush(); err != nil {
+			// these legacy keys will be processed again on the next sync run
+			logger.Warn("Failed to delete legacy keys, will retry on next run",
+				zap.Error(err),
+				zap.Stringer("kind", kind))
 		}
 
 		return syncKeys(keys[:i])
@@ -292,11 +456,6 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 		ingestBatch := &logsv1.IngestBatch{
 			Id:      string(batchID),
 			Entries: entries,
-		}
-
-		logger.Log(zapcore.Level(-3), "Filtering batch of "+strconv.Itoa(len(ingestBatch.Entries)))
-		if err := l.filter.Filter(ingestBatch); err != nil {
-			return fmt.Errorf("failed to filter batch: %w", err)
 		}
 
 		logger.Log(zapcore.Level(-3), "Syncing batch of "+strconv.Itoa(len(ingestBatch.Entries)))

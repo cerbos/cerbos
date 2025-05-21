@@ -1563,6 +1563,9 @@
         "statusCode": {
           "type": "integer",
           "format": "int64"
+        },
+        "oversized": {
+          "type": "boolean"
         }
       }
     },
@@ -2122,6 +2125,9 @@
         },
         "auditTrail": {
           "$ref": "#/definitions/v1AuditTrail"
+        },
+        "oversized": {
+          "type": "boolean"
         }
       }
     },

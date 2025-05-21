@@ -46,6 +46,9 @@ func cerbos_audit_v1_AccessLogEntry_hashpb_sum(m *AccessLogEntry, hasher hash.Ha
 	if _, ok := ignore["cerbos.audit.v1.AccessLogEntry.status_code"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetStatusCode())))
 	}
+	if _, ok := ignore["cerbos.audit.v1.AccessLogEntry.oversized"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetOversized())))
+	}
 }
 
 func cerbos_audit_v1_AuditTrail_hashpb_sum(m *AuditTrail, hasher hash.Hash, ignore map[string]struct{}) {
@@ -164,6 +167,9 @@ func cerbos_audit_v1_DecisionLogEntry_hashpb_sum(m *DecisionLogEntry, hasher has
 		if m.GetAuditTrail() != nil {
 			cerbos_audit_v1_AuditTrail_hashpb_sum(m.GetAuditTrail(), hasher, ignore)
 		}
+	}
+	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.oversized"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetOversized())))
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -18,13 +19,13 @@ import (
 )
 
 const (
-	unionedPathPrefix = "entries[*][*]"
-	peerPrefix        = unionedPathPrefix + ".peer"
-	metadataPrefix    = unionedPathPrefix + ".metadata"
-
-	checkResourcesPrefix = "entries[*].decisionLogEntry.checkResources"
-	planResourcesPrefix  = "entries[*].decisionLogEntry.planResources"
+	peerPart             = "peer"
+	metadataPart         = "metadata"
+	checkResourcesPrefix = "decisionLogEntry.checkResources"
+	planResourcesPrefix  = "decisionLogEntry.planResources"
 )
+
+var entryKindPrefixes = []string{"accessLogEntry", "decisionLogEntry"}
 
 type tokenType int8
 
@@ -69,6 +70,20 @@ func NewAuditLogFilter(conf MaskConf) (*AuditLogFilter, error) {
 	}, nil
 }
 
+func NewOversizedLogFilter() (*AuditLogFilter, error) {
+	return NewAuditLogFilter(MaskConf{
+		CheckResources: []string{
+			"inputs[*].resource.attr",
+			"inputs[*].principal.attr",
+		},
+		PlanResources: []string{
+			"input.resource.attr",
+			"input.principal.attr",
+			"output.filterDebug",
+		},
+	})
+}
+
 func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
 	root := &Token{}
 
@@ -80,25 +95,61 @@ func parseJSONPathExprs(conf MaskConf) (ast *Token, outErr error) {
 		return nil
 	}
 
+peerOuter:
 	for _, r := range conf.Peer {
-		if err := parse(peerPrefix + "." + r); err != nil {
-			outErr = multierr.Append(outErr, err)
+		for i, k := range entryKindPrefixes {
+			if r == "*" {
+				if err := parse(strings.Join([]string{k, peerPart}, ".")); err != nil {
+					outErr = multierr.Append(outErr, err)
+				}
+				if i == len(entryKindPrefixes)-1 {
+					break peerOuter
+				}
+				continue
+			}
+			if err := parse(strings.Join([]string{k, peerPart, r}, ".")); err != nil {
+				outErr = multierr.Append(outErr, err)
+			}
 		}
 	}
 
+metaOuter:
 	for _, r := range conf.Metadata {
-		if err := parse(metadataPrefix + "." + r); err != nil {
-			outErr = multierr.Append(outErr, err)
+		for i, k := range entryKindPrefixes {
+			if r == "*" {
+				if err := parse(strings.Join([]string{k, metadataPart}, ".")); err != nil {
+					outErr = multierr.Append(outErr, err)
+				}
+				if i == len(entryKindPrefixes)-1 {
+					break metaOuter
+				}
+				continue
+			}
+			if err := parse(strings.Join([]string{k, metadataPart, r}, ".")); err != nil {
+				outErr = multierr.Append(outErr, err)
+			}
 		}
 	}
 
 	for _, r := range conf.CheckResources {
+		if r == "*" {
+			if err := parse(checkResourcesPrefix); err != nil {
+				outErr = multierr.Append(outErr, err)
+			}
+			break
+		}
 		if err := parse(checkResourcesPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
 	}
 
 	for _, r := range conf.PlanResources {
+		if r == "*" {
+			if err := parse(planResourcesPrefix); err != nil {
+				outErr = multierr.Append(outErr, err)
+			}
+			break
+		}
 		if err := parse(planResourcesPrefix + "." + r); err != nil {
 			outErr = multierr.Append(outErr, err)
 		}
@@ -311,12 +362,12 @@ func Tokenize(root *Token, path string) error {
 	return nil
 }
 
-func (f *AuditLogFilter) Filter(ingestBatch *logsv1.IngestBatch) error {
+func (f *AuditLogFilter) Filter(entry *logsv1.IngestBatch_Entry) error {
 	if f.astRoot == nil {
 		return nil
 	}
 
-	ib := ingestBatch.ProtoReflect()
+	ib := entry.ProtoReflect()
 	for _, c := range f.astRoot.children {
 		visit(c, ib)
 	}
