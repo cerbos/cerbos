@@ -35,6 +35,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type (
@@ -291,13 +292,13 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 							if scopeAllowNode == nil {
 								scopeAllowNode = node
 							} else {
-								scopeAllowNode = mkNodeFromLO(mkOrLogicalOperation([]*qpN{scopeAllowNode, node}))
+								scopeAllowNode = mkOrNode([]*qpN{scopeAllowNode, node})
 							}
 						case effectv1.Effect_EFFECT_DENY:
 							if scopeDenyNode == nil {
 								scopeDenyNode = node
 							} else {
-								scopeDenyNode = mkNodeFromLO(mkOrLogicalOperation([]*qpN{scopeDenyNode, node}))
+								scopeDenyNode = mkOrNode([]*qpN{scopeDenyNode, node})
 							}
 						}
 					}
@@ -306,7 +307,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 						if roleDenyNode == nil {
 							roleDenyNode = scopeDenyNode
 						} else {
-							roleDenyNode = mkNodeFromLO((mkOrLogicalOperation([]*qpN{roleDenyNode, scopeDenyNode})))
+							roleDenyNode = mkOrNode([]*qpN{roleDenyNode, scopeDenyNode})
 						}
 					}
 
@@ -314,14 +315,12 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 						if roleAllowNode == nil {
 							roleAllowNode = scopeAllowNode
 						} else {
-							var lo *enginev1.PlanResourcesAst_LogicalOperation
 							if pendingAllow {
-								lo = mkAndLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
+								roleAllowNode = mkAndNode([]*qpN{roleAllowNode, scopeAllowNode})
 								pendingAllow = false
 							} else {
-								lo = mkOrLogicalOperation([]*qpN{roleAllowNode, scopeAllowNode})
+								roleAllowNode = mkOrNode([]*qpN{roleAllowNode, scopeAllowNode})
 							}
-							roleAllowNode = mkNodeFromLO(lo)
 						}
 
 						if ruleTable.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
@@ -355,7 +354,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					if policyTypeAllowNode == nil {
 						policyTypeAllowNode = roleAllowNode
 					} else {
-						policyTypeAllowNode = mkNodeFromLO(mkOrLogicalOperation([]*qpN{policyTypeAllowNode, roleAllowNode}))
+						policyTypeAllowNode = mkOrNode([]*qpN{policyTypeAllowNode, roleAllowNode})
 					}
 				}
 
@@ -363,7 +362,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					if policyTypeDenyNode == nil {
 						policyTypeDenyNode = roleDenyNode
 					} else {
-						policyTypeDenyNode = mkNodeFromLO(mkOrLogicalOperation([]*qpN{policyTypeDenyNode, roleDenyNode}))
+						policyTypeDenyNode = mkOrNode([]*qpN{policyTypeDenyNode, roleDenyNode})
 					}
 				}
 			}
@@ -376,7 +375,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				if rootNode == nil {
 					rootNode = policyTypeAllowNode
 				} else {
-					rootNode = mkNodeFromLO(mkOrLogicalOperation([]*qpN{policyTypeAllowNode, rootNode}))
+					rootNode = mkOrNode([]*qpN{policyTypeAllowNode, rootNode})
 				}
 			}
 
@@ -388,7 +387,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 				if rootNode == nil {
 					rootNode = inv
 				} else {
-					rootNode = mkNodeFromLO(mkAndLogicalOperation([]*qpN{inv, rootNode}))
+					rootNode = mkAndNode([]*qpN{inv, rootNode})
 				}
 			}
 		}
@@ -438,6 +437,45 @@ func isNodeConstBool(node *enginev1.PlanResourcesAst_Node) (bool, bool) {
 func mkNodeFromLO(lo *enginev1.PlanResourcesAst_LogicalOperation) *enginev1.PlanResourcesAst_Node {
 	// node AND drNode
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
+}
+
+func mkOrNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
+	uniqueNodes := dedupNodes(nodes)
+	switch len(uniqueNodes) {
+	case 0:
+		return nil
+	case 1:
+		return uniqueNodes[0]
+	}
+
+	return mkNodeFromLO(mkOrLogicalOperation(uniqueNodes))
+}
+
+func mkAndNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
+	uniqueNodes := dedupNodes(nodes)
+	switch len(uniqueNodes) {
+	case 0:
+		return nil
+	case 1:
+		return uniqueNodes[0]
+	}
+
+	return mkNodeFromLO(mkAndLogicalOperation(uniqueNodes))
+}
+
+func dedupNodes(nodes []*enginev1.PlanResourcesAst_Node) []*enginev1.PlanResourcesAst_Node {
+	uniqueNodes := make([]*enginev1.PlanResourcesAst_Node, 0, len(nodes))
+	nodeHashes := make(map[uint64]struct{}, len(nodes))
+
+	for _, node := range nodes {
+		hash := util.HashPB(node, nil)
+		if _, exists := nodeHashes[hash]; !exists {
+			nodeHashes[hash] = struct{}{}
+			uniqueNodes = append(uniqueNodes, node)
+		}
+	}
+
+	return uniqueNodes
 }
 
 func mkOrLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
