@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path/filepath"
 	"strings"
 
 	"buf.build/go/protovalidate"
@@ -24,7 +23,6 @@ const (
 	fileMode               = 0o600
 	maxFileSize            = 5 * 1024 * 1024
 	modifyFilesBatchSize   = 25
-	pathSeparator          = string(filepath.Separator)
 	replaceFilesZipMaxSize = 15728640
 )
 

@@ -53,6 +53,7 @@ func (afc *AddFilesCmd) Validate() error {
 			filePath = path
 			storePath = filepath.Base(path)
 		}
+		storePath = filepath.ToSlash(storePath)
 
 		var err error
 		filePath, err = filepath.Abs(filePath)

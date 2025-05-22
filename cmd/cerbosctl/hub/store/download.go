@@ -182,7 +182,7 @@ func mkdirAll(root *os.Root, path string) error {
 	for {
 		parent, child := filepath.Split(tmp)
 		dirs = append(dirs, child)
-		parent = strings.TrimSuffix(parent, pathSeparator)
+		parent = strings.TrimSuffix(parent, util.PathSeparator)
 		if parent == "" {
 			break
 		}
