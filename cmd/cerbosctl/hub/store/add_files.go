@@ -30,14 +30,14 @@ cerbosctl hub store add-files foo.yaml bar
 
 # Upload bar.yaml, renaming it to foo/bar.yaml in the store
 
-cerbosctl hub store add-files --mesage="Adding foo/bar.yaml" foo/bar.yaml=bar.yaml
+cerbosctl hub store add-files --message="Adding foo/bar.yaml" foo/bar.yaml=bar.yaml
 `
 
 type AddFilesCmd struct {
 	filesToAdd    map[string]string
 	Output        `embed:""`
 	Message       string   `help:"Commit message for this change" default:"Uploaded using cerbosctl"`
-	Paths         []string `arg:"" help:"List of files or the directories to add to the store. To rename how the file appears in the store, use store_path=actual_path as the input format." required:""`
+	Paths         []string `arg:"" help:"List of files or directories to add to the store. To rename how the file appears in the store, use store_path=actual_path as the input format." required:""`
 	VersionMustEq int64    `help:"Require that the store is at this version before committing the change" optional:""`
 }
 
