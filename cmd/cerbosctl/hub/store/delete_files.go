@@ -14,7 +14,6 @@ import (
 
 const deleteFilesHelp = `
 The following exit codes have a special meaning.
-	- 5: Command didn't change the remote store because it's already at the desired state
 	- 6: The version condition supplied using --version-must-eq wasn't satisfied
 
 # Delete foo/bar.yaml from the remote store
@@ -59,10 +58,6 @@ func (dfc *DeleteFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		}
 	}
 
-	if version > 0 {
-		dfc.printNewVersion(k.Stdout, version)
-		return nil
-	}
-
-	return newStoreNotModifiedError()
+	dfc.printNewVersion(k.Stdout, version)
+	return nil
 }

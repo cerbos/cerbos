@@ -21,7 +21,6 @@ import (
 
 const addFilesHelp = `
 The following exit codes have a special meaning.
-	- 5: Command didn't change the remote store because it's already at the desired state
 	- 6: The version condition supplied using --version-must-eq wasn't satisfied
 
 # Upload foo.yaml and all files in the bar directory
@@ -154,12 +153,8 @@ func (afc *AddFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		}
 	}
 
-	if version > 0 {
-		afc.printNewVersion(k.Stdout, version)
-		return nil
-	}
-
-	return newStoreNotModifiedError()
+	afc.printNewVersion(k.Stdout, version)
+	return nil
 }
 
 func (afc *AddFilesCmd) batch() iter.Seq2[[]*storev1.FileOp, error] {

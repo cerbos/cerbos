@@ -124,11 +124,6 @@ func (o Output) toCommandError(w io.Writer, err error) error {
 	return cerr
 }
 
-func newStoreNotModifiedError() error {
-	//nolint:mnd
-	return commandError{exitCode: 5, ErrorMessage: "store not modified"}
-}
-
 func newNoFilesDownloadedError() error {
 	//nolint:mnd
 	return commandError{exitCode: 1, ErrorMessage: "nothing to download"}

@@ -21,7 +21,6 @@ const replaceFilesHelp = `
 Replaces or deletes all files in the remote store so that it only contains the files provided.
 
 The following exit codes have a special meaning.
-	- 5: Command didn't change the remote store because it's already at the desired state
 	- 6: The version condition supplied using --version-must-eq wasn't satisfied
 
 # Upload a local directory
@@ -100,10 +99,6 @@ func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return rfc.toCommandError(k.Stderr, err)
 	}
 
-	if resp != nil {
-		rfc.printNewVersion(k.Stdout, resp.GetNewStoreVersion())
-		return nil
-	}
-
-	return newStoreNotModifiedError()
+	rfc.printNewVersion(k.Stdout, resp.GetNewStoreVersion())
+	return nil
 }

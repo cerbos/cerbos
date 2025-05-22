@@ -1,10 +1,10 @@
 # Start with a clean slate
-cerbosctl_lenient hub store replace-files $WORK/repo
+cerbosctl hub store replace-files $WORK/repo
 cerbosctl hub store list-files
 cmp stdout $WORK/expectations/list-files-01.txt
 
-# Replacing with the same files should fail
-! cerbosctl hub store replace-files $WORK/repo
+# Replacing with the same files should not fail
+cerbosctl hub store replace-files $WORK/repo
 
 # Replacing with condition should fail
 ! cerbosctl hub store replace-files --version-must-eq=999999999 $WORK/cond
@@ -14,8 +14,8 @@ cerbosctl hub store add-files $WORK/add/donald.yaml principal-policies/goofy.yam
 cerbosctl hub store list-files
 cmp stdout $WORK/expectations/list-files-02.txt
 
-# Adding the same files should fail
-! cerbosctl hub store add-files $WORK/add/donald.yaml principal-policies/goofy.yaml=$WORK/add/goofy.yaml
+# Adding the same files should not fail
+cerbosctl hub store add-files $WORK/add/donald.yaml principal-policies/goofy.yaml=$WORK/add/goofy.yaml
 
 # Adding with condition should fail
 ! cerbosctl hub store add-files --version-must-eq=999999999 $WORK/cond/minnie.yaml
@@ -28,8 +28,8 @@ cerbosctl hub store delete-files donald.yaml
 cerbosctl hub store list-files
 cmp stdout $WORK/expectations/list-files-03.txt
 
-# Deleting the same file should fail
-! cerbosctl hub store delete-files donald.yaml
+# Deleting the same file should not fail
+cerbosctl hub store delete-files donald.yaml
 
 # Deleting with condition should fail
 ! cerbosctl hub store delete-files --version-must-eq=999999999 principal-policies/daisy.yaml

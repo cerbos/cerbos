@@ -25,8 +25,7 @@ func TestStoreCmd(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Dir: "testdata/testscripts",
 		Cmds: map[string]func(*testscript.TestScript, bool, []string){
-			"cerbosctl":         cerbosctl,
-			"cerbosctl_lenient": cerbosctlLenient,
+			"cerbosctl": cerbosctl,
 		},
 	})
 }
@@ -42,21 +41,6 @@ func cerbosctl(ts *testscript.TestScript, neg bool, args []string) {
 	case neg && exitCode == 0:
 		ts.Fatalf("cerbosctl exited with %d", exitCode)
 	case !neg && exitCode > 0:
-		ts.Fatalf("cerbosctl exited with %d", exitCode)
-	}
-}
-
-func cerbosctlLenient(ts *testscript.TestScript, neg bool, args []string) {
-	var exitCode int
-	exit := func(code int) {
-		exitCode = code
-	}
-	root.Run(args, exit, ts.Stdout(), ts.Stderr())
-
-	switch {
-	case neg && (exitCode == 0 || exitCode == 5):
-		ts.Fatalf("cerbosctl exited with %d", exitCode)
-	case !neg && (exitCode != 0 && exitCode != 5):
 		ts.Fatalf("cerbosctl exited with %d", exitCode)
 	}
 }
