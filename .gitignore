@@ -29,6 +29,7 @@ npm/test/registry/storage/
 # macOS files
 .DS_Store
 
+.env
 coverage.out
 e2e.cover
 go.work.sum

@@ -1,0 +1,127 @@
+# Start with a clean slate
+cerbosctl hub store replace-files $WORK/repo
+cerbosctl hub store list-files
+cmp stdout $WORK/expectations/list-files-01.txt
+
+# Replacing with the same files should not fail
+cerbosctl hub store replace-files $WORK/repo
+
+# Replacing with condition should fail
+! cerbosctl hub store replace-files --version-must-eq=999999999 $WORK/cond
+
+# Add some files
+cerbosctl hub store add-files $WORK/add/donald.yaml principal-policies/goofy.yaml=$WORK/add/goofy.yaml
+cerbosctl hub store list-files
+cmp stdout $WORK/expectations/list-files-02.txt
+
+# Adding the same files should not fail
+cerbosctl hub store add-files $WORK/add/donald.yaml principal-policies/goofy.yaml=$WORK/add/goofy.yaml
+
+# Adding with condition should fail
+! cerbosctl hub store add-files --version-must-eq=999999999 $WORK/cond/minnie.yaml
+
+# Adding with bad store path should fail
+! cerbosctl hub store add-files x.txt=$WORK/cond/minnie.yaml
+
+# Delete some files
+cerbosctl hub store delete-files donald.yaml
+cerbosctl hub store list-files
+cmp stdout $WORK/expectations/list-files-03.txt
+
+# Deleting the same file should not fail
+cerbosctl hub store delete-files donald.yaml
+
+# Deleting with condition should fail
+! cerbosctl hub store delete-files --version-must-eq=999999999 principal-policies/daisy.yaml
+
+# Ensure store state is as expected
+cerbosctl hub store list-files
+cmp stdout $WORK/expectations/list-files-03.txt
+
+# Download some files to a directory
+cerbosctl hub store get-files --output-path=$WORK/out/get-files-1 principal-policies/daisy.yaml exp-vars/exp-var.yaml
+cmp $WORK/out/get-files-1/principal-policies/daisy.yaml $WORK/repo/principal-policies/daisy.yaml
+cmp $WORK/out/get-files-1/exp-vars/exp-var.yaml $WORK/repo/exp-vars/exp-var.yaml
+
+# Download some files to a zip
+cerbosctl hub store get-files --output-path=$WORK/out/get-files-1.zip principal-policies/daisy.yaml exp-vars/exp-var.yaml
+exists $WORK/out/get-files-1.zip
+
+# Download store to a directory
+cerbosctl hub store download $WORK/out/download-1
+cmp $WORK/out/download-1/principal-policies/daisy.yaml $WORK/repo/principal-policies/daisy.yaml
+cmp $WORK/out/download-1/exp-vars/exp-var.yaml $WORK/repo/exp-vars/exp-var.yaml
+cmp $WORK/out/download-1/principal-policies/goofy.yaml $WORK/add/goofy.yaml
+
+# Download store to a zip
+cerbosctl hub store download $WORK/out/download-2.zip
+exists $WORK/out/download-2.zip
+
+-- repo/principal-policies/daisy.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: daisy_duck
+  version: default
+  rules:
+    - resource: "expenses"
+      actions:
+        - action: "view"
+          effect: EFFECT_ALLOW
+          name: expenses_admin
+-- repo/exp-vars/exp-var.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: foobar
+  definitions:
+    foo: "42"
+    bar: R.attr.foo == V.foo
+-- add/donald.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: donald_duck
+  version: default
+  rules:
+    - resource: "expenses"
+      actions:
+        - action: "view"
+          effect: EFFECT_ALLOW
+-- add/goofy.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: goofy
+  version: default
+  rules:
+    - resource: "expenses"
+      actions:
+        - action: "view"
+          effect: EFFECT_ALLOW
+-- cond/minnie.yaml --
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: minnie
+  version: default
+  rules:
+    - resource: "expenses"
+      actions:
+        - action: "settle"
+          effect: EFFECT_ALLOW
+-- expectations/list-files-01.txt --
+exp-vars/exp-var.yaml
+principal-policies/daisy.yaml
+
+-- expectations/list-files-02.txt --
+donald.yaml
+exp-vars/exp-var.yaml
+principal-policies/daisy.yaml
+principal-policies/goofy.yaml
+
+-- expectations/list-files-03.txt --
+exp-vars/exp-var.yaml
+principal-policies/daisy.yaml
+principal-policies/goofy.yaml
+

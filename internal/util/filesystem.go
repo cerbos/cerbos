@@ -29,6 +29,8 @@ const SchemasDirectory = "_schemas"
 // TestDataDirectory is the name of the special directory containing test fixtures. It is defined here to avoid an import loop.
 const TestDataDirectory = "testdata"
 
+const PathSeparator = string(filepath.Separator)
+
 // IsSupportedTestFile return true if the given file is a supported test file name, i.e. "*_test.{yaml,yml,json}".
 func IsSupportedTestFile(fileName string) bool {
 	if ext, ok := IsSupportedFileTypeExt(fileName); ok {
@@ -64,6 +66,23 @@ func IsHidden(fileName string) bool {
 		return false
 	default:
 		return strings.HasPrefix(fileName, ".")
+	}
+}
+
+func PathIsHidden(path string) bool {
+	tmpPath := path
+	for {
+		dir, file := filepath.Split(tmpPath)
+		if strings.HasPrefix(file, ".") || strings.HasPrefix(dir, ".") {
+			return true
+		}
+
+		dir = strings.TrimSuffix(dir, PathSeparator)
+		if dir == "" {
+			return false
+		}
+
+		tmpPath = dir
 	}
 }
 
