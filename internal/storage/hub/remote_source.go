@@ -10,6 +10,7 @@ import (
 	"io"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -116,14 +117,15 @@ func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context) (bundleapi.WatchHandle
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	log       *zap.Logger
-	conf      *Conf
-	hub       ClientProvider
-	bundle    *Bundle
-	scratchFS afero.Fs
-	client    cloudAPIClient
-	mu        sync.RWMutex
-	healthy   bool
+	log           *zap.Logger
+	conf          *Conf
+	hub           ClientProvider
+	bundle        *Bundle
+	scratchFS     afero.Fs
+	client        cloudAPIClient
+	mu            sync.RWMutex
+	healthy       bool
+	bundleVersion bundleapi.Version
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
@@ -168,12 +170,28 @@ type ClientV2 interface {
 }
 
 func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, error) {
+	var bundleVersion bundleapi.Version
+	switch {
+	case strings.TrimSpace(conf.Remote.BundleLabel) != "":
+		bundleVersion = bundleapi.Version1
+
+	case strings.TrimSpace(conf.Remote.DeploymentID) != "":
+		bundleVersion = bundleapi.Version2
+
+	case strings.TrimSpace(conf.Remote.PlaygroundID) != "":
+		bundleVersion = bundleapi.Version2
+
+	default:
+		return nil, errors.New("bundleLabel, deploymentID or playgroundID must be specified")
+	}
+
 	return &RemoteSource{
-		conf:      conf,
-		hub:       hub,
-		healthy:   false,
-		log:       zap.L().Named(DriverName),
-		scratchFS: afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
+		bundleVersion: bundleVersion,
+		conf:          conf,
+		hub:           hub,
+		healthy:       false,
+		log:           zap.L().Named(DriverName),
+		scratchFS:     afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
 	}, nil
 }
 
@@ -183,7 +201,7 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		TempDir:  s.conf.Remote.TempDir,
 	}
 
-	switch s.conf.BundleVersion {
+	switch s.bundleVersion {
 	case bundleapi.Version1:
 		clientv1, err := s.hub.V1(clientConf)
 		if err != nil {
@@ -215,8 +233,9 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 
 		s.client = &cloudAPIv2{client: clientv2, source: source}
 		s.log = s.log.With(zap.Stringer("source", source))
+
 	default:
-		return fmt.Errorf("unsupported bundle version: %d", s.conf.BundleVersion)
+		return fmt.Errorf("unsupported bundle version: %d", s.bundleVersion)
 	}
 
 	// Ideally we want to be able to automatically switch between online and offline modes.
@@ -227,7 +246,7 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 	// TODO(cell): Implement automatic online/offline mode
 	// TODO(oguzhan): Get rid of offline mode when we no longer support bundle.Version1.
 	if shouldWorkOffline() {
-		if s.conf.BundleVersion == bundleapi.Version2 {
+		if s.bundleVersion == bundleapi.Version2 {
 			return ErrOfflineModeNotAvailable
 		}
 
@@ -345,7 +364,7 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte) error
 
 	var bundle *Bundle
 	var err error
-	switch s.conf.BundleVersion {
+	switch s.bundleVersion {
 	case bundleapi.Version1:
 		if bundle, err = Open(opts); err != nil {
 			s.log.Error("Failed to open bundle", zap.Error(err))
@@ -357,7 +376,7 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte) error
 			return fmt.Errorf("failed to open bundle v2: %w", err)
 		}
 	default:
-		return fmt.Errorf("unsupported bundle version: %d", s.conf.BundleVersion)
+		return fmt.Errorf("unsupported bundle version: %d", s.bundleVersion)
 	}
 
 	s.mu.Lock()

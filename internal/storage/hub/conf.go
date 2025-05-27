@@ -8,9 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/cerbos/cloud-api/bundle"
 	"go.uber.org/multierr"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -37,8 +35,6 @@ type Conf struct {
 	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
 	// CacheSize defines the number of policies to cache in memory.
 	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
-	// BundleVersion defines the bundle service version.
-	BundleVersion bundle.Version `yaml:"bundleVersion" conf:",ignore"`
 }
 
 // LocalSourceConf holds configuration for local bundle store.
@@ -74,7 +70,6 @@ func (conf *Conf) Key() string {
 }
 
 func (conf *Conf) SetDefaults() {
-	conf.BundleVersion = bundle.Version1
 	conf.CacheSize = defaultCacheSize
 }
 
@@ -87,15 +82,11 @@ func (conf *Conf) Validate() (outErr error) {
 		outErr = multierr.Append(outErr, errors.New("cacheSize must be greater than zero"))
 	}
 
-	if conf.BundleVersion == bundle.VersionUnspecified {
-		outErr = multierr.Append(outErr, errors.New("bundleVersion must be specified"))
-	}
-
 	if err := conf.Local.validate(); err != nil {
 		outErr = multierr.Append(outErr, err)
 	}
 
-	if err := conf.Remote.validate(conf.BundleVersion); err != nil {
+	if err := conf.Remote.validate(); err != nil {
 		outErr = multierr.Append(outErr, err)
 	}
 
@@ -154,39 +145,8 @@ func (lc *LocalSourceConf) setDefaultsForUnsetFields() error {
 	return nil
 }
 
-func (rc *RemoteSourceConf) validate(bundleVersion bundle.Version) error {
+func (rc *RemoteSourceConf) validate() error {
 	if rc == nil {
-		return nil
-	}
-
-	switch bundleVersion {
-	case bundle.Version1:
-		if rc.BundleLabel == "" {
-			rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
-		}
-
-		if strings.TrimSpace(rc.BundleLabel) == "" {
-			return errors.New("bundleLabel must be specified")
-		}
-
-	case bundle.Version2:
-		if rc.DeploymentID == "" {
-			rc.DeploymentID = hub.GetEnv(hub.DeploymentIDKey)
-		}
-
-		if rc.PlaygroundID == "" {
-			rc.PlaygroundID = hub.GetEnv(hub.PlaygroundIDKey)
-		}
-
-		if rc.DeploymentID == "" {
-			if rc.PlaygroundID == "" {
-				return errors.New("deploymentID or playgroundID must be specified")
-			}
-		} else if rc.PlaygroundID != "" {
-			return errors.New("deploymentID and playgroundID must not both be specified")
-		}
-
-	default:
 		return nil
 	}
 
@@ -194,6 +154,22 @@ func (rc *RemoteSourceConf) validate(bundleVersion bundle.Version) error {
 }
 
 func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
+	if rc.BundleLabel == "" {
+		rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
+	}
+
+	if rc.DeploymentID == "" {
+		rc.DeploymentID = hub.GetEnv(hub.DeploymentIDKey)
+	}
+
+	if rc.PlaygroundID == "" {
+		rc.PlaygroundID = hub.GetEnv(hub.PlaygroundIDKey)
+	}
+
+	if rc.BundleLabel == "" && rc.DeploymentID == "" && rc.PlaygroundID == "" {
+		return errors.New("bundleLabel, deploymentID or playgroundID must be specified")
+	}
+
 	if rc.TempDir == "" {
 		dir, err := os.MkdirTemp("", "cerbos-hub-*")
 		if err != nil {

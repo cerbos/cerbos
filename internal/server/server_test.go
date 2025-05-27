@@ -87,8 +87,7 @@ func TestServer(t *testing.T) {
 				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", version)))
 
 				conf := &hubstore.Conf{
-					BundleVersion: version,
-					CacheSize:     1024,
+					CacheSize: 1024,
 					Local: &hubstore.LocalSourceConf{
 						BundlePath: filepath.Join(dir, "bundle.crbp"),
 						TempDir:    t.TempDir(),
