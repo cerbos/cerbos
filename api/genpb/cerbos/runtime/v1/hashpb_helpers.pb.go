@@ -511,6 +511,16 @@ func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, igno
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.schemas"]; !ok {
+		if len(m.Schemas) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Schemas)) {
+				_, _ = hasher.Write(protowire.AppendString(nil, k))
+				if m.Schemas[k] != nil {
+					cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas[k], hasher, ignore)
+				}
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m *RunnableDerivedRole, hasher hash.Hash, ignore map[string]struct{}) {

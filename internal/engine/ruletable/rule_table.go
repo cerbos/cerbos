@@ -35,11 +35,11 @@ const allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
 var errNoPoliciesMatched = errors.New("no matching policies")
 
 type RuleTable struct {
+	*runtimev1.RuleTable
+	log          *zap.SugaredLogger
 	policyLoader policyloader.PolicyLoader
 	// version -> scope -> role -> action -> []rows
 	primaryIdx         map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
-	log                *zap.SugaredLogger
-	schemas            map[namer.ModuleID]*policyv1.Schemas
 	meta               map[namer.ModuleID]*runtimev1.RuleTableMetadata
 	policyDerivedRoles map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	// reverse mapping of derived role mod IDs to the resource policies it's referenced in
@@ -111,10 +111,10 @@ type CelProgram struct {
 }
 
 func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
-	rt := &RuleTable{
-		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
+	return &RuleTable{
 		log:                      zap.S().Named("ruletable"),
-		schemas:                  make(map[namer.ModuleID]*policyv1.Schemas),
+		policyLoader:             policyLoader,
+		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
 		meta:                     make(map[namer.ModuleID]*runtimev1.RuleTableMetadata),
 		policyDerivedRoles:       make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole),
 		derivedRolePolicies:      make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
@@ -124,7 +124,9 @@ func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
 		parentRoles:              make(map[string]map[string][]string),
 		parentRoleAncestorsCache: make(map[string]map[string][]string),
 		awaitingHealthyIndex:     atomic.Bool{},
-		policyLoader:             policyLoader,
+		RuleTable: &runtimev1.RuleTable{
+			Schemas: make(map[string]*policyv1.Schemas),
+		},
 	}
 	rt.storeQueryRegister = newStoreQueryRegister(policyLoader.GetCacheDuration(), rt.doDeletePolicy)
 	return rt
@@ -589,7 +591,7 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 	p := rrps.GetPolicies()[0]
 
 	moduleID := namer.GenModuleIDFromFQN(rrps.Meta.Fqn)
-	rt.schemas[moduleID] = rrps.Schemas
+	rt.Schemas[moduleID.String()] = rrps.Schemas
 	rt.meta[moduleID] = &runtimev1.RuleTableMetadata{
 		Fqn:              rrps.Meta.Fqn,
 		Name:             &runtimev1.RuleTableMetadata_Resource{Resource: sanitizedResource},
@@ -910,7 +912,7 @@ func (rt *RuleTable) doDeletePolicy(moduleID namer.ModuleID) {
 		}
 	}
 
-	delete(rt.schemas, moduleID)
+	delete(rt.Schemas, moduleID.String())
 	delete(rt.meta, moduleID)
 	delete(rt.policyDerivedRoles, moduleID)
 }
@@ -931,7 +933,7 @@ func (rt *RuleTable) purge() {
 	clear(rt.parentRoles)
 	clear(rt.policyDerivedRoles)
 	clear(rt.primaryIdx)
-	clear(rt.schemas)
+	clear(rt.Schemas)
 	clear(rt.principalScopeMap)
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
@@ -1270,7 +1272,8 @@ func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	if s, ok := rt.schemas[namer.GenModuleIDFromFQN(fqn)]; ok {
+	modID := namer.GenModuleIDFromFQN(fqn)
+	if s, ok := rt.Schemas[modID.String()]; ok {
 		return s
 	}
 

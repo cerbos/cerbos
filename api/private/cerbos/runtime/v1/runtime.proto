@@ -52,6 +52,7 @@ message RuleTable {
   }
 
   repeated RuleRow rules = 1;
+  map<string, cerbos.policy.v1.Schemas> schemas = 2;
 }
 
 message RuleTableMetadata {

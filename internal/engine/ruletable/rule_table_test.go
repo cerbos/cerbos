@@ -57,7 +57,6 @@ func TestRuleTable(t *testing.T) {
 			require.True(t, exists)
 			require.Len(t, rows, 1)
 
-			require.Contains(t, rt.schemas, modID)
 			require.Contains(t, rt.meta, modID)
 
 			require.NotContains(t, rt.policyDerivedRoles, modID)
@@ -107,7 +106,6 @@ func TestRuleTable(t *testing.T) {
 			})
 
 			require.Empty(t, rt.primaryIdx)
-			require.Empty(t, rt.schemas)
 			require.Empty(t, rt.meta)
 			require.Empty(t, rt.policyDerivedRoles)
 			require.Empty(t, rt.resourceScopeMap)
@@ -216,7 +214,6 @@ func TestRuleTable(t *testing.T) {
 			})
 
 			require.Empty(t, rt.primaryIdx)
-			require.Empty(t, rt.schemas)
 			require.Empty(t, rt.meta)
 			require.Empty(t, rt.policyDerivedRoles)
 			require.Empty(t, rt.principalScopeMap)
@@ -321,7 +318,6 @@ func TestRuleTable(t *testing.T) {
 			})
 
 			require.Empty(t, rt.primaryIdx)
-			require.Empty(t, rt.schemas)
 			require.Empty(t, rt.meta)
 			require.Empty(t, rt.policyDerivedRoles)
 			require.Empty(t, rt.resourceScopeMap)
@@ -379,7 +375,6 @@ func TestRuleTable(t *testing.T) {
 		// the resource policy at scope "" remains (it's rules didn't reference a derived role).
 		require.Empty(t, rt.policyDerivedRoles)
 		require.NotContains(t, rt.primaryIdx[version], scope)
-		require.NotContains(t, rt.schemas, modID)
 		require.NotContains(t, rt.meta, modID)
 		require.NotContains(t, rt.resourceScopeMap, scope)
 		require.NotContains(t, rt.scopeScopePermissions, scope)
