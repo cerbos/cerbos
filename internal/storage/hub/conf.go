@@ -170,6 +170,12 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 		return errors.New("bundleLabel, deploymentID or playgroundID must be specified")
 	}
 
+	if (rc.BundleLabel != "" && (rc.DeploymentID != "" || rc.PlaygroundID != "")) ||
+		(rc.DeploymentID != "" && (rc.BundleLabel != "" || rc.PlaygroundID != "")) ||
+		(rc.PlaygroundID != "" && (rc.BundleLabel != "" || rc.DeploymentID != "")) {
+		return errors.New("only one of the bundleLabel, deploymentID or playgroundID must be specified")
+	}
+
 	if rc.TempDir == "" {
 		dir, err := os.MkdirTemp("", "cerbos-hub-*")
 		if err != nil {
