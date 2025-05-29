@@ -129,7 +129,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			})
 
 			t.Run("Playground", func(t *testing.T) {
-				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, mkConf(t, tctx, withDisableAutoUpdate(), withPlayground()))
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, mkConf(t, tctx, withDisableAutoUpdate(), withPlayground(tctx.version)))
 
 				switch tctx.version {
 				case bundleapi.Version1:
@@ -444,9 +444,9 @@ func withDisableAutoUpdate() confOption {
 	}
 }
 
-func withPlayground() confOption {
+func withPlayground(bundleVersion bundleapi.Version) confOption {
 	return func(conf *hub.Conf) {
-		switch conf.BundleVersion {
+		switch bundleVersion {
 		case bundleapi.Version1:
 			conf.Remote.BundleLabel = playgroundLabel
 		case bundleapi.Version2:
@@ -461,9 +461,8 @@ func mkConf(t *testing.T, tctx testCtx, opts ...confOption) *hub.Conf {
 	t.Helper()
 
 	conf := &hub.Conf{
-		BundleVersion: tctx.version,
-		CacheSize:     1024,
-		Remote:        &hub.RemoteSourceConf{},
+		CacheSize: 1024,
+		Remote:    &hub.RemoteSourceConf{},
 	}
 
 	switch tctx.version {

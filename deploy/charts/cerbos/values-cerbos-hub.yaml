@@ -12,7 +12,6 @@ cerbos:
     storage:
       driver: "hub"
       hub:
-        bundleVersion: 2
         remote:
           deploymentID: "YOUR_DEPLOYMENT_ID" # Alternatively, add `CERBOS_HUB_DEPLOYMENT_ID=<YOUR_DEPLOYMENT_ID>` to the secret you created above
 

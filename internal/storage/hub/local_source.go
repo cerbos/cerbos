@@ -42,28 +42,27 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 	}
 
 	lp := LocalParams{
-		BundlePath:    conf.Local.BundlePath,
-		TempDir:       conf.Local.TempDir,
-		CacheSize:     conf.CacheSize,
-		BundleVersion: conf.BundleVersion,
+		BundlePath: conf.Local.BundlePath,
+		TempDir:    conf.Local.TempDir,
+		CacheSize:  conf.CacheSize,
 	}
 
-	switch conf.BundleVersion {
-	case cloudapi.Version1:
-		if conf.Credentials != nil {
-			lp.SecretKey = conf.Credentials.WorkspaceSecret
-		}
-	case cloudapi.Version2:
-		if conf.Local != nil && conf.Local.EncryptionKey != "" {
-			encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode encryption key: %w", err)
-			}
+	switch {
+	case conf.Credentials != nil:
+		lp.BundleVersion = cloudapi.Version1
+		lp.SecretKey = conf.Credentials.WorkspaceSecret
 
-			lp.EncryptionKey = encryptionKey
+	case conf.Local != nil && conf.Local.EncryptionKey != "":
+		lp.BundleVersion = cloudapi.Version2
+		encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode encryption key: %w", err)
 		}
+
+		lp.EncryptionKey = encryptionKey
+
 	default:
-		return nil, fmt.Errorf("unsupported bundle version: %d", conf.BundleVersion)
+		return nil, fmt.Errorf("encryptionKey or workspaceSecret must be specified")
 	}
 
 	return NewLocalSource(lp)
