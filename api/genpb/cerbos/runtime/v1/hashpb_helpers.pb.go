@@ -514,9 +514,19 @@ func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, igno
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.schemas"]; !ok {
 		if len(m.Schemas) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.Schemas)) {
-				_, _ = hasher.Write(protowire.AppendString(nil, k))
+				_, _ = hasher.Write(protowire.AppendVarint(nil, k))
 				if m.Schemas[k] != nil {
 					cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas[k], hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.meta"]; !ok {
+		if len(m.Meta) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Meta)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, k))
+				if m.Meta[k] != nil {
+					cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m.Meta[k], hasher, ignore)
 				}
 			}
 		}
