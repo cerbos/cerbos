@@ -47,6 +47,7 @@ jobs:
 
       - name: Telepresence
         run: |
+          mkdir bin
           curl -fL https://ambassador-labs.gateway.scarf.sh/telepresenceio/telepresence/releases/download/v2.13.2/telepresence-linux-amd64 -o bin/telepresence
           chmod +x bin/telepresence
           echo "$(pwd)/bin" >> $GITHUB_PATH
