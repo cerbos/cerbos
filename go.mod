@@ -19,8 +19,8 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.2
 	github.com/cerbos/cerbos-sdk-go v0.3.1
-	github.com/cerbos/cerbos/api/genpb v0.43.1-0.20250523080419-44e21fbc30fd
-	github.com/cerbos/cloud-api v0.1.45
+	github.com/cerbos/cerbos/api/genpb v0.43.1-0.20250529080023-666976c05768
+	github.com/cerbos/cloud-api v0.1.46
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.7.0
@@ -35,7 +35,7 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/gobwas/glob v0.2.3
-	github.com/goccy/go-yaml v1.17.1
+	github.com/goccy/go-yaml v1.18.0
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/cel-go v0.25.0
 	github.com/google/go-cmp v0.7.0
@@ -110,12 +110,12 @@ require (
 	golang.org/x/sync v0.14.0
 	golang.org/x/tools v0.33.0
 	gonum.org/v1/gonum v0.16.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250519155744-55703ea1f237
-	google.golang.org/grpc v1.72.1
+	google.golang.org/genproto/googleapis/api v0.0.0-20250528174236-200df99c418a
+	google.golang.org/grpc v1.72.2
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.18.0
+	helm.sh/helm/v3 v3.18.1
 	modernc.org/sqlite v1.37.1
 )
 
