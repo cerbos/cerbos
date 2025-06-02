@@ -1,0 +1,72 @@
+
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.44.0]
+= Cerbos v0.44.0
+
+== Highlights
+
+The `PlanResources` API call now supports specifying more than one action. The generated plan contains the set of constraints that need to be satisfied in order for all of the given actions to be allowed. This can be useful for reducing the number of API calls and the client-side merging required in certain scenarios. The singular `action` field of the `PlanResources` API call is now deprecated and will be removed in a future Cerbos release.
+
+The meaning of `storage.<database driver>.connRetry.maxAttempts` has slightly changed in this release. Previously, it was interpreted as the maximum number of retries after the initial connection attempt. Now it refers to the total number of connection attempts including the initial one. We don't expect this to be an issue for most users. If you relied on a particular behaviour based on this value, increment the previous configuration value by one when you upgrade to Cerbos 0.44.0.
+
+This release includes several improvements and bug fixes that aren't directly visible to end users such as the continuation of the engine overhaul that was started several releases ago and improvements to query plan output to produce more succinct plans. There are new utilities and bug fixes for link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub] integrations as well.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Preserve action field for auditing (link:https://github.com/cerbos/cerbos/pull/2564[#2564])
+* Return appropriate backoff in logcap ingest error path (link:https://github.com/cerbos/cerbos/pull/2549[#2549])
+* Set correct environment variable to configure traces sampler (link:https://github.com/cerbos/cerbos/pull/2551[#2551])
+
+=== Features
+
+* Add principal policy support to rule table (link:https://github.com/cerbos/cerbos/pull/2544[#2544])
+* Add size-based batch limiting to audit log hub (link:https://github.com/cerbos/cerbos/pull/2558[#2558])
+* Add support for multiple actions (link:https://github.com/cerbos/cerbos/pull/2543[#2543])
+* Cerbosctl commands to interact with Hub store (link:https://github.com/cerbos/cerbos/pull/2569[#2569])
+
+=== Enhancements
+
+* #**BREAKING**# Remove bundle version configuration parameter (link:https://github.com/cerbos/cerbos/pull/2583[#2583])
+* Simplify plan with exists operation (link:https://github.com/cerbos/cerbos/pull/2570[#2570])
+* Update helm charts to support bundle v2 (link:https://github.com/cerbos/cerbos/pull/2580[#2580])
+
+=== Documentation
+
+* Add talk to engineer link (link:https://github.com/cerbos/cerbos/pull/2573[#2573])
+
+=== Chores
+
+* Bump github.com/go-jose/go-jose/v4 from 4.0.4 to 4.0.5 (link:https://github.com/cerbos/cerbos/pull/2563[#2563])
+* Bump golang.org/x/net from 0.37.0 to 0.38.0 in /api/genpb (link:https://github.com/cerbos/cerbos/pull/2559[#2559])
+* Bump helm.sh/helm/v3 from 3.16.4 to 3.17.3 in /tools (link:https://github.com/cerbos/cerbos/pull/2545[#2545])
+* Bump version to 0.44.0
+* Deduplicate logical nodes in planner output (link:https://github.com/cerbos/cerbos/pull/2579[#2579])
+* Don't bother caching dependencies for `upload-test-times` job (link:https://github.com/cerbos/cerbos/pull/2557[#2557])
+* Fix how less than or equal operator is displayed (link:https://github.com/cerbos/cerbos/pull/2568[#2568])
+* Update Buf dependencies (link:https://github.com/cerbos/cerbos/pull/2578[#2578])
+* Update dawidd6/action-download-artifact action to v10 (link:https://github.com/cerbos/cerbos/pull/2585[#2585])
+* Update dawidd6/action-download-artifact action to v9 (link:https://github.com/cerbos/cerbos/pull/2548[#2548])
+* Update extractions/setup-just action to v3 (link:https://github.com/cerbos/cerbos/pull/2552[#2552])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2547[#2547])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2565[#2565])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2571[#2571])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2576[#2576])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2581[#2581])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2584[#2584])
+* Update golangci/golangci-lint-action action to v7.0.1 (link:https://github.com/cerbos/cerbos/pull/2566[#2566])
+* #**BREAKING**# Update module github.com/cenkalti/backoff/v4 to v5 (link:https://github.com/cerbos/cerbos/pull/2555[#2555])
+* Update module helm.sh/helm/v3 to v3.17.3 [security] (link:https://github.com/cerbos/cerbos/pull/2546[#2546])
+* Update modules github.com/lestrrat-go/jwx and github.com/vektra/mockery to v3 (major) (link:https://github.com/cerbos/cerbos/pull/2553[#2553])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2562[#2562])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2575[#2575])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2582[#2582])
+* Update pnpm to v10.10.0 (link:https://github.com/cerbos/cerbos/pull/2572[#2572])
+* Update sigstore/cosign-installer action to v3.8.2 (link:https://github.com/cerbos/cerbos/pull/2561[#2561])
+* update go deps (link:https://github.com/cerbos/cerbos/pull/2560[#2560])
+* update module github.com/golangci/golangci-lint to v2 (link:https://github.com/cerbos/cerbos/pull/2556[#2556])
+* update node.js deps (link:https://github.com/cerbos/cerbos/pull/2539[#2539])
