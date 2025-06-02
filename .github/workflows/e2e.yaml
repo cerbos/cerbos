@@ -29,12 +29,24 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
-      - name: Install Helmfile and Telepresence
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          version: v3.18.1
+
+      - name: Install Helm Secrets
+        shell: bash
+        run: |-
+          helm plugin install https://github.com/jkroepke/helm-secrets --version v4.6.5
+      - name: Install Helmfile
+        uses: ./.github/actions/setup-tool
+        with:
+          repo: helmfile/helmfile
+          tag: v1.1.1
+
+      - name: Telepresence
         run: |
-          mkdir bin
-          curl -fL https://github.com/helmfile/helmfile/releases/download/v0.154.0/helmfile_0.154.0_linux_amd64.tar.gz -o bin/helmfile.tar.gz
-          tar -xf bin/helmfile.tar.gz -C bin
-          chmod +x bin/helmfile
           curl -fL https://ambassador-labs.gateway.scarf.sh/telepresenceio/telepresence/releases/download/v2.13.2/telepresence-linux-amd64 -o bin/telepresence
           chmod +x bin/telepresence
           echo "$(pwd)/bin" >> $GITHUB_PATH
