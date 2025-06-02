@@ -120,15 +120,26 @@ type Store_InspectPolicies_Call struct {
 }
 
 // InspectPolicies is a helper method to define mock.On call
-//   - context1
-//   - listPolicyIDsParams
+//   - context1 context.Context
+//   - listPolicyIDsParams storage.ListPolicyIDsParams
 func (_e *Store_Expecter) InspectPolicies(context1 interface{}, listPolicyIDsParams interface{}) *Store_InspectPolicies_Call {
 	return &Store_InspectPolicies_Call{Call: _e.mock.On("InspectPolicies", context1, listPolicyIDsParams)}
 }
 
 func (_c *Store_InspectPolicies_Call) Run(run func(context1 context.Context, listPolicyIDsParams storage.ListPolicyIDsParams)) *Store_InspectPolicies_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(storage.ListPolicyIDsParams))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 storage.ListPolicyIDsParams
+		if args[1] != nil {
+			arg1 = args[1].(storage.ListPolicyIDsParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -177,15 +188,26 @@ type Store_ListPolicyIDs_Call struct {
 }
 
 // ListPolicyIDs is a helper method to define mock.On call
-//   - context1
-//   - listPolicyIDsParams
+//   - context1 context.Context
+//   - listPolicyIDsParams storage.ListPolicyIDsParams
 func (_e *Store_Expecter) ListPolicyIDs(context1 interface{}, listPolicyIDsParams interface{}) *Store_ListPolicyIDs_Call {
 	return &Store_ListPolicyIDs_Call{Call: _e.mock.On("ListPolicyIDs", context1, listPolicyIDsParams)}
 }
 
 func (_c *Store_ListPolicyIDs_Call) Run(run func(context1 context.Context, listPolicyIDsParams storage.ListPolicyIDsParams)) *Store_ListPolicyIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(storage.ListPolicyIDsParams))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 storage.ListPolicyIDsParams
+		if args[1] != nil {
+			arg1 = args[1].(storage.ListPolicyIDsParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -234,14 +256,20 @@ type Store_ListSchemaIDs_Call struct {
 }
 
 // ListSchemaIDs is a helper method to define mock.On call
-//   - context1
+//   - context1 context.Context
 func (_e *Store_Expecter) ListSchemaIDs(context1 interface{}) *Store_ListSchemaIDs_Call {
 	return &Store_ListSchemaIDs_Call{Call: _e.mock.On("ListSchemaIDs", context1)}
 }
 
 func (_c *Store_ListSchemaIDs_Call) Run(run func(context1 context.Context)) *Store_ListSchemaIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -290,15 +318,26 @@ type Store_LoadSchema_Call struct {
 }
 
 // LoadSchema is a helper method to define mock.On call
-//   - context1
-//   - s
+//   - context1 context.Context
+//   - s string
 func (_e *Store_Expecter) LoadSchema(context1 interface{}, s interface{}) *Store_LoadSchema_Call {
 	return &Store_LoadSchema_Call{Call: _e.mock.On("LoadSchema", context1, s)}
 }
 
 func (_c *Store_LoadSchema_Call) Run(run func(context1 context.Context, s string)) *Store_LoadSchema_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
