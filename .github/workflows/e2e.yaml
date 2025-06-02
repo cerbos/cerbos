@@ -40,7 +40,7 @@ jobs:
         run: |-
           helm plugin install https://github.com/jkroepke/helm-secrets --version v4.6.5
       - name: Install Helmfile
-        uses: ./.github/actions/setup-tool
+        uses: jaxxstorm/action-install-gh-release@v2.1.0
         with:
           repo: helmfile/helmfile
           tag: v1.1.1
