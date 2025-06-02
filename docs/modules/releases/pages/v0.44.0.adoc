@@ -31,7 +31,7 @@ This release includes several improvements and bug fixes that aren't directly vi
 
 === Enhancements
 
-* #**BREAKING**# Remove bundle version configuration parameter (link:https://github.com/cerbos/cerbos/pull/2583[#2583])
+* Remove bundle version configuration parameter (link:https://github.com/cerbos/cerbos/pull/2583[#2583])
 * Simplify plan with exists operation (link:https://github.com/cerbos/cerbos/pull/2570[#2570])
 * Update helm charts to support bundle v2 (link:https://github.com/cerbos/cerbos/pull/2580[#2580])
 
