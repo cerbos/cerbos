@@ -73,14 +73,20 @@ type ClientProvider_V1_Call struct {
 }
 
 // V1 is a helper method to define mock.On call
-//   - clientConf
+//   - clientConf bundle.ClientConf
 func (_e *ClientProvider_Expecter) V1(clientConf interface{}) *ClientProvider_V1_Call {
 	return &ClientProvider_V1_Call{Call: _e.mock.On("V1", clientConf)}
 }
 
 func (_c *ClientProvider_V1_Call) Run(run func(clientConf bundle.ClientConf)) *ClientProvider_V1_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(bundle.ClientConf))
+		var arg0 bundle.ClientConf
+		if args[0] != nil {
+			arg0 = args[0].(bundle.ClientConf)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -129,14 +135,20 @@ type ClientProvider_V2_Call struct {
 }
 
 // V2 is a helper method to define mock.On call
-//   - clientConf
+//   - clientConf bundle.ClientConf
 func (_e *ClientProvider_Expecter) V2(clientConf interface{}) *ClientProvider_V2_Call {
 	return &ClientProvider_V2_Call{Call: _e.mock.On("V2", clientConf)}
 }
 
 func (_c *ClientProvider_V2_Call) Run(run func(clientConf bundle.ClientConf)) *ClientProvider_V2_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(bundle.ClientConf))
+		var arg0 bundle.ClientConf
+		if args[0] != nil {
+			arg0 = args[0].(bundle.ClientConf)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }

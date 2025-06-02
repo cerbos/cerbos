@@ -77,14 +77,20 @@ type Index_AddOrUpdate_Call struct {
 }
 
 // AddOrUpdate is a helper method to define mock.On call
-//   - entry
+//   - entry index.Entry
 func (_e *Index_Expecter) AddOrUpdate(entry interface{}) *Index_AddOrUpdate_Call {
 	return &Index_AddOrUpdate_Call{Call: _e.mock.On("AddOrUpdate", entry)}
 }
 
 func (_c *Index_AddOrUpdate_Call) Run(run func(entry index.Entry)) *Index_AddOrUpdate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(index.Entry))
+		var arg0 index.Entry
+		if args[0] != nil {
+			arg0 = args[0].(index.Entry)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -219,14 +225,20 @@ type Index_Delete_Call struct {
 }
 
 // Delete is a helper method to define mock.On call
-//   - entry
+//   - entry index.Entry
 func (_e *Index_Expecter) Delete(entry interface{}) *Index_Delete_Call {
 	return &Index_Delete_Call{Call: _e.mock.On("Delete", entry)}
 }
 
 func (_c *Index_Delete_Call) Run(run func(entry index.Entry)) *Index_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(index.Entry))
+		var arg0 index.Entry
+		if args[0] != nil {
+			arg0 = args[0].(index.Entry)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -275,14 +287,20 @@ type Index_GetAll_Call struct {
 }
 
 // GetAll is a helper method to define mock.On call
-//   - context1
+//   - context1 context.Context
 func (_e *Index_Expecter) GetAll(context1 interface{}) *Index_GetAll_Call {
 	return &Index_GetAll_Call{Call: _e.mock.On("GetAll", context1)}
 }
 
 func (_c *Index_GetAll_Call) Run(run func(context1 context.Context)) *Index_GetAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -322,14 +340,20 @@ type Index_GetAllCompilationUnits_Call struct {
 }
 
 // GetAllCompilationUnits is a helper method to define mock.On call
-//   - context1
+//   - context1 context.Context
 func (_e *Index_Expecter) GetAllCompilationUnits(context1 interface{}) *Index_GetAllCompilationUnits_Call {
 	return &Index_GetAllCompilationUnits_Call{Call: _e.mock.On("GetAllCompilationUnits", context1)}
 }
 
 func (_c *Index_GetAllCompilationUnits_Call) Run(run func(context1 context.Context)) *Index_GetAllCompilationUnits_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -378,14 +402,20 @@ type Index_GetAllMatching_Call struct {
 }
 
 // GetAllMatching is a helper method to define mock.On call
-//   - moduleIDs
+//   - moduleIDs []namer.ModuleID
 func (_e *Index_Expecter) GetAllMatching(moduleIDs interface{}) *Index_GetAllMatching_Call {
 	return &Index_GetAllMatching_Call{Call: _e.mock.On("GetAllMatching", moduleIDs)}
 }
 
 func (_c *Index_GetAllMatching_Call) Run(run func(moduleIDs []namer.ModuleID)) *Index_GetAllMatching_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]namer.ModuleID))
+		var arg0 []namer.ModuleID
+		if args[0] != nil {
+			arg0 = args[0].([]namer.ModuleID)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -440,7 +470,7 @@ type Index_GetCompilationUnits_Call struct {
 }
 
 // GetCompilationUnits is a helper method to define mock.On call
-//   - moduleIDs
+//   - moduleIDs ...namer.ModuleID
 func (_e *Index_Expecter) GetCompilationUnits(moduleIDs ...interface{}) *Index_GetCompilationUnits_Call {
 	return &Index_GetCompilationUnits_Call{Call: _e.mock.On("GetCompilationUnits",
 		append([]interface{}{}, moduleIDs...)...)}
@@ -448,8 +478,15 @@ func (_e *Index_Expecter) GetCompilationUnits(moduleIDs ...interface{}) *Index_G
 
 func (_c *Index_GetCompilationUnits_Call) Run(run func(moduleIDs ...namer.ModuleID)) *Index_GetCompilationUnits_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[0].([]namer.ModuleID)
-		run(variadicArgs...)
+		var arg0 []namer.ModuleID
+		var variadicArgs []namer.ModuleID
+		if len(args) > 0 {
+			variadicArgs = args[0].([]namer.ModuleID)
+		}
+		arg0 = variadicArgs
+		run(
+			arg0...,
+		)
 	})
 	return _c
 }
@@ -504,7 +541,7 @@ type Index_GetDependents_Call struct {
 }
 
 // GetDependents is a helper method to define mock.On call
-//   - moduleIDs
+//   - moduleIDs ...namer.ModuleID
 func (_e *Index_Expecter) GetDependents(moduleIDs ...interface{}) *Index_GetDependents_Call {
 	return &Index_GetDependents_Call{Call: _e.mock.On("GetDependents",
 		append([]interface{}{}, moduleIDs...)...)}
@@ -512,8 +549,15 @@ func (_e *Index_Expecter) GetDependents(moduleIDs ...interface{}) *Index_GetDepe
 
 func (_c *Index_GetDependents_Call) Run(run func(moduleIDs ...namer.ModuleID)) *Index_GetDependents_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[0].([]namer.ModuleID)
-		run(variadicArgs...)
+		var arg0 []namer.ModuleID
+		var variadicArgs []namer.ModuleID
+		if len(args) > 0 {
+			variadicArgs = args[0].([]namer.ModuleID)
+		}
+		arg0 = variadicArgs
+		run(
+			arg0...,
+		)
 	})
 	return _c
 }
@@ -608,14 +652,20 @@ type Index_GetFirstMatch_Call struct {
 }
 
 // GetFirstMatch is a helper method to define mock.On call
-//   - moduleIDs
+//   - moduleIDs []namer.ModuleID
 func (_e *Index_Expecter) GetFirstMatch(moduleIDs interface{}) *Index_GetFirstMatch_Call {
 	return &Index_GetFirstMatch_Call{Call: _e.mock.On("GetFirstMatch", moduleIDs)}
 }
 
 func (_c *Index_GetFirstMatch_Call) Run(run func(moduleIDs []namer.ModuleID)) *Index_GetFirstMatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]namer.ModuleID))
+		var arg0 []namer.ModuleID
+		if args[0] != nil {
+			arg0 = args[0].([]namer.ModuleID)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -670,8 +720,8 @@ type Index_InspectPolicies_Call struct {
 }
 
 // InspectPolicies is a helper method to define mock.On call
-//   - context1
-//   - strings
+//   - context1 context.Context
+//   - strings ...string
 func (_e *Index_Expecter) InspectPolicies(context1 interface{}, strings ...interface{}) *Index_InspectPolicies_Call {
 	return &Index_InspectPolicies_Call{Call: _e.mock.On("InspectPolicies",
 		append([]interface{}{context1}, strings...)...)}
@@ -679,8 +729,20 @@ func (_e *Index_Expecter) InspectPolicies(context1 interface{}, strings ...inter
 
 func (_c *Index_InspectPolicies_Call) Run(run func(context1 context.Context, strings ...string)) *Index_InspectPolicies_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[1].([]string)
-		run(args[0].(context.Context), variadicArgs...)
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
 	})
 	return _c
 }
@@ -735,8 +797,8 @@ type Index_ListPolicyIDs_Call struct {
 }
 
 // ListPolicyIDs is a helper method to define mock.On call
-//   - context1
-//   - strings
+//   - context1 context.Context
+//   - strings ...string
 func (_e *Index_Expecter) ListPolicyIDs(context1 interface{}, strings ...interface{}) *Index_ListPolicyIDs_Call {
 	return &Index_ListPolicyIDs_Call{Call: _e.mock.On("ListPolicyIDs",
 		append([]interface{}{context1}, strings...)...)}
@@ -744,8 +806,20 @@ func (_e *Index_Expecter) ListPolicyIDs(context1 interface{}, strings ...interfa
 
 func (_c *Index_ListPolicyIDs_Call) Run(run func(context1 context.Context, strings ...string)) *Index_ListPolicyIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[1].([]string)
-		run(args[0].(context.Context), variadicArgs...)
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
 	})
 	return _c
 }
@@ -794,14 +868,20 @@ type Index_ListSchemaIDs_Call struct {
 }
 
 // ListSchemaIDs is a helper method to define mock.On call
-//   - context1
+//   - context1 context.Context
 func (_e *Index_Expecter) ListSchemaIDs(context1 interface{}) *Index_ListSchemaIDs_Call {
 	return &Index_ListSchemaIDs_Call{Call: _e.mock.On("ListSchemaIDs", context1)}
 }
 
 func (_c *Index_ListSchemaIDs_Call) Run(run func(context1 context.Context)) *Index_ListSchemaIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -856,8 +936,8 @@ type Index_LoadPolicy_Call struct {
 }
 
 // LoadPolicy is a helper method to define mock.On call
-//   - context1
-//   - strings
+//   - context1 context.Context
+//   - strings ...string
 func (_e *Index_Expecter) LoadPolicy(context1 interface{}, strings ...interface{}) *Index_LoadPolicy_Call {
 	return &Index_LoadPolicy_Call{Call: _e.mock.On("LoadPolicy",
 		append([]interface{}{context1}, strings...)...)}
@@ -865,8 +945,20 @@ func (_e *Index_Expecter) LoadPolicy(context1 interface{}, strings ...interface{
 
 func (_c *Index_LoadPolicy_Call) Run(run func(context1 context.Context, strings ...string)) *Index_LoadPolicy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[1].([]string)
-		run(args[0].(context.Context), variadicArgs...)
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
 	})
 	return _c
 }
@@ -915,15 +1007,26 @@ type Index_LoadSchema_Call struct {
 }
 
 // LoadSchema is a helper method to define mock.On call
-//   - context1
-//   - s
+//   - context1 context.Context
+//   - s string
 func (_e *Index_Expecter) LoadSchema(context1 interface{}, s interface{}) *Index_LoadSchema_Call {
 	return &Index_LoadSchema_Call{Call: _e.mock.On("LoadSchema", context1, s)}
 }
 
 func (_c *Index_LoadSchema_Call) Run(run func(context1 context.Context, s string)) *Index_LoadSchema_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -972,14 +1075,20 @@ type Index_Reload_Call struct {
 }
 
 // Reload is a helper method to define mock.On call
-//   - context1
+//   - context1 context.Context
 func (_e *Index_Expecter) Reload(context1 interface{}) *Index_Reload_Call {
 	return &Index_Reload_Call{Call: _e.mock.On("Reload", context1)}
 }
 
 func (_c *Index_Reload_Call) Run(run func(context1 context.Context)) *Index_Reload_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -1017,14 +1126,20 @@ type Index_RepoStats_Call struct {
 }
 
 // RepoStats is a helper method to define mock.On call
-//   - context1
+//   - context1 context.Context
 func (_e *Index_Expecter) RepoStats(context1 interface{}) *Index_RepoStats_Call {
 	return &Index_RepoStats_Call{Call: _e.mock.On("RepoStats", context1)}
 }
 
 func (_c *Index_RepoStats_Call) Run(run func(context1 context.Context)) *Index_RepoStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }

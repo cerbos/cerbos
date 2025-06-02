@@ -61,14 +61,20 @@ type WatchHandle_ActiveBundleChanged_Call struct {
 }
 
 // ActiveBundleChanged is a helper method to define mock.On call
-//   - s
+//   - s string
 func (_e *WatchHandle_Expecter) ActiveBundleChanged(s interface{}) *WatchHandle_ActiveBundleChanged_Call {
 	return &WatchHandle_ActiveBundleChanged_Call{Call: _e.mock.On("ActiveBundleChanged", s)}
 }
 
 func (_c *WatchHandle_ActiveBundleChanged_Call) Run(run func(s string)) *WatchHandle_ActiveBundleChanged_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }

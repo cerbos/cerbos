@@ -73,15 +73,26 @@ type ClientV1_BootstrapBundle_Call struct {
 }
 
 // BootstrapBundle is a helper method to define mock.On call
-//   - context1
-//   - s
+//   - context1 context.Context
+//   - s string
 func (_e *ClientV1_Expecter) BootstrapBundle(context1 interface{}, s interface{}) *ClientV1_BootstrapBundle_Call {
 	return &ClientV1_BootstrapBundle_Call{Call: _e.mock.On("BootstrapBundle", context1, s)}
 }
 
 func (_c *ClientV1_BootstrapBundle_Call) Run(run func(context1 context.Context, s string)) *ClientV1_BootstrapBundle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -128,15 +139,26 @@ type ClientV1_GetBundle_Call struct {
 }
 
 // GetBundle is a helper method to define mock.On call
-//   - context1
-//   - s
+//   - context1 context.Context
+//   - s string
 func (_e *ClientV1_Expecter) GetBundle(context1 interface{}, s interface{}) *ClientV1_GetBundle_Call {
 	return &ClientV1_GetBundle_Call{Call: _e.mock.On("GetBundle", context1, s)}
 }
 
 func (_c *ClientV1_GetBundle_Call) Run(run func(context1 context.Context, s string)) *ClientV1_GetBundle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -183,14 +205,20 @@ type ClientV1_GetCachedBundle_Call struct {
 }
 
 // GetCachedBundle is a helper method to define mock.On call
-//   - s
+//   - s string
 func (_e *ClientV1_Expecter) GetCachedBundle(s interface{}) *ClientV1_GetCachedBundle_Call {
 	return &ClientV1_GetCachedBundle_Call{Call: _e.mock.On("GetCachedBundle", s)}
 }
 
 func (_c *ClientV1_GetCachedBundle_Call) Run(run func(s string)) *ClientV1_GetCachedBundle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -285,15 +313,26 @@ type ClientV1_WatchBundle_Call struct {
 }
 
 // WatchBundle is a helper method to define mock.On call
-//   - context1
-//   - s
+//   - context1 context.Context
+//   - s string
 func (_e *ClientV1_Expecter) WatchBundle(context1 interface{}, s interface{}) *ClientV1_WatchBundle_Call {
 	return &ClientV1_WatchBundle_Call{Call: _e.mock.On("WatchBundle", context1, s)}
 }
 
 func (_c *ClientV1_WatchBundle_Call) Run(run func(context1 context.Context, s string)) *ClientV1_WatchBundle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

@@ -63,15 +63,26 @@ type IngestSyncer_Sync_Call struct {
 }
 
 // Sync is a helper method to define mock.On call
-//   - context1
-//   - ingestBatch
+//   - context1 context.Context
+//   - ingestBatch *logsv1.IngestBatch
 func (_e *IngestSyncer_Expecter) Sync(context1 interface{}, ingestBatch interface{}) *IngestSyncer_Sync_Call {
 	return &IngestSyncer_Sync_Call{Call: _e.mock.On("Sync", context1, ingestBatch)}
 }
 
 func (_c *IngestSyncer_Sync_Call) Run(run func(context1 context.Context, ingestBatch *logsv1.IngestBatch)) *IngestSyncer_Sync_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*logsv1.IngestBatch))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *logsv1.IngestBatch
+		if args[1] != nil {
+			arg1 = args[1].(*logsv1.IngestBatch)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
