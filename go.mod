@@ -18,7 +18,7 @@ require (
 	github.com/aws/smithy-go v1.22.3
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.2
-	github.com/cerbos/cerbos-sdk-go v0.3.1
+	github.com/cerbos/cerbos-sdk-go v0.3.2
 	github.com/cerbos/cerbos/api/genpb v0.43.1-0.20250603061909-12f6de6ab927
 	github.com/cerbos/cloud-api v0.1.46
 	github.com/cespare/xxhash/v2 v2.3.0
@@ -216,7 +216,7 @@ require (
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
-	github.com/jdxcode/netrc v1.0.0 // indirect
+	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
