@@ -1,8 +1,9 @@
 .Release Notes
+* xref:v0.44.0.adoc[v0.44.0]
 * xref:v0.43.0.adoc[v0.43.0]
 * xref:v0.42.0.adoc[v0.42.0]
-* xref:v0.41.0.adoc[v0.41.0]
 * Archives
+** xref:v0.41.0.adoc[v0.41.0]
 ** xref:v0.40.0.adoc[v0.40.0]
 ** xref:v0.39.0.adoc[v0.39.0]
 ** xref:v0.38.1.adoc[v0.38.1]
