@@ -216,3 +216,39 @@ resourcePolicy:
       condition:
         match:
           expr: P.attr.account_id in (R.attr.accounts_people.map(ap, ap.account_id))
+    - actions: ["multi-role-test"]
+      roles: ["employee"]
+      effect: EFFECT_DENY
+    - actions: ["multi-role-test"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+    - actions: ["multi-role-test-conditional-allow"]
+      roles: ["employee"]
+      effect: EFFECT_DENY
+    - actions: ["multi-role-test-conditional-allow"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: V.is_owner
+    - actions: ["multi-role-test-conditional-deny"]
+      roles: ["employee"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: V.is_owner
+    - actions: ["multi-role-test-conditional-deny"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+    - actions: ["multi-role-test-conditional-allow-deny"]
+      roles: ["employee"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: V.is_owner
+    - actions: ["multi-role-test-conditional-allow-deny"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: V.is_owner
