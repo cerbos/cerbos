@@ -153,3 +153,50 @@ tests:
                       operands:
                         - variable: ap.account_id
                         - variable: ap
+  - action: multi-role-test
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_ALLOWED
+  - action: multi-role-test-conditional-allow
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.owner
+            - value: harry
+  - action: multi-role-test-conditional-deny
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_ALLOWED
+  - action: multi-role-test-conditional-allow-deny
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.owner
+                  - value: harry
+            - expression:
+                operator: not
+                operands:
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: request.resource.attr.owner
+                        - value: harry

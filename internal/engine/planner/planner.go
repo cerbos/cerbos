@@ -341,16 +341,24 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					roleAllowNode = nil
 				}
 
-				if roleAllowNode != nil { //nolint:nestif
-					// If this role yields an unconditional ALLOW and no DENY, override all denies.
-					if roleDenyNode == nil {
-						if b, ok := isNodeConstBool(roleAllowNode); ok && b {
-							policyTypeAllowNode = roleAllowNode
-							policyTypeDenyNode = nil
-							break
-						}
+				// Const DENY overrides any ALLOW in the same role
+				if b, ok := isNodeConstBool(roleDenyNode); ok && b {
+					// Roles are evaluated independently, therefore an ALLOW for one role needs to override a DENY for another.
+					// If we pass the role level `DENY==true`, we end up overriding the result for all roles with an `AND(..., NOT(true))`
+					// due to the policyTypeDenyNode inversion below. Inverting and resolving in the allow node ensures the role is OR'd
+					// against others, e.g. `OR(false, roleAllow1, roleAllow2, ...)`).
+					roleAllowNode = mkFalseNode()
+					roleDenyNode = nil
+				} else if roleAllowNode != nil && roleDenyNode == nil {
+					if b, ok := isNodeConstBool(roleAllowNode); ok && b {
+						policyTypeAllowNode = roleAllowNode
+						policyTypeDenyNode = nil
+						// Break out of the roles loop entirely
+						break
 					}
+				}
 
+				if roleAllowNode != nil {
 					if policyTypeAllowNode == nil {
 						policyTypeAllowNode = roleAllowNode
 					} else {
@@ -423,6 +431,10 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 }
 
 func isNodeConstBool(node *enginev1.PlanResourcesAst_Node) (bool, bool) {
+	if node == nil {
+		return false, false
+	}
+
 	if e, ok := node.Node.(*enginev1.PlanResourcesAst_Node_Expression); ok {
 		if e1 := e.Expression.GetExpr().GetConstExpr(); e1 != nil {
 			if b, ok := e1.ConstantKind.(*exprpb.Constant_BoolValue); ok {
