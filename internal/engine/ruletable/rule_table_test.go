@@ -260,8 +260,8 @@ func TestRuleTable(t *testing.T) {
 
 			// warm up the parent roles cache
 			rt.GetParentRoles(scope, []string{role})
-			require.Contains(t, rt.parentRoles, scope)
-			require.Contains(t, rt.parentRoles[scope], role)
+			require.Contains(t, rt.ScopeParentRoles, scope)
+			require.Contains(t, rt.ScopeParentRoles[scope].RoleParentRoles, role)
 			require.Contains(t, rt.parentRoleAncestorsCache, scope)
 			require.Contains(t, rt.parentRoleAncestorsCache[scope], role)
 		}
@@ -322,7 +322,7 @@ func TestRuleTable(t *testing.T) {
 			require.Empty(t, rt.policyDerivedRoles)
 			require.Empty(t, rt.resourceScopeMap)
 			require.Empty(t, rt.scopeScopePermissions)
-			require.Empty(t, rt.parentRoles)
+			require.Empty(t, rt.ScopeParentRoles)
 			require.Empty(t, rt.parentRoleAncestorsCache)
 			// not deleted, just set to `false`
 			require.Equal(t, 7, rt.storeQueryRegister.length())

@@ -21,11 +21,13 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -454,5 +456,20 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	return engine.NewEphemeral(nil, cm, c.schemaMgr), nil
+	rt := &runtimev1.RuleTable{}
+	rps, err := cm.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range rps {
+		ruletable.AddPolicy(rt, p)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, c.schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.NewEphemeral(nil, ruletableMgr, c.schemaMgr), nil
 }

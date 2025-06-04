@@ -22,14 +22,15 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
@@ -323,9 +324,19 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
+	rt := &runtimev1.RuleTable{}
+	rps, err := tp.policyLoader.GetAll(ctx)
+	require.NoError(t, err)
+	for _, p := range rps {
+		ruletable.AddPolicy(rt, p)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.schemaMgr)
+	require.NoError(t, err)
+
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      tp.policyLoader,
-		RuleTable:         ruletable.NewRuleTable(tp.policyLoader),
+		RuleTableManager:  ruletableMgr,
 		SchemaMgr:         tp.schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),

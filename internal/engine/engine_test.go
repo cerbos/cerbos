@@ -25,15 +25,17 @@ import (
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine/planner"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -332,6 +334,22 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
+	rt := &runtimev1.RuleTable{
+		Rules:              []*runtimev1.RuleTable_RuleRow{},
+		Schemas:            make(map[uint64]*policyv1.Schemas),
+		Meta:               make(map[uint64]*runtimev1.RuleTableMetadata),
+		ScopeParentRoles:   make(map[string]*runtimev1.RuleTable_RoleParentRoles),
+		PolicyDerivedRoles: make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
+	}
+	rps, err := compiler.GetAll(ctx)
+	require.NoError(tb, err)
+	for _, p := range rps {
+		ruletable.AddPolicy(rt, p)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+	require.NoError(tb, err)
+
 	engineConf := &Conf{}
 	engineConf.SetDefaults()
 	engineConf.Globals = map[string]any{"environment": "test"}
@@ -339,7 +357,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 
 	eng := NewFromConf(ctx, engineConf, Components{
 		PolicyLoader:      compiler,
-		RuleTable:         ruletable.NewRuleTable(compiler),
+		RuleTableManager:  ruletableMgr,
 		SchemaMgr:         schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),

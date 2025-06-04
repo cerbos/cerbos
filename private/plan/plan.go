@@ -7,8 +7,10 @@ import (
 	"context"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/private/compile"
@@ -19,6 +21,22 @@ func Resources(ctx context.Context, conf *engine.Conf, idx compile.Index, input 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng := internalengine.NewEphemeral(conf, compiler, schemaMgr)
+
+	rt := &runtimev1.RuleTable{}
+	rps, err := compiler.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range rps {
+		ruletable.AddPolicy(rt, p)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
+	eng := internalengine.NewEphemeral(conf, ruletableMgr, schemaMgr)
 	return eng.PlanResources(ctx, input)
 }

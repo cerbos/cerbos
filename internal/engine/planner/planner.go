@@ -30,10 +30,10 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/internal"
 	plannerutils "github.com/cerbos/cerbos/internal/engine/planner/internal"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -122,7 +122,7 @@ func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, matchedScopes map
 
 const noPolicyMatch = "NO_MATCH"
 
-func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTable, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, schemaMgr schema.Manager, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTableManager, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, schemaMgr schema.Manager, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
 
 	_, span := tracing.StartSpan(ctx, "engine.EvaluateRuleTableQueryPlan")
@@ -181,12 +181,12 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 		var rootNode *qpN
 
 		// evaluate resource policies before principal policies
-		for _, pt := range []policy.Kind{policy.ResourceKind, policy.PrincipalKind} {
+		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
 			var policyTypeAllowNode, policyTypeDenyNode *qpN
 			for i, role := range input.Principal.Roles {
 				// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
 				// break out of the loop after the first iteration as it covers all potential principal rows.
-				if i > 0 && pt == policy.PrincipalKind {
+				if i > 0 && pt == policyv1.Kind_KIND_PRINCIPAL {
 					break
 				}
 
@@ -199,7 +199,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 					var scopeAllowNode, scopeDenyNode *qpN
 
 					derivedRolesList := mkDerivedRolesList(nil)
-					if pt == policy.ResourceKind { //nolint:nestif
+					if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
 						if c, ok := scopedDerivedRolesList[scope]; ok {
 							derivedRolesList = c
 						} else {

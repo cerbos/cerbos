@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
@@ -26,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -132,8 +134,15 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			Trace:                   c.Verbose,
 		}
 
-		compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-		eng := engine.NewEphemeral(nil, compiler, schemaMgr)
+		// TODO(saml) fill ruletable
+		rt := &runtimev1.RuleTable{}
+
+		mgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+		if err != nil {
+			return fmt.Errorf("failed to create ruletable manager: %w", err)
+		}
+
+		eng := engine.NewEphemeral(nil, mgr, schemaMgr)
 
 		testFsys, testDir, err := c.testsDir()
 		if err != nil {
