@@ -10,15 +10,15 @@ import (
 )
 
 func PrincipalPolicyNameProtoPath() string {
-	return fmt.Sprintf("principal_policy.principal")
+	return "principal_policy.principal"
 }
 
 func ResourcePolicyNameProtoPath() string {
-	return fmt.Sprintf("resource_policy.resource")
+	return "resource_policy.resource"
 }
 
 func RolePolicyNameProtoPath() string {
-	return fmt.Sprintf("role_policy.role")
+	return "role_policy.role"
 }
 
 func ResourcePolicyRuleProtoPath(idx int) string {

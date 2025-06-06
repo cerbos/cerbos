@@ -23,13 +23,13 @@ type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
 const AnyRoleVal = "*"
 
 var invalidPolicyNameChars = map[rune]struct{}{
-	'!': struct{}{},
-	'*': struct{}{},
-	'?': struct{}{},
-	'[': struct{}{},
-	']': struct{}{},
-	'{': struct{}{},
-	'}': struct{}{},
+	'!': {},
+	'*': {},
+	'?': {},
+	'[': {},
+	']': {},
+	'{': {},
+	'}': {},
 }
 
 var (
