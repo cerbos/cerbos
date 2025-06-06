@@ -24,7 +24,6 @@ var (
 	errCyclicalVariables      = errors.New("cyclical variable definitions")
 	errImportNotFound         = errors.New("import not found")
 	errInvalidCompilationUnit = errors.New("invalid compilation unit")
-	errInvalidPolicyName      = errors.New("invalid policy name")
 	errInvalidResourceRule    = errors.New("invalid resource rule")
 	errInvalidSchema          = errors.New("invalid schema")
 	errMissingDefinition      = errors.New("missing policy definition")

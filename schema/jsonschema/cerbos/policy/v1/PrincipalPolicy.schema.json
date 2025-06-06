@@ -241,7 +241,7 @@
     },
     "principal": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^[^!\\*\\?\\[\\]\\{\\}]+$"
     },
     "rules": {
       "type": "array",

@@ -354,7 +354,7 @@
         },
         "principal": {
           "type": "string",
-          "minLength": 1
+          "pattern": "^[^!\\*\\?\\[\\]\\{\\}]+$"
         },
         "rules": {
           "type": "array",
@@ -451,7 +451,7 @@
         },
         "resource": {
           "type": "string",
-          "minLength": 1
+          "pattern": "^[^!\\*\\?\\[\\]\\{\\}]+$"
         },
         "rules": {
           "type": "array",
@@ -572,7 +572,7 @@
             },
             "role": {
               "type": "string",
-              "minLength": 1
+              "pattern": "^[^!\\*\\?\\[\\]\\{\\}]+$"
             },
             "rules": {
               "type": "array",
