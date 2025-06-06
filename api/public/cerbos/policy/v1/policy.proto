@@ -69,7 +69,7 @@ message Metadata {
 message ResourcePolicy {
   string resource = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).string = {min_len: 1}
+    (buf.validate.field).string = {pattern: "^[^!*?\\[\\]{}]+$"}
   ];
   string version = 2 [
     (buf.validate.field).required = true,
@@ -129,7 +129,7 @@ message ResourceRule {
 message RolePolicy {
   oneof policy_type {
     option (buf.validate.oneof).required = true;
-    string role = 1 [(buf.validate.field).string = {min_len: 1}];
+    string role = 1 [(buf.validate.field).string = {pattern: "^[^!*?\\[\\]{}]+$"}];
   }
   repeated string parent_roles = 5 [(buf.validate.field).repeated = {
     unique: true
@@ -172,7 +172,7 @@ message RoleRule {
 message PrincipalPolicy {
   string principal = 1 [
     (buf.validate.field).required = true,
-    (buf.validate.field).string = {min_len: 1}
+    (buf.validate.field).string = {pattern: "^[^!*?\\[\\]{}]+$"}
   ];
   string version = 2 [
     (buf.validate.field).required = true,
