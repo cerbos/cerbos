@@ -1,0 +1,11 @@
+-- principal_policies/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  principal: donald{duck!}
+  version: default
+  rules:
+    - resource: "*"
+      actions:
+        - action: "*"
+          effect: EFFECT_ALLOW

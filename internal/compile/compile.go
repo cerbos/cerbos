@@ -22,6 +22,16 @@ type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
 
 const AnyRoleVal = "*"
 
+var invalidPolicyNameChars = map[rune]struct{}{
+	'!': struct{}{},
+	'*': struct{}{},
+	'?': struct{}{},
+	'[': struct{}{},
+	']': struct{}{},
+	'{': struct{}{},
+	'}': struct{}{},
+}
+
 var (
 	emptyVal = &emptypb.Empty{}
 
@@ -73,6 +83,8 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		modCtx.addErrWithDesc(errUnexpectedErr, "Not a role policy definition")
 		return nil
 	}
+
+	checkPolicyName(modCtx, modCtx.def)
 
 	resources := make(map[string]*runtimev1.RunnableRolePolicySet_RuleList)
 	for i, r := range rp.Rules {
@@ -186,6 +198,8 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 	if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
 		return nil, nil
 	}
+
+	checkPolicyName(modCtx, modCtx.def)
 
 	compilePolicyConstants(modCtx, rp.Constants)
 	compilePolicyVariables(modCtx, rp.Variables)
@@ -341,6 +355,38 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 	return compiled
 }
 
+func checkPolicyName(modCtx *moduleCtx, p *policyv1.Policy) {
+	var name, protoPath string
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_PrincipalPolicy:
+		name = pt.PrincipalPolicy.Principal
+		protoPath = policy.PrincipalPolicyNameProtoPath()
+	case *policyv1.Policy_ResourcePolicy:
+		name = pt.ResourcePolicy.Resource
+		protoPath = policy.ResourcePolicyNameProtoPath()
+	case *policyv1.Policy_RolePolicy:
+		name = pt.RolePolicy.GetRole()
+		protoPath = policy.RolePolicyNameProtoPath()
+	default:
+		return
+	}
+
+	invalidChars := make([]rune, 0, len(name))
+	for _, r := range name {
+		if _, ok := invalidPolicyNameChars[r]; ok {
+			invalidChars = append(invalidChars, r)
+		}
+	}
+
+	if len(invalidChars) > 0 {
+		modCtx.addErrForProtoPath(
+			protoPath,
+			errInvalidPolicyName,
+			"Policy name '%s' contains invalid character(s) '%s'", name, string(invalidChars),
+		)
+	}
+}
+
 func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schemaMgr schema.Manager) error {
 	if rp.Schemas == nil {
 		return nil
@@ -480,6 +526,8 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 		modCtx.addErrWithDesc(errUnexpectedErr, "Not a principal policy definition")
 		return nil, nil
 	}
+
+	checkPolicyName(modCtx, modCtx.def)
 
 	compilePolicyConstants(modCtx, pp.Constants)
 	compilePolicyVariables(modCtx, pp.Variables)

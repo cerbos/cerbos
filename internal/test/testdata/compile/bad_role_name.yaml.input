@@ -1,0 +1,10 @@
+-- role_policies/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: superadmin!
+  parentRoles:
+    - "admin"
+  rules:
+    - resource: foo
+      allowActions: ["*"]

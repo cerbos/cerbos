@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+wantErrors:
+  - file: resource_policies/example.yaml
+    error: invalid policy name
+    description: |-
+      Policy name 'example/[?]/*' contains invalid character(s) '[?]*'
+    position:
+      line: 4
+      column: 3
+      path: "$.resourcePolicy.resource"
+mainDef: resource_policies/example.yaml
