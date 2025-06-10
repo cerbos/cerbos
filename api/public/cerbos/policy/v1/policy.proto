@@ -122,7 +122,7 @@ message ResourceRule {
     },
     (buf.validate.field).required = true
   ];
-  string name = 6 [(buf.validate.field).string.pattern = "^([[:alpha:]][\\w\\@\\.\\-]*)*$"];
+  string name = 6 [(buf.validate.field).string.pattern = "^([a-zA-Z][\\w\\@\\.\\-]*)*$"];
   Output output = 7;
 }
 
@@ -201,7 +201,7 @@ message PrincipalRule {
       },
       (buf.validate.field).required = true
     ];
-    string name = 4 [(buf.validate.field).string.pattern = "^([[:alpha:]][\\w\\@\\.\\-]*)*$"];
+    string name = 4 [(buf.validate.field).string.pattern = "^([a-zA-Z][\\w\\@\\.\\-]*)*$"];
     Output output = 5;
   }
 
