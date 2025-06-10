@@ -456,13 +456,9 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 	}
 
 	rt := ruletable.NewRuletable()
-	rps, err := cm.GetAll(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	for _, p := range rps {
-		ruletable.AddPolicy(rt, p)
+	if err := ruletable.LoadFromPolicyLoader(ctx, rt, cm); err != nil {
+		return nil, err
 	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, cm, c.schemaMgr)

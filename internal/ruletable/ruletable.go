@@ -57,6 +57,19 @@ func NewRuletable() *runtimev1.RuleTable {
 	}
 }
 
+func LoadFromPolicyLoader(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader) error {
+	rps, err := pl.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get all policies: %w", err)
+	}
+
+	for _, p := range rps {
+		AddPolicy(rt, p)
+	}
+
+	return nil
+}
+
 func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet) {
 	switch rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
@@ -928,13 +941,10 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 		return nil
 	}
 
-	rps, err := mgr.policyLoader.GetAll(ctx)
-	if err != nil {
-		return err
-	}
 	rt := NewRuletable()
-	for _, p := range rps {
-		AddPolicy(rt, p)
+
+	if err := LoadFromPolicyLoader(ctx, rt, mgr.policyLoader); err != nil {
+		return err
 	}
 
 	if err := mgr.load(rt); err != nil {

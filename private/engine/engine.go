@@ -34,13 +34,9 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
 
 	rt := ruletable.NewRuletable()
-	rps, err := bundleSrc.GetAll(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	for _, p := range rps {
-		ruletable.AddPolicy(rt, p)
+	if err := ruletable.LoadFromPolicyLoader(ctx, rt, bundleSrc); err != nil {
+		return nil, err
 	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, bundleSrc, schemaMgr)

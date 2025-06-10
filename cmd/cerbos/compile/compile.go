@@ -140,12 +140,8 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to create compile manager: %w", err)
 		}
 
-		rps, err := compileMgr.GetAll(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get all policies: %w", err)
-		}
-		for _, p := range rps {
-			ruletable.AddPolicy(rt, p)
+		if err := ruletable.LoadFromPolicyLoader(ctx, rt, compileMgr); err != nil {
+			return err
 		}
 
 		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, schemaMgr)

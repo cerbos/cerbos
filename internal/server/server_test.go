@@ -322,13 +322,9 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
-	rps, err := tp.policyLoader.GetAll(ctx)
-	require.NoError(t, err)
-
 	rt := ruletable.NewRuletable()
-	for _, p := range rps {
-		ruletable.AddPolicy(rt, p)
-	}
+
+	require.NoError(t, ruletable.LoadFromPolicyLoader(ctx, rt, tp.policyLoader))
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.policyLoader, tp.schemaMgr)
 	require.NoError(t, err)

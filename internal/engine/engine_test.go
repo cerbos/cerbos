@@ -333,11 +333,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	}
 
 	rt := ruletable.NewRuletable()
-	rps, err := compiler.GetAll(ctx)
-	require.NoError(tb, err)
-	for _, p := range rps {
-		ruletable.AddPolicy(rt, p)
-	}
+	require.NoError(tb, ruletable.LoadFromPolicyLoader(ctx, rt, compiler))
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
 	require.NoError(tb, err)

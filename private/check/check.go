@@ -88,13 +88,9 @@ func Check(ctx context.Context, conf *engine.Conf, idx compile.Index, inputs []*
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
 	rt := ruletable.NewRuletable()
-	rps, err := compiler.GetAll(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	for _, p := range rps {
-		ruletable.AddPolicy(rt, p)
+	if err := ruletable.LoadFromPolicyLoader(ctx, rt, compiler); err != nil {
+		return nil, err
 	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)

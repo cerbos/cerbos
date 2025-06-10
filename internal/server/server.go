@@ -159,12 +159,9 @@ func Start(ctx context.Context) error {
 	}
 
 	rt := ruletable.NewRuletable()
-	rps, err := policyLoader.GetAll(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get all policies: %w", err)
-	}
-	for _, p := range rps {
-		ruletable.AddPolicy(rt, p)
+
+	if err := ruletable.LoadFromPolicyLoader(ctx, rt, policyLoader); err != nil {
+		return nil
 	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, schemaMgr)
