@@ -73,16 +73,16 @@ message ResourcePolicy {
   ];
   string version = 2 [
     (buf.validate.field).required = true,
-    (buf.validate.field).string = {pattern: "^[[:word:]]+$"}
+    (buf.validate.field).string = {pattern: "^[\\w]+$"}
   ];
   repeated string import_derived_roles = 3 [(buf.validate.field).repeated = {
     unique: true
     items: {
-      string: {pattern: "^[[:word:]\\-\\.]+$"}
+      string: {pattern: "^[\\w\\-\\.]+$"}
     }
   }];
   repeated ResourceRule rules = 4;
-  string scope = 5 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
+  string scope = 5 [(buf.validate.field).string.pattern = "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"];
   Schemas schemas = 6;
   Variables variables = 7;
   ScopePermissions scope_permissions = 8;
@@ -103,7 +103,7 @@ message ResourceRule {
   repeated string derived_roles = 2 [(buf.validate.field).repeated = {
     unique: true
     items: {
-      string: {pattern: "^[[:word:]\\-\\.]+$"}
+      string: {pattern: "^[\\w\\-\\.]+$"}
     }
   }];
   repeated string roles = 3 [(buf.validate.field).repeated = {
@@ -122,7 +122,7 @@ message ResourceRule {
     },
     (buf.validate.field).required = true
   ];
-  string name = 6 [(buf.validate.field).string.pattern = "^([[:alpha:]][[:word:]\\@\\.\\-]*)*$"];
+  string name = 6 [(buf.validate.field).string.pattern = "^([[:alpha:]][\\w\\@\\.\\-]*)*$"];
   Output output = 7;
 }
 
@@ -137,7 +137,7 @@ message RolePolicy {
       string: {min_len: 1}
     }
   }];
-  string scope = 2 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
+  string scope = 2 [(buf.validate.field).string.pattern = "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"];
   repeated RoleRule rules = 3;
   // Deprecated: no-op.
   ScopePermissions scope_permissions = 4 [
@@ -176,10 +176,10 @@ message PrincipalPolicy {
   ];
   string version = 2 [
     (buf.validate.field).required = true,
-    (buf.validate.field).string.pattern = "^[[:word:]]+$"
+    (buf.validate.field).string.pattern = "^[\\w]+$"
   ];
   repeated PrincipalRule rules = 3;
-  string scope = 4 [(buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
+  string scope = 4 [(buf.validate.field).string.pattern = "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"];
   Variables variables = 5;
   ScopePermissions scope_permissions = 6;
   Constants constants = 7;
@@ -201,7 +201,7 @@ message PrincipalRule {
       },
       (buf.validate.field).required = true
     ];
-    string name = 4 [(buf.validate.field).string.pattern = "^([[:alpha:]][[:word:]\\@\\.\\-]*)*$"];
+    string name = 4 [(buf.validate.field).string.pattern = "^([[:alpha:]][\\w\\@\\.\\-]*)*$"];
     Output output = 5;
   }
 
@@ -219,7 +219,7 @@ message DerivedRoles {
   string name = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {
-      pattern: "^[[:word:]\\-\\.]+$"
+      pattern: "^[\\w\\-\\.]+$"
       min_len: 1
     }
   ];
@@ -233,7 +233,7 @@ message DerivedRoles {
 
 message RoleDef {
   string name = 1 [
-    (buf.validate.field).string.pattern = "^[[:word:]\\-\\.]+$",
+    (buf.validate.field).string.pattern = "^[\\w\\-\\.]+$",
     (buf.validate.field).required = true
   ];
   repeated string parent_roles = 2 [
@@ -253,7 +253,7 @@ message ExportConstants {
   string name = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {
-      pattern: "^[[:word:]\\-\\.]+$"
+      pattern: "^[\\w\\-\\.]+$"
       min_len: 1
     }
   ];
@@ -264,7 +264,7 @@ message Constants {
   repeated string import = 1 [(buf.validate.field).repeated = {
     unique: true
     items: {
-      string: {pattern: "^[[:word:]\\-\\.]+$"}
+      string: {pattern: "^[\\w\\-\\.]+$"}
     }
   }];
   map<string, google.protobuf.Value> local = 2;
@@ -274,7 +274,7 @@ message ExportVariables {
   string name = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {
-      pattern: "^[[:word:]\\-\\.]+$"
+      pattern: "^[\\w\\-\\.]+$"
       min_len: 1
     }
   ];
@@ -285,7 +285,7 @@ message Variables {
   repeated string import = 1 [(buf.validate.field).repeated = {
     unique: true
     items: {
-      string: {pattern: "^[[:word:]\\-\\.]+$"}
+      string: {pattern: "^[\\w\\-\\.]+$"}
     }
   }];
   map<string, string> local = 2;

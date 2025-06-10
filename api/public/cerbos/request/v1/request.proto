@@ -128,11 +128,11 @@ message ResourceSet {
     }
   ];
   string policy_version = 2 [
-    (buf.validate.field).string.pattern = "^[[:word:]]*$",
+    (buf.validate.field).string.pattern = "^[\\w]*$",
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
-      pattern: "^[[:word:]]*$"
+      pattern: "^[\\w]*$"
       example: "\"default\""
     }
   ];
@@ -147,11 +147,11 @@ message ResourceSet {
     }
   ];
   string scope = 4 [
-    (buf.validate.field).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$",
+    (buf.validate.field).string.pattern = "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$",
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "A dot-separated scope that describes the hierarchy these resources belong to. This is used for determining policy inheritance."
-      pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+      pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
     }
   ];
 }

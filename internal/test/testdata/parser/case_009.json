@@ -17,7 +17,7 @@
                 "column": 3,
                 "path": "$.resourcePolicy.scope"
             },
-            "message": "resourcePolicy.scope: value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
+            "message": "resourcePolicy.scope: value does not match regex pattern `^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$`"
         },
         {
             "kind": "KIND_VALIDATION_ERROR",
@@ -35,7 +35,7 @@
                 "column": 11,
                 "path": "$.resourcePolicy.rules[1].derivedRoles[0]"
             },
-            "message": "resourcePolicy.rules[1].derivedRoles[0]: value does not match regex pattern `^[[:word:]\\-\\.]+$`"
+            "message": "resourcePolicy.rules[1].derivedRoles[0]: value does not match regex pattern `^[\\w\\-\\.]+$`"
         }
     ],
     "want": [
@@ -208,7 +208,7 @@
                         "column": 3,
                         "path": "$.resourcePolicy.scope"
                     },
-                    "message": "resourcePolicy.scope: value does not match regex pattern `^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$`"
+                    "message": "resourcePolicy.scope: value does not match regex pattern `^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$`"
                 },
                 {
                     "kind": "KIND_VALIDATION_ERROR",
@@ -226,7 +226,7 @@
                         "column": 11,
                         "path": "$.resourcePolicy.rules[1].derivedRoles[0]"
                     },
-                    "message": "resourcePolicy.rules[1].derivedRoles[0]: value does not match regex pattern `^[[:word:]\\-\\.]+$`"
+                    "message": "resourcePolicy.rules[1].derivedRoles[0]: value does not match regex pattern `^[\\w\\-\\.]+$`"
                 }
             ]
         },

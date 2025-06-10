@@ -1166,13 +1166,13 @@
           "type": "string",
           "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
+          "pattern": "^[\\w]*$"
         },
         "scope": {
           "type": "string",
           "example": "acme.corp",
           "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
-          "pattern": "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+          "pattern": "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
         }
       }
     },
@@ -1405,7 +1405,7 @@
           "type": "string",
           "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
+          "pattern": "^[\\w]*$"
         },
         "roles": {
           "type": "array",
@@ -1431,7 +1431,7 @@
           "type": "string",
           "example": "acme.corp",
           "description": "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.",
-          "pattern": "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+          "pattern": "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
         }
       },
       "description": "A person or application attempting to perform the actions on the set of resources.",
@@ -1452,7 +1452,7 @@
           "type": "string",
           "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
+          "pattern": "^[\\w]*$"
         },
         "id": {
           "type": "string",
@@ -1471,7 +1471,7 @@
           "type": "string",
           "example": "acme.corp",
           "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
-          "pattern": "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+          "pattern": "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
         }
       },
       "required": [
@@ -2634,12 +2634,12 @@
           "type": "string",
           "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
+          "pattern": "^[\\w]*$"
         },
         "scope": {
           "type": "string",
           "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
-          "pattern": "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+          "pattern": "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
         }
       },
       "required": [
@@ -3010,7 +3010,7 @@
           "type": "string",
           "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
+          "pattern": "^[\\w]*$"
         },
         "instances": {
           "type": "object",
@@ -3039,7 +3039,7 @@
         "scope": {
           "type": "string",
           "description": "A dot-separated scope that describes the hierarchy these resources belong to. This is used for determining policy inheritance.",
-          "pattern": "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+          "pattern": "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
         }
       },
       "description": "Set of resources to check",

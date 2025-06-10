@@ -32,21 +32,21 @@ message PlanResourcesInput {
     map<string, google.protobuf.Value> attr = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Key-value pairs of contextual data about the resource that are known at a time of the request."}];
 
     string policy_version = 3 [
-      (buf.validate.field).string = {pattern: "^[[:word:]]*$"},
+      (buf.validate.field).string = {pattern: "^[\\w]*$"},
       (google.api.field_behavior) = OPTIONAL,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
-        pattern: "^[[:word:]]*$"
+        pattern: "^[\\w]*$"
         example: "\"default\""
       }
     ];
 
     string scope = 4 [
-      (buf.validate.field).string = {pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"},
+      (buf.validate.field).string = {pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"},
       (google.api.field_behavior) = OPTIONAL,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
-        pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+        pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
       }
     ];
   }
@@ -185,11 +185,11 @@ message Resource {
     }
   ];
   string policy_version = 2 [
-    (buf.validate.field).string = {pattern: "^[[:word:]]*$"},
+    (buf.validate.field).string = {pattern: "^[\\w]*$"},
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
-      pattern: "^[[:word:]]*$"
+      pattern: "^[\\w]*$"
       example: "\"default\""
     }
   ];
@@ -213,11 +213,11 @@ message Resource {
     }
   ];
   string scope = 5 [
-    (buf.validate.field).string = {pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"},
+    (buf.validate.field).string = {pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"},
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
-      pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+      pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
       example: "\"acme.corp\""
     }
   ];
@@ -237,12 +237,12 @@ message Principal {
     }
   ];
   string policy_version = 2 [
-    (buf.validate.field).string = {pattern: "^[[:word:]]*$"},
+    (buf.validate.field).string = {pattern: "^[\\w]*$"},
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
       example: "\"default\""
-      pattern: "^[[:word:]]*$"
+      pattern: "^[\\w]*$"
     }
   ];
   repeated string roles = 3 [
@@ -273,11 +273,11 @@ message Principal {
     }
   ];
   string scope = 5 [
-    (buf.validate.field).string = {pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"},
+    (buf.validate.field).string = {pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"},
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance."
-      pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
+      pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
       example: "\"acme.corp\""
     }
   ];
