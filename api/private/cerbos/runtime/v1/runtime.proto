@@ -32,6 +32,11 @@ message RuleTable {
       map<string, google.protobuf.Empty> actions = 1;
     }
 
+    message Params {
+      repeated Variable ordered_variables = 1;
+      map<string, google.protobuf.Value> constants = 2;
+    }
+
     string origin_fqn = 1;
     string resource = 2;
     string role = 3;
@@ -49,13 +54,11 @@ message RuleTable {
     Output emit_output = 12;
     string name = 13;
     string principal = 14;
-    repeated Variable ordered_variables = 16;
-    map<string, google.protobuf.Value> constants = 17;
-    repeated Variable derived_role_ordered_variables = 18;
-    map<string, google.protobuf.Value> derived_role_constants = 19;
-    string evaluation_key = 20;
-    cerbos.policy.v1.Kind policy_kind = 21;
-    bool from_role_policy = 22;
+    Params params = 16;
+    Params derived_role_params = 17;
+    string evaluation_key = 18;
+    cerbos.policy.v1.Kind policy_kind = 19;
+    bool from_role_policy = 20;
   }
 
   message RoleParentRoles {

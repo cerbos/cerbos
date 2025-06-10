@@ -123,10 +123,12 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 				EmitOutput:       emitOutput,
 				Name:             rule.Name,
 				Principal:        principalID,
-				OrderedVariables: p.OrderedVariables,
-				Constants:        p.Constants,
-				EvaluationKey:    evaluationKey,
-				PolicyKind:       policyv1.Kind_KIND_PRINCIPAL,
+				Params: &runtimev1.RuleTable_RuleRow_Params{
+					OrderedVariables: p.OrderedVariables,
+					Constants:        p.Constants,
+				},
+				EvaluationKey: evaluationKey,
+				PolicyKind:    policyv1.Kind_KIND_PRINCIPAL,
 			}
 
 			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
@@ -205,10 +207,12 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 					Version:          rrps.Meta.Version,
 					EmitOutput:       emitOutput,
 					Name:             rule.Name,
-					OrderedVariables: p.OrderedVariables,
-					Constants:        p.Constants,
-					EvaluationKey:    evaluationKey,
-					PolicyKind:       policyv1.Kind_KIND_RESOURCE,
+					Params: &runtimev1.RuleTable_RuleRow_Params{
+						OrderedVariables: p.OrderedVariables,
+						Constants:        p.Constants,
+					},
+					EvaluationKey: evaluationKey,
+					PolicyKind:    policyv1.Kind_KIND_RESOURCE,
 				}
 
 				if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
@@ -239,21 +243,25 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 							ActionSet: &runtimev1.RuleTable_RuleRow_Action{
 								Action: a,
 							},
-							Condition:                   rule.Condition,
-							DerivedRoleCondition:        rdr.Condition,
-							Effect:                      rule.Effect,
-							Scope:                       p.Scope,
-							ScopePermissions:            scopePermissions,
-							Version:                     rrps.Meta.Version,
-							OriginDerivedRole:           dr,
-							EmitOutput:                  emitOutput,
-							Name:                        rule.Name,
-							OrderedVariables:            p.OrderedVariables,
-							Constants:                   p.Constants,
-							DerivedRoleOrderedVariables: rdr.OrderedVariables,
-							DerivedRoleConstants:        rdr.Constants,
-							EvaluationKey:               evaluationKey,
-							PolicyKind:                  policyv1.Kind_KIND_RESOURCE,
+							Condition:            rule.Condition,
+							DerivedRoleCondition: rdr.Condition,
+							Effect:               rule.Effect,
+							Scope:                p.Scope,
+							ScopePermissions:     scopePermissions,
+							Version:              rrps.Meta.Version,
+							OriginDerivedRole:    dr,
+							EmitOutput:           emitOutput,
+							Name:                 rule.Name,
+							Params: &runtimev1.RuleTable_RuleRow_Params{
+								OrderedVariables: p.OrderedVariables,
+								Constants:        p.Constants,
+							},
+							DerivedRoleParams: &runtimev1.RuleTable_RuleRow_Params{
+								OrderedVariables: rdr.OrderedVariables,
+								Constants:        rdr.Constants,
+							},
+							EvaluationKey: evaluationKey,
+							PolicyKind:    policyv1.Kind_KIND_RESOURCE,
 						}
 
 						if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
@@ -426,13 +434,13 @@ func (mgr *Manager) load(rt *runtimev1.RuleTable) error {
 		switch r.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
 			if !r.FromRolePolicy { //nolint:nestif
-				params, err := generateRowParams(r.OriginFqn, r.OrderedVariables, r.Constants)
+				params, err := generateRowParams(r.OriginFqn, r.Params.OrderedVariables, r.Params.Constants)
 				if err != nil {
 					return err
 				}
 				row.Params = params
 				if r.OriginDerivedRole != "" {
-					drParams, err := generateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.DerivedRoleOrderedVariables, r.DerivedRoleConstants)
+					drParams, err := generateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.DerivedRoleParams.OrderedVariables, r.DerivedRoleParams.Constants)
 					if err != nil {
 						return err
 					}
@@ -454,7 +462,7 @@ func (mgr *Manager) load(rt *runtimev1.RuleTable) error {
 				}
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
-			params, err := generateRowParams(r.OriginFqn, r.OrderedVariables, r.Constants)
+			params, err := generateRowParams(r.OriginFqn, r.Params.OrderedVariables, r.Params.Constants)
 			if err != nil {
 				return err
 			}
