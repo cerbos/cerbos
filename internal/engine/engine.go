@@ -5,7 +5,6 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"math/rand"
@@ -32,8 +31,6 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 )
-
-var errNoPoliciesMatched = errors.New("no matching policies")
 
 const (
 	defaultEffect        = effectv1.Effect_EFFECT_DENY
@@ -136,7 +133,7 @@ type Engine struct {
 	schemaMgr         schema.Manager
 	auditLog          audit.Log
 	policyLoader      policyloader.PolicyLoader
-	ruleTableManager  *ruletable.RuleTableManager
+	ruleTableManager  *ruletable.Manager
 	conf              *Conf
 	metadataExtractor audit.MetadataExtractor
 	workerPool        []chan<- workIn
@@ -146,7 +143,7 @@ type Engine struct {
 type Components struct {
 	AuditLog          audit.Log
 	PolicyLoader      policyloader.PolicyLoader
-	RuleTableManager  *ruletable.RuleTableManager
+	RuleTableManager  *ruletable.Manager
 	SchemaMgr         schema.Manager
 	MetadataExtractor audit.MetadataExtractor
 }
@@ -176,7 +173,7 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	return engine
 }
 
-func NewEphemeral(conf *Conf, rtMgr *ruletable.RuleTableManager, schemaMgr schema.Manager) *Engine {
+func NewEphemeral(conf *Conf, rtMgr *ruletable.Manager, schemaMgr schema.Manager) *Engine {
 	if conf == nil {
 		conf = &Conf{}
 		conf.SetDefaults()
@@ -251,21 +248,12 @@ func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanRes
 }
 
 func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanResourcesInput, opts *CheckOptions) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
-	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, nil, err
 	}
 
-	_, ppVersion, _ := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, opts.evalParams)
-	_, rpVersion, _ := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
-
-	// if err := engine.ruleTableManager.LazyLoadPrincipalPolicy(ctx, ppName, ppVersion, ppScope); err != nil {
-	// 	return nil, nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", ppName, ppVersion, ppScope, err)
-	// }
-
-	// if err := engine.ruleTableManager.LazyLoadResourcePolicy(ctx, rpName, rpVersion, rpScope, input.Principal.Roles); err != nil {
-	// 	return nil, nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", rpName, rpVersion, rpScope, err)
-	// }
+	ppVersion := engine.policyVersion(input.Principal.PolicyVersion, opts.evalParams)
+	rpVersion := engine.policyVersion(input.Resource.PolicyVersion, opts.evalParams)
 
 	return planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTableManager, input, ppVersion, rpVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
 }
@@ -491,32 +479,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	return output, result.AuditTrail, nil
 }
 
-type ruleTableEvaluatorParams struct {
-	name, version, scope string
-}
-
-func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams ruletable.EvalParams, principal, resource ruleTableEvaluatorParams, inputRoles []string) (Evaluator, error) {
-	// if err := engine.ruleTableManager.LazyLoadPrincipalPolicy(ctx, principal.name, principal.version, principal.scope); err != nil {
-	// 	return nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", principal.name, principal.version, principal.scope, err)
-	// }
-
-	// if err := engine.ruleTableManager.LazyLoadResourcePolicy(ctx, resource.name, resource.version, resource.scope, inputRoles); err != nil {
-	// 	return nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", resource.name, resource.version, resource.scope, err)
-	// }
-
-	return NewRuleTableEvaluator(engine.ruleTableManager, engine.schemaMgr, eparams), nil
-}
-
-func (engine *Engine) policyAttr(name, version, scope string, params ruletable.EvalParams) (pName, pVersion, pScope string) {
-	pName = name
-	pVersion = version
-	pScope = scope
-
+func (engine *Engine) policyVersion(version string, params ruletable.EvalParams) string {
 	if version == "" {
-		pVersion = params.DefaultPolicyVersion
+		version = params.DefaultPolicyVersion
 	}
 
-	return pName, pVersion, pScope
+	return version
 }
 
 type workOut struct {

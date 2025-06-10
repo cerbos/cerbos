@@ -26,16 +26,16 @@ type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, ruletable.EvalParams, *enginev1.CheckInput) (*ruletable.PolicyEvalResult, error)
 }
 
-func NewRuleTableEvaluator(rt *ruletable.RuleTableManager, schemaMgr schema.Manager, eparams ruletable.EvalParams) Evaluator {
+func NewRuleTableEvaluator(rt *ruletable.Manager, schemaMgr schema.Manager, eparams ruletable.EvalParams) Evaluator {
 	return &ruleTableEvaluator{
-		RuleTableManager: rt,
-		schemaMgr:        schemaMgr,
-		evalParams:       eparams,
+		Manager:    rt,
+		schemaMgr:  schemaMgr,
+		evalParams: eparams,
 	}
 }
 
 type ruleTableEvaluator struct {
-	*ruletable.RuleTableManager
+	*ruletable.Manager
 	schemaMgr  schema.Manager
 	evalParams ruletable.EvalParams
 }

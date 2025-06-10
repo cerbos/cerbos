@@ -35,19 +35,19 @@ const allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
 var errNoPoliciesMatched = errors.New("no matching policies")
 
 type RuleTable struct {
+	policyLoader        policyloader.PolicyLoader
+	principalScopeMap   map[string]struct{}
+	log                 *zap.SugaredLogger
+	primaryIdx          map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	derivedRolePolicies map[namer.ModuleID]map[namer.ModuleID]struct{}
+	storeQueryRegister  *storeQueryRegister
 	*runtimev1.RuleTable
-	log                      *zap.SugaredLogger
-	policyLoader             policyloader.PolicyLoader                                  // TODO(saml) not required in static
-	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]] // TODO(saml) POST
-	derivedRolePolicies      map[namer.ModuleID]map[namer.ModuleID]struct{}             // TODO(saml) not required in static
-	storeQueryRegister       *storeQueryRegister
-	principalScopeMap        map[string]struct{}                                       // TODO(saml) POST
-	resourceScopeMap         map[string]struct{}                                       // TODO(saml) POST
-	scopeScopePermissions    map[string]policyv1.ScopePermissions                      // TODO(saml) POST
-	parentRoleAncestorsCache map[string]map[string][]string                            // TODO(saml) POST
-	awaitingHealthyIndex     atomic.Bool                                               // TODO(saml) not required in static
-	mu                       sync.RWMutex                                              // TODO(saml) not required in static
-	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole // TODO(saml) PRE + POST(? for WrappedRunnableDerivedRole)
+	resourceScopeMap         map[string]struct{}
+	scopeScopePermissions    map[string]policyv1.ScopePermissions
+	parentRoleAncestorsCache map[string]map[string][]string
+	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	mu                       sync.RWMutex
+	awaitingHealthyIndex     atomic.Bool
 }
 
 type WrappedRunnableDerivedRole struct {
