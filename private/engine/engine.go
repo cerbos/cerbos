@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -34,7 +33,7 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
 
-	rt := &runtimev1.RuleTable{}
+	rt := ruletable.NewRuletable()
 	rps, err := bundleSrc.GetAll(ctx)
 	if err != nil {
 		return nil, err
@@ -44,7 +43,7 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 		ruletable.AddPolicy(rt, p)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, bundleSrc, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

@@ -448,6 +448,10 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 
 	tctx := tracer.Start(checkOpts.tracerSink)
 
+	if err := engine.ruleTableManager.Refresh(ctx); err != nil {
+		return nil, nil, err
+	}
+
 	// evaluate the policies
 	result, err := engine.ruleTableManager.Evaluate(ctx, tctx, checkOpts.evalParams, input)
 	if err != nil {

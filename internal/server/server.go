@@ -36,7 +36,6 @@ import (
 	"google.golang.org/grpc/credentials/local"
 	"google.golang.org/grpc/metadata"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
@@ -159,7 +158,7 @@ func Start(ctx context.Context) error {
 		return ErrInvalidStore
 	}
 
-	rt := &runtimev1.RuleTable{}
+	rt := ruletable.NewRuletable()
 	rps, err := policyLoader.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get all policies: %w", err)
@@ -168,7 +167,7 @@ func Start(ctx context.Context) error {
 		ruletable.AddPolicy(rt, p)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, schemaMgr)
 	if err != nil {
 		return fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

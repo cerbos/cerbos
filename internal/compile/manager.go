@@ -249,14 +249,18 @@ func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, e
 		return nil, fmt.Errorf("failed to get compilation units: %w", err)
 	}
 
-	rpsSet := make([]*runtimev1.RunnablePolicySet, len(cus))
-	for i, cu := range cus {
+	rpsSet := make([]*runtimev1.RunnablePolicySet, 0, len(cus))
+	for _, cu := range cus {
 		rps, err := c.compile(cu)
 		if err != nil {
 			return nil, PolicyCompilationErr{underlying: err}
 		}
 
-		rpsSet[i] = rps
+		if rps == nil {
+			continue
+		}
+
+		rpsSet = append(rpsSet, rps)
 	}
 
 	return rpsSet, nil

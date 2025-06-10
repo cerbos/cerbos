@@ -24,7 +24,6 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -386,14 +385,14 @@ func mkEngine(t *testing.T) *engine.Engine {
 
 	mgr := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
-	rt := &runtimev1.RuleTable{}
+	rt := ruletable.NewRuletable()
 	rps, err := mgr.GetAll(ctx)
 	require.NoError(t, err)
 	for _, p := range rps {
 		ruletable.AddPolicy(rt, p)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, schemaMgr)
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, engine.Components{

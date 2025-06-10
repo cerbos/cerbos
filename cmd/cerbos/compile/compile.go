@@ -17,7 +17,6 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
@@ -134,15 +133,14 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			Trace:                   c.Verbose,
 		}
 
-		// TODO(saml) fill ruletable
-		rt := &runtimev1.RuleTable{}
+		rt := ruletable.NewRuletable()
 
-		mgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+		rtMgr, err := ruletable.NewRuleTableManager(rt, nil, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}
 
-		eng := engine.NewEphemeral(nil, mgr, schemaMgr)
+		eng := engine.NewEphemeral(nil, rtMgr, schemaMgr)
 
 		testFsys, testDir, err := c.testsDir()
 		if err != nil {

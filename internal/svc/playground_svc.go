@@ -21,7 +21,6 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -456,7 +455,7 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	rt := &runtimev1.RuleTable{}
+	rt := ruletable.NewRuletable()
 	rps, err := cm.GetAll(ctx)
 	if err != nil {
 		return nil, err
@@ -466,7 +465,7 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		ruletable.AddPolicy(rt, p)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, c.schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, cm, c.schemaMgr)
 	if err != nil {
 		return nil, err
 	}

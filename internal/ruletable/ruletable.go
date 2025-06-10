@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	celast "github.com/google/cel-go/common/ast"
 	"go.uber.org/multierr"
@@ -23,6 +24,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -41,6 +43,16 @@ const (
 	noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
 	noPolicyMatch           = "NO_MATCH"
 )
+
+func NewRuletable() *runtimev1.RuleTable {
+	return &runtimev1.RuleTable{
+		Rules:              []*runtimev1.RuleTable_RuleRow{},
+		Schemas:            make(map[uint64]*policyv1.Schemas),
+		Meta:               make(map[uint64]*runtimev1.RuleTableMetadata),
+		ScopeParentRoles:   make(map[string]*runtimev1.RuleTable_RoleParentRoles),
+		PolicyDerivedRoles: make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
+	}
+}
 
 func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet) {
 	switch rps.PolicySet.(type) {
@@ -314,14 +326,16 @@ func insertRule(rt *runtimev1.RuleTable, r *runtimev1.RuleTable_RuleRow) {
 type RuleTableManager struct {
 	*runtimev1.RuleTable
 	log                      *zap.SugaredLogger
+	policyLoader             policyloader.PolicyLoader
 	schemaMgr                schema.Manager
-	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]] // TODO(saml) POST
-	principalScopeMap        map[string]struct{}                                        // TODO(saml) POST
-	resourceScopeMap         map[string]struct{}                                        // TODO(saml) POST
-	scopeScopePermissions    map[string]policyv1.ScopePermissions                       // TODO(saml) POST
-	parentRoleAncestorsCache map[string]map[string][]string                             // TODO(saml) POST
-	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole  // TODO(saml) PRE + POST(? for WrappedRunnableDerivedRole)
-	mu                       sync.RWMutex                                               // TODO(saml) not required in static
+	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	principalScopeMap        map[string]struct{}
+	resourceScopeMap         map[string]struct{}
+	scopeScopePermissions    map[string]policyv1.ScopePermissions
+	parentRoleAncestorsCache map[string]map[string][]string
+	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	isStale                  atomic.Bool
+	mu                       sync.RWMutex
 }
 
 type Row struct {
@@ -375,20 +389,33 @@ type CelProgram struct {
 	Name string
 }
 
-func NewRuleTableManager(rt *runtimev1.RuleTable, schemaMgr schema.Manager) (*RuleTableManager, error) {
+func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*RuleTableManager, error) {
 	mgr := &RuleTableManager{
-		RuleTable:                rt,
-		log:                      zap.S().Named("ruletable"),
-		schemaMgr:                schemaMgr,
-		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
-		policyDerivedRoles:       make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole),
-		principalScopeMap:        make(map[string]struct{}),
-		resourceScopeMap:         make(map[string]struct{}),
-		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
-		parentRoleAncestorsCache: make(map[string]map[string][]string),
+		log: zap.S().Named("ruletable"),
+		// TODO(saml) ultimately, the policyLoader should not be attached to the rule table manager. On policy changes, we'll need a separate
+		// mechanism that patches rule tables and reapplies them. This'll be done in a future refactor
+		policyLoader: policyLoader,
+		schemaMgr:    schemaMgr,
 	}
 
-	for _, r := range rt.Rules {
+	mgr.load(rt)
+
+	return mgr, nil
+}
+
+func (mgr *RuleTableManager) load(rt *runtimev1.RuleTable) error {
+	mgr.mu.Lock()
+	defer mgr.mu.Unlock()
+
+	mgr.RuleTable = rt
+	mgr.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
+	mgr.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
+	mgr.principalScopeMap = make(map[string]struct{})
+	mgr.resourceScopeMap = make(map[string]struct{})
+	mgr.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
+	mgr.parentRoleAncestorsCache = make(map[string]map[string][]string)
+
+	for _, r := range mgr.Rules {
 		row := &Row{
 			RuleTable_RuleRow: r,
 		}
@@ -398,19 +425,19 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, schemaMgr schema.Manager) (*Ru
 			if !r.FromRolePolicy {
 				params, err := generateRowParams(r.OriginFqn, r.OrderedVariables, r.Constants)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				row.Params = params
 				if r.OriginDerivedRole != "" {
 					drParams, err := generateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.DerivedRoleOrderedVariables, r.DerivedRoleConstants)
 					if err != nil {
-						return nil, err
+						return err
 					}
 					row.DerivedRoleParams = drParams
 				}
 
 				modID := namer.GenModuleIDFromFQN(r.OriginFqn)
-				if pdr, ok := rt.PolicyDerivedRoles[modID.RawValue()]; ok {
+				if pdr, ok := mgr.PolicyDerivedRoles[modID.RawValue()]; ok {
 					if _, ok := mgr.policyDerivedRoles[modID]; !ok {
 						mgr.policyDerivedRoles[modID] = make(map[string]*WrappedRunnableDerivedRole)
 					}
@@ -428,7 +455,7 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, schemaMgr schema.Manager) (*Ru
 		case policyv1.Kind_KIND_PRINCIPAL:
 			params, err := generateRowParams(r.OriginFqn, r.OrderedVariables, r.Constants)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			row.Params = params
 		}
@@ -440,7 +467,7 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, schemaMgr schema.Manager) (*Ru
 	clear(mgr.RuleTable.Rules)
 	clear(mgr.RuleTable.PolicyDerivedRoles)
 
-	return mgr, nil
+	return nil
 }
 
 func generateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {
@@ -667,6 +694,10 @@ func (rt *RuleTableManager) ScopedRoleExists(version, scope, role string) bool {
 func (rt *RuleTableManager) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
 	res := []*Row{}
 
+	// TODO(saml) can go once merges are handled outside the manager and rule tables are truly static
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+
 	processedActionSets := make(map[*util.GlobMap[[]*Row]]struct{})
 	processedRuleSets := make(map[*[]*Row]struct{})
 	if scopeSet, ok := rt.primaryIdx[version]; ok { //nolint:nestif
@@ -876,11 +907,45 @@ func (rt *RuleTableManager) OnStorageEvent(events ...storage.Event) {
 		switch evt.Kind {
 		case storage.EventReload, storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			rt.log.Info("Reloading ruletable")
+			rt.isStale.Store(true)
 			// TODO(saml)
+			// rps, err := rt.policyLoader.GetAll(context.TODO())
+			// if err != nil {
+			// 	// TODO(saml)
+			// 	continue
+			// }
+			// new := &runtimev1.RuleTable{}
+			// for _, p := range rps {
+			// 	AddPolicy(new, p)
+			// }
+			// rt.load(new)
 		default:
 			rt.log.Debugw("Ignoring storage event", "event", evt)
 		}
 	}
+}
+
+func (rt *RuleTableManager) Refresh(ctx context.Context) error {
+	if !rt.isStale.Load() {
+		return nil
+	}
+
+	rps, err := rt.policyLoader.GetAll(ctx)
+	if err != nil {
+		return err
+	}
+	new := NewRuletable()
+	for _, p := range rps {
+		AddPolicy(new, p)
+	}
+
+	if err := rt.load(new); err != nil {
+		return err
+	}
+
+	rt.isStale.Store(false)
+
+	return nil
 }
 
 // TODO(saml) rename to Check

@@ -50,7 +50,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
-	rt := &runtimev1.RuleTable{}
+	rt := ruletable.NewRuletable()
 	rps, err := compiler.GetAll(ctx)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 		ruletable.AddPolicy(rt, p)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

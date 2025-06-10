@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -260,12 +259,11 @@ func TestAdminService(t *testing.T) {
 		schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 		policyLoader := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
-		tp := testParam{
+		return testParam{
 			store:        store,
 			policyLoader: policyLoader,
 			schemaMgr:    schemaMgr,
 		}
-		return tp
 	}
 
 	testdataDir := test.PathToDir(t, "server")
@@ -324,15 +322,20 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
-	rt := &runtimev1.RuleTable{}
 	rps, err := tp.policyLoader.GetAll(ctx)
 	require.NoError(t, err)
+
+	rt := ruletable.NewRuletable()
 	for _, p := range rps {
 		ruletable.AddPolicy(rt, p)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.policyLoader, tp.schemaMgr)
 	require.NoError(t, err)
+
+	if ss, ok := tp.policyLoader.(storage.Subscribable); ok {
+		ss.Subscribe(ruletableMgr)
+	}
 
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      tp.policyLoader,

@@ -8,7 +8,6 @@ import (
 	"io/fs"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/ruletable"
@@ -88,7 +87,7 @@ func Check(ctx context.Context, conf *engine.Conf, idx compile.Index, inputs []*
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
-	rt := &runtimev1.RuleTable{}
+	rt := ruletable.NewRuletable()
 	rps, err := compiler.GetAll(ctx)
 	if err != nil {
 		return nil, err
@@ -98,7 +97,7 @@ func Check(ctx context.Context, conf *engine.Conf, idx compile.Index, inputs []*
 		ruletable.AddPolicy(rt, p)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
 	if err != nil {
 		return nil, err
 	}
