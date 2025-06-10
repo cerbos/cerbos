@@ -127,7 +127,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		c.TestOutput = &value
 	}
 
-	if !c.SkipTests {
+	if !c.SkipTests { //nolint:nestif
 		verifyConf := verify.Config{
 			IncludedTestNamesRegexp: c.RunRegexp,
 			Trace:                   c.Verbose,
@@ -135,7 +135,20 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 		rt := ruletable.NewRuletable()
 
-		rtMgr, err := ruletable.NewRuleTableManager(rt, nil, schemaMgr)
+		compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
+		if err != nil {
+			return fmt.Errorf("failed to create compile manager: %w", err)
+		}
+
+		rps, err := compileMgr.GetAll(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get all policies: %w", err)
+		}
+		for _, p := range rps {
+			ruletable.AddPolicy(rt, p)
+		}
+
+		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}
