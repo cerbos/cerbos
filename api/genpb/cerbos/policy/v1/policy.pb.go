@@ -3952,7 +3952,7 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\aschemas\x18\x06 \x01(\v2\x19.cerbos.policy.v1.SchemasR\aschemas\x129\n" +
 	"\tvariables\x18\a \x01(\v2\x1b.cerbos.policy.v1.VariablesR\tvariables\x12O\n" +
 	"\x11scope_permissions\x18\b \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsR\x10scopePermissions\x129\n" +
-	"\tconstants\x18\t \x01(\v2\x1b.cerbos.policy.v1.ConstantsR\tconstants\"\x89\x03\n" +
+	"\tconstants\x18\t \x01(\v2\x1b.cerbos.policy.v1.ConstantsR\tconstants\"\x86\x03\n" +
 	"\fResourceRule\x12-\n" +
 	"\aactions\x18\x01 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
 	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\aactions\x12>\n" +
@@ -3960,8 +3960,8 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x05roles\x18\x03 \x03(\tB\x0e\xbaH\v\x92\x01\b\x18\x01\"\x04r\x02\x10\x01R\x05roles\x129\n" +
 	"\tcondition\x18\x04 \x01(\v2\x1b.cerbos.policy.v1.ConditionR\tcondition\x12?\n" +
 	"\x06effect\x18\x05 \x01(\x0e2\x18.cerbos.effect.v1.EffectB\r\xbaH\n" +
-	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x06effect\x126\n" +
-	"\x04name\x18\x06 \x01(\tB\"\xbaH\x1fr\x1d2\x1b^([[:alpha:]][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
+	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x06effect\x123\n" +
+	"\x04name\x18\x06 \x01(\tB\x1f\xbaH\x1cr\x1a2\x18^([a-zA-Z][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
 	"\x06output\x18\a \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\xd6\x02\n" +
 	"\n" +
 	"RolePolicy\x12,\n" +
@@ -3984,18 +3984,18 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x05scope\x18\x04 \x01(\tB*\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x129\n" +
 	"\tvariables\x18\x05 \x01(\v2\x1b.cerbos.policy.v1.VariablesR\tvariables\x12O\n" +
 	"\x11scope_permissions\x18\x06 \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsR\x10scopePermissions\x129\n" +
-	"\tconstants\x18\a \x01(\v2\x1b.cerbos.policy.v1.ConstantsR\tconstants\"\x9b\x03\n" +
+	"\tconstants\x18\a \x01(\v2\x1b.cerbos.policy.v1.ConstantsR\tconstants\"\x98\x03\n" +
 	"\rPrincipalRule\x12&\n" +
 	"\bresource\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\bresource\x12M\n" +
-	"\aactions\x18\x02 \x03(\v2&.cerbos.policy.v1.PrincipalRule.ActionB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\aactions\x1a\x92\x02\n" +
+	"\aactions\x18\x02 \x03(\v2&.cerbos.policy.v1.PrincipalRule.ActionB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\aactions\x1a\x8f\x02\n" +
 	"\x06Action\x12\"\n" +
 	"\x06action\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x06action\x129\n" +
 	"\tcondition\x18\x02 \x01(\v2\x1b.cerbos.policy.v1.ConditionR\tcondition\x12?\n" +
 	"\x06effect\x18\x03 \x01(\x0e2\x18.cerbos.effect.v1.EffectB\r\xbaH\n" +
-	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x06effect\x126\n" +
-	"\x04name\x18\x04 \x01(\tB\"\xbaH\x1fr\x1d2\x1b^([[:alpha:]][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
+	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x06effect\x123\n" +
+	"\x04name\x18\x04 \x01(\tB\x1f\xbaH\x1cr\x1a2\x18^([a-zA-Z][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
 	"\x06output\x18\x05 \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\xfb\x01\n" +
 	"\fDerivedRoles\x12+\n" +
 	"\x04name\x18\x01 \x01(\tB\x17\xbaH\x14\xc8\x01\x01r\x0f\x10\x012\v^[\\w\\-\\.]+$R\x04name\x12H\n" +
