@@ -938,8 +938,7 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 	return nil
 }
 
-// TODO(saml) rename to Check.
-func (mgr *Manager) Evaluate(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	principalVersion := input.Principal.PolicyVersion
 	if principalVersion == "" {
 		principalVersion = evalParams.DefaultPolicyVersion

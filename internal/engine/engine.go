@@ -74,7 +74,11 @@ func newCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *CheckOp
 		tracerSink = tracer.NewZapSink(logging.FromContext(ctx).Named("tracer"))
 	}
 
-	co := &CheckOptions{tracerSink: tracerSink, evalParams: defaultEvalParams(conf)}
+	co := &CheckOptions{tracerSink: tracerSink, evalParams: ruletable.EvalParams{
+		Globals:              conf.Globals,
+		DefaultPolicyVersion: conf.DefaultPolicyVersion,
+		LenientScopeSearch:   conf.LenientScopeSearch,
+	}}
 	for _, opt := range opts {
 		opt(co)
 	}
@@ -441,7 +445,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	// evaluate the policies
-	result, err := engine.ruleTableManager.Evaluate(ctx, tctx, checkOpts.evalParams, input)
+	result, err := engine.ruleTableManager.Check(ctx, tctx, checkOpts.evalParams, input)
 	if err != nil {
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 		return nil, nil, fmt.Errorf("failed to evaluate policies: %w", err)
