@@ -13,13 +13,13 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 
-type Cache[K, V any] struct {
+type Cache[K comparable, V any] struct {
 	cache     gcache.Cache
 	hitAttrs  []attribute.KeyValue
 	missAttrs []attribute.KeyValue
 }
 
-func New[K, V any](kind string, size uint, attributes ...attribute.KeyValue) *Cache[K, V] {
+func New[K comparable, V any](kind string, size uint, attributes ...attribute.KeyValue) *Cache[K, V] {
 	attrs := append([]attribute.KeyValue{metrics.KindKey(kind)}, attributes...)
 	cache := &Cache[K, V]{
 		hitAttrs:  append([]attribute.KeyValue{metrics.ResultKey("hit")}, attrs...),
@@ -75,6 +75,16 @@ func (c *Cache[K, V]) Remove(k K) bool {
 
 func (c *Cache[K, V]) Purge() {
 	c.cache.Purge()
+}
+
+func (c *Cache[K, V]) CopyFromMap(m map[K]V, expiry time.Duration) {
+	for k, v := range m {
+		c.SetWithExpire(k, v, expiry)
+	}
+}
+
+func (c *Cache[K, V]) Len() int {
+	return c.cache.Len(false)
 }
 
 func (c *Cache[K, V]) hit() {

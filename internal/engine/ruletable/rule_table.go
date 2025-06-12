@@ -7,12 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"net/http"
 	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
@@ -21,6 +21,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -30,21 +31,25 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
+const (
+	allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
+	cacheSize          = 1024
+	cacheDuration      = 15 * time.Second
+)
 
 var errNoPoliciesMatched = errors.New("no matching policies")
 
 type RuleTable struct {
 	policyLoader policyloader.PolicyLoader
 	// version -> scope -> role -> action -> []rows
-	primaryIdx         map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	primaryIdx         map[string]map[string]*util.GlobMap[*util.GlobMap[map[string]*Row]]
 	log                *zap.SugaredLogger
 	schemas            map[namer.ModuleID]*policyv1.Schemas
 	meta               map[namer.ModuleID]*runtimev1.RuleTableMetadata
 	policyDerivedRoles map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	// reverse mapping of derived role mod IDs to the resource policies it's referenced in
 	derivedRolePolicies   map[namer.ModuleID]map[namer.ModuleID]struct{}
-	storeQueryRegister    map[namer.ModuleID]bool
+	storeQueryRegister    *cache.Cache[namer.ModuleID, bool]
 	principalScopeMap     map[string]struct{}
 	resourceScopeMap      map[string]struct{}
 	scopeScopePermissions map[string]policyv1.ScopePermissions
@@ -112,13 +117,13 @@ type CelProgram struct {
 
 func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
 	return &RuleTable{
-		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
+		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[map[string]*Row]]),
 		log:                      zap.S().Named("ruletable"),
 		schemas:                  make(map[namer.ModuleID]*policyv1.Schemas),
 		meta:                     make(map[namer.ModuleID]*runtimev1.RuleTableMetadata),
 		policyDerivedRoles:       make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole),
 		derivedRolePolicies:      make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
-		storeQueryRegister:       make(map[namer.ModuleID]bool),
+		storeQueryRegister:       cache.New[namer.ModuleID, bool]("ruletable", cacheSize),
 		principalScopeMap:        make(map[string]struct{}),
 		resourceScopeMap:         make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
@@ -150,7 +155,7 @@ func (rt *RuleTable) LazyLoadResourcePolicy(ctx context.Context, resource, polic
 			return policyExists, isQueried
 		}
 
-		policyExists, isQueried := rt.storeQueryRegister[modID]
+		policyExists, isQueried := rt.storeQueryRegister.Get(modID)
 		return policyExists, isQueried
 	}
 
@@ -261,7 +266,7 @@ func (rt *RuleTable) LazyLoadResourcePolicy(ctx context.Context, resource, polic
 	}
 
 	if len(toLoad) == 0 {
-		maps.Copy(rt.storeQueryRegister, registryBuffer)
+		rt.storeQueryRegister.CopyFromMap(registryBuffer, cacheDuration)
 		return nil
 	}
 
@@ -269,8 +274,7 @@ func (rt *RuleTable) LazyLoadResourcePolicy(ctx context.Context, resource, polic
 		return err
 	}
 
-	maps.Copy(rt.storeQueryRegister, registryBuffer)
-
+	rt.storeQueryRegister.CopyFromMap(registryBuffer, cacheDuration)
 	return nil
 }
 
@@ -288,7 +292,7 @@ func (rt *RuleTable) LazyLoadPrincipalPolicy(ctx context.Context, principal, pol
 			return policyExists, isQueried
 		}
 
-		policyExists, isQueried := rt.storeQueryRegister[modID]
+		policyExists, isQueried := rt.storeQueryRegister.Get(modID)
 		return policyExists, isQueried
 	}
 
@@ -363,7 +367,7 @@ func (rt *RuleTable) LazyLoadPrincipalPolicy(ctx context.Context, principal, pol
 	}
 
 	if len(toLoad) == 0 {
-		maps.Copy(rt.storeQueryRegister, registryBuffer)
+		rt.storeQueryRegister.CopyFromMap(registryBuffer, cacheDuration)
 		return nil
 	}
 
@@ -371,8 +375,7 @@ func (rt *RuleTable) LazyLoadPrincipalPolicy(ctx context.Context, principal, pol
 		return err
 	}
 
-	maps.Copy(rt.storeQueryRegister, registryBuffer)
-
+	rt.storeQueryRegister.CopyFromMap(registryBuffer, cacheDuration)
 	return nil
 }
 
@@ -819,19 +822,19 @@ func (rt *RuleTable) insertRule(r *Row) {
 	{
 		scopeMap, ok := rt.primaryIdx[r.Version]
 		if !ok {
-			scopeMap = make(map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
+			scopeMap = make(map[string]*util.GlobMap[*util.GlobMap[map[string]*Row]])
 			rt.primaryIdx[r.Version] = scopeMap
 		}
 
 		roleMap, ok := scopeMap[r.Scope]
 		if !ok {
-			roleMap = util.NewGlobMap(make(map[string]*util.GlobMap[[]*Row]))
+			roleMap = util.NewGlobMap(make(map[string]*util.GlobMap[map[string]*Row]))
 			scopeMap[r.Scope] = roleMap
 		}
 
 		actionMap, ok := roleMap.GetWithLiteral(r.Role)
 		if !ok {
-			actionMap = util.NewGlobMap(make(map[string][]*Row))
+			actionMap = util.NewGlobMap(make(map[string]map[string]*Row))
 			roleMap.Set(r.Role, actionMap)
 		}
 
@@ -840,9 +843,13 @@ func (rt *RuleTable) insertRule(r *Row) {
 			action = allowActionsIdxKey
 		}
 
-		rows, _ := actionMap.GetWithLiteral(action)
-		rows = append(rows, r)
-		actionMap.Set(action, rows)
+		rows, ok := actionMap.GetWithLiteral(action)
+		if !ok {
+			rows = make(map[string]*Row)
+			actionMap.Set(action, rows)
+		}
+
+		rows[r.EvaluationKey] = r
 	}
 }
 
@@ -857,7 +864,7 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 
 	rt.log.Debugf("Deleting policy %s", meta.GetFqn())
 
-	rt.storeQueryRegister[moduleID] = false
+	rt.storeQueryRegister.Set(moduleID, false)
 
 	for version, scopeMap := range rt.primaryIdx {
 		for scope, roleMap := range scopeMap {
@@ -866,10 +873,10 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 
 			for role, actionMap := range roleMap.GetAll() {
 				for action, rules := range actionMap.GetAll() {
-					newRules := make([]*Row, 0, len(rules))
+					newRules := make(map[string]*Row, len(rules))
 					for _, r := range rules {
 						if r.OriginModuleID != moduleID {
-							newRules = append(newRules, r)
+							newRules[r.EvaluationKey] = r
 						} else {
 							rt.log.Debugf("Dropping rule %s", r.GetOriginFqn())
 						}
@@ -913,7 +920,7 @@ func (rt *RuleTable) invalidateQueryRegister(modID namer.ModuleID) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	delete(rt.storeQueryRegister, modID)
+	rt.storeQueryRegister.Remove(modID)
 }
 
 func (rt *RuleTable) purge() {
@@ -929,7 +936,7 @@ func (rt *RuleTable) purge() {
 	clear(rt.principalScopeMap)
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
-	clear(rt.storeQueryRegister)
+	rt.storeQueryRegister.Purge()
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
@@ -1083,8 +1090,8 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []
 	rt.mu.RLock()
 	defer rt.mu.RUnlock()
 
-	processedActionSets := make(map[*util.GlobMap[[]*Row]]struct{})
-	processedRuleSets := make(map[*[]*Row]struct{})
+	processedActionSets := make(map[*util.GlobMap[map[string]*Row]]struct{})
+	processedRuleSets := make(map[*map[string]*Row]struct{})
 	if scopeSet, ok := rt.primaryIdx[version]; ok { //nolint:nestif
 		for _, scope := range scopes {
 			if roleSet, ok := scopeSet[scope]; ok {
