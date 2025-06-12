@@ -1,8 +1,6 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO(saml) probably delete this file
-
 package internal
 
 import (

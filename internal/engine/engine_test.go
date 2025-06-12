@@ -31,9 +31,9 @@ import (
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine/planner"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -332,6 +332,12 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
+	rt := ruletable.NewRuletable()
+	require.NoError(tb, ruletable.LoadFromPolicyLoader(ctx, rt, compiler))
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	require.NoError(tb, err)
+
 	engineConf := &Conf{}
 	engineConf.SetDefaults()
 	engineConf.Globals = map[string]any{"environment": "test"}
@@ -339,7 +345,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 
 	eng := NewFromConf(ctx, engineConf, Components{
 		PolicyLoader:      compiler,
-		RuleTable:         ruletable.NewRuleTable(compiler),
+		RuleTableManager:  ruletableMgr,
 		SchemaMgr:         schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),
