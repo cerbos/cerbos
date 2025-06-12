@@ -1,10 +1,11 @@
 [IMPORTANT]
 ====
 
-Cerbos has an in-memory cache for holding compiled policy definitions to speed up the evaluation process. When a policy is removed or updated using the xref:api:admin_api.adoc#policy-management[Admin API] this cache is updated by the instance that handles the request. However, if you share the database with multiple Cerbos instances, the other instances won't be aware of the change and might still have the old policy definition cached in memory. There are several ways to handle this situation.
+Cerbos has an in-memory cache for holding compiled policy definitions to speed up the evaluation process. When a policy is removed or updated using the xref:api:admin_api.adoc#policy-management[Admin API] this cache is updated by the instance that handles the request. However, if you share the database with multiple Cerbos instances, the other instances won't be aware of the change and might still have the old policy definition cached in memory. There are two ways to handle this situation.
 
-- By default, the cache entries are stored indefinitely until there's memory pressure. You can set a maximum cache duration for entries by setting the `compile.cacheDuration` configuration value. This could help make all the Cerbos instances to become eventually consistent within a    time frame that's acceptable to you.
-- You can turn off caching completely by setting `compile.cacheSize` configuration to `0`. This would have a small performance hit but depending on your use case it could be negligible.
+- By default, the cache entries are stored indefinitely until there's memory pressure. You can set a maximum cache duration for entries by setting the `compile.cacheDuration` configuration value.
+  This could help make all the Cerbos instances to become eventually consistent within a time frame that's acceptable to you.
+  Setting the `compile.cacheDuration` to a low value helps to reach in an eventually consistent state quicker.
 - Invoke the xref:api:admin_api.adoc#store-management[`/admin/store/reload` API endpoint] on all the Cerbos instances whenever you make a change to your policies.
 
 ====
