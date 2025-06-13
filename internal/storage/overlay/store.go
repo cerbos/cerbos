@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/sony/gobreaker/v2"
 	"github.com/sourcegraph/conc/pool"
@@ -144,6 +145,21 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Man
 	return s, nil
 }
 
+func withCircuitBreaker0[T any](s *Store, baseFn, fallbackFn func() T) T {
+	if s.circuitBreaker.State() == gobreaker.StateOpen {
+		s.log.Debug("Calling overlay fallback method")
+		return fallbackFn()
+	}
+
+	s.log.Debug("Calling overlay base method")
+	result, _ := s.circuitBreaker.Execute(func() (any, error) {
+		return baseFn(), nil
+	})
+
+	//nolint:forcetypeassert
+	return result.(T)
+}
+
 func withCircuitBreaker[T any](s *Store, baseFn, fallbackFn func() (T, error)) (T, error) {
 	if s.circuitBreaker.State() == gobreaker.StateOpen {
 		s.log.Debug("Calling overlay fallback method")
@@ -180,6 +196,14 @@ func (s *Store) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]
 		func() ([]*runtimev1.RunnablePolicySet, error) {
 			return s.fallbackPolicyLoader.GetAllMatching(ctx, modIDs)
 		},
+	)
+}
+
+func (s *Store) GetCacheDuration() time.Duration {
+	return withCircuitBreaker0(
+		s,
+		func() time.Duration { return s.basePolicyLoader.GetCacheDuration() },
+		func() time.Duration { return s.fallbackPolicyLoader.GetCacheDuration() },
 	)
 }
 

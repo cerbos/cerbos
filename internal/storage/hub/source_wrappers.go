@@ -34,6 +34,10 @@ func (instrumentedSource) Driver() string {
 	return DriverName
 }
 
+func (is instrumentedSource) GetCacheDuration() time.Duration {
+	return is.source.GetCacheDuration()
+}
+
 func (is instrumentedSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	return measureBinaryOp(ctx, is.name, "InspectPolicies", func(ctx context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 		return is.source.InspectPolicies(ctx, params)

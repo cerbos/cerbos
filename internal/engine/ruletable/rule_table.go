@@ -7,12 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"net/http"
 	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
@@ -44,7 +44,7 @@ type RuleTable struct {
 	policyDerivedRoles map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	// reverse mapping of derived role mod IDs to the resource policies it's referenced in
 	derivedRolePolicies   map[namer.ModuleID]map[namer.ModuleID]struct{}
-	storeQueryRegister    map[namer.ModuleID]bool
+	storeQueryRegister    *storeQueryRegister
 	principalScopeMap     map[string]struct{}
 	resourceScopeMap      map[string]struct{}
 	scopeScopePermissions map[string]policyv1.ScopePermissions
@@ -111,14 +111,13 @@ type CelProgram struct {
 }
 
 func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
-	return &RuleTable{
+	rt := &RuleTable{
 		primaryIdx:               make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]),
 		log:                      zap.S().Named("ruletable"),
 		schemas:                  make(map[namer.ModuleID]*policyv1.Schemas),
 		meta:                     make(map[namer.ModuleID]*runtimev1.RuleTableMetadata),
 		policyDerivedRoles:       make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole),
 		derivedRolePolicies:      make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
-		storeQueryRegister:       make(map[namer.ModuleID]bool),
 		principalScopeMap:        make(map[string]struct{}),
 		resourceScopeMap:         make(map[string]struct{}),
 		scopeScopePermissions:    make(map[string]policyv1.ScopePermissions),
@@ -127,6 +126,8 @@ func NewRuleTable(policyLoader policyloader.PolicyLoader) *RuleTable {
 		awaitingHealthyIndex:     atomic.Bool{},
 		policyLoader:             policyLoader,
 	}
+	rt.storeQueryRegister = newStoreQueryRegister(policyLoader.GetCacheDuration(), rt.doDeletePolicy)
+	return rt
 }
 
 func (rt *RuleTable) LazyLoadResourcePolicy(ctx context.Context, resource, policyVer, scope string, inputRoles []string) error {
@@ -150,7 +151,7 @@ func (rt *RuleTable) LazyLoadResourcePolicy(ctx context.Context, resource, polic
 			return policyExists, isQueried
 		}
 
-		policyExists, isQueried := rt.storeQueryRegister[modID]
+		policyExists, isQueried := rt.storeQueryRegister.get(modID)
 		return policyExists, isQueried
 	}
 
@@ -261,7 +262,7 @@ func (rt *RuleTable) LazyLoadResourcePolicy(ctx context.Context, resource, polic
 	}
 
 	if len(toLoad) == 0 {
-		maps.Copy(rt.storeQueryRegister, registryBuffer)
+		rt.storeQueryRegister.update(registryBuffer)
 		return nil
 	}
 
@@ -269,7 +270,7 @@ func (rt *RuleTable) LazyLoadResourcePolicy(ctx context.Context, resource, polic
 		return err
 	}
 
-	maps.Copy(rt.storeQueryRegister, registryBuffer)
+	rt.storeQueryRegister.update(registryBuffer)
 
 	return nil
 }
@@ -288,7 +289,7 @@ func (rt *RuleTable) LazyLoadPrincipalPolicy(ctx context.Context, principal, pol
 			return policyExists, isQueried
 		}
 
-		policyExists, isQueried := rt.storeQueryRegister[modID]
+		policyExists, isQueried := rt.storeQueryRegister.get(modID)
 		return policyExists, isQueried
 	}
 
@@ -363,7 +364,7 @@ func (rt *RuleTable) LazyLoadPrincipalPolicy(ctx context.Context, principal, pol
 	}
 
 	if len(toLoad) == 0 {
-		maps.Copy(rt.storeQueryRegister, registryBuffer)
+		rt.storeQueryRegister.update(registryBuffer)
 		return nil
 	}
 
@@ -371,7 +372,7 @@ func (rt *RuleTable) LazyLoadPrincipalPolicy(ctx context.Context, principal, pol
 		return err
 	}
 
-	maps.Copy(rt.storeQueryRegister, registryBuffer)
+	rt.storeQueryRegister.update(registryBuffer)
 
 	return nil
 }
@@ -850,6 +851,11 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
+	rt.doDeletePolicy(moduleID)
+}
+
+// doDeletePolicy implements the delete logic. The caller must obtain a lock first.
+func (rt *RuleTable) doDeletePolicy(moduleID namer.ModuleID) {
 	meta := rt.meta[moduleID]
 	if meta == nil {
 		return
@@ -857,7 +863,7 @@ func (rt *RuleTable) deletePolicy(moduleID namer.ModuleID) {
 
 	rt.log.Debugf("Deleting policy %s", meta.GetFqn())
 
-	rt.storeQueryRegister[moduleID] = false
+	rt.storeQueryRegister.setNotExists(moduleID)
 
 	for version, scopeMap := range rt.primaryIdx {
 		for scope, roleMap := range scopeMap {
@@ -913,7 +919,7 @@ func (rt *RuleTable) invalidateQueryRegister(modID namer.ModuleID) {
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	delete(rt.storeQueryRegister, modID)
+	rt.storeQueryRegister.delete(modID)
 }
 
 func (rt *RuleTable) purge() {
@@ -929,7 +935,7 @@ func (rt *RuleTable) purge() {
 	clear(rt.principalScopeMap)
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
-	clear(rt.storeQueryRegister)
+	rt.storeQueryRegister.clear()
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
@@ -1371,4 +1377,70 @@ func (rt *RuleTable) processPolicyEvent(ev storage.Event) {
 			delete(rt.derivedRolePolicies, modID)
 		}
 	}
+}
+
+type moduleState struct {
+	expiry time.Time
+	exists bool
+}
+
+type storeQueryRegister struct {
+	entries       map[namer.ModuleID]moduleState
+	evict         func(namer.ModuleID)
+	cacheDuration time.Duration
+}
+
+func newStoreQueryRegister(cacheDuration time.Duration, evict func(namer.ModuleID)) *storeQueryRegister {
+	return &storeQueryRegister{cacheDuration: cacheDuration, entries: make(map[namer.ModuleID]moduleState), evict: evict}
+}
+
+func (sqr *storeQueryRegister) contains(key namer.ModuleID) bool {
+	_, exists := sqr.entries[key]
+	return exists
+}
+
+func (sqr *storeQueryRegister) get(key namer.ModuleID) (bool, bool) {
+	if ms, ok := sqr.entries[key]; ok {
+		if ms.expiry.IsZero() || ms.expiry.After(time.Now()) {
+			return ms.exists, true
+		}
+		sqr.evict(key)
+		delete(sqr.entries, key)
+		return false, false
+	}
+	return false, false
+}
+
+func (sqr *storeQueryRegister) setNotExists(key namer.ModuleID) {
+	if ms, ok := sqr.entries[key]; ok {
+		ms.exists = false
+		sqr.entries[key] = ms
+	}
+}
+
+func (sqr *storeQueryRegister) delete(key namer.ModuleID) {
+	delete(sqr.entries, key)
+}
+
+func (sqr *storeQueryRegister) clear() {
+	clear(sqr.entries)
+}
+
+func (sqr *storeQueryRegister) update(buffer map[namer.ModuleID]bool) {
+	var expiry time.Time
+	if sqr.cacheDuration > 0 {
+		expiry = time.Now().Add(sqr.cacheDuration)
+	}
+
+	for k, v := range buffer {
+		if ms, ok := sqr.entries[k]; ok {
+			sqr.entries[k] = moduleState{exists: v, expiry: ms.expiry}
+		} else {
+			sqr.entries[k] = moduleState{exists: v, expiry: expiry}
+		}
+	}
+}
+
+func (sqr *storeQueryRegister) length() int {
+	return len(sqr.entries)
 }
