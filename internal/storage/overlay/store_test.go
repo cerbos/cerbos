@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -239,6 +240,11 @@ type MockPolicyLoader struct {
 	mock.Mock
 }
 
+func (m *MockPolicyLoader) GetCacheDuration() time.Duration {
+	args := m.Called()
+	return args.Get(0).(time.Duration)
+}
+
 func (m *MockPolicyLoader) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx, candidates)
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
@@ -298,6 +304,11 @@ func (ms *MockStore) LoadSchema(ctx context.Context, _ string) (io.ReadCloser, e
 type MockBinaryStore struct {
 	mock.Mock
 	MockStore
+}
+
+func (m *MockBinaryStore) GetCacheDuration() time.Duration {
+	args := m.Called()
+	return args.Get(0).(time.Duration)
 }
 
 func (m *MockBinaryStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {

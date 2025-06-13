@@ -10,12 +10,14 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 
-	cloudapi "github.com/cerbos/cloud-api/bundle"
-	"github.com/cerbos/cloud-api/credentials"
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+
+	cloudapi "github.com/cerbos/cloud-api/bundle"
+	"github.com/cerbos/cloud-api/credentials"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -165,6 +167,10 @@ func (ls *LocalSource) loadBundle() error {
 
 func (ls *LocalSource) Driver() string {
 	return DriverName
+}
+
+func (ls *LocalSource) GetCacheDuration() time.Duration {
+	return 0
 }
 
 func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

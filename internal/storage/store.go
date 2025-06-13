@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -157,6 +158,8 @@ type BinaryStore interface {
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
 	// GetAllMatching returns all modules that exist for the provided module IDs
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
+	// GetCacheDuration returns the time an entry should be cached for.
+	GetCacheDuration() time.Duration
 }
 
 // MutableStore is a store that allows mutations.

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -116,6 +117,10 @@ func (hs *HybridStore) withActiveSource() storage.BinaryStore {
 
 	hs.log.Warn("Switching to local source because remote source is unhealthy")
 	return hs.local
+}
+
+func (hs *HybridStore) GetCacheDuration() time.Duration {
+	return hs.withActiveSource().GetCacheDuration()
 }
 
 func (hs *HybridStore) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

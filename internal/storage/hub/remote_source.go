@@ -565,6 +565,10 @@ func (s *RemoteSource) IsHealthy() bool {
 	return s.healthy
 }
 
+func (s *RemoteSource) GetCacheDuration() time.Duration {
+	return 0
+}
+
 func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

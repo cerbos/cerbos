@@ -80,7 +80,7 @@ func TestRuleTable(t *testing.T) {
 
 			checkIndexes(t)
 
-			exists, queried := rt.storeQueryRegister[modID]
+			exists, queried := rt.storeQueryRegister.get(modID)
 			require.False(t, queried)
 			require.False(t, exists)
 		})
@@ -92,10 +92,10 @@ func TestRuleTable(t *testing.T) {
 
 			// Registry stores the modID after LazyLoads
 			require.NoError(t, rt.LazyLoadResourcePolicy(ctx, resource, version, scope, []string{role}))
-			exists, queried := rt.storeQueryRegister[modID]
+			exists, queried := rt.storeQueryRegister.get(modID)
 			require.True(t, queried)
 			require.True(t, exists)
-			exists, queried = rt.storeQueryRegister[nonexistentRolePolicyModID]
+			exists, queried = rt.storeQueryRegister.get(nonexistentRolePolicyModID)
 			require.True(t, queried)
 			require.False(t, exists)
 
@@ -113,11 +113,11 @@ func TestRuleTable(t *testing.T) {
 			require.Empty(t, rt.resourceScopeMap)
 			require.Empty(t, rt.scopeScopePermissions)
 			// we keep the registry entry but set it to `false`
-			require.Len(t, rt.storeQueryRegister, 2)
-			exists, queried = rt.storeQueryRegister[modID]
+			require.Equal(t, 2, rt.storeQueryRegister.length())
+			exists, queried = rt.storeQueryRegister.get(modID)
 			require.True(t, queried)
 			require.False(t, exists)
-			require.Contains(t, rt.storeQueryRegister, nonexistentRolePolicyModID)
+			require.True(t, rt.storeQueryRegister.contains(nonexistentRolePolicyModID))
 		})
 	})
 
@@ -169,7 +169,7 @@ func TestRuleTable(t *testing.T) {
 
 			checkIndexes(t)
 
-			exists, queried := rt.storeQueryRegister[modID]
+			exists, queried := rt.storeQueryRegister.get(modID)
 			require.False(t, queried)
 			require.False(t, exists)
 		})
@@ -181,7 +181,7 @@ func TestRuleTable(t *testing.T) {
 
 			// Registry stores the modID after LazyLoads
 			require.NoError(t, rt.LazyLoadPrincipalPolicy(ctx, principal, version, scope))
-			exists, queried := rt.storeQueryRegister[modID]
+			exists, queried := rt.storeQueryRegister.get(modID)
 			require.True(t, queried)
 			require.True(t, exists)
 
@@ -222,7 +222,7 @@ func TestRuleTable(t *testing.T) {
 			require.Empty(t, rt.principalScopeMap)
 			require.Empty(t, rt.scopeScopePermissions)
 			// not deleted, just set to `false`
-			exists, queried = rt.storeQueryRegister[modID]
+			exists, queried = rt.storeQueryRegister.get(modID)
 			require.True(t, queried)
 			require.False(t, exists)
 
@@ -281,7 +281,7 @@ func TestRuleTable(t *testing.T) {
 
 			checkIndexes(t)
 
-			exists, queried := rt.storeQueryRegister[modID]
+			exists, queried := rt.storeQueryRegister.get(modID)
 			require.False(t, queried)
 			require.False(t, exists)
 		})
@@ -295,21 +295,21 @@ func TestRuleTable(t *testing.T) {
 			require.NoError(t, rt.LazyLoadResourcePolicy(ctx, resource, version, scope, []string{role}))
 			// A store miss for the resource policy with lenientScopeSearch allows pre-optimised assertion that no
 			// resource policies exist in any scopes, hence the extra keys in the storeQueryRegister.
-			require.Len(t, rt.storeQueryRegister, 7)
-			exists, queried := rt.storeQueryRegister[modID]
+			require.Equal(t, 7, rt.storeQueryRegister.length())
+			exists, queried := rt.storeQueryRegister.get(modID)
 			require.True(t, queried)
 			require.True(t, exists)
 			// all nonexistent resource policy FQNs
-			exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, scope)]
+			exists, queried = rt.storeQueryRegister.get(namer.ResourcePolicyModuleID(resource, version, scope))
 			require.True(t, queried)
 			require.False(t, exists)
 			for s := range namer.ScopeParents(scope) {
-				exists, queried = rt.storeQueryRegister[namer.ResourcePolicyModuleID(resource, version, s)]
+				exists, queried = rt.storeQueryRegister.get(namer.ResourcePolicyModuleID(resource, version, s))
 				require.True(t, queried)
 				require.False(t, exists)
 			}
 			// Missing role policy in first parent scope (the search breaks after this with "not found")
-			exists, queried = rt.storeQueryRegister[namer.RolePolicyModuleID(role, "acme.hr.uk")]
+			exists, queried = rt.storeQueryRegister.get(namer.RolePolicyModuleID(role, "acme.hr.uk"))
 			require.True(t, queried)
 			require.False(t, exists)
 
@@ -329,8 +329,8 @@ func TestRuleTable(t *testing.T) {
 			require.Empty(t, rt.parentRoles)
 			require.Empty(t, rt.parentRoleAncestorsCache)
 			// not deleted, just set to `false`
-			require.Len(t, rt.storeQueryRegister, 7)
-			exists, queried = rt.storeQueryRegister[modID]
+			require.Equal(t, 7, rt.storeQueryRegister.length())
+			exists, queried = rt.storeQueryRegister.get(modID)
 			require.True(t, queried)
 			require.False(t, exists)
 		})
@@ -384,9 +384,9 @@ func TestRuleTable(t *testing.T) {
 		require.NotContains(t, rt.resourceScopeMap, scope)
 		require.NotContains(t, rt.scopeScopePermissions, scope)
 		// referencing resource policy is deleted to prompt fresh retrieval
-		require.NotContains(t, rt.storeQueryRegister, modID)
+		require.False(t, rt.storeQueryRegister.contains(modID))
 		// non-referencing resource policy is still present and untouched
-		exists, queried := rt.storeQueryRegister[baseModID]
+		exists, queried := rt.storeQueryRegister.get(baseModID)
 		require.True(t, queried)
 		require.True(t, exists)
 
