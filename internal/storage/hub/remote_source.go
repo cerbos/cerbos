@@ -117,16 +117,16 @@ func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context) (bundleapi.WatchHandle
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	log           *zap.Logger
-	conf          *Conf
-	hub           ClientProvider
-	bundle        *Bundle
-	scratchFS     afero.Fs
-	client        cloudAPIClient
+	hub       ClientProvider
+	scratchFS afero.Fs
+	client    cloudAPIClient
+	log       *zap.Logger
+	conf      *Conf
+	bundle    *Bundle
+	*storage.SubscriptionManager
+	bundleVersion bundleapi.Version
 	mu            sync.RWMutex
 	healthy       bool
-	bundleVersion bundleapi.Version
-	*storage.SubscriptionManager
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {

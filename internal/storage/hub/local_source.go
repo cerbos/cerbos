@@ -34,9 +34,9 @@ var (
 type LocalSource struct {
 	bundle  *Bundle
 	cleanup func() error
-	params  LocalParams
-	mu      sync.RWMutex
 	*storage.SubscriptionManager
+	params LocalParams
+	mu     sync.RWMutex
 }
 
 func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, error) {

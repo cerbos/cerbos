@@ -25,7 +25,7 @@ const (
 )
 
 func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
-	bundleSrc, err := hub.NewLocalSource(params)
+	bundleSrc, err := hub.NewLocalSource(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create local bundle source from %q: %w", params.BundlePath, err)
 	}
