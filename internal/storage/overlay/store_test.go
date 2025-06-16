@@ -326,6 +326,14 @@ func (m *MockBinaryStore) GetAllMatching(ctx context.Context, modIDs []namer.Mod
 	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
+func (m *MockBinaryStore) Subscribe(s storage.Subscriber) {
+	m.Called(s)
+}
+
+func (m *MockBinaryStore) Unsubscribe(s storage.Subscriber) {
+	m.Called(s)
+}
+
 type MockReloadable struct {
 	mock.Mock
 	MockStore

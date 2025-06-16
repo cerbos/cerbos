@@ -36,9 +36,10 @@ type LocalSource struct {
 	cleanup func() error
 	params  LocalParams
 	mu      sync.RWMutex
+	*storage.SubscriptionManager
 }
 
-func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error) {
+func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, error) {
 	if err := conf.Local.setDefaultsForUnsetFields(); err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 		return nil, fmt.Errorf("encryptionKey or workspaceSecret must be specified")
 	}
 
-	return NewLocalSource(lp)
+	return NewLocalSource(ctx, lp)
 }
 
 type LocalParams struct {
@@ -79,12 +80,12 @@ type LocalParams struct {
 	BundleVersion cloudapi.Version
 }
 
-func NewLocalSource(params LocalParams) (*LocalSource, error) {
+func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, error) {
 	if params.CacheSize == 0 {
 		params.CacheSize = defaultCacheSize
 	}
 
-	ls := &LocalSource{params: params}
+	ls := &LocalSource{params: params, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
 	if err := ls.loadBundle(); err != nil {
 		return nil, err
 	}
@@ -155,6 +156,8 @@ func (ls *LocalSource) loadBundle() error {
 	ls.cleanup = cleanupFn
 	ls.bundle = b
 	ls.mu.Unlock()
+
+	ls.NotifySubscribers(storage.NewReloadEvent())
 
 	if prevCleanupFn != nil {
 		if err := prevCleanupFn(); err != nil {

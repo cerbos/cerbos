@@ -87,6 +87,14 @@ func (is instrumentedSource) Reload(ctx context.Context) error {
 	return nil
 }
 
+func (is instrumentedSource) Subscribe(s storage.Subscriber) {
+	is.source.Subscribe(s)
+}
+
+func (is instrumentedSource) Unsubscribe(s storage.Subscriber) {
+	is.source.Unsubscribe(s)
+}
+
 func (is instrumentedSource) Close() error {
 	if c, ok := is.source.(io.Closer); ok {
 		return c.Close()

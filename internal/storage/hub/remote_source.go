@@ -126,6 +126,7 @@ type RemoteSource struct {
 	mu            sync.RWMutex
 	healthy       bool
 	bundleVersion bundleapi.Version
+	*storage.SubscriptionManager
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
@@ -196,6 +197,7 @@ func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, erro
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
+	s.SubscriptionManager = storage.NewSubscriptionManager(ctx)
 	clientConf := bundleapi.ClientConf{
 		CacheDir: s.conf.Remote.CacheDir,
 		TempDir:  s.conf.Remote.TempDir,
@@ -384,6 +386,8 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte) error
 	s.bundle = bundle
 	s.healthy = true
 	s.mu.Unlock()
+
+	s.NotifySubscribers(storage.NewReloadEvent())
 
 	if oldBundle != nil {
 		if err := oldBundle.Release(); err != nil {

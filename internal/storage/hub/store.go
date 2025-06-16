@@ -151,6 +151,16 @@ func (hs *HybridStore) GetAllMatching(ctx context.Context, candidates []namer.Mo
 	return hs.withActiveSource().GetAllMatching(ctx, candidates)
 }
 
+func (hs *HybridStore) Subscribe(s storage.Subscriber) {
+	hs.local.Subscribe(s)
+	hs.remote.Subscribe(s)
+}
+
+func (hs *HybridStore) Unsubscribe(s storage.Subscriber) {
+	hs.local.Unsubscribe(s)
+	hs.remote.Unsubscribe(s)
+}
+
 func (hs *HybridStore) SourceKind() string {
 	return "hybrid"
 }

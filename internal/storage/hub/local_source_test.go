@@ -172,7 +172,7 @@ func mkLocalSource(t *testing.T, tctx testCtx) *hub.LocalSource {
 	default:
 	}
 
-	ls, err := hub.NewLocalSource(params)
+	ls, err := hub.NewLocalSource(t.Context(), params)
 	require.NoError(t, err, "Failed to create local source")
 	t.Cleanup(func() {
 		require.NoError(t, ls.Close(), "Failed to close local source")

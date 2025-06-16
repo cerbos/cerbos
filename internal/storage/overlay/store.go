@@ -277,6 +277,26 @@ func (s *Store) Reload(ctx context.Context) error {
 	return p.Wait()
 }
 
+func (s *Store) Subscribe(subscriber storage.Subscriber) {
+	if bs, ok := s.baseStore.(storage.Subscribable); ok {
+		bs.Subscribe(subscriber)
+	}
+
+	if fs, ok := s.fallbackStore.(storage.Subscribable); ok {
+		fs.Subscribe(subscriber)
+	}
+}
+
+func (s *Store) Unsubscribe(subscriber storage.Subscriber) {
+	if bs, ok := s.baseStore.(storage.Subscribable); ok {
+		bs.Unsubscribe(subscriber)
+	}
+
+	if fs, ok := s.fallbackStore.(storage.Subscribable); ok {
+		fs.Unsubscribe(subscriber)
+	}
+}
+
 func (s *Store) Close() (outErr error) {
 	if c, ok := s.baseStore.(io.Closer); ok {
 		outErr = multierr.Append(outErr, c.Close())

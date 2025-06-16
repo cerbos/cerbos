@@ -152,6 +152,7 @@ type SourceStore interface {
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.
 type BinaryStore interface {
 	Store
+	Subscribable
 	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 	// GetAll returns all modules that exist within the policy store
