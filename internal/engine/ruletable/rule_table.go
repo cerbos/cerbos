@@ -377,7 +377,7 @@ func (rt *RuleTable) LazyLoadPrincipalPolicy(ctx context.Context, principal, pol
 }
 
 func (rt *RuleTable) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string, lenientScopeSearch bool) (*runtimev1.RunnablePolicySet, error) {
-	ctx, span := tracing.StartSpan(ctx, "ruletable.GetPrincipalPolicy")
+	ctx, span := tracing.StartSpan(ctx, "engine.GetPrincipalPolicy")
 	defer span.End()
 	span.SetAttributes(tracing.PolicyName(principal), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
 

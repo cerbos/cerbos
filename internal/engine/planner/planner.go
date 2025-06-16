@@ -125,7 +125,7 @@ const noPolicyMatch = "NO_MATCH"
 func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTable, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, schemaMgr schema.Manager, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
 
-	_, span := tracing.StartSpan(ctx, "rule_table.EvaluateRuleTableQueryPlan")
+	_, span := tracing.StartSpan(ctx, "engine.EvaluateRuleTableQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
