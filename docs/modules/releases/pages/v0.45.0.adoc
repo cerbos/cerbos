@@ -1,0 +1,34 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.45.0]
+= Cerbos v0.45.0
+
+== Highlights
+
+This is a bug-fix release to address a couple of recently discovered bugs.
+
+- The policy evaluation engine was indefinitely storing the compiled policies in memory without honouring the `compile.cacheDuration` configuration setting. This led to the Cerbos PDP requiring a manual refresh either via the `ReloadStore` Admin API call or through a process restart to pick up changes to policies.
+- The query plan output was incorrectly prioritising the role(s) with deny rules when the principal had multiple roles. Ideally, if the principal has a role that allows access, that should take precedence (consider the case where an admin user also has a less privileged role).
+
+
+This release also enforces a policy naming restriction to disallow wildcard characters. This is to prevent ambiguity in places where wildcards can be used to match multiple policies by name. It also helps increase readability and discoverability because policy names should ideally be descriptive identifiers that can also be used as file names for respective policy definitions.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Handle multi-role planner precedence correctly (link:https://github.com/cerbos/cerbos/pull/2592[#2592])
+* Honour compile cache duration in rule table (link:https://github.com/cerbos/cerbos/pull/2602[#2602])
+* Protect against wildcards in policy names (link:https://github.com/cerbos/cerbos/pull/2593[#2593])
+
+=== Chores
+
+* Bump brace-expansion from 2.0.1 to 2.0.2 in /npm/test/registry (link:https://github.com/cerbos/cerbos/pull/2597[#2597])
+* Bump version to 0.45.0
+* Fix mistake related to compile.cacheSize configuration parameter (link:https://github.com/cerbos/cerbos/pull/2598[#2598])
+* Fix names of tracing spans in engine (link:https://github.com/cerbos/cerbos/pull/2603[#2603])
+* More ASCII character class replacements (link:https://github.com/cerbos/cerbos/pull/2596[#2596])
+* Replace ASCII character classes in validation regexes (link:https://github.com/cerbos/cerbos/pull/2595[#2595])
+* Update cerbos-sdk-go to v0.3.2 (link:https://github.com/cerbos/cerbos/pull/2589[#2589])
