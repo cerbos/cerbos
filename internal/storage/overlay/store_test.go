@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -239,6 +240,11 @@ type MockPolicyLoader struct {
 	mock.Mock
 }
 
+func (m *MockPolicyLoader) GetCacheDuration() time.Duration {
+	args := m.Called()
+	return args.Get(0).(time.Duration)
+}
+
 func (m *MockPolicyLoader) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx, candidates)
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
@@ -300,6 +306,11 @@ type MockBinaryStore struct {
 	MockStore
 }
 
+func (m *MockBinaryStore) GetCacheDuration() time.Duration {
+	args := m.Called()
+	return args.Get(0).(time.Duration)
+}
+
 func (m *MockBinaryStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx, candidates)
 	return args.Get(0).(*runtimev1.RunnablePolicySet), args.Error(1)
@@ -313,6 +324,14 @@ func (m *MockBinaryStore) GetAll(ctx context.Context) ([]*runtimev1.RunnablePoli
 func (m *MockBinaryStore) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx, modIDs)
 	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
+}
+
+func (m *MockBinaryStore) Subscribe(s storage.Subscriber) {
+	m.Called(s)
+}
+
+func (m *MockBinaryStore) Unsubscribe(s storage.Subscriber) {
+	m.Called(s)
 }
 
 type MockReloadable struct {

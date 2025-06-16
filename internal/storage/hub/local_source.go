@@ -10,12 +10,14 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 
-	cloudapi "github.com/cerbos/cloud-api/bundle"
-	"github.com/cerbos/cloud-api/credentials"
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+
+	cloudapi "github.com/cerbos/cloud-api/bundle"
+	"github.com/cerbos/cloud-api/credentials"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -32,11 +34,12 @@ var (
 type LocalSource struct {
 	bundle  *Bundle
 	cleanup func() error
-	params  LocalParams
-	mu      sync.RWMutex
+	*storage.SubscriptionManager
+	params LocalParams
+	mu     sync.RWMutex
 }
 
-func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error) {
+func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, error) {
 	if err := conf.Local.setDefaultsForUnsetFields(); err != nil {
 		return nil, err
 	}
@@ -65,7 +68,7 @@ func NewLocalSourceFromConf(_ context.Context, conf *Conf) (*LocalSource, error)
 		return nil, fmt.Errorf("encryptionKey or workspaceSecret must be specified")
 	}
 
-	return NewLocalSource(lp)
+	return NewLocalSource(ctx, lp)
 }
 
 type LocalParams struct {
@@ -77,12 +80,12 @@ type LocalParams struct {
 	BundleVersion cloudapi.Version
 }
 
-func NewLocalSource(params LocalParams) (*LocalSource, error) {
+func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, error) {
 	if params.CacheSize == 0 {
 		params.CacheSize = defaultCacheSize
 	}
 
-	ls := &LocalSource{params: params}
+	ls := &LocalSource{params: params, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
 	if err := ls.loadBundle(); err != nil {
 		return nil, err
 	}
@@ -154,6 +157,8 @@ func (ls *LocalSource) loadBundle() error {
 	ls.bundle = b
 	ls.mu.Unlock()
 
+	ls.NotifySubscribers(storage.NewReloadEvent())
+
 	if prevCleanupFn != nil {
 		if err := prevCleanupFn(); err != nil {
 			zap.L().Warn("Failed to cleanup previous bundle", zap.Error(err))
@@ -165,6 +170,10 @@ func (ls *LocalSource) loadBundle() error {
 
 func (ls *LocalSource) Driver() string {
 	return DriverName
+}
+
+func (ls *LocalSource) GetCacheDuration() time.Duration {
+	return 0
 }
 
 func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

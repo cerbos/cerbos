@@ -197,6 +197,10 @@ func (c *Manager) evict(modID namer.ModuleID) {
 	c.cache.Remove(modID)
 }
 
+func (c *Manager) GetCacheDuration() time.Duration {
+	return c.cacheDuration
+}
+
 func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	if len(candidates) == 0 {
 		return nil, errors.New("candidates list must contain at least one candidate")

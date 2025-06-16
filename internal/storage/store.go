@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -151,12 +152,15 @@ type SourceStore interface {
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.
 type BinaryStore interface {
 	Store
+	Subscribable
 	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 	// GetAll returns all modules that exist within the policy store
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
 	// GetAllMatching returns all modules that exist for the provided module IDs
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
+	// GetCacheDuration returns the time an entry should be cached for.
+	GetCacheDuration() time.Duration
 }
 
 // MutableStore is a store that allows mutations.

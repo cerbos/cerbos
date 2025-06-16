@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -118,6 +119,10 @@ func (hs *HybridStore) withActiveSource() storage.BinaryStore {
 	return hs.local
 }
 
+func (hs *HybridStore) GetCacheDuration() time.Duration {
+	return hs.withActiveSource().GetCacheDuration()
+}
+
 func (hs *HybridStore) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	return hs.withActiveSource().InspectPolicies(ctx, params)
 }
@@ -144,6 +149,16 @@ func (hs *HybridStore) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicyS
 
 func (hs *HybridStore) GetAllMatching(ctx context.Context, candidates []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	return hs.withActiveSource().GetAllMatching(ctx, candidates)
+}
+
+func (hs *HybridStore) Subscribe(s storage.Subscriber) {
+	hs.local.Subscribe(s)
+	hs.remote.Subscribe(s)
+}
+
+func (hs *HybridStore) Unsubscribe(s storage.Subscriber) {
+	hs.local.Unsubscribe(s)
+	hs.remote.Unsubscribe(s)
 }
 
 func (hs *HybridStore) SourceKind() string {

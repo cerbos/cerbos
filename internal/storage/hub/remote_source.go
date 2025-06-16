@@ -117,15 +117,16 @@ func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context) (bundleapi.WatchHandle
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	log           *zap.Logger
-	conf          *Conf
-	hub           ClientProvider
-	bundle        *Bundle
-	scratchFS     afero.Fs
-	client        cloudAPIClient
+	hub       ClientProvider
+	scratchFS afero.Fs
+	client    cloudAPIClient
+	log       *zap.Logger
+	conf      *Conf
+	bundle    *Bundle
+	*storage.SubscriptionManager
+	bundleVersion bundleapi.Version
 	mu            sync.RWMutex
 	healthy       bool
-	bundleVersion bundleapi.Version
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
@@ -196,6 +197,7 @@ func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, erro
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
+	s.SubscriptionManager = storage.NewSubscriptionManager(ctx)
 	clientConf := bundleapi.ClientConf{
 		CacheDir: s.conf.Remote.CacheDir,
 		TempDir:  s.conf.Remote.TempDir,
@@ -385,6 +387,8 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte) error
 	s.healthy = true
 	s.mu.Unlock()
 
+	s.NotifySubscribers(storage.NewReloadEvent())
+
 	if oldBundle != nil {
 		if err := oldBundle.Release(); err != nil {
 			s.log.Warn("Failed to release old bundle", zap.Error(err))
@@ -563,6 +567,10 @@ func (s *RemoteSource) IsHealthy() bool {
 	defer s.mu.RUnlock()
 
 	return s.healthy
+}
+
+func (s *RemoteSource) GetCacheDuration() time.Duration {
+	return 0
 }
 
 func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {

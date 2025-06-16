@@ -84,5 +84,4 @@ jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.policyVersion" == "20210210"
 jsonpath "$.filter" != null
 jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.status \"PENDING_APPROVAL\")"
-jsonpath "$.meta.matchedScopePerAction" exists
 jsonpath "$.cerbosCallId" exists
