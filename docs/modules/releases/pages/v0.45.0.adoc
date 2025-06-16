@@ -23,6 +23,7 @@ This release also enforces a policy naming restriction to disallow wildcard char
 * Honour compile cache duration in rule table (link:https://github.com/cerbos/cerbos/pull/2602[#2602])
 * Protect against wildcards in policy names (link:https://github.com/cerbos/cerbos/pull/2593[#2593])
 
+
 === Chores
 
 * Bump brace-expansion from 2.0.1 to 2.0.2 in /npm/test/registry (link:https://github.com/cerbos/cerbos/pull/2597[#2597])
@@ -30,5 +31,7 @@ This release also enforces a policy naming restriction to disallow wildcard char
 * Fix mistake related to compile.cacheSize configuration parameter (link:https://github.com/cerbos/cerbos/pull/2598[#2598])
 * Fix names of tracing spans in engine (link:https://github.com/cerbos/cerbos/pull/2603[#2603])
 * More ASCII character class replacements (link:https://github.com/cerbos/cerbos/pull/2596[#2596])
+* Remove deprecated `buf` actions (link:https://github.com/cerbos/cerbos/pull/2604[#2604])
 * Replace ASCII character classes in validation regexes (link:https://github.com/cerbos/cerbos/pull/2595[#2595])
+* Update cerbos-sdk-go to 0.3.4 (link:https://github.com/cerbos/cerbos/pull/2606[#2606])
 * Update cerbos-sdk-go to v0.3.2 (link:https://github.com/cerbos/cerbos/pull/2589[#2589])
