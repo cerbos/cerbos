@@ -274,16 +274,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v1.50.0
-        with:
-          github_token: ${{ github.token }}
-
       - name: Lint protos
-        uses: bufbuild/buf-lint-action@v1.1.1
-
-      - name: Check formatting
-        run: buf format --diff --exit-code
+        uses: bufbuild/buf-action@v1.2.0
+        with:
+          breaking: false
+          format: true
+          lint: true
 
       - name: Find latest release
         id: latest-release
