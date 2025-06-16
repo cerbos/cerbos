@@ -1,0 +1,19 @@
+{
+  "name": "antora-llm-generator",
+  "version": "1.0.0",
+  "description": "An Antora extension to generate text files for LLM consumption.",
+  "main": "llm-generator.js",
+  "keywords": [
+    "antora",
+    "antora-extension",
+    "llm",
+    "rag"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "html-to-text": "^9.0.5",
+    "node-html-markdown": "^1.3.0",
+    "node-html-parser": "^7.0.1"
+  }
+}

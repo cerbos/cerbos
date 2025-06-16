@@ -1,0 +1,10 @@
+{
+  "name": "cerbos-docs-builder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Custom Antora build environment for the Cerbos documentation.",
+  "dependencies": {
+    "antora": "^3.1.6",
+    "antora-llm-generator": "file:./antora-llm-generator"
+  }
+}
