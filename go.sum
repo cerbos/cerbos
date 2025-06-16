@@ -170,8 +170,8 @@ github.com/cenkalti/backoff/v5 v5.0.2/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F9
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cerbos/cerbos-sdk-go v0.3.4 h1:Z4O9XlbvGaD2asB+RcrVQTcnA8ZifnskTe5O63slA4k=
 github.com/cerbos/cerbos-sdk-go v0.3.4/go.mod h1:OOvd9tp9R5ov/QcwBiKVhgCyIwQi3w3uo7mcnL+dvE0=
-github.com/cerbos/cerbos/api/genpb v0.44.0 h1:Nhes4yKaOsNMqaIH+QOvbieRaXXbk93fwsPkP487daE=
-github.com/cerbos/cerbos/api/genpb v0.44.0/go.mod h1:LUvFy/csdjMsnvQH0lP3UHkKTa8M/UOgF2sVEJgPlzU=
+github.com/cerbos/cerbos/api/genpb v0.44.1-0.20250616134713-2a65d5b43745 h1:S/6bNeKCXs+TyaPdRqfx7EiN7JcbmCjUIaRdxW96shU=
+github.com/cerbos/cerbos/api/genpb v0.44.1-0.20250616134713-2a65d5b43745/go.mod h1:LUvFy/csdjMsnvQH0lP3UHkKTa8M/UOgF2sVEJgPlzU=
 github.com/cerbos/cloud-api v0.1.50 h1:br1Msk/RSuaUPGVwwVniNJD9gvsx9RQJyJ4VC2qL8jE=
 github.com/cerbos/cloud-api v0.1.50/go.mod h1:gpsRJ2okizeB6Q1tLJ+Th55QbwcBhBhG9qaWzTvwNzs=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
