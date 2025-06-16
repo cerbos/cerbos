@@ -70,13 +70,11 @@ func (c *Cmd) Run() error {
 	case c.Hub.DeploymentID != "":
 		hubOverrides = []string{
 			"storage.driver=hub",
-			"storage.hub.bundleVersion=2",
 			fmt.Sprintf("storage.hub.remote.deploymentID=%s", c.Hub.DeploymentID),
 		}
 	case c.Hub.PlaygroundID != "":
 		hubOverrides = []string{
 			"storage.driver=hub",
-			"storage.hub.bundleVersion=2",
 			fmt.Sprintf("storage.hub.remote.playgroundID=%s", c.Hub.PlaygroundID),
 		}
 	case c.HubBundle != "":
