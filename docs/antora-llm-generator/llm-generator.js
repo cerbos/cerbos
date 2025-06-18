@@ -38,17 +38,9 @@ module.exports.register = function (context) {
 
       indexContent += `\n- [${page.title}](https://docs.cerbos.dev/${page.out.path})`;
 
-      // Skip tutorials and recipes directories for llm-full.txt
-      if (page.src.path.startsWith("modules/ROOT/pages/tutorial")) {
+      if (page.asciidoc.attributes["page-llm-full-ignore"]) {
         console.log(
-          `LLM Generator: Skipping page in 'tutorial/' directory: ${page.src.path}`
-        );
-        continue;
-      }
-
-      if (page.src.path.startsWith("modules/recipes/")) {
-        console.log(
-          `LLM Generator: Skipping page in 'recipes/' directory: ${page.src.path}`
+          `LLM Generator: Skipping page with 'page-llm-full-ignore' attribute: ${page.src.path}`
         );
         continue;
       }
