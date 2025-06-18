@@ -199,16 +199,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Push public API to BSR
+      - name: Push to BSR
         uses: bufbuild/buf-action@v1.2.0
         with:
           push: true
-          input: api/public
-          token: ${{ secrets.BUF_TOKEN }}
-
-      - name: Push private API to BSR
-        uses: bufbuild/buf-action@v1.2.0
-        with:
-          push: true
-          input: api/private
           token: ${{ secrets.BUF_TOKEN }}
