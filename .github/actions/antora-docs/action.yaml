@@ -14,7 +14,7 @@ runs:
     - name: Build Antora with addons
       uses: docker/build-push-action@v5
       with:
-        context: ${{ github.workspace }}/docs/
+        context: docs/
         load: true
         tags: custom-antora:local
 
@@ -22,9 +22,9 @@ runs:
       shell: bash
       run: |
         docker run --rm \
-          -v ${{ github.workspace }}:/github/workspace/cerbos \
+          -v ${{ github.workspace }}:/cerbos \
           custom-antora:local \
           antora \
           --stacktrace \
           --clean \
-          /github/workspace/cerbos/docs/antora-playbook.yml
+          /cerbos/docs/antora-playbook.yml
