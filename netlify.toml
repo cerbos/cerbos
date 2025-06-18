@@ -1,6 +1,11 @@
 [build]
 publish = "docs/build"
 
+[[headers]]
+for = "/*"
+[headers.values]
+X-Robots-Tag = "llms-txt"
+
 # Only required until Antora LFS support lands. https://gitlab.com/antora/antora/-/issues/185
 
 [[redirects]]
