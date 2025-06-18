@@ -3,4 +3,5 @@ FROM antora/antora:${ANTORA_VERSION}
 WORKDIR /antora
 COPY ./antora-llm-generator /antora/docs/antora-llm-generator
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN cd /antora/docs/antora-llm-generator && npm install
+RUN cd /antora && npm install
