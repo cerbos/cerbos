@@ -1,11 +1,28 @@
 ---
-name: 'antora-docs'
-description: 'Build the docs using Antora'
+name: "antora-docs"
+description: "Build the docs using Antora"
+
 runs:
-  using: 'docker'
-  image: 'docker://docker.io/antora/antora:3.1.6'
-  args:
-    - 'antora'
-    - '--stacktrace'
-    - '--clean'
-    - 'docs/antora-playbook.yml'
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Antora with extensions
+      uses: docker/build-push-action@v5
+      with:
+        context: docs/
+        load: true
+        tags: antora-with-extensions:local
+
+    - name: Generate documentation
+      shell: bash
+      run: |
+        docker run --rm antora-with-extension:local \
+          antora \
+          --stacktrace \
+          --clean \
+          docs/antora-playbook.yml
