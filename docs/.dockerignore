@@ -1,4 +1,4 @@
 # Ignore build artifacts and local dependencies
 build/
 node_modules/
-
+antora-llm-generator/node_modules/
