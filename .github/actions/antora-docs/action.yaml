@@ -11,17 +11,17 @@ runs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Build Antora with extensions
+    - name: Build Antora with addons
       uses: docker/build-push-action@v5
       with:
         context: docs/
         load: true
-        tags: antora-with-extensions:local
+        tags: custom-antora:local
 
     - name: Generate documentation
       shell: bash
       run: |
-        docker run --rm antora-with-extension:local \
+        docker run --rm custom-antora:local \
           antora \
           --stacktrace \
           --clean \
