@@ -9,12 +9,17 @@ const nhm = new NodeHtmlMarkdown();
  * content of the site, suitable for consumption by an LLM.
  */
 module.exports.register = function (context) {
-  const logger = context.getLogger("llm-generator");
+  const logger = context.getLogger("antora-llm-generator");
+  const { playbook } = context.getVariables(); // playbook is available as soon as Antora starts
+  const siteTitle = playbook.site?.title || "Documentation";
+  const siteUrl = playbook.site?.url;
+
+  const skipPaths = context.skipPaths || [];
 
   context.on("navigationBuilt", ({ contentCatalog, siteCatalog }) => {
-    console.log("LLM Generator: Assembling content for LLM text files.");
+    logger.info("LLM Generator: Assembling content for LLM text files.");
 
-    let indexContent = "# Cerbos\n\n##Docs";
+    let indexContent = `# ${siteTitle}\n\n`;
     let fullContent = "";
 
     const pages = contentCatalog.findBy({ family: "page" });
@@ -23,23 +28,23 @@ module.exports.register = function (context) {
       if (!page.out) continue;
 
       if (page.asciidoc.attributes["page-llm-ignore"]) {
-        console.log(
+        logger.warn(
           `LLM Generator: Skipping page with 'page-llm-ignore' attribute: ${page.src.path}`
         );
         continue;
       }
 
-      if (page.src.path.startsWith("modules/releases/")) {
-        console.log(
+      if (skipPaths.some((path) => page.src.path.startsWith(path))) {
+        logger.warn(
           `LLM Generator: Skipping page in 'releases/' directory: ${page.src.path}`
         );
         continue;
       }
 
-      indexContent += `\n- [${page.title}](https://docs.cerbos.dev/${page.out.path})`;
+      indexContent += `\n- [${page.title}](${siteUrl}/${page.out.path})`;
 
       if (page.asciidoc.attributes["page-llm-full-ignore"]) {
-        console.log(
+        logger.warn(
           `LLM Generator: Skipping page with 'page-llm-full-ignore' attribute: ${page.src.path}`
         );
         continue;
@@ -62,6 +67,6 @@ module.exports.register = function (context) {
       contents: Buffer.from(indexContent),
     });
 
-    console.log("LLM Generator: llm.txt and llm-full.txt have been generated.");
+    logger.info("LLM Generator: llm.txt and llm-full.txt have been generated.");
   });
 };

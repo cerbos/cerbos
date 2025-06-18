@@ -42,4 +42,6 @@ output:
 
 antora:
   extensions:
-    - antora-llm-generator
+    - require: antora-llm-generator
+      skipPaths:
+        - "releases/"
