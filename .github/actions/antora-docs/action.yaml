@@ -21,7 +21,11 @@ runs:
     - name: Generate documentation
       shell: bash
       run: |
-        docker run --rm custom-antora:local \
+        docker run --rm \
+          -v ${{ github.workspace }}/${{ inputs.output-dir }}:/antora/build \
+          -v ${{ github.workspace }}:/antora/workspace:ro \
+          -w /antora/workspace \          
+          custom-antora:local \
           antora \
           --stacktrace \
           --clean \
