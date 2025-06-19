@@ -1,6 +1,7 @@
 "use strict";
 
 const { NodeHtmlMarkdown } = require("node-html-markdown");
+const { minimatch } = require("minimatch");
 
 const nhm = new NodeHtmlMarkdown();
 
@@ -8,16 +9,22 @@ const nhm = new NodeHtmlMarkdown();
  * An Antora extension that generates a single text file containing all the
  * content of the site, suitable for consumption by an LLM.
  */
-module.exports.register = function (context) {
+module.exports.register = function (context, { config }) {
   const logger = context.getLogger("antora-llm-generator");
   const { playbook } = context.getVariables(); // playbook is available as soon as Antora starts
   const siteTitle = playbook.site?.title || "Documentation";
   const siteUrl = playbook.site?.url;
 
-  const skipPaths = context.skipPaths || [];
+  const skipPaths = config.skippaths || [];
+
+  logger.warn(`Skip paths: ${JSON.stringify(skipPaths)}`);
+
+  const shouldSkipPath = (path) => {
+    return skipPaths.some((pattern) => minimatch(path, pattern));
+  };
 
   context.on("navigationBuilt", ({ contentCatalog, siteCatalog }) => {
-    logger.info("LLM Generator: Assembling content for LLM text files.");
+    logger.info("Assembling content for LLM text files.");
 
     let indexContent = `# ${siteTitle}\n\n`;
     let fullContent = "";
@@ -27,16 +34,15 @@ module.exports.register = function (context) {
     for (const page of pages) {
       if (!page.out) continue;
 
-      if (page.asciidoc.attributes["page-llm-ignore"]) {
-        logger.warn(
-          `LLM Generator: Skipping page with 'page-llm-ignore' attribute: ${page.src.path}`
-        );
+      // console.log(`Processing page: ${page.src.path} -> ${page.out.path}`);
+      if (shouldSkipPath(page.out.path)) {
+        logger.warn(`Skipping page matching skip pattern: ${page.out.path}`);
         continue;
       }
 
-      if (skipPaths.some((path) => page.src.path.startsWith(path))) {
+      if (page.asciidoc.attributes["page-llm-ignore"]) {
         logger.warn(
-          `LLM Generator: Skipping page in 'releases/' directory: ${page.src.path}`
+          `Skipping page with 'page-llm-ignore' attribute: ${page.src.path}`
         );
         continue;
       }
@@ -45,7 +51,7 @@ module.exports.register = function (context) {
 
       if (page.asciidoc.attributes["page-llm-full-ignore"]) {
         logger.warn(
-          `LLM Generator: Skipping page with 'page-llm-full-ignore' attribute: ${page.src.path}`
+          `Skipping page with 'page-llm-full-ignore' attribute: ${page.src.path}`
         );
         continue;
       }
@@ -67,6 +73,6 @@ module.exports.register = function (context) {
       contents: Buffer.from(indexContent),
     });
 
-    logger.info("LLM Generator: llm.txt and llm-full.txt have been generated.");
+    logger.info("llm.txt and llm-full.txt have been generated.");
   });
 };
