@@ -1,31 +1,7 @@
----
 name: "antora-docs"
 description: "Build the docs using Antora"
-
 runs:
-  using: composite
-  steps:
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build Antora with addons
-      uses: docker/build-push-action@v5
-      with:
-        context: ./docs
-        load: true
-        tags: custom-antora:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - name: Generate documentation
-      shell: bash
-      run: |
-        echo "Building documentation..."
-        docker run --rm \
-          -v $(pwd):/cerbos \
-          custom-antora:${{ github.sha }} \
-          antora \
-          --stacktrace \
-          --clean \
-          /cerbos/docs/antora-playbook.yml
-        echo "✅ Documentation built successfully"
+  using: "docker"
+  image: "docker://docker.io/antora/antora:3.1.6"
+  args:
+    - sh -c "yarn global add @cerbos/antora-llm-generator && antora --stacktrace --clean docs/antora-playbook.yml"

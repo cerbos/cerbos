@@ -25,7 +25,7 @@ docker run \
   -v "${SOURCE_DIR}:${WORKSPACE}/cerbos:Z" \
   --rm -t \
   "${CUSTOM_IMAGE_NAME}" \
-  antora --stacktrace --clean "${WORKSPACE}/cerbos/docs/antora-playbook.yml"
+  sh -c "yarn global add @cerbos/antora-llm-generator && antora --stacktrace --clean ${WORKSPACE}/cerbos/docs/antora-playbook.yml"
 
 echo "Build complete. Output is in ${SOURCE_DIR}/docs/build"
 

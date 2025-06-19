@@ -42,7 +42,7 @@ output:
 
 antora:
   extensions:
-    - require: antora-llm-generator
+    - require: "@cerbos/antora-llm-generator"
       skippaths:
         - "cerbos/{prerelease,[0-9]*.[0-9]*.[0-9]*}/**"
         - "cerbos/**/releases/**"
