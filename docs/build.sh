@@ -1,46 +1,26 @@
 #!/usr/bin/env bash
 #
 # Copyright 2021-2025 Zenauth Ltd.
-
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
-ANTORA_VERSION=${ANTORA_VERSION:-"3.1.6"}
-CUSTOM_IMAGE_NAME="cerbos-docs-builder"
 WORKSPACE="/github/workspace"
+ANTORA_VERSION=${ANTORA_VERSION:-"3.1.6"}
 
-docker buildx build --platform linux/amd64 \
-  --build-arg "ANTORA_VERSION=${ANTORA_VERSION}" \
-  -t "${CUSTOM_IMAGE_NAME}" \
-  "${SOURCE_DIR}/docs" 
-
-
-echo "Generating documentation..."
-
-rm -rf "${SOURCE_DIR}/docs/build"
-
-docker run \
-  --platform linux/amd64 \
-  -v "${SOURCE_DIR}:${WORKSPACE}/cerbos:Z" \
-  --rm -t \
-  "${CUSTOM_IMAGE_NAME}" \
+rm -rf "${SCRIPT_DIR}/build"
+docker run --platform linux/amd64 \
+  -v "$SOURCE_DIR":"${WORKSPACE}/cerbos":Z \
+  --rm -t "docker.io/antora/antora:${ANTORA_VERSION}" \
   sh -c "yarn global add @cerbos/antora-llm-generator && antora --stacktrace --clean ${WORKSPACE}/cerbos/docs/antora-playbook.yml"
 
-echo "Build complete. Output is in ${SOURCE_DIR}/docs/build"
-
+#VERSION=$(awk '/^version:/ {print $2}' "${SCRIPT_DIR}/antora.yml" | tr -d '"')
 
 UNAME=$(uname -s)
 OPEN_CMD=xdg-open
+
 if [[ "$UNAME" == "Darwin" ]]; then
 	OPEN_CMD=open
 fi
 
-
-OUTPUT_FILE="${SOURCE_DIR}/docs/build/cerbos/prerelease/index.html" 
-if [ -f "$OUTPUT_FILE" ]; then
-    echo "Opening ${OUTPUT_FILE}"
-    $OPEN_CMD "$OUTPUT_FILE"
-else
-    echo "Output file not found at ${OUTPUT_FILE}. Please check your playbook's `site.url` or start_page."
-fi
+$OPEN_CMD "${SCRIPT_DIR}/build/cerbos/prerelease/index.html"
