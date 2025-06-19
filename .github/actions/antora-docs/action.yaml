@@ -1,11 +1,9 @@
----
-name: 'antora-docs'
-description: 'Build the docs using Antora'
+name: "antora-docs"
+description: "Build the docs using Antora"
 runs:
-  using: 'docker'
-  image: 'docker://docker.io/antora/antora:3.1.6'
+  using: "docker"
+  image: "docker://docker.io/antora/antora:3.1.6"
   args:
-    - 'antora'
-    - '--stacktrace'
-    - '--clean'
-    - 'docs/antora-playbook.yml'
+    - "sh"
+    - "-c"
+    - "yarn global add @cerbos/antora-llm-generator && antora --stacktrace --clean docs/antora-playbook.yml"
