@@ -89,7 +89,7 @@ func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return rfc.toCommandError(k.Stderr, err)
 	}
 
-	req := hub.NewReplaceFilesRequest(cmd.StoreID, rfc.Message, zipContents)
+	req := hub.NewReplaceFilesRequest(cmd.StoreID, rfc.Message).WithZippedContents(zipContents)
 	if rfc.VersionMustEq > 0 {
 		req.OnlyIfVersionEquals(rfc.VersionMustEq)
 	}
