@@ -55,6 +55,8 @@ type Loader interface {
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 }
 
+type Resolver func(context.Context, string) (io.ReadCloser, error)
+
 func NewNopManager() NopManager {
 	return NopManager{}
 }
@@ -74,10 +76,10 @@ func (NopManager) CheckSchema(_ context.Context, _ string) error {
 }
 
 type manager struct {
-	conf   *Conf
-	log    *zap.Logger
-	loader Loader
-	cache  *cache.Cache[string, *cacheEntry]
+	conf     *Conf
+	log      *zap.Logger
+	cache    *cache.Cache[string, *cacheEntry]
+	resolver Resolver
 }
 
 func New(ctx context.Context, loader Loader) (Manager, error) {
@@ -95,10 +97,10 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	}
 
 	mgr := &manager{
-		conf:   conf,
-		log:    zap.L().Named("schema"),
-		loader: loader,
-		cache:  cache.New[string, *cacheEntry]("schema", conf.CacheSize),
+		conf:     conf,
+		log:      zap.L().Named("schema"),
+		cache:    cache.New[string, *cacheEntry]("schema", conf.CacheSize),
+		resolver: defaultResolver(loader),
 	}
 
 	if s, ok := loader.(storage.Subscribable); ok {
@@ -106,6 +108,37 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	}
 
 	return mgr
+}
+
+func NewEphemeral(resolver Resolver) *manager {
+	mgr := &manager{
+		conf:     NewConf(EnforcementReject),
+		log:      zap.L().Named("schema"),
+		cache:    cache.New[string, *cacheEntry]("schema", defaultCacheSize),
+		resolver: resolver,
+	}
+
+	return mgr
+}
+
+func defaultResolver(loader Loader) Resolver {
+	return func(ctx context.Context, path string) (io.ReadCloser, error) {
+		u, err := url.Parse(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if u.Scheme == "" || u.Scheme == URLScheme {
+			relativePath := strings.TrimPrefix(u.Path, "/")
+			return loader.LoadSchema(ctx, relativePath)
+		}
+
+		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
+		if !ok {
+			return nil, jsonschema.LoaderNotFoundError(path)
+		}
+		return schemaLoader(path)
+	}
 }
 
 func (m *manager) CheckSchema(ctx context.Context, url string) error {
@@ -233,21 +266,7 @@ func (m *manager) loadSchemaFromStore(ctx context.Context, schemaURL string) (*j
 	compiler.AssertFormat = true
 	compiler.AssertContent = true
 	compiler.LoadURL = func(path string) (io.ReadCloser, error) {
-		u, err := url.Parse(path)
-		if err != nil {
-			return nil, err
-		}
-
-		if u.Scheme == "" || u.Scheme == URLScheme {
-			relativePath := strings.TrimPrefix(u.Path, "/")
-			return m.loader.LoadSchema(ctx, relativePath)
-		}
-
-		loader, ok := jsonschema.Loaders[u.Scheme]
-		if !ok {
-			return nil, jsonschema.LoaderNotFoundError(path)
-		}
-		return loader(path)
+		return m.resolver(ctx, path)
 	}
 
 	return compiler.Compile(schemaURL)
