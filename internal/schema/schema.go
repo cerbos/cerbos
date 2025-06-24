@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	// Register the http and https loaders.
+	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -110,7 +112,7 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	return mgr
 }
 
-func NewEphemeral(resolver Resolver) *manager {
+func NewEphemeral(resolver Resolver) Manager {
 	mgr := &manager{
 		conf:     NewConf(EnforcementReject),
 		log:      zap.L().Named("schema"),
