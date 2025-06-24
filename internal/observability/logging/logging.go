@@ -51,8 +51,8 @@ func doInitLogging(ctx context.Context, level string) {
 	case "ERROR":
 		minLogLevel = zapcore.ErrorLevel
 	default:
-		if strings.HasPrefix(level, "V") {
-			if vLevel, err := strconv.Atoi(strings.TrimPrefix(level, "V")); err == nil {
+		if after, ok := strings.CutPrefix(level, "V"); ok {
+			if vLevel, err := strconv.Atoi(after); err == nil {
 				minLogLevel = zapcore.Level(-vLevel)
 			}
 		}
