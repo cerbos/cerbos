@@ -422,7 +422,8 @@ func cerbos_runtime_v1_RuleTable_PolicyDerivedRoles_hashpb_sum(m *RuleTable_Poli
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.derived_roles"]; !ok {
 		if len(m.DerivedRoles) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.DerivedRoles)) {
-				_, _ = hasher.Write(protowire.AppendString(nil, k))
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 				if m.DerivedRoles[k] != nil {
 					cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m.DerivedRoles[k], hasher, ignore)
 				}
@@ -435,7 +436,8 @@ func cerbos_runtime_v1_RuleTable_RoleParentRoles_ParentRoles_hashpb_sum(m *RuleT
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RoleParentRoles.ParentRoles.roles"]; !ok {
 		if len(m.Roles) > 0 {
 			for _, v := range m.Roles {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
 			}
 		}
 	}
@@ -445,7 +447,8 @@ func cerbos_runtime_v1_RuleTable_RoleParentRoles_hashpb_sum(m *RuleTable_RolePar
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RoleParentRoles.role_parent_roles"]; !ok {
 		if len(m.RoleParentRoles) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.RoleParentRoles)) {
-				_, _ = hasher.Write(protowire.AppendString(nil, k))
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 				if m.RoleParentRoles[k] != nil {
 					cerbos_runtime_v1_RuleTable_RoleParentRoles_ParentRoles_hashpb_sum(m.RoleParentRoles[k], hasher, ignore)
 				}
@@ -481,7 +484,8 @@ func cerbos_runtime_v1_RuleTable_RuleRow_Params_hashpb_sum(m *RuleTable_RuleRow_
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.Params.constants"]; !ok {
 		if len(m.Constants) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.Constants)) {
-				_, _ = hasher.Write(protowire.AppendString(nil, k))
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 				if m.Constants[k] != nil {
 					google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore)
 				}
@@ -568,7 +572,8 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 		}
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.evaluation_key"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.GetEvaluationKey()))
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetEvaluationKey()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetEvaluationKey()), len(m.GetEvaluationKey())))
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.policy_kind"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetPolicyKind())))
@@ -611,7 +616,8 @@ func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, igno
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.scope_parent_roles"]; !ok {
 		if len(m.ScopeParentRoles) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.ScopeParentRoles)) {
-				_, _ = hasher.Write(protowire.AppendString(nil, k))
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 				if m.ScopeParentRoles[k] != nil {
 					cerbos_runtime_v1_RuleTable_RoleParentRoles_hashpb_sum(m.ScopeParentRoles[k], hasher, ignore)
 				}
