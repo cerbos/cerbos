@@ -18,7 +18,6 @@ import (
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
@@ -59,7 +58,13 @@ type SourceAttribute struct {
 	Key   string
 }
 
-func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-chan Artefact, error) {
+type SchemaLoader = schema.Loader
+
+type SchemaResolver = schema.Resolver
+
+type SchemaResolverMaker func(SchemaLoader) SchemaResolver
+
+func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMaker, attrs ...SourceAttribute) (Index, <-chan Artefact, error) {
 	srcAttrs := make([]policy.SourceAttribute, len(attrs))
 	for i, a := range attrs {
 		srcAttrs[i] = policy.SourceAttribute{Key: a.Key, Value: a.Value}
@@ -84,13 +89,13 @@ func Files(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, <-
 		return nil, nil, fmt.Errorf("failed to build index: %w", err)
 	}
 
+	schemaResolver := schemaResolverMaker(idx)
 	outChan := make(chan Artefact, 1)
 
 	go func() {
 		defer close(outChan)
 
-		store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-		schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
+		schemaMgr := schema.NewEphemeral(schemaResolver)
 		logger := logging.FromContext(ctx).Named("compile")
 
 		inChan := idx.GetAllCompilationUnits(ctx)
