@@ -22,7 +22,6 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -259,7 +258,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	ppVersion := engine.policyVersion(input.Principal.PolicyVersion, opts.evalParams)
 	rpVersion := engine.policyVersion(input.Resource.PolicyVersion, opts.evalParams)
 
-	return planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTableManager, input, ppVersion, rpVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
+	return engine.ruleTableManager.Plan(ctx, input, ppVersion, rpVersion, opts.NowFunc(), opts.Globals())
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {

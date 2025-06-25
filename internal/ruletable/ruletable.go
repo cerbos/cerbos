@@ -32,6 +32,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
+	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
@@ -1646,4 +1647,312 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 	}
 
 	return result.Value(), nil
+}
+
+func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
+
+	// _, span := tracing.StartSpan(ctx, "engine.EvaluateRuleTableQueryPlan")
+	// span.SetAttributes(tracing.PolicyFQN(fqn))
+	// defer span.End()
+
+	principalScopes, _, _ := mgr.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
+	resourceScopes, _, _ := mgr.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
+
+	request := planner.PlanResourcesInputToRequest(input)
+	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
+
+	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
+	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
+
+	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
+	matchedScopes := make(map[string]string, len(input.Actions))
+	vr, err := mgr.schemaMgr.ValidatePlanResourcesInput(ctx, mgr.GetSchema(fqn), input)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to validate input: %w", err)
+	}
+	var validationErrors []*schemav1.ValidationError
+	if len(vr.Errors) > 0 {
+		validationErrors = vr.Errors.SchemaErrors()
+
+		if vr.Reject {
+			output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
+			output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
+			output.FilterDebug = planner.FilterToString(output.Filter)
+			return output, auditTrail, nil
+		}
+	}
+
+	allRoles := mgr.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
+	scopes := mgr.CombineScopes(principalScopes, resourceScopes)
+	candidateRows := mgr.GetRows(resourceVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, input.Actions)
+	if len(candidateRows) == 0 {
+		output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
+		output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
+		output.FilterDebug = noPolicyMatch
+		return output, auditTrail, nil
+	}
+
+	includingParentRoles := make(map[string]struct{})
+	for _, r := range allRoles {
+		includingParentRoles[r] = struct{}{}
+	}
+
+	policyMatch := false
+	for _, action := range input.Actions {
+		matchedScopes[action] = ""
+		nf := new(planner.NodeFilter)
+		scopedDerivedRolesList := make(map[string]func() (*exprpb.Expr, error))
+
+		var hasPolicyTypeAllow bool
+		var rootNode *planner.QpN
+
+		// evaluate resource policies before principal policies
+		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
+			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
+			for i, role := range input.Principal.Roles {
+				// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
+				// break out of the loop after the first iteration as it covers all potential principal rows.
+				if i > 0 && pt == policyv1.Kind_KIND_PRINCIPAL {
+					break
+				}
+
+				var roleAllowNode, roleDenyNode *planner.QpN
+				var pendingAllow bool
+
+				parentRoles := mgr.GetParentRoles(input.Resource.Scope, []string{role})
+
+				for _, scope := range scopes {
+					var scopeAllowNode, scopeDenyNode *planner.QpN
+
+					derivedRolesList := planner.MkDerivedRolesList(nil)
+					if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
+						if c, ok := scopedDerivedRolesList[scope]; ok {
+							derivedRolesList = c
+						} else {
+							var derivedRoles []planner.RN
+							if drs := mgr.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
+								for name, dr := range drs {
+									if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
+										continue
+									}
+
+									var err error
+									variables, err := planner.VariableExprs(dr.OrderedVariables)
+									if err != nil {
+										return nil, auditTrail, err
+									}
+
+									node, err := evalCtx.EvaluateCondition(ctx, dr.Condition, request, globals, dr.Constants, variables, derivedRolesList)
+									if err != nil {
+										return nil, auditTrail, err
+									}
+
+									derivedRoles = append(derivedRoles, planner.RN{
+										Node: func() (*enginev1.PlanResourcesAst_Node, error) {
+											return node, nil
+										},
+										Role: name,
+									})
+								}
+							}
+
+							sort.Slice(derivedRoles, func(i, j int) bool {
+								return derivedRoles[i].Role < derivedRoles[j].Role
+							})
+
+							derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+
+							scopedDerivedRolesList[scope] = derivedRolesList
+						}
+					}
+
+					for _, row := range candidateRows {
+						if ok := row.Matches(pt, scope, action, input.Principal.Id, parentRoles); !ok {
+							continue
+						}
+
+						if m := mgr.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+							maps.Copy(effectivePolicies, m.GetSourceAttributes())
+						}
+
+						var constants map[string]any
+						var variables map[string]celast.Expr
+						if row.Params != nil {
+							constants = row.Params.Constants
+							var err error
+							variables, err = planner.VariableExprs(row.Params.Variables)
+							if err != nil {
+								return nil, auditTrail, err
+							}
+						}
+
+						node, err := evalCtx.EvaluateCondition(ctx, row.Condition, request, globals, constants, variables, derivedRolesList)
+						if err != nil {
+							return nil, auditTrail, err
+						}
+
+						if row.DerivedRoleCondition != nil { //nolint:nestif
+							var variables map[string]celast.Expr
+							if row.DerivedRoleParams != nil {
+								var err error
+								variables, err = planner.VariableExprs(row.DerivedRoleParams.Variables)
+								if err != nil {
+									return nil, auditTrail, err
+								}
+							}
+
+							drNode, err := evalCtx.EvaluateCondition(ctx, row.DerivedRoleCondition, request, globals, row.DerivedRoleParams.Constants, variables, derivedRolesList)
+							if err != nil {
+								return nil, auditTrail, err
+							}
+
+							if row.Condition == nil {
+								node = drNode
+							} else {
+								node = planner.MkNodeFromLO(planner.MkAndLogicalOperation([]*planner.QpN{node, drNode}))
+							}
+						}
+
+						switch row.Effect { //nolint:exhaustive
+						case effectv1.Effect_EFFECT_ALLOW:
+							if scopeAllowNode == nil {
+								scopeAllowNode = node
+							} else {
+								scopeAllowNode = planner.MkOrNode([]*planner.QpN{scopeAllowNode, node})
+							}
+						case effectv1.Effect_EFFECT_DENY:
+							if scopeDenyNode == nil {
+								scopeDenyNode = node
+							} else {
+								scopeDenyNode = planner.MkOrNode([]*planner.QpN{scopeDenyNode, node})
+							}
+						}
+					}
+
+					if scopeDenyNode != nil {
+						if roleDenyNode == nil {
+							roleDenyNode = scopeDenyNode
+						} else {
+							roleDenyNode = planner.MkOrNode([]*planner.QpN{roleDenyNode, scopeDenyNode})
+						}
+					}
+
+					if scopeAllowNode != nil { //nolint:nestif
+						if roleAllowNode == nil {
+							roleAllowNode = scopeAllowNode
+						} else {
+							if pendingAllow {
+								roleAllowNode = planner.MkAndNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
+								pendingAllow = false
+							} else {
+								roleAllowNode = planner.MkOrNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
+							}
+						}
+
+						if mgr.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+							pendingAllow = true
+						}
+					}
+
+					if (scopeDenyNode != nil || scopeAllowNode != nil) &&
+						mgr.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+						matchedScopes[action] = scope
+						break
+					}
+				}
+
+				// only an ALLOW from a scope with ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS exists with no
+				// matching rules in the parent scopes, therefore null the node
+				if pendingAllow {
+					roleAllowNode = nil
+				}
+
+				// Const DENY overrides any ALLOW in the same role
+				if b, ok := planner.IsNodeConstBool(roleDenyNode); ok && b {
+					// Roles are evaluated independently, therefore an ALLOW for one role needs to override a DENY for another.
+					// If we pass the role level `DENY==true`, we end up overriding the result for all roles with an `AND(..., NOT(true))`
+					// due to the policyTypeDenyNode inversion below. Inverting and resolving in the allow node ensures the role is OR'd
+					// against others, e.g. `OR(false, roleAllow1, roleAllow2, ...)`).
+					roleAllowNode = planner.MkFalseNode()
+					roleDenyNode = nil
+				} else if roleAllowNode != nil && roleDenyNode == nil {
+					if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
+						policyTypeAllowNode = roleAllowNode
+						policyTypeDenyNode = nil
+						// Break out of the roles loop entirely
+						break
+					}
+				}
+
+				if roleAllowNode != nil {
+					if policyTypeAllowNode == nil {
+						policyTypeAllowNode = roleAllowNode
+					} else {
+						policyTypeAllowNode = planner.MkOrNode([]*planner.QpN{policyTypeAllowNode, roleAllowNode})
+					}
+				}
+
+				if roleDenyNode != nil {
+					if policyTypeDenyNode == nil {
+						policyTypeDenyNode = roleDenyNode
+					} else {
+						policyTypeDenyNode = planner.MkOrNode([]*planner.QpN{policyTypeDenyNode, roleDenyNode})
+					}
+				}
+			}
+
+			if policyTypeAllowNode != nil {
+				hasPolicyTypeAllow = true
+			}
+
+			if policyTypeAllowNode != nil {
+				if rootNode == nil {
+					rootNode = policyTypeAllowNode
+				} else {
+					rootNode = planner.MkOrNode([]*planner.QpN{policyTypeAllowNode, rootNode})
+				}
+			}
+
+			// PolicyType denies need to reside at the top level of their PolicyType sub trees (e.g. a conditional
+			// DENY in a principal policy needs to be a top level `(NOT deny condition) AND nested ALLOW`), so we
+			// invert and AND them as we go.
+			if policyTypeDenyNode != nil {
+				inv := planner.InvertNodeBooleanValue(policyTypeDenyNode)
+				if rootNode == nil {
+					rootNode = inv
+				} else {
+					rootNode = planner.MkAndNode([]*planner.QpN{inv, rootNode})
+				}
+			}
+		}
+
+		if rootNode != nil {
+			policyMatch = true
+			if !hasPolicyTypeAllow {
+				nf.ResetToUnconditionalDeny()
+			} else {
+				nf.Add(rootNode, effectv1.Effect_EFFECT_ALLOW)
+			}
+		}
+
+		if nf.AllowIsEmpty() && !nf.DenyIsEmpty() { // reset an conditional DENY to an unconditional one
+			nf.ResetToUnconditionalDeny()
+		}
+		f, err := planner.ToFilter(nf.ToAST())
+		if err != nil {
+			return nil, nil, err
+		}
+		filters = append(filters, f)
+	} // for each action
+	output := planner.MkPlanResourcesOutput(input, matchedScopes, validationErrors)
+	output.Filter, output.FilterDebug, err = planner.MergeWithAnd(filters)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !policyMatch {
+		output.FilterDebug = noPolicyMatch
+	}
+
+	return output, auditTrail, nil
 }
