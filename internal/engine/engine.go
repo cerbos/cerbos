@@ -258,6 +258,10 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	ppVersion := engine.policyVersion(input.Principal.PolicyVersion, opts.evalParams)
 	rpVersion := engine.policyVersion(input.Resource.PolicyVersion, opts.evalParams)
 
+	if err := engine.ruleTableManager.Refresh(ctx); err != nil {
+		return nil, nil, err
+	}
+
 	return engine.ruleTableManager.Plan(ctx, input, ppVersion, rpVersion, opts.NowFunc(), opts.Globals())
 }
 
