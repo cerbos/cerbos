@@ -30,6 +30,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
@@ -958,6 +959,9 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 }
 
 func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+	_, span := tracing.StartSpan(ctx, "engine.Plan")
+	defer span.End()
+
 	principalVersion := input.Principal.PolicyVersion
 	if principalVersion == "" {
 		principalVersion = evalParams.DefaultPolicyVersion
@@ -979,6 +983,8 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 
 	principalScopes, principalPolicyKey, _ := mgr.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
 	resourceScopes, resourcePolicyKey, fqn := mgr.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
+
+	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	pctx := tctx.StartPolicy(fqn)
 
@@ -1652,9 +1658,9 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
 
-	// _, span := tracing.StartSpan(ctx, "engine.EvaluateRuleTableQueryPlan")
-	// span.SetAttributes(tracing.PolicyFQN(fqn))
-	// defer span.End()
+	_, span := tracing.StartSpan(ctx, "engine.Plan")
+	span.SetAttributes(tracing.PolicyFQN(fqn))
+	defer span.End()
 
 	principalScopes, _, _ := mgr.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
 	resourceScopes, _, _ := mgr.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
