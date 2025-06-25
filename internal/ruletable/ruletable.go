@@ -430,9 +430,6 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.Poli
 }
 
 func (mgr *Manager) load(rt *runtimev1.RuleTable) error {
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
-
 	mgr.RuleTable = rt
 	mgr.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
 	mgr.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
