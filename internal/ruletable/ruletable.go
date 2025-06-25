@@ -939,6 +939,9 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 }
 
 func (mgr *Manager) Refresh(ctx context.Context) error {
+	mgr.mu.Lock()
+	defer mgr.mu.Unlock()
+
 	if !mgr.isStale.Load() {
 		return nil
 	}
