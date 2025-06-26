@@ -358,7 +358,7 @@ type Manager struct {
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoleAncestorsCache map[string]map[string][]string
 	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	isStale                  atomic.Bool
+	isStale                  atomic.Bool // TODO(saml) remove this once rule table patching is added
 	mu                       sync.RWMutex
 }
 
@@ -431,6 +431,15 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.Poli
 
 func (mgr *Manager) load(rt *runtimev1.RuleTable) error {
 	mgr.RuleTable = rt
+
+	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
+	clear(mgr.primaryIdx)
+	clear(mgr.policyDerivedRoles)
+	clear(mgr.principalScopeMap)
+	clear(mgr.resourceScopeMap)
+	clear(mgr.scopeScopePermissions)
+	clear(mgr.parentRoleAncestorsCache)
+
 	mgr.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
 	mgr.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
 	mgr.principalScopeMap = make(map[string]struct{})
