@@ -10,7 +10,7 @@ import (
 	"context"
 	"io"
 
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -364,68 +364,6 @@ func (_c *Index_GetAllCompilationUnits_Call) Return(compilationUnitCh <-chan *po
 }
 
 func (_c *Index_GetAllCompilationUnits_Call) RunAndReturn(run func(context1 context.Context) <-chan *policy.CompilationUnit) *Index_GetAllCompilationUnits_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllMatching provides a mock function for the type Index
-func (_mock *Index) GetAllMatching(moduleIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
-	ret := _mock.Called(moduleIDs)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllMatching")
-	}
-
-	var r0 []*policy.CompilationUnit
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func([]namer.ModuleID) ([]*policy.CompilationUnit, error)); ok {
-		return returnFunc(moduleIDs)
-	}
-	if returnFunc, ok := ret.Get(0).(func([]namer.ModuleID) []*policy.CompilationUnit); ok {
-		r0 = returnFunc(moduleIDs)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*policy.CompilationUnit)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func([]namer.ModuleID) error); ok {
-		r1 = returnFunc(moduleIDs)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Index_GetAllMatching_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllMatching'
-type Index_GetAllMatching_Call struct {
-	*mock.Call
-}
-
-// GetAllMatching is a helper method to define mock.On call
-//   - moduleIDs []namer.ModuleID
-func (_e *Index_Expecter) GetAllMatching(moduleIDs interface{}) *Index_GetAllMatching_Call {
-	return &Index_GetAllMatching_Call{Call: _e.mock.On("GetAllMatching", moduleIDs)}
-}
-
-func (_c *Index_GetAllMatching_Call) Run(run func(moduleIDs []namer.ModuleID)) *Index_GetAllMatching_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 []namer.ModuleID
-		if args[0] != nil {
-			arg0 = args[0].([]namer.ModuleID)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *Index_GetAllMatching_Call) Return(compilationUnits []*policy.CompilationUnit, err error) *Index_GetAllMatching_Call {
-	_c.Call.Return(compilationUnits, err)
-	return _c
-}
-
-func (_c *Index_GetAllMatching_Call) RunAndReturn(run func(moduleIDs []namer.ModuleID) ([]*policy.CompilationUnit, error)) *Index_GetAllMatching_Call {
 	_c.Call.Return(run)
 	return _c
 }
