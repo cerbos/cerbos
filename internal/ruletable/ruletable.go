@@ -359,6 +359,7 @@ type Manager struct {
 	parentRoleAncestorsCache map[string]map[string][]string
 	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	isStale                  atomic.Bool // TODO(saml) remove this once rule table patching is added
+	awaitingHealthyIndex     atomic.Bool
 	mu                       sync.RWMutex
 }
 
@@ -418,8 +419,9 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.Poli
 		log: zap.S().Named("ruletable"),
 		// TODO(saml) ultimately, the policyLoader should not be attached to the rule table manager. On policy changes, we'll need a separate
 		// mechanism that patches rule tables and reapplies them. This'll be done in a future refactor
-		policyLoader: policyLoader,
-		schemaMgr:    schemaMgr,
+		policyLoader:         policyLoader,
+		schemaMgr:            schemaMgr,
+		awaitingHealthyIndex: atomic.Bool{},
 	}
 
 	if err := mgr.load(rt); err != nil {
@@ -936,7 +938,12 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, evt := range events {
 		switch evt.Kind {
 		case storage.EventReload, storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
-			mgr.log.Info("Reloading ruletable")
+			// as a temporary measure, to avoid recompiling the whole rule table on updates when no Check
+			// or Plan calls are made, we toggle a flag which is checked at query time and lazily refresh
+			// the table then. This is far from ideal as it can increase the latency of the first query, but
+			// this is a temporary measure (and the lesser of two evils).
+			// TODO(saml) remove this once rule table patching is implemented
+			mgr.log.Info("Scheduling ruletable reload")
 			mgr.isStale.Store(true)
 		default:
 			mgr.log.Debugw("Ignoring storage event", "event", evt)
@@ -954,8 +961,14 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 
 	rt := NewRuletable()
 
+	// If compilation fails, we maintain the last valid rule table state.
+	// To avoid repeated recompilation attempts on known broken policy stores, we set `isStale`
+	// to false to ensure subsequent refreshes are noop'd until further events appear which can
+	// potentially fix the broken state.
 	if err := LoadFromPolicyLoader(ctx, rt, mgr.policyLoader); err != nil {
-		return err
+		mgr.log.Error("Rule table compilation failed, maintaining previous valid state")
+		mgr.isStale.Store(false)
+		return nil
 	}
 
 	if err := mgr.load(rt); err != nil {

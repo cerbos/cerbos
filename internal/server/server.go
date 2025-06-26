@@ -157,7 +157,7 @@ func Start(ctx context.Context) error {
 	rt := ruletable.NewRuletable()
 
 	if err := ruletable.LoadFromPolicyLoader(ctx, rt, policyLoader); err != nil {
-		return nil
+		return err
 	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, schemaMgr)
