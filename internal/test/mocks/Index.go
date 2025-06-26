@@ -10,7 +10,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"

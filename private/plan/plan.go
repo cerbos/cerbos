@@ -19,7 +19,7 @@ import (
 func Resources(ctx context.Context, conf *engine.Conf, idx compile.Index, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+	compiler := internalcompile.NewManager(ctx, store, schemaMgr)
 
 	rt := ruletable.NewRuletable()
 

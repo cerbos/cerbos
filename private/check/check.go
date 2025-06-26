@@ -85,7 +85,7 @@ func (g *TestFixtureGetter) GetAllTestFixtures() []*TestFixtureCtx {
 func Check(ctx context.Context, conf *engine.Conf, idx compile.Index, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+	compiler := internalcompile.NewManager(ctx, store, schemaMgr)
 
 	rt := ruletable.NewRuletable()
 

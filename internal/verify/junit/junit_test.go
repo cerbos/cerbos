@@ -140,7 +140,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
-	mgr := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+	mgr := compile.NewManager(ctx, store, schemaMgr)
 
 	rt := ruletable.NewRuletable()
 	require.NoError(t, ruletable.LoadFromPolicyLoader(ctx, rt, mgr))

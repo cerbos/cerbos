@@ -135,10 +135,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 		rt := ruletable.NewRuletable()
 
-		compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
-		if err != nil {
-			return fmt.Errorf("failed to create compile manager: %w", err)
-		}
+		compileMgr := compile.NewManager(ctx, store, schemaMgr)
 
 		if err := ruletable.LoadFromPolicyLoader(ctx, rt, compileMgr); err != nil {
 			return err
