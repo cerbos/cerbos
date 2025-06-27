@@ -359,7 +359,7 @@ type Manager struct {
 	parentRoleAncestorsCache   map[string]map[string][]string
 	policyDerivedRoles         map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	isStale                    atomic.Bool // TODO(saml) remove this once rule table patching is added
-	awaitingHealthyPolicyStore atomic.Bool
+	awaitingHealthyPolicyStore atomic.Bool // TODO(saml) remove this once rule table patching is added
 	mu                         sync.RWMutex
 }
 
@@ -726,7 +726,7 @@ func (mgr *Manager) ScopedRoleExists(version, scope, role string) bool {
 func (mgr *Manager) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
 	res := []*Row{}
 
-	// TODO(saml) can go once merges are handled outside the manager and rule tables are truly static
+	// TODO(saml) mutex can go once merges are handled outside the manager and rule tables are truly static
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
@@ -956,6 +956,7 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 	defer mgr.mu.Unlock()
 
 	if !mgr.isStale.Load() {
+		// TODO(saml) this atomic bool is only used for logging purposes. Remove with patching
 		if mgr.awaitingHealthyPolicyStore.Load() {
 			mgr.log.Debug("Policy store invalid, using previous valid state")
 		}
@@ -985,7 +986,7 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 }
 
 func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
-	_, span := tracing.StartSpan(ctx, "engine.Plan")
+	_, span := tracing.StartSpan(ctx, "engine.Check")
 	defer span.End()
 
 	principalVersion := input.Principal.PolicyVersion
