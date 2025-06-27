@@ -48,7 +48,6 @@ type Index interface {
 	storage.Instrumented
 	GetFirstMatch([]namer.ModuleID) (*policy.CompilationUnit, error)
 	GetAll(context.Context) ([]*policy.CompilationUnit, error)
-	GetAllMatching([]namer.ModuleID) ([]*policy.CompilationUnit, error)
 	GetCompilationUnits(...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	AddOrUpdate(Entry) (storage.Event, error)
@@ -115,22 +114,6 @@ func (idx *index) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error)
 
 	for cu := range idx.GetAllCompilationUnits(ctx) {
 		res = append(res, cu)
-	}
-
-	return res, nil
-}
-
-func (idx *index) GetAllMatching(modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
-	cus, err := idx.GetCompilationUnits(modIDs...)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]*policy.CompilationUnit, len(cus))
-	var i int
-	for _, cu := range cus {
-		res[i] = cu
-		i++
 	}
 
 	return res, nil

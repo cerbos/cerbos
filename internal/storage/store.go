@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"time"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -139,8 +138,6 @@ type SourceStore interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*policy.CompilationUnit, error)
 	// GetAll returns all modules that exist within the policy store
 	GetAll(context.Context) ([]*policy.CompilationUnit, error)
-	// GetAllMatching returns all modules that exist for the provided module IDs
-	GetAllMatching(context.Context, []namer.ModuleID) ([]*policy.CompilationUnit, error)
 	// GetCompilationUnits gets the compilation units for the given module IDs.
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
@@ -157,10 +154,6 @@ type BinaryStore interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 	// GetAll returns all modules that exist within the policy store
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
-	// GetAllMatching returns all modules that exist for the provided module IDs
-	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
-	// GetCacheDuration returns the time an entry should be cached for.
-	GetCacheDuration() time.Duration
 }
 
 // MutableStore is a store that allows mutations.
@@ -217,11 +210,10 @@ const (
 
 // Event is an event detected by the storage layer.
 type Event struct {
-	OldPolicyID    *namer.ModuleID
-	SchemaFile     string
-	Kind           EventKind
-	PolicyID       namer.ModuleID
-	IndexUnhealthy bool
+	OldPolicyID *namer.ModuleID
+	SchemaFile  string
+	Kind        EventKind
+	PolicyID    namer.ModuleID
 }
 
 func (evt Event) String() string {

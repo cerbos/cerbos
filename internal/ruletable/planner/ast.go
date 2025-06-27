@@ -19,7 +19,7 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/engine/planner/internal"
+	"github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -582,7 +582,7 @@ func visitConst(c *exprpb.Constant) (*structpb.Value, error) {
 	}
 }
 
-func toFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilter, error) {
+func ToFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilter, error) {
 	filter := &enginev1.PlanResourcesFilter{
 		Kind:      enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
 		Condition: new(enginev1.PlanResourcesFilter_Expression_Operand),
@@ -820,7 +820,7 @@ func asBoolValue(op *enginev1.PlanResourcesFilter_Expression_Operand) (bool, boo
 	return false, false
 }
 
-func filterToString(filter *enginev1.PlanResourcesFilter) string {
+func FilterToString(filter *enginev1.PlanResourcesFilter) string {
 	switch filter.Kind {
 	case enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED:
 		return "(true)"

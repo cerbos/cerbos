@@ -569,10 +569,6 @@ func (s *RemoteSource) IsHealthy() bool {
 	return s.healthy
 }
 
-func (s *RemoteSource) GetCacheDuration() time.Duration {
-	return 0
-}
-
 func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -593,17 +589,6 @@ func (s *RemoteSource) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicyS
 	}
 
 	return s.bundle.GetAll(ctx)
-}
-
-func (s *RemoteSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if s.bundle == nil {
-		return nil, ErrBundleNotLoaded
-	}
-
-	return s.bundle.GetAllMatching(ctx, modIDs)
 }
 
 func (s *RemoteSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
