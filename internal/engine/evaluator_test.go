@@ -15,6 +15,7 @@ import (
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/stretchr/testify/require"
@@ -26,7 +27,7 @@ func TestSatisfiesCondition(t *testing.T) {
 	timeNow, err := time.Parse(time.RFC3339, "2021-04-22T10:05:20.021-05:00")
 	require.NoError(t, err, "Failed to parse timestamp")
 
-	eparams := evalParams{nowFunc: func() time.Time { return timeNow }}
+	eparams := ruletable.EvalParams{NowFunc: func() time.Time { return timeNow }}
 
 	for _, tcase := range testCases {
 		t.Run(tcase.Name, func(t *testing.T) {
@@ -35,7 +36,7 @@ func TestSatisfiesCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			tctx := tracer.Start(newTestTraceSink(t))
-			retVal, err := newEvalContext(eparams, tc.Request).satisfiesCondition(t.Context(), tctx.StartCondition(), cond, nil, nil)
+			retVal, err := ruletable.NewEvalContext(eparams, tc.Request).SatisfiesCondition(t.Context(), tctx.StartCondition(), cond, nil, nil)
 
 			if tc.WantError {
 				require.Error(t, err)

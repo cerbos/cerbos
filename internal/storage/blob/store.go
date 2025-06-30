@@ -266,11 +266,6 @@ func (s *Store) updateIndex(ctx context.Context) (err error) {
 	// we need to emit all events regardless of validity as some subscribers (such as the rule table)
 	// need to be kept in sync.
 	defer func() {
-		if err != nil {
-			for i := range evts {
-				evts[i].IndexUnhealthy = true
-			}
-		}
 		s.NotifySubscribers(evts...)
 	}()
 
@@ -469,10 +464,6 @@ func (s *Store) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*
 
 func (s *Store) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
 	return s.idx.GetAll(ctx)
-}
-
-func (s *Store) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
-	return s.idx.GetAllMatching(modIDs)
 }
 
 func (s *Store) GetCompilationUnits(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {

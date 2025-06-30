@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cloud-api/bundle"
@@ -31,5 +32,17 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
-	return engine.NewEphemeral(nil, bundleSrc, schemaMgr), nil
+
+	rt := ruletable.NewRuletable()
+
+	if err := ruletable.LoadFromPolicyLoader(ctx, rt, bundleSrc); err != nil {
+		return nil, err
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, bundleSrc, schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.NewEphemeral(nil, ruletableMgr, schemaMgr), nil
 }

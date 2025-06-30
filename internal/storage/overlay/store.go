@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/sony/gobreaker/v2"
 	"github.com/sourcegraph/conc/pool"
@@ -120,12 +119,12 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker[any] {
 
 // GetOverlayPolicyLoader instantiates both the base and fallback policy loaders and then returns itself.
 func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (policyloader.PolicyLoader, error) {
-	getPolicyLoader := func(storeInterface storage.Store, key string) (policyloader.PolicyLoader, error) {
+	getPolicyLoader := func(storeInterface storage.Store) (policyloader.PolicyLoader, error) {
 		switch st := storeInterface.(type) {
 		case storage.SourceStore:
 			pl, err := compile.NewManager(ctx, st, schemaMgr)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create %s compile manager: %w", key, err)
+				return nil, fmt.Errorf("failed to create compile manager: %w", err)
 			}
 			return pl, nil
 		case storage.BinaryStore:
@@ -136,10 +135,10 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Man
 	}
 
 	var err error
-	if s.basePolicyLoader, err = getPolicyLoader(s.baseStore, "base"); err != nil {
+	if s.basePolicyLoader, err = getPolicyLoader(s.baseStore); err != nil {
 		return nil, err
 	}
-	if s.fallbackPolicyLoader, err = getPolicyLoader(s.fallbackStore, "fallback"); err != nil {
+	if s.fallbackPolicyLoader, err = getPolicyLoader(s.fallbackStore); err != nil {
 		return nil, err
 	}
 
@@ -187,24 +186,6 @@ func (s *Store) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) 
 		func() (*runtimev1.RunnablePolicySet, error) {
 			return s.fallbackPolicyLoader.GetFirstMatch(ctx, candidates)
 		},
-	)
-}
-
-func (s *Store) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	return withCircuitBreaker(
-		s,
-		func() ([]*runtimev1.RunnablePolicySet, error) { return s.basePolicyLoader.GetAllMatching(ctx, modIDs) },
-		func() ([]*runtimev1.RunnablePolicySet, error) {
-			return s.fallbackPolicyLoader.GetAllMatching(ctx, modIDs)
-		},
-	)
-}
-
-func (s *Store) GetCacheDuration() time.Duration {
-	return withCircuitBreaker0(
-		s,
-		func() time.Duration { return s.basePolicyLoader.GetCacheDuration() },
-		func() time.Duration { return s.fallbackPolicyLoader.GetCacheDuration() },
 	)
 }
 
