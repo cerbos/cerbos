@@ -10,15 +10,15 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.uber.org/zap"
+	gcaws "gocloud.dev/aws"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/gcsblob"
 	"gocloud.dev/blob/s3blob"
@@ -129,17 +129,14 @@ func openGSBucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bu
 }
 
 func openS3Bucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bucket, error) {
-	client := &http.Client{Timeout: *conf.RequestTimeout}
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{HTTPClient: client},
-		// Force enable Shared Config support
-		SharedConfigState: session.SharedConfigEnable,
-	})
+	cfg, err := gcaws.V2ConfigFromURLParams(ctx, bucketURL.Query())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	opener := s3blob.URLOpener{ConfigProvider: sess}
-	return opener.OpenBucketURL(ctx, bucketURL)
+
+	cfg.HTTPClient = awshttp.NewBuildableClient().WithTimeout(*conf.RequestTimeout)
+	s3Client := s3.NewFromConfig(cfg)
+	return s3blob.OpenBucket(ctx, s3Client, bucketURL.Host, nil)
 }
 
 type bucketCloner interface {
