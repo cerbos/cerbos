@@ -420,9 +420,6 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.Poli
 		schemaMgr:    schemaMgr,
 	}
 
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
-
 	if err := mgr.load(rt); err != nil {
 		return nil, err
 	}
@@ -671,9 +668,6 @@ func (mgr *Manager) CombineScopes(principalScopes, resourceScopes []string) []st
 }
 
 func (mgr *Manager) ScopedResourceExists(version, resource string, scopes []string) bool {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-
 	if scopeMap, ok := mgr.primaryIdx[version]; ok {
 		for _, scope := range scopes {
 			if roleMap, ok := scopeMap[scope]; ok && roleMap.Len() > 0 {
@@ -694,9 +688,6 @@ func (mgr *Manager) ScopedResourceExists(version, resource string, scopes []stri
 }
 
 func (mgr *Manager) ScopedPrincipalExists(version string, scopes []string) bool {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-
 	if scopeMap, ok := mgr.primaryIdx[version]; ok {
 		for _, scope := range scopes {
 			if roleMap, ok := scopeMap[scope]; ok && roleMap.Len() > 0 {
@@ -709,6 +700,18 @@ func (mgr *Manager) ScopedPrincipalExists(version string, scopes []string) bool 
 						}
 					}
 				}
+			}
+		}
+	}
+
+	return false
+}
+
+func (mgr *Manager) ScopedRoleExists(version, scope, role string) bool {
+	if scopeMap, ok := mgr.primaryIdx[version]; ok {
+		if roleMap, ok := scopeMap[scope]; ok {
+			if _, ok := roleMap.Get(role); ok {
+				return true
 			}
 		}
 	}
@@ -896,9 +899,6 @@ func (mgr *Manager) ScopeExists(pt policy.Kind, scope string) bool {
 }
 
 func (mgr *Manager) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-
 	return mgr.scopeScopePermissions[scope]
 }
 
