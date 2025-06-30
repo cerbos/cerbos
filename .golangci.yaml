@@ -75,6 +75,14 @@ linters:
       allow-unused: true # false would be preferable, but it's flaky (https://github.com/golangci/golangci-lint/issues/3228)
       require-specific: true
 
+    revive:
+      rules:
+        - name: var-naming
+          arguments:
+            - []
+            - []
+            - - skipPackageNameChecks: true
+
     tagliatelle:
       case:
         rules:
