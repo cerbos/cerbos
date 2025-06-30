@@ -1,6 +1,6 @@
 {
   "name": "@cerbos/cerbosctl-linux-x64",
-  "version": "0.45.0",
+  "version": "0.45.1",
   "description": "The linux-x64 binary for cerbosctl",
   "repository": {
     "type": "git",
