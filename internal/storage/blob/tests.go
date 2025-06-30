@@ -34,8 +34,7 @@ const (
 const timeout = 5 * time.Minute
 
 func MinioBucketURL(bucketName, endpoint string) string {
-	// TODO: Replace awssdk=v1&s3ForcePathStyle with hostname_immutable=true when a CDK version greater than  0.39 is available
-	return fmt.Sprintf("s3://%s?region=local&s3ForcePathStyle=true&awssdk=v1&endpoint=http%%3A%%2F%%2F%s", bucketName, endpoint)
+	return fmt.Sprintf("s3://%s?region=local&hostname_immutable=true&endpoint=http%%3A%%2F%%2F%s", bucketName, endpoint)
 }
 
 type UploadParam struct {
