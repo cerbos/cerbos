@@ -135,7 +135,10 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 		rt := ruletable.NewRuletable()
 
-		compileMgr := compile.NewManager(ctx, store, schemaMgr)
+		compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
+		if err != nil {
+			return err
+		}
 
 		if err := ruletable.LoadFromPolicyLoader(ctx, rt, compileMgr); err != nil {
 			return err

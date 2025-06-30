@@ -64,7 +64,8 @@ func TestServer(t *testing.T) {
 			require.NoError(t, err)
 
 			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-			policyLoader := compile.NewManager(ctx, store, schemaMgr)
+			policyLoader, err := compile.NewManager(ctx, store, schemaMgr)
+			require.NoError(t, err)
 
 			tp := testParam{
 				store:        store,
@@ -257,7 +258,8 @@ func TestAdminService(t *testing.T) {
 		require.NoError(t, err)
 
 		schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-		policyLoader := compile.NewManager(ctx, store, schemaMgr)
+		policyLoader, err := compile.NewManager(ctx, store, schemaMgr)
+		require.NoError(t, err)
 
 		return testParam{
 			store:        store,

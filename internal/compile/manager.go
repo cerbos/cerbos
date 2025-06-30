@@ -13,6 +13,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -35,7 +36,11 @@ type Manager struct {
 	*storage.SubscriptionManager
 }
 
-func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) *Manager {
+func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) (*Manager, error) {
+	if err := config.GetSection(&Conf{}); err != nil {
+		return nil, err
+	}
+
 	c := &Manager{
 		log:                 zap.S().Named("compiler"),
 		store:               store,
@@ -47,7 +52,7 @@ func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema
 	go c.processUpdateQueue(ctx)
 	store.Subscribe(c)
 
-	return c
+	return c, nil
 }
 
 func (c *Manager) SubscriberID() string {

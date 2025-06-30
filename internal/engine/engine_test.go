@@ -313,7 +313,8 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	schemaConf := schema.NewConf(p.schemaEnforcement)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	compiler := compile.NewManager(ctx, store, schemaMgr)
+	compiler, err := compile.NewManager(ctx, store, schemaMgr)
+	require.NoError(tb, err)
 
 	var auditLog audit.Log
 	switch {

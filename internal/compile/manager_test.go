@@ -27,7 +27,7 @@ import (
 
 func TestManager(t *testing.T) {
 	t.Run("happy_path", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
@@ -62,7 +62,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("no_matching_policy", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -84,7 +84,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("error_from_store", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -110,7 +110,7 @@ func TestManager(t *testing.T) {
 
 func TestGetFirstMatch(t *testing.T) {
 	t.Run("happy_path", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -147,7 +147,7 @@ func TestGetFirstMatch(t *testing.T) {
 	})
 
 	t.Run("first_scope_missing", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -186,13 +186,16 @@ func TestGetFirstMatch(t *testing.T) {
 	})
 }
 
-func mkManager() (*compile.Manager, *MockStore, context.CancelFunc) {
-	ctx, cancelFunc := context.WithCancel(context.Background())
+func mkManager(t *testing.T) (*compile.Manager, *MockStore, context.CancelFunc) {
+	t.Helper()
+
+	ctx, cancelFunc := context.WithCancel(t.Context())
 
 	mockStore := &MockStore{}
 	mockStore.On("Subscribe", mock.Anything)
 
-	mgr := compile.NewManager(ctx, mockStore, schema.NewNopManager())
+	mgr, err := compile.NewManager(ctx, mockStore, schema.NewNopManager())
+	require.NoError(t, err)
 
 	return mgr, mockStore, cancelFunc
 }

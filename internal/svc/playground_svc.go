@@ -450,7 +450,11 @@ type components struct {
 }
 
 func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
-	cm := compile.NewManager(ctx, c.store, c.schemaMgr)
+	cm, err := compile.NewManager(ctx, c.store, c.schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
 	rt := ruletable.NewRuletable()
 
 	if err := ruletable.LoadFromPolicyLoader(ctx, rt, cm); err != nil {

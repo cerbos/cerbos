@@ -37,7 +37,7 @@ func init() {
 	})
 
 	storage.RegisterDriver("bundle", func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
-		util.DeprecationWarning(storage.ConfKey+".bundle", confKey)
+		util.DeprecationReplacedWarning(storage.ConfKey+".bundle", confKey)
 		conf := new(Conf)
 		if err := confW.Get(storage.ConfKey+".bundle", conf); err != nil {
 			return nil, fmt.Errorf("failed to read bundle configuration: %w", err)
