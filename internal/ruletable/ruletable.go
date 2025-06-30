@@ -951,7 +951,7 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	}
 }
 
-func (mgr *Manager) Refresh(ctx context.Context) error {
+func (mgr *Manager) Reload(ctx context.Context) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
@@ -963,7 +963,7 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 		return nil
 	}
 
-	mgr.log.Info("Refreshing rule table")
+	mgr.log.Info("Reloading rule table")
 	rt := NewRuletable()
 
 	// If compilation fails, maintain the last valid rule table state.

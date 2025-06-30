@@ -256,7 +256,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 	}
 
 	// TODO(saml) remove with patching
-	if err := engine.ruleTableManager.Refresh(ctx); err != nil {
+	if err := engine.ruleTableManager.Reload(ctx); err != nil {
 		return nil, nil, err
 	}
 
@@ -445,7 +445,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	tctx := tracer.Start(checkOpts.tracerSink)
 
 	// TODO(saml) remove with patching
-	if err := engine.ruleTableManager.Refresh(ctx); err != nil {
+	if err := engine.ruleTableManager.Reload(ctx); err != nil {
 		return nil, nil, err
 	}
 
