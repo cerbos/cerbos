@@ -1,6 +1,11 @@
 [build]
 publish = "docs/build"
 
+[[headers]]
+for = "/*"
+[headers.values]
+X-Robots-Tag = "llms-txt"
+
 # Only required until Antora LFS support lands. https://gitlab.com/antora/antora/-/issues/185
 
 [[redirects]]
@@ -219,6 +224,18 @@ force = true
 
 [[redirects]]
 from = "/cerbos/0.45.0/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.45.1/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.45.1/:module/_images/*"
 to = "/cerbos/prerelease/:module/_images/:splat"
 status = 302
 force = true

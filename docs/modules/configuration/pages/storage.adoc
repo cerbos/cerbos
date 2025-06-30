@@ -16,7 +16,7 @@ Cerbos policies can be stored in AWS S3, Google Cloud Storage, or any other S3-c
 * `bucket`: Required. A URL specifying the service (e.g. S3, GCS), the storage bucket and any other configuration parameters required by the provider.
 ** AWS S3: `s3://my-bucket?region=us-west-1`. Must specify region in the URL.
 ** Google Cloud Storage: `gs://my-bucket`
-** S3-compatible (e.g. Minio): `s3://my-bucket?endpoint=my.minio.local:8080&disableSSL=true&s3ForcePathStyle=true&region=local`. Must specify region in the URL.
+** S3-compatible (e.g. Minio): `s3://my-bucket?endpoint=my.minio.local:8080&disableSSL=true&hostname_immutable=true&region=local`. Must specify region in the URL.
 * `prefix`: Optional. Look for policies only under this key prefix.
 * `workDir`: Optional. Path to the local directory to download the policies to. Defaults to the system cache directory if not specified.
 * `updatePollInterval`: Optional. How frequently the blob store should be checked to discover new or updated policies. Defaults to 0 -- which disables polling.
@@ -63,7 +63,7 @@ storage:
 storage:
   driver: "blob"
   blob:
-    bucket: "s3://my-bucket-name?endpoint=localhost:9000&disableSSL=true&s3ForcePathStyle=true&region=local"
+    bucket: "s3://my-bucket-name?endpoint=localhost:9000&disableSSL=true&hostname_immutable=true&region=local"
     workDir: ${HOME}/tmp/cerbos/work
     updatePollInterval: 10s
 ----

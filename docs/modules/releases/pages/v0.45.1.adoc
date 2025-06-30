@@ -1,0 +1,33 @@
+
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.45.1]
+= Cerbos v0.45.1
+
+== Highlights
+
+This is a patch release to fix an issue with configuration when launching a PDP connected to Cerbos Hub.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Don't set bundleVersion when auto-configuring hub (link:https://github.com/cerbos/cerbos/pull/2608[#2608])
+
+=== Documentation
+
+* Generate llm.txt and llm-full.txt (link:https://github.com/cerbos/cerbos/pull/2609[#2609])
+
+=== Chores
+
+* Bump github.com/go-chi/chi/v5 from 5.2.1 to 5.2.2 in /tools (link:https://github.com/cerbos/cerbos/pull/2611[#2611])
+* Bump github.com/go-viper/mapstructure/v2 from 2.1.0 to 2.3.0 (link:https://github.com/cerbos/cerbos/pull/2618[#2618])
+* Bump version to 0.46.0
+* Fix `buf push` step (link:https://github.com/cerbos/cerbos/pull/2610[#2610])
+* Pluggable schema resolver (link:https://github.com/cerbos/cerbos/pull/2614[#2614])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2612[#2612])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2619[#2619])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2613[#2613])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2620[#2620])
