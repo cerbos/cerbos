@@ -5,7 +5,6 @@ package policyloader
 
 import (
 	"context"
-	"time"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -14,6 +13,4 @@ import (
 type PolicyLoader interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
-	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
-	GetCacheDuration() time.Duration
 }

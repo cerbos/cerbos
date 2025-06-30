@@ -34,10 +34,6 @@ func (instrumentedSource) Driver() string {
 	return DriverName
 }
 
-func (is instrumentedSource) GetCacheDuration() time.Duration {
-	return is.source.GetCacheDuration()
-}
-
 func (is instrumentedSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	return measureBinaryOp(ctx, is.name, "InspectPolicies", func(ctx context.Context) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 		return is.source.InspectPolicies(ctx, params)
@@ -71,12 +67,6 @@ func (is instrumentedSource) GetFirstMatch(ctx context.Context, candidates []nam
 func (is instrumentedSource) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
 	return measureBinaryOp(ctx, is.name, "GetAll", func(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
 		return is.source.GetAll(ctx)
-	})
-}
-
-func (is instrumentedSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	return measureBinaryOp(ctx, is.name, "GetAllMatching", func(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
-		return is.source.GetAllMatching(ctx, modIDs)
 	})
 }
 

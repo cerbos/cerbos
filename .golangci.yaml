@@ -83,6 +83,14 @@ linters:
           xml: goCamel
           yaml: goCamel
 
+    revive:
+      rules:
+        - name: var-naming
+          arguments:
+            - []
+            - []
+            - - skipPackageNameChecks: true
+
   exclusions:
     generated: lax
 

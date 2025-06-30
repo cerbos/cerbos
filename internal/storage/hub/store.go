@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -38,7 +37,7 @@ func init() {
 	})
 
 	storage.RegisterDriver("bundle", func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
-		util.DeprecationWarning(storage.ConfKey+".bundle", confKey)
+		util.DeprecationReplacedWarning(storage.ConfKey+".bundle", confKey)
 		conf := new(Conf)
 		if err := confW.Get(storage.ConfKey+".bundle", conf); err != nil {
 			return nil, fmt.Errorf("failed to read bundle configuration: %w", err)
@@ -119,10 +118,6 @@ func (hs *HybridStore) withActiveSource() storage.BinaryStore {
 	return hs.local
 }
 
-func (hs *HybridStore) GetCacheDuration() time.Duration {
-	return hs.withActiveSource().GetCacheDuration()
-}
-
 func (hs *HybridStore) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	return hs.withActiveSource().InspectPolicies(ctx, params)
 }
@@ -145,10 +140,6 @@ func (hs *HybridStore) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 
 func (hs *HybridStore) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
 	return hs.withActiveSource().GetAll(ctx)
-}
-
-func (hs *HybridStore) GetAllMatching(ctx context.Context, candidates []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	return hs.withActiveSource().GetAllMatching(ctx, candidates)
 }
 
 func (hs *HybridStore) Subscribe(s storage.Subscriber) {

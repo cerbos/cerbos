@@ -39,7 +39,7 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/telemetry"
 	"github.com/cerbos/cerbos/internal/validator"
 
@@ -149,25 +149,33 @@ func Start(ctx context.Context) error {
 
 	case storage.SourceStore:
 		// create compile manager
-		compileMgr, err := compile.NewManager(ctx, st, schemaMgr)
+		policyLoader, err = compile.NewManager(ctx, st, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create compile manager: %w", err)
 		}
-		policyLoader = compileMgr
 	default:
 		return ErrInvalidStore
 	}
 
-	rt := ruletable.NewRuleTable(policyLoader)
+	rt := ruletable.NewRuletable()
+
+	if err := ruletable.LoadFromPolicyLoader(ctx, rt, policyLoader); err != nil {
+		return err
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, schemaMgr)
+	if err != nil {
+		return fmt.Errorf("failed to create ruletable manager: %w", err)
+	}
 
 	if ss, ok := policyLoader.(storage.Subscribable); ok {
-		ss.Subscribe(rt)
+		ss.Subscribe(ruletableMgr)
 	}
 
 	// create engine
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      policyLoader,
-		RuleTable:         rt,
+		RuleTableManager:  ruletableMgr,
 		SchemaMgr:         schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: mdExtractor,

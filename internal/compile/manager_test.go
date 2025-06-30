@@ -8,9 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"runtime"
 	"testing"
-	"time"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 
@@ -29,7 +27,7 @@ import (
 
 func TestManager(t *testing.T) {
 	t.Run("happy_path", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
@@ -50,23 +48,21 @@ func TestManager(t *testing.T) {
 					},
 				},
 			}, nil).
-			Once()
+			Twice()
 
 		rps1, err := mgr.GetPolicySet(t.Context(), rp.ID)
 		require.NoError(t, err)
 		require.NotNil(t, rps1)
 
-		// should be read from the cache this time
 		rps2, err := mgr.GetPolicySet(t.Context(), rp.ID)
 		require.NoError(t, err)
 		require.NotNil(t, rps2)
-		require.Equal(t, rps1, rps2)
 
 		mockStore.AssertExpectations(t)
 	})
 
 	t.Run("no_matching_policy", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -74,13 +70,12 @@ func TestManager(t *testing.T) {
 		mockStore.
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{}, nil).
-			Once()
+			Twice()
 
 		rps1, err := mgr.GetPolicySet(t.Context(), rp.ID)
 		require.NoError(t, err)
 		require.Nil(t, rps1)
 
-		// should be read from the cache this time
 		rps2, err := mgr.GetPolicySet(t.Context(), rp.ID)
 		require.NoError(t, err)
 		require.Nil(t, rps2)
@@ -89,7 +84,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("error_from_store", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -111,148 +106,11 @@ func TestManager(t *testing.T) {
 
 		mockStore.AssertExpectations(t)
 	})
-
-	t.Run("recompile_on_update", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
-		defer cancel()
-
-		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
-		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
-		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
-		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
-
-		mockStore.
-			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
-			Return(map[namer.ModuleID]*policy.CompilationUnit{
-				rp.ID: {
-					ModID: rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{
-						rp.ID: rp.Policy,
-						dr.ID: dr.Policy,
-						ec.ID: ec.Policy,
-						ev.ID: ev.Policy,
-					},
-				},
-			}, nil).
-			Once()
-
-		mockStore.
-			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID, rp.ID}).
-			Return(map[namer.ModuleID]*policy.CompilationUnit{
-				rp.ID: {
-					ModID: rp.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{
-						rp.ID: rp.Policy,
-						dr.ID: dr.Policy,
-						ec.ID: ec.Policy,
-						ev.ID: ev.Policy,
-					},
-				},
-				dr.ID: {
-					ModID: dr.ID,
-					Definitions: map[namer.ModuleID]*policyv1.Policy{
-						dr.ID: dr.Policy,
-						ec.ID: ec.Policy,
-						ev.ID: ev.Policy,
-					},
-				},
-			}, nil).
-			Once()
-
-		mockStore.
-			On("GetDependents", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID}).
-			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: {rp.ID}}, nil).
-			Once()
-
-		rps1, err := mgr.GetPolicySet(t.Context(), rp.ID)
-		require.NoError(t, err)
-		require.NotNil(t, rps1)
-
-		// send event to trigger recompiliation
-		mockStore.subscriber.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID})
-
-		yield()
-
-		// a new evaluator should have replaced the previous one
-		rps2, err := mgr.GetPolicySet(t.Context(), rp.ID)
-		require.NoError(t, err)
-		require.NotNil(t, rps2)
-		require.True(t, rps1 != rps2)
-
-		mockStore.AssertExpectations(t)
-	})
-
-	t.Run("recompile_on_delete", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
-		defer cancel()
-
-		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
-		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
-		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
-		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
-
-		gcuInvocationCount := 0
-		gcuFn := func() (map[namer.ModuleID]*policy.CompilationUnit, error) {
-			gcuInvocationCount++
-			switch gcuInvocationCount {
-			case 1:
-				return map[namer.ModuleID]*policy.CompilationUnit{
-					rp.ID: {
-						ModID: rp.ID,
-						Definitions: map[namer.ModuleID]*policyv1.Policy{
-							rp.ID: rp.Policy,
-							dr.ID: dr.Policy,
-							ec.ID: ec.Policy,
-							ev.ID: ev.Policy,
-						},
-					},
-				}, nil
-			case 2, 3: // derived roles is now deleted
-				return map[namer.ModuleID]*policy.CompilationUnit{
-					rp.ID: {
-						ModID: rp.ID,
-						Definitions: map[namer.ModuleID]*policyv1.Policy{
-							rp.ID: rp.Policy,
-							ec.ID: ec.Policy,
-							ev.ID: ev.Policy,
-						},
-					},
-				}, nil
-			default:
-				panic(fmt.Errorf("unexpected number of calls: %d", gcuInvocationCount))
-			}
-		}
-
-		mockStore.
-			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
-			Return(gcuFn)
-
-		mockStore.
-			On("GetDependents", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID}).
-			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: {rp.ID}}, nil).
-			Once()
-
-		rps1, err := mgr.GetPolicySet(t.Context(), rp.ID)
-		require.NoError(t, err)
-		require.NotNil(t, rps1)
-
-		// send event to trigger recompiliation
-		mockStore.subscriber.OnStorageEvent(storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: dr.ID})
-
-		yield()
-
-		// evaluator should be removed because it is now invalid and cannot be compiled
-		rps2, err := mgr.GetPolicySet(t.Context(), rp.ID)
-		require.Error(t, err)
-		require.Nil(t, rps2)
-
-		mockStore.AssertExpectations(t)
-	})
 }
 
 func TestGetFirstMatch(t *testing.T) {
 	t.Run("happy_path", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -275,23 +133,21 @@ func TestGetFirstMatch(t *testing.T) {
 					ev.ID:       ev.Policy,
 				},
 			}, nil).
-			Once()
+			Twice()
 
 		rps1, err := mgr.GetFirstMatch(t.Context(), []namer.ModuleID{rpFooBar.ID, rpFoo.ID, rp.ID})
 		require.NoError(t, err)
 		require.NotNil(t, rps1)
 
-		// should be read from the cache this time
 		rps2, err := mgr.GetFirstMatch(t.Context(), []namer.ModuleID{rpFooBar.ID, rpFoo.ID, rp.ID})
 		require.NoError(t, err)
 		require.NotNil(t, rps2)
-		require.Equal(t, rps1, rps2)
 
 		mockStore.AssertExpectations(t)
 	})
 
 	t.Run("first_scope_missing", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager()
+		mgr, mockStore, cancel := mkManager(t)
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -330,19 +186,16 @@ func TestGetFirstMatch(t *testing.T) {
 	})
 }
 
-func yield() {
-	runtime.Gosched()
-	time.Sleep(200 * time.Millisecond)
-	runtime.Gosched()
-}
+func mkManager(t *testing.T) (*compile.Manager, *MockStore, context.CancelFunc) {
+	t.Helper()
 
-func mkManager() (*compile.Manager, *MockStore, context.CancelFunc) {
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(t.Context())
 
 	mockStore := &MockStore{}
 	mockStore.On("Subscribe", mock.Anything)
 
-	mgr := compile.NewManagerFromDefaultConf(ctx, mockStore, schema.NewNopManager())
+	mgr, err := compile.NewManager(ctx, mockStore, schema.NewNopManager())
+	require.NoError(t, err)
 
 	return mgr, mockStore, cancelFunc
 }
@@ -388,14 +241,6 @@ func (ms *MockStore) GetFirstMatch(ctx context.Context, candidates []namer.Modul
 
 func (ms *MockStore) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
 	args := ms.MethodCalled("GetAll", ctx)
-	if res := args.Get(0); res == nil {
-		return nil, args.Error(0)
-	}
-	return args.Get(0).([]*policy.CompilationUnit), args.Error(1)
-}
-
-func (ms *MockStore) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
-	args := ms.MethodCalled("GetAllMatching", ctx, modIDs)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}
