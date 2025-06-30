@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
@@ -196,10 +195,6 @@ func (ls *LocalSource) Driver() string {
 	return DriverName
 }
 
-func (ls *LocalSource) GetCacheDuration() time.Duration {
-	return 0
-}
-
 func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	ls.mu.RLock()
 	defer ls.mu.RUnlock()
@@ -242,13 +237,6 @@ func (ls *LocalSource) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 func (ls *LocalSource) GetAll(ctx context.Context) (pss []*runtimev1.RunnablePolicySet, err error) {
 	ls.mu.RLock()
 	pss, err = ls.bundle.GetAll(ctx)
-	ls.mu.RUnlock()
-	return pss, err
-}
-
-func (ls *LocalSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) (pss []*runtimev1.RunnablePolicySet, err error) {
-	ls.mu.RLock()
-	pss, err = ls.bundle.GetAllMatching(ctx, modIDs)
 	ls.mu.RUnlock()
 	return pss, err
 }
