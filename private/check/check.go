@@ -10,6 +10,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/util"
@@ -84,7 +85,22 @@ func (g *TestFixtureGetter) GetAllTestFixtures() []*TestFixtureCtx {
 func Check(ctx context.Context, conf *engine.Conf, idx compile.Index, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng := internalengine.NewEphemeral(conf, compiler, schemaMgr)
+	compiler, err := internalcompile.NewManager(ctx, store, schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
+	rt := ruletable.NewRuletable()
+
+	if err := ruletable.LoadFromPolicyLoader(ctx, rt, compiler); err != nil {
+		return nil, err
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
+	eng := internalengine.NewEphemeral(conf, ruletableMgr, schemaMgr)
 	return eng.Check(ctx, inputs)
 }

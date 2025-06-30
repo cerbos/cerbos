@@ -78,6 +78,10 @@ func PDPIdentifier(pdpID string) *pdpv1.Identifier {
 	}
 }
 
-func DeprecationWarning(deprecated, replacement string) {
+func DeprecationWarning(deprecated string) {
+	zap.S().Warnf("[DEPRECATED CONFIG] %s is deprecated and will be removed in a future release.", deprecated)
+}
+
+func DeprecationReplacedWarning(deprecated, replacement string) {
 	zap.S().Warnf("[DEPRECATED CONFIG] %s is deprecated and will be removed in a future release. Please use %s instead.", deprecated, replacement)
 }

@@ -79,9 +79,6 @@ auxData:
         remote: # Remote defines a remote keyset. Mutually exclusive with Local.
           refreshInterval: 1h # RefreshInterval is the refresh interval for the keyset.
           url: https://domain.tld/.well-known/keys.jwks # Required. URL is the JWKS URL to fetch the keyset from.
-compile:
-  cacheDuration: 60s # CacheDuration is the duration to cache an entry.
-  cacheSize: 1024 # CacheSize is the number of compiled policies to cache in memory.
 engine:
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
   globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.

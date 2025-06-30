@@ -24,11 +24,9 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -53,7 +51,6 @@ type OpenOpts struct {
 type Bundle struct {
 	bundleFS afero.Fs
 	manifest *bundlev2.Manifest
-	cache    *cache.Cache[namer.ModuleID, cacheEntry]
 	cleanup  cleanupFn
 	path     string
 }
@@ -68,11 +65,6 @@ func toManifestV2(manifest *bundlev1.Manifest) *bundlev2.Manifest {
 			Source:   manifest.GetMeta().GetSource(),
 		},
 	}
-}
-
-type cacheEntry struct {
-	policySet *runtimev1.RunnablePolicySet
-	err       error
 }
 
 func Open(opts OpenOpts) (*Bundle, error) {
@@ -102,7 +94,6 @@ func Open(opts OpenOpts) (*Bundle, error) {
 		manifest: toManifestV2(manifest),
 		bundleFS: zipFS,
 		cleanup:  cleanup,
-		cache:    cache.New[namer.ModuleID, cacheEntry]("bundle", opts.CacheSize, metrics.SourceKey(opts.Source)),
 	}, nil
 }
 
@@ -172,7 +163,6 @@ func OpenV2(opts OpenOpts) (*Bundle, error) {
 		manifest: manifest,
 		bundleFS: zipFS,
 		cleanup:  cleanup,
-		cache:    cache.New[namer.ModuleID, cacheEntry]("bundle", opts.CacheSize, metrics.SourceKey(opts.Source)),
 	}, nil
 }
 
@@ -331,30 +321,7 @@ func (b *Bundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, erro
 	return res, nil
 }
 
-// GetAllMatching attempts to retrieve all policies from the passed modIDs, unlike `GetFirstMatch` which returns the first
-// of the passed candidates, this function returns list of all available modules from the provided IDs.
-func (b *Bundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	res := []*runtimev1.RunnablePolicySet{}
-	for _, id := range modIDs {
-		policySet, err := b.getMatch(id)
-		if err != nil {
-			return nil, err
-		}
-
-		if policySet != nil {
-			res = append(res, policySet)
-		}
-	}
-
-	return res, nil
-}
-
 func (b *Bundle) getMatch(id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	cached, ok := b.cache.Get(id)
-	if ok {
-		return cached.policySet, cached.err
-	}
-
 	idHex := id.HexStr()
 	fileName := policyDir + idHex
 
@@ -366,10 +333,7 @@ func (b *Bundle) getMatch(id namer.ModuleID) (*runtimev1.RunnablePolicySet, erro
 		return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
 	}
 
-	policySet, err := b.loadPolicySet(idHex, fileName)
-	b.cache.Set(id, cacheEntry{policySet: policySet, err: err})
-
-	return policySet, err
+	return b.loadPolicySet(idHex, fileName)
 }
 
 func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolicySet, error) {

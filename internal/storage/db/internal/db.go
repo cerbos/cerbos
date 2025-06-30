@@ -48,7 +48,6 @@ type DBStorage interface {
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
 	GetAll(ctx context.Context) ([]*policy.CompilationUnit, error)
-	GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error)
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
@@ -326,10 +325,6 @@ func (s *dbStorage) GetAll(ctx context.Context) ([]*policy.CompilationUnit, erro
 		modIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(k))
 	}
 
-	return s.GetAllMatching(ctx, modIDs)
-}
-
-func (s *dbStorage) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
 	cus, err := s.GetCompilationUnits(ctx, modIDs...)
 	if err != nil {
 		return nil, err

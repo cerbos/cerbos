@@ -5,7 +5,6 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"math/rand"
@@ -21,20 +20,16 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 )
-
-var errNoPoliciesMatched = errors.New("no matching policies")
 
 const (
 	defaultEffect        = effectv1.Effect_EFFECT_DENY
@@ -47,23 +42,23 @@ const (
 
 type CheckOptions struct {
 	tracerSink tracer.Sink
-	evalParams evalParams
+	evalParams ruletable.EvalParams
 }
 
 func (co *CheckOptions) NowFunc() func() time.Time {
-	return co.evalParams.nowFunc
+	return co.evalParams.NowFunc
 }
 
 func (co *CheckOptions) DefaultPolicyVersion() string {
-	return co.evalParams.defaultPolicyVersion
+	return co.evalParams.DefaultPolicyVersion
 }
 
 func (co *CheckOptions) LenientScopeSearch() bool {
-	return co.evalParams.lenientScopeSearch
+	return co.evalParams.LenientScopeSearch
 }
 
 func (co *CheckOptions) Globals() map[string]any {
-	return co.evalParams.globals
+	return co.evalParams.Globals
 }
 
 func ApplyCheckOptions(opts ...CheckOpt) *CheckOptions {
@@ -78,13 +73,17 @@ func newCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *CheckOp
 		tracerSink = tracer.NewZapSink(logging.FromContext(ctx).Named("tracer"))
 	}
 
-	co := &CheckOptions{tracerSink: tracerSink, evalParams: defaultEvalParams(conf)}
+	co := &CheckOptions{tracerSink: tracerSink, evalParams: ruletable.EvalParams{
+		Globals:              conf.Globals,
+		DefaultPolicyVersion: conf.DefaultPolicyVersion,
+		LenientScopeSearch:   conf.LenientScopeSearch,
+	}}
 	for _, opt := range opts {
 		opt(co)
 	}
 
-	if co.evalParams.nowFunc == nil {
-		co.evalParams.nowFunc = conditions.Now()
+	if co.evalParams.NowFunc == nil {
+		co.evalParams.NowFunc = conditions.Now()
 	}
 
 	return co
@@ -108,28 +107,28 @@ func WithZapTraceSink(log *zap.Logger) CheckOpt {
 // The function should return the same timestamp every time it is invoked.
 func WithNowFunc(nowFunc func() time.Time) CheckOpt {
 	return func(co *CheckOptions) {
-		co.evalParams.nowFunc = nowFunc
+		co.evalParams.NowFunc = nowFunc
 	}
 }
 
 // WithLenientScopeSearch enables lenient scope search.
 func WithLenientScopeSearch() CheckOpt {
 	return func(co *CheckOptions) {
-		co.evalParams.lenientScopeSearch = true
+		co.evalParams.LenientScopeSearch = true
 	}
 }
 
 // WithGlobals sets the global variables for the engine.
 func WithGlobals(globals map[string]any) CheckOpt {
 	return func(co *CheckOptions) {
-		co.evalParams.globals = globals
+		co.evalParams.Globals = globals
 	}
 }
 
 // WithDefaultPolicyVersion sets the default policy version for the engine.
 func WithDefaultPolicyVersion(defaultPolicyVersion string) CheckOpt {
 	return func(co *CheckOptions) {
-		co.evalParams.defaultPolicyVersion = defaultPolicyVersion
+		co.evalParams.DefaultPolicyVersion = defaultPolicyVersion
 	}
 }
 
@@ -137,7 +136,7 @@ type Engine struct {
 	schemaMgr         schema.Manager
 	auditLog          audit.Log
 	policyLoader      policyloader.PolicyLoader
-	ruleTable         *ruletable.RuleTable
+	ruleTableManager  *ruletable.Manager
 	conf              *Conf
 	metadataExtractor audit.MetadataExtractor
 	workerPool        []chan<- workIn
@@ -147,7 +146,7 @@ type Engine struct {
 type Components struct {
 	AuditLog          audit.Log
 	PolicyLoader      policyloader.PolicyLoader
-	RuleTable         *ruletable.RuleTable
+	RuleTableManager  *ruletable.Manager
 	SchemaMgr         schema.Manager
 	MetadataExtractor audit.MetadataExtractor
 }
@@ -177,20 +176,20 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	return engine
 }
 
-func NewEphemeral(conf *Conf, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) *Engine {
+func NewEphemeral(conf *Conf, rtMgr *ruletable.Manager, schemaMgr schema.Manager) *Engine {
 	if conf == nil {
 		conf = &Conf{}
 		conf.SetDefaults()
 	}
 
-	return newEngine(conf, Components{PolicyLoader: policyLoader, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog(), RuleTable: ruletable.NewRuleTable(policyLoader)})
+	return newEngine(conf, Components{SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog(), RuleTableManager: rtMgr})
 }
 
 func newEngine(conf *Conf, c Components) *Engine {
 	return &Engine{
 		conf:              conf,
 		policyLoader:      c.PolicyLoader,
-		ruleTable:         c.RuleTable,
+		ruleTableManager:  c.RuleTableManager,
 		schemaMgr:         c.SchemaMgr,
 		auditLog:          c.AuditLog,
 		metadataExtractor: c.MetadataExtractor,
@@ -252,23 +251,19 @@ func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanRes
 }
 
 func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanResourcesInput, opts *CheckOptions) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
-	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, nil, err
 	}
 
-	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, opts.evalParams)
-	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, opts.evalParams)
-
-	if err := engine.ruleTable.LazyLoadPrincipalPolicy(ctx, ppName, ppVersion, ppScope); err != nil {
-		return nil, nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", ppName, ppVersion, ppScope, err)
+	// TODO(saml) remove with patching
+	if err := engine.ruleTableManager.Reload(ctx); err != nil {
+		return nil, nil, err
 	}
 
-	if err := engine.ruleTable.LazyLoadResourcePolicy(ctx, rpName, rpVersion, rpScope, input.Principal.Roles); err != nil {
-		return nil, nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", rpName, rpVersion, rpScope, err)
-	}
+	ppVersion := engine.policyVersion(input.Principal.PolicyVersion, opts.evalParams)
+	rpVersion := engine.policyVersion(input.Resource.PolicyVersion, opts.evalParams)
 
-	return planner.EvaluateRuleTableQueryPlan(ctx, engine.ruleTable, input, ppVersion, rpVersion, engine.schemaMgr, opts.NowFunc(), opts.Globals())
+	return engine.ruleTableManager.Plan(ctx, input, ppVersion, rpVersion, opts.NowFunc(), opts.Globals())
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {
@@ -449,15 +444,15 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, nil, err
 	}
 
-	ec, err := engine.buildEvaluationCtx(ctx, checkOpts.evalParams, input)
-	if err != nil {
+	tctx := tracer.Start(checkOpts.tracerSink)
+
+	// TODO(saml) remove with patching
+	if err := engine.ruleTableManager.Reload(ctx); err != nil {
 		return nil, nil, err
 	}
 
-	tctx := tracer.Start(checkOpts.tracerSink)
-
 	// evaluate the policies
-	result, err := ec.evaluate(ctx, tctx, input)
+	result, err := engine.ruleTableManager.Check(ctx, tctx, checkOpts.evalParams, input)
 	if err != nil {
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 		return nil, nil, fmt.Errorf("failed to evaluate policies: %w", err)
@@ -476,7 +471,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 			Policy: noPolicyMatch,
 		}
 
-		if einfo, ok := result.effects[action]; ok {
+		if einfo, ok := result.Effects[action]; ok {
 			ae := output.Actions[action]
 			ae.Effect = einfo.Effect
 			ae.Policy = einfo.Policy
@@ -484,145 +479,23 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		}
 	}
 
-	effectiveDerivedRoles := make([]string, 0, len(result.effectiveDerivedRoles))
-	for edr := range result.effectiveDerivedRoles {
+	effectiveDerivedRoles := make([]string, 0, len(result.EffectiveDerivedRoles))
+	for edr := range result.EffectiveDerivedRoles {
 		effectiveDerivedRoles = append(effectiveDerivedRoles, edr)
 	}
 	output.EffectiveDerivedRoles = effectiveDerivedRoles
-	output.ValidationErrors = result.validationErrors
-	output.Outputs = result.outputs
+	output.ValidationErrors = result.ValidationErrors
+	output.Outputs = result.Outputs
 
-	return output, result.auditTrail, nil
+	return output, result.AuditTrail, nil
 }
 
-func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams, input *enginev1.CheckInput) (*evaluationCtx, error) {
-	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope, eparams)
-	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope, eparams)
-
-	principal := ruleTableEvaluatorParams{
-		name:    ppName,
-		version: ppVersion,
-		scope:   ppScope,
-	}
-	resource := ruleTableEvaluatorParams{
-		name:    rpName,
-		version: rpVersion,
-		scope:   rpScope,
-	}
-
-	check, err := engine.getRuleTableEvaluator(ctx, eparams, principal, resource, input.Principal.Roles)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get evaluator: %w", err)
-	}
-
-	return &evaluationCtx{check}, nil
-}
-
-type ruleTableEvaluatorParams struct {
-	name, version, scope string
-}
-
-func (engine *Engine) getRuleTableEvaluator(ctx context.Context, eparams evalParams, principal, resource ruleTableEvaluatorParams, inputRoles []string) (Evaluator, error) {
-	if err := engine.ruleTable.LazyLoadPrincipalPolicy(ctx, principal.name, principal.version, principal.scope); err != nil {
-		return nil, fmt.Errorf("failed to load principal policy [%s.%s/%s]: %w", principal.name, principal.version, principal.scope, err)
-	}
-
-	if err := engine.ruleTable.LazyLoadResourcePolicy(ctx, resource.name, resource.version, resource.scope, inputRoles); err != nil {
-		return nil, fmt.Errorf("failed to load resource policy [%s.%s/%s]: %w", resource.name, resource.version, resource.scope, err)
-	}
-
-	return NewRuleTableEvaluator(engine.ruleTable, engine.schemaMgr, eparams), nil
-}
-
-func (engine *Engine) policyAttr(name, version, scope string, params evalParams) (pName, pVersion, pScope string) {
-	pName = name
-	pVersion = version
-	pScope = scope
-
+func (engine *Engine) policyVersion(version string, params ruletable.EvalParams) string {
 	if version == "" {
-		pVersion = params.defaultPolicyVersion
+		version = params.DefaultPolicyVersion
 	}
 
-	return pName, pVersion, pScope
-}
-
-type evaluationCtx struct {
-	evaluator Evaluator
-}
-
-func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*evaluationResult, error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.EvalCtxEvaluate")
-	defer span.End()
-
-	if ec.evaluator == nil {
-		tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
-
-		resp := &evaluationResult{
-			effectiveDerivedRoles: make(map[string]struct{}),
-			toResolve:             make(map[string]struct{}),
-		}
-		resp.setDefaultsForUnmatchedActions(tctx, input)
-		return resp, nil
-	}
-
-	result, err := ec.evaluator.Evaluate(ctx, tctx, input)
-	if err != nil {
-		logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
-		tracing.MarkFailed(span, http.StatusInternalServerError, err)
-		return nil, fmt.Errorf("failed to execute policy: %w", err)
-	}
-
-	resp := &evaluationResult{
-		effects:               result.Effects,
-		auditTrail:            result.AuditTrail,
-		effectiveDerivedRoles: result.EffectiveDerivedRoles,
-		toResolve:             result.toResolve,
-		validationErrors:      result.ValidationErrors,
-		outputs:               result.Outputs,
-	}
-
-	if len(result.toResolve) > 0 {
-		tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
-
-		for action := range result.toResolve {
-			if _, ok := resp.effects[action]; !ok {
-				tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
-				resp.effects[action] = EffectInfo{
-					Effect: defaultEffect,
-					Policy: noPolicyMatch,
-				}
-			}
-		}
-	}
-
-	return resp, nil
-}
-
-type evaluationResult struct {
-	effects               map[string]EffectInfo
-	auditTrail            *auditv1.AuditTrail
-	effectiveDerivedRoles map[string]struct{}
-	toResolve             map[string]struct{}
-	validationErrors      []*schemav1.ValidationError
-	outputs               []*enginev1.OutputEntry
-}
-
-func (er *evaluationResult) setDefaultsForUnmatchedActions(tctx tracer.Context, input *enginev1.CheckInput) {
-	if er.effects == nil {
-		er.effects = make(map[string]EffectInfo, len(input.Actions))
-	}
-
-	for _, action := range input.Actions {
-		if ce, ok := er.effects[action]; ok && ce.Effect != effectv1.Effect_EFFECT_UNSPECIFIED && ce.Effect != effectv1.Effect_EFFECT_NO_MATCH {
-			continue
-		}
-
-		tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
-		er.effects[action] = EffectInfo{
-			Effect: defaultEffect,
-			Policy: noPolicyMatch,
-		}
-	}
+	return version
 }
 
 type workOut struct {

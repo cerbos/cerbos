@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -126,14 +127,29 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		c.TestOutput = &value
 	}
 
-	if !c.SkipTests {
+	if !c.SkipTests { //nolint:nestif
 		verifyConf := verify.Config{
 			IncludedTestNamesRegexp: c.RunRegexp,
 			Trace:                   c.Verbose,
 		}
 
-		compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-		eng := engine.NewEphemeral(nil, compiler, schemaMgr)
+		rt := ruletable.NewRuletable()
+
+		compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
+		if err != nil {
+			return err
+		}
+
+		if err := ruletable.LoadFromPolicyLoader(ctx, rt, compileMgr); err != nil {
+			return err
+		}
+
+		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, schemaMgr)
+		if err != nil {
+			return fmt.Errorf("failed to create ruletable manager: %w", err)
+		}
+
+		eng := engine.NewEphemeral(nil, rtMgr, schemaMgr)
 
 		testFsys, testDir, err := c.testsDir()
 		if err != nil {
