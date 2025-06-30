@@ -9,7 +9,7 @@ site:
 content:
   sources:
     - url: ./../
-      branches: [HEAD, "v{0..9}*", "!v0.{0..39}"]
+      branches: [HEAD, 'v{0..9}*', '!v0.{0..31}']
       edit_url: "https://github.com/cerbos/cerbos/tree/main/{path}"
       start_path: docs
     - url: https://github.com/cerbos/cloud-docs.git
@@ -21,7 +21,7 @@ urls:
 asciidoc:
   attributes:
     app-name: "cerbos"
-    app-version: "0.46.0@"
+    app-version: "0.45.1@"
     experimental: true
     page-pagination: true
   extensions:
