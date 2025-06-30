@@ -22,12 +22,12 @@ cerbosctl hub store list-files
 
 # List files matching "resource"
 
-cerbosctl hub store list-files --filter=like:resource
+cerbosctl hub store list-files --filter=contains:resource
 `
 
 type ListFilesCmd struct {
 	Output `embed:""`
-	Filter string `name:"filter" optional:"" help:"Optional file name filter in the form <operator>:<value>. Supported operators are 'eq', 'in' and 'like'. For 'in' multiple values can be provided as a comma separated list."`
+	Filter string `name:"filter" optional:"" help:"Optional file name filter in the form <operator>:<value>. Supported operators are 'eq', 'in' and 'contains'. For 'in' multiple values can be provided as a comma separated list."`
 }
 
 func (*ListFilesCmd) Help() string {
@@ -50,8 +50,8 @@ func (lfc *ListFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		switch strings.ToLower(kind) {
 		case "eq":
 			req.WithFileFilter(hub.FilterPathEqual(value))
-		case "like":
-			req.WithFileFilter(hub.FilterPathLike(value))
+		case "contains":
+			req.WithFileFilter(hub.FilterPathContains(value))
 		case "in":
 			values := strings.Split(value, ",")
 			req.WithFileFilter(hub.FilterPathIn(values...))

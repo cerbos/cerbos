@@ -57,6 +57,10 @@ cmp $WORK/out/download-1/principal-policies/goofy.yaml $WORK/add/goofy.yaml
 cerbosctl hub store download $WORK/out/download-2.zip
 exists $WORK/out/download-2.zip
 
+# List files with filter
+cerbosctl hub store list-files --filter=contains:exp
+cmp stdout $WORK/expectations/list-files-04.txt
+
 -- repo/principal-policies/daisy.yaml --
 ---
 apiVersion: "api.cerbos.dev/v1"
@@ -124,4 +128,7 @@ principal-policies/goofy.yaml
 exp-vars/exp-var.yaml
 principal-policies/daisy.yaml
 principal-policies/goofy.yaml
+
+-- expectations/list-files-04.txt --
+exp-vars/exp-var.yaml
 
