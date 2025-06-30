@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	celast "github.com/google/cel-go/common/ast"
 	"go.uber.org/multierr"
@@ -349,18 +348,16 @@ func insertRule(rt *runtimev1.RuleTable, r *runtimev1.RuleTable_RuleRow) {
 
 type Manager struct {
 	*runtimev1.RuleTable
-	log                        *zap.SugaredLogger
-	policyLoader               policyloader.PolicyLoader
-	schemaMgr                  schema.Manager
-	primaryIdx                 map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
-	principalScopeMap          map[string]struct{}
-	resourceScopeMap           map[string]struct{}
-	scopeScopePermissions      map[string]policyv1.ScopePermissions
-	parentRoleAncestorsCache   map[string]map[string][]string
-	policyDerivedRoles         map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	isStale                    atomic.Bool // TODO(saml) remove this once rule table patching is added
-	awaitingHealthyPolicyStore atomic.Bool // TODO(saml) remove this once rule table patching is added
-	mu                         sync.RWMutex
+	log                      *zap.SugaredLogger
+	policyLoader             policyloader.PolicyLoader
+	schemaMgr                schema.Manager
+	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	principalScopeMap        map[string]struct{}
+	resourceScopeMap         map[string]struct{}
+	scopeScopePermissions    map[string]policyv1.ScopePermissions
+	parentRoleAncestorsCache map[string]map[string][]string
+	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	mu                       sync.RWMutex
 }
 
 type Row struct {
@@ -419,9 +416,8 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.Poli
 		log: zap.S().Named("ruletable"),
 		// TODO(saml) ultimately, the policyLoader should not be attached to the rule table manager. On policy changes, we'll need a separate
 		// mechanism that patches rule tables and reapplies them. This'll be done in a future refactor
-		policyLoader:               policyLoader,
-		schemaMgr:                  schemaMgr,
-		awaitingHealthyPolicyStore: atomic.Bool{},
+		policyLoader: policyLoader,
+		schemaMgr:    schemaMgr,
 	}
 
 	if err := mgr.load(rt); err != nil {
@@ -938,40 +934,29 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, evt := range events {
 		switch evt.Kind {
 		case storage.EventReload, storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
-			// as a temporary measure, to avoid recompiling the whole rule table on updates when no Check
-			// or Plan calls are made, we toggle a flag which is checked at query time and lazily refresh
-			// the table then. This is far from ideal as it can increase the latency of the first query, but
-			// this is a temporary measure (and the lesser of two evils).
+			// Recompile the full policy set on any update events. this is a temporary measure.
 			// TODO(saml) remove this once rule table patching is implemented
-			mgr.log.Info("Scheduling ruletable reload")
-			mgr.isStale.Store(true)
+			if err := mgr.Reload(context.Background()); err != nil {
+				mgr.log.Errorf("Failed to reload rule table: %v", err)
+			}
 		default:
 			mgr.log.Debugw("Ignoring storage event", "event", evt)
 		}
 	}
 }
 
-func (mgr *Manager) Refresh(ctx context.Context) error {
+func (mgr *Manager) Reload(ctx context.Context) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	if !mgr.isStale.Load() {
-		// TODO(saml) this atomic bool is only used for logging purposes. Remove with patching
-		if mgr.awaitingHealthyPolicyStore.Load() {
-			mgr.log.Debug("Policy store invalid, using previous valid state")
-		}
-		return nil
-	}
+	mgr.log.Info("Attempting rule table reload")
 
-	mgr.log.Info("Refreshing rule table")
 	rt := NewRuletable()
 
 	// If compilation fails, maintain the last valid rule table state.
 	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
 	if err := LoadFromPolicyLoader(ctx, rt, mgr.policyLoader); err != nil {
-		mgr.log.Errorf("Rule table compilation failed, using previous valid state: %v", err)
-		mgr.isStale.Store(false)
-		mgr.awaitingHealthyPolicyStore.Store(true)
+		mgr.log.Errorf("Rule table compilation failed, maintaining previous valid state: %v", err)
 		return nil
 	}
 
@@ -979,8 +964,7 @@ func (mgr *Manager) Refresh(ctx context.Context) error {
 		return err
 	}
 
-	mgr.isStale.Store(false)
-	mgr.awaitingHealthyPolicyStore.Store(false)
+	mgr.log.Info("Successfully reloaded rule table")
 
 	return nil
 }
