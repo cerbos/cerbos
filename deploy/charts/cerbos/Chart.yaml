@@ -16,6 +16,6 @@ keywords:
   - policies
   - rbac
   - security
-version: "0.45.1"
-appVersion: "0.45.1"
+version: "0.46.0"
+appVersion: "0.46.0"
 kubeVersion: ">=1.23.0-0"
