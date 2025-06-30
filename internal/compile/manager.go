@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"golang.org/x/sync/singleflight"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -30,7 +29,6 @@ const (
 type Manager struct {
 	store       storage.SourceStore
 	schemaMgr   schema.Manager
-	sf          singleflight.Group
 	log         *zap.SugaredLogger
 	updateQueue chan storage.Event
 	*storage.SubscriptionManager
@@ -94,36 +92,21 @@ func (c *Manager) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID
 		return nil, errors.New("candidates list must contain at least one candidate")
 	}
 
-	key := candidates[0].String()
-	defer c.sf.Forget(key)
-
-	rpsVal, err, _ := c.sf.Do(key, func() (any, error) {
-		cu, err := c.store.GetFirstMatch(ctx, candidates)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get compilation units: %w", err)
-		}
-
-		if cu == nil {
-			return nil, nil
-		}
-
-		rps, err := c.compile(cu)
-		if err != nil {
-			return nil, PolicyCompilationErr{underlying: err}
-		}
-
-		return rps, nil
-	})
+	cu, err := c.store.GetFirstMatch(ctx, candidates)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get compilation units: %w", err)
 	}
 
-	if rpsVal == nil {
+	if cu == nil {
 		return nil, nil
 	}
 
-	//nolint:forcetypeassert
-	return rpsVal.(*runtimev1.RunnablePolicySet), nil
+	rps, err := c.compile(cu)
+	if err != nil {
+		return nil, PolicyCompilationErr{underlying: err}
+	}
+
+	return rps, nil
 }
 
 func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
@@ -150,43 +133,25 @@ func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, e
 }
 
 func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	key := modID.String()
-	defer c.sf.Forget(key)
-
-	rpsVal, err, _ := c.sf.Do(key, func() (any, error) {
-		compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get compilation units: %w", err)
-		}
-
-		if len(compileUnits) == 0 {
-			return nil, nil
-		}
-
-		var retVal *runtimev1.RunnablePolicySet
-		for mID, cu := range compileUnits {
-			rps, err := c.compile(cu)
-			if err != nil {
-				return nil, PolicyCompilationErr{underlying: err}
-			}
-
-			if mID == modID {
-				retVal = rps
-			}
-		}
-
-		return retVal, nil
-	})
+	compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get compilation units: %w", err)
 	}
 
-	if rpsVal == nil {
+	if len(compileUnits) == 0 {
 		return nil, nil
 	}
 
-	//nolint:forcetypeassert
-	return rpsVal.(*runtimev1.RunnablePolicySet), nil
+	if cu, ok := compileUnits[modID]; ok {
+		rps, err := c.compile(cu)
+		if err != nil {
+			return nil, PolicyCompilationErr{underlying: err}
+		}
+
+		return rps, nil
+	}
+
+	return nil, nil
 }
 
 type PolicyCompilationErr struct {
