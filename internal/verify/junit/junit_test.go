@@ -143,7 +143,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	mgr, err := compile.NewManager(ctx, store, schemaMgr)
 	require.NoError(t, err)
 
-	rt := ruletable.NewRuletable()
+	rt := ruletable.NewProtoRuletable()
 	require.NoError(t, ruletable.LoadFromPolicyLoader(ctx, rt, mgr))
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, schemaMgr)

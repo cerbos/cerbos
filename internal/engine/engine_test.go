@@ -333,7 +333,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
-	rt := ruletable.NewRuletable()
+	rt := ruletable.NewProtoRuletable()
 	require.NoError(tb, ruletable.LoadFromPolicyLoader(ctx, rt, compiler))
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)

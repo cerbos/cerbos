@@ -24,7 +24,7 @@ func Resources(ctx context.Context, conf *engine.Conf, idx compile.Index, input 
 		return nil, err
 	}
 
-	rt := ruletable.NewRuletable()
+	rt := ruletable.NewProtoRuletable()
 
 	if err := ruletable.LoadFromPolicyLoader(ctx, rt, compiler); err != nil {
 		return nil, err

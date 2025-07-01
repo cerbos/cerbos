@@ -255,11 +255,6 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		return nil, nil, err
 	}
 
-	// TODO(saml) remove with patching
-	if err := engine.ruleTableManager.Reload(ctx); err != nil {
-		return nil, nil, err
-	}
-
 	ppVersion := engine.policyVersion(input.Principal.PolicyVersion, opts.evalParams)
 	rpVersion := engine.policyVersion(input.Resource.PolicyVersion, opts.evalParams)
 
@@ -443,11 +438,6 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	tctx := tracer.Start(checkOpts.tracerSink)
-
-	// TODO(saml) remove with patching
-	if err := engine.ruleTableManager.Reload(ctx); err != nil {
-		return nil, nil, err
-	}
 
 	// evaluate the policies
 	result, err := engine.ruleTableManager.Check(ctx, tctx, checkOpts.evalParams, input)

@@ -11,12 +11,9 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"sync"
-	"sync/atomic"
 
 	celast "github.com/google/cel-go/common/ast"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -35,7 +32,6 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -49,7 +45,7 @@ const (
 	noPolicyMatch           = "NO_MATCH"
 )
 
-func NewRuletable() *runtimev1.RuleTable {
+func NewProtoRuletable() *runtimev1.RuleTable {
 	return &runtimev1.RuleTable{
 		Rules:              []*runtimev1.RuleTable_RuleRow{},
 		Schemas:            make(map[uint64]*policyv1.Schemas),
@@ -347,20 +343,15 @@ func insertRule(rt *runtimev1.RuleTable, r *runtimev1.RuleTable_RuleRow) {
 	rt.Rules = append(rt.Rules, r)
 }
 
-type Manager struct {
+type RuleTable struct {
 	*runtimev1.RuleTable
-	log                        *zap.SugaredLogger
-	policyLoader               policyloader.PolicyLoader
-	schemaMgr                  schema.Manager
-	primaryIdx                 map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
-	principalScopeMap          map[string]struct{}
-	resourceScopeMap           map[string]struct{}
-	scopeScopePermissions      map[string]policyv1.ScopePermissions
-	parentRoleAncestorsCache   map[string]map[string][]string
-	policyDerivedRoles         map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	isStale                    atomic.Bool // TODO(saml) remove this once rule table patching is added
-	awaitingHealthyPolicyStore atomic.Bool // TODO(saml) remove this once rule table patching is added
-	mu                         sync.RWMutex
+	schemaMgr                schema.Manager
+	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	principalScopeMap        map[string]struct{}
+	resourceScopeMap         map[string]struct{}
+	scopeScopePermissions    map[string]policyv1.ScopePermissions
+	parentRoleAncestorsCache map[string]map[string][]string
+	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 }
 
 type Row struct {
@@ -414,14 +405,9 @@ type CelProgram struct {
 	Name string
 }
 
-func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
-	mgr := &Manager{
-		log: zap.S().Named("ruletable"),
-		// TODO(saml) ultimately, the policyLoader should not be attached to the rule table manager. On policy changes, we'll need a separate
-		// mechanism that patches rule tables and reapplies them. This'll be done in a future refactor
-		policyLoader:               policyLoader,
-		schemaMgr:                  schemaMgr,
-		awaitingHealthyPolicyStore: atomic.Bool{},
+func NewRuleTable(rt *runtimev1.RuleTable, schemaMgr schema.Manager) (*RuleTable, error) {
+	mgr := &RuleTable{
+		schemaMgr: schemaMgr,
 	}
 
 	if err := mgr.load(rt); err != nil {
@@ -431,7 +417,7 @@ func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.Poli
 	return mgr, nil
 }
 
-func (mgr *Manager) load(rt *runtimev1.RuleTable) error {
+func (mgr *RuleTable) load(rt *runtimev1.RuleTable) error {
 	mgr.RuleTable = rt
 
 	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
@@ -535,7 +521,7 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	return progs, nil
 }
 
-func (mgr *Manager) indexRule(r *Row) {
+func (mgr *RuleTable) indexRule(r *Row) {
 	if r.ScopePermissions != policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
 		mgr.scopeScopePermissions[r.Scope] = r.ScopePermissions
 	}
@@ -578,11 +564,11 @@ func (mgr *Manager) indexRule(r *Row) {
 	}
 }
 
-func (mgr *Manager) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
+func (mgr *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
 	return mgr.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }
 
-func (mgr *Manager) GetAllScopes(pt policy.Kind, scope, name, version string) ([]string, string, string) {
+func (mgr *RuleTable) GetAllScopes(pt policy.Kind, scope, name, version string) ([]string, string, string) {
 	var firstPolicyKey, firstFqn string
 	var scopes []string
 
@@ -618,7 +604,7 @@ type scopeNode struct {
 	scope    string
 }
 
-func (mgr *Manager) CombineScopes(principalScopes, resourceScopes []string) []string {
+func (mgr *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []string {
 	// Build a map to track all unique scopes
 	uniqueScopes := make(map[string]struct{})
 	for _, s := range principalScopes {
@@ -671,7 +657,7 @@ func (mgr *Manager) CombineScopes(principalScopes, resourceScopes []string) []st
 	return result
 }
 
-func (mgr *Manager) ScopedResourceExists(version, resource string, scopes []string) bool {
+func (mgr *RuleTable) ScopedResourceExists(version, resource string, scopes []string) bool {
 	if scopeMap, ok := mgr.primaryIdx[version]; ok {
 		for _, scope := range scopes {
 			if roleMap, ok := scopeMap[scope]; ok && roleMap.Len() > 0 {
@@ -691,7 +677,7 @@ func (mgr *Manager) ScopedResourceExists(version, resource string, scopes []stri
 	return false
 }
 
-func (mgr *Manager) ScopedPrincipalExists(version string, scopes []string) bool {
+func (mgr *RuleTable) ScopedPrincipalExists(version string, scopes []string) bool {
 	if scopeMap, ok := mgr.primaryIdx[version]; ok {
 		for _, scope := range scopes {
 			if roleMap, ok := scopeMap[scope]; ok && roleMap.Len() > 0 {
@@ -711,7 +697,7 @@ func (mgr *Manager) ScopedPrincipalExists(version string, scopes []string) bool 
 	return false
 }
 
-func (mgr *Manager) ScopedRoleExists(version, scope, role string) bool {
+func (mgr *RuleTable) ScopedRoleExists(version, scope, role string) bool {
 	if scopeMap, ok := mgr.primaryIdx[version]; ok {
 		if roleMap, ok := scopeMap[scope]; ok {
 			if _, ok := roleMap.Get(role); ok {
@@ -723,12 +709,8 @@ func (mgr *Manager) ScopedRoleExists(version, scope, role string) bool {
 	return false
 }
 
-func (mgr *Manager) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
+func (mgr *RuleTable) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
 	res := []*Row{}
-
-	// TODO(saml) mutex can go once merges are handled outside the manager and rule tables are truly static
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
 
 	processedActionSets := make(map[*util.GlobMap[[]*Row]]struct{})
 	processedRuleSets := make(map[*[]*Row]struct{})
@@ -836,9 +818,7 @@ func (mgr *Manager) GetRows(version, resource string, scopes, roles, actions []s
 	return res
 }
 
-func (mgr *Manager) GetParentRoles(scope string, roles []string) []string {
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
+func (mgr *RuleTable) GetParentRoles(scope string, roles []string) []string {
 
 	// recursively collect all parent roles, caching the flat list on the very first traversal for
 	// each role within the ruletable
@@ -871,7 +851,7 @@ func (mgr *Manager) GetParentRoles(scope string, roles []string) []string {
 	return parentRoles
 }
 
-func (mgr *Manager) collectParentRoles(scope, role string, parentRoleSet, visited map[string]struct{}) {
+func (mgr *RuleTable) collectParentRoles(scope, role string, parentRoleSet, visited map[string]struct{}) {
 	if _, seen := visited[role]; seen {
 		return
 	}
@@ -887,9 +867,7 @@ func (mgr *Manager) collectParentRoles(scope, role string, parentRoleSet, visite
 	}
 }
 
-func (mgr *Manager) ScopeExists(pt policy.Kind, scope string) bool {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
+func (mgr *RuleTable) ScopeExists(pt policy.Kind, scope string) bool {
 
 	var ok bool
 	switch pt { //nolint:exhaustive
@@ -902,13 +880,11 @@ func (mgr *Manager) ScopeExists(pt policy.Kind, scope string) bool {
 	return ok
 }
 
-func (mgr *Manager) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
+func (mgr *RuleTable) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
 	return mgr.scopeScopePermissions[scope]
 }
 
-func (mgr *Manager) GetSchema(fqn string) *policyv1.Schemas {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
+func (mgr *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 
 	modID := namer.GenModuleIDFromFQN(fqn)
 	if s, ok := mgr.Schemas[modID.RawValue()]; ok {
@@ -918,9 +894,7 @@ func (mgr *Manager) GetSchema(fqn string) *policyv1.Schemas {
 	return nil
 }
 
-func (mgr *Manager) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
+func (mgr *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 
 	modID := namer.GenModuleIDFromFQN(fqn)
 	if s, ok := mgr.Meta[modID.RawValue()]; ok {
@@ -930,62 +904,7 @@ func (mgr *Manager) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 	return nil
 }
 
-func (mgr *Manager) SubscriberID() string {
-	return "engine.RuleTable"
-}
-
-func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
-	for _, evt := range events {
-		switch evt.Kind {
-		case storage.EventReload, storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
-			// as a temporary measure, to avoid recompiling the whole rule table on updates when no Check
-			// or Plan calls are made, we toggle a flag which is checked at query time and lazily refresh
-			// the table then. This is far from ideal as it can increase the latency of the first query, but
-			// this is a temporary measure (and the lesser of two evils).
-			// TODO(saml) remove this once rule table patching is implemented
-			mgr.log.Info("Scheduling ruletable reload")
-			mgr.isStale.Store(true)
-		default:
-			mgr.log.Debugw("Ignoring storage event", "event", evt)
-		}
-	}
-}
-
-func (mgr *Manager) Reload(ctx context.Context) error {
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
-
-	if !mgr.isStale.Load() {
-		// TODO(saml) this atomic bool is only used for logging purposes. Remove with patching
-		if mgr.awaitingHealthyPolicyStore.Load() {
-			mgr.log.Debug("Policy store invalid, using previous valid state")
-		}
-		return nil
-	}
-
-	mgr.log.Info("Reloading rule table")
-	rt := NewRuletable()
-
-	// If compilation fails, maintain the last valid rule table state.
-	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-	if err := LoadFromPolicyLoader(ctx, rt, mgr.policyLoader); err != nil {
-		mgr.log.Errorf("Rule table compilation failed, using previous valid state: %v", err)
-		mgr.isStale.Store(false)
-		mgr.awaitingHealthyPolicyStore.Store(true)
-		return nil
-	}
-
-	if err := mgr.load(rt); err != nil {
-		return err
-	}
-
-	mgr.isStale.Store(false)
-	mgr.awaitingHealthyPolicyStore.Store(false)
-
-	return nil
-}
-
-func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+func (mgr *RuleTable) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "engine.Check")
 	defer span.End()
 
@@ -1682,7 +1601,7 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 	return result.Value(), nil
 }
 
-func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (mgr *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
 
 	_, span := tracing.StartSpan(ctx, "engine.Plan")

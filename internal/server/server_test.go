@@ -324,7 +324,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
-	rt := ruletable.NewRuletable()
+	rt := ruletable.NewProtoRuletable()
 
 	require.NoError(t, ruletable.LoadFromPolicyLoader(ctx, rt, tp.policyLoader))
 

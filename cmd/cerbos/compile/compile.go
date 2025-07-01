@@ -133,7 +133,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			Trace:                   c.Verbose,
 		}
 
-		rt := ruletable.NewRuletable()
+		rt := ruletable.NewProtoRuletable()
 
 		compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
 		if err != nil {

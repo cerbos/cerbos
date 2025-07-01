@@ -33,7 +33,7 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
 
-	rt := ruletable.NewRuletable()
+	rt := ruletable.NewProtoRuletable()
 
 	if err := ruletable.LoadFromPolicyLoader(ctx, rt, bundleSrc); err != nil {
 		return nil, err
