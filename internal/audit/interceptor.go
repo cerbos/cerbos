@@ -17,6 +17,7 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 type (
@@ -24,7 +25,7 @@ type (
 	IncludeKeysMethod func(string) bool
 )
 
-func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterceptor, error) {
+func NewUnaryInterceptor(log Log, store storage.Store, exclude ExcludeMethod) (grpc.UnaryServerInterceptor, error) {
 	mdExtractor, err := NewMetadataExtractor()
 	if err != nil {
 		return nil, err
@@ -49,12 +50,13 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterc
 			defer span.End()
 
 			return &auditv1.AccessLogEntry{
-				CallId:     string(callID),
-				Timestamp:  timestamppb.New(ts),
-				Peer:       PeerFromContext(ctx),
-				Method:     info.FullMethod,
-				StatusCode: uint32(status.Code(err)),
-				Metadata:   mdExtractor(ctx),
+				CallId:       string(callID),
+				Timestamp:    timestamppb.New(ts),
+				Peer:         PeerFromContext(ctx),
+				Method:       info.FullMethod,
+				StatusCode:   uint32(status.Code(err)),
+				Metadata:     mdExtractor(ctx),
+				PolicySource: store.Source(),
 			}, nil
 		}); logErr != nil {
 			logging.FromContext(ctx).Warn("Failed to write access log entry", zap.Error(logErr))

@@ -364,7 +364,7 @@ func (s *Server) createListener(listenAddr string) (net.Listener, error) {
 
 func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, error) {
 	log := zap.L().Named("grpc")
-	server, err := s.mkGRPCServer(log, param.AuditLog)
+	server, err := s.mkGRPCServer(log, param)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC server: %w", err)
 	}
@@ -434,10 +434,10 @@ func checkForUnsafeAdminCredentials(log *zap.Logger, passwordHash []byte) {
 	}
 }
 
-func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server, error) {
+func (s *Server) mkGRPCServer(log *zap.Logger, param Param) (*grpc.Server, error) {
 	telemetryInt := telemetry.Intercept()
 
-	auditInterceptor, err := audit.NewUnaryInterceptor(auditLog, accessLogExclude)
+	auditInterceptor, err := audit.NewUnaryInterceptor(param.AuditLog, param.Store, accessLogExclude)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create audit unary interceptor: %w", err)
 	}

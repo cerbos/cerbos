@@ -13,7 +13,7 @@ inputs:
         "block", # No match in target scope. BUT ALLOW in parent scope for role `boss` which no role policies narrow permissions of.
         "defer", # ALLOW in resource policy for a role that `acme_creator` recursively narrows. However, because the named role is
                  # defined in a role policy, it narrows the permissions of `employee` rather than assuming them, even if they share
-                 # the same scope. If the principal explicitly had the role `employee`, this would be allowed. 
+                 # the same scope. If the principal explicitly had the role `employee`, this would be allowed.
         "party_plan", # Rule with non-matching condition in target scope which implicitly DENYs (even with ALLOW in parent scope)
         "make", # ALLOW for `acme_creator`, no match in parent custom role
         ],
@@ -271,6 +271,10 @@ wantDecisionLogs:
                     },
                 },
             },
+        },
+      "policySource":
+        {
+          "disk": {},
         },
     },
   ]

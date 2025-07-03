@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -129,6 +130,8 @@ type Store interface {
 	ListSchemaIDs(context.Context) ([]string, error)
 	// LoadSchema loads the given schema from the store.
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
+	// Source returns metadata for inclusion in audit logs.
+	Source() *auditv1.PolicySource
 }
 
 // SourceStore is implemented by stores that have policies in their source format (uncompiled).

@@ -59,7 +59,7 @@ type Bundle struct {
 }
 
 func toManifestV2(manifest *bundlev1.Manifest) *bundlev2.Manifest {
-	m := &bundlev2.Manifest{
+	return &bundlev2.Manifest{
 		ApiVersion:  manifest.GetApiVersion(),
 		PolicyIndex: manifest.GetPolicyIndex(),
 		Schemas:     manifest.GetSchemas(),
@@ -68,8 +68,6 @@ func toManifestV2(manifest *bundlev1.Manifest) *bundlev2.Manifest {
 			Source:   manifest.GetMeta().GetSource(),
 		},
 	}
-
-	return m
 }
 
 type cacheEntry struct {

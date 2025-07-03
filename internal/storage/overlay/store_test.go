@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -260,6 +261,10 @@ func (m *MockPolicyLoader) GetAllMatching(ctx context.Context, modIDs []namer.Mo
 	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
+func (m *MockPolicyLoader) Source() *auditv1.PolicySource {
+	return nil
+}
+
 type MockStore struct {
 	mock.Mock
 }
@@ -299,6 +304,10 @@ func (ms *MockStore) LoadSchema(ctx context.Context, _ string) (io.ReadCloser, e
 		return nil, args.Error(0)
 	}
 	return nil, nil
+}
+
+func (ms *MockStore) Source() *auditv1.PolicySource {
+	return nil
 }
 
 type MockBinaryStore struct {

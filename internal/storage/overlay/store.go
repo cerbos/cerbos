@@ -15,6 +15,7 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -275,6 +276,14 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	return p.Wait()
+}
+
+func (s *Store) Source() *auditv1.PolicySource {
+	return withCircuitBreaker0(
+		s,
+		func() *auditv1.PolicySource { return s.baseStore.Source() },
+		func() *auditv1.PolicySource { return s.fallbackStore.Source() },
+	)
 }
 
 func (s *Store) Subscribe(subscriber storage.Subscriber) {

@@ -10,6 +10,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/storage"
 	mock "github.com/stretchr/testify/mock"
@@ -348,6 +349,52 @@ func (_c *Store_LoadSchema_Call) Return(readCloser io.ReadCloser, err error) *St
 }
 
 func (_c *Store_LoadSchema_Call) RunAndReturn(run func(context1 context.Context, s string) (io.ReadCloser, error)) *Store_LoadSchema_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Source provides a mock function for the type Store
+func (_mock *Store) Source() *auditv1.PolicySource {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Source")
+	}
+
+	var r0 *auditv1.PolicySource
+	if returnFunc, ok := ret.Get(0).(func() *auditv1.PolicySource); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*auditv1.PolicySource)
+		}
+	}
+	return r0
+}
+
+// Store_Source_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Source'
+type Store_Source_Call struct {
+	*mock.Call
+}
+
+// Source is a helper method to define mock.On call
+func (_e *Store_Expecter) Source() *Store_Source_Call {
+	return &Store_Source_Call{Call: _e.mock.On("Source")}
+}
+
+func (_c *Store_Source_Call) Run(run func()) *Store_Source_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Store_Source_Call) Return(policySource *auditv1.PolicySource) *Store_Source_Call {
+	_c.Call.Return(policySource)
+	return _c
+}
+
+func (_c *Store_Source_Call) RunAndReturn(run func() *auditv1.PolicySource) *Store_Source_Call {
 	_c.Call.Return(run)
 	return _c
 }

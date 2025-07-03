@@ -153,6 +153,8 @@ wantDecisionLogs:
           attributes:
             driver: disk
             source: resource_policies/policy_07.yaml
+    policySource:
+      disk: {}
     checkResources:
       inputs:
         - requestId: both-expr-and-when-defined-rule-activated

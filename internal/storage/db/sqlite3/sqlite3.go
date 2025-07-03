@@ -22,6 +22,7 @@ import (
 	gosqlite3 "modernc.org/sqlite"
 	gosqlite3lib "modernc.org/sqlite/lib"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -106,7 +107,16 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{DBStorage: s}, nil
+	return &Store{
+		DBStorage: s,
+		source: &auditv1.PolicySource{
+			Source: &auditv1.PolicySource_Database_{
+				Database: &auditv1.PolicySource_Database{
+					Driver: auditv1.PolicySource_Database_DRIVER_SQLITE3,
+				},
+			},
+		},
+	}, nil
 }
 
 func runMigrations(db *sql.DB) error {
@@ -175,8 +185,13 @@ func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) er
 
 type Store struct {
 	internal.DBStorage
+	source *auditv1.PolicySource
 }
 
 func (s *Store) Driver() string {
 	return DriverName
+}
+
+func (s *Store) Source() *auditv1.PolicySource {
+	return s.source
 }

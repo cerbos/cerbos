@@ -25,6 +25,7 @@ import (
 	"gocloud.dev/gcp"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -158,6 +159,7 @@ type Store struct {
 	*storage.SubscriptionManager
 	log         *zap.SugaredLogger
 	conf        *Conf
+	source      *auditv1.PolicySource
 	idx         index.Index
 	cloner      bucketCloner
 	symlink     symlinker
@@ -182,6 +184,11 @@ func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, s
 		cloner:              cloner,
 		symlink:             symlink,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		source: &auditv1.PolicySource{
+			Source: &auditv1.PolicySource_Blob_{
+				Blob: &auditv1.PolicySource_Blob{},
+			},
+		},
 	}
 
 	if err := s.init(ctx); err != nil {
@@ -525,6 +532,10 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Store) Source() *auditv1.PolicySource {
+	return s.source
 }
 
 func cacheDir(bucketURL, workDir string) string {

@@ -120,6 +120,9 @@ wantDecisionLogs:
             }
           }
         }
+      },
+      "policySource": {
+        "disk": {},
       }
     }
   ]

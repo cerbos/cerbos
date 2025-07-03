@@ -1,0 +1,17 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/PolicySource/Git.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "branch": {
+      "type": "string"
+    },
+    "repositoryUrl": {
+      "type": "string"
+    },
+    "subDir": {
+      "type": "string"
+    }
+  }
+}

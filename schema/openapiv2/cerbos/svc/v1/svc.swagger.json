@@ -1176,6 +1176,16 @@
         }
       }
     },
+    "DatabaseDriver": {
+      "type": "string",
+      "enum": [
+        "DRIVER_UNSPECIFIED",
+        "DRIVER_MYSQL",
+        "DRIVER_POSTGRES",
+        "DRIVER_SQLITE3"
+      ],
+      "default": "DRIVER_UNSPECIFIED"
+    },
     "ExpressionOperand": {
       "type": "object",
       "properties": {
@@ -1353,6 +1363,48 @@
         }
       },
       "description": "CEL expression"
+    },
+    "PolicySourceBlob": {
+      "type": "object"
+    },
+    "PolicySourceDatabase": {
+      "type": "object",
+      "properties": {
+        "driver": {
+          "$ref": "#/definitions/DatabaseDriver"
+        }
+      }
+    },
+    "PolicySourceDisk": {
+      "type": "object"
+    },
+    "PolicySourceGit": {
+      "type": "object",
+      "properties": {
+        "repositoryUrl": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "subDir": {
+          "type": "string"
+        }
+      }
+    },
+    "PolicySourceHub": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "deploymentId": {
+          "type": "string"
+        },
+        "playgroundId": {
+          "type": "string"
+        }
+      }
     },
     "SchemasIgnoreWhen": {
       "type": "object",
@@ -1566,6 +1618,9 @@
         },
         "oversized": {
           "type": "boolean"
+        },
+        "policySource": {
+          "$ref": "#/definitions/v1PolicySource"
         }
       }
     },
@@ -2128,6 +2183,9 @@
         },
         "oversized": {
           "type": "boolean"
+        },
+        "policySource": {
+          "$ref": "#/definitions/v1PolicySource"
         }
       }
     },
@@ -2852,6 +2910,26 @@
         },
         "$schema": {
           "type": "string"
+        }
+      }
+    },
+    "v1PolicySource": {
+      "type": "object",
+      "properties": {
+        "blob": {
+          "$ref": "#/definitions/PolicySourceBlob"
+        },
+        "database": {
+          "$ref": "#/definitions/PolicySourceDatabase"
+        },
+        "disk": {
+          "$ref": "#/definitions/PolicySourceDisk"
+        },
+        "git": {
+          "$ref": "#/definitions/PolicySourceGit"
+        },
+        "hub": {
+          "$ref": "#/definitions/PolicySourceHub"
         }
       }
     },

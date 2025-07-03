@@ -1,0 +1,17 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/PolicySource/Hub.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "deploymentId": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "playgroundId": {
+      "type": "string"
+    }
+  }
+}

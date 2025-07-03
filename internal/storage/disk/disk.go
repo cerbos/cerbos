@@ -12,6 +12,7 @@ import (
 
 	"go.uber.org/zap"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -41,8 +42,9 @@ func init() {
 }
 
 type Store struct {
-	conf *Conf
-	idx  index.Index
+	conf   *Conf
+	idx    index.Index
+	source *auditv1.PolicySource
 	*storage.SubscriptionManager
 }
 
@@ -68,6 +70,11 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		conf:                conf,
 		idx:                 idx,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		source: &auditv1.PolicySource{
+			Source: &auditv1.PolicySource_Disk_{
+				Disk: &auditv1.PolicySource_Disk{},
+			},
+		},
 	}
 
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
@@ -150,6 +157,10 @@ func (s *Store) Reload(ctx context.Context) error {
 
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	return nil
+}
+
+func (s *Store) Source() *auditv1.PolicySource {
+	return s.source
 }
 
 func (s *Store) Close() error {

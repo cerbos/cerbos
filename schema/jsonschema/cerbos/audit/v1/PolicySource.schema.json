@@ -1,0 +1,81 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/PolicySource.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.audit.v1.PolicySource.Blob": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "cerbos.audit.v1.PolicySource.Database": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "driver": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Database.Driver"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Database.Driver": {
+      "type": "string",
+      "enum": [
+        "DRIVER_UNSPECIFIED",
+        "DRIVER_MYSQL",
+        "DRIVER_POSTGRES",
+        "DRIVER_SQLITE3"
+      ]
+    },
+    "cerbos.audit.v1.PolicySource.Disk": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "cerbos.audit.v1.PolicySource.Git": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "repositoryUrl": {
+          "type": "string"
+        },
+        "subDir": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Hub": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "deploymentId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "playgroundId": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "blob": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Blob"
+    },
+    "database": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Database"
+    },
+    "disk": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Disk"
+    },
+    "git": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Git"
+    },
+    "hub": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Hub"
+    }
+  }
+}

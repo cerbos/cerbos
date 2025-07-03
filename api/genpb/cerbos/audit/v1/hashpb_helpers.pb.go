@@ -53,6 +53,11 @@ func cerbos_audit_v1_AccessLogEntry_hashpb_sum(m *AccessLogEntry, hasher hash.Ha
 	if _, ok := ignore["cerbos.audit.v1.AccessLogEntry.oversized"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetOversized())))
 	}
+	if _, ok := ignore["cerbos.audit.v1.AccessLogEntry.policy_source"]; !ok {
+		if m.GetPolicySource() != nil {
+			cerbos_audit_v1_PolicySource_hashpb_sum(m.GetPolicySource(), hasher, ignore)
+		}
+	}
 }
 
 func cerbos_audit_v1_AuditTrail_hashpb_sum(m *AuditTrail, hasher hash.Hash, ignore map[string]struct{}) {
@@ -181,6 +186,11 @@ func cerbos_audit_v1_DecisionLogEntry_hashpb_sum(m *DecisionLogEntry, hasher has
 	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.oversized"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetOversized())))
 	}
+	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.policy_source"]; !ok {
+		if m.GetPolicySource() != nil {
+			cerbos_audit_v1_PolicySource_hashpb_sum(m.GetPolicySource(), hasher, ignore)
+		}
+	}
 }
 
 func cerbos_audit_v1_MetaValues_hashpb_sum(m *MetaValues, hasher hash.Hash, ignore map[string]struct{}) {
@@ -210,6 +220,80 @@ func cerbos_audit_v1_Peer_hashpb_sum(m *Peer, hasher hash.Hash, ignore map[strin
 	if _, ok := ignore["cerbos.audit.v1.Peer.forwarded_for"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetForwardedFor()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetForwardedFor()), len(m.GetForwardedFor())))
+	}
+}
+
+func cerbos_audit_v1_PolicySource_Blob_hashpb_sum(m *PolicySource_Blob, hasher hash.Hash, ignore map[string]struct{}) {
+}
+
+func cerbos_audit_v1_PolicySource_Database_hashpb_sum(m *PolicySource_Database, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Database.driver"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDriver())))
+	}
+}
+
+func cerbos_audit_v1_PolicySource_Disk_hashpb_sum(m *PolicySource_Disk, hasher hash.Hash, ignore map[string]struct{}) {
+}
+
+func cerbos_audit_v1_PolicySource_Git_hashpb_sum(m *PolicySource_Git, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Git.repository_url"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetRepositoryUrl()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetRepositoryUrl()), len(m.GetRepositoryUrl())))
+	}
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Git.branch"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetBranch()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetBranch()), len(m.GetBranch())))
+	}
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Git.sub_dir"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetSubDir()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetSubDir()), len(m.GetSubDir())))
+	}
+}
+
+func cerbos_audit_v1_PolicySource_Hub_hashpb_sum(m *PolicySource_Hub, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Source != nil {
+		if _, ok := ignore["cerbos.audit.v1.PolicySource.Hub.source"]; !ok {
+			switch t := m.Source.(type) {
+			case *PolicySource_Hub_Label:
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(t.Label))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(t.Label), len(t.Label)))
+			case *PolicySource_Hub_DeploymentId:
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(t.DeploymentId))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(t.DeploymentId), len(t.DeploymentId)))
+			case *PolicySource_Hub_PlaygroundId:
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(t.PlaygroundId))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(t.PlaygroundId), len(t.PlaygroundId)))
+			}
+		}
+	}
+}
+
+func cerbos_audit_v1_PolicySource_hashpb_sum(m *PolicySource, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Source != nil {
+		if _, ok := ignore["cerbos.audit.v1.PolicySource.source"]; !ok {
+			switch t := m.Source.(type) {
+			case *PolicySource_Blob_:
+				if t.Blob != nil {
+					cerbos_audit_v1_PolicySource_Blob_hashpb_sum(t.Blob, hasher, ignore)
+				}
+			case *PolicySource_Database_:
+				if t.Database != nil {
+					cerbos_audit_v1_PolicySource_Database_hashpb_sum(t.Database, hasher, ignore)
+				}
+			case *PolicySource_Disk_:
+				if t.Disk != nil {
+					cerbos_audit_v1_PolicySource_Disk_hashpb_sum(t.Disk, hasher, ignore)
+				}
+			case *PolicySource_Git_:
+				if t.Git != nil {
+					cerbos_audit_v1_PolicySource_Git_hashpb_sum(t.Git, hasher, ignore)
+				}
+			case *PolicySource_Hub_:
+				if t.Hub != nil {
+					cerbos_audit_v1_PolicySource_Hub_hashpb_sum(t.Hub, hasher, ignore)
+				}
+			}
+		}
 	}
 }
 

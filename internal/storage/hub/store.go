@@ -13,6 +13,7 @@ import (
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -159,6 +160,10 @@ func (hs *HybridStore) Subscribe(s storage.Subscriber) {
 func (hs *HybridStore) Unsubscribe(s storage.Subscriber) {
 	hs.local.Unsubscribe(s)
 	hs.remote.Unsubscribe(s)
+}
+
+func (hs *HybridStore) Source() *auditv1.PolicySource {
+	return hs.withActiveSource().Source()
 }
 
 func (hs *HybridStore) SourceKind() string {

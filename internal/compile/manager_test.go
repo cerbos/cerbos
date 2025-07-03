@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 
 	"github.com/stretchr/testify/mock"
@@ -512,5 +513,9 @@ func (ms *MockStore) DeleteSchema(ctx context.Context, _ ...string) error {
 	if res := args.Get(0); res == nil {
 		return args.Error(0)
 	}
+	return nil
+}
+
+func (ms *MockStore) Source() *auditv1.PolicySource {
 	return nil
 }
