@@ -21,26 +21,28 @@ import (
 
 type Manager struct {
 	*RuleTable
-	log          *zap.SugaredLogger
-	mu           sync.RWMutex
-	policyLoader policyloader.PolicyLoader
-	// schemaMgr                  schema.Manager
+	policyLoader               policyloader.PolicyLoader
+	log                        *zap.SugaredLogger
 	ruleTable                  *runtimev1.RuleTable
+	mu                         sync.RWMutex
 	isStale                    atomic.Bool
 	awaitingHealthyPolicyStore atomic.Bool
 }
 
-func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
-	manager, err := NewRuleTable(rt, schemaMgr)
-	if err != nil {
+func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
+	rt := &RuleTable{
+		schemaMgr: schemaMgr,
+	}
+
+	if err := rt.load(protoRT); err != nil {
 		return nil, err
 	}
 
 	return &Manager{
 		log:          zap.S().Named("ruletable"),
-		RuleTable:    manager,
+		RuleTable:    rt,
 		policyLoader: policyLoader,
-		ruleTable:    rt,
+		ruleTable:    protoRT,
 	}, nil
 }
 
@@ -72,7 +74,7 @@ func (mgr *Manager) SubscriberID() string {
 
 func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
-		switch event.Kind {
+		switch event.Kind { //nolint:exhaustive
 		case storage.EventReload:
 			mgr.isStale.Store(true)
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
@@ -81,7 +83,7 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	}
 }
 
-// TODO(saml) remove this post patching
+// TODO(saml) update this post patching.
 func (mgr *Manager) reload(ctx context.Context) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()

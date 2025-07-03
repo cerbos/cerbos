@@ -303,6 +303,7 @@ func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanR
 	return output, planErr
 }
 
+// TODO(saml) make `Engine` and `RuleTable` both satisfy a new `Evaluator` interface with `Check` and `Plan`
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
 	outputs, trail, err := metrics.RecordDuration3(metrics.EngineCheckLatency(), func() (outputs []*enginev1.CheckOutput, trail *auditv1.AuditTrail, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")

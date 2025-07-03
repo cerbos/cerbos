@@ -347,13 +347,13 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 	}
 
 	if ps := rp.Schemas.PrincipalSchema; ps != nil && ps.Ref != "" {
-		if err := schemaMgr.CheckSchema(context.TODO(), ps.Ref); err != nil {
+		if _, err := schemaMgr.LoadSchema(context.TODO(), ps.Ref); err != nil {
 			modCtx.addErrForProtoPath(policy.ResourcePolicyPrincipalSchemaProtoPath(), errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
 		}
 	}
 
 	if rs := rp.Schemas.ResourceSchema; rs != nil && rs.Ref != "" {
-		if err := schemaMgr.CheckSchema(context.TODO(), rs.Ref); err != nil {
+		if _, err := schemaMgr.LoadSchema(context.TODO(), rs.Ref); err != nil {
 			modCtx.addErrForProtoPath(policy.ResourcePolicyResourceSchemaProtoPath(), errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
 		}
 	}

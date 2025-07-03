@@ -45,6 +45,7 @@ var dummy int
 
 func TestCheck(t *testing.T) {
 	mockAuditLog := &mockAuditLog{}
+	// TODO(saml) when both `Engine` and `RuleTable` satisfy the new `Evaluator` interface, we can test for both circumstances here
 	eng, cancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone})
 	defer cancelFunc()
 

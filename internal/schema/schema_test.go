@@ -73,7 +73,7 @@ func TestLoad(t *testing.T) {
 		t.Run(storeName, func(t *testing.T) {
 			for _, tc := range testCases {
 				t.Run(tc.name, func(t *testing.T) {
-					err := mgr.CheckSchema(t.Context(), tc.url)
+					_, err := mgr.LoadSchema(t.Context(), tc.url)
 					if tc.wantErr {
 						require.Error(t, err)
 						return
@@ -173,17 +173,20 @@ func TestCache(t *testing.T) {
 		schemaURL := fmt.Sprintf("%s:///complex_object.json", schema.URLScheme)
 
 		// control test (everything is as it should be)
-		require.NoError(t, mgr.CheckSchema(t.Context(), schemaURL))
+		_, err := mgr.LoadSchema(t.Context(), schemaURL)
+		require.NoError(t, err)
 
 		// write rubbish to file
 		require.NoError(t, afero.WriteFile(fsys, schemaFile, []byte("blah"), 0o644))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "complex_object.json"})
-		require.Error(t, mgr.CheckSchema(t.Context(), schemaURL))
+		_, err = mgr.LoadSchema(t.Context(), schemaURL)
+		require.Error(t, err)
 
 		// reset
 		require.NoError(t, afero.WriteFile(fsys, schemaFile, schemaBytes, 0o644))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "complex_object.json"})
-		require.NoError(t, mgr.CheckSchema(t.Context(), schemaURL))
+		_, err = mgr.LoadSchema(t.Context(), schemaURL)
+		require.NoError(t, err)
 	})
 
 	t.Run("add_and_delete", func(t *testing.T) {
@@ -191,17 +194,20 @@ func TestCache(t *testing.T) {
 		schemaURL := fmt.Sprintf("%s:///wibble.json", schema.URLScheme)
 
 		// control test
-		require.Error(t, mgr.CheckSchema(t.Context(), schemaURL))
+		_, err = mgr.LoadSchema(t.Context(), schemaURL)
+		require.Error(t, err)
 
 		// add file
 		require.NoError(t, afero.WriteFile(fsys, schemaFile, schemaBytes, 0o644))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "wibble.json"})
-		require.NoError(t, mgr.CheckSchema(t.Context(), schemaURL))
+		_, err = mgr.LoadSchema(t.Context(), schemaURL)
+		require.NoError(t, err)
 
 		// delete file
 		require.NoError(t, fsys.Remove(schemaFile))
 		s.OnStorageEvent(storage.Event{Kind: storage.EventDeleteSchema, SchemaFile: "wibble.json"})
-		require.Error(t, mgr.CheckSchema(t.Context(), schemaURL))
+		_, err = mgr.LoadSchema(t.Context(), schemaURL)
+		require.Error(t, err)
 	})
 }
 
