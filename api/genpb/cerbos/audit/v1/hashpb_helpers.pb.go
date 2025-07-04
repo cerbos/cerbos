@@ -224,6 +224,14 @@ func cerbos_audit_v1_Peer_hashpb_sum(m *Peer, hasher hash.Hash, ignore map[strin
 }
 
 func cerbos_audit_v1_PolicySource_Blob_hashpb_sum(m *PolicySource_Blob, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Blob.bucket_url"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetBucketUrl()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetBucketUrl()), len(m.GetBucketUrl())))
+	}
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Blob.prefix"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetPrefix()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPrefix()), len(m.GetPrefix())))
+	}
 }
 
 func cerbos_audit_v1_PolicySource_Database_hashpb_sum(m *PolicySource_Database, hasher hash.Hash, ignore map[string]struct{}) {
@@ -233,6 +241,10 @@ func cerbos_audit_v1_PolicySource_Database_hashpb_sum(m *PolicySource_Database, 
 }
 
 func cerbos_audit_v1_PolicySource_Disk_hashpb_sum(m *PolicySource_Disk, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Disk.directory"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetDirectory()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDirectory()), len(m.GetDirectory())))
+	}
 }
 
 func cerbos_audit_v1_PolicySource_Git_hashpb_sum(m *PolicySource_Git, hasher hash.Hash, ignore map[string]struct{}) {
@@ -244,9 +256,9 @@ func cerbos_audit_v1_PolicySource_Git_hashpb_sum(m *PolicySource_Git, hasher has
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetBranch()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetBranch()), len(m.GetBranch())))
 	}
-	if _, ok := ignore["cerbos.audit.v1.PolicySource.Git.sub_dir"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetSubDir()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetSubDir()), len(m.GetSubDir())))
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Git.subdirectory"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetSubdirectory()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetSubdirectory()), len(m.GetSubdirectory())))
 	}
 }
 

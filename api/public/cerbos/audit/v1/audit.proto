@@ -72,7 +72,10 @@ message AuditTrail {
 }
 
 message PolicySource {
-  message Blob {}
+  message Blob {
+    string bucket_url = 1;
+    string prefix = 2;
+  }
 
   message Database {
     enum Driver {
@@ -85,12 +88,14 @@ message PolicySource {
     Driver driver = 1;
   }
 
-  message Disk {}
+  message Disk {
+    string directory = 1;
+  }
 
   message Git {
     string repository_url = 1;
     string branch = 2;
-    string sub_dir = 3;
+    string subdirectory = 3;
   }
 
   message Hub {

@@ -761,6 +761,8 @@ func (x *DecisionLogEntry_PlanResources) GetError() string {
 
 type PolicySource_Blob struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	BucketUrl     string                 `protobuf:"bytes,1,opt,name=bucket_url,json=bucketUrl,proto3" json:"bucket_url,omitempty"`
+	Prefix        string                 `protobuf:"bytes,2,opt,name=prefix,proto3" json:"prefix,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -793,6 +795,20 @@ func (x *PolicySource_Blob) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PolicySource_Blob.ProtoReflect.Descriptor instead.
 func (*PolicySource_Blob) Descriptor() ([]byte, []int) {
 	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 0}
+}
+
+func (x *PolicySource_Blob) GetBucketUrl() string {
+	if x != nil {
+		return x.BucketUrl
+	}
+	return ""
+}
+
+func (x *PolicySource_Blob) GetPrefix() string {
+	if x != nil {
+		return x.Prefix
+	}
+	return ""
 }
 
 type PolicySource_Database struct {
@@ -841,6 +857,7 @@ func (x *PolicySource_Database) GetDriver() PolicySource_Database_Driver {
 
 type PolicySource_Disk struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Directory     string                 `protobuf:"bytes,1,opt,name=directory,proto3" json:"directory,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -875,11 +892,18 @@ func (*PolicySource_Disk) Descriptor() ([]byte, []int) {
 	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 2}
 }
 
+func (x *PolicySource_Disk) GetDirectory() string {
+	if x != nil {
+		return x.Directory
+	}
+	return ""
+}
+
 type PolicySource_Git struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RepositoryUrl string                 `protobuf:"bytes,1,opt,name=repository_url,json=repositoryUrl,proto3" json:"repository_url,omitempty"`
 	Branch        string                 `protobuf:"bytes,2,opt,name=branch,proto3" json:"branch,omitempty"`
-	SubDir        string                 `protobuf:"bytes,3,opt,name=sub_dir,json=subDir,proto3" json:"sub_dir,omitempty"`
+	Subdirectory  string                 `protobuf:"bytes,3,opt,name=subdirectory,proto3" json:"subdirectory,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -928,9 +952,9 @@ func (x *PolicySource_Git) GetBranch() string {
 	return ""
 }
 
-func (x *PolicySource_Git) GetSubDir() string {
+func (x *PolicySource_Git) GetSubdirectory() string {
 	if x != nil {
-		return x.SubDir
+		return x.Subdirectory
 	}
 	return ""
 }
@@ -1091,26 +1115,30 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x12effective_policies\x18\x01 \x03(\v22.cerbos.audit.v1.AuditTrail.EffectivePoliciesEntryR\x11effectivePolicies\x1ah\n" +
 	"\x16EffectivePoliciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xd7\x05\n" +
+	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xb7\x06\n" +
 	"\fPolicySource\x128\n" +
 	"\x04blob\x18\x01 \x01(\v2\".cerbos.audit.v1.PolicySource.BlobH\x00R\x04blob\x12D\n" +
 	"\bdatabase\x18\x02 \x01(\v2&.cerbos.audit.v1.PolicySource.DatabaseH\x00R\bdatabase\x128\n" +
 	"\x04disk\x18\x03 \x01(\v2\".cerbos.audit.v1.PolicySource.DiskH\x00R\x04disk\x125\n" +
 	"\x03git\x18\x04 \x01(\v2!.cerbos.audit.v1.PolicySource.GitH\x00R\x03git\x125\n" +
-	"\x03hub\x18\x05 \x01(\v2!.cerbos.audit.v1.PolicySource.HubH\x00R\x03hub\x1a\x06\n" +
-	"\x04Blob\x1a\xae\x01\n" +
+	"\x03hub\x18\x05 \x01(\v2!.cerbos.audit.v1.PolicySource.HubH\x00R\x03hub\x1a=\n" +
+	"\x04Blob\x12\x1d\n" +
+	"\n" +
+	"bucket_url\x18\x01 \x01(\tR\tbucketUrl\x12\x16\n" +
+	"\x06prefix\x18\x02 \x01(\tR\x06prefix\x1a\xae\x01\n" +
 	"\bDatabase\x12E\n" +
 	"\x06driver\x18\x01 \x01(\x0e2-.cerbos.audit.v1.PolicySource.Database.DriverR\x06driver\"[\n" +
 	"\x06Driver\x12\x16\n" +
 	"\x12DRIVER_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fDRIVER_MYSQL\x10\x01\x12\x13\n" +
 	"\x0fDRIVER_POSTGRES\x10\x02\x12\x12\n" +
-	"\x0eDRIVER_SQLITE3\x10\x03\x1a\x06\n" +
-	"\x04Disk\x1a]\n" +
+	"\x0eDRIVER_SQLITE3\x10\x03\x1a$\n" +
+	"\x04Disk\x12\x1c\n" +
+	"\tdirectory\x18\x01 \x01(\tR\tdirectory\x1ah\n" +
 	"\x03Git\x12%\n" +
 	"\x0erepository_url\x18\x01 \x01(\tR\rrepositoryUrl\x12\x16\n" +
-	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\x17\n" +
-	"\asub_dir\x18\x03 \x01(\tR\x06subDir\x1au\n" +
+	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\"\n" +
+	"\fsubdirectory\x18\x03 \x01(\tR\fsubdirectory\x1au\n" +
 	"\x03Hub\x12\x16\n" +
 	"\x05label\x18\x01 \x01(\tH\x00R\x05label\x12%\n" +
 	"\rdeployment_id\x18\x02 \x01(\tH\x00R\fdeploymentId\x12%\n" +

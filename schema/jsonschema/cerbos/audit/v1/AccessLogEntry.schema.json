@@ -55,7 +55,15 @@
     },
     "cerbos.audit.v1.PolicySource.Blob": {
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "properties": {
+        "bucketUrl": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        }
+      }
     },
     "cerbos.audit.v1.PolicySource.Database": {
       "type": "object",
@@ -77,7 +85,12 @@
     },
     "cerbos.audit.v1.PolicySource.Disk": {
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "type": "string"
+        }
+      }
     },
     "cerbos.audit.v1.PolicySource.Git": {
       "type": "object",
@@ -89,7 +102,7 @@
         "repositoryUrl": {
           "type": "string"
         },
-        "subDir": {
+        "subdirectory": {
           "type": "string"
         }
       }

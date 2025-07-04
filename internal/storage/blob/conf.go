@@ -31,7 +31,7 @@ type Conf struct {
 	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:",example=30s"`
 	// RequestTimeout specifies the timeout for an HTTP request.
 	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty" conf:",example=10s"`
-	// Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
+	// Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket).
 	Bucket string `yaml:"bucket" conf:"required,example=\"s3://my-bucket-name?region=us-east-2\""`
 	// Prefix specifies a subdirectory to download.
 	Prefix string `yaml:"prefix,omitempty" conf:",example=policies"`

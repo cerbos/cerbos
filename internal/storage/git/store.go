@@ -206,7 +206,7 @@ func (s *Store) Source() *auditv1.PolicySource {
 			Git: &auditv1.PolicySource_Git{
 				RepositoryUrl: s.conf.URL,
 				Branch:        s.conf.getBranch(),
-				SubDir:        s.conf.getSubDir(),
+				Subdirectory:  s.conf.getSubDir(),
 			},
 		},
 	}

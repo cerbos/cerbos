@@ -72,7 +72,9 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 		source: &auditv1.PolicySource{
 			Source: &auditv1.PolicySource_Disk_{
-				Disk: &auditv1.PolicySource_Disk{},
+				Disk: &auditv1.PolicySource_Disk{
+					Directory: dir,
+				},
 			},
 		},
 	}

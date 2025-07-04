@@ -10,7 +10,7 @@
     "repositoryUrl": {
       "type": "string"
     },
-    "subDir": {
+    "subdirectory": {
       "type": "string"
     }
   }

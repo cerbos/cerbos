@@ -135,7 +135,7 @@ storage:
   driver: "disk" # Required. Driver defines which storage driver to use.
   blob:
     # This section is required only if storage.driver is blob.
-    bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
+    bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket).
     downloadTimeout: 30s # DownloadTimeout specifies the timeout for downloading from cloud storage.
     prefix: policies # Prefix specifies a subdirectory to download.
     requestTimeout: 10s # RequestTimeout specifies the timeout for an HTTP request.

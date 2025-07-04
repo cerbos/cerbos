@@ -1365,7 +1365,15 @@
       "description": "CEL expression"
     },
     "PolicySourceBlob": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "bucketUrl": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        }
+      }
     },
     "PolicySourceDatabase": {
       "type": "object",
@@ -1376,7 +1384,12 @@
       }
     },
     "PolicySourceDisk": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "directory": {
+          "type": "string"
+        }
+      }
     },
     "PolicySourceGit": {
       "type": "object",
@@ -1387,7 +1400,7 @@
         "branch": {
           "type": "string"
         },
-        "subDir": {
+        "subdirectory": {
           "type": "string"
         }
       }
