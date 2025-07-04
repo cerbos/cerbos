@@ -250,6 +250,22 @@ func cerbos_audit_v1_PolicySource_Disk_hashpb_sum(m *v1.PolicySource_Disk, hashe
 	}
 }
 
+func cerbos_audit_v1_PolicySource_EmbeddedPDP_hashpb_sum(m *v1.PolicySource_EmbeddedPDP, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.EmbeddedPDP.url"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetUrl()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetUrl()), len(m.GetUrl())))
+	}
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.EmbeddedPDP.commit_hash"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetCommitHash()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetCommitHash()), len(m.GetCommitHash())))
+	}
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.EmbeddedPDP.built_at"]; !ok {
+		if m.GetBuiltAt() != nil {
+			google_protobuf_Timestamp_hashpb_sum(m.GetBuiltAt(), hasher, ignore)
+		}
+	}
+}
+
 func cerbos_audit_v1_PolicySource_Git_hashpb_sum(m *v1.PolicySource_Git, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.audit.v1.PolicySource.Git.repository_url"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetRepositoryUrl()))))
@@ -317,6 +333,10 @@ func cerbos_audit_v1_PolicySource_hashpb_sum(m *v1.PolicySource, hasher hash.Has
 			case *v1.PolicySource_Hub_:
 				if t.Hub != nil {
 					cerbos_audit_v1_PolicySource_Hub_hashpb_sum(t.Hub, hasher, ignore)
+				}
+			case *v1.PolicySource_EmbeddedPdp:
+				if t.EmbeddedPdp != nil {
+					cerbos_audit_v1_PolicySource_EmbeddedPDP_hashpb_sum(t.EmbeddedPdp, hasher, ignore)
 				}
 			}
 		}

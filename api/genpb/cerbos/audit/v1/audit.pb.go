@@ -518,6 +518,7 @@ type PolicySource struct {
 	//	*PolicySource_Disk_
 	//	*PolicySource_Git_
 	//	*PolicySource_Hub_
+	//	*PolicySource_EmbeddedPdp
 	Source        isPolicySource_Source `protobuf_oneof:"source"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -605,6 +606,15 @@ func (x *PolicySource) GetHub() *PolicySource_Hub {
 	return nil
 }
 
+func (x *PolicySource) GetEmbeddedPdp() *PolicySource_EmbeddedPDP {
+	if x != nil {
+		if x, ok := x.Source.(*PolicySource_EmbeddedPdp); ok {
+			return x.EmbeddedPdp
+		}
+	}
+	return nil
+}
+
 type isPolicySource_Source interface {
 	isPolicySource_Source()
 }
@@ -629,6 +639,10 @@ type PolicySource_Hub_ struct {
 	Hub *PolicySource_Hub `protobuf:"bytes,5,opt,name=hub,proto3,oneof"`
 }
 
+type PolicySource_EmbeddedPdp struct {
+	EmbeddedPdp *PolicySource_EmbeddedPDP `protobuf:"bytes,6,opt,name=embedded_pdp,json=embeddedPdp,proto3,oneof"`
+}
+
 func (*PolicySource_Blob_) isPolicySource_Source() {}
 
 func (*PolicySource_Database_) isPolicySource_Source() {}
@@ -638,6 +652,8 @@ func (*PolicySource_Disk_) isPolicySource_Source() {}
 func (*PolicySource_Git_) isPolicySource_Source() {}
 
 func (*PolicySource_Hub_) isPolicySource_Source() {}
+
+func (*PolicySource_EmbeddedPdp) isPolicySource_Source() {}
 
 type DecisionLogEntry_CheckResources struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -899,6 +915,66 @@ func (x *PolicySource_Disk) GetDirectory() string {
 	return ""
 }
 
+type PolicySource_EmbeddedPDP struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	CommitHash    string                 `protobuf:"bytes,2,opt,name=commit_hash,json=commitHash,proto3" json:"commit_hash,omitempty"`
+	BuiltAt       *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=built_at,json=builtAt,proto3" json:"built_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolicySource_EmbeddedPDP) Reset() {
+	*x = PolicySource_EmbeddedPDP{}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolicySource_EmbeddedPDP) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolicySource_EmbeddedPDP) ProtoMessage() {}
+
+func (x *PolicySource_EmbeddedPDP) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolicySource_EmbeddedPDP.ProtoReflect.Descriptor instead.
+func (*PolicySource_EmbeddedPDP) Descriptor() ([]byte, []int) {
+	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 3}
+}
+
+func (x *PolicySource_EmbeddedPDP) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *PolicySource_EmbeddedPDP) GetCommitHash() string {
+	if x != nil {
+		return x.CommitHash
+	}
+	return ""
+}
+
+func (x *PolicySource_EmbeddedPDP) GetBuiltAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.BuiltAt
+	}
+	return nil
+}
+
 type PolicySource_Git struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RepositoryUrl string                 `protobuf:"bytes,1,opt,name=repository_url,json=repositoryUrl,proto3" json:"repository_url,omitempty"`
@@ -910,7 +986,7 @@ type PolicySource_Git struct {
 
 func (x *PolicySource_Git) Reset() {
 	*x = PolicySource_Git{}
-	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[14]
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -922,7 +998,7 @@ func (x *PolicySource_Git) String() string {
 func (*PolicySource_Git) ProtoMessage() {}
 
 func (x *PolicySource_Git) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[14]
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -935,7 +1011,7 @@ func (x *PolicySource_Git) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PolicySource_Git.ProtoReflect.Descriptor instead.
 func (*PolicySource_Git) Descriptor() ([]byte, []int) {
-	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 3}
+	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 4}
 }
 
 func (x *PolicySource_Git) GetRepositoryUrl() string {
@@ -974,7 +1050,7 @@ type PolicySource_Hub struct {
 
 func (x *PolicySource_Hub) Reset() {
 	*x = PolicySource_Hub{}
-	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[15]
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -986,7 +1062,7 @@ func (x *PolicySource_Hub) String() string {
 func (*PolicySource_Hub) ProtoMessage() {}
 
 func (x *PolicySource_Hub) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[15]
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -999,7 +1075,7 @@ func (x *PolicySource_Hub) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PolicySource_Hub.ProtoReflect.Descriptor instead.
 func (*PolicySource_Hub) Descriptor() ([]byte, []int) {
-	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 4}
+	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 5}
 }
 
 func (x *PolicySource_Hub) GetSource() isPolicySource_Hub_Source {
@@ -1082,7 +1158,7 @@ type PolicySource_Hub_LocalBundle struct {
 
 func (x *PolicySource_Hub_LocalBundle) Reset() {
 	*x = PolicySource_Hub_LocalBundle{}
-	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[16]
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1094,7 +1170,7 @@ func (x *PolicySource_Hub_LocalBundle) String() string {
 func (*PolicySource_Hub_LocalBundle) ProtoMessage() {}
 
 func (x *PolicySource_Hub_LocalBundle) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[16]
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1107,7 +1183,7 @@ func (x *PolicySource_Hub_LocalBundle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PolicySource_Hub_LocalBundle.ProtoReflect.Descriptor instead.
 func (*PolicySource_Hub_LocalBundle) Descriptor() ([]byte, []int) {
-	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 4, 0}
+	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 5, 0}
 }
 
 func (x *PolicySource_Hub_LocalBundle) GetPath() string {
@@ -1175,13 +1251,14 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x12effective_policies\x18\x01 \x03(\v22.cerbos.audit.v1.AuditTrail.EffectivePoliciesEntryR\x11effectivePolicies\x1ah\n" +
 	"\x16EffectivePoliciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xaf\a\n" +
+	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xf8\b\n" +
 	"\fPolicySource\x128\n" +
 	"\x04blob\x18\x01 \x01(\v2\".cerbos.audit.v1.PolicySource.BlobH\x00R\x04blob\x12D\n" +
 	"\bdatabase\x18\x02 \x01(\v2&.cerbos.audit.v1.PolicySource.DatabaseH\x00R\bdatabase\x128\n" +
 	"\x04disk\x18\x03 \x01(\v2\".cerbos.audit.v1.PolicySource.DiskH\x00R\x04disk\x125\n" +
 	"\x03git\x18\x04 \x01(\v2!.cerbos.audit.v1.PolicySource.GitH\x00R\x03git\x125\n" +
-	"\x03hub\x18\x05 \x01(\v2!.cerbos.audit.v1.PolicySource.HubH\x00R\x03hub\x1a=\n" +
+	"\x03hub\x18\x05 \x01(\v2!.cerbos.audit.v1.PolicySource.HubH\x00R\x03hub\x12N\n" +
+	"\fembedded_pdp\x18\x06 \x01(\v2).cerbos.audit.v1.PolicySource.EmbeddedPDPH\x00R\vembeddedPdp\x1a=\n" +
 	"\x04Blob\x12\x1d\n" +
 	"\n" +
 	"bucket_url\x18\x01 \x01(\tR\tbucketUrl\x12\x16\n" +
@@ -1194,7 +1271,12 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x0fDRIVER_POSTGRES\x10\x02\x12\x12\n" +
 	"\x0eDRIVER_SQLITE3\x10\x03\x1a$\n" +
 	"\x04Disk\x12\x1c\n" +
-	"\tdirectory\x18\x01 \x01(\tR\tdirectory\x1ah\n" +
+	"\tdirectory\x18\x01 \x01(\tR\tdirectory\x1aw\n" +
+	"\vEmbeddedPDP\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1f\n" +
+	"\vcommit_hash\x18\x02 \x01(\tR\n" +
+	"commitHash\x125\n" +
+	"\bbuilt_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\abuiltAt\x1ah\n" +
 	"\x03Git\x12%\n" +
 	"\x0erepository_url\x18\x01 \x01(\tR\rrepositoryUrl\x12\x16\n" +
 	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\"\n" +
@@ -1223,7 +1305,7 @@ func file_cerbos_audit_v1_audit_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_audit_v1_audit_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cerbos_audit_v1_audit_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cerbos_audit_v1_audit_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cerbos_audit_v1_audit_proto_goTypes = []any{
 	(PolicySource_Database_Driver)(0),       // 0: cerbos.audit.v1.PolicySource.Database.Driver
 	(*AccessLogEntry)(nil),                  // 1: cerbos.audit.v1.AccessLogEntry
@@ -1240,25 +1322,26 @@ var file_cerbos_audit_v1_audit_proto_goTypes = []any{
 	(*PolicySource_Blob)(nil),               // 12: cerbos.audit.v1.PolicySource.Blob
 	(*PolicySource_Database)(nil),           // 13: cerbos.audit.v1.PolicySource.Database
 	(*PolicySource_Disk)(nil),               // 14: cerbos.audit.v1.PolicySource.Disk
-	(*PolicySource_Git)(nil),                // 15: cerbos.audit.v1.PolicySource.Git
-	(*PolicySource_Hub)(nil),                // 16: cerbos.audit.v1.PolicySource.Hub
-	(*PolicySource_Hub_LocalBundle)(nil),    // 17: cerbos.audit.v1.PolicySource.Hub.LocalBundle
-	(*timestamppb.Timestamp)(nil),           // 18: google.protobuf.Timestamp
-	(*v1.CheckInput)(nil),                   // 19: cerbos.engine.v1.CheckInput
-	(*v1.CheckOutput)(nil),                  // 20: cerbos.engine.v1.CheckOutput
-	(*v1.PlanResourcesInput)(nil),           // 21: cerbos.engine.v1.PlanResourcesInput
-	(*v1.PlanResourcesOutput)(nil),          // 22: cerbos.engine.v1.PlanResourcesOutput
-	(*v11.SourceAttributes)(nil),            // 23: cerbos.policy.v1.SourceAttributes
+	(*PolicySource_EmbeddedPDP)(nil),        // 15: cerbos.audit.v1.PolicySource.EmbeddedPDP
+	(*PolicySource_Git)(nil),                // 16: cerbos.audit.v1.PolicySource.Git
+	(*PolicySource_Hub)(nil),                // 17: cerbos.audit.v1.PolicySource.Hub
+	(*PolicySource_Hub_LocalBundle)(nil),    // 18: cerbos.audit.v1.PolicySource.Hub.LocalBundle
+	(*timestamppb.Timestamp)(nil),           // 19: google.protobuf.Timestamp
+	(*v1.CheckInput)(nil),                   // 20: cerbos.engine.v1.CheckInput
+	(*v1.CheckOutput)(nil),                  // 21: cerbos.engine.v1.CheckOutput
+	(*v1.PlanResourcesInput)(nil),           // 22: cerbos.engine.v1.PlanResourcesInput
+	(*v1.PlanResourcesOutput)(nil),          // 23: cerbos.engine.v1.PlanResourcesOutput
+	(*v11.SourceAttributes)(nil),            // 24: cerbos.policy.v1.SourceAttributes
 }
 var file_cerbos_audit_v1_audit_proto_depIdxs = []int32{
-	18, // 0: cerbos.audit.v1.AccessLogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	19, // 0: cerbos.audit.v1.AccessLogEntry.timestamp:type_name -> google.protobuf.Timestamp
 	4,  // 1: cerbos.audit.v1.AccessLogEntry.peer:type_name -> cerbos.audit.v1.Peer
 	7,  // 2: cerbos.audit.v1.AccessLogEntry.metadata:type_name -> cerbos.audit.v1.AccessLogEntry.MetadataEntry
 	6,  // 3: cerbos.audit.v1.AccessLogEntry.policy_source:type_name -> cerbos.audit.v1.PolicySource
-	18, // 4: cerbos.audit.v1.DecisionLogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	19, // 4: cerbos.audit.v1.DecisionLogEntry.timestamp:type_name -> google.protobuf.Timestamp
 	4,  // 5: cerbos.audit.v1.DecisionLogEntry.peer:type_name -> cerbos.audit.v1.Peer
-	19, // 6: cerbos.audit.v1.DecisionLogEntry.inputs:type_name -> cerbos.engine.v1.CheckInput
-	20, // 7: cerbos.audit.v1.DecisionLogEntry.outputs:type_name -> cerbos.engine.v1.CheckOutput
+	20, // 6: cerbos.audit.v1.DecisionLogEntry.inputs:type_name -> cerbos.engine.v1.CheckInput
+	21, // 7: cerbos.audit.v1.DecisionLogEntry.outputs:type_name -> cerbos.engine.v1.CheckOutput
 	8,  // 8: cerbos.audit.v1.DecisionLogEntry.check_resources:type_name -> cerbos.audit.v1.DecisionLogEntry.CheckResources
 	9,  // 9: cerbos.audit.v1.DecisionLogEntry.plan_resources:type_name -> cerbos.audit.v1.DecisionLogEntry.PlanResources
 	10, // 10: cerbos.audit.v1.DecisionLogEntry.metadata:type_name -> cerbos.audit.v1.DecisionLogEntry.MetadataEntry
@@ -1268,22 +1351,24 @@ var file_cerbos_audit_v1_audit_proto_depIdxs = []int32{
 	12, // 14: cerbos.audit.v1.PolicySource.blob:type_name -> cerbos.audit.v1.PolicySource.Blob
 	13, // 15: cerbos.audit.v1.PolicySource.database:type_name -> cerbos.audit.v1.PolicySource.Database
 	14, // 16: cerbos.audit.v1.PolicySource.disk:type_name -> cerbos.audit.v1.PolicySource.Disk
-	15, // 17: cerbos.audit.v1.PolicySource.git:type_name -> cerbos.audit.v1.PolicySource.Git
-	16, // 18: cerbos.audit.v1.PolicySource.hub:type_name -> cerbos.audit.v1.PolicySource.Hub
-	3,  // 19: cerbos.audit.v1.AccessLogEntry.MetadataEntry.value:type_name -> cerbos.audit.v1.MetaValues
-	19, // 20: cerbos.audit.v1.DecisionLogEntry.CheckResources.inputs:type_name -> cerbos.engine.v1.CheckInput
-	20, // 21: cerbos.audit.v1.DecisionLogEntry.CheckResources.outputs:type_name -> cerbos.engine.v1.CheckOutput
-	21, // 22: cerbos.audit.v1.DecisionLogEntry.PlanResources.input:type_name -> cerbos.engine.v1.PlanResourcesInput
-	22, // 23: cerbos.audit.v1.DecisionLogEntry.PlanResources.output:type_name -> cerbos.engine.v1.PlanResourcesOutput
-	3,  // 24: cerbos.audit.v1.DecisionLogEntry.MetadataEntry.value:type_name -> cerbos.audit.v1.MetaValues
-	23, // 25: cerbos.audit.v1.AuditTrail.EffectivePoliciesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	0,  // 26: cerbos.audit.v1.PolicySource.Database.driver:type_name -> cerbos.audit.v1.PolicySource.Database.Driver
-	17, // 27: cerbos.audit.v1.PolicySource.Hub.local_bundle:type_name -> cerbos.audit.v1.PolicySource.Hub.LocalBundle
-	28, // [28:28] is the sub-list for method output_type
-	28, // [28:28] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	16, // 17: cerbos.audit.v1.PolicySource.git:type_name -> cerbos.audit.v1.PolicySource.Git
+	17, // 18: cerbos.audit.v1.PolicySource.hub:type_name -> cerbos.audit.v1.PolicySource.Hub
+	15, // 19: cerbos.audit.v1.PolicySource.embedded_pdp:type_name -> cerbos.audit.v1.PolicySource.EmbeddedPDP
+	3,  // 20: cerbos.audit.v1.AccessLogEntry.MetadataEntry.value:type_name -> cerbos.audit.v1.MetaValues
+	20, // 21: cerbos.audit.v1.DecisionLogEntry.CheckResources.inputs:type_name -> cerbos.engine.v1.CheckInput
+	21, // 22: cerbos.audit.v1.DecisionLogEntry.CheckResources.outputs:type_name -> cerbos.engine.v1.CheckOutput
+	22, // 23: cerbos.audit.v1.DecisionLogEntry.PlanResources.input:type_name -> cerbos.engine.v1.PlanResourcesInput
+	23, // 24: cerbos.audit.v1.DecisionLogEntry.PlanResources.output:type_name -> cerbos.engine.v1.PlanResourcesOutput
+	3,  // 25: cerbos.audit.v1.DecisionLogEntry.MetadataEntry.value:type_name -> cerbos.audit.v1.MetaValues
+	24, // 26: cerbos.audit.v1.AuditTrail.EffectivePoliciesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	0,  // 27: cerbos.audit.v1.PolicySource.Database.driver:type_name -> cerbos.audit.v1.PolicySource.Database.Driver
+	19, // 28: cerbos.audit.v1.PolicySource.EmbeddedPDP.built_at:type_name -> google.protobuf.Timestamp
+	18, // 29: cerbos.audit.v1.PolicySource.Hub.local_bundle:type_name -> cerbos.audit.v1.PolicySource.Hub.LocalBundle
+	30, // [30:30] is the sub-list for method output_type
+	30, // [30:30] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_audit_v1_audit_proto_init() }
@@ -1301,8 +1386,9 @@ func file_cerbos_audit_v1_audit_proto_init() {
 		(*PolicySource_Disk_)(nil),
 		(*PolicySource_Git_)(nil),
 		(*PolicySource_Hub_)(nil),
+		(*PolicySource_EmbeddedPdp)(nil),
 	}
-	file_cerbos_audit_v1_audit_proto_msgTypes[15].OneofWrappers = []any{
+	file_cerbos_audit_v1_audit_proto_msgTypes[16].OneofWrappers = []any{
 		(*PolicySource_Hub_Label)(nil),
 		(*PolicySource_Hub_DeploymentId)(nil),
 		(*PolicySource_Hub_PlaygroundId)(nil),
@@ -1314,7 +1400,7 @@ func file_cerbos_audit_v1_audit_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_audit_v1_audit_proto_rawDesc), len(file_cerbos_audit_v1_audit_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
