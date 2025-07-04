@@ -247,6 +247,15 @@ func readTestCase(tb testing.TB, data []byte) *privatev1.EngineTestCase {
 	tc := &privatev1.EngineTestCase{}
 	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
+	store := test.PathToDir(tb, "store")
+
+	for _, entry := range tc.WantDecisionLogs {
+		disk := entry.GetPolicySource().GetDisk()
+		if disk != nil {
+			disk.Directory = store
+		}
+	}
+
 	return tc
 }
 

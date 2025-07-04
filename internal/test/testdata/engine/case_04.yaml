@@ -243,5 +243,9 @@ wantDecisionLogs:
                 },
             },
         },
+      "policySource":
+        {
+          "disk": {},
+        },
     },
   ]

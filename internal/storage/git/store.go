@@ -19,6 +19,7 @@ import (
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -197,6 +198,18 @@ func (s *Store) Reload(ctx context.Context) error {
 
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	return nil
+}
+
+func (s *Store) Source() *auditv1.PolicySource {
+	return &auditv1.PolicySource{
+		Source: &auditv1.PolicySource_Git_{
+			Git: &auditv1.PolicySource_Git{
+				RepositoryUrl: s.conf.URL,
+				Branch:        s.conf.getBranch(),
+				Subdirectory:  s.conf.getSubDir(),
+			},
+		},
+	}
 }
 
 func isEmptyDir(dir string) (bool, error) {

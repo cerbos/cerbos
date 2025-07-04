@@ -51,6 +51,7 @@ func TestNewStore(t *testing.T) {
 			symlinkerFunc(func(_, _ string) error {
 				return errors.New("any error")
 			}),
+			nil,
 		)
 		must.Error(err)
 	})
@@ -71,7 +72,7 @@ func TestNewStore(t *testing.T) {
 
 		must := require.New(t)
 
-		bucket, err := newBucket(ctx, conf)
+		bucket, _, err := newBucket(ctx, conf)
 		must.NoError(err)
 
 		cloner, err := NewCloner(bucket, cacheDir)
@@ -83,6 +84,7 @@ func TestNewStore(t *testing.T) {
 			newBlobFS(workDir),
 			cloner,
 			symlinkerFunc(func(_, _ string) error { return nil }),
+			nil,
 		)
 		must.NoError(err)
 	})
@@ -155,6 +157,7 @@ func TestStore_updateIndex(t *testing.T) {
 			return &CloneResult{}, nil
 		}),
 		mkSymlinker(cacheDir, workDir),
+		nil,
 	)
 	must.NoError(err)
 
@@ -229,13 +232,13 @@ func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 
 	endpoint := StartMinio(t.Context(), t, bucketName)
 	conf := mkConf(t, dir, bucketName, endpoint)
-	bucket, err := newBucket(t.Context(), conf)
+	bucket, _, err := newBucket(t.Context(), conf)
 	require.NoError(t, err)
 	cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
 	cloner, err := NewCloner(bucket, cacheDir)
 	require.NoError(t, err)
 
-	store, err := NewStore(t.Context(), conf, newBlobFS(dir), cloner, mkSymlinker(cacheDir, dir))
+	store, err := NewStore(t.Context(), conf, newBlobFS(dir), cloner, mkSymlinker(cacheDir, dir), nil)
 	require.NoError(t, err)
 
 	return store, bucket

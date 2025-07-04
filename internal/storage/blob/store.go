@@ -25,6 +25,7 @@ import (
 	"gocloud.dev/gcp"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -56,9 +57,18 @@ func init() {
 			return nil, fmt.Errorf("failed to read blob configuration: %w", err)
 		}
 
-		bucket, err := newBucket(ctx, conf)
+		bucket, url, err := newBucket(ctx, conf)
 		if err != nil {
 			return nil, err
+		}
+
+		source := &auditv1.PolicySource{
+			Source: &auditv1.PolicySource_Blob_{
+				Blob: &auditv1.PolicySource_Blob{
+					BucketUrl: url,
+					Prefix:    conf.Prefix,
+				},
+			},
 		}
 
 		cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
@@ -79,14 +89,14 @@ func init() {
 			dst := filepath.Join(cacheDir, destination)
 
 			return os.Symlink(dst, src)
-		}))
+		}), source)
 	})
 }
 
-func newBucket(ctx context.Context, conf *Conf) (*blob.Bucket, error) {
+func newBucket(ctx context.Context, conf *Conf) (*blob.Bucket, string, error) {
 	u, err := url.Parse(conf.Bucket)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse bucket URL %q: %w", conf.Bucket, err)
+		return nil, "", fmt.Errorf("failed to parse bucket URL %q: %w", conf.Bucket, err)
 	}
 	var bucket *blob.Bucket
 	switch u.Scheme {
@@ -98,14 +108,14 @@ func newBucket(ctx context.Context, conf *Conf) (*blob.Bucket, error) {
 		err = ErrUnsupportedBucketScheme
 	}
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if conf.Prefix != "" {
 		bucket = blob.PrefixedBucket(bucket, conf.Prefix)
 	}
 
-	return bucket, nil
+	return bucket, u.Redacted(), nil
 }
 
 func openGSBucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bucket, error) {
@@ -158,6 +168,7 @@ type Store struct {
 	*storage.SubscriptionManager
 	log         *zap.SugaredLogger
 	conf        *Conf
+	source      *auditv1.PolicySource
 	idx         index.Index
 	cloner      bucketCloner
 	symlink     symlinker
@@ -170,7 +181,7 @@ func (s *Store) Subscribe(sub storage.Subscriber) {
 	s.SubscriptionManager.Subscribe(sub)
 }
 
-func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, symlink symlinker) (*Store, error) {
+func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, symlink symlinker, source *auditv1.PolicySource) (*Store, error) {
 	s := &Store{
 		log: zap.S().Named(DriverName).With(
 			"bucket", conf.Bucket,
@@ -182,6 +193,7 @@ func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, s
 		cloner:              cloner,
 		symlink:             symlink,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		source:              source,
 	}
 
 	if err := s.init(ctx); err != nil {
@@ -525,6 +537,10 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Store) Source() *auditv1.PolicySource {
+	return s.source
 }
 
 func cacheDir(bucketURL, workDir string) string {

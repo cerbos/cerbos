@@ -32,6 +32,108 @@
         }
       }
     },
+    "cerbos.audit.v1.PolicySource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "blob": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Blob"
+        },
+        "database": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Database"
+        },
+        "disk": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Disk"
+        },
+        "git": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Git"
+        },
+        "hub": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Hub"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Blob": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bucketUrl": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Database": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "driver": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Database.Driver"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Database.Driver": {
+      "type": "string",
+      "enum": [
+        "DRIVER_UNSPECIFIED",
+        "DRIVER_MYSQL",
+        "DRIVER_POSTGRES",
+        "DRIVER_SQLITE3"
+      ]
+    },
+    "cerbos.audit.v1.PolicySource.Disk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Git": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "repositoryUrl": {
+          "type": "string"
+        },
+        "subdirectory": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Hub": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "deploymentId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "localBundle": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Hub.LocalBundle"
+        },
+        "playgroundId": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Hub.LocalBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      }
+    },
     "google.protobuf.Timestamp": {
       "title": "Timestamp",
       "description": "A point in time, independent of any time zone or calendar.",
@@ -59,6 +161,9 @@
     },
     "peer": {
       "$ref": "#/definitions/cerbos.audit.v1.Peer"
+    },
+    "policySource": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource"
     },
     "statusCode": {
       "type": "integer",

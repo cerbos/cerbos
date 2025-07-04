@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -34,6 +36,7 @@ var (
 type LocalSource struct {
 	bundle  *Bundle
 	cleanup func() error
+	source  *auditv1.PolicySource
 	*storage.SubscriptionManager
 	params LocalParams
 	mu     sync.RWMutex
@@ -85,7 +88,28 @@ func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, erro
 		params.CacheSize = defaultCacheSize
 	}
 
-	ls := &LocalSource{params: params, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	var err error
+	params.BundlePath, err = filepath.Abs(params.BundlePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path of bundle file [%s]: %w", params.BundlePath, err)
+	}
+
+	ls := &LocalSource{
+		params:              params,
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		source: &auditv1.PolicySource{
+			Source: &auditv1.PolicySource_Hub_{
+				Hub: &auditv1.PolicySource_Hub{
+					Source: &auditv1.PolicySource_Hub_LocalBundle_{
+						LocalBundle: &auditv1.PolicySource_Hub_LocalBundle{
+							Path: params.BundlePath,
+						},
+					},
+				},
+			},
+		},
+	}
+
 	if err := ls.loadBundle(); err != nil {
 		return nil, err
 	}
@@ -231,6 +255,10 @@ func (ls *LocalSource) GetAllMatching(ctx context.Context, modIDs []namer.Module
 
 func (ls *LocalSource) Reload(_ context.Context) error {
 	return ls.loadBundle()
+}
+
+func (ls *LocalSource) Source() *auditv1.PolicySource {
+	return ls.source
 }
 
 func (ls *LocalSource) Close() error {

@@ -21,6 +21,7 @@ message AccessLogEntry {
   string method = 5;
   uint32 status_code = 6;
   bool oversized = 7;
+  PolicySource policy_source = 8;
 }
 
 message DecisionLogEntry {
@@ -52,6 +53,7 @@ message DecisionLogEntry {
   map<string, MetaValues> metadata = 15;
   AuditTrail audit_trail = 16;
   bool oversized = 17;
+  PolicySource policy_source = 18;
 }
 
 message MetaValues {
@@ -67,4 +69,53 @@ message Peer {
 
 message AuditTrail {
   map<string, cerbos.policy.v1.SourceAttributes> effective_policies = 1;
+}
+
+message PolicySource {
+  message Blob {
+    string bucket_url = 1;
+    string prefix = 2;
+  }
+
+  message Database {
+    enum Driver {
+      DRIVER_UNSPECIFIED = 0;
+      DRIVER_MYSQL = 1;
+      DRIVER_POSTGRES = 2;
+      DRIVER_SQLITE3 = 3;
+    }
+
+    Driver driver = 1;
+  }
+
+  message Disk {
+    string directory = 1;
+  }
+
+  message Git {
+    string repository_url = 1;
+    string branch = 2;
+    string subdirectory = 3;
+  }
+
+  message Hub {
+    message LocalBundle {
+      string path = 1;
+    }
+
+    oneof source {
+      string label = 1;
+      string deployment_id = 2;
+      string playground_id = 3;
+      LocalBundle local_bundle = 4;
+    }
+  }
+
+  oneof source {
+    Blob blob = 1;
+    Database database = 2;
+    Disk disk = 3;
+    Git git = 4;
+    Hub hub = 5;
+  }
 }

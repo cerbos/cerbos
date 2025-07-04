@@ -99,5 +99,9 @@ wantDecisionLogs:
                 },
             },
         },
+      "policySource":
+        {
+          "disk": {},
+        },
     },
   ]

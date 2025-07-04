@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/zap"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/hub"
@@ -123,6 +124,7 @@ type RemoteSource struct {
 	log       *zap.Logger
 	conf      *Conf
 	bundle    *Bundle
+	source    *auditv1.PolicySource
 	*storage.SubscriptionManager
 	bundleVersion bundleapi.Version
 	mu            sync.RWMutex
@@ -203,12 +205,17 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		TempDir:  s.conf.Remote.TempDir,
 	}
 
+	hub := &auditv1.PolicySource_Hub{}
+	s.source = &auditv1.PolicySource{Source: &auditv1.PolicySource_Hub_{Hub: hub}}
+
 	switch s.bundleVersion {
 	case bundleapi.Version1:
 		clientv1, err := s.hub.V1(clientConf)
 		if err != nil {
 			return fmt.Errorf("failed to create API client v1: %w", err)
 		}
+
+		hub.Source = &auditv1.PolicySource_Hub_Label{Label: s.conf.Remote.BundleLabel}
 
 		s.client = &cloudAPIv1{
 			client:      clientv1,
@@ -226,8 +233,10 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		var source bundleapiv2.Source
 		switch {
 		case s.conf.Remote.DeploymentID != "":
+			hub.Source = &auditv1.PolicySource_Hub_DeploymentId{DeploymentId: s.conf.Remote.DeploymentID}
 			source = bundleapiv2.DeploymentID(s.conf.Remote.DeploymentID)
 		case s.conf.Remote.PlaygroundID != "":
+			hub.Source = &auditv1.PolicySource_Hub_PlaygroundId{PlaygroundId: s.conf.Remote.PlaygroundID}
 			source = bundleapiv2.PlaygroundID(s.conf.Remote.PlaygroundID)
 		default:
 			return errors.New("no bundle source configured")
@@ -652,6 +661,10 @@ func (s *RemoteSource) LoadSchema(ctx context.Context, id string) (io.ReadCloser
 
 func (s *RemoteSource) Reload(ctx context.Context) error {
 	return s.fetchBundle(ctx)
+}
+
+func (s *RemoteSource) Source() *auditv1.PolicySource {
+	return s.source
 }
 
 func (s *RemoteSource) SourceKind() string {

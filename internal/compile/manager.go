@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/config"
@@ -374,6 +375,10 @@ func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runt
 
 	//nolint:forcetypeassert
 	return rpsVal.(*runtimev1.RunnablePolicySet), nil
+}
+
+func (c *Manager) Source() *auditv1.PolicySource {
+	return c.store.Source()
 }
 
 type PolicyCompilationErr struct {

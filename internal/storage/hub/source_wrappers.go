@@ -11,6 +11,7 @@ import (
 
 	"go.opentelemetry.io/otel/metric"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -85,6 +86,10 @@ func (is instrumentedSource) Reload(ctx context.Context) error {
 		return r.Reload(ctx)
 	}
 	return nil
+}
+
+func (is instrumentedSource) Source() *auditv1.PolicySource {
+	return is.source.Source()
 }
 
 func (is instrumentedSource) Subscribe(s storage.Subscriber) {
