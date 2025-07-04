@@ -265,6 +265,13 @@ func cerbos_audit_v1_PolicySource_Git_hashpb_sum(m *v1.PolicySource_Git, hasher 
 	}
 }
 
+func cerbos_audit_v1_PolicySource_Hub_LocalBundle_hashpb_sum(m *v1.PolicySource_Hub_LocalBundle, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Hub.LocalBundle.path"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetPath()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPath()), len(m.GetPath())))
+	}
+}
+
 func cerbos_audit_v1_PolicySource_Hub_hashpb_sum(m *v1.PolicySource_Hub, hasher hash.Hash, ignore map[string]struct{}) {
 	if m.Source != nil {
 		if _, ok := ignore["cerbos.audit.v1.PolicySource.Hub.source"]; !ok {
@@ -278,6 +285,10 @@ func cerbos_audit_v1_PolicySource_Hub_hashpb_sum(m *v1.PolicySource_Hub, hasher 
 			case *v1.PolicySource_Hub_PlaygroundId:
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(t.PlaygroundId))))
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(t.PlaygroundId), len(t.PlaygroundId)))
+			case *v1.PolicySource_Hub_LocalBundle_:
+				if t.LocalBundle != nil {
+					cerbos_audit_v1_PolicySource_Hub_LocalBundle_hashpb_sum(t.LocalBundle, hasher, ignore)
+				}
 			}
 		}
 	}

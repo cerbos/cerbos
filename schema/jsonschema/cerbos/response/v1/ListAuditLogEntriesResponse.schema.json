@@ -250,7 +250,19 @@
         "label": {
           "type": "string"
         },
+        "localBundle": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Hub.LocalBundle"
+        },
         "playgroundId": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Hub.LocalBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
           "type": "string"
         }
       }

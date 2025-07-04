@@ -99,10 +99,15 @@ message PolicySource {
   }
 
   message Hub {
+    message LocalBundle {
+      string path = 1;
+    }
+
     oneof source {
       string label = 1;
       string deployment_id = 2;
       string playground_id = 3;
+      LocalBundle local_bundle = 4;
     }
   }
 

@@ -111,3 +111,11 @@ func (m *PolicySource_Hub) HashPB(hasher hash.Hash, ignore map[string]struct{}) 
 		cerbos_audit_v1_PolicySource_Hub_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PolicySource_Hub_LocalBundle) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_audit_v1_PolicySource_Hub_LocalBundle_hashpb_sum(m, hasher, ignore)
+	}
+}

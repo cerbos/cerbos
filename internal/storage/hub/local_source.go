@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -87,12 +88,24 @@ func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, erro
 		params.CacheSize = defaultCacheSize
 	}
 
+	var err error
+	params.BundlePath, err = filepath.Abs(params.BundlePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path of bundle file [%s]: %w", params.BundlePath, err)
+	}
+
 	ls := &LocalSource{
 		params:              params,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 		source: &auditv1.PolicySource{
 			Source: &auditv1.PolicySource_Hub_{
-				Hub: &auditv1.PolicySource_Hub{},
+				Hub: &auditv1.PolicySource_Hub{
+					Source: &auditv1.PolicySource_Hub_LocalBundle_{
+						LocalBundle: &auditv1.PolicySource_Hub_LocalBundle{
+							Path: params.BundlePath,
+						},
+					},
+				},
 			},
 		},
 	}

@@ -1198,6 +1198,14 @@
         }
       }
     },
+    "HubLocalBundle": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      }
+    },
     "InspectPoliciesResponseAttribute": {
       "type": "object",
       "properties": {
@@ -1416,6 +1424,9 @@
         },
         "playgroundId": {
           "type": "string"
+        },
+        "localBundle": {
+          "$ref": "#/definitions/HubLocalBundle"
         }
       }
     },
