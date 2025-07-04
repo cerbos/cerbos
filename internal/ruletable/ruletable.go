@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -37,6 +38,8 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 )
+
+var _ evaluator.Evaluator = (*RuleTable)(nil)
 
 const (
 	allowActionsIdxKey      = "\x00_cerbos_reserved_allow_actions"
@@ -904,7 +907,23 @@ func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 	return nil
 }
 
-func (rt *RuleTable) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
+func (rt *RuleTable) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
+	// TODO(saml) retrieve this config properly for the compiled PDP case
+	conf := &evaluator.Conf{
+		Globals:              make(map[string]any),
+		DefaultPolicyVersion: "default",
+		LenientScopeSearch:   false,
+	}
+
+	checkOpts := evaluator.NewCheckOptions(ctx, conf, opts...)
+	tctx := tracer.Start(checkOpts.TracerSink)
+
+	// TODO(saml) should the embedded PDP accept batches? Probably not
+	out, _, err := rt.checkWithAuditTrail(ctx, tctx, checkOpts.EvalParams, inputs[0])
+	return []*enginev1.CheckOutput{out}, err
+}
+
+func (rt *RuleTable) checkWithAuditTrail(ctx context.Context, tctx tracer.Context, evalParams evaluator.EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
 	result, err := rt.check(ctx, tctx, evalParams, input)
 	if err != nil {
 		return nil, nil, err
@@ -923,7 +942,7 @@ func (rt *RuleTable) Check(ctx context.Context, tctx tracer.Context, evalParams 
 			Policy: noPolicyMatch,
 		}
 
-		if einfo, ok := result.Effects[action]; ok {
+		if einfo, ok := result.effects[action]; ok {
 			ae := output.Actions[action]
 			ae.Effect = einfo.Effect
 			ae.Policy = einfo.Policy
@@ -931,18 +950,18 @@ func (rt *RuleTable) Check(ctx context.Context, tctx tracer.Context, evalParams 
 		}
 	}
 
-	effectiveDerivedRoles := make([]string, 0, len(result.EffectiveDerivedRoles))
-	for edr := range result.EffectiveDerivedRoles {
+	effectiveDerivedRoles := make([]string, 0, len(result.effectiveDerivedRoles))
+	for edr := range result.effectiveDerivedRoles {
 		effectiveDerivedRoles = append(effectiveDerivedRoles, edr)
 	}
 	output.EffectiveDerivedRoles = effectiveDerivedRoles
-	output.ValidationErrors = result.ValidationErrors
-	output.Outputs = result.Outputs
+	output.ValidationErrors = result.validationErrors
+	output.Outputs = result.outputs
 
-	return output, result.AuditTrail, nil
+	return output, result.auditTrail, nil
 }
 
-func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams evaluator.EvalParams, input *enginev1.CheckInput) (*policyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "engine.Check")
 	defer span.End()
 
@@ -981,7 +1000,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 	}
 
 	if len(vr.Errors) > 0 {
-		result.ValidationErrors = vr.Errors.SchemaErrors()
+		result.validationErrors = vr.Errors.SchemaErrors()
 
 		pctx.Failed(vr.Errors, "Validation errors")
 
@@ -1106,7 +1125,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 
 									if ok {
 										effectiveDerivedRoles[name] = struct{}{}
-										result.EffectiveDerivedRoles[name] = struct{}{}
+										result.effectiveDerivedRoles[name] = struct{}{}
 									}
 								}
 							}
@@ -1130,7 +1149,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 						rulectx := sctx.StartRule(row.Name)
 
 						if m := rt.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
-							maps.Copy(result.AuditTrail.EffectivePolicies, m.GetSourceAttributes())
+							maps.Copy(result.auditTrail.EffectivePolicies, m.GetSourceAttributes())
 						}
 
 						var constants map[string]any
@@ -1213,7 +1232,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 									Src: namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
 									Val: evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, row.Params.Constants, variables),
 								}
-								result.Outputs = append(result.Outputs, output)
+								result.outputs = append(result.outputs, output)
 								octx.ComputedOutput(output)
 							}
 
@@ -1238,7 +1257,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 									Src: namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
 									Val: evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
 								}
-								result.Outputs = append(result.Outputs, output)
+								result.outputs = append(result.outputs, output)
 								octx.ComputedOutput(output)
 							}
 							rulectx.Skipped(nil, conditionNotSatisfied)
@@ -1291,35 +1310,28 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 	return result, nil
 }
 
-type EvalParams struct {
-	Globals              map[string]any
-	NowFunc              conditions.NowFunc
-	DefaultPolicyVersion string
-	LenientScopeSearch   bool
-}
-
 type EffectInfo struct {
 	Policy string
 	Scope  string
 	Effect effectv1.Effect
 }
 
-type PolicyEvalResult struct {
-	Effects               map[string]EffectInfo
-	EffectiveDerivedRoles map[string]struct{}
+type policyEvalResult struct {
+	effects               map[string]EffectInfo
+	effectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
-	AuditTrail            *auditv1.AuditTrail
-	ValidationErrors      []*schemav1.ValidationError
-	Outputs               []*enginev1.OutputEntry
+	auditTrail            *auditv1.AuditTrail
+	validationErrors      []*schemav1.ValidationError
+	outputs               []*enginev1.OutputEntry
 }
 
-func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEvalResult {
-	per := &PolicyEvalResult{
-		Effects:               make(map[string]EffectInfo, len(actions)),
-		EffectiveDerivedRoles: make(map[string]struct{}),
+func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *policyEvalResult {
+	per := &policyEvalResult{
+		effects:               make(map[string]EffectInfo, len(actions)),
+		effectiveDerivedRoles: make(map[string]struct{}),
 		toResolve:             make(map[string]struct{}, len(actions)),
-		Outputs:               []*enginev1.OutputEntry{},
-		AuditTrail:            auditTrail,
+		outputs:               []*enginev1.OutputEntry{},
+		auditTrail:            auditTrail,
 	}
 
 	for _, a := range actions {
@@ -1329,7 +1341,7 @@ func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEval
 	return per
 }
 
-func (er *PolicyEvalResult) unresolvedActions() []string {
+func (er *policyEvalResult) unresolvedActions() []string {
 	if len(er.toResolve) == 0 {
 		return nil
 	}
@@ -1345,22 +1357,22 @@ func (er *PolicyEvalResult) unresolvedActions() []string {
 }
 
 // setEffect sets the effect for an action. DENY always takes precedence.
-func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
+func (er *policyEvalResult) setEffect(action string, effect EffectInfo) {
 	delete(er.toResolve, action)
 
 	if effect.Effect == effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = effect
+		er.effects[action] = effect
 		return
 	}
 
-	current, ok := er.Effects[action]
+	current, ok := er.effects[action]
 	if !ok {
-		er.Effects[action] = effect
+		er.effects[action] = effect
 		return
 	}
 
 	if current.Effect != effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = effect
+		er.effects[action] = effect
 	}
 }
 
@@ -1392,10 +1404,10 @@ type EvalContext struct {
 	request               *enginev1.Request
 	runtime               *enginev1.Runtime
 	effectiveDerivedRoles internal.StringSet
-	EvalParams
+	evaluator.EvalParams
 }
 
-func NewEvalContext(ep EvalParams, request *enginev1.Request) *EvalContext {
+func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request) *EvalContext {
 	return &EvalContext{
 		EvalParams: ep,
 		request:    request,
@@ -1639,7 +1651,24 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 	return result.Value(), nil
 }
 
-func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, error) {
+	// TODO(saml) retrieve this config properly for the compiled PDP case
+	conf := &evaluator.Conf{
+		Globals:              make(map[string]any),
+		DefaultPolicyVersion: "default",
+		LenientScopeSearch:   false,
+	}
+
+	checkOpts := evaluator.NewCheckOptions(ctx, conf, opts...)
+
+	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
+	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
+
+	out, _, err := rt.PlanWithAuditTrail(ctx, input, principalVersion, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
+	return out, err
+}
+
+func (rt *RuleTable) PlanWithAuditTrail(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
 
 	_, span := tracing.StartSpan(ctx, "engine.Plan")

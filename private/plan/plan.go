@@ -36,5 +36,5 @@ func Resources(ctx context.Context, conf *engine.Conf, idx compile.Index, input 
 	}
 
 	eng := internalengine.NewEphemeral(conf, ruletableMgr, schemaMgr)
-	return eng.PlanResources(ctx, input)
+	return eng.Plan(ctx, input)
 }

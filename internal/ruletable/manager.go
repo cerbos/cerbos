@@ -15,6 +15,7 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -48,7 +49,7 @@ func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader
 	}, nil
 }
 
-func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
+func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams evaluator.EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
 	if err := mgr.reload(ctx); err != nil {
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 		return nil, nil, fmt.Errorf("failed to evaluate policies: %w", err)
@@ -57,7 +58,7 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.RuleTable.Check(ctx, tctx, evalParams, input)
+	return mgr.RuleTable.checkWithAuditTrail(ctx, tctx, evalParams, input)
 }
 
 func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
@@ -68,7 +69,7 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.RuleTable.Plan(ctx, input, principalVersion, resourceVersion, nowFunc, globals)
+	return mgr.RuleTable.PlanWithAuditTrail(ctx, input, principalVersion, resourceVersion, nowFunc, globals)
 }
 
 func (mgr *Manager) SubscriberID() string {

@@ -31,6 +31,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
@@ -57,7 +58,7 @@ func TestCheck(t *testing.T) {
 			mockAuditLog.clear()
 
 			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(traceCollector))
+			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(traceCollector))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -153,7 +154,7 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 			mockAuditLog.clear()
 
 			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(traceCollector))
+			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(traceCollector))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -210,7 +211,7 @@ func TestSchemaValidation(t *testing.T) {
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
 
-					haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(newTestTraceSink(t)))
+					haveOutputs, err := eng.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(newTestTraceSink(t)))
 
 					if tc.WantError {
 						require.Error(t, err)
@@ -266,7 +267,7 @@ func BenchmarkCheck(b *testing.B) {
 	}
 }
 
-func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
+func runBenchmarks(b *testing.B, eng evaluator.Evaluator, testCases []test.Case) {
 	b.Helper()
 
 	for _, tcase := range testCases {
@@ -403,7 +404,7 @@ func TestQueryPlan(t *testing.T) {
 					} else {
 						request.Actions = []string{tt.Action} //nolint:staticcheck
 					}
-					response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
+					response, err := eng.Plan(t.Context(), request, evaluator.WithNowFunc(func() time.Time { return timestamp }))
 					if tt.WantErr {
 						is.Error(err)
 					} else {

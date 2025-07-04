@@ -18,6 +18,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -141,6 +142,6 @@ func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker, opts ...Opt
 
 type checkFunc func(context.Context, []*enginev1.CheckInput, CheckOptions) ([]*enginev1.CheckOutput, error)
 
-func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...internalengine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
 	return f(ctx, inputs, internalengine.ApplyCheckOptions(opts...))
 }
