@@ -1399,6 +1399,21 @@
         }
       }
     },
+    "PolicySourceEmbeddedPDP": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "commitHash": {
+          "type": "string"
+        },
+        "builtAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "PolicySourceGit": {
       "type": "object",
       "properties": {
@@ -2954,6 +2969,9 @@
         },
         "hub": {
           "$ref": "#/definitions/PolicySourceHub"
+        },
+        "embeddedPdp": {
+          "$ref": "#/definitions/PolicySourceEmbeddedPDP"
         }
       }
     },

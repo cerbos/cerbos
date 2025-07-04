@@ -93,6 +93,9 @@
         "disk": {
           "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Disk"
         },
+        "embeddedPdp": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.EmbeddedPDP"
+        },
         "git": {
           "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Git"
         },
@@ -136,6 +139,21 @@
       "additionalProperties": false,
       "properties": {
         "directory": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.EmbeddedPDP": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "builtAt": {
+          "$ref": "#/definitions/google.protobuf.Timestamp"
+        },
+        "commitHash": {
+          "type": "string"
+        },
+        "url": {
           "type": "string"
         }
       }

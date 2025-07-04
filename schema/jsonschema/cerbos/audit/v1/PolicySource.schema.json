@@ -41,6 +41,21 @@
         }
       }
     },
+    "cerbos.audit.v1.PolicySource.EmbeddedPDP": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "builtAt": {
+          "$ref": "#/definitions/google.protobuf.Timestamp"
+        },
+        "commitHash": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.audit.v1.PolicySource.Git": {
       "type": "object",
       "additionalProperties": false,
@@ -82,6 +97,12 @@
           "type": "string"
         }
       }
+    },
+    "google.protobuf.Timestamp": {
+      "title": "Timestamp",
+      "description": "A point in time, independent of any time zone or calendar.",
+      "type": "string",
+      "format": "date-time"
     }
   },
   "type": "object",
@@ -95,6 +116,9 @@
     },
     "disk": {
       "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Disk"
+    },
+    "embeddedPdp": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource.EmbeddedPDP"
     },
     "git": {
       "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Git"

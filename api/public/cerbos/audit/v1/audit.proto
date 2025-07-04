@@ -92,6 +92,12 @@ message PolicySource {
     string directory = 1;
   }
 
+  message EmbeddedPDP {
+    string url = 1;
+    string commit_hash = 2;
+    google.protobuf.Timestamp built_at = 3;
+  }
+
   message Git {
     string repository_url = 1;
     string branch = 2;
@@ -117,5 +123,6 @@ message PolicySource {
     Disk disk = 3;
     Git git = 4;
     Hub hub = 5;
+    EmbeddedPDP embedded_pdp = 6;
   }
 }
