@@ -904,7 +904,45 @@ func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 	return nil
 }
 
-func (rt *RuleTable) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+func (rt *RuleTable) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
+	result, err := rt.check(ctx, tctx, evalParams, input)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	output := &enginev1.CheckOutput{
+		RequestId:  input.RequestId,
+		ResourceId: input.Resource.Id,
+		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+	}
+
+	// update the output
+	for _, action := range input.Actions {
+		output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
+			Effect: effectv1.Effect_EFFECT_DENY,
+			Policy: noPolicyMatch,
+		}
+
+		if einfo, ok := result.Effects[action]; ok {
+			ae := output.Actions[action]
+			ae.Effect = einfo.Effect
+			ae.Policy = einfo.Policy
+			ae.Scope = einfo.Scope
+		}
+	}
+
+	effectiveDerivedRoles := make([]string, 0, len(result.EffectiveDerivedRoles))
+	for edr := range result.EffectiveDerivedRoles {
+		effectiveDerivedRoles = append(effectiveDerivedRoles, edr)
+	}
+	output.EffectiveDerivedRoles = effectiveDerivedRoles
+	output.ValidationErrors = result.ValidationErrors
+	output.Outputs = result.Outputs
+
+	return output, result.AuditTrail, nil
+}
+
+func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "engine.Check")
 	defer span.End()
 

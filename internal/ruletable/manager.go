@@ -5,6 +5,7 @@ package ruletable
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"go.uber.org/zap"
@@ -46,9 +48,10 @@ func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader
 	}, nil
 }
 
-func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
 	if err := mgr.reload(ctx); err != nil {
-		return nil, err
+		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
+		return nil, nil, fmt.Errorf("failed to evaluate policies: %w", err)
 	}
 
 	mgr.mu.RLock()

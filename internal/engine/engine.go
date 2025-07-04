@@ -440,43 +440,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 
 	tctx := tracer.Start(checkOpts.tracerSink)
 
-	// evaluate the policies
-	result, err := engine.ruleTableManager.Check(ctx, tctx, checkOpts.evalParams, input)
-	if err != nil {
-		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
-		return nil, nil, fmt.Errorf("failed to evaluate policies: %w", err)
-	}
-
-	output := &enginev1.CheckOutput{
-		RequestId:  input.RequestId,
-		ResourceId: input.Resource.Id,
-		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
-	}
-
-	// update the output
-	for _, action := range input.Actions {
-		output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
-			Effect: defaultEffect,
-			Policy: noPolicyMatch,
-		}
-
-		if einfo, ok := result.Effects[action]; ok {
-			ae := output.Actions[action]
-			ae.Effect = einfo.Effect
-			ae.Policy = einfo.Policy
-			ae.Scope = einfo.Scope
-		}
-	}
-
-	effectiveDerivedRoles := make([]string, 0, len(result.EffectiveDerivedRoles))
-	for edr := range result.EffectiveDerivedRoles {
-		effectiveDerivedRoles = append(effectiveDerivedRoles, edr)
-	}
-	output.EffectiveDerivedRoles = effectiveDerivedRoles
-	output.ValidationErrors = result.ValidationErrors
-	output.Outputs = result.Outputs
-
-	return output, result.AuditTrail, nil
+	return engine.ruleTableManager.Check(ctx, tctx, checkOpts.evalParams, input)
 }
 
 func (engine *Engine) policyVersion(version string, params ruletable.EvalParams) string {
