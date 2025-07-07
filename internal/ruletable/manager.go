@@ -25,6 +25,7 @@ import (
 type Manager struct {
 	*RuleTable
 	policyLoader               policyloader.PolicyLoader
+	schemaLoader               schema.Loader
 	log                        *zap.SugaredLogger
 	ruleTable                  *runtimev1.RuleTable
 	mu                         sync.RWMutex
@@ -105,7 +106,7 @@ func (mgr *Manager) reload(ctx context.Context) error {
 
 	// If compilation fails, maintain the last valid rule table state.
 	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-	if err := LoadFromPolicyLoader(ctx, rt, mgr.policyLoader); err != nil {
+	if err := Load(ctx, rt, mgr.policyLoader, mgr.schemaLoader); err != nil {
 		mgr.log.Errorf("Rule table compilation failed, using previous valid state: %v", err)
 		mgr.isStale.Store(false)
 		mgr.awaitingHealthyPolicyStore.Store(true)

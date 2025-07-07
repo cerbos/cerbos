@@ -9,14 +9,14 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/private/compile"
-	"github.com/cerbos/cerbos/private/engine"
 )
 
-func Resources(ctx context.Context, conf *engine.Conf, idx compile.Index, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
+func Resources(ctx context.Context, conf *evaluator.Conf, idx compile.Index, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 	compiler, err := internalcompile.NewManager(ctx, store, schemaMgr)
@@ -26,7 +26,7 @@ func Resources(ctx context.Context, conf *engine.Conf, idx compile.Index, input 
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadFromPolicyLoader(ctx, rt, compiler); err != nil {
+	if err := ruletable.Load(ctx, rt, compiler, store); err != nil {
 		return nil, err
 	}
 

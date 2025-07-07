@@ -4,6 +4,7 @@
 package schema
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -82,7 +83,7 @@ func (NopManager) LoadSchema(_ context.Context, _ string) (*jsonschema.Schema, e
 	return nil, nil
 }
 
-func NewStatic(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) (*StaticManager, error) {
+func NewStatic(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) (Manager, error) {
 	conf, err := GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
@@ -90,6 +91,14 @@ func NewStatic(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runt
 
 	if conf.Enforcement == EnforcementNone {
 		return &StaticManager{}, nil
+	}
+
+	return NewStaticFromConf(conf, schemas, rawSchemas)
+}
+
+func NewStaticFromConf(conf *Conf, schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) (Manager, error) {
+	if conf.Enforcement == EnforcementNone {
+		return NopManager{}, nil
 	}
 
 	sm := &StaticManager{
@@ -123,7 +132,7 @@ func PreCompileSchemas(schemas map[uint64]*policyv1.Schemas, rawSchemas map[stri
 	compiler.AssertContent = true
 
 	for ref, raw := range rawSchemas {
-		if err := compiler.AddResource(ref, strings.NewReader(raw.GetContent())); err != nil {
+		if err := compiler.AddResource(ref, bytes.NewReader(raw.GetContent())); err != nil {
 			return nil, fmt.Errorf("failed to add schema %s: %w", ref, err)
 		}
 	}
@@ -280,7 +289,7 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 			log:  zap.L().Named("schema"),
 		},
 		cache:    cache.New[string, *cacheEntry]("schema", conf.CacheSize),
-		resolver: defaultResolver(loader),
+		resolver: DefaultResolver(loader),
 	}
 	mgr.loader = mgr
 
@@ -305,7 +314,7 @@ func NewEphemeral(resolver Resolver) Manager {
 	return mgr
 }
 
-func defaultResolver(loader Loader) Resolver {
+func DefaultResolver(loader Loader) Resolver {
 	return func(ctx context.Context, path string) (io.ReadCloser, error) {
 		u, err := url.Parse(path)
 		if err != nil {

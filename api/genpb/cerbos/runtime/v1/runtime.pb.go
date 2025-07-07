@@ -1619,8 +1619,7 @@ func (x *RuleTable_PolicyDerivedRoles) GetDerivedRoles() map[string]*RunnableDer
 
 type RuleTable_JSONSchema struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Content       []byte                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1655,18 +1654,11 @@ func (*RuleTable_JSONSchema) Descriptor() ([]byte, []int) {
 	return file_cerbos_runtime_v1_runtime_proto_rawDescGZIP(), []int{1, 3}
 }
 
-func (x *RuleTable_JSONSchema) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *RuleTable_JSONSchema) GetContent() string {
+func (x *RuleTable_JSONSchema) GetContent() []byte {
 	if x != nil {
 		return x.Content
 	}
-	return ""
+	return nil
 }
 
 type RuleTable_RuleRow_AllowActions struct {
@@ -3214,7 +3206,7 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"rolePolicy\x12)\n" +
 	"\x10compiler_version\x18\x06 \x01(\rR\x0fcompilerVersionB\f\n" +
 	"\n" +
-	"policy_set\"\xe2\x17\n" +
+	"policy_set\"\xd2\x17\n" +
 	"\tRuleTable\x12:\n" +
 	"\x05rules\x18\x01 \x03(\v2$.cerbos.runtime.v1.RuleTable.RuleRowR\x05rules\x12C\n" +
 	"\aschemas\x18\x02 \x03(\v2).cerbos.runtime.v1.RuleTable.SchemasEntryR\aschemas\x12:\n" +
@@ -3271,11 +3263,10 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\rderived_roles\x18\x01 \x03(\v2A.cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.DerivedRolesEntryR\fderivedRoles\x1ag\n" +
 	"\x11DerivedRolesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12<\n" +
-	"\x05value\x18\x02 \x01(\v2&.cerbos.runtime.v1.RunnableDerivedRoleR\x05value:\x028\x01\x1a6\n" +
+	"\x05value\x18\x02 \x01(\v2&.cerbos.runtime.v1.RunnableDerivedRoleR\x05value:\x028\x01\x1a&\n" +
 	"\n" +
-	"JSONSchema\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\tR\acontent\x1aU\n" +
+	"JSONSchema\x12\x18\n" +
+	"\acontent\x18\x01 \x01(\fR\acontent\x1aU\n" +
 	"\fSchemasEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\x04R\x03key\x12/\n" +
 	"\x05value\x18\x02 \x01(\v2\x19.cerbos.policy.v1.SchemasR\x05value:\x028\x01\x1a]\n" +

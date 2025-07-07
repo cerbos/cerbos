@@ -419,13 +419,9 @@ func cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m *RuleTableMetadata, hasher
 }
 
 func cerbos_runtime_v1_RuleTable_JSONSchema_hashpb_sum(m *RuleTable_JSONSchema, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RuleTable.JSONSchema.id"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetId()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetId()), len(m.GetId())))
-	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.JSONSchema.content"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetContent()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetContent()), len(m.GetContent())))
+		_, _ = hasher.Write(m.GetContent())
 	}
 }
 

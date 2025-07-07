@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO(saml) migrate this to the new `internal/evaluator` package?
 func TestSatisfiesCondition(t *testing.T) {
 	testCases := test.LoadTestCases(t, "cel_eval")
 

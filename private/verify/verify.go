@@ -56,7 +56,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadFromPolicyLoader(ctx, rt, compiler); err != nil {
+	if err := ruletable.Load(ctx, rt, compiler, store); err != nil {
 		return nil, err
 	}
 

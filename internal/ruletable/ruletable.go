@@ -6,6 +6,7 @@ package ruletable
 import (
 	"context"
 	"fmt"
+	"io"
 	"maps"
 	"reflect"
 	"slices"
@@ -55,10 +56,11 @@ func NewProtoRuletable() *runtimev1.RuleTable {
 		Meta:               make(map[uint64]*runtimev1.RuleTableMetadata),
 		ScopeParentRoles:   make(map[string]*runtimev1.RuleTable_RoleParentRoles),
 		PolicyDerivedRoles: make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
+		JsonSchemas:        make(map[string]*runtimev1.RuleTable_JSONSchema),
 	}
 }
 
-func LoadFromPolicyLoader(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader) error {
+func Load(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader, sl schema.Loader) error {
 	rps, err := pl.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get all policies: %w", err)
@@ -66,6 +68,10 @@ func LoadFromPolicyLoader(ctx context.Context, rt *runtimev1.RuleTable, pl polic
 
 	for _, p := range rps {
 		AddPolicy(rt, p)
+	}
+
+	if err := buildRawSchemas(ctx, rt, schema.DefaultResolver(sl)); err != nil {
+		return err
 	}
 
 	return nil
@@ -346,8 +352,32 @@ func insertRule(rt *runtimev1.RuleTable, r *runtimev1.RuleTable_RuleRow) {
 	rt.Rules = append(rt.Rules, r)
 }
 
+func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver schema.Resolver) error {
+	for _, s := range rt.Schemas {
+		for _, r := range []string{s.GetPrincipalSchema().GetRef(), s.GetResourceSchema().GetRef()} {
+			if r != "" {
+				rc, err := resolver(ctx, r)
+				if err != nil {
+					return err
+				}
+
+				schBytes, err := io.ReadAll(rc)
+				if err != nil {
+					return err
+				}
+
+				rt.JsonSchemas[r] = &runtimev1.RuleTable_JSONSchema{
+					Content: schBytes,
+				}
+			}
+		}
+	}
+	return nil
+}
+
 type RuleTable struct {
 	*runtimev1.RuleTable
+	conf                     *evaluator.Conf
 	schemaMgr                schema.Manager
 	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
 	principalScopeMap        map[string]struct{}
@@ -409,15 +439,17 @@ type CelProgram struct {
 }
 
 // TODO(saml) this is a currently unused function that will ultimately be reworked into the instantiation for ePDP or bundle PDPs.
-func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
-	rt := &RuleTable{}
+func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf *schema.Conf) (*RuleTable, error) {
+	rt := &RuleTable{
+		conf: conf,
+	}
 
 	if err := rt.load(protoRT); err != nil {
 		return nil, err
 	}
 
 	var err error
-	if rt.schemaMgr, err = schema.NewStatic(protoRT.Schemas, protoRT.JsonSchemas); err != nil {
+	if rt.schemaMgr, err = schema.NewStaticFromConf(schemaConf, protoRT.Schemas, protoRT.JsonSchemas); err != nil {
 		return nil, err
 	}
 
@@ -490,6 +522,7 @@ func (rt *RuleTable) load(protoRT *runtimev1.RuleTable) error {
 
 	// rules are now indexed, we can clear up any unnecessary transport state
 	clear(rt.Rules)
+	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
 	clear(rt.PolicyDerivedRoles)
 
 	return nil
@@ -908,17 +941,10 @@ func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 }
 
 func (rt *RuleTable) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
-	// TODO(saml) retrieve this config properly for the compiled PDP case
-	conf := &evaluator.Conf{
-		Globals:              make(map[string]any),
-		DefaultPolicyVersion: "default",
-		LenientScopeSearch:   false,
-	}
-
-	checkOpts := evaluator.NewCheckOptions(ctx, conf, opts...)
+	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
 	tctx := tracer.Start(checkOpts.TracerSink)
 
-	// TODO(saml) should the embedded PDP accept batches? Probably not
+	// TODO(saml) handle (synchronous, in the ePDP world) processing of multiple inputs
 	out, _, err := rt.checkWithAuditTrail(ctx, tctx, checkOpts.EvalParams, inputs[0])
 	return []*enginev1.CheckOutput{out}, err
 }
@@ -1652,14 +1678,7 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 }
 
 func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, error) {
-	// TODO(saml) retrieve this config properly for the compiled PDP case
-	conf := &evaluator.Conf{
-		Globals:              make(map[string]any),
-		DefaultPolicyVersion: "default",
-		LenientScopeSearch:   false,
-	}
-
-	checkOpts := evaluator.NewCheckOptions(ctx, conf, opts...)
+	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
 
 	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
 	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)

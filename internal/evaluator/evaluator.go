@@ -99,16 +99,6 @@ func PolicyVersion(version string, params EvalParams) string {
 	return version
 }
 
-// TODO(saml) migrate the engine config to here somehow? This is just copied from `engine/conf.go` for now
-type Conf struct {
-	// Globals are environment-specific variables to be made available to policy conditions.
-	Globals map[string]any `yaml:"globals" conf:",example={\"environment\": \"staging\"}"`
-	// DefaultPolicyVersion defines what version to assume if the request does not specify one.
-	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",example=\"default\""`
-	// LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
-	LenientScopeSearch bool `yaml:"lenientScopeSearch" conf:",example=false"`
-}
-
 func NewCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *CheckOptions {
 	var tracerSink tracer.Sink
 	if debugEnabled, ok := os.LookupEnv("CERBOS_DEBUG_ENGINE"); ok && debugEnabled != "false" {

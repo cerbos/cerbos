@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/hub"
@@ -15,7 +16,7 @@ import (
 )
 
 type (
-	Conf         = engine.Conf
+	Conf         = evaluator.Conf
 	BundleParams = hub.LocalParams
 	Engine       = engine.Engine
 )
@@ -35,7 +36,7 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadFromPolicyLoader(ctx, rt, bundleSrc); err != nil {
+	if err := ruletable.Load(ctx, rt, bundleSrc, bundleSrc); err != nil {
 		return nil, err
 	}
 

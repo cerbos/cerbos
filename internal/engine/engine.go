@@ -42,13 +42,9 @@ const (
 )
 
 func ApplyCheckOptions(opts ...evaluator.CheckOpt) *evaluator.CheckOptions {
-	conf := &Conf{}
+	conf := &evaluator.Conf{}
 	conf.SetDefaults()
-	return evaluator.NewCheckOptions(context.Background(), &evaluator.Conf{
-		Globals:              conf.Globals,
-		DefaultPolicyVersion: conf.DefaultPolicyVersion,
-		LenientScopeSearch:   conf.LenientScopeSearch,
-	}, opts...)
+	return evaluator.NewCheckOptions(context.Background(), conf, opts...)
 }
 
 type Engine struct {
@@ -56,7 +52,7 @@ type Engine struct {
 	auditLog          audit.Log
 	policyLoader      policyloader.PolicyLoader
 	ruleTableManager  *ruletable.Manager
-	conf              *Conf
+	conf              *evaluator.Conf
 	metadataExtractor audit.MetadataExtractor
 	workerPool        []chan<- workIn
 	workerIndex       uint64
@@ -71,7 +67,7 @@ type Components struct {
 }
 
 func New(ctx context.Context, components Components) (*Engine, error) {
-	conf, err := GetConf()
+	conf, err := evaluator.GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
 	}
@@ -79,7 +75,7 @@ func New(ctx context.Context, components Components) (*Engine, error) {
 	return NewFromConf(ctx, conf, components), nil
 }
 
-func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine {
+func NewFromConf(ctx context.Context, conf *evaluator.Conf, components Components) *Engine {
 	engine := newEngine(conf, components)
 
 	if numWorkers := conf.NumWorkers; numWorkers > 0 {
@@ -95,16 +91,16 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	return engine
 }
 
-func NewEphemeral(conf *Conf, rtMgr *ruletable.Manager, schemaMgr schema.Manager) *Engine {
+func NewEphemeral(conf *evaluator.Conf, rtMgr *ruletable.Manager, schemaMgr schema.Manager) *Engine {
 	if conf == nil {
-		conf = &Conf{}
+		conf = &evaluator.Conf{}
 		conf.SetDefaults()
 	}
 
 	return newEngine(conf, Components{SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog(), RuleTableManager: rtMgr})
 }
 
-func newEngine(conf *Conf, c Components) *Engine {
+func newEngine(conf *evaluator.Conf, c Components) *Engine {
 	return &Engine{
 		conf:              conf,
 		policyLoader:      c.PolicyLoader,
@@ -156,11 +152,7 @@ func (engine *Engine) Plan(ctx context.Context, input *enginev1.PlanResourcesInp
 		ctx, span := tracing.StartSpan(ctx, "engine.Plan")
 		defer span.End()
 
-		checkOpts := evaluator.NewCheckOptions(ctx, &evaluator.Conf{
-			Globals:              engine.conf.Globals,
-			DefaultPolicyVersion: engine.conf.DefaultPolicyVersion,
-			LenientScopeSearch:   engine.conf.LenientScopeSearch,
-		}, opts...)
+		checkOpts := evaluator.NewCheckOptions(ctx, engine.conf, opts...)
 
 		output, trail, err = engine.doPlan(ctx, input, checkOpts)
 		if err != nil {
@@ -226,17 +218,12 @@ func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanR
 	return output, planErr
 }
 
-// TODO(saml) make `Engine` and `RuleTable` both satisfy a new `Evaluator` interface with `Check` and `Plan`
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
 	outputs, trail, err := metrics.RecordDuration3(metrics.EngineCheckLatency(), func() (outputs []*enginev1.CheckOutput, trail *auditv1.AuditTrail, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
-		checkOpts := evaluator.NewCheckOptions(ctx, &evaluator.Conf{
-			Globals:              engine.conf.Globals,
-			DefaultPolicyVersion: engine.conf.DefaultPolicyVersion,
-			LenientScopeSearch:   engine.conf.LenientScopeSearch,
-		}, opts...)
+		checkOpts := evaluator.NewCheckOptions(ctx, engine.conf, opts...)
 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized

@@ -159,7 +159,7 @@ func Start(ctx context.Context) error {
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadFromPolicyLoader(ctx, rt, policyLoader); err != nil {
+	if err := ruletable.Load(ctx, rt, policyLoader, store); err != nil {
 		return err
 	}
 
