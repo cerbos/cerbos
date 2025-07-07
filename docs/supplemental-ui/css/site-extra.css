@@ -10,6 +10,10 @@
     color: #000000 !important;
 }
 
+.header .navbar .navbar-brand .navbar-item:hover {
+    background-color: transparent !important;
+}
+
 @media screen and (min-width:1024px) {
     .navbar-item:not(.hide-for-print):hover {
         background-color: #f5f5f5 !important;
