@@ -5,6 +5,8 @@ package flagset
 
 import "github.com/cerbos/cerbos-sdk-go/cerbos"
 
+const maxRecvMsgSizeBytes = 25 * 1024 * 1024 // 25MiB
+
 type Globals struct {
 	Server        string `help:"Address of the Cerbos server" env:"CERBOS_SERVER" default:"localhost:3593"`
 	Username      string `help:"Admin username" env:"CERBOS_USERNAME"`
@@ -17,7 +19,7 @@ type Globals struct {
 }
 
 func (g *Globals) ToClientOpts() []cerbos.Opt {
-	opts := make([]cerbos.Opt, 0)
+	opts := []cerbos.Opt{cerbos.WithMaxRecvMsgSizeBytes(maxRecvMsgSizeBytes)}
 	if g.Plaintext {
 		opts = append(opts, cerbos.WithPlaintext())
 	}
