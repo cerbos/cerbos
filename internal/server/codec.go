@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/encoding"
 
 	// Import the default grpc encoding to ensure that it gets replaced by this codec.
+	"google.golang.org/grpc/encoding/gzip"
 	_ "google.golang.org/grpc/encoding/proto"
 	"google.golang.org/protobuf/proto"
 )
@@ -19,6 +20,8 @@ const name = "proto"
 func init() {
 	// Register the codec to use VT where possible for optimized marshaling/unmarshaling.
 	encoding.RegisterCodec(Codec{vtcodec: vtgrpc.Codec{}})
+	// Register gzip compressor.
+	encoding.RegisterCompressor(encoding.GetCompressor(gzip.Name))
 }
 
 // Codec implements the grpc Codec interface to delegate encoding to VT where possible.
