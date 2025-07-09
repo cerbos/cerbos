@@ -18,8 +18,7 @@ import (
 
 func Resources(ctx context.Context, conf *evaluator.Conf, idx compile.Index, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-	compiler, err := internalcompile.NewManager(ctx, store, schemaMgr)
+	compiler, err := internalcompile.NewManager(ctx, store)
 	if err != nil {
 		return nil, err
 	}
@@ -29,6 +28,8 @@ func Resources(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inp
 	if err := ruletable.Load(ctx, rt, compiler, store); err != nil {
 		return nil, err
 	}
+
+	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	if err != nil {

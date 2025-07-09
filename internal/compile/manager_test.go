@@ -20,7 +20,6 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 )
@@ -194,7 +193,7 @@ func mkManager(t *testing.T) (*compile.Manager, *MockStore, context.CancelFunc) 
 	mockStore := &MockStore{}
 	mockStore.On("Subscribe", mock.Anything)
 
-	mgr, err := compile.NewManager(ctx, mockStore, schema.NewNopManager())
+	mgr, err := compile.NewManager(ctx, mockStore)
 	require.NoError(t, err)
 
 	return mgr, mockStore, cancelFunc

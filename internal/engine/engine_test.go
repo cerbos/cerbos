@@ -326,10 +326,7 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	schemaConf := schema.NewConf(p.schemaEnforcement)
-	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
-
-	compiler, err := compile.NewManager(ctx, store, schemaMgr)
+	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(tb, err)
 
 	var auditLog audit.Log
@@ -351,6 +348,9 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 
 	rt := ruletable.NewProtoRuletable()
 	require.NoError(tb, ruletable.Load(ctx, rt, compiler, store))
+
+	schemaConf := schema.NewConf(p.schemaEnforcement)
+	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	require.NoError(tb, err)
@@ -386,10 +386,7 @@ func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFun
 
 	protoRT := ruletable.NewProtoRuletable()
 
-	schemaConf := schema.NewConf(p.schemaEnforcement)
-	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
-
-	compiler, err := compile.NewManager(ctx, store, schemaMgr)
+	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(tb, err)
 
 	err = ruletable.Load(ctx, protoRT, compiler, store)
@@ -400,7 +397,7 @@ func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFun
 	evalConf.Globals = map[string]any{"environment": "test"}
 	evalConf.LenientScopeSearch = p.lenientScopeSearch
 
-	rt, err := ruletable.NewRuleTable(protoRT, evalConf, schemaConf)
+	rt, err := ruletable.NewRuleTable(protoRT, evalConf, schema.NewConf(p.schemaEnforcement))
 	require.NoError(tb, err)
 
 	return rt, cancelFunc

@@ -48,8 +48,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-	compiler, err := internalcompile.NewManager(ctx, store, schemaMgr)
+	compiler, err := internalcompile.NewManager(ctx, store)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +58,8 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	if err := ruletable.Load(ctx, rt, compiler, store); err != nil {
 		return nil, err
 	}
+
+	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	if err != nil {

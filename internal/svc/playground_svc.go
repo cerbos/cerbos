@@ -450,7 +450,7 @@ type components struct {
 }
 
 func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
-	cm, err := compile.NewManager(ctx, c.store, c.schemaMgr)
+	cm, err := compile.NewManager(ctx, c.store)
 	if err != nil {
 		return nil, err
 	}

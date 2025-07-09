@@ -44,6 +44,9 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	return errs.ErrOrNil()
 }
 
+// Compile compiles a single policy compilation unit into a runnable policy set.
+// The schemaMgr parameter is optional - pass nil to skip schema validation,
+// or provide a SchemaManager instance to enable validation against schema files.
 func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
@@ -183,8 +186,10 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		return nil, nil
 	}
 
-	if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
-		return nil, nil
+	if schemaMgr != nil {
+		if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
+			return nil, nil
+		}
 	}
 
 	compilePolicyConstants(modCtx, rp.Constants)

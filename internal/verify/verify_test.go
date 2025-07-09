@@ -380,14 +380,14 @@ func mkEngine(t *testing.T) *engine.Engine {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	schemaMgr, err := schema.New(ctx, store)
-	require.NoError(t, err)
-
-	mgr, err := compile.NewManager(ctx, store, schemaMgr)
+	mgr, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
 	rt := ruletable.NewProtoRuletable()
 	require.NoError(t, ruletable.Load(ctx, rt, mgr, store))
+
+	schemaMgr, err := schema.New(ctx, store)
+	require.NoError(t, err)
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, store, schemaMgr)
 	require.NoError(t, err)

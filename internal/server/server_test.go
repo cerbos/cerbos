@@ -63,14 +63,13 @@ func TestServer(t *testing.T) {
 			store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 			require.NoError(t, err)
 
-			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-			policyLoader, err := compile.NewManager(ctx, store, schemaMgr)
+			policyLoader, err := compile.NewManager(ctx, store)
 			require.NoError(t, err)
 
 			tp := testParam{
 				store:        store,
 				policyLoader: policyLoader,
-				schemaMgr:    schemaMgr,
+				schemaMgr:    schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject)),
 			}
 			return tp
 		}
@@ -257,14 +256,13 @@ func TestAdminService(t *testing.T) {
 		store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 		require.NoError(t, err)
 
-		schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-		policyLoader, err := compile.NewManager(ctx, store, schemaMgr)
+		policyLoader, err := compile.NewManager(ctx, store)
 		require.NoError(t, err)
 
 		return testParam{
 			store:        store,
 			policyLoader: policyLoader,
-			schemaMgr:    schemaMgr,
+			schemaMgr:    schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject)),
 		}
 	}
 

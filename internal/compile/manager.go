@@ -16,7 +16,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -28,13 +27,12 @@ const (
 
 type Manager struct {
 	store       storage.SourceStore
-	schemaMgr   schema.Manager
 	log         *zap.SugaredLogger
 	updateQueue chan storage.Event
 	*storage.SubscriptionManager
 }
 
-func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) (*Manager, error) {
+func NewManager(ctx context.Context, store storage.SourceStore) (*Manager, error) {
 	if err := config.GetSection(&Conf{}); err != nil {
 		return nil, err
 	}
@@ -42,7 +40,6 @@ func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema
 	c := &Manager{
 		log:                 zap.S().Named("compiler"),
 		store:               store,
-		schemaMgr:           schemaMgr,
 		updateQueue:         make(chan storage.Event, updateQueueSize),
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
@@ -72,7 +69,7 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 		case evt := <-c.updateQueue:
 			c.log.Debugw("Processing storage event", "event", evt)
 			switch evt.Kind {
-			case storage.EventReload, storage.EventAddOrUpdateSchema, storage.EventDeleteSchema:
+			case storage.EventReload:
 				c.NotifySubscribers(evt)
 			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 				if err := c.addEventDependents(&evt); err != nil {
@@ -117,7 +114,7 @@ func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) 
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {
 	return metrics.RecordDuration2(metrics.CompileDuration(), func() (*runtimev1.RunnablePolicySet, error) {
-		return Compile(unit, c.schemaMgr)
+		return Compile(unit, nil)
 	})
 }
 

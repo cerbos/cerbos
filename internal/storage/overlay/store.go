@@ -20,7 +20,6 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -117,11 +116,11 @@ func newCircuitBreaker(conf *Conf) *gobreaker.CircuitBreaker[any] {
 }
 
 // GetOverlayPolicyLoader instantiates both the base and fallback policy loaders and then returns itself.
-func (s *Store) GetOverlayPolicyLoader(ctx context.Context, schemaMgr schema.Manager) (policyloader.PolicyLoader, error) {
+func (s *Store) GetOverlayPolicyLoader(ctx context.Context) (policyloader.PolicyLoader, error) {
 	getPolicyLoader := func(storeInterface storage.Store) (policyloader.PolicyLoader, error) {
 		switch st := storeInterface.(type) {
 		case storage.SourceStore:
-			pl, err := compile.NewManager(ctx, st, schemaMgr)
+			pl, err := compile.NewManager(ctx, st)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create compile manager: %w", err)
 			}

@@ -79,12 +79,6 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 			if err := mgr.processPolicyEvent(event); err != nil {
 				mgr.log.Warnw("Error processing storage event, maintaining last valid state", "event", event, "error", err)
 			}
-		case storage.EventAddOrUpdateSchema, storage.EventDeleteSchema:
-			// TODO(saml) granular handling of schema updates.
-			// If we can retrieve all policies that reference a given schema, we can update each of those individually
-			// if mgr.awaitingHealthyPolicyStore.Load() {
-			mgr.reload()
-			// }
 		default:
 			mgr.log.Debugw("Ignoring storage event", "event", event)
 		}
@@ -175,6 +169,10 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 }
 
 func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
+	if rps == nil {
+		return nil
+	}
+
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 

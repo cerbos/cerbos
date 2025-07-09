@@ -135,7 +135,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 		rt := ruletable.NewProtoRuletable()
 
-		compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
+		compileMgr, err := compile.NewManager(ctx, store)
 		if err != nil {
 			return err
 		}

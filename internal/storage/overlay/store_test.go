@@ -17,7 +17,6 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -65,13 +64,10 @@ func TestDriverInstantiation(t *testing.T) {
 		require.NoError(t, err, "error creating store")
 		require.Equal(t, DriverName, store.Driver())
 
-		schemaMgr, err := schema.New(ctx, store)
-		require.NoError(t, err, "error creating schema manager")
-
 		overlayStore, ok := store.(Overlay)
 		require.True(t, ok, "store does not implement Overlay interface")
 
-		_, err = overlayStore.GetOverlayPolicyLoader(ctx, schemaMgr)
+		_, err = overlayStore.GetOverlayPolicyLoader(ctx)
 		require.NoError(t, err, "error creating overlay policy loader")
 
 		wrappedStore, ok := store.(*Store)
