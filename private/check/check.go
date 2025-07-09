@@ -96,7 +96,7 @@ func Check(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inputs 
 		return nil, err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

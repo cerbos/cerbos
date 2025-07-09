@@ -13,4 +13,5 @@ import (
 type PolicyLoader interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
+	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }

@@ -347,7 +347,6 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 	}
 }
 
-// TODO(saml) make idempotent.
 func insertRule(rt *runtimev1.RuleTable, r *runtimev1.RuleTable_RuleRow) {
 	rt.Rules = append(rt.Rules, r)
 }
@@ -444,7 +443,7 @@ func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf
 		conf: conf,
 	}
 
-	if err := rt.load(protoRT); err != nil {
+	if err := rt.init(protoRT); err != nil {
 		return nil, err
 	}
 
@@ -456,7 +455,7 @@ func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf
 	return rt, nil
 }
 
-func (rt *RuleTable) load(protoRT *runtimev1.RuleTable) error {
+func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.RuleTable = protoRT
 
 	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
@@ -474,28 +473,38 @@ func (rt *RuleTable) load(protoRT *runtimev1.RuleTable) error {
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
 	rt.parentRoleAncestorsCache = make(map[string]map[string][]string)
 
-	for _, r := range rt.Rules {
+	if err := rt.indexAndPurgeRules(); err != nil {
+		return err
+	}
+
+	clear(rt.PolicyDerivedRoles)
+
+	return nil
+}
+
+func (rt *RuleTable) indexAndPurgeRules() error {
+	for _, rule := range rt.Rules {
 		row := &Row{
-			RuleTable_RuleRow: r,
+			RuleTable_RuleRow: rule,
 		}
 
-		switch r.PolicyKind { //nolint:exhaustive
+		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
-			if !r.FromRolePolicy { //nolint:nestif
-				params, err := generateRowParams(r.OriginFqn, r.Params.OrderedVariables, r.Params.Constants)
+			if !rule.FromRolePolicy { //nolint:nestif
+				params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
 				if err != nil {
 					return err
 				}
 				row.Params = params
-				if r.OriginDerivedRole != "" {
-					drParams, err := generateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.DerivedRoleParams.OrderedVariables, r.DerivedRoleParams.Constants)
+				if rule.OriginDerivedRole != "" {
+					drParams, err := generateRowParams(namer.DerivedRolesFQN(rule.OriginDerivedRole), rule.DerivedRoleParams.OrderedVariables, rule.DerivedRoleParams.Constants)
 					if err != nil {
 						return err
 					}
 					row.DerivedRoleParams = drParams
 				}
 
-				modID := namer.GenModuleIDFromFQN(r.OriginFqn)
+				modID := namer.GenModuleIDFromFQN(rule.OriginFqn)
 				if pdr, ok := rt.PolicyDerivedRoles[modID.RawValue()]; ok {
 					if _, ok := rt.policyDerivedRoles[modID]; !ok {
 						rt.policyDerivedRoles[modID] = make(map[string]*WrappedRunnableDerivedRole)
@@ -510,7 +519,7 @@ func (rt *RuleTable) load(protoRT *runtimev1.RuleTable) error {
 				}
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
-			params, err := generateRowParams(r.OriginFqn, r.Params.OrderedVariables, r.Params.Constants)
+			params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
 			if err != nil {
 				return err
 			}
@@ -518,12 +527,12 @@ func (rt *RuleTable) load(protoRT *runtimev1.RuleTable) error {
 		}
 
 		rt.indexRule(row)
+
 	}
 
 	// rules are now indexed, we can clear up any unnecessary transport state
 	clear(rt.Rules)
 	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
-	clear(rt.PolicyDerivedRoles)
 
 	return nil
 }
@@ -944,9 +953,17 @@ func (rt *RuleTable) Check(ctx context.Context, inputs []*enginev1.CheckInput, o
 	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
 	tctx := tracer.Start(checkOpts.TracerSink)
 
-	// TODO(saml) handle (synchronous, in the ePDP world) processing of multiple inputs
-	out, _, err := rt.checkWithAuditTrail(ctx, tctx, checkOpts.EvalParams, inputs[0])
-	return []*enginev1.CheckOutput{out}, err
+	// Primary use for this Evaluator interface is the ePDP, so we run the checks synchronously (for now)
+	out := make([]*enginev1.CheckOutput, len(inputs))
+	for i, input := range inputs {
+		res, _, err := rt.checkWithAuditTrail(ctx, tctx, checkOpts.EvalParams, input)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = res
+	}
+
+	return out, nil
 }
 
 func (rt *RuleTable) checkWithAuditTrail(ctx context.Context, tctx tracer.Context, evalParams evaluator.EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {

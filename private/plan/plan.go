@@ -30,7 +30,7 @@ func Resources(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inp
 		return nil, err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

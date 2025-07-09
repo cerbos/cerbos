@@ -461,7 +461,7 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, cm, c.schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, cm, c.store, c.schemaMgr)
 	if err != nil {
 		return nil, err
 	}

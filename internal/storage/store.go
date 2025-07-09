@@ -138,6 +138,8 @@ type SourceStore interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*policy.CompilationUnit, error)
 	// GetAll returns all modules that exist within the policy store
 	GetAll(context.Context) ([]*policy.CompilationUnit, error)
+	// GetAllMatching returns all modules that exist for the provided module IDs
+	GetAllMatching(context.Context, []namer.ModuleID) ([]*policy.CompilationUnit, error)
 	// GetCompilationUnits gets the compilation units for the given module IDs.
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
@@ -154,6 +156,8 @@ type BinaryStore interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 	// GetAll returns all modules that exist within the policy store
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
+	// GetAllMatching returns all modules that exist for the provided module IDs
+	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }
 
 // MutableStore is a store that allows mutations.
@@ -214,6 +218,7 @@ type Event struct {
 	SchemaFile  string
 	Kind        EventKind
 	PolicyID    namer.ModuleID
+	Dependents  []namer.ModuleID
 }
 
 func (evt Event) String() string {

@@ -163,7 +163,7 @@ func Start(ctx context.Context) error {
 		return err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, store, schemaMgr)
 	if err != nil {
 		return fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

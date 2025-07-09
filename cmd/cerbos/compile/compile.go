@@ -144,7 +144,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return err
 		}
 
-		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, schemaMgr)
+		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, store, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}

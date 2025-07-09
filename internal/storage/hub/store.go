@@ -142,6 +142,10 @@ func (hs *HybridStore) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicyS
 	return hs.withActiveSource().GetAll(ctx)
 }
 
+func (hs *HybridStore) GetAllMatching(ctx context.Context, candidates []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	return hs.withActiveSource().GetAllMatching(ctx, candidates)
+}
+
 func (hs *HybridStore) Subscribe(s storage.Subscriber) {
 	hs.local.Subscribe(s)
 	hs.remote.Subscribe(s)

@@ -328,7 +328,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 
 	require.NoError(t, ruletable.Load(ctx, rt, tp.policyLoader, tp.store))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.policyLoader, tp.schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.policyLoader, tp.store, tp.schemaMgr)
 	require.NoError(t, err)
 
 	if ss, ok := tp.policyLoader.(storage.Subscribable); ok {

@@ -60,7 +60,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 		return nil, err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

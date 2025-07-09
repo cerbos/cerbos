@@ -72,13 +72,47 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 		case evt := <-c.updateQueue:
 			c.log.Debugw("Processing storage event", "event", evt)
 			switch evt.Kind {
-			case storage.EventReload, storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
+			case storage.EventReload, storage.EventAddOrUpdateSchema, storage.EventDeleteSchema:
+				c.NotifySubscribers(evt)
+			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
+				if err := c.addEventDependents(&evt); err != nil {
+					c.log.Warnw("Error while retrieving dependendents event", "event", evt, "error", err)
+				}
 				c.NotifySubscribers(evt)
 			default:
 				c.log.Debugw("Ignoring storage event", "event", evt)
 			}
 		}
 	}
+}
+
+func (c *Manager) addEventDependents(evt *storage.Event) error {
+	deps, err := c.getDependents(evt.PolicyID)
+	if err != nil {
+		return err
+	}
+
+	if len(deps) > 0 {
+		evt.Dependents = deps
+	}
+
+	return nil
+}
+
+func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), storeFetchTimeout)
+	defer cancelFunc()
+
+	dependents, err := c.store.GetDependents(ctx, modID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find dependents: %w", err)
+	}
+
+	if len(dependents) > 0 {
+		return dependents[modID], nil
+	}
+
+	return nil, nil
 }
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {
@@ -127,6 +161,31 @@ func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, e
 		}
 
 		rpsSet = append(rpsSet, rps)
+	}
+
+	return rpsSet, nil
+}
+
+func (c *Manager) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	res := []*runtimev1.RunnablePolicySet{}
+
+	if len(modIDs) == 0 {
+		return res, nil
+	}
+
+	cus, err := c.store.GetAllMatching(ctx, modIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get compilation units: %w", err)
+	}
+
+	rpsSet := make([]*runtimev1.RunnablePolicySet, len(cus))
+	for i, cu := range cus {
+		rps, err := c.compile(cu)
+		if err != nil {
+			return nil, PolicyCompilationErr{underlying: err}
+		}
+
+		rpsSet[i] = rps
 	}
 
 	return rpsSet, nil
