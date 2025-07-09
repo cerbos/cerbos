@@ -216,9 +216,9 @@ const (
 type Event struct {
 	OldPolicyID *namer.ModuleID
 	SchemaFile  string
+	Dependents  []namer.ModuleID
 	Kind        EventKind
 	PolicyID    namer.ModuleID
-	Dependents  []namer.ModuleID
 }
 
 func (evt Event) String() string {

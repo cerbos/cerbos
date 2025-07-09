@@ -527,7 +527,6 @@ func (rt *RuleTable) indexAndPurgeRules() error {
 		}
 
 		rt.indexRule(row)
-
 	}
 
 	// rules are now indexed, we can clear up any unnecessary transport state

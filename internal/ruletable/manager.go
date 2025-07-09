@@ -55,14 +55,14 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams e
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.RuleTable.checkWithAuditTrail(ctx, tctx, evalParams, input)
+	return mgr.checkWithAuditTrail(ctx, tctx, evalParams, input)
 }
 
 func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.RuleTable.PlanWithAuditTrail(ctx, input, principalVersion, resourceVersion, nowFunc, globals)
+	return mgr.PlanWithAuditTrail(ctx, input, principalVersion, resourceVersion, nowFunc, globals)
 }
 
 func (mgr *Manager) SubscriberID() string {
@@ -73,7 +73,9 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
 		switch event.Kind {
 		case storage.EventReload:
-			mgr.reload()
+			if err := mgr.reload(); err != nil {
+				mgr.log.Warnw("Error reloading rule table", "error", err)
+			}
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			mgr.log.Debugw("Processing storage event", "event", event)
 			if err := mgr.processPolicyEvent(event); err != nil {
@@ -98,9 +100,8 @@ func (mgr *Manager) reload() error {
 	// If compilation fails, maintain the last valid rule table state.
 	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
 	if err := Load(ctx, rt, mgr.policyLoader, mgr.schemaLoader); err != nil {
-		mgr.log.Errorf("Rule table compilation failed, using previous valid state: %v", err)
 		mgr.awaitingHealthyPolicyStore.Store(true)
-		return nil
+		return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
 	}
 
 	if err := mgr.init(rt); err != nil {
@@ -178,7 +179,7 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 
 	AddPolicy(mgr.RuleTable.RuleTable, rps)
 
-	if err := mgr.RuleTable.indexAndPurgeRules(); err != nil {
+	if err := mgr.indexAndPurgeRules(); err != nil {
 		return fmt.Errorf("failed to index and purge rules: %w", err)
 	}
 
