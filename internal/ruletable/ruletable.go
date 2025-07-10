@@ -67,7 +67,7 @@ func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.
 	}
 
 	for _, p := range rps {
-		AddPolicy(rt, p)
+		rt.Rules = slices.Concat(rt.Rules, AddPolicy(rt, p))
 	}
 
 	return nil
@@ -81,18 +81,20 @@ func LoadSchemas(ctx context.Context, rt *runtimev1.RuleTable, sl schema.Loader)
 	return nil
 }
 
-func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet) {
+func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet) []*runtimev1.RuleTable_RuleRow {
 	switch rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		addResourcePolicy(rt, rps.GetResourcePolicy())
+		return addResourcePolicy(rt, rps.GetResourcePolicy())
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		addRolePolicy(rt, rps.GetRolePolicy())
+		return addRolePolicy(rt, rps.GetRolePolicy())
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
-		addPrincipalPolicy(rt, rps.GetPrincipalPolicy())
+		return addPrincipalPolicy(rt, rps.GetPrincipalPolicy())
 	}
+
+	return nil
 }
 
-func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincipalPolicySet) {
+func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincipalPolicySet) (res []*runtimev1.RuleTable_RuleRow) {
 	principalID := rpps.Meta.Principal
 
 	policies := rpps.GetPolicies()
@@ -168,12 +170,14 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 				row.Effect = effectv1.Effect_EFFECT_DENY
 			}
 
-			insertRule(rt, row)
+			res = append(res, row)
 		}
 	}
+
+	return
 }
 
-func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResourcePolicySet) {
+func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResourcePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
 	sanitizedResource := namer.SanitizedResource(rrps.Meta.Resource)
 
 	policies := rrps.GetPolicies()
@@ -252,7 +256,7 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 					row.Effect = effectv1.Effect_EFFECT_DENY
 				}
 
-				insertRule(rt, row)
+				res = append(res, row)
 			}
 
 			// merge derived roles as roles with added conditions
@@ -301,15 +305,17 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 							row.Effect = effectv1.Effect_EFFECT_DENY
 						}
 
-						insertRule(rt, row)
+						res = append(res, row)
 					}
 				}
 			}
 		}
 	}
+
+	return
 }
 
-func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) {
+func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
 	version := "default" //nolint:goconst
 	moduleID := namer.GenModuleIDFromFQN(p.Meta.Fqn)
 	rt.Meta[moduleID.RawValue()] = &runtimev1.RuleTableMetadata{
@@ -321,7 +327,7 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 	}
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
-			insertRule(rt, &runtimev1.RuleTable_RuleRow{
+			res = append(res, &runtimev1.RuleTable_RuleRow{
 				OriginFqn: p.Meta.Fqn,
 				Role:      p.Role,
 				Resource:  resource,
@@ -349,10 +355,8 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 	rt.ScopeParentRoles[p.Scope].RoleParentRoles[p.Role] = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{
 		Roles: p.ParentRoles,
 	}
-}
 
-func insertRule(rt *runtimev1.RuleTable, r *runtimev1.RuleTable_RuleRow) {
-	rt.Rules = append(rt.Rules, r)
+	return
 }
 
 func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver schema.Resolver) error {
@@ -477,17 +481,21 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
 	rt.parentRoleAncestorsCache = make(map[string]map[string][]string)
 
-	if err := rt.indexAndPurgeRules(); err != nil {
+	if err := rt.indexRules(rt.Rules); err != nil {
 		return err
 	}
+
+	// rules are now indexed, we can clear up any unnecessary transport state
+	clear(rt.Rules)
+	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
 
 	clear(rt.PolicyDerivedRoles)
 
 	return nil
 }
 
-func (rt *RuleTable) indexAndPurgeRules() error {
-	for _, rule := range rt.Rules {
+func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
+	for _, rule := range rules {
 		row := &Row{
 			RuleTable_RuleRow: rule,
 		}
@@ -532,10 +540,6 @@ func (rt *RuleTable) indexAndPurgeRules() error {
 
 		rt.indexRule(row)
 	}
-
-	// rules are now indexed, we can clear up any unnecessary transport state
-	clear(rt.Rules)
-	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
 
 	return nil
 }

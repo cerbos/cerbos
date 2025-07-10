@@ -179,9 +179,7 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	AddPolicy(mgr.RuleTable.RuleTable, rps)
-
-	if err := mgr.indexAndPurgeRules(); err != nil {
+	if err := mgr.indexRules(AddPolicy(mgr.RuleTable.RuleTable, rps)); err != nil {
 		return fmt.Errorf("failed to index and purge rules: %w", err)
 	}
 
