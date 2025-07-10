@@ -99,7 +99,7 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 
 	policies := rpps.GetPolicies()
 	if len(policies) == 0 {
-		return
+		return res
 	}
 
 	// We only process the first of principal policy sets as it's assumed parent scopes are handled in separate calls
@@ -174,7 +174,7 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 		}
 	}
 
-	return
+	return res
 }
 
 func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResourcePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
@@ -182,7 +182,7 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 
 	policies := rrps.GetPolicies()
 	if len(policies) == 0 {
-		return
+		return res
 	}
 
 	// we only process the first of resource policy sets as it's assumed parent scopes are handled in separate calls
@@ -312,7 +312,7 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 		}
 	}
 
-	return
+	return res
 }
 
 func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
@@ -356,7 +356,7 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 		Roles: p.ParentRoles,
 	}
 
-	return
+	return res
 }
 
 func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver schema.Resolver) error {

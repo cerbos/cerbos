@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -23,8 +22,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const loaderFetchTimeout = 2 * time.Second
-
 type Manager struct {
 	*RuleTable
 	policyLoader               policyloader.PolicyLoader
@@ -35,7 +32,13 @@ type Manager struct {
 }
 
 func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaLoader schema.Loader, schemaMgr schema.Manager) (*Manager, error) {
+	conf, err := evaluator.GetConf()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
+	}
+
 	rt := &RuleTable{
+		conf:      conf,
 		schemaMgr: schemaMgr,
 	}
 
@@ -91,7 +94,7 @@ func (mgr *Manager) reload() error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), loaderFetchTimeout)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
 	defer cancelFunc()
 
 	mgr.log.Info("Reloading rule table")
@@ -132,7 +135,7 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 		mgr.deletePolicy(*evt.OldPolicyID)
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), loaderFetchTimeout)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
 	defer cancelFunc()
 
 	if evt.Kind == storage.EventAddOrUpdatePolicy {

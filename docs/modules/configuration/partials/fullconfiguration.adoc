@@ -83,6 +83,7 @@ engine:
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
   globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.
   lenientScopeSearch: false # LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
+  policyLoaderTimeout: 2s # PolicyLoaderTimeout is the timeout for loading policies from the policy store.
 hub:
   credentials: # Credentials holds Cerbos Hub client credentials.
     clientID: 92B0K05B6HOF # ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
