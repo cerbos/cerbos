@@ -207,7 +207,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) {
 
 	for version, scopeMap := range mgr.primaryIdx {
 		for scope, roleMap := range scopeMap {
-			scopedParentRoleAncestors := mgr.parentRoleAncestorsCache[scope]
+			scopedParentRoleAncestors := mgr.parentRoleAncestors[scope]
 
 			for role, actionMap := range roleMap.GetAll() {
 				for action, rules := range actionMap.GetAll() {
@@ -238,7 +238,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) {
 				delete(mgr.principalScopeMap, scope)
 				delete(mgr.resourceScopeMap, scope)
 				delete(mgr.scopeScopePermissions, scope)
-				delete(mgr.parentRoleAncestorsCache, scope)
+				delete(mgr.parentRoleAncestors, scope)
 			}
 		}
 

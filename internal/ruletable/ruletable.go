@@ -12,7 +12,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"sync"
 
 	celast "github.com/google/cel-go/common/ast"
 	"go.uber.org/multierr"
@@ -385,15 +384,14 @@ func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver sche
 
 type RuleTable struct {
 	*runtimev1.RuleTable
-	conf                     *evaluator.Conf
-	schemaMgr                schema.Manager
-	primaryIdx               map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
-	principalScopeMap        map[string]struct{}
-	resourceScopeMap         map[string]struct{}
-	scopeScopePermissions    map[string]policyv1.ScopePermissions
-	parentRoleAncestorsCache map[string]map[string][]string
-	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	mu                       sync.Mutex // TODO(saml) if we somehow pre cache `parentRoleAncestorsCache`, we can do away with this mutex
+	conf                  *evaluator.Conf
+	schemaMgr             schema.Manager
+	primaryIdx            map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	principalScopeMap     map[string]struct{}
+	resourceScopeMap      map[string]struct{}
+	scopeScopePermissions map[string]policyv1.ScopePermissions
+	parentRoleAncestors   map[string]map[string][]string
+	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 }
 
 type Row struct {
@@ -451,7 +449,6 @@ type CelProgram struct {
 func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf *schema.Conf) (*RuleTable, error) {
 	rt := &RuleTable{
 		conf: conf,
-		mu:   sync.Mutex{},
 	}
 
 	if err := rt.init(protoRT); err != nil {
@@ -469,28 +466,26 @@ func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf
 func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.RuleTable = protoRT
 
-	rt.mu.Lock()
-
 	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
 	clear(rt.primaryIdx)
 	clear(rt.policyDerivedRoles)
 	clear(rt.principalScopeMap)
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
-	clear(rt.parentRoleAncestorsCache)
+	clear(rt.parentRoleAncestors)
 
 	rt.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
 	rt.principalScopeMap = make(map[string]struct{})
 	rt.resourceScopeMap = make(map[string]struct{})
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
-	rt.parentRoleAncestorsCache = make(map[string]map[string][]string)
-
-	rt.mu.Unlock()
+	rt.parentRoleAncestors = make(map[string]map[string][]string)
 
 	if err := rt.indexRules(rt.Rules); err != nil {
 		return err
 	}
+
+	rt.precompileParentRoles()
 
 	// rules are now indexed, we can clear up any unnecessary transport state
 	clear(rt.Rules)
@@ -882,38 +877,48 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []
 }
 
 func (rt *RuleTable) GetParentRoles(scope string, roles []string) []string {
-	// recursively collect all parent roles, caching the flat list on the very first traversal for
-	// each role within the ruletable
 	parentRoles := make([]string, len(roles))
 	copy(parentRoles, roles)
 
-	rt.mu.Lock()
-	defer rt.mu.Unlock()
-
-	parentRoleAncestorsCache, ok := rt.parentRoleAncestorsCache[scope]
+	scopeCache, ok := rt.parentRoleAncestors[scope]
 	if !ok {
-		parentRoleAncestorsCache = make(map[string][]string)
-		rt.parentRoleAncestorsCache[scope] = parentRoleAncestorsCache
+		return parentRoles
 	}
 
 	for _, role := range roles {
-		var roleParents []string
-		if c, ok := parentRoleAncestorsCache[role]; ok {
-			roleParents = c
-		} else {
-			visited := make(map[string]struct{})
-			roleParentsSet := make(map[string]struct{})
-			rt.collectParentRoles(scope, role, roleParentsSet, visited)
-			roleParents = make([]string, 0, len(roleParentsSet))
-			for r := range roleParentsSet {
-				roleParents = append(roleParents, r)
-			}
-			parentRoleAncestorsCache[role] = roleParents
+		if roleParents, ok := scopeCache[role]; ok {
+			parentRoles = append(parentRoles, roleParents...) //nolint:makezero
 		}
-		parentRoles = append(parentRoles, roleParents...) //nolint:makezero
 	}
 
 	return parentRoles
+}
+
+func (rt *RuleTable) precompileParentRoles() {
+	for scope, parentRoles := range rt.ScopeParentRoles {
+		if parentRoles == nil {
+			continue
+		}
+
+		if _, ok := rt.parentRoleAncestors[scope]; !ok {
+			rt.parentRoleAncestors[scope] = make(map[string][]string)
+		}
+
+		scopeCache := rt.parentRoleAncestors[scope]
+
+		for role := range parentRoles.RoleParentRoles {
+			visited := make(map[string]struct{})
+			roleParentsSet := make(map[string]struct{})
+			rt.collectParentRoles(scope, role, roleParentsSet, visited)
+
+			roleParents := make([]string, 0, len(roleParentsSet))
+			for rp := range roleParentsSet {
+				roleParents = append(roleParents, rp)
+			}
+
+			scopeCache[role] = roleParents
+		}
+	}
 }
 
 func (rt *RuleTable) collectParentRoles(scope, role string, parentRoleSet, visited map[string]struct{}) {
