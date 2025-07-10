@@ -89,10 +89,6 @@ func NewStatic(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runt
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
 	}
 
-	if conf.Enforcement == EnforcementNone {
-		return &StaticManager{}, nil
-	}
-
 	return NewStaticFromConf(conf, schemas, rawSchemas)
 }
 
