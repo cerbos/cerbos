@@ -25,7 +25,7 @@ func Resources(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inp
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.Load(ctx, rt, compiler, store); err != nil {
+	if err := ruletable.LoadPolicies(ctx, rt, compiler); err != nil {
 		return nil, err
 	}
 

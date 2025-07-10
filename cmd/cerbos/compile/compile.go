@@ -140,7 +140,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return err
 		}
 
-		if err := ruletable.Load(ctx, rt, compileMgr, store); err != nil {
+		if err := ruletable.LoadPolicies(ctx, rt, compileMgr); err != nil {
 			return err
 		}
 

@@ -457,7 +457,7 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.Load(ctx, rt, cm, c.store); err != nil {
+	if err := ruletable.LoadPolicies(ctx, rt, cm); err != nil {
 		return nil, err
 	}
 

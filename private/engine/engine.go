@@ -36,7 +36,7 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.Load(ctx, rt, bundleSrc, bundleSrc); err != nil {
+	if err := ruletable.LoadPolicies(ctx, rt, bundleSrc); err != nil {
 		return nil, err
 	}
 

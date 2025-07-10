@@ -60,7 +60,7 @@ func NewProtoRuletable() *runtimev1.RuleTable {
 	}
 }
 
-func Load(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader, sl schema.Loader) error {
+func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader) error {
 	rps, err := pl.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get all policies: %w", err)
@@ -70,6 +70,10 @@ func Load(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLo
 		AddPolicy(rt, p)
 	}
 
+	return nil
+}
+
+func LoadSchemas(ctx context.Context, rt *runtimev1.RuleTable, sl schema.Loader) error {
 	if err := buildRawSchemas(ctx, rt, schema.DefaultResolver(sl)); err != nil {
 		return err
 	}

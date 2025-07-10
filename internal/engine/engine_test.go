@@ -347,7 +347,7 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 	}
 
 	rt := ruletable.NewProtoRuletable()
-	require.NoError(tb, ruletable.Load(ctx, rt, compiler, store))
+	require.NoError(tb, ruletable.LoadPolicies(ctx, rt, compiler))
 
 	schemaConf := schema.NewConf(p.schemaEnforcement)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
@@ -389,7 +389,10 @@ func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFun
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(tb, err)
 
-	err = ruletable.Load(ctx, protoRT, compiler, store)
+	err = ruletable.LoadPolicies(ctx, protoRT, compiler)
+	require.NoError(tb, err)
+
+	err = ruletable.LoadSchemas(ctx, protoRT, store)
 	require.NoError(tb, err)
 
 	evalConf := &evaluator.Conf{}

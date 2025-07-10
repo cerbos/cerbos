@@ -74,7 +74,7 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 		switch event.Kind {
 		case storage.EventReload:
 			if err := mgr.reload(); err != nil {
-				mgr.log.Warnw("Error reloading rule table", "error", err)
+				mgr.log.Warnw("Error reloading rule table, maintaining last valid state", "error", err)
 			}
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			mgr.log.Debugw("Processing storage event", "event", event)
@@ -99,7 +99,7 @@ func (mgr *Manager) reload() error {
 
 	// If compilation fails, maintain the last valid rule table state.
 	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-	if err := Load(ctx, rt, mgr.policyLoader, mgr.schemaLoader); err != nil {
+	if err := LoadPolicies(ctx, rt, mgr.policyLoader); err != nil {
 		mgr.awaitingHealthyPolicyStore.Store(true)
 		return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
 	}
@@ -107,6 +107,8 @@ func (mgr *Manager) reload() error {
 	if err := mgr.init(rt); err != nil {
 		return err
 	}
+
+	mgr.log.Info("Rule table reload successful")
 
 	mgr.awaitingHealthyPolicyStore.Store(false)
 
@@ -148,7 +150,7 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 	}
 
 	if len(evt.Dependents) > 0 {
-		// handle dependents reloading atomically
+		// handle reloading dependents atomically
 		toReload, err := mgr.policyLoader.GetAllMatching(ctx, evt.Dependents)
 		if err != nil {
 			return fmt.Errorf("failed to load dependent policies: %w", err)
