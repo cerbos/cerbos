@@ -1703,11 +1703,11 @@ func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInpu
 	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
 	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
 
-	out, _, err := rt.PlanWithAuditTrail(ctx, input, principalVersion, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
+	out, _, err := rt.planWithAuditTrail(ctx, input, principalVersion, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
 	return out, err
 }
 
-func (rt *RuleTable) PlanWithAuditTrail(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
 
 	_, span := tracing.StartSpan(ctx, "engine.Plan")

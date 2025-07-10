@@ -62,7 +62,7 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.PlanWithAuditTrail(ctx, input, principalVersion, resourceVersion, nowFunc, globals)
+	return mgr.planWithAuditTrail(ctx, input, principalVersion, resourceVersion, nowFunc, globals)
 }
 
 func (mgr *Manager) SubscriberID() string {
