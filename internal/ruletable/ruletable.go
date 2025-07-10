@@ -12,6 +12,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	celast "github.com/google/cel-go/common/ast"
 	"go.uber.org/multierr"
@@ -392,6 +393,7 @@ type RuleTable struct {
 	scopeScopePermissions    map[string]policyv1.ScopePermissions
 	parentRoleAncestorsCache map[string]map[string][]string
 	policyDerivedRoles       map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	mu                       sync.Mutex // TODO(saml) if we somehow pre cache `parentRoleAncestorsCache`, we can do away with this mutex
 }
 
 type Row struct {
@@ -449,6 +451,7 @@ type CelProgram struct {
 func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf *schema.Conf) (*RuleTable, error) {
 	rt := &RuleTable{
 		conf: conf,
+		mu:   sync.Mutex{},
 	}
 
 	if err := rt.init(protoRT); err != nil {
@@ -466,6 +469,8 @@ func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf
 func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.RuleTable = protoRT
 
+	rt.mu.Lock()
+
 	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
 	clear(rt.primaryIdx)
 	clear(rt.policyDerivedRoles)
@@ -480,6 +485,8 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.resourceScopeMap = make(map[string]struct{})
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
 	rt.parentRoleAncestorsCache = make(map[string]map[string][]string)
+
+	rt.mu.Unlock()
 
 	if err := rt.indexRules(rt.Rules); err != nil {
 		return err
@@ -879,6 +886,9 @@ func (rt *RuleTable) GetParentRoles(scope string, roles []string) []string {
 	// each role within the ruletable
 	parentRoles := make([]string, len(roles))
 	copy(parentRoles, roles)
+
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
 
 	parentRoleAncestorsCache, ok := rt.parentRoleAncestorsCache[scope]
 	if !ok {
