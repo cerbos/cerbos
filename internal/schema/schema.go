@@ -107,12 +107,9 @@ func NewStaticFromConf(conf *Conf, schemas map[uint64]*policyv1.Schemas, rawSche
 	}
 	sm.loader = sm
 
-	comp, err := PreCompileSchemas(schemas, rawSchemas)
-	if err != nil {
+	if err := sm.preCompileSchemas(schemas, rawSchemas); err != nil {
 		return nil, err
 	}
-
-	sm.CompiledSchemas = comp
 
 	return sm, nil
 }
@@ -120,12 +117,12 @@ func NewStaticFromConf(conf *Conf, schemas map[uint64]*policyv1.Schemas, rawSche
 type StaticManager struct {
 	conf            *Conf
 	log             *zap.Logger
-	CompiledSchemas map[string]*jsonschema.Schema
+	compiledSchemas map[string]*jsonschema.Schema
 	loader          managerLoader
 }
 
-func PreCompileSchemas(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) (map[string]*jsonschema.Schema, error) {
-	res := make(map[string]*jsonschema.Schema)
+func (m *StaticManager) preCompileSchemas(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) error {
+	m.compiledSchemas = make(map[string]*jsonschema.Schema)
 
 	compiler := jsonschema.NewCompiler()
 	compiler.AssertFormat = true
@@ -133,7 +130,7 @@ func PreCompileSchemas(schemas map[uint64]*policyv1.Schemas, rawSchemas map[stri
 
 	for ref, raw := range rawSchemas {
 		if err := compiler.AddResource(ref, bytes.NewReader(raw.GetContent())); err != nil {
-			return nil, fmt.Errorf("failed to add schema %s: %w", ref, err)
+			return fmt.Errorf("failed to add schema %s: %w", ref, err)
 		}
 	}
 
@@ -143,22 +140,22 @@ func PreCompileSchemas(schemas map[uint64]*policyv1.Schemas, rawSchemas map[stri
 				continue
 			}
 
-			if _, ok := res[r]; !ok {
+			if _, ok := m.compiledSchemas[r]; !ok {
 				comp, err := compiler.Compile(r)
 				if err != nil {
-					return nil, fmt.Errorf("failed to compile schema %s: %w", r, err)
+					return fmt.Errorf("failed to compile schema %s: %w", r, err)
 				}
 
-				res[r] = comp
+				m.compiledSchemas[r] = comp
 			}
 		}
 	}
 
-	return res, nil
+	return nil
 }
 
 func (m *StaticManager) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
-	schema, ok := m.CompiledSchemas[url]
+	schema, ok := m.compiledSchemas[url]
 	if !ok {
 		return nil, fmt.Errorf("schema %q not found", url)
 	}
