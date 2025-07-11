@@ -18,6 +18,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -47,19 +48,20 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-	compiler, err := internalcompile.NewManager(ctx, store, schemaMgr)
+	compiler, err := internalcompile.NewManager(ctx, store)
 	if err != nil {
 		return nil, err
 	}
 
-	rt := ruletable.NewRuletable()
+	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadFromPolicyLoader(ctx, rt, compiler); err != nil {
+	if err := ruletable.LoadPolicies(ctx, rt, compiler); err != nil {
 		return nil, err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +143,6 @@ func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker, opts ...Opt
 
 type checkFunc func(context.Context, []*enginev1.CheckInput, CheckOptions) ([]*enginev1.CheckOutput, error)
 
-func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...internalengine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
 	return f(ctx, inputs, internalengine.ApplyCheckOptions(opts...))
 }

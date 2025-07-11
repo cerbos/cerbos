@@ -133,18 +133,18 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			Trace:                   c.Verbose,
 		}
 
-		rt := ruletable.NewRuletable()
+		rt := ruletable.NewProtoRuletable()
 
-		compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
+		compileMgr, err := compile.NewManager(ctx, store)
 		if err != nil {
 			return err
 		}
 
-		if err := ruletable.LoadFromPolicyLoader(ctx, rt, compileMgr); err != nil {
+		if err := ruletable.LoadPolicies(ctx, rt, compileMgr); err != nil {
 			return err
 		}
 
-		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, schemaMgr)
+		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, store, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}

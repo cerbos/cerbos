@@ -4,6 +4,7 @@
 package schema
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -23,6 +24,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -48,9 +50,13 @@ func (vr *ValidationResult) add(errs ...ValidationError) {
 }
 
 type Manager interface {
+	managerLoader
 	ValidateCheckInput(context.Context, *policyv1.Schemas, *enginev1.CheckInput) (*ValidationResult, error)
 	ValidatePlanResourcesInput(context.Context, *policyv1.Schemas, *enginev1.PlanResourcesInput) (*ValidationResult, error)
-	CheckSchema(context.Context, string) error
+}
+
+type managerLoader interface {
+	LoadSchema(context.Context, string) (*jsonschema.Schema, error)
 }
 
 type Loader interface {
@@ -73,93 +79,97 @@ func (NopManager) ValidatePlanResourcesInput(_ context.Context, _ *policyv1.Sche
 	return alwaysValidResult, nil
 }
 
-func (NopManager) CheckSchema(_ context.Context, _ string) error {
-	return nil
+func (NopManager) LoadSchema(_ context.Context, _ string) (*jsonschema.Schema, error) {
+	return nil, nil
 }
 
-type manager struct {
-	conf     *Conf
-	log      *zap.Logger
-	cache    *cache.Cache[string, *cacheEntry]
-	resolver Resolver
-}
-
-func New(ctx context.Context, loader Loader) (Manager, error) {
+func NewStatic(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) (Manager, error) {
 	conf, err := GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
 	}
 
-	return NewFromConf(ctx, loader, conf), nil
+	return NewStaticFromConf(conf, schemas, rawSchemas)
 }
 
-func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
+func NewStaticFromConf(conf *Conf, schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) (Manager, error) {
 	if conf.Enforcement == EnforcementNone {
-		return NopManager{}
+		return NopManager{}, nil
 	}
 
-	mgr := &manager{
-		conf:     conf,
-		log:      zap.L().Named("schema"),
-		cache:    cache.New[string, *cacheEntry]("schema", conf.CacheSize),
-		resolver: defaultResolver(loader),
+	sm := &StaticManager{
+		conf: conf,
+		log:  zap.L().Named("schema"),
+	}
+	sm.loader = sm
+
+	if err := sm.preCompileSchemas(schemas, rawSchemas); err != nil {
+		return nil, err
 	}
 
-	if s, ok := loader.(storage.Subscribable); ok {
-		s.Subscribe(mgr)
-	}
-
-	return mgr
+	return sm, nil
 }
 
-func NewEphemeral(resolver Resolver) Manager {
-	mgr := &manager{
-		conf:     NewConf(EnforcementReject),
-		log:      zap.L().Named("schema"),
-		cache:    cache.New[string, *cacheEntry]("schema", defaultCacheSize),
-		resolver: resolver,
-	}
-
-	return mgr
+type StaticManager struct {
+	conf            *Conf
+	log             *zap.Logger
+	compiledSchemas map[string]*jsonschema.Schema
+	loader          managerLoader
 }
 
-func defaultResolver(loader Loader) Resolver {
-	return func(ctx context.Context, path string) (io.ReadCloser, error) {
-		u, err := url.Parse(path)
-		if err != nil {
-			return nil, err
+func (m *StaticManager) preCompileSchemas(schemas map[uint64]*policyv1.Schemas, rawSchemas map[string]*runtimev1.RuleTable_JSONSchema) error {
+	m.compiledSchemas = make(map[string]*jsonschema.Schema)
+
+	compiler := jsonschema.NewCompiler()
+	compiler.AssertFormat = true
+	compiler.AssertContent = true
+
+	for ref, raw := range rawSchemas {
+		if err := compiler.AddResource(ref, bytes.NewReader(raw.GetContent())); err != nil {
+			return fmt.Errorf("failed to add schema %s: %w", ref, err)
 		}
-
-		if u.Scheme == "" || u.Scheme == URLScheme {
-			relativePath := strings.TrimPrefix(u.Path, "/")
-			return loader.LoadSchema(ctx, relativePath)
-		}
-
-		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
-		if !ok {
-			return nil, jsonschema.LoaderNotFoundError(path)
-		}
-		return schemaLoader(path)
 	}
+
+	for _, schema := range schemas {
+		for _, r := range []string{schema.GetPrincipalSchema().GetRef(), schema.GetResourceSchema().GetRef()} {
+			if r == "" {
+				continue
+			}
+
+			if _, ok := m.compiledSchemas[r]; !ok {
+				comp, err := compiler.Compile(r)
+				if err != nil {
+					return fmt.Errorf("failed to compile schema %s: %w", r, err)
+				}
+
+				m.compiledSchemas[r] = comp
+			}
+		}
+	}
+
+	return nil
 }
 
-func (m *manager) CheckSchema(ctx context.Context, url string) error {
-	_, err := m.loadSchema(ctx, url)
-	return err
+func (m *StaticManager) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+	schema, ok := m.compiledSchemas[url]
+	if !ok {
+		return nil, fmt.Errorf("schema %q not found", url)
+	}
+	return schema, nil
 }
 
-func (m *manager) ValidateCheckInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.CheckInput) (*ValidationResult, error) {
+func (m *StaticManager) ValidateCheckInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.CheckInput) (*ValidationResult, error) {
 	return m.validate(ctx, schemas, input.Principal.Attr, input.Resource.Attr, input.Actions, nil)
 }
 
-func (m *manager) ValidatePlanResourcesInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.PlanResourcesInput) (*ValidationResult, error) {
+func (m *StaticManager) ValidatePlanResourcesInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.PlanResourcesInput) (*ValidationResult, error) {
 	return m.validate(ctx, schemas, input.Principal.Attr, input.Resource.Attr, input.Actions, func(err *jsonschema.ValidationError) bool {
 		// resource attributes are optional for query planning, so ignore errors from required properties
 		return !strings.HasSuffix(err.KeywordLocation, "/required")
 	})
 }
 
-func (m *manager) validate(ctx context.Context, schemas *policyv1.Schemas, principalAttr, resourceAttr map[string]*structpb.Value, actions []string, resourceErrorFilter validationErrorFilter) (*ValidationResult, error) {
+func (m *StaticManager) validate(ctx context.Context, schemas *policyv1.Schemas, principalAttr, resourceAttr map[string]*structpb.Value, actions []string, resourceErrorFilter validationErrorFilter) (*ValidationResult, error) {
 	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
 	if schemas == nil {
 		return result, nil
@@ -191,7 +201,7 @@ func (m *manager) validate(ctx context.Context, schemas *policyv1.Schemas, princ
 	return result, nil
 }
 
-func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *policyv1.Schemas_Schema, attr map[string]*structpb.Value, actions []string, errorFilter validationErrorFilter) error {
+func (m *StaticManager) validateAttr(ctx context.Context, src ErrSource, schemaRef *policyv1.Schemas_Schema, attr map[string]*structpb.Value, actions []string, errorFilter validationErrorFilter) error {
 	if schemaRef == nil || schemaRef.Ref == "" {
 		return nil
 	}
@@ -210,7 +220,7 @@ func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *po
 		}
 	}
 
-	schema, err := m.loadSchema(ctx, schemaRef.Ref)
+	schema, err := m.loader.LoadSchema(ctx, schemaRef.Ref)
 	if err != nil {
 		m.log.Warn("Failed to load schema", zap.String("schema", schemaRef.Ref), zap.Error(err))
 		return newSchemaLoadErr(src, schemaRef.Ref)
@@ -246,7 +256,78 @@ func attrToJSONObject(src ErrSource, attr map[string]*structpb.Value) (any, erro
 	return gjson.GetBytes(jsonBytes, attrPath).Value(), nil
 }
 
-func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+type manager struct {
+	StaticManager
+	cache    *cache.Cache[string, *cacheEntry]
+	resolver Resolver
+}
+
+func New(ctx context.Context, loader Loader) (Manager, error) {
+	conf, err := GetConf()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
+	}
+
+	return NewFromConf(ctx, loader, conf), nil
+}
+
+func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
+	if conf.Enforcement == EnforcementNone {
+		return NopManager{}
+	}
+
+	mgr := &manager{
+		StaticManager: StaticManager{
+			conf: conf,
+			log:  zap.L().Named("schema"),
+		},
+		cache:    cache.New[string, *cacheEntry]("schema", conf.CacheSize),
+		resolver: DefaultResolver(loader),
+	}
+	mgr.loader = mgr
+
+	if s, ok := loader.(storage.Subscribable); ok {
+		s.Subscribe(mgr)
+	}
+
+	return mgr
+}
+
+func NewEphemeral(resolver Resolver) Manager {
+	mgr := &manager{
+		StaticManager: StaticManager{
+			conf: NewConf(EnforcementReject),
+			log:  zap.L().Named("schema"),
+		},
+		cache:    cache.New[string, *cacheEntry]("schema", defaultCacheSize),
+		resolver: resolver,
+	}
+	mgr.loader = mgr
+
+	return mgr
+}
+
+func DefaultResolver(loader Loader) Resolver {
+	return func(ctx context.Context, path string) (io.ReadCloser, error) {
+		u, err := url.Parse(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if u.Scheme == "" || u.Scheme == URLScheme {
+			relativePath := strings.TrimPrefix(u.Path, "/")
+			return loader.LoadSchema(ctx, relativePath)
+		}
+
+		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
+		if !ok {
+			return nil, jsonschema.LoaderNotFoundError(path)
+		}
+		return schemaLoader(path)
+	}
+}
+
+func (m *manager) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
 	entry, ok := m.cache.Get(url)
 	if ok {
 		return entry.schema, entry.err

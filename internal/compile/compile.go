@@ -44,6 +44,9 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	return errs.ErrOrNil()
 }
 
+// Compile compiles a single policy compilation unit into a runnable policy set.
+// The schemaMgr parameter is optional - pass nil to skip schema validation,
+// or provide a SchemaManager instance to enable validation against schema files.
 func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
@@ -183,8 +186,10 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		return nil, nil
 	}
 
-	if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
-		return nil, nil
+	if schemaMgr != nil {
+		if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
+			return nil, nil
+		}
 	}
 
 	compilePolicyConstants(modCtx, rp.Constants)
@@ -347,13 +352,13 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 	}
 
 	if ps := rp.Schemas.PrincipalSchema; ps != nil && ps.Ref != "" {
-		if err := schemaMgr.CheckSchema(context.TODO(), ps.Ref); err != nil {
+		if _, err := schemaMgr.LoadSchema(context.TODO(), ps.Ref); err != nil {
 			modCtx.addErrForProtoPath(policy.ResourcePolicyPrincipalSchemaProtoPath(), errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
 		}
 	}
 
 	if rs := rp.Schemas.ResourceSchema; rs != nil && rs.Ref != "" {
-		if err := schemaMgr.CheckSchema(context.TODO(), rs.Ref); err != nil {
+		if _, err := schemaMgr.LoadSchema(context.TODO(), rs.Ref); err != nil {
 			modCtx.addErrForProtoPath(policy.ResourcePolicyResourceSchemaProtoPath(), errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
 		}
 	}

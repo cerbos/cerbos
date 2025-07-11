@@ -241,6 +241,13 @@ func (ls *LocalSource) GetAll(ctx context.Context) (pss []*runtimev1.RunnablePol
 	return pss, err
 }
 
+func (ls *LocalSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) (pss []*runtimev1.RunnablePolicySet, err error) {
+	ls.mu.RLock()
+	pss, err = ls.bundle.GetAllMatching(ctx, modIDs)
+	ls.mu.RUnlock()
+	return pss, err
+}
+
 func (ls *LocalSource) Reload(_ context.Context) error {
 	return ls.loadBundle()
 }

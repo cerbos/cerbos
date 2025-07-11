@@ -31,6 +31,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
@@ -45,54 +46,71 @@ var dummy int
 
 func TestCheck(t *testing.T) {
 	mockAuditLog := &mockAuditLog{}
-	eng, cancelFunc := mkEngine(t, param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone})
-	defer cancelFunc()
+	params := param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone}
+
+	eng, engCancelFunc := mkEngine(t, params)
+	defer engCancelFunc()
+
+	rt, rtCancelFunc := mkRuleTable(t, params)
+	defer rtCancelFunc()
+
+	evaluators := map[string]evaluator.Evaluator{
+		"engine":    eng,
+		"ruletable": rt,
+	}
 
 	testCases := test.LoadTestCases(t, "engine")
 
-	for _, tcase := range testCases {
-		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readTestCase(t, tcase.Input)
-			mockAuditLog.clear()
+	for evalName, eval := range evaluators {
+		t.Run(evalName, func(t *testing.T) {
+			for _, tcase := range testCases {
+				t.Run(tcase.Name, func(t *testing.T) {
+					tc := readTestCase(t, tcase.Input)
+					mockAuditLog.clear()
 
-			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(traceCollector))
+					traceCollector := tracer.NewCollector()
+					haveOutputs, err := eval.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(traceCollector))
 
-			if tc.WantError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-
-			for i, have := range haveOutputs {
-				// TODO(saml) I can't, for the life of me, figure out out to order this via a transformation
-				// function in `cmp.Diff` below, so this'll have to do for now
-				slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
-					if a.Src < b.Src {
-						return -1
-					} else if a.Src > b.Src {
-						return 1
+					if tc.WantError {
+						require.Error(t, err)
+					} else {
+						require.NoError(t, err)
 					}
-					return 0
+
+					for i, have := range haveOutputs {
+						slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
+							if a.Src < b.Src {
+								return -1
+							} else if a.Src > b.Src {
+								return 1
+							}
+							return 0
+						})
+
+						require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+							have,
+							protocmp.Transform(),
+							protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+						))
+					}
+
+					haveDecisionLogs := mockAuditLog.getDecisionLogs()
+
+					// ruletable calls do not return audit logs
+					if evalName == "ruletable" {
+						tc.WantDecisionLogs = nil
+					}
+
+					require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
+						haveDecisionLogs,
+						protocmp.Transform(),
+						protocmp.IgnoreEmptyMessages(),
+						protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+						protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
+						protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
+					))
 				})
-
-				require.Empty(t, cmp.Diff(tc.WantOutputs[i],
-					have,
-					protocmp.Transform(),
-					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-				))
 			}
-
-			haveDecisionLogs := mockAuditLog.getDecisionLogs()
-
-			require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
-				haveDecisionLogs,
-				protocmp.Transform(),
-				protocmp.IgnoreEmptyMessages(),
-				protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-				protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
-				protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
-			))
 		})
 	}
 
@@ -152,7 +170,7 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 			mockAuditLog.clear()
 
 			traceCollector := tracer.NewCollector()
-			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(traceCollector))
+			haveOutputs, err := eng.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(traceCollector))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -161,8 +179,6 @@ func TestCheckWithLenientScopeSearch(t *testing.T) {
 			}
 
 			for i, have := range haveOutputs {
-				// TODO(saml) I can't, for the life of me, figure out out to order this via a transformation
-				// function in `cmp.Diff` below, so this'll have to do for now
 				slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
 					if a.Src < b.Src {
 						return -1
@@ -209,7 +225,7 @@ func TestSchemaValidation(t *testing.T) {
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
 
-					haveOutputs, err := eng.Check(t.Context(), tc.Inputs, WithTraceSink(newTestTraceSink(t)))
+					haveOutputs, err := eng.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(newTestTraceSink(t)))
 
 					if tc.WantError {
 						require.Error(t, err)
@@ -274,7 +290,7 @@ func BenchmarkCheck(b *testing.B) {
 	}
 }
 
-func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
+func runBenchmarks(b *testing.B, eng evaluator.Evaluator, testCases []test.Case) {
 	b.Helper()
 
 	for _, tcase := range testCases {
@@ -306,7 +322,7 @@ type param struct {
 	auditLog           audit.Log
 }
 
-func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
+func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) {
 	tb.Helper()
 
 	if p.subDir == "" {
@@ -319,10 +335,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	schemaConf := schema.NewConf(p.schemaEnforcement)
-	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
-
-	compiler, err := compile.NewManager(ctx, store, schemaMgr)
+	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(tb, err)
 
 	var auditLog audit.Log
@@ -342,18 +355,21 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
-	rt := ruletable.NewRuletable()
-	require.NoError(tb, ruletable.LoadFromPolicyLoader(ctx, rt, compiler))
+	rt := ruletable.NewProtoRuletable()
+	require.NoError(tb, ruletable.LoadPolicies(ctx, rt, compiler))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	schemaConf := schema.NewConf(p.schemaEnforcement)
+	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
 	require.NoError(tb, err)
 
-	engineConf := &Conf{}
-	engineConf.SetDefaults()
-	engineConf.Globals = map[string]any{"environment": "test"}
-	engineConf.LenientScopeSearch = p.lenientScopeSearch
+	evalConf := &evaluator.Conf{}
+	evalConf.SetDefaults()
+	evalConf.Globals = map[string]any{"environment": "test"}
+	evalConf.LenientScopeSearch = p.lenientScopeSearch
 
-	eng := NewFromConf(ctx, engineConf, Components{
+	eng := NewFromConf(ctx, evalConf, Components{
 		PolicyLoader:      compiler,
 		RuleTableManager:  ruletableMgr,
 		SchemaMgr:         schemaMgr,
@@ -362,6 +378,41 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	})
 
 	return eng, cancelFunc
+}
+
+func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) {
+	tb.Helper()
+
+	if p.subDir == "" {
+		p.subDir = "store"
+	}
+	dir := test.PathToDir(tb, p.subDir)
+
+	ctx, cancelFunc := context.WithCancel(tb.Context())
+
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
+	require.NoError(tb, err)
+
+	protoRT := ruletable.NewProtoRuletable()
+
+	compiler, err := compile.NewManager(ctx, store)
+	require.NoError(tb, err)
+
+	err = ruletable.LoadPolicies(ctx, protoRT, compiler)
+	require.NoError(tb, err)
+
+	err = ruletable.LoadSchemas(ctx, protoRT, store)
+	require.NoError(tb, err)
+
+	evalConf := &evaluator.Conf{}
+	evalConf.SetDefaults()
+	evalConf.Globals = map[string]any{"environment": "test"}
+	evalConf.LenientScopeSearch = p.lenientScopeSearch
+
+	rt, err := ruletable.NewRuleTable(protoRT, evalConf, schema.NewConf(p.schemaEnforcement))
+	require.NoError(tb, err)
+
+	return rt, cancelFunc
 }
 
 func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite {
@@ -411,7 +462,7 @@ func TestQueryPlan(t *testing.T) {
 					} else {
 						request.Actions = []string{tt.Action} //nolint:staticcheck
 					}
-					response, err := eng.PlanResources(t.Context(), request, WithNowFunc(func() time.Time { return timestamp }))
+					response, err := eng.Plan(t.Context(), request, evaluator.WithNowFunc(func() time.Time { return timestamp }))
 					if tt.WantErr {
 						is.Error(err)
 					} else {
