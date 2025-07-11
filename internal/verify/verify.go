@@ -12,7 +12,7 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/validator"
@@ -26,7 +26,7 @@ type Config struct {
 }
 
 type Checker interface {
-	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error)
+	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error)
 }
 
 // Verify runs the test suites from the provided directory.

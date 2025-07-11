@@ -1,18 +1,23 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package engine
+package evaluator
 
 import (
 	"errors"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
-const confKey = "engine"
+const (
+	confKey = "engine"
+
+	defaultPolicyLoaderTimeout = 2 * time.Second
+)
 
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
@@ -24,7 +29,9 @@ type Conf struct {
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",example=\"default\""`
 	// LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
 	LenientScopeSearch bool `yaml:"lenientScopeSearch" conf:",example=false"`
-	NumWorkers         uint `yaml:"numWorkers" conf:",ignore"`
+	// PolicyLoaderTimeout is the timeout for loading policies from the policy store.
+	PolicyLoaderTimeout time.Duration `yaml:"policyLoaderTimeout" conf:",example=2s"`
+	NumWorkers          uint          `yaml:"numWorkers" conf:",ignore"`
 }
 
 func (c *Conf) Key() string {
@@ -33,6 +40,7 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.DefaultPolicyVersion = namer.DefaultVersion
+	c.PolicyLoaderTimeout = defaultPolicyLoaderTimeout
 	c.NumWorkers = uint(runtime.NumCPU() + 4) //nolint:mnd
 }
 

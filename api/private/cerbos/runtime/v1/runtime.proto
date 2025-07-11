@@ -73,11 +73,16 @@ message RuleTable {
     map<string, RunnableDerivedRole> derived_roles = 1;
   }
 
+  message JSONSchema {
+    bytes content = 1;
+  }
+
   repeated RuleRow rules = 1;
   map<uint64, cerbos.policy.v1.Schemas> schemas = 2;
   map<uint64, RuleTableMetadata> meta = 3;
   map<string, RoleParentRoles> scope_parent_roles = 4;
   map<uint64, PolicyDerivedRoles> policy_derived_roles = 5;
+  map<string, JSONSchema> json_schemas = 6;
 }
 
 message RuleTableMetadata {

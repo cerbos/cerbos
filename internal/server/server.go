@@ -127,19 +127,13 @@ func Start(ctx context.Context) error {
 		return fmt.Errorf("failed to create store: %w", err)
 	}
 
-	// create schema manager
-	schemaMgr, err := internalSchema.New(ctx, store)
-	if err != nil {
-		return fmt.Errorf("failed to create schema manager: %w", err)
-	}
-
 	var policyLoader policyloader.PolicyLoader
 	switch st := store.(type) {
 	// Overlay needs to take precedence over BinaryStore in this type switch,
 	// as our overlay store implements BinaryStore also
 	case overlay.Overlay:
 		// create wrapped policy loader
-		pl, err := st.GetOverlayPolicyLoader(ctx, schemaMgr)
+		pl, err := st.GetOverlayPolicyLoader(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to create overlay policy loader: %w", err)
 		}
@@ -149,7 +143,7 @@ func Start(ctx context.Context) error {
 
 	case storage.SourceStore:
 		// create compile manager
-		policyLoader, err = compile.NewManager(ctx, st, schemaMgr)
+		policyLoader, err = compile.NewManager(ctx, st)
 		if err != nil {
 			return fmt.Errorf("failed to create compile manager: %w", err)
 		}
@@ -157,13 +151,19 @@ func Start(ctx context.Context) error {
 		return ErrInvalidStore
 	}
 
-	rt := ruletable.NewRuletable()
+	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadFromPolicyLoader(ctx, rt, policyLoader); err != nil {
+	if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
 		return err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, schemaMgr)
+	// create schema manager
+	schemaMgr, err := internalSchema.New(ctx, store)
+	if err != nil {
+		return fmt.Errorf("failed to create schema manager: %w", err)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, store, schemaMgr)
 	if err != nil {
 		return fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

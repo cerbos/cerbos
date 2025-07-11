@@ -6,17 +6,15 @@ package ruletable
 import (
 	"context"
 	"fmt"
+	"io"
 	"maps"
 	"reflect"
 	"slices"
 	"sort"
 	"strings"
-	"sync"
-	"sync/atomic"
 
 	celast "github.com/google/cel-go/common/ast"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -29,18 +27,20 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 )
+
+var _ evaluator.Evaluator = (*RuleTable)(nil)
 
 const (
 	allowActionsIdxKey      = "\x00_cerbos_reserved_allow_actions"
@@ -49,46 +49,57 @@ const (
 	noPolicyMatch           = "NO_MATCH"
 )
 
-func NewRuletable() *runtimev1.RuleTable {
+func NewProtoRuletable() *runtimev1.RuleTable {
 	return &runtimev1.RuleTable{
 		Rules:              []*runtimev1.RuleTable_RuleRow{},
 		Schemas:            make(map[uint64]*policyv1.Schemas),
 		Meta:               make(map[uint64]*runtimev1.RuleTableMetadata),
 		ScopeParentRoles:   make(map[string]*runtimev1.RuleTable_RoleParentRoles),
 		PolicyDerivedRoles: make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
+		JsonSchemas:        make(map[string]*runtimev1.RuleTable_JSONSchema),
 	}
 }
 
-func LoadFromPolicyLoader(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader) error {
+func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader) error {
 	rps, err := pl.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get all policies: %w", err)
 	}
 
 	for _, p := range rps {
-		AddPolicy(rt, p)
+		rt.Rules = slices.Concat(rt.Rules, AddPolicy(rt, p))
 	}
 
 	return nil
 }
 
-func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet) {
-	switch rps.PolicySet.(type) {
-	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		addResourcePolicy(rt, rps.GetResourcePolicy())
-	case *runtimev1.RunnablePolicySet_RolePolicy:
-		addRolePolicy(rt, rps.GetRolePolicy())
-	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
-		addPrincipalPolicy(rt, rps.GetPrincipalPolicy())
+func LoadSchemas(ctx context.Context, rt *runtimev1.RuleTable, sl schema.Loader) error {
+	if err := buildRawSchemas(ctx, rt, schema.DefaultResolver(sl)); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincipalPolicySet) {
+func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet) []*runtimev1.RuleTable_RuleRow {
+	switch rps.PolicySet.(type) {
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		return addResourcePolicy(rt, rps.GetResourcePolicy())
+	case *runtimev1.RunnablePolicySet_RolePolicy:
+		return addRolePolicy(rt, rps.GetRolePolicy())
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		return addPrincipalPolicy(rt, rps.GetPrincipalPolicy())
+	}
+
+	return nil
+}
+
+func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincipalPolicySet) (res []*runtimev1.RuleTable_RuleRow) {
 	principalID := rpps.Meta.Principal
 
 	policies := rpps.GetPolicies()
 	if len(policies) == 0 {
-		return
+		return res
 	}
 
 	// We only process the first of principal policy sets as it's assumed parent scopes are handled in separate calls
@@ -113,7 +124,7 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 		// where a tenant might want to "inherit" the permissions of the parent by immediately falling
 		// through). We do this by creating a noop row in the rule table which means we bypass the
 		// "policy does not exist in the scope" during evaluation.
-		insertRule(rt, &runtimev1.RuleTable_RuleRow{
+		res = append(res, &runtimev1.RuleTable_RuleRow{
 			OriginFqn:         rpps.Meta.Fqn,
 			Scope:             p.Scope,
 			ScopePermissions:  scopePermissions,
@@ -176,17 +187,19 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 				row.Effect = effectv1.Effect_EFFECT_DENY
 			}
 
-			insertRule(rt, row)
+			res = append(res, row)
 		}
 	}
+
+	return res
 }
 
-func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResourcePolicySet) {
+func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResourcePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
 	sanitizedResource := namer.SanitizedResource(rrps.Meta.Resource)
 
 	policies := rrps.GetPolicies()
 	if len(policies) == 0 {
-		return
+		return res
 	}
 
 	// we only process the first of resource policy sets as it's assumed parent scopes are handled in separate calls
@@ -216,7 +229,7 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 		// where a tenant might want to "inherit" the permissions of the parent by immediately falling
 		// through). We do this by creating a noop row in the rule table which means we bypass the
 		// "policy does not exist in the scope" during evaluation.
-		insertRule(rt, &runtimev1.RuleTable_RuleRow{
+		res = append(res, &runtimev1.RuleTable_RuleRow{
 			OriginFqn:         rrps.Meta.Fqn,
 			Resource:          sanitizedResource,
 			Scope:             p.Scope,
@@ -277,7 +290,7 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 					row.Effect = effectv1.Effect_EFFECT_DENY
 				}
 
-				insertRule(rt, row)
+				res = append(res, row)
 			}
 
 			// merge derived roles as roles with added conditions
@@ -326,15 +339,17 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 							row.Effect = effectv1.Effect_EFFECT_DENY
 						}
 
-						insertRule(rt, row)
+						res = append(res, row)
 					}
 				}
 			}
 		}
 	}
+
+	return res
 }
 
-func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) {
+func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
 	version := "default" //nolint:goconst
 	moduleID := namer.GenModuleIDFromFQN(p.Meta.Fqn)
 	rt.Meta[moduleID.RawValue()] = &runtimev1.RuleTableMetadata{
@@ -346,7 +361,7 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 	}
 	for resource, rl := range p.Resources {
 		for idx, rule := range rl.Rules {
-			insertRule(rt, &runtimev1.RuleTable_RuleRow{
+			res = append(res, &runtimev1.RuleTable_RuleRow{
 				OriginFqn: p.Meta.Fqn,
 				Role:      p.Role,
 				Resource:  resource,
@@ -374,27 +389,43 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 	rt.ScopeParentRoles[p.Scope].RoleParentRoles[p.Role] = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{
 		Roles: p.ParentRoles,
 	}
+
+	return res
 }
 
-// TODO(saml) make idempotent.
-func insertRule(rt *runtimev1.RuleTable, r *runtimev1.RuleTable_RuleRow) {
-	rt.Rules = append(rt.Rules, r)
+func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver schema.Resolver) error {
+	for _, s := range rt.Schemas {
+		for _, r := range []string{s.GetPrincipalSchema().GetRef(), s.GetResourceSchema().GetRef()} {
+			if r != "" {
+				rc, err := resolver(ctx, r)
+				if err != nil {
+					return err
+				}
+
+				schBytes, err := io.ReadAll(rc)
+				if err != nil {
+					return err
+				}
+
+				rt.JsonSchemas[r] = &runtimev1.RuleTable_JSONSchema{
+					Content: schBytes,
+				}
+			}
+		}
+	}
+	return nil
 }
 
-type Manager struct {
+type RuleTable struct {
 	*runtimev1.RuleTable
-	log                        *zap.SugaredLogger
-	policyLoader               policyloader.PolicyLoader
-	schemaMgr                  schema.Manager
-	primaryIdx                 map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
-	principalScopeMap          map[string]struct{}
-	resourceScopeMap           map[string]struct{}
-	scopeScopePermissions      map[string]policyv1.ScopePermissions
-	parentRoleAncestorsCache   map[string]map[string][]string
-	policyDerivedRoles         map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	isStale                    atomic.Bool // TODO(saml) remove this once rule table patching is added
-	awaitingHealthyPolicyStore atomic.Bool // TODO(saml) remove this once rule table patching is added
-	mu                         sync.RWMutex
+	conf                  *evaluator.Conf
+	schemaMgr             schema.Manager
+	primaryIdx            map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]]
+	principalScopeMap     map[string]struct{}
+	resourceScopeMap      map[string]struct{}
+	scopeScopePermissions map[string]policyv1.ScopePermissions
+	parentRoleAncestors   map[string]map[string][]string
+	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 }
 
 type Row struct {
@@ -448,70 +479,87 @@ type CelProgram struct {
 	Name string
 }
 
-func NewRuleTableManager(rt *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
-	mgr := &Manager{
-		log: zap.S().Named("ruletable"),
-		// TODO(saml) ultimately, the policyLoader should not be attached to the rule table manager. On policy changes, we'll need a separate
-		// mechanism that patches rule tables and reapplies them. This'll be done in a future refactor
-		policyLoader:               policyLoader,
-		schemaMgr:                  schemaMgr,
-		awaitingHealthyPolicyStore: atomic.Bool{},
+// TODO(saml) this is a currently unused function that will ultimately be reworked into the instantiation for ePDP or bundle PDPs.
+func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf *schema.Conf) (*RuleTable, error) {
+	rt := &RuleTable{
+		conf: conf,
 	}
 
-	if err := mgr.load(rt); err != nil {
+	if err := rt.init(protoRT); err != nil {
 		return nil, err
 	}
 
-	return mgr, nil
+	var err error
+	if rt.schemaMgr, err = schema.NewStaticFromConf(schemaConf, protoRT.Schemas, protoRT.JsonSchemas); err != nil {
+		return nil, err
+	}
+
+	return rt, nil
 }
 
-func (mgr *Manager) load(rt *runtimev1.RuleTable) error {
-	mgr.RuleTable = rt
+func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
+	rt.RuleTable = protoRT
 
 	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
-	clear(mgr.primaryIdx)
-	clear(mgr.policyDerivedRoles)
-	clear(mgr.principalScopeMap)
-	clear(mgr.resourceScopeMap)
-	clear(mgr.scopeScopePermissions)
-	clear(mgr.parentRoleAncestorsCache)
+	clear(rt.primaryIdx)
+	clear(rt.policyDerivedRoles)
+	clear(rt.principalScopeMap)
+	clear(rt.resourceScopeMap)
+	clear(rt.scopeScopePermissions)
+	clear(rt.parentRoleAncestors)
 
-	mgr.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
-	mgr.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
-	mgr.principalScopeMap = make(map[string]struct{})
-	mgr.resourceScopeMap = make(map[string]struct{})
-	mgr.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
-	mgr.parentRoleAncestorsCache = make(map[string]map[string][]string)
+	rt.primaryIdx = make(map[string]map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
+	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
+	rt.principalScopeMap = make(map[string]struct{})
+	rt.resourceScopeMap = make(map[string]struct{})
+	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
+	rt.parentRoleAncestors = make(map[string]map[string][]string)
 
-	for _, r := range mgr.Rules {
+	if err := rt.indexRules(rt.Rules); err != nil {
+		return err
+	}
+
+	rt.precompileParentRoles()
+
+	// rules are now indexed, we can clear up any unnecessary transport state
+	clear(rt.Rules)
+	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
+
+	clear(rt.PolicyDerivedRoles)
+
+	return nil
+}
+
+func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
+	for _, rule := range rules {
 		row := &Row{
-			RuleTable_RuleRow: r,
+			RuleTable_RuleRow: rule,
 		}
 
-		switch r.PolicyKind { //nolint:exhaustive
+		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
-			if !r.FromRolePolicy { //nolint:nestif
-				params, err := generateRowParams(r.OriginFqn, r.Params.OrderedVariables, r.Params.Constants)
+			if !rule.FromRolePolicy { //nolint:nestif
+				params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
 				if err != nil {
 					return err
 				}
 				row.Params = params
-				if r.OriginDerivedRole != "" {
-					drParams, err := generateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.DerivedRoleParams.OrderedVariables, r.DerivedRoleParams.Constants)
+				if rule.OriginDerivedRole != "" {
+					drParams, err := generateRowParams(namer.DerivedRolesFQN(rule.OriginDerivedRole), rule.DerivedRoleParams.OrderedVariables, rule.DerivedRoleParams.Constants)
 					if err != nil {
 						return err
 					}
 					row.DerivedRoleParams = drParams
 				}
 
-				modID := namer.GenModuleIDFromFQN(r.OriginFqn)
-				if pdr, ok := mgr.PolicyDerivedRoles[modID.RawValue()]; ok {
-					if _, ok := mgr.policyDerivedRoles[modID]; !ok {
-						mgr.policyDerivedRoles[modID] = make(map[string]*WrappedRunnableDerivedRole)
+				modID := namer.GenModuleIDFromFQN(rule.OriginFqn)
+				if pdr, ok := rt.PolicyDerivedRoles[modID.RawValue()]; ok {
+					if _, ok := rt.policyDerivedRoles[modID]; !ok {
+						rt.policyDerivedRoles[modID] = make(map[string]*WrappedRunnableDerivedRole)
 					}
 
 					for n, dr := range pdr.DerivedRoles {
-						mgr.policyDerivedRoles[modID][n] = &WrappedRunnableDerivedRole{
+						rt.policyDerivedRoles[modID][n] = &WrappedRunnableDerivedRole{
 							RunnableDerivedRole: dr,
 							Constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
 						}
@@ -519,19 +567,15 @@ func (mgr *Manager) load(rt *runtimev1.RuleTable) error {
 				}
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
-			params, err := generateRowParams(r.OriginFqn, r.Params.OrderedVariables, r.Params.Constants)
+			params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
 			if err != nil {
 				return err
 			}
 			row.Params = params
 		}
 
-		mgr.indexRule(row)
+		rt.indexRule(row)
 	}
-
-	// rules are now indexed, we can clear up any unnecessary transport state
-	clear(mgr.Rules)
-	clear(mgr.PolicyDerivedRoles)
 
 	return nil
 }
@@ -569,24 +613,24 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	return progs, nil
 }
 
-func (mgr *Manager) indexRule(r *Row) {
+func (rt *RuleTable) indexRule(r *Row) {
 	if r.ScopePermissions != policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-		mgr.scopeScopePermissions[r.Scope] = r.ScopePermissions
+		rt.scopeScopePermissions[r.Scope] = r.ScopePermissions
 	}
 
 	switch r.PolicyKind { //nolint:exhaustive
 	case policyv1.Kind_KIND_PRINCIPAL:
-		mgr.principalScopeMap[r.Scope] = struct{}{}
+		rt.principalScopeMap[r.Scope] = struct{}{}
 	case policyv1.Kind_KIND_RESOURCE:
-		mgr.resourceScopeMap[r.Scope] = struct{}{}
+		rt.resourceScopeMap[r.Scope] = struct{}{}
 	}
 
 	// index as `version->scope->role_glob->action_glob`
 	{
-		scopeMap, ok := mgr.primaryIdx[r.Version]
+		scopeMap, ok := rt.primaryIdx[r.Version]
 		if !ok {
 			scopeMap = make(map[string]*util.GlobMap[*util.GlobMap[[]*Row]])
-			mgr.primaryIdx[r.Version] = scopeMap
+			rt.primaryIdx[r.Version] = scopeMap
 		}
 
 		roleMap, ok := scopeMap[r.Scope]
@@ -612,11 +656,11 @@ func (mgr *Manager) indexRule(r *Row) {
 	}
 }
 
-func (mgr *Manager) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
-	return mgr.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
+func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
+	return rt.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }
 
-func (mgr *Manager) GetAllScopes(pt policy.Kind, scope, name, version string) ([]string, string, string) {
+func (rt *RuleTable) GetAllScopes(pt policy.Kind, scope, name, version string) ([]string, string, string) {
 	var firstPolicyKey, firstFqn string
 	var scopes []string
 
@@ -628,14 +672,14 @@ func (mgr *Manager) GetAllScopes(pt policy.Kind, scope, name, version string) ([
 		fqnFn = namer.ResourcePolicyFQN
 	}
 
-	if mgr.ScopeExists(pt, scope) {
+	if rt.ScopeExists(pt, scope) {
 		firstFqn = fqnFn(name, version, scope)
 		firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
 		scopes = append(scopes, scope)
 	}
 
 	for s := range namer.ScopeParents(scope) {
-		if mgr.ScopeExists(pt, s) {
+		if rt.ScopeExists(pt, s) {
 			scopes = append(scopes, s)
 			if firstPolicyKey == "" {
 				firstFqn = fqnFn(name, version, s)
@@ -652,7 +696,7 @@ type scopeNode struct {
 	scope    string
 }
 
-func (mgr *Manager) CombineScopes(principalScopes, resourceScopes []string) []string {
+func (rt *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []string {
 	// Build a map to track all unique scopes
 	uniqueScopes := make(map[string]struct{})
 	for _, s := range principalScopes {
@@ -705,8 +749,8 @@ func (mgr *Manager) CombineScopes(principalScopes, resourceScopes []string) []st
 	return result
 }
 
-func (mgr *Manager) ScopedResourceExists(version, resource string, scopes []string) bool {
-	if scopeMap, ok := mgr.primaryIdx[version]; ok {
+func (rt *RuleTable) ScopedResourceExists(version, resource string, scopes []string) bool {
+	if scopeMap, ok := rt.primaryIdx[version]; ok {
 		for _, scope := range scopes {
 			if roleMap, ok := scopeMap[scope]; ok && roleMap.Len() > 0 {
 				for _, actionMap := range roleMap.GetAll() {
@@ -725,8 +769,8 @@ func (mgr *Manager) ScopedResourceExists(version, resource string, scopes []stri
 	return false
 }
 
-func (mgr *Manager) ScopedPrincipalExists(version string, scopes []string) bool {
-	if scopeMap, ok := mgr.primaryIdx[version]; ok {
+func (rt *RuleTable) ScopedPrincipalExists(version string, scopes []string) bool {
+	if scopeMap, ok := rt.primaryIdx[version]; ok {
 		for _, scope := range scopes {
 			if roleMap, ok := scopeMap[scope]; ok && roleMap.Len() > 0 {
 				for _, actionMap := range roleMap.GetAll() {
@@ -745,8 +789,8 @@ func (mgr *Manager) ScopedPrincipalExists(version string, scopes []string) bool 
 	return false
 }
 
-func (mgr *Manager) ScopedRoleExists(version, scope, role string) bool {
-	if scopeMap, ok := mgr.primaryIdx[version]; ok {
+func (rt *RuleTable) ScopedRoleExists(version, scope, role string) bool {
+	if scopeMap, ok := rt.primaryIdx[version]; ok {
 		if roleMap, ok := scopeMap[scope]; ok {
 			if _, ok := roleMap.Get(role); ok {
 				return true
@@ -757,16 +801,12 @@ func (mgr *Manager) ScopedRoleExists(version, scope, role string) bool {
 	return false
 }
 
-func (mgr *Manager) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
+func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []string) []*Row {
 	res := []*Row{}
-
-	// TODO(saml) mutex can go once merges are handled outside the manager and rule tables are truly static
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
 
 	processedActionSets := make(map[*util.GlobMap[[]*Row]]struct{})
 	processedRuleSets := make(map[*[]*Row]struct{})
-	if scopeSet, ok := mgr.primaryIdx[version]; ok { //nolint:nestif
+	if scopeSet, ok := rt.primaryIdx[version]; ok { //nolint:nestif
 		for _, scope := range scopes {
 			if roleSet, ok := scopeSet[scope]; ok {
 				for _, role := range roles {
@@ -870,156 +910,157 @@ func (mgr *Manager) GetRows(version, resource string, scopes, roles, actions []s
 	return res
 }
 
-func (mgr *Manager) GetParentRoles(scope string, roles []string) []string {
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
-
-	// recursively collect all parent roles, caching the flat list on the very first traversal for
-	// each role within the ruletable
+func (rt *RuleTable) GetParentRoles(scope string, roles []string) []string {
 	parentRoles := make([]string, len(roles))
 	copy(parentRoles, roles)
 
-	parentRoleAncestorsCache, ok := mgr.parentRoleAncestorsCache[scope]
+	scopeCache, ok := rt.parentRoleAncestors[scope]
 	if !ok {
-		parentRoleAncestorsCache = make(map[string][]string)
-		mgr.parentRoleAncestorsCache[scope] = parentRoleAncestorsCache
+		return parentRoles
 	}
 
 	for _, role := range roles {
-		var roleParents []string
-		if c, ok := parentRoleAncestorsCache[role]; ok {
-			roleParents = c
-		} else {
-			visited := make(map[string]struct{})
-			roleParentsSet := make(map[string]struct{})
-			mgr.collectParentRoles(scope, role, roleParentsSet, visited)
-			roleParents = make([]string, 0, len(roleParentsSet))
-			for r := range roleParentsSet {
-				roleParents = append(roleParents, r)
-			}
-			parentRoleAncestorsCache[role] = roleParents
+		if roleParents, ok := scopeCache[role]; ok {
+			parentRoles = append(parentRoles, roleParents...) //nolint:makezero
 		}
-		parentRoles = append(parentRoles, roleParents...) //nolint:makezero
 	}
 
 	return parentRoles
 }
 
-func (mgr *Manager) collectParentRoles(scope, role string, parentRoleSet, visited map[string]struct{}) {
+func (rt *RuleTable) precompileParentRoles() {
+	for scope, parentRoles := range rt.ScopeParentRoles {
+		if parentRoles == nil {
+			continue
+		}
+
+		if _, ok := rt.parentRoleAncestors[scope]; !ok {
+			rt.parentRoleAncestors[scope] = make(map[string][]string)
+		}
+
+		scopeCache := rt.parentRoleAncestors[scope]
+
+		for role := range parentRoles.RoleParentRoles {
+			visited := make(map[string]struct{})
+			roleParentsSet := make(map[string]struct{})
+			rt.collectParentRoles(scope, role, roleParentsSet, visited)
+
+			roleParents := make([]string, 0, len(roleParentsSet))
+			for rp := range roleParentsSet {
+				roleParents = append(roleParents, rp)
+			}
+
+			scopeCache[role] = roleParents
+		}
+	}
+}
+
+func (rt *RuleTable) collectParentRoles(scope, role string, parentRoleSet, visited map[string]struct{}) {
 	if _, seen := visited[role]; seen {
 		return
 	}
 	visited[role] = struct{}{}
 
-	if parentRoles, ok := mgr.ScopeParentRoles[scope]; ok {
+	if parentRoles, ok := rt.ScopeParentRoles[scope]; ok {
 		if prs, ok := parentRoles.RoleParentRoles[role]; ok {
 			for _, pr := range prs.Roles {
 				parentRoleSet[pr] = struct{}{}
-				mgr.collectParentRoles(scope, pr, parentRoleSet, visited)
+				rt.collectParentRoles(scope, pr, parentRoleSet, visited)
 			}
 		}
 	}
 }
 
-func (mgr *Manager) ScopeExists(pt policy.Kind, scope string) bool {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-
+func (rt *RuleTable) ScopeExists(pt policy.Kind, scope string) bool {
 	var ok bool
 	switch pt { //nolint:exhaustive
 	case policy.PrincipalKind:
-		_, ok = mgr.principalScopeMap[scope]
+		_, ok = rt.principalScopeMap[scope]
 	case policy.ResourceKind:
-		_, ok = mgr.resourceScopeMap[scope]
+		_, ok = rt.resourceScopeMap[scope]
 	}
 
 	return ok
 }
 
-func (mgr *Manager) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
-	return mgr.scopeScopePermissions[scope]
+func (rt *RuleTable) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
+	return rt.scopeScopePermissions[scope]
 }
 
-func (mgr *Manager) GetSchema(fqn string) *policyv1.Schemas {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-
+func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {
 	modID := namer.GenModuleIDFromFQN(fqn)
-	if s, ok := mgr.Schemas[modID.RawValue()]; ok {
+	if s, ok := rt.Schemas[modID.RawValue()]; ok {
 		return s
 	}
 
 	return nil
 }
 
-func (mgr *Manager) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
-	mgr.mu.RLock()
-	defer mgr.mu.RUnlock()
-
+func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 	modID := namer.GenModuleIDFromFQN(fqn)
-	if s, ok := mgr.Meta[modID.RawValue()]; ok {
+	if s, ok := rt.Meta[modID.RawValue()]; ok {
 		return s
 	}
 
 	return nil
 }
 
-func (mgr *Manager) SubscriberID() string {
-	return "engine.RuleTable"
+func (rt *RuleTable) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
+	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
+	tctx := tracer.Start(checkOpts.TracerSink)
+
+	// Primary use for this Evaluator interface is the ePDP, so we run the checks synchronously (for now)
+	out := make([]*enginev1.CheckOutput, len(inputs))
+	for i, input := range inputs {
+		res, _, err := rt.checkWithAuditTrail(ctx, tctx, checkOpts.EvalParams, input)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = res
+	}
+
+	return out, nil
 }
 
-func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
-	for _, evt := range events {
-		switch evt.Kind {
-		case storage.EventReload, storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
-			// as a temporary measure, to avoid recompiling the whole rule table on updates when no Check
-			// or Plan calls are made, we toggle a flag which is checked at query time and lazily refresh
-			// the table then. This is far from ideal as it can increase the latency of the first query, but
-			// this is a temporary measure (and the lesser of two evils).
-			// TODO(saml) remove this once rule table patching is implemented
-			mgr.log.Info("Scheduling ruletable reload")
-			mgr.isStale.Store(true)
-		default:
-			mgr.log.Debugw("Ignoring storage event", "event", evt)
+func (rt *RuleTable) checkWithAuditTrail(ctx context.Context, tctx tracer.Context, evalParams evaluator.EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
+	result, err := rt.check(ctx, tctx, evalParams, input)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	output := &enginev1.CheckOutput{
+		RequestId:  input.RequestId,
+		ResourceId: input.Resource.Id,
+		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+	}
+
+	// update the output
+	for _, action := range input.Actions {
+		output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
+			Effect: effectv1.Effect_EFFECT_DENY,
+			Policy: noPolicyMatch,
+		}
+
+		if einfo, ok := result.effects[action]; ok {
+			ae := output.Actions[action]
+			ae.Effect = einfo.Effect
+			ae.Policy = einfo.Policy
+			ae.Scope = einfo.Scope
 		}
 	}
+
+	effectiveDerivedRoles := make([]string, 0, len(result.effectiveDerivedRoles))
+	for edr := range result.effectiveDerivedRoles {
+		effectiveDerivedRoles = append(effectiveDerivedRoles, edr)
+	}
+	output.EffectiveDerivedRoles = effectiveDerivedRoles
+	output.ValidationErrors = result.validationErrors
+	output.Outputs = result.outputs
+
+	return output, result.auditTrail, nil
 }
 
-func (mgr *Manager) Reload(ctx context.Context) error {
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
-
-	if !mgr.isStale.Load() {
-		// TODO(saml) this atomic bool is only used for logging purposes. Remove with patching
-		if mgr.awaitingHealthyPolicyStore.Load() {
-			mgr.log.Debug("Policy store invalid, using previous valid state")
-		}
-		return nil
-	}
-
-	mgr.log.Info("Reloading rule table")
-	rt := NewRuletable()
-
-	// If compilation fails, maintain the last valid rule table state.
-	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-	if err := LoadFromPolicyLoader(ctx, rt, mgr.policyLoader); err != nil {
-		mgr.log.Errorf("Rule table compilation failed, using previous valid state: %v", err)
-		mgr.isStale.Store(false)
-		mgr.awaitingHealthyPolicyStore.Store(true)
-		return nil
-	}
-
-	if err := mgr.load(rt); err != nil {
-		return err
-	}
-
-	mgr.isStale.Store(false)
-	mgr.awaitingHealthyPolicyStore.Store(false)
-
-	return nil
-}
-
-func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams EvalParams, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
+func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams evaluator.EvalParams, input *enginev1.CheckInput) (*policyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "engine.Check")
 	defer span.End()
 
@@ -1037,20 +1078,20 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 	result := newEvalResult(input.Actions, trail)
 
 	if !evalParams.LenientScopeSearch &&
-		!mgr.ScopeExists(policy.PrincipalKind, input.Principal.Scope) &&
-		!mgr.ScopeExists(policy.ResourceKind, input.Resource.Scope) {
+		!rt.ScopeExists(policy.PrincipalKind, input.Principal.Scope) &&
+		!rt.ScopeExists(policy.ResourceKind, input.Resource.Scope) {
 		return result, nil
 	}
 
-	principalScopes, principalPolicyKey, _ := mgr.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
-	resourceScopes, resourcePolicyKey, fqn := mgr.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
+	principalScopes, principalPolicyKey, _ := rt.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
+	resourceScopes, resourcePolicyKey, fqn := rt.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
 
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	pctx := tctx.StartPolicy(fqn)
 
 	// validate the input
-	vr, err := mgr.schemaMgr.ValidateCheckInput(ctx, mgr.GetSchema(fqn), input)
+	vr, err := rt.schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(fqn), input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 
@@ -1058,7 +1099,7 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 	}
 
 	if len(vr.Errors) > 0 {
-		result.ValidationErrors = vr.Errors.SchemaErrors()
+		result.validationErrors = vr.Errors.SchemaErrors()
 
 		pctx.Failed(vr.Errors, "Validation errors")
 
@@ -1083,19 +1124,19 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 	}
 
 	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
-	scopedPrincipalExists := mgr.ScopedPrincipalExists(principalVersion, principalScopes)
-	scopedResourceExists := mgr.ScopedResourceExists(resourceVersion, sanitizedResource, resourceScopes)
+	scopedPrincipalExists := rt.ScopedPrincipalExists(principalVersion, principalScopes)
+	scopedResourceExists := rt.ScopedResourceExists(resourceVersion, sanitizedResource, resourceScopes)
 	if !scopedPrincipalExists && !scopedResourceExists {
 		return result, nil
 	}
 
-	allRoles := mgr.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
+	allRoles := rt.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
 	}
 
-	candidateRows := mgr.GetRows(resourceVersion, sanitizedResource, mgr.CombineScopes(principalScopes, resourceScopes), allRoles, actionsToResolve)
+	candidateRows := rt.GetRows(resourceVersion, sanitizedResource, rt.CombineScopes(principalScopes, resourceScopes), allRoles, actionsToResolve)
 
 	varCache := make(map[string]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
@@ -1142,7 +1183,7 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := mgr.GetParentRoles(input.Resource.Scope, []string{role})
+				parentRoles := rt.GetParentRoles(input.Resource.Scope, []string{role})
 
 			scopesLoop:
 				for _, scope := range scopes {
@@ -1154,7 +1195,7 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 					if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
 						if _, ok := processedScopedDerivedRoles[scope]; !ok { //nolint:nestif
 							effectiveDerivedRoles := make(internal.StringSet)
-							if drs := mgr.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
+							if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
 								for name, dr := range drs {
 									drctx := tctx.StartPolicy(dr.OriginFqn).StartDerivedRole(name)
 									if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
@@ -1183,7 +1224,7 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 
 									if ok {
 										effectiveDerivedRoles[name] = struct{}{}
-										result.EffectiveDerivedRoles[name] = struct{}{}
+										result.effectiveDerivedRoles[name] = struct{}{}
 									}
 								}
 							}
@@ -1206,8 +1247,8 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 
 						rulectx := sctx.StartRule(row.Name)
 
-						if m := mgr.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
-							maps.Copy(result.AuditTrail.EffectivePolicies, m.GetSourceAttributes())
+						if m := rt.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+							maps.Copy(result.auditTrail.EffectivePolicies, m.GetSourceAttributes())
 						}
 
 						var constants map[string]any
@@ -1287,10 +1328,10 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 							if outputExpr != nil {
 								octx := rulectx.StartOutput(row.Name)
 								output := &enginev1.OutputEntry{
-									Src: namer.RuleFQN(mgr.GetMeta(row.OriginFqn), row.Scope, row.Name),
+									Src: namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
 									Val: evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, row.Params.Constants, variables),
 								}
-								result.Outputs = append(result.Outputs, output)
+								result.outputs = append(result.outputs, output)
 								octx.ComputedOutput(output)
 							}
 
@@ -1312,10 +1353,10 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 							if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
 								octx := rulectx.StartOutput(row.Name)
 								output := &enginev1.OutputEntry{
-									Src: namer.RuleFQN(mgr.GetMeta(row.OriginFqn), row.Scope, row.Name),
+									Src: namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
 									Val: evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
 								}
-								result.Outputs = append(result.Outputs, output)
+								result.outputs = append(result.outputs, output)
 								octx.ComputedOutput(output)
 							}
 							rulectx.Skipped(nil, conditionNotSatisfied)
@@ -1323,7 +1364,7 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 					}
 
 					if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow {
-						switch mgr.GetScopeScopePermissions(scope) { //nolint:exhaustive
+						switch rt.GetScopeScopePermissions(scope) { //nolint:exhaustive
 						case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
 							delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
 						case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
@@ -1368,35 +1409,28 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams E
 	return result, nil
 }
 
-type EvalParams struct {
-	Globals              map[string]any
-	NowFunc              conditions.NowFunc
-	DefaultPolicyVersion string
-	LenientScopeSearch   bool
-}
-
 type EffectInfo struct {
 	Policy string
 	Scope  string
 	Effect effectv1.Effect
 }
 
-type PolicyEvalResult struct {
-	Effects               map[string]EffectInfo
-	EffectiveDerivedRoles map[string]struct{}
+type policyEvalResult struct {
+	effects               map[string]EffectInfo
+	effectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
-	AuditTrail            *auditv1.AuditTrail
-	ValidationErrors      []*schemav1.ValidationError
-	Outputs               []*enginev1.OutputEntry
+	auditTrail            *auditv1.AuditTrail
+	validationErrors      []*schemav1.ValidationError
+	outputs               []*enginev1.OutputEntry
 }
 
-func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEvalResult {
-	per := &PolicyEvalResult{
-		Effects:               make(map[string]EffectInfo, len(actions)),
-		EffectiveDerivedRoles: make(map[string]struct{}),
+func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *policyEvalResult {
+	per := &policyEvalResult{
+		effects:               make(map[string]EffectInfo, len(actions)),
+		effectiveDerivedRoles: make(map[string]struct{}),
 		toResolve:             make(map[string]struct{}, len(actions)),
-		Outputs:               []*enginev1.OutputEntry{},
-		AuditTrail:            auditTrail,
+		outputs:               []*enginev1.OutputEntry{},
+		auditTrail:            auditTrail,
 	}
 
 	for _, a := range actions {
@@ -1406,7 +1440,7 @@ func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *PolicyEval
 	return per
 }
 
-func (er *PolicyEvalResult) unresolvedActions() []string {
+func (er *policyEvalResult) unresolvedActions() []string {
 	if len(er.toResolve) == 0 {
 		return nil
 	}
@@ -1422,22 +1456,22 @@ func (er *PolicyEvalResult) unresolvedActions() []string {
 }
 
 // setEffect sets the effect for an action. DENY always takes precedence.
-func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
+func (er *policyEvalResult) setEffect(action string, effect EffectInfo) {
 	delete(er.toResolve, action)
 
 	if effect.Effect == effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = effect
+		er.effects[action] = effect
 		return
 	}
 
-	current, ok := er.Effects[action]
+	current, ok := er.effects[action]
 	if !ok {
-		er.Effects[action] = effect
+		er.effects[action] = effect
 		return
 	}
 
 	if current.Effect != effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = effect
+		er.effects[action] = effect
 	}
 }
 
@@ -1469,10 +1503,10 @@ type EvalContext struct {
 	request               *enginev1.Request
 	runtime               *enginev1.Runtime
 	effectiveDerivedRoles internal.StringSet
-	EvalParams
+	evaluator.EvalParams
 }
 
-func NewEvalContext(ep EvalParams, request *enginev1.Request) *EvalContext {
+func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request) *EvalContext {
 	return &EvalContext{
 		EvalParams: ep,
 		request:    request,
@@ -1716,15 +1750,25 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 	return result.Value(), nil
 }
 
-func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, error) {
+	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
+
+	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
+	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
+
+	out, _, err := rt.planWithAuditTrail(ctx, input, principalVersion, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
+	return out, err
+}
+
+func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
 
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
-	principalScopes, _, _ := mgr.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
-	resourceScopes, _, _ := mgr.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
+	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
+	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
 
 	request := planner.PlanResourcesInputToRequest(input)
 	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
@@ -1734,7 +1778,7 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
-	vr, err := mgr.schemaMgr.ValidatePlanResourcesInput(ctx, mgr.GetSchema(fqn), input)
+	vr, err := rt.schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(fqn), input)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to validate input: %w", err)
 	}
@@ -1750,9 +1794,9 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 		}
 	}
 
-	allRoles := mgr.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
-	scopes := mgr.CombineScopes(principalScopes, resourceScopes)
-	candidateRows := mgr.GetRows(resourceVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, input.Actions)
+	allRoles := rt.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
+	scopes := rt.CombineScopes(principalScopes, resourceScopes)
+	candidateRows := rt.GetRows(resourceVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, input.Actions)
 	if len(candidateRows) == 0 {
 		output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
 		output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
@@ -1787,7 +1831,7 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 				var roleAllowNode, roleDenyNode *planner.QpN
 				var pendingAllow bool
 
-				parentRoles := mgr.GetParentRoles(input.Resource.Scope, []string{role})
+				parentRoles := rt.GetParentRoles(input.Resource.Scope, []string{role})
 
 				for _, scope := range scopes {
 					var scopeAllowNode, scopeDenyNode *planner.QpN
@@ -1798,7 +1842,7 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 							derivedRolesList = c
 						} else {
 							var derivedRoles []planner.RN
-							if drs := mgr.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
+							if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
 								for name, dr := range drs {
 									if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
 										continue
@@ -1839,7 +1883,7 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 							continue
 						}
 
-						if m := mgr.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+						if m := rt.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
 						}
 
@@ -1917,13 +1961,13 @@ func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput
 							}
 						}
 
-						if mgr.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+						if rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
 							pendingAllow = true
 						}
 					}
 
 					if (scopeDenyNode != nil || scopeAllowNode != nil) &&
-						mgr.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 						matchedScopes[action] = scope
 						break
 					}
