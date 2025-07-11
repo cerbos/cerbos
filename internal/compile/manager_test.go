@@ -21,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 )
@@ -195,7 +194,7 @@ func mkManager(t *testing.T) (*compile.Manager, *MockStore, context.CancelFunc) 
 	mockStore := &MockStore{}
 	mockStore.On("Subscribe", mock.Anything)
 
-	mgr, err := compile.NewManager(ctx, mockStore, schema.NewNopManager())
+	mgr, err := compile.NewManager(ctx, mockStore)
 	require.NoError(t, err)
 
 	return mgr, mockStore, cancelFunc
@@ -242,6 +241,14 @@ func (ms *MockStore) GetFirstMatch(ctx context.Context, candidates []namer.Modul
 
 func (ms *MockStore) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
 	args := ms.MethodCalled("GetAll", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).([]*policy.CompilationUnit), args.Error(1)
+}
+
+func (ms *MockStore) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
+	args := ms.MethodCalled("GetAllMatching", ctx, modIDs)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}

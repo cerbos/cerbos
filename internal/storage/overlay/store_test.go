@@ -18,7 +18,6 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -66,13 +65,10 @@ func TestDriverInstantiation(t *testing.T) {
 		require.NoError(t, err, "error creating store")
 		require.Equal(t, DriverName, store.Driver())
 
-		schemaMgr, err := schema.New(ctx, store)
-		require.NoError(t, err, "error creating schema manager")
-
 		overlayStore, ok := store.(Overlay)
 		require.True(t, ok, "store does not implement Overlay interface")
 
-		_, err = overlayStore.GetOverlayPolicyLoader(ctx, schemaMgr)
+		_, err = overlayStore.GetOverlayPolicyLoader(ctx)
 		require.NoError(t, err, "error creating overlay policy loader")
 
 		wrappedStore, ok := store.(*Store)
@@ -250,6 +246,11 @@ func (m *MockPolicyLoader) GetAll(ctx context.Context) ([]*runtimev1.RunnablePol
 	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
 }
 
+func (m *MockPolicyLoader) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx, modIDs)
+	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
+}
+
 func (m *MockPolicyLoader) Source() *auditv1.PolicySource {
 	return nil
 }
@@ -311,6 +312,11 @@ func (m *MockBinaryStore) GetFirstMatch(ctx context.Context, candidates []namer.
 
 func (m *MockBinaryStore) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
 	args := m.Called(ctx)
+	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
+}
+
+func (m *MockBinaryStore) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	args := m.Called(ctx, modIDs)
 	return args.Get(0).([]*runtimev1.RunnablePolicySet), args.Error(1)
 }
 

@@ -137,16 +137,16 @@ func mkEngine(t *testing.T) *engine.Engine {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
+	mgr, err := compile.NewManager(ctx, store)
+	require.NoError(t, err)
+
+	rt := ruletable.NewProtoRuletable()
+	require.NoError(t, ruletable.LoadPolicies(ctx, rt, mgr))
+
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
-	mgr, err := compile.NewManager(ctx, store, schemaMgr)
-	require.NoError(t, err)
-
-	rt := ruletable.NewRuletable()
-	require.NoError(t, ruletable.LoadFromPolicyLoader(ctx, rt, mgr))
-
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, store, schemaMgr)
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, engine.Components{

@@ -321,6 +321,24 @@ func (b *Bundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, erro
 	return res, nil
 }
 
+// GetAllMatching attempts to retrieve all policies from the passed modIDs, unlike `GetFirstMatch` which returns the first
+// of the passed candidates, this function returns list of all available modules from the provided IDs.
+func (b *Bundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	res := []*runtimev1.RunnablePolicySet{}
+	for _, id := range modIDs {
+		policySet, err := b.getMatch(id)
+		if err != nil {
+			return nil, err
+		}
+
+		if policySet != nil {
+			res = append(res, policySet)
+		}
+	}
+
+	return res, nil
+}
+
 func (b *Bundle) getMatch(id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	idHex := id.HexStr()
 	fileName := policyDir + idHex
