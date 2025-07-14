@@ -17,16 +17,16 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
-	"go.uber.org/zap"
 )
 
 type Manager struct {
 	*RuleTable
 	policyLoader               policyloader.PolicyLoader
 	schemaLoader               schema.Loader
-	log                        *zap.SugaredLogger
+	log                        *logging.Logger
 	mu                         sync.RWMutex
 	awaitingHealthyPolicyStore atomic.Bool
 }
@@ -47,7 +47,7 @@ func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader
 	}
 
 	return &Manager{
-		log:          zap.S().Named("ruletable"),
+		log:          logging.NewLogger("ruletable"),
 		RuleTable:    rt,
 		policyLoader: policyLoader,
 		schemaLoader: schemaLoader,

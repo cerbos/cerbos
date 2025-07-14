@@ -17,7 +17,6 @@ import (
 	// Register the http and https loaders.
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 	"github.com/tidwall/gjson"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -99,7 +98,7 @@ func NewStaticFromConf(conf *Conf, schemas map[uint64]*policyv1.Schemas, rawSche
 
 	sm := &StaticManager{
 		conf: conf,
-		log:  zap.L().Named("schema"),
+		log:  logging.NewLogger("schema"),
 	}
 	sm.loader = sm
 
@@ -112,7 +111,7 @@ func NewStaticFromConf(conf *Conf, schemas map[uint64]*policyv1.Schemas, rawSche
 
 type StaticManager struct {
 	conf            *Conf
-	log             *zap.Logger
+	log             *logging.Logger
 	compiledSchemas map[string]*jsonschema.Schema
 	loader          managerLoader
 }
@@ -195,7 +194,7 @@ func (m *StaticManager) validate(ctx context.Context, schemas *policyv1.Schemas,
 	}
 
 	if len(result.Errors) > 0 {
-		logging.FromContext(ctx).Warn("Validation failed", zap.Strings("errors", result.Errors.ErrorMessages()))
+		logging.FromContext(ctx).Warn("Validation failed", logging.Strings("errors", result.Errors.ErrorMessages()))
 	}
 
 	return result, nil
@@ -215,14 +214,14 @@ func (m *StaticManager) validateAttr(ctx context.Context, src ErrSource, schemaR
 
 		if len(toValidate) != len(actions) {
 			m.log.Warn("Schema validation is enabled for some actions but disabled for others",
-				zap.Strings("all_actions", actions),
-				zap.Strings("actions_requiring_validation", toValidate))
+				logging.Strings("all_actions", actions),
+				logging.Strings("actions_requiring_validation", toValidate))
 		}
 	}
 
 	schema, err := m.loader.LoadSchema(ctx, schemaRef.Ref)
 	if err != nil {
-		m.log.Warn("Failed to load schema", zap.String("schema", schemaRef.Ref), zap.Error(err))
+		m.log.Warn("Failed to load schema", logging.String("schema", schemaRef.Ref), logging.Error(err))
 		return newSchemaLoadErr(src, schemaRef.Ref)
 	}
 
@@ -279,7 +278,7 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	mgr := &manager{
 		StaticManager: StaticManager{
 			conf: conf,
-			log:  zap.L().Named("schema"),
+			log:  logging.NewLogger("schema"),
 		},
 		cache:    cache.New[string, *cacheEntry]("schema", conf.CacheSize),
 		resolver: DefaultResolver(loader),
@@ -297,7 +296,7 @@ func NewEphemeral(resolver Resolver) Manager {
 	mgr := &manager{
 		StaticManager: StaticManager{
 			conf: NewConf(EnforcementReject),
-			log:  zap.L().Named("schema"),
+			log:  logging.NewLogger("schema"),
 		},
 		cache:    cache.New[string, *cacheEntry]("schema", defaultCacheSize),
 		resolver: resolver,
@@ -366,11 +365,11 @@ func (m *manager) OnStorageEvent(events ...storage.Event) {
 		case storage.EventAddOrUpdateSchema:
 			cacheKey := fmt.Sprintf("%s:///%s", URLScheme, event.SchemaFile)
 			_ = m.cache.Remove(cacheKey)
-			m.log.Debug("Handled schema add/update event", zap.String("schema", cacheKey))
+			m.log.Debug("Handled schema add/update event", logging.String("schema", cacheKey))
 		case storage.EventDeleteSchema:
 			cacheKey := fmt.Sprintf("%s:///%s", URLScheme, event.SchemaFile)
 			_ = m.cache.Remove(cacheKey)
-			m.log.Warn("Handled schema delete event", zap.String("schema", cacheKey))
+			m.log.Warn("Handled schema delete event", logging.String("schema", cacheKey))
 		case storage.EventReload:
 			m.cache.Purge()
 			m.log.Debug("Handled store reload event")
