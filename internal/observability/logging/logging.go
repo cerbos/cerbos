@@ -37,7 +37,7 @@ func NewLogger(name string) *Logger {
 	return &Logger{zap.S().Named(name)}
 }
 
-// Implement missing functions here
+// Implement missing functions here.
 var (
 	String  = zap.String
 	Strings = zap.Strings

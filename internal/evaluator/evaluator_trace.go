@@ -21,4 +21,3 @@ func NewCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *CheckOp
 
 	return newCheckOptions(tracerSink, conf, opts...)
 }
-
