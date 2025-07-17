@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package logging
 
 import (
@@ -26,6 +28,21 @@ const defaultTmpLogLevelDuration = 10 * time.Minute
 type ctxLog struct{}
 
 var ctxLogKey = &ctxLog{}
+
+type Logger struct {
+	*zap.SugaredLogger
+}
+
+func NewLogger(name string) *Logger {
+	return &Logger{zap.S().Named(name)}
+}
+
+// Implement missing functions here.
+var (
+	String  = zap.String
+	Strings = zap.Strings
+	Error   = zap.Error
+)
 
 // InitLogging initializes the global logger.
 func InitLogging(ctx context.Context, level string) {

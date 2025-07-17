@@ -20,7 +20,7 @@ import (
 
 type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
 
-const AnyRoleVal = "*"
+const anyRoleVal = "*"
 
 var (
 	emptyVal = &emptypb.Empty{}
@@ -326,8 +326,8 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 		}
 
 		for _, pr := range def.ParentRoles {
-			if pr == AnyRoleVal {
-				rdr.ParentRoles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+			if pr == anyRoleVal {
+				rdr.ParentRoles = map[string]*emptypb.Empty{anyRoleVal: {}}
 				break
 			}
 			rdr.ParentRoles[pr] = emptyVal
@@ -387,8 +387,8 @@ func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.Resource
 	if len(rule.Roles) > 0 {
 		cr.Roles = make(map[string]*emptypb.Empty, len(rule.Roles))
 		for _, r := range rule.Roles {
-			if r == AnyRoleVal {
-				cr.Roles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+			if r == anyRoleVal {
+				cr.Roles = map[string]*emptypb.Empty{anyRoleVal: {}}
 				break
 			}
 			cr.Roles[r] = emptyVal
