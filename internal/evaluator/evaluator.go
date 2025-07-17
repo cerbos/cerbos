@@ -5,14 +5,11 @@ package evaluator
 
 import (
 	"context"
-	"os"
 	"time"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
-	"github.com/cerbos/cerbos/internal/observability/logging"
-	"go.uber.org/zap"
 )
 
 type Evaluator interface {
@@ -27,11 +24,6 @@ func WithTraceSink(tracerSink tracer.Sink) CheckOpt {
 	return func(co *CheckOptions) {
 		co.TracerSink = tracerSink
 	}
-}
-
-// WithZapTraceSink sets an engine tracer with Zap set as the sink.
-func WithZapTraceSink(log *zap.Logger) CheckOpt {
-	return WithTraceSink(tracer.NewZapSink(log))
 }
 
 // WithNowFunc sets the function for determining `now` during condition evaluation.
@@ -97,26 +89,4 @@ func PolicyVersion(version string, params EvalParams) string {
 	}
 
 	return version
-}
-
-func NewCheckOptions(ctx context.Context, conf *Conf, opts ...CheckOpt) *CheckOptions {
-	var tracerSink tracer.Sink
-	if debugEnabled, ok := os.LookupEnv("CERBOS_DEBUG_ENGINE"); ok && debugEnabled != "false" {
-		tracerSink = tracer.NewZapSink(logging.FromContext(ctx).Named("tracer"))
-	}
-
-	co := &CheckOptions{TracerSink: tracerSink, EvalParams: EvalParams{
-		Globals:              conf.Globals,
-		DefaultPolicyVersion: conf.DefaultPolicyVersion,
-		LenientScopeSearch:   conf.LenientScopeSearch,
-	}}
-	for _, opt := range opts {
-		opt(co)
-	}
-
-	if co.EvalParams.NowFunc == nil {
-		co.EvalParams.NowFunc = conditions.Now()
-	}
-
-	return co
 }

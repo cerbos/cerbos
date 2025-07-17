@@ -1007,7 +1007,7 @@ func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 
 func (rt *RuleTable) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
 	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
-	tctx := tracer.Start(checkOpts.TracerSink)
+	tctx := tracing.StartTracer(checkOpts.TracerSink)
 
 	// Primary use for this Evaluator interface is the ePDP, so we run the checks synchronously (for now)
 	out := make([]*enginev1.CheckOutput, len(inputs))
@@ -1295,7 +1295,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 								// Derived role engine trace logs are handled above. Because derived role conditions are baked into the rule table rows, we don't want to
 								// confuse matters by adding condition trace logs if a rule is referencing a derived role, so we pass a no-op context here.
 								// TODO(saml) we could probably pre-compile the condition also
-								drSatisfied, err := evalCtx.SatisfiesCondition(ctx, tracer.Start(nil), row.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
+								drSatisfied, err := evalCtx.SatisfiesCondition(ctx, tracing.StartTracer(nil), row.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
 								if err != nil {
 									rulectx.Skipped(err, "Error evaluating derived role condition")
 									continue
