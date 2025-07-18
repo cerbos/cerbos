@@ -258,6 +258,6 @@ jaeger:
 prometheus:
 	@ docker run -i -t --rm --name=prometheus \
 		-p 9090:9090 \
-		bitnami/prometheus:latest \
+		bitnamisecure/prometheus:latest \
 		--config.file=/opt/bitnami/prometheus/conf/prometheus.yml \
 		--enable-feature=otlp-write-receiver
