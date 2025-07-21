@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  importDerivedRoles:
+    - globex_roles
+  resource: "stapler"
+
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles:
+        - ADMIN
+
+    # If the `principal` is not part of the organization, then they are denied
+    - actions: ["*"]
+      effect: EFFECT_DENY
+      roles:
+        - "*"
+      condition:
+        match:
+          expr: >
+            !(R.scope in P.attr.organizations)
+
+    # A `principal` that belongs to any of these groups "OWNER", "FINANCE" or
+    # "REGION_MANAGER" is allowed to perform action "view".
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - FINANCE
