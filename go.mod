@@ -53,6 +53,7 @@ require (
 	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
+	github.com/keygen-sh/machineid v1.1.1
 	github.com/lestrrat-go/httprc/v3 v3.0.0
 	github.com/lestrrat-go/jwx/v3 v3.0.8
 	github.com/mattn/go-isatty v0.0.20
