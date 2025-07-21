@@ -25,8 +25,8 @@ type SchemaConf struct {
 }
 
 type Conf struct {
-	Eval   EvalConf
 	Schema SchemaConf
+	Eval   EvalConf
 }
 
 func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf Conf) (*RuleTable, error) {
