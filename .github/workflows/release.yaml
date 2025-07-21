@@ -83,7 +83,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.9.1
+        uses: sigstore/cosign-installer@v3.9.2
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
@@ -136,7 +136,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY}}
 
       - name: Install Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2.1.4
+        uses: google-github-actions/setup-gcloud@v2.1.5
 
       - name: Publish JSON schemas
         run: |-
@@ -189,7 +189,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY}}
 
       - name: Install Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2.1.4
+        uses: google-github-actions/setup-gcloud@v2.1.5
 
       - name: Package Helm chart
         run: |-
