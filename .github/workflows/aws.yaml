@@ -58,7 +58,7 @@ jobs:
           write_build_cache: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.9.1
+        uses: sigstore/cosign-installer@v3.9.2
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v6
