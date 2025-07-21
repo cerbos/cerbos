@@ -614,7 +614,7 @@ func (s *Server) parseAndOpen(listenAddr string) (net.Listener, error) {
 			return nil, err
 		}
 
-		listener, err := net.Listen(network, addr)
+		listener, err := net.Listen(network, addr) //nolint:noctx
 		if err != nil {
 			return nil, err
 		}

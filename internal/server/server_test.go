@@ -295,7 +295,7 @@ func TestAdminService(t *testing.T) {
 func getFreeListenAddr(t *testing.T) string {
 	t.Helper()
 
-	lis, err := net.Listen("tcp", "localhost:0")
+	lis, err := net.Listen("tcp", "localhost:0") //nolint:noctx
 	require.NoError(t, err, "Failed to create listener")
 
 	addr := lis.Addr().String()
