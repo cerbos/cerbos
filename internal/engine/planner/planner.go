@@ -295,6 +295,10 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 								scopeAllowNode = mkOrNode([]*qpN{scopeAllowNode, node})
 							}
 						case effectv1.Effect_EFFECT_DENY:
+							// ignore constant false DENY nodes
+							if b, ok := isNodeConstBool(node); ok && !b {
+								continue
+							}
 							if scopeDenyNode == nil {
 								scopeDenyNode = node
 							} else {
@@ -409,7 +413,7 @@ func EvaluateRuleTableQueryPlan(ctx context.Context, ruleTable *ruletable.RuleTa
 			}
 		}
 
-		if nf.allowIsEmpty() && !nf.denyIsEmpty() { // reset an conditional DENY to an unconditional one
+		if nf.allowIsEmpty() && !nf.denyIsEmpty() { // reset a conditional DENY to an unconditional one
 			nf.resetToUnconditionalDeny()
 		}
 		f, err := toFilter(nf.toAST())
