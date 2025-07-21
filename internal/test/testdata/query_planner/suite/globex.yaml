@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Guard against denied scoped role overriding non-matching DENY rule in base scope for other role
+principal:
+    id: frank
+    policyVersion: default
+    roles:
+        - USER
+        - SUPERAPPROVER
+    attr:
+      department: "FINANCE"
+      organizations: ["GLOBEX"]
+      region: "EMEA"
+tests:
+    - action: view
+      resource:
+        kind: stapler
+        scope: GLOBEX
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_ALLOWED

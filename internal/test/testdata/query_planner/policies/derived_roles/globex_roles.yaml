@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: globex_roles
+  definitions:
+    - name: FINANCE
+      parentRoles: ["USER"]
+      condition:
+        match:
+          expr: request.principal.attr.department == "FINANCE"

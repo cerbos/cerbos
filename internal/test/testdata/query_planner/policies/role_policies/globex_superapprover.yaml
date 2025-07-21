@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: "api.cerbos.dev/v1"
+rolePolicy:
+  role: "SUPERAPPROVER"
+  scope: "GLOBEX"
+  parentRoles:
+    - "ADMIN"
+  rules:
+    - resource: "stapler"
+      allowActions:
+        - "approve"
+      condition:
+        match:
+          expr: "R.attr.amount <= 100000"
