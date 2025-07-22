@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
+	"strings"
 
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	// Register the http and https loaders.
@@ -126,4 +128,24 @@ func (m *manager) OnStorageEvent(events ...storage.Event) {
 type cacheEntry struct {
 	schema *jsonschema.Schema
 	err    error
+}
+
+func DefaultResolver(loader Loader) Resolver {
+	return func(ctx context.Context, path string) (io.ReadCloser, error) {
+		u, err := url.Parse(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if u.Scheme == "" || u.Scheme == URLScheme {
+			relativePath := strings.TrimPrefix(u.Path, "/")
+			return loader.LoadSchema(ctx, relativePath)
+		}
+
+		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
+		if !ok {
+			return nil, jsonschema.LoaderNotFoundError(path)
+		}
+		return schemaLoader(path)
+	}
 }

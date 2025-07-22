@@ -250,7 +250,19 @@ func attrToJSONObject(src ErrSource, attr map[string]*structpb.Value) (any, erro
 	return gjson.GetBytes(jsonBytes, attrPath).Value(), nil
 }
 
-func DefaultResolver(loader Loader) Resolver {
+func filterActionsToValidate(ignore, actions []string) []string {
+	filtered := actions
+	for _, glob := range ignore {
+		filtered = util.FilterGlobNotMatches(glob, filtered)
+		if len(filtered) == 0 {
+			return nil
+		}
+	}
+
+	return filtered
+}
+
+func StaticResolver(loader Loader) Resolver {
 	return func(ctx context.Context, path string) (io.ReadCloser, error) {
 		u, err := url.Parse(path)
 		if err != nil {
@@ -262,22 +274,6 @@ func DefaultResolver(loader Loader) Resolver {
 			return loader.LoadSchema(ctx, relativePath)
 		}
 
-		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
-		if !ok {
-			return nil, jsonschema.LoaderNotFoundError(path)
-		}
-		return schemaLoader(path)
+		return nil, jsonschema.LoaderNotFoundError(path)
 	}
-}
-
-func filterActionsToValidate(ignore, actions []string) []string {
-	filtered := actions
-	for _, glob := range ignore {
-		filtered = util.FilterGlobNotMatches(glob, filtered)
-		if len(filtered) == 0 {
-			return nil
-		}
-	}
-
-	return filtered
 }

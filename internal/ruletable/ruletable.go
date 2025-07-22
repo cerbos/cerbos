@@ -74,7 +74,7 @@ func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.
 }
 
 func LoadSchemas(ctx context.Context, rt *runtimev1.RuleTable, sl schema.Loader) error {
-	if err := buildRawSchemas(ctx, rt, schema.DefaultResolver(sl)); err != nil {
+	if err := buildRawSchemas(ctx, rt, schema.StaticResolver(sl)); err != nil {
 		return err
 	}
 
