@@ -74,7 +74,7 @@ func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.
 }
 
 func LoadSchemas(ctx context.Context, rt *runtimev1.RuleTable, sl schema.Loader) error {
-	if err := buildRawSchemas(ctx, rt, schema.DefaultResolver(sl)); err != nil {
+	if err := buildRawSchemas(ctx, rt, schema.StaticResolver(sl)); err != nil {
 		return err
 	}
 
@@ -1933,6 +1933,10 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 								scopeAllowNode = planner.MkOrNode([]*planner.QpN{scopeAllowNode, node})
 							}
 						case effectv1.Effect_EFFECT_DENY:
+							// ignore constant false DENY nodes
+							if b, ok := planner.IsNodeConstBool(node); ok && !b {
+								continue
+							}
 							if scopeDenyNode == nil {
 								scopeDenyNode = node
 							} else {
@@ -2047,7 +2051,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 			}
 		}
 
-		if nf.AllowIsEmpty() && !nf.DenyIsEmpty() { // reset an conditional DENY to an unconditional one
+		if nf.AllowIsEmpty() && !nf.DenyIsEmpty() { // reset a conditional DENY to an unconditional one
 			nf.ResetToUnconditionalDeny()
 		}
 		f, err := planner.ToFilter(nf.ToAST())
