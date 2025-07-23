@@ -11,7 +11,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -36,6 +35,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	hubstore "github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cloud-api/bundle"
 )
 
@@ -296,11 +296,8 @@ func TestAdminService(t *testing.T) {
 func getFreeListenAddr(t *testing.T) string {
 	t.Helper()
 
-	lis, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err, "Failed to create listener")
-
-	addr := lis.Addr().String()
-	lis.Close()
+	addr, err := util.GetFreeListenAddr()
+	require.NoError(t, err, "Failed to get free listen address")
 
 	return addr
 }
