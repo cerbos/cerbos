@@ -231,13 +231,13 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 	// This is why we have two dedicated ports for HTTP and gRPC traffic. However, if gRPC traffic is sent to the HTTP port, it
 	// will still be handled correctly.
 
-	grpcL, err := s.createListener(s.conf.GRPCListenAddr)
+	grpcL, err := s.createListener(ctx, s.conf.GRPCListenAddr)
 	if err != nil {
 		log.Error("Failed to create gRPC listener", zap.Error(err))
 		return err
 	}
 
-	httpL, err := s.createListener(s.conf.HTTPListenAddr)
+	httpL, err := s.createListener(ctx, s.conf.HTTPListenAddr)
 	if err != nil {
 		log.Error("Failed to create HTTP listener", zap.Error(err))
 		return err
@@ -349,8 +349,8 @@ func (s *Server) initializeTLSConfig(log *zap.Logger) error {
 	return nil
 }
 
-func (s *Server) createListener(listenAddr string) (net.Listener, error) {
-	l, err := s.parseAndOpen(listenAddr)
+func (s *Server) createListener(ctx context.Context, listenAddr string) (net.Listener, error) {
+	l, err := s.parseAndOpen(ctx, listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
 	}
@@ -594,7 +594,7 @@ func (s *Server) mkGRPCConn() (*grpc.ClientConn, error) {
 }
 
 // inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L100
-func (s *Server) parseAndOpen(listenAddr string) (net.Listener, error) {
+func (s *Server) parseAndOpen(ctx context.Context, listenAddr string) (net.Listener, error) {
 	network, addr, err := util.ParseListenAddress(listenAddr)
 	if err != nil {
 		return nil, err
@@ -606,7 +606,8 @@ func (s *Server) parseAndOpen(listenAddr string) (net.Listener, error) {
 			return nil, err
 		}
 
-		listener, err := net.Listen(network, addr)
+		netConf := &net.ListenConfig{}
+		listener, err := netConf.Listen(ctx, network, addr)
 		if err != nil {
 			return nil, err
 		}
