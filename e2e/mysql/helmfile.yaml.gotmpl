@@ -59,6 +59,7 @@ releases:
       - initdbScriptsConfigMap: mysql-init
       - image:
           repository: mysql
+          tag: "9"
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
