@@ -1,0 +1,115 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "No principal policy rules"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "scope": "acme.hr.uk",
+          "roles": ["employee"]
+        },
+      "resource":
+        {
+          "kind": "salary_record",
+          "id": "XX125"
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.donald_duck.vdefault/acme.hr.uk",
+              "scope": "acme.hr",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXXK47JKTMYWJBRJBHAH2H",
+      "timestamp": "2023-12-01T14:53:27.559283481Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "salary_record",
+                    "id": "XX125",
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "roles": ["employee"],
+                    "scope": "acme.hr.uk",
+                  },
+                "actions": ["view:public"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.donald_duck.vdefault/acme.hr.uk",
+                        "scope": "acme.hr",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "principal.donald_duck.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02.yaml",
+                    },
+                },
+              "principal.donald_duck.vdefault/acme":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02_acme.yaml",
+                    },
+                },
+              "principal.donald_duck.vdefault/acme.hr":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02_acme.hr.yaml",
+                    },
+                },
+            },
+        },
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]

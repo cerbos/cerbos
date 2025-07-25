@@ -519,6 +519,24 @@ func (rt *RuleTable) addPrincipalPolicy(rpps *runtimev1.RunnablePrincipalPolicyS
 	}
 	rt.scopeScopePermissions[p.Scope] = scopePermissions
 
+	if len(p.ResourceRules) == 0 {
+		// Cover the edge case where a policy is created with no rules (useful in the multitenant case
+		// where a tenant might want to "inherit" the permissions of the parent by immediately falling
+		// through). We do this by creating a noop row in the rule table which means we bypass the
+		// "policy does not exist in the scope" during evaluation.
+		rt.insertRule(&Row{
+			RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+				OriginFqn:        rpps.Meta.Fqn,
+				Scope:            p.Scope,
+				ScopePermissions: scopePermissions,
+				Version:          rpps.Meta.Version,
+				Principal:        principalID,
+			},
+			OriginModuleID: moduleID,
+			PolicyKind:     policy.PrincipalKind,
+		})
+	}
+
 	for resource, resourceRules := range p.ResourceRules {
 		for _, rule := range resourceRules.ActionRules {
 			emitOutput := rule.EmitOutput
@@ -631,6 +649,24 @@ func (rt *RuleTable) addResourcePolicy(rrps *runtimev1.RunnableResourcePolicySet
 		scopePermissions = policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
 	}
 	rt.scopeScopePermissions[p.Scope] = scopePermissions
+
+	if len(p.Rules) == 0 {
+		// Cover the edge case where a policy is created with no rules (useful in the multitenant case
+		// where a tenant might want to "inherit" the permissions of the parent by immediately falling
+		// through). We do this by creating a noop row in the rule table which means we bypass the
+		// "policy does not exist in the scope" during evaluation.
+		rt.insertRule(&Row{
+			RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+				OriginFqn:        rrps.Meta.Fqn,
+				Resource:         sanitizedResource,
+				Scope:            p.Scope,
+				ScopePermissions: scopePermissions,
+				Version:          rrps.Meta.Version,
+			},
+			OriginModuleID: moduleID,
+			PolicyKind:     policy.ResourceKind,
+		})
+	}
 
 	for _, rule := range p.Rules {
 		emitOutput := rule.EmitOutput
