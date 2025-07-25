@@ -12,5 +12,6 @@ import (
 )
 
 func TestMySQL(t *testing.T) {
+	t.Skip("Needs #2648")
 	e2e.RunSuites(t, e2e.WithContextID("mysql"), e2e.WithMutableStoreSuites())
 }
