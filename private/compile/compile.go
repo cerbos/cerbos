@@ -64,7 +64,7 @@ type SchemaResolver = schema.Resolver
 
 type SchemaResolverMaker func(SchemaLoader) SchemaResolver
 
-func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMaker, attrs ...SourceAttribute) (Index, <-chan Artefact, error) {
+func BuildIndex(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Index, error) {
 	srcAttrs := make([]policy.SourceAttribute, len(attrs))
 	for i, a := range attrs {
 		srcAttrs[i] = policy.SourceAttribute{Key: a.Key, Value: a.Value}
@@ -74,7 +74,7 @@ func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMa
 	if err != nil {
 		idxErrs := new(index.BuildError)
 		if errors.As(err, &idxErrs) {
-			return nil, nil, &Errors{
+			return nil, &Errors{
 				Errors: &runtimev1.Errors{
 					Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
 				},
@@ -83,10 +83,19 @@ func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMa
 
 		panicErr := new(parser.PanicError)
 		if errors.As(err, panicErr) {
-			return nil, nil, PanicError{Cause: panicErr.Cause, Context: panicErr.Context}
+			return nil, PanicError{Cause: panicErr.Cause, Context: panicErr.Context}
 		}
 
-		return nil, nil, fmt.Errorf("failed to build index: %w", err)
+		return nil, fmt.Errorf("failed to build index: %w", err)
+	}
+
+	return idx, nil
+}
+
+func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMaker, attrs ...SourceAttribute) (Index, <-chan Artefact, error) {
+	idx, err := BuildIndex(ctx, fsys, attrs...)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	schemaResolver := schemaResolverMaker(idx)

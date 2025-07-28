@@ -39,7 +39,7 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/telemetry"
 	"github.com/cerbos/cerbos/internal/validator"
 
@@ -127,19 +127,13 @@ func Start(ctx context.Context) error {
 		return fmt.Errorf("failed to create store: %w", err)
 	}
 
-	// create schema manager
-	schemaMgr, err := internalSchema.New(ctx, store)
-	if err != nil {
-		return fmt.Errorf("failed to create schema manager: %w", err)
-	}
-
 	var policyLoader policyloader.PolicyLoader
 	switch st := store.(type) {
 	// Overlay needs to take precedence over BinaryStore in this type switch,
 	// as our overlay store implements BinaryStore also
 	case overlay.Overlay:
 		// create wrapped policy loader
-		pl, err := st.GetOverlayPolicyLoader(ctx, schemaMgr)
+		pl, err := st.GetOverlayPolicyLoader(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to create overlay policy loader: %w", err)
 		}
@@ -149,25 +143,39 @@ func Start(ctx context.Context) error {
 
 	case storage.SourceStore:
 		// create compile manager
-		compileMgr, err := compile.NewManager(ctx, st, schemaMgr)
+		policyLoader, err = compile.NewManager(ctx, st)
 		if err != nil {
 			return fmt.Errorf("failed to create compile manager: %w", err)
 		}
-		policyLoader = compileMgr
 	default:
 		return ErrInvalidStore
 	}
 
-	rt := ruletable.NewRuleTable(policyLoader)
+	rt := ruletable.NewProtoRuletable()
+
+	if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
+		return err
+	}
+
+	// create schema manager
+	schemaMgr, err := internalSchema.New(ctx, store)
+	if err != nil {
+		return fmt.Errorf("failed to create schema manager: %w", err)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, store, schemaMgr)
+	if err != nil {
+		return fmt.Errorf("failed to create ruletable manager: %w", err)
+	}
 
 	if ss, ok := policyLoader.(storage.Subscribable); ok {
-		ss.Subscribe(rt)
+		ss.Subscribe(ruletableMgr)
 	}
 
 	// create engine
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      policyLoader,
-		RuleTable:         rt,
+		RuleTableManager:  ruletableMgr,
 		SchemaMgr:         schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: mdExtractor,

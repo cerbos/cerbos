@@ -18,7 +18,7 @@ import (
 	"github.com/google/cel-go/parser"
 
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/engine/planner/internal"
+	"github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/google/cel-go/common/operators"
 )
 

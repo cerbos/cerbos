@@ -20,7 +20,7 @@ import (
 
 type compilerVersionMigration func(*runtimev1.RunnablePolicySet) error
 
-const AnyRoleVal = "*"
+const anyRoleVal = "*"
 
 var (
 	emptyVal = &emptypb.Empty{}
@@ -44,6 +44,9 @@ func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager
 	return errs.ErrOrNil()
 }
 
+// Compile compiles a single policy compilation unit into a runnable policy set.
+// The schemaMgr parameter is optional - pass nil to skip schema validation,
+// or provide a SchemaManager instance to enable validation against schema files.
 func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
@@ -183,8 +186,10 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		return nil, nil
 	}
 
-	if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
-		return nil, nil
+	if schemaMgr != nil {
+		if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
+			return nil, nil
+		}
 	}
 
 	compilePolicyConstants(modCtx, rp.Constants)
@@ -321,8 +326,8 @@ func compileDerivedRoles(modCtx *moduleCtx) map[string]*runtimev1.RunnableDerive
 		}
 
 		for _, pr := range def.ParentRoles {
-			if pr == AnyRoleVal {
-				rdr.ParentRoles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+			if pr == anyRoleVal {
+				rdr.ParentRoles = map[string]*emptypb.Empty{anyRoleVal: {}}
 				break
 			}
 			rdr.ParentRoles[pr] = emptyVal
@@ -347,13 +352,13 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 	}
 
 	if ps := rp.Schemas.PrincipalSchema; ps != nil && ps.Ref != "" {
-		if err := schemaMgr.CheckSchema(context.TODO(), ps.Ref); err != nil {
+		if _, err := schemaMgr.LoadSchema(context.TODO(), ps.Ref); err != nil {
 			modCtx.addErrForProtoPath(policy.ResourcePolicyPrincipalSchemaProtoPath(), errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
 		}
 	}
 
 	if rs := rp.Schemas.ResourceSchema; rs != nil && rs.Ref != "" {
-		if err := schemaMgr.CheckSchema(context.TODO(), rs.Ref); err != nil {
+		if _, err := schemaMgr.LoadSchema(context.TODO(), rs.Ref); err != nil {
 			modCtx.addErrForProtoPath(policy.ResourcePolicyResourceSchemaProtoPath(), errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
 		}
 	}
@@ -382,8 +387,8 @@ func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.Resource
 	if len(rule.Roles) > 0 {
 		cr.Roles = make(map[string]*emptypb.Empty, len(rule.Roles))
 		for _, r := range rule.Roles {
-			if r == AnyRoleVal {
-				cr.Roles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+			if r == anyRoleVal {
+				cr.Roles = map[string]*emptypb.Empty{anyRoleVal: {}}
 				break
 			}
 			cr.Roles[r] = emptyVal

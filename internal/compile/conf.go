@@ -4,49 +4,35 @@
 package compile
 
 import (
-	"errors"
 	"time"
 
-	"go.uber.org/multierr"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
-const (
-	confKey          = "compile"
-	defaultCacheSize = 1024
-)
+const confKey = "compile"
 
 // Conf is optional configuration for caches.
 type Conf struct {
-	// CacheSize is the number of compiled policies to cache in memory.
-	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
-	// CacheDuration is the duration to cache an entry.
-	CacheDuration time.Duration `yaml:"cacheDuration" conf:",example=60s"`
+	// [DEPRECATED] CacheSize is the number of compiled policies to cache in memory.
+	CacheSize uint `yaml:"cacheSize" conf:",ignore"`
+	// [DEPRECATED] CacheDuration is the duration to cache an entry.
+	CacheDuration time.Duration `yaml:"cacheDuration" conf:",ignore"`
 }
 
 func (c *Conf) Key() string {
 	return confKey
 }
 
-func (c *Conf) SetDefaults() {
-	c.CacheSize = defaultCacheSize
-}
+func (c *Conf) SetDefaults() {}
 
-func (c *Conf) Validate() (outErr error) {
-	if c.CacheSize < 1 {
-		outErr = multierr.Append(outErr, errors.New("compile.cacheSize must be greater than 0"))
+func (c *Conf) Validate() error {
+	if c.CacheSize != 0 {
+		util.DeprecationWarning("compile.cacheSize")
 	}
 
-	if c.CacheDuration < 0 {
-		outErr = multierr.Append(outErr, errors.New("compile.cacheDuration must be positive"))
+	if c.CacheDuration != 0 {
+		util.DeprecationWarning("compile.cacheDuration")
 	}
 
-	return outErr
-}
-
-// DefaultConf creates a config with defaults.
-func DefaultConf() *Conf {
-	cconf := &Conf{}
-	cconf.SetDefaults()
-
-	return cconf
+	return nil
 }

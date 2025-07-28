@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package blob
 
 import (
@@ -266,11 +268,6 @@ func (s *Store) updateIndex(ctx context.Context) (err error) {
 	// we need to emit all events regardless of validity as some subscribers (such as the rule table)
 	// need to be kept in sync.
 	defer func() {
-		if err != nil {
-			for i := range evts {
-				evts[i].IndexUnhealthy = true
-			}
-		}
 		s.NotifySubscribers(evts...)
 	}()
 

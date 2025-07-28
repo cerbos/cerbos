@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -449,10 +450,21 @@ type components struct {
 }
 
 func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
-	cm, err := compile.NewManager(ctx, c.store, c.schemaMgr)
+	cm, err := compile.NewManager(ctx, c.store)
 	if err != nil {
 		return nil, err
 	}
 
-	return engine.NewEphemeral(nil, cm, c.schemaMgr), nil
+	rt := ruletable.NewProtoRuletable()
+
+	if err := ruletable.LoadPolicies(ctx, rt, cm); err != nil {
+		return nil, err
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, cm, c.store, c.schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.NewEphemeral(nil, ruletableMgr, c.schemaMgr), nil
 }

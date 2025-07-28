@@ -12,8 +12,8 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -352,33 +352,33 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action strin
 }
 
 func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, options *policyv1.TestOptions, trace bool) (_ []*enginev1.CheckOutput, traces []*enginev1.Trace, _ error) {
-	var checkOpts []engine.CheckOpt
+	var checkOpts []evaluator.CheckOpt
 
 	usedDefaultNow := false
 	if now := options.GetNow(); now != nil {
-		checkOpts = append(checkOpts, engine.WithNowFunc(now.AsTime))
+		checkOpts = append(checkOpts, evaluator.WithNowFunc(now.AsTime))
 	} else {
-		checkOpts = append(checkOpts, engine.WithNowFunc(func() time.Time {
+		checkOpts = append(checkOpts, evaluator.WithNowFunc(func() time.Time {
 			usedDefaultNow = true
 			return time.Time{}
 		}))
 	}
 
 	if options.GetLenientScopeSearch() {
-		checkOpts = append(checkOpts, engine.WithLenientScopeSearch())
+		checkOpts = append(checkOpts, evaluator.WithLenientScopeSearch())
 	}
 
 	if globals := options.GetGlobals(); len(globals) > 0 {
-		checkOpts = append(checkOpts, engine.WithGlobals((&structpb.Struct{Fields: globals}).AsMap()))
+		checkOpts = append(checkOpts, evaluator.WithGlobals((&structpb.Struct{Fields: globals}).AsMap()))
 	}
 
 	if defaultPolicyVersion := options.GetDefaultPolicyVersion(); defaultPolicyVersion != "" {
-		checkOpts = append(checkOpts, engine.WithDefaultPolicyVersion(defaultPolicyVersion))
+		checkOpts = append(checkOpts, evaluator.WithDefaultPolicyVersion(defaultPolicyVersion))
 	}
 
 	if trace {
 		traceCollector := tracer.NewCollector()
-		checkOpts = append(checkOpts, engine.WithTraceSink(traceCollector))
+		checkOpts = append(checkOpts, evaluator.WithTraceSink(traceCollector))
 		defer func() { traces = traceCollector.Traces() }()
 	}
 

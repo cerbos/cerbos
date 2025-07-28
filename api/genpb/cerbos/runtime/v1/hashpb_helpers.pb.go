@@ -418,6 +418,52 @@ func cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m *RuleTableMetadata, hasher
 	}
 }
 
+func cerbos_runtime_v1_RuleTable_JSONSchema_hashpb_sum(m *RuleTable_JSONSchema, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.JSONSchema.content"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetContent()))))
+		_, _ = hasher.Write(m.GetContent())
+	}
+}
+
+func cerbos_runtime_v1_RuleTable_PolicyDerivedRoles_hashpb_sum(m *RuleTable_PolicyDerivedRoles, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.derived_roles"]; !ok {
+		if len(m.DerivedRoles) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.DerivedRoles)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.DerivedRoles[k] != nil {
+					cerbos_runtime_v1_RunnableDerivedRole_hashpb_sum(m.DerivedRoles[k], hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_RuleTable_RoleParentRoles_ParentRoles_hashpb_sum(m *RuleTable_RoleParentRoles_ParentRoles, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RoleParentRoles.ParentRoles.roles"]; !ok {
+		if len(m.Roles) > 0 {
+			for _, v := range m.Roles {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_RuleTable_RoleParentRoles_hashpb_sum(m *RuleTable_RoleParentRoles, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RoleParentRoles.role_parent_roles"]; !ok {
+		if len(m.RoleParentRoles) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.RoleParentRoles)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.RoleParentRoles[k] != nil {
+					cerbos_runtime_v1_RuleTable_RoleParentRoles_ParentRoles_hashpb_sum(m.RoleParentRoles[k], hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_RuleTable_RuleRow_AllowActions_hashpb_sum(m *RuleTable_RuleRow_AllowActions, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.actions"]; !ok {
 		if len(m.Actions) > 0 {
@@ -426,6 +472,29 @@ func cerbos_runtime_v1_RuleTable_RuleRow_AllowActions_hashpb_sum(m *RuleTable_Ru
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 				if m.Actions[k] != nil {
 					google_protobuf_Empty_hashpb_sum(m.Actions[k], hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_RuleTable_RuleRow_Params_hashpb_sum(m *RuleTable_RuleRow_Params, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.Params.ordered_variables"]; !ok {
+		if len(m.OrderedVariables) > 0 {
+			for _, v := range m.OrderedVariables {
+				if v != nil {
+					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.Params.constants"]; !ok {
+		if len(m.Constants) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Constants)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Constants[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore)
 				}
 			}
 		}
@@ -499,6 +568,26 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetPrincipal()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPrincipal()), len(m.GetPrincipal())))
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.params"]; !ok {
+		if m.GetParams() != nil {
+			cerbos_runtime_v1_RuleTable_RuleRow_Params_hashpb_sum(m.GetParams(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.derived_role_params"]; !ok {
+		if m.GetDerivedRoleParams() != nil {
+			cerbos_runtime_v1_RuleTable_RuleRow_Params_hashpb_sum(m.GetDerivedRoleParams(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.evaluation_key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetEvaluationKey()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetEvaluationKey()), len(m.GetEvaluationKey())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.policy_kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetPolicyKind())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.from_role_policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetFromRolePolicy())))
+	}
 }
 
 func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, ignore map[string]struct{}) {
@@ -507,6 +596,58 @@ func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, igno
 			for _, v := range m.Rules {
 				if v != nil {
 					cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.schemas"]; !ok {
+		if len(m.Schemas) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Schemas)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, k))
+				if m.Schemas[k] != nil {
+					cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas[k], hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.meta"]; !ok {
+		if len(m.Meta) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Meta)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, k))
+				if m.Meta[k] != nil {
+					cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m.Meta[k], hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.scope_parent_roles"]; !ok {
+		if len(m.ScopeParentRoles) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.ScopeParentRoles)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.ScopeParentRoles[k] != nil {
+					cerbos_runtime_v1_RuleTable_RoleParentRoles_hashpb_sum(m.ScopeParentRoles[k], hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.policy_derived_roles"]; !ok {
+		if len(m.PolicyDerivedRoles) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.PolicyDerivedRoles)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, k))
+				if m.PolicyDerivedRoles[k] != nil {
+					cerbos_runtime_v1_RuleTable_PolicyDerivedRoles_hashpb_sum(m.PolicyDerivedRoles[k], hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.json_schemas"]; !ok {
+		if len(m.JsonSchemas) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.JsonSchemas)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.JsonSchemas[k] != nil {
+					cerbos_runtime_v1_RuleTable_JSONSchema_hashpb_sum(m.JsonSchemas[k], hasher, ignore)
 				}
 			}
 		}

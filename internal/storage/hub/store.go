@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package hub
 
 import (
@@ -8,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -39,7 +40,7 @@ func init() {
 	})
 
 	storage.RegisterDriver("bundle", func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
-		util.DeprecationWarning(storage.ConfKey+".bundle", confKey)
+		util.DeprecationReplacedWarning(storage.ConfKey+".bundle", confKey)
 		conf := new(Conf)
 		if err := confW.Get(storage.ConfKey+".bundle", conf); err != nil {
 			return nil, fmt.Errorf("failed to read bundle configuration: %w", err)
@@ -118,10 +119,6 @@ func (hs *HybridStore) withActiveSource() storage.BinaryStore {
 
 	hs.log.Warn("Switching to local source because remote source is unhealthy")
 	return hs.local
-}
-
-func (hs *HybridStore) GetCacheDuration() time.Duration {
-	return hs.withActiveSource().GetCacheDuration()
 }
 
 func (hs *HybridStore) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

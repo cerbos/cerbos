@@ -6,9 +6,10 @@ package internal
 import (
 	"maps"
 
-	"github.com/cerbos/cerbos/internal/compile"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+const anyRoleVal = "*"
 
 type ProtoSet map[string]*emptypb.Empty
 
@@ -54,7 +55,7 @@ func ToSet(values []string) StringSet {
 
 func SetIntersects(s1 ProtoSet, s2 StringSet) bool {
 	for v := range s1 {
-		if v == compile.AnyRoleVal {
+		if v == anyRoleVal {
 			return true
 		}
 

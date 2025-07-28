@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package hub
 
 import (
@@ -576,10 +578,6 @@ func (s *RemoteSource) IsHealthy() bool {
 	defer s.mu.RUnlock()
 
 	return s.healthy
-}
-
-func (s *RemoteSource) GetCacheDuration() time.Duration {
-	return 0
 }
 
 func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {

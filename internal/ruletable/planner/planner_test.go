@@ -23,7 +23,7 @@ import (
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/engine/planner/internal"
+	"github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/go-cmp/cmp"
@@ -174,12 +174,12 @@ func Test_evaluateCondition(t *testing.T) {
 			want: "true",
 		},
 	}
-	evalCtx := &evalContext{TimeFn: time.Now}
+	evalCtx := &EvalContext{TimeFn: time.Now}
 	ctx := t.Context()
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("Expr:%q", tt.args.expr), func(t *testing.T) {
 			is := require.New(t)
-			got, err := evalCtx.evaluateCondition(ctx, tt.args.condition, tt.args.request, nil, nil, nil, nil)
+			got, err := evalCtx.EvaluateCondition(ctx, tt.args.condition, tt.args.request, nil, nil, nil, nil)
 			is.NoError(err)
 			expression := got.GetExpression()
 			is.Equal(tt.want, unparse(t, expression))
@@ -232,7 +232,7 @@ func Test_evaluateCondition(t *testing.T) {
 					}
 				}
 			}
-			got, err := evalCtx.evaluateCondition(ctx, c, &enginev1.Request{
+			got, err := evalCtx.EvaluateCondition(ctx, c, &enginev1.Request{
 				Principal: &enginev1.Request_Principal{Attr: principalAttr},
 				Resource:  &enginev1.Request_Resource{Attr: resourceAttr},
 			}, nil, nil, nil, nil)
@@ -451,7 +451,7 @@ func TestNormaliseFilter(t *testing.T) {
 			haveFilter := normaliseFilter(tc.Input)
 			require.Empty(t, cmp.Diff(tc.WantFilter, haveFilter, protocmp.Transform()))
 
-			haveStr := filterToString(haveFilter)
+			haveStr := FilterToString(haveFilter)
 			require.Equal(t, tc.WantString, haveStr)
 		})
 	}

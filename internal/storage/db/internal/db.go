@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package internal
 
 import (
@@ -326,7 +328,19 @@ func (s *dbStorage) GetAll(ctx context.Context) ([]*policy.CompilationUnit, erro
 		modIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(k))
 	}
 
-	return s.GetAllMatching(ctx, modIDs)
+	cus, err := s.GetCompilationUnits(ctx, modIDs...)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*policy.CompilationUnit, len(cus))
+	var i int
+	for _, cu := range cus {
+		res[i] = cu
+		i++
+	}
+
+	return res, nil
 }
 
 func (s *dbStorage) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {

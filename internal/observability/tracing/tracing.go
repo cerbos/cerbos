@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package tracing
 
 import (
@@ -12,6 +14,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/semconv/v1.13.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 )
 
 func HTTPHandler(handler http.Handler, path string) http.Handler {
@@ -20,6 +24,10 @@ func HTTPHandler(handler http.Handler, path string) http.Handler {
 
 func StartSpan(ctx context.Context, name string) (context.Context, trace.Span) {
 	return otelsdk.Tracer("cerbos.dev/cerbos").Start(ctx, name)
+}
+
+func StartTracer(sink tracer.Sink) tracer.Context {
+	return tracer.Start(sink)
 }
 
 func MarkFailed(span trace.Span, code int, err error) {
