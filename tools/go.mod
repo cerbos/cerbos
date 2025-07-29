@@ -8,12 +8,12 @@ require (
 	connectrpc.com/connect v1.18.1
 	github.com/bufbuild/buf v1.55.1
 	github.com/cerbos/protoc-gen-go-hashpb v0.4.2
-	github.com/cerbos/protoc-gen-jsonschema v0.1.7
+	github.com/cerbos/protoc-gen-jsonschema v0.1.6
 	github.com/dadav/helm-schema v0.0.0-20250516042030-eb9f80173063
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/golangci/golangci-lint/v2 v2.3.0
 	github.com/google/go-licenses v1.6.0
-	github.com/goreleaser/goreleaser/v2 v2.11.1
+	github.com/goreleaser/goreleaser/v2 v2.11.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/vektra/mockery/v3 v3.5.1
@@ -29,14 +29,14 @@ require (
 	4d63.com/gochecknoglobals v0.2.2 // indirect
 	al.essio.dev/pkg/shellescape v1.6.0 // indirect
 	buf.build/gen/go/bufbuild/bufplugin/protocolbuffers/go v1.36.6-20250121211742-6d880cc6cc8d.1 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250717185734-6c6e0d3c608e.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250625184727-c923a0c2a132.1 // indirect
 	buf.build/gen/go/bufbuild/registry/connectrpc/go v1.18.1-20250606164443-9d1800bf4ccc.1 // indirect
 	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.36.6-20250606164443-9d1800bf4ccc.1 // indirect
 	buf.build/gen/go/pluginrpc/pluginrpc/protocolbuffers/go v1.36.6-20241007202033-cf42259fcbfc.1 // indirect
 	buf.build/go/app v0.1.0 // indirect
 	buf.build/go/bufplugin v0.9.0 // indirect
 	buf.build/go/interrupt v1.1.0 // indirect
-	buf.build/go/protovalidate v0.14.0 // indirect
+	buf.build/go/protovalidate v0.13.1 // indirect
 	buf.build/go/protoyaml v0.6.0 // indirect
 	buf.build/go/spdx v0.2.0 // indirect
 	buf.build/go/standard v0.1.0 // indirect
@@ -515,7 +515,7 @@ require (
 	github.com/zeebo/errs v1.4.0 // indirect
 	gitlab.com/bosi/decorder v0.4.2 // indirect
 	gitlab.com/digitalxero/go-conventional-commit v1.0.7 // indirect
-	gitlab.com/gitlab-org/api/client-go v0.137.0 // indirect
+	gitlab.com/gitlab-org/api/client-go v0.134.0 // indirect
 	go-simpler.org/musttag v0.13.1 // indirect
 	go-simpler.org/sloglint v0.11.1 // indirect
 	go.augendre.info/arangolint v0.2.0 // indirect

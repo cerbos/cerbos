@@ -5,7 +5,7 @@ go 1.23.4
 toolchain go1.24.5
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250717185734-6c6e0d3c608e.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250625184727-c923a0c2a132.1
 	connectrpc.com/connect v1.18.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
