@@ -121,6 +121,17 @@ func (mgr *Manager) reload() error {
 }
 
 func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
+	// if the index has been unhealthy, we have no way of knowing if there are unlinked dependents
+	// in the rule table, so we purge the table in it's entirety and then return.
+	// An example scenario:
+	// - a PDP is started with a valid policy set including a resource policy
+	// - the resource policy is updated to reference a non-existent derived role
+	// - the index build fails but no updates occur to the rule table and it continues to operate
+	//   on the last valid dataset
+	// - the missing derived roles policy is added, but the resource policy Update event with the import
+	//   never made it to the rule table update, thus the old definition is still in the rule table
+	// - the ruletable will continue to return stale data until another (valid) resource policy update
+	//   triggers a reload.
 	if mgr.awaitingHealthyPolicyStore.Load() {
 		return mgr.reload()
 	}
@@ -131,20 +142,20 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 		}
 	}()
 
-	mgr.deletePolicy(evt.PolicyID)
-
-	if evt.OldPolicyID != nil {
-		mgr.deletePolicy(*evt.OldPolicyID)
-	}
-
 	ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
 	defer cancelFunc()
 
-	if evt.Kind == storage.EventAddOrUpdatePolicy {
+	if evt.Kind == storage.EventAddOrUpdatePolicy { //nolint:nestif
 		var rps *runtimev1.RunnablePolicySet
 		rps, err = mgr.policyLoader.GetFirstMatch(ctx, []namer.ModuleID{evt.PolicyID})
 		if err != nil {
 			return fmt.Errorf("failed to load policy: %w", err)
+		}
+
+		// Only delete if we successfully retrieved the policy above (e.g. no compilation errors occurred)
+		mgr.deletePolicy(evt.PolicyID)
+		if evt.OldPolicyID != nil {
+			mgr.deletePolicy(*evt.OldPolicyID)
 		}
 
 		if rps != nil {
