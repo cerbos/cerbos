@@ -185,10 +185,7 @@ func TestUpdateStore(t *testing.T) {
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
-		wantEvents := make([]storage.Event, 0, len(pset))
-		for _, p := range pset {
-			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
-		}
+		wantEvents := buildRequiredEventsWithDependents(t, []storage.EventKind{storage.EventAddOrUpdatePolicy}, pset)
 
 		checkEvents(t, timeout, wantEvents...)
 	})
@@ -268,10 +265,7 @@ func TestUpdateStore(t *testing.T) {
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
-		wantEvents := make([]storage.Event, 0, len(pset))
-		for _, p := range pset {
-			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
-		}
+		wantEvents := buildRequiredEventsWithDependents(t, []storage.EventKind{storage.EventAddOrUpdatePolicy}, pset)
 
 		checkEvents(t, timeout, wantEvents...)
 	})
@@ -336,12 +330,71 @@ func TestUpdateStore(t *testing.T) {
 		param.mockIdx.AssertExpectations(t)
 		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
+		// dependents are deleted first (by coincidence) because of the ordering of `pset`, therefore we don't use the `buildRequiredEvents` method
+		// to attach `Dependents`
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
 			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
 		checkEvents(t, timeout, wantEvents...)
+	})
+
+	t.Run("delete dependencies", func(t *testing.T) {
+		// This test is a bit of a hack. We rely on the existence of dependent policies (resource and principal policies)
+		// in order to generate the expected `Dependents` in `buildRequiredEventsWithDependents`, but we need to remove
+		// them from the actual delete events as we're trying to simulate JUST the removal of the dependencies.
+
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		param.mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.Delete(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		checkEvents := storage.TestSubscription(param.store)
+		pset := genPolicySet(1) //nolint:gosec
+
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
+			for file, p := range pset {
+				switch p.PolicyType.(type) {
+				case *policyv1.Policy_PrincipalPolicy, *policyv1.Policy_ResourcePolicy, *policyv1.Policy_RolePolicy:
+					continue
+				}
+
+				fp := filepath.Join(policyDir, file)
+				if err := os.Remove(filepath.Join(param.sourceGitDir, fp)); err != nil {
+					return err
+				}
+
+				if _, err := wt.Remove(fp); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}))
+
+		require.NoError(t, param.store.updateIndex(t.Context()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNumberOfCalls(t, "Delete", 3)
+
+		wantEvents := buildRequiredEventsWithDependents(t, []storage.EventKind{storage.EventDeleteOrDisablePolicy}, pset)
+
+		// remove delete events for dependents. We need them in `buildRequiredEventsWithDependents` but only want to test
+		// what happens when we delete the dependencies (dependents should be returned in the events)
+		dependencyWantEvents := []storage.Event{}
+		for _, ev := range wantEvents {
+			if len(ev.Dependents) > 0 {
+				dependencyWantEvents = append(dependencyWantEvents, ev)
+			}
+		}
+
+		checkEvents(t, timeout, dependencyWantEvents...)
 	})
 
 	t.Run("rename policy", func(t *testing.T) {
@@ -390,11 +443,7 @@ func TestUpdateStore(t *testing.T) {
 		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
-		wantEvents := make([]storage.Event, 0, len(pset))
-		for _, p := range pset {
-			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: namer.GenModuleID(p)})
-			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
-		}
+		wantEvents := buildRequiredEventsWithDependents(t, []storage.EventKind{storage.EventDeleteOrDisablePolicy, storage.EventAddOrUpdatePolicy}, pset)
 
 		checkEvents(t, timeout, wantEvents...)
 	})
@@ -570,6 +619,42 @@ func TestUpdateStore(t *testing.T) {
 
 		checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, "invalid.json"))
 	})
+}
+
+func buildRequiredEventsWithDependents(t *testing.T, eventKinds []storage.EventKind, pset policySet) []storage.Event {
+	t.Helper()
+
+	wantEvents := make([]storage.Event, 0, len(pset)*len(eventKinds))
+	dependents := make(map[string]map[namer.ModuleID]struct{})
+
+	for _, p := range pset {
+		modID := namer.GenModuleID(p)
+		depFQNs, _ := policy.Dependencies(p)
+		for _, d := range depFQNs {
+			if _, ok := dependents[d]; !ok {
+				dependents[d] = make(map[namer.ModuleID]struct{})
+			}
+			dependents[d][modID] = struct{}{}
+		}
+	}
+
+	for _, p := range pset {
+		modID := namer.GenModuleID(p)
+		for _, k := range eventKinds {
+			ev := storage.Event{Kind: k, PolicyID: modID}
+
+			if deps, ok := dependents[namer.FQN(p)]; ok {
+				ev.Dependents = make([]namer.ModuleID, 0, len(deps))
+				for d := range deps {
+					ev.Dependents = append(ev.Dependents, d)
+				}
+			}
+
+			wantEvents = append(wantEvents, ev)
+		}
+	}
+
+	return wantEvents
 }
 
 func TestReloadable(t *testing.T) {

@@ -75,12 +75,10 @@ func TestRuleTableManager(t *testing.T) {
 		RequestId: "1",
 		Resource: &enginev1.Resource{
 			Kind: "rock",
-			// PolicyVersion: "default",
-			Id: "1",
+			Id:   "1",
 		},
 		Principal: &enginev1.Principal{
-			Id: "sam",
-			// PolicyVersion: "default",
+			Id:    "sam",
 			Roles: []string{"user"},
 		},
 		Actions: []string{action},
@@ -164,6 +162,44 @@ func TestRuleTableManager(t *testing.T) {
 			require.Len(t, outputs, 1)
 			require.Contains(t, outputs[0].Actions, action)
 			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
+		}, 1*time.Second, 50*time.Millisecond)
+	})
+
+	t.Run("updating_derived_role_affects_rule_table", func(t *testing.T) {
+		derivedRoleFile := "derived_roles/special_roles.yaml"
+		p := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_DerivedRoles{
+				DerivedRoles: &policyv1.DerivedRoles{
+					Name: "special_roles",
+					Definitions: []*policyv1.RoleDef{
+						{
+							Name:        "special_user",
+							ParentRoles: []string{"user"},
+							Condition: &policyv1.Condition{
+								Condition: &policyv1.Condition_Match{
+									Match: &policyv1.Match{
+										Op: &policyv1.Match_Expr{
+											Expr: "true == true", // <-- change
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		addOrUpdatePolicy(t, derivedRoleFile, p, memFsys, idx, store)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			require.NoError(t, err)
+
+			require.Len(t, outputs, 1)
+			require.Contains(t, outputs[0].Actions, action)
+			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 }
