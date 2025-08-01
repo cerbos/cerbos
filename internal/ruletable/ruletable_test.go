@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -200,6 +201,88 @@ func TestRuleTableManager(t *testing.T) {
 			require.Len(t, outputs, 1)
 			require.Contains(t, outputs[0].Actions, action)
 			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
+		}, 1*time.Second, 50*time.Millisecond)
+	})
+
+	t.Run("adding_and_referencing_export_const_affects_rule_table", func(t *testing.T) {
+		// add the new export constant file
+		constantsFile := "export_constants/special_constants.yaml"
+		cp := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_ExportConstants{
+				ExportConstants: &policyv1.ExportConstants{
+					Name: "special_constants",
+					Definitions: map[string]*structpb.Value{
+						"FlakeyTrue": structpb.NewBoolValue(true),
+					},
+				},
+			},
+		}
+		addOrUpdatePolicy(t, constantsFile, cp, memFsys, idx, store)
+
+		// update the resource policy to reference it
+		rp := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_ResourcePolicy{
+				ResourcePolicy: &policyv1.ResourcePolicy{
+					Resource: "rock",
+					Version:  "default",
+					Constants: &policyv1.Constants{
+						Import: []string{"special_constants"},
+					},
+					Rules: []*policyv1.ResourceRule{
+						{
+							Actions: []string{action},
+							Roles:   []string{"user"},
+							Effect:  effectv1.Effect_EFFECT_ALLOW,
+							Condition: &policyv1.Condition{
+								Condition: &policyv1.Condition_Match{
+									Match: &policyv1.Match{
+										Op: &policyv1.Match_Expr{
+											Expr: "C.FlakeyTrue == true",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		addOrUpdatePolicy(t, resourceFile, rp, memFsys, idx, store)
+
+		// The check should be allowed
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			require.NoError(t, err)
+
+			require.Len(t, outputs, 1)
+			require.Contains(t, outputs[0].Actions, action)
+			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
+		}, 1*time.Second, 50*time.Millisecond)
+
+		// Now update the export constant rule
+		cp = &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_ExportConstants{
+				ExportConstants: &policyv1.ExportConstants{
+					Name: "special_constants",
+					Definitions: map[string]*structpb.Value{
+						"FlakeyTrue": structpb.NewBoolValue(false),
+					},
+				},
+			},
+		}
+		addOrUpdatePolicy(t, constantsFile, cp, memFsys, idx, store)
+
+		// The rule table should be updated, and the check request should now be denied
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			require.NoError(t, err)
+
+			require.Len(t, outputs, 1)
+			require.Contains(t, outputs[0].Actions, action)
+			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 }
