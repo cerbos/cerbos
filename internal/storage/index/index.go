@@ -317,6 +317,13 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 		idx.addDep(modID, dep)
 	}
 
+	if deps, ok := idx.dependents[modID]; ok && len(deps) > 0 {
+		evt.Dependents = make([]namer.ModuleID, 0, len(deps))
+		for d := range deps {
+			evt.Dependents = append(evt.Dependents, d)
+		}
+	}
+
 	statsCtx := context.Background()
 	metrics.Add(statsCtx, metrics.IndexEntryCount(), int64(len(idx.modIDToFile)-startCount))
 	metrics.Inc(statsCtx, metrics.IndexCRUDCount(), metrics.KindKey(crudKind))
@@ -357,6 +364,9 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 			if refs, ok := idx.dependents[dep]; ok {
 				delete(refs, modID)
 			}
+			if len(idx.dependents[dep]) == 0 {
+				delete(idx.dependents, dep)
+			}
 		}
 	}
 
@@ -364,6 +374,13 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	delete(idx.modIDToFile, modID)
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
+
+	if deps, ok := idx.dependents[modID]; ok && len(deps) > 0 {
+		evt.Dependents = make([]namer.ModuleID, 0, len(deps))
+		for d := range deps {
+			evt.Dependents = append(evt.Dependents, d)
+		}
+	}
 
 	statsCtx := context.Background()
 	metrics.Add(statsCtx, metrics.IndexEntryCount(), int64(len(idx.modIDToFile)-startCount))
