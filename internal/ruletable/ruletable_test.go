@@ -19,6 +19,9 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -85,13 +88,20 @@ func TestRuleTableManager(t *testing.T) {
 		Actions: []string{action},
 	}
 
+	conf := &evaluator.Conf{}
+	conf.SetDefaults()
+	evalParams := evaluator.EvalParams{
+		DefaultPolicyVersion: conf.DefaultPolicyVersion,
+		NowFunc:              conditions.Now(),
+	}
+	tctx := tracer.Start(nil)
+
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+		output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
 		require.NoError(t, err)
 
-		require.Len(t, outputs, 1)
-		require.Contains(t, outputs[0].Actions, action)
-		require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
+		require.Contains(t, output.Actions, action)
+		require.Equal(t, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
 	}, 1*time.Second, 50*time.Millisecond)
 
 	t.Run("maintain_valid_state_on_missing_derived_role", func(t *testing.T) {
@@ -118,12 +128,11 @@ func TestRuleTableManager(t *testing.T) {
 
 		// Check request should still return ALLOW
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
 			require.NoError(t, err)
 
-			require.Len(t, outputs, 1)
-			require.Contains(t, outputs[0].Actions, action)
-			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
+			require.Contains(t, output.Actions, action)
+			require.Equal(t, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 
@@ -157,12 +166,11 @@ func TestRuleTableManager(t *testing.T) {
 
 		// Check request should now return DENY
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
 			require.NoError(t, err)
 
-			require.Len(t, outputs, 1)
-			require.Contains(t, outputs[0].Actions, action)
-			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
+			require.Contains(t, output.Actions, action)
+			require.Equal(t, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 
@@ -195,12 +203,11 @@ func TestRuleTableManager(t *testing.T) {
 		addOrUpdatePolicy(t, derivedRoleFile, p, memFsys, idx, store)
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
 			require.NoError(t, err)
 
-			require.Len(t, outputs, 1)
-			require.Contains(t, outputs[0].Actions, action)
-			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
+			require.Contains(t, output.Actions, action)
+			require.Equal(t, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 
@@ -253,12 +260,11 @@ func TestRuleTableManager(t *testing.T) {
 
 		// The check should be allowed
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
 			require.NoError(t, err)
 
-			require.Len(t, outputs, 1)
-			require.Contains(t, outputs[0].Actions, action)
-			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
+			require.Contains(t, output.Actions, action)
+			require.Equal(t, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_ALLOW)
 		}, 1*time.Second, 50*time.Millisecond)
 
 		// Now update the export constant rule
@@ -277,12 +283,11 @@ func TestRuleTableManager(t *testing.T) {
 
 		// The rule table should be updated, and the check request should now be denied
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			outputs, err := ruletableMgr.RuleTable.Check(ctx, []*enginev1.CheckInput{input})
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
 			require.NoError(t, err)
 
-			require.Len(t, outputs, 1)
-			require.Contains(t, outputs[0].Actions, action)
-			require.Equal(t, outputs[0].Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
+			require.Contains(t, output.Actions, action)
+			require.Equal(t, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 }
