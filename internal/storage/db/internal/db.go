@@ -302,7 +302,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 
 			ev := storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID}
 
-			if deps, ok := dependents[p.ID]; ok {
+			if deps, ok := dependents[p.ID]; ok && len(deps) > 0 {
 				ev.Dependents = deps
 			}
 
@@ -728,7 +728,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 
 			ev := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, ids[0])
 
-			if deps, ok := dependents[ids[0]]; ok {
+			if deps, ok := dependents[ids[0]]; ok && len(deps) > 0 {
 				ev.Dependents = deps
 			}
 
@@ -744,7 +744,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			idList[i] = id
 			ev := storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: id}
 
-			if deps, ok := dependents[id]; ok {
+			if deps, ok := dependents[id]; ok && len(deps) > 0 {
 				ev.Dependents = deps
 			}
 

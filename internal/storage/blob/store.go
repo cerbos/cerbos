@@ -304,7 +304,19 @@ func (s *Store) addOrUpdateEvent(etag, file, currDirName string, ts int64) (stor
 	}
 	wp := policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(etag), indexBuildTSSourceAttr(ts)))
 
-	return storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID), nil
+	evt := storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID)
+
+	dependents, err := s.idx.GetDependents(wp.ID)
+	if err != nil {
+		return evt, err
+	}
+
+	if deps, ok := dependents[wp.ID]; ok && len(deps) > 0 {
+		evt.Dependents = make([]namer.ModuleID, len(deps))
+		copy(evt.Dependents, deps)
+	}
+
+	return evt, nil
 }
 
 func (s *Store) deleteEvent(file string) (storage.Event, error) {
@@ -317,7 +329,20 @@ func (s *Store) deleteEvent(file string) (storage.Event, error) {
 		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
 
-	return storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, namer.GenModuleID(p)), nil
+	modID := namer.GenModuleID(p)
+	evt := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, modID)
+
+	dependents, err := s.idx.GetDependents(modID)
+	if err != nil {
+		return evt, err
+	}
+
+	if deps, ok := dependents[modID]; ok && len(deps) > 0 {
+		evt.Dependents = make([]namer.ModuleID, len(deps))
+		copy(evt.Dependents, deps)
+	}
+
+	return evt, nil
 }
 
 func (s *Store) clone(ctx context.Context) (*CloneResult, error) {

@@ -317,7 +317,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 		idx.addDep(modID, dep)
 	}
 
-	if deps, ok := idx.dependents[modID]; ok {
+	if deps, ok := idx.dependents[modID]; ok && len(deps) > 0 {
 		evt.Dependents = make([]namer.ModuleID, 0, len(deps))
 		for d := range deps {
 			evt.Dependents = append(evt.Dependents, d)
@@ -375,7 +375,7 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
 
-	if deps, ok := idx.dependents[modID]; ok {
+	if deps, ok := idx.dependents[modID]; ok && len(deps) > 0 {
 		evt.Dependents = make([]namer.ModuleID, 0, len(deps))
 		for d := range deps {
 			evt.Dependents = append(evt.Dependents, d)
