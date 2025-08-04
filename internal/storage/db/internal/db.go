@@ -234,6 +234,19 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 
 	events := make([]storage.Event, len(policies))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		modIDs := make([]namer.ModuleID, len(policies))
+		for i, p := range policies {
+			modIDs[i] = p.ID
+		}
+
+		// We only need to retrieve the state of Dependents before the update (there's no need
+		// to update a dependent policy in the rule table if it's only just been added in the
+		// same batch). Therefore, we can share the same transaction.
+		dependents, err := s.getDependents(ctx, tx, modIDs...)
+		if err != nil {
+			return err
+		}
+
 		for i, p := range policies {
 			if err := s.opts.upsertPolicy(ctx, tx, p); err != nil {
 				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
@@ -287,7 +300,13 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 			}
 
-			events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID}
+			ev := storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID}
+
+			if deps, ok := dependents[p.ID]; ok && len(deps) > 0 {
+				ev.Dependents = deps
+			}
+
+			events[i] = ev
 		}
 
 		return nil
@@ -503,13 +522,28 @@ func (q getCompilationUnitsQueryBuilder) j(depth int) exp.IdentifierExpression {
 }
 
 func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
+	var dependents map[namer.ModuleID][]namer.ModuleID
+
+	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		var err error
+		dependents, err = s.getDependents(ctx, tx, ids...)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dependents, nil
+}
+
+func (s *dbStorage) getDependents(ctx context.Context, tx *goqu.TxDatabase, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
 	// Rather than writing a proper recursive query (which is pretty much impossible to do in a database-agnostic way), we're
 	// exploiting the fact that we have a maximum of two levels of dependency (resourcePolicy -> derivedRoles -> exportVariables).
 
 	// SELECT dependency_id AS policy_id, policy_id AS dependent_id
 	// FROM policy_dependency
 	// WHERE policy_dependency.dependency_id IN (?)
-	directDependentsQuery := s.db.
+	directDependentsQuery := tx.
 		Select(
 			goqu.C(PolicyDepTblDepIDCol).As("policy_id"),
 			goqu.C(PolicyDepTblPolicyIDCol).As("dependent_id"),
@@ -521,7 +555,7 @@ func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (m
 	// FROM policy_dependency AS parent
 	// JOIN policy_dependency AS child ON child.policy_id = parent.dependency_id
 	// WHERE child.dependency_id IN (?)
-	transitiveDependentsQuery := s.db.
+	transitiveDependentsQuery := tx.
 		Select(
 			goqu.T("child").Col(PolicyDepTblDepIDCol).As("policy_id"),
 			goqu.T("parent").Col(PolicyDepTblPolicyIDCol).As("dependent_id"),
@@ -678,35 +712,54 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 }
 
 func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
-	if len(ids) == 1 {
-		_, err := s.db.Delete(PolicyTbl).Prepared(true).
-			Where(goqu.C(PolicyTblIDCol).Eq(ids[0])).
-			Executor().ExecContext(ctx)
+	return s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		dependents, err := s.getDependents(ctx, tx, ids...)
 		if err != nil {
 			return err
 		}
 
-		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, ids[0]))
+		if len(ids) == 1 {
+			_, err := tx.Delete(PolicyTbl).Prepared(true).
+				Where(goqu.C(PolicyTblIDCol).Eq(ids[0])).
+				Executor().ExecContext(ctx)
+			if err != nil {
+				return err
+			}
+
+			ev := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, ids[0])
+
+			if deps, ok := dependents[ids[0]]; ok && len(deps) > 0 {
+				ev.Dependents = deps
+			}
+
+			s.NotifySubscribers(ev)
+
+			return nil
+		}
+
+		idList := make([]any, len(ids))
+		events := make([]storage.Event, len(ids))
+
+		for i, id := range ids {
+			idList[i] = id
+			ev := storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: id}
+
+			if deps, ok := dependents[id]; ok && len(deps) > 0 {
+				ev.Dependents = deps
+			}
+
+			events[i] = ev
+		}
+		if _, err := tx.Delete(PolicyTbl).Prepared(true).
+			Where(goqu.C(PolicyTblIDCol).In(idList...)).
+			Executor().ExecContext(ctx); err != nil {
+			return err
+		}
+
+		s.NotifySubscribers(events...)
 
 		return nil
-	}
-
-	idList := make([]any, len(ids))
-	events := make([]storage.Event, len(ids))
-
-	for i, id := range ids {
-		idList[i] = id
-		events[i] = storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: id}
-	}
-	_, err := s.db.Delete(PolicyTbl).Prepared(true).
-		Where(goqu.C(PolicyTblIDCol).In(idList...)).
-		Executor().ExecContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	s.NotifySubscribers(events...)
-	return nil
+	})
 }
 
 func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

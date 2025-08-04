@@ -479,7 +479,6 @@ type CelProgram struct {
 	Name string
 }
 
-// TODO(saml) this is a currently unused function that will ultimately be reworked into the instantiation for ePDP or bundle PDPs.
 func NewRuleTable(protoRT *runtimev1.RuleTable, conf *evaluator.Conf, schemaConf *schema.Conf) (*RuleTable, error) {
 	rt := &RuleTable{
 		conf: conf,
