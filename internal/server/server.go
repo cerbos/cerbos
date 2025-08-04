@@ -198,11 +198,12 @@ type Param struct {
 }
 
 type Server struct {
-	conf       *Conf
-	cancelFunc context.CancelFunc
-	pool       *pool.ContextPool
-	health     *health.Server
-	tlsConfig  *tls.Config
+	conf         *Conf
+	cancelFunc   context.CancelFunc
+	pool         *pool.ContextPool
+	health       *health.Server
+	tlsConfig    *tls.Config
+	platformDone <-chan struct{}
 }
 
 func NewServer(conf *Conf) *Server {
@@ -256,8 +257,36 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		return err
 	}
 
+	var shutdown <-chan struct{}
+	if runtimeAPI := os.Getenv("AWS_LAMBDA_RUNTIME_API"); runtimeAPI != "" {
+		s.pool.Go(func(ctx context.Context) error {
+			l, err := registerNewLambdaExt(ctx, runtimeAPI)
+			if err != nil {
+				log.Error("Failed to register Cerbos server as Lambda extension", zap.Error(err))
+				return err
+			}
+			for {
+				if ctx.Err() != nil {
+					break
+				}
+				shutdown, err := l.checkShutdown(ctx)
+				if ctx.Err() == nil && err != nil {
+					log.Error("Failed to check for shutdown")
+					return err
+				}
+				if shutdown {
+					cancelFunc()
+					break
+				}
+			}
+			return nil
+		})
+	}
 	s.pool.Go(func(ctx context.Context) error {
-		<-ctx.Done()
+		select {
+		case _ = <-shutdown:
+		case _ = <-ctx.Done():
+		}
 		log.Info("Shutting down")
 
 		// mark this service as NOT_SERVING in the gRPC health check.
