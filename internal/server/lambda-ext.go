@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type lambdaExt struct {
@@ -44,15 +46,12 @@ const (
 	nextEventEndpoint    = "/2020-01-01/extension/event/next"
 )
 
-func newLambdaExt(runtimeAPI string) *lambdaExt {
-	return &lambdaExt{
-		runtimeAPI: runtimeAPI,
-	}
-}
-func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
-	l := lambdaExt {
-		nextEventURL: fmt.Sprintf("http://%s%s", runtimeAPI, nextEventEndpoint)	
-		client: &http.Client{Timeout: 10 * time.Second}
+const maxBodySize = 1024
+
+func registerNewLambdaExt(ctx context.Context, runtimeAPI string, timeout time.Duration) (*lambdaExt, error) {
+	l := lambdaExt{
+		nextEventURL: fmt.Sprintf("http://%s%s", runtimeAPI, nextEventEndpoint),
+		client:       &http.Client{Timeout: timeout},
 	}
 	url := fmt.Sprintf("http://%s%s", runtimeAPI, registrationEndpoint)
 
@@ -78,7 +77,6 @@ func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		const maxBodySize = 1024
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
 		return nil, fmt.Errorf("registration failed with status %d: %s", resp.StatusCode, string(body))
 	}
@@ -89,23 +87,20 @@ func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 }
 
 func (l *lambdaExt) checkShutdown(ctx context.Context) (bool, error) {
-// 	import "github.com/tidwall/gjson"
+	log := zap.L().Named("lambda-ext-impl")
 
-// json := `{"name":{"first":"Janet","last":"Prichard"},"age":47}`
-// value := gjson.Get(json, "name.first")
-// println(value.String()) // "Janet"
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", l.nextEventURL, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to create next event request: %w", err)
 	}
 
-	req.Header.Set(extensionIdHeader, l.extensionID)
+	req.Header.Set(extensionIDHeader, l.extensionID)
 
 	resp, err := l.client.Do(req)
 	if err != nil {
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
+			log.Debug("Checking next event timed-out")
 			return false, nil
 		}
 		return false, fmt.Errorf("failed to get next event: %w", err)
@@ -113,7 +108,7 @@ func (l *lambdaExt) checkShutdown(ctx context.Context) (bool, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
 		return false, fmt.Errorf("get next event failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
