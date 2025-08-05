@@ -33,7 +33,7 @@ type EventResponse struct {
 		Value string `json:"value"`
 	} `json:"tracing"`
 	EventType          string `json:"eventType"`
-	RequestID          string `json:"requestId"`
+	RequestID          string `json:"requestId"` //nolint:tagliatelle
 	InvokedFunctionArn string `json:"invokedFunctionArn"`
 	DeadlineMs         int64  `json:"deadlineMs"`
 }
