@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package blob
 
 import (
@@ -266,11 +268,6 @@ func (s *Store) updateIndex(ctx context.Context) (err error) {
 	// we need to emit all events regardless of validity as some subscribers (such as the rule table)
 	// need to be kept in sync.
 	defer func() {
-		if err != nil {
-			for i := range evts {
-				evts[i].IndexUnhealthy = true
-			}
-		}
 		s.NotifySubscribers(evts...)
 	}()
 
@@ -307,7 +304,19 @@ func (s *Store) addOrUpdateEvent(etag, file, currDirName string, ts int64) (stor
 	}
 	wp := policy.Wrap(policy.WithSourceAttributes(p, driverSourceAttr, etagSourceAttr(etag), indexBuildTSSourceAttr(ts)))
 
-	return storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID), nil
+	evt := storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID)
+
+	dependents, err := s.idx.GetDependents(wp.ID)
+	if err != nil {
+		return evt, err
+	}
+
+	if deps, ok := dependents[wp.ID]; ok && len(deps) > 0 {
+		evt.Dependents = make([]namer.ModuleID, len(deps))
+		copy(evt.Dependents, deps)
+	}
+
+	return evt, nil
 }
 
 func (s *Store) deleteEvent(file string) (storage.Event, error) {
@@ -320,7 +329,20 @@ func (s *Store) deleteEvent(file string) (storage.Event, error) {
 		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
 
-	return storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, namer.GenModuleID(p)), nil
+	modID := namer.GenModuleID(p)
+	evt := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, modID)
+
+	dependents, err := s.idx.GetDependents(modID)
+	if err != nil {
+		return evt, err
+	}
+
+	if deps, ok := dependents[modID]; ok && len(deps) > 0 {
+		evt.Dependents = make([]namer.ModuleID, len(deps))
+		copy(evt.Dependents, deps)
+	}
+
+	return evt, nil
 }
 
 func (s *Store) clone(ctx context.Context) (*CloneResult, error) {

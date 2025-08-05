@@ -18,6 +18,8 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -46,9 +48,25 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
+	compiler, err := internalcompile.NewManager(ctx, store)
+	if err != nil {
+		return nil, err
+	}
+
+	rt := ruletable.NewProtoRuletable()
+
+	if err := ruletable.LoadPolicies(ctx, rt, compiler); err != nil {
+		return nil, err
+	}
+
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-	compiler := internalcompile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
-	eng := internalengine.NewEphemeral(nil, compiler, schemaMgr)
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
+	if err != nil {
+		return nil, err
+	}
+
+	eng := internalengine.NewEphemeral(nil, ruletableMgr, schemaMgr)
 
 	results, err := verify.Verify(ctx, fsys, eng, verify.Config{Trace: true})
 	if err != nil {
@@ -125,6 +143,6 @@ func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker, opts ...Opt
 
 type checkFunc func(context.Context, []*enginev1.CheckInput, CheckOptions) ([]*enginev1.CheckOutput, error)
 
-func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...internalengine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
 	return f(ctx, inputs, internalengine.ApplyCheckOptions(opts...))
 }

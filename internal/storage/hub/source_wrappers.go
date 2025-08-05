@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package hub
 
 import (
@@ -33,10 +35,6 @@ type instrumentedSource struct {
 
 func (instrumentedSource) Driver() string {
 	return DriverName
-}
-
-func (is instrumentedSource) GetCacheDuration() time.Duration {
-	return is.source.GetCacheDuration()
 }
 
 func (is instrumentedSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

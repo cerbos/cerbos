@@ -125,9 +125,14 @@ func main() {
 		Sections: make(map[string]string),
 	}
 	for i, s := range structs {
+		docs := genDocs(s)
+		// Skip empty sections (structs with only ignored fields)
+		if strings.TrimSpace(docs) == "" {
+			continue
+		}
 		imp := fmt.Sprintf("c%d", i)
 		output.Imports[imp] = s.Pkg
-		output.Sections[fmt.Sprintf("%s.%s", imp, s.Name)] = genDocs(s)
+		output.Sections[fmt.Sprintf("%s.%s", imp, s.Name)] = docs
 	}
 
 	tmpl, err := template.New("generator.go").Parse(templateText)
