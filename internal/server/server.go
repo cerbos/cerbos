@@ -198,12 +198,11 @@ type Param struct {
 }
 
 type Server struct {
-	conf         *Conf
-	cancelFunc   context.CancelFunc
-	pool         *pool.ContextPool
-	health       *health.Server
-	tlsConfig    *tls.Config
-	platformDone <-chan struct{}
+	conf       *Conf
+	cancelFunc context.CancelFunc
+	pool       *pool.ContextPool
+	health     *health.Server
+	tlsConfig  *tls.Config
 }
 
 func NewServer(conf *Conf) *Server {
@@ -305,7 +304,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 func (s *Server) cancelOnShutdown(cancelFunc context.CancelFunc, runtimeAPI string) {
 	log := zap.L().Named("lambda-ext")
 	s.pool.Go(func(ctx context.Context) error {
-		l, err := registerNewLambdaExt(ctx, runtimeAPI, 10*time.Second)
+		l, err := registerNewLambdaExt(ctx, runtimeAPI)
 		if err != nil {
 			log.Error("Failed to register Cerbos server as Lambda extension", zap.Error(err))
 			return err

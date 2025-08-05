@@ -18,7 +18,6 @@ import (
 )
 
 type lambdaExt struct {
-	runtimeAPI   string
 	nextEventURL string
 	extensionID  string
 	client       *http.Client
@@ -31,7 +30,7 @@ type RegisterRequest struct {
 type EventResponse struct {
 	EventType          string `json:"eventType"`
 	DeadlineMs         int64  `json:"deadlineMs"`
-	RequestID          string `json:"requestId"`
+	RequestID          string `json:"requestId"` //nolint:tagliatelle
 	InvokedFunctionArn string `json:"invokedFunctionArn"`
 	Tracing            struct {
 		Type  string `json:"type"`
@@ -48,10 +47,10 @@ const (
 
 const maxBodySize = 1024
 
-func registerNewLambdaExt(ctx context.Context, runtimeAPI string, timeout time.Duration) (*lambdaExt, error) {
+func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
 	l := lambdaExt{
 		nextEventURL: fmt.Sprintf("http://%s%s", runtimeAPI, nextEventEndpoint),
-		client:       &http.Client{Timeout: timeout},
+		client:       &http.Client{Timeout: 10 * time.Second}, //nolint:mnd
 	}
 	url := fmt.Sprintf("http://%s%s", runtimeAPI, registrationEndpoint)
 
