@@ -18,9 +18,9 @@ import (
 )
 
 type lambdaExt struct {
+	client       *http.Client
 	nextEventURL string
 	extensionID  string
-	client       *http.Client
 }
 
 type RegisterRequest struct {
@@ -28,14 +28,14 @@ type RegisterRequest struct {
 }
 
 type EventResponse struct {
-	EventType          string `json:"eventType"`
-	DeadlineMs         int64  `json:"deadlineMs"`
-	RequestID          string `json:"requestId"` //nolint:tagliatelle
-	InvokedFunctionArn string `json:"invokedFunctionArn"`
-	Tracing            struct {
+	Tracing struct {
 		Type  string `json:"type"`
 		Value string `json:"value"`
 	} `json:"tracing"`
+	EventType          string `json:"eventType"`
+	RequestID          string `json:"requestId"`
+	InvokedFunctionArn string `json:"invokedFunctionArn"`
+	DeadlineMs         int64  `json:"deadlineMs"`
 }
 
 const (
