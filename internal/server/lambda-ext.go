@@ -61,7 +61,7 @@ func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 		return nil, fmt.Errorf("failed to marshal register request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create register request: %w", err)
 	}
