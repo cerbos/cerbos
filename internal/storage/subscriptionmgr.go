@@ -1,14 +1,20 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package storage
 
 import (
 	"context"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -122,7 +128,31 @@ func TestSubscription(s Subscribable) func(*testing.T, time.Duration, ...Event) 
 		}
 
 		s.Unsubscribe(sub)
-		require.ElementsMatch(t, wantEvents, haveEvents)
+		require.Empty(
+			t,
+			cmp.Diff(
+				wantEvents,
+				haveEvents,
+				// sort top‐level Events by PolicyID.hash, then by SchemaFile for schema events
+				cmpopts.SortSlices(func(a, b Event) bool {
+					aHash := reflect.ValueOf(a.PolicyID).FieldByName("hash").Uint()
+					bHash := reflect.ValueOf(b.PolicyID).FieldByName("hash").Uint()
+					if aHash != bHash {
+						return aHash < bHash
+					}
+					// For events with same PolicyID hash (like schema events), sort by SchemaFile
+					return a.SchemaFile < b.SchemaFile
+				}),
+				// sort Dependents by hash
+				cmpopts.SortSlices(func(a, b namer.ModuleID) bool {
+					return reflect.ValueOf(a).FieldByName("hash").Uint() <
+						reflect.ValueOf(b).FieldByName("hash").Uint()
+				}),
+				// allow comparing ModuleID despite its unexported field
+				cmpopts.EquateComparable(namer.ModuleID{}),
+			),
+			"events mismatch (-want +got)",
+		)
 	}
 }
 

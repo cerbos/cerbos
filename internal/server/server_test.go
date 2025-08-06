@@ -26,9 +26,9 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/engine/ruletable"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
@@ -63,13 +63,13 @@ func TestServer(t *testing.T) {
 			store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 			require.NoError(t, err)
 
-			schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-			policyLoader := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+			policyLoader, err := compile.NewManager(ctx, store)
+			require.NoError(t, err)
 
 			tp := testParam{
 				store:        store,
 				policyLoader: policyLoader,
-				schemaMgr:    schemaMgr,
+				schemaMgr:    schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject)),
 			}
 			return tp
 		}
@@ -256,15 +256,14 @@ func TestAdminService(t *testing.T) {
 		store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 		require.NoError(t, err)
 
-		schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
-		policyLoader := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
+		policyLoader, err := compile.NewManager(ctx, store)
+		require.NoError(t, err)
 
-		tp := testParam{
+		return testParam{
 			store:        store,
 			policyLoader: policyLoader,
-			schemaMgr:    schemaMgr,
+			schemaMgr:    schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject)),
 		}
-		return tp
 	}
 
 	testdataDir := test.PathToDir(t, "server")
@@ -320,9 +319,20 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
+	rt := ruletable.NewProtoRuletable()
+
+	require.NoError(t, ruletable.LoadPolicies(ctx, rt, tp.policyLoader))
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.policyLoader, tp.store, tp.schemaMgr)
+	require.NoError(t, err)
+
+	if ss, ok := tp.policyLoader.(storage.Subscribable); ok {
+		ss.Subscribe(ruletableMgr)
+	}
+
 	eng, err := engine.New(ctx, engine.Components{
 		PolicyLoader:      tp.policyLoader,
-		RuleTable:         ruletable.NewRuleTable(tp.policyLoader),
+		RuleTableManager:  ruletableMgr,
 		SchemaMgr:         tp.schemaMgr,
 		AuditLog:          auditLog,
 		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),

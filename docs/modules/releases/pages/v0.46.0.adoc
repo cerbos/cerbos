@@ -1,0 +1,52 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.46.0]
+= Cerbos v0.46.0
+
+== Highlights
+
+This release contains a couple of bug fixes and updates to the audit logging system to record more information about the policy sources used and the PDP itself.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Handle const false DENY nodes in role-level query planning (link:https://github.com/cerbos/cerbos/pull/2644[#2644])
+* Handle rule-less policies for multi-tenant fallthrough (link:https://github.com/cerbos/cerbos/pull/2649[#2649])
+
+=== Features
+
+* Include policy source in audit logs (link:https://github.com/cerbos/cerbos/pull/2624[#2624])
+
+=== Enhancements
+
+* Add embedded PDP metadata to audit logs (link:https://github.com/cerbos/cerbos/pull/2625[#2625])
+* Stickier PDP IDs (link:https://github.com/cerbos/cerbos/pull/2641[#2641])
+
+=== Documentation
+
+* Fix css for logo on hover (link:https://github.com/cerbos/cerbos/pull/2628[#2628])
+
+=== Chores
+
+* Bump form-data from 4.0.2 to 4.0.4 in /npm/test/registry (link:https://github.com/cerbos/cerbos/pull/2654[#2654])
+* Bump github.com/docker/docker from 28.2.2+incompatible to 28.3.3+incompatible in /tools (link:https://github.com/cerbos/cerbos/pull/2655[#2655])
+* Bump helm.sh/helm/v3 from 3.17.3 to 3.18.4 in /tools (link:https://github.com/cerbos/cerbos/pull/2632[#2632])
+* Bump version to 0.46.0
+* Enable gzip and increase response size limit for cerbosctl (link:https://github.com/cerbos/cerbos/pull/2631[#2631])
+* Rename cerbosctl hub `like` filter to `contains` (link:https://github.com/cerbos/cerbos/pull/2623[#2623])
+* Set MySQL tag (link:https://github.com/cerbos/cerbos/pull/2647[#2647])
+* Temporarily disable MySQL E2E tests (link:https://github.com/cerbos/cerbos/pull/2650[#2650])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2642[#2642])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2626[#2626])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2635[#2635])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2643[#2643])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2651[#2651])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2652[#2652])
+* Update pnpm to v10.13.1 (link:https://github.com/cerbos/cerbos/pull/2636[#2636])
+* Update sigstore/cosign-installer action to v3.9.1 (link:https://github.com/cerbos/cerbos/pull/2627[#2627])
+* Use new Bitnami repository (link:https://github.com/cerbos/cerbos/pull/2640[#2640])
+* Use official MySQL image in E2E tests (link:https://github.com/cerbos/cerbos/pull/2646[#2646])
+* update module helm.sh/helm/v3 to v3.18.4 [security] (link:https://github.com/cerbos/cerbos/pull/2633[#2633])

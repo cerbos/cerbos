@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package storage
 
 import (
@@ -9,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"time"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -162,8 +163,6 @@ type BinaryStore interface {
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
 	// GetAllMatching returns all modules that exist for the provided module IDs
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
-	// GetCacheDuration returns the time an entry should be cached for.
-	GetCacheDuration() time.Duration
 }
 
 // MutableStore is a store that allows mutations.
@@ -220,11 +219,11 @@ const (
 
 // Event is an event detected by the storage layer.
 type Event struct {
-	OldPolicyID    *namer.ModuleID
-	SchemaFile     string
-	Kind           EventKind
-	PolicyID       namer.ModuleID
-	IndexUnhealthy bool
+	OldPolicyID *namer.ModuleID
+	SchemaFile  string
+	Dependents  []namer.ModuleID
+	Kind        EventKind
+	PolicyID    namer.ModuleID
 }
 
 func (evt Event) String() string {

@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package hub
 
 import (
@@ -11,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
@@ -194,10 +195,6 @@ func (ls *LocalSource) loadBundle() error {
 
 func (ls *LocalSource) Driver() string {
 	return DriverName
-}
-
-func (ls *LocalSource) GetCacheDuration() time.Duration {
-	return 0
 }
 
 func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

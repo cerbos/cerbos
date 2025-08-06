@@ -181,10 +181,15 @@ func (*RunnablePolicySet_Variables) isRunnablePolicySet_PolicySet() {}
 func (*RunnablePolicySet_RolePolicy) isRunnablePolicySet_PolicySet() {}
 
 type RuleTable struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Rules         []*RuleTable_RuleRow   `protobuf:"bytes,1,rep,name=rules,proto3" json:"rules,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState                   `protogen:"open.v1"`
+	Rules              []*RuleTable_RuleRow                     `protobuf:"bytes,1,rep,name=rules,proto3" json:"rules,omitempty"`
+	Schemas            map[uint64]*v1.Schemas                   `protobuf:"bytes,2,rep,name=schemas,proto3" json:"schemas,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Meta               map[uint64]*RuleTableMetadata            `protobuf:"bytes,3,rep,name=meta,proto3" json:"meta,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ScopeParentRoles   map[string]*RuleTable_RoleParentRoles    `protobuf:"bytes,4,rep,name=scope_parent_roles,json=scopeParentRoles,proto3" json:"scope_parent_roles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	PolicyDerivedRoles map[uint64]*RuleTable_PolicyDerivedRoles `protobuf:"bytes,5,rep,name=policy_derived_roles,json=policyDerivedRoles,proto3" json:"policy_derived_roles,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	JsonSchemas        map[string]*RuleTable_JSONSchema         `protobuf:"bytes,6,rep,name=json_schemas,json=jsonSchemas,proto3" json:"json_schemas,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *RuleTable) Reset() {
@@ -220,6 +225,41 @@ func (*RuleTable) Descriptor() ([]byte, []int) {
 func (x *RuleTable) GetRules() []*RuleTable_RuleRow {
 	if x != nil {
 		return x.Rules
+	}
+	return nil
+}
+
+func (x *RuleTable) GetSchemas() map[uint64]*v1.Schemas {
+	if x != nil {
+		return x.Schemas
+	}
+	return nil
+}
+
+func (x *RuleTable) GetMeta() map[uint64]*RuleTableMetadata {
+	if x != nil {
+		return x.Meta
+	}
+	return nil
+}
+
+func (x *RuleTable) GetScopeParentRoles() map[string]*RuleTable_RoleParentRoles {
+	if x != nil {
+		return x.ScopeParentRoles
+	}
+	return nil
+}
+
+func (x *RuleTable) GetPolicyDerivedRoles() map[uint64]*RuleTable_PolicyDerivedRoles {
+	if x != nil {
+		return x.PolicyDerivedRoles
+	}
+	return nil
+}
+
+func (x *RuleTable) GetJsonSchemas() map[string]*RuleTable_JSONSchema {
+	if x != nil {
+		return x.JsonSchemas
 	}
 	return nil
 }
@@ -1283,6 +1323,11 @@ type RuleTable_RuleRow struct {
 	EmitOutput           *Output                       `protobuf:"bytes,12,opt,name=emit_output,json=emitOutput,proto3" json:"emit_output,omitempty"`
 	Name                 string                        `protobuf:"bytes,13,opt,name=name,proto3" json:"name,omitempty"`
 	Principal            string                        `protobuf:"bytes,14,opt,name=principal,proto3" json:"principal,omitempty"`
+	Params               *RuleTable_RuleRow_Params     `protobuf:"bytes,16,opt,name=params,proto3" json:"params,omitempty"`
+	DerivedRoleParams    *RuleTable_RuleRow_Params     `protobuf:"bytes,17,opt,name=derived_role_params,json=derivedRoleParams,proto3" json:"derived_role_params,omitempty"`
+	EvaluationKey        string                        `protobuf:"bytes,18,opt,name=evaluation_key,json=evaluationKey,proto3" json:"evaluation_key,omitempty"`
+	PolicyKind           v1.Kind                       `protobuf:"varint,19,opt,name=policy_kind,json=policyKind,proto3,enum=cerbos.policy.v1.Kind" json:"policy_kind,omitempty"`
+	FromRolePolicy       bool                          `protobuf:"varint,20,opt,name=from_role_policy,json=fromRolePolicy,proto3" json:"from_role_policy,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -1433,6 +1478,41 @@ func (x *RuleTable_RuleRow) GetPrincipal() string {
 	return ""
 }
 
+func (x *RuleTable_RuleRow) GetParams() *RuleTable_RuleRow_Params {
+	if x != nil {
+		return x.Params
+	}
+	return nil
+}
+
+func (x *RuleTable_RuleRow) GetDerivedRoleParams() *RuleTable_RuleRow_Params {
+	if x != nil {
+		return x.DerivedRoleParams
+	}
+	return nil
+}
+
+func (x *RuleTable_RuleRow) GetEvaluationKey() string {
+	if x != nil {
+		return x.EvaluationKey
+	}
+	return ""
+}
+
+func (x *RuleTable_RuleRow) GetPolicyKind() v1.Kind {
+	if x != nil {
+		return x.PolicyKind
+	}
+	return v1.Kind(0)
+}
+
+func (x *RuleTable_RuleRow) GetFromRolePolicy() bool {
+	if x != nil {
+		return x.FromRolePolicy
+	}
+	return false
+}
+
 type isRuleTable_RuleRow_ActionSet interface {
 	isRuleTable_RuleRow_ActionSet()
 }
@@ -1449,6 +1529,138 @@ func (*RuleTable_RuleRow_Action) isRuleTable_RuleRow_ActionSet() {}
 
 func (*RuleTable_RuleRow_AllowActions_) isRuleTable_RuleRow_ActionSet() {}
 
+type RuleTable_RoleParentRoles struct {
+	state           protoimpl.MessageState                            `protogen:"open.v1"`
+	RoleParentRoles map[string]*RuleTable_RoleParentRoles_ParentRoles `protobuf:"bytes,1,rep,name=role_parent_roles,json=roleParentRoles,proto3" json:"role_parent_roles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *RuleTable_RoleParentRoles) Reset() {
+	*x = RuleTable_RoleParentRoles{}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RuleTable_RoleParentRoles) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RuleTable_RoleParentRoles) ProtoMessage() {}
+
+func (x *RuleTable_RoleParentRoles) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RuleTable_RoleParentRoles.ProtoReflect.Descriptor instead.
+func (*RuleTable_RoleParentRoles) Descriptor() ([]byte, []int) {
+	return file_cerbos_runtime_v1_runtime_proto_rawDescGZIP(), []int{1, 1}
+}
+
+func (x *RuleTable_RoleParentRoles) GetRoleParentRoles() map[string]*RuleTable_RoleParentRoles_ParentRoles {
+	if x != nil {
+		return x.RoleParentRoles
+	}
+	return nil
+}
+
+type RuleTable_PolicyDerivedRoles struct {
+	state         protoimpl.MessageState          `protogen:"open.v1"`
+	DerivedRoles  map[string]*RunnableDerivedRole `protobuf:"bytes,1,rep,name=derived_roles,json=derivedRoles,proto3" json:"derived_roles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RuleTable_PolicyDerivedRoles) Reset() {
+	*x = RuleTable_PolicyDerivedRoles{}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RuleTable_PolicyDerivedRoles) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RuleTable_PolicyDerivedRoles) ProtoMessage() {}
+
+func (x *RuleTable_PolicyDerivedRoles) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RuleTable_PolicyDerivedRoles.ProtoReflect.Descriptor instead.
+func (*RuleTable_PolicyDerivedRoles) Descriptor() ([]byte, []int) {
+	return file_cerbos_runtime_v1_runtime_proto_rawDescGZIP(), []int{1, 2}
+}
+
+func (x *RuleTable_PolicyDerivedRoles) GetDerivedRoles() map[string]*RunnableDerivedRole {
+	if x != nil {
+		return x.DerivedRoles
+	}
+	return nil
+}
+
+type RuleTable_JSONSchema struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Content       []byte                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RuleTable_JSONSchema) Reset() {
+	*x = RuleTable_JSONSchema{}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RuleTable_JSONSchema) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RuleTable_JSONSchema) ProtoMessage() {}
+
+func (x *RuleTable_JSONSchema) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RuleTable_JSONSchema.ProtoReflect.Descriptor instead.
+func (*RuleTable_JSONSchema) Descriptor() ([]byte, []int) {
+	return file_cerbos_runtime_v1_runtime_proto_rawDescGZIP(), []int{1, 3}
+}
+
+func (x *RuleTable_JSONSchema) GetContent() []byte {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
 type RuleTable_RuleRow_AllowActions struct {
 	state         protoimpl.MessageState    `protogen:"open.v1"`
 	Actions       map[string]*emptypb.Empty `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -1458,7 +1670,7 @@ type RuleTable_RuleRow_AllowActions struct {
 
 func (x *RuleTable_RuleRow_AllowActions) Reset() {
 	*x = RuleTable_RuleRow_AllowActions{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[17]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1470,7 +1682,7 @@ func (x *RuleTable_RuleRow_AllowActions) String() string {
 func (*RuleTable_RuleRow_AllowActions) ProtoMessage() {}
 
 func (x *RuleTable_RuleRow_AllowActions) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[17]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1493,6 +1705,102 @@ func (x *RuleTable_RuleRow_AllowActions) GetActions() map[string]*emptypb.Empty 
 	return nil
 }
 
+type RuleTable_RuleRow_Params struct {
+	state            protoimpl.MessageState     `protogen:"open.v1"`
+	OrderedVariables []*Variable                `protobuf:"bytes,1,rep,name=ordered_variables,json=orderedVariables,proto3" json:"ordered_variables,omitempty"`
+	Constants        map[string]*structpb.Value `protobuf:"bytes,2,rep,name=constants,proto3" json:"constants,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *RuleTable_RuleRow_Params) Reset() {
+	*x = RuleTable_RuleRow_Params{}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RuleTable_RuleRow_Params) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RuleTable_RuleRow_Params) ProtoMessage() {}
+
+func (x *RuleTable_RuleRow_Params) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RuleTable_RuleRow_Params.ProtoReflect.Descriptor instead.
+func (*RuleTable_RuleRow_Params) Descriptor() ([]byte, []int) {
+	return file_cerbos_runtime_v1_runtime_proto_rawDescGZIP(), []int{1, 0, 1}
+}
+
+func (x *RuleTable_RuleRow_Params) GetOrderedVariables() []*Variable {
+	if x != nil {
+		return x.OrderedVariables
+	}
+	return nil
+}
+
+func (x *RuleTable_RuleRow_Params) GetConstants() map[string]*structpb.Value {
+	if x != nil {
+		return x.Constants
+	}
+	return nil
+}
+
+type RuleTable_RoleParentRoles_ParentRoles struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Roles         []string               `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RuleTable_RoleParentRoles_ParentRoles) Reset() {
+	*x = RuleTable_RoleParentRoles_ParentRoles{}
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RuleTable_RoleParentRoles_ParentRoles) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RuleTable_RoleParentRoles_ParentRoles) ProtoMessage() {}
+
+func (x *RuleTable_RoleParentRoles_ParentRoles) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RuleTable_RoleParentRoles_ParentRoles.ProtoReflect.Descriptor instead.
+func (*RuleTable_RoleParentRoles_ParentRoles) Descriptor() ([]byte, []int) {
+	return file_cerbos_runtime_v1_runtime_proto_rawDescGZIP(), []int{1, 1, 0}
+}
+
+func (x *RuleTable_RoleParentRoles_ParentRoles) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
 type RunnableRolePolicySet_Metadata struct {
 	state            protoimpl.MessageState          `protogen:"open.v1"`
 	Fqn              string                          `protobuf:"bytes,1,opt,name=fqn,proto3" json:"fqn,omitempty"`
@@ -1504,7 +1812,7 @@ type RunnableRolePolicySet_Metadata struct {
 
 func (x *RunnableRolePolicySet_Metadata) Reset() {
 	*x = RunnableRolePolicySet_Metadata{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[21]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1516,7 +1824,7 @@ func (x *RunnableRolePolicySet_Metadata) String() string {
 func (*RunnableRolePolicySet_Metadata) ProtoMessage() {}
 
 func (x *RunnableRolePolicySet_Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[21]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1564,7 +1872,7 @@ type RunnableRolePolicySet_Rule struct {
 
 func (x *RunnableRolePolicySet_Rule) Reset() {
 	*x = RunnableRolePolicySet_Rule{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[22]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1576,7 +1884,7 @@ func (x *RunnableRolePolicySet_Rule) String() string {
 func (*RunnableRolePolicySet_Rule) ProtoMessage() {}
 
 func (x *RunnableRolePolicySet_Rule) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[22]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1622,7 +1930,7 @@ type RunnableRolePolicySet_RuleList struct {
 
 func (x *RunnableRolePolicySet_RuleList) Reset() {
 	*x = RunnableRolePolicySet_RuleList{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[23]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1634,7 +1942,7 @@ func (x *RunnableRolePolicySet_RuleList) String() string {
 func (*RunnableRolePolicySet_RuleList) ProtoMessage() {}
 
 func (x *RunnableRolePolicySet_RuleList) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[23]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1670,7 +1978,7 @@ type RunnableResourcePolicySet_Metadata struct {
 
 func (x *RunnableResourcePolicySet_Metadata) Reset() {
 	*x = RunnableResourcePolicySet_Metadata{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[28]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1682,7 +1990,7 @@ func (x *RunnableResourcePolicySet_Metadata) String() string {
 func (*RunnableResourcePolicySet_Metadata) ProtoMessage() {}
 
 func (x *RunnableResourcePolicySet_Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[28]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1750,7 +2058,7 @@ type RunnableResourcePolicySet_Policy struct {
 
 func (x *RunnableResourcePolicySet_Policy) Reset() {
 	*x = RunnableResourcePolicySet_Policy{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[29]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1762,7 +2070,7 @@ func (x *RunnableResourcePolicySet_Policy) String() string {
 func (*RunnableResourcePolicySet_Policy) ProtoMessage() {}
 
 func (x *RunnableResourcePolicySet_Policy) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[29]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1852,7 +2160,7 @@ type RunnableResourcePolicySet_Policy_Rule struct {
 
 func (x *RunnableResourcePolicySet_Policy_Rule) Reset() {
 	*x = RunnableResourcePolicySet_Policy_Rule{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[32]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1864,7 +2172,7 @@ func (x *RunnableResourcePolicySet_Policy_Rule) String() string {
 func (*RunnableResourcePolicySet_Policy_Rule) ProtoMessage() {}
 
 func (x *RunnableResourcePolicySet_Policy_Rule) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[32]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1947,7 +2255,7 @@ type RunnableDerivedRolesSet_Metadata struct {
 
 func (x *RunnableDerivedRolesSet_Metadata) Reset() {
 	*x = RunnableDerivedRolesSet_Metadata{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[42]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1959,7 +2267,7 @@ func (x *RunnableDerivedRolesSet_Metadata) String() string {
 func (*RunnableDerivedRolesSet_Metadata) ProtoMessage() {}
 
 func (x *RunnableDerivedRolesSet_Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[42]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1999,7 +2307,7 @@ type RunnableVariablesSet_Metadata struct {
 
 func (x *RunnableVariablesSet_Metadata) Reset() {
 	*x = RunnableVariablesSet_Metadata{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[45]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2011,7 +2319,7 @@ func (x *RunnableVariablesSet_Metadata) String() string {
 func (*RunnableVariablesSet_Metadata) ProtoMessage() {}
 
 func (x *RunnableVariablesSet_Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[45]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2054,7 +2362,7 @@ type RunnablePrincipalPolicySet_Metadata struct {
 
 func (x *RunnablePrincipalPolicySet_Metadata) Reset() {
 	*x = RunnablePrincipalPolicySet_Metadata{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[48]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2066,7 +2374,7 @@ func (x *RunnablePrincipalPolicySet_Metadata) String() string {
 func (*RunnablePrincipalPolicySet_Metadata) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[48]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2132,7 +2440,7 @@ type RunnablePrincipalPolicySet_Policy struct {
 
 func (x *RunnablePrincipalPolicySet_Policy) Reset() {
 	*x = RunnablePrincipalPolicySet_Policy{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[49]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2144,7 +2452,7 @@ func (x *RunnablePrincipalPolicySet_Policy) String() string {
 func (*RunnablePrincipalPolicySet_Policy) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Policy) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[49]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2218,7 +2526,7 @@ type RunnablePrincipalPolicySet_Policy_ActionRule struct {
 
 func (x *RunnablePrincipalPolicySet_Policy_ActionRule) Reset() {
 	*x = RunnablePrincipalPolicySet_Policy_ActionRule{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[52]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2230,7 +2538,7 @@ func (x *RunnablePrincipalPolicySet_Policy_ActionRule) String() string {
 func (*RunnablePrincipalPolicySet_Policy_ActionRule) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Policy_ActionRule) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[52]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2298,7 +2606,7 @@ type RunnablePrincipalPolicySet_Policy_ResourceRules struct {
 
 func (x *RunnablePrincipalPolicySet_Policy_ResourceRules) Reset() {
 	*x = RunnablePrincipalPolicySet_Policy_ResourceRules{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[53]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2310,7 +2618,7 @@ func (x *RunnablePrincipalPolicySet_Policy_ResourceRules) String() string {
 func (*RunnablePrincipalPolicySet_Policy_ResourceRules) ProtoMessage() {}
 
 func (x *RunnablePrincipalPolicySet_Policy_ResourceRules) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[53]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2343,7 +2651,7 @@ type Output_When struct {
 
 func (x *Output_When) Reset() {
 	*x = Output_When{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[57]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2355,7 +2663,7 @@ func (x *Output_When) String() string {
 func (*Output_When) ProtoMessage() {}
 
 func (x *Output_When) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[57]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2394,7 +2702,7 @@ type Condition_ExprList struct {
 
 func (x *Condition_ExprList) Reset() {
 	*x = Condition_ExprList{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[58]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2406,7 +2714,7 @@ func (x *Condition_ExprList) String() string {
 func (*Condition_ExprList) ProtoMessage() {}
 
 func (x *Condition_ExprList) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[58]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2442,7 +2750,7 @@ type CompileErrors_Err struct {
 
 func (x *CompileErrors_Err) Reset() {
 	*x = CompileErrors_Err{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[59]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2454,7 +2762,7 @@ func (x *CompileErrors_Err) String() string {
 func (*CompileErrors_Err) ProtoMessage() {}
 
 func (x *CompileErrors_Err) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[59]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2517,7 +2825,7 @@ type IndexBuildErrors_DuplicateDef struct {
 
 func (x *IndexBuildErrors_DuplicateDef) Reset() {
 	*x = IndexBuildErrors_DuplicateDef{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[60]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2529,7 +2837,7 @@ func (x *IndexBuildErrors_DuplicateDef) String() string {
 func (*IndexBuildErrors_DuplicateDef) ProtoMessage() {}
 
 func (x *IndexBuildErrors_DuplicateDef) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[60]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2588,7 +2896,7 @@ type IndexBuildErrors_MissingImport struct {
 
 func (x *IndexBuildErrors_MissingImport) Reset() {
 	*x = IndexBuildErrors_MissingImport{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[61]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2600,7 +2908,7 @@ func (x *IndexBuildErrors_MissingImport) String() string {
 func (*IndexBuildErrors_MissingImport) ProtoMessage() {}
 
 func (x *IndexBuildErrors_MissingImport) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[61]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2675,7 +2983,7 @@ type IndexBuildErrors_MissingScope struct {
 
 func (x *IndexBuildErrors_MissingScope) Reset() {
 	*x = IndexBuildErrors_MissingScope{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[62]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2687,7 +2995,7 @@ func (x *IndexBuildErrors_MissingScope) String() string {
 func (*IndexBuildErrors_MissingScope) ProtoMessage() {}
 
 func (x *IndexBuildErrors_MissingScope) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[62]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2726,7 +3034,7 @@ type IndexBuildErrors_ScopePermissionsConflicts struct {
 
 func (x *IndexBuildErrors_ScopePermissionsConflicts) Reset() {
 	*x = IndexBuildErrors_ScopePermissionsConflicts{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[63]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2738,7 +3046,7 @@ func (x *IndexBuildErrors_ScopePermissionsConflicts) String() string {
 func (*IndexBuildErrors_ScopePermissionsConflicts) ProtoMessage() {}
 
 func (x *IndexBuildErrors_ScopePermissionsConflicts) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[63]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2773,7 +3081,7 @@ type IndexBuildErrors_LoadFailure struct {
 
 func (x *IndexBuildErrors_LoadFailure) Reset() {
 	*x = IndexBuildErrors_LoadFailure{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[64]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2785,7 +3093,7 @@ func (x *IndexBuildErrors_LoadFailure) String() string {
 func (*IndexBuildErrors_LoadFailure) ProtoMessage() {}
 
 func (x *IndexBuildErrors_LoadFailure) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[64]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2834,7 +3142,7 @@ type IndexBuildErrors_Disabled struct {
 
 func (x *IndexBuildErrors_Disabled) Reset() {
 	*x = IndexBuildErrors_Disabled{}
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[65]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2846,7 +3154,7 @@ func (x *IndexBuildErrors_Disabled) String() string {
 func (*IndexBuildErrors_Disabled) ProtoMessage() {}
 
 func (x *IndexBuildErrors_Disabled) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[65]
+	mi := &file_cerbos_runtime_v1_runtime_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2898,9 +3206,14 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"rolePolicy\x12)\n" +
 	"\x10compiler_version\x18\x06 \x01(\rR\x0fcompilerVersionB\f\n" +
 	"\n" +
-	"policy_set\"\xc4\a\n" +
+	"policy_set\"\xd2\x17\n" +
 	"\tRuleTable\x12:\n" +
-	"\x05rules\x18\x01 \x03(\v2$.cerbos.runtime.v1.RuleTable.RuleRowR\x05rules\x1a\xfa\x06\n" +
+	"\x05rules\x18\x01 \x03(\v2$.cerbos.runtime.v1.RuleTable.RuleRowR\x05rules\x12C\n" +
+	"\aschemas\x18\x02 \x03(\v2).cerbos.runtime.v1.RuleTable.SchemasEntryR\aschemas\x12:\n" +
+	"\x04meta\x18\x03 \x03(\v2&.cerbos.runtime.v1.RuleTable.MetaEntryR\x04meta\x12`\n" +
+	"\x12scope_parent_roles\x18\x04 \x03(\v22.cerbos.runtime.v1.RuleTable.ScopeParentRolesEntryR\x10scopeParentRoles\x12f\n" +
+	"\x14policy_derived_roles\x18\x05 \x03(\v24.cerbos.runtime.v1.RuleTable.PolicyDerivedRolesEntryR\x12policyDerivedRoles\x12P\n" +
+	"\fjson_schemas\x18\x06 \x03(\v2-.cerbos.runtime.v1.RuleTable.JsonSchemasEntryR\vjsonSchemas\x1a\xab\v\n" +
 	"\aRuleRow\x12\x1d\n" +
 	"\n" +
 	"origin_fqn\x18\x01 \x01(\tR\toriginFqn\x12\x1a\n" +
@@ -2919,14 +3232,56 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\vemit_output\x18\f \x01(\v2\x19.cerbos.runtime.v1.OutputR\n" +
 	"emitOutput\x12\x12\n" +
 	"\x04name\x18\r \x01(\tR\x04name\x12\x1c\n" +
-	"\tprincipal\x18\x0e \x01(\tR\tprincipal\x1a\xbc\x01\n" +
+	"\tprincipal\x18\x0e \x01(\tR\tprincipal\x12C\n" +
+	"\x06params\x18\x10 \x01(\v2+.cerbos.runtime.v1.RuleTable.RuleRow.ParamsR\x06params\x12[\n" +
+	"\x13derived_role_params\x18\x11 \x01(\v2+.cerbos.runtime.v1.RuleTable.RuleRow.ParamsR\x11derivedRoleParams\x12%\n" +
+	"\x0eevaluation_key\x18\x12 \x01(\tR\revaluationKey\x127\n" +
+	"\vpolicy_kind\x18\x13 \x01(\x0e2\x16.cerbos.policy.v1.KindR\n" +
+	"policyKind\x12(\n" +
+	"\x10from_role_policy\x18\x14 \x01(\bR\x0efromRolePolicy\x1a\xbc\x01\n" +
 	"\fAllowActions\x12X\n" +
 	"\aactions\x18\x01 \x03(\v2>.cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntryR\aactions\x1aR\n" +
 	"\fActionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.EmptyR\x05value:\x028\x01B\f\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.EmptyR\x05value:\x028\x01\x1a\x82\x02\n" +
+	"\x06Params\x12H\n" +
+	"\x11ordered_variables\x18\x01 \x03(\v2\x1b.cerbos.runtime.v1.VariableR\x10orderedVariables\x12X\n" +
+	"\tconstants\x18\x02 \x03(\v2:.cerbos.runtime.v1.RuleTable.RuleRow.Params.ConstantsEntryR\tconstants\x1aT\n" +
+	"\x0eConstantsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01B\f\n" +
 	"\n" +
-	"action_set\"\x86\x04\n" +
+	"action_set\x1a\xa3\x02\n" +
+	"\x0fRoleParentRoles\x12m\n" +
+	"\x11role_parent_roles\x18\x01 \x03(\v2A.cerbos.runtime.v1.RuleTable.RoleParentRoles.RoleParentRolesEntryR\x0froleParentRoles\x1a#\n" +
+	"\vParentRoles\x12\x14\n" +
+	"\x05roles\x18\x01 \x03(\tR\x05roles\x1a|\n" +
+	"\x14RoleParentRolesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12N\n" +
+	"\x05value\x18\x02 \x01(\v28.cerbos.runtime.v1.RuleTable.RoleParentRoles.ParentRolesR\x05value:\x028\x01\x1a\xe5\x01\n" +
+	"\x12PolicyDerivedRoles\x12f\n" +
+	"\rderived_roles\x18\x01 \x03(\v2A.cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.DerivedRolesEntryR\fderivedRoles\x1ag\n" +
+	"\x11DerivedRolesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12<\n" +
+	"\x05value\x18\x02 \x01(\v2&.cerbos.runtime.v1.RunnableDerivedRoleR\x05value:\x028\x01\x1a&\n" +
+	"\n" +
+	"JSONSchema\x12\x18\n" +
+	"\acontent\x18\x01 \x01(\fR\acontent\x1aU\n" +
+	"\fSchemasEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x04R\x03key\x12/\n" +
+	"\x05value\x18\x02 \x01(\v2\x19.cerbos.policy.v1.SchemasR\x05value:\x028\x01\x1a]\n" +
+	"\tMetaEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x04R\x03key\x12:\n" +
+	"\x05value\x18\x02 \x01(\v2$.cerbos.runtime.v1.RuleTableMetadataR\x05value:\x028\x01\x1aq\n" +
+	"\x15ScopeParentRolesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12B\n" +
+	"\x05value\x18\x02 \x01(\v2,.cerbos.runtime.v1.RuleTable.RoleParentRolesR\x05value:\x028\x01\x1av\n" +
+	"\x17PolicyDerivedRolesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x04R\x03key\x12E\n" +
+	"\x05value\x18\x02 \x01(\v2/.cerbos.runtime.v1.RuleTable.PolicyDerivedRolesR\x05value:\x028\x01\x1ag\n" +
+	"\x10JsonSchemasEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12=\n" +
+	"\x05value\x18\x02 \x01(\v2'.cerbos.runtime.v1.RuleTable.JSONSchemaR\x05value:\x028\x01\"\x86\x04\n" +
 	"\x11RuleTableMetadata\x12\x10\n" +
 	"\x03fqn\x18\x01 \x01(\tR\x03fqn\x12\x1c\n" +
 	"\bresource\x18\x02 \x01(\tH\x00R\bresource\x12\x14\n" +
@@ -3191,7 +3546,7 @@ func file_cerbos_runtime_v1_runtime_proto_rawDescGZIP() []byte {
 	return file_cerbos_runtime_v1_runtime_proto_rawDescData
 }
 
-var file_cerbos_runtime_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 66)
+var file_cerbos_runtime_v1_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 79)
 var file_cerbos_runtime_v1_runtime_proto_goTypes = []any{
 	(*RunnablePolicySet)(nil),              // 0: cerbos.runtime.v1.RunnablePolicySet
 	(*RuleTable)(nil),                      // 1: cerbos.runtime.v1.RuleTable
@@ -3210,64 +3565,78 @@ var file_cerbos_runtime_v1_runtime_proto_goTypes = []any{
 	(*IndexBuildErrors)(nil),               // 14: cerbos.runtime.v1.IndexBuildErrors
 	(*Errors)(nil),                         // 15: cerbos.runtime.v1.Errors
 	(*RuleTable_RuleRow)(nil),              // 16: cerbos.runtime.v1.RuleTable.RuleRow
-	(*RuleTable_RuleRow_AllowActions)(nil), // 17: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions
-	nil,                                    // 18: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntry
-	nil,                                    // 19: cerbos.runtime.v1.RuleTableMetadata.SourceAttributesEntry
-	nil,                                    // 20: cerbos.runtime.v1.RuleTableMetadata.AnnotationsEntry
-	(*RunnableRolePolicySet_Metadata)(nil), // 21: cerbos.runtime.v1.RunnableRolePolicySet.Metadata
-	(*RunnableRolePolicySet_Rule)(nil),     // 22: cerbos.runtime.v1.RunnableRolePolicySet.Rule
-	(*RunnableRolePolicySet_RuleList)(nil), // 23: cerbos.runtime.v1.RunnableRolePolicySet.RuleList
-	nil,                                    // 24: cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry
-	nil,                                    // 25: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry
-	nil,                                    // 26: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.AnnotationsEntry
-	nil,                                    // 27: cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry
-	(*RunnableResourcePolicySet_Metadata)(nil), // 28: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata
-	(*RunnableResourcePolicySet_Policy)(nil),   // 29: cerbos.runtime.v1.RunnableResourcePolicySet.Policy
-	nil,                                        // 30: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
-	nil,                                        // 31: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.AnnotationsEntry
-	(*RunnableResourcePolicySet_Policy_Rule)(nil), // 32: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
-	nil,                                      // 33: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
-	nil,                                      // 34: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
-	nil,                                      // 35: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry
-	nil,                                      // 36: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
-	nil,                                      // 37: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
-	nil,                                      // 38: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
-	nil,                                      // 39: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry
-	nil,                                      // 40: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry
-	nil,                                      // 41: cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry
-	(*RunnableDerivedRolesSet_Metadata)(nil), // 42: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata
-	nil,                                      // 43: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry
-	nil,                                      // 44: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.AnnotationsEntry
-	(*RunnableVariablesSet_Metadata)(nil),    // 45: cerbos.runtime.v1.RunnableVariablesSet.Metadata
-	nil,                                      // 46: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry
-	nil,                                      // 47: cerbos.runtime.v1.RunnableVariablesSet.Metadata.AnnotationsEntry
-	(*RunnablePrincipalPolicySet_Metadata)(nil), // 48: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata
-	(*RunnablePrincipalPolicySet_Policy)(nil),   // 49: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy
-	nil, // 50: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
-	nil, // 51: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.AnnotationsEntry
-	(*RunnablePrincipalPolicySet_Policy_ActionRule)(nil),    // 52: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
-	(*RunnablePrincipalPolicySet_Policy_ResourceRules)(nil), // 53: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
-	nil,                                    // 54: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
-	nil,                                    // 55: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
-	nil,                                    // 56: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry
-	(*Output_When)(nil),                    // 57: cerbos.runtime.v1.Output.When
-	(*Condition_ExprList)(nil),             // 58: cerbos.runtime.v1.Condition.ExprList
-	(*CompileErrors_Err)(nil),              // 59: cerbos.runtime.v1.CompileErrors.Err
-	(*IndexBuildErrors_DuplicateDef)(nil),  // 60: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef
-	(*IndexBuildErrors_MissingImport)(nil), // 61: cerbos.runtime.v1.IndexBuildErrors.MissingImport
-	(*IndexBuildErrors_MissingScope)(nil),  // 62: cerbos.runtime.v1.IndexBuildErrors.MissingScope
-	(*IndexBuildErrors_ScopePermissionsConflicts)(nil), // 63: cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts
-	(*IndexBuildErrors_LoadFailure)(nil),               // 64: cerbos.runtime.v1.IndexBuildErrors.LoadFailure
-	(*IndexBuildErrors_Disabled)(nil),                  // 65: cerbos.runtime.v1.IndexBuildErrors.Disabled
-	(v1.ScopePermissions)(0),                           // 66: cerbos.policy.v1.ScopePermissions
-	(*v1.Schemas)(nil),                                 // 67: cerbos.policy.v1.Schemas
-	(*v1alpha1.CheckedExpr)(nil),                       // 68: google.api.expr.v1alpha1.CheckedExpr
-	(v11.Effect)(0),                                    // 69: cerbos.effect.v1.Effect
-	(*emptypb.Empty)(nil),                              // 70: google.protobuf.Empty
-	(*v1.SourceAttributes)(nil),                        // 71: cerbos.policy.v1.SourceAttributes
-	(*structpb.Value)(nil),                             // 72: google.protobuf.Value
-	(*v12.Position)(nil),                               // 73: cerbos.source.v1.Position
-	(*v12.Error)(nil),                                  // 74: cerbos.source.v1.Error
+	(*RuleTable_RoleParentRoles)(nil),      // 17: cerbos.runtime.v1.RuleTable.RoleParentRoles
+	(*RuleTable_PolicyDerivedRoles)(nil),   // 18: cerbos.runtime.v1.RuleTable.PolicyDerivedRoles
+	(*RuleTable_JSONSchema)(nil),           // 19: cerbos.runtime.v1.RuleTable.JSONSchema
+	nil,                                    // 20: cerbos.runtime.v1.RuleTable.SchemasEntry
+	nil,                                    // 21: cerbos.runtime.v1.RuleTable.MetaEntry
+	nil,                                    // 22: cerbos.runtime.v1.RuleTable.ScopeParentRolesEntry
+	nil,                                    // 23: cerbos.runtime.v1.RuleTable.PolicyDerivedRolesEntry
+	nil,                                    // 24: cerbos.runtime.v1.RuleTable.JsonSchemasEntry
+	(*RuleTable_RuleRow_AllowActions)(nil), // 25: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions
+	(*RuleTable_RuleRow_Params)(nil),       // 26: cerbos.runtime.v1.RuleTable.RuleRow.Params
+	nil,                                    // 27: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntry
+	nil,                                    // 28: cerbos.runtime.v1.RuleTable.RuleRow.Params.ConstantsEntry
+	(*RuleTable_RoleParentRoles_ParentRoles)(nil), // 29: cerbos.runtime.v1.RuleTable.RoleParentRoles.ParentRoles
+	nil,                                    // 30: cerbos.runtime.v1.RuleTable.RoleParentRoles.RoleParentRolesEntry
+	nil,                                    // 31: cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.DerivedRolesEntry
+	nil,                                    // 32: cerbos.runtime.v1.RuleTableMetadata.SourceAttributesEntry
+	nil,                                    // 33: cerbos.runtime.v1.RuleTableMetadata.AnnotationsEntry
+	(*RunnableRolePolicySet_Metadata)(nil), // 34: cerbos.runtime.v1.RunnableRolePolicySet.Metadata
+	(*RunnableRolePolicySet_Rule)(nil),     // 35: cerbos.runtime.v1.RunnableRolePolicySet.Rule
+	(*RunnableRolePolicySet_RuleList)(nil), // 36: cerbos.runtime.v1.RunnableRolePolicySet.RuleList
+	nil,                                    // 37: cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry
+	nil,                                    // 38: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry
+	nil,                                    // 39: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.AnnotationsEntry
+	nil,                                    // 40: cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry
+	(*RunnableResourcePolicySet_Metadata)(nil), // 41: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata
+	(*RunnableResourcePolicySet_Policy)(nil),   // 42: cerbos.runtime.v1.RunnableResourcePolicySet.Policy
+	nil,                                        // 43: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
+	nil,                                        // 44: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.AnnotationsEntry
+	(*RunnableResourcePolicySet_Policy_Rule)(nil), // 45: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
+	nil,                                      // 46: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
+	nil,                                      // 47: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
+	nil,                                      // 48: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry
+	nil,                                      // 49: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
+	nil,                                      // 50: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
+	nil,                                      // 51: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
+	nil,                                      // 52: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry
+	nil,                                      // 53: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry
+	nil,                                      // 54: cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry
+	(*RunnableDerivedRolesSet_Metadata)(nil), // 55: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata
+	nil,                                      // 56: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry
+	nil,                                      // 57: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.AnnotationsEntry
+	(*RunnableVariablesSet_Metadata)(nil),    // 58: cerbos.runtime.v1.RunnableVariablesSet.Metadata
+	nil,                                      // 59: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry
+	nil,                                      // 60: cerbos.runtime.v1.RunnableVariablesSet.Metadata.AnnotationsEntry
+	(*RunnablePrincipalPolicySet_Metadata)(nil), // 61: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata
+	(*RunnablePrincipalPolicySet_Policy)(nil),   // 62: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy
+	nil, // 63: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
+	nil, // 64: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.AnnotationsEntry
+	(*RunnablePrincipalPolicySet_Policy_ActionRule)(nil),    // 65: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
+	(*RunnablePrincipalPolicySet_Policy_ResourceRules)(nil), // 66: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
+	nil,                                    // 67: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
+	nil,                                    // 68: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
+	nil,                                    // 69: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry
+	(*Output_When)(nil),                    // 70: cerbos.runtime.v1.Output.When
+	(*Condition_ExprList)(nil),             // 71: cerbos.runtime.v1.Condition.ExprList
+	(*CompileErrors_Err)(nil),              // 72: cerbos.runtime.v1.CompileErrors.Err
+	(*IndexBuildErrors_DuplicateDef)(nil),  // 73: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef
+	(*IndexBuildErrors_MissingImport)(nil), // 74: cerbos.runtime.v1.IndexBuildErrors.MissingImport
+	(*IndexBuildErrors_MissingScope)(nil),  // 75: cerbos.runtime.v1.IndexBuildErrors.MissingScope
+	(*IndexBuildErrors_ScopePermissionsConflicts)(nil), // 76: cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts
+	(*IndexBuildErrors_LoadFailure)(nil),               // 77: cerbos.runtime.v1.IndexBuildErrors.LoadFailure
+	(*IndexBuildErrors_Disabled)(nil),                  // 78: cerbos.runtime.v1.IndexBuildErrors.Disabled
+	(v1.ScopePermissions)(0),                           // 79: cerbos.policy.v1.ScopePermissions
+	(*v1.Schemas)(nil),                                 // 80: cerbos.policy.v1.Schemas
+	(*v1alpha1.CheckedExpr)(nil),                       // 81: google.api.expr.v1alpha1.CheckedExpr
+	(v11.Effect)(0),                                    // 82: cerbos.effect.v1.Effect
+	(v1.Kind)(0),                                       // 83: cerbos.policy.v1.Kind
+	(*emptypb.Empty)(nil),                              // 84: google.protobuf.Empty
+	(*structpb.Value)(nil),                             // 85: google.protobuf.Value
+	(*v1.SourceAttributes)(nil),                        // 86: cerbos.policy.v1.SourceAttributes
+	(*v12.Position)(nil),                               // 87: cerbos.source.v1.Position
+	(*v12.Error)(nil),                                  // 88: cerbos.source.v1.Error
 }
 var file_cerbos_runtime_v1_runtime_proto_depIdxs = []int32{
 	4,   // 0: cerbos.runtime.v1.RunnablePolicySet.resource_policy:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet
@@ -3276,117 +3645,137 @@ var file_cerbos_runtime_v1_runtime_proto_depIdxs = []int32{
 	7,   // 3: cerbos.runtime.v1.RunnablePolicySet.variables:type_name -> cerbos.runtime.v1.RunnableVariablesSet
 	3,   // 4: cerbos.runtime.v1.RunnablePolicySet.role_policy:type_name -> cerbos.runtime.v1.RunnableRolePolicySet
 	16,  // 5: cerbos.runtime.v1.RuleTable.rules:type_name -> cerbos.runtime.v1.RuleTable.RuleRow
-	19,  // 6: cerbos.runtime.v1.RuleTableMetadata.source_attributes:type_name -> cerbos.runtime.v1.RuleTableMetadata.SourceAttributesEntry
-	20,  // 7: cerbos.runtime.v1.RuleTableMetadata.annotations:type_name -> cerbos.runtime.v1.RuleTableMetadata.AnnotationsEntry
-	21,  // 8: cerbos.runtime.v1.RunnableRolePolicySet.meta:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Metadata
-	66,  // 9: cerbos.runtime.v1.RunnableRolePolicySet.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	24,  // 10: cerbos.runtime.v1.RunnableRolePolicySet.resources:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry
-	28,  // 11: cerbos.runtime.v1.RunnableResourcePolicySet.meta:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata
-	29,  // 12: cerbos.runtime.v1.RunnableResourcePolicySet.policies:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy
-	67,  // 13: cerbos.runtime.v1.RunnableResourcePolicySet.schemas:type_name -> cerbos.policy.v1.Schemas
-	39,  // 14: cerbos.runtime.v1.RunnableDerivedRole.parent_roles:type_name -> cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry
-	40,  // 15: cerbos.runtime.v1.RunnableDerivedRole.variables:type_name -> cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry
-	12,  // 16: cerbos.runtime.v1.RunnableDerivedRole.condition:type_name -> cerbos.runtime.v1.Condition
-	11,  // 17: cerbos.runtime.v1.RunnableDerivedRole.ordered_variables:type_name -> cerbos.runtime.v1.Variable
-	41,  // 18: cerbos.runtime.v1.RunnableDerivedRole.constants:type_name -> cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry
-	42,  // 19: cerbos.runtime.v1.RunnableDerivedRolesSet.meta:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata
-	43,  // 20: cerbos.runtime.v1.RunnableDerivedRolesSet.derived_roles:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry
-	45,  // 21: cerbos.runtime.v1.RunnableVariablesSet.meta:type_name -> cerbos.runtime.v1.RunnableVariablesSet.Metadata
-	46,  // 22: cerbos.runtime.v1.RunnableVariablesSet.variables:type_name -> cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry
-	48,  // 23: cerbos.runtime.v1.RunnablePrincipalPolicySet.meta:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata
-	49,  // 24: cerbos.runtime.v1.RunnablePrincipalPolicySet.policies:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy
-	68,  // 25: cerbos.runtime.v1.Expr.checked:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	57,  // 26: cerbos.runtime.v1.Output.when:type_name -> cerbos.runtime.v1.Output.When
-	9,   // 27: cerbos.runtime.v1.Variable.expr:type_name -> cerbos.runtime.v1.Expr
-	58,  // 28: cerbos.runtime.v1.Condition.all:type_name -> cerbos.runtime.v1.Condition.ExprList
-	58,  // 29: cerbos.runtime.v1.Condition.any:type_name -> cerbos.runtime.v1.Condition.ExprList
-	58,  // 30: cerbos.runtime.v1.Condition.none:type_name -> cerbos.runtime.v1.Condition.ExprList
-	9,   // 31: cerbos.runtime.v1.Condition.expr:type_name -> cerbos.runtime.v1.Expr
-	59,  // 32: cerbos.runtime.v1.CompileErrors.errors:type_name -> cerbos.runtime.v1.CompileErrors.Err
-	60,  // 33: cerbos.runtime.v1.IndexBuildErrors.duplicate_defs:type_name -> cerbos.runtime.v1.IndexBuildErrors.DuplicateDef
-	64,  // 34: cerbos.runtime.v1.IndexBuildErrors.load_failures:type_name -> cerbos.runtime.v1.IndexBuildErrors.LoadFailure
-	61,  // 35: cerbos.runtime.v1.IndexBuildErrors.missing_imports:type_name -> cerbos.runtime.v1.IndexBuildErrors.MissingImport
-	65,  // 36: cerbos.runtime.v1.IndexBuildErrors.disabled_defs:type_name -> cerbos.runtime.v1.IndexBuildErrors.Disabled
-	62,  // 37: cerbos.runtime.v1.IndexBuildErrors.missing_scope_details:type_name -> cerbos.runtime.v1.IndexBuildErrors.MissingScope
-	63,  // 38: cerbos.runtime.v1.IndexBuildErrors.scope_permissions_conflicts:type_name -> cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts
-	14,  // 39: cerbos.runtime.v1.Errors.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
-	13,  // 40: cerbos.runtime.v1.Errors.compile_errors:type_name -> cerbos.runtime.v1.CompileErrors
-	17,  // 41: cerbos.runtime.v1.RuleTable.RuleRow.allow_actions:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.AllowActions
-	12,  // 42: cerbos.runtime.v1.RuleTable.RuleRow.condition:type_name -> cerbos.runtime.v1.Condition
-	12,  // 43: cerbos.runtime.v1.RuleTable.RuleRow.derived_role_condition:type_name -> cerbos.runtime.v1.Condition
-	69,  // 44: cerbos.runtime.v1.RuleTable.RuleRow.effect:type_name -> cerbos.effect.v1.Effect
-	66,  // 45: cerbos.runtime.v1.RuleTable.RuleRow.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	10,  // 46: cerbos.runtime.v1.RuleTable.RuleRow.emit_output:type_name -> cerbos.runtime.v1.Output
-	18,  // 47: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.actions:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntry
-	70,  // 48: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntry.value:type_name -> google.protobuf.Empty
-	71,  // 49: cerbos.runtime.v1.RuleTableMetadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	25,  // 50: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry
-	26,  // 51: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Metadata.AnnotationsEntry
-	27,  // 52: cerbos.runtime.v1.RunnableRolePolicySet.Rule.allow_actions:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry
-	12,  // 53: cerbos.runtime.v1.RunnableRolePolicySet.Rule.condition:type_name -> cerbos.runtime.v1.Condition
-	22,  // 54: cerbos.runtime.v1.RunnableRolePolicySet.RuleList.rules:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Rule
-	23,  // 55: cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry.value:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.RuleList
-	71,  // 56: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	70,  // 57: cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry.value:type_name -> google.protobuf.Empty
-	30,  // 58: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
-	31,  // 59: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.AnnotationsEntry
-	33,  // 60: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
-	34,  // 61: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
-	32,  // 62: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.rules:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
-	67,  // 63: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.schemas:type_name -> cerbos.policy.v1.Schemas
-	11,  // 64: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
-	66,  // 65: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	35,  // 66: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry
-	71,  // 67: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	36,  // 68: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.actions:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
-	37,  // 69: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
-	38,  // 70: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
-	12,  // 71: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.condition:type_name -> cerbos.runtime.v1.Condition
-	69,  // 72: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.effect:type_name -> cerbos.effect.v1.Effect
-	9,   // 73: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output:type_name -> cerbos.runtime.v1.Expr
-	10,  // 74: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.emit_output:type_name -> cerbos.runtime.v1.Output
-	5,   // 75: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
-	9,   // 76: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	72,  // 77: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
-	70,  // 78: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry.value:type_name -> google.protobuf.Empty
-	70,  // 79: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry.value:type_name -> google.protobuf.Empty
-	70,  // 80: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry.value:type_name -> google.protobuf.Empty
-	70,  // 81: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry.value:type_name -> google.protobuf.Empty
-	9,   // 82: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	72,  // 83: cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry.value:type_name -> google.protobuf.Value
-	44,  // 84: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.AnnotationsEntry
-	5,   // 85: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
-	47,  // 86: cerbos.runtime.v1.RunnableVariablesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableVariablesSet.Metadata.AnnotationsEntry
-	9,   // 87: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	50,  // 88: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
-	51,  // 89: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.AnnotationsEntry
-	54,  // 90: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
-	55,  // 91: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.resource_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
-	11,  // 92: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
-	66,  // 93: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	56,  // 94: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry
-	71,  // 95: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	12,  // 96: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.condition:type_name -> cerbos.runtime.v1.Condition
-	69,  // 97: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.effect:type_name -> cerbos.effect.v1.Effect
-	9,   // 98: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output:type_name -> cerbos.runtime.v1.Expr
-	10,  // 99: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.emit_output:type_name -> cerbos.runtime.v1.Output
-	52,  // 100: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules.action_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
-	9,   // 101: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	53,  // 102: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry.value:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
-	72,  // 103: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
-	9,   // 104: cerbos.runtime.v1.Output.When.rule_activated:type_name -> cerbos.runtime.v1.Expr
-	9,   // 105: cerbos.runtime.v1.Output.When.condition_not_met:type_name -> cerbos.runtime.v1.Expr
-	12,  // 106: cerbos.runtime.v1.Condition.ExprList.expr:type_name -> cerbos.runtime.v1.Condition
-	73,  // 107: cerbos.runtime.v1.CompileErrors.Err.position:type_name -> cerbos.source.v1.Position
-	73,  // 108: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.position:type_name -> cerbos.source.v1.Position
-	73,  // 109: cerbos.runtime.v1.IndexBuildErrors.MissingImport.position:type_name -> cerbos.source.v1.Position
-	74,  // 110: cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_details:type_name -> cerbos.source.v1.Error
-	73,  // 111: cerbos.runtime.v1.IndexBuildErrors.Disabled.position:type_name -> cerbos.source.v1.Position
-	112, // [112:112] is the sub-list for method output_type
-	112, // [112:112] is the sub-list for method input_type
-	112, // [112:112] is the sub-list for extension type_name
-	112, // [112:112] is the sub-list for extension extendee
-	0,   // [0:112] is the sub-list for field type_name
+	20,  // 6: cerbos.runtime.v1.RuleTable.schemas:type_name -> cerbos.runtime.v1.RuleTable.SchemasEntry
+	21,  // 7: cerbos.runtime.v1.RuleTable.meta:type_name -> cerbos.runtime.v1.RuleTable.MetaEntry
+	22,  // 8: cerbos.runtime.v1.RuleTable.scope_parent_roles:type_name -> cerbos.runtime.v1.RuleTable.ScopeParentRolesEntry
+	23,  // 9: cerbos.runtime.v1.RuleTable.policy_derived_roles:type_name -> cerbos.runtime.v1.RuleTable.PolicyDerivedRolesEntry
+	24,  // 10: cerbos.runtime.v1.RuleTable.json_schemas:type_name -> cerbos.runtime.v1.RuleTable.JsonSchemasEntry
+	32,  // 11: cerbos.runtime.v1.RuleTableMetadata.source_attributes:type_name -> cerbos.runtime.v1.RuleTableMetadata.SourceAttributesEntry
+	33,  // 12: cerbos.runtime.v1.RuleTableMetadata.annotations:type_name -> cerbos.runtime.v1.RuleTableMetadata.AnnotationsEntry
+	34,  // 13: cerbos.runtime.v1.RunnableRolePolicySet.meta:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Metadata
+	79,  // 14: cerbos.runtime.v1.RunnableRolePolicySet.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	37,  // 15: cerbos.runtime.v1.RunnableRolePolicySet.resources:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry
+	41,  // 16: cerbos.runtime.v1.RunnableResourcePolicySet.meta:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata
+	42,  // 17: cerbos.runtime.v1.RunnableResourcePolicySet.policies:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy
+	80,  // 18: cerbos.runtime.v1.RunnableResourcePolicySet.schemas:type_name -> cerbos.policy.v1.Schemas
+	52,  // 19: cerbos.runtime.v1.RunnableDerivedRole.parent_roles:type_name -> cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry
+	53,  // 20: cerbos.runtime.v1.RunnableDerivedRole.variables:type_name -> cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry
+	12,  // 21: cerbos.runtime.v1.RunnableDerivedRole.condition:type_name -> cerbos.runtime.v1.Condition
+	11,  // 22: cerbos.runtime.v1.RunnableDerivedRole.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	54,  // 23: cerbos.runtime.v1.RunnableDerivedRole.constants:type_name -> cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry
+	55,  // 24: cerbos.runtime.v1.RunnableDerivedRolesSet.meta:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata
+	56,  // 25: cerbos.runtime.v1.RunnableDerivedRolesSet.derived_roles:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry
+	58,  // 26: cerbos.runtime.v1.RunnableVariablesSet.meta:type_name -> cerbos.runtime.v1.RunnableVariablesSet.Metadata
+	59,  // 27: cerbos.runtime.v1.RunnableVariablesSet.variables:type_name -> cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry
+	61,  // 28: cerbos.runtime.v1.RunnablePrincipalPolicySet.meta:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata
+	62,  // 29: cerbos.runtime.v1.RunnablePrincipalPolicySet.policies:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy
+	81,  // 30: cerbos.runtime.v1.Expr.checked:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	70,  // 31: cerbos.runtime.v1.Output.when:type_name -> cerbos.runtime.v1.Output.When
+	9,   // 32: cerbos.runtime.v1.Variable.expr:type_name -> cerbos.runtime.v1.Expr
+	71,  // 33: cerbos.runtime.v1.Condition.all:type_name -> cerbos.runtime.v1.Condition.ExprList
+	71,  // 34: cerbos.runtime.v1.Condition.any:type_name -> cerbos.runtime.v1.Condition.ExprList
+	71,  // 35: cerbos.runtime.v1.Condition.none:type_name -> cerbos.runtime.v1.Condition.ExprList
+	9,   // 36: cerbos.runtime.v1.Condition.expr:type_name -> cerbos.runtime.v1.Expr
+	72,  // 37: cerbos.runtime.v1.CompileErrors.errors:type_name -> cerbos.runtime.v1.CompileErrors.Err
+	73,  // 38: cerbos.runtime.v1.IndexBuildErrors.duplicate_defs:type_name -> cerbos.runtime.v1.IndexBuildErrors.DuplicateDef
+	77,  // 39: cerbos.runtime.v1.IndexBuildErrors.load_failures:type_name -> cerbos.runtime.v1.IndexBuildErrors.LoadFailure
+	74,  // 40: cerbos.runtime.v1.IndexBuildErrors.missing_imports:type_name -> cerbos.runtime.v1.IndexBuildErrors.MissingImport
+	78,  // 41: cerbos.runtime.v1.IndexBuildErrors.disabled_defs:type_name -> cerbos.runtime.v1.IndexBuildErrors.Disabled
+	75,  // 42: cerbos.runtime.v1.IndexBuildErrors.missing_scope_details:type_name -> cerbos.runtime.v1.IndexBuildErrors.MissingScope
+	76,  // 43: cerbos.runtime.v1.IndexBuildErrors.scope_permissions_conflicts:type_name -> cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts
+	14,  // 44: cerbos.runtime.v1.Errors.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
+	13,  // 45: cerbos.runtime.v1.Errors.compile_errors:type_name -> cerbos.runtime.v1.CompileErrors
+	25,  // 46: cerbos.runtime.v1.RuleTable.RuleRow.allow_actions:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.AllowActions
+	12,  // 47: cerbos.runtime.v1.RuleTable.RuleRow.condition:type_name -> cerbos.runtime.v1.Condition
+	12,  // 48: cerbos.runtime.v1.RuleTable.RuleRow.derived_role_condition:type_name -> cerbos.runtime.v1.Condition
+	82,  // 49: cerbos.runtime.v1.RuleTable.RuleRow.effect:type_name -> cerbos.effect.v1.Effect
+	79,  // 50: cerbos.runtime.v1.RuleTable.RuleRow.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	10,  // 51: cerbos.runtime.v1.RuleTable.RuleRow.emit_output:type_name -> cerbos.runtime.v1.Output
+	26,  // 52: cerbos.runtime.v1.RuleTable.RuleRow.params:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.Params
+	26,  // 53: cerbos.runtime.v1.RuleTable.RuleRow.derived_role_params:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.Params
+	83,  // 54: cerbos.runtime.v1.RuleTable.RuleRow.policy_kind:type_name -> cerbos.policy.v1.Kind
+	30,  // 55: cerbos.runtime.v1.RuleTable.RoleParentRoles.role_parent_roles:type_name -> cerbos.runtime.v1.RuleTable.RoleParentRoles.RoleParentRolesEntry
+	31,  // 56: cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.derived_roles:type_name -> cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.DerivedRolesEntry
+	80,  // 57: cerbos.runtime.v1.RuleTable.SchemasEntry.value:type_name -> cerbos.policy.v1.Schemas
+	2,   // 58: cerbos.runtime.v1.RuleTable.MetaEntry.value:type_name -> cerbos.runtime.v1.RuleTableMetadata
+	17,  // 59: cerbos.runtime.v1.RuleTable.ScopeParentRolesEntry.value:type_name -> cerbos.runtime.v1.RuleTable.RoleParentRoles
+	18,  // 60: cerbos.runtime.v1.RuleTable.PolicyDerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RuleTable.PolicyDerivedRoles
+	19,  // 61: cerbos.runtime.v1.RuleTable.JsonSchemasEntry.value:type_name -> cerbos.runtime.v1.RuleTable.JSONSchema
+	27,  // 62: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.actions:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntry
+	11,  // 63: cerbos.runtime.v1.RuleTable.RuleRow.Params.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	28,  // 64: cerbos.runtime.v1.RuleTable.RuleRow.Params.constants:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.Params.ConstantsEntry
+	84,  // 65: cerbos.runtime.v1.RuleTable.RuleRow.AllowActions.ActionsEntry.value:type_name -> google.protobuf.Empty
+	85,  // 66: cerbos.runtime.v1.RuleTable.RuleRow.Params.ConstantsEntry.value:type_name -> google.protobuf.Value
+	29,  // 67: cerbos.runtime.v1.RuleTable.RoleParentRoles.RoleParentRolesEntry.value:type_name -> cerbos.runtime.v1.RuleTable.RoleParentRoles.ParentRoles
+	5,   // 68: cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
+	86,  // 69: cerbos.runtime.v1.RuleTableMetadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	38,  // 70: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry
+	39,  // 71: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Metadata.AnnotationsEntry
+	40,  // 72: cerbos.runtime.v1.RunnableRolePolicySet.Rule.allow_actions:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry
+	12,  // 73: cerbos.runtime.v1.RunnableRolePolicySet.Rule.condition:type_name -> cerbos.runtime.v1.Condition
+	35,  // 74: cerbos.runtime.v1.RunnableRolePolicySet.RuleList.rules:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Rule
+	36,  // 75: cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry.value:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.RuleList
+	86,  // 76: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	84,  // 77: cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry.value:type_name -> google.protobuf.Empty
+	43,  // 78: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
+	44,  // 79: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.AnnotationsEntry
+	46,  // 80: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
+	47,  // 81: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
+	45,  // 82: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.rules:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
+	80,  // 83: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.schemas:type_name -> cerbos.policy.v1.Schemas
+	11,  // 84: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	79,  // 85: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	48,  // 86: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry
+	86,  // 87: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	49,  // 88: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.actions:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
+	50,  // 89: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
+	51,  // 90: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
+	12,  // 91: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.condition:type_name -> cerbos.runtime.v1.Condition
+	82,  // 92: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.effect:type_name -> cerbos.effect.v1.Effect
+	9,   // 93: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output:type_name -> cerbos.runtime.v1.Expr
+	10,  // 94: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.emit_output:type_name -> cerbos.runtime.v1.Output
+	5,   // 95: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
+	9,   // 96: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	85,  // 97: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
+	84,  // 98: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry.value:type_name -> google.protobuf.Empty
+	84,  // 99: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry.value:type_name -> google.protobuf.Empty
+	84,  // 100: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry.value:type_name -> google.protobuf.Empty
+	84,  // 101: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry.value:type_name -> google.protobuf.Empty
+	9,   // 102: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	85,  // 103: cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry.value:type_name -> google.protobuf.Value
+	57,  // 104: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.AnnotationsEntry
+	5,   // 105: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
+	60,  // 106: cerbos.runtime.v1.RunnableVariablesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableVariablesSet.Metadata.AnnotationsEntry
+	9,   // 107: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	63,  // 108: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
+	64,  // 109: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.AnnotationsEntry
+	67,  // 110: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
+	68,  // 111: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.resource_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
+	11,  // 112: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	79,  // 113: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	69,  // 114: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry
+	86,  // 115: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	12,  // 116: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.condition:type_name -> cerbos.runtime.v1.Condition
+	82,  // 117: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.effect:type_name -> cerbos.effect.v1.Effect
+	9,   // 118: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output:type_name -> cerbos.runtime.v1.Expr
+	10,  // 119: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.emit_output:type_name -> cerbos.runtime.v1.Output
+	65,  // 120: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules.action_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
+	9,   // 121: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	66,  // 122: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry.value:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
+	85,  // 123: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
+	9,   // 124: cerbos.runtime.v1.Output.When.rule_activated:type_name -> cerbos.runtime.v1.Expr
+	9,   // 125: cerbos.runtime.v1.Output.When.condition_not_met:type_name -> cerbos.runtime.v1.Expr
+	12,  // 126: cerbos.runtime.v1.Condition.ExprList.expr:type_name -> cerbos.runtime.v1.Condition
+	87,  // 127: cerbos.runtime.v1.CompileErrors.Err.position:type_name -> cerbos.source.v1.Position
+	87,  // 128: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.position:type_name -> cerbos.source.v1.Position
+	87,  // 129: cerbos.runtime.v1.IndexBuildErrors.MissingImport.position:type_name -> cerbos.source.v1.Position
+	88,  // 130: cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_details:type_name -> cerbos.source.v1.Error
+	87,  // 131: cerbos.runtime.v1.IndexBuildErrors.Disabled.position:type_name -> cerbos.source.v1.Position
+	132, // [132:132] is the sub-list for method output_type
+	132, // [132:132] is the sub-list for method input_type
+	132, // [132:132] is the sub-list for extension type_name
+	132, // [132:132] is the sub-list for extension extendee
+	0,   // [0:132] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_runtime_v1_runtime_proto_init() }
@@ -3426,7 +3815,7 @@ func file_cerbos_runtime_v1_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_runtime_v1_runtime_proto_rawDesc), len(file_cerbos_runtime_v1_runtime_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   66,
+			NumMessages:   79,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

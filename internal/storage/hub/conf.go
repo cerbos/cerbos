@@ -1,6 +1,8 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package hub
 
 import (
@@ -99,7 +101,7 @@ func (conf *Conf) Validate() (outErr error) {
 
 func (conf *Conf) validateCredentials() error {
 	if conf.Credentials != nil {
-		util.DeprecationWarning("storage.bundle.credentials section", "hub.credentials")
+		util.DeprecationReplacedWarning("storage.bundle.credentials section", "hub.credentials")
 		return errors.New("storage.bundle.credentials section is no longer supported")
 	}
 
@@ -200,7 +202,7 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 	}
 
 	if rc.Connection != nil {
-		util.DeprecationWarning("storage.bundle.remote.connection section", "hub.connection")
+		util.DeprecationReplacedWarning("storage.bundle.remote.connection section", "hub.connection")
 		return errors.New("storage.bundle.remote.connection configuration is no longer supported")
 	}
 
