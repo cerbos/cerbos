@@ -15,7 +15,6 @@ import (
 
 	pdpv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/pdp/v1"
 	"github.com/google/uuid"
-	"github.com/keygen-sh/machineid"
 )
 
 var (
@@ -68,7 +67,7 @@ func AppShortVersion() string {
 }
 
 var getPdpID = sync.OnceValue(func() string {
-	machineID, err := machineid.ID()
+	machineID, err := getMachineID()
 	if err != nil || machineID == "" {
 		//nolint:gosec
 		uuidNodeID := md5.Sum(uuid.NodeID())

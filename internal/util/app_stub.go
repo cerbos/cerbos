@@ -8,3 +8,7 @@ package util
 func DeprecationWarning(deprecated string) {}
 
 func DeprecationReplacedWarning(deprecated, replacement string) {}
+
+func getMachineID() (string, error) {
+	return "", nil
+}
