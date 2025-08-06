@@ -88,7 +88,7 @@ func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 func (l *lambdaExt) checkShutdown(ctx context.Context) (bool, error) {
 	log := zap.L().Named("lambda-ext-impl")
 
-	req, err := http.NewRequestWithContext(ctx, "GET", l.nextEventURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, l.nextEventURL, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to create next event request: %w", err)
 	}
