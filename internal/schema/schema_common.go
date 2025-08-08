@@ -217,7 +217,7 @@ func (m *StaticManager) validateAttr(ctx context.Context, src ErrSource, schemaR
 	schema, err := m.loader.LoadSchema(ctx, schemaRef.Ref)
 	if err != nil {
 		m.log.Warn("Failed to load schema", logging.String("schema", schemaRef.Ref), logging.Error(err))
-		return newSchemaLoadErr(src, schemaRef.Ref)
+		return NewLoadErr(src, schemaRef.Ref, err)
 	}
 
 	attrJSON, err := attrToJSONObject(src, attr)
