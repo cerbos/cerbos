@@ -66,8 +66,19 @@ func newValidationErrorList(validationErr *jsonschema.ValidationError, source Er
 	return errs
 }
 
-func newSchemaLoadErr(source ErrSource, schema string) ValidationErrorList {
-	return ValidationErrorList{{Source: source, Message: fmt.Sprintf("Failed to load schema %q", schema)}}
+func NewLoadErr(source ErrSource, schema string, err error) ValidationErrorList {
+	switch source {
+	case ErrSourcePrincipal:
+		return newLoadErr(source, fmt.Sprintf("Failed to load principal schema %q: %v", schema, err))
+	case ErrSourceResource:
+		return newLoadErr(source, fmt.Sprintf("Failed to load resource schema %q: %v", schema, err))
+	default:
+		return newLoadErr(source, fmt.Sprintf("Failed to load schema %q: %v", schema, err))
+	}
+}
+
+func newLoadErr(source ErrSource, message string) ValidationErrorList {
+	return ValidationErrorList{{Source: source, Message: message}}
 }
 
 type ValidationError struct {

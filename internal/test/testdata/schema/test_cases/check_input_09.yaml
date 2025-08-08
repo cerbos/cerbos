@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=../../.jsonschema/SchemaTestCase.schema.json
 ---
-description: Invalid URL scheme
+description: Non existent schema references
 schemaRefs:
   principalSchema:
-    ref: complex_object.json
+    ref: cerbos:///non_existent_ref.json
   resourceSchema:
-    ref: complex_object.json
+    ref: cerbos:///non_existent_ref.json
 checkInput:
   actions: [ "view:public" ]
   principal:
@@ -20,8 +20,8 @@ checkInput:
     id: "XX125"
     attr: *myAttr
 wantValidationErrors:
-  - message: 'Failed to load principal schema "complex_object.json": invalid URL scheme ""'
+  - message: 'Failed to load principal schema "cerbos:///non_existent_ref.json": schema file "does_not_exist.json" referenced by the schema does not exist in the store'
     source: SOURCE_PRINCIPAL
 
-  - message: 'Failed to load resource schema "complex_object.json": invalid URL scheme ""'
+  - message: 'Failed to load resource schema "cerbos:///non_existent_ref.json": schema file "does_not_exist.json" referenced by the schema does not exist in the store'
     source: SOURCE_RESOURCE
