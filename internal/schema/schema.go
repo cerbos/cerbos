@@ -12,9 +12,12 @@ import (
 	"io"
 	"io/fs"
 	"net/url"
+	"os"
 	"strings"
 
+	"github.com/cerbos/cerbos/internal/util"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+
 	// Register the http and https loaders.
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 
@@ -74,21 +77,49 @@ func NewEphemeral(resolver Resolver) Manager {
 	return mgr
 }
 
-func (m *manager) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
-	entry, ok := m.cache.Get(url)
+func (m *manager) LoadSchema(ctx context.Context, _url string) (*jsonschema.Schema, error) {
+	entry, ok := m.cache.Get(_url)
 	if ok {
 		return entry.schema, entry.err
 	}
 
 	e := &cacheEntry{}
-	e.schema, e.err = m.loadSchemaFromStore(ctx, url)
-
-	if e.err != nil && errors.Is(e.err, fs.ErrNotExist) {
-		e.err = fmt.Errorf("schema %q does not exist in the store", url)
+	e.schema, e.err = m.loadSchemaFromStore(ctx, _url)
+	if e.err == nil || !errors.Is(e.err, fs.ErrNotExist) {
+		m.cache.Set(_url, e)
+		return e.schema, e.err
 	}
 
-	m.cache.Set(url, e)
-	return e.schema, e.err
+	var jsonSchemaErr *jsonschema.SchemaError
+	var pathErr *fs.PathError
+	if !errors.As(e.err, &jsonSchemaErr) || !errors.As(e.err, &pathErr) {
+		m.cache.Set(_url, e)
+		return e.schema, e.err
+	}
+
+	parsedURL, err := url.Parse(_url)
+	if err != nil {
+		e.err = fmt.Errorf("failed to parse URL: %w", err)
+		m.cache.Set(_url, e)
+		return e.schema, e.err
+	}
+	if parsedURL.Scheme != URLScheme {
+		e.err = fmt.Errorf("invalid URL scheme %q", parsedURL.Scheme)
+		m.cache.Set(_url, e)
+		return e.schema, e.err
+	}
+	parsedURLPath := strings.TrimPrefix(parsedURL.Path, "/")
+
+	pathErrPath := strings.TrimPrefix(pathErr.Path, util.SchemasDirectory+string(os.PathSeparator))
+	if parsedURLPath == pathErrPath {
+		e.err = fmt.Errorf("schema file %q does not exist in the store", pathErrPath)
+		m.cache.Set(_url, e)
+		return e.schema, e.err
+	} else {
+		e.err = fmt.Errorf("schema file %q referenced by the schema does not exist in the store", pathErr.Path)
+		m.cache.Set(_url, e)
+		return e.schema, e.err
+	}
 }
 
 func (m *manager) loadSchemaFromStore(ctx context.Context, schemaURL string) (*jsonschema.Schema, error) {
