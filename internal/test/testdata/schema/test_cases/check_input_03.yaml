@@ -20,7 +20,7 @@ checkInput:
     id: "XX125"
     attr: *myAttr
 wantValidationErrors:
-  - message: 'Failed to load resource schema "cerbos:///blah.json": schema file "blah.json" does not exist in the store'
+  - message: 'Failed to load resource schema "cerbos:///blah.json": schema file "_schemas/blah.json" does not exist in the store'
     source: SOURCE_RESOURCE
 
   - path: /

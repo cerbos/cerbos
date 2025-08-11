@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/cerbos/cerbos/internal/util"
@@ -77,49 +78,33 @@ func NewEphemeral(resolver Resolver) Manager {
 	return mgr
 }
 
-func (m *manager) LoadSchema(ctx context.Context, _url string) (*jsonschema.Schema, error) {
-	entry, ok := m.cache.Get(_url)
+func (m *manager) LoadSchema(ctx context.Context, schemaURL string) (*jsonschema.Schema, error) {
+	entry, ok := m.cache.Get(schemaURL)
 	if ok {
 		return entry.schema, entry.err
 	}
 
 	e := &cacheEntry{}
-	e.schema, e.err = m.loadSchemaFromStore(ctx, _url)
-	if e.err == nil || !errors.Is(e.err, fs.ErrNotExist) {
-		m.cache.Set(_url, e)
+	var notFoundErr *notFoundErr
+	if e.schema, e.err = m.loadSchemaFromStore(ctx, schemaURL); e.err != nil && errors.As(e.err, &notFoundErr) {
+		parsedSchemaURL, err := url.Parse(schemaURL)
+		switch {
+		case err != nil:
+			e.err = fmt.Errorf("failed to parse URL: %w", err)
+		case notFoundErr.Scheme != URLScheme:
+			e.err = fmt.Errorf("schema file %q does not exist", schemaURL)
+		case strings.TrimPrefix(parsedSchemaURL.Path, "/") != strings.TrimPrefix(notFoundErr.Path, util.SchemasDirectory+string(os.PathSeparator)):
+			e.err = fmt.Errorf("schema file %q referenced by the schema does not exist in the store", notFoundErr.Path)
+		default:
+			e.err = fmt.Errorf("schema file %q does not exist in the store", notFoundErr.Path)
+		}
+
+		m.cache.Set(schemaURL, e)
 		return e.schema, e.err
 	}
 
-	var jsonSchemaErr *jsonschema.SchemaError
-	var pathErr *fs.PathError
-	if !errors.As(e.err, &jsonSchemaErr) || !errors.As(e.err, &pathErr) {
-		m.cache.Set(_url, e)
-		return e.schema, e.err
-	}
-
-	parsedURL, err := url.Parse(_url)
-	if err != nil {
-		e.err = fmt.Errorf("failed to parse URL: %w", err)
-		m.cache.Set(_url, e)
-		return e.schema, e.err
-	}
-	if parsedURL.Scheme != URLScheme {
-		e.err = fmt.Errorf("invalid URL scheme %q", parsedURL.Scheme)
-		m.cache.Set(_url, e)
-		return e.schema, e.err
-	}
-	parsedURLPath := strings.TrimPrefix(parsedURL.Path, "/")
-
-	pathErrPath := strings.TrimPrefix(pathErr.Path, util.SchemasDirectory+string(os.PathSeparator))
-	if parsedURLPath == pathErrPath {
-		e.err = fmt.Errorf("schema file %q does not exist in the store", pathErrPath)
-		m.cache.Set(_url, e)
-		return e.schema, e.err
-	} else {
-		e.err = fmt.Errorf("schema file %q referenced by the schema does not exist in the store", pathErr.Path)
-		m.cache.Set(_url, e)
-		return e.schema, e.err
-	}
+	m.cache.Set(schemaURL, e)
+	return e.schema, e.err
 }
 
 func (m *manager) loadSchemaFromStore(ctx context.Context, schemaURL string) (*jsonschema.Schema, error) {
@@ -161,6 +146,15 @@ type cacheEntry struct {
 	err    error
 }
 
+type notFoundErr struct {
+	Scheme string
+	Path   string
+}
+
+func (e notFoundErr) Error() string {
+	return fmt.Sprintf("schema file %q does not exist in the store", e.Path)
+}
+
 func DefaultResolver(loader Loader) Resolver {
 	return func(ctx context.Context, path string) (io.ReadCloser, error) {
 		u, err := url.Parse(path)
@@ -170,13 +164,32 @@ func DefaultResolver(loader Loader) Resolver {
 
 		if u.Scheme == "" || u.Scheme == URLScheme {
 			relativePath := strings.TrimPrefix(u.Path, "/")
-			return loader.LoadSchema(ctx, relativePath)
+			var pathErr *fs.PathError
+			s, err := loader.LoadSchema(ctx, relativePath)
+			if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+				return nil, &notFoundErr{
+					Scheme: u.Scheme,
+					Path:   filepath.Join(util.SchemasDirectory, pathErr.Path),
+				}
+			}
+
+			return s, err
 		}
 
 		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
 		if !ok {
 			return nil, jsonschema.LoaderNotFoundError(path)
 		}
-		return schemaLoader(path)
+
+		s, err := schemaLoader(path)
+		var pathErr *fs.PathError
+		if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+			return nil, &notFoundErr{
+				Scheme: u.Scheme,
+				Path:   pathErr.Path,
+			}
+		}
+
+		return s, err
 	}
 }
