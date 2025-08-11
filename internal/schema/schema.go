@@ -165,7 +165,7 @@ func DefaultResolver(loader Loader) Resolver {
 
 		switch u.Scheme {
 		case "", URLScheme:
-			return loadCerbosURL(ctx, loader, u)
+			return loadCerbosURL(ctx, u, loader)
 		case "http", "https":
 			return loadHTTPURL(ctx, u)
 		case "file":
@@ -176,7 +176,7 @@ func DefaultResolver(loader Loader) Resolver {
 	}
 }
 
-func loadCerbosURL(ctx context.Context, loader Loader, u *url.URL) (io.ReadCloser, error) {
+func loadCerbosURL(ctx context.Context, u *url.URL, loader Loader) (io.ReadCloser, error) {
 	relativePath := strings.TrimPrefix(u.Path, "/")
 	var pathErr *fs.PathError
 	s, err := loader.LoadSchema(ctx, relativePath)

@@ -269,11 +269,11 @@ func StaticResolver(loader Loader) Resolver {
 			return nil, err
 		}
 
-		if u.Scheme == "" || u.Scheme == URLScheme {
-			relativePath := strings.TrimPrefix(u.Path, "/")
-			return loader.LoadSchema(ctx, relativePath)
+		switch u.Scheme {
+		case "", URLScheme:
+			return loadCerbosURL(ctx, u, loader)
+		default:
+			return nil, jsonschema.LoaderNotFoundError(path)
 		}
-
-		return nil, jsonschema.LoaderNotFoundError(path)
 	}
 }
