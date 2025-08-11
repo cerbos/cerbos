@@ -2,7 +2,7 @@ module github.com/cerbos/cerbos/tools
 
 go 1.24.2
 
-toolchain go1.24.5
+toolchain go1.24.6
 
 require (
 	connectrpc.com/connect v1.18.1
@@ -16,11 +16,11 @@ require (
 	github.com/goreleaser/goreleaser/v2 v2.11.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
-	github.com/vektra/mockery/v3 v3.5.1
+	github.com/vektra/mockery/v3 v3.5.2
 	go.elastic.co/go-licence-detector v0.9.1
 	golang.org/x/tools/gopls v0.20.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/protobuf v1.36.7
 	gotest.tools/gotestsum v1.12.3
 )
 
@@ -274,7 +274,7 @@ require (
 	github.com/google/certificate-transparency-go v1.3.2-0.20250506133818-bc7acd89f703 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.20.6 // indirect
-	github.com/google/go-github/v73 v73.0.0 // indirect
+	github.com/google/go-github/v74 v74.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/ko v0.18.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20250213175939-b5d1a3369749 // indirect
