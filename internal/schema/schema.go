@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -162,34 +163,78 @@ func DefaultResolver(loader Loader) Resolver {
 			return nil, err
 		}
 
-		if u.Scheme == "" || u.Scheme == URLScheme {
-			relativePath := strings.TrimPrefix(u.Path, "/")
-			var pathErr *fs.PathError
-			s, err := loader.LoadSchema(ctx, relativePath)
-			if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
-				return nil, &notFoundErr{
-					Scheme: u.Scheme,
-					Path:   filepath.Join(util.SchemasDirectory, pathErr.Path),
-				}
-			}
-
-			return s, err
-		}
-
-		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
-		if !ok {
+		switch u.Scheme {
+		case "", URLScheme:
+			return loadCerbosURL(ctx, loader, u)
+		case "http", "https":
+			return loadHTTPURL(ctx, u)
+		case "file":
+			return loadFileURL(u)
+		default:
 			return nil, jsonschema.LoaderNotFoundError(path)
 		}
+	}
+}
 
-		s, err := schemaLoader(path)
-		var pathErr *fs.PathError
-		if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
-			return nil, &notFoundErr{
-				Scheme: u.Scheme,
-				Path:   pathErr.Path,
-			}
+func loadCerbosURL(ctx context.Context, loader Loader, u *url.URL) (io.ReadCloser, error) {
+	relativePath := strings.TrimPrefix(u.Path, "/")
+	var pathErr *fs.PathError
+	s, err := loader.LoadSchema(ctx, relativePath)
+	if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+		p := pathErr.Path
+		if !strings.HasPrefix(pathErr.Path, util.SchemasDirectory) {
+			p = filepath.Join(util.SchemasDirectory, pathErr.Path)
 		}
 
-		return s, err
+		return nil, &notFoundErr{
+			Scheme: u.Scheme,
+			Path:   p,
+		}
 	}
+
+	return s, err
+}
+
+func loadFileURL(u *url.URL) (io.ReadCloser, error) {
+	f := u.Path
+	var pathErr *fs.PathError
+	if file, err := os.Open(f); err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+		return nil, &notFoundErr{
+			Scheme: u.Scheme,
+			Path:   pathErr.Path,
+		}
+	} else {
+		return file, nil
+	}
+}
+
+func loadHTTPURL(ctx context.Context, u *url.URL) (io.ReadCloser, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		u.RequestURI(),
+		http.NoBody,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, &notFoundErr{
+			Scheme: u.Scheme,
+			Path:   u.Path,
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%s returned status code %d", u.RequestURI(), resp.StatusCode)
+	}
+
+	return resp.Body, nil
 }
