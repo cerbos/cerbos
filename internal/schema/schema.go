@@ -87,21 +87,16 @@ func (m *manager) LoadSchema(ctx context.Context, schemaURL string) (*jsonschema
 
 	e := &cacheEntry{}
 	var notFoundErr *notFoundErr
-	if e.schema, e.err = m.loadSchemaFromStore(ctx, schemaURL); e.err != nil && errors.As(e.err, &notFoundErr) {
-		parsedSchemaURL, err := url.Parse(schemaURL)
+	e.schema, e.err = m.loadSchemaFromStore(ctx, schemaURL)
+	if e.err != nil && errors.As(e.err, &notFoundErr) {
 		switch {
-		case err != nil:
-			e.err = fmt.Errorf("failed to parse URL: %w", err)
-		case notFoundErr.Scheme != URLScheme:
-			e.err = fmt.Errorf("schema file %q does not exist", schemaURL)
-		case strings.TrimPrefix(parsedSchemaURL.Path, "/") != strings.TrimPrefix(notFoundErr.Path, util.SchemasDirectory+string(os.PathSeparator)):
-			e.err = fmt.Errorf("schema file %q referenced by the schema does not exist in the store", notFoundErr.Path)
+		case notFoundErr.scheme != URLScheme:
+			e.err = fmt.Errorf("schema %s doesn't exist", schemaURL)
+		case notFoundErr.url != schemaURL:
+			e.err = fmt.Errorf("schema %s referenced by %s doesn't exist", notFoundErr.fullPath, schemaURL)
 		default:
-			e.err = fmt.Errorf("schema file %q does not exist in the store", notFoundErr.Path)
+			e.err = fmt.Errorf("schema %s doesn't exist", notFoundErr.fullPath)
 		}
-
-		m.cache.Set(schemaURL, e)
-		return e.schema, e.err
 	}
 
 	m.cache.Set(schemaURL, e)
@@ -148,12 +143,16 @@ type cacheEntry struct {
 }
 
 type notFoundErr struct {
-	Scheme string
-	Path   string
+	// url is the URL failed to load
+	url string
+	// scheme is the scheme of the URL without any colons or slashes
+	scheme string
+	// fullPath is the resolved file system path.
+	fullPath string
 }
 
 func (e notFoundErr) Error() string {
-	return fmt.Sprintf("schema file %q does not exist in the store", e.Path)
+	return fmt.Sprintf("schema %q does not exist", e.fullPath)
 }
 
 func DefaultResolver(loader Loader) Resolver {
@@ -187,8 +186,9 @@ func loadCerbosURL(ctx context.Context, u *url.URL, loader Loader) (io.ReadClose
 		}
 
 		return nil, &notFoundErr{
-			Scheme: u.Scheme,
-			Path:   p,
+			url:      u.String(),
+			scheme:   u.Scheme,
+			fullPath: p,
 		}
 	}
 
@@ -200,8 +200,9 @@ func loadFileURL(u *url.URL) (io.ReadCloser, error) {
 	var pathErr *fs.PathError
 	if file, err := os.Open(f); err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
 		return nil, &notFoundErr{
-			Scheme: u.Scheme,
-			Path:   pathErr.Path,
+			url:      u.String(),
+			scheme:   u.Scheme,
+			fullPath: pathErr.Path,
 		}
 	} else {
 		return file, nil
@@ -227,8 +228,9 @@ func loadHTTPURL(ctx context.Context, u *url.URL) (io.ReadCloser, error) {
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, &notFoundErr{
-			Scheme: u.Scheme,
-			Path:   u.Path,
+			url:      u.String(),
+			scheme:   u.Scheme,
+			fullPath: u.Path,
 		}
 	}
 

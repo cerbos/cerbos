@@ -20,8 +20,10 @@ checkInput:
     id: "XX125"
     attr: *myAttr
 wantValidationErrors:
-  - message: 'Failed to load principal schema "complex_object.json": schema file "complex_object.json" does not exist'
+  - message: >-
+      Failed to load principal schema "complex_object.json": schema complex_object.json doesn't exist
     source: SOURCE_PRINCIPAL
 
-  - message: 'Failed to load resource schema "complex_object.json": schema file "complex_object.json" does not exist'
+  - message: >-
+      Failed to load resource schema "complex_object.json": schema complex_object.json doesn't exist
     source: SOURCE_RESOURCE
