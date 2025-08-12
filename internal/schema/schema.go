@@ -11,10 +11,15 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/cerbos/cerbos/internal/util"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+
 	// Register the http and https loaders.
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 
@@ -22,6 +27,8 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/storage"
 )
+
+const fileURLScheme = "file"
 
 func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	if conf.Enforcement == EnforcementNone {
@@ -74,20 +81,35 @@ func NewEphemeral(resolver Resolver) Manager {
 	return mgr
 }
 
-func (m *manager) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
-	entry, ok := m.cache.Get(url)
+func (m *manager) LoadSchema(ctx context.Context, schemaURL string) (*jsonschema.Schema, error) {
+	entry, ok := m.cache.Get(schemaURL)
 	if ok {
 		return entry.schema, entry.err
 	}
 
 	e := &cacheEntry{}
-	e.schema, e.err = m.loadSchemaFromStore(ctx, url)
+	var notFoundErr *notFoundErr
+	e.schema, e.err = m.loadSchemaFromStore(ctx, schemaURL)
+	if e.err != nil && errors.As(e.err, &notFoundErr) {
+		var absolutePath string
+		var err error
+		if notFoundErr.scheme == fileURLScheme {
+			if absolutePath, err = filepath.Abs(schemaURL); err != nil {
+				e.err = fmt.Errorf("failed to resolve schema URL %q: %w", schemaURL, err)
+			}
+		}
 
-	if e.err != nil && errors.Is(e.err, fs.ErrNotExist) {
-		e.err = fmt.Errorf("schema %q does not exist in the store", url)
+		switch {
+		case notFoundErr.scheme == fileURLScheme && notFoundErr.fullPath == absolutePath:
+			e.err = fmt.Errorf("schema %s doesn't exist", schemaURL)
+		case notFoundErr.url != schemaURL:
+			e.err = fmt.Errorf("schema %s referenced by %s doesn't exist", notFoundErr.fullPath, schemaURL)
+		default:
+			e.err = fmt.Errorf("schema %s doesn't exist", notFoundErr.fullPath)
+		}
 	}
 
-	m.cache.Set(url, e)
+	m.cache.Set(schemaURL, e)
 	return e.schema, e.err
 }
 
@@ -130,6 +152,19 @@ type cacheEntry struct {
 	err    error
 }
 
+type notFoundErr struct {
+	// url is the URL failed to load
+	url string
+	// scheme is the scheme of the URL without any colons or slashes
+	scheme string
+	// fullPath is the resolved file system path.
+	fullPath string
+}
+
+func (e notFoundErr) Error() string {
+	return fmt.Sprintf("schema %q does not exist", e.fullPath)
+}
+
 func DefaultResolver(loader Loader) Resolver {
 	return func(ctx context.Context, path string) (io.ReadCloser, error) {
 		u, err := url.Parse(path)
@@ -137,15 +172,81 @@ func DefaultResolver(loader Loader) Resolver {
 			return nil, err
 		}
 
-		if u.Scheme == "" || u.Scheme == URLScheme {
-			relativePath := strings.TrimPrefix(u.Path, "/")
-			return loader.LoadSchema(ctx, relativePath)
-		}
-
-		schemaLoader, ok := jsonschema.Loaders[u.Scheme]
-		if !ok {
+		switch u.Scheme {
+		case "", URLScheme:
+			return loadCerbosURL(ctx, u, loader)
+		case "http", "https":
+			return loadHTTPURL(ctx, u)
+		case fileURLScheme:
+			return loadFileURL(u)
+		default:
 			return nil, jsonschema.LoaderNotFoundError(path)
 		}
-		return schemaLoader(path)
 	}
+}
+
+func loadCerbosURL(ctx context.Context, u *url.URL, loader Loader) (io.ReadCloser, error) {
+	relativePath := strings.TrimPrefix(u.Path, "/")
+	var pathErr *fs.PathError
+	s, err := loader.LoadSchema(ctx, relativePath)
+	if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+		p := pathErr.Path
+		if !strings.HasPrefix(pathErr.Path, util.SchemasDirectory) {
+			p = filepath.Join(util.SchemasDirectory, pathErr.Path)
+		}
+
+		return nil, &notFoundErr{
+			url:      u.String(),
+			scheme:   u.Scheme,
+			fullPath: p,
+		}
+	}
+
+	return s, err
+}
+
+func loadFileURL(u *url.URL) (io.ReadCloser, error) {
+	f := u.Path
+	var pathErr *fs.PathError
+	if file, err := os.Open(f); err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+		return nil, &notFoundErr{
+			url:      u.String(),
+			scheme:   u.Scheme,
+			fullPath: pathErr.Path,
+		}
+	} else {
+		return file, nil
+	}
+}
+
+func loadHTTPURL(ctx context.Context, u *url.URL) (io.ReadCloser, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		u.String(),
+		http.NoBody,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, &notFoundErr{
+			url:      u.String(),
+			scheme:   u.Scheme,
+			fullPath: u.String(),
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%s returned status code %d", u.RequestURI(), resp.StatusCode)
+	}
+
+	return resp.Body, nil
 }

@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=../../.jsonschema/SchemaTestCase.schema.json
+---
+description: Non existent schema references (http scheme)
+schemaRefs:
+  principalSchema:
+    ref: cerbos:///non_existent_http_ref.json
+  resourceSchema:
+    ref: cerbos:///non_existent_http_ref.json
+checkInput:
+  actions: [ "view:public" ]
+  principal:
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &myAttr
+      stringField: hello
+  resource:
+    kind: "expense_request"
+    policyVersion: "20210210"
+    id: "XX125"
+    attr: *myAttr
+wantValidationErrors:
+  - message: >-
+      Failed to load principal schema "cerbos:///non_existent_http_ref.json": schema https://cerbos.dev/does_not_exist.json referenced by cerbos:///non_existent_http_ref.json doesn't exist
+    source: SOURCE_PRINCIPAL
+
+  - message: >-
+      Failed to load resource schema "cerbos:///non_existent_http_ref.json": schema https://cerbos.dev/does_not_exist.json referenced by cerbos:///non_existent_http_ref.json doesn't exist
+    source: SOURCE_RESOURCE

@@ -60,7 +60,7 @@ playgroundEvaluate:
             [
               {
                 "file": "policy_01.yaml",
-                "error": 'Failed to load resource schema "cerbos:///resources/leave_request.json": schema "cerbos:///resources/leave_request.json" does not exist in the store (invalid schema)',
+                "error": "Failed to load resource schema \"cerbos:///resources/leave_request.json\": schema _schemas/resources/leave_request.json doesn't exist (invalid schema)",
                 "details": { "line": 17, "column": 7 },
               },
             ],

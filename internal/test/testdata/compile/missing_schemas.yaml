@@ -4,7 +4,7 @@ wantErrors:
   - file: resource_policies/leave_request_20210210.yaml
     error: invalid schema
     description: |-
-      Failed to load principal schema "cerbos:///non_existent_principal.json": schema "cerbos:///non_existent_principal.json" does not exist in the store
+      Failed to load principal schema "cerbos:///non_existent_principal.json": schema _schemas/non_existent_principal.json doesn't exist
     position:
       line: 10
       column: 7
@@ -12,7 +12,7 @@ wantErrors:
   - file: resource_policies/leave_request_20210210.yaml
     error: invalid schema
     description: |-
-      Failed to load resource schema "cerbos:///non_existent_leave_request.json": schema "cerbos:///non_existent_leave_request.json" does not exist in the store
+      Failed to load resource schema "cerbos:///non_existent_leave_request.json": schema _schemas/non_existent_leave_request.json doesn't exist
     position:
       line: 12
       column: 7
