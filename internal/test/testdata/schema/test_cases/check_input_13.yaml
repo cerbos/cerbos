@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=../../.jsonschema/SchemaTestCase.schema.json
+---
+description: Missing schemas (file scheme)
+schemaRefs:
+  principalSchema:
+    ref: file:///blah.json
+  resourceSchema:
+    ref: file:///blah.json
+checkInput:
+  actions: [ "view:public" ]
+  principal:
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &myAttr
+      stringField: hello
+  resource:
+    kind: "expense_request"
+    policyVersion: "20210210"
+    id: "XX125"
+    attr: *myAttr
+wantValidationErrors:
+  - message: >-
+      Failed to load principal schema "file:///blah.json": schema /blah.json doesn't exist
+    source: SOURCE_PRINCIPAL
+
+  - message: >-
+      Failed to load resource schema "file:///blah.json": schema /blah.json doesn't exist
+    source: SOURCE_RESOURCE

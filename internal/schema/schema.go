@@ -28,6 +28,8 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
+const fileURLScheme = "file"
+
 func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	if conf.Enforcement == EnforcementNone {
 		return NopManager{}
@@ -89,8 +91,16 @@ func (m *manager) LoadSchema(ctx context.Context, schemaURL string) (*jsonschema
 	var notFoundErr *notFoundErr
 	e.schema, e.err = m.loadSchemaFromStore(ctx, schemaURL)
 	if e.err != nil && errors.As(e.err, &notFoundErr) {
+		var absolutePath string
+		var err error
+		if notFoundErr.scheme == fileURLScheme {
+			if absolutePath, err = filepath.Abs(schemaURL); err != nil {
+				e.err = fmt.Errorf("failed to resolve schema URL %q: %w", schemaURL, err)
+			}
+		}
+
 		switch {
-		case notFoundErr.scheme != URLScheme:
+		case notFoundErr.scheme == fileURLScheme && notFoundErr.fullPath == absolutePath:
 			e.err = fmt.Errorf("schema %s doesn't exist", schemaURL)
 		case notFoundErr.url != schemaURL:
 			e.err = fmt.Errorf("schema %s referenced by %s doesn't exist", notFoundErr.fullPath, schemaURL)
@@ -167,7 +177,7 @@ func DefaultResolver(loader Loader) Resolver {
 			return loadCerbosURL(ctx, u, loader)
 		case "http", "https":
 			return loadHTTPURL(ctx, u)
-		case "file":
+		case fileURLScheme:
 			return loadFileURL(u)
 		default:
 			return nil, jsonschema.LoaderNotFoundError(path)
@@ -213,7 +223,7 @@ func loadHTTPURL(ctx context.Context, u *url.URL) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		u.RequestURI(),
+		u.String(),
 		http.NoBody,
 	)
 	if err != nil {
@@ -230,7 +240,7 @@ func loadHTTPURL(ctx context.Context, u *url.URL) (io.ReadCloser, error) {
 		return nil, &notFoundErr{
 			url:      u.String(),
 			scheme:   u.Scheme,
-			fullPath: u.Path,
+			fullPath: u.String(),
 		}
 	}
 
