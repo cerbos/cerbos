@@ -46,7 +46,7 @@ const (
 
 const maxBodySize = 1024
 
-func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
+func RegisterNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
 	l := lambdaExt{
 		nextEventURL: fmt.Sprintf("http://%s%s", runtimeAPI, nextEventEndpoint),
 		client:       &http.Client{Timeout: 0}, //nolint:mnd
@@ -84,7 +84,7 @@ func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 	return &l, nil
 }
 
-func (l *lambdaExt) checkShutdown(ctx context.Context) (bool, error) {
+func (l *lambdaExt) CheckShutdown(ctx context.Context) (bool, error) {
 	log := zap.L().Named("lambda-ext-impl")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, l.nextEventURL, nil)

@@ -264,9 +264,6 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		return err
 	}
 
-	if runtimeAPI := os.Getenv("AWS_LAMBDA_RUNTIME_API"); runtimeAPI != "" {
-		s.cancelOnShutdown(cancelFunc, runtimeAPI)
-	}
 	s.pool.Go(func(ctx context.Context) error {
 		<-ctx.Done()
 		log.Info("Shutting down")
@@ -307,31 +304,6 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 
 	log.Info("Shutdown complete")
 	return nil
-}
-
-func (s *Server) cancelOnShutdown(cancelFunc context.CancelFunc, runtimeAPI string) {
-	log := zap.L().Named("lambda-ext")
-	s.pool.Go(func(ctx context.Context) error {
-		log.Debug("Registering lambda extension")
-		l, err := registerNewLambdaExt(ctx, runtimeAPI)
-		if err != nil {
-			log.Error("Failed to register Cerbos server as Lambda extension", zap.Error(err))
-			return err
-		}
-		for ctx.Err() == nil {
-			shutdown, err := l.checkShutdown(ctx)
-			if ctx.Err() == nil && err != nil {
-				log.Error("Failed to check for shutdown")
-				return err
-			}
-			if shutdown {
-				log.Debug("Shutting down")
-				cancelFunc()
-				break
-			}
-		}
-		return nil
-	})
 }
 
 func (s *Server) initializeTLSConfig(log *zap.Logger) error {

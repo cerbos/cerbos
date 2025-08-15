@@ -1,0 +1,71 @@
+// Copyright 2021-2025 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+package main
+
+import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/pkg/cerbos"
+	"github.com/sourcegraph/conc/pool"
+	"go.uber.org/zap"
+)
+
+func main() {
+	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopFunc()
+
+	const logLevel = "INFO"
+	logging.InitLogging(ctx, logLevel)
+	defer zap.L().Sync() //nolint:errcheck
+
+	runtimeAPI := os.Getenv("AWS_LAMBDA_RUNTIME_API")
+
+	log := zap.L().Named("lambda-ext")
+	if runtimeAPI == "" {
+		log.Error("AWS_LAMBDA_RUNTIME_API env var not set, exiting")
+		exit2()
+	}
+
+	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
+	p.Go(func(ctx context.Context) error {
+		return cerbos.Serve(ctx)
+	})
+	//TODO: wait for healthcheck
+	p.Go(func(ctx context.Context) error {
+		log.Debug("Registering lambda extension")
+		l, err := server.RegisterNewLambdaExt(ctx, runtimeAPI)
+		if err != nil {
+			log.Error("Failed to register Cerbos server as Lambda extension", zap.Error(err))
+			return err
+		}
+		for ctx.Err() == nil {
+			shutdown, err := l.CheckShutdown(ctx)
+			if ctx.Err() == nil && err != nil {
+				log.Error("Failed to check for shutdown")
+				return err
+			}
+			if shutdown {
+				log.Debug("Shutting down")
+				stopFunc()
+				break
+			}
+		}
+		return nil
+	})
+	if err := p.Wait(); err != nil {
+		log.Error("Stopping server due to error", zap.Error(err))
+		exit2()
+	}
+}
+
+// exit2 returns 2 on exit
+func exit2() {
+	_ = zap.L().Sync()
+	os.Exit(2)
+}
