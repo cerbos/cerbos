@@ -12,7 +12,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -50,7 +49,7 @@ const maxBodySize = 1024
 func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
 	l := lambdaExt{
 		nextEventURL: fmt.Sprintf("http://%s%s", runtimeAPI, nextEventEndpoint),
-		client:       &http.Client{Timeout: 10 * time.Second}, //nolint:mnd
+		client:       &http.Client{Timeout: 0}, //nolint:mnd
 	}
 	url := fmt.Sprintf("http://%s%s", runtimeAPI, registrationEndpoint)
 
@@ -67,7 +66,7 @@ func registerNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(extensionNameHeader, "Cerbos PDP")
+	req.Header.Set(extensionNameHeader, "cerbos")
 
 	resp, err := l.client.Do(req)
 	if err != nil {
