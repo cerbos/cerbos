@@ -312,6 +312,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 func (s *Server) cancelOnShutdown(cancelFunc context.CancelFunc, runtimeAPI string) {
 	log := zap.L().Named("lambda-ext")
 	s.pool.Go(func(ctx context.Context) error {
+		log.Debug("Registering lambda extension")
 		l, err := registerNewLambdaExt(ctx, runtimeAPI)
 		if err != nil {
 			log.Error("Failed to register Cerbos server as Lambda extension", zap.Error(err))
