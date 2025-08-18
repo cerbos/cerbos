@@ -190,7 +190,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24.x
+          go-version: 1.25.x
           cache: false
           check-latest: true
 
@@ -246,7 +246,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24.x
+          go-version: 1.25.x
           check-latest: true
           cache: false
 
@@ -309,7 +309,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.x"
+          go-version: "1.25.x"
 
       - name: Test Helm chart
         run: ./deploy/charts/validate.sh
