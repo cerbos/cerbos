@@ -5,15 +5,14 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/run"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/pkg/cerbos"
 	"github.com/sourcegraph/conc/pool"
@@ -40,7 +39,6 @@ func main() {
 	p.Go(func(ctx context.Context) error {
 		return cerbos.Serve(ctx)
 	})
-	//TODO: wait for healthcheck
 	if err := waitForReady(ctx); err != nil {
 		log.Error("Readiness check failed", zap.Error(err))
 		exit2()
@@ -73,21 +71,20 @@ func main() {
 	}
 }
 
-func waitForReady(ctx context.Context) any {
+func waitForReady(ctx context.Context) error {
 	var conf server.Conf
 	if err := config.GetSection(&conf); err != nil {
-		return nil, fmt.Errorf("failed to obtain server config; %w", err)
+		return fmt.Errorf("failed to obtain server config; %w", err)
 	}
-
 	protocol := "http"
 	if conf.TLS != nil && conf.TLS.Cert != "" && conf.TLS.Key != "" {
 		protocol = "https"
 	}
 	httpAddr := fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr)
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()      //nolint:forcetypeassert
-	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-
-	client := http.Client{Transport: customTransport}
+	if err := run.WaitForReady(ctx, nil, httpAddr); err != nil {
+		return err
+	}
+	return nil
 }
 
 // exit2 returns 2 on exit
