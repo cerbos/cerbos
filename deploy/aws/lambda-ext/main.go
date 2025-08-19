@@ -12,7 +12,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/run"
+	runutils "github.com/cerbos/cerbos/internal/run"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/pkg/cerbos"
 	"github.com/sourcegraph/conc/pool"
@@ -23,7 +23,16 @@ func main() {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
 
-	const logLevel = "INFO"
+	configPath := os.Getenv("CERBOS_CONFIG")
+	if configPath == "" {
+		configPath = "/conf.yml"
+	}
+
+	logLevel := os.Getenv("CERBOS_LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info"
+	}
+
 	logging.InitLogging(ctx, logLevel)
 	defer zap.L().Sync() //nolint:errcheck
 
@@ -37,13 +46,15 @@ func main() {
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 	p.Go(func(ctx context.Context) error {
-		return cerbos.Serve(ctx)
+		return cerbos.Serve(ctx,
+			cerbos.WithConfigFile(configPath),
+			cerbos.WithLogLevel(cerbos.LogLevel(logLevel)),
+		)
 	})
 	if err := waitForReady(ctx); err != nil {
 		log.Error("Readiness check failed", zap.Error(err))
 		exit2()
 	}
-
 	p.Go(func(ctx context.Context) error {
 		log.Debug("Registering lambda extension")
 		l, err := server.RegisterNewLambdaExt(ctx, runtimeAPI)
@@ -81,7 +92,7 @@ func waitForReady(ctx context.Context) error {
 		protocol = "https"
 	}
 	httpAddr := fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr)
-	if err := run.WaitForReady(ctx, nil, httpAddr); err != nil {
+	if err := runutils.WaitForReady(ctx, nil, httpAddr); err != nil {
 		return err
 	}
 	return nil
