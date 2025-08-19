@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=../../.jsonschema/SchemaTestCase.schema.json
 ---
-description: Missing both schemas
+description: Non existent schema references (file scheme)
 schemaRefs:
   principalSchema:
-    ref: cerbos:///blah.json
+    ref: cerbos:///non_existent_file_ref.json
   resourceSchema:
-    ref: cerbos:///blah.json
+    ref: cerbos:///non_existent_file_ref.json
 checkInput:
   actions: [ "view:public" ]
   principal:
@@ -21,9 +21,9 @@ checkInput:
     attr: *myAttr
 wantValidationErrors:
   - message: >-
-      Failed to load principal schema "cerbos:///blah.json": schema _schemas/blah.json doesn't exist
+      Failed to load principal schema "cerbos:///non_existent_file_ref.json": schema /does_not_exist.json referenced by cerbos:///non_existent_file_ref.json doesn't exist
     source: SOURCE_PRINCIPAL
 
   - message: >-
-      Failed to load resource schema "cerbos:///blah.json": schema _schemas/blah.json doesn't exist
+      Failed to load resource schema "cerbos:///non_existent_file_ref.json": schema /does_not_exist.json referenced by cerbos:///non_existent_file_ref.json doesn't exist
     source: SOURCE_RESOURCE

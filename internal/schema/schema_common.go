@@ -217,7 +217,7 @@ func (m *StaticManager) validateAttr(ctx context.Context, src ErrSource, schemaR
 	schema, err := m.loader.LoadSchema(ctx, schemaRef.Ref)
 	if err != nil {
 		m.log.Warn("Failed to load schema", logging.String("schema", schemaRef.Ref), logging.Error(err))
-		return newSchemaLoadErr(src, schemaRef.Ref)
+		return NewLoadErr(src, schemaRef.Ref, err)
 	}
 
 	attrJSON, err := attrToJSONObject(src, attr)
@@ -269,11 +269,11 @@ func StaticResolver(loader Loader) Resolver {
 			return nil, err
 		}
 
-		if u.Scheme == "" || u.Scheme == URLScheme {
-			relativePath := strings.TrimPrefix(u.Path, "/")
-			return loader.LoadSchema(ctx, relativePath)
+		switch u.Scheme {
+		case "", URLScheme:
+			return loadCerbosURL(ctx, u, loader)
+		default:
+			return nil, jsonschema.LoaderNotFoundError(path)
 		}
-
-		return nil, jsonschema.LoaderNotFoundError(path)
 	}
 }

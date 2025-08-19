@@ -6,6 +6,7 @@
 package util
 
 import (
+	"github.com/keygen-sh/machineid"
 	"go.uber.org/zap"
 )
 
@@ -15,4 +16,8 @@ func DeprecationWarning(deprecated string) {
 
 func DeprecationReplacedWarning(deprecated, replacement string) {
 	zap.S().Warnf("[DEPRECATED CONFIG] %s is deprecated and will be removed in a future release. Please use %s instead.", deprecated, replacement)
+}
+
+func getMachineID() (string, error) {
+	return machineid.ID()
 }
