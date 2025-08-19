@@ -60,9 +60,6 @@ storage:
     directory: %q
     watchForChanges: true
 `
-
-	requestTimeout = 100 * time.Millisecond
-	retryInterval  = 141 * time.Millisecond
 )
 
 type Cmd struct {

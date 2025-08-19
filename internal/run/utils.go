@@ -17,13 +17,6 @@ const (
 	retryInterval  = 141 * time.Millisecond
 )
 
-type PdpInstance struct {
-	errors   chan error
-	stopFn   context.CancelFunc
-	httpAddr string
-	grpcAddr string
-}
-
 func WaitForReady(ctx context.Context, errors <-chan error, httpAddr string) error {
 	client := newClient()
 	healthURL := fmt.Sprintf("%s/_cerbos/health", httpAddr)
