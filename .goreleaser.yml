@@ -38,6 +38,34 @@ builds:
             - BINARY_VERSION={{ .Version }}
             - BINARY_PATH={{ .Path }}
 
+  - main: ./deploy/cerbos
+    binary: cerbos
+    id: "cerbos"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - "6"
+      - "7"
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}} -X github.com/cerbos/cerbos/internal/telemetry.WriteKey={{.Env.TELEMETRY_WRITE_KEY}} -X github.com/cerbos/cerbos/internal/telemetry.DataPlaneURL={{.Env.TELEMETRY_URL}}
+    hooks:
+      post:
+        - cmd: hack/scripts/copy-binary-to-npm-package.sh
+          env:
+            - BINARY_NAME=cerbos
+            - BINARY_OS={{ .Os }}
+            - BINARY_ARCH={{ .Arch }}
+            - BINARY_VERSION={{ .Version }}
+            - BINARY_PATH={{ .Path }}
   - main: ./cmd/cerbos
     binary: cerbos
     id: "cerbos-aws"
