@@ -54,7 +54,7 @@ func main() {
 			cerbos.WithLogLevel(cerbos.LogLevel(logLevel)),
 		)
 	})
-	if err := waitForReady(ctx); err != nil {
+	if err := awslambda.WaitForReady(ctx); err != nil {
 		log.Error("Readiness check failed", zap.Error(err))
 		exit2()
 	}
@@ -85,22 +85,6 @@ func main() {
 			exit2()
 		}
 	}
-}
-
-func waitForReady(ctx context.Context) error {
-	var conf server.Conf
-	if err := config.GetSection(&conf); err != nil {
-		return fmt.Errorf("failed to obtain server config; %w", err)
-	}
-	protocol := "http"
-	if conf.TLS != nil && conf.TLS.Cert != "" && conf.TLS.Key != "" {
-		protocol = "https"
-	}
-	httpAddr := fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr)
-	if err := runutils.WaitForReady(ctx, nil, httpAddr); err != nil {
-		return err
-	}
-	return nil
 }
 
 // exit2 returns 2 on exit

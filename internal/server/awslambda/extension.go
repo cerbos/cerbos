@@ -12,7 +12,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
+	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/run"
+	"github.com/cerbos/cerbos/internal/server"
 	"go.uber.org/zap"
 )
 
@@ -116,4 +120,23 @@ func (l *lambdaExt) CheckShutdown(ctx context.Context) (bool, error) {
 	}
 
 	return event.EventType == "SHUTDOWN", nil
+}
+
+func WaitForReady(ctx context.Context) error {
+	var conf server.Conf
+	if err := config.GetSection(&conf); err != nil {
+		return fmt.Errorf("failed to obtain server config; %w", err)
+	}
+	protocol := "http"
+	if conf.TLS != nil && conf.TLS.Cert != "" && conf.TLS.Key != "" {
+		protocol = "https"
+	}
+	httpAddr := fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr)
+	const timeout = 5 * time.Second
+	ctx, cancelFunc := context.WithTimeout(ctx, timeout)
+	defer cancelFunc()
+	if err := run.WaitForReady(ctx, nil, httpAddr); err != nil {
+		return err
+	}
+	return nil
 }
