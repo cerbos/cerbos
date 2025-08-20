@@ -25,7 +25,7 @@ func main() {
 
 	configPath := os.Getenv("CERBOS_CONFIG")
 	if configPath == "" {
-		configPath = "/conf.yml"
+		configPath = "/.cerbos.yaml"
 	}
 
 	logLevel := os.Getenv("CERBOS_LOG_LEVEL")
