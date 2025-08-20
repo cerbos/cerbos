@@ -77,8 +77,10 @@ func main() {
 		return nil
 	})
 	if err := p.Wait(); err != nil {
-		log.Error("Stopping server due to error", zap.Error(err))
-		exit2()
+	    if !errors.Is(err, context.Canceled) {
+		    log.Error("Stopping server due to error", zap.Error(err))
+		    exit2()
+		}
 	}
 }
 
