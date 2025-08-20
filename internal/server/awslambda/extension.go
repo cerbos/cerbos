@@ -1,7 +1,7 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package server
+package awslambda
 
 import (
 	"bytes"
@@ -46,7 +46,7 @@ const (
 
 const maxBodySize = 1024
 
-func RegisterNewLambdaExt(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
+func RegisterNewExtension(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
 	l := lambdaExt{
 		nextEventURL: fmt.Sprintf("http://%s%s", runtimeAPI, nextEventEndpoint),
 		client:       &http.Client{Timeout: 0}, //nolint:mnd
