@@ -6,17 +6,13 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"go.uber.org/zap"
 
-	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	runutils "github.com/cerbos/cerbos/internal/run"
-	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/internal/server/awslambda"
 	"github.com/cerbos/cerbos/pkg/cerbos"
 	"github.com/sourcegraph/conc/pool"
