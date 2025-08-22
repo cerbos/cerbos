@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -50,11 +51,11 @@ func main() {
 			cerbos.WithLogLevel(cerbos.LogLevel(logLevel)),
 		)
 	})
-	if err := awslambda.WaitForReady(ctx); err != nil {
-		log.Error("Readiness check failed", zap.Error(err))
-		exit2()
-	}
 	p.Go(func(ctx context.Context) error {
+		if err := awslambda.WaitForReady(ctx); err != nil {
+			log.Error("Readiness check failed", zap.Error(err))
+			return fmt.Errorf("readiness check failed: %w", err)
+		}
 		log.Debug("Registering lambda extension")
 		l, err := awslambda.RegisterNewExtension(ctx, runtimeAPI)
 		if err != nil {
@@ -71,6 +72,12 @@ func main() {
 				log.Debug("Shutting down")
 				stopFunc()
 				break
+			}
+		}
+		if err := ctx.Err(); !errors.Is(err, context.Canceled) {
+			repErr := l.ReportError(ctx, err)
+			if repErr != nil {
+				log.Error("failed to report error to AWS Lambda Runtime", zap.Error(repErr))
 			}
 		}
 		return nil

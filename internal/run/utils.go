@@ -68,7 +68,7 @@ func checkHealth(client *http.Client, healthURL string) error {
 	defer func() {
 		if resp.Body != nil {
 			_, _ = io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	}()
 

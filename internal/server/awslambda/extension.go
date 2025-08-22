@@ -10,8 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -21,9 +23,9 @@ import (
 )
 
 type lambdaExt struct {
-	client       *http.Client
-	nextEventURL string
-	extensionID  string
+	client      *http.Client
+	runtimeAPI  string
+	extensionID string
 }
 
 type RegisterRequest struct {
@@ -44,16 +46,18 @@ type EventResponse struct {
 const (
 	extensionNameHeader  = "Lambda-Extension-Name"
 	extensionIDHeader    = "Lambda-Extension-Identifier"
+	extensionErrorType   = "Lambda-Extension-Function-Error-Type"
 	registrationEndpoint = "/2020-01-01/extension/register"
 	nextEventEndpoint    = "/2020-01-01/extension/event/next"
+	exitErrorEndpoint    = "/2020-01-01/extension/exit/error"
 )
 
 const maxBodySize = 1024
 
 func RegisterNewExtension(ctx context.Context, runtimeAPI string) (*lambdaExt, error) {
 	l := lambdaExt{
-		nextEventURL: fmt.Sprintf("http://%s%s", runtimeAPI, nextEventEndpoint),
-		client:       &http.Client{Timeout: 0}, //nolint:mnd
+		runtimeAPI: runtimeAPI,
+		client:     &http.Client{Timeout: 0}, //nolint:mnd
 	}
 	url := fmt.Sprintf("http://%s%s", runtimeAPI, registrationEndpoint)
 
@@ -89,9 +93,8 @@ func RegisterNewExtension(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 }
 
 func (l *lambdaExt) CheckShutdown(ctx context.Context) (bool, error) {
-	log := zap.L().Named("lambda-ext-impl")
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, l.nextEventURL, nil)
+	nextEventURL := fmt.Sprintf("http://%s%s", l.runtimeAPI, nextEventEndpoint)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, nextEventURL, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to create next event request: %w", err)
 	}
@@ -100,17 +103,15 @@ func (l *lambdaExt) CheckShutdown(ctx context.Context) (bool, error) {
 
 	resp, err := l.client.Do(req)
 	if err != nil {
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) && urlErr.Timeout() {
-			log.Debug("Checking next event timed-out")
-			return false, nil
-		}
 		return false, fmt.Errorf("failed to get next event: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
+		if len(body) = maxBodySize {
+			io.Copy(io.Discard, resp.Body)
+		}
 		return false, fmt.Errorf("get next event failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -120,6 +121,27 @@ func (l *lambdaExt) CheckShutdown(ctx context.Context) (bool, error) {
 	}
 
 	return event.EventType == "SHUTDOWN", nil
+}
+
+func (l *lambdaExt) ReportError(ctx context.Context, err error) error {
+	url := fmt.Sprintf("http://%s%s", l.runtimeAPI, exitErrorEndpoint)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(err.Error()))
+	if err != nil {
+		return fmt.Errorf("failed to create exit error request: %w", err)
+	}
+
+	req.Header.Set(extensionIDHeader, l.extensionID)
+	req.Header.Set(extensionErrorType, "Extension.UnknownError")
+
+	resp, err := l.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to report error: %w", err)
+	}
+
+	_, _ = io.Copy(io.Discard, resp.Body)
+	_ = resp.Body.Close()
+
+	return nil
 }
 
 func WaitForReady(ctx context.Context) error {
