@@ -1,12 +1,14 @@
 repositories:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
+
 helmDefaults:
   cleanupOnFail: true
   wait: true
   recreatePods: true
   force: true
   createNamespace: true
+
 releases:
   - name: minio
     namespace: '{{ requiredEnv "E2E_NS" }}'
@@ -37,7 +39,8 @@ releases:
           rootPassword: passw0rd
       - defaultBuckets: "cerbos"
       - persistence:
-          enabled: false
+          enabled": false
+
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
     needs: ["minio"]
@@ -58,19 +61,6 @@ releases:
           - '--cert={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.crt'
           - '--key={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.key'
           - '--namespace={{ requiredEnv "E2E_NS" }}'
-      - events: ["presync"]
-        showlogs: true
-        command: bash
-        args:
-          - -lc
-          - |
-            TMP_TAR="$(mktemp -t e2e_policies.tgz)"
-            tar -C '{{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/store' -czf "$TMP_TAR" .
-            kubectl create configmap cerbos-policies-tar-{{ requiredEnv "E2E_CONTEXT_ID" }} \
-              --from-file=store.tgz="$TMP_TAR" \
-              -n '{{ requiredEnv "E2E_NS" }}' \
-              -o yaml --dry-run=client | kubectl apply -f -
-            rm -f "$TMP_TAR"
       - events: ["postuninstall"]
         showlogs: true
         command: kubectl
@@ -89,11 +79,6 @@ releases:
             emptyDir: {}
           - name: cerbos-policies
             emptyDir: {}
-          - name: e2e-policies-tar
-            configMap:
-              name: cerbos-policies-tar-{{ requiredEnv "E2E_CONTEXT_ID" }}
-          - name: e2e-policy-workdir
-            emptyDir: {}
       - volumeMounts:
           - name: cerbos-auditlog
             mountPath: /audit
@@ -104,35 +89,6 @@ releases:
             value: '{{ requiredEnv "E2E_BUCKET_USERNAME" }}'
           - name: AWS_SECRET_ACCESS_KEY
             value: '{{ requiredEnv "E2E_BUCKET_PASSWORD" }}'
-      - initContainers:
-          - name: wait-for-policies
-            image: bitnami/minio-client:latest
-            imagePullPolicy: IfNotPresent
-            env:
-              - name: AWS_ACCESS_KEY_ID
-                value: '{{ requiredEnv "E2E_BUCKET_USERNAME" }}'
-              - name: AWS_SECRET_ACCESS_KEY
-                value: '{{ requiredEnv "E2E_BUCKET_PASSWORD" }}'
-            volumeMounts:
-              - name: e2e-policies-tar
-                mountPath: /src
-              - name: e2e-policy-workdir
-                mountPath: /work
-            command: ["/bin/sh", "-lc"]
-            args:
-              - |
-                export PATH=/opt/bitnami/minio-client/bin:$PATH
-                set -eu
-
-                # work around some permissioning issues
-                mkdir -p /work/in
-                tar -xzf /src/store.tgz -C /work/in
-
-                mc alias set minio \
-                  http://minio-{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}:9000 \
-                  "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
-
-                mc mirror /work/in minio/cerbos/{{ requiredEnv "E2E_BUCKET_PREFIX" }}
       - cerbos:
           tlsSecretName: 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
           logLevel: DEBUG
