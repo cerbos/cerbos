@@ -3,9 +3,9 @@
 description: Missing schemas (http)
 schemaRefs:
   principalSchema:
-    ref: https://cerbos.dev/blah.json
+    ref: https://example.com/blah.json
   resourceSchema:
-    ref: https://cerbos.dev/blah.json
+    ref: https://example.com/blah.json
 checkInput:
   actions: [ "view:public" ]
   principal:
@@ -21,9 +21,9 @@ checkInput:
     attr: *myAttr
 wantValidationErrors:
   - message: >-
-      Failed to load principal schema "https://cerbos.dev/blah.json": schema https://cerbos.dev/blah.json doesn't exist
+      Failed to load principal schema "https://example.com/blah.json": schema https://example.com/blah.json doesn't exist
     source: SOURCE_PRINCIPAL
 
   - message: >-
-      Failed to load resource schema "https://cerbos.dev/blah.json": schema https://cerbos.dev/blah.json doesn't exist
+      Failed to load resource schema "https://example.com/blah.json": schema https://example.com/blah.json doesn't exist
     source: SOURCE_RESOURCE
