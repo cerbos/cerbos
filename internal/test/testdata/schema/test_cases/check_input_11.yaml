@@ -21,9 +21,9 @@ checkInput:
     attr: *myAttr
 wantValidationErrors:
   - message: >-
-      Failed to load principal schema "cerbos:///non_existent_http_ref.json": schema https://cerbos.dev/does_not_exist.json referenced by cerbos:///non_existent_http_ref.json doesn't exist
+      Failed to load principal schema "cerbos:///non_existent_http_ref.json": schema https://example.com/does_not_exist.json referenced by cerbos:///non_existent_http_ref.json doesn't exist
     source: SOURCE_PRINCIPAL
 
   - message: >-
-      Failed to load resource schema "cerbos:///non_existent_http_ref.json": schema https://cerbos.dev/does_not_exist.json referenced by cerbos:///non_existent_http_ref.json doesn't exist
+      Failed to load resource schema "cerbos:///non_existent_http_ref.json": schema https://example.com/does_not_exist.json referenced by cerbos:///non_existent_http_ref.json doesn't exist
     source: SOURCE_RESOURCE
