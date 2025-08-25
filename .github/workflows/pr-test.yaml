@@ -275,7 +275,7 @@ jobs:
           fetch-tags: true
 
       - name: Lint protos
-        uses: bufbuild/buf-action@v1.2.0
+        uses: bufbuild/buf-action@v1.3.0
         with:
           breaking: false
           format: true
