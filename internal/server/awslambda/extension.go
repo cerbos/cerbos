@@ -7,19 +7,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/run"
 	"github.com/cerbos/cerbos/internal/server"
-	"go.uber.org/zap"
 )
 
 type lambdaExt struct {
@@ -109,8 +105,8 @@ func (l *lambdaExt) CheckShutdown(ctx context.Context) (bool, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
-		if len(body) = maxBodySize {
-			io.Copy(io.Discard, resp.Body)
+		if len(body) == maxBodySize {
+			_, _ = io.Copy(io.Discard, resp.Body)
 		}
 		return false, fmt.Errorf("get next event failed with status %d: %s", resp.StatusCode, string(body))
 	}

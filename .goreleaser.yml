@@ -35,7 +35,7 @@ builds:
             - BINARY_VERSION={{ .Version }}
             - BINARY_PATH={{ .Path }}
 
-  - main: ./deploy/aws/lambda-ext
+  - main: ./deploy/awslambda/extension.go
     binary: cerbosext
     id: "cerbosext"
     env:
