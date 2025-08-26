@@ -70,7 +70,7 @@ func RegisterNewExtension(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(extensionNameHeader, "cerbos")
+	req.Header.Set(extensionNameHeader, "cerbosext")
 
 	resp, err := l.client.Do(req)
 	if err != nil {
