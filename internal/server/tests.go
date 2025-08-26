@@ -58,19 +58,28 @@ func (AuthCreds) RequireTransportSecurity() bool {
 	return false
 }
 
-func LoadTestCases(tb testing.TB, dirs ...string) *TestRunner {
+func LoadTestCases(tb testing.TB, suiteSleeps map[int]time.Duration, dirs ...string) *TestRunner {
 	tb.Helper()
 	var testCases []*privatev1.ServerTestCase
 
-	for _, dir := range dirs {
+	totalTestCases := 0
+	testCaseSleeps := make(map[int]time.Duration)
+	for i, dir := range dirs {
 		cases := test.LoadTestCases(tb, filepath.Join("server", dir))
 		for _, c := range cases {
 			tc := readTestCase(tb, c.Name, c.Input)
 			testCases = append(testCases, tc)
 		}
+
+		totalTestCases += len(cases)
+		if i < len(dirs)-1 { // no point sleeping after the final suite
+			if dur, ok := suiteSleeps[i]; ok && len(cases) > 0 {
+				testCaseSleeps[totalTestCases-1] = dur
+			}
+		}
 	}
 
-	return &TestRunner{Cases: testCases, Timeout: requestTimeout, HealthPollInterval: healthPollInterval}
+	return &TestRunner{Cases: testCases, Timeout: requestTimeout, HealthPollInterval: healthPollInterval, sleeps: testCaseSleeps}
 }
 
 func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTestCase {
@@ -91,6 +100,7 @@ type TestRunner struct {
 	Timeout                time.Duration
 	HealthPollInterval     time.Duration
 	CerbosClientMaxRetries uint
+	sleeps                 map[int]time.Duration
 }
 
 // WithCerbosClientRetries is relevant to Overlay storage driver calls (specifically the e2e overlay test).
@@ -107,8 +117,11 @@ func (tr *TestRunner) RunGRPCTests(addr string, opts ...grpc.DialOption) func(*t
 			grpcHealthCheckPasses(t, grpcConn, tr.HealthPollInterval),
 			tr.Timeout, tr.HealthPollInterval, "Server did not come up on time")
 
-		for _, tc := range tr.Cases {
+		for i, tc := range tr.Cases {
 			t.Run(tc.Name, tr.executeGRPCTestCase(grpcConn, tc))
+			if dur, ok := tr.sleeps[i]; ok {
+				time.Sleep(dur)
+			}
 		}
 	}
 }
@@ -215,8 +228,11 @@ func (tr *TestRunner) RunHTTPTests(hostAddr string, creds *AuthCreds) func(*test
 			httpHealthCheckPasses(c, fmt.Sprintf("%s/_cerbos/health", hostAddr), tr.HealthPollInterval),
 			tr.Timeout, tr.HealthPollInterval, "Server did not come up on time")
 
-		for _, tc := range tr.Cases {
+		for i, tc := range tr.Cases {
 			t.Run(tc.Name, tr.executeHTTPTestCase(c, hostAddr, creds, tc))
+			if dur, ok := tr.sleeps[i]; ok {
+				time.Sleep(dur)
+			}
 		}
 
 		t.Run("cors", tr.checkCORS(c, hostAddr))

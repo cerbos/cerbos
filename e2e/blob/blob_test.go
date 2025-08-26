@@ -42,7 +42,7 @@ func TestBlob(t *testing.T) {
 		_ = blob.CopyDirToBucket(ctx, cctx, p)
 
 		// Wait for Cerbos to pick up the changes
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithPostSetup(postSetup), e2e.WithComputedEnv(computedEnvFn))

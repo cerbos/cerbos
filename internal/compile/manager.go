@@ -73,44 +73,12 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 			case storage.EventReload:
 				c.NotifySubscribers(evt)
 			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
-				if err := c.addEventDependents(&evt); err != nil {
-					c.log.Warnw("Error while retrieving dependendents event", "event", evt, "error", err)
-				}
 				c.NotifySubscribers(evt)
 			default:
 				c.log.Debugw("Ignoring storage event", "event", evt)
 			}
 		}
 	}
-}
-
-func (c *Manager) addEventDependents(evt *storage.Event) error {
-	deps, err := c.getDependents(evt.PolicyID)
-	if err != nil {
-		return err
-	}
-
-	if len(deps) > 0 {
-		evt.Dependents = deps
-	}
-
-	return nil
-}
-
-func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), storeFetchTimeout)
-	defer cancelFunc()
-
-	dependents, err := c.store.GetDependents(ctx, modID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find dependents: %w", err)
-	}
-
-	if len(dependents) > 0 {
-		return dependents[modID], nil
-	}
-
-	return nil, nil
 }
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {

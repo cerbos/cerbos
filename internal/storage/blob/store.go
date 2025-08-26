@@ -243,13 +243,17 @@ func (s *Store) updateIndex(ctx context.Context) (err error) {
 
 	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(cr.addedOrUpdated), len(cr.deleted))
 
-	evts := make([]storage.Event, 0, len(cr.addedOrUpdated)+len(cr.deleted))
-	for _, i := range cr.deleted {
-		e, err := s.deleteEvent(i.file)
+	evts := make([]storage.Event, 0, len(cr.addedOrUpdated)+len(cr.deleted)+1)
+	modIDs := make([]namer.ModuleID, len(cr.addedOrUpdated)+len(cr.deleted))
+	processedModIDs := make(map[namer.ModuleID]struct{}, len(cr.addedOrUpdated)+len(cr.deleted))
+	for i, inf := range cr.deleted {
+		e, err := s.deleteEvent(inf.file)
 		if err != nil {
 			return fmt.Errorf("failed to create delete event: %w", err)
 		}
 		evts = append(evts, e)
+		modIDs[i] = e.PolicyID
+		processedModIDs[e.PolicyID] = struct{}{}
 	}
 
 	dir, dirName, ts, err := s.prepareWorkDir(ctx, cr.all)
@@ -257,12 +261,35 @@ func (s *Store) updateIndex(ctx context.Context) (err error) {
 		return fmt.Errorf("failed to prepare temp directory from the new set of files: %w", err)
 	}
 
-	for _, i := range cr.addedOrUpdated {
-		e, err := s.addOrUpdateEvent(i.etag, i.file, dirName, ts)
+	for i, inf := range cr.addedOrUpdated {
+		e, err := s.addOrUpdateEvent(inf.etag, inf.file, dirName, ts)
 		if err != nil {
 			return fmt.Errorf("failed to create add or update event: %w", err)
 		}
 		evts = append(evts, e)
+		modIDs[i] = e.PolicyID
+		processedModIDs[e.PolicyID] = struct{}{}
+	}
+
+	depsMap, err := s.idx.GetDependents(modIDs...)
+	if err != nil {
+		return fmt.Errorf("failed to get dependents: %w", err)
+	}
+
+	// to prevent duplicating shared dependents across multiple events, we create a single stub event
+	// which carries all dependents not already included in this batch of events
+	depEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy}
+	for _, deps := range depsMap {
+		for _, d := range deps {
+			if _, ok := processedModIDs[d]; !ok {
+				depEvent.Dependents = append(depEvent.Dependents, d)
+				processedModIDs[d] = struct{}{}
+			}
+		}
+	}
+
+	if len(depEvent.Dependents) > 0 {
+		evts = append(evts, depEvent)
 	}
 
 	// we need to emit all events regardless of validity as some subscribers (such as the rule table)
@@ -306,16 +333,6 @@ func (s *Store) addOrUpdateEvent(etag, file, currDirName string, ts int64) (stor
 
 	evt := storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, wp.ID)
 
-	dependents, err := s.idx.GetDependents(wp.ID)
-	if err != nil {
-		return evt, err
-	}
-
-	if deps, ok := dependents[wp.ID]; ok && len(deps) > 0 {
-		evt.Dependents = make([]namer.ModuleID, len(deps))
-		copy(evt.Dependents, deps)
-	}
-
 	return evt, nil
 }
 
@@ -331,16 +348,6 @@ func (s *Store) deleteEvent(file string) (storage.Event, error) {
 
 	modID := namer.GenModuleID(p)
 	evt := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, modID)
-
-	dependents, err := s.idx.GetDependents(modID)
-	if err != nil {
-		return evt, err
-	}
-
-	if deps, ok := dependents[modID]; ok && len(deps) > 0 {
-		evt.Dependents = make([]namer.ModuleID, len(deps))
-		copy(evt.Dependents, deps)
-	}
 
 	return evt, nil
 }
