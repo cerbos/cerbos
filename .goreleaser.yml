@@ -35,8 +35,6 @@ builds:
             - BINARY_VERSION={{ .Version }}
             - BINARY_PATH={{ .Path }}
 
-  - main: ./deploy/awslambda/extension.go
-    binary: cerbosext
   - main: ./cmd/awslambda/extension
     binary: extensions/cerbosext
     id: "cerbosext"
