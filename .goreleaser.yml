@@ -37,6 +37,8 @@ builds:
 
   - main: ./deploy/awslambda/extension.go
     binary: cerbosext
+  - main: ./cmd/awslambda/extension
+    binary: extensions/cerbosext
     id: "cerbosext"
     env:
       - CGO_ENABLED=0

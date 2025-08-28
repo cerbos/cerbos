@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -70,7 +72,7 @@ func RegisterNewExtension(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(extensionNameHeader, "cerbosext")
+	req.Header.Set(extensionNameHeader, path.Base(os.Args[0]))
 
 	resp, err := l.client.Do(req)
 	if err != nil {
