@@ -96,11 +96,11 @@ func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTest
 }
 
 type TestRunner struct {
+	sleeps                 map[int]time.Duration
 	Cases                  []*privatev1.ServerTestCase
 	Timeout                time.Duration
 	HealthPollInterval     time.Duration
 	CerbosClientMaxRetries uint
-	sleeps                 map[int]time.Duration
 }
 
 // WithCerbosClientRetries is relevant to Overlay storage driver calls (specifically the e2e overlay test).
