@@ -120,14 +120,14 @@ func RunSuites(t *testing.T, opts ...Opt) {
 		ctx.Logf("Finished PostSetup function")
 	}
 
-	sleeps := make(map[int]time.Duration)
-	for i, suite := range sopt.suites {
+	suiteSleeps := make(map[string]time.Duration)
+	for _, suite := range sopt.suites {
 		if suite == AdminSuite {
-			sleeps[i] = adminSuiteSleepDuration
+			suiteSleeps[AdminSuite] = adminSuiteSleepDuration
 		}
 	}
 
-	tr := server.LoadTestCases(t, sleeps, sopt.suites...)
+	tr := server.LoadTestCases(t, suiteSleeps, sopt.suites...)
 	tr.Timeout = testTimeout
 
 	if sopt.overlayMaxRetries != 0 {

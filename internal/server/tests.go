@@ -58,7 +58,7 @@ func (AuthCreds) RequireTransportSecurity() bool {
 	return false
 }
 
-func LoadTestCases(tb testing.TB, suiteSleeps map[int]time.Duration, dirs ...string) *TestRunner {
+func LoadTestCases(tb testing.TB, suiteSleeps map[string]time.Duration, dirs ...string) *TestRunner {
 	tb.Helper()
 	var testCases []*privatev1.ServerTestCase
 
@@ -73,7 +73,7 @@ func LoadTestCases(tb testing.TB, suiteSleeps map[int]time.Duration, dirs ...str
 
 		totalTestCases += len(cases)
 		if i < len(dirs)-1 { // no point sleeping after the final suite
-			if dur, ok := suiteSleeps[i]; ok && len(cases) > 0 {
+			if dur, ok := suiteSleeps[dir]; ok && len(cases) > 0 {
 				testCaseSleeps[totalTestCases-1] = dur
 			}
 		}
