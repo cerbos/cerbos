@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -22,7 +23,7 @@ import (
 	"go.uber.org/multierr"
 )
 
-const cerbosHTTPAddr = "http://127.0.0.1:3592"
+const cerbosHTTPAddr = "unix:/tmp/cerbos.http.sock"
 
 func main() {
 	gw, err := NewGateway(cerbosHTTPAddr)
@@ -38,6 +39,7 @@ var ErrNotStarted = errors.New("timeout exceeded starting Cerbos")
 type Gateway struct {
 	httpClient    *http.Client
 	cerbosAddress *url.URL
+	socketPath    string
 }
 
 // NewGateway creates a new Gateway instance.
@@ -45,13 +47,35 @@ func NewGateway(addr string) (*Gateway, error) {
 	if addr == "" {
 		return nil, errors.New("cerbos address not provided")
 	}
-	u, err := url.Parse(addr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse cerbos address: %w", err)
+
+	var socketPath string
+	var u *url.URL
+	var err error
+
+	if after, ok := strings.CutPrefix(addr, "unix:"); ok {
+		socketPath = after
+		u = &url.URL{Scheme: "http", Host: "localhost"}
+	} else {
+		u, err = url.Parse(addr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse cerbos address: %w", err)
+		}
 	}
+
+	client := &http.Client{}
+	if socketPath != "" {
+		transport := &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		}
+		client.Transport = transport
+	}
+
 	gw := &Gateway{
 		cerbosAddress: u,
-		httpClient:    &http.Client{},
+		socketPath:    socketPath,
+		httpClient:    client,
 	}
 
 	return gw, nil

@@ -6,6 +6,10 @@ auxData:
   jwt:
     disableVerification: true
 
+server:
+  httpListenAddr: "unix:/tmp/cerbos.http.sock"
+  grpcListenAddr: "unix:/tmp/cerbos.grpc.sock"
+
 storage:
   driver: "blob"
   blob:
