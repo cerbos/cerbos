@@ -18,6 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/run"
 	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type lambdaExt struct {
@@ -147,15 +148,24 @@ func WaitForReady(ctx context.Context) error {
 	if err := config.GetSection(&conf); err != nil {
 		return fmt.Errorf("failed to obtain server config; %w", err)
 	}
+
+	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr)
+	if err != nil {
+		return fmt.Errorf("failed to create transport for %s: %w", conf.HTTPListenAddr, err)
+	}
+
+	client := &http.Client{Transport: transport}
+
 	protocol := "http"
 	if conf.TLS != nil && conf.TLS.Cert != "" && conf.TLS.Key != "" {
 		protocol = "https"
 	}
-	httpAddr := fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr)
+	healthURL := fmt.Sprintf("%s://%s/_cerbos/health", protocol, conf.HTTPListenAddr)
+
 	const timeout = 5 * time.Second
 	ctx, cancelFunc := context.WithTimeout(ctx, timeout)
 	defer cancelFunc()
-	if err := run.WaitForReady(ctx, nil, httpAddr); err != nil {
+	if err := run.WaitForReady(ctx, nil, client, healthURL); err != nil {
 		return err
 	}
 	return nil

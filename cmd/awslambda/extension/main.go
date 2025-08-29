@@ -90,8 +90,8 @@ func main() {
 	}
 }
 
-// exit2 returns 2 on exit
+// exit2 returns 2 on exit.
 func exit2() {
 	_ = zap.L().Sync()
-	os.Exit(2)
+	os.Exit(2) //nolint:mnd
 }

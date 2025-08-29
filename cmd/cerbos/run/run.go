@@ -5,9 +5,11 @@ package run
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -27,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	runutils "github.com/cerbos/cerbos/internal/run"
 	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -203,10 +206,26 @@ func (c *Cmd) startPDP(ctx context.Context) (*pdpInstance, error) {
 		protocol = "https"
 	}
 
+	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create transport for %s: %w", conf.HTTPListenAddr, err)
+	}
+
+	if protocol == "https" {
+		if httpTransport, ok := transport.(*http.Transport); ok {
+			httpTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		}
+	}
+
+	client := &http.Client{Transport: transport}
+	healthURL := fmt.Sprintf("%s://%s/_cerbos/health", protocol, conf.HTTPListenAddr)
+
 	instance := &pdpInstance{
-		httpAddr: fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr),
-		grpcAddr: conf.GRPCListenAddr,
-		errors:   make(chan error, 1),
+		httpAddr:  fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr),
+		grpcAddr:  conf.GRPCListenAddr,
+		errors:    make(chan error, 1),
+		client:    client,
+		healthURL: healthURL,
 	}
 
 	serverCtx, stopFn := context.WithCancel(context.Background())
@@ -265,12 +284,14 @@ func (c *Cmd) Help() string {
 }
 
 type pdpInstance struct {
-	errors   chan error
-	stopFn   context.CancelFunc
-	httpAddr string
-	grpcAddr string
+	errors    chan error
+	stopFn    context.CancelFunc
+	httpAddr  string
+	grpcAddr  string
+	client    *http.Client
+	healthURL string
 }
 
 func (pdp *pdpInstance) waitForReady(ctx context.Context) error {
-	return runutils.WaitForReady(ctx, pdp.errors, pdp.httpAddr)
+	return runutils.WaitForReady(ctx, pdp.errors, pdp.client, pdp.healthURL)
 }

@@ -5,7 +5,6 @@ package run
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,10 +16,7 @@ const (
 	retryInterval  = 141 * time.Millisecond
 )
 
-func WaitForReady(ctx context.Context, errors <-chan error, httpAddr string) error {
-	client := newClient()
-	healthURL := fmt.Sprintf("%s/_cerbos/health", httpAddr)
-
+func WaitForReady(ctx context.Context, errors <-chan error, client *http.Client, healthURL string) error {
 	lastErr := checkHealth(client, healthURL)
 	if lastErr == nil {
 		return nil
@@ -42,13 +38,6 @@ func WaitForReady(ctx context.Context, errors <-chan error, httpAddr string) err
 			}
 		}
 	}
-}
-
-func newClient() *http.Client {
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()      //nolint:forcetypeassert
-	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-
-	return &http.Client{Transport: customTransport}
 }
 
 func checkHealth(client *http.Client, healthURL string) error {

@@ -6,9 +6,11 @@
 package util
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -77,6 +79,31 @@ func GetFreePort() (int, error) {
 	}
 
 	return strconv.Atoi(p)
+}
+
+// NewTransportForAddress creates an HTTP transport for the given listen address.
+// For Unix Domain Sockets, it returns a transport with custom DialContext.
+// For TCP addresses, it returns a cloned default transport with secure defaults.
+func NewTransportForAddress(listenAddr string) (http.RoundTripper, error) {
+	network, addr, err := ParseListenAddress(listenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	if network == "unix" {
+		dialer := &net.Dialer{}
+		return &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return dialer.DialContext(ctx, "unix", addr)
+			},
+		}, nil
+	}
+
+	transport, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return nil, fmt.Errorf("default transport is not *http.Transport")
+	}
+	return transport.Clone(), nil
 }
 
 // EagerGRPCClient creates a gRPC client and establishes a connection immediately.
