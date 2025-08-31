@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.15.0",
   "dependencies": {
     "cerbos": "latest",
     "cerbosctl": "latest"
