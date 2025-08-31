@@ -6,6 +6,7 @@ package awslambda
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -149,23 +150,25 @@ func WaitForReady(ctx context.Context) error {
 		return fmt.Errorf("failed to obtain server config; %w", err)
 	}
 
-	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr)
+	protocol := "http"
+	var tlsConfig *tls.Config
+	if !conf.TLS.Empty() && !util.IsUnix(conf.HTTPListenAddr) {
+		tlsConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		protocol = "https"
+	}
+	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr, tlsConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create transport for %s: %w", conf.HTTPListenAddr, err)
 	}
 
 	client := &http.Client{Transport: transport}
 
-	protocol := "http"
-	if conf.TLS != nil && conf.TLS.Cert != "" && conf.TLS.Key != "" {
-		protocol = "https"
-	}
-	healthURL := fmt.Sprintf("%s://%s/_cerbos/health", protocol, conf.HTTPListenAddr)
-
 	const timeout = 5 * time.Second
 	ctx, cancelFunc := context.WithTimeout(ctx, timeout)
 	defer cancelFunc()
-	if err := run.WaitForReady(ctx, nil, client, healthURL); err != nil {
+
+	httpAddr := fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr)
+	if err := run.WaitForReady(ctx, nil, client, httpAddr); err != nil {
 		return err
 	}
 	return nil

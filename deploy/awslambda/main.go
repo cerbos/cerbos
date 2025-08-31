@@ -47,13 +47,17 @@ func NewGateway(addr string) (*Gateway, error) {
 	if addr == "" {
 		return nil, errors.New("cerbos address not provided")
 	}
-
-	var socketPath string
 	var u *url.URL
 	var err error
 
-	if after, ok := strings.CutPrefix(addr, "unix:"); ok {
-		socketPath = after
+	client := &http.Client{}
+	if socketPath, ok := strings.CutPrefix(addr, "unix:"); ok {
+		dialer := &net.Dialer{}
+		client.Transport = &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return dialer.DialContext(ctx, "unix", socketPath)
+			},
+		}
 		u = &url.URL{Scheme: "http", Host: "localhost"}
 	} else {
 		u, err = url.Parse(addr)
@@ -62,19 +66,8 @@ func NewGateway(addr string) (*Gateway, error) {
 		}
 	}
 
-	client := &http.Client{}
-	if socketPath != "" {
-		transport := &http.Transport{
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
-			},
-		}
-		client.Transport = transport
-	}
-
 	gw := &Gateway{
 		cerbosAddress: u,
-		socketPath:    socketPath,
 		httpClient:    client,
 	}
 

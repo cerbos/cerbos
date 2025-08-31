@@ -202,30 +202,23 @@ func (c *Cmd) startPDP(ctx context.Context) (*pdpInstance, error) {
 	}
 
 	protocol := "http"
-	if conf.TLS != nil && conf.TLS.Cert != "" && conf.TLS.Key != "" {
+	var tlsConfig *tls.Config
+	if !conf.TLS.Empty() && !util.IsUnix(conf.HTTPListenAddr) {
+		tlsConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 		protocol = "https"
 	}
-
-	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr)
+	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr, tlsConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create transport for %s: %w", conf.HTTPListenAddr, err)
 	}
 
-	if protocol == "https" {
-		if httpTransport, ok := transport.(*http.Transport); ok {
-			httpTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-		}
-	}
-
 	client := &http.Client{Transport: transport}
-	healthURL := fmt.Sprintf("%s://%s/_cerbos/health", protocol, conf.HTTPListenAddr)
 
 	instance := &pdpInstance{
-		httpAddr:  fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr),
-		grpcAddr:  conf.GRPCListenAddr,
-		errors:    make(chan error, 1),
-		client:    client,
-		healthURL: healthURL,
+		httpAddr: fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr),
+		grpcAddr: conf.GRPCListenAddr,
+		errors:   make(chan error, 1),
+		client:   client,
 	}
 
 	serverCtx, stopFn := context.WithCancel(context.Background())
@@ -284,14 +277,13 @@ func (c *Cmd) Help() string {
 }
 
 type pdpInstance struct {
-	errors    chan error
-	stopFn    context.CancelFunc
-	httpAddr  string
-	grpcAddr  string
-	client    *http.Client
-	healthURL string
+	errors   chan error
+	stopFn   context.CancelFunc
+	httpAddr string
+	grpcAddr string
+	client   *http.Client
 }
 
 func (pdp *pdpInstance) waitForReady(ctx context.Context) error {
-	return runutils.WaitForReady(ctx, pdp.errors, pdp.client, pdp.healthURL)
+	return runutils.WaitForReady(ctx, pdp.errors, pdp.client, pdp.httpAddr)
 }

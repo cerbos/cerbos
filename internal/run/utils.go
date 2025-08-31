@@ -16,7 +16,8 @@ const (
 	retryInterval  = 141 * time.Millisecond
 )
 
-func WaitForReady(ctx context.Context, errors <-chan error, client *http.Client, healthURL string) error {
+func WaitForReady(ctx context.Context, errors <-chan error, client *http.Client, httpAddr string) error {
+	healthURL := fmt.Sprintf("%s/_cerbos/health", httpAddr)
 	lastErr := checkHealth(client, healthURL)
 	if lastErr == nil {
 		return nil
