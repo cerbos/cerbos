@@ -270,9 +270,9 @@ func (c *Cmd) Help() string {
 type pdpInstance struct {
 	errors   chan error
 	stopFn   context.CancelFunc
+	client   *http.Client
 	httpAddr string
 	grpcAddr string
-	client   *http.Client
 }
 
 func (pdp *pdpInstance) waitForReady(ctx context.Context) error {
