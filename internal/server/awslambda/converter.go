@@ -1,0 +1,145 @@
+// Copyright 2021-2025 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+package awslambda
+
+import (
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/aws/aws-lambda-go/events"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/internal/compile"
+)
+
+// APIGatewayEventToCheckResourcesRequest converts an API Gateway event to a CheckResourcesRequest
+func APIGatewayEventToCheckResourcesRequest(event events.APIGatewayV2HTTPRequest) (*requestv1.CheckResourcesRequest, error) {
+	if event.Body == "" {
+		return nil, fmt.Errorf("request body is required")
+	}
+
+	body := event.Body
+	if event.IsBase64Encoded {
+		decoded, err := base64.StdEncoding.DecodeString(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode base64 body: %w", err)
+		}
+		body = string(decoded)
+	}
+
+	var req requestv1.CheckResourcesRequest
+	if err := protojson.Unmarshal([]byte(body), &req); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal CheckResourcesRequest: %w", err)
+	}
+
+	return &req, nil
+}
+
+// APIGatewayEventToPlanResourcesRequest converts an API Gateway event to a PlanResourcesRequest
+func APIGatewayEventToPlanResourcesRequest(event events.APIGatewayV2HTTPRequest) (*requestv1.PlanResourcesRequest, error) {
+	if event.Body == "" {
+		return nil, fmt.Errorf("request body is required")
+	}
+
+	body := event.Body
+	if event.IsBase64Encoded {
+		decoded, err := base64.StdEncoding.DecodeString(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode base64 body: %w", err)
+		}
+		body = string(decoded)
+	}
+
+	var req requestv1.PlanResourcesRequest
+	if err := protojson.Unmarshal([]byte(body), &req); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal PlanResourcesRequest: %w", err)
+	}
+
+	return &req, nil
+}
+
+// CheckResourcesResponseToAPIGateway converts a CheckResourcesResponse to an API Gateway response
+func CheckResourcesResponseToAPIGateway(resp *responsev1.CheckResourcesResponse) (events.APIGatewayV2HTTPResponse, error) {
+	jsonResp, err := protojson.Marshal(resp)
+	if err != nil {
+		return events.APIGatewayV2HTTPResponse{}, fmt.Errorf("failed to marshal CheckResourcesResponse: %w", err)
+	}
+
+	return events.APIGatewayV2HTTPResponse{
+		StatusCode: http.StatusOK,
+		Headers: map[string]string{
+			"content-type": "application/json",
+		},
+		Body: string(jsonResp),
+	}, nil
+}
+
+// PlanResourcesResponseToAPIGateway converts a PlanResourcesResponse to an API Gateway response
+func PlanResourcesResponseToAPIGateway(resp *responsev1.PlanResourcesResponse) (events.APIGatewayV2HTTPResponse, error) {
+	jsonResp, err := protojson.Marshal(resp)
+	if err != nil {
+		return events.APIGatewayV2HTTPResponse{}, fmt.Errorf("failed to marshal PlanResourcesResponse: %w", err)
+	}
+
+	return events.APIGatewayV2HTTPResponse{
+		StatusCode: http.StatusOK,
+		Headers: map[string]string{
+			"content-type": "application/json",
+		},
+		Body: string(jsonResp),
+	}, nil
+}
+
+// ErrorToAPIGateway converts an error to an API Gateway error response with proper status code mapping
+func ErrorToAPIGateway(err error, statusCode int) events.APIGatewayV2HTTPResponse {
+	// Map gRPC status codes to HTTP status codes
+	if st, ok := status.FromError(err); ok {
+		switch st.Code() {
+		case codes.InvalidArgument:
+			statusCode = http.StatusBadRequest
+		case codes.Unauthenticated:
+			statusCode = http.StatusUnauthorized
+		case codes.PermissionDenied:
+			statusCode = http.StatusForbidden
+		case codes.NotFound:
+			statusCode = http.StatusNotFound
+		case codes.FailedPrecondition:
+			statusCode = http.StatusUnprocessableEntity
+		case codes.Internal:
+			statusCode = http.StatusInternalServerError
+		case codes.Unavailable:
+			statusCode = http.StatusServiceUnavailable
+		case codes.DeadlineExceeded:
+			statusCode = http.StatusRequestTimeout
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+	} else if errors.Is(err, compile.PolicyCompilationErr{}) {
+		statusCode = http.StatusUnprocessableEntity
+	}
+
+	errorResp := map[string]any{
+		"error": map[string]any{
+			"message": err.Error(),
+			"code":    statusCode,
+		},
+	}
+
+	jsonResp, _ := json.Marshal(errorResp)
+
+	return events.APIGatewayV2HTTPResponse{
+		StatusCode: statusCode,
+		Headers: map[string]string{
+			"content-type": "application/json",
+		},
+		Body: string(jsonResp),
+	}
+}
