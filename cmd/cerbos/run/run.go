@@ -200,13 +200,13 @@ func (c *Cmd) startPDP(ctx context.Context) (*pdpInstance, error) {
 		return nil, fmt.Errorf("failed to obtain server config; %w", err)
 	}
 
-	client, protocol, err := util.NewInsecureHTTPClient(conf.HTTPListenAddr, !conf.TLS.Empty())
+	client, httpAddr, err := util.NewInsecureHTTPClient(conf.HTTPListenAddr, !conf.TLS.Empty())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP client for %s: %w", conf.HTTPListenAddr, err)
 	}
 
 	instance := &pdpInstance{
-		httpAddr: fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr),
+		httpAddr: httpAddr,
 		grpcAddr: conf.GRPCListenAddr,
 		errors:   make(chan error, 1),
 		client:   client,
@@ -270,9 +270,9 @@ func (c *Cmd) Help() string {
 type pdpInstance struct {
 	errors   chan error
 	stopFn   context.CancelFunc
-	client   *http.Client
 	httpAddr string
 	grpcAddr string
+	client   *http.Client
 }
 
 func (pdp *pdpInstance) waitForReady(ctx context.Context) error {
