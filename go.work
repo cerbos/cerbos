@@ -8,5 +8,5 @@ use (
 	./hack/tools/generate-npm-packages
 	./hack/tools/testsplit
 	./tools
-	./deploy/awslambda/
+	./deploy/awslambda/extension
 )
