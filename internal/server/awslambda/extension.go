@@ -150,7 +150,7 @@ func WaitForReady(ctx context.Context) error {
 	if err := config.GetSection(&conf); err != nil {
 		return fmt.Errorf("failed to obtain server config; %w", err)
 	}
-	client, protocol, err := util.NewInsecureHTTPClient(conf.HTTPListenAddr, !conf.TLS.Empty())
+	client, httpAddr, err := util.NewInsecureHTTPClient(conf.HTTPListenAddr, !conf.TLS.Empty())
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP client for %s: %w", conf.HTTPListenAddr, err)
 	}
@@ -158,7 +158,6 @@ func WaitForReady(ctx context.Context) error {
 	ctx, cancelFunc := context.WithTimeout(ctx, timeout)
 	defer cancelFunc()
 
-	httpAddr := fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr)
 	if err := run.WaitForReady(ctx, nil, client, httpAddr); err != nil {
 		return err
 	}

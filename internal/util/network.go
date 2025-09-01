@@ -83,20 +83,23 @@ func GetFreePort() (int, error) {
 	return strconv.Atoi(p)
 }
 
-func NewInsecureHTTPClient(httpListenAddr string, tlsSpecified bool) (client *http.Client, protocol string, err error) {
+func NewInsecureHTTPClient(httpListenAddr string, tlsSpecified bool) (client *http.Client, httpAddr string, err error) {
 	network, addr, err := ParseListenAddress(httpListenAddr)
 	if err != nil {
 		return nil, "", err
 	}
-	protocol = "http"
+	protocol := "http"
 	var tlsConfig *tls.Config
 	if tlsSpecified && network != unixNetwork {
 		tlsConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 		protocol = "https"
 	}
 	transport := newTransportForAddress(network, addr, tlsConfig)
-
-	return &http.Client{Transport: transport}, protocol, nil
+	httpAddr = fmt.Sprintf("%s://%s", protocol, httpListenAddr)
+	if network == unixNetwork {
+		httpAddr = "http://localhost"
+	}
+	return &http.Client{Transport: transport}, httpAddr, nil
 }
 
 func newTransportForAddress(network, addr string, tlsConfig *tls.Config) http.RoundTripper {
