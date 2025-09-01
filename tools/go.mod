@@ -8,7 +8,7 @@ require (
 	connectrpc.com/connect v1.18.1
 	github.com/bufbuild/buf v1.57.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.4.2
-	github.com/cerbos/protoc-gen-jsonschema v0.1.7
+	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20250516042030-eb9f80173063
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/golangci/golangci-lint/v2 v2.4.0
