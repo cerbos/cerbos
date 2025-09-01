@@ -127,8 +127,7 @@ func TestCheckResourcesResponseToAPIGateway(t *testing.T) {
 
 func TestErrorToAPIGateway(t *testing.T) {
 	t.Run("generic error", func(t *testing.T) {
-		err := errors.New("something went wrong")
-		resp := ErrorToAPIGateway(err, http.StatusInternalServerError)
+		resp := ErrorToAPIGateway("something went wrong", http.StatusInternalServerError)
 
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 		require.Equal(t, "application/json", resp.Headers["content-type"])

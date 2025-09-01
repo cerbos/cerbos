@@ -86,47 +86,18 @@ func ResponseToAPIGateway[T proto.Message](resp T) (events.APIGatewayV2HTTPRespo
 	}, nil
 }
 
-// CheckResourcesResponseToAPIGateway converts a CheckResourcesResponse to an API Gateway response
 func CheckResourcesResponseToAPIGateway(resp *responsev1.CheckResourcesResponse) (events.APIGatewayV2HTTPResponse, error) {
 	return ResponseToAPIGateway(resp)
 }
 
-// PlanResourcesResponseToAPIGateway converts a PlanResourcesResponse to an API Gateway response
 func PlanResourcesResponseToAPIGateway(resp *responsev1.PlanResourcesResponse) (events.APIGatewayV2HTTPResponse, error) {
 	return ResponseToAPIGateway(resp)
 }
 
-// ErrorToAPIGateway converts an error to an API Gateway error response with proper status code mapping
-func ErrorToAPIGateway(err error, statusCode int) events.APIGatewayV2HTTPResponse {
-	// Map gRPC status codes to HTTP status codes
-	if st, ok := status.FromError(err); ok {
-		switch st.Code() {
-		case codes.InvalidArgument:
-			statusCode = http.StatusBadRequest
-		case codes.Unauthenticated:
-			statusCode = http.StatusUnauthorized
-		case codes.PermissionDenied:
-			statusCode = http.StatusForbidden
-		case codes.NotFound:
-			statusCode = http.StatusNotFound
-		case codes.FailedPrecondition:
-			statusCode = http.StatusUnprocessableEntity
-		case codes.Internal:
-			statusCode = http.StatusInternalServerError
-		case codes.Unavailable:
-			statusCode = http.StatusServiceUnavailable
-		case codes.DeadlineExceeded:
-			statusCode = http.StatusRequestTimeout
-		default:
-			statusCode = http.StatusInternalServerError
-		}
-	} else if errors.Is(err, compile.PolicyCompilationErr{}) {
-		statusCode = http.StatusUnprocessableEntity
-	}
-
+func ErrorToAPIGateway(message string, statusCode int) events.APIGatewayV2HTTPResponse {
 	errorResp := map[string]any{
 		"error": map[string]any{
-			"message": err.Error(),
+			"message": message,
 			"code":    statusCode,
 		},
 	}
