@@ -5,7 +5,6 @@ package run
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -201,18 +200,10 @@ func (c *Cmd) startPDP(ctx context.Context) (*pdpInstance, error) {
 		return nil, fmt.Errorf("failed to obtain server config; %w", err)
 	}
 
-	protocol := "http"
-	var tlsConfig *tls.Config
-	if !conf.TLS.Empty() && !util.IsUnix(conf.HTTPListenAddr) {
-		tlsConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-		protocol = "https"
-	}
-	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr, tlsConfig)
+	client, protocol, err := util.NewInsecureHTTPClient(conf.HTTPListenAddr, !conf.TLS.Empty())
 	if err != nil {
-		return nil, fmt.Errorf("failed to create transport for %s: %w", conf.HTTPListenAddr, err)
+		return nil, fmt.Errorf("failed to create HTTP client for %s: %w", conf.HTTPListenAddr, err)
 	}
-
-	client := &http.Client{Transport: transport}
 
 	instance := &pdpInstance{
 		httpAddr: fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr),

@@ -81,19 +81,26 @@ func GetFreePort() (int, error) {
 	return strconv.Atoi(p)
 }
 
-func IsUnix(listenAddr string) bool {
-	return strings.HasPrefix(listenAddr, "unix:")
-}
-
-// NewTransportForAddress creates an HTTP transport for the given listen address.
-// For Unix Domain Sockets, it returns a transport with custom DialContext.
-// For TCP addresses, it returns a cloned default transport with secure defaults.
-func NewTransportForAddress(listenAddr string, tlsConfig *tls.Config) (http.RoundTripper, error) {
-	network, addr, err := ParseListenAddress(listenAddr)
+func NewInsecureHTTPClient(httpListenAddr string, tlsSpecified bool) (client *http.Client, protocol string, err error) {
+	network, addr, err := ParseListenAddress(httpListenAddr)
 	if err != nil {
-		return nil, err
+		return nil, "", err
+	}
+	protocol = "http"
+	var tlsConfig *tls.Config
+	if tlsSpecified && network != "unix" {
+		tlsConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		protocol = "https"
+	}
+	transport, err := newTransportForAddress(network, addr, tlsConfig)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create transport for %s: %w", httpListenAddr, err)
 	}
 
+	return &http.Client{Transport: transport}, protocol, nil
+}
+
+func newTransportForAddress(network, addr string, tlsConfig *tls.Config) (http.RoundTripper, error) {
 	if network == "unix" {
 		dialer := &net.Dialer{}
 		transport := &http.Transport{

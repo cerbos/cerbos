@@ -1,12 +1,13 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !js && !wasm
+
 package awslambda
 
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -149,20 +150,10 @@ func WaitForReady(ctx context.Context) error {
 	if err := config.GetSection(&conf); err != nil {
 		return fmt.Errorf("failed to obtain server config; %w", err)
 	}
-
-	protocol := "http"
-	var tlsConfig *tls.Config
-	if !conf.TLS.Empty() && !util.IsUnix(conf.HTTPListenAddr) {
-		tlsConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-		protocol = "https"
-	}
-	transport, err := util.NewTransportForAddress(conf.HTTPListenAddr, tlsConfig)
+	client, protocol, err := util.NewInsecureHTTPClient(conf.HTTPListenAddr, !conf.TLS.Empty())
 	if err != nil {
-		return fmt.Errorf("failed to create transport for %s: %w", conf.HTTPListenAddr, err)
+		return fmt.Errorf("failed to create HTTP client for %s: %w", conf.HTTPListenAddr, err)
 	}
-
-	client := &http.Client{Transport: transport}
-
 	const timeout = 5 * time.Second
 	ctx, cancelFunc := context.WithTimeout(ctx, timeout)
 	defer cancelFunc()
