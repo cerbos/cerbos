@@ -9,6 +9,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -96,9 +97,7 @@ func (c Ctx) Environ() []string {
 	}
 
 	if c.ComputedEnv != nil {
-		for k, v := range c.ComputedEnv {
-			defaults[k] = v
-		}
+		maps.Copy(defaults, c.ComputedEnv)
 	}
 
 	var e2eVars []string //nolint:prealloc

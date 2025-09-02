@@ -7,7 +7,9 @@ package blob_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/cerbos/cerbos/internal/test/e2e"
@@ -25,5 +27,23 @@ func TestBlob(t *testing.T) {
 		return env
 	}
 
-	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnvFn))
+	postSetup := func(ctx e2e.Ctx) {
+		p := blob.UploadParam{
+			BucketURL:    env["E2E_BUCKET_URL"],
+			BucketPrefix: env["E2E_BUCKET_PREFIX"],
+			Username:     env["E2E_BUCKET_USERNAME"],
+			Password:     env["E2E_BUCKET_PASSWORD"],
+			Directory:    filepath.Join(ctx.SourceRoot, "internal", "test", "testdata", "store"),
+		}
+
+		cctx, cancelFn := ctx.CommandTimeoutCtx()
+		defer cancelFn()
+
+		_ = blob.CopyDirToBucket(ctx, cctx, p)
+
+		// Wait for Cerbos to pick up the changes
+		time.Sleep(2 * time.Second)
+	}
+
+	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithPostSetup(postSetup), e2e.WithComputedEnv(computedEnvFn))
 }

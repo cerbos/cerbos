@@ -77,40 +77,13 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
 		const schID = "leave_request"
 
-		addPolicies := func(expectDependents bool) func(*testing.T) {
+		addPolicies := func(policies []policy.Wrapper, wantEvents []storage.Event) func(*testing.T) {
 			return func(t *testing.T) {
 				t.Helper()
 
 				checkEvents := storage.TestSubscription(store)
-				require.NoError(t, store.AddOrUpdate(ctx, policyList...))
+				require.NoError(t, store.AddOrUpdate(ctx, policies...))
 
-				wantEvents := []storage.Event{
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: pp.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID, Dependents: []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ec.ID, Dependents: []namer.ModuleID{rp.ID, pp.ID, drImportVariables.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID, ppAcme.ID, ppAcmeHR.ID, rpImportDerivedRolesThatImportVariables.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ev.ID, Dependents: []namer.ModuleID{rp.ID, pp.ID, drImportVariables.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID, ppAcme.ID, ppAcmeHR.ID, rpImportDerivedRolesThatImportVariables.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID, Dependents: []namer.ModuleID{rpx.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcme.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHR.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHRUK.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcme.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcmeHR.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drImportVariables.ID, Dependents: []namer.ModuleID{rpImportDerivedRolesThatImportVariables.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpImportDerivedRolesThatImportVariables.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpDupe1.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppDupe1.ID},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drDupe1.ID, Dependents: []namer.ModuleID{rpDupe1.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ecDupe1.ID, Dependents: []namer.ModuleID{rpDupe1.ID, ppDupe1.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: evDupe1.ID, Dependents: []namer.ModuleID{rpDupe1.ID, ppDupe1.ID}},
-					{Kind: storage.EventAddOrUpdatePolicy, PolicyID: xevx.ID, Dependents: []namer.ModuleID{rpx.ID}},
-				}
-				if !expectDependents {
-					for i := range wantEvents {
-						wantEvents[i].Dependents = nil
-					}
-				}
 				checkEvents(t, timeout, wantEvents...)
 
 				stats := store.RepoStats(ctx)
@@ -123,9 +96,37 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		}
 
 		t.Run("add_or_update", func(t *testing.T) {
-			// NOTE: `update` will not pass without `add` running before
-			t.Run("add", addPolicies(false))
-			t.Run("update", addPolicies(true))
+			wantFullEvents := []storage.Event{
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: pp.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ec.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ev.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcme.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHR.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHRUK.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcme.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcmeHR.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drImportVariables.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpImportDerivedRolesThatImportVariables.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ecDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: evDupe1.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: xevx.ID},
+			}
+			t.Run("add", addPolicies(policyList, wantFullEvents))
+			t.Run("update", addPolicies(policyList, wantFullEvents))
+
+			wantPartialEvents := []storage.Event{
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, Dependents: []namer.ModuleID{rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
+			}
+			t.Run("update_partial", addPolicies([]policy.Wrapper{rp, dr}, wantPartialEvents))
 		})
 
 		t.Run("add_id_collision", func(t *testing.T) {
@@ -345,7 +346,8 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 			wantEvents := []storage.Event{
 				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: rpx.ID},
-				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: dr.ID, Dependents: []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
+				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: dr.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, Dependents: []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
 			}
 			checkEvents(t, timeout, wantEvents...)
 		})

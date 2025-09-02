@@ -89,9 +89,8 @@ import (
 )
 
 const (
-	defaultTimeout           = 30 * time.Second
-	metricsReportingInterval = 15 * time.Second
-	minGRPCConnectTimeout    = 20 * time.Second
+	defaultTimeout        = 30 * time.Second
+	minGRPCConnectTimeout = 20 * time.Second
 
 	adminEndpoint      = "/admin"
 	apiEndpoint        = "/api"

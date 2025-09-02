@@ -25,6 +25,8 @@ const (
 	ChecksSuite        = "checks"
 	PlanResourcesSuite = "plan_resources"
 	testTimeout        = 90 * time.Second // Things are slower inside Kind
+
+	adminSuiteSleepDuration = time.Millisecond * 500
 )
 
 type Opt func(*suiteOpt)
@@ -118,7 +120,14 @@ func RunSuites(t *testing.T, opts ...Opt) {
 		ctx.Logf("Finished PostSetup function")
 	}
 
-	tr := server.LoadTestCases(t, sopt.suites...)
+	suiteSleeps := make(map[string]time.Duration)
+	for _, suite := range sopt.suites {
+		if suite == AdminSuite {
+			suiteSleeps[AdminSuite] = adminSuiteSleepDuration
+		}
+	}
+
+	tr := server.LoadTestCases(t, suiteSleeps, sopt.suites...)
 	tr.Timeout = testTimeout
 
 	if sopt.overlayMaxRetries != 0 {

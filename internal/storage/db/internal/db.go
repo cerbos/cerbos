@@ -232,11 +232,13 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 		return errUpsertPolicyRequired
 	}
 
-	events := make([]storage.Event, len(policies))
+	events := make([]storage.Event, 0, len(policies)+1)
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		modIDs := make([]namer.ModuleID, len(policies))
+		modIDSet := make(map[namer.ModuleID]struct{}, len(policies))
 		for i, p := range policies {
 			modIDs[i] = p.ID
+			modIDSet[p.ID] = struct{}{}
 		}
 
 		// We only need to retrieve the state of Dependents before the update (there's no need
@@ -247,7 +249,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 			return err
 		}
 
-		for i, p := range policies {
+		for _, p := range policies {
 			if err := s.opts.upsertPolicy(ctx, tx, p); err != nil {
 				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
 			}
@@ -300,13 +302,23 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 			}
 
-			ev := storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID}
+			events = append(events, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID})
+		}
 
-			if deps, ok := dependents[p.ID]; ok && len(deps) > 0 {
-				ev.Dependents = deps
+		// build a deduplicated union of dependents across the whole batch and
+		// exclude policies updated in this batch.
+		depEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy}
+		for _, deps := range dependents {
+			for _, d := range deps {
+				if _, ok := modIDSet[d]; !ok {
+					depEvent.Dependents = append(depEvent.Dependents, d)
+					modIDSet[d] = struct{}{}
+				}
 			}
+		}
 
-			events[i] = ev
+		if len(depEvent.Dependents) > 0 {
+			events = append(events, depEvent)
 		}
 
 		return nil
@@ -712,7 +724,8 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 }
 
 func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
-	return s.db.WithTx(func(tx *goqu.TxDatabase) error {
+	var events []storage.Event
+	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		dependents, err := s.getDependents(ctx, tx, ids...)
 		if err != nil {
 			return err
@@ -732,23 +745,19 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 				ev.Dependents = deps
 			}
 
-			s.NotifySubscribers(ev)
+			events = []storage.Event{ev}
 
 			return nil
 		}
 
+		events = make([]storage.Event, 0, len(ids)+1)
 		idList := make([]any, len(ids))
-		events := make([]storage.Event, len(ids))
+		idSet := make(map[namer.ModuleID]struct{}, len(ids))
 
 		for i, id := range ids {
+			events = append(events, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: id})
 			idList[i] = id
-			ev := storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: id}
-
-			if deps, ok := dependents[id]; ok && len(deps) > 0 {
-				ev.Dependents = deps
-			}
-
-			events[i] = ev
+			idSet[id] = struct{}{}
 		}
 		if _, err := tx.Delete(PolicyTbl).Prepared(true).
 			Where(goqu.C(PolicyTblIDCol).In(idList...)).
@@ -756,10 +765,30 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			return err
 		}
 
-		s.NotifySubscribers(events...)
+		// Build a deduplicated union of dependents across the whole batch,
+		// excluding policies deleted in this batch.
+		depEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy}
+		for _, deps := range dependents {
+			for _, d := range deps {
+				if _, ok := idSet[d]; !ok {
+					depEvent.Dependents = append(depEvent.Dependents, d)
+					idSet[d] = struct{}{}
+				}
+			}
+		}
+
+		if len(depEvent.Dependents) > 0 {
+			events = append(events, depEvent)
+		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	s.NotifySubscribers(events...)
+
+	return nil
 }
 
 func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
