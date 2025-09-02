@@ -13,6 +13,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/server/awslambda"
 	"github.com/cerbos/cerbos/pkg/cerbos"
@@ -42,6 +43,10 @@ func main() {
 	if runtimeAPI == "" {
 		log.Error("AWS_LAMBDA_RUNTIME_API env var not set, exiting")
 		exit2()
+	}
+	log.Info("Loading configuration", zap.String("configPath", configPath))
+	if err := config.Load(configPath, nil); err != nil {
+		log.Error("failed to load configuration", zap.Error(err))
 	}
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
