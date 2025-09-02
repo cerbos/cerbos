@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cerbos Lambda Function
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 29
+
+Parameters:
+  ArchitectureParameter:
+    Type: String
+    Default: amd64
+    AllowedValues:
+      - arm64
+      - amd64
+    Description: "AWS Lambda function architecture: x86_64 or arm64."
+
+Mappings:
+  ArchitectureMap:
+      amd64:
+        Arch: x86_64
+        BuildRef: cerbosfunc_linux_amd64_v1
+      arm64:
+        Arch: arm64
+        BuildRef: cerbosfunc_linux_arm64_v8.0
+
+Resources:
+  CerbosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: provided.al2
+      CodeUri: !Sub 
+        - "../../../dist/${BuildRef}/"
+        - BuildRef: !FindInMap [ArchitectureMap, !Ref ArchitectureParameter, BuildRef]
+      Handler: cerbosfunc
+      Architectures:
+        - !FindInMap [ArchitectureMap, !Ref ArchitectureParameter, Arch]
+      MemorySize: 1024
+      Events:
+        CheckResources:
+          Type: HttpApi
+          Properties:
+            Path: /v1/check/resources
+            Method: POST
+        PlanResources:
+          Type: HttpApi
+          Properties:
+            Path: /v1/plan/resources
+            Method: POST
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: GET
+      Environment:
+        Variables:
+          BUCKET_URL: s3://test-dev.cerbos.dev
+          BUCKET_PREFIX: policies
+          CERBOS_LOG_LEVEL: debug
+          XDG_CACHE_HOME: /tmp
+          CERBOS_CONFIG: /var/task/.cerbos.yaml
+      Policies:
+        - S3ReadPolicy:
+            BucketName: test-dev.cerbos.dev
+
+Conditions:
+  IsAmd64: !Equals [!Ref ArchitectureParameter, amd64]
+
+Outputs:
+  CerbosFunctionAPI:
+    Description: "API Gateway endpoint URL for Cerbos Function"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  CerbosFunction:
+    Description: "Cerbos Lambda Function ARN"
+    Value: !GetAtt CerbosFunction.Arn
+  CerbosFunctionIamRole:
+    Description: "IAM Role created for the Cerbos Lambda function"
+    Value: !GetAtt CerbosFunctionRole.Arn
