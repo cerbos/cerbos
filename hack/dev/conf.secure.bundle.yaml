@@ -12,6 +12,9 @@ server:
   tls:
     cert: hack/dev/tls.crt
     key: hack/dev/tls.key
+  authzen:
+    enabled: true
+    listenAddr: ":3595"
 
 auxData:
   jwt:

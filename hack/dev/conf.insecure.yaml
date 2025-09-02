@@ -9,6 +9,9 @@ server:
     adminCredentials:
       username: cerbos
       passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
+  authzen:
+    enabled: true
+    listenAddr: ":3595"
 
 auxData:
   jwt:

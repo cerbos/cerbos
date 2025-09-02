@@ -241,3 +241,31 @@ Thanks a lot for spending your time helping Cerbos grow. Keep rocking 🥂
 <a>
   <img src="https://contributors-img.web.app/image?repo=cerbos/cerbos" alt="Contributors"/>
 </a>
+
+
+## AuthZEN Translation Layer
+
+Cerbos can expose a minimal OpenID AuthZEN-compatible HTTP API as a translation layer to the existing CheckResources API.
+
+Configuration (YAML):
+
+```yaml
+server:
+  # Enable the AuthZEN translation layer
+  authzen:
+    enabled: true
+    # Listen address for the AuthZEN HTTP server (TCP or unix: socket)
+    # Defaults to ":3595" if not set
+    listenAddr: ":3595"
+```
+
+Endpoints (served by the AuthZEN server):
+- `/.well-known/authzen-configuration` (metadata)
+- `POST /access/v1/evaluation`
+- `POST /access/v1/evaluations`
+
+Notes:
+- Only evaluation endpoints are implemented. Subject/Resource/Action search endpoints are not implemented and are intentionally omitted from metadata.
+- Requests are translated to Cerbos CheckResources calls. The `subject.properties.roles` field is required.
+- AuthZEN `context`, if present, is embedded under `$context` inside the principal attributes for policy evaluation.
+- TLS is supported via the standard `server.tls` configuration. When TLS is enabled, the metadata `policy_decision_point` will use the `https` scheme, and all AuthZEN endpoints are served over TLS (access them via `https://`).

@@ -36,6 +36,7 @@ const (
 	defaultRawAdminPasswordHash     = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
 	defaultUDSFileMode              = "0o766"
 	requestItemsMax                 = 500
+	defaultAuthZENListenAddr        = ":3595"
 )
 
 var (
@@ -67,6 +68,8 @@ type Conf struct {
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",ignore"`
 	// APIExplorerEnabled defines whether the API explorer UI is enabled.
 	APIExplorerEnabled bool `yaml:"apiExplorerEnabled" conf:",example=true"`
+	// AuthZEN defines the OpenID AuthZEN translation layer configuration.
+	AuthZEN AuthZENConf `yaml:"authzen"`
 	// Advanced server settings.
 	Advanced AdvancedConf `yaml:"advanced"`
 }
@@ -144,6 +147,14 @@ type AdvancedConf struct {
 	GRPC AdvancedGRPCConf `yaml:"grpc"`
 }
 
+// AuthZENConf holds configuration for the OpenID AuthZEN translation layer.
+type AuthZENConf struct {
+	// Enabled defines whether the AuthZEN HTTP API is enabled.
+	Enabled bool `yaml:"enabled" conf:",example=false"`
+	// ListenAddr is the dedicated HTTP address for AuthZEN.
+	ListenAddr string `yaml:"listenAddr" conf:",example=\":3595\""`
+}
+
 type AdvancedHTTPConf struct {
 	// ReadTimeout sets the timeout for reading a request.
 	ReadTimeout time.Duration `yaml:"readTimeout" conf:",example=30s"`
@@ -202,6 +213,10 @@ func (c *Conf) SetDefaults() {
 			ConnectionTimeout:    defaultGRPCConnectionTimeout,
 		},
 	}
+
+	if c.AuthZEN.ListenAddr == "" {
+		c.AuthZEN.ListenAddr = defaultAuthZENListenAddr
+	}
 }
 
 func (c *Conf) Validate() (errs error) {
@@ -211,6 +226,14 @@ func (c *Conf) Validate() (errs error) {
 
 	if _, _, err := util.ParseListenAddress(c.GRPCListenAddr); err != nil {
 		errs = multierr.Append(errs, fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err))
+	}
+
+	if c.AuthZEN.Enabled {
+		if c.AuthZEN.ListenAddr == "" {
+			errs = multierr.Append(errs, fmt.Errorf("authzen.listenAddr must be set when authzen.enabled is true"))
+		} else if _, _, err := util.ParseListenAddress(c.AuthZEN.ListenAddr); err != nil {
+			errs = multierr.Append(errs, fmt.Errorf("invalid authzen.listenAddr '%s': %w", c.AuthZEN.ListenAddr, err))
+		}
 	}
 
 	if mode, err := strconv.ParseInt(c.UDSFileMode, 0, 32); err != nil {
