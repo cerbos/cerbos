@@ -167,7 +167,7 @@ func Start(ctx context.Context) error {
 		return fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
-	if ss, ok := policyLoader.(storage.Subscribable); ok {
+	if ss, ok := store.(storage.Subscribable); ok {
 		ss.Subscribe(ruletableMgr)
 	}
 

@@ -38,8 +38,9 @@ const DriverName = "git"
 var driverAttr = policy.SourceDriver(DriverName)
 
 var (
-	_ storage.SourceStore = (*Store)(nil)
-	_ storage.Reloadable  = (*Store)(nil)
+	_ storage.SourceStore  = (*Store)(nil)
+	_ storage.Reloadable   = (*Store)(nil)
+	_ storage.Subscribable = (*Store)(nil)
 )
 
 func init() {
