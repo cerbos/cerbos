@@ -78,7 +78,7 @@ require (
 	github.com/spf13/afero v1.14.0
 	github.com/spiffe/go-spiffe/v2 v2.6.0
 	github.com/stoewer/go-strcase v1.3.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/sjson v1.2.5
