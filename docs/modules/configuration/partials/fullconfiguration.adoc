@@ -111,6 +111,9 @@ server:
       readHeaderTimeout: 15s # ReadHeaderTimeout sets the timeout for reading request headers.
       readTimeout: 30s # ReadTimeout sets the timeout for reading a request.
       writeTimeout: 30s # WriteTimeout sets the timeout for writing a response.
+  authzen: # AuthZEN defines the OpenID AuthZEN translation layer configuration.
+    enabled: false # Enabled defines whether the AuthZEN HTTP API is enabled.
+    listenAddr: ":3595" # ListenAddr is the dedicated HTTP address for AuthZEN.
   cors: # CORS defines the CORS configuration for the server.
     allowedHeaders: ['content-type'] # AllowedHeaders is the contents of the allowed-headers header.
     allowedOrigins: ['*'] # AllowedOrigins is the contents of the allowed-origins header.
