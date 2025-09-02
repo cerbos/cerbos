@@ -37,20 +37,20 @@ const (
 
 // AuthZEN request/response data models (subset per spec).
 type azSubject struct {
+	Properties map[string]any `json:"properties,omitempty"`
 	Type       string         `json:"type"`
 	ID         string         `json:"id"`
-	Properties map[string]any `json:"properties,omitempty"`
 }
 
 type azAction struct {
-	Name       string         `json:"name"`
 	Properties map[string]any `json:"properties,omitempty"`
+	Name       string         `json:"name"`
 }
 
 type azResource struct {
+	Properties map[string]any `json:"properties,omitempty"`
 	Type       string         `json:"type"`
 	ID         string         `json:"id"`
-	Properties map[string]any `json:"properties,omitempty"`
 }
 
 type azTuple struct {
@@ -69,8 +69,8 @@ type azEvaluationRequest struct {
 }
 
 type azDecision struct {
-	Decision bool           `json:"decision"`
 	Context  map[string]any `json:"context,omitempty"`
+	Decision bool           `json:"decision"`
 }
 
 type azEvaluationsResponse struct {
@@ -78,9 +78,9 @@ type azEvaluationsResponse struct {
 }
 
 type azMetadata struct {
-	PolicyDecisionPoint       string `json:"policy_decision_point"`
-	AccessEvaluationEndpoint  string `json:"access_evaluation_endpoint"`
-	AccessEvaluationsEndpoint string `json:"access_evaluations_endpoint,omitempty"`
+	PolicyDecisionPoint       string `json:"policy_decision_point"`                 //nolint:tagliatelle
+	AccessEvaluationEndpoint  string `json:"access_evaluation_endpoint"`            //nolint:tagliatelle
+	AccessEvaluationsEndpoint string `json:"access_evaluations_endpoint,omitempty"` //nolint:tagliatelle
 	// We intentionally omit search endpoints as they are not implemented.
 	Capabilities []string `json:"capabilities,omitempty"`
 }
@@ -183,7 +183,12 @@ func (s *Server) handleAuthZENEvaluation(w http.ResponseWriter, r *http.Request,
 	}
 
 	decision := azDecision{Decision: extractSingleDecision(resp)}
-	// No additional context returned in this MVP.
+	// If there are outputs from the Check response, include them in the context
+	if res := resp.GetResults(); len(res) > 0 {
+		if ctx := outputsToContext(res[0].GetOutputs()); ctx != nil {
+			decision.Context = ctx
+		}
+	}
 	if reqID != "" {
 		w.Header().Set(headerRequestID, reqID)
 	}
@@ -206,8 +211,8 @@ func (s *Server) handleAuthZENEvaluations(w http.ResponseWriter, r *http.Request
 
 	// Group evaluations by principal details (subject+context) and issue one CheckResources per group
 	type item struct {
-		idx   int
 		entry *requestv1.CheckResourcesRequest_ResourceEntry
+		idx   int
 	}
 
 	type group struct {
@@ -217,8 +222,9 @@ func (s *Server) handleAuthZENEvaluations(w http.ResponseWriter, r *http.Request
 
 	groups := make(map[string]*group)
 
-	// decisions to fill in original order
+	// decisions to fill in original order along with optional contexts
 	decisions := make([]bool, len(in.Evaluations))
+	contexts := make([]map[string]any, len(in.Evaluations))
 
 	for i := range in.Evaluations {
 		t := resolveTuple(&in, &in.Evaluations[i])
@@ -267,13 +273,17 @@ func (s *Server) handleAuthZENEvaluations(w http.ResponseWriter, r *http.Request
 			return
 		}
 		for j, rr := range results {
-			decisions[g.items[j].idx] = firstActionIsAllow(rr.GetActions())
+			idx := g.items[j].idx
+			decisions[idx] = firstActionIsAllow(rr.GetActions())
+			if ctx := outputsToContext(rr.GetOutputs()); ctx != nil {
+				contexts[idx] = ctx
+			}
 		}
 	}
 
 	out := azEvaluationsResponse{Evaluations: make([]azDecision, len(in.Evaluations))}
 	for i := range decisions {
-		out.Evaluations[i] = azDecision{Decision: decisions[i]}
+		out.Evaluations[i] = azDecision{Decision: decisions[i], Context: contexts[i]}
 	}
 	if reqID != "" {
 		w.Header().Set(headerRequestID, reqID)
@@ -322,13 +332,15 @@ func principalKey(pr *enginev1.Principal) string {
 
 // canonicalValueString produces a deterministic string representation of a structpb.Value
 // by recursively sorting object keys. This is only used for grouping keys.
+const authzenNullStr = "null"
+
 func canonicalValueString(v *structpb.Value) string {
 	if v == nil {
-		return "null"
+		return authzenNullStr
 	}
 	switch x := v.GetKind().(type) {
 	case *structpb.Value_NullValue:
-		return "null"
+		return authzenNullStr
 	case *structpb.Value_BoolValue:
 		if x.BoolValue {
 			return "true"
@@ -367,7 +379,7 @@ func canonicalValueString(v *structpb.Value) string {
 		b.WriteByte('}')
 		return b.String()
 	default:
-		return "null"
+		return authzenNullStr
 	}
 }
 
@@ -506,6 +518,32 @@ func firstActionIsAllow(m map[string]effectv1.Effect) bool {
 		return v == effectv1.Effect_EFFECT_ALLOW
 	}
 	return false
+}
+
+// outputsToContext converts engine outputs to an AuthZEN decision context map.
+// Returns nil if there are no outputs.
+func outputsToContext(entries []*enginev1.OutputEntry) map[string]any {
+	if len(entries) == 0 {
+		return nil
+	}
+	outs := make([]map[string]any, 0, len(entries))
+	for _, e := range entries {
+		if e == nil {
+			continue
+		}
+		var val any
+		if v := e.GetVal(); v != nil {
+			val = v.AsInterface()
+		}
+		outs = append(outs, map[string]any{
+			"src": e.GetSrc(),
+			"val": val,
+		})
+	}
+	if len(outs) == 0 {
+		return nil
+	}
+	return map[string]any{"outputs": outs}
 }
 
 func extractString(m map[string]any, key string) (string, bool) {

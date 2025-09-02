@@ -268,4 +268,5 @@ Notes:
 - Only evaluation endpoints are implemented. Subject/Resource/Action search endpoints are not implemented and are intentionally omitted from metadata.
 - Requests are translated to Cerbos CheckResources calls. The `subject.properties.roles` field is required.
 - AuthZEN `context`, if present, is embedded under `$context` inside the principal attributes for policy evaluation.
+ - If the underlying Cerbos CheckResources result includes `outputs`, they are returned in the AuthZEN decision under `context.outputs` (each item includes `src` and `val`).
 - TLS is supported via the standard `server.tls` configuration. When TLS is enabled, the metadata `policy_decision_point` will use the `https` scheme, and all AuthZEN endpoints are served over TLS (access them via `https://`).

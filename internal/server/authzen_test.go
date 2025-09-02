@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -60,7 +61,8 @@ type authzenEvaluationRequest struct {
 }
 
 type authzenDecision struct {
-	Decision bool `json:"decision"`
+	Decision bool           `json:"decision"`
+	Context  map[string]any `json:"context,omitempty"`
 }
 
 type authzenEvaluationsResponse struct {
@@ -68,9 +70,9 @@ type authzenEvaluationsResponse struct {
 }
 
 type authzenMetadata struct {
-	PolicyDecisionPoint       string `json:"policy_decision_point"`
-	AccessEvaluationEndpoint  string `json:"access_evaluation_endpoint"`
-	AccessEvaluationsEndpoint string `json:"access_evaluations_endpoint"`
+	PolicyDecisionPoint       string `json:"policy_decision_point"`       //nolint:tagliatelle
+	AccessEvaluationEndpoint  string `json:"access_evaluation_endpoint"`  //nolint:tagliatelle
+	AccessEvaluationsEndpoint string `json:"access_evaluations_endpoint"` //nolint:tagliatelle
 }
 
 func TestAuthZEN_Metadata(t *testing.T) {
@@ -146,7 +148,7 @@ func fetchAuthZENMetadata(t *testing.T, c *http.Client, url string) authzenMetad
 		}
 		defer func() {
 			if resp.Body != nil {
-				io.Copy(io.Discard, resp.Body)
+				_, _ = io.Copy(io.Discard, resp.Body) //nolint:errcheck
 				resp.Body.Close()
 			}
 		}()
@@ -161,7 +163,7 @@ func fetchAuthZENMetadata(t *testing.T, c *http.Client, url string) authzenMetad
 	require.NoError(t, err)
 	defer func() {
 		if resp.Body != nil {
-			io.Copy(io.Discard, resp.Body)
+			_, _ = io.Copy(io.Discard, resp.Body) //nolint:errcheck
 			resp.Body.Close()
 		}
 	}()
@@ -281,6 +283,80 @@ func TestAuthZEN_EvaluationsRequest(t *testing.T) {
 	require.False(t, resp.Evaluations[1].Decision, "second decision should be false")
 }
 
+func TestAuthZEN_EvaluationOutputs(t *testing.T) {
+	tpg := func(t *testing.T) testParam {
+		t.Helper()
+		ctx := t.Context()
+
+		dir := test.PathToDir(t, "store")
+		store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
+		require.NoError(t, err)
+
+		policyLoader, err := compile.NewManager(ctx, store)
+		require.NoError(t, err)
+
+		return testParam{
+			store:        store,
+			policyLoader: policyLoader,
+			schemaMgr:    schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject)),
+		}
+	}
+
+	conf := defaultConf()
+	conf.HTTPListenAddr = getFreeListenAddr(t)
+	conf.GRPCListenAddr = getFreeListenAddr(t)
+	conf.AuthZEN.Enabled = true
+	conf.AuthZEN.ListenAddr = getFreeListenAddr(t)
+
+	startServer(t, conf, tpg)
+
+	client := mkHTTPClient(t)
+	// Wait for AuthZEN well-known endpoint to be available
+	require.Eventually(t,
+		httpHealthCheckPasses(client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenWellKnownPath), 2*time.Second),
+		10*time.Second, 200*time.Millisecond,
+		"AuthZEN server did not come up on time",
+	)
+
+	// Use equipment_request policy with outputs on action view:public
+	const resID = "EQ123"
+	const principalID = "employee_1"
+
+	req := authzenEvaluationRequest{
+		Subject:  &authzenSubject{Type: "user", ID: principalID, Properties: map[string]any{"roles": []string{"employee"}}},
+		Resource: &authzenResource{Type: "equipment_request", ID: resID, Properties: map[string]any{"id": resID}},
+		Action:   &authzenAction{Name: "view:public"},
+	}
+
+	out := doAuthZENRequest(t, client, conf, req)
+	require.True(t, out.Decision, "expected decision=true for view:public")
+
+	// Validate outputs propagated to context
+	require.NotNil(t, out.Context, "context expected to be set")
+	outputs, ok := out.Context["outputs"].([]any)
+	require.True(t, ok, "context.outputs must be an array")
+	require.GreaterOrEqual(t, len(outputs), 1, "expected at least one output entry")
+
+	// Inspect first output entry shape: {src: string, val: any}
+	first, ok := outputs[0].(map[string]any)
+	require.True(t, ok, "output entry must be an object")
+	_, hasSrc := first["src"].(string)
+	require.True(t, hasSrc, "output.src must be a string")
+
+	// Validate value object contains expected fields per policy_07 public-view output
+	valObj, ok := first["val"].(map[string]any)
+	require.True(t, ok, "output.val must be an object")
+
+	// Spot-check a few fields
+	require.Equal(t, principalID, valObj["id"], "val.id should equal principal id")
+	require.Equal(t, resID, valObj["keys"], "val.keys should equal resource id")
+	require.Equal(t, true, valObj["some_bool"], "val.some_bool should be true")
+
+	nested, ok := valObj["something_nested"].(map[string]any)
+	require.True(t, ok, "val.something_nested must be an object")
+	require.Equal(t, false, nested["nested_bool"], "nested_bool should be false")
+}
+
 func TestAuthZEN_NegativeCases(t *testing.T) {
 	tpg := func(t *testing.T) testParam {
 		t.Helper()
@@ -308,7 +384,7 @@ func TestAuthZEN_NegativeCases(t *testing.T) {
 	)
 
 	t.Run("evaluation/bad_json", func(t *testing.T) {
-		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalPath), []byte("{"))
+		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalPath), []byte("{")) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -318,7 +394,7 @@ func TestAuthZEN_NegativeCases(t *testing.T) {
 			"resource": map[string]any{"type": "leave_request", "id": "XX125", "properties": map[string]any{"policyVersion": "20210210"}},
 		}
 		b, _ := json.Marshal(body)
-		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalPath), b)
+		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalPath), b) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -329,12 +405,12 @@ func TestAuthZEN_NegativeCases(t *testing.T) {
 			"action":   map[string]any{},
 		}
 		b, _ := json.Marshal(body)
-		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalPath), b)
+		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalPath), b) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
 	t.Run("evaluations/bad_json", func(t *testing.T) {
-		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalsPath), []byte("{"))
+		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalsPath), []byte("{")) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -347,7 +423,7 @@ func TestAuthZEN_NegativeCases(t *testing.T) {
 			},
 		}
 		b, _ := json.Marshal(body)
-		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalsPath), b)
+		resp := doAuthZENPostRaw(t, client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalsPath), b) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 }
@@ -363,14 +439,14 @@ func doAuthZENPostRaw(t *testing.T, c *http.Client, url string, body []byte) *ht
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		if resp.Body != nil {
-			io.Copy(io.Discard, resp.Body)
+			_, _ = io.Copy(io.Discard, resp.Body) //nolint:errcheck
 			resp.Body.Close()
 		}
 	})
 	return resp
 }
 
-// sanity check that the direct gRPC CheckResources for the inputs used above results in allow for view:public
+// sanity check that the direct gRPC CheckResources for the inputs used above results in allow for view:public.
 func TestAuthZEN_GrpcSanityCheck(t *testing.T) {
 	tpg := func(t *testing.T) testParam {
 		t.Helper()
@@ -438,7 +514,7 @@ func doAuthZENRequest(t *testing.T, c *http.Client, conf *Conf, req authzenEvalu
 	require.NoError(t, err)
 	defer func() {
 		if httpResp.Body != nil {
-			io.Copy(io.Discard, httpResp.Body)
+			_, _ = io.Copy(io.Discard, httpResp.Body) //nolint:errcheck
 			httpResp.Body.Close()
 		}
 	}()
@@ -468,7 +544,7 @@ func doAuthZENEvaluations(t *testing.T, c *http.Client, conf *Conf, req authzenE
 	require.NoError(t, err)
 	defer func() {
 		if httpResp.Body != nil {
-			io.Copy(io.Discard, httpResp.Body)
+			_, _ = io.Copy(io.Discard, httpResp.Body) //nolint:errcheck
 			httpResp.Body.Close()
 		}
 	}()
@@ -524,7 +600,7 @@ func TestAuthZEN_CORS(t *testing.T) {
 				require.NoError(t, err)
 				defer func() {
 					if resp.Body != nil {
-						io.Copy(io.Discard, resp.Body)
+						_, _ = io.Copy(io.Discard, resp.Body) //nolint:errcheck
 						resp.Body.Close()
 					}
 				}()
@@ -559,7 +635,8 @@ func TestAuthZEN_UDS(t *testing.T) {
 
 	// UDS HTTP client
 	c := &http.Client{Transport: &http.Transport{DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-		return net.DialTimeout("unix", authzenSock, 5*time.Second)
+		d := &net.Dialer{Timeout: 5 * time.Second}
+		return d.DialContext(ctx, "unix", authzenSock)
 	}}}
 
 	// Fetch metadata over UDS
@@ -583,7 +660,7 @@ func TestAuthZEN_UDS(t *testing.T) {
 		require.NoError(t, err)
 		defer func() {
 			if httpResp.Body != nil {
-				io.Copy(io.Discard, httpResp.Body)
+				_, _ = io.Copy(io.Discard, httpResp.Body) //nolint:errcheck
 				httpResp.Body.Close()
 			}
 		}()
@@ -629,9 +706,7 @@ func TestAuthZEN_Evaluations_MultipleSubjects(t *testing.T) {
 	// Common resource template
 	resBase := func(id string, extras map[string]any) map[string]any {
 		props := map[string]any{"policyVersion": "20210210", "department": "marketing", "geography": "GB", "team": "design", "id": id}
-		for k, v := range extras {
-			props[k] = v
-		}
+		maps.Copy(props, extras)
 		return map[string]any{"type": "leave_request", "id": id, "properties": props}
 	}
 
@@ -667,4 +742,282 @@ func TestAuthZEN_Evaluations_MultipleSubjects(t *testing.T) {
 	require.True(t, resp.Evaluations[1].Decision)
 	require.False(t, resp.Evaluations[2].Decision)
 	require.True(t, resp.Evaluations[3].Decision)
+}
+
+func TestAuthZEN_EvaluationsOutputs(t *testing.T) {
+	tpg := func(t *testing.T) testParam {
+		t.Helper()
+		ctx := t.Context()
+		dir := test.PathToDir(t, "store")
+		store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
+		require.NoError(t, err)
+		policyLoader, err := compile.NewManager(ctx, store)
+		require.NoError(t, err)
+		return testParam{store: store, policyLoader: policyLoader, schemaMgr: schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))}
+	}
+
+	conf := defaultConf()
+	conf.HTTPListenAddr = getFreeListenAddr(t)
+	conf.GRPCListenAddr = getFreeListenAddr(t)
+	conf.AuthZEN.Enabled = true
+	conf.AuthZEN.ListenAddr = getFreeListenAddr(t)
+
+	startServer(t, conf, tpg)
+
+	client := mkHTTPClient(t)
+	require.Eventually(t,
+		httpHealthCheckPasses(client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenWellKnownPath), 2*time.Second),
+		10*time.Second, 200*time.Millisecond,
+	)
+
+	// Batch with two outputs-producing evaluations
+	const pID = "emp1"
+	req := authzenEvaluationRequest{
+		Subject: &authzenSubject{Type: "user", ID: pID, Properties: map[string]any{"roles": []string{"employee"}}},
+		Evaluations: []map[string]any{
+			{
+				"resource": map[string]any{"type": "equipment_request", "id": "EQ-1", "properties": map[string]any{"id": "EQ-1"}},
+				"action":   map[string]any{"name": "view:public"},
+			},
+			{
+				"resource": map[string]any{"type": "equipment_request", "id": "EQ-2", "properties": map[string]any{"id": "EQ-2"}},
+				"action":   map[string]any{"name": "view:public"},
+			},
+		},
+	}
+
+	out := doAuthZENEvaluations(t, client, conf, req)
+	require.Len(t, out.Evaluations, 2)
+	for i, wantRID := range []string{"EQ-1", "EQ-2"} {
+		dec := out.Evaluations[i]
+		require.True(t, dec.Decision, "expected allow for %s", wantRID)
+		require.NotNil(t, dec.Context, "context expected for %s", wantRID)
+		outputs, ok := dec.Context["outputs"].([]any)
+		require.True(t, ok)
+		require.NotEmpty(t, outputs)
+		first, ok := outputs[0].(map[string]any)
+		require.True(t, ok)
+		v, ok := first["val"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, pID, v["id"])       // principal id
+		require.Equal(t, wantRID, v["keys"]) // resource id propagated in output
+	}
+}
+
+func TestAuthZEN_WellKnown_ForwardedHeaders(t *testing.T) {
+	tpg := func(t *testing.T) testParam {
+		t.Helper()
+		ctx := t.Context()
+		dir := test.PathToDir(t, "store")
+		store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
+		require.NoError(t, err)
+		policyLoader, err := compile.NewManager(ctx, store)
+		require.NoError(t, err)
+		return testParam{store: store, policyLoader: policyLoader, schemaMgr: schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))}
+	}
+
+	conf := defaultConf()
+	conf.HTTPListenAddr = getFreeListenAddr(t)
+	conf.GRPCListenAddr = getFreeListenAddr(t)
+	conf.AuthZEN.Enabled = true
+	conf.AuthZEN.ListenAddr = getFreeListenAddr(t)
+
+	startServer(t, conf, tpg)
+	client := mkHTTPClient(t)
+	require.Eventually(t,
+		httpHealthCheckPasses(client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenWellKnownPath), 2*time.Second),
+		10*time.Second, 200*time.Millisecond,
+	)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenWellKnownPath), http.NoBody)
+	require.NoError(t, err)
+	req.Header.Set("X-Forwarded-Host", "example.com")
+	req.Header.Set("X-Forwarded-Proto", "https")
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		if resp.Body != nil {
+			_, _ = io.Copy(io.Discard, resp.Body) //nolint:errcheck
+			resp.Body.Close()
+		}
+	}()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	var md authzenMetadata
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&md))
+	require.Equal(t, "https://example.com"+authzenEvalPath, md.AccessEvaluationEndpoint)
+	require.Equal(t, "https://example.com"+authzenEvalsPath, md.AccessEvaluationsEndpoint)
+}
+
+func TestAuthZEN_RequestIDEcho(t *testing.T) {
+	tpg := func(t *testing.T) testParam {
+		t.Helper()
+		ctx := t.Context()
+		dir := test.PathToDir(t, "store")
+		store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
+		require.NoError(t, err)
+		policyLoader, err := compile.NewManager(ctx, store)
+		require.NoError(t, err)
+		return testParam{store: store, policyLoader: policyLoader, schemaMgr: schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))}
+	}
+
+	conf := defaultConf()
+	conf.HTTPListenAddr = getFreeListenAddr(t)
+	conf.GRPCListenAddr = getFreeListenAddr(t)
+	conf.AuthZEN.Enabled = true
+	conf.AuthZEN.ListenAddr = getFreeListenAddr(t)
+
+	startServer(t, conf, tpg)
+	client := mkHTTPClient(t)
+	require.Eventually(t,
+		httpHealthCheckPasses(client, fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenWellKnownPath), 2*time.Second),
+		10*time.Second, 200*time.Millisecond,
+	)
+
+	const reqID = "abc-123"
+
+	// Single evaluation
+	body := map[string]any{
+		"subject":  map[string]any{"type": "user", "id": "u1", "properties": map[string]any{"roles": []any{"employee"}}},
+		"resource": map[string]any{"type": "leave_request", "id": "XX125", "properties": map[string]any{"policyVersion": "20210210", "department": "marketing", "geography": "GB", "team": "design", "id": "XX125"}},
+		"action":   map[string]any{"name": "view:public"},
+	}
+	b, _ := json.Marshal(body)
+	evalURL := fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalPath)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	r1, _ := http.NewRequestWithContext(ctx, http.MethodPost, evalURL, bytes.NewReader(b))
+	r1.Header.Set("Content-Type", "application/json")
+	r1.Header.Set("X-Request-ID", reqID)
+	resp1, err := client.Do(r1)
+	require.NoError(t, err)
+	defer func() {
+		if resp1.Body != nil {
+			_, _ = io.Copy(io.Discard, resp1.Body) //nolint:errcheck
+			resp1.Body.Close()
+		}
+	}()
+	require.Equal(t, reqID, resp1.Header.Get("X-Request-ID"))
+
+	// Batch evaluations
+	body = map[string]any{
+		"subject": map[string]any{"type": "user", "id": "u1", "properties": map[string]any{"roles": []any{"employee"}}},
+		"evaluations": []any{
+			map[string]any{"resource": map[string]any{"type": "leave_request", "id": "R1", "properties": map[string]any{"policyVersion": "20210210", "department": "marketing", "geography": "GB", "team": "design", "id": "R1"}}, "action": map[string]any{"name": "view:public"}},
+		},
+	}
+	b, _ = json.Marshal(body)
+	evalsURL := fmt.Sprintf("http://%s%s", conf.AuthZEN.ListenAddr, authzenEvalsPath)
+	r2, _ := http.NewRequestWithContext(ctx, http.MethodPost, evalsURL, bytes.NewReader(b))
+	r2.Header.Set("Content-Type", "application/json")
+	r2.Header.Set("X-Request-ID", reqID)
+	resp2, err := client.Do(r2)
+	require.NoError(t, err)
+	defer func() {
+		if resp2.Body != nil {
+			_, _ = io.Copy(io.Discard, resp2.Body) //nolint:errcheck
+			resp2.Body.Close()
+		}
+	}()
+	require.Equal(t, reqID, resp2.Header.Get("X-Request-ID"))
+}
+
+func TestPrincipalKeyCanonicalization(t *testing.T) {
+	// Same principal details with different role order and attribute map order should yield the same key
+	mustVal := func(t *testing.T, v any) *structpb.Value {
+		t.Helper()
+		vv, err := structpb.NewValue(v)
+		require.NoError(t, err)
+		return vv
+	}
+
+	p1 := &enginev1.Principal{
+		Id:            "alice",
+		PolicyVersion: "20210210",
+		Scope:         "acme",
+		Roles:         []string{"employee", "manager"},
+		Attr: map[string]*structpb.Value{
+			"meta": mustVal(t, map[string]any{"a": 1.0, "b": 2.0}),
+			"team": structpb.NewStringValue("design"),
+		},
+	}
+
+	// roles reversed; attributes map fields in different insertion order
+	p2 := &enginev1.Principal{
+		Id:            "alice",
+		PolicyVersion: "20210210",
+		Scope:         "acme",
+		Roles:         []string{"manager", "employee"},
+		Attr: map[string]*structpb.Value{
+			"team": structpb.NewStringValue("design"),
+			"meta": mustVal(t, map[string]any{"b": 2.0, "a": 1.0}),
+		},
+	}
+
+	k1 := principalKey(p1)
+	k2 := principalKey(p2)
+	require.Equal(t, k1, k2, "principalKey must be stable across orders")
+}
+
+func TestOutputsToContext_EmptyAndNonEmpty(t *testing.T) {
+	// Empty entries -> nil
+	require.Nil(t, outputsToContext(nil))
+	require.Nil(t, outputsToContext([]*enginev1.OutputEntry{}))
+
+	// Non-empty entries -> map with outputs
+	val, err := structpb.NewValue(map[string]any{"ok": true, "n": 1.0})
+	require.NoError(t, err)
+	e := &enginev1.OutputEntry{Src: "test#rule-001", Val: val}
+	ctx := outputsToContext([]*enginev1.OutputEntry{e})
+	require.NotNil(t, ctx)
+	outs, ok := ctx["outputs"].([]map[string]any)
+	if !ok { // fall back to []any -> map
+		anyOuts, ok2 := ctx["outputs"].([]any)
+		require.True(t, ok2)
+		require.Len(t, anyOuts, 1)
+		m, ok3 := anyOuts[0].(map[string]any)
+		require.True(t, ok3)
+		require.Equal(t, "test#rule-001", m["src"])
+		val, ok4 := m["val"].(map[string]any)
+		require.True(t, ok4)
+		require.Equal(t, true, val["ok"])
+		require.Equal(t, 1.0, val["n"])
+		return
+	}
+	require.Len(t, outs, 1)
+	require.Equal(t, "test#rule-001", outs[0]["src"])
+}
+
+func TestExtractHelpers(t *testing.T) {
+	// extractStringSlice
+	m := map[string]any{"roles": []any{"employee", "manager"}}
+	require.ElementsMatch(t, []string{"employee", "manager"}, extractStringSlice(m, "roles"))
+
+	m = map[string]any{"roles": "employee, manager viewer"}
+	require.ElementsMatch(t, []string{"employee", "manager", "viewer"}, extractStringSlice(m, "roles"))
+
+	// extractStringAltKeys
+	pv, ok := extractStringAltKeys(map[string]any{"policy_version": "20210210"}, "policyVersion", "policy_version")
+	require.True(t, ok)
+	require.Equal(t, "20210210", pv)
+}
+
+func TestResolveTuple_MergePrecedence(t *testing.T) {
+	top := &azEvaluationRequest{
+		Subject:  &azSubject{Type: "user", ID: "u1", Properties: map[string]any{"roles": []any{"employee"}}},
+		Action:   &azAction{Name: "view:public"},
+		Resource: &azResource{Type: "leave_request", ID: "R1"},
+		Context:  map[string]any{"k": "top"},
+	}
+	item := &azTuple{
+		// override resource and context only
+		Resource: &azResource{Type: "leave_request", ID: "R2"},
+		Context:  map[string]any{"k": "item"},
+	}
+	m := resolveTuple(top, item)
+	require.Equal(t, top.Subject, m.Subject)
+	require.Equal(t, top.Action, m.Action)
+	require.Equal(t, item.Resource, m.Resource)
+	require.Equal(t, item.Context, m.Context)
 }
