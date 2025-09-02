@@ -51,7 +51,7 @@ builds:
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}} -X github.com/cerbos/cerbos/internal/telemetry.WriteKey={{.Env.TELEMETRY_WRITE_KEY}} -X github.com/cerbos/cerbos/internal/telemetry.DataPlaneURL={{.Env.TELEMETRY_URL}}
   - main: ./cmd/awslambda/function
-    binary: function/cerbosfunc
+    binary: cerbosfunc
     id: "cerbosfunc"
     env:
       - CGO_ENABLED=0
