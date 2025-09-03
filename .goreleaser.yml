@@ -61,6 +61,8 @@ builds:
       - amd64
       - arm64
     mod_timestamp: "{{ .CommitTimestamp }}"
+    tags:
+      - lambda.norpc
     flags:
       - -trimpath
     ldflags:
