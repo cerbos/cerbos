@@ -37,12 +37,12 @@ Resources:
         CheckResources:
           Type: HttpApi
           Properties:
-            Path: /v1/check/resources
+            Path: /api/check/resources
             Method: POST
         PlanResources:
           Type: HttpApi
           Properties:
-            Path: /v1/plan/resources
+            Path: /api/plan/resources
             Method: POST
         HealthCheck:
           Type: HttpApi
@@ -55,7 +55,7 @@ Resources:
           BUCKET_PREFIX: policies
           CERBOS_LOG_LEVEL: debug
           XDG_CACHE_HOME: /tmp
-          CERBOS_CONFIG: /var/task/.cerbos.yaml
+          CERBOS_CONFIG: /.cerbos.yaml
       Policies:
         - S3ReadPolicy:
             BucketName: test-dev.cerbos.dev

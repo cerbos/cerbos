@@ -30,9 +30,9 @@ func RouteRequest(ctx context.Context, event events.APIGatewayV2HTTPRequest, svc
 	}
 
 	switch {
-	case strings.HasSuffix(event.RawPath, "/v1/check/resources"):
+	case strings.HasSuffix(event.RawPath, "/api/check/resources"):
 		return handleCheckResources(ctx, event, svc)
-	case strings.HasSuffix(event.RawPath, "/v1/plan/resources"):
+	case strings.HasSuffix(event.RawPath, "/api/plan/resources"):
 		return handlePlanResources(ctx, event, svc)
 	default:
 		log.Warn("Path not found", zap.String("path", event.RawPath))
