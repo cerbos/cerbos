@@ -1,0 +1,15 @@
+---
+# https://docs.cerbos.dev/cerbos/latest/configuration/auxdata.html
+# WARNING: Disabling JWT verification is not recommended because it makes the system
+# insecure by forcing Cerbos to evaluate policies using potentially tampered data.
+auxData:
+  jwt:
+    disableVerification: true
+
+storage:
+  driver: "blob"
+  blob:
+    bucket: $BUCKET_URL
+    prefix: $BUCKET_PREFIX
+    workDir: /tmp/workDir
+    updatePollInterval: 15s

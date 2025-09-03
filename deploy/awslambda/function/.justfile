@@ -8,6 +8,7 @@ function-package:
     #!/usr/bin/env bash
     arch=$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')
     mkdir -p dist
+    cp .cerbos.yaml dist/
     if [[ "$arch" == "arm64" ]] then
      ln -f "../../../dist/cerbosfunc_linux_arm64_v8.0/cerbosfunc" dist/bootstrap 
     else
