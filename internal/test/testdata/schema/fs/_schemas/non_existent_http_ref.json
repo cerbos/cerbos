@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
-    "department": { "$ref": "https://cerbos.dev/does_not_exist.json" }
+    "department": { "$ref": "https://example.com/does_not_exist.json" }
   },
   "required": ["department"]
 }

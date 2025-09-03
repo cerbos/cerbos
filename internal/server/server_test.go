@@ -129,7 +129,7 @@ func TestServer(t *testing.T) {
 
 func apiTests(tpg testParamGen) func(*testing.T) {
 	return func(t *testing.T) {
-		tr := LoadTestCases(t, "checks", "playground", "plan_resources")
+		tr := LoadTestCases(t, nil, "checks", "playground", "plan_resources")
 
 		t.Run("with_tls", func(t *testing.T) {
 			testdataDir := test.PathToDir(t, "server")
@@ -284,7 +284,7 @@ func TestAdminService(t *testing.T) {
 
 	startServer(t, conf, tpg)
 
-	tr := LoadTestCases(t, "admin", "checks")
+	tr := LoadTestCases(t, nil, "admin", "checks")
 	creds := &AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
 
 	tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec

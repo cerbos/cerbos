@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"sync/atomic"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -26,11 +25,10 @@ import (
 
 type Manager struct {
 	*RuleTable
-	policyLoader               policyloader.PolicyLoader
-	schemaLoader               schema.Loader
-	log                        *logging.Logger
-	mu                         sync.RWMutex
-	awaitingHealthyPolicyStore atomic.Bool
+	policyLoader policyloader.PolicyLoader
+	schemaLoader schema.Loader
+	log          *logging.Logger
+	mu           sync.RWMutex
 }
 
 func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaLoader schema.Loader, schemaMgr schema.Manager) (*Manager, error) {
@@ -105,7 +103,6 @@ func (mgr *Manager) reload() error {
 	// If compilation fails, maintain the last valid rule table state.
 	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
 	if err := LoadPolicies(ctx, rt, mgr.policyLoader); err != nil {
-		mgr.awaitingHealthyPolicyStore.Store(true)
 		return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
 	}
 
@@ -115,37 +112,15 @@ func (mgr *Manager) reload() error {
 
 	mgr.log.Info("Rule table reload successful")
 
-	mgr.awaitingHealthyPolicyStore.Store(false)
-
 	return nil
 }
 
 func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
-	// if the index has been unhealthy, we have no way of knowing if there are unlinked dependents
-	// in the rule table, so we purge the table in it's entirety and then return.
-	// An example scenario:
-	// - a PDP is started with a valid policy set including a resource policy
-	// - the resource policy is updated to reference a non-existent derived role
-	// - the index build fails but no updates occur to the rule table and it continues to operate
-	//   on the last valid dataset
-	// - the missing derived roles policy is added, but the resource policy Update event with the import
-	//   never made it to the rule table update, thus the old definition is still in the rule table
-	// - the ruletable will continue to return stale data until another (valid) resource policy update
-	//   triggers a reload.
-	if mgr.awaitingHealthyPolicyStore.Load() {
-		return mgr.reload()
-	}
-
-	defer func() {
-		if err != nil {
-			mgr.awaitingHealthyPolicyStore.Store(true)
-		}
-	}()
-
 	ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
 	defer cancelFunc()
 
-	if evt.Kind == storage.EventAddOrUpdatePolicy { //nolint:nestif
+	switch evt.Kind { //nolint:exhaustive
+	case storage.EventAddOrUpdatePolicy:
 		var rps *runtimev1.RunnablePolicySet
 		rps, err = mgr.policyLoader.GetFirstMatch(ctx, []namer.ModuleID{evt.PolicyID})
 		if err != nil {
@@ -163,6 +138,8 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 				return err
 			}
 		}
+	case storage.EventDeleteOrDisablePolicy:
+		mgr.deletePolicy(evt.PolicyID)
 	}
 
 	if len(evt.Dependents) > 0 {

@@ -56,7 +56,7 @@ func TestServe(t *testing.T) {
 				serveErr <- cerbos.Serve(ctx, cerbos.WithConfig(config))
 			}()
 
-			testRunner := server.LoadTestCases(t, "checks/check_resources")
+			testRunner := server.LoadTestCases(t, nil, "checks/check_resources")
 
 			t.Run("grpc", testRunner.RunGRPCTests(grpcListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 			t.Run("http", testRunner.RunHTTPTests(fmt.Sprintf("http://%s", httpListenAddr), nil))

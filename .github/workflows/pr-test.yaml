@@ -41,7 +41,7 @@ jobs:
     if: ${{ needs.changes.outputs.code == 'true' }}
     name: Generate
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Free disk space
         uses: jlumbroso/free-disk-space@main
@@ -82,7 +82,7 @@ jobs:
     steps:
       - name: Download previous test times
         continue-on-error: true
-        uses: dawidd6/action-download-artifact@v10
+        uses: dawidd6/action-download-artifact@v11
         with:
           workflow: pr-test.yaml
           name: test-times
@@ -275,7 +275,7 @@ jobs:
           fetch-tags: true
 
       - name: Lint protos
-        uses: bufbuild/buf-action@v1.2.0
+        uses: bufbuild/buf-action@v1.3.0
         with:
           breaking: false
           format: true
