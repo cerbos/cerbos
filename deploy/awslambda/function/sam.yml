@@ -24,6 +24,18 @@ Mappings:
         Arch: arm64
 
 Resources:
+  CerbosConfigLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: cerbos-config
+      Description: Cerbos confg
+      ContentUri: config-layer/
+      CompatibleRuntimes:
+        - provided.al2
+      CompatibleArchitectures:
+        - arm64
+        - x86_64
+
   CerbosFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -33,6 +45,8 @@ Resources:
       Architectures:
         - !FindInMap [ArchitectureMap, !Ref ArchitectureParameter, Arch]
       MemorySize: 1024
+      Layers:
+        - !Ref CerbosConfigLayer
       Events:
         CheckResources:
           Type: HttpApi
@@ -55,7 +69,7 @@ Resources:
           BUCKET_PREFIX: policies
           CERBOS_LOG_LEVEL: debug
           XDG_CACHE_HOME: /tmp
-          CERBOS_CONFIG: /.cerbos.yaml
+          CERBOS_CONFIG: /opt/.cerbos.yaml
       Policies:
         - S3ReadPolicy:
             BucketName: test-dev.cerbos.dev
