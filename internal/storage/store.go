@@ -138,7 +138,6 @@ type Store interface {
 // SourceStore is implemented by stores that have policies in their source format (uncompiled).
 type SourceStore interface {
 	Store
-	Subscribable
 	// GetFirstMatch searches for the given module IDs in order and returns the first one found.
 	GetFirstMatch(context.Context, []namer.ModuleID) (*policy.CompilationUnit, error)
 	// GetAll returns all modules that exist within the policy store
