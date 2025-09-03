@@ -16,7 +16,7 @@ import (
 	"github.com/cerbos/cerbos/internal/svc"
 )
 
-// RouteRequest routes the API Gateway request to the appropriate handler
+// RouteRequest routes the API Gateway request to the appropriate handler.
 func RouteRequest(ctx context.Context, event events.APIGatewayV2HTTPRequest, svc *svc.CerbosService) (events.APIGatewayV2HTTPResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 

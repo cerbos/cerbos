@@ -17,7 +17,7 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 )
 
-// parseRequestBody handles the common body parsing logic
+// parseRequestBody handles the common body parsing logic.
 func parseRequestBody(event events.APIGatewayV2HTTPRequest) ([]byte, error) {
 	if event.Body == "" {
 		return nil, fmt.Errorf("request body is required")
@@ -35,7 +35,7 @@ func parseRequestBody(event events.APIGatewayV2HTTPRequest) ([]byte, error) {
 	return []byte(body), nil
 }
 
-// APIGatewayEventToCheckResourcesRequest converts an API Gateway event to a CheckResourcesRequest
+// APIGatewayEventToCheckResourcesRequest converts an API Gateway event to a CheckResourcesRequest.
 func APIGatewayEventToCheckResourcesRequest(event events.APIGatewayV2HTTPRequest) (*requestv1.CheckResourcesRequest, error) {
 	body, err := parseRequestBody(event)
 	if err != nil {
@@ -50,7 +50,7 @@ func APIGatewayEventToCheckResourcesRequest(event events.APIGatewayV2HTTPRequest
 	return &req, nil
 }
 
-// APIGatewayEventToPlanResourcesRequest converts an API Gateway event to a PlanResourcesRequest
+// APIGatewayEventToPlanResourcesRequest converts an API Gateway event to a PlanResourcesRequest.
 func APIGatewayEventToPlanResourcesRequest(event events.APIGatewayV2HTTPRequest) (*requestv1.PlanResourcesRequest, error) {
 	body, err := parseRequestBody(event)
 	if err != nil {
@@ -65,7 +65,7 @@ func APIGatewayEventToPlanResourcesRequest(event events.APIGatewayV2HTTPRequest)
 	return &req, nil
 }
 
-// ResponseToAPIGateway converts a protobuf response to an API Gateway response
+// ResponseToAPIGateway converts a protobuf response to an API Gateway response.
 func ResponseToAPIGateway[T proto.Message](resp T) (events.APIGatewayV2HTTPResponse, error) {
 	jsonResp, err := protojson.Marshal(resp)
 	if err != nil {

@@ -27,12 +27,12 @@ import (
 	"github.com/cerbos/cerbos/internal/svc"
 )
 
-// FunctionHandler handles AWS Lambda function invocations
+// FunctionHandler handles AWS Lambda function invocations.
 type FunctionHandler struct {
 	svc *svc.CerbosService
 }
 
-// NewFunctionHandler creates a new Lambda function handler
+// NewFunctionHandler creates a new Lambda function handler.
 func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 	log := zap.L().Named("lambda-func")
 
@@ -133,14 +133,14 @@ func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 	}, nil
 }
 
-// Handle processes AWS Lambda function invocations
+// Handle processes AWS Lambda function invocations.
 func (h *FunctionHandler) Handle(ctx context.Context, event events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	start := time.Now()
 
 	// Add request ID and other metadata to logging context
 	reqLog := logging.ReqScopeLog(ctx).With(
 		zap.String("requestId", event.RequestContext.RequestID),
-		//TODO: AWS X-Ray trace ID is available in context or headers, not directly in event
+		// TODO: AWS X-Ray trace ID is available in context or headers, not directly in event
 		zap.String("path", event.RawPath),
 		zap.String("method", event.RequestContext.HTTP.Method),
 		zap.String("sourceIp", event.RequestContext.HTTP.SourceIP),

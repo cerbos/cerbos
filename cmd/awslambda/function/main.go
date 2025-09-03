@@ -16,7 +16,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	
+
 	logLevel := os.Getenv("CERBOS_LOG_LEVEL")
 	if logLevel == "" {
 		logLevel = "info"
