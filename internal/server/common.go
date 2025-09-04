@@ -21,11 +21,11 @@ import (
 
 // CoreComponents holds the shared components needed for both server and Lambda function initialization.
 type CoreComponents struct {
-	Engine      *engine.Engine
-	AuxData     *auxdata.AuxData
-	AuditLog    audit.Log
-	Store       storage.Store
-	ReqLimits   svc.RequestLimits
+	Engine    *engine.Engine
+	AuxData   *auxdata.AuxData
+	AuditLog  audit.Log
+	Store     storage.Store
+	ReqLimits svc.RequestLimits
 }
 
 // InitializeCerbosCore performs the common initialization steps shared between server and Lambda function.
