@@ -87,7 +87,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
-	if ss, ok := policyLoader.(storage.Subscribable); ok {
+	if ss, ok := store.(storage.Subscribable); ok {
 		ss.Subscribe(ruletableMgr)
 	}
 

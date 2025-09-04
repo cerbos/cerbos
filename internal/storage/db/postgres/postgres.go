@@ -35,6 +35,7 @@ const (
 var (
 	_ storage.SourceStore  = (*Store)(nil)
 	_ storage.MutableStore = (*Store)(nil)
+	_ storage.Subscribable = (*Store)(nil)
 )
 
 func init() {
