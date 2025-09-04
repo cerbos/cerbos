@@ -12,18 +12,9 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"go.uber.org/zap"
 
-	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/auxdata"
-	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
-	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/ruletable"
-	internalSchema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/server"
-	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/overlay"
 	"github.com/cerbos/cerbos/internal/svc"
 )
 
@@ -46,86 +37,12 @@ func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	auditLog, err := audit.NewLog(ctx)
+	core, err := server.InitializeCerbosCore(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create audit log: %w", err)
+		return nil, err
 	}
 
-	mdExtractor, err := audit.NewMetadataExtractor()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metadata extractor: %w", err)
-	}
-
-	store, err := storage.New(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create store: %w", err)
-	}
-
-	var policyLoader policyloader.PolicyLoader
-	switch st := store.(type) {
-	case overlay.Overlay:
-		pl, err := st.GetOverlayPolicyLoader(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create overlay policy loader: %w", err)
-		}
-		policyLoader = pl
-	case storage.BinaryStore:
-		policyLoader = st
-	case storage.SourceStore:
-		policyLoader, err = compile.NewManager(ctx, st)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create compile manager: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("invalid store type")
-	}
-
-	rt := ruletable.NewProtoRuletable()
-	if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
-	}
-
-	schemaMgr, err := internalSchema.New(ctx, store)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create schema manager: %w", err)
-	}
-
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, store, schemaMgr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
-	}
-
-	if ss, ok := policyLoader.(storage.Subscribable); ok {
-		ss.Subscribe(ruletableMgr)
-	}
-
-	eng, err := engine.New(ctx, engine.Components{
-		PolicyLoader:      policyLoader,
-		RuleTableManager:  ruletableMgr,
-		SchemaMgr:         schemaMgr,
-		AuditLog:          auditLog,
-		MetadataExtractor: mdExtractor,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create engine: %w", err)
-	}
-
-	auxData, err := auxdata.New(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize auxData handler: %w", err)
-	}
-
-	serverConf, err := server.GetConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get server configuration: %w", err)
-	}
-
-	reqLimits := svc.RequestLimits{
-		MaxActionsPerResource:  serverConf.RequestLimits.MaxActionsPerResource,
-		MaxResourcesPerRequest: serverConf.RequestLimits.MaxResourcesPerRequest,
-	}
-
-	cerbosSvc := svc.NewCerbosService(eng, auxData, reqLimits)
+	cerbosSvc := svc.NewCerbosService(core.Engine, core.AuxData, core.ReqLimits)
 
 	log.Info("Lambda function handler initialized successfully")
 	return &FunctionHandler{

@@ -38,8 +38,6 @@ import (
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/telemetry"
 	"github.com/cerbos/cerbos/internal/validator"
 
@@ -59,17 +57,11 @@ import (
 	_ "github.com/cerbos/cerbos/internal/audit/kafka"
 	// Import to register the hub audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/hub"
-	"github.com/cerbos/cerbos/internal/auxdata"
-	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
-	internalSchema "github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage"
 
 	// Import blob to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/blob"
-	"github.com/cerbos/cerbos/internal/storage/overlay"
 
 	// Import hub to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/hub"
@@ -109,99 +101,17 @@ func Start(ctx context.Context) error {
 		return fmt.Errorf("failed to load server configuration: %w", err)
 	}
 
-	// create audit log
-	auditLog, err := audit.NewLog(ctx)
+	core, err := InitializeCerbosCore(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create audit log: %w", err)
-	}
-
-	mdExtractor, err := audit.NewMetadataExtractor()
-	if err != nil {
-		return fmt.Errorf("failed to create metadata extractor: %w", err)
-	}
-
-	// create store
-	store, err := storage.New(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create store: %w", err)
-	}
-
-	var policyLoader policyloader.PolicyLoader
-	switch st := store.(type) {
-	// Overlay needs to take precedence over BinaryStore in this type switch,
-	// as our overlay store implements BinaryStore also
-	case overlay.Overlay:
-		// create wrapped policy loader
-		pl, err := st.GetOverlayPolicyLoader(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to create overlay policy loader: %w", err)
-		}
-		policyLoader = pl
-	case storage.BinaryStore:
-		policyLoader = st
-
-	case storage.SourceStore:
-		// create compile manager
-		policyLoader, err = compile.NewManager(ctx, st)
-		if err != nil {
-			return fmt.Errorf("failed to create compile manager: %w", err)
-		}
-	default:
-		return ErrInvalidStore
-	}
-
-	rt := ruletable.NewProtoRuletable()
-
-	if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
 		return err
-	}
-
-	// create schema manager
-	schemaMgr, err := internalSchema.New(ctx, store)
-	if err != nil {
-		return fmt.Errorf("failed to create schema manager: %w", err)
-	}
-
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, store, schemaMgr)
-	if err != nil {
-		return fmt.Errorf("failed to create ruletable manager: %w", err)
-	}
-
-	if ss, ok := policyLoader.(storage.Subscribable); ok {
-		ss.Subscribe(ruletableMgr)
-	}
-
-	// create engine
-	eng, err := engine.New(ctx, engine.Components{
-		PolicyLoader:      policyLoader,
-		RuleTableManager:  ruletableMgr,
-		SchemaMgr:         schemaMgr,
-		AuditLog:          auditLog,
-		MetadataExtractor: mdExtractor,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create engine: %w", err)
-	}
-
-	// initialize aux data
-	auxData, err := auxdata.New(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to initialize auxData handler: %w", err)
 	}
 
 	s := NewServer(conf)
 
-	telemetry.Start(ctx, store)
+	telemetry.Start(ctx, core.Store)
 	defer telemetry.Stop()
 
-	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store})
-}
-
-type Param struct {
-	AuditLog audit.Log
-	AuxData  *auxdata.AuxData
-	Engine   *engine.Engine
-	Store    storage.Store
+	return s.Start(ctx, core)
 }
 
 type Server struct {
@@ -219,7 +129,7 @@ func NewServer(conf *Conf) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context, param Param) error {
+func (s *Server) Start(ctx context.Context, core *CoreComponents) error {
 	ctx, cancelFunc := context.WithCancel(ctx)
 	s.pool = pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 	s.cancelFunc = cancelFunc
@@ -251,7 +161,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 	}
 
 	// start servers
-	grpcServer, err := s.startGRPCServer(grpcL, param)
+	grpcServer, err := s.startGRPCServer(grpcL, core)
 	if err != nil {
 		log.Error("Failed to start GRPC server", zap.Error(err))
 		return err
@@ -290,11 +200,11 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 	}
 
 	log.Debug("Shutting down the audit log")
-	if err := param.AuditLog.Close(); err != nil {
+	if err := core.AuditLog.Close(); err != nil {
 		log.Error("Failed to cleanly close audit log", zap.Error(err))
 	}
 
-	if closer, ok := param.Store.(io.Closer); ok {
+	if closer, ok := core.Store.(io.Closer); ok {
 		log.Debug("Shutting down store")
 		if err := closer.Close(); err != nil {
 			log.Error("Store didn't shutdown correctly", zap.Error(err))
@@ -369,9 +279,9 @@ func (s *Server) createListener(ctx context.Context, listenAddr string) (net.Lis
 	return l, nil
 }
 
-func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, error) {
+func (s *Server) startGRPCServer(l net.Listener, core *CoreComponents) (*grpc.Server, error) {
 	log := zap.L().Named("grpc")
-	server, err := s.mkGRPCServer(log, param)
+	server, err := s.mkGRPCServer(log, core)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC server: %w", err)
 	}
@@ -379,12 +289,7 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 	healthpb.RegisterHealthServer(server, s.health)
 	reflection.Register(server)
 
-	reqLimits := svc.RequestLimits{
-		MaxActionsPerResource:  s.conf.RequestLimits.MaxActionsPerResource,
-		MaxResourcesPerRequest: s.conf.RequestLimits.MaxResourcesPerRequest,
-	}
-
-	cerbosSvc := svc.NewCerbosService(param.Engine, param.AuxData, reqLimits)
+	cerbosSvc := svc.NewCerbosService(core.Engine, core.AuxData, core.ReqLimits)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
 	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
@@ -400,13 +305,13 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 
 		go checkForUnsafeAdminCredentials(log, adminPasswdHash)
 
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(param.Store, param.AuditLog, adminUser, adminPasswdHash))
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(core.Store, core.AuditLog, adminUser, adminPasswdHash))
 		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
 	if s.conf.PlaygroundEnabled {
 		log.Info("Starting playground service")
-		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService(reqLimits))
+		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService(core.ReqLimits))
 		s.health.SetServingStatus(svcv1.CerbosPlaygroundService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
@@ -441,10 +346,10 @@ func checkForUnsafeAdminCredentials(log *zap.Logger, passwordHash []byte) {
 	}
 }
 
-func (s *Server) mkGRPCServer(log *zap.Logger, param Param) (*grpc.Server, error) {
+func (s *Server) mkGRPCServer(log *zap.Logger, core *CoreComponents) (*grpc.Server, error) {
 	telemetryInt := telemetry.Intercept()
 
-	auditInterceptor, err := audit.NewUnaryInterceptor(param.AuditLog, param.Store, accessLogExclude)
+	auditInterceptor, err := audit.NewUnaryInterceptor(core.AuditLog, core.Store, accessLogExclude)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create audit unary interceptor: %w", err)
 	}
