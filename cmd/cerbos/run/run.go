@@ -5,7 +5,6 @@ package run
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -27,7 +26,9 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	runutils "github.com/cerbos/cerbos/internal/run"
 	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -61,9 +62,6 @@ storage:
     directory: %q
     watchForChanges: true
 `
-
-	requestTimeout = 100 * time.Millisecond
-	retryInterval  = 141 * time.Millisecond
 )
 
 type Cmd struct {
@@ -202,15 +200,16 @@ func (c *Cmd) startPDP(ctx context.Context) (*pdpInstance, error) {
 		return nil, fmt.Errorf("failed to obtain server config; %w", err)
 	}
 
-	protocol := "http"
-	if conf.TLS != nil && conf.TLS.Cert != "" && conf.TLS.Key != "" {
-		protocol = "https"
+	client, httpAddr, err := util.NewInsecureHTTPClient(conf.HTTPListenAddr, !conf.TLS.Empty())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP client for %s: %w", conf.HTTPListenAddr, err)
 	}
 
 	instance := &pdpInstance{
-		httpAddr: fmt.Sprintf("%s://%s", protocol, conf.HTTPListenAddr),
+		httpAddr: httpAddr,
 		grpcAddr: conf.GRPCListenAddr,
 		errors:   make(chan error, 1),
+		client:   client,
 	}
 
 	serverCtx, stopFn := context.WithCancel(context.Background())
@@ -271,68 +270,11 @@ func (c *Cmd) Help() string {
 type pdpInstance struct {
 	errors   chan error
 	stopFn   context.CancelFunc
+	client   *http.Client
 	httpAddr string
 	grpcAddr string
 }
 
 func (pdp *pdpInstance) waitForReady(ctx context.Context) error {
-	client := pdp.client()
-	healthURL := fmt.Sprintf("%s/_cerbos/health", pdp.httpAddr)
-
-	lastErr := pdp.checkHealth(client, healthURL)
-	if lastErr == nil {
-		return nil
-	}
-
-	ticker := time.NewTicker(retryInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return lastErr
-		case err := <-pdp.errors:
-			return err
-		case <-ticker.C:
-			lastErr = pdp.checkHealth(client, healthURL)
-			if lastErr == nil {
-				return nil
-			}
-		}
-	}
-}
-
-func (pdp *pdpInstance) client() *http.Client {
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()      //nolint:forcetypeassert
-	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-
-	return &http.Client{Transport: customTransport}
-}
-
-func (pdp *pdpInstance) checkHealth(client *http.Client, healthURL string) error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), requestTimeout)
-	defer cancelFunc()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, healthURL, http.NoBody)
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if resp.Body != nil {
-			_, _ = io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("received status %q", resp.Status)
-	}
-
-	return nil
+	return runutils.WaitForReady(ctx, pdp.errors, pdp.client, pdp.httpAddr)
 }

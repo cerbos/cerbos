@@ -1,0 +1,35 @@
+{
+  "requestId": "test",
+  "principal": {
+    "id": "john",
+    "policyVersion": "20210210",
+    "roles": [
+      "employee"
+    ],
+    "attr": {
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resources": [
+    {
+      "resource": {
+        "id": "XX125",
+        "kind": "leave_request",
+        "policyVersion": "20210210",
+        "attr": {
+          "department": "marketing",
+          "geography": "GB",
+          "owner": "john",
+          "team": "design"
+        }
+      },
+      "actions": [
+        "view:public",
+        "approve"
+      ]
+    }
+  ],
+  "includeMeta": true
+}

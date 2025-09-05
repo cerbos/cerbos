@@ -122,6 +122,9 @@ lint-modernize: _modernize
 package $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='' $AWS_CONTAINER_REPO='aws.local/cerbos/cerbos' $AWS_PRODUCT_CODE='': _goreleaser
     @ "${TOOLS_BIN_DIR}/goreleaser"  release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
 
+package-build BUILD_ID $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='': _goreleaser
+    "${TOOLS_BIN_DIR}/goreleaser"  build --config=.goreleaser.yml --snapshot --id '{{ BUILD_ID }}' --clean
+
 pre-commit: lint-helm generate lint tests
 
 test PKG='./...' TEST='.*':

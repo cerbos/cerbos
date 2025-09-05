@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cerbos server
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+
+Parameters:
+  ArchitectureParameter:
+    Type: String
+    Default: amd64
+    AllowedValues:
+      - arm64
+      - amd64
+    Description: "AWS Lambda function architecture: x86_64 or arm64."
+
+Mappings:
+  ArchitectureMap:
+      amd64:
+        Arch: x86_64
+        LayerRef: CerbosExtensionLayerX86
+      arm64:
+        Arch: arm64
+        LayerRef: CerbosExtensionLayerArm64
+
+Resources:
+  CerbosExtensionLayerX86:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: cerbos-extension-x86_64
+      Description: Cerbos extension layer for x86_64 architecture
+      ContentUri: ../../../dist/cerbosext_linux_amd64_v1/
+      CompatibleRuntimes:
+        - provided.al2
+      CompatibleArchitectures:
+        - x86_64
+
+  CerbosExtensionLayerArm64:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: cerbos-extension-arm64
+      Description: Cerbos extension layer for ARM64 architecture
+      ContentUri: ../../../dist/cerbosext_linux_arm64_v8.0/
+      CompatibleRuntimes:
+        - provided.al2
+      CompatibleArchitectures:
+        - arm64
+
+  CerbosServerFunctionZip:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: provided.al2
+      CodeUri: dist/
+      Handler: main
+      Architectures:
+        - !FindInMap [ArchitectureMap, !Ref ArchitectureParameter, Arch]
+      Layers:
+        - !If
+          - IsAmd64
+          - !Ref CerbosExtensionLayerX86
+          - !Ref CerbosExtensionLayerArm64
+      MemorySize: 1024
+      Events:
+        CatchAll:
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          BUCKET_URL: s3://test-dev.cerbos.dev
+          BUCKET_PREFIX: policies
+          CERBOS_LOG_LEVEL: debug
+          XDG_CACHE_HOME: /tmp
+          CERBOS_CONFIG: /var/task/.cerbos.yaml
+
+Conditions:
+  IsAmd64: !Equals [!Ref ArchitectureParameter, amd64]
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  CerbosServerFunctionAPI:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  CerbosServerFunctionZip:
+    Description: "Cerbos Server Function ARN"
+    Value: !GetAtt CerbosServerFunctionZip.Arn
+  CerbosFunctionIamRole:
+    Description: "IAM Role created for the Cerbos Server function"
+    Value: !GetAtt CerbosServerFunctionZipRole.Arn
+  CerbosExtensionLayerX86Arn:
+    Description: "Cerbos Extension Layer ARN for x86_64"
+    Value: !Ref CerbosExtensionLayerX86
+  CerbosExtensionLayerArm64Arn:
+    Description: "Cerbos Extension Layer ARN for ARM64"
+    Value: !Ref CerbosExtensionLayerArm64

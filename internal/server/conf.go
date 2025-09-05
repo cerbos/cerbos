@@ -81,6 +81,10 @@ type TLSConf struct {
 	CACert string `yaml:"caCert" conf:",example=/path/to/CA_certificate"`
 }
 
+func (t *TLSConf) Empty() bool {
+	return t == nil || t.Key == "" || t.Cert == ""
+}
+
 type CORSConf struct {
 	// AllowedOrigins is the contents of the allowed-origins header.
 	AllowedOrigins []string `yaml:"allowedOrigins" conf:",example=['*']"`
