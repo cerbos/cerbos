@@ -43,7 +43,7 @@ jobs:
         uses: jaxxstorm/action-install-gh-release@v2.1.0
         with:
           repo: helmfile/helmfile
-          tag: v1.1.5
+          tag: v1.1.6
 
       - name: Telepresence
         run: |
