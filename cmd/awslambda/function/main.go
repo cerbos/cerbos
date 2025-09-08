@@ -29,6 +29,11 @@ func main() {
 	if err != nil {
 		zap.L().Fatal("Failed to create Lambda function handler", zap.Error(err))
 	}
+	defer func() {
+		if err := handler.Close(); err != nil {
+			zap.L().Error("Failed to cleanly shutdown Lambda function handler", zap.Error(err))
+		}
+	}()
 
 	lambda.Start(handler.Handle)
 }

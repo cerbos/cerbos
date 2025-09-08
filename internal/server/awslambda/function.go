@@ -6,6 +6,7 @@ package awslambda
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -20,10 +21,10 @@ import (
 
 // FunctionHandler handles AWS Lambda function invocations.
 type FunctionHandler struct {
-	svc *svc.CerbosService
+	svc  *svc.CerbosService
+	core *server.CoreComponents
 }
 
-// NewFunctionHandler creates a new Lambda function handler.
 func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 	log := zap.L().Named("lambda-func")
 
@@ -46,11 +47,11 @@ func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 
 	log.Info("Lambda function handler initialized successfully")
 	return &FunctionHandler{
-		svc: cerbosSvc,
+		svc:  cerbosSvc,
+		core: core,
 	}, nil
 }
 
-// Handle processes AWS Lambda function invocations.
 func (h *FunctionHandler) Handle(ctx context.Context, event events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	start := time.Now()
 
@@ -77,4 +78,25 @@ func (h *FunctionHandler) Handle(ctx context.Context, event events.APIGatewayV2H
 	)
 
 	return resp, err
+}
+
+func (h *FunctionHandler) Close() error {
+	log := zap.L().Named("lambda-func")
+
+	log.Debug("Shutting down the audit log")
+	if err := h.core.AuditLog.Close(); err != nil {
+		log.Error("Failed to cleanly close audit log", zap.Error(err))
+		return err
+	}
+
+	if closer, ok := h.core.Store.(io.Closer); ok {
+		log.Debug("Shutting down store")
+		if err := closer.Close(); err != nil {
+			log.Error("Store didn't shutdown correctly", zap.Error(err))
+			return err
+		}
+	}
+
+	log.Debug("Lambda function handler shutdown complete")
+	return nil
 }
