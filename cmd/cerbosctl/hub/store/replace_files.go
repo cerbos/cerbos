@@ -18,7 +18,6 @@ import (
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 	"github.com/go-git/go-git/v5"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -58,7 +57,7 @@ func (*ReplaceFilesCmd) Help() string {
 func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	var zipContents []byte
 	var err error
-	var gitChangeDetails *gitChangeDetails
+	var gitChangeDetails *changeDetails
 
 	//nolint:nestif
 	if rfc.Path == "-" {
@@ -166,13 +165,7 @@ func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	return nil
 }
 
-type gitChangeDetails struct {
-	uploader *storev1.ChangeDetails_Uploader
-	origin   *storev1.ChangeDetails_Git
-	message  string
-}
-
-func (rfc *ReplaceFilesCmd) changeDetailsFromGit() (*gitChangeDetails, error) {
+func (rfc *ReplaceFilesCmd) changeDetailsFromGit() (*changeDetails, error) {
 	r, err := git.PlainOpenWithOptions(rfc.Path, &git.PlainOpenOptions{
 		DetectDotGit: true,
 	})
@@ -185,24 +178,5 @@ func (rfc *ReplaceFilesCmd) changeDetailsFromGit() (*gitChangeDetails, error) {
 		return nil, fmt.Errorf("failed to get HEAD: %w", err)
 	}
 
-	commit, err := r.CommitObject(ref.Hash())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get HEAD commit: %w", err)
-	}
-
-	return &gitChangeDetails{
-		message: commit.Message,
-		uploader: &storev1.ChangeDetails_Uploader{
-			Name: commit.Committer.String(),
-		},
-		origin: &storev1.ChangeDetails_Git{
-			Ref:        ref.Name().String(),
-			Hash:       commit.Hash.String(),
-			Message:    commit.Message,
-			Committer:  commit.Committer.String(),
-			CommitDate: timestamppb.New(commit.Committer.When),
-			Author:     commit.Author.String(),
-			AuthorDate: timestamppb.New(commit.Author.When),
-		},
-	}, nil
+	return changeDetailsFromHash(r, ref.Hash())
 }
