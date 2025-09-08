@@ -7,14 +7,24 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/alecthomas/kong"
-
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
+	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
+	"github.com/go-git/go-git/v5"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+const (
+	defaultMessage = "Uploaded using cerbosctl"
+	defaultName    = "cerbosctl"
+	defaultSource  = "cerbosctl"
 )
 
 const replaceFilesHelp = `
@@ -34,9 +44,11 @@ cerbosctl hub store replace-files /path/to/archive.zip
 
 type ReplaceFilesCmd struct {
 	Output        `embed:""`
-	Message       string `help:"Commit message for this change" default:"Uploaded using cerbosctl"`
-	Path          string `arg:"" type:"path" help:"Path to a directory or a zip file containing the contents to upload" required:""`
-	VersionMustEq int64  `help:"Require that the store is at this version before committing the change" optional:""`
+	Message       string          `help:"Commit message for this change"`
+	Path          string          `arg:"" type:"path" help:"Path to a directory or a zip file containing the contents to upload" required:""`
+	Origin        json.RawMessage `help:"Metadata of the origin for this change as JSON string" placeholder:"{\"internal\":{\"source\":\"CI workflow\",\"metadata\":{\"id\":\"1\"}}}"`
+	Uploader      json.RawMessage `help:"Metadata of the uploader for this change as JSON string" placeholder:"{\"name\":\"cerbos-sdk-go\",\"metadata\":{\"version\":\"v0.1\"}}"`
+	VersionMustEq int64           `help:"Require that the store is at this version before committing the change" optional:""`
 }
 
 func (*ReplaceFilesCmd) Help() string {
@@ -46,6 +58,7 @@ func (*ReplaceFilesCmd) Help() string {
 func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	var zipContents []byte
 	var err error
+	var gitChangeDetails *gitChangeDetails
 
 	//nolint:nestif
 	if rfc.Path == "-" {
@@ -68,6 +81,8 @@ func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 			if err != nil {
 				return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to zip %s: %w", rfc.Path, err))
 			}
+
+			gitChangeDetails, _ = rfc.changeDetailsFromGit()
 		} else {
 			if _, err = zip.OpenReader(rfc.Path); err != nil {
 				return rfc.toCommandError(k.Stderr, fmt.Errorf("invalid zip file %s: %w", rfc.Path, err))
@@ -89,7 +104,55 @@ func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return rfc.toCommandError(k.Stderr, err)
 	}
 
-	req := hub.NewReplaceFilesRequest(cmd.StoreID, rfc.Message).WithZippedContents(zipContents)
+	var message string
+	switch {
+	case rfc.Message != "":
+		message = rfc.Message
+	case gitChangeDetails != nil:
+		message = gitChangeDetails.message
+	default:
+		message = defaultMessage
+	}
+
+	changeDetails := hub.NewChangeDetails(message)
+
+	switch {
+	case rfc.Origin != nil:
+		cd := &storev1.ChangeDetails{}
+		if err := protojson.Unmarshal(rfc.Origin, cd); err != nil {
+			return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to unmarshal origin: %w", err))
+		}
+		switch cd.GetOrigin().(type) {
+		case *storev1.ChangeDetails_Git_:
+			changeDetails.WithOriginGitDetails(cd.GetGit())
+		case *storev1.ChangeDetails_Internal_:
+			changeDetails.WithOriginInternalDetails(cd.GetInternal())
+		}
+	case gitChangeDetails != nil:
+		changeDetails.WithOriginGitDetails(gitChangeDetails.origin)
+	default:
+		changeDetails.WithOriginInternal(defaultSource)
+	}
+
+	switch {
+	case rfc.Uploader != nil:
+		uploader := &storev1.ChangeDetails_Uploader{}
+		if err := protojson.Unmarshal(rfc.Uploader, uploader); err != nil {
+			return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to unmarshal uploader: %w", err))
+		}
+		changeDetails.WithUploaderDetails(uploader)
+	case gitChangeDetails != nil:
+		changeDetails.WithUploaderDetails(gitChangeDetails.uploader)
+	default:
+		changeDetails.WithUploaderDetails(&storev1.ChangeDetails_Uploader{
+			Name: defaultName,
+		})
+	}
+
+	req := hub.
+		NewReplaceFilesRequest(cmd.StoreID, message).
+		WithChangeDetails(changeDetails).
+		WithZippedContents(zipContents)
 	if rfc.VersionMustEq > 0 {
 		req.OnlyIfVersionEquals(rfc.VersionMustEq)
 	}
@@ -101,4 +164,45 @@ func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 
 	rfc.printNewVersion(k.Stdout, resp.GetNewStoreVersion())
 	return nil
+}
+
+type gitChangeDetails struct {
+	uploader *storev1.ChangeDetails_Uploader
+	origin   *storev1.ChangeDetails_Git
+	message  string
+}
+
+func (rfc *ReplaceFilesCmd) changeDetailsFromGit() (*gitChangeDetails, error) {
+	r, err := git.PlainOpenWithOptions(rfc.Path, &git.PlainOpenOptions{
+		DetectDotGit: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to open git repository: %w", err)
+	}
+
+	ref, err := r.Head()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get HEAD: %w", err)
+	}
+
+	commit, err := r.CommitObject(ref.Hash())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get HEAD commit: %w", err)
+	}
+
+	return &gitChangeDetails{
+		message: commit.Message,
+		uploader: &storev1.ChangeDetails_Uploader{
+			Name: commit.Committer.String(),
+		},
+		origin: &storev1.ChangeDetails_Git{
+			Ref:        ref.Name().String(),
+			Hash:       commit.Hash.String(),
+			Message:    commit.Message,
+			Committer:  commit.Committer.String(),
+			CommitDate: timestamppb.New(commit.Committer.When),
+			Author:     commit.Author.String(),
+			AuthorDate: timestamppb.New(commit.Author.When),
+		},
+	}, nil
 }
