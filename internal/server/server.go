@@ -216,7 +216,7 @@ func (s *Server) Start(ctx context.Context, core *CoreComponents) error {
 }
 
 func (s *Server) initializeTLSConfig(log *zap.Logger) error {
-	if s.conf.TLS == nil || (s.conf.TLS.Cert == "" || s.conf.TLS.Key == "") {
+	if s.conf.TLS.Empty() {
 		return nil
 	}
 	conf := s.conf.TLS
