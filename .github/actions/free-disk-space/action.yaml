@@ -1,0 +1,23 @@
+name: Free disk space
+description: Remove unused files to free-up disk space
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |-
+        wget -O /tmp/rmz --quiet https://github.com/SUPERCILEX/fuc/releases/download/3.1.1/x86_64-unknown-linux-gnu-rmz
+        chmod +x /tmp/rmz
+        df -h
+        sudo /tmp/rmz -f \
+          /opt/az \
+          /opt/ghc \
+          /opt/google \
+          /opt/hostedtoolcache \
+          /opt/microsoft \
+          /usr/local/julia* \
+          /usr/local/lib/android \
+          /usr/local/share/powershell \
+          /usr/share/dotnet
+        sudo docker system prune --all --force || true
+        sudo docker builder prune --all --force || true
+        df -h
