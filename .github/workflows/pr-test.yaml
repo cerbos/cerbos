@@ -43,11 +43,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
@@ -101,13 +101,13 @@ jobs:
     outputs:
       job-total: ${{ strategy.job-total }}
     steps:
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           lfs: true
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
@@ -305,13 +305,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
       - name: Check out code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
         uses: ./.github/actions/setup-go
