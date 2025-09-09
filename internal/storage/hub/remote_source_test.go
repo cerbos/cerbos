@@ -107,6 +107,27 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				require.ErrorIs(t, err, hub.ErrBundleNotLoaded, "Exepcted bundle not loaded error")
 			})
 
+			t.Run("BootstrapDisabled", func(t *testing.T) {
+				config := mkConf(t, tctx, withDisableAutoUpdate(), withDisableBootstrap())
+				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, config)
+
+				switch tctx.version {
+				case bundleapi.Version1:
+					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
+
+				case bundleapi.Version2:
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+
+				default:
+				}
+
+				require.NoError(t, rs.Init(t.Context()), "Failed to init")
+
+				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+				require.NoError(t, err, "Failed to call ListPolicyIDs")
+				require.True(t, len(ids) > 0, "Policy IDs are empty")
+			})
+
 			t.Run("Reload", func(t *testing.T) {
 				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
@@ -441,6 +462,12 @@ type confOption func(*hub.Conf)
 func withDisableAutoUpdate() confOption {
 	return func(conf *hub.Conf) {
 		conf.Remote.DisableAutoUpdate = true
+	}
+}
+
+func withDisableBootstrap() confOption {
+	return func(conf *hub.Conf) {
+		conf.Remote.DisableBootstrap = true
 	}
 }
 

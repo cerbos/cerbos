@@ -313,17 +313,23 @@ func shouldWorkOffline() bool {
 }
 
 func (s *RemoteSource) fetchBundle(ctx context.Context) error {
-	s.log.Info("Fetching bootstrap bundle")
-	bdlPath, encryptionKey, err := s.client.BootstrapBundle(ctx)
-	if err == nil {
-		s.log.Debug("Using bootstrap bundle")
-		return s.swapBundle(bdlPath, encryptionKey)
-	}
+	var bdlPath string
+	var encryptionKey []byte
+	var err error
 
-	if errors.Is(err, bundleapi.ErrBootstrappingNotSupported) {
-		s.log.Info("Skipped fetching bootstrap bundle", zap.Error(err))
-	} else {
-		s.log.Warn("Failed to fetch bootstrap bundle", zap.Error(err))
+	if !s.conf.Remote.DisableBootstrap {
+		s.log.Info("Fetching bootstrap bundle")
+		bdlPath, encryptionKey, err = s.client.BootstrapBundle(ctx)
+		if err == nil {
+			s.log.Debug("Using bootstrap bundle")
+			return s.swapBundle(bdlPath, encryptionKey)
+		}
+
+		if errors.Is(err, bundleapi.ErrBootstrappingNotSupported) {
+			s.log.Info("Skipped fetching bootstrap bundle", zap.Error(err))
+		} else {
+			s.log.Warn("Failed to fetch bootstrap bundle", zap.Error(err))
+		}
 	}
 
 	s.log.Info("Fetching bundle from the API")
