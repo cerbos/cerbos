@@ -1,0 +1,12 @@
+name: Free disk space
+description: Remove unused files to free-up disk space
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |-
+        df -h
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
+        sudo docker builder prune -a
+        df -h

@@ -44,15 +44,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+        uses: ./.github/actions/free-disk-space
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -109,16 +101,8 @@ jobs:
     outputs:
       job-total: ${{ strategy.job-total }}
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -322,15 +306,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+        uses: ./.github/actions/free-disk-space
 
       - name: Check out code
         uses: actions/checkout@v4
