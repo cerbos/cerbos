@@ -5,10 +5,10 @@ runs:
   steps:
     - shell: bash
       run: |-
-        wget -O rmz --quiet https://github.com/SUPERCILEX/fuc/releases/download/3.1.1/x86_64-unknown-linux-gnu-rmz
-        chmod +x rmz
+        wget -O /tmp/rmz --quiet https://github.com/SUPERCILEX/fuc/releases/download/3.1.1/x86_64-unknown-linux-gnu-rmz
+        chmod +x /tmp/rmz
         df -h
-        sudo ./rmz -f \
+        sudo /tmp/rmz -f \
           /opt/az \
           /opt/ghc \
           /opt/google \
