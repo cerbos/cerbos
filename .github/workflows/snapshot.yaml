@@ -13,22 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
         uses: ./.github/actions/setup-go
