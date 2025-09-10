@@ -16,7 +16,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -25,19 +24,24 @@ const uploadGitHelp = `
 The following exit codes have a special meaning.
 	- 6: The version condition supplied using --version-must-eq wasn't satisfied
 
-# Add, delete or update files from git repository
+# Add, delete or update files from commit 55a4248 to HEAD
 
-cerbosctl hub store upload-git
+cerbosctl hub store upload-git 55a4248
+cerbosctl hub store upload-git 55a4248 --path path/to/git/repository
 
-# Add, delete or update files from git repository in path/to/git/repository
+# Add, delete or update files from commit 55a4248 to e746228
 
-cerbosctl hub store upload-git path/to/git/repository
+cerbosctl hub store upload-git 55a4248 e746228
+cerbosctl hub store upload-git 55a4248 e746228 --path path/to/git/repository
 `
 
 type UploadGitCmd struct {
-	Output       `embed:""`
-	Path         string `arg:"" help:"Path to the git repository" default:"."`
-	diffsToApply []*diff
+	diffToApply   *diff
+	Output        `embed:""`
+	From          string `arg:"" help:"Git revision to start from when generating the diff"`
+	To            string `arg:"" help:"Git revision to end when generating the diff (The resolved reference must be the ancestor of the from argument)" default:"HEAD"`
+	Path          string `help:"Path to the git repository" default:"."`
+	VersionMustEq int64  `help:"Require that the store is at this version before committing the change" optional:""`
 }
 
 func (*UploadGitCmd) Help() string {
@@ -45,13 +49,23 @@ func (*UploadGitCmd) Help() string {
 }
 
 func (ugc *UploadGitCmd) Validate() error {
-	repository, err := git.PlainOpen(ugc.Path)
+	r, err := git.PlainOpen(ugc.Path)
 	if err != nil {
 		return fmt.Errorf("failed to open git repository: %w", err)
 	}
 
-	if ugc.diffsToApply, err = ugc.diffs(repository); err != nil {
-		return fmt.Errorf("failed to get diffs: %w", err)
+	from, err := r.ResolveRevision(plumbing.Revision(ugc.From))
+	if err != nil {
+		return fmt.Errorf("failed to resolve revision %q: %w", ugc.From, err)
+	}
+
+	to, err := r.ResolveRevision(plumbing.Revision(ugc.To))
+	if err != nil {
+		return fmt.Errorf("failed to resolve revision %q: %w", ugc.To, err)
+	}
+
+	if ugc.diffToApply, err = ugc.diff(r, *from, *to); err != nil {
+		return fmt.Errorf("failed to get diff between revision %q to %q: %w", ugc.From, ugc.To, err)
 	}
 
 	return nil
@@ -68,42 +82,36 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return ugc.toCommandError(k.Stderr, err)
 	}
 
-	var version int64
-	for _, diff := range ugc.diffsToApply {
-		for batch, err := range ugc.batch(diff) {
-			if err != nil {
-				return ugc.toCommandError(k.Stderr, err)
-			}
+	version := ugc.VersionMustEq
+	for batch, err := range ugc.batch() {
+		if err != nil {
+			return ugc.toCommandError(k.Stderr, err)
+		}
 
-			changeDetails, err := changeDetailsFromHash(repository, diff.hash)
-			if err != nil {
-				return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details for %q: %w", diff.hash.String(), err))
-			}
+		changeDetails, err := changeDetailsFromHash(repository, ugc.diffToApply.hash)
+		if err != nil {
+			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details for %q: %w", ugc.diffToApply.hash.String(), err))
+		}
 
-			req := hub.
-				NewModifyFilesRequest(cmd.StoreID, changeDetails.message).
-				WithChangeDetails(
-					hub.NewChangeDetails(changeDetails.message).
-						WithOriginGitDetails(changeDetails.origin).
-						WithUploaderDetails(changeDetails.uploader),
-				).
-				AddOps(batch...)
+		req := hub.
+			NewModifyFilesRequest(cmd.StoreID, changeDetails.message).
+			WithChangeDetails(
+				hub.NewChangeDetails(changeDetails.message).
+					WithOriginGitDetails(changeDetails.origin).
+					WithUploaderDetails(changeDetails.uploader),
+			).
+			AddOps(batch...)
+		if version > 0 {
+			req.OnlyIfVersionEquals(version)
+		}
 
-			reqBytes, err := protojson.Marshal(req.Proto())
-			if err != nil {
-				return ugc.toCommandError(k.Stderr, err)
-			}
+		resp, err := client.ModifyFilesLenient(context.Background(), req)
+		if err != nil {
+			return ugc.toCommandError(k.Stderr, err)
+		}
 
-			fmt.Fprintf(k.Stdout, "%s\n\n", string(reqBytes))
-
-			resp, err := client.ModifyFilesLenient(context.Background(), req)
-			if err != nil {
-				return ugc.toCommandError(k.Stderr, err)
-			}
-
-			if resp != nil {
-				version = resp.GetNewStoreVersion()
-			}
+		if resp != nil {
+			version = resp.GetNewStoreVersion()
 		}
 	}
 
@@ -111,12 +119,12 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	return nil
 }
 
-func (ugc *UploadGitCmd) batch(diff *diff) iter.Seq2[[]*storev1.FileOp, error] {
+func (ugc *UploadGitCmd) batch() iter.Seq2[[]*storev1.FileOp, error] {
 	return func(yield func([]*storev1.FileOp, error) bool) {
 		batch := make([]*storev1.FileOp, 0, modifyFilesBatchSize)
 		batchCounter := 0
 
-		for _, change := range diff.changes {
+		for _, change := range ugc.diffToApply.changes {
 			switch change.operation {
 			case OpAddOrUpdate:
 				contents, err := os.ReadFile(change.path)
@@ -160,38 +168,37 @@ func (ugc *UploadGitCmd) batch(diff *diff) iter.Seq2[[]*storev1.FileOp, error] {
 	}
 }
 
-func (ugc *UploadGitCmd) diffs(r *git.Repository) ([]*diff, error) {
-	head, err := r.Head()
+func (ugc *UploadGitCmd) diff(r *git.Repository, from, to plumbing.Hash) (*diff, error) {
+	fromCommit, err := r.CommitObject(from)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get HEAD: %w", err)
+		return nil, fmt.Errorf("failed to get commit object for commit %q: %w", from.String(), err)
 	}
 
-	iter, err := r.Log(&git.LogOptions{From: head.Hash()})
+	toCommit, err := r.CommitObject(to)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get commit iterator: %w", err)
+		return nil, fmt.Errorf("failed to get commit object for commit %q: %w", to.String(), err)
 	}
 
-	headCommit, err := iter.Next()
+	isAncestor, err := fromCommit.IsAncestor(toCommit)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get HEAD commit: %w", err)
+		return nil, fmt.Errorf("failed to check if ancestor: %w", err)
 	}
 
-	parentCommit, err := iter.Next()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get parent commit: %w", err)
+	if !isAncestor {
+		return nil, fmt.Errorf("commit %q is not ancestor of commit %q", to.String(), from.String())
 	}
 
-	headTree, err := headCommit.Tree()
+	fromTree, err := fromCommit.Tree()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tree for HEAD commit: %w", err)
+		return nil, fmt.Errorf("failed to get tree of commit %q: %w", from.String(), err)
 	}
 
-	parentTree, err := parentCommit.Tree()
+	toTree, err := toCommit.Tree()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tree for parent commit: %w", err)
+		return nil, fmt.Errorf("failed to get tree of commit %q: %w", to.String(), err)
 	}
 
-	objectChanges, err := object.DiffTree(parentTree, headTree)
+	objectChanges, err := object.DiffTree(fromTree, toTree)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get diff tree: %w", err)
 	}
@@ -201,7 +208,7 @@ func (ugc *UploadGitCmd) diffs(r *git.Repository) ([]*diff, error) {
 		return nil, fmt.Errorf("failed to get changes: %w", err)
 	}
 
-	return []*diff{{hash: head.Hash(), changes: changes}}, nil
+	return &diff{hash: to, changes: changes}, nil
 }
 
 func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error) {
@@ -210,7 +217,7 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 		return nil, fmt.Errorf("failed to get absolute path to repository: %w", err)
 	}
 
-	changes := make([]*change, 0, len(ugc.diffsToApply))
+	changes := make([]*change, 0, len(objectChanges))
 	for _, objectChange := range objectChanges {
 		from, to, err := objectChange.Files()
 		if err != nil {
@@ -243,13 +250,15 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 			return nil, fmt.Errorf("invalid file %q: must not be hidden and must be a YAML or JSON file", path)
 		}
 
-		stat, err := os.Stat(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to stat file at %q: %w", path, err)
-		}
+		if operation != OpDelete {
+			stat, err := os.Stat(path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to stat file at %q: %w", path, err)
+			}
 
-		if stat.Size() > maxFileSize {
-			return nil, fmt.Errorf("file too large: %s", path)
+			if stat.Size() > maxFileSize {
+				return nil, fmt.Errorf("file too large: %s", path)
+			}
 		}
 
 		changes = append(changes, &change{
