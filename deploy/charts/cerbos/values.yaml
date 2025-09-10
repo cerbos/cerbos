@@ -336,6 +336,11 @@ service:
   # @schema
   # Set the internalTrafficPolicy. If this is unset and .Values.type is set to daemonset, this will default to "Local"
   internalTrafficPolicy: ""
+  # @schema
+  # enum: ["", PreferClose, PreferSameZone, PreferSameNode]
+  # @schema
+  # Set the trafficDistribution.
+  trafficDistribution: ""
 
 # @schema
 # required: false
