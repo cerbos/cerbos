@@ -209,3 +209,55 @@ jobs:
           helm registry logout ${{ env.OCI_REGISTRY }}
         env:
           HELM_EXPERIMENTAL_OCI: "1"
+
+  publishLambdaFunction:
+    name: Publish AWS Lambda Function to SAR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: releaseBinaries
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            path_suffix: linux_amd64_v1
+          - arch: arm64
+            path_suffix: linux_arm64_v8.0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Download GoReleaser artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: dist/
+
+      - name: Prepare Lambda function for deployment
+        run: |-
+          VERSION="${GITHUB_REF#refs/tags/}"
+          cd deploy/awslambda/function
+          mkdir -p dist
+          cp ../../../dist/cerbosfunc_${{ matrix.path_suffix }}/cerbosfunc dist/bootstrap
+          chmod +x dist/bootstrap
+
+      - name: Publish to AWS Serverless Application Repository
+        run: |-
+          VERSION="${GITHUB_REF#refs/tags/}"
+          cd deploy/awslambda/function
+          sam publish \
+            --template sam.yml \
+            --semantic-version "${VERSION#v}" \
+            --region ${{ vars.AWS_REGION }} \
+            --parameter-overrides ArchitectureParameter=${{ matrix.arch }}
