@@ -9,6 +9,7 @@ import (
 	"iter"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
@@ -40,6 +41,7 @@ type UploadGitCmd struct {
 	From          string `arg:"" help:"Git revision to start from when generating the diff"`
 	To            string `arg:"" help:"Git revision to end when generating the diff (The resolved reference must be the ancestor of the from argument)" default:"HEAD"`
 	Path          string `help:"Path to the git repository" default:"."`
+	Subdirectory  string `help:"Subdirectory under the given path to check and upload changes from" aliases:"subdir" default:"."`
 	Output        `embed:""`
 	ChangeDetails `embed:""`
 	VersionMustEq int64 `help:"Require that the store is at this version before committing the change" optional:""`
@@ -247,6 +249,11 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 			operation = OpDelete
 		}
 
+		normalizedName, skipped := ugc.normalize(name)
+		if skipped {
+			continue
+		}
+
 		path := filepath.Clean(filepath.Join(pathToRepo, name))
 		if path == "" || util.PathIsHidden(path) || !util.IsSupportedFileType(path) {
 			return nil, fmt.Errorf("invalid file %q: must not be hidden and must be a YAML or JSON file", path)
@@ -264,13 +271,13 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 		}
 
 		changes = append(changes, &change{
-			name:      name,
+			name:      normalizedName,
 			path:      path,
 			operation: operation,
 		})
 		if nameOfToBeDeleted != "" {
 			changes = append(changes, &change{
-				name:      name,
+				name:      normalizedName,
 				path:      path,
 				operation: OpDelete,
 			})
@@ -278,6 +285,21 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 	}
 
 	return changes, nil
+}
+
+func (ugc *UploadGitCmd) normalize(name string) (normalized string, skipped bool) {
+	normalized = name
+	if ugc.Subdirectory != "." {
+		if n, ok := strings.CutPrefix(name, ugc.Subdirectory+"/"); ok {
+			normalized = n
+		} else {
+			skipped = true
+		}
+
+		return
+	}
+
+	return
 }
 
 type diff struct {
