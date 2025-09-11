@@ -9,6 +9,7 @@ import (
 	"iter"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
@@ -40,6 +41,7 @@ type UploadGitCmd struct {
 	From          string `arg:"" help:"Git revision to start from when generating the diff"`
 	To            string `arg:"" help:"Git revision to end when generating the diff (The resolved reference must be the ancestor of the from argument)" default:"HEAD"`
 	Path          string `help:"Path to the git repository" default:"."`
+	Subdirectory  string `help:"Subdirectory under the given path to check and upload changes from" aliases:"subdir" default:"."`
 	Output        `embed:""`
 	ChangeDetails `embed:""`
 	VersionMustEq int64 `help:"Require that the store is at this version before committing the change" optional:""`
@@ -247,6 +249,10 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 			operation = OpDelete
 		}
 
+		if ugc.skipped(name) {
+			continue
+		}
+
 		path := filepath.Clean(filepath.Join(pathToRepo, name))
 		if path == "" || util.PathIsHidden(path) || !util.IsSupportedFileType(path) {
 			return nil, fmt.Errorf("invalid file %q: must not be hidden and must be a YAML or JSON file", path)
@@ -278,6 +284,14 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 	}
 
 	return changes, nil
+}
+
+func (ugc *UploadGitCmd) skipped(name string) bool {
+	if ugc.Subdirectory != "." {
+		return !strings.HasPrefix(name, ugc.Subdirectory+"/")
+	}
+
+	return false
 }
 
 type diff struct {
