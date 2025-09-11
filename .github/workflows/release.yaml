@@ -248,16 +248,24 @@ jobs:
         run: |-
           VERSION="${GITHUB_REF#refs/tags/}"
           cd deploy/awslambda/function
-          mkdir -p dist
+          mkdir -p dist config-layer
           cp ../../../dist/cerbosfunc_${{ matrix.path_suffix }}/cerbosfunc dist/bootstrap
           chmod +x dist/bootstrap
+          cp .cerbos.yaml config-layer/
 
+      - name: Package Lambda function
+        run: |-
+          cd deploy/awslambda/function
+          sam package \
+            --template-file sam.yml \
+            --s3-bucket ${{ vars.AWS_SAM_PACKAGING_BUCKET }} \
+            --output-template-file packaged-template.yml \
+            --region ${{ vars.AWS_REGION }}
       - name: Publish to AWS Serverless Application Repository
         run: |-
           VERSION="${GITHUB_REF#refs/tags/}"
           cd deploy/awslambda/function
           sam publish \
-            --template sam.yml \
+            --template packaged-template.yml \
             --semantic-version "${VERSION#v}" \
-            --region ${{ vars.AWS_REGION }} \
-            --parameter-overrides ArchitectureParameter=${{ matrix.arch }}
+            --region ${{ vars.AWS_REGION }}
