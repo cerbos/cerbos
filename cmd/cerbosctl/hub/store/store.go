@@ -11,14 +11,14 @@ import (
 	"strings"
 
 	"buf.build/go/protovalidate"
-	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
+	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 	"github.com/cerbos/cloud-api/store"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -162,6 +162,62 @@ func (o Output) format(w io.Writer, value any) {
 			fmt.Fprintf(w, "%s\n", value)
 		}
 	}
+}
+
+type ChangeDetails struct {
+	Message  string          `help:"Commit message for this change"`
+	Origin   json.RawMessage `help:"Metadata of the origin for this change as JSON string" placeholder:"{\"internal\":{\"source\":\"CI workflow\",\"metadata\":{\"id\":\"1\"}}}"`
+	Uploader json.RawMessage `help:"Metadata of the uploader for this change as JSON string" placeholder:"{\"name\":\"cerbos-sdk-go\",\"metadata\":{\"version\":\"v0.1\"}}"`
+}
+
+func (cd ChangeDetails) ChangeDetails(gitChangeDetails *changeDetails) (*hub.ChangeDetails, string, error) {
+	var message string
+	switch {
+	case cd.Message != "":
+		message = cd.Message
+	case gitChangeDetails != nil:
+		message = gitChangeDetails.message
+	default:
+		message = defaultMessage
+	}
+
+	hubChangeDetails := hub.NewChangeDetails(message)
+
+	switch {
+	case cd.Origin != nil:
+		tmp := &storev1.ChangeDetails{}
+		if err := protojson.Unmarshal(cd.Origin, tmp); err != nil {
+			return nil, "", fmt.Errorf("failed to unmarshal origin: %w", err)
+		}
+
+		switch tmp.GetOrigin().(type) {
+		case *storev1.ChangeDetails_Git_:
+			hubChangeDetails.WithOriginGitDetails(tmp.GetGit())
+		case *storev1.ChangeDetails_Internal_:
+			hubChangeDetails.WithOriginInternalDetails(tmp.GetInternal())
+		}
+	case gitChangeDetails != nil:
+		hubChangeDetails.WithOriginGitDetails(gitChangeDetails.origin)
+	default:
+		hubChangeDetails.WithOriginInternal(defaultSource)
+	}
+
+	switch {
+	case cd.Uploader != nil:
+		uploader := &storev1.ChangeDetails_Uploader{}
+		if err := protojson.Unmarshal(cd.Uploader, uploader); err != nil {
+			return nil, "", fmt.Errorf("failed to unmarshal uploader: %w", err)
+		}
+		hubChangeDetails.WithUploaderDetails(uploader)
+	case gitChangeDetails != nil:
+		hubChangeDetails.WithUploaderDetails(gitChangeDetails.uploader)
+	default:
+		hubChangeDetails.WithUploaderDetails(&storev1.ChangeDetails_Uploader{
+			Name: defaultName,
+		})
+	}
+
+	return hubChangeDetails, message, nil
 }
 
 func changeDetailsFromHash(r *git.Repository, hash plumbing.Hash) (*changeDetails, error) {

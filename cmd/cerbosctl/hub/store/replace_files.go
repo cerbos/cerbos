@@ -7,7 +7,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,9 +14,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
-	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 	"github.com/go-git/go-git/v5"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const (
@@ -43,11 +40,9 @@ cerbosctl hub store replace-files /path/to/archive.zip
 
 type ReplaceFilesCmd struct {
 	Output        `embed:""`
-	Message       string          `help:"Commit message for this change"`
-	Path          string          `arg:"" type:"path" help:"Path to a directory or a zip file containing the contents to upload" required:""`
-	Origin        json.RawMessage `help:"Metadata of the origin for this change as JSON string" placeholder:"{\"internal\":{\"source\":\"CI workflow\",\"metadata\":{\"id\":\"1\"}}}"`
-	Uploader      json.RawMessage `help:"Metadata of the uploader for this change as JSON string" placeholder:"{\"name\":\"cerbos-sdk-go\",\"metadata\":{\"version\":\"v0.1\"}}"`
-	VersionMustEq int64           `help:"Require that the store is at this version before committing the change" optional:""`
+	Path          string `arg:"" type:"path" help:"Path to a directory or a zip file containing the contents to upload" required:""`
+	ChangeDetails `embed:""`
+	VersionMustEq int64 `help:"Require that the store is at this version before committing the change" optional:""`
 }
 
 func (*ReplaceFilesCmd) Help() string {
@@ -103,49 +98,9 @@ func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return rfc.toCommandError(k.Stderr, err)
 	}
 
-	var message string
-	switch {
-	case rfc.Message != "":
-		message = rfc.Message
-	case gitChangeDetails != nil:
-		message = gitChangeDetails.message
-	default:
-		message = defaultMessage
-	}
-
-	changeDetails := hub.NewChangeDetails(message)
-
-	switch {
-	case rfc.Origin != nil:
-		cd := &storev1.ChangeDetails{}
-		if err := protojson.Unmarshal(rfc.Origin, cd); err != nil {
-			return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to unmarshal origin: %w", err))
-		}
-		switch cd.GetOrigin().(type) {
-		case *storev1.ChangeDetails_Git_:
-			changeDetails.WithOriginGitDetails(cd.GetGit())
-		case *storev1.ChangeDetails_Internal_:
-			changeDetails.WithOriginInternalDetails(cd.GetInternal())
-		}
-	case gitChangeDetails != nil:
-		changeDetails.WithOriginGitDetails(gitChangeDetails.origin)
-	default:
-		changeDetails.WithOriginInternal(defaultSource)
-	}
-
-	switch {
-	case rfc.Uploader != nil:
-		uploader := &storev1.ChangeDetails_Uploader{}
-		if err := protojson.Unmarshal(rfc.Uploader, uploader); err != nil {
-			return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to unmarshal uploader: %w", err))
-		}
-		changeDetails.WithUploaderDetails(uploader)
-	case gitChangeDetails != nil:
-		changeDetails.WithUploaderDetails(gitChangeDetails.uploader)
-	default:
-		changeDetails.WithUploaderDetails(&storev1.ChangeDetails_Uploader{
-			Name: defaultName,
-		})
+	changeDetails, message, err := rfc.ChangeDetails.ChangeDetails(gitChangeDetails)
+	if err != nil {
+		return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details: %w", err))
 	}
 
 	req := hub.
