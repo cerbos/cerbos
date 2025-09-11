@@ -24,12 +24,12 @@ const uploadGitHelp = `
 The following exit codes have a special meaning.
 	- 6: The version condition supplied using --version-must-eq wasn't satisfied
 
-# Add, delete or update files from commit 55a4248 to HEAD
+# Apply the file changes recorded in the git repo between commit 55a4248 and HEAD
 
 cerbosctl hub store upload-git 55a4248
 cerbosctl hub store upload-git 55a4248 --path path/to/git/repository
 
-# Add, delete or update files from commit 55a4248 to e746228
+# Apply the file changes recorded in the git repo between commit 55a4248 to e746228
 
 cerbosctl hub store upload-git 55a4248 e746228
 cerbosctl hub store upload-git 55a4248 e746228 --path path/to/git/repository
@@ -37,11 +37,12 @@ cerbosctl hub store upload-git 55a4248 e746228 --path path/to/git/repository
 
 type UploadGitCmd struct {
 	diffToApply   *diff
-	Output        `embed:""`
 	From          string `arg:"" help:"Git revision to start from when generating the diff"`
 	To            string `arg:"" help:"Git revision to end when generating the diff (The resolved reference must be the ancestor of the from argument)" default:"HEAD"`
 	Path          string `help:"Path to the git repository" default:"."`
-	VersionMustEq int64  `help:"Require that the store is at this version before committing the change" optional:""`
+	Output        `embed:""`
+	ChangeDetails `embed:""`
+	VersionMustEq int64 `help:"Require that the store is at this version before committing the change" optional:""`
 }
 
 func (*UploadGitCmd) Help() string {
@@ -88,18 +89,19 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 			return ugc.toCommandError(k.Stderr, err)
 		}
 
-		changeDetails, err := changeDetailsFromHash(repository, ugc.diffToApply.hash)
+		gitChangeDetails, err := changeDetailsFromHash(repository, ugc.diffToApply.hash)
 		if err != nil {
 			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details for %q: %w", ugc.diffToApply.hash.String(), err))
 		}
 
+		changeDetails, message, err := ugc.ChangeDetails.ChangeDetails(gitChangeDetails)
+		if err != nil {
+			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details: %w", err))
+		}
+
 		req := hub.
-			NewModifyFilesRequest(cmd.StoreID, changeDetails.message).
-			WithChangeDetails(
-				hub.NewChangeDetails(changeDetails.message).
-					WithOriginGitDetails(changeDetails.origin).
-					WithUploaderDetails(changeDetails.uploader),
-			).
+			NewModifyFilesRequest(cmd.StoreID, message).
+			WithChangeDetails(changeDetails).
 			AddOps(batch...)
 		if version > 0 {
 			req.OnlyIfVersionEquals(version)
