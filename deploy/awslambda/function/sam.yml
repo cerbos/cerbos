@@ -13,8 +13,10 @@ Metadata:
     Labels: 
       - authorization
       - access-control
+      - RBAC
+      - ABAC
+      - PBAC
       - policy
-      - serverless
       - security
     HomePageUrl: https://cerbos.dev
     SourceCodeUrl: https://github.com/cerbos/cerbos

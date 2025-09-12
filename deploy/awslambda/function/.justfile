@@ -11,8 +11,12 @@ publish-to-sar: function-package
         exit 1
     fi
     
-    version=${CERBOS_VERSION:-1.0.0}
+    # Extract version from the compiled binary (same as goreleaser)
+    version=$(./dist/bootstrap --version 2>/dev/null | head -n1 | awk '{print $2}' || echo "1.0.0")
+    # Remove 'v' prefix if present for SAR semantic versioning
+    version=${version#v}
     
+    echo "Detected version: $version"
     echo "Packaging Lambda function for SAR..."
     sam package \
         --template-file sam.yml \
