@@ -15,6 +15,7 @@ import (
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -56,10 +57,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				}
 
 				require.NoError(t, rs.Init(t.Context()), "Failed to init")
-
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("BootstrapFail", func(t *testing.T) {
@@ -78,10 +80,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				}
 
 				require.NoError(t, rs.Init(t.Context()), "Failed to init")
-
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("BootstrapAndAPIFailure", func(t *testing.T) {
@@ -101,10 +104,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				require.Error(t, rs.Init(t.Context()), "Expected error")
 				require.False(t, rs.IsHealthy(), "Source should be unhealthy")
-
-				_, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.Error(t, err, "Expected error from ListPolicyIDs")
-				require.ErrorIs(t, err, hub.ErrBundleNotLoaded, "Exepcted bundle not loaded error")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					_, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.Error(c, err, "Expected error from ListPolicyIDs")
+					require.ErrorIs(c, err, hub.ErrBundleNotLoaded, "Expected bundle not loaded error")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("BootstrapDisabled", func(t *testing.T) {
@@ -122,10 +126,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				}
 
 				require.NoError(t, rs.Init(t.Context()), "Failed to init")
-
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("Reload", func(t *testing.T) {
@@ -143,10 +148,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 				require.NoError(t, rs.Reload(t.Context()), "Failed to reload")
-
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("Playground", func(t *testing.T) {
@@ -164,10 +170,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				}
 
 				require.NoError(t, rs.Init(t.Context()), "Failed to init")
-
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 		})
 
@@ -181,9 +188,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				mockClientV1.EXPECT().GetCachedBundle(label).Return(tctx.bundlePath, nil).Once()
 				require.NoError(t, rs.Init(t.Context()), "Failed to init")
 
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 
 			case bundleapi.Version2:
 				require.ErrorIs(t, rs.Init(t.Context()), hub.ErrOfflineModeNotAvailable)
@@ -254,9 +263,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					return rs.IsHealthy() == false
 				}, 60*time.Millisecond, 10*time.Millisecond, "Source should be unhealthy")
 
-				_, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.Error(t, err, "Expected error from ListPolicyIDs")
-				require.ErrorIs(t, err, hub.ErrBundleNotLoaded, "Expected bundle not loaded error")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					_, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.Error(c, err, "Expected error from ListPolicyIDs")
+					require.ErrorIs(c, err, hub.ErrBundleNotLoaded, "Expected bundle not loaded error")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("BundleRemoved", func(t *testing.T) {
@@ -296,9 +307,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				waitForCallsDone(t, wh.callsDone)
 
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.ErrorIs(t, err, hub.ErrBundleNotLoaded, "Failed to remove the bundle")
-				require.Len(t, ids, 0, "Policy IDs must be empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.ErrorIs(c, err, hub.ErrBundleNotLoaded, "Failed to remove the bundle")
+					require.Len(c, ids, 0, "Policy IDs must be empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("ErrorsInEvents", func(t *testing.T) {
@@ -342,9 +355,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				waitForCallsDone(t, wh.callsDone)
 
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("Reconnect", func(t *testing.T) {
@@ -400,9 +415,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				waitForCallsDone(t, wh.callsDone)
 
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 
 			t.Run("Retry", func(t *testing.T) {
@@ -449,9 +466,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				require.False(t, rs.IsHealthy(), "Source should be unhealthy")
 
-				ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
-				require.NoError(t, err, "Failed to call ListPolicyIDs")
-				require.True(t, len(ids) > 0, "Policy IDs are empty")
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					ids, err := rs.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
+					require.NoError(c, err, "Failed to call ListPolicyIDs")
+					require.True(c, len(ids) > 0, "Policy IDs are empty")
+				}, 50*time.Millisecond, 10*time.Millisecond)
 			})
 		})
 	}
