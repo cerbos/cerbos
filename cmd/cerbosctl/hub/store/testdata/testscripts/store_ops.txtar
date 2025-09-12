@@ -6,6 +6,9 @@ cmp stdout $WORK/expectations/list-files-01.txt
 # Replacing with the same files should not fail
 cerbosctl hub store replace-files $WORK/repo
 
+# Specify origin and uploader when replacing
+cerbosctl hub store replace-files $WORK/repo --origin='{"internal":{"source":"CI workflow","metadata":{"id":"1"}}}' --uploader='{"name":"cerbos-sdk-go","metadata":{"version":"v0.1"}}'
+
 # Replacing with condition should fail
 ! cerbosctl hub store replace-files --version-must-eq=999999999 $WORK/cond
 
