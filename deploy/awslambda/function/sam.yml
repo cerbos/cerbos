@@ -8,8 +8,8 @@ Metadata:
     Description: "Cerbos is an authorization layer that evolves with your product. This Lambda function provides a serverless Policy Decision Point (PDP) for evaluating access control policies."
     Author: "Cerbos"
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: https://github.com/cerbos/cerbos/blob/main/LICENSE
-    ReadmeUrl: https://github.com/cerbos/cerbos/blob/main/README.md
+    LicenseUrl: ../../../LICENSE
+    ReadmeUrl: ../../../README.md
     Labels: 
       - authorization
       - access-control
