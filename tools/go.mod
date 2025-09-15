@@ -12,7 +12,7 @@ require (
 	github.com/dadav/helm-schema v0.0.0-20250516042030-eb9f80173063
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/golangci/golangci-lint/v2 v2.4.0
-	github.com/google/go-licenses v1.6.0
+	github.com/google/go-licenses/v2 v2.0.1
 	github.com/goreleaser/goreleaser/v2 v2.12.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
