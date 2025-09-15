@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -192,7 +191,6 @@ func mkManager(t *testing.T) (*compile.Manager, *MockStore, context.CancelFunc) 
 	ctx, cancelFunc := context.WithCancel(t.Context())
 
 	mockStore := &MockStore{}
-	mockStore.On("Subscribe", mock.Anything)
 
 	mgr, err := compile.NewManager(ctx, mockStore)
 	require.NoError(t, err)
@@ -205,23 +203,12 @@ func anyCtx(context.Context) bool {
 }
 
 type MockStore struct {
-	subscriber storage.Subscriber
 	mock.Mock
 }
 
 func (ms *MockStore) Driver() string {
 	args := ms.MethodCalled("Driver")
 	return args.String(0)
-}
-
-func (ms *MockStore) Subscribe(s storage.Subscriber) {
-	ms.MethodCalled("Subscribe", s)
-	ms.subscriber = s
-}
-
-func (ms *MockStore) Unsubscribe(s storage.Subscriber) {
-	ms.MethodCalled("Unsubscribe", s)
-	ms.subscriber = nil
 }
 
 func (ms *MockStore) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {
@@ -278,16 +265,6 @@ func (ms *MockStore) GetDependents(ctx context.Context, ids ...namer.ModuleID) (
 	return args.Get(0).(map[namer.ModuleID][]namer.ModuleID), args.Error(1)
 }
 
-func (ms *MockStore) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
-	args := ms.MethodCalled("AddOrUpdate", ctx, policies)
-	return args.Error(0)
-}
-
-func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
-	args := ms.MethodCalled("Delete", ctx, ids)
-	return args.Error(0)
-}
-
 func (ms *MockStore) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	args := ms.MethodCalled("InspectPolicies", ctx)
 	if res := args.Get(0); res == nil {
@@ -326,46 +303,6 @@ func (ms *MockStore) LoadSchema(ctx context.Context, _ string) (io.ReadCloser, e
 		return nil, args.Error(0)
 	}
 	return nil, nil
-}
-
-func (ms *MockStore) GetSchema(ctx context.Context, _ string) ([]byte, error) {
-	args := ms.MethodCalled("GetSchema", ctx)
-	if res := args.Get(0); res == nil {
-		return nil, args.Error(0)
-	}
-	return nil, nil
-}
-
-func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, _ ...*schemav1.Schema) error {
-	args := ms.MethodCalled("AddOrUpdateSchema", ctx)
-	if res := args.Get(0); res == nil {
-		return args.Error(0)
-	}
-	return nil
-}
-
-func (ms *MockStore) Disable(ctx context.Context, _ ...string) (uint32, error) {
-	args := ms.MethodCalled("Disable", ctx)
-	if res := args.Get(0); res == nil {
-		return 0, args.Error(0)
-	}
-	return 0, nil
-}
-
-func (ms *MockStore) Enable(ctx context.Context, _ ...string) (uint32, error) {
-	args := ms.MethodCalled("Enable", ctx)
-	if res := args.Get(0); res == nil {
-		return 0, args.Error(0)
-	}
-	return 0, nil
-}
-
-func (ms *MockStore) DeleteSchema(ctx context.Context, _ ...string) error {
-	args := ms.MethodCalled("DeleteSchema", ctx)
-	if res := args.Get(0); res == nil {
-		return args.Error(0)
-	}
-	return nil
 }
 
 func (ms *MockStore) Source() *auditv1.PolicySource {

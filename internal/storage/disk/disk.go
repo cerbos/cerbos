@@ -28,8 +28,9 @@ import (
 const DriverName = "disk"
 
 var (
-	_ storage.SourceStore = (*Store)(nil)
-	_ storage.Reloadable  = (*Store)(nil)
+	_ storage.SourceStore  = (*Store)(nil)
+	_ storage.Reloadable   = (*Store)(nil)
+	_ storage.Subscribable = (*Store)(nil)
 )
 
 func init() {

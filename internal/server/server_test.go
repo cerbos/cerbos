@@ -34,6 +34,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	hubstore "github.com/cerbos/cerbos/internal/storage/hub"
+	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cloud-api/bundle"
@@ -326,7 +327,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.policyLoader, tp.store, tp.schemaMgr)
 	require.NoError(t, err)
 
-	if ss, ok := tp.policyLoader.(storage.Subscribable); ok {
+	if ss, ok := tp.store.(storage.Subscribable); ok {
 		ss.Subscribe(ruletableMgr)
 	}
 
@@ -339,11 +340,14 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 	})
 	require.NoError(t, err, "Failed to create engine")
 
-	param := Param{AuditLog: auditLog, AuxData: auxData, Store: tp.store, Engine: eng}
+	core := &CoreComponents{AuditLog: auditLog, AuxData: auxData, Store: tp.store, Engine: eng, ReqLimits: svc.RequestLimits{
+		MaxActionsPerResource:  conf.RequestLimits.MaxActionsPerResource,
+		MaxResourcesPerRequest: conf.RequestLimits.MaxResourcesPerRequest,
+	}}
 
 	s := NewServer(conf)
 	go func() {
-		if err := s.Start(ctx, param); err != nil {
+		if err := s.Start(ctx, core); err != nil {
 			panic(err)
 		}
 	}()

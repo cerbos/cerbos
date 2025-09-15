@@ -6,20 +6,24 @@
 package util
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"google.golang.org/grpc"
 )
 
+const unixNetwork = "unix"
+
 // ParseListenAddress parses an address and returns the network type and the address to dial.
 // inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L31
 func ParseListenAddress(listenAddr string) (network, addr string, err error) {
 	if strings.HasPrefix(listenAddr, "unix:") {
-		network = "unix"
+		network = unixNetwork
 		addr = listenAddr[5:]
 
 		return
@@ -77,6 +81,44 @@ func GetFreePort() (int, error) {
 	}
 
 	return strconv.Atoi(p)
+}
+
+func NewInsecureHTTPClient(httpListenAddr string, tlsSpecified bool) (client *http.Client, httpAddr string, err error) {
+	network, addr, err := ParseListenAddress(httpListenAddr)
+	if err != nil {
+		return nil, "", err
+	}
+	protocol := "http"
+	var tlsConfig *tls.Config
+	if tlsSpecified && network != unixNetwork {
+		tlsConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		protocol = "https"
+	}
+	transport := newTransportForAddress(network, addr, tlsConfig)
+	httpAddr = fmt.Sprintf("%s://%s", protocol, httpListenAddr)
+	if network == unixNetwork {
+		httpAddr = "http://localhost"
+	}
+	return &http.Client{Transport: transport}, httpAddr, nil
+}
+
+func newTransportForAddress(network, addr string, tlsConfig *tls.Config) http.RoundTripper {
+	if network == unixNetwork {
+		dialer := &net.Dialer{}
+		return &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return dialer.DialContext(ctx, "unix", addr)
+			},
+		}
+	}
+
+	transport := http.DefaultTransport.(*http.Transport) //nolint:forcetypeassert
+	if tlsConfig != nil {
+		transport = transport.Clone()
+		transport.TLSClientConfig = tlsConfig
+	}
+
+	return transport
 }
 
 // EagerGRPCClient creates a gRPC client and establishes a connection immediately.

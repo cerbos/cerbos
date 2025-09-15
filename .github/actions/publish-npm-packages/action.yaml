@@ -12,7 +12,7 @@ runs:
 
   steps:
     - name: Install Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v5
       with:
         node-version-file: .node-version
         registry-url: https://registry.npmjs.com

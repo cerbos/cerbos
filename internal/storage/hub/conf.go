@@ -65,6 +65,8 @@ type RemoteSourceConf struct {
 	TempDir string `yaml:"tempDir" conf:",example=${TEMP}"`
 	// DisableAutoUpdate sets whether new bundles should be automatically downloaded and applied.
 	DisableAutoUpdate bool `yaml:"disableAutoUpdate" conf:",example=false"`
+	// DisableBootstrap makes the PDP always fetch bundles using the API. If the API is down, the PDP won't be able to start.
+	DisableBootstrap bool `yaml:"disableBootstrap" conf:",ignore"`
 }
 
 func (conf *Conf) Key() string {

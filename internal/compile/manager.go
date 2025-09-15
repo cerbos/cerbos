@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -20,17 +19,9 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
-const (
-	negativeCacheEntryTTL = 10 * time.Second
-	storeFetchTimeout     = 2 * time.Second
-	updateQueueSize       = 32
-)
-
 type Manager struct {
-	store       storage.SourceStore
-	log         *zap.SugaredLogger
-	updateQueue chan storage.Event
-	*storage.SubscriptionManager
+	store storage.SourceStore
+	log   *zap.SugaredLogger
 }
 
 func NewManager(ctx context.Context, store storage.SourceStore) (*Manager, error) {
@@ -39,46 +30,11 @@ func NewManager(ctx context.Context, store storage.SourceStore) (*Manager, error
 	}
 
 	c := &Manager{
-		log:                 zap.S().Named("compiler"),
-		store:               store,
-		updateQueue:         make(chan storage.Event, updateQueueSize),
-		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		log:   zap.S().Named("compiler"),
+		store: store,
 	}
-
-	go c.processUpdateQueue(ctx)
-	store.Subscribe(c)
 
 	return c, nil
-}
-
-func (c *Manager) SubscriberID() string {
-	return "compile.Manager"
-}
-
-func (c *Manager) OnStorageEvent(events ...storage.Event) {
-	for _, evt := range events {
-		c.log.Debugw("Received storage event", "event", evt)
-		c.updateQueue <- evt
-	}
-}
-
-func (c *Manager) processUpdateQueue(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case evt := <-c.updateQueue:
-			c.log.Debugw("Processing storage event", "event", evt)
-			switch evt.Kind {
-			case storage.EventReload:
-				c.NotifySubscribers(evt)
-			case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
-				c.NotifySubscribers(evt)
-			default:
-				c.log.Debugw("Ignoring storage event", "event", evt)
-			}
-		}
-	}
 }
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {

@@ -451,6 +451,18 @@
             "null"
           ]
         },
+        "trafficDistribution": {
+          "default": "",
+          "description": "Set the trafficDistribution.",
+          "enum": [
+            "",
+            "PreferClose",
+            "PreferSameZone",
+            "PreferSameNode"
+          ],
+          "required": [],
+          "title": "trafficDistribution"
+        },
         "type": {
           "default": "ClusterIP",
           "description": "Service type",

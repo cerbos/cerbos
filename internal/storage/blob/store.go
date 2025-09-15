@@ -44,8 +44,9 @@ const (
 )
 
 var (
-	_ storage.SourceStore = (*Store)(nil)
-	_ storage.Reloadable  = (*Store)(nil)
+	_ storage.SourceStore  = (*Store)(nil)
+	_ storage.Reloadable   = (*Store)(nil)
+	_ storage.Subscribable = (*Store)(nil)
 )
 
 var ErrUnsupportedBucketScheme = errors.New("currently only \"s3\" and \"gs\" bucket URL schemes are supported")
