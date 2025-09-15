@@ -142,7 +142,7 @@ jobs:
           write_build_cache: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.9.2
+        uses: sigstore/cosign-installer@v3.10.0
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
