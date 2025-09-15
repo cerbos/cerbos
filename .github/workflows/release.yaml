@@ -252,12 +252,16 @@ jobs:
           cp ../../../dist/cerbosfunc_${{ matrix.path_suffix }}/cerbosfunc dist/bootstrap
           chmod +x dist/bootstrap
           cp .cerbos.yaml config-layer/
+          
+          # Create architecture-specific template
+          app_name="cerbos-lambda-function-${{ matrix.arch }}"
+          sed "s/\"cerbos-lambda-function\"/\"${app_name}\"/" sam.yml > sam-sar.yml
 
       - name: Package Lambda function
         run: |-
           cd deploy/awslambda/function
           sam package \
-            --template-file sam.yml \
+            --template-file sam-sar.yml \
             --s3-bucket ${{ vars.AWS_SAM_PACKAGING_BUCKET }} \
             --output-template-file packaged-template.yml \
             --region ${{ vars.AWS_REGION }}
