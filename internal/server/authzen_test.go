@@ -20,6 +20,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/compile"
 	// Blank import to ensure engine package is included for side-effects if any build tags apply in future.
+	authzenv1 "github.com/cerbos/cerbos/api/genpb/cerbos/authzen/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
@@ -961,32 +962,27 @@ func TestPrincipalKeyCanonicalization(t *testing.T) {
 }
 
 func TestOutputsToContext_EmptyAndNonEmpty(t *testing.T) {
-	// Empty entries -> nil
-	require.Nil(t, outputsToContext(nil))
-	require.Nil(t, outputsToContext([]*enginev1.OutputEntry{}))
+    // Empty entries -> nil
+    require.Nil(t, outputsToContext(nil))
+    require.Nil(t, outputsToContext([]*enginev1.OutputEntry{}))
 
-	// Non-empty entries -> map with outputs
-	val, err := structpb.NewValue(map[string]any{"ok": true, "n": 1.0})
-	require.NoError(t, err)
-	e := &enginev1.OutputEntry{Src: "test#rule-001", Val: val}
-	ctx := outputsToContext([]*enginev1.OutputEntry{e})
-	require.NotNil(t, ctx)
-	outs, ok := ctx["outputs"].([]map[string]any)
-	if !ok { // fall back to []any -> map
-		anyOuts, ok2 := ctx["outputs"].([]any)
-		require.True(t, ok2)
-		require.Len(t, anyOuts, 1)
-		m, ok3 := anyOuts[0].(map[string]any)
-		require.True(t, ok3)
-		require.Equal(t, "test#rule-001", m["src"])
-		val, ok4 := m["val"].(map[string]any)
-		require.True(t, ok4)
-		require.Equal(t, true, val["ok"])
-		require.Equal(t, 1.0, val["n"])
-		return
-	}
-	require.Len(t, outs, 1)
-	require.Equal(t, "test#rule-001", outs[0]["src"])
+    // Non-empty entries -> map with outputs
+    val, err := structpb.NewValue(map[string]any{"ok": true, "n": 1.0})
+    require.NoError(t, err)
+    e := &enginev1.OutputEntry{Src: "test#rule-001", Val: val}
+    ctx := outputsToContext([]*enginev1.OutputEntry{e})
+    require.NotNil(t, ctx)
+    m := ctx.AsMap()
+    anyOuts, ok2 := m["outputs"].([]any)
+    require.True(t, ok2)
+    require.Len(t, anyOuts, 1)
+    out0, ok3 := anyOuts[0].(map[string]any)
+    require.True(t, ok3)
+    require.Equal(t, "test#rule-001", out0["src"])
+    v, ok4 := out0["val"].(map[string]any)
+    require.True(t, ok4)
+    require.Equal(t, true, v["ok"])
+    require.Equal(t, 1.0, v["n"])
 }
 
 func TestExtractHelpers(t *testing.T) {
@@ -1004,20 +1000,28 @@ func TestExtractHelpers(t *testing.T) {
 }
 
 func TestResolveTuple_MergePrecedence(t *testing.T) {
-	top := &azEvaluationRequest{
-		Subject:  &azSubject{Type: "user", ID: "u1", Properties: map[string]any{"roles": []any{"employee"}}},
-		Action:   &azAction{Name: "view:public"},
-		Resource: &azResource{Type: "leave_request", ID: "R1"},
-		Context:  map[string]any{"k": "top"},
-	}
-	item := &azTuple{
-		// override resource and context only
-		Resource: &azResource{Type: "leave_request", ID: "R2"},
-		Context:  map[string]any{"k": "item"},
-	}
-	m := resolveTuple(top, item)
-	require.Equal(t, top.Subject, m.Subject)
-	require.Equal(t, top.Action, m.Action)
-	require.Equal(t, item.Resource, m.Resource)
-	require.Equal(t, item.Context, m.Context)
+    // Build properties structs
+    subProps, err := structpb.NewStruct(map[string]any{"roles": []any{"employee"}})
+    require.NoError(t, err)
+    topCtx, err := structpb.NewStruct(map[string]any{"k": "top"})
+    require.NoError(t, err)
+    itemCtx, err := structpb.NewStruct(map[string]any{"k": "item"})
+    require.NoError(t, err)
+
+    top := &authzenv1.EvaluationRequest{
+        Subject:  &authzenv1.Subject{Type: "user", Id: "u1", Properties: subProps},
+        Action:   &authzenv1.Action{Name: "view:public"},
+        Resource: &authzenv1.Resource{Type: "leave_request", Id: "R1"},
+        Context:  topCtx,
+    }
+    item := &authzenv1.Tuple{
+        // override resource and context only
+        Resource: &authzenv1.Resource{Type: "leave_request", Id: "R2"},
+        Context:  itemCtx,
+    }
+    m := resolveTuple(top, item)
+    require.Equal(t, top.Subject, m.Subject)
+    require.Equal(t, top.Action, m.Action)
+    require.Equal(t, item.Resource, m.Resource)
+    require.Equal(t, item.Context, m.Context)
 }

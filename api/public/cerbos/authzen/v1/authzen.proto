@@ -1,0 +1,181 @@
+// Copyright 2021-2025 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.authzen.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/struct.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option csharp_namespace = "Cerbos.Api.V1.Authzen";
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/authzen/v1;authzenv1";
+option java_package = "dev.cerbos.api.v1.authzen";
+
+// Subject represents the AuthZEN subject entity.
+message Subject {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Subject"}
+  };
+  // Arbitrary key-value properties attached to the subject.
+  google.protobuf.Struct properties = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Arbitrary key-value properties attached to the subject."}];
+  // Subject type, e.g. "user".
+  string type = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Subject type."
+      example: "\"user\""
+    }
+  ];
+  // Subject identifier.
+  string id = 3 [
+    (buf.validate.field).string.min_len = 1,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Subject identifier."
+      example: "\"alice\""
+    }
+  ];
+}
+
+// Action represents the AuthZEN action entity.
+message Action {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Action"}
+  };
+  // Arbitrary key-value properties attached to the action.
+  google.protobuf.Struct properties = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Arbitrary key-value properties attached to the action."}];
+  // Action name, e.g. "view".
+  string name = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Action name."
+      example: "\"view:public\""
+    }
+  ];
+}
+
+// Resource represents the AuthZEN resource entity.
+message Resource {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Resource"}
+  };
+  // Arbitrary key-value properties attached to the resource.
+  google.protobuf.Struct properties = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Arbitrary key-value properties attached to the resource."}];
+  // Resource type, e.g. "album:object".
+  string type = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Resource type."
+      example: "\"leave_request\""
+    }
+  ];
+  // Resource identifier.
+  string id = 3 [
+    (buf.validate.field).string.min_len = 1,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Resource identifier."
+      example: "\"XX125\""
+    }
+  ];
+}
+
+// Tuple encapsulates a subject-action-resource tuple with optional context.
+message Tuple {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Subject-Action-Resource tuple with optional context"}
+  };
+  Subject subject = 1;
+  Action action = 2;
+  Resource resource = 3;
+  // Evaluation context passed alongside the tuple.
+  google.protobuf.Struct context = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Contextual attributes for this evaluation."}];
+}
+
+// EvaluationRequest is the AuthZEN evaluation request.
+// It supports a single tuple defined at the top level, or a batch via 'evaluations'.
+message EvaluationRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Access Evaluation request"}
+  };
+  Subject subject = 1 [
+    (buf.validate.field).required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Subject to evaluate."}
+  ];
+  Action action = 2 [
+    (buf.validate.field).required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Action to evaluate."}
+  ];
+  Resource resource = 3 [
+    (buf.validate.field).required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Resource to evaluate."}
+  ];
+  google.protobuf.Struct context = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional evaluation context."}];
+}
+
+// EvaluationsRequest is the batch request form for multiple tuples.
+message EvaluationsRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Access Evaluations batch request"}
+  };
+  // Subject used for all evaluations unless overridden in a tuple.
+  Subject subject = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Default subject for all evaluations; tuples may override."}];
+  // Optional default context; tuple context overrides when set.
+  google.protobuf.Struct context = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Default context for all evaluations; tuples may override."}];
+  // Optional default action; tuples may override.
+  Action action = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Default action for all evaluations; tuples may override."}];
+  // Optional default resource; tuples may override.
+  Resource resource = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Default resource for all evaluations; tuples may override."}];
+  // The list of evaluations to perform.
+  repeated Tuple evaluations = 5 [
+    (buf.validate.field).repeated = {min_items: 0},
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Evaluations to perform (order preserved)."}
+  ];
+
+  // If evaluations are provided, ensure each evaluation has a subject via tuple or top-level default.
+  option (buf.validate.message).cel = {
+    id: "batch_requires_subject"
+    expression: "size(this.evaluations) == 0 || this.evaluations.all(e, has(e.subject) || has(this.subject))"
+    message: "Each evaluation must have a subject via tuple or top-level default"
+  };
+  // If evaluations are provided, ensure each evaluation has an action via tuple or top-level default.
+  option (buf.validate.message).cel = {
+    id: "batch_requires_action"
+    expression: "size(this.evaluations) == 0 || this.evaluations.all(e, has(e.action) || has(this.action))"
+    message: "Each evaluation must have an action via tuple or top-level default"
+  };
+  // If evaluations are provided, ensure each evaluation has a resource via tuple or top-level default.
+  option (buf.validate.message).cel = {
+    id: "batch_requires_resource"
+    expression: "size(this.evaluations) == 0 || this.evaluations.all(e, has(e.resource) || has(this.resource))"
+    message: "Each evaluation must have a resource via tuple or top-level default"
+  };
+}
+
+// Decision contains the boolean decision and optional context (e.g. outputs).
+message Decision {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN decision"}
+  };
+  google.protobuf.Struct context = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional decision context (e.g., outputs)."}];
+  bool decision = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "true for allow, false for deny."}];
+}
+
+// EvaluationsResponse holds decisions for a batch request in request order.
+message EvaluationsResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN batch decisions response"}
+  };
+  repeated Decision evaluations = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Decisions in the same order as the request tuples."}];
+}
+
+// Metadata describes the AuthZEN translation layer endpoints and capabilities.
+message Metadata {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN metadata discovery document"}
+  };
+  string policy_decision_point = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Base URL of the Policy Decision Point (PDP)."}];
+  string access_evaluation_endpoint = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "URL of the Access Evaluation endpoint."}];
+  string access_evaluations_endpoint = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "URL of the Access Evaluations (batch) endpoint."}];
+  repeated string capabilities = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Array of URNs describing PDP capabilities."}];
+}
