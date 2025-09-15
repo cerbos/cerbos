@@ -4,7 +4,7 @@ Description: Cerbos Lambda Function
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: !Sub "cerbos-lambda-function-${ArchitectureParameter}"
+    Name: "cerbos-lambda-function"
     Description: "Cerbos is an authorization layer that evolves with your product. This Lambda function provides a serverless Policy Decision Point (PDP) for evaluating access control policies."
     Author: "Cerbos"
     SpdxLicenseId: Apache-2.0
