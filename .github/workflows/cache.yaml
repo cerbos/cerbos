@@ -15,7 +15,7 @@ jobs:
       deps: ${{ steps.filter.outputs.deps }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check for changes
         id: filter
@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
