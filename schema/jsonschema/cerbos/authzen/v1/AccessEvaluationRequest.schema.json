@@ -1,0 +1,86 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/authzen/v1/AccessEvaluationRequest.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.authzen.v1.Action": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "$ref": "#/definitions/google.protobuf.Struct"
+        }
+      }
+    },
+    "cerbos.authzen.v1.Resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "$ref": "#/definitions/google.protobuf.Struct"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "cerbos.authzen.v1.Subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "$ref": "#/definitions/google.protobuf.Struct"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "google.protobuf.Struct": {
+      "title": "Struct",
+      "description": "A structured data value, consisting of fields which map to dynamically-typed values.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/google.protobuf.Value"
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "required": [
+    "subject",
+    "action",
+    "resource"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "$ref": "#/definitions/cerbos.authzen.v1.Action"
+    },
+    "context": {
+      "$ref": "#/definitions/google.protobuf.Struct"
+    },
+    "resource": {
+      "$ref": "#/definitions/cerbos.authzen.v1.Resource"
+    },
+    "subject": {
+      "$ref": "#/definitions/cerbos.authzen.v1.Subject"
+    }
+  }
+}

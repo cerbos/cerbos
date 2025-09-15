@@ -42,17 +42,17 @@ func (m *Tuple) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *EvaluationRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *AccessEvaluationRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_authzen_v1_EvaluationRequest_hashpb_sum(m, hasher, ignore)
+		cerbos_authzen_v1_AccessEvaluationRequest_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *EvaluationsRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *AccessEvaluationsRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_authzen_v1_EvaluationsRequest_hashpb_sum(m, hasher, ignore)
+		cerbos_authzen_v1_AccessEvaluationsRequest_hashpb_sum(m, hasher, ignore)
 	}
 }
 
@@ -66,16 +66,24 @@ func (m *Decision) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *EvaluationsResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *AccessEvaluationsResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_authzen_v1_EvaluationsResponse_hashpb_sum(m, hasher, ignore)
+		cerbos_authzen_v1_AccessEvaluationsResponse_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *Metadata) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *GetMetadataResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_authzen_v1_Metadata_hashpb_sum(m, hasher, ignore)
+		cerbos_authzen_v1_GetMetadataResponse_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *AccessEvaluationResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_authzen_v1_AccessEvaluationResponse_hashpb_sum(m, hasher, ignore)
 	}
 }

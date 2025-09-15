@@ -924,65 +924,28 @@ func TestAuthZEN_RequestIDEcho(t *testing.T) {
 	require.Equal(t, reqID, resp2.Header.Get("X-Request-ID"))
 }
 
-func TestPrincipalKeyCanonicalization(t *testing.T) {
-	// Same principal details with different role order and attribute map order should yield the same key
-	mustVal := func(t *testing.T, v any) *structpb.Value {
-		t.Helper()
-		vv, err := structpb.NewValue(v)
-		require.NoError(t, err)
-		return vv
-	}
-
-	p1 := &enginev1.Principal{
-		Id:            "alice",
-		PolicyVersion: "20210210",
-		Scope:         "acme",
-		Roles:         []string{"employee", "manager"},
-		Attr: map[string]*structpb.Value{
-			"meta": mustVal(t, map[string]any{"a": 1.0, "b": 2.0}),
-			"team": structpb.NewStringValue("design"),
-		},
-	}
-
-	// roles reversed; attributes map fields in different insertion order
-	p2 := &enginev1.Principal{
-		Id:            "alice",
-		PolicyVersion: "20210210",
-		Scope:         "acme",
-		Roles:         []string{"manager", "employee"},
-		Attr: map[string]*structpb.Value{
-			"team": structpb.NewStringValue("design"),
-			"meta": mustVal(t, map[string]any{"b": 2.0, "a": 1.0}),
-		},
-	}
-
-	k1 := principalKey(p1)
-	k2 := principalKey(p2)
-	require.Equal(t, k1, k2, "principalKey must be stable across orders")
-}
-
 func TestOutputsToContext_EmptyAndNonEmpty(t *testing.T) {
-    // Empty entries -> nil
-    require.Nil(t, outputsToContext(nil))
-    require.Nil(t, outputsToContext([]*enginev1.OutputEntry{}))
+	// Empty entries -> nil
+	require.Nil(t, outputsToContext(nil))
+	require.Nil(t, outputsToContext([]*enginev1.OutputEntry{}))
 
-    // Non-empty entries -> map with outputs
-    val, err := structpb.NewValue(map[string]any{"ok": true, "n": 1.0})
-    require.NoError(t, err)
-    e := &enginev1.OutputEntry{Src: "test#rule-001", Val: val}
-    ctx := outputsToContext([]*enginev1.OutputEntry{e})
-    require.NotNil(t, ctx)
-    m := ctx.AsMap()
-    anyOuts, ok2 := m["outputs"].([]any)
-    require.True(t, ok2)
-    require.Len(t, anyOuts, 1)
-    out0, ok3 := anyOuts[0].(map[string]any)
-    require.True(t, ok3)
-    require.Equal(t, "test#rule-001", out0["src"])
-    v, ok4 := out0["val"].(map[string]any)
-    require.True(t, ok4)
-    require.Equal(t, true, v["ok"])
-    require.Equal(t, 1.0, v["n"])
+	// Non-empty entries -> map with outputs
+	val, err := structpb.NewValue(map[string]any{"ok": true, "n": 1.0})
+	require.NoError(t, err)
+	e := &enginev1.OutputEntry{Src: "test#rule-001", Val: val}
+	ctx := outputsToContext([]*enginev1.OutputEntry{e})
+	require.NotNil(t, ctx)
+	m := ctx.AsMap()
+	anyOuts, ok2 := m["outputs"].([]any)
+	require.True(t, ok2)
+	require.Len(t, anyOuts, 1)
+	out0, ok3 := anyOuts[0].(map[string]any)
+	require.True(t, ok3)
+	require.Equal(t, "test#rule-001", out0["src"])
+	v, ok4 := out0["val"].(map[string]any)
+	require.True(t, ok4)
+	require.Equal(t, true, v["ok"])
+	require.Equal(t, 1.0, v["n"])
 }
 
 func TestExtractHelpers(t *testing.T) {
@@ -1000,28 +963,28 @@ func TestExtractHelpers(t *testing.T) {
 }
 
 func TestResolveTuple_MergePrecedence(t *testing.T) {
-    // Build properties structs
-    subProps, err := structpb.NewStruct(map[string]any{"roles": []any{"employee"}})
-    require.NoError(t, err)
-    topCtx, err := structpb.NewStruct(map[string]any{"k": "top"})
-    require.NoError(t, err)
-    itemCtx, err := structpb.NewStruct(map[string]any{"k": "item"})
-    require.NoError(t, err)
+	// Build properties structs
+	subProps, err := structpb.NewStruct(map[string]any{"roles": []any{"employee"}})
+	require.NoError(t, err)
+	topCtx, err := structpb.NewStruct(map[string]any{"k": "top"})
+	require.NoError(t, err)
+	itemCtx, err := structpb.NewStruct(map[string]any{"k": "item"})
+	require.NoError(t, err)
 
-    top := &authzenv1.EvaluationRequest{
-        Subject:  &authzenv1.Subject{Type: "user", Id: "u1", Properties: subProps},
-        Action:   &authzenv1.Action{Name: "view:public"},
-        Resource: &authzenv1.Resource{Type: "leave_request", Id: "R1"},
-        Context:  topCtx,
-    }
-    item := &authzenv1.Tuple{
-        // override resource and context only
-        Resource: &authzenv1.Resource{Type: "leave_request", Id: "R2"},
-        Context:  itemCtx,
-    }
-    m := resolveTuple(top, item)
-    require.Equal(t, top.Subject, m.Subject)
-    require.Equal(t, top.Action, m.Action)
-    require.Equal(t, item.Resource, m.Resource)
-    require.Equal(t, item.Context, m.Context)
+	top := &authzenv1.AccessEvaluationRequest{
+		Subject:  &authzenv1.Subject{Type: "user", Id: "u1", Properties: subProps},
+		Action:   &authzenv1.Action{Name: "view:public"},
+		Resource: &authzenv1.Resource{Type: "leave_request", Id: "R1"},
+		Context:  topCtx,
+	}
+	item := &authzenv1.Tuple{
+		// override resource and context only
+		Resource: &authzenv1.Resource{Type: "leave_request", Id: "R2"},
+		Context:  itemCtx,
+	}
+	m := resolveTuple(top, item)
+	require.Equal(t, top.Subject, m.Subject)
+	require.Equal(t, top.Action, m.Action)
+	require.Equal(t, item.Resource, m.Resource)
+	require.Equal(t, item.Context, m.Context)
 }

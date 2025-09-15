@@ -4,13 +4,113 @@
     "title": "cerbos/authzen/v1/authzen.proto",
     "version": "version not set"
   },
+  "tags": [
+    {
+      "name": "AuthZENService"
+    }
+  ],
   "consumes": [
     "application/json"
   ],
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/.well-known/authzen-configuration": {
+      "get": {
+        "summary": "AuthZEN Metadata",
+        "description": "Discover AuthZEN endpoints and capabilities.",
+        "operationId": "AuthZENService_GetMetadata",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMetadataResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AuthZENService"
+        ]
+      }
+    },
+    "/access/v1/evaluation": {
+      "post": {
+        "summary": "AuthZEN Access Evaluation",
+        "description": "Evaluate a single subject/action/resource tuple.",
+        "operationId": "AuthZENService_AccessEvaluation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "AuthZEN Access Evaluation request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthZENService"
+        ]
+      }
+    },
+    "/access/v1/evaluations": {
+      "post": {
+        "summary": "AuthZEN Access Evaluations",
+        "description": "Evaluate multiple tuples with optional top-level defaults for subject, action, resource, and context.",
+        "operationId": "AuthZENService_AccessEvaluations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "AuthZEN Access Evaluations batch request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthZENService"
+        ]
+      }
+    }
+  },
   "definitions": {
     "protobufAny": {
       "type": "object",
@@ -20,6 +120,14 @@
         }
       },
       "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "rpcStatus": {
       "type": "object",
@@ -39,6 +147,197 @@
           }
         }
       }
+    },
+    "v1AccessEvaluationRequest": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/v1Subject",
+          "description": "Subject to evaluate."
+        },
+        "action": {
+          "$ref": "#/definitions/v1Action",
+          "description": "Action to evaluate."
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource",
+          "description": "Resource to evaluate."
+        },
+        "context": {
+          "type": "object",
+          "description": "Optional evaluation context."
+        }
+      },
+      "description": "AuthZEN Access Evaluation request"
+    },
+    "v1AccessEvaluationResponse": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "object"
+        },
+        "decision": {
+          "type": "boolean"
+        }
+      },
+      "description": "AccessEvaluationResponse mirrors Decision for RPC naming compliance."
+    },
+    "v1AccessEvaluationsRequest": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/v1Subject",
+          "description": "Default subject for all evaluations; tuples may override."
+        },
+        "context": {
+          "type": "object",
+          "description": "Default context for all evaluations; tuples may override."
+        },
+        "action": {
+          "$ref": "#/definitions/v1Action",
+          "description": "Default action for all evaluations; tuples may override."
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource",
+          "description": "Default resource for all evaluations; tuples may override."
+        },
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Tuple"
+          },
+          "description": "Evaluations to perform (order preserved)."
+        }
+      },
+      "description": "AuthZEN Access Evaluations batch request"
+    },
+    "v1AccessEvaluationsResponse": {
+      "type": "object",
+      "properties": {
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Decision"
+          },
+          "description": "Decisions in the same order as the request tuples."
+        }
+      },
+      "description": "AuthZEN batch decisions response"
+    },
+    "v1Action": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "description": "Arbitrary key-value properties attached to the action."
+        },
+        "name": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action name."
+        }
+      },
+      "description": "AuthZEN Action"
+    },
+    "v1Decision": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "object",
+          "description": "Optional decision context (e.g., outputs)."
+        },
+        "decision": {
+          "type": "boolean",
+          "description": "true for allow, false for deny."
+        }
+      },
+      "description": "AuthZEN decision"
+    },
+    "v1GetMetadataResponse": {
+      "type": "object",
+      "properties": {
+        "policyDecisionPoint": {
+          "type": "string",
+          "description": "Base URL of the Policy Decision Point (PDP)."
+        },
+        "accessEvaluationEndpoint": {
+          "type": "string",
+          "description": "URL of the Access Evaluation endpoint."
+        },
+        "accessEvaluationsEndpoint": {
+          "type": "string",
+          "description": "URL of the Access Evaluations (batch) endpoint."
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of URNs describing PDP capabilities."
+        }
+      },
+      "description": "AuthZEN metadata discovery document"
+    },
+    "v1Resource": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "description": "Arbitrary key-value properties attached to the resource."
+        },
+        "type": {
+          "type": "string",
+          "example": "leave_request",
+          "description": "Resource type."
+        },
+        "id": {
+          "type": "string",
+          "example": "XX125",
+          "description": "Resource identifier."
+        }
+      },
+      "description": "AuthZEN Resource"
+    },
+    "v1Subject": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "description": "Arbitrary key-value properties attached to the subject."
+        },
+        "type": {
+          "type": "string",
+          "example": "user",
+          "description": "Subject type."
+        },
+        "id": {
+          "type": "string",
+          "example": "alice",
+          "description": "Subject identifier."
+        }
+      },
+      "description": "AuthZEN Subject"
+    },
+    "v1Tuple": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/v1Subject"
+        },
+        "action": {
+          "$ref": "#/definitions/v1Action"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "context": {
+          "type": "object",
+          "description": "Contextual attributes for this evaluation."
+        }
+      },
+      "description": "Subject-Action-Resource tuple with optional context"
     }
   }
 }

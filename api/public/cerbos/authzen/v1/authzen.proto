@@ -6,6 +6,7 @@ syntax = "proto3";
 package cerbos.authzen.v1;
 
 import "buf/validate/validate.proto";
+import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -94,7 +95,7 @@ message Tuple {
 
 // EvaluationRequest is the AuthZEN evaluation request.
 // It supports a single tuple defined at the top level, or a batch via 'evaluations'.
-message EvaluationRequest {
+message AccessEvaluationRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN Access Evaluation request"}
   };
@@ -114,7 +115,7 @@ message EvaluationRequest {
 }
 
 // EvaluationsRequest is the batch request form for multiple tuples.
-message EvaluationsRequest {
+message AccessEvaluationsRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN Access Evaluations batch request"}
   };
@@ -162,15 +163,15 @@ message Decision {
 }
 
 // EvaluationsResponse holds decisions for a batch request in request order.
-message EvaluationsResponse {
+message AccessEvaluationsResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN batch decisions response"}
   };
   repeated Decision evaluations = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Decisions in the same order as the request tuples."}];
 }
 
-// Metadata describes the AuthZEN translation layer endpoints and capabilities.
-message Metadata {
+// GetMetadataResponse describes the AuthZEN translation layer endpoints and capabilities.
+message GetMetadataResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN metadata discovery document"}
   };
@@ -178,4 +179,49 @@ message Metadata {
   string access_evaluation_endpoint = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "URL of the Access Evaluation endpoint."}];
   string access_evaluations_endpoint = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "URL of the Access Evaluations (batch) endpoint."}];
   repeated string capabilities = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Array of URNs describing PDP capabilities."}];
+}
+
+// Empty request for metadata discovery.
+message GetMetadataRequest {}
+
+// AuthZENService exposes the AuthZEN HTTP API via gRPC + grpc-gateway.
+service AuthZENService {
+  // AccessEvaluation evaluates a single subject/action/resource tuple.
+  rpc AccessEvaluation(AccessEvaluationRequest) returns (AccessEvaluationResponse) {
+    option (google.api.http) = {
+      post: "/access/v1/evaluation"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "AuthZEN Access Evaluation"
+      description: "Evaluate a single subject/action/resource tuple."
+    };
+  }
+
+  // AccessEvaluations evaluates multiple tuples (boxcarred request).
+  rpc AccessEvaluations(AccessEvaluationsRequest) returns (AccessEvaluationsResponse) {
+    option (google.api.http) = {
+      post: "/access/v1/evaluations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "AuthZEN Access Evaluations"
+      description: "Evaluate multiple tuples with optional top-level defaults for subject, action, resource, and context."
+    };
+  }
+
+  // GetMetadata returns the metadata discovery document.
+  rpc GetMetadata(GetMetadataRequest) returns (GetMetadataResponse) {
+    option (google.api.http) = {get: "/.well-known/authzen-configuration"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "AuthZEN Metadata"
+      description: "Discover AuthZEN endpoints and capabilities."
+    };
+  }
+}
+
+// AccessEvaluationResponse mirrors Decision for RPC naming compliance.
+message AccessEvaluationResponse {
+  google.protobuf.Struct context = 1;
+  bool decision = 2;
 }

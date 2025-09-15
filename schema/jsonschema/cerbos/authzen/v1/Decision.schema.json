@@ -1,0 +1,28 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/authzen/v1/Decision.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "google.protobuf.Struct": {
+      "title": "Struct",
+      "description": "A structured data value, consisting of fields which map to dynamically-typed values.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/google.protobuf.Value"
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "$ref": "#/definitions/google.protobuf.Struct"
+    },
+    "decision": {
+      "type": "boolean"
+    }
+  }
+}

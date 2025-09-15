@@ -12,6 +12,7 @@ package authzenv1
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -282,7 +283,7 @@ func (x *Tuple) GetContext() *structpb.Struct {
 
 // EvaluationRequest is the AuthZEN evaluation request.
 // It supports a single tuple defined at the top level, or a batch via 'evaluations'.
-type EvaluationRequest struct {
+type AccessEvaluationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Subject       *Subject               `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`
 	Action        *Action                `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
@@ -292,20 +293,20 @@ type EvaluationRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EvaluationRequest) Reset() {
-	*x = EvaluationRequest{}
+func (x *AccessEvaluationRequest) Reset() {
+	*x = AccessEvaluationRequest{}
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EvaluationRequest) String() string {
+func (x *AccessEvaluationRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EvaluationRequest) ProtoMessage() {}
+func (*AccessEvaluationRequest) ProtoMessage() {}
 
-func (x *EvaluationRequest) ProtoReflect() protoreflect.Message {
+func (x *AccessEvaluationRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -317,33 +318,33 @@ func (x *EvaluationRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EvaluationRequest.ProtoReflect.Descriptor instead.
-func (*EvaluationRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use AccessEvaluationRequest.ProtoReflect.Descriptor instead.
+func (*AccessEvaluationRequest) Descriptor() ([]byte, []int) {
 	return file_cerbos_authzen_v1_authzen_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *EvaluationRequest) GetSubject() *Subject {
+func (x *AccessEvaluationRequest) GetSubject() *Subject {
 	if x != nil {
 		return x.Subject
 	}
 	return nil
 }
 
-func (x *EvaluationRequest) GetAction() *Action {
+func (x *AccessEvaluationRequest) GetAction() *Action {
 	if x != nil {
 		return x.Action
 	}
 	return nil
 }
 
-func (x *EvaluationRequest) GetResource() *Resource {
+func (x *AccessEvaluationRequest) GetResource() *Resource {
 	if x != nil {
 		return x.Resource
 	}
 	return nil
 }
 
-func (x *EvaluationRequest) GetContext() *structpb.Struct {
+func (x *AccessEvaluationRequest) GetContext() *structpb.Struct {
 	if x != nil {
 		return x.Context
 	}
@@ -351,7 +352,7 @@ func (x *EvaluationRequest) GetContext() *structpb.Struct {
 }
 
 // EvaluationsRequest is the batch request form for multiple tuples.
-type EvaluationsRequest struct {
+type AccessEvaluationsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Subject used for all evaluations unless overridden in a tuple.
 	Subject *Subject `protobuf:"bytes,1,opt,name=subject,proto3" json:"subject,omitempty"`
@@ -367,20 +368,20 @@ type EvaluationsRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EvaluationsRequest) Reset() {
-	*x = EvaluationsRequest{}
+func (x *AccessEvaluationsRequest) Reset() {
+	*x = AccessEvaluationsRequest{}
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EvaluationsRequest) String() string {
+func (x *AccessEvaluationsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EvaluationsRequest) ProtoMessage() {}
+func (*AccessEvaluationsRequest) ProtoMessage() {}
 
-func (x *EvaluationsRequest) ProtoReflect() protoreflect.Message {
+func (x *AccessEvaluationsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -392,40 +393,40 @@ func (x *EvaluationsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EvaluationsRequest.ProtoReflect.Descriptor instead.
-func (*EvaluationsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use AccessEvaluationsRequest.ProtoReflect.Descriptor instead.
+func (*AccessEvaluationsRequest) Descriptor() ([]byte, []int) {
 	return file_cerbos_authzen_v1_authzen_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *EvaluationsRequest) GetSubject() *Subject {
+func (x *AccessEvaluationsRequest) GetSubject() *Subject {
 	if x != nil {
 		return x.Subject
 	}
 	return nil
 }
 
-func (x *EvaluationsRequest) GetContext() *structpb.Struct {
+func (x *AccessEvaluationsRequest) GetContext() *structpb.Struct {
 	if x != nil {
 		return x.Context
 	}
 	return nil
 }
 
-func (x *EvaluationsRequest) GetAction() *Action {
+func (x *AccessEvaluationsRequest) GetAction() *Action {
 	if x != nil {
 		return x.Action
 	}
 	return nil
 }
 
-func (x *EvaluationsRequest) GetResource() *Resource {
+func (x *AccessEvaluationsRequest) GetResource() *Resource {
 	if x != nil {
 		return x.Resource
 	}
 	return nil
 }
 
-func (x *EvaluationsRequest) GetEvaluations() []*Tuple {
+func (x *AccessEvaluationsRequest) GetEvaluations() []*Tuple {
 	if x != nil {
 		return x.Evaluations
 	}
@@ -486,27 +487,27 @@ func (x *Decision) GetDecision() bool {
 }
 
 // EvaluationsResponse holds decisions for a batch request in request order.
-type EvaluationsResponse struct {
+type AccessEvaluationsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Evaluations   []*Decision            `protobuf:"bytes,1,rep,name=evaluations,proto3" json:"evaluations,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EvaluationsResponse) Reset() {
-	*x = EvaluationsResponse{}
+func (x *AccessEvaluationsResponse) Reset() {
+	*x = AccessEvaluationsResponse{}
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EvaluationsResponse) String() string {
+func (x *AccessEvaluationsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EvaluationsResponse) ProtoMessage() {}
+func (*AccessEvaluationsResponse) ProtoMessage() {}
 
-func (x *EvaluationsResponse) ProtoReflect() protoreflect.Message {
+func (x *AccessEvaluationsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -518,20 +519,20 @@ func (x *EvaluationsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EvaluationsResponse.ProtoReflect.Descriptor instead.
-func (*EvaluationsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use AccessEvaluationsResponse.ProtoReflect.Descriptor instead.
+func (*AccessEvaluationsResponse) Descriptor() ([]byte, []int) {
 	return file_cerbos_authzen_v1_authzen_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *EvaluationsResponse) GetEvaluations() []*Decision {
+func (x *AccessEvaluationsResponse) GetEvaluations() []*Decision {
 	if x != nil {
 		return x.Evaluations
 	}
 	return nil
 }
 
-// Metadata describes the AuthZEN translation layer endpoints and capabilities.
-type Metadata struct {
+// GetMetadataResponse describes the AuthZEN translation layer endpoints and capabilities.
+type GetMetadataResponse struct {
 	state                     protoimpl.MessageState `protogen:"open.v1"`
 	PolicyDecisionPoint       string                 `protobuf:"bytes,1,opt,name=policy_decision_point,json=policyDecisionPoint,proto3" json:"policy_decision_point,omitempty"`
 	AccessEvaluationEndpoint  string                 `protobuf:"bytes,2,opt,name=access_evaluation_endpoint,json=accessEvaluationEndpoint,proto3" json:"access_evaluation_endpoint,omitempty"`
@@ -541,20 +542,20 @@ type Metadata struct {
 	sizeCache                 protoimpl.SizeCache
 }
 
-func (x *Metadata) Reset() {
-	*x = Metadata{}
+func (x *GetMetadataResponse) Reset() {
+	*x = GetMetadataResponse{}
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Metadata) String() string {
+func (x *GetMetadataResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Metadata) ProtoMessage() {}
+func (*GetMetadataResponse) ProtoMessage() {}
 
-func (x *Metadata) ProtoReflect() protoreflect.Message {
+func (x *GetMetadataResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -566,44 +567,134 @@ func (x *Metadata) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Metadata.ProtoReflect.Descriptor instead.
-func (*Metadata) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetMetadataResponse.ProtoReflect.Descriptor instead.
+func (*GetMetadataResponse) Descriptor() ([]byte, []int) {
 	return file_cerbos_authzen_v1_authzen_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *Metadata) GetPolicyDecisionPoint() string {
+func (x *GetMetadataResponse) GetPolicyDecisionPoint() string {
 	if x != nil {
 		return x.PolicyDecisionPoint
 	}
 	return ""
 }
 
-func (x *Metadata) GetAccessEvaluationEndpoint() string {
+func (x *GetMetadataResponse) GetAccessEvaluationEndpoint() string {
 	if x != nil {
 		return x.AccessEvaluationEndpoint
 	}
 	return ""
 }
 
-func (x *Metadata) GetAccessEvaluationsEndpoint() string {
+func (x *GetMetadataResponse) GetAccessEvaluationsEndpoint() string {
 	if x != nil {
 		return x.AccessEvaluationsEndpoint
 	}
 	return ""
 }
 
-func (x *Metadata) GetCapabilities() []string {
+func (x *GetMetadataResponse) GetCapabilities() []string {
 	if x != nil {
 		return x.Capabilities
 	}
 	return nil
 }
 
+// Empty request for metadata discovery.
+type GetMetadataRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMetadataRequest) Reset() {
+	*x = GetMetadataRequest{}
+	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMetadataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMetadataRequest) ProtoMessage() {}
+
+func (x *GetMetadataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMetadataRequest.ProtoReflect.Descriptor instead.
+func (*GetMetadataRequest) Descriptor() ([]byte, []int) {
+	return file_cerbos_authzen_v1_authzen_proto_rawDescGZIP(), []int{9}
+}
+
+// AccessEvaluationResponse mirrors Decision for RPC naming compliance.
+type AccessEvaluationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Context       *structpb.Struct       `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+	Decision      bool                   `protobuf:"varint,2,opt,name=decision,proto3" json:"decision,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccessEvaluationResponse) Reset() {
+	*x = AccessEvaluationResponse{}
+	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccessEvaluationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessEvaluationResponse) ProtoMessage() {}
+
+func (x *AccessEvaluationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_authzen_v1_authzen_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessEvaluationResponse.ProtoReflect.Descriptor instead.
+func (*AccessEvaluationResponse) Descriptor() ([]byte, []int) {
+	return file_cerbos_authzen_v1_authzen_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AccessEvaluationResponse) GetContext() *structpb.Struct {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+func (x *AccessEvaluationResponse) GetDecision() bool {
+	if x != nil {
+		return x.Decision
+	}
+	return false
+}
+
 var File_cerbos_authzen_v1_authzen_proto protoreflect.FileDescriptor
 
 const file_cerbos_authzen_v1_authzen_proto_rawDesc = "" +
 	"\n" +
-	"\x1fcerbos/authzen/v1/authzen.proto\x12\x11cerbos.authzen.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x89\x02\n" +
+	"\x1fcerbos/authzen/v1/authzen.proto\x12\x11cerbos.authzen.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x89\x02\n" +
 	"\aSubject\x12u\n" +
 	"\n" +
 	"properties\x18\x01 \x01(\v2\x17.google.protobuf.StructB<\x92A927Arbitrary key-value properties attached to the subject.R\n" +
@@ -629,14 +720,14 @@ const file_cerbos_authzen_v1_authzen_proto_rawDesc = "" +
 	"\x06action\x18\x02 \x01(\v2\x19.cerbos.authzen.v1.ActionR\x06action\x127\n" +
 	"\bresource\x18\x03 \x01(\v2\x1b.cerbos.authzen.v1.ResourceR\bresource\x12b\n" +
 	"\acontext\x18\x04 \x01(\v2\x17.google.protobuf.StructB/\x92A,2*Contextual attributes for this evaluation.R\acontext::\x92A7\n" +
-	"523Subject-Action-Resource tuple with optional context\"\x98\x03\n" +
-	"\x11EvaluationRequest\x12U\n" +
+	"523Subject-Action-Resource tuple with optional context\"\x9e\x03\n" +
+	"\x17AccessEvaluationRequest\x12U\n" +
 	"\asubject\x18\x01 \x01(\v2\x1a.cerbos.authzen.v1.SubjectB\x1f\x92A\x162\x14Subject to evaluate.\xbaH\x03\xc8\x01\x01R\asubject\x12Q\n" +
 	"\x06action\x18\x02 \x01(\v2\x19.cerbos.authzen.v1.ActionB\x1e\x92A\x152\x13Action to evaluate.\xbaH\x03\xc8\x01\x01R\x06action\x12Y\n" +
 	"\bresource\x18\x03 \x01(\v2\x1b.cerbos.authzen.v1.ResourceB \x92A\x172\x15Resource to evaluate.\xbaH\x03\xc8\x01\x01R\bresource\x12T\n" +
 	"\acontext\x18\x04 \x01(\v2\x17.google.protobuf.StructB!\x92A\x1e2\x1cOptional evaluation context.R\acontext:(\x92A%\n" +
-	"#2!AuthZEN Access Evaluation request\"\xc8\t\n" +
-	"\x12EvaluationsRequest\x12t\n" +
+	"#2!AuthZEN Access Evaluation request\"\xce\t\n" +
+	"\x18AccessEvaluationsRequest\x12t\n" +
 	"\asubject\x18\x01 \x01(\v2\x1a.cerbos.authzen.v1.SubjectB>\x92A;29Default subject for all evaluations; tuples may override.R\asubject\x12q\n" +
 	"\acontext\x18\x02 \x01(\v2\x17.google.protobuf.StructB>\x92A;29Default context for all evaluations; tuples may override.R\acontext\x12p\n" +
 	"\x06action\x18\x03 \x01(\v2\x19.cerbos.authzen.v1.ActionB=\x92A:28Default action for all evaluations; tuples may override.R\x06action\x12x\n" +
@@ -649,16 +740,24 @@ const file_cerbos_authzen_v1_authzen_proto_rawDesc = "" +
 	"\bDecision\x12b\n" +
 	"\acontext\x18\x01 \x01(\v2\x17.google.protobuf.StructB/\x92A,2*Optional decision context (e.g., outputs).R\acontext\x12@\n" +
 	"\bdecision\x18\x02 \x01(\bB$\x92A!2\x1ftrue for allow, false for deny.R\bdecision:\x17\x92A\x14\n" +
-	"\x122\x10AuthZEN decision\"\xb6\x01\n" +
-	"\x13EvaluationsResponse\x12v\n" +
+	"\x122\x10AuthZEN decision\"\xbc\x01\n" +
+	"\x19AccessEvaluationsResponse\x12v\n" +
 	"\vevaluations\x18\x01 \x03(\v2\x1b.cerbos.authzen.v1.DecisionB7\x92A422Decisions in the same order as the request tuples.R\vevaluations:'\x92A$\n" +
-	"\"2 AuthZEN batch decisions response\"\xd3\x03\n" +
-	"\bMetadata\x12e\n" +
+	"\"2 AuthZEN batch decisions response\"\xde\x03\n" +
+	"\x13GetMetadataResponse\x12e\n" +
 	"\x15policy_decision_point\x18\x01 \x01(\tB1\x92A.2,Base URL of the Policy Decision Point (PDP).R\x13policyDecisionPoint\x12i\n" +
 	"\x1aaccess_evaluation_endpoint\x18\x02 \x01(\tB+\x92A(2&URL of the Access Evaluation endpoint.R\x18accessEvaluationEndpoint\x12t\n" +
 	"\x1baccess_evaluations_endpoint\x18\x03 \x01(\tB4\x92A12/URL of the Access Evaluations (batch) endpoint.R\x19accessEvaluationsEndpoint\x12S\n" +
 	"\fcapabilities\x18\x04 \x03(\tB/\x92A,2*Array of URNs describing PDP capabilities.R\fcapabilities:*\x92A'\n" +
-	"%2#AuthZEN metadata discovery documentBs\n" +
+	"%2#AuthZEN metadata discovery document\"\x14\n" +
+	"\x12GetMetadataRequest\"i\n" +
+	"\x18AccessEvaluationResponse\x121\n" +
+	"\acontext\x18\x01 \x01(\v2\x17.google.protobuf.StructR\acontext\x12\x1a\n" +
+	"\bdecision\x18\x02 \x01(\bR\bdecision2\xda\x05\n" +
+	"\x0eAuthZENService\x12\xdd\x01\n" +
+	"\x10AccessEvaluation\x12*.cerbos.authzen.v1.AccessEvaluationRequest\x1a+.cerbos.authzen.v1.AccessEvaluationResponse\"p\x92AM\x12\x19AuthZEN Access Evaluation\x1a0Evaluate a single subject/action/resource tuple.\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/access/v1/evaluation\x12\x99\x02\n" +
+	"\x11AccessEvaluations\x12+.cerbos.authzen.v1.AccessEvaluationsRequest\x1a,.cerbos.authzen.v1.AccessEvaluationsResponse\"\xa8\x01\x92A\x83\x01\x12\x1aAuthZEN Access Evaluations\x1aeEvaluate multiple tuples with optional top-level defaults for subject, action, resource, and context.\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/access/v1/evaluations\x12\xcb\x01\n" +
+	"\vGetMetadata\x12%.cerbos.authzen.v1.GetMetadataRequest\x1a&.cerbos.authzen.v1.GetMetadataResponse\"m\x92A@\x12\x10AuthZEN Metadata\x1a,Discover AuthZEN endpoints and capabilities.\x82\xd3\xe4\x93\x02$\x12\"/.well-known/authzen-configurationBs\n" +
 	"\x19dev.cerbos.api.v1.authzenZ>github.com/cerbos/cerbos/api/genpb/cerbos/authzen/v1;authzenv1\xaa\x02\x15Cerbos.Api.V1.Authzenb\x06proto3"
 
 var (
@@ -673,43 +772,52 @@ func file_cerbos_authzen_v1_authzen_proto_rawDescGZIP() []byte {
 	return file_cerbos_authzen_v1_authzen_proto_rawDescData
 }
 
-var file_cerbos_authzen_v1_authzen_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_cerbos_authzen_v1_authzen_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_cerbos_authzen_v1_authzen_proto_goTypes = []any{
-	(*Subject)(nil),             // 0: cerbos.authzen.v1.Subject
-	(*Action)(nil),              // 1: cerbos.authzen.v1.Action
-	(*Resource)(nil),            // 2: cerbos.authzen.v1.Resource
-	(*Tuple)(nil),               // 3: cerbos.authzen.v1.Tuple
-	(*EvaluationRequest)(nil),   // 4: cerbos.authzen.v1.EvaluationRequest
-	(*EvaluationsRequest)(nil),  // 5: cerbos.authzen.v1.EvaluationsRequest
-	(*Decision)(nil),            // 6: cerbos.authzen.v1.Decision
-	(*EvaluationsResponse)(nil), // 7: cerbos.authzen.v1.EvaluationsResponse
-	(*Metadata)(nil),            // 8: cerbos.authzen.v1.Metadata
-	(*structpb.Struct)(nil),     // 9: google.protobuf.Struct
+	(*Subject)(nil),                   // 0: cerbos.authzen.v1.Subject
+	(*Action)(nil),                    // 1: cerbos.authzen.v1.Action
+	(*Resource)(nil),                  // 2: cerbos.authzen.v1.Resource
+	(*Tuple)(nil),                     // 3: cerbos.authzen.v1.Tuple
+	(*AccessEvaluationRequest)(nil),   // 4: cerbos.authzen.v1.AccessEvaluationRequest
+	(*AccessEvaluationsRequest)(nil),  // 5: cerbos.authzen.v1.AccessEvaluationsRequest
+	(*Decision)(nil),                  // 6: cerbos.authzen.v1.Decision
+	(*AccessEvaluationsResponse)(nil), // 7: cerbos.authzen.v1.AccessEvaluationsResponse
+	(*GetMetadataResponse)(nil),       // 8: cerbos.authzen.v1.GetMetadataResponse
+	(*GetMetadataRequest)(nil),        // 9: cerbos.authzen.v1.GetMetadataRequest
+	(*AccessEvaluationResponse)(nil),  // 10: cerbos.authzen.v1.AccessEvaluationResponse
+	(*structpb.Struct)(nil),           // 11: google.protobuf.Struct
 }
 var file_cerbos_authzen_v1_authzen_proto_depIdxs = []int32{
-	9,  // 0: cerbos.authzen.v1.Subject.properties:type_name -> google.protobuf.Struct
-	9,  // 1: cerbos.authzen.v1.Action.properties:type_name -> google.protobuf.Struct
-	9,  // 2: cerbos.authzen.v1.Resource.properties:type_name -> google.protobuf.Struct
+	11, // 0: cerbos.authzen.v1.Subject.properties:type_name -> google.protobuf.Struct
+	11, // 1: cerbos.authzen.v1.Action.properties:type_name -> google.protobuf.Struct
+	11, // 2: cerbos.authzen.v1.Resource.properties:type_name -> google.protobuf.Struct
 	0,  // 3: cerbos.authzen.v1.Tuple.subject:type_name -> cerbos.authzen.v1.Subject
 	1,  // 4: cerbos.authzen.v1.Tuple.action:type_name -> cerbos.authzen.v1.Action
 	2,  // 5: cerbos.authzen.v1.Tuple.resource:type_name -> cerbos.authzen.v1.Resource
-	9,  // 6: cerbos.authzen.v1.Tuple.context:type_name -> google.protobuf.Struct
-	0,  // 7: cerbos.authzen.v1.EvaluationRequest.subject:type_name -> cerbos.authzen.v1.Subject
-	1,  // 8: cerbos.authzen.v1.EvaluationRequest.action:type_name -> cerbos.authzen.v1.Action
-	2,  // 9: cerbos.authzen.v1.EvaluationRequest.resource:type_name -> cerbos.authzen.v1.Resource
-	9,  // 10: cerbos.authzen.v1.EvaluationRequest.context:type_name -> google.protobuf.Struct
-	0,  // 11: cerbos.authzen.v1.EvaluationsRequest.subject:type_name -> cerbos.authzen.v1.Subject
-	9,  // 12: cerbos.authzen.v1.EvaluationsRequest.context:type_name -> google.protobuf.Struct
-	1,  // 13: cerbos.authzen.v1.EvaluationsRequest.action:type_name -> cerbos.authzen.v1.Action
-	2,  // 14: cerbos.authzen.v1.EvaluationsRequest.resource:type_name -> cerbos.authzen.v1.Resource
-	3,  // 15: cerbos.authzen.v1.EvaluationsRequest.evaluations:type_name -> cerbos.authzen.v1.Tuple
-	9,  // 16: cerbos.authzen.v1.Decision.context:type_name -> google.protobuf.Struct
-	6,  // 17: cerbos.authzen.v1.EvaluationsResponse.evaluations:type_name -> cerbos.authzen.v1.Decision
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	11, // 6: cerbos.authzen.v1.Tuple.context:type_name -> google.protobuf.Struct
+	0,  // 7: cerbos.authzen.v1.AccessEvaluationRequest.subject:type_name -> cerbos.authzen.v1.Subject
+	1,  // 8: cerbos.authzen.v1.AccessEvaluationRequest.action:type_name -> cerbos.authzen.v1.Action
+	2,  // 9: cerbos.authzen.v1.AccessEvaluationRequest.resource:type_name -> cerbos.authzen.v1.Resource
+	11, // 10: cerbos.authzen.v1.AccessEvaluationRequest.context:type_name -> google.protobuf.Struct
+	0,  // 11: cerbos.authzen.v1.AccessEvaluationsRequest.subject:type_name -> cerbos.authzen.v1.Subject
+	11, // 12: cerbos.authzen.v1.AccessEvaluationsRequest.context:type_name -> google.protobuf.Struct
+	1,  // 13: cerbos.authzen.v1.AccessEvaluationsRequest.action:type_name -> cerbos.authzen.v1.Action
+	2,  // 14: cerbos.authzen.v1.AccessEvaluationsRequest.resource:type_name -> cerbos.authzen.v1.Resource
+	3,  // 15: cerbos.authzen.v1.AccessEvaluationsRequest.evaluations:type_name -> cerbos.authzen.v1.Tuple
+	11, // 16: cerbos.authzen.v1.Decision.context:type_name -> google.protobuf.Struct
+	6,  // 17: cerbos.authzen.v1.AccessEvaluationsResponse.evaluations:type_name -> cerbos.authzen.v1.Decision
+	11, // 18: cerbos.authzen.v1.AccessEvaluationResponse.context:type_name -> google.protobuf.Struct
+	4,  // 19: cerbos.authzen.v1.AuthZENService.AccessEvaluation:input_type -> cerbos.authzen.v1.AccessEvaluationRequest
+	5,  // 20: cerbos.authzen.v1.AuthZENService.AccessEvaluations:input_type -> cerbos.authzen.v1.AccessEvaluationsRequest
+	9,  // 21: cerbos.authzen.v1.AuthZENService.GetMetadata:input_type -> cerbos.authzen.v1.GetMetadataRequest
+	10, // 22: cerbos.authzen.v1.AuthZENService.AccessEvaluation:output_type -> cerbos.authzen.v1.AccessEvaluationResponse
+	7,  // 23: cerbos.authzen.v1.AuthZENService.AccessEvaluations:output_type -> cerbos.authzen.v1.AccessEvaluationsResponse
+	8,  // 24: cerbos.authzen.v1.AuthZENService.GetMetadata:output_type -> cerbos.authzen.v1.GetMetadataResponse
+	22, // [22:25] is the sub-list for method output_type
+	19, // [19:22] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_authzen_v1_authzen_proto_init() }
@@ -723,9 +831,9 @@ func file_cerbos_authzen_v1_authzen_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_authzen_v1_authzen_proto_rawDesc), len(file_cerbos_authzen_v1_authzen_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_cerbos_authzen_v1_authzen_proto_goTypes,
 		DependencyIndexes: file_cerbos_authzen_v1_authzen_proto_depIdxs,

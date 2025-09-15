@@ -13,6 +13,84 @@ import (
 	unsafe "unsafe"
 )
 
+func cerbos_authzen_v1_AccessEvaluationRequest_hashpb_sum(m *AccessEvaluationRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationRequest.subject"]; !ok {
+		if m.GetSubject() != nil {
+			cerbos_authzen_v1_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationRequest.action"]; !ok {
+		if m.GetAction() != nil {
+			cerbos_authzen_v1_Action_hashpb_sum(m.GetAction(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationRequest.resource"]; !ok {
+		if m.GetResource() != nil {
+			cerbos_authzen_v1_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationRequest.context"]; !ok {
+		if m.GetContext() != nil {
+			google_protobuf_Struct_hashpb_sum(m.GetContext(), hasher, ignore)
+		}
+	}
+}
+
+func cerbos_authzen_v1_AccessEvaluationResponse_hashpb_sum(m *AccessEvaluationResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationResponse.context"]; !ok {
+		if m.GetContext() != nil {
+			google_protobuf_Struct_hashpb_sum(m.GetContext(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationResponse.decision"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetDecision())))
+	}
+}
+
+func cerbos_authzen_v1_AccessEvaluationsRequest_hashpb_sum(m *AccessEvaluationsRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsRequest.subject"]; !ok {
+		if m.GetSubject() != nil {
+			cerbos_authzen_v1_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsRequest.context"]; !ok {
+		if m.GetContext() != nil {
+			google_protobuf_Struct_hashpb_sum(m.GetContext(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsRequest.action"]; !ok {
+		if m.GetAction() != nil {
+			cerbos_authzen_v1_Action_hashpb_sum(m.GetAction(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsRequest.resource"]; !ok {
+		if m.GetResource() != nil {
+			cerbos_authzen_v1_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsRequest.evaluations"]; !ok {
+		if len(m.Evaluations) > 0 {
+			for _, v := range m.Evaluations {
+				if v != nil {
+					cerbos_authzen_v1_Tuple_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_authzen_v1_AccessEvaluationsResponse_hashpb_sum(m *AccessEvaluationsResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsResponse.evaluations"]; !ok {
+		if len(m.Evaluations) > 0 {
+			for _, v := range m.Evaluations {
+				if v != nil {
+					cerbos_authzen_v1_Decision_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
 func cerbos_authzen_v1_Action_hashpb_sum(m *Action, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.authzen.v1.Action.properties"]; !ok {
 		if m.GetProperties() != nil {
@@ -36,87 +114,23 @@ func cerbos_authzen_v1_Decision_hashpb_sum(m *Decision, hasher hash.Hash, ignore
 	}
 }
 
-func cerbos_authzen_v1_EvaluationRequest_hashpb_sum(m *EvaluationRequest, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationRequest.subject"]; !ok {
-		if m.GetSubject() != nil {
-			cerbos_authzen_v1_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationRequest.action"]; !ok {
-		if m.GetAction() != nil {
-			cerbos_authzen_v1_Action_hashpb_sum(m.GetAction(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationRequest.resource"]; !ok {
-		if m.GetResource() != nil {
-			cerbos_authzen_v1_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationRequest.context"]; !ok {
-		if m.GetContext() != nil {
-			google_protobuf_Struct_hashpb_sum(m.GetContext(), hasher, ignore)
-		}
-	}
+func cerbos_authzen_v1_GetMetadataRequest_hashpb_sum(m *GetMetadataRequest, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
-func cerbos_authzen_v1_EvaluationsRequest_hashpb_sum(m *EvaluationsRequest, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationsRequest.subject"]; !ok {
-		if m.GetSubject() != nil {
-			cerbos_authzen_v1_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationsRequest.context"]; !ok {
-		if m.GetContext() != nil {
-			google_protobuf_Struct_hashpb_sum(m.GetContext(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationsRequest.action"]; !ok {
-		if m.GetAction() != nil {
-			cerbos_authzen_v1_Action_hashpb_sum(m.GetAction(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationsRequest.resource"]; !ok {
-		if m.GetResource() != nil {
-			cerbos_authzen_v1_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationsRequest.evaluations"]; !ok {
-		if len(m.Evaluations) > 0 {
-			for _, v := range m.Evaluations {
-				if v != nil {
-					cerbos_authzen_v1_Tuple_hashpb_sum(v, hasher, ignore)
-				}
-			}
-		}
-	}
-}
-
-func cerbos_authzen_v1_EvaluationsResponse_hashpb_sum(m *EvaluationsResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.authzen.v1.EvaluationsResponse.evaluations"]; !ok {
-		if len(m.Evaluations) > 0 {
-			for _, v := range m.Evaluations {
-				if v != nil {
-					cerbos_authzen_v1_Decision_hashpb_sum(v, hasher, ignore)
-				}
-			}
-		}
-	}
-}
-
-func cerbos_authzen_v1_Metadata_hashpb_sum(m *Metadata, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.authzen.v1.Metadata.policy_decision_point"]; !ok {
+func cerbos_authzen_v1_GetMetadataResponse_hashpb_sum(m *GetMetadataResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.authzen.v1.GetMetadataResponse.policy_decision_point"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetPolicyDecisionPoint()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPolicyDecisionPoint()), len(m.GetPolicyDecisionPoint())))
 	}
-	if _, ok := ignore["cerbos.authzen.v1.Metadata.access_evaluation_endpoint"]; !ok {
+	if _, ok := ignore["cerbos.authzen.v1.GetMetadataResponse.access_evaluation_endpoint"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetAccessEvaluationEndpoint()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAccessEvaluationEndpoint()), len(m.GetAccessEvaluationEndpoint())))
 	}
-	if _, ok := ignore["cerbos.authzen.v1.Metadata.access_evaluations_endpoint"]; !ok {
+	if _, ok := ignore["cerbos.authzen.v1.GetMetadataResponse.access_evaluations_endpoint"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetAccessEvaluationsEndpoint()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAccessEvaluationsEndpoint()), len(m.GetAccessEvaluationsEndpoint())))
 	}
-	if _, ok := ignore["cerbos.authzen.v1.Metadata.capabilities"]; !ok {
+	if _, ok := ignore["cerbos.authzen.v1.GetMetadataResponse.capabilities"]; !ok {
 		if len(m.Capabilities) > 0 {
 			for _, v := range m.Capabilities {
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
