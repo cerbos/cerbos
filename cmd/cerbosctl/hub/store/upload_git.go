@@ -85,20 +85,20 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return ugc.toCommandError(k.Stderr, err)
 	}
 
+	gitChangeDetails, err := changeDetailsFromHash(repository, ugc.diffToApply.hash)
+	if err != nil {
+		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details for %q: %w", ugc.diffToApply.hash.String(), err))
+	}
+
+	changeDetails, message, err := ugc.ChangeDetails.ChangeDetails(gitChangeDetails)
+	if err != nil {
+		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details: %w", err))
+	}
+
 	version := ugc.VersionMustEq
 	for batch, err := range ugc.batch() {
 		if err != nil {
 			return ugc.toCommandError(k.Stderr, err)
-		}
-
-		gitChangeDetails, err := changeDetailsFromHash(repository, ugc.diffToApply.hash)
-		if err != nil {
-			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details for %q: %w", ugc.diffToApply.hash.String(), err))
-		}
-
-		changeDetails, message, err := ugc.ChangeDetails.ChangeDetails(gitChangeDetails)
-		if err != nil {
-			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details: %w", err))
 		}
 
 		req := hub.
@@ -228,7 +228,7 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 			return nil, fmt.Errorf("failed to get file from change: %w", err)
 		}
 
-		var nameOfToBeDeleted string
+		var oldNameOfRenamedFile string
 		var name string
 		var operation op
 		switch {
@@ -239,7 +239,7 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 			} else {
 				name = objectChange.To.Name
 				operation = OpAddOrUpdate
-				nameOfToBeDeleted = objectChange.From.Name
+				oldNameOfRenamedFile = objectChange.From.Name
 			}
 		case from == nil && to != nil:
 			name = objectChange.To.Name
@@ -249,14 +249,15 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 			operation = OpDelete
 		}
 
+		name = filepath.Clean(name)
+		path := filepath.Join(pathToRepo, name)
+		if path == "" || util.PathIsHidden(path) || !util.IsSupportedFileType(path) {
+			return nil, fmt.Errorf("invalid file %q: must not be hidden and must be a YAML or JSON file", path)
+		}
+
 		normalizedName, skipped := ugc.normalize(name)
 		if skipped {
 			continue
-		}
-
-		path := filepath.Clean(filepath.Join(pathToRepo, name))
-		if path == "" || util.PathIsHidden(path) || !util.IsSupportedFileType(path) {
-			return nil, fmt.Errorf("invalid file %q: must not be hidden and must be a YAML or JSON file", path)
 		}
 
 		if operation != OpDelete {
@@ -275,7 +276,7 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 			path:      path,
 			operation: operation,
 		})
-		if nameOfToBeDeleted != "" {
+		if oldNameOfRenamedFile != "" {
 			changes = append(changes, &change{
 				name:      normalizedName,
 				path:      path,
