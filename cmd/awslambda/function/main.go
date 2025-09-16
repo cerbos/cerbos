@@ -18,7 +18,7 @@ import (
 
 func main() {
 	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
-		fmt.Printf("cerbos %s\n", util.Version)
+		fmt.Printf("cerbos %s\n", util.Version) //nolint:forbidigo
 		return
 	}
 
