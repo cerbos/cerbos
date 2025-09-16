@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -102,7 +102,7 @@ jobs:
       job-total: ${{ strategy.job-total }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           lfs: true
 
@@ -116,7 +116,7 @@ jobs:
         uses: extractions/setup-just@v3
 
       - name: Download previous test times
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: previous-test-times
 
@@ -169,10 +169,10 @@ jobs:
         run: test "${{ needs.test.result }}" = "success"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.25.x
           cache: false
@@ -182,7 +182,7 @@ jobs:
         uses: extractions/setup-just@v3
 
       - name: Download JUnit reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
 
       - name: Combine JUnit reports
         run: |-
@@ -210,7 +210,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           lfs: true
@@ -226,9 +226,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.25.x
           check-latest: true
@@ -241,7 +241,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7.0.1
+        uses: golangci/golangci-lint-action@v8.0.0
         with:
           version: latest
           args: "--config=.golangci.yaml -v"
@@ -253,7 +253,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -289,9 +289,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.25.x"
 
@@ -306,7 +306,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -354,7 +354,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out .node-version file
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           sparse-checkout: |
             .node-version
@@ -362,7 +362,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Download npm packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: npm-packages
 
@@ -370,7 +370,7 @@ jobs:
         run: tar --extract --verbose --file npm.tar
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           cache: npm
           cache-dependency-path: npm/test/registry/package-lock.json

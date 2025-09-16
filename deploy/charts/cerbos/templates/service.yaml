@@ -38,3 +38,6 @@ spec:
       {{- end }}
   selector:
     {{- include "cerbos.selectorLabels" . | nindent 4 }}
+  {{- with .Values.service.trafficDistribution }}
+  trafficDistribution: {{ quote . }}
+  {{- end }}

@@ -10,21 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
@@ -43,7 +35,7 @@ jobs:
         uses: jaxxstorm/action-install-gh-release@v2.1.0
         with:
           repo: helmfile/helmfile
-          tag: v1.1.6
+          tag: v1.1.7
 
       - name: Telepresence
         run: |
