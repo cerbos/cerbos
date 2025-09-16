@@ -253,15 +253,17 @@ jobs:
           chmod +x dist/bootstrap
           cp .cerbos.yaml config-layer/
           
-          # Create architecture-specific template
-          app_name="cerbos-lambda-function-${{ matrix.arch }}"
-          sed "s/\"cerbos-lambda-function\"/\"${app_name}\"/" sam.yml > sam-sar.yml
+          arch=$(sed -e 's/aarch64/arm64/' -e 's/amd64/x86_64/' <<< "${{ matrix.arch }}")
+          app_name="cerbos-lambda-function-${arch/_/-}" # _ isn't valid character in the name
+
+          # Create template with architecture-specific name, replace arch (noop if arch is arm64)
+          sed -e "s/\"cerbos-lambda-function\"/\"${app_name}\"/" -e "s/- arm64/- ${arch}/" sam.yml > .sam.tmp.yml
 
       - name: Package Lambda function
         run: |-
           cd deploy/awslambda/function
           sam package \
-            --template-file sam-sar.yml \
+            --template-file .sam.tmp.yml \
             --s3-bucket ${{ vars.AWS_SAM_PACKAGING_BUCKET }} \
             --output-template-file packaged-template.yml \
             --region ${{ vars.AWS_REGION }}
