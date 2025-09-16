@@ -4,8 +4,10 @@ publish: function-package
     sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
     --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides ArchitectureParameter=$arch
 
-publish-to-sar ARCH=arch(): (function-package ARCH)
+publish-to-sar ARCH=arch() VERSION='': (function-package ARCH)
     #!/usr/bin/env bash
+    set -euo pipefail
+
     if [[ -z "${CERBOS_SAM_PACKAGING_BUCKET}" ]]; then
         echo "Error: CERBOS_SAM_PACKAGING_BUCKET environment variable is required for SAR publication"
         exit 1
@@ -16,11 +18,14 @@ publish-to-sar ARCH=arch(): (function-package ARCH)
     
     # Create template with architecture-specific name
     sed "s/\"cerbos-lambda-function\"/\"${app_name}\"/" sam.yml > sam-sar.yml
-    
-    version=$(./dist/bootstrap --version 2>/dev/null | head -n1 | awk '{print $2}' || (echo "Error: failed to determine version"; exit 1))
-    # Remove 'v' prefix if present for SAR semantic versioning
-    version=${version#v}
-    
+
+    if [[ -z "{{ VERSION }}" ]]; then
+        version=$(./dist/bootstrap --version 2>/dev/null | head -n1 | awk '{print $2}')
+        # Remove 'v' prefix if present for SAR semantic versioning
+        version=${version#v}
+    else
+        version="{{ VERSION }}"
+    fi
     echo "Detected version: $version"
     echo "Detected architecture: $arch"
     echo "Publishing as: $app_name"
