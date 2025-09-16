@@ -13,10 +13,10 @@ publish-to-sar ARCH=arch() VERSION='': (function-package ARCH)
     fi
     
     arch=$(sed -e 's/aarch64/arm64/' -e 's/amd64/x86_64/' <<< "{{ ARCH }}")
-    app_name="cerbos-lambda-function-${arch}"
+    app_name="cerbos-lambda-function-${arch/_/-}" # _ isn't valid character in the name
     
     # Create template with architecture-specific name, replace arch (noop if arch is arm64)
-    sed -e "s/\"cerbos-lambda-function\"/\"${app_name}\"/" -e "s/- arm64/- ${arch}/" sam.yml > sam-sar.yml
+    sed -e "s/\"cerbos-lambda-function\"/\"${app_name}\"/" -e "s/- arm64/- ${arch}/" sam.yml > .sam.tmp.yml
 
     if [[ -z "{{ VERSION }}" ]]; then
         version=$(./dist/bootstrap --version 2>/dev/null | head -n1 | awk '{print $2}')
@@ -29,9 +29,9 @@ publish-to-sar ARCH=arch() VERSION='': (function-package ARCH)
     echo "Publishing as: $app_name"
     echo "Packaging Lambda function for SAR..."
     sam package \
-        --template-file sam-sar.yml \
+        --template-file .sam.tmp.yml \
         --s3-bucket "${CERBOS_SAM_PACKAGING_BUCKET}" \
-        --output-template-file packaged-template.yml
+        --output-template-file packaged-template.yml > /dev/null
     
     echo "Publishing to AWS Serverless Application Repository..."
     sam publish \
@@ -39,7 +39,7 @@ publish-to-sar ARCH=arch() VERSION='': (function-package ARCH)
         --semantic-version "$version"
     
     # Clean up temporary files
-    rm -f sam-sar.yml packaged-template.yml
+    rm -f .sam.tmp.yml packaged-template.yml
 
 function-package ARCH=arch():
     #!/usr/bin/env bash
