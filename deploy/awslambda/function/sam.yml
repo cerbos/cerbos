@@ -26,22 +26,6 @@ Globals:
   Function:
     Timeout: 5
 
-Parameters:
-  ArchitectureParameter:
-    Type: String
-    Default: amd64
-    AllowedValues:
-      - arm64
-      - amd64
-    Description: "AWS Lambda function architecture: x86_64 or arm64."
-
-Mappings:
-  ArchitectureMap:
-      amd64:
-        Arch: x86_64
-      arm64:
-        Arch: arm64
-
 Resources:
   CerbosConfigLayer:
     Type: AWS::Serverless::LayerVersion
@@ -53,7 +37,6 @@ Resources:
         - provided.al2
       CompatibleArchitectures:
         - arm64
-        - x86_64
 
   CerbosFunction:
     Type: AWS::Serverless::Function
@@ -62,7 +45,7 @@ Resources:
       CodeUri: dist/
       Handler: bootstrap
       Architectures:
-        - !FindInMap [ArchitectureMap, !Ref ArchitectureParameter, Arch]
+        - arm64
       MemorySize: 1024
       Layers:
         - !Ref CerbosConfigLayer
@@ -92,9 +75,6 @@ Resources:
       Policies:
         - S3ReadPolicy:
             BucketName: test-dev.cerbos.dev
-
-Conditions:
-  IsAmd64: !Equals [!Ref ArchitectureParameter, amd64]
 
 Outputs:
   CerbosFunctionAPI:

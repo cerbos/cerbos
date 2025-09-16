@@ -1,8 +1,7 @@
-publish: function-package
+publish: (function-package 'arm64')
     #!/usr/bin/env bash
-    arch=$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')
     sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
-    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides ArchitectureParameter=$arch
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
 
 publish-to-sar ARCH=arch() VERSION='': (function-package ARCH)
     #!/usr/bin/env bash
@@ -13,19 +12,18 @@ publish-to-sar ARCH=arch() VERSION='': (function-package ARCH)
         exit 1
     fi
     
-    arch=$(sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/' <<< "{{ ARCH }}")
+    arch=$(sed -e 's/aarch64/arm64/' -e 's/amd64/x86_64/' <<< "{{ ARCH }}")
     app_name="cerbos-lambda-function-${arch}"
     
-    # Create template with architecture-specific name
-    sed "s/\"cerbos-lambda-function\"/\"${app_name}\"/" sam.yml > sam-sar.yml
+    # Create template with architecture-specific name, replace arch (noop if arch is arm64)
+    sed -e "s/\"cerbos-lambda-function\"/\"${app_name}\"/" -e "s/- arm64/- ${arch}/" sam.yml > sam-sar.yml
 
     if [[ -z "{{ VERSION }}" ]]; then
         version=$(./dist/bootstrap --version 2>/dev/null | head -n1 | awk '{print $2}')
-        # Remove 'v' prefix if present for SAR semantic versioning
-        version=${version#v}
     else
         version="{{ VERSION }}"
     fi
+    version=${version#v}
     echo "Detected version: $version"
     echo "Detected architecture: $arch"
     echo "Publishing as: $app_name"
@@ -45,7 +43,7 @@ publish-to-sar ARCH=arch() VERSION='': (function-package ARCH)
 
 function-package ARCH=arch():
     #!/usr/bin/env bash
-    arch=$(sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/' <<< "{{ ARCH }}")
+    arch=$(sed -e 's/aarch64/arm64/' <<< "{{ ARCH }}")
     mkdir -p dist config-layer
     
     cp .cerbos.yaml config-layer/
