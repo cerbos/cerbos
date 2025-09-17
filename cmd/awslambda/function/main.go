@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -13,15 +12,9 @@ import (
 
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/server/awslambda"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func main() {
-	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
-		fmt.Printf("cerbos %s\n", util.Version) //nolint:forbidigo
-		return
-	}
-
 	ctx := context.Background()
 
 	logLevel := os.Getenv("CERBOS_LOG_LEVEL")
