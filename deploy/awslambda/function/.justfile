@@ -70,7 +70,7 @@ publish-to-sar ARCH=arch() $VERSION $CERBOS_SAM_PACKAGING_BUCKET: (function-pack
     # Create template with architecture-specific name, replace arch (noop if arch is arm64)
     sed -e "s/\"cerbos-lambda-function\"/\"${app_name}\"/" -e "s/- arm64/- ${arch}/" sam.yml > .sam.tmp.yml
 
-    version=${version#v}
+    VERSION=${VERSION#v}
     echo "Detected version: $version"
     echo "Detected architecture: $arch"
     echo "Publishing as: $app_name"
