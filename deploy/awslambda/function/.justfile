@@ -3,12 +3,12 @@ publish: (function-package 'arm64')
     sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
     --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
 
-publish-to-sar VERSION='' ARCH=arch(): (function-package ARCH)
+publish-to-sar VERSION='' ARCH=arch() BUCKET="$CERBOS_SAM_PACKAGING_BUCKET": (function-package ARCH)
     #!/usr/bin/env bash
     set -euo pipefail
 
-    if [[ -z "${CERBOS_SAM_PACKAGING_BUCKET}" ]]; then
-        echo "Error: CERBOS_SAM_PACKAGING_BUCKET environment variable is required for SAR publication"
+    if [[ -z "{{ BUCKET }}" ]]; then
+        echo "Error: BUCKET arg is required"
         exit 1
     fi
     if [[ -z "{{ VERSION }}" ]]; then
@@ -29,7 +29,7 @@ publish-to-sar VERSION='' ARCH=arch(): (function-package ARCH)
     echo "Packaging Lambda function for SAR..."
     sam package \
         --template-file .sam.tmp.yml \
-        --s3-bucket "${CERBOS_SAM_PACKAGING_BUCKET}" \
+        --s3-bucket "{{ BUCKET }}" \
         --output-template-file packaged-template.yml > /dev/null
     
     echo "Publishing to AWS Serverless Application Repository..."
