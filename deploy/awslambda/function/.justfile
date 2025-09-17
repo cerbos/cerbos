@@ -55,15 +55,6 @@ publish-to-sar ARCH=arch() $VERSION $CERBOS_SAM_PACKAGING_BUCKET: (function-pack
     #!/usr/bin/env bash
     set -euo pipefail
 
-    if [[ -z "{{ BUCKET }}" ]]; then
-        echo "Error: BUCKET arg is required"
-        exit 1
-    fi
-    if [[ -z "{{ VERSION }}" ]]; then
-        echo "Error: version is required"
-        exit 1
-    fi
-    
     arch=$(sed -e 's/aarch64/arm64/' -e 's/amd64/x86_64/' <<< "{{ ARCH }}")
     app_name="cerbos-lambda-function-${arch/_/-}" # _ isn't valid character in the name
     
@@ -71,19 +62,20 @@ publish-to-sar ARCH=arch() $VERSION $CERBOS_SAM_PACKAGING_BUCKET: (function-pack
     sed -e "s/\"cerbos-lambda-function\"/\"${app_name}\"/" -e "s/- arm64/- ${arch}/" sam.yml > .sam.tmp.yml
 
     VERSION=${VERSION#v}
-    echo "Detected version: $version"
+
+    echo "Detected version: $VERSION"
     echo "Detected architecture: $arch"
     echo "Publishing as: $app_name"
     echo "Packaging Lambda function for SAR..."
     sam package \
         --template-file .sam.tmp.yml \
-        --s3-bucket "{{ BUCKET }}" \
+        --s3-bucket "$CERBOS_SAM_PACKAGING_BUCKET" \
         --output-template-file packaged-template.yml > /dev/null
     
     echo "Publishing to AWS Serverless Application Repository..."
     sam publish \
         --template packaged-template.yml \
-        --semantic-version "$version"
+        --semantic-version "$VERSION"
     
     # Clean up temporary files
     rm -f .sam.tmp.yml packaged-template.yml
