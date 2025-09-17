@@ -3,6 +3,54 @@ publish: (function-package 'arm64')
     sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
     --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
 
+export POLICY := '''
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "20210210"
+  resource: leave_request
+  rules:
+  - actions: ["condone"]
+    roles:
+        - employee
+    effect: EFFECT_ALLOW
+    condition:
+      match:
+        expr: R.attr.team == "design"
+'''
+export CONFIG := '''
+auxData:
+  jwt:
+    disableVerification: true
+
+storage:
+  driver: "disk"
+  disk:
+    directory: /opt/policies
+'''
+# Build and publish AWS Lambda layer with Cerbos config and policies
+publish-test-layer LAYER_NAME="cerbos-config-policies":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p test-layer-content/policies
+    printf "%s" "$POLICY" > test-layer-content/policies/leave_request.yaml
+    printf "%s" "$CONFIG" > test-layer-content/conf.yml
+
+    cd test-layer-content
+    zip -r ../{{ LAYER_NAME }}.zip .
+    cd ..
+    
+    # Publish layer using AWS CLI
+    aws lambda publish-layer-version \
+        --layer-name "{{ LAYER_NAME }}" \
+        --description "Cerbos configuration and policies layer" \
+        --zip-file fileb://{{ LAYER_NAME }}.zip \
+        --compatible-architectures arm64 x86_64
+    
+    # Cleanup
+    rm -rf test-layer-content {{ LAYER_NAME }}.zip
+    
+    echo "Layer {{ LAYER_NAME }} published successfully"
+
 publish-to-sar VERSION='' ARCH=arch() BUCKET="$CERBOS_SAM_PACKAGING_BUCKET": (function-package ARCH)
     #!/usr/bin/env bash
     set -euo pipefail
