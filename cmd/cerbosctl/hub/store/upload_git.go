@@ -75,9 +75,14 @@ func (ugc *UploadGitCmd) Validate() error {
 }
 
 func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
+	if len(ugc.diffToApply.changes) == 0 {
+		fmt.Fprintf(k.Stdout, "No changes to upload\n")
+		return nil
+	}
+
 	repository, err := git.PlainOpen(ugc.Path)
 	if err != nil {
-		return fmt.Errorf("failed to open git repository: %w", err)
+		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to open git repository: %w", err))
 	}
 
 	client, err := cmd.storeClient()
