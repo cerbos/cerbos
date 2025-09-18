@@ -257,7 +257,7 @@ func (ugc *UploadGitCmd) changes(objectChanges object.Changes) ([]*change, error
 		name = filepath.Clean(name)
 		path := filepath.Join(pathToRepo, name)
 		if path == "" || util.PathIsHidden(path) || !util.IsSupportedFileType(path) {
-			return nil, fmt.Errorf("invalid file %q: must not be hidden and must be a YAML or JSON file", path)
+			continue
 		}
 
 		normalizedName, skipped := ugc.normalize(name)
