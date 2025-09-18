@@ -51,7 +51,7 @@ publish-test-layer LAYER_NAME="cerbos-config-policies":
     
     echo "Layer {{ LAYER_NAME }} published successfully"
 
-publish-to-sar ARCH=arch() $VERSION $CERBOS_SAM_PACKAGING_BUCKET: (function-package ARCH)
+publish-to-sar $VERSION $CERBOS_SAM_PACKAGING_BUCKET ARCH=arch() : (function-package ARCH)
     #!/usr/bin/env bash
     set -euo pipefail
 
