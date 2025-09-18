@@ -81,6 +81,11 @@ func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstant
 		modCtx.variables.Use(path, checkedExpr)
 	}
 
+	// Validate field references against schemas
+	if modCtx.schemaValidator != nil {
+		modCtx.schemaValidator.validateFieldReferences(path, checkedExpr)
+	}
+
 	return checkedExpr
 }
 

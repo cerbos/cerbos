@@ -190,6 +190,13 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) (*runtim
 		if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
 			return nil, nil
 		}
+		
+		// Initialize schema field validator for compile-time field validation
+		if schemaValidator, err := newSchemaFieldValidator(modCtx, schemaMgr, rp.Schemas); err != nil {
+			modCtx.addErrWithDesc(err, "Failed to initialize schema field validator")
+		} else {
+			modCtx.schemaValidator = schemaValidator
+		}
 	}
 
 	compilePolicyConstants(modCtx, rp.Constants)

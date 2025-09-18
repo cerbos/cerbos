@@ -43,12 +43,13 @@ func (uc *unitCtx) moduleCtx(id namer.ModuleID) *moduleCtx {
 
 type moduleCtx struct {
 	*unitCtx
-	def        *policyv1.Policy
-	srcCtx     parser.SourceCtx
-	constants  *constantDefinitions
-	variables  *variableDefinitions
-	fqn        string
-	sourceFile string
+	def             *policyv1.Policy
+	srcCtx          parser.SourceCtx
+	constants       *constantDefinitions
+	variables       *variableDefinitions
+	schemaValidator *schemaFieldValidator
+	fqn             string
+	sourceFile      string
 }
 
 func (mc *moduleCtx) error() error {
