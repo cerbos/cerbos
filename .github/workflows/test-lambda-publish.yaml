@@ -1,0 +1,56 @@
+---
+name: Test Lambda Function Publishing
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Test version (e.g., v1.0.0-test)'
+        required: false
+        default: 'v0.0.0-test'
+        type: string
+      arch:
+        description: 'Architecture to test'
+        required: false
+        default: 'arm64'
+        type: choice
+        options:
+          - arm64
+          - amd64
+
+jobs:
+  testPublishLambdaFunction:
+    name: Test Publish AWS Lambda Function to SAR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_REGION: us-east-2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - name: Create test binary
+        run: |
+          # Create minimal test binary for packaging
+          mkdir -p dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}
+          echo "#!/bin/bash" > dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}/cerbosfunc
+          echo 'echo "test binary"' >> dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}/cerbosfunc
+          chmod +x dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}/cerbosfunc
+      - name: Install just
+        uses: extractions/setup-just@v3
+      - name: Test Lambda function publishing
+        run: |
+          cd deploy/awslambda/function
+          just publish-to-sar "${{ github.event.inputs.version }}" "${{ github.event.inputs.arch }}" "cerbos-lambda-test"

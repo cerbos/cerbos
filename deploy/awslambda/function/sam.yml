@@ -2,26 +2,29 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Cerbos Lambda Function
 
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: "cerbos-lambda-function"
+    Description: "Cerbos is an authorization layer that evolves with your product. This Lambda function provides a serverless Policy Decision Point (PDP) for evaluating access control policies."
+    Author: "Cerbos"
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: ../../../LICENSE
+    ReadmeUrl: ../../../README.md
+    Labels: 
+      - authorization
+      - access-control
+      - RBAC
+      - ABAC
+      - PBAC
+      - policy
+      - security
+    HomePageUrl: https://cerbos.dev
+    SourceCodeUrl: https://github.com/cerbos/cerbos
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 5
-
-Parameters:
-  ArchitectureParameter:
-    Type: String
-    Default: amd64
-    AllowedValues:
-      - arm64
-      - amd64
-    Description: "AWS Lambda function architecture: x86_64 or arm64."
-
-Mappings:
-  ArchitectureMap:
-      amd64:
-        Arch: x86_64
-      arm64:
-        Arch: arm64
 
 Resources:
   CerbosConfigLayer:
@@ -34,7 +37,6 @@ Resources:
         - provided.al2
       CompatibleArchitectures:
         - arm64
-        - x86_64
 
   CerbosFunction:
     Type: AWS::Serverless::Function
@@ -43,7 +45,7 @@ Resources:
       CodeUri: dist/
       Handler: bootstrap
       Architectures:
-        - !FindInMap [ArchitectureMap, !Ref ArchitectureParameter, Arch]
+        - arm64
       MemorySize: 1024
       Layers:
         - !Ref CerbosConfigLayer
@@ -73,9 +75,6 @@ Resources:
       Policies:
         - S3ReadPolicy:
             BucketName: test-dev.cerbos.dev
-
-Conditions:
-  IsAmd64: !Equals [!Ref ArchitectureParameter, amd64]
 
 Outputs:
   CerbosFunctionAPI:
