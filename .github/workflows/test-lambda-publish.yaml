@@ -32,11 +32,13 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
+          aws-region: ${{ vars.AWS_REGION }}
+
       - name: Set up SAM CLI
         uses: aws-actions/setup-sam@v2
         with:
@@ -52,5 +54,6 @@ jobs:
         uses: extractions/setup-just@v3
       - name: Test Lambda function publishing
         run: |
+          export AWS_REGION="${{ vars.AWS_REGION }}"
           cd deploy/awslambda/function
           just publish-to-sar "${{ github.event.inputs.version }}" "${{ github.event.inputs.arch }}" "cerbos-lambda-test"
