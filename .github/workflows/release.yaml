@@ -241,4 +241,4 @@ jobs:
         run: |-
           VERSION="${GITHUB_REF#refs/tags/}"
           export AWS_REGION="${{ vars.AWS_REGION }}"
-          just -f ./deploy/awslambda/function/.justfile publish-to-sar "$VERSION" "${{ vars.AWS_SAM_PACKAGING_BUCKET }}" "${{ matrix.arch }}"
+          just -f ./deploy/awslambda/function/.justfile publish-to-sar "$VERSION" "${{ matrix.arch }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" 

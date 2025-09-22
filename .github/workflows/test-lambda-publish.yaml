@@ -56,4 +56,4 @@ jobs:
         run: |
           export AWS_REGION="${{ vars.AWS_REGION }}"
           cd deploy/awslambda/function
-          just publish-to-sar "${{ github.event.inputs.version }}" "${{ github.event.inputs.arch }}" "cerbos-lambda-test"
+          just publish-to-sar "${{ github.event.inputs.version }}" "${{ github.event.inputs.arch }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}"
