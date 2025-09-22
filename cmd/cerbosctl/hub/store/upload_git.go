@@ -302,10 +302,10 @@ func (ugc *UploadGitCmd) normalize(name string) (normalized string, skipped bool
 			skipped = true
 		}
 
-		return
+		return normalized, skipped
 	}
 
-	return
+	return normalized, skipped
 }
 
 type diff struct {

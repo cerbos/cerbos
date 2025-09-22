@@ -152,7 +152,7 @@ func validateDerivedRoles(dr *policyv1.DerivedRoles, sc parser.SourceCtx) (outEr
 		}
 	}
 
-	return
+	return outErr
 }
 
 func validateExportConstants(p *policyv1.Policy, sc parser.SourceCtx) error {
