@@ -140,5 +140,5 @@ func (lr *lockedRand) Read(p []byte) (n int, err error) {
 	n, err = lr.rnd.Read(p)
 	lr.mu.Unlock()
 
-	return
+	return n, err
 }
