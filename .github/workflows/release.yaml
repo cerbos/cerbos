@@ -217,10 +217,10 @@ jobs:
           - arch: arm64
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
           aws-region: ${{ vars.AWS_REGION }}
@@ -229,7 +229,7 @@ jobs:
         uses: aws-actions/setup-sam@v2
 
       - name: Download GoReleaser artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: artifacts
           path: dist/

@@ -26,11 +26,11 @@ func ParseListenAddress(listenAddr string) (network, addr string, err error) {
 		network = unixNetwork
 		addr = listenAddr[5:]
 
-		return
+		return network, addr, err
 	}
 
 	if _, err = net.ResolveTCPAddr("tcp", listenAddr); err != nil {
-		return
+		return network, addr, err
 	}
 
 	return "tcp", listenAddr, nil

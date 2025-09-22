@@ -59,7 +59,7 @@ func (g *TestFixtureGetter) LoadTestFixture(path string) (fixture *verify.TestFi
 		fixture, _ = verify.LoadTestFixture(g.fsys, path, true)
 		g.cache[path] = fixture
 	}
-	return
+	return fixture
 }
 
 type TestFixtureCtx struct {

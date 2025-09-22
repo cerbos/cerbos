@@ -246,7 +246,7 @@ func replaceVars(e celast.Expr, vars map[string]celast.Expr) (output celast.Expr
 				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.FieldName()))
 			}
 		}
-		return
+		return output, matched, err
 	})
 }
 
