@@ -31,11 +31,12 @@ Resources:
   CerbosExtensionLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: cerbos-lambda-extension-layer
+      LayerName: cerbos-extension
       Description: Cerbos extension layer
       ContentUri: ./layer
       CompatibleRuntimes:
         - provided.al2
+        - provided.al2023
       CompatibleArchitectures:
         - arm64
 
@@ -48,7 +49,7 @@ Resources:
       Architectures:
         - arm64
       Layers:
-        - CerbosExtensionLayer
+        - !Ref CerbosExtensionLayer
       MemorySize: 1024
       Events:
         CatchAll:
