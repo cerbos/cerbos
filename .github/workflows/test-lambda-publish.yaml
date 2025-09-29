@@ -97,10 +97,11 @@ jobs:
         uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
+
       - name: Install just
         uses: extractions/setup-just@v3
+
       - name: Test Lambda function publishing
         run: |
           export AWS_REGION="${{ vars.AWS_REGION }}"
-          cd deploy/awslambda/function
-          just publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"
+          just -f deploy/awslambda/extension/.justfile publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"
