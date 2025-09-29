@@ -59,9 +59,7 @@ Resources:
             Method: ANY
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          BUCKET_URL: s3://test-dev.cerbos.dev
-          BUCKET_PREFIX: policies
-          CERBOS_LOG_LEVEL: debug
+          CERBOS_LOG_LEVEL: info
           XDG_CACHE_HOME: /tmp
           CERBOS_CONFIG: /var/task/.cerbos.yaml
 
