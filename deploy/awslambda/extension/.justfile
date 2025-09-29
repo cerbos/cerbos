@@ -1,8 +1,6 @@
-publish: (function-package 'arm64')
-    #!/usr/bin/env bash
-    arch=$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')
-    sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-CerbosExt} --resolve-s3 \
-    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides ArchitectureParameter=$arch
+publish $CERBOS_SAM_PACKAGING_BUCKET: (function-package 'arm64')
+    @ sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-CerbosExt} --s3-bucket "$CERBOS_SAM_PACKAGING_BUCKET"  \
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset 
 
 publish-to-sar $VERSION $CERBOS_SAM_PACKAGING_BUCKET ARCH=arch() : (function-package ARCH)
     #!/usr/bin/env bash
