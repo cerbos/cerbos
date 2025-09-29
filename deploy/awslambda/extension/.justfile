@@ -1,7 +1,7 @@
 publish: (function-package 'arm64')
     #!/usr/bin/env bash
     arch=$(uname -m | sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/')
-    sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
+    sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-CerbosExt} --resolve-s3 \
     --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides ArchitectureParameter=$arch
 
 publish-to-sar $VERSION $CERBOS_SAM_PACKAGING_BUCKET ARCH=arch() : (function-package ARCH)
@@ -36,12 +36,12 @@ publish-to-sar $VERSION $CERBOS_SAM_PACKAGING_BUCKET ARCH=arch() : (function-pac
 function-package ARCH=arch():
     #!/usr/bin/env bash
     arch=$(sed -e 's/aarch64/arm64/' <<< "{{ ARCH }}")
-	mkdir -p dist layer/extensions
-	CGO_ENABLED=0 GOOS=linux go build -o dist/bootstrap main.go
-	cp .cerbos.yaml dist/.cerbos.yaml
+    mkdir -p dist layer/extensions
+    CGO_ENABLED=0 GOOS=linux go build -o dist/bootstrap main.go
+    cp .cerbos.yaml dist/.cerbos.yaml
 
     if [[ "$arch" == "arm64" ]] then
-     ln -f "../../../dist/cerbosfunc_linux_arm64_v8.0/cerbosext" layer/extensions/serbosext
+     ln -f "../../../dist/cerbosext_linux_arm64_v8.0/cerbosext" layer/extensions/cerbosext
     else
-     ln -f "../../../dist/cerbosfunc_linux_amd64_v1/cerbosext" layer/extensions/serbosext
+     ln -f "../../../dist/cerbosext_linux_amd64_v1/cerbosext" layer/extensions/cerbosext
     fi
