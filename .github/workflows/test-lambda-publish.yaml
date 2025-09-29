@@ -18,10 +18,58 @@ on:
           - amd64
 
 jobs:
+  buildBinaries:
+    name: Release Binaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+
+      - name: Install Go and restore cached dependencies
+        uses: ./.github/actions/setup-go
+        with:
+          cross_compiling: true
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/.cache/cerbos/bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: build --config=.goreleaser.yml --snapshot --id 'cerbosext' --clean
+
+      - name: Upload artifacts as goreleaser build does not upload them
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: dist/
+
   testPublishLambdaFunction:
     name: Test Publish AWS Lambda Function to SAR
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: buildBinaries
     permissions:
       id-token: write
       contents: read
@@ -32,6 +80,13 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: artifacts
+          path: dist/
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
@@ -42,17 +97,11 @@ jobs:
         uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
-      - name: Create test binary
-        run: |
-          # Create minimal test binary for packaging
-          mkdir -p dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}
-          echo "#!/bin/bash" > dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}/cerbosfunc
-          echo 'echo "test binary"' >> dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}/cerbosfunc
-          chmod +x dist/cerbosfunc_linux_${{ github.event.inputs.arch == 'arm64' && 'arm64_v8.0' || 'amd64_v1' }}/cerbosfunc
+
       - name: Install just
         uses: extractions/setup-just@v3
+
       - name: Test Lambda function publishing
         run: |
           export AWS_REGION="${{ vars.AWS_REGION }}"
-          cd deploy/awslambda/function
-          just publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"
+          just -f deploy/awslambda/extension/.justfile publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"

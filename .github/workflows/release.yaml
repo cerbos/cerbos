@@ -237,8 +237,8 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v3
 
-      - name: Prepare, package and publish Lambda function to AWS SAR
+      - name: Prepare, package and publish Lambda extension to AWS SAR
         run: |-
           VERSION="${GITHUB_REF#refs/tags/}"
           export AWS_REGION="${{ vars.AWS_REGION }}"
-          just -f ./deploy/awslambda/function/.justfile publish-to-sar "$VERSION" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ matrix.arch }}"
+          just -f ./deploy/awslambda/extension/.justfile publish-to-sar "$VERSION" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ matrix.arch }}"

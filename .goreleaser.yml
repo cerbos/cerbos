@@ -36,7 +36,7 @@ builds:
             - BINARY_PATH={{ .Path }}
 
   - main: ./cmd/awslambda/extension
-    binary: extensions/cerbosext
+    binary: cerbosext
     id: "cerbosext"
     env:
       - CGO_ENABLED=0
