@@ -5,7 +5,7 @@ Description: Cerbos server
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: "cerbos-lambda-extension"
-    Description: "Cerbos is an authorization layer that evolves with your product. This Lambda function has a layer (extension) containing Cerbos Policy Decision Point (PDP). The layer can be attached to your Lambda function and serve its authorization needs. This is similar to a sidecar deployment pattern."
+    Description: "Cerbos is an authorization layer that evolves with your product. This Lambda function has an extension containing Cerbos PDP. The layer can be attached to your Lambda function. This is similar to a sidecar deployment pattern."
     Author: "Cerbos"
     SpdxLicenseId: Apache-2.0
     LicenseUrl: ../../../LICENSE
@@ -39,7 +39,7 @@ Resources:
       CompatibleArchitectures:
         - arm64
 
-  CerbosServerFunctionZip:
+  CerbosServerFunctionWithExt:
     Type: AWS::Serverless::Function
     Properties:
       Runtime: provided.al2
@@ -71,15 +71,12 @@ Outputs:
   CerbosServerFunctionAPI:
     Description: "API Gateway endpoint URL"
     Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
-  CerbosServerFunctionZip:
+  CerbosServerFunctionWithExt:
     Description: "Cerbos Server Function ARN"
-    Value: !GetAtt CerbosServerFunctionZip.Arn
+    Value: !GetAtt CerbosServerFunctionWithExt.Arn
   CerbosFunctionIamRole:
     Description: "IAM Role created for the Cerbos Server function"
-    Value: !GetAtt CerbosServerFunctionZipRole.Arn
-  CerbosExtensionLayerX86Arn:
-    Description: "Cerbos Extension Layer ARN for x86_64"
-    Value: !Ref CerbosExtensionLayerX86
-  CerbosExtensionLayerArm64Arn:
-    Description: "Cerbos Extension Layer ARN for ARM64"
-    Value: !Ref CerbosExtensionLayerArm64
+    Value: !GetAtt CerbosServerFunctionWithExtRole.Arn
+  CerbosExtensionLayerArn:
+    Description: "Cerbos Extension Layer ARN"
+    Value: !Ref CerbosExtensionLayer
