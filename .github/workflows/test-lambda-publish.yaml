@@ -53,6 +53,9 @@ jobs:
         with:
           version: latest
           args: build --config=.goreleaser.yml --snapshot --id cerbosext --clean
+        env:
+          TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
+          TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
       - name: Upload artifacts as goreleaser build does not upload them
         uses: actions/upload-artifact@v4
