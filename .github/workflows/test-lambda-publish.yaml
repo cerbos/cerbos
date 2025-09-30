@@ -52,7 +52,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: build --config=.goreleaser.yml --snapshot --id 'cerbosext' --clean
+          args: build --config=.goreleaser.yml --snapshot --id cerbosext --clean
 
       - name: Upload artifacts as goreleaser build does not upload them
         uses: actions/upload-artifact@v4
