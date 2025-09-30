@@ -39,14 +39,9 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cross_compiling: true
-          write_deps_cache: "false"
-          write_build_cache: "false"
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
-
-      - name: Debug GoReleaser config
-        run: cat .goreleaser.yml
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v6
