@@ -37,7 +37,7 @@ builds:
 
   - main: ./cmd/awslambda/extension
     binary: cerbosext
-    id: "cerbosext"
+    id: cerbosext
     env:
       - CGO_ENABLED=0
     goos:
