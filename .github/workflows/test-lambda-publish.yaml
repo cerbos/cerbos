@@ -45,6 +45,9 @@ jobs:
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
 
+      - name: Debug GoReleaser config
+        run: cat .goreleaser.yml
+
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
