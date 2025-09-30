@@ -34,6 +34,8 @@ releases:
           - '{{ requiredEnv "E2E_NS" }}'
     values:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+      - image:
+          repository: bitnamilegacy/minio
       - auth:
           rootUser: admin
           rootPassword: passw0rd
@@ -121,6 +123,6 @@ releases:
                 bucket: '{{ requiredEnv "E2E_BUCKET_URL" }}'
                 prefix: '{{ requiredEnv "E2E_BUCKET_PREFIX" }}'
                 workDir: /data
-                updatePollInterval: 0.5s
+                updatePollInterval: 250ms
             telemetry:
               disabled: true
