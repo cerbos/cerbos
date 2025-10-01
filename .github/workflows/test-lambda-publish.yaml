@@ -47,7 +47,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: build --config=.goreleaser.yml --snapshot --id cerbosext --clean
+          args: build --config=.goreleaser.yml --snapshot --id cerbosext --id cerbosfunc --clean
         env:
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
