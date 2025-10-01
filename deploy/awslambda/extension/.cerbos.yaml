@@ -11,9 +11,6 @@ server:
   grpcListenAddr: "unix:/tmp/cerbos.grpc.sock"
 
 storage:
-  driver: "blob"
-  blob:
-    bucket: $BUCKET_URL
-    prefix: $BUCKET_PREFIX
-    workDir: /tmp/workDir
-    updatePollInterval: 15s
+  driver: "disk"
+  disk:
+    directory: /var/task/policies

@@ -1,5 +1,5 @@
-publish $CERBOS_SAM_PACKAGING_BUCKET: (function-package 'arm64')
-    @ sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-DebugCerbosExt} --s3-bucket "$CERBOS_SAM_PACKAGING_BUCKET"  \
+publish: (function-package 'arm64')
+    @ sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-CerbosExt} --resolve-s3 \
     --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset 
 
 publish-to-sar $VERSION $CERBOS_SAM_PACKAGING_BUCKET ARCH=arch() : (function-package ARCH)
@@ -38,6 +38,7 @@ function-package ARCH=arch():
     mkdir -p dist layer/extensions
     CGO_ENABLED=0 GOOS=linux go build -o dist/bootstrap main.go
     cp .cerbos.yaml dist/.cerbos.yaml
+    cp -r policies dist
 
     if [[ "$arch" == "arm64" ]] then
      ln -f "../../../dist/cerbosext_linux_arm64_v8.0/cerbosext" layer/extensions/cerbosext
