@@ -64,16 +64,6 @@ jobs:
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/cerbos/bin
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.10.0
 
