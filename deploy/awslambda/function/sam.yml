@@ -35,6 +35,7 @@ Resources:
       ContentUri: config-layer/
       CompatibleRuntimes:
         - provided.al2
+        - provided.al2023
       CompatibleArchitectures:
         - arm64
 
@@ -67,14 +68,9 @@ Resources:
             Method: GET
       Environment:
         Variables:
-          BUCKET_URL: s3://test-dev.cerbos.dev
-          BUCKET_PREFIX: policies
           CERBOS_LOG_LEVEL: debug
           XDG_CACHE_HOME: /tmp
           CERBOS_CONFIG: /opt/.cerbos.yaml
-      Policies:
-        - S3ReadPolicy:
-            BucketName: test-dev.cerbos.dev
 
 Outputs:
   CerbosFunctionAPI:
