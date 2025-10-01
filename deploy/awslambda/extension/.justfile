@@ -38,7 +38,7 @@ function-package ARCH=arch():
     mkdir -p dist layer/extensions
     CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -o dist/bootstrap main.go
     cp .cerbos.yaml dist/.cerbos.yaml
-    cp -r policies dist
+    cp -r ../policies dist
 
     if [[ "$arch" == "arm64" ]] then
      ln -f "../../../dist/cerbosext_linux_arm64_v8.0/cerbosext" layer/extensions/cerbosext
