@@ -33,10 +33,10 @@ publish-to-sar $VERSION $CERBOS_SAM_PACKAGING_BUCKET ARCH=arch() : (function-pac
 
 function-package ARCH=arch():
     #!/usr/bin/env bash
-    arch=$(sed -e 's/aarch64/arm64/' <<< "{{ ARCH }}")
+    arch=$(sed -e 's/aarch64/arm64/' -e 's/x86_64/amd64/' <<< "{{ ARCH }}")
     rm -rf dist layer/extensions
     mkdir -p dist layer/extensions
-    CGO_ENABLED=0 GOOS=linux go build -o dist/bootstrap main.go
+    CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -o dist/bootstrap main.go
     cp .cerbos.yaml dist/.cerbos.yaml
     cp -r policies dist
 
