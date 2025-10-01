@@ -97,4 +97,9 @@ jobs:
       - name: Test Lambda function publishing
         run: |
           export AWS_REGION="${{ vars.AWS_REGION }}"
+          just -f deploy/awslambda/function/.justfile publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"
+
+      - name: Test Lambda extension publishing
+        run: |
+          export AWS_REGION="${{ vars.AWS_REGION }}"
           just -f deploy/awslambda/extension/.justfile publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"
