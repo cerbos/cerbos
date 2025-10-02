@@ -131,6 +131,14 @@ archives:
     ids:
       - cerbosctl
     name_template: 'cerbosctl_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - id: cerbosext
+    ids:
+      - cerbosext
+    name_template: 'cerbosext_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - id: cerbosfunc
+    ids:
+      - cerbosfunc
+    name_template: 'cerbosfunc_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 
 nfpms:
   - id: cerbos
