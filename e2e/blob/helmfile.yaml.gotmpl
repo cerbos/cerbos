@@ -38,8 +38,9 @@ releases:
           repository: bitnamilegacy/minio
       - clientImage:
           repository: bitnamilegacy/minio-client
-      - consoleImage:
-          repository: bitnamilegacy/minio-object-browser
+      - console:
+          image:
+            repository: bitnamilegacy/minio-object-browser
       - defaultInitContainers:
           volumePermissions:
             image:
