@@ -134,11 +134,11 @@ archives:
   - id: cerbosext
     ids:
       - cerbosext
-    name_template: 'cerbosext_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: 'cerbos_aws_lambda_ext_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
   - id: cerbosfunc
     ids:
       - cerbosfunc
-    name_template: 'cerbosfunc_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: 'cerbos_aws_lambda_func_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 
 nfpms:
   - id: cerbos
