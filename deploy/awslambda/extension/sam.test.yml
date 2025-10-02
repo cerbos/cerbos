@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Cerbos test function
+Description: Function without extension attached. Deployed to a user account. Cerbos extension to be attached separately.
 
 Globals:
   Function:
