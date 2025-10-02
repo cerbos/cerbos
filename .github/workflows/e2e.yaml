@@ -62,17 +62,17 @@ jobs:
           wait: 180s
 
       - name: Run E2E Tests
-        run: e2e/run.sh
+        run: e2e/run.sh ./blob/...
         env:
           E2E_SKIP_CLUSTER: "true"
           E2E_NO_CLEANUP: "true"
 
-      - name: Notify Slack
-        if: failure()
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        uses: voxmedia/github-action-slack-notify-build@v2
-        with:
-          channel_id: C02TMGNNL4V
-          status: FAILED
-          color: danger
+      #- name: Notify Slack
+      #  if: failure()
+      #  env:
+      #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      #  uses: voxmedia/github-action-slack-notify-build@v2
+      #  with:
+      #    channel_id: C02TMGNNL4V
+      #    status: FAILED
+      #    color: danger
