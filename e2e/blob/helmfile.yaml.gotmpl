@@ -34,6 +34,17 @@ releases:
           - '{{ requiredEnv "E2E_NS" }}'
     values:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+      - image:
+          repository: bitnamilegacy/minio
+      - clientImage:
+          repository: bitnamilegacy/minio-client
+      - console:
+          image:
+            repository: bitnamilegacy/minio-object-browser
+      - defaultInitContainers:
+          volumePermissions:
+            image:
+              repository: bitnamilegacy/os-shell
       - auth:
           rootUser: admin
           rootPassword: passw0rd
@@ -121,6 +132,6 @@ releases:
                 bucket: '{{ requiredEnv "E2E_BUCKET_URL" }}'
                 prefix: '{{ requiredEnv "E2E_BUCKET_PREFIX" }}'
                 workDir: /data
-                updatePollInterval: 0.5s
+                updatePollInterval: 250ms
             telemetry:
               disabled: true
