@@ -1,0 +1,25 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: leave_request
+  version: "staging"
+  rules:
+  - actions: ['*']
+    effect: EFFECT_ALLOW
+    roles:
+    - admin
+  - actions: ["view:*"]
+    roles:
+    - employee
+    effect: EFFECT_ALLOW
+  - actions: ["view:public"]
+    roles:
+    - employee
+    effect: EFFECT_ALLOW
+  - actions: ["approve"]
+    condition:
+      match:
+        expr: request.resource.attr.status == "PENDING_APPROVAL"
+    roles:
+    - manager
+    effect: EFFECT_ALLOW

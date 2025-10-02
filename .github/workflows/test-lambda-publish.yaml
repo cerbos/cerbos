@@ -40,16 +40,6 @@ jobs:
         with:
           cross_compiling: true
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/cerbos/bin
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
 
@@ -57,7 +47,10 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: build --config=.goreleaser.yml --snapshot --id 'cerbosext' --clean
+          args: build --config=.goreleaser.yml --snapshot --id cerbosext --id cerbosfunc --clean
+        env:
+          TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
+          TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
       - name: Upload artifacts as goreleaser build does not upload them
         uses: actions/upload-artifact@v4
@@ -102,6 +95,11 @@ jobs:
         uses: extractions/setup-just@v3
 
       - name: Test Lambda function publishing
+        run: |
+          export AWS_REGION="${{ vars.AWS_REGION }}"
+          just -f deploy/awslambda/function/.justfile publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"
+
+      - name: Test Lambda extension publishing
         run: |
           export AWS_REGION="${{ vars.AWS_REGION }}"
           just -f deploy/awslambda/extension/.justfile publish-to-sar "${{ github.event.inputs.version }}" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ github.event.inputs.arch }}"

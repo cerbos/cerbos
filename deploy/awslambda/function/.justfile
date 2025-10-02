@@ -86,7 +86,8 @@ function-package ARCH=arch():
     mkdir -p dist config-layer
     
     cp .cerbos.yaml config-layer/
-    
+    cp -r ../policies config-layer/
+
     if [[ "$arch" == "arm64" ]] then
      ln -f "../../../dist/cerbosfunc_linux_arm64_v8.0/cerbosfunc" dist/bootstrap 
     else
