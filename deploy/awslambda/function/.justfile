@@ -89,7 +89,7 @@ function-package ARCH=arch():
     cp -r ../policies config-layer/
 
     if [[ "$arch" == "arm64" ]] then
-     ln -f "../../../dist/cerbosfunc_linux_arm64_v8.0/cerbosfunc" dist/bootstrap 
+     ln -f "../../../dist/cerbos-aws-lambda-func_linux_arm64_v8.0/cerbosfunc" dist/bootstrap 
     else
-     ln -f "../../../dist/cerbosfunc_linux_amd64_v1/cerbosfunc" dist/bootstrap 
+     ln -f "../../../dist/cerbos-aws-lambda-func_linux_amd64_v1/cerbosfunc" dist/bootstrap 
     fi
