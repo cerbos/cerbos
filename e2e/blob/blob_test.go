@@ -88,7 +88,7 @@ func TestBlob(t *testing.T) {
 		// Give it another 5 seconds to allow events to propagate from the store to the ruletable.
 		// 5 seconds might seem excessive, but the Github CI runners are driving me up the wall so
 		// I want to give this test as much chance as possible at passing.
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 30)
 	}
 
 	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithPostSetup(postSetup), e2e.WithComputedEnv(computedEnvFn))
