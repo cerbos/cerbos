@@ -36,6 +36,14 @@ releases:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
       - image:
           repository: bitnamilegacy/minio
+      - clientImage:
+          repository: bitnamilegacy/minio-client
+      - consoleImage:
+          repository: bitnamilegacy/minio-object-browser
+      - defaultInitContainers:
+          volumePermissions:
+            image:
+              repository: bitnamilegacy/os-shell
       - auth:
           rootUser: admin
           rootPassword: passw0rd
