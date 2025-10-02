@@ -37,14 +37,37 @@ The store ID and credentials can be provided using either command-line flags or 
 `
 
 type Conn struct {
-	APIEndpoint  string `name:"api-endpoint" hidden:"" default:"https://api.cerbos.cloud" env:"CERBOS_HUB_API_ENDPOINT"`
-	StoreID      string `name:"store-id" help:"ID of the store to operate on" env:"CERBOS_HUB_STORE_ID" required:""`
-	ClientID     string `name:"client-id" help:"Client ID of the access credential" env:"CERBOS_HUB_CLIENT_ID" required:""`
-	ClientSecret string `name:"client-secret" help:"Client secret of the access credential" env:"CERBOS_HUB_CLIENT_SECRET" required:""`
+	APIEndpoint   string `name:"api-endpoint" hidden:"" default:"https://api.cerbos.cloud" env:"CERBOS_HUB_API_ENDPOINT"`
+	TLSCACert     string `name:"tls-ca-cert" hidden:"" help:"Path to the CA certificate for verifying server identity" type:"existingfile" env:"CERBOS_HUB_TLS_CA_CERT"`
+	TLSClientCert string `name:"tls-client-cert" hidden:"" help:"Path to the TLS client certificate" type:"existingfile" env:"CERBOS_HUB_TLS_CLIENT_CERT" and:"tls-client-key"`
+	TLSClientKey  string `name:"tls-client-key" hidden:"" help:"Path to the TLS client key" type:"existingfile" env:"CERBOS_HUB_TLS_CLIENT_KEY" and:"tls-client-cert"`
+	TLSInsecure   bool   `name:"tls-insecure" hidden:"" help:"Skip validating server certificate" env:"CERBOS_HUB_TLS_INSECURE"`
+	StoreID       string `name:"store-id" help:"ID of the store to operate on" env:"CERBOS_HUB_STORE_ID" required:""`
+	ClientID      string `name:"client-id" help:"Client ID of the access credential" env:"CERBOS_HUB_CLIENT_ID" required:""`
+	ClientSecret  string `name:"client-secret" help:"Client secret of the access credential" env:"CERBOS_HUB_CLIENT_SECRET" required:""`
 }
 
 func (c Conn) storeClient() (*hub.StoreClient, error) {
-	hc, err := cerbos.NewHubClient(cerbos.WithHubAPIEndpoint(c.APIEndpoint), cerbos.WithHubCredentials(c.ClientID, c.ClientSecret))
+	hubOpts := []cerbos.HubOpt{
+		cerbos.WithHubAPIEndpoint(c.APIEndpoint),
+		cerbos.WithHubCredentials(c.ClientID, c.ClientSecret),
+	}
+
+	var advancedOpts []cerbos.Opt
+	if c.TLSCACert != "" {
+		advancedOpts = append(advancedOpts, cerbos.WithTLSCACert(c.TLSCACert))
+	}
+	if c.TLSClientCert != "" && c.TLSClientKey != "" {
+		advancedOpts = append(advancedOpts, cerbos.WithTLSClientCert(c.TLSClientCert, c.TLSClientKey))
+	}
+	if c.TLSInsecure {
+		advancedOpts = append(advancedOpts, cerbos.WithTLSInsecure())
+	}
+
+	if len(advancedOpts) > 0 {
+		hubOpts = append(hubOpts, cerbos.WithAdvancedOptions(advancedOpts...))
+	}
+	hc, err := cerbos.NewHubClient(hubOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Hub client: %w", err)
 	}
