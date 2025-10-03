@@ -53,25 +53,15 @@ var (
 		decls.NewVariable(CELGlobalsIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
 		decls.NewVariable(CELGlobalsAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
 	}
-
-	StdEnvOptions = []cel.EnvOption{
-		ext.TwoVarComprehensions(),
-		cel.CrossTypeNumericComparisons(true),
-		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
-		cel.VariableDecls(StdEnvDecls...),
-		ext.Lists(),
-		ext.Bindings(),
-		ext.Strings(),
-		ext.Encoders(),
-		ext.Math(),
-		CerbosCELLib(),
-	}
 )
 
 func init() {
 	var err error
 
-	StdEnv, err = initEnv(StdEnvOptions)
+	StdEnv, err = NewEnv(
+		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
+		cel.VariableDecls(StdEnvDecls...),
+	)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
@@ -87,14 +77,19 @@ func init() {
 	}
 }
 
-func initEnv(options []cel.EnvOption) (*cel.Env, error) {
-	env, err := cel.NewEnv(options...)
-	if err != nil {
-		return nil, err
-	}
+func NewEnv(envOptions ...cel.EnvOption) (*cel.Env, error) {
+	envOptions = append([]cel.EnvOption{
+		ext.TwoVarComprehensions(),
+		cel.CrossTypeNumericComparisons(true),
+		ext.Lists(),
+		ext.Bindings(),
+		ext.Strings(),
+		ext.Encoders(),
+		ext.Math(),
+		CerbosCELLib(),
+	}, envOptions...)
 
-	cctp := types.NewCamelCaseFieldProvider(env.CELTypeProvider())
-	return env.Extend(cel.CustomTypeProvider(cctp))
+	return cel.NewEnv(append(envOptions, types.JSONFields())...)
 }
 
 func compileConstant(value string) (*exprpb.CheckedExpr, error) {
