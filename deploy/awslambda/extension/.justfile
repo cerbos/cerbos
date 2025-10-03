@@ -41,9 +41,9 @@ function-package ARCH=arch():
     cp -r ../policies dist
 
     if [[ "$arch" == "arm64" ]] then
-     ln -f "../../../dist/cerbosext_linux_arm64_v8.0/cerbosext" layer/extensions/cerbosext
+     ln -f "../../../dist/cerbos-aws-lambda-ext_linux_arm64_v8.0/cerbosext" layer/extensions/cerbosext
     else
-     ln -f "../../../dist/cerbosext_linux_amd64_v1/cerbosext" layer/extensions/cerbosext
+     ln -f "../../../dist/cerbos-aws-lambda-ext_linux_amd64_v1/cerbosext" layer/extensions/cerbosext
     fi
 
 publish-test-function:
