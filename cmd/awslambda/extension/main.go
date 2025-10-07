@@ -59,14 +59,10 @@ func main() {
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 
 	p.Go(func(ctx context.Context) error {
-		opts := []cerbos.ServeOption{
+		return cerbos.Serve(ctx,
+			cerbos.WithConfig(overrides),
 			cerbos.WithConfigFile(configPath),
-			cerbos.WithLogLevel(cerbos.LogLevel(logLevel)),
-		}
-		if len(overrides) > 0 {
-			opts = append(opts, cerbos.WithConfig(overrides))
-		}
-		return cerbos.Serve(ctx, opts...)
+			cerbos.WithLogLevel(cerbos.LogLevel(logLevel)))
 	})
 	p.Go(func(ctx context.Context) error {
 		if err := awslambda.WaitForReady(ctx); err != nil {
