@@ -182,6 +182,17 @@
       },
       "description": "AccessEvaluationResponse mirrors Decision for RPC naming compliance."
     },
+    "v1AccessEvaluationsOptions": {
+      "type": "object",
+      "properties": {
+        "evaluationsSemantic": {
+          "type": "string",
+          "example": "deny_on_first_deny",
+          "description": "Evaluation semantic to apply. Defaults to \"execute_all\" when unset."
+        }
+      },
+      "description": "Optional execution controls for AuthZEN batch requests"
+    },
     "v1AccessEvaluationsRequest": {
       "type": "object",
       "properties": {
@@ -208,6 +219,10 @@
             "$ref": "#/definitions/v1Tuple"
           },
           "description": "Evaluations to perform (order preserved)."
+        },
+        "options": {
+          "$ref": "#/definitions/v1AccessEvaluationsOptions",
+          "description": "Execution options for the batch request."
         }
       },
       "description": "AuthZEN Access Evaluations batch request"

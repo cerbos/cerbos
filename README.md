@@ -266,7 +266,9 @@ Endpoints (served by the AuthZEN server):
 
 Notes:
 - Only evaluation endpoints are implemented. Subject/Resource/Action search endpoints are not implemented and are intentionally omitted from metadata.
-- Requests are translated to Cerbos CheckResources calls. The `subject.properties.roles` field is required.
+- Requests are translated to Cerbos CheckResources calls. Supplying `subject.properties.roles` is **required**; requests without at least one role are rejected with HTTP `400`.
+- The AuthZEN subject type is exposed inside the Cerbos principal attributes under `$type` (e.g., `attr["$type"] = "user"`).
 - AuthZEN `context`, if present, is embedded under `$context` inside the principal attributes for policy evaluation.
  - If the underlying Cerbos CheckResources result includes `outputs`, they are returned in the AuthZEN decision under `context.outputs` (each item includes `src` and `val`).
-- TLS is supported via the standard `server.tls` configuration. When TLS is enabled, the metadata `policy_decision_point` will use the `https` scheme, and all AuthZEN endpoints are served over TLS (access them via `https://`).
+- `options.evaluations_semantic` is accepted but only `"execute_all"` is currently supported; requests specifying any other value are rejected with `400`.
+- TLS is optional. When `server.tls` is configured the AuthZEN server advertises HTTPS endpoints; otherwise endpoints are served over HTTP, which can be secured by an upstream load balancer or service mesh.

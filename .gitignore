@@ -38,3 +38,4 @@ junit.*.xml
 test-times.json
 unit.cover
 
+.cache

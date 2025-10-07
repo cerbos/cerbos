@@ -33,17 +33,20 @@ import (
 )
 
 const (
-	authzenWellKnownPath = "/.well-known/authzen-configuration"
-	authzenEvalPath      = "/access/v1/evaluation"
-	authzenEvalsPath     = "/access/v1/evaluations"
-	headerRequestID      = "X-Request-ID"
+	authzenWellKnownPath               = "/.well-known/authzen-configuration"
+	authzenEvalPath                    = "/access/v1/evaluation"
+	authzenEvalsPath                   = "/access/v1/evaluations"
+	headerRequestID                    = "X-Request-ID"
+	authzenSemanticExecuteAll          = "execute_all"
+	authzenSemanticDenyOnFirstDeny     = "deny_on_first_deny"
+	authzenSemanticPermitOnFirstPermit = "permit_on_first_permit"
 )
 
 // Note: AuthZEN request/response data models are defined in protobuf at
 // api/public/cerbos/authzen/v1/authzen.proto and used via generated types.
 
 func (s *Server) startAuthZENServer(ctx context.Context, l net.Listener, _ *grpc.Server) (*http.Server, error) {
-	log := zap.L().Named("authzen")
+	log := zap.S().Named("authzen")
 
 	grpcConn, err := s.mkGRPCConn()
 	if err != nil {
@@ -56,7 +59,8 @@ func (s *Server) startAuthZENServer(ctx context.Context, l net.Listener, _ *grpc
 	gw := mkGatewayMux(grpcConn)
 	svc := &authzenRPC{server: s, cl: cl}
 	if err := authzenv1.RegisterAuthZENServiceHandlerServer(ctx, gw, svc); err != nil {
-		return nil, err
+		log.Errorw("Failed to register AuthZEN HTTP service", "error", err)
+		return nil, fmt.Errorf("failed to register AuthZEN HTTP service: %w", err)
 	}
 
 	// Root HTTP mux: use our legacy well-known handler for correct host/proto detection, and delegate others to gw
@@ -79,10 +83,10 @@ func (s *Server) startAuthZENServer(ctx context.Context, l net.Listener, _ *grpc
 	}
 
 	s.pool.Go(func(_ context.Context) error {
-		log.Info(fmt.Sprintf("Starting AuthZEN HTTP server at %s", s.conf.AuthZEN.ListenAddr))
+		log.Infof("Starting AuthZEN HTTP server at %s", s.conf.AuthZEN.ListenAddr)
 		err := h.Serve(l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Error("AuthZEN server failed", zap.Error(err))
+			log.Errorw("AuthZEN server failed", "error", err)
 			return err
 		}
 		log.Info("AuthZEN server stopped")
@@ -103,28 +107,29 @@ func (a *authzenRPC) AccessEvaluation(ctx context.Context, in *authzenv1.AccessE
 	if err := validator.Validate(in); err != nil {
 		return nil, grpcBadRequest(err)
 	}
-	tuple := resolveTuple(in, nil)
-	chkReq, err := buildCheckResourcesRequest(getReqIDFromMD(ctx), tuple)
-	if err != nil {
-		return nil, grpcBadRequest(err)
-	}
-	resp, err := a.cl.CheckResources(ctx, chkReq)
+	dec, err := a.evaluateTuple(ctx, resolveTuple(in, nil), getReqIDFromMD(ctx))
 	if err != nil {
 		return nil, err
 	}
-	dec := &authzenv1.AccessEvaluationResponse{Decision: extractSingleDecision(resp)}
-	if res := resp.GetResults(); len(res) > 0 {
-		if c := outputsToContext(res[0].GetOutputs()); c != nil {
-			dec.Context = c
-		}
-	}
 	setReqIDEcho(ctx)
-	return dec, nil
+	return &authzenv1.AccessEvaluationResponse{Decision: dec.GetDecision(), Context: dec.GetContext()}, nil
 }
 
 func (a *authzenRPC) AccessEvaluations(ctx context.Context, in *authzenv1.AccessEvaluationsRequest) (*authzenv1.AccessEvaluationsResponse, error) {
 	if err := validator.Validate(in); err != nil {
 		return nil, grpcBadRequest(err)
+	}
+
+	semantic := strings.ToLower(strings.TrimSpace(in.GetOptions().GetEvaluationsSemantic()))
+	if semantic == "" {
+		semantic = authzenSemanticExecuteAll
+	}
+	switch semantic {
+	case authzenSemanticExecuteAll:
+	case authzenSemanticDenyOnFirstDeny, authzenSemanticPermitOnFirstPermit:
+		return nil, grpcBadRequest(fmt.Errorf("options.evaluations_semantic %q is not supported (only %q is allowed)", semantic, authzenSemanticExecuteAll))
+	default:
+		return nil, grpcBadRequest(fmt.Errorf("invalid options.evaluations_semantic %q", in.GetOptions().GetEvaluationsSemantic()))
 	}
 
 	// If no evaluations, behave like single using top-level defaults
@@ -137,72 +142,50 @@ func (a *authzenRPC) AccessEvaluations(ctx context.Context, in *authzenv1.Access
 		return &authzenv1.AccessEvaluationsResponse{Evaluations: []*authzenv1.Decision{dec}}, nil
 	}
 
-	out := &authzenv1.AccessEvaluationsResponse{Evaluations: make([]*authzenv1.Decision, len(in.GetEvaluations()))}
+	out := make([]*authzenv1.Decision, 0, len(in.GetEvaluations()))
 	reqID := getReqIDFromMD(ctx)
 
-	for i := range in.GetEvaluations() {
-		t := resolveBatchTuple(in, in.GetEvaluations()[i])
-
-		pr, err := azSubjectToCerbos(t.GetSubject(), t.GetContext())
-		if err != nil {
-			return nil, grpcBadRequest(err)
-		}
-		res, actions, err := azResourceToCerbos(t.GetResource(), t.GetAction())
-		if err != nil {
-			return nil, grpcBadRequest(err)
-		}
-
-		chkReq := &requestv1.CheckResourcesRequest{
-			RequestId: reqID,
-			Principal: pr,
-			Resources: []*requestv1.CheckResourcesRequest_ResourceEntry{{
-				Resource: res,
-				Actions:  actions,
-			}},
-		}
-
-		resp, err := a.cl.CheckResources(ctx, chkReq)
+	for _, item := range in.GetEvaluations() {
+		dec, err := a.evaluateTuple(ctx, resolveBatchTuple(in, item), reqID)
 		if err != nil {
 			return nil, err
 		}
-		dec := &authzenv1.Decision{Decision: extractSingleDecision(resp)}
-		if res := resp.GetResults(); len(res) > 0 {
-			if c := outputsToContext(res[0].GetOutputs()); c != nil {
-				dec.Context = c
-			}
-		}
-		out.Evaluations[i] = dec
+		out = append(out, dec)
 	}
 
 	setReqIDEcho(ctx)
-	return out, nil
+	return &authzenv1.AccessEvaluationsResponse{Evaluations: out}, nil
 }
 
 // evalSingleFromDefaults evaluates a single decision using the top-level defaults in the batch request.
 func (a *authzenRPC) evalSingleFromDefaults(ctx context.Context, in *authzenv1.AccessEvaluationsRequest) (*authzenv1.Decision, error) {
 	t := &authzenv1.Tuple{Subject: in.GetSubject(), Action: in.GetAction(), Resource: in.GetResource(), Context: in.GetContext()}
-	chkReq, err := buildCheckResourcesRequest(getReqIDFromMD(ctx), t)
+	return a.evaluateTuple(ctx, t, getReqIDFromMD(ctx))
+}
+
+func (a *authzenRPC) evaluateTuple(ctx context.Context, tuple *authzenv1.Tuple, reqID string) (*authzenv1.Decision, error) {
+	chkReq, err := buildCheckResourcesRequest(reqID, tuple)
 	if err != nil {
 		return nil, grpcBadRequest(err)
 	}
+
 	resp, err := a.cl.CheckResources(ctx, chkReq)
 	if err != nil {
 		return nil, err
 	}
+
 	dec := &authzenv1.Decision{Decision: extractSingleDecision(resp)}
 	if res := resp.GetResults(); len(res) > 0 {
 		if c := outputsToContext(res[0].GetOutputs()); c != nil {
 			dec.Context = c
 		}
 	}
+
 	return dec, nil
 }
 
 func (a *authzenRPC) GetMetadata(ctx context.Context, _ *authzenv1.GetMetadataRequest) (*authzenv1.GetMetadataResponse, error) {
-	scheme := "http"
-	if a.server.tlsConfig != nil {
-		scheme = "https"
-	}
+	scheme := a.server.authZENDefaultScheme()
 	host := ""
 	if mdIn, ok := metadata.FromIncomingContext(ctx); ok {
 		if v := getFirst(mdIn, "x-forwarded-host", "X-Forwarded-Host"); v != "" {
@@ -210,9 +193,19 @@ func (a *authzenRPC) GetMetadata(ctx context.Context, _ *authzenv1.GetMetadataRe
 		} else if v := getFirst(mdIn, "host", "Host", ":authority"); v != "" {
 			host = v
 		}
-		if v := getFirst(mdIn, "x-forwarded-proto", "X-Forwarded-Proto"); v != "" {
-			scheme = v
+		if v := strings.ToLower(getFirst(mdIn, "x-forwarded-proto", "X-Forwarded-Proto")); v != "" {
+			if a.server.authZENUsesUnixSocket() {
+				scheme = v
+			} else if v == "https" {
+				scheme = "https"
+			}
 		}
+	}
+	if host == "" {
+		host = a.server.authZENDefaultHost()
+	}
+	if !a.server.authZENUsesUnixSocket() && a.server.tlsConfig != nil {
+		scheme = "https"
 	}
 	base := fmt.Sprintf("%s://%s", scheme, host)
 	return &authzenv1.GetMetadataResponse{
@@ -266,17 +259,17 @@ func getFirst(md metadata.MD, keys ...string) string {
 }
 
 func (s *Server) handleAuthZENWellKnown(w http.ResponseWriter, r *http.Request) {
-	scheme := "http"
-	if s.tlsConfig != nil {
-		scheme = "https"
+	scheme := s.authZENDefaultScheme()
+	if xfp := r.Header.Get("X-Forwarded-Proto"); xfp != "" {
+		scheme = xfp
 	}
 
 	host := r.Host
 	if xf := r.Header.Get("X-Forwarded-Host"); xf != "" {
 		host = xf
 	}
-	if xfp := r.Header.Get("X-Forwarded-Proto"); xfp != "" {
-		scheme = xfp
+	if host == "" {
+		host = s.authZENDefaultHost()
 	}
 
 	base := fmt.Sprintf("%s://%s", scheme, host)
@@ -288,6 +281,41 @@ func (s *Server) handleAuthZENWellKnown(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeProtoJSON(w, http.StatusOK, md)
+}
+
+func (s *Server) authZENUsesUnixSocket() bool {
+	return strings.HasPrefix(s.conf.AuthZEN.ListenAddr, "unix:")
+}
+
+func (s *Server) authZENDefaultScheme() string {
+	if s.authZENUsesUnixSocket() {
+		return "http"
+	}
+	if s.tlsConfig != nil {
+		return "https"
+	}
+	return "http"
+}
+
+func (s *Server) authZENDefaultHost() string {
+	if s.authZENUsesUnixSocket() {
+		return "unix"
+	}
+
+	host, port, err := net.SplitHostPort(s.conf.AuthZEN.ListenAddr)
+	if err != nil {
+		return s.conf.AuthZEN.ListenAddr
+	}
+
+	if host == "" || host == "0.0.0.0" || host == "::" || host == "[::]" {
+		host = "localhost"
+	}
+
+	if port == "" {
+		return host
+	}
+
+	return net.JoinHostPort(host, port)
 }
 
 // resolveTuple combines top-level defaults and per-evaluation overrides.
@@ -358,7 +386,7 @@ func azSubjectToCerbos(sj *authzenv1.Subject, ctx *structpb.Struct) (*enginev1.P
 	props := structToMap(sj.GetProperties())
 	roles := extractStringSlice(props, "roles")
 	if len(roles) == 0 {
-		return nil, fmt.Errorf("subject.properties.roles is required")
+		return nil, fmt.Errorf("subject.properties.roles must be a non-empty array of role identifiers")
 	}
 	pr.Roles = roles
 
@@ -378,7 +406,7 @@ func azSubjectToCerbos(sj *authzenv1.Subject, ctx *structpb.Struct) (*enginev1.P
 		}
 		attrs[k] = v
 	}
-	attrs["type"] = sj.GetType()
+	attrs["$type"] = sj.GetType()
 	if ctx != nil {
 		attrs["$context"] = ctx.AsMap()
 	}

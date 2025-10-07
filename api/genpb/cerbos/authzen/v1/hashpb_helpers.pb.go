@@ -47,6 +47,13 @@ func cerbos_authzen_v1_AccessEvaluationResponse_hashpb_sum(m *AccessEvaluationRe
 	}
 }
 
+func cerbos_authzen_v1_AccessEvaluationsOptions_hashpb_sum(m *AccessEvaluationsOptions, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsOptions.evaluations_semantic"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetEvaluationsSemantic()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetEvaluationsSemantic()), len(m.GetEvaluationsSemantic())))
+	}
+}
+
 func cerbos_authzen_v1_AccessEvaluationsRequest_hashpb_sum(m *AccessEvaluationsRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsRequest.subject"]; !ok {
 		if m.GetSubject() != nil {
@@ -75,6 +82,11 @@ func cerbos_authzen_v1_AccessEvaluationsRequest_hashpb_sum(m *AccessEvaluationsR
 					cerbos_authzen_v1_Tuple_hashpb_sum(v, hasher, ignore)
 				}
 			}
+		}
+	}
+	if _, ok := ignore["cerbos.authzen.v1.AccessEvaluationsRequest.options"]; !ok {
+		if m.GetOptions() != nil {
+			cerbos_authzen_v1_AccessEvaluationsOptions_hashpb_sum(m.GetOptions(), hasher, ignore)
 		}
 	}
 }

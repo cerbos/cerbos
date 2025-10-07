@@ -132,6 +132,10 @@ message AccessEvaluationsRequest {
     (buf.validate.field).repeated = {min_items: 0},
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Evaluations to perform (order preserved)."}
   ];
+  // Optional execution options applied to the batch request.
+  AccessEvaluationsOptions options = 6 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Execution options for the batch request."}
+  ];
 
   // If evaluations are provided, ensure each evaluation has a subject via tuple or top-level default.
   option (buf.validate.message).cel = {
@@ -151,6 +155,23 @@ message AccessEvaluationsRequest {
     expression: "size(this.evaluations) == 0 || this.evaluations.all(e, has(e.resource) || has(this.resource))"
     message: "Each evaluation must have a resource via tuple or top-level default"
   };
+}
+
+// AccessEvaluationsOptions captures optional execution controls for batch requests.
+message AccessEvaluationsOptions {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Optional execution controls for AuthZEN batch requests"}
+  };
+  // Controls how the PDP should execute the evaluations array.
+  string evaluations_semantic = 1 [
+    (buf.validate.field).string = {
+      in: ["", "execute_all", "deny_on_first_deny", "permit_on_first_permit"]
+    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Evaluation semantic to apply. Defaults to \"execute_all\" when unset.",
+      example: "\"deny_on_first_deny\""
+    }
+  ];
 }
 
 // Decision contains the boolean decision and optional context (e.g. outputs).
