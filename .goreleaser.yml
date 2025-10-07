@@ -36,8 +36,8 @@ builds:
             - BINARY_PATH={{ .Path }}
 
   - main: ./cmd/awslambda/extension
-    binary: extensions/cerbosext
-    id: "cerbosext"
+    binary: cerbosext
+    id: cerbos-aws-lambda-ext
     env:
       - CGO_ENABLED=0
     goos:
@@ -52,7 +52,7 @@ builds:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}} -X github.com/cerbos/cerbos/internal/telemetry.WriteKey={{.Env.TELEMETRY_WRITE_KEY}} -X github.com/cerbos/cerbos/internal/telemetry.DataPlaneURL={{.Env.TELEMETRY_URL}}
   - main: ./cmd/awslambda/function
     binary: cerbosfunc
-    id: "cerbosfunc"
+    id: "cerbos-aws-lambda-func"
     env:
       - CGO_ENABLED=0
     goos:
@@ -131,6 +131,14 @@ archives:
     ids:
       - cerbosctl
     name_template: 'cerbosctl_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - id: cerbosext
+    ids:
+      - cerbos-aws-lambda-ext
+    name_template: 'cerbos_aws_lambda_ext_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  - id: cerbosfunc
+    ids:
+      - cerbos-aws-lambda-func
+    name_template: 'cerbos_aws_lambda_func_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 
 nfpms:
   - id: cerbos

@@ -1,0 +1,18 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+description: |-
+  Common dynamic roles used within the Apatr app
+derivedRoles:
+  name: apatr_common_roles
+  definitions:
+    - name: owner
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: request.resource.attr.owner == request.principal.id
+
+    - name: abuse_moderator
+      parentRoles: ["moderator"]
+      condition:
+        match:
+          expr: request.resource.attr.flagged == true

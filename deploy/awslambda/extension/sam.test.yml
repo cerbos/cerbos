@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Function without extension attached. Deployed to a user account. Cerbos extension to be attached separately.
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  TestExtensionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: provided.al2
+      CodeUri: dist/
+      Handler: bootstrap
+      Architectures:
+        - arm64
+      MemorySize: 1024
+      Events:
+        CatchAll:
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          CERBOS_LOG_LEVEL: info
+          XDG_CACHE_HOME: /tmp
+          CERBOS_CONFIG: /var/task/.cerbos.yaml
+
+Outputs:
+  CerbosServerFunctionAPI:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  TestExtensionFunction:
+    Description: "Cerbos Server Function ARN"
+    Value: !GetAtt TestExtensionFunction.Arn

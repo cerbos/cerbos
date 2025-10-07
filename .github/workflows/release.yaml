@@ -64,16 +64,6 @@ jobs:
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/cerbos/bin
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.10.0
 
@@ -201,3 +191,50 @@ jobs:
           helm registry logout ${{ env.OCI_REGISTRY }}
         env:
           HELM_EXPERIMENTAL_OCI: "1"
+
+  publishLambdaFunction:
+    name: Publish AWS Lambda Function to SAR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: releaseBinaries
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+          - arch: arm64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Download GoReleaser artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: artifacts
+          path: dist/
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Prepare, package and publish Lambda function to AWS SARs
+        run: |-
+          VERSION="${GITHUB_REF#refs/tags/}"
+          export AWS_REGION="${{ vars.AWS_REGION }}"
+          just -f ./deploy/awslambda/function/.justfile publish-to-sar "$VERSION" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ matrix.arch }}"
+
+      - name: Prepare, package and publish Lambda extension to AWS SARs
+        run: |-
+          VERSION="${GITHUB_REF#refs/tags/}"
+          export AWS_REGION="${{ vars.AWS_REGION }}"
+          just -f ./deploy/awslambda/extension/.justfile publish-to-sar "$VERSION" "${{ secrets.AWS_SAR_PUBLISHING_BUCKET }}" "${{ matrix.arch }}"

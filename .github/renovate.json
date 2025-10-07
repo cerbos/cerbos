@@ -1,81 +1,118 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "configMigration": true,
-  "extends": [
-    "group:allNonMajor",
-    "schedule:weekly",
-    ":automergeDisabled",
-    ":combinePatchMinorReleases",
-    ":dependencyDashboard",
-    ":gitSignOff",
-    ":renovatePrefix",
-    ":semanticCommitTypeAll(chore)",
-    ":separateMultipleMajorReleases"
-  ],
-  "ignoreDeps": ["github.com/cerbos/go-yaml"],
-  "packageRules": [
-    {
-      "matchManagers": ["helmfile"],
-      "groupName": "Helm deps",
-      "groupSlug": "helm-deps"
-    },
-    {
-      "matchManagers": ["github-actions"],
-      "groupName": "GitHub Actions deps",
-      "groupSlug": "gh-actions-deps"
-    },
-    {
-      "description": "Opt-out of go.mod Go version updates: https://github.com/renovatebot/renovate/issues/16715",
-      "matchManagers": ["gomod"],
-      "matchDepTypes": ["golang"],
-      "enabled": false
-    },
-    {
-      "matchManagers": ["gomod"],
-      "groupName": "Go deps",
-      "groupSlug": "go-deps",
-      "postUpdateOptions": [
-        "gomodTidy",
-        "gomodUpdateImportPaths"
-      ]
-    },
-    {
-      "matchManagers": ["dockerfile", "docker-compose"],
-      "matchUpdateTypes": ["major", "minor", "patch"],
-      "digest": {
-        "enabled": false
-      },
-      "groupName": "Docker deps",
-      "groupSlug": "docker-deps"
-    },
-    {
-      "matchManagers": ["nodenv", "npm"],
-      "groupName": "Node.js deps",
-      "groupSlug": "node-deps",
-      "rangeStrategy": "pin"
-    },
-    {
-      "description": "Don't update dependencies for npm test cases (they should be kept set to 'latest' because they're pulled from the private registry)",
-      "matchFileNames": ["npm/test/cases/*/package.json"],
-      "matchDepTypes": ["dependencies"],
-      "enabled": false
-    },
-    {
-      "description": "Don't do major version updates for package managers in npm test cases (each test case targets a specific major version)",
-      "matchFileNames": ["npm/test/cases/*/package.json"],
-      "matchDepTypes": ["packageManager"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
-    },
-    {
-      "description": "https://github.com/verdaccio/verdaccio/issues/5187",
-      "matchPackageNames": ["verdaccio"],
-      "enabled": false
-    }
-  ],
-  "labels": [
-    "kind/chore",
-    "area/dependencies",
-    "bots"
-  ]
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "configMigration": true,
+    "commitMessageLowerCase": "never",
+    "minimumReleaseAge": "5 days",
+    "internalChecksFilter": "strict",
+    "extends": [
+        "group:allNonMajor",
+        "schedule:weekly",
+        ":automergeDisabled",
+        ":combinePatchMinorReleases",
+        ":dependencyDashboard",
+        ":gitSignOff",
+        ":renovatePrefix",
+        ":semanticCommitTypeAll(chore)",
+        ":separateMultipleMajorReleases"
+    ],
+    "ignoreDeps": [
+        "github.com/cerbos/go-yaml"
+    ],
+    "packageRules": [
+        {
+            "matchManagers": [
+                "helmfile"
+            ],
+            "groupName": "Helm deps",
+            "groupSlug": "helm-deps"
+        },
+        {
+            "matchManagers": [
+                "github-actions"
+            ],
+            "groupName": "GitHub Actions deps",
+            "groupSlug": "gh-actions-deps"
+        },
+        {
+            "description": "Opt-out of go.mod Go version updates: https://github.com/renovatebot/renovate/issues/16715",
+            "matchManagers": [
+                "gomod"
+            ],
+            "matchDepTypes": [
+                "golang"
+            ],
+            "enabled": false
+        },
+        {
+            "matchManagers": [
+                "gomod"
+            ],
+            "groupName": "Go deps",
+            "groupSlug": "go-deps",
+            "postUpdateOptions": [
+                "gomodTidy",
+                "gomodUpdateImportPaths"
+            ]
+        },
+        {
+            "matchManagers": [
+                "dockerfile",
+                "docker-compose"
+            ],
+            "matchUpdateTypes": [
+                "major",
+                "minor",
+                "patch"
+            ],
+            "digest": {
+                "enabled": false
+            },
+            "groupName": "Docker deps",
+            "groupSlug": "docker-deps"
+        },
+        {
+            "matchManagers": [
+                "nodenv",
+                "npm"
+            ],
+            "groupName": "Node.js deps",
+            "groupSlug": "node-deps",
+            "rangeStrategy": "pin"
+        },
+        {
+            "description": "Don't update dependencies for npm test cases (they should be kept set to 'latest' because they're pulled from the private registry)",
+            "matchFileNames": [
+                "npm/test/cases/*/package.json"
+            ],
+            "matchDepTypes": [
+                "dependencies"
+            ],
+            "enabled": false
+        },
+        {
+            "description": "Don't do major version updates for package managers in npm test cases (each test case targets a specific major version)",
+            "matchFileNames": [
+                "npm/test/cases/*/package.json"
+            ],
+            "matchDepTypes": [
+                "packageManager"
+            ],
+            "matchUpdateTypes": [
+                "major"
+            ],
+            "enabled": false
+        },
+        {
+            "description": "https://github.com/verdaccio/verdaccio/issues/5187",
+            "matchPackageNames": [
+                "verdaccio"
+            ],
+            "enabled": false
+        }
+    ],
+    "labels": [
+        "kind/chore",
+        "area/dependencies",
+        "bots"
+    ]
 }

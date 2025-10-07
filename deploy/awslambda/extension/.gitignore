@@ -1,5 +1,4 @@
-config-layer
-test-layer-content
+layer
 *.zip
 packaged-template.yml
 .sam.tmp.yml

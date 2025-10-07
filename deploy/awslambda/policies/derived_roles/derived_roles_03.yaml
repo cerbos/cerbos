@@ -1,0 +1,16 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: buyer_derived_roles
+  definitions:
+    - name: buyer
+      parentRoles: ["user"]
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.ownerOrgId == P.attr.orgId
+              - expr: ("buyer" in P.attr.jobRoles)
+              - expr: (R.attr.tags.brand in P.attr.tags.brands) || ("*" in P.attr.tags.brands)
+              - expr: (R.attr.tags.class in P.attr.tags.classes) || ("*" in P.attr.tags.classes)
+              - expr: (R.attr.tags.region in P.attr.tags.regions) || ("*" in P.attr.tags.regions)
