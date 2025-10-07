@@ -29,12 +29,10 @@ func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 	log := zap.L().Named("lambda-func")
 
 	configPath := os.Getenv("CERBOS_CONFIG")
-	if configPath == "" {
-		configPath = "/var/task/.cerbos.yaml"
-	}
 
 	log.Info("Loading configuration", zap.String("configPath", configPath))
-	if err := config.Load(configPath, nil); err != nil {
+
+	if err := config.Load(configPath, MkConfOverrides("/opt/policies")); err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
 

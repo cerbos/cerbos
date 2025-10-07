@@ -25,9 +25,6 @@ func main() {
 	defer stopFunc()
 
 	configPath := os.Getenv("CERBOS_CONFIG")
-	if configPath == "" {
-		configPath = "/var/task/.cerbos.yaml"
-	}
 
 	logLevel := os.Getenv("CERBOS_LOG_LEVEL")
 	if logLevel == "" {
@@ -53,6 +50,7 @@ func main() {
 	p.Go(func(ctx context.Context) error {
 		return cerbos.Serve(ctx,
 			cerbos.WithConfigFile(configPath),
+			cerbos.WithConfig(awslambda.MkConfOverrides("/var/task/policies")),
 			cerbos.WithLogLevel(cerbos.LogLevel(logLevel)),
 		)
 	})
