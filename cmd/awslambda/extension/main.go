@@ -48,11 +48,20 @@ func main() {
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
 	p.Go(func(ctx context.Context) error {
-		return cerbos.Serve(ctx,
+		opts := []cerbos.ServeOption{
 			cerbos.WithConfigFile(configPath),
-			cerbos.WithConfig(awslambda.MkConfOverrides("/var/task/policies")),
 			cerbos.WithLogLevel(cerbos.LogLevel(logLevel)),
-		)
+		}
+
+		if configPath == "" {
+			overrides, err := awslambda.MkConfOverrides("/var/task/policies")
+			if err != nil {
+				return fmt.Errorf("failed to create config overrides: %w", err)
+			}
+			opts = append(opts, cerbos.WithConfig(overrides))
+		}
+
+		return cerbos.Serve(ctx, opts...)
 	})
 	p.Go(func(ctx context.Context) error {
 		if err := awslambda.WaitForReady(ctx); err != nil {

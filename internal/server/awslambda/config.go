@@ -3,11 +3,15 @@
 
 package awslambda
 
-import "fmt"
+import (
+	"fmt"
 
-func MkConfOverrides(cwd string) map[string]any, error {
+	"helm.sh/helm/v3/pkg/strvals"
+)
+
+func MkConfOverrides(cwd string) (map[string]any, error) {
 	confOverrides := map[string]any{}
-	overrides = string[]{fmt.Sprintf("storage.disk.directory=%s", cwd), "storage.disk.watchForChanges=false"}
+	overrides := []string{fmt.Sprintf("storage.disk.directory=%s", cwd), "storage.disk.watchForChanges=false"}
 	for _, override := range overrides {
 		if err := strvals.ParseInto(override, confOverrides); err != nil {
 			return nil, fmt.Errorf("failed to parse config override [%s]: %w", override, err)
