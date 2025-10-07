@@ -26,8 +26,8 @@ func MkConfStorageOverrides(cwd string, confOverrides map[string]any) error {
 
 func MkConfServerOverrides(confOverrides map[string]any) error {
 	overrides := []string{
-		"server.httpListenAddr=\"unix:/tmp/cerbos.http.sock\"",
-		"server.grpcListenAddr=\"unix:/tmp/cerbos.grpc.sock\"",
+		"server.httpListenAddr=unix:/tmp/cerbos.http.sock",
+		"server.grpcListenAddr=unix:/tmp/cerbos.grpc.sock",
 	}
 	for _, override := range overrides {
 		if err := strvals.ParseInto(override, confOverrides); err != nil {
