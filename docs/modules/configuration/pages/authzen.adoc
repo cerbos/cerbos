@@ -1,0 +1,145 @@
+include::ROOT:partial$attributes.adoc[]
+
+= AuthZEN
+
+include::ROOT:partial$version-check.adoc[]
+
+Cerbos can expose the OpenID AuthZEN API on a dedicated listener. This translation layer is disabled by default and must be explicitly enabled. See the link:https://openid.net/wg/authzen/[OpenID AuthZEN] for specification details and the API data model.
+
+== Enable the AuthZEN API
+
+Set `server.authzen.enabled` to `true` to start the AuthZEN HTTP server. When enabled, Cerbos serves the AuthZEN discovery document and evaluation endpoints alongside the standard Cerbos APIs.
+
+.Enable AuthZEN
+[source,yaml,linenums]
+----
+server:
+  authzen:
+    enabled: true
+----
+
+== Listen address
+
+The AuthZEN server listens on its own address which defaults to `:3595`. Use `server.authzen.listenAddr` to customize the bind target or move the listener to a Unix domain socket. The address format matches other Cerbos listeners (see xref:server.adoc[]).
+
+.Custom TCP address
+[source,yaml,linenums]
+----
+server:
+  authzen:
+    enabled: true
+    listenAddr: "0.0.0.0:8444"
+----
+
+.Unix domain socket
+[source,yaml,linenums]
+----
+server:
+  authzen:
+    enabled: true
+    listenAddr: "unix:/var/run/cerbos.authzen.sock"
+----
+
+[NOTE]
+====
+When TLS is configured via `server.tls`, the same certificates are used for the AuthZEN listener. CORS settings from `server.cors` also apply to AuthZEN responses.
+====
+
+== Available endpoints
+
+Once enabled, the AuthZEN server exposes the following HTTP routes relative to the configured listen address:
+
+* `/.well-known/authzen-configuration` — discovery document describing the available endpoints.
+* `/access/v1/evaluation` — evaluate a single AuthZEN tuple.
+* `/access/v1/evaluations` — evaluate multiple tuples in a single request.
+
+Each endpoint accepts JSON payloads that comply with the AuthZEN specification. Requests may include the `X-Request-ID` header; when present, Cerbos echoes the value back in responses to support end-to-end correlation.
+
+== Mapping to `CheckResources`
+
+AuthZEN requests are translated into the standard Cerbos xref:api:index.adoc#check-resources[`CheckResources`] call before policies are evaluated. The following example shows how an AuthZEN `AccessEvaluationRequest` maps to the generated Cerbos request.
+
+.AuthZEN AccessEvaluationRequest
+[source,json,linenums]
+----
+{
+  "subject": {
+    "id": "user-123",
+    "type": "user",
+    "properties": {
+      "roles": ["manager", "approver"],
+      "$policyVersion": "2024-preview",
+      "$scope": "acme",
+      "department": "sales"
+    }
+  },
+  "action": { "name": "approve" },
+  "resource": {
+    "type": "leave_request",
+    "id": "LR-42",
+    "properties": {
+      "$scope": "acme",
+      "$policyVersion": "2024-preview",
+      "owner": "user-123",
+      "status": "PENDING"
+    }
+  },
+  "context": {
+    "channel": "web",
+    "ip": "203.0.113.10"
+  }
+}
+----
+
+.Derived Cerbos CheckResources request
+[source,json,linenums]
+----
+{
+  "principal": {
+    "id": "user-123",
+    "roles": ["manager", "approver"],
+    "policyVersion": "2024-preview",
+    "scope": "acme",
+    "attr": {
+      "$type": "user",
+      "$context": {
+        "channel": "web",
+        "ip": "203.0.113.10"
+      },
+      "department": "sales"
+    }
+  },
+  "resources": [
+    {
+      "actions": ["approve"],
+      "resource": {
+        "kind": "leave_request",
+        "id": "LR-42",
+        "scope": "acme",
+        "policyVersion": "2024-preview",
+        "attr": {
+          "owner": "user-123",
+          "status": "PENDING"
+        }
+      }
+    }
+  ]
+}
+----
+
+Key mappings:
+
+* `subject.properties.roles` → `principal.roles` (must contain at least one role).
+* `subject.properties.$policyVersion` → `principal.policyVersion`.
+* `subject.properties.$scope` → `principal.scope`.
+* Remaining `subject.properties` become `principal.attr`; Cerbos injects `"$type"` and `"$context"` automatically.
+* `resource.properties.$policyVersion` → `resource.policyVersion`.
+* `resource.properties.$scope` → `resource.scope`.
+* Remaining `resource.properties` populate `resource.attr`.
+* `action.name` becomes the single entry in the `actions` array (batch requests generate one entry per tuple).
+* The optional `context` struct is passed through to `principal.attr["$context"]`, allowing policies to reference request metadata.
+
+[NOTE]
+====
+The `$scope` and `$policyVersion` property names are reserved for mapping AuthZEN tuples onto Cerbos scopes and policy versions. They are stripped from the attribute map after translation so the values are only applied to the dedicated `scope` and `policyVersion` fields recognised by the Cerbos engine.
+====

@@ -788,6 +788,79 @@ func TestExtractHelpers(t *testing.T) {
 	require.Equal(t, "20210210", pv)
 }
 
+func TestAuthZEN_SpecialAttributeMappings(t *testing.T) {
+	t.Helper()
+
+	subjectProps, err := structpb.NewStruct(map[string]any{
+		"roles":          []any{"manager"},
+		"$scope":         "acme",
+		"$policyVersion": "2024-preview",
+		"department":     "sales",
+	})
+	require.NoError(t, err)
+
+	ctxStruct, err := structpb.NewStruct(map[string]any{"ip": "203.0.113.10"})
+	require.NoError(t, err)
+
+	subject := &authzenv1.Subject{
+		Id:         "user-123",
+		Type:       "user",
+		Properties: subjectProps,
+	}
+
+	principal, err := azSubjectToCerbos(subject, ctxStruct)
+	require.NoError(t, err)
+	require.Equal(t, "acme", principal.Scope)
+	require.Equal(t, "2024-preview", principal.PolicyVersion)
+	require.ElementsMatch(t, []string{"manager"}, principal.Roles)
+
+	attr := principal.GetAttr()
+	require.NotNil(t, attr)
+	if ctxVal, ok := attr["$context"]; ok {
+		require.Equal(t, "203.0.113.10", ctxVal.GetStructValue().AsMap()["ip"])
+	} else {
+		t.Fatalf("$context attribute missing")
+	}
+
+	deptVal, ok := attr["department"]
+	require.True(t, ok)
+	require.Equal(t, "sales", deptVal.GetStringValue())
+	_, ok = attr["$scope"]
+	require.False(t, ok, "principal attr should not contain $scope")
+	_, ok = attr["$policyVersion"]
+	require.False(t, ok, "principal attr should not contain $policyVersion")
+
+	resourceProps, err := structpb.NewStruct(map[string]any{
+		"$scope":         "tenant-1",
+		"$policyVersion": "beta",
+		"owner":          "user-123",
+	})
+	require.NoError(t, err)
+
+	resource := &authzenv1.Resource{
+		Type:       "leave_request",
+		Id:         "LR-42",
+		Properties: resourceProps,
+	}
+
+	action := &authzenv1.Action{Name: "approve"}
+	resOut, actions, err := azResourceToCerbos(resource, action)
+	require.NoError(t, err)
+	require.Equal(t, []string{"approve"}, actions)
+	require.Equal(t, "tenant-1", resOut.Scope)
+	require.Equal(t, "beta", resOut.PolicyVersion)
+
+	resAttr := resOut.GetAttr()
+	require.NotNil(t, resAttr)
+	ownerVal, ok := resAttr["owner"]
+	require.True(t, ok)
+	require.Equal(t, "user-123", ownerVal.GetStringValue())
+	_, ok = resAttr["$scope"]
+	require.False(t, ok, "resource attr should not contain $scope")
+	_, ok = resAttr["$policyVersion"]
+	require.False(t, ok, "resource attr should not contain $policyVersion")
+}
+
 func TestResolveTuple_MergePrecedence(t *testing.T) {
 	// Build properties structs
 	subProps, err := structpb.NewStruct(map[string]any{"roles": []any{"employee"}})

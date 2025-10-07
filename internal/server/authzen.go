@@ -391,17 +391,17 @@ func azSubjectToCerbos(sj *authzenv1.Subject, ctx *structpb.Struct) (*enginev1.P
 	pr.Roles = roles
 
 	// scope & policy version if provided
-	if scope, ok := extractString(props, "scope"); ok {
+	if scope, ok := extractStringAltKeys(props, "$scope", "scope"); ok {
 		pr.Scope = scope
 	}
-	if pv, ok := extractStringAltKeys(props, "policyVersion", "policy_version"); ok {
+	if pv, ok := extractStringAltKeys(props, "$policyVersion", "policyVersion"); ok {
 		pr.PolicyVersion = pv
 	}
 
 	// attributes: everything else + include subject.type and $context
 	attrs := map[string]any{}
 	for k, v := range props {
-		if k == "roles" || k == "scope" || k == "policyVersion" || k == "policy_version" {
+		if k == "roles" || k == "scope" || k == "$scope" || k == "policyVersion" || k == "$policyVersion" {
 			continue
 		}
 		attrs[k] = v
@@ -430,12 +430,16 @@ func azResourceToCerbos(rs *authzenv1.Resource, act *authzenv1.Action) (*enginev
 
 	// scope & policy version if provided
 	props := structToMap(rs.GetProperties())
-	if scope, ok := extractString(props, "scope"); ok {
+	if scope, ok := extractStringAltKeys(props, "$scope", "scope"); ok {
 		r.Scope = scope
 	}
-	if pv, ok := extractStringAltKeys(props, "policyVersion", "policy_version"); ok {
+	if pv, ok := extractStringAltKeys(props, "$policyVersion", "policyVersion"); ok {
 		r.PolicyVersion = pv
 	}
+	delete(props, "scope")
+	delete(props, "$scope")
+	delete(props, "policyVersion")
+	delete(props, "$policyVersion")
 
 	// attributes: everything in properties
 	spb, err := toStruct(props)
