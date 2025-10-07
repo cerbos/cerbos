@@ -9,13 +9,30 @@ import (
 	"helm.sh/helm/v3/pkg/strvals"
 )
 
-func MkConfOverrides(cwd string) (map[string]any, error) {
-	confOverrides := map[string]any{}
-	overrides := []string{fmt.Sprintf("storage.disk.directory=%s", cwd), "storage.disk.watchForChanges=false"}
+func MkConfStorageOverrides(cwd string, confOverrides map[string]any) error {
+	overrides := []string{
+		fmt.Sprintf("storage.disk.directory=%s", cwd),
+		"storage.disk.watchForChanges=false",
+		"server.httpListenAddr=\"unix:/tmp/cerbos.http.sock\"",
+		"server.grpcListenAddr=\"unix:/tmp/cerbos.grpc.sock\"",
+	}
 	for _, override := range overrides {
 		if err := strvals.ParseInto(override, confOverrides); err != nil {
-			return nil, fmt.Errorf("failed to parse config override [%s]: %w", override, err)
+			return fmt.Errorf("failed to parse config override [%s]: %w", override, err)
 		}
 	}
-	return confOverrides, nil
+	return nil
+}
+
+func MkConfServerOverrides(confOverrides map[string]any) error {
+	overrides := []string{
+		"server.httpListenAddr=\"unix:/tmp/cerbos.http.sock\"",
+		"server.grpcListenAddr=\"unix:/tmp/cerbos.grpc.sock\"",
+	}
+	for _, override := range overrides {
+		if err := strvals.ParseInto(override, confOverrides); err != nil {
+			return fmt.Errorf("failed to parse config override [%s]: %w", override, err)
+		}
+	}
+	return nil
 }

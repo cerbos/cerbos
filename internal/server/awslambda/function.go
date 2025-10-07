@@ -32,11 +32,9 @@ func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 
 	log.Info("Loading configuration", zap.String("configPath", configPath))
 
-	var overrides map[string]any
+	overrides := make(map[string]any)
 	if configPath == "" {
-		var err error
-		overrides, err = MkConfOverrides("/opt/policies")
-		if err != nil {
+		if err := MkConfStorageOverrides("/opt/policies", overrides); err != nil {
 			return nil, fmt.Errorf("failed to create config overrides: %w", err)
 		}
 	}

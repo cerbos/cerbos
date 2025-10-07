@@ -54,9 +54,12 @@ func main() {
 		}
 
 		if configPath == "" {
-			overrides, err := awslambda.MkConfOverrides("/var/task/policies")
-			if err != nil {
-				return fmt.Errorf("failed to create config overrides: %w", err)
+			overrides := make(map[string]any)
+			if err := awslambda.MkConfStorageOverrides("/var/task/policies", overrides); err != nil {
+				return fmt.Errorf("failed to create storage config overrides: %w", err)
+			}
+			if err := awslambda.MkConfServerOverrides(overrides); err != nil {
+				return fmt.Errorf("failed to create server config overrides: %w", err)
 			}
 			opts = append(opts, cerbos.WithConfig(overrides))
 		}
