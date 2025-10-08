@@ -45,15 +45,30 @@ type Cmd struct {
 	LogLevel        LogLevelFlag `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
 	Config          string       `help:"Path to config file" optional:"" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
 	HubBundle       string       `help:"[Legacy] Use Cerbos Hub to pull the policy bundle with the given label. Overrides the store defined in the configuration." optional:"" env:"CERBOS_HUB_BUNDLE,CERBOS_CLOUD_BUNDLE" group:"hubv1" xor:"hub.deployment-id,hub.playground-id"`
-	Hub             hubFlags     `embed:"" prefix:"hub."`
+	Hub             HubFlags     `embed:"" prefix:"hub."`
 	Set             []string     `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 }
 
-type hubFlags struct {
+type HubFlags struct {
 	DeploymentID string `help:"Use Cerbos Hub to pull the policy bundle for the given deployment ID. Overrides the store defined in the configuration." optional:"" env:"CERBOS_HUB_DEPLOYMENT_ID" group:"hubv2" xor:"hub-bundle,hub.playground-id"`
 	PlaygroundID string `help:"Use Cerbos Hub to pull the policy bundle for the given playground ID. Overrides the store defined in the configuration." optional:"" env:"CERBOS_HUB_PLAYGROUND_ID" group:"hubv2" xor:"hub-bundle,hub.deployment-id"`
 }
 
+func MkHubOverrides(hub *HubFlags) []string {
+	switch {
+	case hub.DeploymentID != "":
+		return []string{
+			"storage.driver=hub",
+			fmt.Sprintf("storage.hub.remote.deploymentID=%s", hub.DeploymentID),
+		}
+	case hub.PlaygroundID != "":
+		return []string{
+			"storage.driver=hub",
+			fmt.Sprintf("storage.hub.remote.playgroundID=%s", hub.PlaygroundID),
+		}
+	}
+	return nil
+}
 func (c *Cmd) Run() error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
@@ -66,22 +81,13 @@ func (c *Cmd) Run() error {
 	}
 
 	var hubOverrides []string
-	switch {
-	case c.Hub.DeploymentID != "":
-		hubOverrides = []string{
-			"storage.driver=hub",
-			fmt.Sprintf("storage.hub.remote.deploymentID=%s", c.Hub.DeploymentID),
-		}
-	case c.Hub.PlaygroundID != "":
-		hubOverrides = []string{
-			"storage.driver=hub",
-			fmt.Sprintf("storage.hub.remote.playgroundID=%s", c.Hub.PlaygroundID),
-		}
-	case c.HubBundle != "":
+	if c.HubBundle != "" {
 		hubOverrides = []string{
 			"storage.driver=hub",
 			fmt.Sprintf("storage.hub.remote.bundleLabel=%s", c.HubBundle),
 		}
+	} else {
+		hubOverrides = MkHubOverrides(&c.Hub)
 	}
 	for _, hubOverride := range hubOverrides {
 		if err := strvals.ParseInto(hubOverride, confOverrides); err != nil {

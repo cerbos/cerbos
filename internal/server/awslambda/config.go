@@ -34,3 +34,15 @@ func MkConfServerOverrides(confOverrides map[string]any) error {
 	}
 	return nil
 }
+
+func MkConfStorageHubOverrides(tmpDir string, confOverrides map[string]any) error {
+	overrides := []string{
+		fmt.Sprintf("storage.hub.remote.tempDir=%s", tmpDir),
+	}
+	for _, override := range overrides {
+		if err := strvals.ParseInto(override, confOverrides); err != nil {
+			return fmt.Errorf("failed to parse config override [%s]: %w", override, err)
+		}
+	}
+	return nil
+}

@@ -12,7 +12,10 @@ import (
 	"syscall"
 
 	"go.uber.org/zap"
+	"helm.sh/helm/v3/pkg/strvals"
 
+	"github.com/alecthomas/kong"
+	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/server/awslambda"
@@ -41,19 +44,18 @@ func main() {
 		log.Error("AWS_LAMBDA_RUNTIME_API env var not set, exiting")
 		exit2()
 	}
-	var overrides map[string]any
+	overrides := make(map[string]any)
 	if configPath == "" {
-		overrides = make(map[string]any)
-		if err := awslambda.MkConfStorageOverrides("/var/task/policies", overrides); err != nil {
-			log.Error("failed to create storage config overrides", zap.Error(err))
-		}
-		if err := awslambda.MkConfServerOverrides(overrides); err != nil {
-			log.Error("failed to create server config overrides", zap.Error(err))
+		if err := getConfOverrides(overrides); err != nil {
+			log.Error("failed to get conf overrides", zap.Error(err))
+			exit2()
 		}
 	}
+
 	log.Info("Loading configuration", zap.String("configPath", configPath))
 	if err := config.Load(configPath, overrides); err != nil { // need to load configuration for the awslambda.WaitForReady healthcheck
 		log.Error("failed to load configuration", zap.Error(err))
+		exit2()
 	}
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
@@ -107,4 +109,29 @@ func main() {
 func exit2() {
 	_ = zap.L().Sync()
 	os.Exit(2) //nolint:mnd
+}
+
+func getConfOverrides(confOverrides map[string]any) error {
+	if err := awslambda.MkConfServerOverrides(confOverrides); err != nil {
+		return err
+	}
+	var hubFlags server.HubFlags
+	parser := kong.Must(&hubFlags)
+	if _, err := parser.Parse(nil); err != nil {
+		return fmt.Errorf("failed to parse Hub flags: %w", err)
+	}
+	hubOverrides := server.MkHubOverrides(&hubFlags)
+
+	for _, hubOverride := range hubOverrides {
+		if err := strvals.ParseInto(hubOverride, confOverrides); err != nil {
+			return fmt.Errorf("failed to parse Cerbos Hub override: %w", err)
+		}
+	}
+	if len(hubOverrides) != 0 {
+		return awslambda.MkConfStorageHubOverrides("/tmp", confOverrides)
+	}
+	if err := awslambda.MkConfStorageOverrides("/var/task/policies", confOverrides); err != nil {
+		return err
+	}
+	return nil
 }
