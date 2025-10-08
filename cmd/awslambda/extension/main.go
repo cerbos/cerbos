@@ -11,16 +11,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/alecthomas/kong"
+	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/strvals"
 
-	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/server/awslambda"
 	"github.com/cerbos/cerbos/pkg/cerbos"
-	"github.com/sourcegraph/conc/pool"
 )
 
 func main() {
