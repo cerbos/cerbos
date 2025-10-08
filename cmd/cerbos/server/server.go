@@ -69,6 +69,7 @@ func MkHubOverrides(hub *HubFlags) []string {
 	}
 	return nil
 }
+
 func (c *Cmd) Run() error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
