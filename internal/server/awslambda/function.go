@@ -34,7 +34,7 @@ func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 
 	overrides := make(map[string]any)
 	if configPath == "" {
-		if err := MkConfStorageOverrides("/opt/policies", overrides); err != nil {
+		if err := GetConfOverrides("/tmp", "/opt/policies", overrides); err != nil {
 			return nil, fmt.Errorf("failed to create config overrides: %w", err)
 		}
 	}

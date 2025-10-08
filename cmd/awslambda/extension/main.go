@@ -11,12 +11,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/alecthomas/kong"
 	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/zap"
-	"helm.sh/helm/v3/pkg/strvals"
 
-	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/server/awslambda"
@@ -46,7 +43,7 @@ func main() {
 	}
 	overrides := make(map[string]any)
 	if configPath == "" {
-		if err := getConfOverrides(overrides); err != nil {
+		if err := awslambda.GetConfOverrides("/tmp", "/var/task/policies", overrides); err != nil {
 			log.Error("failed to get conf overrides", zap.Error(err))
 			exit2()
 		}
@@ -109,29 +106,4 @@ func main() {
 func exit2() {
 	_ = zap.L().Sync()
 	os.Exit(2) //nolint:mnd
-}
-
-func getConfOverrides(confOverrides map[string]any) error {
-	if err := awslambda.MkConfServerOverrides(confOverrides); err != nil {
-		return err
-	}
-	var hubFlags server.HubFlags
-	parser := kong.Must(&hubFlags)
-	if _, err := parser.Parse(nil); err != nil {
-		return fmt.Errorf("failed to parse Hub flags: %w", err)
-	}
-	hubOverrides := server.MkHubOverrides(&hubFlags)
-
-	for _, hubOverride := range hubOverrides {
-		if err := strvals.ParseInto(hubOverride, confOverrides); err != nil {
-			return fmt.Errorf("failed to parse Cerbos Hub override: %w", err)
-		}
-	}
-	if len(hubOverrides) != 0 {
-		return awslambda.MkConfStorageHubOverrides("/tmp", confOverrides)
-	}
-	if err := awslambda.MkConfStorageOverrides("/var/task/policies", confOverrides); err != nil {
-		return err
-	}
-	return nil
 }
