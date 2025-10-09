@@ -12,7 +12,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 )
 
-func mkConfStorageOverrides(cwd string, confOverrides map[string]any) error {
+func MkConfStorageOverrides(cwd string, confOverrides map[string]any) error {
 	overrides := []string{
 		fmt.Sprintf("storage.disk.directory=%s", cwd),
 		"storage.disk.watchForChanges=false",
@@ -50,16 +50,18 @@ func mkConfStorageHubOverrides(tmpDir string, confOverrides map[string]any) erro
 	return nil
 }
 
-func GetConfOverrides(tempDir, policiesDir string, confOverrides map[string]any) error {
+const tempDir string = "/tmp" // Lambda tempDir
+
+func GetConfOverrides(confOverrides map[string]any) error {
 	if err := mkConfServerOverrides(confOverrides); err != nil {
 		return err
 	}
-	var hubFlags server.HubFlags
-	parser := kong.Must(&hubFlags)
+	var cmd server.Cmd
+	parser := kong.Must(&cmd)
 	if _, err := parser.Parse(nil); err != nil {
 		return fmt.Errorf("failed to parse Hub flags: %w", err)
 	}
-	hubOverrides := server.MkHubOverrides(&hubFlags)
+	hubOverrides := server.MkHubOverrides(&cmd)
 
 	for _, hubOverride := range hubOverrides {
 		if err := strvals.ParseInto(hubOverride, confOverrides); err != nil {
@@ -69,8 +71,10 @@ func GetConfOverrides(tempDir, policiesDir string, confOverrides map[string]any)
 	if len(hubOverrides) != 0 {
 		return mkConfStorageHubOverrides(tempDir, confOverrides)
 	}
-	if err := mkConfStorageOverrides(policiesDir, confOverrides); err != nil {
-		return err
-	}
 	return nil
+}
+
+func HubStorageDriver(confOverrides map[string]any) bool {
+	driver, ok := confOverrides["storage.driver"]
+	return ok && driver == "hub"
 }

@@ -33,12 +33,14 @@ func NewFunctionHandler(ctx context.Context) (*FunctionHandler, error) {
 	log.Info("Loading configuration", zap.String("configPath", configPath))
 
 	overrides := make(map[string]any)
-	if configPath == "" {
-		if err := GetConfOverrides("/tmp", "/opt/policies", overrides); err != nil {
+	if err := GetConfOverrides(overrides); err != nil {
+		return nil, fmt.Errorf("failed to create config overrides: %w", err)
+	}
+	if configPath == "" && !HubStorageDriver(overrides) {
+		if err := MkConfStorageOverrides("/opt/policies", overrides); err != nil {
 			return nil, fmt.Errorf("failed to create config overrides: %w", err)
 		}
 	}
-
 	if err := config.Load(configPath, overrides); err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}

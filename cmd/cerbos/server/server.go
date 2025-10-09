@@ -54,7 +54,8 @@ type HubFlags struct {
 	PlaygroundID string `help:"Use Cerbos Hub to pull the policy bundle for the given playground ID. Overrides the store defined in the configuration." optional:"" env:"CERBOS_HUB_PLAYGROUND_ID" group:"hubv2" xor:"hub-bundle,hub.deployment-id"`
 }
 
-func MkHubOverrides(hub *HubFlags) []string {
+func MkHubOverrides(c *Cmd) []string {
+	hub := c.Hub
 	switch {
 	case hub.DeploymentID != "":
 		return []string{
@@ -65,6 +66,11 @@ func MkHubOverrides(hub *HubFlags) []string {
 		return []string{
 			"storage.driver=hub",
 			fmt.Sprintf("storage.hub.remote.playgroundID=%s", hub.PlaygroundID),
+		}
+	case c.HubBundle != "":
+		return []string{
+			"storage.driver=hub",
+			fmt.Sprintf("storage.hub.remote.bundleLabel=%s", c.HubBundle),
 		}
 	}
 	return nil
@@ -81,16 +87,7 @@ func (c *Cmd) Run() error {
 		}
 	}
 
-	var hubOverrides []string
-	if c.HubBundle != "" {
-		hubOverrides = []string{
-			"storage.driver=hub",
-			fmt.Sprintf("storage.hub.remote.bundleLabel=%s", c.HubBundle),
-		}
-	} else {
-		hubOverrides = MkHubOverrides(&c.Hub)
-	}
-	for _, hubOverride := range hubOverrides {
+	for _, hubOverride := range MkHubOverrides(c) {
 		if err := strvals.ParseInto(hubOverride, confOverrides); err != nil {
 			return fmt.Errorf("failed to parse Cerbos Hub override [%s]: %w", hubOverride, err)
 		}

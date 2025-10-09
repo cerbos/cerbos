@@ -42,8 +42,12 @@ func main() {
 		exit2()
 	}
 	overrides := make(map[string]any)
-	if configPath == "" {
-		if err := awslambda.GetConfOverrides("/tmp", "/var/task/policies", overrides); err != nil {
+	if err := awslambda.GetConfOverrides(overrides); err != nil {
+		log.Error("failed to get conf overrides", zap.Error(err))
+		exit2()
+	}
+	if configPath == "" && !awslambda.HubStorageDriver(overrides) {
+		if err := awslambda.MkConfStorageOverrides("/var/task/policies", overrides); err != nil {
 			log.Error("failed to get conf overrides", zap.Error(err))
 			exit2()
 		}
