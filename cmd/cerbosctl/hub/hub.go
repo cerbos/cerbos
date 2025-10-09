@@ -23,7 +23,7 @@ var hideGlobals = map[string]struct{}{
 	"plaintext":   {},
 }
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	EmbeddedPDP epdp.Cmd  `cmd:"" name:"embedded_pdp" aliases:"epdp"`
 	Store       store.Cmd `cmd:"" name:"store"`
 }

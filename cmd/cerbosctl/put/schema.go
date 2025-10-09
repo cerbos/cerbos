@@ -34,7 +34,7 @@ cerbosctl put schema -R ./dir/to/schemas
 # Put schemas from a zip file
 cerbosctl put schema ./dir/to/schemas.zip`
 
-type SchemaCmd struct {
+type SchemaCmd struct { //betteralign:ignore
 	Paths []string `arg:"" type:"path" help:"Path to schema file or directory"`
 }
 

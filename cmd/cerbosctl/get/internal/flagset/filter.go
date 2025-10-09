@@ -10,7 +10,7 @@ import (
 )
 
 //nolint:govet
-type Filters struct {
+type Filters struct { //betteralign:ignore
 	Name            []string `help:"Filter policies by name"`
 	NameRegexp      string   `help:"Filter policies by name, using regular expression"`
 	Version         []string `help:"Filter policies by version"`

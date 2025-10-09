@@ -22,7 +22,7 @@ cerbosctl hub store get-files --output-path=/path/to/dir foo.yaml bar.yaml
 cerbosctl hub store get-files --output-path=/path/to/archive.zip foo.yaml bar.yaml
 `
 
-type GetFilesCmd struct {
+type GetFilesCmd struct { //betteralign:ignore
 	Output     `embed:""`
 	OutputPath string   `name:"output-path" short:"O" type:"path" required:"" help:"Path to write the retrieved files. Must be a path to a directory, zip file or - for stdout."`
 	Files      []string `arg:"" required:"" help:"List of files to retrieve"`

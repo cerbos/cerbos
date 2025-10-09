@@ -41,7 +41,7 @@ cerbosctl get export_constants export_constants.my_constants -ojson
 # Get exported constants policy definition as pretty json
 cerbosctl get export_constants export_constants.my_constants -oprettyjson`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	flagset.Format
 	flagset.Sort
 	flagset.Filters

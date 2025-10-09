@@ -53,7 +53,7 @@ cerbos healthcheck --kind=http --host-port=10.0.1.5:3592 --no-tls
 `
 )
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Config   string        `help:"Cerbos config file" group:"config" xor:"hostport,cacert,notls" env:"CERBOS_CONFIG"`
 	Kind     string        `help:"Healthcheck kind (${enum})" default:"grpc" enum:"grpc,http" env:"CERBOS_HC_KIND"`
 	HostPort string        `help:"Host and port to connect to" group:"manual" xor:"hostport" env:"CERBOS_HC_HOSTPORT"`

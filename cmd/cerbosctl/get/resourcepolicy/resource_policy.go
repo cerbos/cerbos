@@ -40,7 +40,7 @@ cerbosctl get resource_policies resource.leave_request.default -ojson
 # Get resource policy definition as pretty json
 cerbosctl get resource_policies resource.leave_request.default -oprettyjson`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	flagset.Format
 	flagset.Sort
 	flagset.Filters

@@ -13,7 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Client kong.VersionFlag `help:"Only show cerbosctl version"`
 }
 

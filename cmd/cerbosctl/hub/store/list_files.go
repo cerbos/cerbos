@@ -25,7 +25,7 @@ cerbosctl hub store list-files
 cerbosctl hub store list-files --filter=contains:resource
 `
 
-type ListFilesCmd struct {
+type ListFilesCmd struct { //betteralign:ignore
 	Output `embed:""`
 	Filter string `name:"filter" optional:"" help:"Optional file name filter in the form <operator>:<value>. Supported operators are 'eq', 'in' and 'contains'. For 'in' multiple values can be provided as a comma separated list."`
 }

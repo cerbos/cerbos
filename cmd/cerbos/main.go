@@ -24,8 +24,8 @@ const (
 )
 
 func main() {
-	//nolint: govet
-	var cli struct {
+	//nolint:govet
+	var cli struct { //betteralign:ignore
 		Compile     compile.Cmd      `cmd:"" help:"Compile and test policies"`
 		Server      server.Cmd       `cmd:"" help:"Start Cerbos server (PDP)"`
 		Healthcheck healthcheck.Cmd  `cmd:"" help:"Healthcheck utility" aliases:"hc"`

@@ -40,7 +40,7 @@ func (ll *LogLevelFlag) Decode(ctx *kong.DecodeContext) error {
 	return nil
 }
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	DebugListenAddr string       `help:"Address to start the gops listener" placeholder:":6666"`
 	LogLevel        LogLevelFlag `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
 	Config          string       `help:"Path to config file" optional:"" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
