@@ -59,12 +59,12 @@ func MkHubOverrides(c *Cmd) []string {
 	case c.Hub.DeploymentID != "":
 		return []string{
 			"storage.driver=hub",
-			fmt.Sprintf("storage.hub.remote.deploymentID=%s", hub.DeploymentID),
+			fmt.Sprintf("storage.hub.remote.deploymentID=%s", c.Hub.DeploymentID),
 		}
 	case c.Hub.PlaygroundID != "":
 		return []string{
 			"storage.driver=hub",
-			fmt.Sprintf("storage.hub.remote.playgroundID=%s", hub.PlaygroundID),
+			fmt.Sprintf("storage.hub.remote.playgroundID=%s", c.Hub.PlaygroundID),
 		}
 	case c.HubBundle != "":
 		return []string{
