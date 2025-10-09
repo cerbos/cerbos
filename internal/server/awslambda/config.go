@@ -75,6 +75,21 @@ func GetConfOverrides(confOverrides map[string]any) error {
 }
 
 func HubStorageDriver(confOverrides map[string]any) bool {
-	driver, ok := confOverrides["storage.driver"]
-	return ok && driver == "hub"
+	val, exists := confOverrides["storage"]
+	if !exists {
+		return false
+	}
+
+	nested, ok := val.(map[string]any)
+	if !ok {
+		return false
+	}
+
+	val, exists = nested["driver"]
+	if !exists {
+		return false
+	}
+
+	str, ok := val.(string)
+	return ok && str == "hub"
 }
