@@ -11,13 +11,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/server/awslambda"
 	"github.com/cerbos/cerbos/pkg/cerbos"
-	"github.com/sourcegraph/conc/pool"
 )
 
 func main() {
@@ -41,19 +41,22 @@ func main() {
 		log.Error("AWS_LAMBDA_RUNTIME_API env var not set, exiting")
 		exit2()
 	}
-	var overrides map[string]any
-	if configPath == "" {
-		overrides = make(map[string]any)
+	overrides := make(map[string]any)
+	if err := awslambda.GetConfOverrides(overrides); err != nil {
+		log.Error("failed to get conf overrides", zap.Error(err))
+		exit2()
+	}
+	if configPath == "" && !awslambda.HubStorageDriver(overrides) {
 		if err := awslambda.MkConfStorageOverrides("/var/task/policies", overrides); err != nil {
-			log.Error("failed to create storage config overrides", zap.Error(err))
-		}
-		if err := awslambda.MkConfServerOverrides(overrides); err != nil {
-			log.Error("failed to create server config overrides", zap.Error(err))
+			log.Error("failed to get conf overrides", zap.Error(err))
+			exit2()
 		}
 	}
+
 	log.Info("Loading configuration", zap.String("configPath", configPath))
 	if err := config.Load(configPath, overrides); err != nil { // need to load configuration for the awslambda.WaitForReady healthcheck
 		log.Error("failed to load configuration", zap.Error(err))
+		exit2()
 	}
 
 	p := pool.New().WithContext(ctx).WithCancelOnError().WithFirstError()
