@@ -55,14 +55,13 @@ type HubFlags struct {
 }
 
 func MkHubOverrides(c *Cmd) []string {
-	hub := c.Hub
 	switch {
-	case hub.DeploymentID != "":
+	case c.Hub.DeploymentID != "":
 		return []string{
 			"storage.driver=hub",
 			fmt.Sprintf("storage.hub.remote.deploymentID=%s", hub.DeploymentID),
 		}
-	case hub.PlaygroundID != "":
+	case c.Hub.PlaygroundID != "":
 		return []string{
 			"storage.driver=hub",
 			fmt.Sprintf("storage.hub.remote.playgroundID=%s", hub.PlaygroundID),
