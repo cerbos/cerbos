@@ -438,9 +438,11 @@ func parseTag(tag string) (*TagInfo, error) {
 
 			switch sp[0] {
 			case optionExampleValue:
-				ti.DefaultValue = sp[1]
+				ti.DefaultValue = strings.ReplaceAll(sp[1], "&#44;", ",")
 			case optionIgnore:
 				ti.Ignore = true
+			default:
+				return nil, fmt.Errorf("invalid conf tag option %q", sp[0])
 			}
 		}
 	}
