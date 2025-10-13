@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/tools
 go 1.25.1
 
 require (
-	connectrpc.com/connect v1.19.0
+	connectrpc.com/connect v1.19.1
 	github.com/bufbuild/buf v1.57.2
 	github.com/cerbos/protoc-gen-go-hashpb v0.4.2
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
@@ -11,14 +11,14 @@ require (
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/golangci/golangci-lint/v2 v2.5.0
 	github.com/google/go-licenses v1.6.0
-	github.com/goreleaser/goreleaser/v2 v2.12.4
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
+	github.com/goreleaser/goreleaser/v2 v2.12.5
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/vektra/mockery/v3 v3.5.5
 	go.elastic.co/go-licence-detector v0.9.1
 	golang.org/x/tools/gopls v0.20.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
-	google.golang.org/protobuf v1.36.9
+	google.golang.org/protobuf v1.36.10
 	gotest.tools/gotestsum v1.13.0
 )
 
@@ -170,7 +170,7 @@ require (
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/charmbracelet/bubbletea v1.3.5 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
-	github.com/charmbracelet/fang v0.4.2 // indirect
+	github.com/charmbracelet/fang v0.4.3 // indirect
 	github.com/charmbracelet/lipgloss v1.1.0 // indirect
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta1 // indirect
 	github.com/charmbracelet/x/ansi v0.10.1 // indirect
@@ -369,7 +369,7 @@ require (
 	github.com/manuelarte/funcorder v0.5.0 // indirect
 	github.com/maratori/testableexamples v1.0.0 // indirect
 	github.com/maratori/testpackage v1.1.1 // indirect
-	github.com/mark3labs/mcp-go v0.41.0 // indirect
+	github.com/mark3labs/mcp-go v0.41.1 // indirect
 	github.com/matoous/godox v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -559,9 +559,9 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.246.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
-	google.golang.org/grpc v1.75.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4 // indirect
+	google.golang.org/grpc v1.75.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
