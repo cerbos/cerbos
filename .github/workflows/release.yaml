@@ -70,6 +70,12 @@ jobs:
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
 
+      - name: Install Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          registry-url: https://registry.npmjs.com
+
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -84,9 +90,8 @@ jobs:
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
       - name: Publish npm packages
-        uses: ./.github/actions/publish-npm-packages
-        with:
-          token: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        working-directory: npm
+        run: corepack npm publish --workspaces --access=public --provenance
 
   releaseProtos:
     name: Release Protobufs
