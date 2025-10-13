@@ -909,7 +909,7 @@ func (rt *RuleTable) GetRows(version, resource string, scopes, roles, actions []
 	return res
 }
 
-func (rt *RuleTable) GetParentRoles(scope string, roles []string) []string {
+func (rt *RuleTable) AddParentRoles(scope string, roles []string) []string {
 	parentRoles := make([]string, len(roles))
 	copy(parentRoles, roles)
 
@@ -1129,7 +1129,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 		return result, nil
 	}
 
-	allRoles := rt.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
+	allRoles := rt.AddParentRoles(input.Resource.Scope, input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
@@ -1182,7 +1182,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := rt.GetParentRoles(input.Resource.Scope, []string{role})
+				parentRoles := rt.AddParentRoles(input.Resource.Scope, []string{role})
 
 			scopesLoop:
 				for _, scope := range scopes {
@@ -1793,7 +1793,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 		}
 	}
 
-	allRoles := rt.GetParentRoles(input.Resource.Scope, input.Principal.Roles)
+	allRoles := rt.AddParentRoles(input.Resource.Scope, input.Principal.Roles)
 	scopes := rt.CombineScopes(principalScopes, resourceScopes)
 	candidateRows := rt.GetRows(resourceVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, input.Actions)
 	if len(candidateRows) == 0 {
@@ -1830,7 +1830,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 				var roleAllowNode, roleDenyNode *planner.QpN
 				var pendingAllow bool
 
-				parentRoles := rt.GetParentRoles(input.Resource.Scope, []string{role})
+				rolesIncludingParents := rt.AddParentRoles(input.Resource.Scope, []string{role})
 
 				for _, scope := range scopes {
 					var scopeAllowNode, scopeDenyNode *planner.QpN
@@ -1878,7 +1878,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 					}
 
 					for _, row := range candidateRows {
-						if ok := row.Matches(pt, scope, action, input.Principal.Id, parentRoles); !ok {
+						if ok := row.Matches(pt, scope, action, input.Principal.Id, rolesIncludingParents); !ok {
 							continue
 						}
 
