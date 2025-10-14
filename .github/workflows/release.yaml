@@ -74,7 +74,6 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
-          registry-url: https://registry.npmjs.com
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v6
