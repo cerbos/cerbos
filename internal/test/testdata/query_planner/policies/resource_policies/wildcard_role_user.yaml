@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: user
+  rules:
+    - actions: ["filter"]
+      effect: EFFECT_ALLOW
+      roles: ["*"]
+      condition:
+        match:
+          all:
+            of:
+              - any:
+                  of:
+                    - all:
+                        of:
+                          - expr: R.attr.org_id == P.attr.org_id
+                          - expr: R.attr.is_active == P.attr.is_active
+                    - expr: R.attr.include_all == P.attr.include_all
+              - expr: R.attr.excluded_items == P.attr.excluded_items
+              - expr: R.attr.excluded == P.attr.excluded

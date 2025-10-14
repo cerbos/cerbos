@@ -1,0 +1,127 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Basics tests
+principal:
+    id: user123
+    policyVersion: default
+    roles:
+        - role0
+        - role1
+        - role2
+        - role3
+        - role4
+        - role5
+        - role6
+        - role7
+        - role8
+        - role9
+    attr:
+      is_active: false
+      instance_id: "12345"
+      org_id: ["50"]
+tests:
+    - action: filter
+      resource:
+        kind: user
+        policyVersion: default
+        scope: acme
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.org_id
+                                - value: ["50"]
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.is_active
+                                - value: false
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.include_all
+                          - expression:
+                              operator: get-field
+                              operands:
+                                - expression:
+                                    operator: struct
+                                    operands:
+                                      - expression:
+                                          operator: set-field
+                                          operands:
+                                            - value: "instance_id"
+                                            - value: "12345"
+                                      - expression:
+                                          operator: set-field
+                                          operands:
+                                            - value: "is_active"
+                                            - value: false
+                                      - expression:
+                                          operator: set-field
+                                          operands:
+                                            - value: "org_id"
+                                            - value: ["50"]
+                                - variable: "include_all"
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.excluded
+                    - expression:
+                        operator: get-field
+                        operands:
+                          - expression:
+                              operator: struct
+                              operands:
+                                - expression:
+                                    operator: set-field
+                                    operands:
+                                      - value: "instance_id"
+                                      - value: "12345"
+                                - expression:
+                                    operator: set-field
+                                    operands:
+                                      - value: "is_active"
+                                      - value: false
+                                - expression:
+                                    operator: set-field
+                                    operands:
+                                      - value: "org_id"
+                                      - value: ["50"]
+                          - variable: "excluded"
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.excluded_items
+                    - expression:
+                        operator: get-field
+                        operands:
+                          - expression:
+                              operator: struct
+                              operands:
+                                - expression:
+                                    operator: set-field
+                                    operands:
+                                      - value: "org_id"
+                                      - value: ["50"]
+                                - expression:
+                                    operator: set-field
+                                    operands:
+                                      - value: "instance_id"
+                                      - value: "12345"
+                                - expression:
+                                    operator: set-field
+                                    operands:
+                                      - value: "is_active"
+                                      - value: false
+                          - variable: "excluded_items"
