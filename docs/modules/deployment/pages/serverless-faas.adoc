@@ -7,6 +7,13 @@ include::ROOT:partial$version-check.adoc[]
 
 == AWS Lambda
 
+[NOTE]
+====
+Cerbos is a CPU-bound application. On AWS Lambda environments CPU is not individually configurable and is determined as a function of allocated memory (see link:https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html). If you're experiencing slow response times from Cerbos, increase the memory allocation. Even though neither Cerbos nor your code requires a lot of memory, the architecture of AWS Lambda forces this counter-intuitive tuning advice.
+
+Because each application is different, we can't provide any recommendations. Monitor your application and tune the memory allocation until the performance is satisfactory for your needs.   
+====
+
 Cerbos provides two deployment options for AWS Lambda:
 
 === Cerbos Lambda Function
