@@ -13,8 +13,8 @@ Cerbos provides two deployment options for AWS Lambda:
 
 Deploy Cerbos as a standalone AWS Lambda function that handles authorization requests directly. This deployment pattern is suitable for centralized authorization services.
 
-* **Binary**: Use the `cerbosfunc` binary built by Goreleaser
-* **Distribution**: Available as both ZIP package and container image
+* **Binary**: Use the provided `cerbosfunc` binary.
+* **Distribution**: Can be used as both ZIP package and container image.
 * **APIs**: Supports `/v1/check/resources` and `/v1/plan/resources` endpoints via API Gateway
 * **Resource**: TODO add note about memory allocation.
 
@@ -28,7 +28,7 @@ include::example$sam-function.yml[]
 
 Deploy Cerbos as a Lambda extension layer that runs alongside your application function. This deployment pattern is similar to a sidecar deployment.
 
-* **Binary**: Use the `cerbosext` binary built by Goreleaser  
+* **Binary**: Use the provided `cerbosext` binary.
 * **Distribution**: Distributed as a ZIP package layer.
 * **APIs**: Supports `/v1/check/resources` and `/v1/plan/resources` endpoints via API Gateway
 * **Resource**: TODO add note about memory allocation.
