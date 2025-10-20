@@ -13,10 +13,7 @@ Cerbos provides two deployment options for AWS Lambda:
 
 Deploy Cerbos as a standalone AWS Lambda function that handles authorization requests directly. This deployment pattern is suitable for centralized authorization services.
 
-* **Binary**: Use the provided `cerbosfunc` binary.
-* **Distribution**: Can be used as both ZIP package and container image.
-* **APIs**: Supports `/v1/check/resources` and `/v1/plan/resources` endpoints via API Gateway
-* **Resource**: TODO add note about memory allocation.
+Download the specially-built `cerbosfunc` binary from the link:{app-github-releases-page}[releases page], which can be deployed as either a Zip package or a container image. 
 
 .SAM template for Lambda Function deployment
 [source,yaml]
