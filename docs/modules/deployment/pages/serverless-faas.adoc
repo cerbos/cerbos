@@ -7,4 +7,67 @@ include::ROOT:partial$version-check.adoc[]
 
 == AWS Lambda
 
-You can deploy Cerbos to AWS Lambda by building a special container image that includes the Lambda runtime and the Cerbos binary. See https://github.com/cerbos/cerbos-aws-lambda for an example. The repository also contains an example of an AWS Lambda function that creates an AWS API Gateway endpoint to communicate with Cerbos over the HTTP protocol.
+Cerbos provides two deployment options for AWS Lambda:
+
+=== Cerbos Lambda Function
+
+Deploy Cerbos as a standalone AWS Lambda function that handles authorization requests directly. This deployment pattern is suitable for centralized authorization services.
+
+* **Binary**: Use the `cerbosfunc` binary built by Goreleaser
+* **Distribution**: Available as both ZIP package and container image
+* **APIs**: Supports `/v1/check/resources` and `/v1/plan/resources` endpoints via API Gateway
+* **Resource**: TODO add note about memory allocation.
+
+.SAM template for Lambda Function deployment
+[source,yaml]
+----
+include::example$sam-function.yml[]
+----
+
+=== Cerbos Lambda Extension (Layer)
+
+Deploy Cerbos as a Lambda extension layer that runs alongside your application function. This deployment pattern is similar to a sidecar deployment.
+
+* **Binary**: Use the `cerbosext` binary built by Goreleaser  
+* **Distribution**: Distributed as a ZIP package layer.
+* **APIs**: Supports `/v1/check/resources` and `/v1/plan/resources` endpoints via API Gateway
+* **Resource**: TODO add note about memory allocation.
+
+.SAM template for Lambda Extension deployment
+[source,yaml]
+----
+include::example$sam-extension.yml[]
+----
+
+=== Comparison: Function vs Extension
+
+[cols="1,1,1"]
+|===
+|Aspect |Lambda Function |Lambda Extension
+
+|**Deployment Pattern**
+|Centralized service
+|Sidecar pattern
+
+|**Resource Sharing**
+|Dedicated Lambda execution
+|Shares execution with application function
+
+|**Cold Start**
+|Independent cold start
+|Shared cold start with application
+
+|**Network Overhead**
+|API Gateway + Lambda runtime
+|Direct process communication
+
+|**Use Case**
+|Central authorization service
+|Embedded authorization for specific functions
+
+|**Scaling**
+|Independent scaling
+|Scales with application function
+|===
+
+Both deployment options use AWS SAM (Serverless Application Model) templates for easy deployment and include example configurations for policies, logging, and API Gateway integration.

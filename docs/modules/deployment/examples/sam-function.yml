@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cerbos Lambda Function
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  CerbosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: provided.al2
+      CodeUri: dist/
+      Handler: bootstrap # this must be a hard link to the cerbosfunc binary with matchinig CPU architecture
+      Architectures:
+        - arm64
+      MemorySize: 1024
+      Events:
+        CheckResources:
+          Type: HttpApi
+          Properties:
+            Path: /api/check/resources
+            Method: POST
+        PlanResources:
+          Type: HttpApi
+          Properties:
+            Path: /api/plan/resources
+            Method: POST
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: GET
+      Environment:
+        Variables:
+          CERBOS_LOG_LEVEL: debug
+          XDG_CACHE_HOME: /tmp
+          CERBOS_CONFIG: /.cerbos.yaml
+
+Outputs:
+  CerbosFunctionAPI:
+    Description: "API Gateway endpoint URL for Cerbos Function"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  CerbosFunction:
+    Description: "Cerbos Lambda Function ARN"
+    Value: !GetAtt CerbosFunction.Arn
+  CerbosFunctionIamRole:
+    Description: "IAM Role created for the Cerbos Lambda function"
+    Value: !GetAtt CerbosFunctionRole.Arn
