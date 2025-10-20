@@ -25,10 +25,7 @@ include::example$sam-function.yml[]
 
 Deploy Cerbos as a Lambda extension layer that runs alongside your application function. This deployment pattern is similar to a sidecar deployment.
 
-* **Binary**: Use the provided `cerbosext` binary.
-* **Distribution**: Distributed as a ZIP package layer.
-* **APIs**: Supports `/v1/check/resources` and `/v1/plan/resources` endpoints via API Gateway
-* **Resource**: TODO add note about memory allocation.
+Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
 
 .SAM template for Lambda Extension deployment
 [source,yaml]
