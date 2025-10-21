@@ -119,7 +119,7 @@ Outputs:
     Description: "Cerbos Extension Layer ARN"
     Value: !Ref CerbosExtensionLayer
 ----
-<1> - the layer is a directory containing `cerbosext` binary
+<1> Layer is a directory containing the `cerbosext` binary
 
 === Configuration
 
