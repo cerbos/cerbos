@@ -20,7 +20,27 @@ Cerbos provides two deployment options for AWS Lambda:
 
 Deploy Cerbos as a standalone AWS Lambda function that handles authorization requests directly. This deployment pattern is suitable for centralized authorization services.
 
-Download the specially-built `cerbosfunc` binary from the link:{app-github-releases-page}[releases page], which can be deployed as either a Zip package or a container image. 
+Download the specially-built `cerbosfunc` binary from the link:{app-github-releases-page}[releases page], which can be deployed as either a Zip package or a container image.
+
+Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary to `bootstrap` and creating a zip file with it at the root. See link:https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html for more information.
+
+[source,shell,linenums]
+----
+mv cerbosfunc bootstrap
+zip myfunc.zip bootstrap
+----
+
+To deploy as a container, build an image using a Dockerfile similar to the following:
+
+[source,dockerfile,linenums]
+----
+FROM public.ecr.aws/lambda/provided:al2023
+COPY cerbosfunc /cerbosfunc
+ENTRYPOINT [ "/cerbosfunc" ]
+----
+
+See link:https://docs.aws.amazon.com/lambda/latest/dg/go-image.html for more information.
+
 
 .SAM template for Lambda Function deployment
 
