@@ -135,7 +135,7 @@ The Cerbos function/extension can be configured with environment variables.
     XDG_CACHE_HOME: /tmp
     CERBOS_CONFIG: "..." <1>
 ----
-<1> - The Lambda function file at `/<filename>` available to the extension by `/var/task/<filename>` path.
+<1> Path to the Cerbos configuration file
 
 The extension can be configured without the config file to work with Cerbos Hub.
 [source,yaml,linenum]
