@@ -79,7 +79,7 @@ Outputs:
     Description: "IAM Role created for the Cerbos Lambda function"
     Value: !GetAtt CerbosFunctionRole.Arn
 ----
-<1> - this must be a hard link to the `cerbosfunc` binary with matchinig CPU architecture
+<1> This must be a hard link to the `cerbosfunc` binary with matchinig CPU architecture
 
 === Cerbos Lambda Extension (Layer)
 
