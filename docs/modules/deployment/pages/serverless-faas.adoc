@@ -79,7 +79,7 @@ Outputs:
     Description: "IAM Role created for the Cerbos Lambda function"
     Value: !GetAtt CerbosFunctionRole.Arn
 ----
-<1> This must be a hard link to the `cerbosfunc` binary with matchinig CPU architecture
+<1> The `cerbosfunc` binary should be renamed to (or hard-linked as) `bootstrap` as per AWS Lambda guidelines for Go binaries.
 
 === Cerbos Lambda Extension (Layer)
 
