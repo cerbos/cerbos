@@ -86,6 +86,7 @@ Outputs:
 Deploy Cerbos as a Lambda extension layer that runs alongside your application function. This deployment pattern is similar to a sidecar deployment.
 
 Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
+The layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package.
 
 .SAM template for Lambda Extension deployment
 [source,yaml,linenums]
@@ -119,6 +120,30 @@ Outputs:
     Value: !Ref CerbosExtensionLayer
 ----
 <1> - the layer is a directory containing `cerbosext` binary
+
+=== Configuration
+
+[NOTE]
+====
+Cerbos Lambda extension overrides `server.httpListenAddr` and `server.grpcListenAddr` to  "unix:/tmp/cerbos.http.sock" and "unix:/tmp/cerbos.grpc.sock" respectively.
+====
+
+The Cerbos function/extension can be configured with the environment variables.
+[source,yaml,linenum]
+----
+    CERBOS_LOG_LEVEL: info
+    XDG_CACHE_HOME: /tmp
+    CERBOS_CONFIG: "..." <1>
+----
+<1> - The Lambda function file at `/<filename>` available to the extension by `/var/task/<filename>` path.
+
+The extension can be configured without the config file to work with Cerbos Hub.
+[source,yaml,linenum]
+----
+CERBOS_HUB_DEPLOYMENT_ID: "..."
+CERBOS_HUB_CLIENT_ID: "..."
+CERBOS_HUB_CLIENT_SECRET: ".."
+----
 
 === Comparison: Function vs Extension
 
