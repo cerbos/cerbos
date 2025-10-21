@@ -131,9 +131,9 @@ Cerbos Lambda extension overrides `server.httpListenAddr` and `server.grpcListen
 The Cerbos function/extension can be configured with environment variables.
 [source,yaml,linenum]
 ----
-    CERBOS_LOG_LEVEL: info
-    XDG_CACHE_HOME: /tmp
-    CERBOS_CONFIG: "..." <1>
+CERBOS_LOG_LEVEL: info
+XDG_CACHE_HOME: /tmp
+CERBOS_CONFIG: "..." <1>
 ----
 <1> Path to the Cerbos configuration file
 
