@@ -23,10 +23,63 @@ Deploy Cerbos as a standalone AWS Lambda function that handles authorization req
 Download the specially-built `cerbosfunc` binary from the link:{app-github-releases-page}[releases page], which can be deployed as either a Zip package or a container image. 
 
 .SAM template for Lambda Function deployment
-[source,yaml]
+
+[source,yaml,linenums]
 ----
-include::example$sam-function.yml[]
+---
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cerbos Lambda Function
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  CerbosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: provided.al2
+      CodeUri: dist/
+      Handler: bootstrap <1> 
+      Architectures:
+        - arm64
+      MemorySize: 1024
+      Events:
+        CheckResources:
+          Type: HttpApi
+          Properties:
+            Path: /api/check/resources
+            Method: POST
+        PlanResources:
+          Type: HttpApi
+          Properties:
+            Path: /api/plan/resources
+            Method: POST
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: GET
+      Environment:
+        Variables:
+          CERBOS_LOG_LEVEL: debug
+          XDG_CACHE_HOME: /tmp
+          CERBOS_CONFIG: /.cerbos.yaml
+
+Outputs:
+  CerbosFunctionAPI:
+    Description: "API Gateway endpoint URL for Cerbos Function"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  CerbosFunction:
+    Description: "Cerbos Lambda Function ARN"
+    Value: !GetAtt CerbosFunction.Arn
+  CerbosFunctionIamRole:
+    Description: "IAM Role created for the Cerbos Lambda function"
+    Value: !GetAtt CerbosFunctionRole.Arn
 ----
+<1> - this must be a hard link to the `cerbosfunc` binary with matchinig CPU architecture
 
 === Cerbos Lambda Extension (Layer)
 
@@ -35,10 +88,37 @@ Deploy Cerbos as a Lambda extension layer that runs alongside your application f
 Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
 
 .SAM template for Lambda Extension deployment
-[source,yaml]
+[source,yaml,linenums]
 ----
-include::example$sam-extension.yml[]
+---
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cerbos server
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  CerbosExtensionLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: cerbos-extension
+      Description: Cerbos extension layer
+      ContentUri: ./layer <1> 
+      CompatibleRuntimes:
+        - provided.al2
+        - provided.al2023
+      CompatibleArchitectures:
+        - arm64
+
+Outputs:
+  CerbosExtensionLayerArn:
+    Description: "Cerbos Extension Layer ARN"
+    Value: !Ref CerbosExtensionLayer
 ----
+<1> - the layer is a directory containing `cerbosext` binary
 
 === Comparison: Function vs Extension
 
