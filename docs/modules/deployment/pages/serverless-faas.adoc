@@ -42,7 +42,7 @@ ENTRYPOINT [ "/cerbosfunc" ]
 See link:https://docs.aws.amazon.com/lambda/latest/dg/go-image.html for more information.
 
 
-.SAM template for Lambda Function deployment
+.SAM template for Lambda Function deployment with a zip package
 
 [source,yaml,linenums]
 ----
