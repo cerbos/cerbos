@@ -128,7 +128,7 @@ Outputs:
 Cerbos Lambda extension overrides `server.httpListenAddr` and `server.grpcListenAddr` to  "unix:/tmp/cerbos.http.sock" and "unix:/tmp/cerbos.grpc.sock" respectively.
 ====
 
-The Cerbos function/extension can be configured with the environment variables.
+The Cerbos function/extension can be configured with environment variables.
 [source,yaml,linenum]
 ----
     CERBOS_LOG_LEVEL: info
