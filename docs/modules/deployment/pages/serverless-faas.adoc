@@ -137,7 +137,7 @@ The Cerbos function/extension can be configured with environment variables.
 ----
 <1> Path to the Cerbos configuration file
 
-The extension can be configured without the config file to work with Cerbos Hub.
+Set the following environment variables to connect to link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub].
 [source,yaml,linenum]
 ----
 CERBOS_HUB_DEPLOYMENT_ID: "..."
