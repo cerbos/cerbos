@@ -449,7 +449,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
 
 		if suggestHub {
-			log.Info("Cerbos Hub offers features like enhanced policy management, " +
+			zap.L().Named("hub").Info("Cerbos Hub offers features like enhanced policy management, " +
 				"continuous deployment pipelines, and enterprise support. " +
 				"Learn more at https://go.cerbos.io/hub")
 		}
