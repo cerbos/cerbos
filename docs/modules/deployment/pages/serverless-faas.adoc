@@ -26,21 +26,11 @@ Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary 
 
 [source,shell,linenums]
 ----
-mv cerbosfunc bootstrap
-sam deploy ...
+mkdir -p dist
+mv cerbosfunc dist/bootstrap
+sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset 
 ----
-
-To deploy as a container, build an image using a Dockerfile similar to the following:
-
-[source,dockerfile,linenums]
-----
-FROM public.ecr.aws/lambda/provided:al2023
-COPY cerbosfunc /cerbosfunc
-ENTRYPOINT [ "/cerbosfunc" ]
-----
-
-See link:https://docs.aws.amazon.com/lambda/latest/dg/go-image.html for more information.
-
 
 .SAM template for Lambda Function deployment with a zip package
 
@@ -101,6 +91,17 @@ Outputs:
 ----
 <1> The `cerbosfunc` binary should be renamed to (or hard-linked as) `bootstrap` as per AWS Lambda guidelines for Go binaries.
 
+To deploy as a container, build an image using a Dockerfile similar to the following:
+
+[source,dockerfile,linenums]
+----
+FROM public.ecr.aws/lambda/provided:al2023
+COPY cerbosfunc /cerbosfunc
+ENTRYPOINT [ "/cerbosfunc" ]
+----
+
+See link:https://docs.aws.amazon.com/lambda/latest/dg/go-image.html for more information.
+
 === Cerbos Lambda Extension (Layer)
 
 Lambda function deployed as a Zip package can have up to five layers. Primary use case for link:https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html[layers] is managing dependencies and configurations.
@@ -110,6 +111,14 @@ Deploying Cerbos PDP as a Lambda extension allows it to run on the same host wit
 Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
 The (extension) layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package. See link:https://docs.aws.amazon.com/lambda/latest/dg/adding-layers.html[adding layers] for more information.
  
+[source,shell,linenums]
+----
+mkdir -p layer/extensions
+mv cerbosext layer/extensions/
+sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset 
+----
+
 .SAM template for Lambda Extension deployment
 [source,yaml,linenums]
 ----
