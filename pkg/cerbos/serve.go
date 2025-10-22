@@ -17,8 +17,6 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/otel"
 	"github.com/cerbos/cerbos/internal/server"
-	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/hub"
 )
 
 type LogLevel string
@@ -124,14 +122,6 @@ func Serve(ctx context.Context, options ...ServeOption) error {
 	if err := config.Load(opts.configFilePath, opts.configOverrides); err != nil {
 		log.Errorw("Failed to load configuration", "error", err)
 		return err
-	}
-
-	if storageConf, err := storage.GetConf(); err == nil && storageConf.Driver != hub.DriverName {
-		log.Info(
-			"Cerbos Hub offers features like enhanced policy management, " +
-				"continuous deployment pipelines, and enterprise support. " +
-				"Learn more at https://go.cerbos.io/hub",
-		)
 	}
 
 	// initialize tracing
