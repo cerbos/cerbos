@@ -60,18 +60,18 @@ include::ROOT:partial$try-cerbos-hub.adoc[]
 For the following steps, you need a Cerbos Hub account with a workspace connected to your policy repository and a set of client credentials. See the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub getting started guide] for details.
 
 
-* Create a new Kubernetes secret to hold the Cerbos Hub credentials - see the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub guide] for details.
+* Create a new Kubernetes secret to hold the Cerbos Hub credentials. See the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub guide] for details.
 +
 [source,sh]
 ----
 kubectl create secret generic cerbos-hub-credentials \
    --from-literal=CERBOS_HUB_CLIENT_ID=YOUR_CLIENT_ID \ <1>
    --from-literal=CERBOS_HUB_CLIENT_SECRET=YOUR_CLIENT_SECRET \ <2>
-   --from-literal=CERBOS_HUB_WORKSPACE_SECRET=YOUR_WORKSPACE_SECRET <3>
+   --from-literal=CERBOS_HUB_DEPLOYMENT_ID=YOUR_DEPLOYMENT_ID <3>
 ----
 <1> Client ID from the Cerbos Hub credential
 <2> Client secret from the Cerbos Hub credential
-<3> Cerbos Hub workspace secret
+<3> Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[Deployment ID]
 
 * Create a new values file named `hub-values.yaml` with the following contents:
 +
@@ -84,17 +84,9 @@ serviceAccount:
 # Set Cerbos configuration
 cerbos:
   config:
-    # Configure the Hub storage driver
-    storage:
-      driver: "hub"
-      # Configure deployment label. Alternatively, add `CERBOS_HUB_BUNDLE=<YOUR_LABEL>` to the secret you created above.
-      hub:
-        remote:
-          bundleLabel: "YOUR_LABEL" <1>
-
     # Configure the Hub audit backend
     audit:
-      enabled: true <2>
+      enabled: true <1>
       backend: "hub"
       hub:
         storagePath: /audit_logs
@@ -113,8 +105,7 @@ volumeMounts:
   - name: cerbos-audit-logs
     mountPath: /audit_logs
 ----
-<1> The label to watch for bundle updates. See xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment labels documentation] for details.
-<2> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
+<1> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
 
 * Deploy Cerbos using the AWS Helm chart
 +
@@ -124,7 +115,7 @@ aws ecr get-login-password \
      --region us-west-1 | helm registry login \
      --username AWS \
      --password-stdin 709825985650.dkr.ecr.us-west-1.amazonaws.com
-  
+
 helm install cerbos oci://709825985650.dkr.ecr.us-east-1.amazonaws.com/cerbos/cerbos-aws-helm  --values=hub-values.yaml
 ----
 
@@ -203,7 +194,7 @@ In the AWS console or the CLI, create the task using the following JSON definiti
         "--set=audit.enabled=true", <5>
         "--set=audit.backend=hub",
         "--set=audit.hub.storagePath=/tmp"
-      ], 
+      ],
       "environmentFiles": [],
       "mountPoints": [],
       "volumesFrom": [],
