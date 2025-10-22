@@ -24,6 +24,7 @@ Download the specially-built `cerbosfunc` binary from the link:{app-github-relea
 
 Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary to `bootstrap` and creating a zip file with it at the root. See link:https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html for more information.
 
+.Lambda Function deployment with a zip package
 [source,shell,linenums]
 ----
 mkdir -p dist
@@ -111,6 +112,7 @@ Deploying Cerbos PDP as a Lambda extension allows it to run on the same host wit
 Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
 The (extension) layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package. See link:https://docs.aws.amazon.com/lambda/latest/dg/adding-layers.html[adding layers] for more information.
  
+.Lambda Extension deployment
 [source,shell,linenums]
 ----
 mkdir -p layer/extensions
