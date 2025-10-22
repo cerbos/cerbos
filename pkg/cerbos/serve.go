@@ -132,7 +132,7 @@ func Serve(ctx context.Context, options ...ServeOption) error {
 		log.Info(
 			"Cerbos Hub offers features like enhanced policy management, " +
 				"continuous deployment pipelines, and enterprise support. " +
-				"Learn more: https://go.cerbos.io/hub",
+				"Learn more at https://go.cerbos.io/hub",
 		)
 	}
 
