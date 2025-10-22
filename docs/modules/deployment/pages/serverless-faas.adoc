@@ -9,7 +9,7 @@ include::ROOT:partial$version-check.adoc[]
 
 [NOTE]
 ====
-Cerbos is a CPU-bound application. On AWS Lambda environments CPU is not individually configurable and is determined as a function of allocated memory (see link:https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html). If you're experiencing slow response times from Cerbos, increase the memory allocation. Even though neither Cerbos nor your code requires a lot of memory, the architecture of AWS Lambda forces this counter-intuitive tuning advice.
+Cerbos is a CPU-bound application. On AWS Lambda environments CPU is not individually configurable and is determined as a function of allocated memory (see link:https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html[Configure Lambda function memory]). If you're experiencing slow response times from Cerbos, increase the memory allocation. Even though neither Cerbos nor your code requires a lot of memory, the architecture of AWS Lambda forces this counter-intuitive tuning advice.
 
 Because each application is different, we can't provide any recommendations. Monitor your application and tune the memory allocation until the performance is satisfactory for your needs.   
 ====
@@ -22,7 +22,7 @@ Deploy Cerbos as a standalone AWS Lambda function that handles authorization req
 
 Download the specially-built `cerbosfunc` binary from the link:{app-github-releases-page}[releases page], which can be deployed as either a Zip package or a container image.
 
-Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary to `bootstrap` and creating a zip file with it at the root. See link:https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html for more information.
+Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary to `bootstrap` and creating a zip file with it at the root. See link:https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html[Deploy Go Lambda functions with .zip file archives] for more information.
 
 .Lambda Function deployment with a zip package
 [source,shell,linenums]
@@ -101,7 +101,7 @@ COPY cerbosfunc /cerbosfunc
 ENTRYPOINT [ "/cerbosfunc" ]
 ----
 
-See link:https://docs.aws.amazon.com/lambda/latest/dg/go-image.html for more information.
+See link:https://docs.aws.amazon.com/lambda/latest/dg/go-image.html[Deploy Go Lambda functions with container images] for more information.
 
 === Cerbos Lambda Extension (Layer)
 
