@@ -27,7 +27,7 @@ Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary 
 [source,shell,linenums]
 ----
 mv cerbosfunc bootstrap
-zip myfunc.zip bootstrap
+sam deploy ...
 ----
 
 To deploy as a container, build an image using a Dockerfile similar to the following:
@@ -103,11 +103,13 @@ Outputs:
 
 === Cerbos Lambda Extension (Layer)
 
-Deploy Cerbos as a Lambda extension layer that runs alongside your application function. This deployment pattern is similar to a sidecar deployment.
+Lambda function deployed as a Zip package can have up to five layers. Primary use case for link:https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html[layers] is managing dependencies and configurations.
+Additionally, a layer can be used to deploy a Lambda function link:https://docs.aws.amazon.com/lambda/latest/dg/lambda-extensions.html[extension].
+Deploying Cerbos PDP as a Lambda extension allows it to run on the same host with your application function. This deployment pattern is similar to a sidecar deployment.
 
 Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
-The layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package.
-
+The (extension) layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package. See link:https://docs.aws.amazon.com/lambda/latest/dg/adding-layers.html[adding layers] for more information.
+ 
 .SAM template for Lambda Extension deployment
 [source,yaml,linenums]
 ----
