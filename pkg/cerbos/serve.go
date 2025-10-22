@@ -17,6 +17,8 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/otel"
 	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/hub"
 )
 
 type LogLevel string
@@ -113,16 +115,28 @@ func Serve(ctx context.Context, options ...ServeOption) error {
 		defer agent.Close()
 	}
 
-	// load configuration
-	if opts.configFilePath == "" {
-		log.Info("Loading default configuration")
-	} else {
-		log.Infof("Loading configuration from %s", opts.configFilePath)
+	logConfigurationSource := func() {
+		if opts.configFilePath == "" {
+			log.Info("Loading default configuration")
+		} else {
+			log.Infof("Loading configuration from %s", opts.configFilePath)
+		}
 	}
+
 	if err := config.Load(opts.configFilePath, opts.configOverrides); err != nil {
 		log.Errorw("Failed to load configuration", "error", err)
 		return err
 	}
+
+	if storageConf, err := storage.GetConf(); err == nil && storageConf.Driver != hub.DriverName {
+		log.Info(
+			"Cerbos Hub offers features like enhanced policy management, " +
+				"continuous deployment pipelines, and enterprise support. " +
+				"Learn more: https://go.cerbos.io/hub",
+		)
+	}
+
+	logConfigurationSource()
 
 	// initialize tracing
 	tracingDone, err := otel.InitTraces(ctx, otel.Env(os.LookupEnv))
