@@ -182,9 +182,9 @@ storage:
 
 include::ROOT:partial$try-cerbos-hub.adoc[]
 
-Connects the PDP to a Cerbos Hub xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment label]. Whenever a policy change is detected, the Cerbos Hub CI/CD pipeline compiles, tests and pushes an optimized policy bundle to the PDP.
+Connects the PDP to a Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[Deployment]. A Cerbos Hub Deployment tracks a connected Git repository or a xref:cerbos-hub:ROOT:policy-stores.adoc[managed Cerbos Hub store] and automatically compiles, tests and pushes an optimized policy bundle to the PDP whenever a policy change is committed.
 
-If you are new to Cerbos Hub, follow the xref:cerbos-hub:ROOT:getting-started.adoc[getting started guide]. For more information about configuring a PDP to connect to Cerbos Hub, refer to the xref:cerbos-hub:ROOT:decision-points-service.adoc[Service PDP documentation].
+If you are new to Cerbos Hub, follow the xref:cerbos-hub:ROOT:getting-started.adoc[getting started guide]. For more information about configuring a PDP to connect to Cerbos Hub, refer to the xref:cerbos-hub:ROOT:deployments.adoc[Deployments documentation].
 
 
 [#mysql]
