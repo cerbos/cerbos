@@ -167,7 +167,7 @@ func (s *Server) Start(ctx context.Context, core *CoreComponents) error {
 		return err
 	}
 
-	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer)
+	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, core.SuggestHub)
 	if err != nil {
 		log.Error("Failed to start HTTP server", zap.Error(err))
 		return err
@@ -383,7 +383,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, core *CoreComponents) (*grpc.Serv
 	return grpc.NewServer(opts...), nil
 }
 
-func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server) (*http.Server, error) {
+func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, suggestHub bool) (*http.Server, error) {
 	log := zap.S().Named("http")
 
 	grpcConn, err := s.mkGRPCConn()
@@ -447,6 +447,12 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	s.pool.Go(func(_ context.Context) error {
 		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
+
+		if suggestHub {
+			zap.L().Named("hub").Info("Cerbos Hub offers features like enhanced policy management, " +
+				"continuous deployment pipelines, and enterprise support. " +
+				"Learn more at https://go.cerbos.io/hub")
+		}
 		err := h.Serve(l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Errorw("HTTP server failed", "error", err)

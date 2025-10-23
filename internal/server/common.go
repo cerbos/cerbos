@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	audithub "github.com/cerbos/cerbos/internal/audit/hub"
+
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -15,17 +17,19 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable"
 	internalSchema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
+	storagehub "github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/storage/overlay"
 	"github.com/cerbos/cerbos/internal/svc"
 )
 
 // CoreComponents holds the shared components needed for both server and Lambda function initialization.
 type CoreComponents struct {
-	Engine    *engine.Engine
-	AuxData   *auxdata.AuxData
-	AuditLog  audit.Log
-	Store     storage.Store
-	ReqLimits svc.RequestLimits
+	Engine     *engine.Engine
+	AuxData    *auxdata.AuxData
+	AuditLog   audit.Log
+	Store      storage.Store
+	ReqLimits  svc.RequestLimits
+	SuggestHub bool
 }
 
 // InitializeCerbosCore performs the common initialization steps shared between server and Lambda function.
@@ -120,10 +124,11 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 	}
 
 	return &CoreComponents{
-		Engine:    eng,
-		AuxData:   auxData,
-		AuditLog:  auditLog,
-		Store:     store,
-		ReqLimits: reqLimits,
+		Engine:     eng,
+		AuxData:    auxData,
+		AuditLog:   auditLog,
+		Store:      store,
+		ReqLimits:  reqLimits,
+		SuggestHub: auditLog.Backend() != audithub.Backend && store.Driver() != storagehub.DriverName,
 	}, nil
 }

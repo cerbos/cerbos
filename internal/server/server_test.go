@@ -343,7 +343,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 	core := &CoreComponents{AuditLog: auditLog, AuxData: auxData, Store: tp.store, Engine: eng, ReqLimits: svc.RequestLimits{
 		MaxActionsPerResource:  conf.RequestLimits.MaxActionsPerResource,
 		MaxResourcesPerRequest: conf.RequestLimits.MaxResourcesPerRequest,
-	}}
+	}, SuggestHub: false}
 
 	s := NewServer(conf)
 	go func() {
