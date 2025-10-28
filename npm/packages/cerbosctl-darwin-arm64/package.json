@@ -1,6 +1,6 @@
 {
   "name": "@cerbos/cerbosctl-darwin-arm64",
-  "version": "0.47.0-prerelease",
+  "version": "0.47.0",
   "description": "The darwin-arm64 binary for cerbosctl",
   "repository": {
     "type": "git",
