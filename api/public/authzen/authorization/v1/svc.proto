@@ -1,0 +1,45 @@
+// Copyright 2021-2025 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package authzen.authorization.v1;
+
+import "authzen/authorization/v1/evaluation.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option csharp_namespace = "AuthZen.Api.V1.Authorization";
+option go_package = "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1";
+option java_package = "dev.authzen.api.v1.authorization";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "AuthZEN Authorization API"
+    version: "v1"
+    description: "OpenID AuthZEN Authorization API for access evaluations"
+    contact: {
+      name: "AuthZEN Working Group"
+      url: "https://openid.net/wg/authzen/"
+    }
+  }
+  schemes: HTTPS
+  consumes: "application/json"
+  produces: "application/json"
+};
+
+// AuthZEN Authorization Service
+service AuthorizationService {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {description: "AuthZEN Authorization Service for access evaluations"};
+
+  // Evaluate performs an access evaluation
+  rpc AccessEvaluation(AccessEvaluationRequest) returns (AccessEvaluationResponse) {
+    option (google.api.http) = {
+      post: "/access/v1/evaluation"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Evaluate access request"
+      description: "Evaluate whether a subject can perform an action on a resource according to AuthZEN specification"
+    };
+  }
+}

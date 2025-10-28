@@ -36,6 +36,7 @@ import (
 	"google.golang.org/grpc/credentials/local"
 	"google.golang.org/grpc/metadata"
 
+	authzenv1 "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/telemetry"
@@ -86,6 +87,7 @@ const (
 
 	adminEndpoint      = "/admin"
 	apiEndpoint        = "/api"
+	authzenEndpont     = "/access"
 	healthEndpoint     = "/_cerbos/health"
 	metricsEndpoint    = "/_cerbos/metrics"
 	playgroundEndpoint = "/api/playground"
@@ -291,6 +293,9 @@ func (s *Server) startGRPCServer(l net.Listener, core *CoreComponents) (*grpc.Se
 
 	cerbosSvc := svc.NewCerbosService(core.Engine, core.AuxData, core.ReqLimits)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
+	authzenSvc := svc.NewAuthzenAuthorizationService(cerbosSvc)
+	authzenv1.RegisterAuthorizationServiceServer(server, authzenSvc)
+
 	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
 	if s.conf.AdminAPI.Enabled {
@@ -398,6 +403,11 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return nil, fmt.Errorf("failed to register Cerbos HTTP service: %w", err)
 	}
 
+	if err := authzenv1.RegisterAuthorizationServiceHandler(ctx, gwmux, grpcConn); err != nil {
+		log.Errorw("Failed to register AuthZen HTTP service", "error", err)
+		return nil, fmt.Errorf("failed to register AuthZen HTTP service: %w", err)
+	}
+
 	if s.conf.AdminAPI.Enabled {
 		if err := svcv1.RegisterCerbosAdminServiceHandler(ctx, gwmux, grpcConn); err != nil {
 			log.Errorw("Failed to register Cerbos admin HTTP service", "error", err)
@@ -419,6 +429,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	cerbosMux.PathPrefix(adminEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), adminEndpoint))
 	cerbosMux.PathPrefix(apiEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), apiEndpoint))
+	cerbosMux.PathPrefix(authzenEndpont).Handler(tracing.HTTPHandler(prettyJSON(gwmux), authzenEndpont))
 	cerbosMux.Path(healthEndpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 

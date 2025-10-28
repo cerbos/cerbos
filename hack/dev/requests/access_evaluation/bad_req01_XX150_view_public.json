@@ -1,0 +1,39 @@
+{
+  "subject": {
+    "type": "user",
+    "id": "donald_duck",
+    "properties": {
+      "cerbos.policyVersion": "20210210",
+      "cerbos.roles": [
+        "employee"
+      ],
+      "department": "accounting",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resource": {
+    "type": "leave_request",
+    "id": "XX150",
+    "properties": {
+      "cerbos.policyVersion": "20210210",
+      "department": "accounting",
+      "geography": "GB",
+      "id": "XX125",
+      "owner": "mary",
+      "team": "design"
+    }
+  },
+  "action": {
+    "name": "view:public",
+    "properties": {}
+  },
+  "context": {
+    "cerbos.requestId": "test",
+    "auxData": {
+      "jwt": {
+        "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX"
+      }
+    }
+  }
+}
