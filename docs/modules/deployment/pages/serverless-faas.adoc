@@ -5,13 +5,14 @@ include::ROOT:partial$attributes.adoc[]
 include::ROOT:partial$version-check.adoc[]
 
 
+[#aws-lambda]
 == AWS Lambda
 
 [NOTE]
 ====
 Cerbos is a CPU-bound application. On AWS Lambda environments CPU is not individually configurable and is determined as a function of allocated memory (see link:https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html[Configure Lambda function memory]). If you're experiencing slow response times from Cerbos, increase the memory allocation. Even though neither Cerbos nor your code requires a lot of memory, the architecture of AWS Lambda forces this counter-intuitive tuning advice.
 
-Because each application is different, we can't provide any recommendations. Monitor your application and tune the memory allocation until the performance is satisfactory for your needs.   
+Because each application is different, we can't provide any recommendations. Monitor your application and tune the memory allocation until the performance is satisfactory for your needs.
 ====
 
 Cerbos provides two deployment options for AWS Lambda:
@@ -30,7 +31,7 @@ Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary 
 mkdir -p dist
 mv cerbosfunc dist/bootstrap
 sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
-    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset 
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
 ----
 
 .SAM template for Lambda Function deployment with a zip package
@@ -53,7 +54,7 @@ Resources:
     Properties:
       Runtime: provided.al2
       CodeUri: dist/
-      Handler: bootstrap <1> 
+      Handler: bootstrap <1>
       Architectures:
         - arm64
       MemorySize: 1024
@@ -111,14 +112,14 @@ Deploying Cerbos PDP as a Lambda extension allows it to run on the same host wit
 
 Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
 The (extension) layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package. See link:https://docs.aws.amazon.com/lambda/latest/dg/adding-layers.html[adding layers] for more information.
- 
+
 .Lambda Extension deployment
 [source,shell,linenums]
 ----
 mkdir -p layer/extensions
 mv cerbosext layer/extensions/
 sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
-    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset 
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
 ----
 
 .SAM template for Lambda Extension deployment
@@ -140,7 +141,7 @@ Resources:
     Properties:
       LayerName: cerbos-extension
       Description: Cerbos extension layer
-      ContentUri: ./layer <1> 
+      ContentUri: ./layer <1>
       CompatibleRuntimes:
         - provided.al2
         - provided.al2023
