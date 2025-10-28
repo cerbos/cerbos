@@ -21,9 +21,9 @@ Cerbos provides two deployment options for AWS Lambda:
 
 Deploy Cerbos as a standalone AWS Lambda function that handles authorization requests directly. This deployment pattern is suitable for centralized authorization services.
 
-Download the specially-built `cerbosfunc` binary from the link:{app-github-releases-page}[releases page], which can be deployed as either a Zip package or a container image.
+Download the appropriate `cerbos_aws_lambda_func` tarball from the link:{app-github-releases-page}[releases page]. It contains a specially-built binary named `cerbosfunc`  that can be deployed as either a Zip package or a container image.
 
-Deploying as a zip package requires renaming the downloaded `cerbosfunc` binary to `bootstrap` and creating a zip file with it at the root. See link:https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html[Deploy Go Lambda functions with .zip file archives] for more information.
+Deploying as a zip package requires renaming the `cerbosfunc` binary to `bootstrap` and creating a zip file with it at the root. See link:https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html[Deploy Go Lambda functions with .zip file archives] for more information.
 
 .Lambda Function deployment with a zip package
 [source,shell,linenums]
@@ -110,7 +110,7 @@ Lambda function deployed as a Zip package can have up to five layers. Primary us
 Additionally, a layer can be used to deploy a Lambda function link:https://docs.aws.amazon.com/lambda/latest/dg/lambda-extensions.html[extension].
 Deploying Cerbos PDP as a Lambda extension allows it to run on the same host with your application function. This deployment pattern is similar to a sidecar deployment.
 
-Download the specially-built `cerbosext` binary from the link:{app-github-releases-page}[releases page], which can be deployed as a Zip layer.
+Download the appropriate `cerbos_aws_lamba_ext` tarball from the link:{app-github-releases-page}[releases page]. It contains a specially-built `cerbosext` binary that can be deployed as a Zip layer.
 The (extension) layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package. See link:https://docs.aws.amazon.com/lambda/latest/dg/adding-layers.html[adding layers] for more information.
 
 .Lambda Extension deployment
