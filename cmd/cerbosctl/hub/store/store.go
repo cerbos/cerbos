@@ -37,7 +37,7 @@ The store ID and credentials can be provided using either command-line flags or 
 `
 
 type Conn struct {
-	APIEndpoint   string `name:"api-endpoint" hidden:"" default:"https://api.cerbos.cloud" env:"CERBOS_HUB_API_ENDPOINT"`
+	APIEndpoint   string `name:"api-endpoint" default:"https://api.cerbos.cloud" env:"CERBOS_HUB_API_ENDPOINT"`
 	TLSCACert     string `name:"tls-ca-cert" hidden:"" help:"Path to the CA certificate for verifying server identity" type:"existingfile" env:"CERBOS_HUB_TLS_CA_CERT"`
 	TLSClientCert string `name:"tls-client-cert" hidden:"" help:"Path to the TLS client certificate" type:"existingfile" env:"CERBOS_HUB_TLS_CLIENT_CERT" and:"tls-client-key"`
 	TLSClientKey  string `name:"tls-client-key" hidden:"" help:"Path to the TLS client key" type:"existingfile" env:"CERBOS_HUB_TLS_CLIENT_KEY" and:"tls-client-cert"`
