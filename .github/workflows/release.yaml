@@ -88,6 +88,12 @@ jobs:
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: dist/
+
       - name: Publish npm packages
         working-directory: npm
         run: corepack npm publish --workspaces --access=public --provenance
