@@ -70,6 +70,11 @@ jobs:
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
 
+      - name: Install Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -83,10 +88,15 @@ jobs:
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
-      - name: Publish npm packages
-        uses: ./.github/actions/publish-npm-packages
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          token: ${{ secrets.NPM_PUBLISH_TOKEN }}
+          name: artifacts
+          path: dist/
+
+      - name: Publish npm packages
+        working-directory: npm
+        run: corepack npm publish --workspaces --access=public --provenance
 
   releaseProtos:
     name: Release Protobufs

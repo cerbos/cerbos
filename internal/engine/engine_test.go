@@ -539,6 +539,14 @@ func stabiliseExpression(expr *enginev1.PlanResourcesFilter_Expression) *enginev
 		normalizedOperands[i] = stabiliseOperand(op)
 	}
 
+	// Ensure struct literals have deterministically ordered entries to avoid flaky comparisons
+	if expr.Operator == planner.Struct {
+		sort.Slice(normalizedOperands, func(i, j int) bool {
+			return normalizedOperands[i].GetExpression().Operands[0].GetValue().GetStringValue() <
+				normalizedOperands[j].GetExpression().Operands[0].GetValue().GetStringValue()
+		})
+	}
+
 	// Sort operands if operator is commutative
 	if isCommutativeOperator(expr.Operator) {
 		sort.Slice(normalizedOperands, func(i, j int) bool {

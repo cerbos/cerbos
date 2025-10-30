@@ -5,6 +5,208 @@ include::ROOT:partial$attributes.adoc[]
 include::ROOT:partial$version-check.adoc[]
 
 
+[#aws-lambda]
 == AWS Lambda
 
-You can deploy Cerbos to AWS Lambda by building a special container image that includes the Lambda runtime and the Cerbos binary. See https://github.com/cerbos/cerbos-aws-lambda for an example. The repository also contains an example of an AWS Lambda function that creates an AWS API Gateway endpoint to communicate with Cerbos over the HTTP protocol.
+[NOTE]
+====
+Cerbos is a CPU-bound application. On AWS Lambda environments CPU is not individually configurable and is determined as a function of allocated memory (see link:https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html[Configure Lambda function memory]). If you're experiencing slow response times from Cerbos, increase the memory allocation. Even though neither Cerbos nor your code requires a lot of memory, the architecture of AWS Lambda forces this counter-intuitive tuning advice.
+
+Because each application is different, we can't provide any recommendations. Monitor your application and tune the memory allocation until the performance is satisfactory for your needs.
+====
+
+Cerbos provides two deployment options for AWS Lambda:
+
+=== Cerbos Lambda Function
+
+Deploy Cerbos as a standalone AWS Lambda function that handles authorization requests directly. This deployment pattern is suitable for centralized authorization services.
+
+
+Download the appropriate `cerbos_aws_lambda_func` tarball from the link:{app-github-releases-page}[releases page]. It contains a specially-built binary named `bootstrap` that can be deployed as either a Zip package or a container image.
+
+Deploying it as a zip package requires creating a zip file with the `bootstrap` binary at the root. See link:https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html[Deploy Go Lambda functions with .zip file archives] for more information.
+
+.Lambda Function deployment with a zip package
+[source,shell,linenums]
+----
+mkdir -p dist
+sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
+----
+
+.SAM template for Lambda Function deployment with a zip package
+
+[source,yaml,linenums]
+----
+---
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cerbos Lambda Function
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  CerbosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: provided.al2
+      CodeUri: dist/
+      Handler: bootstrap
+      Architectures:
+        - arm64
+      MemorySize: 1024
+      Events:
+        CheckResources:
+          Type: HttpApi
+          Properties:
+            Path: /api/check/resources
+            Method: POST
+        PlanResources:
+          Type: HttpApi
+          Properties:
+            Path: /api/plan/resources
+            Method: POST
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: GET
+      Environment:
+        Variables:
+          CERBOS_LOG_LEVEL: debug
+          XDG_CACHE_HOME: /tmp
+          CERBOS_CONFIG: /.cerbos.yaml
+
+Outputs:
+  CerbosFunctionAPI:
+    Description: "API Gateway endpoint URL for Cerbos Function"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  CerbosFunction:
+    Description: "Cerbos Lambda Function ARN"
+    Value: !GetAtt CerbosFunction.Arn
+  CerbosFunctionIamRole:
+    Description: "IAM Role created for the Cerbos Lambda function"
+    Value: !GetAtt CerbosFunctionRole.Arn
+----
+
+To deploy as a container, build an image using a Dockerfile similar to the following:
+
+[source,dockerfile,linenums]
+----
+FROM public.ecr.aws/lambda/provided:al2023
+COPY bootstrap /bootstrap
+ENTRYPOINT [ "/bootstrap" ]
+----
+
+See link:https://docs.aws.amazon.com/lambda/latest/dg/go-image.html[Deploy Go Lambda functions with container images] for more information.
+
+=== Cerbos Lambda Extension (Layer)
+
+Lambda function deployed as a Zip package can have up to five layers. Primary use case for link:https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html[layers] is managing dependencies and configurations.
+Additionally, a layer can be used to deploy a Lambda function link:https://docs.aws.amazon.com/lambda/latest/dg/lambda-extensions.html[extension].
+Deploying Cerbos PDP as a Lambda extension allows it to run on the same host with your application function. This deployment pattern is similar to a sidecar deployment.
+
+Download the appropriate `cerbos_aws_lamba_ext` tarball from the link:{app-github-releases-page}[releases page]. It contains a specially-built `cerbosext` binary that can be deployed as a Zip layer.
+The (extension) layer then can be attached to your AWS Lambda function, if it is deployed as a Zip package. See link:https://docs.aws.amazon.com/lambda/latest/dg/adding-layers.html[adding layers] for more information.
+
+.Lambda Extension deployment
+[source,shell,linenums]
+----
+mkdir -p layer/extensions
+mv cerbosext layer/extensions/
+sam deploy --template sam.yml --stack-name ${CERBOS_STACK_NAME:-Cerbos} --resolve-s3 \
+    --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
+----
+
+.SAM template for Lambda Extension deployment
+[source,yaml,linenums]
+----
+---
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Cerbos server
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  CerbosExtensionLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: cerbos-extension
+      Description: Cerbos extension layer
+      ContentUri: ./layer <1>
+      CompatibleRuntimes:
+        - provided.al2
+        - provided.al2023
+      CompatibleArchitectures:
+        - arm64
+
+Outputs:
+  CerbosExtensionLayerArn:
+    Description: "Cerbos Extension Layer ARN"
+    Value: !Ref CerbosExtensionLayer
+----
+<1> Layer is a directory containing the `cerbosext` binary
+
+=== Configuration
+
+[NOTE]
+====
+Cerbos Lambda extension overrides `server.httpListenAddr` and `server.grpcListenAddr` to  "unix:/tmp/cerbos.http.sock" and "unix:/tmp/cerbos.grpc.sock" respectively.
+====
+
+The Cerbos function/extension can be configured with environment variables.
+[source,yaml,linenum]
+----
+CERBOS_LOG_LEVEL: info
+XDG_CACHE_HOME: /tmp
+CERBOS_CONFIG: "..." <1>
+----
+<1> Path to the Cerbos configuration file
+
+Set the following environment variables to connect to link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub].
+[source,yaml,linenum]
+----
+CERBOS_HUB_DEPLOYMENT_ID: "..."
+CERBOS_HUB_CLIENT_ID: "..."
+CERBOS_HUB_CLIENT_SECRET: ".."
+----
+
+=== Comparison: Function vs Extension
+
+[cols="1,1,1"]
+|===
+|Aspect |Lambda Function |Lambda Extension
+
+|**Deployment Pattern**
+|Centralized service
+|Sidecar pattern
+
+|**Resource Sharing**
+|Dedicated Lambda execution
+|Shares execution with application function
+
+|**Cold Start**
+|Independent cold start
+|Shared cold start with application
+
+|**Network Overhead**
+|API Gateway + Lambda runtime
+|Direct process communication
+
+|**Use Case**
+|Central authorization service
+|Embedded authorization for specific functions
+
+|**Scaling**
+|Independent scaling
+|Scales with application function
+|===
+
+Both deployment options use AWS SAM (Serverless Application Model) templates for easy deployment and include example configurations for policies, logging, and API Gateway integration.

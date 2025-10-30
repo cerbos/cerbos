@@ -1,25 +1,104 @@
-{"name": "github.com/acomagu/bufpipe", "licenceTextOverrideFile": "licences/github.com/acomagu/bufpipe/LICENSE"}
-{"name": "github.com/ajstarks/svgo", "licenceType": "CC-BY-4.0"}
-{"name": "github.com/alibabacloud-go/cr-20160607", "licenceType": "Apache-2.0"}
-{"name": "github.com/alibabacloud-go/tea-xml", "licenceType": "Apache-2.0"}
-{"name": "github.com/bmizerany/assert", "licenceType": "UNKNOWN"}
-{"name": "github.com/caarlos0/sshmarshal", "licenceType": "Public Domain"}
-{"name": "github.com/cerbos/cloud-api", "licenceType": "Apache-2.0"}
-{"name": "github.com/chzyer/logex", "licenceTextOverrideFile": "licences/github.com/chzyer/logex/LICENSE"}
-{"name": "github.com/dnaeon/go-vcr", "licenceType": "BSD-2-Clause"}
-{"name": "github.com/docker/go-metrics", "licenceType": "Apache-2.0"}
-{"name": "github.com/garyburd/redigo", "licenceType": "Apache-2.0"}
-{"name": "github.com/go-errors/errors", "licenceTextOverrideFile": "licences/github.com/go-errors/errors/LICENSE.MIT"}
-{"name": "github.com/grpc-ecosystem/go-grpc-middleware/v2", "licenceType": "Apache-2.0"}
-{"name": "github.com/hudl/fargo", "licenceTextOverrideFile": "licences/github.com/hudl/fargo/LICENSE"}
-{"name": "github.com/kr/logfmt", "licenceTextOverrideFile": "licences/github.com/kr/logfmt/LICENSE"}
-{"name": "github.com/lightstep/lightstep-tracer-common/golang/gogo", "licenceTextOverrideFile": "licences/github.com/lightstep/lightstep-tracer-common/golang/gogo/LICENSE"}
-{"name": "github.com/miekg/dns", "licenceType": "BSD-2-Clause"}
-{"name": "github.com/pascaldekloe/goe", "licenceType": "Public Domain"}
-{"name": "github.com/pjbgf/sha1cd", "licenceTextOverrideFile": "licences/github.com/pjbgf/sha1cd/LICENSE"}
-{"name": "github.com/streadway/handy", "licenceTextOverrideFile": "licences/github.com/streadway/handy/LICENSE"}
-{"name": "github.com/xeipuuv/gojsonpointer", "licenceType": "Apache-2.0"}
-{"name": "github.com/xeipuuv/gojsonreference", "licenceType": "Apache-2.0"}
-{"name": "github.com/xeipuuv/gojsonschema", "licenceType": "Apache-2.0"}
-{"name": "github.com/xi2/xz", "licenceType": "Public Domain"}
-{"name": "github.com/segmentio/backo-go", "licenceTextOverrideFile": "licences/github.com/segmentio/backo-go/LICENSE"}
+{
+    "name": "github.com/acomagu/bufpipe",
+    "licenceTextOverrideFile": "licences/github.com/acomagu/bufpipe/LICENSE"
+}
+{
+    "name": "github.com/ajstarks/svgo",
+    "licenceType": "CC-BY-4.0"
+}
+{
+    "name": "github.com/alibabacloud-go/cr-20160607",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/alibabacloud-go/tea-xml",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/bmizerany/assert",
+    "licenceType": "UNKNOWN"
+}
+{
+    "name": "github.com/caarlos0/sshmarshal",
+    "licenceType": "Public Domain"
+}
+{
+    "name": "github.com/cerbos/cloud-api",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/chzyer/logex",
+    "licenceTextOverrideFile": "licences/github.com/chzyer/logex/LICENSE"
+}
+{
+    "name": "github.com/dnaeon/go-vcr",
+    "licenceType": "BSD-2-Clause"
+}
+{
+    "name": "github.com/docker/go-metrics",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/garyburd/redigo",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/go-errors/errors",
+    "licenceTextOverrideFile": "licences/github.com/go-errors/errors/LICENSE.MIT"
+}
+{
+    "name": "github.com/grpc-ecosystem/go-grpc-middleware/v2",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/hudl/fargo",
+    "licenceTextOverrideFile": "licences/github.com/hudl/fargo/LICENSE"
+}
+{
+    "name": "github.com/kr/logfmt",
+    "licenceTextOverrideFile": "licences/github.com/kr/logfmt/LICENSE"
+}
+{
+    "name": "github.com/lightstep/lightstep-tracer-common/golang/gogo",
+    "licenceTextOverrideFile": "licences/github.com/lightstep/lightstep-tracer-common/golang/gogo/LICENSE"
+}
+{
+    "name": "github.com/miekg/dns",
+    "licenceType": "BSD-2-Clause"
+}
+{
+    "name": "github.com/pascaldekloe/goe",
+    "licenceType": "Public Domain"
+}
+{
+    "name": "github.com/pjbgf/sha1cd",
+    "licenceTextOverrideFile": "licences/github.com/pjbgf/sha1cd/LICENSE"
+}
+{
+    "name": "github.com/segmentio/asm",
+    "licenceType": "MIT"
+}
+{
+    "name": "github.com/segmentio/backo-go",
+    "licenceTextOverrideFile": "licences/github.com/segmentio/backo-go/LICENSE"
+}
+{
+    "name": "github.com/streadway/handy",
+    "licenceTextOverrideFile": "licences/github.com/streadway/handy/LICENSE"
+}
+{
+    "name": "github.com/xeipuuv/gojsonpointer",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/xeipuuv/gojsonreference",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/xeipuuv/gojsonschema",
+    "licenceType": "Apache-2.0"
+}
+{
+    "name": "github.com/xi2/xz",
+    "licenceType": "Public Domain"
+}

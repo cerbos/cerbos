@@ -1,7 +1,7 @@
 ---
 name: cerbos
 title: Cerbos
-version: "0.47.0"
+version: "0.48.0"
 prerelease: -prerelease
 nav:
   - modules/ROOT/nav.adoc

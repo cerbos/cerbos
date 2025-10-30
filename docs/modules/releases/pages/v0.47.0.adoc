@@ -1,0 +1,107 @@
+
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.47.0]
+= Cerbos v0.47.0
+
+== Highlights
+
+Running Cerbos on AWS Lambda environments is now easier and more streamlined. Two specially-built binaries with lifecycle event handlers allow Cerbos to be deployed as a standalone function or as an extension to your own function (similar to a sidecar). See xref:deployment:serverless-faas.adoc#aws-lambda[Lambda deployment documentation] for more information.
+
+Compiler error messages for missing schema references are now more detailed to help with debugging.
+
+The `cerbosctl` commands for working with Cerbos Hub stores are now git-aware. The commands to upload files to Cerbos Hub can detect git repositories and automatically set the commit details if none are provided by the user. A new command to upload files changed in a git commit range has been added as well.
+
+
+== Changelog
+
+
+=== Features and enhancements
+
+* Add upload-git command and git change details option to replace-files command (link:https://github.com/cerbos/cerbos/pull/2695[#2695])
+* Add AWS Lambda support (link:https://github.com/cerbos/cerbos/pull/2661[#2661])
+* Allow specififying service.trafficDistribution (link:https://github.com/cerbos/cerbos/pull/2693[#2693])
+* More detailed schema errors (link:https://github.com/cerbos/cerbos/pull/2663[#2663])
+
+=== Documentation
+
+* Add AI policy to contribution guidelines (link:https://github.com/cerbos/cerbos/pull/2710[#2710])
+* Add AWS Lambda docs (link:https://github.com/cerbos/cerbos/pull/2740[#2740])
+* Fix broken link in README.md (link:https://github.com/cerbos/cerbos/pull/2658[#2658])
+
+=== Other
+
+* Added messaging about Hub to PDP logs (link:https://github.com/cerbos/cerbos/pull/2743[#2743])
+* Allow overriding TLS settings for cerbosctl hub commands (link:https://github.com/cerbos/cerbos/pull/2724[#2724])
+* Batch dependents and deflake CI suites (link:https://github.com/cerbos/cerbos/pull/2677[#2677])
+* Better node dedup in query planner (link:https://github.com/cerbos/cerbos/pull/2735[#2735])
+* Bump github.com/docker/docker from 27.2.0+incompatible to 28.0.0+incompatible (link:https://github.com/cerbos/cerbos/pull/2666[#2666])
+* Bump github.com/go-viper/mapstructure/v2 from 2.3.0 to 2.4.0 (link:https://github.com/cerbos/cerbos/pull/2673[#2673])
+* Bump github.com/quic-go/quic-go from 0.54.0 to 0.54.1 in /tools (link:https://github.com/cerbos/cerbos/pull/2731[#2731])
+* Bump github.com/ulikunitz/xz from 0.5.12 to 0.5.14 in /tools (link:https://github.com/cerbos/cerbos/pull/2678[#2678])
+* Bump version to 0.47.0
+* Clean up .goreleaser.yml (link:https://github.com/cerbos/cerbos/pull/2670[#2670])
+* Clean up deployment to AWS SAR (link:https://github.com/cerbos/cerbos/pull/2723[#2723])
+* Clear disk space quicker (link:https://github.com/cerbos/cerbos/pull/2692[#2692])
+* Config option to disable bootstrapping (link:https://github.com/cerbos/cerbos/pull/2691[#2691])
+* Decouple rule table (link:https://github.com/cerbos/cerbos/pull/2653[#2653])
+* Don't set `registry-url` to avoid introducing a spurious `NODE_AUTH_TOKEN` (link:https://github.com/cerbos/cerbos/pull/2736[#2736])
+* Exclude machineid lib from JS builds (link:https://github.com/cerbos/cerbos/pull/2662[#2662])
+* Fix e2e blob test by guaranteeing policy existence (link:https://github.com/cerbos/cerbos/pull/2672[#2672])
+* Fix e2e overlay test (link:https://github.com/cerbos/cerbos/pull/2671[#2671])
+* Fix flaky remote source tests (link:https://github.com/cerbos/cerbos/pull/2696[#2696])
+* Implement io.Closer for Lambda function handler (link:https://github.com/cerbos/cerbos/pull/2689[#2689])
+* Increase blob e2e sleep period (link:https://github.com/cerbos/cerbos/pull/2684[#2684])
+* Increase E2E blob store update interval (link:https://github.com/cerbos/cerbos/pull/2720[#2720])
+* Increase e2e blob store sleep for minio startup (link:https://github.com/cerbos/cerbos/pull/2699[#2699])
+* Move all Minio images to bitnamilegacy  (link:https://github.com/cerbos/cerbos/pull/2722[#2722])
+* Poll for policy existence in blob e2e tests (link:https://github.com/cerbos/cerbos/pull/2706[#2706])
+* Publish AWS Lambda extension to SAR (link:https://github.com/cerbos/cerbos/pull/2719[#2719])
+* Publish lambda handler to AWS SAR (link:https://github.com/cerbos/cerbos/pull/2707[#2707])
+* Remove disableSSL and add protocol to the endpoint query param (link:https://github.com/cerbos/cerbos/pull/2715[#2715])
+* Remove superfluous compile manager subscription mechanism (link:https://github.com/cerbos/cerbos/pull/2686[#2686])
+* Rename lambda release directories for consistency (link:https://github.com/cerbos/cerbos/pull/2725[#2725])
+* Set minimum age for Renovate dependencies (link:https://github.com/cerbos/cerbos/pull/2708[#2708])
+* Support Hub config in Lambda (link:https://github.com/cerbos/cerbos/pull/2729[#2729])
+* Test publishing to SAR (link:https://github.com/cerbos/cerbos/pull/2713[#2713])
+* Update Buf dependencies (link:https://github.com/cerbos/cerbos/pull/2737[#2737])
+* Update GitHub Actions deps to v5 (major) (link:https://github.com/cerbos/cerbos/pull/2712[#2712])
+* Update Go deps (link:https://github.com/cerbos/cerbos/pull/2711[#2711])
+* Update Go deps (link:https://github.com/cerbos/cerbos/pull/2717[#2717])
+* Update Go deps (link:https://github.com/cerbos/cerbos/pull/2727[#2727])
+* Update Go deps (link:https://github.com/cerbos/cerbos/pull/2732[#2732])
+* Update Go deps (link:https://github.com/cerbos/cerbos/pull/2739[#2739])
+* Update Go deps (link:https://github.com/cerbos/cerbos/pull/2744[#2744])
+* Update Node.js deps (link:https://github.com/cerbos/cerbos/pull/2718[#2718])
+* Update Node.js deps (link:https://github.com/cerbos/cerbos/pull/2733[#2733])
+* Update Node.js deps (link:https://github.com/cerbos/cerbos/pull/2738[#2738])
+* Update Node.js deps (link:https://github.com/cerbos/cerbos/pull/2745[#2745])
+* Update actions/setup-go action to v6 (link:https://github.com/cerbos/cerbos/pull/2701[#2701])
+* Update amannn/action-semantic-pull-request action to v6 (link:https://github.com/cerbos/cerbos/pull/2681[#2681])
+* Update dawidd6/action-download-artifact action to v11 (link:https://github.com/cerbos/cerbos/pull/2682[#2682])
+* Update dependency helmfile/helmfile to v1.1.6 (link:https://github.com/cerbos/cerbos/pull/2687[#2687])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2665[#2665])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2669[#2669])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2675[#2675])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/2697[#2697])
+* Update github actions deps to v3 (major) (link:https://github.com/cerbos/cerbos/pull/2683[#2683])
+* Update github actions deps to v5 (major) (link:https://github.com/cerbos/cerbos/pull/2702[#2702])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2659[#2659])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2664[#2664])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2668[#2668])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2674[#2674])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2688[#2688])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/2698[#2698])
+* Update golangci/golangci-lint-action action to v8 (link:https://github.com/cerbos/cerbos/pull/2703[#2703])
+* Update helm.sh/helm/v3 to 3.18.5 (link:https://github.com/cerbos/cerbos/pull/2667[#2667])
+* Update module github.com/google/go-licenses to v2 (link:https://github.com/cerbos/cerbos/pull/2704[#2704])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2660[#2660])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2680[#2680])
+* Update node.js deps (link:https://github.com/cerbos/cerbos/pull/2700[#2700])
+* Use CollectT in EventuallyWithT (link:https://github.com/cerbos/cerbos/pull/2685[#2685])
+* Use OIDC to authenticate to publish npm packages (link:https://github.com/cerbos/cerbos/pull/2734[#2734])
+* Use default config if one not provided for Lambda (link:https://github.com/cerbos/cerbos/pull/2728[#2728])
+* Use faster disk space reclaim action (link:https://github.com/cerbos/cerbos/pull/2694[#2694])
+* Use legacy Bitnami registry (link:https://github.com/cerbos/cerbos/pull/2721[#2721])
+* update go deps (link:https://github.com/cerbos/cerbos/pull/2679[#2679])
+* update go deps (link:https://github.com/cerbos/cerbos/pull/2705[#2705])

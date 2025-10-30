@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -17,6 +18,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -27,6 +29,15 @@ import (
 	plannerutils "github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/cerbos/cerbos/internal/util"
 )
+
+var ignoreHashFields = map[string]struct{}{
+	"google.api.expr.v1alpha1.CheckedExpr.reference_map":  {},
+	"google.api.expr.v1alpha1.CheckedExpr.type_map":       {},
+	"google.api.expr.v1alpha1.CheckedExpr.source_info":    {},
+	"google.api.expr.v1alpha1.CheckedExpr.expr_version":   {},
+	"google.api.expr.v1alpha1.Expr.id":                    {},
+	"google.api.expr.v1alpha1.Expr.CreateStruct.Entry.id": {},
+}
 
 type (
 	QpN   = enginev1.PlanResourcesAst_Node
@@ -160,14 +171,91 @@ func dedupNodes(nodes []*enginev1.PlanResourcesAst_Node) []*enginev1.PlanResourc
 	nodeHashes := make(map[uint64]struct{}, len(nodes))
 
 	for _, node := range nodes {
-		hash := util.HashPB(node, nil)
-		if _, exists := nodeHashes[hash]; !exists {
-			nodeHashes[hash] = struct{}{}
-			uniqueNodes = append(uniqueNodes, node)
+		// We hit a bug where Go map iteration was causing inconsistent ordering with `Expr_CreateStruct` entries. This led to
+		// outputs with many OR'd duplicate sets of conditions (namely in rules with wildcard roles and with many roles being resolved
+		// against those rules). I've tried to be a bit thorough in covering a few cases, but I'll admit that I'm shooting from
+		// the hip somewhat. However, this feels low risk given the context. Worst case, we'll miss a dedup opportunity and end up
+		// with duplicate nodes (logical no-ops), which is the situation we were in before.
+		// A clone probably isn't necessary, but it keeps the function side-effect free and predictable.
+		clone := proto.Clone(node).(*enginev1.PlanResourcesAst_Node) //nolint:forcetypeassert
+		orderStructEntriesNode(clone)
+
+		hash := util.HashPB(clone, ignoreHashFields)
+		if _, exists := nodeHashes[hash]; exists {
+			continue
 		}
+
+		nodeHashes[hash] = struct{}{}
+		uniqueNodes = append(uniqueNodes, node)
 	}
 
 	return uniqueNodes
+}
+
+func orderStructEntriesNode(node *enginev1.PlanResourcesAst_Node) {
+	switch t := node.Node.(type) {
+	case *enginev1.PlanResourcesAst_Node_LogicalOperation:
+		for _, child := range t.LogicalOperation.Nodes {
+			orderStructEntriesNode(child)
+		}
+	case *enginev1.PlanResourcesAst_Node_Expression:
+		orderStructEntriesExpr(t.Expression.GetExpr())
+	}
+}
+
+func orderStructEntriesExpr(expr *exprpb.Expr) {
+	if expr == nil {
+		return
+	}
+
+	switch t := expr.ExprKind.(type) {
+	case *exprpb.Expr_CallExpr:
+		orderStructEntriesExpr(t.CallExpr.Target)
+		for _, arg := range t.CallExpr.Args {
+			orderStructEntriesExpr(arg)
+		}
+	case *exprpb.Expr_ListExpr:
+		for _, elem := range t.ListExpr.Elements {
+			orderStructEntriesExpr(elem)
+		}
+	case *exprpb.Expr_StructExpr:
+		for _, entry := range t.StructExpr.Entries {
+			if mk := entry.GetMapKey(); mk != nil {
+				orderStructEntriesExpr(mk)
+			}
+			if val := entry.GetValue(); val != nil {
+				orderStructEntriesExpr(val)
+			}
+		}
+		sort.SliceStable(t.StructExpr.Entries, func(i, j int) bool {
+			return structEntryKey(t.StructExpr.Entries[i]) < structEntryKey(t.StructExpr.Entries[j])
+		})
+	case *exprpb.Expr_SelectExpr:
+		orderStructEntriesExpr(t.SelectExpr.Operand)
+	case *exprpb.Expr_ComprehensionExpr:
+		orderStructEntriesExpr(t.ComprehensionExpr.IterRange)
+		orderStructEntriesExpr(t.ComprehensionExpr.AccuInit)
+		orderStructEntriesExpr(t.ComprehensionExpr.LoopCondition)
+		orderStructEntriesExpr(t.ComprehensionExpr.LoopStep)
+		orderStructEntriesExpr(t.ComprehensionExpr.Result)
+	default:
+	}
+}
+
+func structEntryKey(entry *exprpb.Expr_CreateStruct_Entry) string {
+	switch k := entry.KeyKind.(type) {
+	case *exprpb.Expr_CreateStruct_Entry_FieldKey:
+		return k.FieldKey
+	case *exprpb.Expr_CreateStruct_Entry_MapKey:
+		if ce := k.MapKey.GetConstExpr(); ce != nil {
+			if sv := ce.GetStringValue(); sv != "" {
+				return sv
+			}
+		}
+		return k.MapKey.String()
+	default:
+		return ""
+	}
 }
 
 func mkOrLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
