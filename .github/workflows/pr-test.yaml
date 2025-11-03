@@ -116,7 +116,7 @@ jobs:
         uses: extractions/setup-just@v3
 
       - name: Download previous test times
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: previous-test-times
 
@@ -182,7 +182,7 @@ jobs:
         uses: extractions/setup-just@v3
 
       - name: Download JUnit reports
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
 
       - name: Combine JUnit reports
         run: |-
@@ -362,7 +362,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Download npm packages
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: npm-packages
 
@@ -370,7 +370,7 @@ jobs:
         run: tar --extract --verbose --file npm.tar
 
       - name: Install Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           cache: npm
           cache-dependency-path: npm/test/registry/package-lock.json
