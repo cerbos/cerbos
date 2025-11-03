@@ -111,6 +111,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 }
 
 // CheckResourceSet checks a batch of homogenous resources.
+//
 // Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
 	log := logging.ReqScopeLog(ctx)
@@ -170,6 +171,7 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 }
 
 // CheckResourceBatch checks a batch of heterogenous resources.
+//
 // Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
 	log := logging.ReqScopeLog(ctx)

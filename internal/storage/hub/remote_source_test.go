@@ -286,7 +286,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
-					events[0].EncryptionKey = encryptionKey
+					events[0].EncryptionKey = encryptionKey //nolint:gosec
 					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Once()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).Return(nil)
@@ -335,7 +335,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
-					events[1].EncryptionKey = encryptionKey
+					events[1].EncryptionKey = encryptionKey //nolint:gosec
 					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Twice()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).
@@ -389,7 +389,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
-					events[0].EncryptionKey = encryptionKey
+					events[0].EncryptionKey = encryptionKey //nolint:gosec
 					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
 
 					// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
