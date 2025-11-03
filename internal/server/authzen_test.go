@@ -182,19 +182,23 @@ func TestAuthZEN_Metadata(t *testing.T) {
 		expectedScheme string
 	}{
 		{
-			name:           "without_tls",
-			configure:      func(_ *testing.T, _ *Conf) {},
+			name: "without_tls",
+			configure: func(t *testing.T, _ *Conf) {
+				t.Helper()
+			},
 			expectedScheme: "http",
 		},
 		{
-			name:           "with_tls",
-			configure:      func(t *testing.T, conf *Conf) { enableAuthZENTLS(t, conf) },
+			name: "with_tls",
+			configure: func(t *testing.T, conf *Conf) {
+				t.Helper()
+				enableAuthZENTLS(t, conf)
+			},
 			expectedScheme: "https",
 		},
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			conf := newAuthZENConf(t)
 			tc.configure(t, conf)
@@ -219,12 +223,17 @@ func TestAuthZEN_NegativeCases(t *testing.T) {
 		configure func(*testing.T, *Conf)
 	}{
 		{
-			name:      "without_tls",
-			configure: func(_ *testing.T, _ *Conf) {},
+			name: "without_tls",
+			configure: func(t *testing.T, _ *Conf) {
+				t.Helper()
+			},
 		},
 		{
-			name:      "with_tls",
-			configure: func(t *testing.T, conf *Conf) { enableAuthZENTLS(t, conf) },
+			name: "with_tls",
+			configure: func(t *testing.T, conf *Conf) {
+				t.Helper()
+				enableAuthZENTLS(t, conf)
+			},
 		},
 	}
 
@@ -275,7 +284,6 @@ func TestAuthZEN_NegativeCases(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			conf := newAuthZENConf(t)
 			tc.configure(t, conf)
@@ -286,7 +294,6 @@ func TestAuthZEN_NegativeCases(t *testing.T) {
 			waitForAuthZENReady(t, client, conf)
 
 			for _, rc := range cases {
-				rc := rc
 				t.Run(rc.name, func(t *testing.T) {
 					resp := doAuthZENPostRaw(t, client, authzenURL(conf, rc.path), rc.bodyFunc()) //nolint:bodyclose // closed in helper
 					require.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -352,16 +359,22 @@ func TestAuthZEN_Evaluations_MultipleSubjects(t *testing.T) {
 		configure func(*testing.T, *Conf)
 	}{
 		{
-			name:      "without_tls",
-			configure: func(_ *testing.T, _ *Conf) {},
+			name: "without_tls",
+			configure: func(t *testing.T, _ *Conf) {
+				t.Helper()
+			},
 		},
 		{
-			name:      "with_tls",
-			configure: func(t *testing.T, conf *Conf) { enableAuthZENTLS(t, conf) },
+			name: "with_tls",
+			configure: func(t *testing.T, conf *Conf) {
+				t.Helper()
+				enableAuthZENTLS(t, conf)
+			},
 		},
 	}
 
 	runScenario := func(t *testing.T, conf *Conf, client *http.Client) {
+		t.Helper()
 		employee := map[string]any{"type": "user", "id": "alice", "properties": map[string]any{"roles": []string{"employee"}, "department": "marketing", "geography": "GB", "team": "design"}}
 		manager := map[string]any{"type": "user", "id": "bob", "properties": map[string]any{"roles": []string{"manager"}, "department": "marketing", "geography": "GB", "team": "design", "managed_geographies": "GB"}}
 
@@ -389,7 +402,6 @@ func TestAuthZEN_Evaluations_MultipleSubjects(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			conf := newAuthZENConf(t)
 			tc.configure(t, conf)
@@ -475,7 +487,7 @@ func TestAuthZEN_EvaluationsSemantics(t *testing.T) {
 		req := newReq(map[string]any{"evaluations_semantic": "deny_on_first_deny"}, baseSeq)
 		body, err := json.Marshal(req)
 		require.NoError(t, err)
-		resp := doAuthZENPostRaw(t, client, authzenURL(conf, authzenEvalsPath), body)
+		resp := doAuthZENPostRaw(t, client, authzenURL(conf, authzenEvalsPath), body) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -483,7 +495,7 @@ func TestAuthZEN_EvaluationsSemantics(t *testing.T) {
 		req := newReq(map[string]any{"evaluations_semantic": "permit_on_first_permit"}, permitSeq)
 		body, err := json.Marshal(req)
 		require.NoError(t, err)
-		resp := doAuthZENPostRaw(t, client, authzenURL(conf, authzenEvalsPath), body)
+		resp := doAuthZENPostRaw(t, client, authzenURL(conf, authzenEvalsPath), body) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -491,7 +503,7 @@ func TestAuthZEN_EvaluationsSemantics(t *testing.T) {
 		req := newReq(map[string]any{"evaluations_semantic": "invalid"}, baseSeq)
 		body, err := json.Marshal(req)
 		require.NoError(t, err)
-		resp := doAuthZENPostRaw(t, client, authzenURL(conf, authzenEvalsPath), body)
+		resp := doAuthZENPostRaw(t, client, authzenURL(conf, authzenEvalsPath), body) //nolint:bodyclose // closed in helper
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 }
@@ -502,16 +514,22 @@ func TestAuthZEN_EvaluationsOutputs(t *testing.T) {
 		configure func(*testing.T, *Conf)
 	}{
 		{
-			name:      "without_tls",
-			configure: func(_ *testing.T, _ *Conf) {},
+			name: "without_tls",
+			configure: func(t *testing.T, _ *Conf) {
+				t.Helper()
+			},
 		},
 		{
-			name:      "with_tls",
-			configure: func(t *testing.T, conf *Conf) { enableAuthZENTLS(t, conf) },
+			name: "with_tls",
+			configure: func(t *testing.T, conf *Conf) {
+				t.Helper()
+				enableAuthZENTLS(t, conf)
+			},
 		},
 	}
 
 	runScenario := func(t *testing.T, conf *Conf, client *http.Client) {
+		t.Helper()
 		const pID = "emp1"
 		req := authzenEvaluationRequest{
 			Subject: &authzenSubject{Type: "user", ID: pID, Properties: map[string]any{"roles": []string{"employee"}}},
@@ -540,7 +558,6 @@ func TestAuthZEN_EvaluationsOutputs(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			conf := newAuthZENConf(t)
 			tc.configure(t, conf)
@@ -590,17 +607,21 @@ func TestAuthZEN_RequestIDEcho(t *testing.T) {
 		configure func(*testing.T, *Conf)
 	}{
 		{
-			name:      "without_tls",
-			configure: func(_ *testing.T, _ *Conf) {},
+			name: "without_tls",
+			configure: func(t *testing.T, _ *Conf) {
+				t.Helper()
+			},
 		},
 		{
-			name:      "with_tls",
-			configure: func(t *testing.T, conf *Conf) { enableAuthZENTLS(t, conf) },
+			name: "with_tls",
+			configure: func(t *testing.T, conf *Conf) {
+				t.Helper()
+				enableAuthZENTLS(t, conf)
+			},
 		},
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			conf := newAuthZENConf(t)
 			tc.configure(t, conf)
@@ -638,15 +659,20 @@ func TestAuthZEN_GrpcSanityCheck(t *testing.T) {
 		dialOpt   func() grpc.DialOption
 	}{
 		{
-			name:      "without_tls",
-			configure: func(_ *testing.T, _ *Conf) {},
-			dialOpt:   func() grpc.DialOption { return grpc.WithTransportCredentials(local.NewCredentials()) },
+			name: "without_tls",
+			configure: func(t *testing.T, _ *Conf) {
+				t.Helper()
+			},
+			dialOpt: func() grpc.DialOption { return grpc.WithTransportCredentials(local.NewCredentials()) },
 		},
 		{
-			name:      "with_tls",
-			configure: func(t *testing.T, conf *Conf) { enableAuthZENTLS(t, conf) },
+			name: "with_tls",
+			configure: func(t *testing.T, conf *Conf) {
+				t.Helper()
+				enableAuthZENTLS(t, conf)
+			},
 			dialOpt: func() grpc.DialOption {
-				return grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: true}))
+				return grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: true})) //nolint:gosec // test uses self-signed certs
 			},
 		},
 	}
@@ -667,7 +693,6 @@ func TestAuthZEN_GrpcSanityCheck(t *testing.T) {
 	req := &requestv1.CheckResourcesRequest{Principal: pr, Resources: []*requestv1.CheckResourcesRequest_ResourceEntry{{Actions: []string{"view:public"}, Resource: res}}}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			conf := newAuthZENConf(t)
 			tc.configure(t, conf)

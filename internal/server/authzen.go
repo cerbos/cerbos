@@ -40,6 +40,8 @@ const (
 	authzenSemanticExecuteAll          = "execute_all"
 	authzenSemanticDenyOnFirstDeny     = "deny_on_first_deny"
 	authzenSemanticPermitOnFirstPermit = "permit_on_first_permit"
+	schemeHTTP                         = "http"
+	schemeHTTPS                        = "https"
 )
 
 // Note: AuthZEN request/response data models are defined in protobuf at
@@ -188,24 +190,14 @@ func (a *authzenRPC) GetMetadata(ctx context.Context, _ *authzenv1.GetMetadataRe
 	scheme := a.server.authZENDefaultScheme()
 	host := ""
 	if mdIn, ok := metadata.FromIncomingContext(ctx); ok {
-		if v := getFirst(mdIn, "x-forwarded-host", "X-Forwarded-Host"); v != "" {
-			host = v
-		} else if v := getFirst(mdIn, "host", "Host", ":authority"); v != "" {
-			host = v
-		}
-		if v := strings.ToLower(getFirst(mdIn, "x-forwarded-proto", "X-Forwarded-Proto")); v != "" {
-			if a.server.authZENUsesUnixSocket() {
-				scheme = v
-			} else if v == "https" {
-				scheme = "https"
-			}
-		}
+		host = authZENHostFromMetadata(mdIn, host)
+		scheme = a.schemeFromMetadata(mdIn, scheme)
 	}
 	if host == "" {
 		host = a.server.authZENDefaultHost()
 	}
 	if !a.server.authZENUsesUnixSocket() && a.server.tlsConfig != nil {
-		scheme = "https"
+		scheme = schemeHTTPS
 	}
 	base := fmt.Sprintf("%s://%s", scheme, host)
 	return &authzenv1.GetMetadataResponse{
@@ -258,6 +250,30 @@ func getFirst(md metadata.MD, keys ...string) string {
 	return ""
 }
 
+func authZENHostFromMetadata(md metadata.MD, current string) string {
+	if host := getFirst(md, "x-forwarded-host", "X-Forwarded-Host"); host != "" {
+		return host
+	}
+	if host := getFirst(md, "host", "Host", ":authority"); host != "" {
+		return host
+	}
+	return current
+}
+
+func (a *authzenRPC) schemeFromMetadata(md metadata.MD, current string) string {
+	proto := strings.ToLower(getFirst(md, "x-forwarded-proto", "X-Forwarded-Proto"))
+	if proto == "" {
+		return current
+	}
+	if a.server.authZENUsesUnixSocket() {
+		return proto
+	}
+	if proto == schemeHTTPS {
+		return schemeHTTPS
+	}
+	return current
+}
+
 func (s *Server) handleAuthZENWellKnown(w http.ResponseWriter, r *http.Request) {
 	scheme := s.authZENDefaultScheme()
 	if xfp := r.Header.Get("X-Forwarded-Proto"); xfp != "" {
@@ -289,12 +305,12 @@ func (s *Server) authZENUsesUnixSocket() bool {
 
 func (s *Server) authZENDefaultScheme() string {
 	if s.authZENUsesUnixSocket() {
-		return "http"
+		return schemeHTTP
 	}
 	if s.tlsConfig != nil {
-		return "https"
+		return schemeHTTPS
 	}
-	return "http"
+	return schemeHTTP
 }
 
 func (s *Server) authZENDefaultHost() string {
