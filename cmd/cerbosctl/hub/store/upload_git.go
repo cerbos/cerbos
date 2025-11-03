@@ -38,8 +38,8 @@ cerbosctl hub store upload-git 55a4248 e746228 --path path/to/git/repository
 
 type UploadGitCmd struct {
 	diffToApply   *diff
-	From          string `arg:"" help:"Git revision to start from when generating the diff"`
-	To            string `arg:"" help:"Git revision to end when generating the diff (The resolved reference must be the ancestor of the from argument)" default:"HEAD"`
+	From          string `arg:"" help:"Git revision to start from when generating the diff (the resolved reference must be the ancestor of the to argument)"`
+	To            string `arg:"" help:"Git revision to end when generating the diff" default:"HEAD"`
 	Path          string `help:"Path to the git repository" default:"."`
 	Subdirectory  string `help:"Subdirectory under the given path to check and upload changes from" aliases:"subdir" default:"."`
 	Output        `embed:""`
