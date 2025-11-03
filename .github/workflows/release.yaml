@@ -65,7 +65,7 @@ jobs:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.10.0
+        uses: sigstore/cosign-installer@v3.10.1
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
