@@ -53,7 +53,7 @@ jobs:
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
       - name: Upload artifacts as goreleaser build does not upload them
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: artifacts
           path: dist/

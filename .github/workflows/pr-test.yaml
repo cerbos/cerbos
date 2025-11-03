@@ -81,7 +81,7 @@ jobs:
           search_artifacts: true
 
       - name: Upload previous test times
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: previous-test-times
           path: test-times.json
@@ -135,7 +135,7 @@ jobs:
           CERBOS_HUB_STORE_ID: "${{ secrets.CERBOS_HUB_STORE_ID }}"
 
       - name: Upload JUnit reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: junit-reports-${{ strategy.job-index }}
           path: junit.*.xml
@@ -190,7 +190,7 @@ jobs:
           just test-times ${{ needs.test.outputs.job-total }}
 
       - name: Upload new test times
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-times
           path: test-times.json
@@ -336,7 +336,7 @@ jobs:
         run: tar --create --verbose --file npm.tar npm
 
       - name: Upload npm packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: npm-packages
           path: npm.tar
