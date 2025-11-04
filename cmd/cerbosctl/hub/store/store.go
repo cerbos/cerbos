@@ -24,7 +24,6 @@ import (
 const (
 	dirMode                = 0o700
 	downloadBatchSize      = 10
-	fileMode               = 0o600
 	maxFileSize            = 5 * 1024 * 1024
 	modifyFilesBatchSize   = 25
 	replaceFilesZipMaxSize = 15728640

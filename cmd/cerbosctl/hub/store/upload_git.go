@@ -158,6 +158,7 @@ func (ugc *UploadGitCmd) batch() iter.Seq2[[]*storev1.FileOp, error] {
 				})
 			default:
 				yield(nil, fmt.Errorf("unexpected operation %s", change.operation))
+				return
 			}
 
 			batchCounter++
