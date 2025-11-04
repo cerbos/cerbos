@@ -26,6 +26,28 @@ message RunnablePolicySet {
   uint32 compiler_version = 6;
 }
 
+message RuleTableConf {
+  message EvaluatorConf {
+    map<string, google.protobuf.Value> globals = 1;
+    string default_policy_version = 2;
+    bool lenient_scope_search = 3;
+  }
+
+  message SchemaConf {
+    enum Enforcement {
+      ENFORCEMENT_UNSPECIFIED = 0;
+      ENFORCEMENT_NONE = 1;
+      ENFORCEMENT_WARN = 2;
+      ENFORCEMENT_REJECT = 3;
+    }
+
+    Enforcement enforcement = 1;
+  }
+
+  EvaluatorConf evaluator = 1;
+  SchemaConf schema = 2;
+}
+
 message RuleTable {
   message RuleRow {
     message AllowActions {
