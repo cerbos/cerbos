@@ -8,42 +8,55 @@ import (
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
+	"github.com/cerbos/cerbos/internal/namer"
 	internalruletable "github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type RuleTable = internalruletable.RuleTable
 
-type EvalConf struct {
-	Globals              map[string]any
-	DefaultPolicyVersion string
-	LenientScopeSearch   bool
-}
-
-type SchemaConf struct {
-	Enforcement schema.Enforcement
-}
-
-type Conf struct {
-	Schema SchemaConf
-	Eval   EvalConf
-}
-
-func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf Conf) (*RuleTable, error) {
-	evalConf := &evaluator.Conf{
-		Globals:              conf.Eval.Globals,
-		DefaultPolicyVersion: conf.Eval.DefaultPolicyVersion,
-		LenientScopeSearch:   conf.Eval.LenientScopeSearch,
+func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *runtimev1.RuleTableConf) (*RuleTable, error) {
+	schemaConf, err := schemaConfFromProto(conf.GetSchema())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}
 
-	schemaConf := &schema.Conf{
-		Enforcement: conf.Schema.Enforcement,
-	}
-
-	rt, err := internalruletable.NewRuleTable(rtProto, evalConf, schemaConf)
+	rt, err := internalruletable.NewRuleTable(rtProto, evaluatorConfFromProto(conf.GetEvaluator()), schemaConf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}
 
 	return rt, nil
+}
+
+func evaluatorConfFromProto(confProto *runtimev1.RuleTableConf_EvaluatorConf) *evaluator.Conf {
+	conf := &evaluator.Conf{
+		Globals:              (&structpb.Struct{Fields: confProto.GetGlobals()}).AsMap(),
+		DefaultPolicyVersion: confProto.GetDefaultPolicyVersion(),
+		LenientScopeSearch:   confProto.GetLenientScopeSearch(),
+	}
+
+	if conf.DefaultPolicyVersion == "" {
+		conf.DefaultPolicyVersion = namer.DefaultVersion
+	}
+
+	return conf
+}
+
+func schemaConfFromProto(confProto *runtimev1.RuleTableConf_SchemaConf) (*schema.Conf, error) {
+	conf := &schema.Conf{}
+
+	switch confProto.GetEnforcement() {
+	case runtimev1.RuleTableConf_SchemaConf_ENFORCEMENT_UNSPECIFIED, runtimev1.RuleTableConf_SchemaConf_ENFORCEMENT_WARN:
+		conf.Enforcement = schema.EnforcementWarn
+	case runtimev1.RuleTableConf_SchemaConf_ENFORCEMENT_NONE:
+		conf.Enforcement = schema.EnforcementNone
+	case runtimev1.RuleTableConf_SchemaConf_ENFORCEMENT_REJECT:
+		conf.Enforcement = schema.EnforcementReject
+	default:
+		return nil, fmt.Errorf("unknown schema enforcement %v", confProto.GetEnforcement())
+	}
+
+	return conf, nil
 }
