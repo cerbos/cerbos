@@ -135,6 +135,8 @@ jobs:
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v4.0.0
+        with:
+          cosign-release: 2.6.1
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0
