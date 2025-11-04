@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
@@ -276,4 +278,37 @@ func StaticResolver(loader Loader) Resolver {
 			return nil, jsonschema.LoaderNotFoundError(path)
 		}
 	}
+}
+
+func loadCerbosURL(ctx context.Context, u *url.URL, loader Loader) (io.ReadCloser, error) {
+	relativePath := strings.TrimPrefix(u.Path, "/")
+	var pathErr *fs.PathError
+	s, err := loader.LoadSchema(ctx, relativePath)
+	if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+		p := pathErr.Path
+		if !strings.HasPrefix(pathErr.Path, util.SchemasDirectory) {
+			p = filepath.Join(util.SchemasDirectory, pathErr.Path)
+		}
+
+		return nil, &notFoundErr{
+			url:      u.String(),
+			scheme:   u.Scheme,
+			fullPath: p,
+		}
+	}
+
+	return s, err
+}
+
+type notFoundErr struct {
+	// url is the URL failed to load
+	url string
+	// scheme is the scheme of the URL without any colons or slashes
+	scheme string
+	// fullPath is the resolved file system path.
+	fullPath string
+}
+
+func (e notFoundErr) Error() string {
+	return fmt.Sprintf("schema %q does not exist", e.fullPath)
 }

@@ -15,9 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/cerbos/cerbos/internal/util"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 
 	// Register the http and https loaders.
@@ -152,19 +150,6 @@ type cacheEntry struct {
 	err    error
 }
 
-type notFoundErr struct {
-	// url is the URL failed to load
-	url string
-	// scheme is the scheme of the URL without any colons or slashes
-	scheme string
-	// fullPath is the resolved file system path.
-	fullPath string
-}
-
-func (e notFoundErr) Error() string {
-	return fmt.Sprintf("schema %q does not exist", e.fullPath)
-}
-
 func DefaultResolver(loader Loader) Resolver {
 	return func(ctx context.Context, path string) (io.ReadCloser, error) {
 		u, err := url.Parse(path)
@@ -183,26 +168,6 @@ func DefaultResolver(loader Loader) Resolver {
 			return nil, jsonschema.LoaderNotFoundError(path)
 		}
 	}
-}
-
-func loadCerbosURL(ctx context.Context, u *url.URL, loader Loader) (io.ReadCloser, error) {
-	relativePath := strings.TrimPrefix(u.Path, "/")
-	var pathErr *fs.PathError
-	s, err := loader.LoadSchema(ctx, relativePath)
-	if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
-		p := pathErr.Path
-		if !strings.HasPrefix(pathErr.Path, util.SchemasDirectory) {
-			p = filepath.Join(util.SchemasDirectory, pathErr.Path)
-		}
-
-		return nil, &notFoundErr{
-			url:      u.String(),
-			scheme:   u.Scheme,
-			fullPath: p,
-		}
-	}
-
-	return s, err
 }
 
 func loadFileURL(u *url.URL) (io.ReadCloser, error) {
