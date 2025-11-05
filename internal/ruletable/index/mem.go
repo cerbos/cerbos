@@ -49,9 +49,14 @@ func (lm *MemLiteralMap) set(_ context.Context, k string, rs *rowSet) error {
 	return nil
 }
 
-func (lm *MemLiteralMap) get(_ context.Context, k string) (*rowSet, bool, error) {
-	v, ok := lm.m[k]
-	return v, ok, nil
+func (lm *MemLiteralMap) get(_ context.Context, keys ...string) (map[string]*rowSet, error) {
+	res := make(map[string]*rowSet)
+	for _, k := range keys {
+		if v, ok := lm.m[k]; ok {
+			res[k] = v
+		}
+	}
+	return res, nil
 }
 
 func (lm *MemLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
@@ -73,13 +78,26 @@ func (gl *MemGlobMap) set(_ context.Context, k string, rs *rowSet) error {
 	return nil
 }
 
-func (gl *MemGlobMap) getWithLiteral(_ context.Context, k string) (*rowSet, bool, error) {
-	rs, exists := gl.m.GetWithLiteral(k)
-	return rs, exists, nil
+func (gl *MemGlobMap) getWithLiteral(_ context.Context, keys ...string) (map[string]*rowSet, error) {
+	res := make(map[string]*rowSet)
+	for _, k := range keys {
+		if v, ok := gl.m.GetWithLiteral(k); ok {
+			res[k] = v
+		}
+	}
+	return res, nil
 }
 
-func (gl *MemGlobMap) getMerged(_ context.Context, k string) (map[string]*rowSet, error) {
-	return gl.m.GetMerged(k), nil
+func (gl *MemGlobMap) getMerged(_ context.Context, keys ...string) (map[string]*rowSet, error) {
+	res := make(map[string]*rowSet)
+	for _, k := range keys {
+		rs := newRowSet()
+		for _, s := range gl.m.GetMerged(k) {
+			rs = rs.getUnion(s)
+		}
+		res[k] = rs
+	}
+	return res, nil
 }
 
 func (gl *MemGlobMap) getAll(context.Context) (map[string]*rowSet, error) {

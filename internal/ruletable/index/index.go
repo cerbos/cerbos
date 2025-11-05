@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"hash"
+	"maps"
 	"slices"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -38,14 +39,14 @@ type Index interface {
 
 type literalMap interface {
 	set(context.Context, string, *rowSet) error
-	get(context.Context, string) (*rowSet, bool, error)
+	get(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
 }
 
 type globMap interface {
 	set(context.Context, string, *rowSet) error
-	getWithLiteral(context.Context, string) (*rowSet, bool, error)
-	getMerged(context.Context, string) (map[string]*rowSet, error)
+	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
+	getMerged(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
 }
 
@@ -106,71 +107,59 @@ func newRowSet() *rowSet {
 	}
 }
 
-func copyOf(o *rowSet) *rowSet {
-	return newRowSet().unionWith(o)
-}
-
-// func (s *rowSet) serialize() (iter.Seq2[string, []byte], func() error) {
-// 	var err error
-// 	return func(yield func(string, []byte) bool) {
-// 		for sum, r := range s.m {
-// 			sumHex := hex.EncodeToString(sum[:])
-// 			var b []byte
-// 			if b, err = r.MarshalVT(); err != nil {
-// 				return
-// 			}
-// 			if !yield(sumHex, b) {
-// 				return
-// 			}
-// 		}
-// 	}, func() error { return err }
+// func copyOf(o *rowSet) *rowSet {
+// 	return newRowSet().unionWith(o)
 // }
 
-func (s *rowSet) set(r *Row) {
-	if s.m == nil {
-		s.m = make(map[[sha256.Size]byte]*Row)
+func (l *rowSet) set(r *Row) {
+	if l.m == nil {
+		l.m = make(map[[sha256.Size]byte]*Row)
 	}
-	s.m[r.sum] = r
+	l.m[r.sum] = r
 }
 
-func (s *rowSet) has(r *Row) bool {
-	_, exists := s.m[r.sum]
+func (l *rowSet) has(r *Row) bool {
+	_, exists := l.m[r.sum]
 	return exists
 }
 
-func (s *rowSet) del(r *Row) {
-	delete(s.m, r.sum)
+func (l *rowSet) del(r *Row) {
+	delete(l.m, r.sum)
 }
 
-func (s *rowSet) unionWith(o *rowSet) *rowSet {
+func (s *rowSet) getUnion(o *rowSet) *rowSet {
+	res := newRowSet()
+	res.m = maps.Clone(s.m)
+
 	if o == nil {
-		return s
+		return res
 	}
 
 	for _, r := range o.m {
-		s.set(r)
+		res.set(r)
 	}
 
-	return s
+	return res
 }
 
-func (s *rowSet) intersectWith(o *rowSet) *rowSet {
+func (l *rowSet) getIntersection(o *rowSet) *rowSet {
+	res := newRowSet()
 	if o == nil {
-		return s
+		return res
 	}
 
-	for _, r := range s.m {
-		if !o.has(r) {
-			delete(s.m, r.sum)
+	for _, r := range l.m {
+		if o.has(r) {
+			res.set(r)
 		}
 	}
 
-	return s
+	return res
 }
 
-func (s *rowSet) rows() []*Row {
-	res := make([]*Row, 0, len(s.m))
-	for _, r := range s.m {
+func (l *rowSet) rows() []*Row {
+	res := make([]*Row, 0, len(l.m))
+	for _, r := range l.m {
 		res = append(res, r)
 	}
 
@@ -204,51 +193,55 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	r.HashPB(m.rowHasher, ignoredRuleTableProtoFields)
 	m.rowHasher.Sum(r.sum[:0])
 
-	versionRows, ok, err := m.version.get(ctx, r.Version)
+	versionRowSets, err := m.version.get(ctx, r.Version)
 	if err != nil {
 		return err
 	}
+	versionRowSet, ok := versionRowSets[r.Version]
 	if !ok {
-		versionRows = newRowSet()
+		versionRowSet = newRowSet()
 	}
-	versionRows.set(r)
-	if err := m.version.set(ctx, r.Version, versionRows); err != nil {
+	versionRowSet.set(r)
+	if err := m.version.set(ctx, r.Version, versionRowSet); err != nil {
 		return err
 	}
 
-	scopeRows, ok, err := m.scope.get(ctx, r.Scope)
+	scopeRowSets, err := m.scope.get(ctx, r.Scope)
 	if err != nil {
 		return err
 	}
+	scopeRowSet, ok := scopeRowSets[r.Scope]
 	if !ok {
-		scopeRows = newRowSet()
+		scopeRowSet = newRowSet()
 	}
-	scopeRows.set(r)
-	if err := m.scope.set(ctx, r.Scope, scopeRows); err != nil {
+	scopeRowSet.set(r)
+	if err := m.scope.set(ctx, r.Scope, scopeRowSet); err != nil {
 		return err
 	}
 
-	roleRows, ok, err := m.roleGlob.getWithLiteral(ctx, r.Role)
+	roleRowSets, err := m.roleGlob.getWithLiteral(ctx, r.Role)
 	if err != nil {
 		return err
 	}
+	roleRowSet, ok := roleRowSets[r.Role]
 	if !ok {
-		roleRows = newRowSet()
+		roleRowSet = newRowSet()
 	}
-	roleRows.set(r)
-	if err := m.roleGlob.set(ctx, r.Role, roleRows); err != nil {
+	roleRowSet.set(r)
+	if err := m.roleGlob.set(ctx, r.Role, roleRowSet); err != nil {
 		return err
 	}
 
-	resourceRows, ok, err := m.resourceGlob.getWithLiteral(ctx, r.Resource)
+	resourceRowSets, err := m.resourceGlob.getWithLiteral(ctx, r.Resource)
 	if err != nil {
 		return err
 	}
+	resourceRowSet, ok := resourceRowSets[r.Resource]
 	if !ok {
-		resourceRows = newRowSet()
+		resourceRowSet = newRowSet()
 	}
-	resourceRows.set(r)
-	if err := m.resourceGlob.set(ctx, r.Resource, resourceRows); err != nil {
+	resourceRowSet.set(r)
+	if err := m.resourceGlob.set(ctx, r.Resource, resourceRowSet); err != nil {
 		return err
 	}
 
@@ -256,15 +249,16 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	if len(r.GetAllowActions().GetActions()) > 0 {
 		action = allowActionsIdxKey
 	}
-	actionRows, ok, err := m.actionGlob.getWithLiteral(ctx, action)
+	actionRowSets, err := m.actionGlob.getWithLiteral(ctx, action)
 	if err != nil {
 		return err
 	}
+	actionRowSet, ok := actionRowSets[action]
 	if !ok {
-		actionRows = newRowSet()
+		actionRowSet = newRowSet()
 	}
-	actionRows.set(r)
-	if err := m.actionGlob.set(ctx, action, actionRows); err != nil {
+	actionRowSet.set(r)
+	if err := m.actionGlob.set(ctx, action, actionRowSet); err != nil {
 		return err
 	}
 
@@ -275,60 +269,58 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 	resSet := newRowSet()
 	res := []*Row{}
 
-	versionOrig, ok, err := m.version.get(ctx, version)
+	sets, err := m.version.get(ctx, version)
 	if err != nil {
 		return nil, err
 	}
+	set, ok := sets[version]
 	if !ok {
 		return res, nil
 	}
-	set := copyOf(versionOrig)
 
-	resourceMap, err := m.resourceGlob.getMerged(ctx, resource)
+	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
 	if err != nil {
 		return nil, err
 	}
-	resourceSet := newRowSet()
-	for _, s := range resourceMap {
-		resourceSet.unionWith(s)
+	resourceSet, ok := resourceSets[resource]
+	if !ok {
+		return res, nil
 	}
-	set.intersectWith(resourceSet)
+	set = set.getIntersection(resourceSet)
 
 	for _, scope := range scopes {
-		scopeOrig, ok, err := m.scope.get(ctx, scope)
+		scopeSets, err := m.scope.get(ctx, scope)
 		if err != nil {
 			return nil, err
 		}
+		scopeSet, ok := scopeSets[scope]
 		if !ok {
 			continue
 		}
-		scopeSet := copyOf(scopeOrig).intersectWith(set)
+		scopeSet = scopeSet.getIntersection(set)
 
 		for _, role := range roles {
-			roleMap, err := m.roleGlob.getMerged(ctx, role)
+			roleSets, err := m.roleGlob.getMerged(ctx, role)
 			if err != nil {
 				return nil, err
 			}
-			roleSet := newRowSet()
-			for _, s := range roleMap {
-				roleSet.unionWith(s)
-			}
-			if len(roleSet.m) == 0 {
-				continue
-			}
-			roleSet.intersectWith(scopeSet)
-
-			roleFqn := namer.RolePolicyFQN(role, scope)
-
-			literalActionSetOrig, ok, err := m.actionGlob.getWithLiteral(ctx, allowActionsIdxKey)
-			if err != nil {
-				return nil, err
-			}
+			roleSet, ok := roleSets[role]
 			if !ok {
 				continue
 			}
-			literalActionSet := copyOf(literalActionSetOrig).intersectWith(roleSet)
-			if ars := literalActionSet.rows(); len(ars) > 0 {
+			roleSet = roleSet.getIntersection(scopeSet)
+
+			roleFqn := namer.RolePolicyFQN(role, scope)
+
+			literalActionSets, err := m.actionGlob.getWithLiteral(ctx, allowActionsIdxKey)
+			if err != nil {
+				return nil, err
+			}
+			literalActionSet, ok := literalActionSets[allowActionsIdxKey]
+			if !ok {
+				continue
+			}
+			if ars := literalActionSet.getIntersection(roleSet).rows(); len(ars) > 0 {
 				actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 				// retrieve actions mapped to all effectual rows
 				for _, ar := range ars {
@@ -402,16 +394,15 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			}
 
 			for _, action := range actions {
-				actionMap, err := m.actionGlob.getMerged(ctx, action)
+				actionSets, err := m.actionGlob.getMerged(ctx, action)
 				if err != nil {
 					return nil, err
 				}
-				actionSet := newRowSet()
-				for _, s := range actionMap {
-					actionSet.unionWith(s)
+				actionSet, ok := actionSets[action]
+				if !ok {
+					continue
 				}
-				actionSet.intersectWith(roleSet)
-				for _, r := range actionSet.rows() {
+				for _, r := range actionSet.getIntersection(roleSet).rows() {
 					if !resSet.has(r) {
 						resSet.set(r)
 						res = append(res, r)
@@ -493,84 +484,88 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 }
 
 func (m *Impl) GetScopes(ctx context.Context) ([]string, error) {
-	allScopes, err := m.scope.getAll(ctx)
+	scopeSets, err := m.scope.getAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]string, 0, len(allScopes))
-	for scope := range allScopes {
+	res := make([]string, 0, len(scopeSets))
+	for scope := range scopeSets {
 		res = append(res, scope)
 	}
 	return res, nil
 }
 
 func (m *Impl) GetRoleGlobs(ctx context.Context) ([]string, error) {
-	roles, err := m.roleGlob.getAll(ctx)
+	roleSets, err := m.roleGlob.getAll(ctx)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]string, 0, len(roles))
-	for roleGlob := range roles {
+	res := make([]string, 0, len(roleSets))
+	for roleGlob := range roleSets {
 		res = append(res, roleGlob)
 	}
 	return res, nil
 }
 
 func (m *Impl) ScopedRoleGlobExists(ctx context.Context, scope, role string) (bool, error) {
-	rsOrig, ok, err := m.roleGlob.getWithLiteral(ctx, role)
+	roleGlobSets, err := m.roleGlob.getWithLiteral(ctx, role)
 	if err != nil {
 		return false, err
 	}
+	rs, ok := roleGlobSets[role]
 	if !ok {
 		return false, nil
 	}
 
-	scopeRs, ok, err := m.scope.get(ctx, scope)
+	scopeSets, err := m.scope.get(ctx, scope)
 	if err != nil {
 		return false, err
 	}
+	scopeSet, ok := scopeSets[scope]
 	if !ok {
 		return false, nil
 	}
-	rs := copyOf(rsOrig).intersectWith(scopeRs)
+	rs = rs.getIntersection(scopeSet)
 	return len(rs.m) > 0, nil
 }
 
 func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource string, scopes []string) (bool, error) {
-	versionOrig, ok, err := m.version.get(ctx, version)
+	versionSets, err := m.version.get(ctx, version)
 	if err != nil {
 		return false, err
 	}
+	rs, ok := versionSets[version]
 	if !ok {
 		return false, nil
 	}
 
 	scopeSet := newRowSet()
 	for _, scope := range scopes {
-		scopeRs, ok, err := m.scope.get(ctx, scope)
+		scopeRss, err := m.scope.get(ctx, scope)
 		if err != nil {
 			return false, err
 		}
+		scopeRs, ok := scopeRss[scope]
 		if !ok {
 			continue
 		}
-		scopeSet.unionWith(scopeRs)
+		scopeSet = scopeSet.getUnion(scopeRs)
 	}
 	if len(scopeSet.m) == 0 {
 		return false, nil
 	}
-	rs := copyOf(versionOrig).intersectWith(scopeSet)
+	rs = rs.getIntersection(scopeSet)
 
-	resourceMap, err := m.resourceGlob.getMerged(ctx, resource)
+	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
 	if err != nil {
 		return false, err
 	}
-	resourceSet := newRowSet()
-	for _, s := range resourceMap {
-		resourceSet.unionWith(s)
+	resourceSet, ok := resourceSets[resource]
+	if !ok {
+		return false, nil
 	}
-	rs.intersectWith(resourceSet)
+	rs = rs.getIntersection(resourceSet)
 
 	for _, rule := range rs.m {
 		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE {
@@ -582,29 +577,31 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 }
 
 func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes []string) (bool, error) {
-	versionOrig, ok, err := m.version.get(ctx, version)
+	versionSets, err := m.version.get(ctx, version)
 	if err != nil {
 		return false, err
 	}
+	rs, ok := versionSets[version]
 	if !ok {
 		return false, nil
 	}
 
 	scopeSet := newRowSet()
 	for _, scope := range scopes {
-		scopeOrig, ok, err := m.scope.get(ctx, scope)
+		scopeSets, err := m.scope.get(ctx, scope)
 		if err != nil {
 			return false, err
 		}
+		ss, ok := scopeSets[scope]
 		if !ok {
 			continue
 		}
-		scopeSet.unionWith(scopeOrig)
+		scopeSet = scopeSet.getUnion(ss)
 	}
 	if len(scopeSet.m) == 0 {
 		return false, nil
 	}
-	rs := copyOf(versionOrig).intersectWith(scopeSet)
+	rs = rs.getIntersection(scopeSet)
 
 	for _, rule := range rs.m {
 		if rule.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {

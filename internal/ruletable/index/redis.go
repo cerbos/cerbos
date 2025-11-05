@@ -96,28 +96,33 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 	return nil
 }
 
-func (rm *redisMap) get(ctx context.Context, cat string) (*rowSet, bool, error) {
-	rowsKey := rm.rowsKey(cat)
+func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet, error) {
+	res := make(map[string]*rowSet)
+	for _, cat := range cats {
+		rowsKey := rm.rowsKey(cat)
 
-	ok, err := rm.db.SIsMember(ctx, rm.key, rowsKey).Result()
-	if err != nil {
-		return nil, false, err
-	}
-	if !ok {
-		return newRowSet(), false, nil
+		ok, err := rm.db.SIsMember(ctx, rm.key, rowsKey).Result()
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return res, nil
+		}
+
+		rawRows, err := rm.db.SMembers(ctx, rowsKey).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		rs, err := deserialize(rawRows)
+		if err != nil {
+			return nil, err
+		}
+
+		res[cat] = rs
 	}
 
-	rawRows, err := rm.db.SMembers(ctx, rowsKey).Result()
-	if err != nil {
-		return nil, false, err
-	}
-
-	rs, err := deserialize(rawRows)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return rs, true, nil
+	return res, nil
 }
 
 func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
@@ -140,6 +145,7 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 
 		res[rm.catFromRowsKey(rk)] = rs
 	}
+
 	return res, nil
 }
 
@@ -153,14 +159,6 @@ func newRedisLiteralMap(db *redis.Client, namespace, category string) *RedisLite
 	}
 }
 
-func (lm *RedisLiteralMap) get(ctx context.Context, k string) (*rowSet, bool, error) {
-	return lm.redisMap.get(ctx, k)
-}
-
-func (lm *RedisLiteralMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
-	return lm.redisMap.getAll(ctx)
-}
-
 type RedisGlobMap struct {
 	*redisMap
 }
@@ -171,40 +169,41 @@ func newRedisGlobMap(db *redis.Client, namespace, category string) *RedisGlobMap
 	}
 }
 
-func (gl *RedisGlobMap) getWithLiteral(ctx context.Context, k string) (*rowSet, bool, error) {
-	return gl.redisMap.get(ctx, k)
+func (gl *RedisGlobMap) getWithLiteral(ctx context.Context, keys ...string) (map[string]*rowSet, error) {
+	return gl.redisMap.get(ctx, keys...)
 }
 
-func (gl *RedisGlobMap) getMerged(ctx context.Context, key string) (map[string]*rowSet, error) {
+func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[string]*rowSet, error) {
 	rowsKeys, err := gl.db.SMembers(ctx, gl.key).Result()
 	if err != nil {
 		return nil, err
 	}
 
 	res := make(map[string]*rowSet)
-	for _, rk := range rowsKeys {
-		cat := gl.catFromRowsKey(rk)
-		if cat != key && !util.MatchesGlob(cat, key) {
-			continue
-		}
+	for _, key := range keys {
+		resRs := newRowSet()
+		for _, rk := range rowsKeys {
+			cat := gl.catFromRowsKey(rk)
+			if cat != key && !util.MatchesGlob(cat, key) {
+				continue
+			}
 
-		rawRows, err := gl.db.SMembers(ctx, rk).Result()
-		if err != nil {
-			return nil, err
-		}
+			rawRows, err := gl.db.SMembers(ctx, rk).Result()
+			if err != nil {
+				return nil, err
+			}
 
-		rs, err := deserialize(rawRows)
-		if err != nil {
-			return nil, err
-		}
+			rs, err := deserialize(rawRows)
+			if err != nil {
+				return nil, err
+			}
 
-		res[cat] = rs
+			resRs = resRs.getUnion(rs)
+		}
+		res[key] = resRs
 	}
-	return res, nil
-}
 
-func (gl *RedisGlobMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
-	return gl.redisMap.getAll(ctx)
+	return res, nil
 }
 
 func serialize(rs *rowSet) ([]any, error) {
