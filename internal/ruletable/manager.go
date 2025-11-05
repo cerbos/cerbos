@@ -7,7 +7,6 @@ package ruletable
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -78,10 +77,6 @@ func (mgr *Manager) SubscriberID() string {
 func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
 		switch event.Kind {
-		case storage.EventRuleTableUpdated:
-			if err := mgr.swapRuleTable(); err != nil {
-				mgr.log.Warnw("Failed to swap rule table", "error", err)
-			}
 		case storage.EventReload:
 			if err := mgr.reload(); err != nil {
 				mgr.log.Warnw("Error reloading rule table, maintaining last valid state", "error", err)
@@ -97,44 +92,32 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	}
 }
 
-func (mgr *Manager) swapRuleTable() error {
-	ruleTableSource, ok := mgr.policyLoader.(PreBuiltRuleTableSource)
-	if !ok {
-		return errors.New("underlying store is not a valid rule table source")
-	}
-
-	mgr.mu.Lock()
-	defer mgr.mu.Unlock()
-
-	newRuleTable, err := ruleTableSource.GetRuleTable()
-	if err != nil {
-		return fmt.Errorf("failed to load the new rule table: %w", err)
-	}
-
-	if err := mgr.init(newRuleTable); err != nil {
-		return fmt.Errorf("failed to initialize new rule table: %w", err)
-	}
-
-	return nil
-}
-
 func (mgr *Manager) reload() error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
-	defer cancelFunc()
+	var newRuleTable *runtimev1.RuleTable
+	if ruleTableSource, ok := mgr.policyLoader.(PreBuiltRuleTableSource); ok {
+		var err error
+		newRuleTable, err = ruleTableSource.GetRuleTable()
+		if err != nil {
+			return fmt.Errorf("failed to load the new rule table: %w", err)
+		}
+	} else {
+		ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
+		defer cancelFunc()
 
-	mgr.log.Info("Reloading rule table")
-	rt := NewProtoRuletable()
+		mgr.log.Info("Reloading rule table")
+		newRuleTable = NewProtoRuletable()
 
-	// If compilation fails, maintain the last valid rule table state.
-	// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-	if err := LoadPolicies(ctx, rt, mgr.policyLoader); err != nil {
-		return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
+		// If compilation fails, maintain the last valid rule table state.
+		// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
+		if err := LoadPolicies(ctx, newRuleTable, mgr.policyLoader); err != nil {
+			return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
+		}
 	}
 
-	if err := mgr.init(rt); err != nil {
+	if err := mgr.init(newRuleTable); err != nil {
 		return err
 	}
 

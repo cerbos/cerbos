@@ -560,11 +560,13 @@ func mkRemoteSource(t *testing.T, tctx testCtx, conf *hub.Conf) (_ *hub.RemoteSo
 
 	switch tctx.version {
 	case bundleapi.Version1:
+		clientConf.BundleType = bundlev2.BundleType_BUNDLE_TYPE_LEGACY
 		mockClientV1 = mocks.NewClientV1(t)
 		provider.EXPECT().V1(clientConf).Return(mockClientV1, nil)
 		mockClientV1.EXPECT().HubCredentials().Return(mkCredentials(t, tctx)).Maybe()
 
 	case bundleapi.Version2:
+		clientConf.BundleType = bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE
 		mockClientV2 = mocks.NewClientV2(t)
 		provider.EXPECT().V2(clientConf).Return(mockClientV2, nil)
 

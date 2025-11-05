@@ -35,7 +35,7 @@ var (
 
 // LocalSource loads a bundle from local disk.
 type LocalSource struct {
-	bundle  *Bundle
+	bundle  *LegacyBundle
 	cleanup func() error
 	source  *auditv1.PolicySource
 	*storage.SubscriptionManager
@@ -132,7 +132,7 @@ func (ls *LocalSource) loadBundle() error {
 		CacheSize:  ls.params.CacheSize,
 	}
 
-	var b *Bundle
+	var b *LegacyBundle
 	switch ls.params.BundleVersion {
 	case cloudapi.Version1:
 		var creds *credentials.Credentials
@@ -144,7 +144,7 @@ func (ls *LocalSource) loadBundle() error {
 		}
 
 		opts.Credentials = creds
-		if b, err = Open(opts); err != nil {
+		if b, err = OpenLegacy(opts); err != nil {
 			if err := os.RemoveAll(workDir); err != nil {
 				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
 			}
@@ -153,7 +153,7 @@ func (ls *LocalSource) loadBundle() error {
 		}
 	case cloudapi.Version2:
 		opts.EncryptionKey = ls.params.EncryptionKey
-		if b, err = OpenV2(opts); err != nil {
+		if b, err = OpenLegacyV2(opts); err != nil {
 			if err := os.RemoveAll(workDir); err != nil {
 				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
 			}
