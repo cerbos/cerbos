@@ -9,6 +9,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	internalruletable "github.com/cerbos/cerbos/internal/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
@@ -40,7 +41,7 @@ func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf Conf) (*RuleTable,
 		Enforcement: conf.Schema.Enforcement,
 	}
 
-	rt, err := internalruletable.NewRuleTable(rtProto, evalConf, schemaConf)
+	rt, err := internalruletable.NewRuleTable(index.NewMem(), rtProto, evalConf, schemaConf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}

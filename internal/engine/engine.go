@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/audit"
@@ -33,8 +32,6 @@ import (
 var _ evaluator.Evaluator = (*Engine)(nil)
 
 const (
-	defaultEffect        = effectv1.Effect_EFFECT_DENY
-	noPolicyMatch        = "NO_MATCH"
 	parallelismThreshold = 5
 	workerQueueSize      = 4
 	workerResetJitter    = 1 << 4
