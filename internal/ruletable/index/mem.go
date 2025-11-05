@@ -2,6 +2,7 @@ package index
 
 import (
 	"context"
+	"maps"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -53,14 +54,15 @@ func (lm *MemLiteralMap) get(_ context.Context, keys ...string) (map[string]*row
 	res := make(map[string]*rowSet)
 	for _, k := range keys {
 		if v, ok := lm.m[k]; ok {
-			res[k] = v
+			// return a copy
+			res[k] = newRowSet().unionWith(v)
 		}
 	}
 	return res, nil
 }
 
 func (lm *MemLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
-	return lm.m, nil
+	return maps.Clone(lm.m), nil
 }
 
 type MemGlobMap struct {
@@ -82,7 +84,8 @@ func (gl *MemGlobMap) getWithLiteral(_ context.Context, keys ...string) (map[str
 	res := make(map[string]*rowSet)
 	for _, k := range keys {
 		if v, ok := gl.m.GetWithLiteral(k); ok {
-			res[k] = v
+			// copy
+			res[k] = newRowSet().unionWith(v)
 		}
 	}
 	return res, nil
@@ -93,7 +96,7 @@ func (gl *MemGlobMap) getMerged(_ context.Context, keys ...string) (map[string]*
 	for _, k := range keys {
 		rs := newRowSet()
 		for _, s := range gl.m.GetMerged(k) {
-			rs = rs.getUnion(s)
+			rs = rs.unionWith(s)
 		}
 		res[k] = rs
 	}
