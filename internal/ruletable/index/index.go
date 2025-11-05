@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"hash"
-	"maps"
 	"slices"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -107,10 +106,6 @@ func newRowSet() *rowSet {
 	}
 }
 
-// func copyOf(o *rowSet) *rowSet {
-// 	return newRowSet().unionWith(o)
-// }
-
 func (l *rowSet) set(r *Row) {
 	if l.m == nil {
 		l.m = make(map[[sha256.Size]byte]*Row)
@@ -127,14 +122,15 @@ func (l *rowSet) del(r *Row) {
 	delete(l.m, r.sum)
 }
 
-func (s *rowSet) getUnion(o *rowSet) *rowSet {
-	res := newRowSet()
-	res.m = maps.Clone(s.m)
-
+func (s *rowSet) unionWith(o *rowSet) *rowSet {
 	if o == nil {
-		return res
+		return s
 	}
 
+	res := newRowSet()
+	for _, r := range s.m {
+		res.set(r)
+	}
 	for _, r := range o.m {
 		res.set(r)
 	}
@@ -142,13 +138,13 @@ func (s *rowSet) getUnion(o *rowSet) *rowSet {
 	return res
 }
 
-func (l *rowSet) getIntersection(o *rowSet) *rowSet {
+func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	res := newRowSet()
 	if o == nil {
 		return res
 	}
 
-	for _, r := range l.m {
+	for _, r := range s.m {
 		if o.has(r) {
 			res.set(r)
 		}
@@ -286,41 +282,59 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 	if !ok {
 		return res, nil
 	}
-	set = set.getIntersection(resourceSet)
+	set = set.intersectWith(resourceSet)
+
+	scopeSets, err := m.scope.get(ctx, scopes...)
+	if err != nil {
+		return nil, err
+	}
+	if len(scopeSets) == 0 {
+		return res, nil
+	}
+
+	roleSets, err := m.roleGlob.getMerged(ctx, roles...)
+	if err != nil {
+		return nil, err
+	}
+	if len(roleSets) == 0 {
+		return res, nil
+	}
+
+	literalActionSets, err := m.actionGlob.getWithLiteral(ctx, allowActionsIdxKey)
+	if err != nil {
+		return nil, err
+	}
+
+	actionSets, err := m.actionGlob.getMerged(ctx, actions...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(literalActionSets) == 0 && len(actionSets) == 0 {
+		return res, nil
+	}
 
 	for _, scope := range scopes {
-		scopeSets, err := m.scope.get(ctx, scope)
-		if err != nil {
-			return nil, err
-		}
 		scopeSet, ok := scopeSets[scope]
 		if !ok {
 			continue
 		}
-		scopeSet = scopeSet.getIntersection(set)
+		scopeSet = scopeSet.intersectWith(set)
 
 		for _, role := range roles {
-			roleSets, err := m.roleGlob.getMerged(ctx, role)
-			if err != nil {
-				return nil, err
-			}
 			roleSet, ok := roleSets[role]
 			if !ok {
 				continue
 			}
-			roleSet = roleSet.getIntersection(scopeSet)
+			roleSet = roleSet.intersectWith(scopeSet)
 
 			roleFqn := namer.RolePolicyFQN(role, scope)
 
-			literalActionSets, err := m.actionGlob.getWithLiteral(ctx, allowActionsIdxKey)
-			if err != nil {
-				return nil, err
-			}
 			literalActionSet, ok := literalActionSets[allowActionsIdxKey]
 			if !ok {
 				continue
 			}
-			if ars := literalActionSet.getIntersection(roleSet).rows(); len(ars) > 0 {
+			if ars := literalActionSet.intersectWith(roleSet).rows(); len(ars) > 0 {
 				actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 				// retrieve actions mapped to all effectual rows
 				for _, ar := range ars {
@@ -394,15 +408,11 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			}
 
 			for _, action := range actions {
-				actionSets, err := m.actionGlob.getMerged(ctx, action)
-				if err != nil {
-					return nil, err
-				}
 				actionSet, ok := actionSets[action]
 				if !ok {
 					continue
 				}
-				for _, r := range actionSet.getIntersection(roleSet).rows() {
+				for _, r := range actionSet.intersectWith(roleSet).rows() {
 					if !resSet.has(r) {
 						resSet.set(r)
 						res = append(res, r)
@@ -526,8 +536,7 @@ func (m *Impl) ScopedRoleGlobExists(ctx context.Context, scope, role string) (bo
 	if !ok {
 		return false, nil
 	}
-	rs = rs.getIntersection(scopeSet)
-	return len(rs.m) > 0, nil
+	return len(rs.intersectWith(scopeSet).m) > 0, nil
 }
 
 func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource string, scopes []string) (bool, error) {
@@ -550,12 +559,12 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 		if !ok {
 			continue
 		}
-		scopeSet = scopeSet.getUnion(scopeRs)
+		scopeSet = scopeSet.unionWith(scopeRs)
 	}
 	if len(scopeSet.m) == 0 {
 		return false, nil
 	}
-	rs = rs.getIntersection(scopeSet)
+	rs = rs.intersectWith(scopeSet)
 
 	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
 	if err != nil {
@@ -565,7 +574,7 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 	if !ok {
 		return false, nil
 	}
-	rs = rs.getIntersection(resourceSet)
+	rs = rs.intersectWith(resourceSet)
 
 	for _, rule := range rs.m {
 		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE {
@@ -596,12 +605,12 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 		if !ok {
 			continue
 		}
-		scopeSet = scopeSet.getUnion(ss)
+		scopeSet = scopeSet.unionWith(ss)
 	}
 	if len(scopeSet.m) == 0 {
 		return false, nil
 	}
-	rs = rs.getIntersection(scopeSet)
+	rs = rs.intersectWith(scopeSet)
 
 	for _, rule := range rs.m {
 		if rule.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {

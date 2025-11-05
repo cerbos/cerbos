@@ -198,7 +198,7 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 				return nil, err
 			}
 
-			resRs = resRs.getUnion(rs)
+			resRs = resRs.unionWith(rs)
 		}
 		res[key] = resRs
 	}
