@@ -16,8 +16,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -34,6 +36,7 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -49,14 +52,30 @@ func TestCheck(t *testing.T) {
 	params := param{auditLog: mockAuditLog, schemaEnforcement: schema.EnforcementNone}
 
 	eng, engCancelFunc := mkEngine(t, params)
-	defer engCancelFunc()
+	t.Cleanup(engCancelFunc)
 
-	rt, rtCancelFunc := mkRuleTable(t, params)
-	defer rtCancelFunc()
+	rtMem, rtMemCancelFunc := mkRuleTable(t, params, index.NewMem())
+	t.Cleanup(rtMemCancelFunc)
+
+	mr, err := miniredis.Run()
+	require.NoError(t, err, "failed to start Redis client")
+	t.Cleanup(mr.Close)
+
+	connURL := fmt.Sprintf("redis://%s/0?dial_timeout=3&read_timeout=6s&max_retries=2", mr.Addr())
+	opts, err := redis.ParseURL(connURL)
+	require.NoError(t, err)
+
+	client := redis.NewClient(opts)
+	redIdx, err := index.NewRedis(client, "test")
+	require.NoError(t, err, "failed to create Redis index")
+
+	rtRedis, rtRedisCancelFunc := mkRuleTable(t, params, redIdx)
+	t.Cleanup(rtRedisCancelFunc)
 
 	evaluators := map[string]evaluator.Evaluator{
-		"engine":    eng,
-		"ruletable": rt,
+		"engine":          eng,
+		"ruletable_mem":   rtMem,
+		"ruletable_redis": rtRedis,
 	}
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -97,7 +116,7 @@ func TestCheck(t *testing.T) {
 					haveDecisionLogs := mockAuditLog.getDecisionLogs()
 
 					// ruletable calls do not return audit logs
-					if evalName == "ruletable" {
+					if evalName != "engine" {
 						tc.WantDecisionLogs = nil
 					}
 
@@ -380,7 +399,7 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 	return eng, cancelFunc
 }
 
-func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) {
+func mkRuleTable(tb testing.TB, p param, idx index.Index) (evaluator.Evaluator, context.CancelFunc) {
 	tb.Helper()
 
 	if p.subDir == "" {
@@ -409,7 +428,7 @@ func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFun
 	evalConf.Globals = map[string]any{"environment": "test"}
 	evalConf.LenientScopeSearch = p.lenientScopeSearch
 
-	rt, err := ruletable.NewRuleTable(protoRT, evalConf, schema.NewConf(p.schemaEnforcement))
+	rt, err := ruletable.NewRuleTable(idx, protoRT, evalConf, schema.NewConf(p.schemaEnforcement))
 	require.NoError(tb, err)
 
 	return rt.Evaluator(), cancelFunc

@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
@@ -39,6 +40,7 @@ func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader
 	rt := &RuleTable{
 		conf:      conf,
 		schemaMgr: schemaMgr,
+		idx:       index.NewImpl(index.NewMem()),
 	}
 
 	if err := rt.init(protoRT); err != nil {
@@ -194,19 +196,36 @@ func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) {
 }
 
 // doDeletePolicy implements the delete logic. The caller must obtain a lock first.
-func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) {
+func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	meta := mgr.Meta[moduleID.RawValue()]
 	if meta == nil {
-		return
+		return nil
 	}
 
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 
-	mgr.idx.DeletePolicy(meta.GetFqn())
-	for _, scope := range mgr.idx.GetScopes() {
+	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
+	defer cancelFn()
+
+	if err := mgr.idx.DeletePolicy(ctx, meta.GetFqn()); err != nil {
+		return err
+	}
+	scopes, err := mgr.idx.GetScopes(ctx)
+	if err != nil {
+		return err
+	}
+	for _, scope := range scopes {
 		scopedParentRoleAncestors := mgr.parentRoleAncestors[scope]
-		for _, roleGlob := range mgr.idx.GetRoleGlobs() {
-			if !mgr.idx.ScopedRoleGlobExists(scope, roleGlob) {
+		roleGlobs, err := mgr.idx.GetRoleGlobs(ctx)
+		if err != nil {
+			return err
+		}
+		for _, roleGlob := range roleGlobs {
+			exists, err := mgr.idx.ScopedRoleGlobExists(ctx, scope, roleGlob)
+			if err != nil {
+				return err
+			}
+			if !exists {
 				delete(scopedParentRoleAncestors, roleGlob)
 			}
 		}
@@ -259,4 +278,6 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) {
 	delete(mgr.Schemas, moduleID.RawValue())
 	delete(mgr.Meta, moduleID.RawValue())
 	delete(mgr.policyDerivedRoles, moduleID)
+
+	return nil
 }
