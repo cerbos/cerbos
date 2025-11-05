@@ -7,6 +7,7 @@ package ruletable
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -26,12 +27,15 @@ import (
 type Manager struct {
 	*RuleTable
 	policyLoader policyloader.PolicyLoader
-	schemaLoader schema.Loader
 	log          *logging.Logger
 	mu           sync.RWMutex
 }
 
-func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaLoader schema.Loader, schemaMgr schema.Manager) (*Manager, error) {
+type PreBuiltRuleTableSource interface {
+	GetRuleTable() (*runtimev1.RuleTable, error)
+}
+
+func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
 	conf, err := evaluator.GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
@@ -50,7 +54,6 @@ func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader
 		log:          logging.NewLogger("ruletable"),
 		RuleTable:    rt,
 		policyLoader: policyLoader,
-		schemaLoader: schemaLoader,
 	}, nil
 }
 
@@ -75,6 +78,10 @@ func (mgr *Manager) SubscriberID() string {
 func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
 		switch event.Kind {
+		case storage.EventRuleTableUpdated:
+			if err := mgr.swapRuleTable(); err != nil {
+				mgr.log.Warnw("Failed to swap rule table", "error", err)
+			}
 		case storage.EventReload:
 			if err := mgr.reload(); err != nil {
 				mgr.log.Warnw("Error reloading rule table, maintaining last valid state", "error", err)
@@ -88,6 +95,27 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 			mgr.log.Debugw("Ignoring storage event", "event", event)
 		}
 	}
+}
+
+func (mgr *Manager) swapRuleTable() error {
+	ruleTableSource, ok := mgr.policyLoader.(PreBuiltRuleTableSource)
+	if !ok {
+		return errors.New("underlying store is not a valid rule table source")
+	}
+
+	mgr.mu.Lock()
+	defer mgr.mu.Unlock()
+
+	newRuleTable, err := ruleTableSource.GetRuleTable()
+	if err != nil {
+		return fmt.Errorf("failed to load the new rule table: %w", err)
+	}
+
+	if err := mgr.init(newRuleTable); err != nil {
+		return fmt.Errorf("failed to initialize new rule table: %w", err)
+	}
+
+	return nil
 }
 
 func (mgr *Manager) reload() error {

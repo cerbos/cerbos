@@ -11,13 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/cerbos/cloud-api/base"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 
 	internalhub "github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -51,7 +53,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
@@ -73,8 +75,8 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", nil, bundleapi.ErrBootstrapBundleNotFound).Once()
-					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, bundleapi.ErrBootstrapBundleNotFound).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
@@ -96,8 +98,8 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return("", errors.New("fail")).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", nil, errors.New("fail")).Once()
-					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return("", nil, errors.New("fail")).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, errors.New("fail")).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return("", bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, errors.New("fail")).Once()
 
 				default:
 				}
@@ -120,7 +122,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
@@ -141,7 +143,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Twice()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Twice()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, loadEncryptionKey(t, tctx), nil).Twice()
 
 				default:
 				}
@@ -163,8 +165,8 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, playgroundLabel).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, playgroundID).Return("", nil, bundleapi.ErrBootstrappingNotSupported).Once()
-					mockClientV2.EXPECT().GetBundle(mock.Anything, playgroundID).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), nil, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, playgroundID).Return("", bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, bundleapi.ErrBootstrappingNotSupported).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, playgroundID).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, nil).Once()
 
 				default:
 				}
@@ -244,7 +246,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 						Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, loadEncryptionKey(t, tctx), nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
 						Run(func(context.Context, bundleapiv2.Source) {
 							close(callsDone)
@@ -287,7 +289,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
 					events[0].EncryptionKey = encryptionKey //nolint:gosec
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, encryptionKey, nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Once()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).Return(nil)
 
@@ -336,7 +338,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
 					events[1].EncryptionKey = encryptionKey //nolint:gosec
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, encryptionKey, nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Twice()
 					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).
 						Run(func(_ string) {
@@ -390,7 +392,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
 					events[0].EncryptionKey = encryptionKey //nolint:gosec
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, encryptionKey, nil).Once()
 
 					// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
@@ -446,7 +448,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 						Return(nil, errors.New("error"))
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, loadEncryptionKey(t, tctx), nil).Once()
 
 					// Returning an error should force the caller to retry
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).

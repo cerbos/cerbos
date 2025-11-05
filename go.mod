@@ -310,3 +310,5 @@ require (
 )
 
 exclude google.golang.org/grpc/stats/opentelemetry v0.0.0-20240907200651-3ffb98b2c93a
+
+replace github.com/cerbos/cloud-api => /home/cell/work/cloud-api

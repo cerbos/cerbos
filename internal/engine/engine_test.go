@@ -361,7 +361,7 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 	schemaConf := schema.NewConf(p.schemaEnforcement)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
 	require.NoError(tb, err)
 
 	evalConf := &evaluator.Conf{}

@@ -389,7 +389,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, store, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, schemaMgr)
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, engine.Components{

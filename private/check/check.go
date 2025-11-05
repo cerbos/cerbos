@@ -97,7 +97,7 @@ func Check(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inputs 
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

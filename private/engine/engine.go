@@ -40,7 +40,7 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 		return nil, err
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, bundleSrc, bundleSrc, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, bundleSrc, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

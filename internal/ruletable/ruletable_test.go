@@ -48,7 +48,7 @@ func TestRuleTableManager(t *testing.T) {
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
-	ruletableMgr, err := NewRuleTableManager(NewProtoRuletable(), compiler, store, schemaMgr)
+	ruletableMgr, err := NewRuleTableManager(NewProtoRuletable(), compiler, schemaMgr)
 	require.NoError(t, err)
 
 	store.Subscribe(ruletableMgr)

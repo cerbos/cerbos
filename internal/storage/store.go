@@ -214,6 +214,7 @@ const (
 	EventDeleteSchema
 	EventReload
 	EventNop
+	EventRuleTableUpdated
 )
 
 // Event is an event detected by the storage layer.
@@ -243,6 +244,8 @@ func (evt Event) String() string {
 		kind = "RELOAD"
 	case EventNop:
 		kind = "NOP"
+	case EventRuleTableUpdated:
+		kind = "RULE TABLE UPDATE"
 	default:
 		kind = "UNKNOWN"
 	}

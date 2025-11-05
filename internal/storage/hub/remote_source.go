@@ -17,13 +17,15 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
+	"github.com/spf13/afero"
+	"go.uber.org/zap"
+
 	"github.com/cerbos/cloud-api/base"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	hubapi "github.com/cerbos/cloud-api/hub"
-	"github.com/spf13/afero"
-	"go.uber.org/zap"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -51,8 +53,8 @@ var (
 )
 
 type cloudAPIClient interface {
-	BootstrapBundle(context.Context) (string, []byte, error)
-	GetBundle(context.Context) (string, []byte, error)
+	BootstrapBundle(context.Context) (string, bundlev2.BundleType, []byte, error)
+	GetBundle(context.Context) (string, bundlev2.BundleType, []byte, error)
 	GetCachedBundle() (string, error)
 	OpenCredentials() *credentials.Credentials
 	WatchBundle(context.Context) (bundleapi.WatchHandle, error)
@@ -64,18 +66,18 @@ type cloudAPIv1 struct {
 	playground  bool
 }
 
-func (apiv1 *cloudAPIv1) BootstrapBundle(ctx context.Context) (string, []byte, error) {
+func (apiv1 *cloudAPIv1) BootstrapBundle(ctx context.Context) (string, bundlev2.BundleType, []byte, error) {
 	if apiv1.playground {
-		return "", nil, bundleapi.ErrBootstrappingNotSupported
+		return "", bundlev2.BundleType_BUNDLE_TYPE_UNSPECIFIED, nil, bundleapi.ErrBootstrappingNotSupported
 	}
 
 	path, err := apiv1.client.BootstrapBundle(ctx, apiv1.bundleLabel)
-	return path, nil, err
+	return path, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, err
 }
 
-func (apiv1 *cloudAPIv1) GetBundle(ctx context.Context) (string, []byte, error) {
+func (apiv1 *cloudAPIv1) GetBundle(ctx context.Context) (string, bundlev2.BundleType, []byte, error) {
 	path, err := apiv1.client.GetBundle(ctx, apiv1.bundleLabel)
-	return path, nil, err
+	return path, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, err
 }
 
 func (apiv1 *cloudAPIv1) GetCachedBundle() (string, error) {
@@ -98,11 +100,11 @@ type cloudAPIv2 struct {
 	source bundleapiv2.Source
 }
 
-func (apiv2 *cloudAPIv2) BootstrapBundle(ctx context.Context) (string, []byte, error) {
+func (apiv2 *cloudAPIv2) BootstrapBundle(ctx context.Context) (string, bundlev2.BundleType, []byte, error) {
 	return apiv2.client.BootstrapBundle(ctx, apiv2.source)
 }
 
-func (apiv2 *cloudAPIv2) GetBundle(ctx context.Context) (string, []byte, error) {
+func (apiv2 *cloudAPIv2) GetBundle(ctx context.Context) (string, bundlev2.BundleType, []byte, error) {
 	return apiv2.client.GetBundle(ctx, apiv2.source)
 }
 
@@ -168,8 +170,8 @@ type ClientV1 interface {
 }
 
 type ClientV2 interface {
-	BootstrapBundle(context.Context, bundleapiv2.Source) (string, []byte, error)
-	GetBundle(context.Context, bundleapiv2.Source) (string, []byte, error)
+	BootstrapBundle(context.Context, bundleapiv2.Source) (string, bundlev2.BundleType, []byte, error)
+	GetBundle(context.Context, bundleapiv2.Source) (string, bundlev2.BundleType, []byte, error)
 	GetCachedBundle(bundleapiv2.Source) (string, error)
 	WatchBundle(context.Context, bundleapiv2.Source) (bundleapi.WatchHandle, error)
 }
@@ -202,9 +204,11 @@ func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, erro
 
 func (s *RemoteSource) Init(ctx context.Context) error {
 	s.SubscriptionManager = storage.NewSubscriptionManager(ctx)
+	bundleType := bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE
 	clientConf := bundleapi.ClientConf{
-		CacheDir: s.conf.Remote.CacheDir,
-		TempDir:  s.conf.Remote.TempDir,
+		CacheDir:   s.conf.Remote.CacheDir,
+		TempDir:    s.conf.Remote.TempDir,
+		BundleType: &bundleType,
 	}
 
 	hub := &auditv1.PolicySource_Hub{}
@@ -314,15 +318,16 @@ func shouldWorkOffline() bool {
 
 func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 	var bdlPath string
+	var bdlType bundlev2.BundleType
 	var encryptionKey []byte
 	var err error
 
 	if !s.conf.Remote.DisableBootstrap {
 		s.log.Info("Fetching bootstrap bundle")
-		bdlPath, encryptionKey, err = s.client.BootstrapBundle(ctx)
+		bdlPath, bdlType, encryptionKey, err = s.client.BootstrapBundle(ctx)
 		if err == nil {
 			s.log.Debug("Using bootstrap bundle")
-			return s.swapBundle(bdlPath, encryptionKey)
+			return s.swapBundle(bdlPath, encryptionKey, bdlType)
 		}
 
 		if errors.Is(err, bundleapi.ErrBootstrappingNotSupported) {
@@ -333,7 +338,7 @@ func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 	}
 
 	s.log.Info("Fetching bundle from the API")
-	bdlPath, encryptionKey, err = s.client.GetBundle(ctx)
+	bdlPath, bdlType, encryptionKey, err = s.client.GetBundle(ctx)
 	if err != nil {
 		s.log.Error("Failed to fetch bundle using the API", zap.Error(err))
 		metrics.Inc(ctx, metrics.BundleFetchErrorsCount())
@@ -341,7 +346,7 @@ func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 	}
 
 	s.log.Debug("Using bundle fetched from the API")
-	return s.swapBundle(bdlPath, encryptionKey)
+	return s.swapBundle(bdlPath, encryptionKey, bdlType)
 }
 
 func (s *RemoteSource) fetchBundleOffline() error {
@@ -353,7 +358,7 @@ func (s *RemoteSource) fetchBundleOffline() error {
 		return fmt.Errorf("failed to find cached bundle: %w", err)
 	}
 
-	return s.swapBundle(bdlPath, nil)
+	return s.swapBundle(bdlPath, nil, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
 }
 
 func (s *RemoteSource) removeBundle(healthy bool) {
@@ -370,8 +375,8 @@ func (s *RemoteSource) removeBundle(healthy bool) {
 	}
 }
 
-func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte) error {
-	s.log.Debug("Swapping bundle", zap.String("path", bundlePath))
+func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundleType bundlev2.BundleType) error {
+	s.log.Debug("Swapping bundle", zap.String("path", bundlePath), zap.String("bundle-type", bundleType.String()))
 	opts := OpenOpts{
 		Source:        "remote",
 		BundlePath:    bundlePath,
@@ -550,7 +555,7 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 				}
 			case bundleapi.ServerEventNewBundle:
 				incEventMetric("bundle_update")
-				if err := s.swapBundle(evt.NewBundlePath, evt.EncryptionKey); err != nil {
+				if err := s.swapBundle(evt.NewBundlePath, evt.EncryptionKey, evt.BundleType); err != nil {
 					s.log.Warn("Failed to swap bundle", zap.Error(err))
 				} else {
 					if err := watchHandle.ActiveBundleChanged(s.activeBundleID()); err != nil {
