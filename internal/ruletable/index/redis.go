@@ -179,28 +179,45 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 		return nil, err
 	}
 
-	res := make(map[string]*rowSet)
-	for _, key := range keys {
-		resRs := newRowSet()
-		for _, rk := range rowsKeys {
-			cat := gl.catFromRowsKey(rk)
-			if cat != key && !util.MatchesGlob(cat, key) {
-				continue
+	matched := make(map[string][]string, len(keys))
+	for _, rk := range rowsKeys {
+		cat := gl.catFromRowsKey(rk)
+		for _, k := range keys {
+			if cat == k || util.MatchesGlob(cat, k) {
+				matched[k] = append(matched[k], rk)
 			}
-
-			rawRows, err := gl.db.SMembers(ctx, rk).Result()
-			if err != nil {
-				return nil, err
-			}
-
-			rs, err := deserialize(rawRows)
-			if err != nil {
-				return nil, err
-			}
-
-			resRs = resRs.unionWith(rs)
 		}
-		res[key] = resRs
+	}
+
+	res := make(map[string]*rowSet, len(keys))
+	cmds := make(map[string]*redis.StringSliceCmd, len(keys))
+	_, err = gl.db.Pipelined(ctx, func(p redis.Pipeliner) error {
+		for _, k := range keys {
+			rks := matched[k]
+			switch len(rks) {
+			case 0:
+			case 1:
+				cmds[k] = p.SMembers(ctx, rks[0])
+			default:
+				cmds[k] = p.SUnion(ctx, rks...)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for k := range matched {
+		raw, err := cmds[k].Result()
+		if err != nil {
+			return nil, err
+		}
+		rs, err := deserialize(raw)
+		if err != nil {
+			return nil, err
+		}
+		res[k] = rs
 	}
 
 	return res, nil
