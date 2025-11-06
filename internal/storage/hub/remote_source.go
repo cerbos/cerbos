@@ -219,7 +219,7 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 	clientConf := bundleapi.ClientConf{
 		CacheDir:   s.conf.Remote.CacheDir,
 		TempDir:    s.conf.Remote.TempDir,
-		BundleType: &bundleType,
+		BundleType: bundleType,
 	}
 
 	hub := &auditv1.PolicySource_Hub{}

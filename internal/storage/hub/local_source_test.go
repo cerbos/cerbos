@@ -136,22 +136,29 @@ type testCtx struct {
 	scratchDir string
 	bundlePath string
 	version    bundle.Version
+	bundleType bundlev2.BundleType
 }
 
-func mkTestCtx(t *testing.T, version bundle.Version) testCtx {
+func mkTestCtx(t *testing.T, version bundle.Version, bundleType bundlev2.BundleType) testCtx {
 	t.Helper()
 
 	tempDir := t.TempDir()
 	scratchDir := filepath.Join(tempDir, "scratch")
 	require.NoError(t, os.MkdirAll(scratchDir, 0o774))
 
-	rootDir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", version)))
+	suffix := "legacy"
+	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+		suffix = "ruletable"
+	}
+
+	rootDir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_%s", version, suffix)))
 	bundlePath := filepath.Join(rootDir, bundleName)
 	return testCtx{
 		rootDir:    rootDir,
 		bundlePath: bundlePath,
 		scratchDir: scratchDir,
 		version:    version,
+		bundleType: bundleType,
 	}
 }
 
