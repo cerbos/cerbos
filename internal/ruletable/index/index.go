@@ -51,7 +51,8 @@ type globMap interface {
 
 type Row struct {
 	*runtimev1.RuleTable_RuleRow
-	sum                        [sha256.Size]byte
+	// sum                        [sha256.Size]byte
+	sum                        string
 	Params                     *rowParams
 	DerivedRoleParams          *rowParams
 	NoMatchForScopePermissions bool
@@ -97,23 +98,23 @@ func (r *Row) Matches(pt policyv1.Kind, scope, action, principalID string, roles
 }
 
 type rowSet struct {
-	m map[[sha256.Size]byte]*Row
+	m map[string]*Row
 }
 
 func newRowSet() *rowSet {
 	return &rowSet{
-		m: make(map[[sha256.Size]byte]*Row),
+		m: make(map[string]*Row),
 	}
 }
 
 func (l *rowSet) set(r *Row) {
 	if l.m == nil {
-		l.m = make(map[[sha256.Size]byte]*Row)
+		l.m = make(map[string]*Row)
 	}
 	l.m[r.sum] = r
 }
 
-func (l *rowSet) has(sum [sha256.Size]byte) bool {
+func (l *rowSet) has(sum string) bool {
 	_, exists := l.m[sum]
 	return exists
 }
@@ -200,7 +201,7 @@ func NewImpl(idx Index) *Impl {
 func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	defer m.rowHasher.Reset()
 	r.HashPB(m.rowHasher, ignoredRuleTableProtoFields)
-	m.rowHasher.Sum(r.sum[:0])
+	r.sum = string(m.rowHasher.Sum(nil))
 
 	versionRowSets, err := m.version.get(ctx, r.Version)
 	if err != nil {
