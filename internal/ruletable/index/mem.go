@@ -31,7 +31,9 @@ func (m *Mem) getGlobMap(string) globMap {
 	return newMemGlobMap()
 }
 
-func (m *Mem) resolve([]*Row) error { return nil }
+func (m *Mem) resolve(_ context.Context, rows []*Row) ([]*Row, error) {
+	return rows, nil
+}
 
 type memLiteralMap struct {
 	m map[string]*rowSet

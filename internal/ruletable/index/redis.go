@@ -24,33 +24,64 @@ var (
 )
 
 type Redis struct {
-	db        *redis.Client
-	namespace string
+	db    *redis.Client
+	nsKey string
 }
 
 func NewRedis(client *redis.Client, namespace string) (*Redis, error) {
 	return &Redis{
-		db:        client,
-		namespace: namespace,
+		db:    client,
+		nsKey: namespace,
 	}, nil
 }
 
 func (r *Redis) getLiteralMap(category string) literalMap {
-	return newRedisLiteralMap(r.db, r.namespace, category)
+	return newRedisLiteralMap(r.db, r.nsKey, category)
 }
 
 func (r *Redis) getGlobMap(category string) globMap {
-	return newRedisGlobMap(r.db, r.namespace, category)
+	return newRedisGlobMap(r.db, r.nsKey, category)
 }
 
-func (r *Redis) resolve(rows []*Row) error {
-	for _, r := range rows {
-		var err error
-		if err = hydrateParams(r); err != nil {
-			return err
+func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
+	sums := make([]string, 0, len(rows))
+	for _, row := range rows {
+		var sum string
+		if row.RuleTable_RuleRow != nil {
+			sum = string(hex.EncodeToString(row.sum[:]))
+		} else {
+			sum = r.rowKey(hex.EncodeToString(row.sum[:]))
+		}
+		sums = append(sums, sum)
+	}
+
+	if len(sums) == 0 {
+		return rows, nil
+	}
+
+	rawRows, err := r.db.MGet(ctx, sums...).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	for i, raw := range rawRows {
+		if rows[i].RuleTable_RuleRow == nil {
+			rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
+			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil {
+				return nil, err
+			}
+			if err := hydrateParams(rows[i]); err != nil {
+				return nil, err
+			}
 		}
 	}
-	return nil
+
+	return rows, nil
+}
+
+func (r *Redis) rowKey(sum string) string {
+	// value is the serialised row
+	return r.nsKey + ":" + sum
 }
 
 type redisMap struct {
@@ -149,12 +180,7 @@ func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet
 			return nil, err
 		}
 
-		rawRows, err := rm.db.MGet(ctx, sums...).Result()
-		if err != nil {
-			return nil, err
-		}
-
-		rs, err := deserialize(sums, rm.sumFromRowKey, rawRows)
+		rs, err := getRowSetWithSums(sums, rm.sumFromRowKey)
 		if err != nil {
 			return nil, err
 		}
@@ -178,12 +204,7 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 			return nil, err
 		}
 
-		rawRows, err := rm.db.MGet(ctx, sums...).Result()
-		if err != nil {
-			return nil, err
-		}
-
-		rs, err := deserialize(sums, rm.sumFromRowKey, rawRows)
+		rs, err := getRowSetWithSums(sums, rm.sumFromRowKey)
 		if err != nil {
 			return nil, err
 		}
@@ -260,7 +281,6 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 			if err != nil {
 				return err
 			}
-
 			rowCmds[k] = p.MGet(ctx, sums...)
 			sumsMap[k] = sums
 		}
@@ -270,12 +290,7 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 	}
 
 	for k := range matched {
-		rawRows, err := rowCmds[k].Result()
-		if err != nil {
-			return nil, err
-		}
-
-		rs, err := deserialize(sumsMap[k], gl.sumFromRowKey, rawRows)
+		rs, err := getRowSetWithSums(sumsMap[k], gl.sumFromRowKey)
 		if err != nil {
 			return nil, err
 		}
@@ -299,14 +314,9 @@ func serialize(rs *rowSet, sumsFn func(string) string) ([]any, []any, error) {
 	return sums, raws, nil
 }
 
-func deserialize(sums []string, sumsFn func(string) string, raws []any) (*rowSet, error) {
+func getRowSetWithSums(sums []string, sumsFn func(string) string) (*rowSet, error) {
 	rs := newRowSet()
-	for i, raw := range raws {
-		r := &runtimev1.RuleTable_RuleRow{}
-		if err := r.UnmarshalVT([]byte(raw.(string))); err != nil {
-			return nil, err
-		}
-
+	for i := range sums {
 		b, err := hex.DecodeString(sumsFn(sums[i]))
 		if err != nil {
 			panic(err)
@@ -315,8 +325,7 @@ func deserialize(sums []string, sumsFn func(string) string, raws []any) (*rowSet
 		copy(sum[:], b)
 
 		rs.set(&Row{
-			RuleTable_RuleRow: r,
-			sum:               sum,
+			sum: sum,
 		})
 	}
 	return rs, nil

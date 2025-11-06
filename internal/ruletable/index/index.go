@@ -33,7 +33,7 @@ var ignoredRuleTableProtoFields = map[string]struct{}{
 type Index interface {
 	getLiteralMap(string) literalMap
 	getGlobMap(string) globMap
-	resolve([]*Row) error
+	resolve(context.Context, []*Row) ([]*Row, error)
 }
 
 type literalMap interface {
@@ -113,8 +113,8 @@ func (l *rowSet) set(r *Row) {
 	l.m[r.sum] = r
 }
 
-func (l *rowSet) has(r *Row) bool {
-	_, exists := l.m[r.sum]
+func (l *rowSet) has(sum [sha256.Size]byte) bool {
+	_, exists := l.m[sum]
 	return exists
 }
 
@@ -145,7 +145,7 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	}
 
 	for _, r := range s.m {
-		if o.has(r) {
+		if o.has(r.sum) {
 			res.set(r)
 		}
 	}
@@ -160,6 +160,19 @@ func (l *rowSet) rows() []*Row {
 	}
 
 	return res
+}
+
+func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
+	res, err := idx.resolve(ctx, rs.rows())
+	if err != nil {
+		return err
+	}
+
+	for _, row := range res {
+		rs.set(row)
+	}
+
+	return nil
 }
 
 type Impl struct {
@@ -196,6 +209,8 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	versionRowSet, ok := versionRowSets[r.Version]
 	if !ok {
 		versionRowSet = newRowSet()
+	} else if err := versionRowSet.resolve(ctx, m.idx); err != nil {
+		return err
 	}
 	versionRowSet.set(r)
 	if err := m.version.set(ctx, r.Version, versionRowSet); err != nil {
@@ -209,6 +224,8 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	scopeRowSet, ok := scopeRowSets[r.Scope]
 	if !ok {
 		scopeRowSet = newRowSet()
+	} else if err := scopeRowSet.resolve(ctx, m.idx); err != nil {
+		return err
 	}
 	scopeRowSet.set(r)
 	if err := m.scope.set(ctx, r.Scope, scopeRowSet); err != nil {
@@ -222,6 +239,8 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	roleRowSet, ok := roleRowSets[r.Role]
 	if !ok {
 		roleRowSet = newRowSet()
+	} else if err := roleRowSet.resolve(ctx, m.idx); err != nil {
+		return err
 	}
 	roleRowSet.set(r)
 	if err := m.roleGlob.set(ctx, r.Role, roleRowSet); err != nil {
@@ -235,6 +254,8 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	resourceRowSet, ok := resourceRowSets[r.Resource]
 	if !ok {
 		resourceRowSet = newRowSet()
+	} else if err := resourceRowSet.resolve(ctx, m.idx); err != nil {
+		return err
 	}
 	resourceRowSet.set(r)
 	if err := m.resourceGlob.set(ctx, r.Resource, resourceRowSet); err != nil {
@@ -252,6 +273,8 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 	actionRowSet, ok := actionRowSets[action]
 	if !ok {
 		actionRowSet = newRowSet()
+	} else if err := actionRowSet.resolve(ctx, m.idx); err != nil {
+		return err
 	}
 	actionRowSet.set(r)
 	if err := m.actionGlob.set(ctx, action, actionRowSet); err != nil {
@@ -262,6 +285,7 @@ func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
 }
 
 func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, roles, actions []string) ([]*Row, error) {
+	// we need the determinism of a slice, so track results in that and use the resSet to prevent dupes
 	resSet := newRowSet()
 	res := []*Row{}
 
@@ -337,7 +361,11 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			if ars := literalActionSet.intersectWith(roleSet).rows(); len(ars) > 0 {
 				actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 				// retrieve actions mapped to all effectual rows
-				for _, ar := range ars {
+				resolved, err := m.idx.resolve(ctx, ars)
+				if err != nil {
+					return nil, err
+				}
+				for _, ar := range resolved {
 					for a := range ar.GetAllowActions().GetActions() {
 						rows, _ := actionMatchedRows.Get(a)
 						rows = append(rows, ar)
@@ -413,7 +441,7 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 					continue
 				}
 				for _, r := range actionSet.intersectWith(roleSet).rows() {
-					if !resSet.has(r) {
+					if !resSet.has(r.sum) {
 						resSet.set(r)
 						res = append(res, r)
 					}
@@ -422,7 +450,10 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		}
 	}
 
-	m.idx.resolve(res)
+	res, err = m.idx.resolve(ctx, res)
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }
@@ -437,6 +468,9 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 		return err
 	}
 	for _, rs := range allVersions {
+		if err := rs.resolve(ctx, m.idx); err != nil {
+			return err
+		}
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
@@ -449,6 +483,9 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 		return err
 	}
 	for _, rs := range allScopes {
+		if err := rs.resolve(ctx, m.idx); err != nil {
+			return err
+		}
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
@@ -461,6 +498,9 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 		return err
 	}
 	for _, rs := range allRoleGlobs {
+		if err := rs.resolve(ctx, m.idx); err != nil {
+			return err
+		}
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
@@ -473,6 +513,9 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 		return err
 	}
 	for _, rs := range allActionGlobs {
+		if err := rs.resolve(ctx, m.idx); err != nil {
+			return err
+		}
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
@@ -485,6 +528,9 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 		return err
 	}
 	for _, rs := range allResourceGlobs {
+		if err := rs.resolve(ctx, m.idx); err != nil {
+			return err
+		}
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
@@ -578,7 +624,10 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 	}
 	rs = rs.intersectWith(resourceSet)
 
-	for _, rule := range rs.m {
+	if err := rs.resolve(ctx, m.idx); err != nil {
+		return false, err
+	}
+	for _, rule := range rs.rows() {
 		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE {
 			return true, nil
 		}
@@ -614,7 +663,10 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 	}
 	rs = rs.intersectWith(scopeSet)
 
-	for _, rule := range rs.m {
+	if err := rs.resolve(ctx, m.idx); err != nil {
+		return false, err
+	}
+	for _, rule := range rs.rows() {
 		if rule.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
 			return true, nil
 		}
