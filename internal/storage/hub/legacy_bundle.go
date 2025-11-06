@@ -299,6 +299,10 @@ func (lb *LegacyBundle) ID() string {
 	return lb.manifest.Meta.BundleId
 }
 
+func (lb *LegacyBundle) Type() bundlev2.BundleType {
+	return bundlev2.BundleType_BUNDLE_TYPE_LEGACY
+}
+
 func (lb *LegacyBundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	if lb == nil {
 		return nil, ErrBundleNotLoaded

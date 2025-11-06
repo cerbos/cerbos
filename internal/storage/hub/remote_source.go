@@ -53,8 +53,17 @@ var (
 )
 
 type Bundle interface {
+	io.Closer
 	ID() string
 	Release() error
+	Type() bundlev2.BundleType
+	InspectPolicies(context.Context, storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
+	ListPolicyIDs(context.Context, storage.ListPolicyIDsParams) ([]string, error)
+	ListSchemaIDs(context.Context) ([]string, error)
+	LoadSchema(context.Context, string) (io.ReadCloser, error)
+	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
+	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }
 
 type cloudAPIClient interface {
@@ -127,15 +136,13 @@ func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context) (bundleapi.WatchHandle
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	hub             ClientProvider
-	scratchFS       afero.Fs
-	client          cloudAPIClient
-	log             *zap.Logger
-	conf            *Conf
-	legacyBundle    *LegacyBundle
-	ruleTableBundle *RuleTableBundle
-	bundleType      bundlev2.BundleType
-	source          *auditv1.PolicySource
+	hub       ClientProvider
+	scratchFS afero.Fs
+	client    cloudAPIClient
+	log       *zap.Logger
+	conf      *Conf
+	bundle    Bundle
+	source    *auditv1.PolicySource
 	*storage.SubscriptionManager
 	bundleVersion bundleapi.Version
 	mu            sync.RWMutex
@@ -375,13 +382,8 @@ func (s *RemoteSource) fetchBundleOffline() error {
 func (s *RemoteSource) removeBundle(healthy bool) {
 	var oldBundle Bundle
 	s.mu.Lock()
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		oldBundle = s.ruleTableBundle
-		s.ruleTableBundle = nil
-	} else {
-		oldBundle = s.legacyBundle
-		s.legacyBundle = nil
-	}
+	oldBundle = s.bundle
+	s.bundle = nil
 	s.healthy = healthy
 	s.mu.Unlock()
 
@@ -401,11 +403,10 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 		CacheSize:     s.conf.CacheSize,
 	}
 
-	var ruleTableBundle *RuleTableBundle
-	var legacyBundle *LegacyBundle
+	var newBundle Bundle
 	var err error
 	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		ruleTableBundle, err = OpenRuleTableBundle(opts)
+		newBundle, err = OpenRuleTableBundle(opts)
 		if err != nil {
 			s.log.Error("Failed to open rule table bundle", zap.Error(err))
 			return fmt.Errorf("failed to open rule table bundle: %w", err)
@@ -413,12 +414,12 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 	} else {
 		switch s.bundleVersion {
 		case bundleapi.Version1:
-			if legacyBundle, err = OpenLegacy(opts); err != nil {
+			if newBundle, err = OpenLegacy(opts); err != nil {
 				s.log.Error("Failed to open bundle", zap.Error(err))
 				return fmt.Errorf("failed to open bundle: %w", err)
 			}
 		case bundleapi.Version2:
-			if legacyBundle, err = OpenLegacyV2(opts); err != nil {
+			if newBundle, err = OpenLegacyV2(opts); err != nil {
 				s.log.Error("Failed to open bundle v2", zap.Error(err))
 				return fmt.Errorf("failed to open bundle v2: %w", err)
 			}
@@ -429,20 +430,8 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 
 	var oldBundle Bundle
 	s.mu.Lock()
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		oldBundle = s.legacyBundle
-		s.legacyBundle = nil
-	} else {
-		oldBundle = s.ruleTableBundle
-		s.ruleTableBundle = nil
-	}
-
-	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		s.ruleTableBundle = ruleTableBundle
-	} else {
-		s.legacyBundle = legacyBundle
-	}
-	s.bundleType = bundleType
+	oldBundle = s.bundle
+	s.bundle = newBundle
 	s.healthy = true
 	s.mu.Unlock()
 
@@ -464,11 +453,7 @@ func (s *RemoteSource) activeBundleID() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.ID()
-	}
-
-	return s.legacyBundle.ID()
+	return s.bundle.ID()
 }
 
 func (s *RemoteSource) startWatchLoop(ctx context.Context, noBundleBackoff backoff.BackOff) {
@@ -632,77 +617,77 @@ func (s *RemoteSource) GetFirstMatch(ctx context.Context, candidates []namer.Mod
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.GetFirstMatch(ctx, candidates)
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
 	}
 
-	return s.legacyBundle.GetFirstMatch(ctx, candidates)
+	return s.bundle.GetFirstMatch(ctx, candidates)
 }
 
 func (s *RemoteSource) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.GetAll(ctx)
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
 	}
 
-	return s.legacyBundle.GetAll(ctx)
+	return s.bundle.GetAll(ctx)
 }
 
 func (s *RemoteSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.GetAllMatching(ctx, modIDs)
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
 	}
 
-	return s.legacyBundle.GetAllMatching(ctx, modIDs)
+	return s.bundle.GetAllMatching(ctx, modIDs)
 }
 
 func (s *RemoteSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.InspectPolicies(ctx, params)
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
 	}
 
-	return s.legacyBundle.InspectPolicies(ctx, params)
+	return s.bundle.InspectPolicies(ctx, params)
 }
 
 func (s *RemoteSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.ListPolicyIDs(ctx, params)
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
 	}
 
-	return s.legacyBundle.ListPolicyIDs(ctx, params)
+	return s.bundle.ListPolicyIDs(ctx, params)
 }
 
 func (s *RemoteSource) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.ListSchemaIDs(ctx)
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
 	}
 
-	return s.legacyBundle.ListSchemaIDs(ctx)
+	return s.bundle.ListSchemaIDs(ctx)
 }
 
 func (s *RemoteSource) LoadSchema(ctx context.Context, id string) (io.ReadCloser, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return s.ruleTableBundle.LoadSchema(ctx, id)
+	if s.bundle == nil {
+		return nil, ErrBundleNotLoaded
 	}
 
-	return s.legacyBundle.LoadSchema(ctx, id)
+	return s.bundle.LoadSchema(ctx, id)
 }
 
 func (s *RemoteSource) Reload(ctx context.Context) error {
@@ -721,13 +706,11 @@ func (s *RemoteSource) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		err := s.ruleTableBundle.Close()
-		s.ruleTableBundle = nil
-		return err
+	if s.bundle == nil {
+		return nil
 	}
 
-	err := s.legacyBundle.Close()
-	s.legacyBundle = nil
+	err := s.bundle.Close()
+	s.bundle = nil
 	return err
 }

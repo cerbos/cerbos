@@ -24,10 +24,13 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-const bundleName = "bundle.crbp"
+const (
+	legacyBundleName    = "bundle.crbp"
+	ruleTableBundleName = "bundle.crrts"
+)
 
 func TestLocalSource(t *testing.T) {
-	tctx := mkTestCtx(t, bundle.Version1)
+	tctx := mkTestCtx(t, bundle.Version1, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
 	lsv1 := mkLocalSource(t, tctx)
 	t.Run("v1", func(t *testing.T) {
 		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
@@ -36,12 +39,12 @@ func TestLocalSource(t *testing.T) {
 		manifest := &bundlev1.Manifest{}
 		require.NoError(t, protojson.Unmarshal(mb, manifest))
 
-		t.Run("original", runLocalSourceTests(lsv1, manifest.PolicyIndex, manifest.Schemas))
+		t.Run("original", runLocalSourceTests(lsv1, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 		require.NoError(t, lsv1.Reload(t.Context()), "Failed to reload local source")
-		t.Run("reloaded", runLocalSourceTests(lsv1, manifest.PolicyIndex, manifest.Schemas))
+		t.Run("reloaded", runLocalSourceTests(lsv1, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 	})
 
-	tctx = mkTestCtx(t, bundle.Version2)
+	tctx = mkTestCtx(t, bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
 	lsv2 := mkLocalSource(t, tctx)
 	t.Run("v2", func(t *testing.T) {
 		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
@@ -50,13 +53,27 @@ func TestLocalSource(t *testing.T) {
 		manifest := &bundlev2.Manifest{}
 		require.NoError(t, protojson.Unmarshal(mb, manifest))
 
-		t.Run("original", runLocalSourceTests(lsv2, manifest.PolicyIndex, manifest.Schemas))
+		t.Run("original", runLocalSourceTests(lsv2, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 		require.NoError(t, lsv2.Reload(t.Context()), "Failed to reload local source")
-		t.Run("reloaded", runLocalSourceTests(lsv2, manifest.PolicyIndex, manifest.Schemas))
+		t.Run("reloaded", runLocalSourceTests(lsv2, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+	})
+
+	tctx = mkTestCtx(t, bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)
+	lsrt := mkLocalSource(t, tctx)
+	t.Run("ruleTable", func(t *testing.T) {
+		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
+		require.NoError(t, err)
+
+		manifest := &bundlev2.Manifest{}
+		require.NoError(t, protojson.Unmarshal(mb, manifest))
+
+		t.Run("original", runLocalSourceTests(lsrt, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+		require.NoError(t, lsv2.Reload(t.Context()), "Failed to reload local source")
+		t.Run("reloaded", runLocalSourceTests(lsrt, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 	})
 }
 
-func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, schemas []string) func(*testing.T) {
+func runLocalSourceTests(have *hub.LocalSource, bundleType bundlev2.BundleType, policyIndex map[string]string, schemas []string) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Run("listPolicyIDs", func(t *testing.T) {
 			havePolicies, err := have.ListPolicyIDs(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
@@ -69,6 +86,10 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 		})
 
 		t.Run("inspectPolicies", func(t *testing.T) {
+			if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+				t.Skip()
+			}
+
 			results, err := have.InspectPolicies(t.Context(), storage.ListPolicyIDsParams{IncludeDisabled: true})
 			require.NoError(t, err)
 
@@ -93,6 +114,9 @@ func runLocalSourceTests(have *hub.LocalSource, policyIndex map[string]string, s
 		})
 
 		t.Run("getFirstMatch", func(t *testing.T) {
+			if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+				t.Skip()
+			}
 			blahMod := namer.GenModuleIDFromFQN("blah")
 
 			t.Run("existing", func(t *testing.T) {
@@ -152,7 +176,10 @@ func mkTestCtx(t *testing.T, version bundle.Version, bundleType bundlev2.BundleT
 	}
 
 	rootDir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_%s", version, suffix)))
-	bundlePath := filepath.Join(rootDir, bundleName)
+	bundlePath := filepath.Join(rootDir, legacyBundleName)
+	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+		bundlePath = filepath.Join(rootDir, ruleTableBundleName)
+	}
 	return testCtx{
 		rootDir:    rootDir,
 		bundlePath: bundlePath,

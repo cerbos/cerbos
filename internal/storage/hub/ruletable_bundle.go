@@ -6,29 +6,30 @@ package hub
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
-	"maps"
 	"os"
-	"slices"
+	"strings"
 
 	"go.uber.org/zap"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/crypto"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 )
 
 var ErrUnsupportedOperation = errors.New("operation not supported by bundle")
 
+const cerbosSchemaPrefix = schema.URLScheme + ":///"
+
 type RuleTableBundle struct {
-	hash      string
 	ruleTable *runtimev1.RuleTable
 }
 
@@ -36,20 +37,20 @@ func OpenRuleTableBundle(opts OpenOpts) (*RuleTableBundle, error) {
 	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
 	logger.Info("Opening rule table bundle")
 
-	ruleTable, hash, err := decryptRuleTableBundle(opts, logger)
+	ruleTable, err := decryptRuleTableBundle(opts, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Info("Rule table bundle opened", zap.String("hash", hash))
-	return &RuleTableBundle{ruleTable: ruleTable, hash: hash}, nil
+	logger.Info("Rule table bundle opened", zap.String("id", ruleTable.GetManifest().GetBundleId()))
+	return &RuleTableBundle{ruleTable: ruleTable}, nil
 }
 
-func decryptRuleTableBundle(opts OpenOpts, logger *zap.Logger) (*runtimev1.RuleTable, string, error) {
+func decryptRuleTableBundle(opts OpenOpts, logger *zap.Logger) (*runtimev1.RuleTable, error) {
 	input, err := os.Open(opts.BundlePath)
 	if err != nil {
 		logger.Debug("Failed to open rule table bundle", zap.Error(err))
-		return nil, "", fmt.Errorf("failed to open rule table bundle at path %q: %w", opts.BundlePath, err)
+		return nil, fmt.Errorf("failed to open rule table bundle at path %q: %w", opts.BundlePath, err)
 	}
 	defer input.Close()
 
@@ -61,7 +62,7 @@ func decryptRuleTableBundle(opts OpenOpts, logger *zap.Logger) (*runtimev1.RuleT
 
 		d := new(bytes.Buffer)
 		if _, err := crypto.DecryptChaCha20Poly1305Stream(opts.EncryptionKey, input, d); err != nil {
-			return nil, "", fmt.Errorf("failed to decrypt: %w", err)
+			return nil, fmt.Errorf("failed to decrypt: %w", err)
 		}
 
 		decrypted = d
@@ -69,32 +70,28 @@ func decryptRuleTableBundle(opts OpenOpts, logger *zap.Logger) (*runtimev1.RuleT
 
 	// The hashing here is done because rule tables don't have identifiers like the legacy bundles.
 	// We need to be able to look at the logs and identify when distinct bundles are swapped in. The hash would help with that.
-	hasher := sha256.New()
-	decryptedStream := io.TeeReader(decrypted, hasher)
-	decryptedBytes, err := io.ReadAll(decryptedStream)
+	decryptedBytes, err := io.ReadAll(decrypted)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to read decrypted bundle contents: %w", err)
+		return nil, fmt.Errorf("failed to read decrypted bundle contents: %w", err)
 	}
 
 	ruleTable := &runtimev1.RuleTable{}
 	if err := ruleTable.UnmarshalVT(decryptedBytes); err != nil {
-		return nil, "", fmt.Errorf("failed to unmarshal rule table: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal rule table: %w", err)
 	}
 
-	hash := sha256.Sum256(nil)
-
-	return ruleTable, hex.EncodeToString(hash[:]), nil
+	return ruleTable, nil
 }
 
 func (rtb *RuleTableBundle) ID() string {
-	if rtb == nil {
+	if rtb == nil || rtb.ruleTable == nil {
 		return bundleapi.BundleIDUnknown
 	}
-	return rtb.hash
+	return rtb.ruleTable.GetManifest().GetBundleId()
 }
 
-func (*RuleTableBundle) Driver() string {
-	return DriverName
+func (*RuleTableBundle) Type() bundlev2.BundleType {
+	return bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE
 }
 
 func (*RuleTableBundle) GetFirstMatch(_ context.Context, _ []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
@@ -113,9 +110,31 @@ func (*RuleTableBundle) InspectPolicies(_ context.Context, _ storage.ListPolicyI
 	return nil, ErrUnsupportedOperation
 }
 
-func (*RuleTableBundle) ListPolicyIDs(_ context.Context, _ storage.ListPolicyIDsParams) ([]string, error) {
-	// TODO: This can probably be implemented using the data from the rule table.
-	return nil, ErrUnsupportedOperation
+func (rtb *RuleTableBundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
+	policyFQNs := make(map[string]struct{})
+	for _, meta := range rtb.ruleTable.GetMeta() {
+		policyFQNs[meta.GetFqn()] = struct{}{}
+	}
+
+	filteredSize := len(policyFQNs)
+	var ss util.StringSet
+	if len(params.IDs) > 0 {
+		ss = util.ToStringSet(params.IDs)
+		filteredSize = len(ss)
+	}
+
+	output := make([]string, 0, filteredSize)
+	for fqn := range policyFQNs {
+		if len(params.IDs) > 0 {
+			if ss.Contains(fqn) {
+				output = append(output, namer.PolicyKeyFromFQN(fqn))
+			}
+		} else {
+			output = append(output, namer.PolicyKeyFromFQN(fqn))
+		}
+	}
+
+	return output, nil
 }
 
 func (rtb *RuleTableBundle) ListSchemaIDs(_ context.Context) ([]string, error) {
@@ -124,7 +143,10 @@ func (rtb *RuleTableBundle) ListSchemaIDs(_ context.Context) ([]string, error) {
 	}
 
 	schemas := rtb.ruleTable.GetJsonSchemas()
-	output := slices.Collect(maps.Keys(schemas))
+	output := make([]string, 0, len(schemas))
+	for schemaName := range schemas {
+		output = append(output, strings.TrimPrefix(schemaName, cerbosSchemaPrefix))
+	}
 
 	return output, nil
 }
@@ -134,7 +156,9 @@ func (rtb *RuleTableBundle) LoadSchema(_ context.Context, path string) (io.ReadC
 		return nil, ErrBundleNotLoaded
 	}
 
-	schemaDef, exists := rtb.ruleTable.GetJsonSchemas()[path]
+	qualifiedPath := cerbosSchemaPrefix + path
+
+	schemaDef, exists := rtb.ruleTable.GetJsonSchemas()[qualifiedPath]
 	if exists {
 		return io.NopCloser(bytes.NewReader(schemaDef.GetContent())), nil
 	}
@@ -153,7 +177,6 @@ func (rtb *RuleTableBundle) GetRuleTable() (*runtimev1.RuleTable, error) {
 func (rtb *RuleTableBundle) Release() error {
 	if rtb != nil {
 		rtb.ruleTable = nil
-		rtb.hash = ""
 	}
 
 	return nil

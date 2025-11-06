@@ -20,6 +20,7 @@ import (
 
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -35,7 +36,7 @@ var (
 
 // LocalSource loads a bundle from local disk.
 type LocalSource struct {
-	bundle  *LegacyBundle
+	bundle  Bundle
 	cleanup func() error
 	source  *auditv1.PolicySource
 	*storage.SubscriptionManager
@@ -125,6 +126,13 @@ func (ls *LocalSource) loadBundle() error {
 	}
 
 	bundlePath := ls.params.BundlePath
+	var bundleType bundlev2.BundleType
+	switch filepath.Ext(bundlePath) {
+	case ".crrt", ".crrts":
+		bundleType = bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE
+	default:
+		bundleType = bundlev2.BundleType_BUNDLE_TYPE_LEGACY
+	}
 	opts := OpenOpts{
 		Source:     "local",
 		BundlePath: bundlePath,
@@ -132,7 +140,8 @@ func (ls *LocalSource) loadBundle() error {
 		CacheSize:  ls.params.CacheSize,
 	}
 
-	var b *LegacyBundle
+	var b Bundle
+
 	switch ls.params.BundleVersion {
 	case cloudapi.Version1:
 		var creds *credentials.Credentials
@@ -153,7 +162,13 @@ func (ls *LocalSource) loadBundle() error {
 		}
 	case cloudapi.Version2:
 		opts.EncryptionKey = ls.params.EncryptionKey
-		if b, err = OpenLegacyV2(opts); err != nil {
+		if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+			b, err = OpenRuleTableBundle(opts)
+		} else {
+			b, err = OpenLegacyV2(opts)
+		}
+
+		if err != nil {
 			if err := os.RemoveAll(workDir); err != nil {
 				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
 			}
@@ -201,52 +216,54 @@ func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListP
 	ls.mu.RLock()
 	defer ls.mu.RUnlock()
 
-	if ls.bundle == nil {
-		return nil, ErrBundleNotLoaded
-	}
-
 	return ls.bundle.InspectPolicies(ctx, params)
 }
 
 func (ls *LocalSource) ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) (ids []string, err error) {
 	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
 	ids, err = ls.bundle.ListPolicyIDs(ctx, params)
-	ls.mu.RUnlock()
 	return ids, err
 }
 
 func (ls *LocalSource) ListSchemaIDs(ctx context.Context) (ids []string, err error) {
 	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
 	ids, err = ls.bundle.ListSchemaIDs(ctx)
-	ls.mu.RUnlock()
 	return ids, err
 }
 
 func (ls *LocalSource) LoadSchema(ctx context.Context, id string) (schema io.ReadCloser, err error) {
 	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
 	schema, err = ls.bundle.LoadSchema(ctx, id)
-	ls.mu.RUnlock()
 	return schema, err
 }
 
 func (ls *LocalSource) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (ps *runtimev1.RunnablePolicySet, err error) {
 	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
 	ps, err = ls.bundle.GetFirstMatch(ctx, candidates)
-	ls.mu.RUnlock()
 	return ps, err
 }
 
 func (ls *LocalSource) GetAll(ctx context.Context) (pss []*runtimev1.RunnablePolicySet, err error) {
 	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
 	pss, err = ls.bundle.GetAll(ctx)
-	ls.mu.RUnlock()
 	return pss, err
 }
 
 func (ls *LocalSource) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) (pss []*runtimev1.RunnablePolicySet, err error) {
 	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
 	pss, err = ls.bundle.GetAllMatching(ctx, modIDs)
-	ls.mu.RUnlock()
 	return pss, err
 }
 
