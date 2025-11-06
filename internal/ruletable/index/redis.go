@@ -106,6 +106,20 @@ func (rm *redisMap) catFromSumsKey(k string) string {
 	return strings.TrimPrefix(k, rm.catKey+":")
 }
 
+func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
+	sums := make([]any, 0, len(rs.m))
+	raws := make([]any, 0, len(rs.m))
+	for sum, r := range rs.m {
+		sums = append(sums, rm.rowKey(string(sum[:])))
+		b, err := r.MarshalVT()
+		if err != nil {
+			return nil, nil, err
+		}
+		raws = append(raws, b)
+	}
+	return sums, raws, nil
+}
+
 func (rm *redisMap) rowKey(sum string) string {
 	// value is the serialised row
 	return rm.nsKey + ":" + sum
@@ -113,6 +127,20 @@ func (rm *redisMap) rowKey(sum string) string {
 
 func (rm *redisMap) sumFromRowKey(key string) string {
 	return strings.TrimPrefix(key, rm.nsKey+":")
+}
+
+func (rm *redisMap) getRowSetWithSums(sums []string) (*rowSet, error) {
+	rs := newRowSet()
+	for i := range sums {
+		b := []byte(rm.sumFromRowKey(sums[i]))
+		var sum [32]byte
+		copy(sum[:], b)
+
+		rs.set(&Row{
+			sum: sum,
+		})
+	}
+	return rs, nil
 }
 
 /*
@@ -130,7 +158,7 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 	_, err := rm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
 		p.SAdd(ctx, rm.catKey, sumsKey)
 
-		sums, rows, err := serialize(rs, rm.rowKey)
+		sums, rows, err := rm.serialize(rs)
 		if err != nil {
 			return err
 		}
@@ -179,7 +207,7 @@ func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet
 			return nil, err
 		}
 
-		rs, err := getRowSetWithSums(sums, rm.sumFromRowKey)
+		rs, err := rm.getRowSetWithSums(sums)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +231,7 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 			return nil, err
 		}
 
-		rs, err := getRowSetWithSums(sums, rm.sumFromRowKey)
+		rs, err := rm.getRowSetWithSums(sums)
 		if err != nil {
 			return nil, err
 		}
@@ -289,7 +317,7 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 	}
 
 	for k := range matched {
-		rs, err := getRowSetWithSums(sumsMap[k], gl.sumFromRowKey)
+		rs, err := gl.getRowSetWithSums(sumsMap[k])
 		if err != nil {
 			return nil, err
 		}
@@ -297,34 +325,6 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 	}
 
 	return res, nil
-}
-
-func serialize(rs *rowSet, sumsFn func(string) string) ([]any, []any, error) {
-	sums := make([]any, 0, len(rs.m))
-	raws := make([]any, 0, len(rs.m))
-	for sum, r := range rs.m {
-		sums = append(sums, sumsFn(string(sum[:])))
-		b, err := r.MarshalVT()
-		if err != nil {
-			return nil, nil, err
-		}
-		raws = append(raws, b)
-	}
-	return sums, raws, nil
-}
-
-func getRowSetWithSums(sums []string, sumsFn func(string) string) (*rowSet, error) {
-	rs := newRowSet()
-	for i := range sums {
-		b := []byte(sumsFn(sums[i]))
-		var sum [32]byte
-		copy(sum[:], b)
-
-		rs.set(&Row{
-			sum: sum,
-		})
-	}
-	return rs, nil
 }
 
 func hydrateParams(r *Row) error {
