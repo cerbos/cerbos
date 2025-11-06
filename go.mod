@@ -20,7 +20,7 @@ require (
 	github.com/aws/smithy-go v1.23.2
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.3
-	github.com/cerbos/cerbos-sdk-go v0.3.12
+	github.com/cerbos/cerbos-sdk-go v0.3.13
 	github.com/cerbos/cerbos/api/genpb v0.47.0
 	github.com/cerbos/cloud-api v0.1.64
 	github.com/cespare/xxhash/v2 v2.3.0
