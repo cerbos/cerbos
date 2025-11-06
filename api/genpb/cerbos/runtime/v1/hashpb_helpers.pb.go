@@ -465,6 +465,13 @@ func cerbos_runtime_v1_RuleTable_JSONSchema_hashpb_sum(m *RuleTable_JSONSchema, 
 	}
 }
 
+func cerbos_runtime_v1_RuleTable_Manifest_hashpb_sum(m *RuleTable_Manifest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.Manifest.bundle_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetBundleId()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetBundleId()), len(m.GetBundleId())))
+	}
+}
+
 func cerbos_runtime_v1_RuleTable_PolicyDerivedRoles_hashpb_sum(m *RuleTable_PolicyDerivedRoles, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.PolicyDerivedRoles.derived_roles"]; !ok {
 		if len(m.DerivedRoles) > 0 {
@@ -690,6 +697,11 @@ func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, igno
 					cerbos_runtime_v1_RuleTable_JSONSchema_hashpb_sum(m.JsonSchemas[k], hasher, ignore)
 				}
 			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.manifest"]; !ok {
+		if m.GetManifest() != nil {
+			cerbos_runtime_v1_RuleTable_Manifest_hashpb_sum(m.GetManifest(), hasher, ignore)
 		}
 	}
 }
