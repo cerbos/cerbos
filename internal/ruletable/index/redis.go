@@ -2,7 +2,7 @@ package index
 
 import (
 	"context"
-	"crypto/sha256"
+	"encoding/hex"
 	"strings"
 	"time"
 
@@ -35,10 +35,6 @@ func NewRedis(client *redis.Client, namespace string) (*Redis, error) {
 	}, nil
 }
 
-func (r *Redis) getNamespace() string {
-	return r.namespace
-}
-
 func (r *Redis) getLiteralMap(category string) literalMap {
 	return newRedisLiteralMap(r.db, r.namespace, category)
 }
@@ -47,45 +43,84 @@ func (r *Redis) getGlobMap(category string) globMap {
 	return newRedisGlobMap(r.db, r.namespace, category)
 }
 
+func (r *Redis) resolve(rows []*Row) error {
+	for _, r := range rows {
+		var err error
+		if err = hydrateParams(r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type redisMap struct {
-	db  *redis.Client
-	key string
+	db     *redis.Client
+	nsKey  string
+	catKey string
 }
 
 func newRedisMap(db *redis.Client, namespace, categoryKey string) *redisMap {
 	return &redisMap{
-		db:  db,
-		key: namespace + ":" + categoryKey,
+		db:     db,
+		nsKey:  namespace,
+		catKey: namespace + ":" + categoryKey,
 	}
 }
 
-func (rm *redisMap) rowsKey(k string) string {
-	return rm.key + ":" + k
+func (rm *redisMap) sumsKey(categoryItem string) string {
+	// values consist of sets of checksums mapped to individual rows
+	return rm.catKey + ":" + categoryItem
 }
 
-func (rm *redisMap) catFromRowsKey(k string) string {
-	return strings.TrimPrefix(k, rm.key+":")
+func (rm *redisMap) catFromSumsKey(k string) string {
+	return strings.TrimPrefix(k, rm.catKey+":")
+}
+
+func (rm *redisMap) rowKey(sum string) string {
+	// value is the serialised row
+	return rm.nsKey + ":" + sum
+}
+
+func (rm *redisMap) sumFromRowKey(key string) string {
+	return strings.TrimPrefix(key, rm.nsKey+":")
 }
 
 /*
+nsKey == {namespace}
+catKey == {nsKey:category}
+
 We store the following:
-(`idxKey` == {namespace:category})
-- {idxKey} -> set[{idxKey:category_item}] e.g. `1:scope:foo`
-- {idxKey:category_item} -> set[*Ruletable_RuleRow]
+- {catKey} -> set[{catKey:category_item}] e.g. `1:scope:foo`
+- {catKey:category_item} -> set[{namespace:row_checksum}]
+- {nsKey:row_checksum} -> *Ruletable_RuleRow
+// scoping checksums by namespace prevents duplicating rows across categories)
 */
 func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
-	rowsKey := rm.rowsKey(cat)
+	sumsKey := rm.sumsKey(cat)
 	_, err := rm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
-		p.SAdd(ctx, rm.key, rowsKey)
+		p.SAdd(ctx, rm.catKey, sumsKey)
 
-		rows, err := serialize(rs)
+		sums, rows, err := serialize(rs, rm.rowKey)
 		if err != nil {
 			return err
 		}
-		p.SAdd(ctx, rowsKey, rows...)
 
-		p.Expire(ctx, rowsKey, keyTTL)
-		p.Expire(ctx, rm.key, keyTTL)
+		p.SAdd(ctx, sumsKey, sums...)
+
+		rkBatch := []any{}
+		for i, r := range rows {
+			rk := sums[i].(string)
+			rkBatch = append(rkBatch, rk, r)
+		}
+
+		// TODO(saml) how to deal with TTL on these keys?
+		if err := rm.db.MSet(ctx, rkBatch...).Err(); err != nil {
+			return err
+		}
+
+		// TODO(saml)
+		p.Expire(ctx, sumsKey, keyTTL)
+		p.Expire(ctx, rm.catKey, keyTTL)
 
 		return nil
 	})
@@ -99,9 +134,9 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet, error) {
 	res := make(map[string]*rowSet)
 	for _, cat := range cats {
-		rowsKey := rm.rowsKey(cat)
+		sumsKey := rm.sumsKey(cat)
 
-		ok, err := rm.db.SIsMember(ctx, rm.key, rowsKey).Result()
+		ok, err := rm.db.SIsMember(ctx, rm.catKey, sumsKey).Result()
 		if err != nil {
 			return nil, err
 		}
@@ -109,12 +144,17 @@ func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet
 			return res, nil
 		}
 
-		rawRows, err := rm.db.SMembers(ctx, rowsKey).Result()
+		sums, err := rm.db.SMembers(ctx, sumsKey).Result()
 		if err != nil {
 			return nil, err
 		}
 
-		rs, err := deserialize(rawRows)
+		rawRows, err := rm.db.MGet(ctx, sums...).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		rs, err := deserialize(sums, rm.sumFromRowKey, rawRows)
 		if err != nil {
 			return nil, err
 		}
@@ -126,24 +166,29 @@ func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet
 }
 
 func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
-	rowsKeys, err := rm.db.SMembers(ctx, rm.key).Result()
+	catsKeys, err := rm.db.SMembers(ctx, rm.catKey).Result()
 	if err != nil {
 		return nil, err
 	}
 
 	res := make(map[string]*rowSet)
-	for _, rk := range rowsKeys {
-		rawRows, err := rm.db.SMembers(ctx, rk).Result()
+	for _, catKey := range catsKeys {
+		sums, err := rm.db.SMembers(ctx, catKey).Result()
 		if err != nil {
 			return nil, err
 		}
 
-		rs, err := deserialize(rawRows)
+		rawRows, err := rm.db.MGet(ctx, sums...).Result()
 		if err != nil {
 			return nil, err
 		}
 
-		res[rm.catFromRowsKey(rk)] = rs
+		rs, err := deserialize(sums, rm.sumFromRowKey, rawRows)
+		if err != nil {
+			return nil, err
+		}
+
+		res[rm.catFromSumsKey(catKey)] = rs
 	}
 
 	return res, nil
@@ -174,46 +219,63 @@ func (gl *RedisGlobMap) getWithLiteral(ctx context.Context, keys ...string) (map
 }
 
 func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[string]*rowSet, error) {
-	rowsKeys, err := gl.db.SMembers(ctx, gl.key).Result()
+	catsKeys, err := gl.db.SMembers(ctx, gl.catKey).Result()
 	if err != nil {
 		return nil, err
 	}
 
 	matched := make(map[string][]string, len(keys))
-	for _, rk := range rowsKeys {
-		cat := gl.catFromRowsKey(rk)
+	for _, catKey := range catsKeys {
+		cat := gl.catFromSumsKey(catKey)
 		for _, k := range keys {
 			if cat == k || util.MatchesGlob(cat, k) {
-				matched[k] = append(matched[k], rk)
+				matched[k] = append(matched[k], catKey)
 			}
 		}
 	}
 
 	res := make(map[string]*rowSet, len(keys))
-	cmds := make(map[string]*redis.StringSliceCmd, len(keys))
-	_, err = gl.db.Pipelined(ctx, func(p redis.Pipeliner) error {
+	sumCmds := make(map[string]*redis.StringSliceCmd, len(keys))
+	if _, err = gl.db.Pipelined(ctx, func(p redis.Pipeliner) error {
 		for _, k := range keys {
-			rks := matched[k]
-			switch len(rks) {
+			matchingCatItems := matched[k]
+			switch len(matchingCatItems) {
 			case 0:
 			case 1:
-				cmds[k] = p.SMembers(ctx, rks[0])
+				sumCmds[k] = p.SMembers(ctx, matchingCatItems[0])
 			default:
-				cmds[k] = p.SUnion(ctx, rks...)
+				sumCmds[k] = p.SUnion(ctx, matchingCatItems...)
 			}
 		}
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
+		return nil, err
+	}
+
+	sumsMap := make(map[string][]string, len(keys))
+	rowCmds := make(map[string]*redis.SliceCmd, len(keys))
+	if _, err = gl.db.Pipelined(ctx, func(p redis.Pipeliner) error {
+		for k := range matched {
+			sums, err := sumCmds[k].Result()
+			if err != nil {
+				return err
+			}
+
+			rowCmds[k] = p.MGet(ctx, sums...)
+			sumsMap[k] = sums
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
 	for k := range matched {
-		raw, err := cmds[k].Result()
+		rawRows, err := rowCmds[k].Result()
 		if err != nil {
 			return nil, err
 		}
-		rs, err := deserialize(raw)
+
+		rs, err := deserialize(sumsMap[k], gl.sumFromRowKey, rawRows)
 		if err != nil {
 			return nil, err
 		}
@@ -223,63 +285,57 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 	return res, nil
 }
 
-func serialize(rs *rowSet) ([]any, error) {
-	res := make([]any, 0, len(rs.m))
-	for _, r := range rs.m {
+func serialize(rs *rowSet, sumsFn func(string) string) ([]any, []any, error) {
+	sums := make([]any, 0, len(rs.m))
+	raws := make([]any, 0, len(rs.m))
+	for sum, r := range rs.m {
+		sums = append(sums, sumsFn(hex.EncodeToString(sum[:])))
 		b, err := r.MarshalVT()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		res = append(res, b)
+		raws = append(raws, b)
 	}
-	return res, nil
+	return sums, raws, nil
 }
 
-func deserialize(raws []string) (*rowSet, error) {
-	// TODO(saml) move the sum to the proto definition
-	rowHasher := sha256.New()
+func deserialize(sums []string, sumsFn func(string) string, raws []any) (*rowSet, error) {
 	rs := newRowSet()
-	for _, s := range raws {
+	for i, raw := range raws {
 		r := &runtimev1.RuleTable_RuleRow{}
-		if err := r.UnmarshalVT([]byte(s)); err != nil {
+		if err := r.UnmarshalVT([]byte(raw.(string))); err != nil {
 			return nil, err
 		}
 
-		r.HashPB(rowHasher, ignoredRuleTableProtoFields)
-		var sum [sha256.Size]byte
-		rowHasher.Sum(sum[:0])
-		rowHasher.Reset()
-
-		params, drParams, err := hydrateParams(r)
+		b, err := hex.DecodeString(sumsFn(sums[i]))
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
+		var sum [32]byte
+		copy(sum[:], b)
 
 		rs.set(&Row{
 			RuleTable_RuleRow: r,
 			sum:               sum,
-			Params:            params,
-			DerivedRoleParams: drParams,
 		})
 	}
 	return rs, nil
 }
 
-func hydrateParams(rr *runtimev1.RuleTable_RuleRow) (*rowParams, *rowParams, error) {
-	var params, drParams *rowParams
+func hydrateParams(r *Row) error {
 	var err error
-	if (rr.PolicyKind == policyv1.Kind_KIND_RESOURCE && !rr.FromRolePolicy) ||
-		rr.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
-		params, err = GenerateRowParams(rr.OriginFqn, rr.Params.OrderedVariables, rr.Params.Constants)
+	if (r.PolicyKind == policyv1.Kind_KIND_RESOURCE && !r.FromRolePolicy) ||
+		r.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
+		r.Params, err = GenerateRowParams(r.OriginFqn, r.RuleTable_RuleRow.Params.OrderedVariables, r.RuleTable_RuleRow.Params.Constants)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 	}
-	if rr.DerivedRoleParams != nil {
-		drParams, err = GenerateRowParams(namer.DerivedRolesFQN(rr.OriginDerivedRole), rr.DerivedRoleParams.OrderedVariables, rr.DerivedRoleParams.Constants)
+	if r.RuleTable_RuleRow.DerivedRoleParams != nil {
+		r.DerivedRoleParams, err = GenerateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.RuleTable_RuleRow.DerivedRoleParams.OrderedVariables, r.RuleTable_RuleRow.DerivedRoleParams.Constants)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 	}
-	return params, drParams, nil
+	return nil
 }

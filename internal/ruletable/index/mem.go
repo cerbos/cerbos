@@ -11,8 +11,8 @@ const memNamespaceKey = "mem"
 
 var (
 	_ Index      = (*Mem)(nil)
-	_ literalMap = (*MemLiteralMap)(nil)
-	_ globMap    = (*MemGlobMap)(nil)
+	_ literalMap = (*memLiteralMap)(nil)
+	_ globMap    = (*memGlobMap)(nil)
 )
 
 type Mem struct {
@@ -23,34 +23,32 @@ func NewMem() *Mem {
 	return &Mem{namespace: memNamespaceKey}
 }
 
-func (m *Mem) getNamespace() string {
-	return m.namespace
-}
-
 func (m *Mem) getLiteralMap(string) literalMap {
-	return NewMemLiteralMap()
+	return newMemLiteralMap()
 }
 
 func (m *Mem) getGlobMap(string) globMap {
-	return NewMemGlobMap()
+	return newMemGlobMap()
 }
 
-type MemLiteralMap struct {
+func (m *Mem) resolve([]*Row) error { return nil }
+
+type memLiteralMap struct {
 	m map[string]*rowSet
 }
 
-func NewMemLiteralMap() *MemLiteralMap {
-	return &MemLiteralMap{
+func newMemLiteralMap() *memLiteralMap {
+	return &memLiteralMap{
 		make(map[string]*rowSet),
 	}
 }
 
-func (lm *MemLiteralMap) set(_ context.Context, k string, rs *rowSet) error {
+func (lm *memLiteralMap) set(_ context.Context, k string, rs *rowSet) error {
 	lm.m[k] = rs
 	return nil
 }
 
-func (lm *MemLiteralMap) get(_ context.Context, keys ...string) (map[string]*rowSet, error) {
+func (lm *memLiteralMap) get(_ context.Context, keys ...string) (map[string]*rowSet, error) {
 	res := make(map[string]*rowSet)
 	for _, k := range keys {
 		if v, ok := lm.m[k]; ok {
@@ -61,26 +59,26 @@ func (lm *MemLiteralMap) get(_ context.Context, keys ...string) (map[string]*row
 	return res, nil
 }
 
-func (lm *MemLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
+func (lm *memLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
 	return maps.Clone(lm.m), nil
 }
 
-type MemGlobMap struct {
+type memGlobMap struct {
 	m *util.GlobMap[*rowSet]
 }
 
-func NewMemGlobMap() *MemGlobMap {
-	return &MemGlobMap{
+func newMemGlobMap() *memGlobMap {
+	return &memGlobMap{
 		util.NewGlobMap(make(map[string]*rowSet)),
 	}
 }
 
-func (gl *MemGlobMap) set(_ context.Context, k string, rs *rowSet) error {
+func (gl *memGlobMap) set(_ context.Context, k string, rs *rowSet) error {
 	gl.m.Set(k, rs)
 	return nil
 }
 
-func (gl *MemGlobMap) getWithLiteral(_ context.Context, keys ...string) (map[string]*rowSet, error) {
+func (gl *memGlobMap) getWithLiteral(_ context.Context, keys ...string) (map[string]*rowSet, error) {
 	res := make(map[string]*rowSet)
 	for _, k := range keys {
 		if v, ok := gl.m.GetWithLiteral(k); ok {
@@ -91,7 +89,7 @@ func (gl *MemGlobMap) getWithLiteral(_ context.Context, keys ...string) (map[str
 	return res, nil
 }
 
-func (gl *MemGlobMap) getMerged(_ context.Context, keys ...string) (map[string]*rowSet, error) {
+func (gl *memGlobMap) getMerged(_ context.Context, keys ...string) (map[string]*rowSet, error) {
 	res := make(map[string]*rowSet)
 	for _, k := range keys {
 		rs := newRowSet()
@@ -103,6 +101,6 @@ func (gl *MemGlobMap) getMerged(_ context.Context, keys ...string) (map[string]*
 	return res, nil
 }
 
-func (gl *MemGlobMap) getAll(context.Context) (map[string]*rowSet, error) {
+func (gl *memGlobMap) getAll(context.Context) (map[string]*rowSet, error) {
 	return gl.m.GetAll(), nil
 }
