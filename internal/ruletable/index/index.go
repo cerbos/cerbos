@@ -31,9 +31,9 @@ var ignoredRuleTableProtoFields = map[string]struct{}{
 }
 
 type Index interface {
-	getNamespace() string // TODO(saml) should I be using this?
 	getLiteralMap(string) literalMap
 	getGlobMap(string) globMap
+	resolve([]*Row) error
 }
 
 type literalMap interface {
@@ -421,6 +421,8 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			}
 		}
 	}
+
+	m.idx.resolve(res)
 
 	return res, nil
 }
