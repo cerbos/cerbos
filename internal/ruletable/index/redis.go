@@ -2,7 +2,6 @@ package index
 
 import (
 	"context"
-	"encoding/hex"
 	"strings"
 	"time"
 
@@ -48,9 +47,9 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for _, row := range rows {
 		var sum string
 		if row.RuleTable_RuleRow != nil {
-			sum = string(hex.EncodeToString(row.sum[:]))
+			sum = string(row.sum[:])
 		} else {
-			sum = r.rowKey(hex.EncodeToString(row.sum[:]))
+			sum = r.rowKey(string(row.sum[:]))
 		}
 		sums = append(sums, sum)
 	}
@@ -304,7 +303,7 @@ func serialize(rs *rowSet, sumsFn func(string) string) ([]any, []any, error) {
 	sums := make([]any, 0, len(rs.m))
 	raws := make([]any, 0, len(rs.m))
 	for sum, r := range rs.m {
-		sums = append(sums, sumsFn(hex.EncodeToString(sum[:])))
+		sums = append(sums, sumsFn(string(sum[:])))
 		b, err := r.MarshalVT()
 		if err != nil {
 			return nil, nil, err
@@ -317,10 +316,7 @@ func serialize(rs *rowSet, sumsFn func(string) string) ([]any, []any, error) {
 func getRowSetWithSums(sums []string, sumsFn func(string) string) (*rowSet, error) {
 	rs := newRowSet()
 	for i := range sums {
-		b, err := hex.DecodeString(sumsFn(sums[i]))
-		if err != nil {
-			panic(err)
-		}
+		b := []byte(sumsFn(sums[i]))
 		var sum [32]byte
 		copy(sum[:], b)
 
