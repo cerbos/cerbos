@@ -132,12 +132,12 @@ func (rm *redisMap) sumFromRowKey(key string) string {
 func (rm *redisMap) getRowSetWithSums(sums []string) (*rowSet, error) {
 	rs := newRowSet()
 	for i := range sums {
-		b := []byte(rm.sumFromRowKey(sums[i]))
-		var sum [32]byte
-		copy(sum[:], b)
+		// b := []byte(rm.sumFromRowKey(sums[i]))
+		// var sum [32]byte
+		// copy(sum[:], b)
 
 		rs.set(&Row{
-			sum: sum,
+			sum: rm.sumFromRowKey(sums[i]),
 		})
 	}
 	return rs, nil
