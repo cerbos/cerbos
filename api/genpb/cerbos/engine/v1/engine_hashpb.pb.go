@@ -199,3 +199,27 @@ func (m *Runtime) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 		cerbos_engine_v1_Runtime_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *Config) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_Config_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *Config_Evaluator) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_Config_Evaluator_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *Config_Schema) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_Config_Schema_hashpb_sum(m, hasher, ignore)
+	}
+}

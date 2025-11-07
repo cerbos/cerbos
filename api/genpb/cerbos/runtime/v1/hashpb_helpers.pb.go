@@ -371,46 +371,6 @@ func cerbos_runtime_v1_Output_hashpb_sum(m *Output, hasher hash.Hash, ignore map
 	}
 }
 
-func cerbos_runtime_v1_RuleTableConf_EvaluatorConf_hashpb_sum(m *RuleTableConf_EvaluatorConf, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RuleTableConf.EvaluatorConf.globals"]; !ok {
-		if len(m.Globals) > 0 {
-			for _, k := range slices.Sorted(maps.Keys(m.Globals)) {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
-				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
-				if m.Globals[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.Globals[k], hasher, ignore)
-				}
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTableConf.EvaluatorConf.default_policy_version"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetDefaultPolicyVersion()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDefaultPolicyVersion()), len(m.GetDefaultPolicyVersion())))
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTableConf.EvaluatorConf.lenient_scope_search"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetLenientScopeSearch())))
-	}
-}
-
-func cerbos_runtime_v1_RuleTableConf_SchemaConf_hashpb_sum(m *RuleTableConf_SchemaConf, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RuleTableConf.SchemaConf.enforcement"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetEnforcement())))
-	}
-}
-
-func cerbos_runtime_v1_RuleTableConf_hashpb_sum(m *RuleTableConf, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.runtime.v1.RuleTableConf.evaluator"]; !ok {
-		if m.GetEvaluator() != nil {
-			cerbos_runtime_v1_RuleTableConf_EvaluatorConf_hashpb_sum(m.GetEvaluator(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RuleTableConf.schema"]; !ok {
-		if m.GetSchema() != nil {
-			cerbos_runtime_v1_RuleTableConf_SchemaConf_hashpb_sum(m.GetSchema(), hasher, ignore)
-		}
-	}
-}
-
 func cerbos_runtime_v1_RuleTableMetadata_hashpb_sum(m *RuleTableMetadata, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RuleTableMetadata.fqn"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetFqn()))))

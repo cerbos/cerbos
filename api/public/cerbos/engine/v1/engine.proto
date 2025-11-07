@@ -380,3 +380,25 @@ message Request {
 message Runtime {
   repeated string effective_derived_roles = 1;
 }
+
+message Config {
+  message Evaluator {
+    map<string, google.protobuf.Value> globals = 1;
+    string default_policy_version = 2;
+    bool lenient_scope_search = 3;
+  }
+
+  message Schema {
+    enum Enforcement {
+      ENFORCEMENT_UNSPECIFIED = 0;
+      ENFORCEMENT_NONE = 1;
+      ENFORCEMENT_WARN = 2;
+      ENFORCEMENT_REJECT = 3;
+    }
+
+    Enforcement enforcement = 1;
+  }
+
+  Evaluator evaluator = 1;
+  Schema schema = 2;
+}
