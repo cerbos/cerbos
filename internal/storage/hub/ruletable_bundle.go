@@ -111,6 +111,10 @@ func (*RuleTableBundle) InspectPolicies(_ context.Context, _ storage.ListPolicyI
 }
 
 func (rtb *RuleTableBundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
+	if rtb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
 	policyFQNs := make(map[string]struct{})
 	for _, meta := range rtb.ruleTable.GetMeta() {
 		policyFQNs[meta.GetFqn()] = struct{}{}
