@@ -602,6 +602,17 @@ func (s *RemoteSource) Driver() string {
 	return DriverName
 }
 
+func (s *RemoteSource) GetRuleTable() (*runtimev1.RuleTable, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if rtBundle, ok := s.bundle.(*RuleTableBundle); ok {
+		return rtBundle.GetRuleTable()
+	}
+
+	return nil, ErrUnsupportedOperation
+}
+
 func (s *RemoteSource) IsHealthy() bool {
 	if s == nil {
 		return false

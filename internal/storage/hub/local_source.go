@@ -212,6 +212,17 @@ func (ls *LocalSource) Driver() string {
 	return DriverName
 }
 
+func (ls *LocalSource) GetRuleTable() (*runtimev1.RuleTable, error) {
+	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
+	if rtBundle, ok := ls.bundle.(*RuleTableBundle); ok {
+		return rtBundle.GetRuleTable()
+	}
+
+	return nil, ErrUnsupportedOperation
+}
+
 func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
 	ls.mu.RLock()
 	defer ls.mu.RUnlock()

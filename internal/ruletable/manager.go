@@ -30,10 +30,6 @@ type Manager struct {
 	mu           sync.RWMutex
 }
 
-type PreBuiltRuleTableSource interface {
-	GetRuleTable() (*runtimev1.RuleTable, error)
-}
-
 func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
 	conf, err := evaluator.GetConf()
 	if err != nil {
@@ -97,9 +93,9 @@ func (mgr *Manager) reload() error {
 	defer mgr.mu.Unlock()
 
 	var newRuleTable *runtimev1.RuleTable
-	if ruleTableSource, ok := mgr.policyLoader.(PreBuiltRuleTableSource); ok {
+	if ruleTableStore, ok := mgr.policyLoader.(storage.RuleTableStore); ok {
 		var err error
-		newRuleTable, err = ruleTableSource.GetRuleTable()
+		newRuleTable, err = ruleTableStore.GetRuleTable()
 		if err != nil {
 			return fmt.Errorf("failed to load the new rule table: %w", err)
 		}

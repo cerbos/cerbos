@@ -5,6 +5,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	audithub "github.com/cerbos/cerbos/internal/audit/hub"
@@ -52,6 +53,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 	}
 
 	var policyLoader policyloader.PolicyLoader
+	var ruleTableStore storage.RuleTableStore
 	switch st := store.(type) {
 	// Overlay needs to take precedence over BinaryStore in this type switch,
 	// as our overlay store implements BinaryStore also
@@ -64,6 +66,9 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		policyLoader = pl
 	case storage.BinaryStore:
 		policyLoader = st
+		if rtStore, ok := store.(storage.RuleTableStore); ok {
+			ruleTableStore = rtStore
+		}
 	case storage.SourceStore:
 		// create compile manager
 		policyLoader, err = compile.NewManager(ctx, st)
@@ -76,7 +81,19 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
+	//nolint:nestif
+	if ruleTableStore != nil {
+		rt, err = ruleTableStore.GetRuleTable()
+		if err != nil {
+			if !errors.Is(err, storagehub.ErrUnsupportedOperation) {
+				return nil, fmt.Errorf("failed to load rule table: %w", err)
+			}
+
+			if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
+				return nil, fmt.Errorf("failed to load policies: %w", err)
+			}
+		}
+	} else if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 

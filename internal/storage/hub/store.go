@@ -99,12 +99,14 @@ func NewStore(ctx context.Context, conf *Conf) (storage.BinaryStore, error) {
 
 type Source interface {
 	SourceKind() string
+	storage.BinaryStore
+	storage.RuleTableStore
 }
 
 type HybridStore struct {
 	log             *zap.Logger
-	local           storage.BinaryStore
-	remote          storage.BinaryStore
+	local           Source
+	remote          Source
 	remoteIsHealthy func() bool
 }
 
@@ -112,7 +114,15 @@ func (*HybridStore) Driver() string {
 	return DriverName
 }
 
-func (hs *HybridStore) withActiveSource() storage.BinaryStore {
+func (hs *HybridStore) GetRuleTable() (*runtimev1.RuleTable, error) {
+	if rtTable, ok := hs.withActiveSource().(storage.RuleTableStore); ok {
+		return rtTable.GetRuleTable()
+	}
+
+	return nil, ErrUnsupportedOperation
+}
+
+func (hs *HybridStore) withActiveSource() Source {
 	if hs.remoteIsHealthy() {
 		return hs.remote
 	}

@@ -171,7 +171,7 @@ func (rtb *RuleTableBundle) LoadSchema(_ context.Context, path string) (io.ReadC
 }
 
 func (rtb *RuleTableBundle) GetRuleTable() (*runtimev1.RuleTable, error) {
-	if rtb == nil {
+	if rtb == nil || rtb.ruleTable == nil {
 		return nil, ErrBundleNotLoaded
 	}
 
