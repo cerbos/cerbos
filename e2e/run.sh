@@ -33,7 +33,7 @@ run_tests() {
     (
         cd "$SCRIPT_DIR"
         telepresence helm install
-        telepresence connect --no-report -- go test -v -failfast -p=1 --tags="tests e2e" "$@"
+        telepresence connect --no-report -- go test -v -p=1 --tags="tests e2e" "$@"
     )
 }
 
