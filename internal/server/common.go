@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	audithub "github.com/cerbos/cerbos/internal/audit/hub"
 
 	"github.com/cerbos/cerbos/internal/audit"
@@ -79,22 +80,27 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, ErrInvalidStore
 	}
 
-	rt := ruletable.NewProtoRuletable()
-
+	var ruleTable *runtimev1.RuleTable
 	//nolint:nestif
 	if ruleTableStore != nil {
-		rt, err = ruleTableStore.GetRuleTable()
+		rt, err := ruleTableStore.GetRuleTable()
 		if err != nil {
 			if !errors.Is(err, storagehub.ErrUnsupportedOperation) {
 				return nil, fmt.Errorf("failed to load rule table: %w", err)
 			}
 
-			if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
+			ruleTable = ruletable.NewProtoRuletable()
+			if err := ruletable.LoadPolicies(ctx, ruleTable, policyLoader); err != nil {
 				return nil, fmt.Errorf("failed to load policies: %w", err)
 			}
+		} else {
+			ruleTable = rt
 		}
-	} else if err := ruletable.LoadPolicies(ctx, rt, policyLoader); err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
+	} else {
+		ruleTable = ruletable.NewProtoRuletable()
+		if err := ruletable.LoadPolicies(ctx, ruleTable, policyLoader); err != nil {
+			return nil, fmt.Errorf("failed to load policies: %w", err)
+		}
 	}
 
 	// create schema manager
@@ -103,7 +109,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, policyLoader, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, policyLoader, schemaMgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
