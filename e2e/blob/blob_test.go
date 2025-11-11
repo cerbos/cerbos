@@ -31,7 +31,7 @@ func TestBlob(t *testing.T) {
 	env := make(map[string]string)
 
 	computedEnvFn := func(ctx e2e.Ctx) map[string]string {
-		minioEndpoint := fmt.Sprintf("minio-%s.%s:9000", ctx.ContextID, ctx.Namespace())
+		minioEndpoint := fmt.Sprintf("minio-%s.%s.svc.cluster.local:9000", ctx.ContextID, ctx.Namespace())
 		env["E2E_BUCKET_URL"] = blob.MinioBucketURL("cerbos", minioEndpoint)
 		env["E2E_BUCKET_PREFIX"] = "repo/"
 		env["E2E_BUCKET_USERNAME"] = "admin"

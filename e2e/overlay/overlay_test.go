@@ -25,7 +25,7 @@ func TestOverlay(t *testing.T) {
 	computedEnv := func(ctx e2e.Ctx) map[string]string {
 		return map[string]string{
 			"E2E_DATABASE_URL":           dbURL(ctx),
-			"E2E_CERBOS_HOST":            fmt.Sprintf("cerbos-admin-%s.%s", ctx.ContextID, ctx.Namespace()),
+			"E2E_CERBOS_HOST":            fmt.Sprintf("cerbos-admin-%s.%s.svc.cluster.local", ctx.ContextID, ctx.Namespace()),
 			"E2E_FALLBACK_ERR_THRESHOLD": strconv.FormatInt(fallbackErrThreshold, 10),
 		}
 	}

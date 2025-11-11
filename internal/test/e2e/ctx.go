@@ -121,7 +121,7 @@ func (c Ctx) CerbosHost() string {
 	if hostname, ok := c.ComputedEnv[cerbosHostNameEnvVar]; ok {
 		return hostname
 	}
-	return fmt.Sprintf("cerbos-%s.%s", c.ContextID, c.Namespace())
+	return fmt.Sprintf("cerbos-%s.%s.svc.cluster.local", c.ContextID, c.Namespace())
 }
 
 func (c Ctx) Namespace() string {
