@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -38,6 +39,7 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cloud-api/bundle"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 )
 
 // NOTE(saml) this is the max allowable path length on macOS, which appears to be the shortest of common platforms (at 104).
@@ -79,18 +81,25 @@ func TestServer(t *testing.T) {
 	})
 
 	t.Run("store=bundle_local", func(t *testing.T) {
-		tpg := func(version bundle.Version) func(t *testing.T) testParam {
+		tpg := func(version bundle.Version, bundleType bundlev2.BundleType) func(t *testing.T) testParam {
 			return func(t *testing.T) testParam {
 				t.Helper()
 				ctx, cancelFunc := context.WithCancel(t.Context())
 				t.Cleanup(cancelFunc)
 
-				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", version)))
+				dirSuffix := "legacy"
+				bundleName := "bundle.crbp"
+				if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+					dirSuffix = "ruletable"
+					bundleName = "bundle.crrts"
+				}
+
+				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_%s", version, dirSuffix)))
 
 				conf := &hubstore.Conf{
 					CacheSize: 1024,
 					Local: &hubstore.LocalSourceConf{
-						BundlePath: filepath.Join(dir, "bundle.crbp"),
+						BundlePath: filepath.Join(dir, bundleName),
 						TempDir:    t.TempDir(),
 					},
 				}
@@ -122,8 +131,9 @@ func TestServer(t *testing.T) {
 		}
 
 		t.Run("api", func(t *testing.T) {
-			t.Run("bundlev1", apiTests(tpg(bundle.Version1)))
-			t.Run("bundlev2", apiTests(tpg(bundle.Version2)))
+			t.Run("bundlev1", apiTests(tpg(bundle.Version1, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
+			t.Run("bundlev2", apiTests(tpg(bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
+			t.Run("bundlev2_ruletable", apiTests(tpg(bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)))
 		})
 	})
 }
@@ -321,8 +331,15 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 	}})
 
 	rt := ruletable.NewProtoRuletable()
-
-	require.NoError(t, ruletable.LoadPolicies(ctx, rt, tp.policyLoader))
+	if rtStore, ok := tp.store.(storage.RuleTableStore); ok {
+		var err error
+		rt, err = rtStore.GetRuleTable()
+		if err != nil && errors.Is(err, hubstore.ErrUnsupportedOperation) {
+			require.NoError(t, ruletable.LoadPolicies(ctx, rt, tp.policyLoader))
+		}
+	} else {
+		require.NoError(t, ruletable.LoadPolicies(ctx, rt, tp.policyLoader))
+	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(rt, tp.policyLoader, tp.schemaMgr)
 	require.NoError(t, err)
