@@ -68,8 +68,6 @@ func decryptRuleTableBundle(opts OpenOpts, logger *zap.Logger) (*runtimev1.RuleT
 		decrypted = d
 	}
 
-	// The hashing here is done because rule tables don't have identifiers like the legacy bundles.
-	// We need to be able to look at the logs and identify when distinct bundles are swapped in. The hash would help with that.
 	decryptedBytes, err := io.ReadAll(decrypted)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read decrypted bundle contents: %w", err)
