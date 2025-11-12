@@ -30,29 +30,29 @@ the remote store doesn't have any Git change details in the latest version in wh
 files in the remote store by the files in the local git repository.
 
 cerbosctl hub store upload-git
-cerbosctl hub store upload-git HEAD
-cerbosctl hub store upload-git HEAD --path path/to/git/repository
-cerbosctl hub store upload-git HEAD --path path/to/git/repository --subdir policies
+cerbosctl hub store upload-git --to=HEAD
+cerbosctl hub store upload-git --to=HEAD --path path/to/git/repository
+cerbosctl hub store upload-git --to=HEAD --path path/to/git/repository --subdir policies
 
 # Apply the file changes recorded in the git repo between commit 55a4248 and HEAD
 
 cerbosctl hub store upload-git --from=55a4248
-cerbosctl hub store upload-git HEAD --from=55a4248
-cerbosctl hub store upload-git HEAD --from=55a4248 --path path/to/git/repository
-cerbosctl hub store upload-git HEAD --from=55a4248 --path path/to/git/repository --subdir policies
+cerbosctl hub store upload-git --from=55a4248 --to=HEAD
+cerbosctl hub store upload-git --from=55a4248 --to=HEAD --path path/to/git/repository
+cerbosctl hub store upload-git --from=55a4248 --to=HEAD --path path/to/git/repository --subdir policies
 
 # Apply the file changes recorded in the git repo between commit 55a4248 to e746228
 
-cerbosctl hub store upload-git e746228 --from=55a4248
-cerbosctl hub store upload-git e746228 --from=55a4248 --path path/to/git/repository
-cerbosctl hub store upload-git e746228 --from=55a4248 --path path/to/git/repository --subdir policies
+cerbosctl hub store upload-git --from=55a4248 --to=e746228 
+cerbosctl hub store upload-git --from=55a4248 --to=e746228 --path path/to/git/repository
+cerbosctl hub store upload-git --from=55a4248 --to=e746228 --path path/to/git/repository --subdir policies
 `
 
 type UploadGitCmd struct {
 	repository    *git.Repository
 	from          *plumbing.Hash
 	to            *plumbing.Hash
-	To            string `arg:"" help:"Git revision to end when generating the diff" default:"HEAD"`
+	To            string `help:"Git revision to end when generating the diff" default:"HEAD"`
 	From          string `help:"Git revision to start from when generating the diff (the resolved reference must be the ancestor of the to argument)"`
 	Path          string `help:"Path to the git repository" default:"."`
 	Subdirectory  string `help:"Subdirectory under the given path to check and upload changes from" aliases:"subdir" default:"."`
