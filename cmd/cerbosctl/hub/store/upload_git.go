@@ -90,6 +90,8 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return ugc.toCommandError(k.Stderr, err)
 	}
 
+	version := ugc.VersionMustEq
+
 	//nolint:nestif
 	if ugc.from == nil {
 		resp, err := client.GetCurrentVersion(context.Background(), hub.NewGetCurrentVersionRequest(cmd.StoreID))
@@ -116,6 +118,12 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		if ugc.from, err = ugc.repository.ResolveRevision(plumbing.Revision(g.GetHash())); err != nil {
 			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to resolve revision retrieved as 'from' flag from GetStoreVersion RPC: %w", err))
 		}
+
+		if ugc.VersionMustEq > 0 && ugc.VersionMustEq != resp.GetStoreVersion() {
+			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to match remote store version %d with --version-must-eq=%d", resp.GetStoreVersion(), ugc.VersionMustEq))
+		}
+
+		version = resp.GetStoreVersion()
 	}
 
 	diffToApply, err := ugc.diff(ugc.repository, *ugc.from, *ugc.to)
@@ -143,7 +151,6 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details: %w", err))
 	}
 
-	version := ugc.VersionMustEq
 	for batch, err := range ugc.batch(diffToApply) {
 		if err != nil {
 			return ugc.toCommandError(k.Stderr, err)
