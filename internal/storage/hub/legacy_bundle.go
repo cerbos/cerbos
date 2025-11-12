@@ -16,6 +16,7 @@ import (
 	"os"
 	"strings"
 
+	bundleapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/cerbos/cloud-api/crypto"
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
@@ -50,7 +51,7 @@ type OpenOpts struct {
 	CacheSize     uint
 }
 
-type Bundle struct {
+type LegacyBundle struct {
 	bundleFS afero.Fs
 	manifest *bundlev2.Manifest
 	cleanup  cleanupFn
@@ -69,11 +70,11 @@ func toManifestV2(manifest *bundlev1.Manifest) *bundlev2.Manifest {
 	}
 }
 
-func Open(opts OpenOpts) (*Bundle, error) {
+func OpenLegacy(opts OpenOpts) (*LegacyBundle, error) {
 	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
 	logger.Info("Opening bundle")
 
-	decryptedPath, size, err := decryptBundle(opts, logger)
+	decryptedPath, size, err := decryptLegacyBundle(opts, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func Open(opts OpenOpts) (*Bundle, error) {
 	}
 
 	logger.Info("Bundle opened", zap.String("identifier", manifest.Meta.Identifier))
-	return &Bundle{
+	return &LegacyBundle{
 		path:     decryptedPath,
 		manifest: toManifestV2(manifest),
 		bundleFS: zipFS,
@@ -99,7 +100,7 @@ func Open(opts OpenOpts) (*Bundle, error) {
 	}, nil
 }
 
-func decryptBundle(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
+func decryptLegacyBundle(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
 	input, err := os.Open(opts.BundlePath)
 	if err != nil {
 		logger.Debug("Failed to open bundle", zap.Error(err))
@@ -138,11 +139,11 @@ func decryptBundle(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
 	return fileName, size, nil
 }
 
-func OpenV2(opts OpenOpts) (*Bundle, error) {
+func OpenLegacyV2(opts OpenOpts) (*LegacyBundle, error) {
 	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
 	logger.Info("Opening bundle v2")
 
-	decryptedPath, size, err := decryptBundleV2(opts, logger)
+	decryptedPath, size, err := decryptLegacyBundleV2(opts, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +161,7 @@ func OpenV2(opts OpenOpts) (*Bundle, error) {
 	}
 
 	logger.Info("Bundle v2 opened", zap.String("id", manifest.Meta.BundleId))
-	return &Bundle{
+	return &LegacyBundle{
 		path:     decryptedPath,
 		manifest: manifest,
 		bundleFS: zipFS,
@@ -168,7 +169,7 @@ func OpenV2(opts OpenOpts) (*Bundle, error) {
 	}, nil
 }
 
-func decryptBundleV2(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
+func decryptLegacyBundleV2(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
 	input, err := os.Open(opts.BundlePath)
 	if err != nil {
 		logger.Debug("Failed to open bundle v2", zap.Error(err))
@@ -290,9 +291,25 @@ func readManifestFile(bundleFS afero.Fs) ([]byte, error) {
 	return manifestBytes, nil
 }
 
-func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+func (lb *LegacyBundle) ID() string {
+	if lb == nil || lb.manifest == nil || lb.manifest.Meta == nil {
+		return bundleapi.BundleIDUnknown
+	}
+
+	return lb.manifest.Meta.BundleId
+}
+
+func (lb *LegacyBundle) Type() bundlev2.BundleType {
+	return bundlev2.BundleType_BUNDLE_TYPE_LEGACY
+}
+
+func (lb *LegacyBundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	if lb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
 	for _, id := range candidates {
-		policySet, err := b.getMatch(id)
+		policySet, err := lb.getMatch(id)
 		if err != nil {
 			return nil, err
 		}
@@ -305,12 +322,16 @@ func (b *Bundle) GetFirstMatch(_ context.Context, candidates []namer.ModuleID) (
 	return nil, nil
 }
 
-func (b *Bundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+func (lb *LegacyBundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, error) {
+	if lb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
 	res := []*runtimev1.RunnablePolicySet{}
-	for fqn := range b.manifest.PolicyIndex {
+	for fqn := range lb.manifest.PolicyIndex {
 		modID := namer.GenModuleIDFromFQN(fqn)
 
-		policySet, err := b.getMatch(modID)
+		policySet, err := lb.getMatch(modID)
 		if err != nil {
 			return nil, err
 		}
@@ -325,10 +346,14 @@ func (b *Bundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, erro
 
 // GetAllMatching attempts to retrieve all policies from the passed modIDs, unlike `GetFirstMatch` which returns the first
 // of the passed candidates, this function returns list of all available modules from the provided IDs.
-func (b *Bundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+func (lb *LegacyBundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
+	if lb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
 	res := []*runtimev1.RunnablePolicySet{}
 	for _, id := range modIDs {
-		policySet, err := b.getMatch(id)
+		policySet, err := lb.getMatch(id)
 		if err != nil {
 			return nil, err
 		}
@@ -341,11 +366,11 @@ func (b *Bundle) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*
 	return res, nil
 }
 
-func (b *Bundle) getMatch(id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+func (lb *LegacyBundle) getMatch(id namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	idHex := id.HexStr()
 	fileName := policyDir + idHex
 
-	if _, err := b.bundleFS.Stat(fileName); err != nil {
+	if _, err := lb.bundleFS.Stat(fileName); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, nil
 		}
@@ -353,11 +378,11 @@ func (b *Bundle) getMatch(id namer.ModuleID) (*runtimev1.RunnablePolicySet, erro
 		return nil, fmt.Errorf("failed to stat policy %s: %w", idHex, err)
 	}
 
-	return b.loadPolicySet(idHex, fileName)
+	return lb.loadPolicySet(idHex, fileName)
 }
 
-func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolicySet, error) {
-	f, err := b.bundleFS.Open(fileName)
+func (lb *LegacyBundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolicySet, error) {
+	f, err := lb.bundleFS.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open policy %s: %w", idHex, err)
 	}
@@ -380,11 +405,15 @@ func (b *Bundle) loadPolicySet(idHex, fileName string) (*runtimev1.RunnablePolic
 	return rps, nil
 }
 
-func (b *Bundle) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+func (lb *LegacyBundle) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	if lb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
 	var policyIDs []string
 	if len(params.IDs) == 0 {
 		var err error
-		if policyIDs, err = b.ListPolicyIDs(ctx, params); err != nil {
+		if policyIDs, err = lb.ListPolicyIDs(ctx, params); err != nil {
 			return nil, fmt.Errorf("failed to list policies: %w", err)
 		}
 	} else {
@@ -397,7 +426,7 @@ func (b *Bundle) InspectPolicies(ctx context.Context, params storage.ListPolicyI
 		idHex := id.HexStr()
 		fileName := policyDir + idHex
 
-		pset, err := b.loadPolicySet(idHex, fileName)
+		pset, err := lb.loadPolicySet(idHex, fileName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load policy %s: %w", policyID, err)
 		}
@@ -410,8 +439,12 @@ func (b *Bundle) InspectPolicies(ctx context.Context, params storage.ListPolicyI
 	return ins.Results()
 }
 
-func (b *Bundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
-	filteredSize := len(b.manifest.PolicyIndex)
+func (lb *LegacyBundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
+	if lb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
+	filteredSize := len(lb.manifest.PolicyIndex)
 	var ss util.StringSet
 	if len(params.IDs) > 0 {
 		ss = util.ToStringSet(params.IDs)
@@ -419,7 +452,7 @@ func (b *Bundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsPa
 	}
 
 	output := make([]string, 0, filteredSize)
-	for fqn := range b.manifest.PolicyIndex {
+	for fqn := range lb.manifest.PolicyIndex {
 		if len(params.IDs) > 0 {
 			if ss.Contains(fqn) {
 				output = append(output, namer.PolicyKeyFromFQN(fqn))
@@ -432,19 +465,27 @@ func (b *Bundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsPa
 	return output, nil
 }
 
-func (b *Bundle) ListSchemaIDs(_ context.Context) ([]string, error) {
-	output := make([]string, len(b.manifest.Schemas))
-	for i, s := range b.manifest.Schemas {
+func (lb *LegacyBundle) ListSchemaIDs(_ context.Context) ([]string, error) {
+	if lb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
+	output := make([]string, len(lb.manifest.Schemas))
+	for i, s := range lb.manifest.Schemas {
 		output[i] = strings.TrimPrefix(s, schemaDir)
 	}
 
 	return output, nil
 }
 
-func (b *Bundle) LoadSchema(_ context.Context, path string) (io.ReadCloser, error) {
+func (lb *LegacyBundle) LoadSchema(_ context.Context, path string) (io.ReadCloser, error) {
+	if lb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
 	fullPath := schemaDir + path
 
-	f, err := b.bundleFS.Open(fullPath)
+	f, err := lb.bundleFS.Open(fullPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema %s: %w", path, err)
 	}
@@ -453,10 +494,14 @@ func (b *Bundle) LoadSchema(_ context.Context, path string) (io.ReadCloser, erro
 	return f, nil
 }
 
-func (b *Bundle) Release() error {
-	return b.Close()
+func (lb *LegacyBundle) Release() error {
+	return lb.Close()
 }
 
-func (b *Bundle) Close() error {
-	return b.cleanup()
+func (lb *LegacyBundle) Close() error {
+	if lb == nil {
+		return nil
+	}
+
+	return lb.cleanup()
 }

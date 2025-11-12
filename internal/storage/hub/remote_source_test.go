@@ -11,13 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/cerbos/cloud-api/base"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 
 	internalhub "github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -26,17 +28,19 @@ import (
 )
 
 const (
-	bundleV1ID      = "h1:Hdon9Em1L7cUu4dClTCYnoEvQXoJjsMocshQsadoAWk="
-	bundleV2ID      = "66PXRRKTQ396OECH"
-	label           = "label"
-	playgroundLabel = "playground/A4W8GJAIZYIH"
-	deploymentID    = bundleapiv2.DeploymentID("3LWZ3N3GFMIL")
-	playgroundID    = bundleapiv2.PlaygroundID("A4W8GJAIZYIH")
+	bundleV1ID        = "h1:Hdon9Em1L7cUu4dClTCYnoEvQXoJjsMocshQsadoAWk="
+	bundleV2ID        = "66PXRRKTQ396OECH"
+	bundleRuleTableID = "YX8PDCGKHU89FQBI"
+	label             = "label"
+	playgroundLabel   = "playground/A4W8GJAIZYIH"
+	deploymentID      = bundleapiv2.DeploymentID("3LWZ3N3GFMIL")
+	playgroundID      = bundleapiv2.PlaygroundID("A4W8GJAIZYIH")
 )
 
 func TestRemoteSource(t *testing.T) {
-	t.Run("v1", runRemoteTests(mkTestCtx(t, bundleapi.Version1)))
-	t.Run("v2", runRemoteTests(mkTestCtx(t, bundleapi.Version2)))
+	t.Run("v1", runRemoteTests(mkTestCtx(t, bundleapi.Version1, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
+	t.Run("v2", runRemoteTests(mkTestCtx(t, bundleapi.Version2, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
+	t.Run("ruletable", runRemoteTests(mkTestCtx(t, bundleapi.Version2, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)))
 }
 
 func runRemoteTests(tctx testCtx) func(t *testing.T) {
@@ -51,7 +55,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
@@ -73,8 +77,8 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", nil, bundleapi.ErrBootstrapBundleNotFound).Once()
-					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", tctx.bundleType, nil, bundleapi.ErrBootstrapBundleNotFound).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
@@ -96,8 +100,8 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return("", errors.New("fail")).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", nil, errors.New("fail")).Once()
-					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return("", nil, errors.New("fail")).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return("", tctx.bundleType, nil, errors.New("fail")).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return("", tctx.bundleType, nil, errors.New("fail")).Once()
 
 				default:
 				}
@@ -120,7 +124,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().GetBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, loadEncryptionKey(t, tctx), nil).Once()
 
 				default:
 				}
@@ -141,7 +145,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().BootstrapBundle(mock.Anything, label).Return(tctx.bundlePath, nil).Twice()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Twice()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, loadEncryptionKey(t, tctx), nil).Twice()
 
 				default:
 				}
@@ -163,8 +167,12 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					mockClientV1.EXPECT().GetBundle(mock.Anything, playgroundLabel).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), nil).Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, playgroundID).Return("", nil, bundleapi.ErrBootstrappingNotSupported).Once()
-					mockClientV2.EXPECT().GetBundle(mock.Anything, playgroundID).Return(filepath.Join(tctx.rootDir, "bundle_unencrypted.crbp"), nil, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, playgroundID).Return("", tctx.bundleType, nil, bundleapi.ErrBootstrappingNotSupported).Once()
+					bundleName := "bundle_unencrypted.crbp"
+					if tctx.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+						bundleName = "bundle_unencrypted.crrt"
+					}
+					mockClientV2.EXPECT().GetBundle(mock.Anything, playgroundID).Return(filepath.Join(tctx.rootDir, bundleName), tctx.bundleType, nil, nil).Once()
 
 				default:
 				}
@@ -228,6 +236,11 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				}
 			}
 
+			wantBundleID := bundleV2ID
+			if tctx.bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+				wantBundleID = bundleRuleTableID
+			}
+
 			t.Run("AuthFailure", func(t *testing.T) {
 				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
@@ -244,7 +257,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 						Once()
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, loadEncryptionKey(t, tctx), nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
 						Run(func(context.Context, bundleapiv2.Source) {
 							close(callsDone)
@@ -274,7 +287,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 				wh := mkWatchHandle()
 				events := []bundleapi.ServerEvent{
-					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
+					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath, BundleType: tctx.bundleType},
 					{Kind: bundleapi.ServerEventBundleRemoved},
 				}
 
@@ -287,9 +300,9 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
 					events[0].EncryptionKey = encryptionKey //nolint:gosec
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, encryptionKey, nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Once()
-					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).Return(nil)
+					wh.mockHandle.EXPECT().ActiveBundleChanged(wantBundleID).Return(nil)
 
 				default:
 				}
@@ -320,7 +333,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				events := []bundleapi.ServerEvent{
 					{Kind: bundleapi.ServerEventError, Error: errors.New("error1")},
-					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
+					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath, BundleType: tctx.bundleType},
 				}
 
 				switch tctx.version {
@@ -336,9 +349,9 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
 					events[1].EncryptionKey = encryptionKey //nolint:gosec
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, encryptionKey, nil).Once()
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).Return(wh.mockHandle, nil).Twice()
-					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).
+					wh.mockHandle.EXPECT().ActiveBundleChanged(wantBundleID).
 						Run(func(_ string) {
 							close(wh.callsDone)
 						}).
@@ -367,7 +380,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				wh := mkWatchHandle()
 				var callCount int32
 				events := []bundleapi.ServerEvent{
-					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath},
+					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath, BundleType: tctx.bundleType},
 					{Kind: bundleapi.ServerEventReconnect, ReconnectBackoff: 100 * time.Millisecond},
 				}
 
@@ -390,7 +403,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 				case bundleapi.Version2:
 					encryptionKey := loadEncryptionKey(t, tctx)
 					events[0].EncryptionKey = encryptionKey //nolint:gosec
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, encryptionKey, nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, encryptionKey, nil).Once()
 
 					// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
@@ -402,7 +415,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 						Return(wh.mockHandle, nil).
 						Twice()
 
-					wh.mockHandle.EXPECT().ActiveBundleChanged(bundleV2ID).Return(nil)
+					wh.mockHandle.EXPECT().ActiveBundleChanged(wantBundleID).Return(nil)
 
 				default:
 				}
@@ -446,7 +459,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 						Return(nil, errors.New("error"))
 
 				case bundleapi.Version2:
-					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, loadEncryptionKey(t, tctx), nil).Once()
+					mockClientV2.EXPECT().BootstrapBundle(mock.Anything, deploymentID).Return(tctx.bundlePath, tctx.bundleType, loadEncryptionKey(t, tctx), nil).Once()
 
 					// Returning an error should force the caller to retry
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
@@ -558,11 +571,13 @@ func mkRemoteSource(t *testing.T, tctx testCtx, conf *hub.Conf) (_ *hub.RemoteSo
 
 	switch tctx.version {
 	case bundleapi.Version1:
+		clientConf.BundleType = bundlev2.BundleType_BUNDLE_TYPE_LEGACY
 		mockClientV1 = mocks.NewClientV1(t)
 		provider.EXPECT().V1(clientConf).Return(mockClientV1, nil)
 		mockClientV1.EXPECT().HubCredentials().Return(mkCredentials(t, tctx)).Maybe()
 
 	case bundleapi.Version2:
+		clientConf.BundleType = bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE
 		mockClientV2 = mocks.NewClientV2(t)
 		provider.EXPECT().V2(clientConf).Return(mockClientV2, nil)
 

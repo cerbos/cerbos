@@ -61,7 +61,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, store, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
 	if err != nil {
 		return nil, err
 	}

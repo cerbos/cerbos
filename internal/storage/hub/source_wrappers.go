@@ -23,18 +23,22 @@ import (
 )
 
 // instrument wraps the given source to produce metrics.
-func instrument(name string, source storage.BinaryStore) storage.BinaryStore {
+func instrument(name string, source Source) Source {
 	return instrumentedSource{name: name, source: source}
 }
 
 // instrumentedSource is a source that measures the time taken by each operation.
 type instrumentedSource struct {
-	source storage.BinaryStore
+	source Source
 	name   string
 }
 
 func (instrumentedSource) Driver() string {
 	return DriverName
+}
+
+func (is instrumentedSource) GetRuleTable() (*runtimev1.RuleTable, error) {
+	return is.source.GetRuleTable()
 }
 
 func (is instrumentedSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
@@ -106,11 +110,7 @@ func (is instrumentedSource) Close() error {
 }
 
 func (is instrumentedSource) SourceKind() string {
-	if s, ok := is.source.(Source); ok {
-		return s.SourceKind()
-	}
-
-	return "unknown"
+	return is.source.SourceKind()
 }
 
 func measureBinaryOp[T any](ctx context.Context, source, opName string, op func(context.Context) (T, error)) (T, error) {

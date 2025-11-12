@@ -12,6 +12,7 @@ import (
 
 	"github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/bundle/v2"
+	"github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -43,7 +44,7 @@ func (_m *ClientV2) EXPECT() *ClientV2_Expecter {
 }
 
 // BootstrapBundle provides a mock function for the type ClientV2
-func (_mock *ClientV2) BootstrapBundle(context1 context.Context, source v2.Source) (string, []byte, error) {
+func (_mock *ClientV2) BootstrapBundle(context1 context.Context, source v2.Source) (string, bundlev2.BundleType, []byte, error) {
 	ret := _mock.Called(context1, source)
 
 	if len(ret) == 0 {
@@ -51,9 +52,10 @@ func (_mock *ClientV2) BootstrapBundle(context1 context.Context, source v2.Sourc
 	}
 
 	var r0 string
-	var r1 []byte
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, v2.Source) (string, []byte, error)); ok {
+	var r1 bundlev2.BundleType
+	var r2 []byte
+	var r3 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, v2.Source) (string, bundlev2.BundleType, []byte, error)); ok {
 		return returnFunc(context1, source)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, v2.Source) string); ok {
@@ -61,19 +63,24 @@ func (_mock *ClientV2) BootstrapBundle(context1 context.Context, source v2.Sourc
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, v2.Source) []byte); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, v2.Source) bundlev2.BundleType); ok {
 		r1 = returnFunc(context1, source)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]byte)
-		}
+		r1 = ret.Get(1).(bundlev2.BundleType)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, v2.Source) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, v2.Source) []byte); ok {
 		r2 = returnFunc(context1, source)
 	} else {
-		r2 = ret.Error(2)
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]byte)
+		}
 	}
-	return r0, r1, r2
+	if returnFunc, ok := ret.Get(3).(func(context.Context, v2.Source) error); ok {
+		r3 = returnFunc(context1, source)
+	} else {
+		r3 = ret.Error(3)
+	}
+	return r0, r1, r2, r3
 }
 
 // ClientV2_BootstrapBundle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BootstrapBundle'
@@ -106,18 +113,18 @@ func (_c *ClientV2_BootstrapBundle_Call) Run(run func(context1 context.Context, 
 	return _c
 }
 
-func (_c *ClientV2_BootstrapBundle_Call) Return(s string, bytes []byte, err error) *ClientV2_BootstrapBundle_Call {
-	_c.Call.Return(s, bytes, err)
+func (_c *ClientV2_BootstrapBundle_Call) Return(s string, bundleType bundlev2.BundleType, bytes []byte, err error) *ClientV2_BootstrapBundle_Call {
+	_c.Call.Return(s, bundleType, bytes, err)
 	return _c
 }
 
-func (_c *ClientV2_BootstrapBundle_Call) RunAndReturn(run func(context1 context.Context, source v2.Source) (string, []byte, error)) *ClientV2_BootstrapBundle_Call {
+func (_c *ClientV2_BootstrapBundle_Call) RunAndReturn(run func(context1 context.Context, source v2.Source) (string, bundlev2.BundleType, []byte, error)) *ClientV2_BootstrapBundle_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetBundle provides a mock function for the type ClientV2
-func (_mock *ClientV2) GetBundle(context1 context.Context, source v2.Source) (string, []byte, error) {
+func (_mock *ClientV2) GetBundle(context1 context.Context, source v2.Source) (string, bundlev2.BundleType, []byte, error) {
 	ret := _mock.Called(context1, source)
 
 	if len(ret) == 0 {
@@ -125,9 +132,10 @@ func (_mock *ClientV2) GetBundle(context1 context.Context, source v2.Source) (st
 	}
 
 	var r0 string
-	var r1 []byte
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, v2.Source) (string, []byte, error)); ok {
+	var r1 bundlev2.BundleType
+	var r2 []byte
+	var r3 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, v2.Source) (string, bundlev2.BundleType, []byte, error)); ok {
 		return returnFunc(context1, source)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, v2.Source) string); ok {
@@ -135,19 +143,24 @@ func (_mock *ClientV2) GetBundle(context1 context.Context, source v2.Source) (st
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, v2.Source) []byte); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, v2.Source) bundlev2.BundleType); ok {
 		r1 = returnFunc(context1, source)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]byte)
-		}
+		r1 = ret.Get(1).(bundlev2.BundleType)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, v2.Source) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(context.Context, v2.Source) []byte); ok {
 		r2 = returnFunc(context1, source)
 	} else {
-		r2 = ret.Error(2)
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]byte)
+		}
 	}
-	return r0, r1, r2
+	if returnFunc, ok := ret.Get(3).(func(context.Context, v2.Source) error); ok {
+		r3 = returnFunc(context1, source)
+	} else {
+		r3 = ret.Error(3)
+	}
+	return r0, r1, r2, r3
 }
 
 // ClientV2_GetBundle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBundle'
@@ -180,12 +193,12 @@ func (_c *ClientV2_GetBundle_Call) Run(run func(context1 context.Context, source
 	return _c
 }
 
-func (_c *ClientV2_GetBundle_Call) Return(s string, bytes []byte, err error) *ClientV2_GetBundle_Call {
-	_c.Call.Return(s, bytes, err)
+func (_c *ClientV2_GetBundle_Call) Return(s string, bundleType bundlev2.BundleType, bytes []byte, err error) *ClientV2_GetBundle_Call {
+	_c.Call.Return(s, bundleType, bytes, err)
 	return _c
 }
 
-func (_c *ClientV2_GetBundle_Call) RunAndReturn(run func(context1 context.Context, source v2.Source) (string, []byte, error)) *ClientV2_GetBundle_Call {
+func (_c *ClientV2_GetBundle_Call) RunAndReturn(run func(context1 context.Context, source v2.Source) (string, bundlev2.BundleType, []byte, error)) *ClientV2_GetBundle_Call {
 	_c.Call.Return(run)
 	return _c
 }

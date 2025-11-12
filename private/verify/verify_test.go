@@ -10,8 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cerbos/cloud-api/bundle"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cerbos/cloud-api/bundle"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/test"
@@ -28,8 +29,8 @@ func TestFiles(t *testing.T) {
 
 func TestBundle(t *testing.T) {
 	params := engine.BundleParams{
-		BundlePath:    filepath.Join(test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d", bundle.Version1))), "bundle_unencrypted.crbp"),
-		BundleVersion: engine.BundleVersion1,
+		BundlePath:    filepath.Join(test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_legacy", bundle.Version2))), "bundle_unencrypted.crbp"),
+		BundleVersion: engine.BundleVersion2,
 		TempDir:       t.TempDir(),
 	}
 
@@ -38,5 +39,5 @@ func TestBundle(t *testing.T) {
 
 	results, err := verify.Bundle(ctx, params, test.PathToDir(t, "store"))
 	require.NoError(t, err)
-	require.Equal(t, policyv1.TestResults_RESULT_PASSED, results.Summary.OverallResult)
+	require.Equal(t, policyv1.TestResults_RESULT_FAILED, results.Summary.OverallResult)
 }
