@@ -14,6 +14,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
+	"github.com/cerbos/cloud-api/store"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -120,7 +121,7 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		}
 
 		if ugc.VersionMustEq > 0 && ugc.VersionMustEq != resp.GetStoreVersion() {
-			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to match remote store version %d with --version-must-eq=%d", resp.GetStoreVersion(), ugc.VersionMustEq))
+			return ugc.toCommandError(k.Stderr, hub.StoreRPCError{Kind: store.RPCErrorConditionUnsatisfied})
 		}
 
 		version = resp.GetStoreVersion()
