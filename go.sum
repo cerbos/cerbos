@@ -164,8 +164,8 @@ github.com/cerbos/cerbos-sdk-go v0.3.12 h1:Eq8VmqXcPVi76rh8/PsHIeMK39SU5ZIQ9dn8/
 github.com/cerbos/cerbos-sdk-go v0.3.12/go.mod h1:XUcFaAPUc6O6j8LtOCHBiBmDr/SX2imNh7Kvk2s7e00=
 github.com/cerbos/cerbos/api/genpb v0.47.0 h1:jTzSCr2nI7sK5kE6uSU8IZ3Fvdp/teFPZh575EHbDRg=
 github.com/cerbos/cerbos/api/genpb v0.47.0/go.mod h1:/Pkk5bTpm49VHvkA6Wa+rxJLVbWM7h6UIBYmKj5wYm0=
-github.com/cerbos/cloud-api v0.1.63 h1:RwQOPfHMN8UI3ULouKyc3V+xB4KUfGLOt+qFOYmWFZk=
-github.com/cerbos/cloud-api v0.1.63/go.mod h1:GFfDAUinji5AvqSHPUOhRCNYXsOnNFtzp91QXhF114k=
+github.com/cerbos/cloud-api v0.1.64 h1:WBPu8Uv4LFYTHaKFHpgsuqqx4TVDigjtdt7UQiEehD8=
+github.com/cerbos/cloud-api v0.1.64/go.mod h1:vcxlsSENx77Zcd3im0+8juGofaAw7FP9zFNglkcTvVM=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cloudflare/certinel v0.4.1 h1:b0nGqKxEjCe6aS3SoZf0HwjkzfCCAqGzZj8iB9ZJGW0=
