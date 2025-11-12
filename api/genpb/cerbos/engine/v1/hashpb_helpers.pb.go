@@ -124,46 +124,6 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *CheckOutput, hasher hash.Hash, i
 	}
 }
 
-func cerbos_engine_v1_Config_Evaluator_hashpb_sum(m *Config_Evaluator, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.engine.v1.Config.Evaluator.globals"]; !ok {
-		if len(m.Globals) > 0 {
-			for _, k := range slices.Sorted(maps.Keys(m.Globals)) {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
-				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
-				if m.Globals[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.Globals[k], hasher, ignore)
-				}
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.engine.v1.Config.Evaluator.default_policy_version"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetDefaultPolicyVersion()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDefaultPolicyVersion()), len(m.GetDefaultPolicyVersion())))
-	}
-	if _, ok := ignore["cerbos.engine.v1.Config.Evaluator.lenient_scope_search"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetLenientScopeSearch())))
-	}
-}
-
-func cerbos_engine_v1_Config_Schema_hashpb_sum(m *Config_Schema, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.engine.v1.Config.Schema.enforcement"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetEnforcement())))
-	}
-}
-
-func cerbos_engine_v1_Config_hashpb_sum(m *Config, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.engine.v1.Config.evaluator"]; !ok {
-		if m.GetEvaluator() != nil {
-			cerbos_engine_v1_Config_Evaluator_hashpb_sum(m.GetEvaluator(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["cerbos.engine.v1.Config.schema"]; !ok {
-		if m.GetSchema() != nil {
-			cerbos_engine_v1_Config_Schema_hashpb_sum(m.GetSchema(), hasher, ignore)
-		}
-	}
-}
-
 func cerbos_engine_v1_OutputEntry_hashpb_sum(m *OutputEntry, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.engine.v1.OutputEntry.src"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetSrc()))))

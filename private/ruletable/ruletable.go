@@ -6,18 +6,18 @@ package ruletable
 import (
 	"fmt"
 
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	internalruletable "github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
+	epdpv2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/epdp/v2"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type RuleTable = internalruletable.RuleTable
 
-func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *enginev1.Config) (*RuleTable, error) {
+func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *epdpv2.Config) (*RuleTable, error) {
 	schemaConf, err := schemaConfFromProto(conf.GetSchema())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
@@ -31,7 +31,7 @@ func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *enginev1.Config) 
 	return rt, nil
 }
 
-func evaluatorConfFromProto(confProto *enginev1.Config_Evaluator) *evaluator.Conf {
+func evaluatorConfFromProto(confProto *epdpv2.Config_Evaluator) *evaluator.Conf {
 	conf := &evaluator.Conf{
 		Globals:              (&structpb.Struct{Fields: confProto.GetGlobals()}).AsMap(),
 		DefaultPolicyVersion: confProto.GetDefaultPolicyVersion(),
@@ -45,15 +45,15 @@ func evaluatorConfFromProto(confProto *enginev1.Config_Evaluator) *evaluator.Con
 	return conf
 }
 
-func schemaConfFromProto(confProto *enginev1.Config_Schema) (*schema.Conf, error) {
+func schemaConfFromProto(confProto *epdpv2.Config_Schema) (*schema.Conf, error) {
 	conf := &schema.Conf{}
 
 	switch confProto.GetEnforcement() {
-	case enginev1.Config_Schema_ENFORCEMENT_UNSPECIFIED, enginev1.Config_Schema_ENFORCEMENT_WARN:
+	case epdpv2.Config_Schema_ENFORCEMENT_UNSPECIFIED, epdpv2.Config_Schema_ENFORCEMENT_WARN:
 		conf.Enforcement = schema.EnforcementWarn
-	case enginev1.Config_Schema_ENFORCEMENT_NONE:
+	case epdpv2.Config_Schema_ENFORCEMENT_NONE:
 		conf.Enforcement = schema.EnforcementNone
-	case enginev1.Config_Schema_ENFORCEMENT_REJECT:
+	case epdpv2.Config_Schema_ENFORCEMENT_REJECT:
 		conf.Enforcement = schema.EnforcementReject
 	default:
 		return nil, fmt.Errorf("unknown schema enforcement %v", confProto.GetEnforcement())
