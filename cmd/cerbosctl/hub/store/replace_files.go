@@ -50,82 +50,91 @@ func (*ReplaceFilesCmd) Help() string {
 }
 
 func (rfc *ReplaceFilesCmd) Run(k *kong.Kong, cmd *Cmd) error {
-	var zipContents []byte
-	var err error
-	var gitChangeDetails *changeDetails
-
-	//nolint:nestif
-	if rfc.Path == "-" {
-		zipContents, err = io.ReadAll(os.Stdin)
-		if err != nil {
-			return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to read stdin: %w", err))
-		}
-
-		if _, err = zip.NewReader(bytes.NewReader(zipContents), int64(len(zipContents))); err != nil {
-			return rfc.toCommandError(k.Stderr, errors.New("piped content is not valid zip data"))
-		}
-	} else {
-		stat, err := os.Stat(rfc.Path)
-		if err != nil {
-			return rfc.toCommandError(k.Stderr, err)
-		}
-
-		if stat.IsDir() {
-			zipContents, err = hub.Zip(os.DirFS(rfc.Path))
-			if err != nil {
-				return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to zip %s: %w", rfc.Path, err))
-			}
-
-			gitChangeDetails, _ = rfc.changeDetailsFromGit()
-		} else {
-			if _, err = zip.OpenReader(rfc.Path); err != nil {
-				return rfc.toCommandError(k.Stderr, fmt.Errorf("invalid zip file %s: %w", rfc.Path, err))
-			}
-
-			zipContents, err = os.ReadFile(rfc.Path)
-			if err != nil {
-				return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to read zip file %s: %w", rfc.Path, err))
-			}
-		}
-	}
-
-	if len(zipContents) > replaceFilesZipMaxSize {
-		return rfc.toCommandError(k.Stderr, errors.New("zipped data size is too large"))
-	}
-
 	client, err := cmd.storeClient()
 	if err != nil {
 		return rfc.toCommandError(k.Stderr, err)
 	}
 
-	changeDetails, message, err := rfc.ChangeDetails.ChangeDetails(gitChangeDetails)
-	if err != nil {
-		return rfc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details: %w", err))
-	}
-
-	req := hub.
-		NewReplaceFilesRequest(cmd.StoreID, message).
-		WithChangeDetails(changeDetails).
-		WithZippedContents(zipContents)
-	if rfc.VersionMustEq > 0 {
-		req.OnlyIfVersionEquals(rfc.VersionMustEq)
-	}
-
-	resp, err := client.ReplaceFilesLenient(context.Background(), req)
+	newStoreVersion, err := replaceFiles(client, cmd.StoreID, rfc.Path, rfc.ChangeDetails, rfc.VersionMustEq)
 	if err != nil {
 		return rfc.toCommandError(k.Stderr, err)
 	}
 
-	rfc.printNewVersion(k.Stdout, resp.GetNewStoreVersion())
+	rfc.printNewVersion(k.Stdout, newStoreVersion)
 	return nil
 }
 
-func (rfc *ReplaceFilesCmd) changeDetailsFromGit() (*changeDetails, error) {
-	r, err := git.PlainOpenWithOptions(rfc.Path, &git.PlainOpenOptions{
+func replaceFiles(storeClient *hub.StoreClient, storeID, path string, cd ChangeDetails, versionMustEq int64) (int64, error) {
+	var zipContents []byte
+	var err error
+	var gitChangeDetails *changeDetails
+
+	//nolint:nestif
+	if path == "-" {
+		zipContents, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			return 0, fmt.Errorf("failed to read stdin: %w", err)
+		}
+
+		if _, err = zip.NewReader(bytes.NewReader(zipContents), int64(len(zipContents))); err != nil {
+			return 0, errors.New("piped content is not valid zip data")
+		}
+	} else {
+		stat, err := os.Stat(path)
+		if err != nil {
+			return 0, err
+		}
+
+		if stat.IsDir() {
+			zipContents, err = hub.Zip(os.DirFS(path))
+			if err != nil {
+				return 0, fmt.Errorf("failed to zip %s: %w", path, err)
+			}
+
+			gitChangeDetails, _ = changeDetailsFromGit(path)
+		} else {
+			if _, err = zip.OpenReader(path); err != nil {
+				return 0, fmt.Errorf("invalid zip file %s: %w", path, err)
+			}
+
+			zipContents, err = os.ReadFile(path)
+			if err != nil {
+				return 0, fmt.Errorf("failed to read zip file %s: %w", path, err)
+			}
+		}
+	}
+
+	if len(zipContents) > replaceFilesZipMaxSize {
+		return 0, errors.New("zipped data size is too large")
+	}
+
+	changeDetails, message, err := cd.ChangeDetails(gitChangeDetails)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get change details: %w", err)
+	}
+
+	req := hub.
+		NewReplaceFilesRequest(storeID, message).
+		WithChangeDetails(changeDetails).
+		WithZippedContents(zipContents)
+	if versionMustEq > 0 {
+		req.OnlyIfVersionEquals(versionMustEq)
+	}
+
+	resp, err := storeClient.ReplaceFilesLenient(context.Background(), req)
+	if err != nil {
+		return 0, err
+	}
+
+	return resp.GetNewStoreVersion(), nil
+}
+
+func changeDetailsFromGit(path string) (*changeDetails, error) {
+	r, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{
 		DetectDotGit: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to open git repository: %w", err)
+		return nil, fmt.Errorf("failed to open git repository at %q: %w", path, err)
 	}
 
 	ref, err := r.Head()

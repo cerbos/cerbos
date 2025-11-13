@@ -14,6 +14,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
+	"github.com/cerbos/cloud-api/store"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -25,21 +26,35 @@ const uploadGitHelp = `
 The following exit codes have a special meaning.
 	- 6: The version condition supplied using --version-must-eq wasn't satisfied
 
+# Apply the file changes between remote store's current version and the local git repository's HEAD, unless 
+the remote store doesn't have any Git change details in the latest version in which case fallback to replacing all
+files in the remote store by the files in the local git repository.
+
+cerbosctl hub store upload-git
+cerbosctl hub store upload-git --to=HEAD
+cerbosctl hub store upload-git --to=HEAD --path path/to/git/repository
+cerbosctl hub store upload-git --to=HEAD --path path/to/git/repository --subdir policies
+
 # Apply the file changes recorded in the git repo between commit 55a4248 and HEAD
 
-cerbosctl hub store upload-git 55a4248
-cerbosctl hub store upload-git 55a4248 --path path/to/git/repository
+cerbosctl hub store upload-git --from=55a4248
+cerbosctl hub store upload-git --from=55a4248 --to=HEAD
+cerbosctl hub store upload-git --from=55a4248 --to=HEAD --path path/to/git/repository
+cerbosctl hub store upload-git --from=55a4248 --to=HEAD --path path/to/git/repository --subdir policies
 
 # Apply the file changes recorded in the git repo between commit 55a4248 to e746228
 
-cerbosctl hub store upload-git 55a4248 e746228
-cerbosctl hub store upload-git 55a4248 e746228 --path path/to/git/repository
+cerbosctl hub store upload-git --from=55a4248 --to=e746228 
+cerbosctl hub store upload-git --from=55a4248 --to=e746228 --path path/to/git/repository
+cerbosctl hub store upload-git --from=55a4248 --to=e746228 --path path/to/git/repository --subdir policies
 `
 
 type UploadGitCmd struct {
-	diffToApply   *diff
-	From          string `arg:"" help:"Git revision to start from when generating the diff (the resolved reference must be the ancestor of the to argument)"`
-	To            string `arg:"" help:"Git revision to end when generating the diff" default:"HEAD"`
+	repository    *git.Repository
+	from          *plumbing.Hash
+	to            *plumbing.Hash
+	To            string `help:"Git revision to end when generating the diff" default:"HEAD"`
+	From          string `help:"Git revision to start from when generating the diff (the resolved reference must be the ancestor of the to argument)"`
 	Path          string `help:"Path to the git repository" default:"."`
 	Subdirectory  string `help:"Subdirectory under the given path to check and upload changes from" aliases:"subdir" default:"."`
 	Output        `embed:""`
@@ -52,30 +67,72 @@ func (*UploadGitCmd) Help() string {
 }
 
 func (ugc *UploadGitCmd) Validate() error {
-	r, err := git.PlainOpen(ugc.Path)
-	if err != nil {
+	var err error
+	if ugc.repository, err = git.PlainOpen(ugc.Path); err != nil {
 		return fmt.Errorf("failed to open git repository: %w", err)
 	}
 
-	from, err := r.ResolveRevision(plumbing.Revision(ugc.From))
-	if err != nil {
-		return fmt.Errorf("failed to resolve revision %q: %w", ugc.From, err)
+	if ugc.to, err = ugc.repository.ResolveRevision(plumbing.Revision(ugc.To)); err != nil {
+		return fmt.Errorf("failed to resolve revision specified in 'to' argument as %q: %w", ugc.To, err)
 	}
 
-	to, err := r.ResolveRevision(plumbing.Revision(ugc.To))
-	if err != nil {
-		return fmt.Errorf("failed to resolve revision %q: %w", ugc.To, err)
-	}
-
-	if ugc.diffToApply, err = ugc.diff(r, *from, *to); err != nil {
-		return fmt.Errorf("failed to get diff between revision %q to %q: %w", ugc.From, ugc.To, err)
+	if ugc.From != "" {
+		if ugc.from, err = ugc.repository.ResolveRevision(plumbing.Revision(ugc.From)); err != nil {
+			return fmt.Errorf("failed to resolve revision specified in 'from' flag as %q: %w", ugc.From, err)
+		}
 	}
 
 	return nil
 }
 
 func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
-	if len(ugc.diffToApply.changes) == 0 {
+	client, err := cmd.storeClient()
+	if err != nil {
+		return ugc.toCommandError(k.Stderr, err)
+	}
+
+	version := ugc.VersionMustEq
+
+	//nolint:nestif
+	if ugc.from == nil {
+		resp, err := client.GetCurrentVersion(context.Background(), hub.NewGetCurrentVersionRequest(cmd.StoreID))
+		if err != nil {
+			return ugc.toCommandError(k.Stderr, err)
+		}
+
+		g := resp.GetChangeDetails().GetGit()
+		if g == nil || g.GetHash() == "" {
+			pathToRepo, err := filepath.Abs(ugc.Path)
+			if err != nil {
+				return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get absolute path to repository: %w", err))
+			}
+
+			newStoreVersion, err := replaceFiles(client, cmd.StoreID, filepath.Join(pathToRepo, ugc.Subdirectory), ugc.ChangeDetails, ugc.VersionMustEq)
+			if err != nil {
+				return ugc.toCommandError(k.Stderr, err)
+			}
+
+			ugc.printNewVersion(k.Stdout, newStoreVersion)
+			return nil
+		}
+
+		if ugc.from, err = ugc.repository.ResolveRevision(plumbing.Revision(g.GetHash())); err != nil {
+			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to resolve revision %q: %w", ugc.From, err))
+		}
+
+		if ugc.VersionMustEq > 0 && ugc.VersionMustEq != resp.GetStoreVersion() {
+			return ugc.toCommandError(k.Stderr, hub.StoreRPCError{Kind: store.RPCErrorConditionUnsatisfied})
+		}
+
+		version = resp.GetStoreVersion()
+	}
+
+	diffToApply, err := ugc.diff(ugc.repository, *ugc.from, *ugc.to)
+	if err != nil {
+		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get diff between revision %q to %q: %w", ugc.From, ugc.To, err))
+	}
+
+	if len(diffToApply.changes) == 0 {
 		fmt.Fprintf(k.Stdout, "No changes to upload\n")
 		return nil
 	}
@@ -85,14 +142,9 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to open git repository: %w", err))
 	}
 
-	client, err := cmd.storeClient()
+	gitChangeDetails, err := changeDetailsFromHash(repository, diffToApply.hash)
 	if err != nil {
-		return ugc.toCommandError(k.Stderr, err)
-	}
-
-	gitChangeDetails, err := changeDetailsFromHash(repository, ugc.diffToApply.hash)
-	if err != nil {
-		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details for %q: %w", ugc.diffToApply.hash.String(), err))
+		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details for %q: %w", diffToApply.hash.String(), err))
 	}
 
 	changeDetails, message, err := ugc.ChangeDetails.ChangeDetails(gitChangeDetails)
@@ -100,8 +152,7 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to get change details: %w", err))
 	}
 
-	version := ugc.VersionMustEq
-	for batch, err := range ugc.batch() {
+	for batch, err := range ugc.batch(diffToApply) {
 		if err != nil {
 			return ugc.toCommandError(k.Stderr, err)
 		}
@@ -128,12 +179,12 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	return nil
 }
 
-func (ugc *UploadGitCmd) batch() iter.Seq2[[]*storev1.FileOp, error] {
+func (ugc *UploadGitCmd) batch(diffToApply *diff) iter.Seq2[[]*storev1.FileOp, error] {
 	return func(yield func([]*storev1.FileOp, error) bool) {
 		batch := make([]*storev1.FileOp, 0, modifyFilesBatchSize)
 		batchCounter := 0
 
-		for _, change := range ugc.diffToApply.changes {
+		for _, change := range diffToApply.changes {
 			switch change.operation {
 			case OpAddOrUpdate:
 				contents, err := os.ReadFile(change.path)
