@@ -5,7 +5,7 @@ include::ROOT:partial$attributes.adoc[]
 
 == Highlights
 
-This release introduces a new xref:0.17.0@configuration:audit.adoc#file[file-based audit logging backend] for structured logs that can be ingested by log aggregators. Having the audit trails from all Cerbos instances aggregated in a log management system provides system and security operators fine-grained visibility into all the resources secured by Cerbos. The collected audit data can be used to monitor live trends, create alerts for exceptional or suspicious patterns, and investigate past incidents.        
+This release introduces a new xref:configuration:audit.adoc#file[file-based audit logging backend] for structured logs that can be ingested by log aggregators. Having the audit trails from all Cerbos instances aggregated in a log management system provides system and security operators fine-grained visibility into all the resources secured by Cerbos. The collected audit data can be used to monitor live trends, create alerts for exceptional or suspicious patterns, and investigate past incidents.        
 
 Resource policies and derived role definitions now support the special ``*`` operator to be used with ``roles`` and ``parentRoles`` fields to match any role. Previously, in order for a derived role or a policy rule to activate, at least one of the principal's roles had to match the set of roles enumerated in the rule. With this change, derived roles or policy rules can be defined to effectively ignore the principal's role. One of the ways in which this feature can be used is to model capability-based access rules based on grants defined in a JWT. 
 
