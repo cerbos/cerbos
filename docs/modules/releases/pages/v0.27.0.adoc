@@ -5,9 +5,9 @@ include::ROOT:partial$attributes.adoc[]
 
 == Highlights
 
-Cerbos now supports returning user-defined output values from policy evaluation. Policy authors define an optional expression to evaluate if a rule is activated and Cerbos collects and returns the set of outputs as part of the API response. This enables developers to take specific actions in their applications based on the outcome of an authorization check. See the xref:0.27.0@policies:outputs.adoc[outputs documentation] for more information.
+Cerbos now supports returning user-defined output values from policy evaluation. Policy authors define an optional expression to evaluate if a rule is activated and Cerbos collects and returns the set of outputs as part of the API response. This enables developers to take specific actions in their applications based on the outcome of an authorization check. See the xref:policies:outputs.adoc[outputs documentation] for more information.
 
-The new `overlay` storage is a special driver that allows you to configure any two Cerbos xref:configuration:storage.adoc[storage drivers] as base and fallback stores. If the base store becomes unavailable for some reason, Cerbos automatically switches to the fallback store until the base becomes available again. See the xref:0.27.0@configuration:storage.adoc#redundancy[overlay documentation] for more information.
+The new `overlay` storage is a special driver that allows you to configure any two Cerbos xref:configuration:storage.adoc[storage drivers] as base and fallback stores. If the base store becomes unavailable for some reason, Cerbos automatically switches to the fallback store until the base becomes available again. See the xref:configuration:storage.adoc#redundancy[overlay documentation] for more information.
 
 The database storage drivers now perform a schema check on startup to make sure that the required tables exist. This behaviour can be switched off in the configuration.
 

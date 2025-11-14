@@ -7,7 +7,7 @@ This release contains improvements to the Admin API to make administrative tasks
 
 == Highlights
 
-When using database-backed policy stores, it's now possible to disable policies by name xref:0.25.0@cli:cerbosctl.adoc#disable[using `cerbosctl`] or the xref:0.25.0@api:admin_api.adoc#disable-policies[Admin API]. Previously this required re-submitting the whole policy to the Admin API with its `disabled` field set to `true`. The new endpoint detects whether disabling a scoped policy would break the scope chain and warns the user about it. That helps prevent users from making changes that leaves the policy store in an invalid state.
+When using database-backed policy stores, it's now possible to disable policies by name xref:cli:cerbosctl.adoc#disable[using `cerbosctl`] or the xref:api:admin_api.adoc#disable-policies[Admin API]. Previously this required re-submitting the whole policy to the Admin API with its `disabled` field set to `true`. The new endpoint detects whether disabling a scoped policy would break the scope chain and warns the user about it. That helps prevent users from making changes that leaves the policy store in an invalid state.
 
 The `DeleteSchema` Admin API endpoint now returns the number of schemas deleted and does not throw an error if none were deleted.
 
