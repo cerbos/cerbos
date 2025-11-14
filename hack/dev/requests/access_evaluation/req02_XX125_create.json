@@ -1,0 +1,35 @@
+{
+  "subject": {
+    "type": "user",
+    "id": "john",
+    "properties": {
+      "cerbos.scope": "acme.hr",
+      "cerbos.roles": [
+        "employee"
+      ],
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design",
+      "ip_address": "10.20.5.5"
+    }
+  },
+  "resource": {
+    "type": "leave_request",
+    "id": "XX125",
+    "properties": {
+      "cerbos.scope": "acme.hr.uk",
+      "department": "marketing",
+      "geography": "GB",
+      "id": "XX125",
+      "owner": "john",
+      "team": "design"
+    }
+  },
+  "action": {
+    "name": "create",
+    "properties": {}
+  },
+  "context": {
+    "cerbos.requestId": "test"
+  }
+}

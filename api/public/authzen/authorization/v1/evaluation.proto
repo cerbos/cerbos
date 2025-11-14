@@ -1,0 +1,209 @@
+// Copyright 2021-2025 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package authzen.authorization.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option csharp_namespace = "AuthZen.Api.V1.Authorization";
+option go_package = "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1";
+option java_package = "dev.authzen.api.v1.authorization";
+
+// AuthZEN evaluation request message
+message AccessEvaluationRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluation request"}
+  };
+
+  // Subject represents the principal requesting access
+  message Subject {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "Subject requesting access"}
+    };
+
+    string type = 1 [
+      (buf.validate.field).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Type of the subject."
+        example: "\"user\""
+      }
+    ];
+
+    string id = 2 [
+      (buf.validate.field).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Unique identifier for the subject."
+        example: "\"alice@acmecorp.com\""
+      }
+    ];
+
+    map<string, google.protobuf.Value> properties = 3 [
+      (buf.validate.field).map.keys = {
+        string: {min_len: 1}
+      },
+      (buf.validate.field).map.values.required = true,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Key-value pairs of contextual data about this subject that should be used during policy evaluation."
+        example: "{\"department\": \"engineering\"}"
+      }
+    ];
+  }
+
+  // Resource represents the target of the access request
+  message Resource {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "Resource being accessed"}
+    };
+
+    string type = 1 [
+      (buf.validate.field).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Type of the resource."
+        example: "\"account\""
+      }
+    ];
+
+    string id = 2 [
+      (buf.validate.field).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Unique identifier for the resource."
+        example: "\"123\""
+      }
+    ];
+
+    map<string, google.protobuf.Value> properties = 3 [
+      (buf.validate.field).map.keys = {
+        string: {min_len: 1}
+      },
+      (buf.validate.field).map.values.required = true,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Key-value pairs of contextual data about this resource that should be used during policy evaluation."
+        example: "{\"owner\": \"bugs_bunny\"}"
+      }
+    ];
+  }
+
+  // Action represents the operation being performed
+  message Action {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "Action being performed"}
+    };
+
+    string name = 1 [
+      (buf.validate.field).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Name of the action being performed."
+        example: "\"can_read\""
+      }
+    ];
+
+    map<string, google.protobuf.Value> properties = 2 [
+      (buf.validate.field).map.keys = {
+        string: {min_len: 1}
+      },
+      (buf.validate.field).map.values.required = true,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Key-value pairs of contextual data about this action that should be used during policy evaluation."
+        example: "{\"method\": \"GET\"}"
+      }
+    ];
+  }
+
+  Subject subject = 1 [
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  Resource resource = 2 [
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  Action action = 3 [
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
+
+  map<string, google.protobuf.Value> context = 4 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
+      example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
+    }
+  ];
+}
+
+// AuthZEN evaluation response message
+message AccessEvaluationResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluation response"}
+  };
+
+  // Context provides additional information about the evaluation
+  message Context {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "Additional context about the evaluation"}
+    };
+
+    // Reason provides explanation for administrative or user-facing purposes
+    message Reason {
+      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {description: "Reason for the access decision"}
+      };
+
+      map<string, google.protobuf.Value> properties = 1 [
+        (buf.validate.field).map.keys = {
+          string: {min_len: 1}
+        },
+        (buf.validate.field).map.values.required = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "Key-value pairs providing reason details."
+          example: "{\"policy\": \"resource.expense.v1\", \"rule\": \"owner_access\"}"
+        }
+      ];
+    }
+
+    string id = 1 [
+      (buf.validate.field).string = {min_len: 1},
+      (buf.validate.field).required = true,
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Identifier describing the response reason."
+        example: "\"policy_evaluated\""
+      }
+    ];
+
+    Reason reason_admin = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Administrative reason for internal purposes."}];
+
+    Reason reason_user = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "User-facing reason for explaining access denial."}];
+  }
+
+  bool decision = 1 [
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Whether to allow or deny the operation."
+      example: "true"
+    }
+  ];
+
+  Context context = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Additional context about the evaluation."}];
+}
