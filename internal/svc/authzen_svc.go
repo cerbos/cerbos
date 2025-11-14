@@ -42,7 +42,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 	if err != nil {
 		return nil, err
 	}
-	respAsValue, err := recodeToValue(resp)
+	respAsValue, err := messageToValue(resp.ProtoReflect())
 	if err != nil {
 		return nil, err
 	}
@@ -122,10 +122,6 @@ func toPrincipal(subj *svcv1.AccessEvaluationRequest_Subject) *enginev1.Principa
 		Attr:          props,
 		Scope:         lookupOrEmptyString(props, "scope"),
 	}
-}
-
-func recodeToValue(from proto.Message) (*structpb.Value, error) {
-	return messageToValue(from.ProtoReflect())
 }
 
 func messageToValue(msg protoreflect.Message) (*structpb.Value, error) {

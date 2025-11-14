@@ -172,7 +172,6 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     tests["cerbos.svc.v1.CerbosService/CheckResourceSet"]="check_resource_set"
     tests["cerbos.svc.v1.CerbosService/CheckResourceBatch"]="check_resource_batch"
     tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
-    tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
     tests["cerbos.svc.v1.CerbosService/PlanResources"]="plan_resources"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"]="playground_validate"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate"]="playground_evaluate"
