@@ -133,7 +133,7 @@ func messageToValue(msg protoreflect.Message) (*structpb.Value, error) {
 			rangeErr = err
 			return false
 		}
-		fields[string(fd.Name())] = fieldValue
+		fields[fd.JSONName()] = fieldValue
 		return true
 	})
 
