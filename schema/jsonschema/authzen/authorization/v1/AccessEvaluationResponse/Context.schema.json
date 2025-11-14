@@ -1,0 +1,43 @@
+{
+  "$id": "https://api.cerbos.dev/authzen/authorization/v1/AccessEvaluationResponse/Context.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "authzen.authorization.v1.AccessEvaluationResponse.Context.Reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reasonAdmin": {
+      "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationResponse.Context.Reason"
+    },
+    "reasonUser": {
+      "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationResponse.Context.Reason"
+    }
+  }
+}
