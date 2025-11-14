@@ -12,7 +12,6 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -328,7 +327,7 @@ func structValueToProtoValue(value *structpb.Value, fd protoreflect.FieldDescrip
 func extractAuxData(m map[string]*structpb.Value) (*requestv1.AuxData, error) {
 	var auxData *structpb.Value
 	var ok bool
-	if auxData, ok = m["auxData"]; !ok {
+	if auxData, ok = m[cerbosProp("auxData")]; !ok {
 		return nil, nil
 	}
 
