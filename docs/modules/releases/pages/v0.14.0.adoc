@@ -13,11 +13,11 @@ The policy testing framework is updated to support writing matrix tests and to t
 
 Deploying Cerbos to environments that utilise the Docker HEALTHCHECK directive (AWS Elastic Container Service, for example) is now easier using the built-in `cerbos healthcheck` command. The Cerbos container image ships with a default HEALTHCHECK configured using this command and it can be tuned using environment variables or command-line flags. See xref:cli:cerbos.adoc#healthcheck[cerbos healthcheck] documentation for details.
 
-The `cerbosctl` management tool now supports adding or updating policies and schemas to a running Cerbos instance using the new `put` subcommand. The xref:cli:cerbosctl.adoc#put[cerbosctl put documentation]. 
+The `cerbosctl` management tool now supports adding or updating policies and schemas to a running Cerbos instance using the new `put` subcommand. The xref:api:admin_api.adoc[Admin API] must be enabled on the Cerbos instance and it must be configured to use one of the database storage backends such as Postgres or MySQL in order for this command to work. For more information see xref:cli:cerbosctl.adoc#put[cerbosctl put documentation].
 
-You can write policy conditions that make use of the current time using the newly introduced `now` function. It's designed to provide a stable timestamp value that returns the time that particular policy started executing. The semantics of the `timeSince` function has changed to use this stable definition of `now` as well. 
- 
-The size of the in-memory caches that hold compiled policies and schemas have a significant impact on the performance of Cerbos PDPs. This release introduces two new configuration options to tune the sizes of these caches. If you are running Cerbos on Kubernetes or other orchestration system that imposes memory resource limits on containers, make sure to consider the cache sizes when configuring those limits. By default Cerbos holds 1024 compiled policies and 1024 schemas in its cache. The size and usage metrics of caches are available through the metrics endpoint (`/_cerbos/metrics`). 
+You can write policy conditions that make use of the current time using the newly introduced `now` function. It's designed to provide a stable timestamp value that returns the time that particular policy started executing. The semantics of the `timeSince` function has changed to use this stable definition of `now` as well.
+
+The size of the in-memory caches that hold compiled policies and schemas have a significant impact on the performance of Cerbos PDPs. This release introduces two new configuration options to tune the sizes of these caches. If you are running Cerbos on Kubernetes or other orchestration system that imposes memory resource limits on containers, make sure to consider the cache sizes when configuring those limits. By default Cerbos holds 1024 compiled policies and 1024 schemas in its cache. The size and usage metrics of caches are available through the metrics endpoint (`/_cerbos/metrics`).
 
 
 == Changelog
