@@ -5,11 +5,11 @@ include::ROOT:partial$attributes.adoc[]
 
 == Highlights
 
-The `PlanResources` API now validates requests using xref:0.19.0@policies:schemas.adoc[schemas] to flag any invalid or unknown attributes. Similar to the `CheckResources` API, the xref:0.19.0@configuration:schema.adoc[schema enforcement level] defined in the configuration file determines whether invalid requests are processed with warnings or completely rejected.
+The `PlanResources` API now validates requests using xref:policies:schemas.adoc[schemas] to flag any invalid or unknown attributes. Similar to the `CheckResources` API, the xref:configuration:schema.adoc[schema enforcement level] defined in the configuration file determines whether invalid requests are processed with warnings or completely rejected.
 
 This release also includes several fixes to the `PlanResources` output to simplify the plan produced for expressions that make use of higher-order functions like `in` and `exists`. The AST produced for logical operators like `and` and `or` is now more consistent regardless of the operator used as well.
 
-Distributed traces can now be exported to collectors that support link:https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md[OTLP] by using the new xref:0.19.0@configuration:tracing.adoc#otlp[`otlp` exporter]. Thanks to community member @rcrowe for contributing this feature.
+Distributed traces can now be exported to collectors that support link:https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md[OTLP] by using the new xref:configuration:tracing.adoc#otlp[`otlp` exporter]. Thanks to community member @rcrowe for contributing this feature.
 
 
 == Changelog
