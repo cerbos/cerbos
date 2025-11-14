@@ -9,7 +9,7 @@ This is a quick release close on the heels of xref:v0.27.0.adoc[Cerbos v0.27.0] 
 
 You can now write policy tests to verify that your policies produce the correct xref:policies:outputs.adoc[output values]. Checking for output values in tests is optional but, if you do define any output expectations, the tests will fail if the produced output does not match the expectations. See xref:policies:compile.adoc[] for information on testing.
 
-Audit log entries written to xref:0.28.0@configuration:audit.adoc#kafka[Kafka] can now be compressed using one of the supported compression algorithms. The default algorithm used is `Snappy`. Thanks to `@shangardezi` for contributing this feature.
+Audit log entries written to xref:shangardezi` for contributing this feature.
 
 
 == Changelog

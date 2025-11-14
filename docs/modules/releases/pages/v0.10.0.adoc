@@ -5,7 +5,7 @@ include::ROOT:partial$attributes.adoc[]
 
 == Highlights
 
-This release is about making Cerbos easier to install and try out. In addition to the existing container images, binaries and Helm charts, Cerbos can now be installed using xref:0.10.0@ROOT:installation/binary.adoc#homebrew[Homebrew] and xref:0.10.0@ROOT:installation/binary.adoc#linux-packages[DEB or RPM packages] as well. We have also added documentation and recipes for running Cerbos on the xref:0.10.0@deployment:serverless-faas.adoc[AWS Lambda platform] and as a xref:0.10.0@deployment:systemd.adoc[Systemd service] on Linux.
+This release is about making Cerbos easier to install and try out. In addition to the existing container images, binaries and Helm charts, Cerbos can now be installed using xref:deployment:systemd.adoc[Systemd service] on Linux.
 
 
 == Changelog
