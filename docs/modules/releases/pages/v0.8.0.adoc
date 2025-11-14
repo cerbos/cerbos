@@ -9,7 +9,7 @@ This is a quick release to fix a bug with derived role imports where only the la
 
 There are a few ergonomics improvements bundled with this release as well.
 
-Hierarchy functions:: An extension to CEL that makes working with hierarchy representations in policy conditions easier. You can now write policy rules that inspect attributes describing the positions where your resources and principals belong to in a hierarchy. See xref:0.8.0@cerbos:policies:conditions.adoc#hierarchies[hierarchy documentation] for details.
+Hierarchy functions:: An extension to CEL that makes working with hierarchy representations in policy conditions easier. You can now write policy rules that inspect attributes describing the positions where your resources and principals belong to in a hierarchy. See xref:cerbos:policies:conditions.adoc#hierarchies[hierarchy documentation] for details.
 Globals in conditions:: You can define common CEL expressions in the new `globals` section of a policy and refer to them in conditions. This enables code reuse and easier updates to business logic with reduced opportunities for making mistakes. Please note that this feature is still unstable and will be stabilised in a future release.
 Name policy rules:: When authoring policies, you can name individual policy rules using the optional `name` field. This aids the Cerbos engine to produce better error messages and also helps you improve your own documentation and communication efforts by being able to identify and refer to individual rules by name.
 Filter policy list:: When listing policies using the Admin API or the `cerbosctl` utility, you can filter the list based on values of policy fields. 
