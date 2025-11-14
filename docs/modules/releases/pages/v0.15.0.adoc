@@ -7,23 +7,23 @@ This release is full of new features and enhancements to increase developer prod
 
 == Highlights
 
-Cerbos now ships with a REPL (read-evaluate-print-loop) for developing conditions for policies. It provides an interactive environment where all the Cerbos special variables like `request` can be set and referenced in CEL expressions to get immediate feedback about the effects of executing those expressions. When developing complex logic, the REPL should help policy authors save a lot of time in the prototyping stage. It's available as a sub command of the Cerbos executable and can be run from the binary or the container by invoking `cerbos repl`. See the xref:0.15.0@cli:cerbos.adoc#repl[REPL documentation] for more information.   
+Cerbos now ships with a REPL (read-evaluate-print-loop) for developing conditions for policies. It provides an interactive environment where all the Cerbos special variables like `request` can be set and referenced in CEL expressions to get immediate feedback about the effects of executing those expressions. When developing complex logic, the REPL should help policy authors save a lot of time in the prototyping stage. It's available as a sub command of the Cerbos executable and can be run from the binary or the container by invoking `cerbos repl`. See the xref:cli:cerbos.adoc#repl[REPL documentation] for more information.
 
 image::repl.gif[]
 
-Schemas describing the structure of the Cerbos policies are now publicly available and can be used with editors that support schemas to make the policy editing experience better. Most editors, when configured with the schema URL, can provide context-sensitive hints, validation and other rich editing features for policies. See xref:0.15.0@policies:authoring_tips.adoc[] for more information about how to configure your editor.  
+Schemas describing the structure of the Cerbos policies are now publicly available and can be used with editors that support schemas to make the policy editing experience better. Most editors, when configured with the schema URL, can provide context-sensitive hints, validation and other rich editing features for policies. See xref:policies:authoring_tips.adoc[] for more information about how to configure your editor.
 
 image::schema_edit.gif[]
 
-One of the core features of Cerbos is the policy testing framework. This release includes many improvements to the test runner to make the test output easy to consume by both humans and automated tools. The default output produces a summarised view of the test run which is much more compact and easy to read. Failures and other details are rendered in a natural tree structure and the output can be customised in many ways. Engine traces for failed tests are now properly rendered as JSON for consumption by automated tools as well. 
+One of the core features of Cerbos is the policy testing framework. This release includes many improvements to the test runner to make the test output easy to consume by both humans and automated tools. The default output produces a summarised view of the test run which is much more compact and easy to read. Failures and other details are rendered in a natural tree structure and the output can be customised in many ways. Engine traces for failed tests are now properly rendered as JSON for consumption by automated tools as well.
 
 image::test_output.png[]
 
-The Admin API has a new endpoint to force a reload of some of the disk-based stores such as `disk`, `git` and `blob`. This is useful when policies rarely change and polling the store for updates isn't necessary. Using the Admin API or the `cerbosctl` utility, the store can now be manually refreshed to pickup any changes. See xref:0.15.0@api:admin_api.adoc#store-management[Admin API] documentation and xref:0.15.0@cli:cerbosctl.adoc#store[`cerbosctl` documentation] for details.   
+The Admin API has a new endpoint to force a reload of some of the disk-based stores such as `disk`, `git` and `blob`. This is useful when policies rarely change and polling the store for updates isn't necessary. Using the Admin API or the `cerbosctl` utility, the store can now be manually refreshed to pickup any changes. See xref:api:admin_api.adoc#store-management[Admin API] documentation and xref:cli:cerbosctl.adoc#store[`cerbosctl` documentation] for details.
 
-The test server provided by the Go SDK can now be configured with all available Cerbos configuration options. This should be particularly useful in integration testing scenarios where the server needs to be configured as close to the actual production server as possible. 
- 
-Anonymous usage information collection is introduced in this release to help Cerbos developers prioritise new features and improve existing ones. No personal information is ever collected and opting out is easy. See xref:0.15.0@ROOT:telemetry.adoc[] for more information about the kind of data collected and how to opt out.
+The test server provided by the Go SDK can now be configured with all available Cerbos configuration options. This should be particularly useful in integration testing scenarios where the server needs to be configured as close to the actual production server as possible.
+
+Anonymous usage information collection is introduced in this release to help Cerbos developers prioritise new features and improve existing ones. No personal information is ever collected and opting out is easy. See xref:ROOT:telemetry.adoc[] for more information about the kind of data collected and how to opt out.
 
 
 == Changelog

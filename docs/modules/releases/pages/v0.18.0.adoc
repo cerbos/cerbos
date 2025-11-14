@@ -9,7 +9,7 @@ This release includes a whole host of quality-of-life improvements and fixes dri
 
 The `cerbosctl` utility is now available as a container. It makes it easier to provision Cerbos on container orchestration systems using native constructs (for example, init containers on Kubernetes).
 
-Cerbos now caches the verification state of JWTs in memory to avoid repeating the expensive cryptographic operations on each and every request. The tokens are still validated each time to ensure that they haven't expired and are valid for use. See xref:0.18.0@configuration:auxdata.adoc[AuxData configuration] for information on how to configure the cache.
+Cerbos now caches the verification state of JWTs in memory to avoid repeating the expensive cryptographic operations on each and every request. The tokens are still validated each time to ensure that they haven't expired and are valid for use. See xref:configuration:auxdata.adoc[AuxData configuration] for information on how to configure the cache.
 
 There are several improvements to the `PlanResources` API. An optimisation pass has been introduced to simplify some of the logical expressions in the query plan and eliminate redundant conditions. For example, `NOT true` automatically gets simplified to just `false` and `true AND x == y` gets simplified to `x == y`. All aliases, such as `R` for `request.resource`, are expanded to their long form in the plan output to help make the API response predictable. The output of the `filterDebug` field in the query plan response is standardised to use S-expression format to ensure that it is easily verifiable by automated tools.  
 
