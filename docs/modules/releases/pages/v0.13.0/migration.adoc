@@ -2,11 +2,11 @@ include::ROOT:partial$attributes.adoc[]
 
 = Migrating from Cerbos 0.12.0 to 0.13.0
 
-Cerbos 0.13.0 introduces the concept of xref:0.13.0@policies:scoped_policies.adoc[scoped policies] which requires an update to the database tables if you are using either MySQL or Postgres xref:0.13.0@configuration:storage.adoc[storage backends]. As Cerbos instances access the database backends using an unprivileged user, the database migration will not be performed automatically. An administrator must run the appropriate migration script on the database before upgrading to Cerbos 0.13.0. The `Check` and `Plan` API calls will continue to work during the migration. We do not recommend using the Admin API to add or update records during the migration as writes could potentially block or fail while the tables are altered.  
+Cerbos 0.13.0 introduces the concept of xref:policies:scoped_policies.adoc[scoped policies] which requires an update to the database tables if you are using either MySQL or Postgres xref:configuration:storage.adoc[storage backends]. As Cerbos instances access the database backends using an unprivileged user, the database migration will not be performed automatically. An administrator must run the appropriate migration script on the database before upgrading to Cerbos 0.13.0. The `Check` and `Plan` API calls will continue to work during the migration. We do not recommend using the Admin API to add or update records during the migration as writes could potentially block or fail while the tables are altered.
 
 .Migration steps
 . While Cerbos 0.12.0 is still running, execute one of the migration scripts as a database administration user
-. Upgrade to Cerbos 0.13.0 
+. Upgrade to Cerbos 0.13.0
 
 == MySQL
 
