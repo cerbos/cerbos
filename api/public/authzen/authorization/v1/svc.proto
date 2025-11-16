@@ -11,7 +11,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 option csharp_namespace = "AuthZen.Api.V1.Authorization";
 option go_package = "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1";
-option java_package = "dev.authzen.api.v1.authorization";
+option java_package = "dev.cerbos.authzen.api.v1.authorization";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "AuthZEN Authorization API"
