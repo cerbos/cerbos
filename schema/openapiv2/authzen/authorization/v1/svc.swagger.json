@@ -5,8 +5,8 @@
     "description": "OpenID AuthZEN Authorization API for access evaluations",
     "version": "v1",
     "contact": {
-      "name": "AuthZEN Working Group",
-      "url": "https://openid.net/wg/authzen/"
+      "name": "Cerbos",
+      "url": "https://cerbos.dev"
     }
   },
   "tags": [

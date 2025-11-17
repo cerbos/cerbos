@@ -31,9 +31,9 @@ const file_authzen_authorization_v1_svc_proto_rawDesc = "" +
 	"\n" +
 	"\"authzen/authorization/v1/svc.proto\x12\x18authzen.authorization.v1\x1a)authzen/authorization/v1/evaluation.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xef\x02\n" +
 	"\x14AuthorizationService\x12\x9b\x02\n" +
-	"\x10AccessEvaluation\x121.authzen.authorization.v1.AccessEvaluationRequest\x1a2.authzen.authorization.v1.AccessEvaluationResponse\"\x9f\x01\x92A|\x12\x17Evaluate access request\x1aaEvaluate whether a subject can perform an action on a resource according to AuthZEN specification\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/access/v1/evaluation\x1a9\x92A6\x124AuthZEN Authorization Service for access evaluationsB\xdb\x02\x92A\xbb\x01\x12\x91\x01\n" +
-	"\x19AuthZEN Authorization API\x127OpenID AuthZEN Authorization API for access evaluations\"7\n" +
-	"\x15AuthZEN Working Group\x12\x1ehttps://openid.net/wg/authzen/2\x02v1*\x01\x022\x10application/json:\x10application/json\n" +
+	"\x10AccessEvaluation\x121.authzen.authorization.v1.AccessEvaluationRequest\x1a2.authzen.authorization.v1.AccessEvaluationResponse\"\x9f\x01\x92A|\x12\x17Evaluate access request\x1aaEvaluate whether a subject can perform an action on a resource according to AuthZEN specification\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/access/v1/evaluation\x1a9\x92A6\x124AuthZEN Authorization Service for access evaluationsB\xbf\x02\x92A\x9f\x01\x12v\n" +
+	"\x19AuthZEN Authorization API\x127OpenID AuthZEN Authorization API for access evaluations\"\x1c\n" +
+	"\x06Cerbos\x12\x12https://cerbos.dev2\x02v1*\x01\x022\x10application/json:\x10application/json\n" +
 	"'dev.cerbos.authzen.api.v1.authorizationZKgithub.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1\xaa\x02#Cerbos.AuthZen.Api.V1.Authorizationb\x06proto3"
 
 var file_authzen_authorization_v1_svc_proto_goTypes = []any{
