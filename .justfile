@@ -172,10 +172,10 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     tests["cerbos.svc.v1.CerbosService/CheckResourceSet"]="check_resource_set"
     tests["cerbos.svc.v1.CerbosService/CheckResourceBatch"]="check_resource_batch"
     tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
-    tests["cerbos.svc.v1.CerbosService/CheckResources"]="check_resources"
     tests["cerbos.svc.v1.CerbosService/PlanResources"]="plan_resources"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"]="playground_validate"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate"]="playground_evaluate"
+    tests["authzen.authorization.v1.AuthorizationService/AccessEvaluation"]="access_evaluation"
 
     for svc in "${!tests[@]}"; do
         echo "--- $svc ---"
@@ -187,7 +187,7 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     done
 
 check-http PROTOCOL='https' HOST='localhost' PORT='3592':
-	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan}.hurl
+	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan,access_evaluation}.hurl
 
 # Executables
 

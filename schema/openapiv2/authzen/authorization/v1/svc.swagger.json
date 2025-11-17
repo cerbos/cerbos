@@ -1,0 +1,270 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "AuthZEN Authorization API",
+    "description": "OpenID AuthZEN Authorization API for access evaluations",
+    "version": "v1",
+    "contact": {
+      "name": "Cerbos",
+      "url": "https://cerbos.dev"
+    }
+  },
+  "tags": [
+    {
+      "name": "AuthorizationService",
+      "description": "AuthZEN Authorization Service for access evaluations"
+    }
+  ],
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/access/v1/evaluation": {
+      "post": {
+        "summary": "Evaluate access request",
+        "description": "Evaluate whether a subject can perform an action on a resource according to AuthZEN specification",
+        "operationId": "AuthorizationService_AccessEvaluation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "AuthZEN access evaluation request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthorizationService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AccessEvaluationRequestAction": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "can_read",
+          "description": "Name of the action being performed."
+        },
+        "properties": {
+          "type": "object",
+          "example": {
+            "method": "GET"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs of contextual data about this action that should be used during policy evaluation."
+        }
+      },
+      "description": "Action being performed",
+      "title": "Action represents the operation being performed",
+      "required": [
+        "name"
+      ]
+    },
+    "AccessEvaluationRequestResource": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "account",
+          "description": "Type of the resource."
+        },
+        "id": {
+          "type": "string",
+          "example": "123",
+          "description": "Unique identifier for the resource."
+        },
+        "properties": {
+          "type": "object",
+          "example": {
+            "owner": "bugs_bunny"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs of contextual data about this resource that should be used during policy evaluation."
+        }
+      },
+      "description": "Resource being accessed",
+      "title": "Resource represents the target of the access request",
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "AccessEvaluationRequestSubject": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "user",
+          "description": "Type of the subject."
+        },
+        "id": {
+          "type": "string",
+          "example": "alice@acmecorp.com",
+          "description": "Unique identifier for the subject."
+        },
+        "properties": {
+          "type": "object",
+          "example": {
+            "department": "engineering"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs of contextual data about this subject that should be used during policy evaluation."
+        }
+      },
+      "description": "Subject requesting access",
+      "title": "Subject represents the principal requesting access",
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "AccessEvaluationResponseContext": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "policy_evaluated",
+          "description": "Identifier describing the response reason."
+        },
+        "reasonAdmin": {
+          "$ref": "#/definitions/ContextReason",
+          "description": "Administrative reason for internal purposes."
+        },
+        "reasonUser": {
+          "$ref": "#/definitions/ContextReason",
+          "description": "User-facing reason for explaining access denial."
+        }
+      },
+      "description": "Additional context about the evaluation",
+      "title": "Context provides additional information about the evaluation",
+      "required": [
+        "id"
+      ]
+    },
+    "ContextReason": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "example": {
+            "policy": "resource.expense.v1",
+            "rule": "owner_access"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs providing reason details."
+        }
+      },
+      "description": "Reason for the access decision",
+      "title": "Reason provides explanation for administrative or user-facing purposes"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AccessEvaluationRequest": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/AccessEvaluationRequestSubject"
+        },
+        "resource": {
+          "$ref": "#/definitions/AccessEvaluationRequestResource"
+        },
+        "action": {
+          "$ref": "#/definitions/AccessEvaluationRequestAction"
+        },
+        "context": {
+          "type": "object",
+          "example": {
+            "time": "2023-01-01T00:00:00Z"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
+        }
+      },
+      "description": "AuthZEN access evaluation request",
+      "title": "AuthZEN evaluation request message",
+      "required": [
+        "subject",
+        "resource",
+        "action"
+      ]
+    },
+    "v1AccessEvaluationResponse": {
+      "type": "object",
+      "properties": {
+        "decision": {
+          "type": "boolean",
+          "example": true,
+          "description": "Whether to allow or deny the operation."
+        },
+        "context": {
+          "$ref": "#/definitions/AccessEvaluationResponseContext",
+          "description": "Additional context about the evaluation."
+        }
+      },
+      "description": "AuthZEN access evaluation response",
+      "title": "AuthZEN evaluation response message",
+      "required": [
+        "decision"
+      ]
+    }
+  }
+}
