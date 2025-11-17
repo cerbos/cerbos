@@ -18,17 +18,14 @@
       "properties": {
         "enabled": {
           "default": false,
-          "required": [],
           "type": "boolean"
         },
         "maxReplicas": {
           "default": 100,
-          "required": [],
           "type": "integer"
         },
         "minReplicas": {
           "default": 1,
-          "required": [],
           "type": "integer"
         },
         "targetCPUUtilizationPercentage": {
@@ -68,28 +65,24 @@
         "grpcPort": {
           "default": 3593,
           "description": "Port to expose the gRPC service on.",
-          "required": [],
           "title": "grpcPort",
           "type": "integer"
         },
         "httpPort": {
           "default": 3592,
           "description": "Port to expose the http service on.",
-          "required": [],
           "title": "httpPort",
           "type": "integer"
         },
         "logLevel": {
           "default": "INFO",
           "description": "Cerbos log level. Valid values are DEBUG, INFO, WARN and ERROR",
-          "required": [],
           "title": "logLevel",
           "type": "string"
         },
         "prometheusPodAnnotationsEnabled": {
           "default": true,
           "description": "Add Prometheus service discovery annotations to the pod.",
-          "required": [],
           "title": "prometheusPodAnnotationsEnabled",
           "type": "boolean"
         },
@@ -161,11 +154,9 @@
         "additionalProperties": true,
         "properties": {
           "name": {
-            "required": [],
             "type": "string"
           },
           "value": {
-            "required": [],
             "type": "string"
           }
         },
@@ -259,7 +250,6 @@
       "items": {
         "properties": {
           "name": {
-            "required": [],
             "type": "string"
           }
         },
@@ -349,7 +339,6 @@
     "replicaCount": {
       "default": 1,
       "description": "Number of Cerbos pods to run",
-      "required": [],
       "title": "replicaCount",
       "type": "integer"
     },

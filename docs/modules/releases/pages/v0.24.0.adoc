@@ -20,7 +20,7 @@ A new setting named `decisionLogFilters` has been introduced to allow users to r
 - Ignore all `PlanResources` calls
 - Ignore `PlanResources` calls that produce `ALWAYS_ALLOW` plans
 
-See xref:0.24.0@configuration:audit.adoc[] for more information.
+See xref:configuration:audit.adoc[] for more information.
 
 === Database connectivity improvement
 
