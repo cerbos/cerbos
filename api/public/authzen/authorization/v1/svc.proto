@@ -9,7 +9,7 @@ import "authzen/authorization/v1/evaluation.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-option csharp_namespace = "AuthZen.Api.V1.Authorization";
+option csharp_namespace = "Cerbos.AuthZen.Api.V1.Authorization";
 option go_package = "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1";
 option java_package = "dev.cerbos.authzen.api.v1.authorization";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
@@ -18,8 +18,8 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     version: "v1"
     description: "OpenID AuthZEN Authorization API for access evaluations"
     contact: {
-      name: "AuthZEN Working Group"
-      url: "https://openid.net/wg/authzen/"
+      name: "Cerbos"
+      url: "https://cerbos.dev"
     }
   }
   schemes: HTTPS

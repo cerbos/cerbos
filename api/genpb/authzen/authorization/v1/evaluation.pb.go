@@ -492,8 +492,8 @@ const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:%\x92A\"\n" +
 	" 2\x1eReason for the access decision:.\x92A+\n" +
 	")2'Additional context about the evaluation:)\x92A&\n" +
-	"$2\"AuthZEN access evaluation responseB\x8e\x01\n" +
-	" dev.authzen.api.v1.authorizationZKgithub.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1\xaa\x02\x1cAuthZen.Api.V1.Authorizationb\x06proto3"
+	"$2\"AuthZEN access evaluation responseB\x9c\x01\n" +
+	"'dev.cerbos.authzen.api.v1.authorizationZKgithub.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1\xaa\x02#Cerbos.AuthZen.Api.V1.Authorizationb\x06proto3"
 
 var (
 	file_authzen_authorization_v1_evaluation_proto_rawDescOnce sync.Once

@@ -10,7 +10,7 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-option csharp_namespace = "AuthZen.Api.V1.Authorization";
+option csharp_namespace = "Cerbos.AuthZen.Api.V1.Authorization";
 option go_package = "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1";
 option java_package = "dev.cerbos.authzen.api.v1.authorization";
 
