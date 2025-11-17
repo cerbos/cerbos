@@ -8,6 +8,6 @@
     "test": "test/run.sh"
   },
   "devDependencies": {
-    "corepack": "0.34.2"
+    "corepack": "0.34.3"
   }
 }
