@@ -355,81 +355,79 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 
 			roleFqn := namer.RolePolicyFQN(role, scope)
 
-			literalActionSet, ok := literalActionSets[allowActionsIdxKey]
-			if !ok {
-				continue
-			}
-			if ars := literalActionSet.intersectWith(roleSet).rows(); len(ars) > 0 {
-				actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
-				// retrieve actions mapped to all effectual rows
-				resolved, err := m.idx.resolve(ctx, ars)
-				if err != nil {
-					return nil, err
-				}
-				for _, ar := range resolved {
-					for a := range ar.GetAllowActions().GetActions() {
-						rows, _ := actionMatchedRows.Get(a)
-						rows = append(rows, ar)
-						actionMatchedRows.Set(a, rows)
+			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok {
+				if ars := literalActionSet.intersectWith(roleSet).rows(); len(ars) > 0 {
+					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+					// retrieve actions mapped to all effectual rows
+					resolved, err := m.idx.resolve(ctx, ars)
+					if err != nil {
+						return nil, err
 					}
-				}
-
-				for _, action := range actions {
-					matchedRows := []*Row{}
-					for _, rows := range actionMatchedRows.GetMerged(action) {
-						matchedRows = append(matchedRows, rows...)
-					}
-					if len(matchedRows) == 0 {
-						// add a blanket DENY for non matching actions
-						newRow := &Row{
-							RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-								ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-									Action: action,
-								},
-								OriginFqn:      roleFqn,
-								Resource:       resource,
-								Role:           role,
-								Effect:         effectv1.Effect_EFFECT_DENY,
-								Scope:          scope,
-								Version:        version,
-								PolicyKind:     policyv1.Kind_KIND_RESOURCE,
-								FromRolePolicy: true,
-							},
-							NoMatchForScopePermissions: true,
+					for _, ar := range resolved {
+						for a := range ar.GetAllowActions().GetActions() {
+							rows, _ := actionMatchedRows.Get(a)
+							rows = append(rows, ar)
+							actionMatchedRows.Set(a, rows)
 						}
-						resSet.set(newRow)
-						res = append(res, newRow)
-					} else {
-						for _, ar := range matchedRows {
-							// Don't bother adding a rule if there's no condition.
-							// Otherwise, we invert the condition and set a DENY
-							if ar.Condition != nil {
-								newRow := &Row{
-									RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-										ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-											Action: action,
-										},
-										OriginFqn: ar.OriginFqn,
-										Resource:  resource,
-										Condition: &runtimev1.Condition{
-											Op: &runtimev1.Condition_None{
-												None: &runtimev1.Condition_ExprList{
-													Expr: []*runtimev1.Condition{ar.Condition},
+					}
+
+					for _, action := range actions {
+						matchedRows := []*Row{}
+						for _, rows := range actionMatchedRows.GetMerged(action) {
+							matchedRows = append(matchedRows, rows...)
+						}
+						if len(matchedRows) == 0 {
+							// add a blanket DENY for non matching actions
+							newRow := &Row{
+								RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+									ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+										Action: action,
+									},
+									OriginFqn:      roleFqn,
+									Resource:       resource,
+									Role:           role,
+									Effect:         effectv1.Effect_EFFECT_DENY,
+									Scope:          scope,
+									Version:        version,
+									PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+									FromRolePolicy: true,
+								},
+								NoMatchForScopePermissions: true,
+							}
+							resSet.set(newRow)
+							res = append(res, newRow)
+						} else {
+							for _, ar := range matchedRows {
+								// Don't bother adding a rule if there's no condition.
+								// Otherwise, we invert the condition and set a DENY
+								if ar.Condition != nil {
+									newRow := &Row{
+										RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+											ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+												Action: action,
+											},
+											OriginFqn: ar.OriginFqn,
+											Resource:  resource,
+											Condition: &runtimev1.Condition{
+												Op: &runtimev1.Condition_None{
+													None: &runtimev1.Condition_ExprList{
+														Expr: []*runtimev1.Condition{ar.Condition},
+													},
 												},
 											},
+											Role:             ar.Role,
+											Effect:           effectv1.Effect_EFFECT_DENY,
+											Scope:            scope,
+											ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
+											Version:          version,
+											EvaluationKey:    ar.EvaluationKey,
+											PolicyKind:       policyv1.Kind_KIND_RESOURCE,
+											FromRolePolicy:   true,
 										},
-										Role:             ar.Role,
-										Effect:           effectv1.Effect_EFFECT_DENY,
-										Scope:            scope,
-										ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
-										Version:          version,
-										EvaluationKey:    ar.EvaluationKey,
-										PolicyKind:       policyv1.Kind_KIND_RESOURCE,
-										FromRolePolicy:   true,
-									},
+									}
+									resSet.set(newRow)
+									res = append(res, newRow)
 								}
-								resSet.set(newRow)
-								res = append(res, newRow)
 							}
 						}
 					}
