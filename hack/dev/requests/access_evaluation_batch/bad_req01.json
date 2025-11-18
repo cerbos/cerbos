@@ -7,20 +7,8 @@
       "cerbos.roles": [
         "employee"
       ],
-      "department": "marketing",
+      "department": "accounting",
       "geography": "GB",
-      "team": "design"
-    }
-  },
-  "resource": {
-    "type": "leave_request",
-    "id": "XX125",
-    "properties": {
-      "cerbos.policyVersion": "20210210",
-      "department": "marketing",
-      "geography": "GB",
-      "id": "XX125",
-      "owner": "john",
       "team": "design"
     }
   },
@@ -34,12 +22,36 @@
   },
   "evaluations": [
     {
+      "resource": {
+        "type": "leave_request",
+        "id": "XX125",
+        "properties": {
+          "cerbos.policyVersion": "20210210",
+          "department": "accounting",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "john",
+          "team": "design"
+        }
+      },
       "action": {
         "name": "view:public",
         "properties": {}
       }
     },
     {
+      "resource": {
+        "type": "leave_request",
+        "id": "XX125",
+        "properties": {
+          "cerbos.policyVersion": "20210210",
+          "department": "accounting",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "john",
+          "team": "design"
+        }
+      },
       "action": {
         "name": "approve",
         "properties": {}
@@ -51,7 +63,7 @@
         "id": "XX125",
         "properties": {
           "cerbos.policyVersion": "20210210",
-          "department": "marketing",
+          "department": "accounting",
           "geography": "GB",
           "id": "XX125",
           "owner": "john",
@@ -69,7 +81,7 @@
         "id": "XX125",
         "properties": {
           "cerbos.policyVersion": "20210210",
-          "department": "marketing",
+          "department": "accounting",
           "geography": "GB",
           "id": "XX125",
           "owner": "john",
@@ -87,7 +99,7 @@
         "id": "XX150",
         "properties": {
           "cerbos.policyVersion": "20210210",
-          "department": "marketing",
+          "department": "accounting",
           "geography": "GB",
           "id": "XX125",
           "owner": "mary",
@@ -105,7 +117,7 @@
         "id": "XX150",
         "properties": {
           "cerbos.policyVersion": "20210210",
-          "department": "marketing",
+          "department": "accounting",
           "geography": "GB",
           "id": "XX125",
           "owner": "mary",
@@ -123,7 +135,7 @@
         "id": "XX150",
         "properties": {
           "cerbos.policyVersion": "20210210",
-          "department": "marketing",
+          "department": "accounting",
           "geography": "GB",
           "id": "XX125",
           "owner": "mary",
