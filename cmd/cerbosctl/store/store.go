@@ -8,7 +8,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/store/reload"
 )
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Export export.Cmd `cmd:"" name:"export" aliases:"e"`
 	Reload reload.Cmd `cmd:"" name:"reload" aliases:"r"`
 }

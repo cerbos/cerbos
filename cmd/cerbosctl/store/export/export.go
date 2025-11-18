@@ -32,7 +32,7 @@ cerbosctl store export archive.zip
 cerbosctl store export path/to/archive.gzip
 cerbosctl store export path/to/archive.tar.gz`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Path string `arg:"" help:"Path to write policies and schemas" type:"path"`
 }
 

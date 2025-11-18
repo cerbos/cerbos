@@ -21,7 +21,7 @@ cerbosctl get s
 # Get schema definition
 cerbosctl get schemas principal.json`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	flagset.Format
 
 	SchemaIDs []string `arg:"" name:"id" optional:"" help:"list of schema ids to retrieve"` //nolint:revive

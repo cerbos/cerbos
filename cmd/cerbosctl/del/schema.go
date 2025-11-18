@@ -22,7 +22,7 @@ cerbosctl delete schemas principal.json leave_request.json
 cerbosctl delete schema principal.json leave_request.json
 cerbosctl delete s principal.json leave_request.json`
 
-type SchemaCmd struct {
+type SchemaCmd struct { //betteralign:ignore
 	SchemaIds []string `arg:"" name:"id" help:"list of schema ids to delete"` //nolint:revive
 }
 

@@ -34,7 +34,7 @@ cerbosctl put policy -R ./dir/to/policies
 # Put policies from a zip file
 cerbosctl put policy ./dir/to/policies.zip`
 
-type PolicyCmd struct {
+type PolicyCmd struct { //betteralign:ignore
 	Paths []string `arg:"" type:"path" help:"Path to policy file or directory"`
 }
 

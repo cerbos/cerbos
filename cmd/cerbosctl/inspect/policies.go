@@ -26,7 +26,7 @@ cerbosctl inspect policies`
 )
 
 //nolint:govet
-type PoliciesCmd struct {
+type PoliciesCmd struct { //betteralign:ignore
 	flagset.Filters
 	flagset.Format
 }

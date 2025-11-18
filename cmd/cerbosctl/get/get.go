@@ -13,7 +13,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/schema"
 )
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	DerivedRoles    derivedroles.Cmd    `cmd:"" name:"derived_roles" aliases:"derived_role,dr"`
 	ExportConstants exportconstants.Cmd `cmd:"" name:"export_constants" aliases:"ec"`
 	ExportVariables exportvariables.Cmd `cmd:"" name:"export_variables" aliases:"ev"`

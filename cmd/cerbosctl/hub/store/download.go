@@ -35,7 +35,7 @@ cerbosctl hub store download /path/to/archive.zip
 
 `
 
-type DownloadCmd struct {
+type DownloadCmd struct { //betteralign:ignore
 	Output     `embed:""`
 	OutputPath string `arg:"" type:"path" required:"" help:"Path to write the retrieved files. Must be a path to a directory, zip file or - for stdout."`
 }

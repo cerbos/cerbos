@@ -15,6 +15,9 @@ export TOOLS_BIN_DIR := join(env_var_or_default("XDG_CACHE_HOME", join(env_var("
 default:
     @just --list
 
+align PKG='./...': _betteralign
+    @ GOFLAGS="-tags=tests,integration" "${TOOLS_BIN_DIR}/betteralign" -apply {{ PKG }}
+
 build: generate lint tests package
 
 clean:
@@ -191,6 +194,8 @@ check-http PROTOCOL='https' HOST='localhost' PORT='3592':
 	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan,access_evaluation,access_evaluation_batch}.hurl
 
 # Executables
+
+_betteralign: (_install "betteralign" "github.com/dkorunic/betteralign" "cmd/betteralign")
 
 _buf: (_install "buf" "github.com/bufbuild/buf" "cmd/buf")
 

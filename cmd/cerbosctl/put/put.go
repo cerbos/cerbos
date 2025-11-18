@@ -3,7 +3,7 @@
 
 package put
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Policy    PolicyCmd `cmd:"" aliases:"policies,p"`
 	Schema    SchemaCmd `cmd:"" aliases:"schemas,s"`
 	Recursive bool      `short:"R" help:"Process the directory used in -f, --filename recursively"`

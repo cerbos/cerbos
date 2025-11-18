@@ -40,7 +40,7 @@ func NewParser() (*participle.Parser[REPLDirective], error) {
 }
 
 //nolint:govet
-type REPLDirective struct {
+type REPLDirective struct { //betteralign:ignore
 	Exit  bool           `parser:"@('q'|'quit'|'exit')"`
 	Reset bool           `parser:"| @'reset'"`
 	Vars  bool           `parser:"| @'vars'"`

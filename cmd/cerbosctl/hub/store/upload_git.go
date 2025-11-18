@@ -26,7 +26,7 @@ const uploadGitHelp = `
 The following exit codes have a special meaning.
 	- 6: The version condition supplied using --version-must-eq wasn't satisfied
 
-# Apply the file changes between remote store's current version and the local git repository's HEAD, unless 
+# Apply the file changes between remote store's current version and the local git repository's HEAD, unless
 the remote store doesn't have any Git change details in the latest version in which case fallback to replacing all
 files in the remote store by the files in the local git repository.
 
@@ -44,12 +44,12 @@ cerbosctl hub store upload-git --from=55a4248 --to=HEAD --path path/to/git/repos
 
 # Apply the file changes recorded in the git repo between commit 55a4248 to e746228
 
-cerbosctl hub store upload-git --from=55a4248 --to=e746228 
+cerbosctl hub store upload-git --from=55a4248 --to=e746228
 cerbosctl hub store upload-git --from=55a4248 --to=e746228 --path path/to/git/repository
 cerbosctl hub store upload-git --from=55a4248 --to=e746228 --path path/to/git/repository --subdir policies
 `
 
-type UploadGitCmd struct {
+type UploadGitCmd struct { //betteralign:ignore
 	repository    *git.Repository
 	from          *plumbing.Hash
 	to            *plumbing.Hash

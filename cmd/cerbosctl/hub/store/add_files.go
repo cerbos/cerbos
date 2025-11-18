@@ -32,7 +32,7 @@ cerbosctl hub store add-files foo.yaml bar
 cerbosctl hub store add-files --message="Adding foo/bar.yaml" foo/bar.yaml=bar.yaml
 `
 
-type AddFilesCmd struct {
+type AddFilesCmd struct { //betteralign:ignore
 	filesToAdd    map[string]string
 	Output        `embed:""`
 	Message       string   `help:"Commit message for this change" default:"Uploaded using cerbosctl"`

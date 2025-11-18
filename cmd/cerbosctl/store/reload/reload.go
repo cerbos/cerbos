@@ -18,7 +18,7 @@ cerbosctl store reload
 # Reload the store and wait until it finishes
 cerbosctl store reload --wait`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Wait bool `help:"Wait until the reloading process finishes"`
 }
 

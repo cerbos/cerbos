@@ -21,7 +21,7 @@ The following exit codes have a special meaning.
 cerbosctl hub store delete-files --message="Deleting foo/bar.yaml" foo/bar.yaml
 `
 
-type DeleteFilesCmd struct {
+type DeleteFilesCmd struct { //betteralign:ignore
 	Output        `embed:""`
 	Message       string   `help:"Commit message for this change" default:"Uploaded using cerbosctl"`
 	Paths         []string `arg:"" help:"List of paths to delete from the store" required:""`

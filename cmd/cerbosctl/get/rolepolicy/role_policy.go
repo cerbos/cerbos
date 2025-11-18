@@ -39,7 +39,7 @@ cerbosctl get role_policies role.acme_admin -ojson
 # Get role policy definition as pretty json
 cerbosctl get role_policies role.acme_admin -oprettyjson`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	flagset.Format
 	flagset.Sort
 	flagset.Filters

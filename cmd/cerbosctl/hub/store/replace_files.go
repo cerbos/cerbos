@@ -38,7 +38,7 @@ cerbosctl hub store replace-files /path/to/dir
 cerbosctl hub store replace-files /path/to/archive.zip
 `
 
-type ReplaceFilesCmd struct {
+type ReplaceFilesCmd struct { //betteralign:ignore
 	Output        `embed:""`
 	Path          string `arg:"" type:"path" help:"Path to a directory or a zip file containing the contents to upload" required:""`
 	ChangeDetails `embed:""`

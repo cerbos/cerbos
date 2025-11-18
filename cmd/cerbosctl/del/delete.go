@@ -3,6 +3,6 @@
 
 package del
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Schema SchemaCmd `cmd:"" aliases:"schemas,s"`
 }

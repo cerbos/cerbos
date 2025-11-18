@@ -33,7 +33,7 @@ const (
 	policyIDNotFoundYet = ""
 )
 
-type ListCandidatesCmd struct {
+type ListCandidatesCmd struct { //betteralign:ignore
 	Path      string `arg:"" type:"path" help:"Path to repository"`
 	NoHeaders bool   `help:"Do not output headers"`
 }

@@ -18,7 +18,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/repl/internal"
 )
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	History string `help:"Path to history file" type:"path"`
 }
 
