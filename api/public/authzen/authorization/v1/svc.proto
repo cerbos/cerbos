@@ -42,4 +42,15 @@ service AuthorizationService {
       description: "Evaluate whether a subject can perform an action on a resource according to AuthZEN specification"
     };
   }
+  // Evaluate performs an access evaluation
+  rpc AccessEvaluationBatch(AccessEvaluationBatchRequest) returns (AccessEvaluationBatchResponse) {
+    option (google.api.http) = {
+      post: "/access/v1/evaluations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Batch evaluate access request"
+      description: "Batch evaluate whether a subject can perform an action on a resource according to AuthZEN specification"
+    };
+  }
 }

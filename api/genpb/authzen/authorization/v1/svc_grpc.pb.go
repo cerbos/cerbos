@@ -22,7 +22,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthorizationService_AccessEvaluation_FullMethodName = "/authzen.authorization.v1.AuthorizationService/AccessEvaluation"
+	AuthorizationService_AccessEvaluation_FullMethodName      = "/authzen.authorization.v1.AuthorizationService/AccessEvaluation"
+	AuthorizationService_AccessEvaluationBatch_FullMethodName = "/authzen.authorization.v1.AuthorizationService/AccessEvaluationBatch"
 )
 
 // AuthorizationServiceClient is the client API for AuthorizationService service.
@@ -33,6 +34,8 @@ const (
 type AuthorizationServiceClient interface {
 	// Evaluate performs an access evaluation
 	AccessEvaluation(ctx context.Context, in *AccessEvaluationRequest, opts ...grpc.CallOption) (*AccessEvaluationResponse, error)
+	// Evaluate performs an access evaluation
+	AccessEvaluationBatch(ctx context.Context, in *AccessEvaluationBatchRequest, opts ...grpc.CallOption) (*AccessEvaluationBatchResponse, error)
 }
 
 type authorizationServiceClient struct {
@@ -53,6 +56,16 @@ func (c *authorizationServiceClient) AccessEvaluation(ctx context.Context, in *A
 	return out, nil
 }
 
+func (c *authorizationServiceClient) AccessEvaluationBatch(ctx context.Context, in *AccessEvaluationBatchRequest, opts ...grpc.CallOption) (*AccessEvaluationBatchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AccessEvaluationBatchResponse)
+	err := c.cc.Invoke(ctx, AuthorizationService_AccessEvaluationBatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthorizationServiceServer is the server API for AuthorizationService service.
 // All implementations must embed UnimplementedAuthorizationServiceServer
 // for forward compatibility.
@@ -61,6 +74,8 @@ func (c *authorizationServiceClient) AccessEvaluation(ctx context.Context, in *A
 type AuthorizationServiceServer interface {
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *AccessEvaluationRequest) (*AccessEvaluationResponse, error)
+	// Evaluate performs an access evaluation
+	AccessEvaluationBatch(context.Context, *AccessEvaluationBatchRequest) (*AccessEvaluationBatchResponse, error)
 	mustEmbedUnimplementedAuthorizationServiceServer()
 }
 
@@ -73,6 +88,9 @@ type UnimplementedAuthorizationServiceServer struct{}
 
 func (UnimplementedAuthorizationServiceServer) AccessEvaluation(context.Context, *AccessEvaluationRequest) (*AccessEvaluationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AccessEvaluation not implemented")
+}
+func (UnimplementedAuthorizationServiceServer) AccessEvaluationBatch(context.Context, *AccessEvaluationBatchRequest) (*AccessEvaluationBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AccessEvaluationBatch not implemented")
 }
 func (UnimplementedAuthorizationServiceServer) mustEmbedUnimplementedAuthorizationServiceServer() {}
 func (UnimplementedAuthorizationServiceServer) testEmbeddedByValue()                              {}
@@ -113,6 +131,24 @@ func _AuthorizationService_AccessEvaluation_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthorizationService_AccessEvaluationBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AccessEvaluationBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServiceServer).AccessEvaluationBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthorizationService_AccessEvaluationBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServiceServer).AccessEvaluationBatch(ctx, req.(*AccessEvaluationBatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthorizationService_ServiceDesc is the grpc.ServiceDesc for AuthorizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -123,6 +159,10 @@ var AuthorizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AccessEvaluation",
 			Handler:    _AuthorizationService_AccessEvaluation_Handler,
+		},
+		{
+			MethodName: "AccessEvaluationBatch",
+			Handler:    _AuthorizationService_AccessEvaluationBatch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

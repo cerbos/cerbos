@@ -39,6 +39,9 @@ const (
 	// AuthorizationServiceAccessEvaluationProcedure is the fully-qualified name of the
 	// AuthorizationService's AccessEvaluation RPC.
 	AuthorizationServiceAccessEvaluationProcedure = "/authzen.authorization.v1.AuthorizationService/AccessEvaluation"
+	// AuthorizationServiceAccessEvaluationBatchProcedure is the fully-qualified name of the
+	// AuthorizationService's AccessEvaluationBatch RPC.
+	AuthorizationServiceAccessEvaluationBatchProcedure = "/authzen.authorization.v1.AuthorizationService/AccessEvaluationBatch"
 )
 
 // AuthorizationServiceClient is a client for the authzen.authorization.v1.AuthorizationService
@@ -46,6 +49,8 @@ const (
 type AuthorizationServiceClient interface {
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error)
+	// Evaluate performs an access evaluation
+	AccessEvaluationBatch(context.Context, *connect.Request[v1.AccessEvaluationBatchRequest]) (*connect.Response[v1.AccessEvaluationBatchResponse], error)
 }
 
 // NewAuthorizationServiceClient constructs a client for the
@@ -66,12 +71,19 @@ func NewAuthorizationServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(authorizationServiceMethods.ByName("AccessEvaluation")),
 			connect.WithClientOptions(opts...),
 		),
+		accessEvaluationBatch: connect.NewClient[v1.AccessEvaluationBatchRequest, v1.AccessEvaluationBatchResponse](
+			httpClient,
+			baseURL+AuthorizationServiceAccessEvaluationBatchProcedure,
+			connect.WithSchema(authorizationServiceMethods.ByName("AccessEvaluationBatch")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // authorizationServiceClient implements AuthorizationServiceClient.
 type authorizationServiceClient struct {
-	accessEvaluation *connect.Client[v1.AccessEvaluationRequest, v1.AccessEvaluationResponse]
+	accessEvaluation      *connect.Client[v1.AccessEvaluationRequest, v1.AccessEvaluationResponse]
+	accessEvaluationBatch *connect.Client[v1.AccessEvaluationBatchRequest, v1.AccessEvaluationBatchResponse]
 }
 
 // AccessEvaluation calls authzen.authorization.v1.AuthorizationService.AccessEvaluation.
@@ -79,11 +91,18 @@ func (c *authorizationServiceClient) AccessEvaluation(ctx context.Context, req *
 	return c.accessEvaluation.CallUnary(ctx, req)
 }
 
+// AccessEvaluationBatch calls authzen.authorization.v1.AuthorizationService.AccessEvaluationBatch.
+func (c *authorizationServiceClient) AccessEvaluationBatch(ctx context.Context, req *connect.Request[v1.AccessEvaluationBatchRequest]) (*connect.Response[v1.AccessEvaluationBatchResponse], error) {
+	return c.accessEvaluationBatch.CallUnary(ctx, req)
+}
+
 // AuthorizationServiceHandler is an implementation of the
 // authzen.authorization.v1.AuthorizationService service.
 type AuthorizationServiceHandler interface {
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error)
+	// Evaluate performs an access evaluation
+	AccessEvaluationBatch(context.Context, *connect.Request[v1.AccessEvaluationBatchRequest]) (*connect.Response[v1.AccessEvaluationBatchResponse], error)
 }
 
 // NewAuthorizationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -99,10 +118,18 @@ func NewAuthorizationServiceHandler(svc AuthorizationServiceHandler, opts ...con
 		connect.WithSchema(authorizationServiceMethods.ByName("AccessEvaluation")),
 		connect.WithHandlerOptions(opts...),
 	)
+	authorizationServiceAccessEvaluationBatchHandler := connect.NewUnaryHandler(
+		AuthorizationServiceAccessEvaluationBatchProcedure,
+		svc.AccessEvaluationBatch,
+		connect.WithSchema(authorizationServiceMethods.ByName("AccessEvaluationBatch")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/authzen.authorization.v1.AuthorizationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthorizationServiceAccessEvaluationProcedure:
 			authorizationServiceAccessEvaluationHandler.ServeHTTP(w, r)
+		case AuthorizationServiceAccessEvaluationBatchProcedure:
+			authorizationServiceAccessEvaluationBatchHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -114,4 +141,8 @@ type UnimplementedAuthorizationServiceHandler struct{}
 
 func (UnimplementedAuthorizationServiceHandler) AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("authzen.authorization.v1.AuthorizationService.AccessEvaluation is not implemented"))
+}
+
+func (UnimplementedAuthorizationServiceHandler) AccessEvaluationBatch(context.Context, *connect.Request[v1.AccessEvaluationBatchRequest]) (*connect.Response[v1.AccessEvaluationBatchResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("authzen.authorization.v1.AuthorizationService.AccessEvaluationBatch is not implemented"))
 }

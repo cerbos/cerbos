@@ -31,7 +31,6 @@ func NewAuthzenAuthorizationService(svc *CerbosService) *AuthzenAuthorizationSer
 	}
 }
 
-// AccessEvaluation implements authorizationv1.AuthorizationServiceServer.
 func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r *svcv1.AccessEvaluationRequest) (*svcv1.AccessEvaluationResponse, error) {
 	req, err := toCheckResourcesRequest(r)
 	if err != nil {
@@ -49,6 +48,10 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 		Decision: resp.Results[0].Actions[req.Resources[0].Actions[0]] == effectv1.Effect_EFFECT_ALLOW,
 		Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 	}, nil
+}
+
+func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
+	panic("not implemented")
 }
 
 func cerbosProp(s string) string {

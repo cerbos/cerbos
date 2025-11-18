@@ -59,9 +59,67 @@
           "AuthorizationService"
         ]
       }
+    },
+    "/access/v1/evaluations": {
+      "post": {
+        "summary": "Batch evaluate access request",
+        "description": "Batch evaluate whether a subject can perform an action on a resource according to AuthZEN specification",
+        "operationId": "AuthorizationService_AccessEvaluationBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "AuthZEN access evaluations request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AccessEvaluationBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AuthorizationService"
+        ]
+      }
     }
   },
   "definitions": {
+    "AccessEvaluationBatchRequestEvaluation": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/v1Subject"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "action": {
+          "$ref": "#/definitions/v1Action"
+        },
+        "context": {
+          "type": "object",
+          "example": {
+            "time": "2023-01-01T00:00:00Z"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
+        }
+      },
+      "description": "An evaluation"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -97,6 +155,54 @@
           }
         }
       }
+    },
+    "v1AccessEvaluationBatchRequest": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/v1Subject"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "action": {
+          "$ref": "#/definitions/v1Action"
+        },
+        "context": {
+          "type": "object",
+          "example": {
+            "time": "2023-01-01T00:00:00Z"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
+        },
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AccessEvaluationBatchRequestEvaluation"
+          }
+        }
+      },
+      "description": "AuthZEN access evaluations request",
+      "title": "AuthZEN evaluations request message"
+    },
+    "v1AccessEvaluationBatchResponse": {
+      "type": "object",
+      "properties": {
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1AccessEvaluationResponse"
+          }
+        }
+      },
+      "description": "AuthZEN access evaluations response",
+      "title": "AuthZEN evaluations response message",
+      "required": [
+        "evaluations"
+      ]
     },
     "v1AccessEvaluationRequest": {
       "type": "object",
