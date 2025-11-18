@@ -131,11 +131,13 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 
 		// Build resource entries and track mapping
 		type resultMapping struct {
-			action      string
+			requestIdx  int
 			responseIdx int
+			action      string
 		}
 		var mappings []resultMapping
 
+		requestIdx := 0
 		for _, resGroup := range resourceGroups {
 			actions := make([]string, 0, len(resGroup))
 			for _, req := range resGroup {
@@ -143,9 +145,10 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 				mappings = append(mappings, resultMapping{
 					action:      req.action.GetName(),
 					responseIdx: req.index,
+					requestIdx:  requestIdx,
 				})
 			}
-
+			requestIdx++
 			checkReq.Resources = append(checkReq.Resources, &requestv1.CheckResourcesRequest_ResourceEntry{
 				Actions:  actions,
 				Resource: toResource(resGroup[0].resource),
@@ -163,9 +166,9 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 		}
 
 		// Map results back to original positions
-		for i, mapping := range mappings {
+		for _, mapping := range mappings {
 			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
-				Decision: checkResp.Results[i].Actions[mapping.action] == effectv1.Effect_EFFECT_ALLOW,
+				Decision: checkResp.Results[mapping.requestIdx].Actions[mapping.action] == effectv1.Effect_EFFECT_ALLOW,
 				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 			}
 		}
