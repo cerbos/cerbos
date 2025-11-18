@@ -52,7 +52,8 @@ cerbos compile --skip-tests /path/to/policy/repo
 `
 )
 
-type Cmd struct { //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
+//nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
+type Cmd struct { //betteralign:ignore
 	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
 	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
 	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`

@@ -23,11 +23,11 @@ cerbosctl enable policies derived_roles.my_derived_roles resource.leave_request.
 cerbosctl enable policy derived_roles.my_derived_roles resource.leave_request.default
 cerbosctl enable p derived_roles.my_derived_roles resource.leave_request.default`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Policy PolicyCmd `cmd:"" aliases:"policies,p"`
 }
 
-type PolicyCmd struct {
+type PolicyCmd struct { //betteralign:ignore
 	PolicyIds []string `arg:"" name:"id" help:"list of policy ids to enable"` //nolint:revive
 }
 

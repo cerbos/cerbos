@@ -74,7 +74,7 @@ func (c Conn) storeClient() (*hub.StoreClient, error) {
 	return hc.StoreClient(), nil
 }
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	UploadGit    UploadGitCmd `cmd:"" name:"upload-git" help:"Upload files from a local git repository to the store"`
 	Conn         `embed:""`
 	ListFiles    ListFilesCmd    `cmd:"" name:"list-files" help:"List store files"`

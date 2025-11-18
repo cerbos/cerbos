@@ -3,6 +3,6 @@
 
 package epdp
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	ListCandidates ListCandidatesCmd `cmd:"" name:"list-candidates" aliases:"lc" help:"List candidates to be included in the ePDP bundle"`
 }

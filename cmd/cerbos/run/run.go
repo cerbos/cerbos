@@ -64,7 +64,7 @@ storage:
 `
 )
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	LogLevel string         `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
 	Config   string         `help:"Path to config file" type:"existingfile" placeholder:".cerbos.yaml"`
 	Set      []string       `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`

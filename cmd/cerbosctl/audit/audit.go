@@ -53,7 +53,7 @@ cerbosctl audit --kind=access --since=3h --raw
 cerbosctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S`
 )
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Kind string `default:"access" enum:"access,decision" help:"Kind of log entry (${enum})"`
 	flagset.AuditFilters
 	Raw bool `help:"Output results without formatting or colours"`

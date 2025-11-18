@@ -438,9 +438,11 @@ func parseTag(tag string) (*TagInfo, error) {
 
 			switch sp[0] {
 			case optionExampleValue:
-				ti.DefaultValue = sp[1]
+				ti.DefaultValue = strings.ReplaceAll(sp[1], "&#44;", ",")
 			case optionIgnore:
 				ti.Ignore = true
+			default:
+				return nil, fmt.Errorf("invalid conf tag option %q", sp[0])
 			}
 		}
 	}
@@ -504,10 +506,6 @@ func (f finder) findReceiverObj(tpe ast.Expr) *ast.StructType {
 }
 
 func doInitLogging(level string) {
-	errorPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.ErrorLevel
-	})
-
 	minLogLevel := zapcore.InfoLevel
 
 	switch strings.ToUpper(level) {
@@ -521,27 +519,17 @@ func doInitLogging(level string) {
 		minLogLevel = zapcore.ErrorLevel
 	}
 
-	infoPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl < zapcore.ErrorLevel && lvl >= minLogLevel
-	})
-
-	consoleErrors := zapcore.Lock(os.Stderr)
-	consoleInfo := zapcore.Lock(os.Stdout)
-
 	encoderConf := ecszap.NewDefaultEncoderConfig().ToZapCoreEncoderConfig()
 	var consoleEncoder zapcore.Encoder
 
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
+	if !isatty.IsTerminal(os.Stderr.Fd()) {
 		consoleEncoder = zapcore.NewJSONEncoder(encoderConf)
 	} else {
 		encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		consoleEncoder = zapcore.NewConsoleEncoder(encoderConf)
 	}
 
-	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, consoleErrors, errorPriority),
-		zapcore.NewCore(consoleEncoder, consoleInfo, infoPriority),
-	)
+	core := zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stderr), minLogLevel)
 
 	stackTraceEnabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl > zapcore.ErrorLevel

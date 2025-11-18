@@ -41,7 +41,7 @@ cerbosctl get export_variables export_variables.my_variables -ojson
 # Get exported variables policy definition as pretty json
 cerbosctl get export_variables export_variables.my_variables -oprettyjson`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	flagset.Format
 	flagset.Sort
 	flagset.Filters

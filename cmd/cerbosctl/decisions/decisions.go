@@ -51,7 +51,7 @@ cerbosctl decisions --since=3h --raw
 # View a specific log entry by call ID
 cerbosctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S`
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	flagset.AuditFilters
 }
 

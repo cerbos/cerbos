@@ -3,6 +3,6 @@
 
 package inspect
 
-type Cmd struct {
+type Cmd struct { //betteralign:ignore
 	Policies PoliciesCmd `cmd:"" name:"policies" aliases:"p" help:"Inspect policies in the store"`
 }
