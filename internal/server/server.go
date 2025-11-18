@@ -293,10 +293,11 @@ func (s *Server) startGRPCServer(l net.Listener, core *CoreComponents) (*grpc.Se
 
 	cerbosSvc := svc.NewCerbosService(core.Engine, core.AuxData, core.ReqLimits)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
+	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
+
 	authzenSvc := svc.NewAuthzenAuthorizationService(cerbosSvc)
 	authzenv1.RegisterAuthorizationServiceServer(server, authzenSvc)
-
-	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
+	s.health.SetServingStatus(authzenv1.AuthorizationService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
