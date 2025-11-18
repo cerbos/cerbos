@@ -12,6 +12,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	"github.com/cerbos/cerbos/internal/util"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -51,7 +52,135 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 }
 
 func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
-	panic("not implemented")
+	// Merge each evaluation with defaults to create complete requests
+	type evalRequest struct {
+		subject  *svcv1.Subject
+		resource *svcv1.Resource
+		action   *svcv1.Action
+		context  map[string]*structpb.Value
+		auxData  *requestv1.AuxData
+		index    int // Original index for maintaining order
+	}
+
+	merged := make([]evalRequest, len(r.Evaluations))
+
+	defaultAuxData, err := extractAuxData(r.Context)
+	if err != nil {
+		return nil, err
+	}
+	for i, eval := range r.Evaluations {
+		ctx := r.Context
+		auxData := defaultAuxData
+		if len(eval.Context) > 0 {
+			ctx = eval.Context
+			auxData, err = extractAuxData(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+		merged[i] = evalRequest{
+			subject:  merge(r.Subject, eval.Subject),
+			resource: merge(r.Resource, eval.Resource),
+			action:   merge(r.Action, eval.Action),
+			context:  ctx,
+			auxData:  auxData,
+			index:    i,
+		}
+	}
+
+	// Group evaluations by (subject, auxData)
+	type groupKey struct {
+		subjectID   string
+		auxDataHash uint64
+	}
+
+	groups := make(map[groupKey][]evalRequest)
+	for _, req := range merged {
+		key := groupKey{
+			subjectID:   req.subject.Id,
+			auxDataHash: util.HashPB(req.auxData, nil),
+		}
+		groups[key] = append(groups[key], req)
+	}
+
+	responses := make([]*svcv1.AccessEvaluationResponse, len(r.Evaluations))
+
+	// Process each group with a single CheckResources call
+	for _, reqs := range groups {
+		checkReq := &requestv1.CheckResourcesRequest{
+			RequestId:   lookupOrEmptyString(reqs[0].context, "requestId"),
+			IncludeMeta: true,
+			Principal:   toPrincipal(reqs[0].subject),
+			AuxData:     reqs[0].auxData,
+			Resources:   make([]*requestv1.CheckResourcesRequest_ResourceEntry, 0),
+		}
+
+		// Group by resource
+		type resourceKey struct {
+			resourceType string
+			resourceID   string
+		}
+		resourceGroups := make(map[resourceKey][]evalRequest)
+		for _, req := range reqs {
+			key := resourceKey{
+				resourceType: req.resource.Type,
+				resourceID:   req.resource.Id,
+			}
+			resourceGroups[key] = append(resourceGroups[key], req)
+		}
+
+		// Build resource entries and track mapping
+		type resultMapping struct {
+			action      string
+			responseIdx int
+		}
+		var mappings []resultMapping
+
+		for _, resGroup := range resourceGroups {
+			actions := make([]string, 0, len(resGroup))
+			for _, req := range resGroup {
+				actions = append(actions, req.action.GetName())
+				mappings = append(mappings, resultMapping{
+					action:      req.action.GetName(),
+					responseIdx: req.index,
+				})
+			}
+
+			checkReq.Resources = append(checkReq.Resources, &requestv1.CheckResourcesRequest_ResourceEntry{
+				Actions:  actions,
+				Resource: toResource(resGroup[0].resource),
+			})
+		}
+
+		checkResp, err := aas.svc.CheckResources(ctx, checkReq)
+		if err != nil {
+			return nil, err
+		}
+
+		respAsValue, err := messageToValue(checkResp.ProtoReflect())
+		if err != nil {
+			return nil, err
+		}
+
+		// Map results back to original positions
+		for i, mapping := range mappings {
+			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
+				Decision: checkResp.Results[i].Actions[mapping.action] == effectv1.Effect_EFFECT_ALLOW,
+				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
+			}
+		}
+	}
+
+	return &svcv1.AccessEvaluationBatchResponse{
+		Evaluations: responses,
+	}, nil
+}
+
+func merge[T any](defaults, override *T) *T {
+	if override != nil {
+		return override
+	}
+	return defaults
 }
 
 func cerbosProp(s string) string {
