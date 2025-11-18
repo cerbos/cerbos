@@ -150,3 +150,46 @@ policySetsExpectation:
             name: z
             value: "3"
             used: true
+
+ruleTablesExpectation:
+  ruleTables:
+    principal.john.vdefault:
+      policyId: principal.john.vdefault
+      actions:
+        - x
+      attributes:
+        - kind: KIND_PRINCIPAL_ATTRIBUTE
+          name: x
+      constants:
+        - kind: KIND_UNKNOWN
+          name: x
+          value: 1
+      variables:
+        - kind: KIND_UNKNOWN
+          name: x
+          value: "1"
+
+    resource.leave_request.vdefault:
+      policyId: resource.leave_request.vdefault
+      actions:
+        - "y"
+        - z
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: "y"
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: z
+      constants:
+        - kind: KIND_UNKNOWN
+          name: "y"
+          value: 2
+        - kind: KIND_UNKNOWN
+          name: z
+          value: 3
+      variables:
+        - kind: KIND_UNKNOWN
+          name: "y"
+          value: "2"
+        - kind: KIND_UNKNOWN
+          name: z
+          value: "3"

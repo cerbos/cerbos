@@ -1,7 +1,7 @@
 // Copyright 2021-2025 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package ruletable
+package ruletable_test
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,7 +49,7 @@ func TestRuleTableManager(t *testing.T) {
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
-	ruletableMgr, err := NewRuleTableManager(NewProtoRuletable(), compiler, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruletable.NewProtoRuletable(), compiler, schemaMgr)
 	require.NoError(t, err)
 
 	store.Subscribe(ruletableMgr)

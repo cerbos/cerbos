@@ -61,3 +61,14 @@ policySetsExpectation:
           line: 14
           column: 9
           path: $.resourcePolicy.rules[0].condition.match.expr
+
+ruleTablesExpectation:
+  compileErrors:
+    compileErrors:
+      - file: resource.leave_request.vdefault.yaml
+        error: undefined constant
+        description: Undefined constant 'missingConst'
+        position:
+          line: 14
+          column: 9
+          path: $.resourcePolicy.rules[0].condition.match.expr

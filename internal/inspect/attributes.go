@@ -19,14 +19,16 @@ func attributeList(in map[string]*responsev1.InspectPoliciesResponse_Attribute) 
 		})
 	}
 
-	slices.SortFunc(out, func(a, b *responsev1.InspectPoliciesResponse_Attribute) int {
-		kind := cmp.Compare(a.GetKind(), b.GetKind())
-		if kind == 0 {
-			return cmp.Compare(a.GetName(), b.GetName())
-		}
+	if len(out) > 1 {
+		slices.SortFunc(out, func(a, b *responsev1.InspectPoliciesResponse_Attribute) int {
+			kind := cmp.Compare(a.GetKind(), b.GetKind())
+			if kind == 0 {
+				return cmp.Compare(a.GetName(), b.GetName())
+			}
 
-		return kind
-	})
+			return kind
+		})
+	}
 
 	return out
 }

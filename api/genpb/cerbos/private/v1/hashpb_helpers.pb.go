@@ -2279,6 +2279,18 @@ func cerbos_private_v1_IndexBuilderTestCase_hashpb_sum(m *IndexBuilderTestCase, 
 	}
 }
 
+func cerbos_private_v1_InspectTestCase_CompileErrors_hashpb_sum(m *InspectTestCase_CompileErrors, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.CompileErrors.compile_errors"]; !ok {
+		if len(m.CompileErrors) > 0 {
+			for _, v := range m.CompileErrors {
+				if v != nil {
+					cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
 func cerbos_private_v1_InspectTestCase_PoliciesExpectation_hashpb_sum(m *InspectTestCase_PoliciesExpectation, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.InspectTestCase.PoliciesExpectation.policies"]; !ok {
 		if len(m.Policies) > 0 {
@@ -2301,18 +2313,6 @@ func cerbos_private_v1_InspectTestCase_PoliciesExpectation_hashpb_sum(m *Inspect
 	}
 }
 
-func cerbos_private_v1_InspectTestCase_PolicySetsExpectation_CompileErrors_hashpb_sum(m *InspectTestCase_PolicySetsExpectation_CompileErrors, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.private.v1.InspectTestCase.PolicySetsExpectation.CompileErrors.compile_errors"]; !ok {
-		if len(m.CompileErrors) > 0 {
-			for _, v := range m.CompileErrors {
-				if v != nil {
-					cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(v, hasher, ignore)
-				}
-			}
-		}
-	}
-}
-
 func cerbos_private_v1_InspectTestCase_PolicySetsExpectation_hashpb_sum(m *InspectTestCase_PolicySetsExpectation, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.InspectTestCase.PolicySetsExpectation.policy_sets"]; !ok {
 		if len(m.PolicySets) > 0 {
@@ -2328,11 +2328,39 @@ func cerbos_private_v1_InspectTestCase_PolicySetsExpectation_hashpb_sum(m *Inspe
 	if m.Errors != nil {
 		if _, ok := ignore["cerbos.private.v1.InspectTestCase.PolicySetsExpectation.errors"]; !ok {
 			switch t := m.Errors.(type) {
-			case *InspectTestCase_PolicySetsExpectation_CompileErrors_:
+			case *InspectTestCase_PolicySetsExpectation_CompileErrors:
 				if t.CompileErrors != nil {
-					cerbos_private_v1_InspectTestCase_PolicySetsExpectation_CompileErrors_hashpb_sum(t.CompileErrors, hasher, ignore)
+					cerbos_private_v1_InspectTestCase_CompileErrors_hashpb_sum(t.CompileErrors, hasher, ignore)
 				}
 			case *InspectTestCase_PolicySetsExpectation_IndexBuildErrors:
+				if t.IndexBuildErrors != nil {
+					cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(t.IndexBuildErrors, hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_private_v1_InspectTestCase_RuleTablesExpectation_hashpb_sum(m *InspectTestCase_RuleTablesExpectation, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.RuleTablesExpectation.rule_tables"]; !ok {
+		if len(m.RuleTables) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.RuleTables)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.RuleTables[k] != nil {
+					cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m.RuleTables[k], hasher, ignore)
+				}
+			}
+		}
+	}
+	if m.Errors != nil {
+		if _, ok := ignore["cerbos.private.v1.InspectTestCase.RuleTablesExpectation.errors"]; !ok {
+			switch t := m.Errors.(type) {
+			case *InspectTestCase_RuleTablesExpectation_CompileErrors:
+				if t.CompileErrors != nil {
+					cerbos_private_v1_InspectTestCase_CompileErrors_hashpb_sum(t.CompileErrors, hasher, ignore)
+				}
+			case *InspectTestCase_RuleTablesExpectation_IndexBuildErrors:
 				if t.IndexBuildErrors != nil {
 					cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(t.IndexBuildErrors, hasher, ignore)
 				}
@@ -2363,6 +2391,11 @@ func cerbos_private_v1_InspectTestCase_hashpb_sum(m *InspectTestCase, hasher has
 	if _, ok := ignore["cerbos.private.v1.InspectTestCase.policy_sets_expectation"]; !ok {
 		if m.GetPolicySetsExpectation() != nil {
 			cerbos_private_v1_InspectTestCase_PolicySetsExpectation_hashpb_sum(m.GetPolicySetsExpectation(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.InspectTestCase.rule_tables_expectation"]; !ok {
+		if m.GetRuleTablesExpectation() != nil {
+			cerbos_private_v1_InspectTestCase_RuleTablesExpectation_hashpb_sum(m.GetRuleTablesExpectation(), hasher, ignore)
 		}
 	}
 }

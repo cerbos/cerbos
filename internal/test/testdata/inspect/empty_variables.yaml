@@ -57,3 +57,18 @@ policySetsExpectation:
       policyId: resource.leave_request.vdefault
       actions:
         - approve
+
+ruleTablesExpectation:
+  ruleTables:
+    principal.john.vdefault:
+      policyId: principal.john.vdefault
+      actions:
+        - "*"
+      attributes:
+        - name: someAttr
+          kind: KIND_RESOURCE_ATTRIBUTE
+
+    resource.leave_request.vdefault:
+      policyId: resource.leave_request.vdefault
+      actions:
+        - approve

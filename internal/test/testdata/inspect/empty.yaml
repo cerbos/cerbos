@@ -65,3 +65,10 @@ policySetsExpectation:
         policyId: principal.john.vdefault
       resource.leave_request.vdefault:
         policyId: resource.leave_request.vdefault
+
+ruleTablesExpectation:
+  ruleTables:
+    principal.john.vdefault:
+      policyId: principal.john.vdefault
+    resource.leave_request.vdefault:
+      policyId: resource.leave_request.vdefault

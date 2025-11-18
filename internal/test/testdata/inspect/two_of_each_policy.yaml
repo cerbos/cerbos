@@ -448,3 +448,96 @@ policySetsExpectation:
           name: label
           used: true
           value: "\"dude\""
+
+ruleTablesExpectation:
+  ruleTables:
+    principal.john_1.vdefault:
+      policyId: principal.john_1.vdefault
+      actions:
+        - "*"
+      attributes:
+        - name: markedResource
+          kind: KIND_RESOURCE_ATTRIBUTE
+      variables:
+        - name: commonLabel
+          value: "\"dude\""
+          kind: KIND_UNKNOWN
+        - name: commonMarkedResource
+          value: R.attr.markedResource
+          kind: KIND_UNKNOWN
+        - name: markedResource
+          value: R.attr.markedResource
+          kind: KIND_UNKNOWN
+
+    principal.john_2.vdefault:
+      policyId: principal.john_2.vdefault
+      actions:
+        - "*"
+      attributes:
+        - name: markedResource
+          kind: KIND_RESOURCE_ATTRIBUTE
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonLabel
+          value: "\"dude\""
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: label
+          value: "\"dude\""
+
+    resource.leave_request_1.vdefault:
+      policyId: resource.leave_request_1.vdefault
+      actions:
+        - "*"
+        - create
+        - duplicate
+        - view
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      derivedRoles:
+        - name: approved_user_1
+          kind: KIND_IMPORTED
+        - name: approved_user_2
+          kind: KIND_IMPORTED
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonLabel
+          value: "\"dude\""
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: markedResource
+          value: R.attr.markedResource
+
+    resource.leave_request_2.vdefault:
+      policyId: resource.leave_request_2.vdefault
+      actions:
+        - "*"
+        - create
+        - duplicate
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      derivedRoles:
+        - name: approved_user_1
+          kind: KIND_IMPORTED
+        - name: approved_user_2
+          kind: KIND_IMPORTED
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonLabel
+          value: "\"dude\""
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: label
+          value: "\"dude\""
