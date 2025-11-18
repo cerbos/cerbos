@@ -14,115 +14,115 @@ option csharp_namespace = "Cerbos.AuthZen.Api.V1.Authorization";
 option go_package = "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1";
 option java_package = "dev.cerbos.authzen.api.v1.authorization";
 
+// Subject represents the principal requesting access
+message Subject {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Subject requesting access"}
+  };
+
+  string type = 1 [
+    (buf.validate.field).string = {min_len: 1},
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Type of the subject."
+      example: "\"user\""
+    }
+  ];
+
+  string id = 2 [
+    (buf.validate.field).string = {min_len: 1},
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Unique identifier for the subject."
+      example: "\"alice@acmecorp.com\""
+    }
+  ];
+
+  map<string, google.protobuf.Value> properties = 3 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key-value pairs of contextual data about this subject that should be used during policy evaluation."
+      example: "{\"department\": \"engineering\"}"
+    }
+  ];
+}
+
+// Resource represents the target of the access request
+message Resource {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Resource being accessed"}
+  };
+
+  string type = 1 [
+    (buf.validate.field).string = {min_len: 1},
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Type of the resource."
+      example: "\"account\""
+    }
+  ];
+
+  string id = 2 [
+    (buf.validate.field).string = {min_len: 1},
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Unique identifier for the resource."
+      example: "\"123\""
+    }
+  ];
+
+  map<string, google.protobuf.Value> properties = 3 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key-value pairs of contextual data about this resource that should be used during policy evaluation."
+      example: "{\"owner\": \"bugs_bunny\"}"
+    }
+  ];
+}
+
+// Action represents the operation being performed
+message Action {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Action being performed"}
+  };
+
+  string name = 1 [
+    (buf.validate.field).string = {min_len: 1},
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Name of the action being performed."
+      example: "\"can_read\""
+    }
+  ];
+
+  map<string, google.protobuf.Value> properties = 2 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key-value pairs of contextual data about this action that should be used during policy evaluation."
+      example: "{\"method\": \"GET\"}"
+    }
+  ];
+}
+
 // AuthZEN evaluation request message
 message AccessEvaluationRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN access evaluation request"}
   };
-
-  // Subject represents the principal requesting access
-  message Subject {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {description: "Subject requesting access"}
-    };
-
-    string type = 1 [
-      (buf.validate.field).string = {min_len: 1},
-      (buf.validate.field).required = true,
-      (google.api.field_behavior) = REQUIRED,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Type of the subject."
-        example: "\"user\""
-      }
-    ];
-
-    string id = 2 [
-      (buf.validate.field).string = {min_len: 1},
-      (buf.validate.field).required = true,
-      (google.api.field_behavior) = REQUIRED,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Unique identifier for the subject."
-        example: "\"alice@acmecorp.com\""
-      }
-    ];
-
-    map<string, google.protobuf.Value> properties = 3 [
-      (buf.validate.field).map.keys = {
-        string: {min_len: 1}
-      },
-      (buf.validate.field).map.values.required = true,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Key-value pairs of contextual data about this subject that should be used during policy evaluation."
-        example: "{\"department\": \"engineering\"}"
-      }
-    ];
-  }
-
-  // Resource represents the target of the access request
-  message Resource {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {description: "Resource being accessed"}
-    };
-
-    string type = 1 [
-      (buf.validate.field).string = {min_len: 1},
-      (buf.validate.field).required = true,
-      (google.api.field_behavior) = REQUIRED,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Type of the resource."
-        example: "\"account\""
-      }
-    ];
-
-    string id = 2 [
-      (buf.validate.field).string = {min_len: 1},
-      (buf.validate.field).required = true,
-      (google.api.field_behavior) = REQUIRED,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Unique identifier for the resource."
-        example: "\"123\""
-      }
-    ];
-
-    map<string, google.protobuf.Value> properties = 3 [
-      (buf.validate.field).map.keys = {
-        string: {min_len: 1}
-      },
-      (buf.validate.field).map.values.required = true,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Key-value pairs of contextual data about this resource that should be used during policy evaluation."
-        example: "{\"owner\": \"bugs_bunny\"}"
-      }
-    ];
-  }
-
-  // Action represents the operation being performed
-  message Action {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {description: "Action being performed"}
-    };
-
-    string name = 1 [
-      (buf.validate.field).string = {min_len: 1},
-      (buf.validate.field).required = true,
-      (google.api.field_behavior) = REQUIRED,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Name of the action being performed."
-        example: "\"can_read\""
-      }
-    ];
-
-    map<string, google.protobuf.Value> properties = 2 [
-      (buf.validate.field).map.keys = {
-        string: {min_len: 1}
-      },
-      (buf.validate.field).map.values.required = true,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Key-value pairs of contextual data about this action that should be used during policy evaluation."
-        example: "{\"method\": \"GET\"}"
-      }
-    ];
-  }
 
   Subject subject = 1 [
     (buf.validate.field).required = true,
@@ -206,4 +206,67 @@ message AccessEvaluationResponse {
   ];
 
   Context context = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Additional context about the evaluation."}];
+}
+
+// AuthZEN evaluations request message
+message AccessEvaluationBatchRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluations request"}
+  };
+
+  Subject subject = 1;
+  Resource resource = 2;
+  Action action = 3;
+
+  map<string, google.protobuf.Value> context = 4 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
+      example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
+    }
+  ];
+
+  message Evaluation {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "An evaluation"}
+    };
+
+    Subject subject = 1;
+    Resource resource = 2;
+    Action action = 3;
+
+    map<string, google.protobuf.Value> context = 4 [
+      (buf.validate.field).map.keys = {
+        string: {min_len: 1}
+      },
+      (buf.validate.field).map.values.required = true,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
+        example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
+      }
+    ];
+  }
+
+  repeated Evaluation evaluations = 5 
+    [(buf.validate.field).repeated.min_items = 1];
+
+  option (buf.validate.message).cel = {
+    id: "actions"
+    message: "either the default action must be set or all evaluations must have an action"
+    expression: "has(this.action) || this.evaluations.all(x, has(x.action))"
+  };
+
+  option (buf.validate.message).cel = {
+    id: "subjects"
+    message: "either the default subject must be set or all evaluations must have a subject"
+    expression: "has(this.subject) || this.evaluations.all(x, has(x.subject))"
+  };
+  option (buf.validate.message).cel = {
+    id: "resources"
+    message: "either the default resource must be set or all evaluations must have a resource"
+    expression: "has(this.resource) || this.evaluations.all(x, has(x.resource))"
+  };
 }
