@@ -47,12 +47,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 	}
 	return &svcv1.AccessEvaluationResponse{
 		Decision: resp.Results[0].Actions[req.Resources[0].Actions[0]] == effectv1.Effect_EFFECT_ALLOW,
-		Context: &svcv1.AccessEvaluationResponse_Context{
-			Id: resp.RequestId,
-			ReasonUser: &svcv1.AccessEvaluationResponse_Context_Reason{
-				Properties: map[string]*structpb.Value{cerbosProp("response"): respAsValue},
-			},
-		},
+		Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 	}, nil
 }
 
@@ -92,7 +87,7 @@ func toCheckResourcesRequest(req *svcv1.AccessEvaluationRequest) (*requestv1.Che
 	}, nil
 }
 
-func toResource(res *svcv1.AccessEvaluationRequest_Resource) *enginev1.Resource {
+func toResource(res *svcv1.Resource) *enginev1.Resource {
 	props := res.Properties
 	return &enginev1.Resource{
 		Kind:          res.Type,
@@ -103,7 +98,7 @@ func toResource(res *svcv1.AccessEvaluationRequest_Resource) *enginev1.Resource 
 	}
 }
 
-func toPrincipal(subj *svcv1.AccessEvaluationRequest_Subject) *enginev1.Principal {
+func toPrincipal(subj *svcv1.Subject) *enginev1.Principal {
 	props := subj.Properties
 	var roles []string
 	for _, v := range lookup(props, "roles").GetListValue().GetValues() {

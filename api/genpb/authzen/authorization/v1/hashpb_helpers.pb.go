@@ -13,82 +13,90 @@ import (
 	unsafe "unsafe"
 )
 
-func authzen_authorization_v1_AccessEvaluationRequest_Action_hashpb_sum(m *AccessEvaluationRequest_Action, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Action.name"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetName()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetName()), len(m.GetName())))
+func authzen_authorization_v1_AccessEvaluationBatchRequest_Evaluation_hashpb_sum(m *AccessEvaluationBatchRequest_Evaluation, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.subject"]; !ok {
+		if m.GetSubject() != nil {
+			authzen_authorization_v1_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
+		}
 	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Action.properties"]; !ok {
-		if len(m.Properties) > 0 {
-			for _, k := range slices.Sorted(maps.Keys(m.Properties)) {
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.resource"]; !ok {
+		if m.GetResource() != nil {
+			authzen_authorization_v1_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.action"]; !ok {
+		if m.GetAction() != nil {
+			authzen_authorization_v1_Action_hashpb_sum(m.GetAction(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.context"]; !ok {
+		if len(m.Context) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Context)) {
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
-				if m.Properties[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.Properties[k], hasher, ignore)
+				if m.Context[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Context[k], hasher, ignore)
 				}
 			}
 		}
 	}
 }
 
-func authzen_authorization_v1_AccessEvaluationRequest_Resource_hashpb_sum(m *AccessEvaluationRequest_Resource, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Resource.type"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetType()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetType()), len(m.GetType())))
+func authzen_authorization_v1_AccessEvaluationBatchRequest_hashpb_sum(m *AccessEvaluationBatchRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.subject"]; !ok {
+		if m.GetSubject() != nil {
+			authzen_authorization_v1_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
+		}
 	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Resource.id"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetId()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetId()), len(m.GetId())))
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.resource"]; !ok {
+		if m.GetResource() != nil {
+			authzen_authorization_v1_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
+		}
 	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Resource.properties"]; !ok {
-		if len(m.Properties) > 0 {
-			for _, k := range slices.Sorted(maps.Keys(m.Properties)) {
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.action"]; !ok {
+		if m.GetAction() != nil {
+			authzen_authorization_v1_Action_hashpb_sum(m.GetAction(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.context"]; !ok {
+		if len(m.Context) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Context)) {
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
-				if m.Properties[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.Properties[k], hasher, ignore)
+				if m.Context[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Context[k], hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchRequest.evaluations"]; !ok {
+		if len(m.Evaluations) > 0 {
+			for _, v := range m.Evaluations {
+				if v != nil {
+					authzen_authorization_v1_AccessEvaluationBatchRequest_Evaluation_hashpb_sum(v, hasher, ignore)
 				}
 			}
 		}
 	}
 }
 
-func authzen_authorization_v1_AccessEvaluationRequest_Subject_hashpb_sum(m *AccessEvaluationRequest_Subject, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Subject.type"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetType()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetType()), len(m.GetType())))
-	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Subject.id"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetId()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetId()), len(m.GetId())))
-	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.Subject.properties"]; !ok {
-		if len(m.Properties) > 0 {
-			for _, k := range slices.Sorted(maps.Keys(m.Properties)) {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
-				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
-				if m.Properties[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.Properties[k], hasher, ignore)
-				}
-			}
-		}
-	}
+func authzen_authorization_v1_AccessEvaluationBatchResponse_hashpb_sum(m *AccessEvaluationBatchResponse, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
 func authzen_authorization_v1_AccessEvaluationRequest_hashpb_sum(m *AccessEvaluationRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.subject"]; !ok {
 		if m.GetSubject() != nil {
-			authzen_authorization_v1_AccessEvaluationRequest_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
+			authzen_authorization_v1_Subject_hashpb_sum(m.GetSubject(), hasher, ignore)
 		}
 	}
 	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.resource"]; !ok {
 		if m.GetResource() != nil {
-			authzen_authorization_v1_AccessEvaluationRequest_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
+			authzen_authorization_v1_Resource_hashpb_sum(m.GetResource(), hasher, ignore)
 		}
 	}
 	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.action"]; !ok {
 		if m.GetAction() != nil {
-			authzen_authorization_v1_AccessEvaluationRequest_Action_hashpb_sum(m.GetAction(), hasher, ignore)
+			authzen_authorization_v1_Action_hashpb_sum(m.GetAction(), hasher, ignore)
 		}
 	}
 	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationRequest.context"]; !ok {
@@ -104,8 +112,29 @@ func authzen_authorization_v1_AccessEvaluationRequest_hashpb_sum(m *AccessEvalua
 	}
 }
 
-func authzen_authorization_v1_AccessEvaluationResponse_Context_Reason_hashpb_sum(m *AccessEvaluationResponse_Context_Reason, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.Context.Reason.properties"]; !ok {
+func authzen_authorization_v1_AccessEvaluationResponse_hashpb_sum(m *AccessEvaluationResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.decision"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetDecision())))
+	}
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.context"]; !ok {
+		if len(m.Context) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Context)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Context[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Context[k], hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func authzen_authorization_v1_Action_hashpb_sum(m *Action, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.Action.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetName()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetName()), len(m.GetName())))
+	}
+	if _, ok := ignore["authzen.authorization.v1.Action.properties"]; !ok {
 		if len(m.Properties) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.Properties)) {
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
@@ -118,30 +147,46 @@ func authzen_authorization_v1_AccessEvaluationResponse_Context_Reason_hashpb_sum
 	}
 }
 
-func authzen_authorization_v1_AccessEvaluationResponse_Context_hashpb_sum(m *AccessEvaluationResponse_Context, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.Context.id"]; !ok {
+func authzen_authorization_v1_Resource_hashpb_sum(m *Resource, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.Resource.type"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetType()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetType()), len(m.GetType())))
+	}
+	if _, ok := ignore["authzen.authorization.v1.Resource.id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetId()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetId()), len(m.GetId())))
 	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.Context.reason_admin"]; !ok {
-		if m.GetReasonAdmin() != nil {
-			authzen_authorization_v1_AccessEvaluationResponse_Context_Reason_hashpb_sum(m.GetReasonAdmin(), hasher, ignore)
-		}
-	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.Context.reason_user"]; !ok {
-		if m.GetReasonUser() != nil {
-			authzen_authorization_v1_AccessEvaluationResponse_Context_Reason_hashpb_sum(m.GetReasonUser(), hasher, ignore)
+	if _, ok := ignore["authzen.authorization.v1.Resource.properties"]; !ok {
+		if len(m.Properties) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Properties)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Properties[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Properties[k], hasher, ignore)
+				}
+			}
 		}
 	}
 }
 
-func authzen_authorization_v1_AccessEvaluationResponse_hashpb_sum(m *AccessEvaluationResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.decision"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetDecision())))
+func authzen_authorization_v1_Subject_hashpb_sum(m *Subject, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.Subject.type"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetType()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetType()), len(m.GetType())))
 	}
-	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationResponse.context"]; !ok {
-		if m.GetContext() != nil {
-			authzen_authorization_v1_AccessEvaluationResponse_Context_hashpb_sum(m.GetContext(), hasher, ignore)
+	if _, ok := ignore["authzen.authorization.v1.Subject.id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetId()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetId()), len(m.GetId())))
+	}
+	if _, ok := ignore["authzen.authorization.v1.Subject.properties"]; !ok {
+		if len(m.Properties) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Properties)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Properties[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Properties[k], hasher, ignore)
+				}
+			}
 		}
 	}
 }

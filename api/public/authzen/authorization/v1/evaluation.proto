@@ -157,45 +157,6 @@ message AccessEvaluationResponse {
     json_schema: {description: "AuthZEN access evaluation response"}
   };
 
-  // Context provides additional information about the evaluation
-  message Context {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {description: "Additional context about the evaluation"}
-    };
-
-    // Reason provides explanation for administrative or user-facing purposes
-    message Reason {
-      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        json_schema: {description: "Reason for the access decision"}
-      };
-
-      map<string, google.protobuf.Value> properties = 1 [
-        (buf.validate.field).map.keys = {
-          string: {min_len: 1}
-        },
-        (buf.validate.field).map.values.required = true,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "Key-value pairs providing reason details."
-          example: "{\"policy\": \"resource.expense.v1\", \"rule\": \"owner_access\"}"
-        }
-      ];
-    }
-
-    string id = 1 [
-      (buf.validate.field).string = {min_len: 1},
-      (buf.validate.field).required = true,
-      (google.api.field_behavior) = REQUIRED,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Identifier describing the response reason."
-        example: "\"policy_evaluated\""
-      }
-    ];
-
-    Reason reason_admin = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Administrative reason for internal purposes."}];
-
-    Reason reason_user = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "User-facing reason for explaining access denial."}];
-  }
-
   bool decision = 1 [
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
@@ -205,7 +166,16 @@ message AccessEvaluationResponse {
     }
   ];
 
-  Context context = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Additional context about the evaluation."}];
+  map<string, google.protobuf.Value> context = 2 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Additional context about evaluation"
+      example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
+    }
+  ];
 }
 
 // AuthZEN evaluations request message
@@ -250,8 +220,7 @@ message AccessEvaluationBatchRequest {
     ];
   }
 
-  repeated Evaluation evaluations = 5 
-    [(buf.validate.field).repeated.min_items = 1];
+  repeated Evaluation evaluations = 5 [(buf.validate.field).repeated.min_items = 1];
 
   option (buf.validate.message).cel = {
     id: "actions"
@@ -268,5 +237,17 @@ message AccessEvaluationBatchRequest {
     id: "resources"
     message: "either the default resource must be set or all evaluations must have a resource"
     expression: "has(this.resource) || this.evaluations.all(x, has(x.resource))"
+  };
+  option (buf.validate.message).cel = {
+    id: "contexts"
+    message: "either the default context must be set or all evaluations must have a context"
+    expression: "has(this.context) || this.evaluations.all(x, has(x.context))"
+  };
+}
+
+// AuthZEN evaluations response message
+message AccessEvaluationBatchResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluations response"}
   };
 }
