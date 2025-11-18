@@ -62,7 +62,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 		index    int // Original index for maintaining order
 	}
 
-	merged := make([]evalRequest, len(r.Evaluations))
+	evals := make([]evalRequest, len(r.Evaluations)) // evaluations with default values taken into account
 
 	defaultAuxData, err := extractAuxData(r.Context)
 	if err != nil {
@@ -78,7 +78,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 				return nil, err
 			}
 		}
-		merged[i] = evalRequest{
+		evals[i] = evalRequest{
 			subject:  merge(r.Subject, eval.Subject),
 			resource: merge(r.Resource, eval.Resource),
 			action:   merge(r.Action, eval.Action),
@@ -88,14 +88,14 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 		}
 	}
 
-	// Group evaluations by (subject, auxData)
+	// Group evaluations by (subject, auxData) to call CheckResources for each group
 	type groupKey struct {
 		subjectID   string
 		auxDataHash uint64
 	}
 
 	groups := make(map[groupKey][]evalRequest)
-	for _, req := range merged {
+	for _, req := range evals {
 		key := groupKey{
 			subjectID:   req.subject.Id,
 			auxDataHash: util.HashPB(req.auxData, nil),
@@ -112,47 +112,47 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			IncludeMeta: true,
 			Principal:   toPrincipal(reqs[0].subject),
 			AuxData:     reqs[0].auxData,
-			Resources:   make([]*requestv1.CheckResourcesRequest_ResourceEntry, 0),
 		}
 
-		// Group by resource
+		// Group by resource since a ResourceEntry can have multiple actions
 		type resourceKey struct {
 			resourceType string
 			resourceID   string
 		}
-		resourceGroups := make(map[resourceKey][]evalRequest)
+		reqsByRes := make(map[resourceKey][]evalRequest)
 		for _, req := range reqs {
 			key := resourceKey{
 				resourceType: req.resource.Type,
 				resourceID:   req.resource.Id,
 			}
-			resourceGroups[key] = append(resourceGroups[key], req)
+			reqsByRes[key] = append(reqsByRes[key], req)
 		}
 
 		// Build resource entries and track mapping
 		type resultMapping struct {
-			requestIdx  int
-			responseIdx int
-			action      string
+			action           string
+			resourceEntryIdx int
+			responseIdx      int
 		}
 		var mappings []resultMapping
 
-		requestIdx := 0
-		for _, resGroup := range resourceGroups {
-			actions := make([]string, 0, len(resGroup))
-			for _, req := range resGroup {
-				actions = append(actions, req.action.GetName())
+		resourceEntryIdx := 0
+		checkReq.Resources = make([]*requestv1.CheckResourcesRequest_ResourceEntry, len(reqsByRes))
+		for _, reqs1 := range reqsByRes {
+			actions := make([]string, len(reqs1))
+			for i, req := range reqs1 {
+				actions[i] = req.action.GetName()
 				mappings = append(mappings, resultMapping{
-					action:      req.action.GetName(),
-					responseIdx: req.index,
-					requestIdx:  requestIdx,
+					action:           actions[i],
+					responseIdx:      req.index,
+					resourceEntryIdx: resourceEntryIdx,
 				})
 			}
-			requestIdx++
-			checkReq.Resources = append(checkReq.Resources, &requestv1.CheckResourcesRequest_ResourceEntry{
+			checkReq.Resources[resourceEntryIdx] = &requestv1.CheckResourcesRequest_ResourceEntry{
 				Actions:  actions,
-				Resource: toResource(resGroup[0].resource),
-			})
+				Resource: toResource(reqs1[0].resource),
+			}
+			resourceEntryIdx++
 		}
 
 		checkResp, err := aas.svc.CheckResources(ctx, checkReq)
@@ -168,7 +168,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 		// Map results back to original positions
 		for _, mapping := range mappings {
 			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
-				Decision: checkResp.Results[mapping.requestIdx].Actions[mapping.action] == effectv1.Effect_EFFECT_ALLOW,
+				Decision: checkResp.Results[mapping.resourceEntryIdx].Actions[mapping.action] == effectv1.Effect_EFFECT_ALLOW,
 				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 			}
 		}
