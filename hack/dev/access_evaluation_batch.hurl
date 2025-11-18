@@ -11,7 +11,7 @@ HTTP 200
 # Valid AccessEvaluationBatch request 1
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluations
 Content-Type: application/json
-file,requests/access_evaluations/batch_req01.json;
+file,requests/access_evaluation_batch/req01.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
@@ -27,7 +27,7 @@ jsonpath "$.evaluations[6].decision" not exists
 # Valid AccessEvaluationBatch request 2
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluations
 Content-Type: application/json
-file,requests/access_evaluations/batch_req02.json;
+file,requests/access_evaluation_batch/req02.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
