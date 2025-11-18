@@ -10,6 +10,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	internalengine "github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -83,6 +84,41 @@ func (g *TestFixtureGetter) GetAllTestFixtures() []*TestFixtureCtx {
 }
 
 func Check(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+	engine, err := newEngine(ctx, conf, idx)
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.Check(ctx, inputs)
+}
+
+type CheckOutputWithTraces struct {
+	CheckOutput *enginev1.CheckOutput
+	Traces      []*enginev1.Trace
+}
+
+func CheckWithTraces(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inputs []*enginev1.CheckInput) ([]CheckOutputWithTraces, error) {
+	engine, err := newEngine(ctx, conf, idx)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]CheckOutputWithTraces, len(inputs))
+	for i, input := range inputs {
+		collector := tracer.NewCollector()
+
+		outputs, err := engine.Check(ctx, []*enginev1.CheckInput{input}, evaluator.WithTraceSink(collector))
+		if err != nil {
+			return nil, err
+		}
+
+		results[i] = CheckOutputWithTraces{CheckOutput: outputs[0], Traces: collector.Traces()}
+	}
+
+	return results, nil
+}
+
+func newEngine(ctx context.Context, conf *evaluator.Conf, idx compile.Index) (*internalengine.Engine, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	compiler, err := internalcompile.NewManager(ctx, store)
 	if err != nil {
@@ -102,6 +138,5 @@ func Check(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inputs 
 		return nil, err
 	}
 
-	eng := internalengine.NewEphemeral(conf, ruletableMgr, schemaMgr)
-	return eng.Check(ctx, inputs)
+	return internalengine.NewEphemeral(conf, ruletableMgr, schemaMgr), nil
 }
