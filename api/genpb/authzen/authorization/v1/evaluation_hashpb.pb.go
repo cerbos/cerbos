@@ -63,3 +63,11 @@ func (m *AccessEvaluationBatchRequest_Evaluation) HashPB(hasher hash.Hash, ignor
 		authzen_authorization_v1_AccessEvaluationBatchRequest_Evaluation_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *AccessEvaluationBatchResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		authzen_authorization_v1_AccessEvaluationBatchResponse_hashpb_sum(m, hasher, ignore)
+	}
+}

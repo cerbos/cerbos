@@ -250,4 +250,8 @@ message AccessEvaluationBatchResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN access evaluations response"}
   };
+  repeated AccessEvaluationResponse evaluations = 1 [
+    (buf.validate.field).required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
 }

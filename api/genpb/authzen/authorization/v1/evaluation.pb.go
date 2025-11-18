@@ -404,7 +404,8 @@ func (x *AccessEvaluationBatchRequest) GetEvaluations() []*AccessEvaluationBatch
 
 // AuthZEN evaluations response message
 type AccessEvaluationBatchResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state         protoimpl.MessageState      `protogen:"open.v1"`
+	Evaluations   []*AccessEvaluationResponse `protobuf:"bytes,1,rep,name=evaluations,proto3" json:"evaluations,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -437,6 +438,13 @@ func (x *AccessEvaluationBatchResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AccessEvaluationBatchResponse.ProtoReflect.Descriptor instead.
 func (*AccessEvaluationBatchResponse) Descriptor() ([]byte, []int) {
 	return file_authzen_authorization_v1_evaluation_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AccessEvaluationBatchResponse) GetEvaluations() []*AccessEvaluationResponse {
+	if x != nil {
+		return x.Evaluations
+	}
+	return nil
 }
 
 type AccessEvaluationBatchRequest_Evaluation struct {
@@ -581,8 +589,9 @@ const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\aactions\x12Leither the default action must be set or all evaluations must have an action\x1a:has(this.action) || this.evaluations.all(x, has(x.action))\x1a\x97\x01\n" +
 	"\bsubjects\x12Meither the default subject must be set or all evaluations must have a subject\x1a<has(this.subject) || this.evaluations.all(x, has(x.subject))\x1a\x9c\x01\n" +
 	"\tresources\x12Oeither the default resource must be set or all evaluations must have a resource\x1a>has(this.resource) || this.evaluations.all(x, has(x.resource))\x1a\x97\x01\n" +
-	"\bcontexts\x12Meither the default context must be set or all evaluations must have a context\x1a<has(this.context) || this.evaluations.all(x, has(x.context))\"K\n" +
-	"\x1dAccessEvaluationBatchResponse:*\x92A'\n" +
+	"\bcontexts\x12Meither the default context must be set or all evaluations must have a context\x1a<has(this.context) || this.evaluations.all(x, has(x.context))\"\xac\x01\n" +
+	"\x1dAccessEvaluationBatchResponse\x12_\n" +
+	"\vevaluations\x18\x01 \x03(\v22.authzen.authorization.v1.AccessEvaluationResponseB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\vevaluations:*\x92A'\n" +
 	"%2#AuthZEN access evaluations responseB\x9c\x01\n" +
 	"'dev.cerbos.authzen.api.v1.authorizationZKgithub.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1\xaa\x02#Cerbos.AuthZen.Api.V1.Authorizationb\x06proto3"
 
@@ -631,22 +640,23 @@ var file_authzen_authorization_v1_evaluation_proto_depIdxs = []int32{
 	2,  // 10: authzen.authorization.v1.AccessEvaluationBatchRequest.action:type_name -> authzen.authorization.v1.Action
 	12, // 11: authzen.authorization.v1.AccessEvaluationBatchRequest.context:type_name -> authzen.authorization.v1.AccessEvaluationBatchRequest.ContextEntry
 	13, // 12: authzen.authorization.v1.AccessEvaluationBatchRequest.evaluations:type_name -> authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation
-	15, // 13: authzen.authorization.v1.Subject.PropertiesEntry.value:type_name -> google.protobuf.Value
-	15, // 14: authzen.authorization.v1.Resource.PropertiesEntry.value:type_name -> google.protobuf.Value
-	15, // 15: authzen.authorization.v1.Action.PropertiesEntry.value:type_name -> google.protobuf.Value
-	15, // 16: authzen.authorization.v1.AccessEvaluationRequest.ContextEntry.value:type_name -> google.protobuf.Value
-	15, // 17: authzen.authorization.v1.AccessEvaluationResponse.ContextEntry.value:type_name -> google.protobuf.Value
-	15, // 18: authzen.authorization.v1.AccessEvaluationBatchRequest.ContextEntry.value:type_name -> google.protobuf.Value
-	0,  // 19: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.subject:type_name -> authzen.authorization.v1.Subject
-	1,  // 20: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.resource:type_name -> authzen.authorization.v1.Resource
-	2,  // 21: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.action:type_name -> authzen.authorization.v1.Action
-	14, // 22: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.context:type_name -> authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.ContextEntry
-	15, // 23: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.ContextEntry.value:type_name -> google.protobuf.Value
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	4,  // 13: authzen.authorization.v1.AccessEvaluationBatchResponse.evaluations:type_name -> authzen.authorization.v1.AccessEvaluationResponse
+	15, // 14: authzen.authorization.v1.Subject.PropertiesEntry.value:type_name -> google.protobuf.Value
+	15, // 15: authzen.authorization.v1.Resource.PropertiesEntry.value:type_name -> google.protobuf.Value
+	15, // 16: authzen.authorization.v1.Action.PropertiesEntry.value:type_name -> google.protobuf.Value
+	15, // 17: authzen.authorization.v1.AccessEvaluationRequest.ContextEntry.value:type_name -> google.protobuf.Value
+	15, // 18: authzen.authorization.v1.AccessEvaluationResponse.ContextEntry.value:type_name -> google.protobuf.Value
+	15, // 19: authzen.authorization.v1.AccessEvaluationBatchRequest.ContextEntry.value:type_name -> google.protobuf.Value
+	0,  // 20: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.subject:type_name -> authzen.authorization.v1.Subject
+	1,  // 21: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.resource:type_name -> authzen.authorization.v1.Resource
+	2,  // 22: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.action:type_name -> authzen.authorization.v1.Action
+	14, // 23: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.context:type_name -> authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.ContextEntry
+	15, // 24: authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.ContextEntry.value:type_name -> google.protobuf.Value
+	25, // [25:25] is the sub-list for method output_type
+	25, // [25:25] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_authzen_authorization_v1_evaluation_proto_init() }

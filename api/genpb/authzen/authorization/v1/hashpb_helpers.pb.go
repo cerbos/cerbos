@@ -81,6 +81,15 @@ func authzen_authorization_v1_AccessEvaluationBatchRequest_hashpb_sum(m *AccessE
 }
 
 func authzen_authorization_v1_AccessEvaluationBatchResponse_hashpb_sum(m *AccessEvaluationBatchResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationBatchResponse.evaluations"]; !ok {
+		if len(m.Evaluations) > 0 {
+			for _, v := range m.Evaluations {
+				if v != nil {
+					authzen_authorization_v1_AccessEvaluationResponse_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
 }
 
 func authzen_authorization_v1_AccessEvaluationRequest_hashpb_sum(m *AccessEvaluationRequest, hasher hash.Hash, ignore map[string]struct{}) {
