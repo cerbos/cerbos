@@ -57,18 +57,13 @@ func TestCheck(t *testing.T) {
 	rtMem, rtMemCancelFunc := mkRuleTable(t, params, index.NewMem())
 	t.Cleanup(rtMemCancelFunc)
 
-	mr, err := miniredis.Run()
-	require.NoError(t, err, "failed to start Redis client")
+	mr := miniredis.RunT(t)
 	t.Cleanup(mr.Close)
 
-	connURL := fmt.Sprintf("redis://%s/0?dial_timeout=3&read_timeout=6s&max_retries=2", mr.Addr())
-	opts, err := redis.ParseURL(connURL)
-	require.NoError(t, err)
+	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	t.Cleanup(func() { client.Close() })
 
-	client := redis.NewClient(opts)
 	redIdx := index.New(client, "test", 0, 0)
-	require.NoError(t, err, "failed to create Redis index")
-
 	rtRedis, rtRedisCancelFunc := mkRuleTable(t, params, redIdx)
 	t.Cleanup(rtRedisCancelFunc)
 
