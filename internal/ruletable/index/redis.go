@@ -68,6 +68,10 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 
 	for i, raw := range rawRows {
 		if rows[i].RuleTable_RuleRow == nil {
+			if raw == nil {
+				// TODO(saml) handle error?
+				continue
+			}
 			rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
 			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
 				return nil, err
@@ -152,35 +156,30 @@ We store the following:
 - {nsKey:row_checksum} -> *Ruletable_RuleRow
 // scoping checksums by namespace prevents duplicating rows across categories).
 */
+
 func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
+	sums, rows, err := rm.serialize(rs)
+	if err != nil {
+		return err
+	}
+
 	sumsKey := rm.sumsKey(cat)
-	_, err := rm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
+
+	_, err = rm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
 		p.SAdd(ctx, rm.catKey, sumsKey)
-
-		sums, rows, err := rm.serialize(rs)
-		if err != nil {
-			return err
-		}
-
 		p.SAdd(ctx, sumsKey, sums...)
 
-		rkBatch := []any{}
 		for i, r := range rows {
 			rk := sums[i].(string) //nolint:forcetypeassert
-			rkBatch = append(rkBatch, rk, r)
+			p.Set(ctx, rk, r, keyTTL)
 		}
 
-		// TODO(saml) how to deal with TTL on these keys?
-		if err := rm.db.MSet(ctx, rkBatch...).Err(); err != nil {
-			return err
-		}
-
-		// TODO(saml)
 		p.Expire(ctx, sumsKey, keyTTL)
 		p.Expire(ctx, rm.catKey, keyTTL)
 
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}
@@ -189,24 +188,33 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 }
 
 func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet, error) {
+	if len(cats) == 0 {
+		return nil, nil
+	}
+
+	existsCmds := make(map[string]*redis.BoolCmd, len(cats))
+	dataCmds := make(map[string]*redis.StringSliceCmd, len(cats))
+
+	_, err := rm.db.Pipelined(ctx, func(p redis.Pipeliner) error {
+		for _, cat := range cats {
+			sumsKey := rm.sumsKey(cat)
+			existsCmds[cat] = p.SIsMember(ctx, rm.catKey, sumsKey)
+			dataCmds[cat] = p.SMembers(ctx, sumsKey)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	res := make(map[string]*rowSet)
 	for _, cat := range cats {
-		sumsKey := rm.sumsKey(cat)
-
-		ok, err := rm.db.SIsMember(ctx, rm.catKey, sumsKey).Result()
-		if err != nil {
-			return nil, err
+		if existsCmds[cat].Val() {
+			sums := dataCmds[cat].Val()
+			if len(sums) > 0 {
+				res[cat] = rm.getRowSetWithSums(sums)
+			}
 		}
-		if !ok {
-			return res, nil
-		}
-
-		sums, err := rm.db.SMembers(ctx, sumsKey).Result()
-		if err != nil {
-			return nil, err
-		}
-
-		res[cat] = rm.getRowSetWithSums(sums)
 	}
 
 	return res, nil
@@ -218,17 +226,52 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 		return nil, err
 	}
 
-	res := make(map[string]*rowSet)
-	for _, catKey := range catsKeys {
-		sums, err := rm.db.SMembers(ctx, catKey).Result()
-		if err != nil {
-			return nil, err
-		}
+	if len(catsKeys) == 0 {
+		return make(map[string]*rowSet), nil
+	}
 
-		res[rm.catFromSumsKey(catKey)] = rm.getRowSetWithSums(sums)
+	cmds := make(map[string]*redis.StringSliceCmd, len(catsKeys))
+	_, err = rm.db.Pipelined(ctx, func(p redis.Pipeliner) error {
+		for _, catKey := range catsKeys {
+			cmds[catKey] = p.SMembers(ctx, catKey)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]*rowSet, len(catsKeys))
+	for _, catKey := range catsKeys {
+		sums := cmds[catKey].Val()
+		catName := rm.catFromSumsKey(catKey)
+		res[catName] = rm.getRowSetWithSums(sums)
 	}
 
 	return res, nil
+}
+
+func (rm *redisMap) delete(ctx context.Context, cats ...string) error {
+	if len(cats) == 0 {
+		return nil
+	}
+
+	targetKeys := make([]string, len(cats))
+	targetMembers := make([]any, len(cats))
+
+	for i, cat := range cats {
+		key := rm.sumsKey(cat)
+		targetKeys[i] = key
+		targetMembers[i] = key
+	}
+
+	_, err := rm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
+		p.SRem(ctx, rm.catKey, targetMembers...)
+		p.Del(ctx, targetKeys...)
+		return nil
+	})
+
+	return err
 }
 
 type RedisLiteralMap struct {
@@ -273,6 +316,7 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 
 	res := make(map[string]*rowSet, len(keys))
 	sumCmds := make(map[string]*redis.StringSliceCmd, len(keys))
+
 	if _, err = gl.db.Pipelined(ctx, func(p redis.Pipeliner) error {
 		for _, k := range keys {
 			matchingCatItems := matched[k]
@@ -289,24 +333,16 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 		return nil, err
 	}
 
-	sumsMap := make(map[string][]string, len(keys))
-	rowCmds := make(map[string]*redis.SliceCmd, len(keys))
-	if _, err = gl.db.Pipelined(ctx, func(p redis.Pipeliner) error {
-		for k := range matched {
-			sums, err := sumCmds[k].Result()
-			if err != nil {
-				return err
-			}
-			rowCmds[k] = p.MGet(ctx, sums...)
-			sumsMap[k] = sums
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
 	for k := range matched {
-		res[k] = gl.getRowSetWithSums(sumsMap[k])
+		if cmd, ok := sumCmds[k]; ok {
+			sums, err := cmd.Result()
+			if err != nil {
+				return nil, err
+			}
+			res[k] = gl.getRowSetWithSums(sums)
+		} else {
+			res[k] = newRowSet()
+		}
 	}
 
 	return res, nil

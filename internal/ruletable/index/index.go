@@ -6,7 +6,6 @@ package index
 import (
 	"context"
 	"crypto/sha256"
-	"hash"
 	"slices"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -43,6 +42,7 @@ type literalMap interface {
 	set(context.Context, string, *rowSet) error
 	get(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
+	delete(context.Context, ...string) error
 }
 
 type globMap interface {
@@ -50,6 +50,7 @@ type globMap interface {
 	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
 	getMerged(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
+	delete(context.Context, ...string) error
 }
 
 type Row struct {
@@ -121,6 +122,10 @@ func (l *rowSet) has(sum string) bool {
 	return exists
 }
 
+func (l *rowSet) len() int {
+	return len(l.m)
+}
+
 func (l *rowSet) del(r *Row) {
 	delete(l.m, r.sum)
 }
@@ -180,7 +185,6 @@ func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
 
 type Impl struct {
 	idx          Index
-	rowHasher    hash.Hash
 	version      literalMap
 	scope        literalMap
 	roleGlob     globMap
@@ -191,7 +195,6 @@ type Impl struct {
 func NewImpl(idx Index) *Impl {
 	return &Impl{
 		idx:          idx,
-		rowHasher:    sha256.New(),
 		version:      idx.getLiteralMap(versionKey),
 		scope:        idx.getLiteralMap(scopeKey),
 		roleGlob:     idx.getGlobMap(roleGlobKey),
@@ -201,9 +204,9 @@ func NewImpl(idx Index) *Impl {
 }
 
 func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
-	defer m.rowHasher.Reset()
-	r.HashPB(m.rowHasher, ignoredRuleTableProtoFields)
-	r.sum = string(m.rowHasher.Sum(nil))
+	h := sha256.New()
+	r.HashPB(h, ignoredRuleTableProtoFields)
+	r.sum = string(h.Sum(nil))
 
 	versionRowSets, err := m.version.get(ctx, r.Version)
 	if err != nil {
@@ -468,13 +471,23 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 	if err != nil {
 		return err
 	}
-	for _, rs := range allVersions {
+	for cat, rs := range allVersions {
 		if err := rs.resolve(ctx, m.idx); err != nil {
 			return err
 		}
+		initialLen := rs.len()
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
+			}
+		}
+		if rs.len() == 0 {
+			if err := m.version.delete(ctx, cat); err != nil {
+				return err
+			}
+		} else if rs.len() != initialLen {
+			if err := m.version.set(ctx, cat, rs); err != nil {
+				return err
 			}
 		}
 	}
@@ -483,13 +496,23 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 	if err != nil {
 		return err
 	}
-	for _, rs := range allScopes {
+	for cat, rs := range allScopes {
 		if err := rs.resolve(ctx, m.idx); err != nil {
 			return err
 		}
+		initialLen := rs.len()
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
+			}
+		}
+		if rs.len() == 0 {
+			if err := m.scope.delete(ctx, cat); err != nil {
+				return err
+			}
+		} else if rs.len() != initialLen {
+			if err := m.scope.set(ctx, cat, rs); err != nil {
+				return err
 			}
 		}
 	}
@@ -498,13 +521,23 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 	if err != nil {
 		return err
 	}
-	for _, rs := range allRoleGlobs {
+	for cat, rs := range allRoleGlobs {
 		if err := rs.resolve(ctx, m.idx); err != nil {
 			return err
 		}
+		initialLen := rs.len()
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
+			}
+		}
+		if rs.len() == 0 {
+			if err := m.roleGlob.delete(ctx, cat); err != nil {
+				return err
+			}
+		} else if rs.len() != initialLen {
+			if err := m.roleGlob.set(ctx, cat, rs); err != nil {
+				return err
 			}
 		}
 	}
@@ -513,13 +546,23 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 	if err != nil {
 		return err
 	}
-	for _, rs := range allActionGlobs {
+	for cat, rs := range allActionGlobs {
 		if err := rs.resolve(ctx, m.idx); err != nil {
 			return err
 		}
+		initialLen := rs.len()
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
+			}
+		}
+		if rs.len() == 0 {
+			if err := m.actionGlob.delete(ctx, cat); err != nil {
+				return err
+			}
+		} else if rs.len() != initialLen {
+			if err := m.actionGlob.set(ctx, cat, rs); err != nil {
+				return err
 			}
 		}
 	}
@@ -528,13 +571,23 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 	if err != nil {
 		return err
 	}
-	for _, rs := range allResourceGlobs {
+	for cat, rs := range allResourceGlobs {
 		if err := rs.resolve(ctx, m.idx); err != nil {
 			return err
 		}
+		initialLen := rs.len()
 		for _, r := range rs.rows() {
 			if r.OriginFqn == fqn {
 				rs.del(r)
+			}
+		}
+		if rs.len() == 0 {
+			if err := m.resourceGlob.delete(ctx, cat); err != nil {
+				return err
+			}
+		} else if rs.len() != initialLen {
+			if err := m.resourceGlob.set(ctx, cat, rs); err != nil {
+				return err
 			}
 		}
 	}
@@ -677,7 +730,6 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 }
 
 func (m *Impl) Reset() {
-	m.rowHasher = sha256.New()
 	m.version = m.idx.getLiteralMap(versionKey)
 	m.scope = m.idx.getLiteralMap(scopeKey)
 	m.roleGlob = m.idx.getGlobMap(roleGlobKey)
