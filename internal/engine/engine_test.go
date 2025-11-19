@@ -44,6 +44,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const redisTTL = time.Second * 5
+
 // trick compiler into not converting benchmarks into nops.
 var dummy int
 
@@ -66,7 +68,7 @@ func TestCheck(t *testing.T) {
 	require.NoError(t, err)
 
 	client := redis.NewClient(opts)
-	redIdx, err := index.NewRedis(client, "test")
+	redIdx, err := index.NewRedis(client, "test", redisTTL)
 	require.NoError(t, err, "failed to create Redis index")
 
 	rtRedis, rtRedisCancelFunc := mkRuleTable(t, params, redIdx)

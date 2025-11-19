@@ -5,6 +5,7 @@ package index
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -15,9 +16,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const (
-	keyTTL = time.Minute * 5
-)
+const defaultKeyTTL = time.Minute * 5
 
 var (
 	_ Index      = (*Redis)(nil)
@@ -28,21 +27,26 @@ var (
 type Redis struct {
 	db    *redis.Client
 	nsKey string
+	ttl   time.Duration
 }
 
-func NewRedis(client *redis.Client, namespace string) (*Redis, error) {
+func NewRedis(client *redis.Client, namespace string, ttl time.Duration) (*Redis, error) {
+	if ttl == 0 {
+		ttl = defaultKeyTTL
+	}
 	return &Redis{
 		db:    client,
 		nsKey: namespace,
+		ttl:   ttl,
 	}, nil
 }
 
 func (r *Redis) getLiteralMap(category string) literalMap {
-	return newRedisLiteralMap(r.db, r.nsKey, category)
+	return newRedisLiteralMap(r.db, r.nsKey, category, r.ttl)
 }
 
 func (r *Redis) getGlobMap(category string) globMap {
-	return newRedisGlobMap(r.db, r.nsKey, category)
+	return newRedisGlobMap(r.db, r.nsKey, category, r.ttl)
 }
 
 func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
@@ -69,8 +73,7 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for i, raw := range rawRows {
 		if rows[i].RuleTable_RuleRow == nil {
 			if raw == nil {
-				// TODO(saml) handle error?
-				continue
+				return nil, fmt.Errorf("data missing for key %s", sums[i])
 			}
 			rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
 			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
@@ -94,13 +97,15 @@ type redisMap struct {
 	db     *redis.Client
 	nsKey  string
 	catKey string
+	ttl    time.Duration
 }
 
-func newRedisMap(db *redis.Client, namespace, categoryKey string) *redisMap {
+func newRedisMap(db *redis.Client, namespace, categoryKey string, ttl time.Duration) *redisMap {
 	return &redisMap{
 		db:     db,
 		nsKey:  namespace,
 		catKey: namespace + ":" + categoryKey,
+		ttl:    ttl,
 	}
 }
 
@@ -171,11 +176,11 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 
 		for i, r := range rows {
 			rk := sums[i].(string) //nolint:forcetypeassert
-			p.Set(ctx, rk, r, keyTTL)
+			p.Set(ctx, rk, r, rm.ttl)
 		}
 
-		p.Expire(ctx, sumsKey, keyTTL)
-		p.Expire(ctx, rm.catKey, keyTTL)
+		p.Expire(ctx, sumsKey, rm.ttl)
+		p.Expire(ctx, rm.catKey, rm.ttl)
 
 		return nil
 	})
@@ -277,9 +282,9 @@ type RedisLiteralMap struct {
 	*redisMap
 }
 
-func newRedisLiteralMap(db *redis.Client, namespace, category string) *RedisLiteralMap {
+func newRedisLiteralMap(db *redis.Client, namespace, category string, ttl time.Duration) *RedisLiteralMap {
 	return &RedisLiteralMap{
-		redisMap: newRedisMap(db, namespace, category),
+		redisMap: newRedisMap(db, namespace, category, ttl),
 	}
 }
 
@@ -287,9 +292,9 @@ type RedisGlobMap struct {
 	*redisMap
 }
 
-func newRedisGlobMap(db *redis.Client, namespace, category string) *RedisGlobMap {
+func newRedisGlobMap(db *redis.Client, namespace, category string, ttl time.Duration) *RedisGlobMap {
 	return &RedisGlobMap{
-		redisMap: newRedisMap(db, namespace, category),
+		redisMap: newRedisMap(db, namespace, category, ttl),
 	}
 }
 
