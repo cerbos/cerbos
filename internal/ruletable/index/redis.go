@@ -36,11 +36,11 @@ var (
 )
 
 type Redis struct {
+	sentinelDeadline time.Time
+	dataDeadline     time.Time
 	db               *redis.Client
 	nsKey            string
 	sentKey          string
-	sentinelDeadline time.Time
-	dataDeadline     time.Time
 	readOnly         bool
 }
 
@@ -72,7 +72,7 @@ func GetExisting(ctx context.Context, client *redis.Client, namespace string) (*
 // batch expires consistently with no time drift.
 //
 // Usage: Call this when GetExisting returns ErrCacheMiss.
-func New(client *redis.Client, namespace string, ttl time.Duration, expirationBuffer time.Duration) *Redis {
+func New(client *redis.Client, namespace string, ttl, expirationBuffer time.Duration) *Redis {
 	if ttl <= 0 {
 		ttl = defaultKeyTTL
 	}
@@ -147,12 +147,12 @@ func (r *Redis) rowKey(sum string) string {
 }
 
 type redisMap struct {
+	sentinelDeadline time.Time
+	dataDeadline     time.Time
 	db               *redis.Client
 	nsKey            string
 	catKey           string
 	sentKey          string
-	sentinelDeadline time.Time
-	dataDeadline     time.Time
 	readOnly         bool
 }
 
@@ -348,7 +348,7 @@ type RedisLiteralMap struct {
 	*redisMap
 }
 
-func newRedisLiteralMap(db *redis.Client, namespace, category string, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
+func newRedisLiteralMap(db *redis.Client, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
 	return &RedisLiteralMap{
 		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
@@ -358,7 +358,7 @@ type RedisGlobMap struct {
 	*redisMap
 }
 
-func newRedisGlobMap(db *redis.Client, namespace, category string, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
+func newRedisGlobMap(db *redis.Client, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
 	return &RedisGlobMap{
 		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
