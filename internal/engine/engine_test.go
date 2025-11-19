@@ -63,14 +63,10 @@ func TestCheck(t *testing.T) {
 	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 	t.Cleanup(func() { client.Close() })
 
-	redIdx := index.New(client, "test", 0, 0)
-	rtRedis, rtRedisCancelFunc := mkRuleTable(t, params, redIdx)
-	t.Cleanup(rtRedisCancelFunc)
-
 	evaluators := map[string]evaluator.Evaluator{
 		"engine":          eng,
 		"ruletable_mem":   rtMem,
-		"ruletable_redis": rtRedis,
+		"ruletable_redis": nil,
 	}
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -80,6 +76,13 @@ func TestCheck(t *testing.T) {
 			// avoid spinning up a redis instance in CI (it's slow)
 			if evalName == "ruletable_redis" {
 				test.SkipIfGHActions(t)
+
+				if eval == nil {
+					redIdx := index.New(client, "test", 0, 0)
+					var rtRedisCancelFunc context.CancelFunc
+					eval, rtRedisCancelFunc = mkRuleTable(t, params, redIdx)
+					t.Cleanup(rtRedisCancelFunc)
+				}
 			}
 			for _, tcase := range testCases {
 				t.Run(tcase.Name, func(t *testing.T) {
