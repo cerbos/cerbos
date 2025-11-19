@@ -20,7 +20,7 @@ type Span interface {
 
 type noopSpan struct{}
 
-// TODO(saml) change all stub interface/function paramaters to `struct{}` rather than `any` where possible
+// TODO(saml) change all stub interface/function parameters to `struct{}` rather than `any` where possible
 func (*noopSpan) End(_ ...struct{})           {}
 func (*noopSpan) SetAttributes(_ ...struct{}) {}
 
