@@ -84,6 +84,10 @@ func TestCheck(t *testing.T) {
 
 	for evalName, eval := range evaluators {
 		t.Run(evalName, func(t *testing.T) {
+			// avoid spinning up a redis instance in CI (it's slow)
+			if evalName == "ruletable_redis" {
+				test.SkipIfGHActions(t)
+			}
 			for _, tcase := range testCases {
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
